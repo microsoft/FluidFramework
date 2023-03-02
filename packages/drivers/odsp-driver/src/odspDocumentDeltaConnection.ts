@@ -387,7 +387,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		logger: ITelemetryLogger,
 		private readonly enableMultiplexing?: boolean,
 	) {
-		super(socket, documentId, logger);
+		super(socket, documentId, logger, false, uuid());
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
@@ -493,6 +493,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				{
 					eventName: "ServerDisconnect",
 					clientId: this.hasDetails ? this.clientId : undefined,
+					details: JSON.stringify({
+						connection: this.connectionId,
+					}),
 				},
 				error,
 			);

@@ -31,8 +31,8 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
 	encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
 	editor: { buildChildChange: () => fail("Child changes not supported") },
-	intoDelta: (change): Delta.FieldChanges =>
-		change === 0 ? {} : { beforeShallow: [{ index: 0, setValue: change.new }] },
+	intoDelta: (change) =>
+		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
 };
 
 const valueField = new FieldKind(
@@ -123,12 +123,14 @@ const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): N
 	return nodeChangeFromValueChange(rebased);
 };
 
-const childToDelta = (nodeChange: NodeChangeset): Delta.NodeChanges => {
+const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
-	return {
+	const nodeDelta: Delta.Modify = {
+		type: Delta.MarkType.Modify,
 		setValue: valueChange.new,
 	};
+	return nodeDelta;
 };
 
 const childEncoder = (nodeChange: NodeChangeset): JsonCompatibleReadOnly => {
@@ -379,12 +381,17 @@ describe("Generic FieldKind", () => {
 			},
 		];
 
-		const expected: Delta.FieldChanges = {
-			beforeShallow: [
-				{ index: 0, setValue: 1 },
-				{ index: 2, setValue: 2 },
-			],
+		const valueDelta1: Delta.Mark = {
+			type: Delta.MarkType.Modify,
+			setValue: 1,
 		};
+
+		const valueDelta2: Delta.Mark = {
+			type: Delta.MarkType.Modify,
+			setValue: 2,
+		};
+
+		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
 		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, noRepair);
 		assert.deepEqual(actual, expected);

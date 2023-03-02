@@ -4,6 +4,7 @@
 
 ```ts
 
+import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -33,6 +34,16 @@ export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
 }
 
+// @internal
+export function ContainerSelectionDropdown(props: ContainerSelectionDropdownProps): React_2.ReactElement;
+
+// @internal
+export interface ContainerSelectionDropdownProps {
+    initialSelection?: string;
+    onChangeSelection(containerId: string | undefined): void;
+    options: ContainerMetadata[];
+}
+
 // @public
 export const defaultRenderOptions: Required<RenderOptions>;
 
@@ -57,11 +68,26 @@ export interface HasContainerId {
     containerId: string;
 }
 
+// @internal
+export enum PanelView {
+    Audience = "Audience",
+    ContainerData = "Data"
+}
+
+// @internal
+export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React_2.ReactElement;
+
+// @internal
+export interface PanelViewSelectionMenuProps {
+    currentSelection: PanelView;
+    updateSelection(newSelection: PanelView): void;
+}
+
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 
 // @public
-export function renderClientDebuggerView(targetElement: HTMLElement | null): Promise<boolean>;
+export function renderClientDebuggerView(targetElement: HTMLElement): Promise<void>;
 
 // @public
 export interface RenderOptions {
