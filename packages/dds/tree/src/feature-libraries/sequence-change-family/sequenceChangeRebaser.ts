@@ -18,7 +18,6 @@ function rebaseAnchors(anchors: AnchorSet, over: SequenceChangeset): void {
 
 export const sequenceChangeRebaser: SequenceChangeRebaser = {
 	compose,
-	squash: compose,
 	invert,
 	rebase,
 	rebaseAnchors,

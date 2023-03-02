@@ -13,7 +13,6 @@ type TestChange = TestChange[] | { I: TestChange } | { C: TestChange; O: TestCha
 
 const testRebaser: ChangeRebaser<TestChange> = {
 	compose: (changes: TaggedChange<TestChange>[]) => changes.map((c) => c.change),
-	squash: (changes: TaggedChange<TestChange>[]) => changes.map((c) => c.change),
 	invert: (change: TaggedChange<TestChange>) => ({ I: change.change }),
 	rebase: (change: TestChange, over: TaggedChange<TestChange>) => ({ C: change, O: over.change }),
 	rebaseAnchors: (anchor: AnchorSet, over: TestChange) => {},

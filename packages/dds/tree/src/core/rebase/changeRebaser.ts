@@ -51,13 +51,6 @@ export interface ChangeRebaser<TChangeset> {
 	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
 	/**
-	 * Compose a collection of changesets into a single one.
-	 * Changes within the returned changeset not tagged with RevisionIds.
-	 * See {@link ChangeRebaser} for requirements.
-	 */
-	squash(changes: TaggedChange<TChangeset>[], revision: RevisionTag): TChangeset;
-
-	/**
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:

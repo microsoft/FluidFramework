@@ -127,16 +127,6 @@ export class ModularChangeFamily
 		return { fieldKind, changesets: normalizedChanges };
 	}
 
-	squash(changes: TaggedChange<ModularChangeset>[], revision: RevisionTag): ModularChangeset {
-		// The implementation after this assert is only valid so long as we use anonymous changesets.
-		assert(
-			changes.find((change) => (change.revision ?? change.change.revisions) !== undefined) ===
-				undefined,
-			"Squash unsupported for tagged changesets",
-		);
-		return this.compose(changes);
-	}
-
 	compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		let maxId = -1;
 		const revInfos: RevisionInfo[] = [];

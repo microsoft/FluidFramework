@@ -64,7 +64,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 		// not expected to happen in transactions but that could change in the future.
 		const anonChanges = changes.map((c) => makeAnonChange(c));
 		const revision = mintRevision();
-		const edit = changeFamily.rebaser.squash(anonChanges, revision);
+		const edit = changeFamily.rebaser.compose(anonChanges);
 		submitEdit(edit, revision);
 	}
 
