@@ -356,19 +356,12 @@ export class MongoDbFactory implements core.IDbFactory {
         assert(!global || !!this.globalDbEndpoint, `No global endpoint provided
                  when trying to connect to global db.`);
         // Need to cast to any before MongoClientOptions due to missing properties in d.ts
-        interface MongoClientOptionsExtend {
-            useNewUrlParser: boolean,
-            useUnifiedTopolify: boolean
-        }
-
-        const options: MongoClientOptions & MongoClientOptionsExtend= {
+        const options: MongoClientOptions = {
             keepAlive: true,
             keepAliveInitialDelay: 180000,
             connectTimeoutMS: 1000,
             maxConnecting: 100,
-            socketTimeoutMS: 120000,
-            useNewUrlParser: true,
-            useUnifiedTopolify: true
+            socketTimeoutMS: 120000
         };
 
         if (this.connectionPoolMinSize) {
