@@ -129,7 +129,7 @@ export class CheckpointManager implements ICheckpointManager {
         if (this.localDocumentCollection) {
             if(!noActiveClients) {
                 Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
-                // Use upsert in case document does not exist in local DB
+                // Use upsert in case document does not exist in the local database
                 await this.localDocumentCollection.upsert(checkpointFilter, checkpointData, null)
                     .catch((error) => {
                         Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
