@@ -15,6 +15,13 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+## 2.0.0-internal.3.3.0 Upcoming changes
+
+-   [Some APIs meant only for internal usage are deprecated](#some-apis-meant-only-for-internal-usage-are-deprecated)
+
+### Some APIs meant only for internal usage are deprecated
+Specifically, `IGarbageCollectionRuntime` and `IConnectableRuntime` in the `@fluidframework/container-runtime` package.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
