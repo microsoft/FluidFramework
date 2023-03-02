@@ -15,19 +15,13 @@
     "build:compile": "lerna run build:compile --stream",
     "build:genver": "lerna run build:genver --stream --parallel",
     "clean": "rimraf dist *.tsbuildinfo *.build.log",
-    "format": "lerna run format --no-sort --stream -- -- -- --color",
-    "postinstall": "npm run postinstall:lerna",
+    "format": "lerna run format --no-sort --stream",
+    "preinstall": "node scripts/only-pnpm.cjs",
     "lint": "lerna run lint --no-sort --stream",
     "lint:fix": "lerna run lint:fix --no-sort --stream",
-    "policy-check": "fluid-repo-policy-check",
-    "policy-check:fix": "fluid-repo-policy-check -r",
-    "post-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json lerna-package-lock.json; [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json; exit 0",
-    "post-lerna-install:win32": "if exist package-lock.json move package-lock.json lerna-package-lock.json && if exist package-lock.json.bak move package-lock.json.bak package-lock.json",
-    "postinstall:lerna": "run-script-os",
-    "postinstall:lerna:default": "npm run pre-lerna-install:default && { lerna bootstrap --strict --hoist;t1=$?;npm run post-lerna-install:default;exit $t1;}",
-    "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
-    "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
-    "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
+    "policy-check": "cd ../.. && npm run policy-check",
+    "policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
+    "policy-check:fix": "cd ../.. && npm run policy-check:fix",
     "start": "node packages/historian/dist/www.js",
     "start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
     "start:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
@@ -49,7 +43,8 @@
     "temp-directory": "nyc/.nyc_output"
   },
   "devDependencies": {
-    "@fluidframework/build-tools": "^0.4.4000",
+    "@fluid-tools/build-cli": "0.11.0-134585",
+    "@fluidframework/build-tools": "0.11.0-134585",
     "@fluidframework/eslint-config-fluid": "^2.0.0",
     "@rushstack/eslint-config": "^2.6.1",
     "@types/compression": "0.0.36",
@@ -71,7 +66,7 @@
     "eslint-plugin-react": "~7.28.0",
     "eslint-plugin-unicorn": "~40.0.0",
     "eslint-plugin-unused-imports": "~2.0.0",
-    "lerna": "^4.0.0",
+    "lerna": "^5.1.8",
     "mocha": "^10.1.0",
     "nyc": "^15.1.0",
     "rimraf": "^3.0.2",
@@ -79,5 +74,10 @@
     "supertest": "^3.3.0",
     "tslint": "^5.12.0",
     "typescript": "~4.5.5"
+  },
+  "pnpm": {
+    "overrides": {
+      "socket.io-parser": "^4.2.1"
+    }
   }
 }

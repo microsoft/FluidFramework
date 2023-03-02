@@ -577,6 +577,10 @@ export class DataStores implements IDisposable {
 						eventName: "SetConnectionStateError",
 						clientId,
 						fluidDataStore,
+						details: JSON.stringify({
+							runtimeConnected: this.runtime.connected,
+							connected,
+						}),
 					},
 					error,
 				);

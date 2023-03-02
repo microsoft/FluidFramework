@@ -21,6 +21,7 @@ export function create(
     const router: Router = Router();
     const repoPerDocEnabled: boolean = store.get("git:repoPerDocEnabled") ?? false;
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.get("/repos/:owner/:repo/contents/*", async (request, response, next) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         const resultP = repoManagerFactory.open(repoManagerParams)

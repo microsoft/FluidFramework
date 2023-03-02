@@ -119,6 +119,32 @@ describe("ClientDebugger unit tests", () => {
 		expect(audienceRemoved).to.be.true;
 	});
 
+	it("Validate container state contents are as expected ", async () => {
+		const clientDebugger = initializeDebugger(containerId, container!);
+
+		// verify container state change in container is reflecting in client debugger
+		container!.connect();
+
+		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(1);
+		expect(clientDebugger?.getContainerConnectionLog()[0].newState).to.equal("connected");
+
+		await container!.attach({ url: "test-url" });
+		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(2);
+		expect(clientDebugger?.getContainerConnectionLog()[1].newState).to.equal("attached");
+
+		container!.disconnect();
+		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(3);
+		expect(clientDebugger?.getContainerConnectionLog()[2].newState).to.equal("disconnected");
+
+		container!.close();
+		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(4);
+		expect(clientDebugger?.getContainerConnectionLog()[3].newState).to.equal("closed");
+
+		container!.dispose?.();
+		expect(clientDebugger?.getContainerConnectionLog().length).to.equal(5);
+		expect(clientDebugger?.getContainerConnectionLog()[4].newState).to.equal("disposed");
+	});
+
 	it("Closing debugger removes it from global (window) registry and disposes it.", () => {
 		const clientDebugger = initializeDebugger(containerId, container!);
 		const otherClientDebugger = initializeDebugger(otherContainerId, otherContainer!);

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertFieldChangesEqual, deepFreeze, fakeRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -45,7 +45,7 @@ function composeI<T>(
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
 		SF.amendCompose(composed, composer, idAllocator, moveEffects);
-		// assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
+		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
 	}
 	return composed;
 }
@@ -60,7 +60,7 @@ export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>)
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
 		rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, moveEffects);
-		// assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
+		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
 }
@@ -109,10 +109,10 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
+	assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset): Delta.FieldChanges {
+export function toDelta(change: TestChangeset): Delta.MarkList {
 	return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
 }
 
