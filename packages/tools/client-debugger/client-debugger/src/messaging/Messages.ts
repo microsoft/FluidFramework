@@ -18,6 +18,10 @@ export interface IDebuggerMessage<TData = unknown> {
 	 * All messages sent by this library will have the same `source`: {@link debuggerMessageSource}.
 	 * Listeners that only want to accept messages coming from this library can filter to those with
 	 * a matching source.
+	 *
+	 * Consumers are encouraged to use a single `source` for all messages they send to this library.
+	 * This will help the system differentiate messages it has received from different sources for
+	 * the purpose of logging, etc.
 	 */
 	source: string;
 
