@@ -68,6 +68,11 @@ describe("Document Dirty", () => {
 					"No superfluous transition event, dirty and clean count should match when state is clean",
 				);
 			});
+
+			if (!containerRuntime.isDirty) {
+				// Give one count for the initial clean state
+				wasMarkedCleanContainerCount += 1;
+			}
 			container.on("saved", () => {
 				wasMarkedCleanContainerCount += 1;
 				assert.equal(container.isDirty, false, "Document is marked clean");
@@ -93,6 +98,10 @@ describe("Document Dirty", () => {
 				);
 			});
 
+			if (containerRuntime.isDirty) {
+				// Give one count for the initial dirty state
+				wasMarkedDirtyContainerCount += 1;
+			}
 			container.on("dirty", () => {
 				wasMarkedDirtyContainerCount += 1;
 				assert.equal(container.isDirty, true, "Document is marked dirty");
@@ -468,6 +477,11 @@ describe("Document Dirty", () => {
 					"No superfluous transition event1, clean should be only one more then dirty when state is clean",
 				);
 			});
+
+			if (!containerRuntime.isDirty) {
+				// Give one count for the initial saved state
+				wasMarkedCleanContainerCount += 1;
+			}
 			container.on("saved", () => {
 				wasMarkedCleanContainerCount += 1;
 				assert.equal(container.isDirty, false, "Document is marked clean");
@@ -493,6 +507,10 @@ describe("Document Dirty", () => {
 				);
 			});
 
+			if (containerRuntime.isDirty) {
+				// Give one count for the initial dirty state
+				wasMarkedDirtyContainerCount += 1;
+			}
 			container.on("dirty", () => {
 				wasMarkedDirtyContainerCount += 1;
 				assert.equal(container.isDirty, true, "Document is marked dirty");
