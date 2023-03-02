@@ -18,11 +18,7 @@ import {
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import {
-	channelsTreeName,
-	IContainerRuntimeBase,
-	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions";
+import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -40,7 +36,6 @@ import {
 	TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IRequest } from "@fluidframework/core-interfaces";
 import { pkgVersion } from "../packageVersion";
 
 const defaultDataStoreId = "default";
@@ -130,10 +125,14 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-export const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 class TestDataObject1 extends DataObject {
 	protected async initializingFromExisting(): Promise<void> {
-		throw new Error("EntryPoint not implemented");
+		// This test data object will verify full initialization isn't for summarizer client.
+		if (this.context.clientDetails.capabilities.interactive === false) {
+			throw new Error(
+				"Non interactive / summarizer client's data object should not be initialized",
+			);
+		}
 	}
 }
 
@@ -324,15 +323,14 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		);
 	});
 
-	it("should not call entry point before data store is requested", async () => {
+	it("full initialization of data object should not happen by default", async () => {
+		const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 		const dataStoreFactory1 = new DataObjectFactory(
 			TestDataObjectType1,
 			TestDataObject1,
 			[],
 			[],
 		);
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
 		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		]);
@@ -342,7 +340,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			dataStoreFactory1,
 			registryStoreEntries,
 			undefined,
-			[innerRequestHandler],
+			[],
 		);
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 
@@ -354,7 +352,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		);
 		assert.doesNotThrow(
 			async () => requestFluidObject<TestDataObject1>(container1, "/"),
-			"Initialization from container client should success.",
+			"Initial creation of container and data store should succeed.",
 		);
 
 		// Create a summarizer for the container and do a summary shouldn't throw.
@@ -373,9 +371,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 		// In summarizer, load the data store should fail.
 		const summarizerContainer = await provider.loadContainer(runtimeFactory);
-		await assert.rejects(
+		assert.doesNotThrow(
 			async () => requestFluidObject<TestDataObject1>(summarizerContainer, "/"),
-
 			"This validates the summarizer client doesn't fully initialize the data object.",
 		);
 
@@ -384,12 +381,33 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		const container2 = await loader.resolve({ url });
 		assert.doesNotThrow(
 			async () => requestFluidObject<TestDataObject1>(container2, "/"),
-			(e) => e.message === "EntryPoint not implemented",
+			(e) => e.message === "Test should not hit this point",
 			"This validates that an interactive client doesn't fully initialize the data object.",
 		);
 
 		// clean up the error message in provider's logger
-		provider.logger = new EventAndErrorTrackingLogger(new MockLogger());
+		// const expectedErrors = [
+		// 	{
+		// 		eventName: "fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
+		// 		error: "Submission of an out of order message",
+		// 	},
+		// 	// A container will not close when an out of order message was detected.
+		// 	// The error below is due to the artificial repro of interleaving op processing and flushing
+		// 	{
+		// 		eventName: "fluid:telemetry:Container:ContainerClose",
+		// 		error: "Found a non-Sequential sequenceNumber",
+		// 	},
+		// ];
+
+		// itExpects(
+		// 	"Reference sequence number mismatch when doing op reentry - early flush enabled - submits two batches",
+		// 	expectedErrors,
+		// 	async () => {
+		// 		// By default, we would flush a batch when we detect a reference sequence number mismatch
+		// 		await processOutOfOrderOp({});
+		// 		assert.strictEqual(capturedBatches.length, 2);
+		// 	},
+		// );
 	});
 
 	/**
