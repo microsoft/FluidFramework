@@ -17,6 +17,7 @@ import { MachineState } from "../machines";
 import { ReleaseGroup, ReleasePackage } from "../releaseGroups";
 import { askForReleaseType } from "./askFunctions";
 import {
+	checkAssertTagging,
 	checkBranchName,
 	checkBranchUpToDate,
 	checkDoesReleaseFromReleaseBranch,
@@ -92,7 +93,7 @@ export interface FluidReleaseStateHandlerData {
 	shouldSkipChecks?: boolean;
 
 	/**
-	 * True if repo policy should be checked.
+	 * True if repo policy should be checked. This also affects assert tagging, which runs as part of policy.
 	 */
 	shouldCheckPolicy?: boolean;
 
@@ -171,6 +172,11 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 
 			case "CheckPolicy": {
 				result = await checkPolicy(state, machine, testMode, log, data);
+				break;
+			}
+
+			case "CheckAssertTagging": {
+				result = await checkAssertTagging(state, machine, testMode, log, data);
 				break;
 			}
 
@@ -330,6 +336,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 
 			case "PromptToCommitBump":
 			case "PromptToCommitDeps":
+			case "PromptToCommitPolicy":
 			case "PromptToCommitReleasedDepsBump": {
 				result = await promptToCommitChanges(state, machine, testMode, log, data);
 				break;
