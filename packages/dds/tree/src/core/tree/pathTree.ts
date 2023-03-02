@@ -6,10 +6,10 @@
 import { FieldKey } from "./types";
 
 /**
- * Identical to {@link UpPath2}, but a duplicate declaration is needed to make the default type parameter compile.
+ * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
  * @alpha
  */
-export type UpPath2 = UpPath;
+export type UpPathDefault = UpPath;
 
 /**
  * Path from a location in the tree upward.
@@ -24,7 +24,7 @@ export type UpPath2 = UpPath;
  * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
  * @alpha
  */
-export interface UpPath<TParent = UpPath2> {
+export interface UpPath<TParent = UpPathDefault> {
 	/**
 	 * The parent, or undefined in the case where this path is a member of a detached sequence.
 	 */

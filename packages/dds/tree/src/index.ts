@@ -87,7 +87,7 @@ export {
 	MapSubset,
 	AnchorNode,
 	anchorSlot,
-	UpPath2,
+	UpPathDefault,
 	AnchorEvents,
 } from "./core";
 

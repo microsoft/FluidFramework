@@ -1211,14 +1211,14 @@ export type UnwrappedEditableField = UnwrappedEditableTree | undefined | Editabl
 export type UnwrappedEditableTree = EditableTreeOrPrimitive | EditableField;
 
 // @alpha
-export interface UpPath<TParent = UpPath2> {
+export interface UpPath<TParent = UpPathDefault> {
     readonly parent: TParent | undefined;
     readonly parentField: FieldKey;
     readonly parentIndex: number;
 }
 
 // @alpha
-export type UpPath2 = UpPath;
+export type UpPathDefault = UpPath;
 
 // @alpha
 export type UuidString = string & {

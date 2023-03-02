@@ -41,7 +41,7 @@ export {
 	FieldUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
-	UpPath2,
+	UpPathDefault,
 } from "./pathTree";
 export {
 	FieldMapObject,

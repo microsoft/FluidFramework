@@ -80,7 +80,7 @@ export {
 	MapSubset,
 	AnchorNode,
 	anchorSlot,
-	UpPath2,
+	UpPathDefault,
 	inCursorField,
 	inCursorNode,
 	AnchorEvents,

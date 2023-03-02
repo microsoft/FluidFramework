@@ -47,7 +47,6 @@ export type AnchorKeyBrand = Brand<number, "AnchorKey">;
  * @alpha
  */
 export type AnchorKey<TContent> = Opaque<AnchorKeyBrand> & Covariant<TContent>;
-let slotCounter = 0;
 
 /**
  * Data stashed on an anchor.
@@ -136,6 +135,12 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 export function anchorSlot<TContent>(): AnchorKey<TContent> {
 	return brand(slotCounter++);
 }
+
+/**
+ * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorKey}.
+ * This allows the keys to be small integers, which are efficient to use as keys in maps.
+ */
+let slotCounter = 0;
 
 /**
  * Collection of Anchors at a specific revision.
