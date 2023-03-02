@@ -3,53 +3,23 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable prefer-template */
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
-/* eslint-disable import/no-internal-modules */
-
+import { strict as assert } from "assert";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
 	createSchemaRepository,
-	defaultSchemaPolicy,
-	FieldSchema,
 	ValueSchema,
+	brand,
+	EmptyKey,
+	lookupTreeSchema,
+	fieldSchema,
+	FieldKinds,
+	TreeSchemaIdentifier,
 } from "@fluid-internal/tree";
-import { brand } from "@fluid-internal/tree/dist/util/brand";
 import { convertPSetSchemaToSharedTreeLls } from "../schemaConverter";
 
-describe("LlsSchemaConverter", () => {
-	let schemaRepository;
-	it("Conversion", () => {
-		register();
-		const tableSdc: any = brand("Test:Table-1.0.0");
-		const [, OptionalFieldKind] = defaultSchemaPolicy.fieldKinds.keys();
+const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");
 
-		function getRootFieldSchema(): FieldSchema {
-			return {
-				kind: OptionalFieldKind,
-				types: new Set([tableSdc]),
-			};
-		}
-		const rootFieldSchema: FieldSchema = getRootFieldSchema();
-		schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
-	});
-	it("Enum", () => {
-		checkEnum(schemaRepository);
-	});
-	it("Missing Refs", () => {
-		checkMissingRefs(schemaRepository);
-	});
-	it("Check Structure", () => {
-		checkStructure(schemaRepository);
-	});
-	it("Inheritance Translation", () => {
-		checkInheritanceTranslation(schemaRepository);
-	});
-});
-
-function register() {
+function registerPropertySchemas() {
 	PropertyFactory.register({
 		typeid: "Test:Cell-1.0.0",
 		properties: [{ id: "value", typeid: "Uint64" }],
@@ -121,91 +91,104 @@ function register() {
 	});
 }
 
-function checkMissingRefs(schemaData) {
-	const schemaMap = schemaData.treeSchema;
-	const schemaTypesSet = new Set<string>();
-	let keysIter = schemaMap.keys();
-	for (const key of keysIter) {
-		schemaTypesSet.add(key);
-	}
-	keysIter = schemaMap.keys();
-	for (const key of keysIter) {
-		const value = schemaMap.get(key);
-		value?.localFields.forEach((field) => {
-			if (field.types) {
-				field.types.forEach((type) => {
-					if (!schemaTypesSet.has(type.toString())) {
-						fail(
-							`Missing type ${type.toString()} in schema at the type ${key} field ${
-								field.name
-							}`,
+describe("LlsSchemaConverter", () => {
+	beforeAll(registerPropertySchemas);
+
+	it("Enum", () => {
+		const schemaRepository = createSchemaRepository();
+		convertPSetSchemaToSharedTreeLls(
+			schemaRepository,
+			fieldSchema(FieldKinds.optional, [tableTypeName]),
+		);
+		const table = lookupTreeSchema(schemaRepository, tableTypeName);
+		assert(table !== undefined);
+		const encoding = table.localFields.get(brand("encoding"));
+		assert(encoding !== undefined);
+		assert(encoding.types !== undefined);
+		assert(encoding.types.has(brand("Enum")));
+	});
+
+	it("Missing Refs", () => {
+		const schemaRepository = createSchemaRepository();
+		convertPSetSchemaToSharedTreeLls(
+			schemaRepository,
+			fieldSchema(FieldKinds.optional, [tableTypeName]),
+		);
+		const typeNames = new Set(schemaRepository.treeSchema.keys());
+		for (const typeName of typeNames) {
+			const treeSchema = lookupTreeSchema(schemaRepository, typeName);
+			assert(treeSchema !== undefined);
+			treeSchema.localFields.forEach((field, fieldKey) => {
+				if (field.types) {
+					field.types.forEach((type) => {
+						assert(
+							typeNames.has(type),
+							`Missing type "${type}" in tree schema "${typeName}" for a local field "${fieldKey}"`,
 						);
-					}
+					});
+				}
+			});
+			if (treeSchema.extraLocalFields.types) {
+				treeSchema.extraLocalFields.types.forEach((type) => {
+					assert(
+						typeNames.has(type),
+						`Missing type "${type}" in tree schema "${typeName}" for extra local fields`,
+					);
 				});
 			}
-		});
-	}
-}
+		}
+	});
 
-function checkInheritanceTranslation(schemaData) {
-	const schemaMap = schemaData.treeSchema;
-	const row = schemaMap.get("array<Test:Row-1.0.0>");
-	expect(row).not.toBeUndefined;
-	expect(row?.localFields).not.toBeUndefined;
-	const field = row?.localFields.get("");
-	expect(field).not.toBeUndefined;
-	expect(field?.types).not.toBeUndefined;
-	const types = field?.types;
-	expect(types?.has("Test:Row-1.0.0")).toBeTruthy;
-	expect(types?.has("Test:ExtendedRow-1.0.0")).toBeTruthy;
-	expect(types?.has("Test:OtherExtendedRow-1.0.0")).toBeTruthy;
-}
+	it("Check Structure", () => {
+		const schemaRepository = createSchemaRepository();
+		convertPSetSchemaToSharedTreeLls(
+			schemaRepository,
+			fieldSchema(FieldKinds.optional, [tableTypeName]),
+		);
+		const table = lookupTreeSchema(schemaRepository, tableTypeName);
+		assert(table !== undefined);
+		assert(table.localFields !== undefined);
 
-function checkEnum(schemaData) {
-	const schemaMap = schemaData.treeSchema;
-	const table = schemaMap.get("Test:Table-1.0.0");
-	expect(table).not.toBeUndefined;
-	expect(table?.localFields).not.toBeUndefined;
-	const encoding = table?.localFields.get("encoding");
-	expect(encoding).not.toBeUndefined;
-	expect(encoding?.types).not.toBeUndefined;
-	expect(encoding?.types?.has("Enum")).toBeTruthy;
-}
+		const extendedRows = table.localFields.get(brand("extendedRows"));
+		assert(extendedRows !== undefined);
+		assert(extendedRows.types !== undefined);
+		assert(extendedRows.types.has(brand("array<Test:ExtendedRow-1.0.0>")));
 
-function checkStructure(schemaData) {
-	const schemaMap = schemaData.treeSchema;
-	const table = schemaMap.get("Test:Table-1.0.0");
-	checkTable(schemaData, table);
-}
+		const extendedRowsSchema = lookupTreeSchema(
+			schemaRepository,
+			brand("Test:ExtendedRow-1.0.0"),
+		);
+		assert(extendedRowsSchema !== undefined);
+		const info = extendedRowsSchema.localFields.get(brand("info"));
+		assert(info !== undefined);
+		assert(info.types !== undefined);
+		assert(info.types.has(brand("map<Test:RowInfo-1.0.0>")));
+		const infoType = lookupTreeSchema(schemaRepository, brand("Test:RowInfo-1.0.0"));
+		assert(infoType !== undefined);
 
-function checkTable(schemaData, table) {
-	expect(table).not.toBeUndefined;
-	expect(table?.localFields).not.toBeUndefined;
-	const extendedRows = table?.localFields.get("extendedRows");
-	checkExtendedRows(schemaData, extendedRows);
-}
+		const uint64 = infoType.localFields.get(brand("value"));
+		assert(uint64 !== undefined);
+		assert(uint64.types !== undefined);
+		expect(uint64.types.has(brand("Uint64"))).toBeTruthy();
+		assert(uint64.types.has(brand("Uint64")));
+		const uint64Type = lookupTreeSchema(schemaRepository, brand("Uint64"));
+		assert(uint64Type.value === ValueSchema.Number);
+	});
 
-function checkExtendedRows(schemaData, extendedRows) {
-	expect(extendedRows).not.toBeUndefined;
-	expect(extendedRows?.types).not.toBeUndefined;
-	expect(extendedRows?.types?.has("array<Test:ExtendedRow-1.0.0>")).toBeTruthy;
-	const info = schemaData.treeSchema.get("Test:ExtendedRow-1.0.0")?.localFields.get("info");
-	checkInfo(schemaData, info);
-}
-
-function checkInfo(schemaData, info) {
-	expect(info).not.toBeUndefined;
-	expect(info?.types).not.toBeUndefined;
-	expect(info?.types?.has("map<Test:RowInfo-1.0.0>")).toBeTruthy;
-	const infoType = schemaData.treeSchema.get("Test:RowInfo-1.0.0");
-	expect(infoType).not.toBeUndefined;
-	expect(infoType?.localFields).not.toBeUndefined;
-	const uint64 = schemaData.treeSchema.get("Test:RowInfo-1.0.0");
-	checkUint64(schemaData, uint64);
-}
-
-function checkUint64(schemaData, uint64) {
-	expect(uint64).not.toBeUndefined;
-	const uint64Type = schemaData.treeSchema.get("Uint64");
-	expect(uint64Type.value === ValueSchema.Number).toBeTruthy;
-}
+	it("Inheritance Translation", () => {
+		const schemaRepository = createSchemaRepository();
+		convertPSetSchemaToSharedTreeLls(
+			schemaRepository,
+			fieldSchema(FieldKinds.optional, [tableTypeName]),
+		);
+		const row = lookupTreeSchema(schemaRepository, brand("array<Test:Row-1.0.0>"));
+		assert(row !== undefined);
+		assert(row.localFields !== undefined);
+		const field = row.localFields.get(EmptyKey);
+		assert(field !== undefined);
+		assert(field.types !== undefined);
+		assert(field.types.has(brand("Test:Row-1.0.0")));
+		assert(field.types.has(brand("Test:ExtendedRow-1.0.0")));
+		assert(field.types.has(brand("Test:OtherExtendedRow-1.0.0")));
+	});
+});
