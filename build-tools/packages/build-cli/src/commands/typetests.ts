@@ -48,6 +48,7 @@ export default class PrepareTypeTestsCommand extends PackageCommand<
 			exclusive: ["enable"],
 		}),
 		normalize: Flags.boolean({
+			char: "n",
 			description: `Removes any unrecognized data from "typeValidation" in the package.json`,
 			exclusive: ["enable"],
 		}),
@@ -86,8 +87,8 @@ export default class PrepareTypeTestsCommand extends PackageCommand<
 			updateTypeTestConfiguration(json, { resetBroken: this.flags.reset, version });
 			if (this.flags.normalize) {
 				json.typeValidation = {
-					broken: json.typeValidation?.broken ?? {},
 					disabled: json.typeValidation?.disabled === true ? true : undefined,
+					broken: json.typeValidation?.broken ?? {},
 				};
 			}
 		});

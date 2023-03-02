@@ -30,6 +30,18 @@ export interface TypeTestConfigActions {
 	resetBroken?: boolean;
 }
 
+/**
+ * Gets the version before `version`.
+ * This is done by decrementing the least significant non-zero component (as separated by `.`).
+ *
+ * @remarks
+ * This means that `1.2.3` -> `1.2.2` and `1.2.0` -> `1.1.0`.
+ *
+ * When given the current version of a package (in the source),
+ * this typically computes the version of the release that was made closest to the current version from a branch perspective.
+ * For example if the version on main is `1.2.3`,
+ * the closest release history wise would be the first release of the previous minor, so `1.1.0` even if there were other point releases on the `1.1` branch.
+ */
 function previousVersion(version: string): string {
 	const parts = version.split(".");
 	for (let index = parts.length - 1; index >= 0; index--) {

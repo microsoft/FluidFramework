@@ -12,7 +12,9 @@ import { releaseGroupFlag } from "./flags";
 /**
  * Commands that run operations per project.
  */
-export abstract class PackageCommand<T extends typeof Command> extends BaseCommand<T> {
+export abstract class PackageCommand<
+	T extends typeof Command & { flags: typeof PackageCommand.flags },
+> extends BaseCommand<T> {
 	static flags = {
 		dir: Flags.directory({
 			char: "d",
@@ -85,7 +87,6 @@ export abstract class PackageCommand<T extends typeof Command> extends BaseComma
 		const independentPackages = flags.packages;
 		const dir = flags.dir;
 
-		const packageDirs: string[] = [];
 		if (dir !== undefined) {
 			return this.processPackages([dir]);
 		}
@@ -97,12 +98,12 @@ export abstract class PackageCommand<T extends typeof Command> extends BaseComma
 		const ctx = await this.getContext();
 		if (releaseGroup !== undefined) {
 			this.info(`Finding packages for release group: ${releaseGroup}`);
-			packageDirs.push(...ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory));
+			return this.processPackages(
+				ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
+			);
 		}
 		assert(independentPackages);
 		this.info(`Finding independent packages`);
-		packageDirs.push(...ctx.independentPackages.map((p) => p.directory));
-
-		return this.processPackages(packageDirs);
+		return this.processPackages(ctx.independentPackages.map((p) => p.directory));
 	}
 }
