@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { clone, fail } from "../../util";
+import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
 	InputSpanningMark,
@@ -18,7 +18,7 @@ import {
 	ReturnTo,
 	Skip,
 } from "./format";
-import { getInputLength, getOutputLength, isSkipMark } from "./utils";
+import { cloneMark, getInputLength, getOutputLength, isSkipMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -278,7 +278,7 @@ function applyMoveEffectsToSource<T>(
 	);
 	const result: Mark<T>[] = [];
 	if (!effect.shouldRemove) {
-		const newMark = clone(mark);
+		const newMark = cloneMark(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {
 			assert(

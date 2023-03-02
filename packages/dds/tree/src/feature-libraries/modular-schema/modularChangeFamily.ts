@@ -25,7 +25,6 @@ import {
 import {
 	addToNestedSet,
 	brand,
-	clone,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
 	JsonCompatibleReadOnly,
@@ -221,7 +220,7 @@ export class ModularChangeFamily
 		let valueChange: ValueChange | undefined;
 		for (const change of changes) {
 			if (change.change.valueChange !== undefined) {
-				valueChange = clone(change.change.valueChange);
+				valueChange = { ...change.change.valueChange };
 				valueChange.revision ??= change.revision;
 			}
 			if (change.change.fieldChanges !== undefined) {
