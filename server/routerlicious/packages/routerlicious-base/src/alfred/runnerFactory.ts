@@ -261,7 +261,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
                 throttleConfig.maxInMemoryCacheAgeInMs,
                 throttleConfig.enableEnhancedTelemetry,
             );
-            return throttler
+            return throttler;
         };
 
         // Rest API Throttler
