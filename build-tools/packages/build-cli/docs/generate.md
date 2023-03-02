@@ -93,15 +93,10 @@ DESCRIPTION
   The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
 
   # Usage
-
   <!-- usage -->
-
   # Commands
-
   <!-- commands -->
-
   # Table of contents
-
   <!-- toc -->
 
   Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.

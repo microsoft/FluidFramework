@@ -16,30 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_deleteFluidCacheIndexDbInstance": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
-    TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>;
-declare function use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
-    use: TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>);
-use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
-    get_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_deleteFluidCacheIndexDbInstance": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
-    TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>;
-declare function use_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
-    use: TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>);
-use_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
-    get_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_FluidCache": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_FluidCache():
@@ -84,3 +60,27 @@ declare function use_old_InterfaceDeclaration_FluidCacheConfig(
     use: TypeOnly<old.FluidCacheConfig>);
 use_old_InterfaceDeclaration_FluidCacheConfig(
     get_current_InterfaceDeclaration_FluidCacheConfig());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_deleteFluidCacheIndexDbInstance": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
+    TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>;
+declare function use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
+    use: TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>);
+use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
+    get_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_deleteFluidCacheIndexDbInstance": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
+    TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>;
+declare function use_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
+    use: TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>);
+use_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
+    get_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance());

@@ -100,54 +100,6 @@ use_old_TypeAliasDeclaration_AttributionKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_blobCountPropertyName": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_blobCountPropertyName():
-    TypeOnly<typeof old.blobCountPropertyName>;
-declare function use_current_VariableDeclaration_blobCountPropertyName(
-    use: TypeOnly<typeof current.blobCountPropertyName>);
-use_current_VariableDeclaration_blobCountPropertyName(
-    get_old_VariableDeclaration_blobCountPropertyName());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_blobCountPropertyName": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_blobCountPropertyName():
-    TypeOnly<typeof current.blobCountPropertyName>;
-declare function use_old_VariableDeclaration_blobCountPropertyName(
-    use: TypeOnly<typeof old.blobCountPropertyName>);
-use_old_VariableDeclaration_blobCountPropertyName(
-    get_current_VariableDeclaration_blobCountPropertyName());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_channelsTreeName": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_channelsTreeName():
-    TypeOnly<typeof old.channelsTreeName>;
-declare function use_current_VariableDeclaration_channelsTreeName(
-    use: TypeOnly<typeof current.channelsTreeName>);
-use_current_VariableDeclaration_channelsTreeName(
-    get_old_VariableDeclaration_channelsTreeName());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_channelsTreeName": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_channelsTreeName():
-    TypeOnly<typeof current.channelsTreeName>;
-declare function use_old_VariableDeclaration_channelsTreeName(
-    use: TypeOnly<typeof old.channelsTreeName>);
-use_old_VariableDeclaration_channelsTreeName(
-    get_current_VariableDeclaration_channelsTreeName());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_CreateChildSummarizerNodeFn():
@@ -288,102 +240,6 @@ declare function use_old_EnumDeclaration_FlushMode(
     use: TypeOnly<old.FlushMode>);
 use_old_EnumDeclaration_FlushMode(
     get_current_EnumDeclaration_FlushMode());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobPrefix": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_gcBlobPrefix():
-    TypeOnly<typeof old.gcBlobPrefix>;
-declare function use_current_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof current.gcBlobPrefix>);
-use_current_VariableDeclaration_gcBlobPrefix(
-    get_old_VariableDeclaration_gcBlobPrefix());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcBlobPrefix": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_gcBlobPrefix():
-    TypeOnly<typeof current.gcBlobPrefix>;
-declare function use_old_VariableDeclaration_gcBlobPrefix(
-    use: TypeOnly<typeof old.gcBlobPrefix>);
-use_old_VariableDeclaration_gcBlobPrefix(
-    get_current_VariableDeclaration_gcBlobPrefix());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcDeletedBlobKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_gcDeletedBlobKey():
-    TypeOnly<typeof old.gcDeletedBlobKey>;
-declare function use_current_VariableDeclaration_gcDeletedBlobKey(
-    use: TypeOnly<typeof current.gcDeletedBlobKey>);
-use_current_VariableDeclaration_gcDeletedBlobKey(
-    get_old_VariableDeclaration_gcDeletedBlobKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcDeletedBlobKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_gcDeletedBlobKey():
-    TypeOnly<typeof current.gcDeletedBlobKey>;
-declare function use_old_VariableDeclaration_gcDeletedBlobKey(
-    use: TypeOnly<typeof old.gcDeletedBlobKey>);
-use_old_VariableDeclaration_gcDeletedBlobKey(
-    get_current_VariableDeclaration_gcDeletedBlobKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTombstoneBlobKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_gcTombstoneBlobKey():
-    TypeOnly<typeof old.gcTombstoneBlobKey>;
-declare function use_current_VariableDeclaration_gcTombstoneBlobKey(
-    use: TypeOnly<typeof current.gcTombstoneBlobKey>);
-use_current_VariableDeclaration_gcTombstoneBlobKey(
-    get_old_VariableDeclaration_gcTombstoneBlobKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTombstoneBlobKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_gcTombstoneBlobKey():
-    TypeOnly<typeof current.gcTombstoneBlobKey>;
-declare function use_old_VariableDeclaration_gcTombstoneBlobKey(
-    use: TypeOnly<typeof old.gcTombstoneBlobKey>);
-use_old_VariableDeclaration_gcTombstoneBlobKey(
-    get_current_VariableDeclaration_gcTombstoneBlobKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTreeKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_gcTreeKey():
-    TypeOnly<typeof old.gcTreeKey>;
-declare function use_current_VariableDeclaration_gcTreeKey(
-    use: TypeOnly<typeof current.gcTreeKey>);
-use_current_VariableDeclaration_gcTreeKey(
-    get_old_VariableDeclaration_gcTreeKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_gcTreeKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_gcTreeKey():
-    TypeOnly<typeof current.gcTreeKey>;
-declare function use_old_VariableDeclaration_gcTreeKey(
-    use: TypeOnly<typeof old.gcTreeKey>);
-use_old_VariableDeclaration_gcTreeKey(
-    get_current_VariableDeclaration_gcTreeKey());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -869,30 +725,6 @@ use_old_InterfaceDeclaration_IInboundSignalMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_InboundAttachMessage": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_InboundAttachMessage():
-    TypeOnly<old.InboundAttachMessage>;
-declare function use_current_TypeAliasDeclaration_InboundAttachMessage(
-    use: TypeOnly<current.InboundAttachMessage>);
-use_current_TypeAliasDeclaration_InboundAttachMessage(
-    get_old_TypeAliasDeclaration_InboundAttachMessage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_InboundAttachMessage": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_InboundAttachMessage():
-    TypeOnly<current.InboundAttachMessage>;
-declare function use_old_TypeAliasDeclaration_InboundAttachMessage(
-    use: TypeOnly<old.InboundAttachMessage>);
-use_old_TypeAliasDeclaration_InboundAttachMessage(
-    get_current_TypeAliasDeclaration_InboundAttachMessage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProvideFluidDataStoreFactory": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProvideFluidDataStoreFactory():
@@ -1182,6 +1014,30 @@ use_old_InterfaceDeclaration_ITelemetryContext(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_InboundAttachMessage": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_InboundAttachMessage():
+    TypeOnly<old.InboundAttachMessage>;
+declare function use_current_TypeAliasDeclaration_InboundAttachMessage(
+    use: TypeOnly<current.InboundAttachMessage>);
+use_current_TypeAliasDeclaration_InboundAttachMessage(
+    get_old_TypeAliasDeclaration_InboundAttachMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_InboundAttachMessage": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_InboundAttachMessage():
+    TypeOnly<current.InboundAttachMessage>;
+declare function use_old_TypeAliasDeclaration_InboundAttachMessage(
+    use: TypeOnly<old.InboundAttachMessage>);
+use_old_TypeAliasDeclaration_InboundAttachMessage(
+    get_current_TypeAliasDeclaration_InboundAttachMessage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries():
@@ -1278,30 +1134,6 @@ use_old_TypeAliasDeclaration_SummarizeInternalFn(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_totalBlobSizePropertyName": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_totalBlobSizePropertyName():
-    TypeOnly<typeof old.totalBlobSizePropertyName>;
-declare function use_current_VariableDeclaration_totalBlobSizePropertyName(
-    use: TypeOnly<typeof current.totalBlobSizePropertyName>);
-use_current_VariableDeclaration_totalBlobSizePropertyName(
-    get_old_VariableDeclaration_totalBlobSizePropertyName());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_totalBlobSizePropertyName": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_totalBlobSizePropertyName():
-    TypeOnly<typeof current.totalBlobSizePropertyName>;
-declare function use_old_VariableDeclaration_totalBlobSizePropertyName(
-    use: TypeOnly<typeof old.totalBlobSizePropertyName>);
-use_old_VariableDeclaration_totalBlobSizePropertyName(
-    get_current_VariableDeclaration_totalBlobSizePropertyName());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_VisibilityState": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_VisibilityState():
@@ -1346,3 +1178,171 @@ declare function use_old_TypeAliasDeclaration_VisibilityState(
     use: TypeOnly<old.VisibilityState>);
 use_old_TypeAliasDeclaration_VisibilityState(
     get_current_TypeAliasDeclaration_VisibilityState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_blobCountPropertyName": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_blobCountPropertyName():
+    TypeOnly<typeof old.blobCountPropertyName>;
+declare function use_current_VariableDeclaration_blobCountPropertyName(
+    use: TypeOnly<typeof current.blobCountPropertyName>);
+use_current_VariableDeclaration_blobCountPropertyName(
+    get_old_VariableDeclaration_blobCountPropertyName());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_blobCountPropertyName": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_blobCountPropertyName():
+    TypeOnly<typeof current.blobCountPropertyName>;
+declare function use_old_VariableDeclaration_blobCountPropertyName(
+    use: TypeOnly<typeof old.blobCountPropertyName>);
+use_old_VariableDeclaration_blobCountPropertyName(
+    get_current_VariableDeclaration_blobCountPropertyName());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_channelsTreeName": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_channelsTreeName():
+    TypeOnly<typeof old.channelsTreeName>;
+declare function use_current_VariableDeclaration_channelsTreeName(
+    use: TypeOnly<typeof current.channelsTreeName>);
+use_current_VariableDeclaration_channelsTreeName(
+    get_old_VariableDeclaration_channelsTreeName());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_channelsTreeName": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_channelsTreeName():
+    TypeOnly<typeof current.channelsTreeName>;
+declare function use_old_VariableDeclaration_channelsTreeName(
+    use: TypeOnly<typeof old.channelsTreeName>);
+use_old_VariableDeclaration_channelsTreeName(
+    get_current_VariableDeclaration_channelsTreeName());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcBlobPrefix": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcBlobPrefix():
+    TypeOnly<typeof old.gcBlobPrefix>;
+declare function use_current_VariableDeclaration_gcBlobPrefix(
+    use: TypeOnly<typeof current.gcBlobPrefix>);
+use_current_VariableDeclaration_gcBlobPrefix(
+    get_old_VariableDeclaration_gcBlobPrefix());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcBlobPrefix": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcBlobPrefix():
+    TypeOnly<typeof current.gcBlobPrefix>;
+declare function use_old_VariableDeclaration_gcBlobPrefix(
+    use: TypeOnly<typeof old.gcBlobPrefix>);
+use_old_VariableDeclaration_gcBlobPrefix(
+    get_current_VariableDeclaration_gcBlobPrefix());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcDeletedBlobKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcDeletedBlobKey():
+    TypeOnly<typeof old.gcDeletedBlobKey>;
+declare function use_current_VariableDeclaration_gcDeletedBlobKey(
+    use: TypeOnly<typeof current.gcDeletedBlobKey>);
+use_current_VariableDeclaration_gcDeletedBlobKey(
+    get_old_VariableDeclaration_gcDeletedBlobKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcDeletedBlobKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcDeletedBlobKey():
+    TypeOnly<typeof current.gcDeletedBlobKey>;
+declare function use_old_VariableDeclaration_gcDeletedBlobKey(
+    use: TypeOnly<typeof old.gcDeletedBlobKey>);
+use_old_VariableDeclaration_gcDeletedBlobKey(
+    get_current_VariableDeclaration_gcDeletedBlobKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTombstoneBlobKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcTombstoneBlobKey():
+    TypeOnly<typeof old.gcTombstoneBlobKey>;
+declare function use_current_VariableDeclaration_gcTombstoneBlobKey(
+    use: TypeOnly<typeof current.gcTombstoneBlobKey>);
+use_current_VariableDeclaration_gcTombstoneBlobKey(
+    get_old_VariableDeclaration_gcTombstoneBlobKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTombstoneBlobKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcTombstoneBlobKey():
+    TypeOnly<typeof current.gcTombstoneBlobKey>;
+declare function use_old_VariableDeclaration_gcTombstoneBlobKey(
+    use: TypeOnly<typeof old.gcTombstoneBlobKey>);
+use_old_VariableDeclaration_gcTombstoneBlobKey(
+    get_current_VariableDeclaration_gcTombstoneBlobKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTreeKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_gcTreeKey():
+    TypeOnly<typeof old.gcTreeKey>;
+declare function use_current_VariableDeclaration_gcTreeKey(
+    use: TypeOnly<typeof current.gcTreeKey>);
+use_current_VariableDeclaration_gcTreeKey(
+    get_old_VariableDeclaration_gcTreeKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_gcTreeKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_gcTreeKey():
+    TypeOnly<typeof current.gcTreeKey>;
+declare function use_old_VariableDeclaration_gcTreeKey(
+    use: TypeOnly<typeof old.gcTreeKey>);
+use_old_VariableDeclaration_gcTreeKey(
+    get_current_VariableDeclaration_gcTreeKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_totalBlobSizePropertyName": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_totalBlobSizePropertyName():
+    TypeOnly<typeof old.totalBlobSizePropertyName>;
+declare function use_current_VariableDeclaration_totalBlobSizePropertyName(
+    use: TypeOnly<typeof current.totalBlobSizePropertyName>);
+use_current_VariableDeclaration_totalBlobSizePropertyName(
+    get_old_VariableDeclaration_totalBlobSizePropertyName());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_totalBlobSizePropertyName": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_totalBlobSizePropertyName():
+    TypeOnly<typeof current.totalBlobSizePropertyName>;
+declare function use_old_VariableDeclaration_totalBlobSizePropertyName(
+    use: TypeOnly<typeof old.totalBlobSizePropertyName>);
+use_old_VariableDeclaration_totalBlobSizePropertyName(
+    get_current_VariableDeclaration_totalBlobSizePropertyName());

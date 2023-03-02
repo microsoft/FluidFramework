@@ -105,5 +105,10 @@
 	},
 	"engines": {
 		"node": ">=14.0.0"
+	},
+	"pnpm": {
+		"overrides": {
+			"socket.io-parser": "^4.2.1"
+		}
 	}
 }
