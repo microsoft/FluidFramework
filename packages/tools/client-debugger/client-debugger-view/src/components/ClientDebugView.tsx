@@ -97,7 +97,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 				);
 				break;
 			default:
-				throw new Error(`Unrecognized RootView selection value: "${viewSelection}".`);
+				throw new Error(`Unrecognized PanelView selection value: "${viewSelection}".`);
 		}
 		view = (
 			<Stack tokens={{ childrenGap: 10 }}>
