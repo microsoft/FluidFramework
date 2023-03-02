@@ -43,6 +43,9 @@ import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
 export function addBlobToSummary(summary: ISummaryTreeWithStats, key: string, content: string | Uint8Array): void;
 
 // @public (undocumented)
+export function addBlobToSummaryViaPath(summary: ISummaryTree, stats: ISummaryStats, path: string[], content: string | Uint8Array): void;
+
+// @public (undocumented)
 export function addSummarizeResultToSummary(summary: ISummaryTreeWithStats, key: string, summarizeResult: ISummarizeResult): void;
 
 // @public (undocumented)

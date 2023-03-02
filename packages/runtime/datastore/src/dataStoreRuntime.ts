@@ -40,8 +40,6 @@ import {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	SummaryType,
-	ISummaryBlob,
-	ISummaryTree,
 	IQuorumClients,
 } from "@fluidframework/protocol-definitions";
 import {

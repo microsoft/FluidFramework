@@ -162,15 +162,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get isDirty(): boolean;
     // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
-    static loadRuntime(params: {
-        context: IContainerContext;
-        registryEntries: NamedFluidDataStoreRegistryEntries;
-        existing: boolean;
-        requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-        runtimeOptions?: IContainerRuntimeOptions;
-        containerScope?: FluidObject;
-        containerRuntimeCtor?: typeof ContainerRuntime;
-    }): Promise<ContainerRuntime>;
+    static loadRuntime(params: IContainerRuntimeParams): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
@@ -357,6 +349,24 @@ export interface IContainerRuntimeOptions {
     readonly maxBatchSizeInBytes?: number;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
+}
+
+// @public (undocumented)
+export interface IContainerRuntimeParams {
+    // (undocumented)
+    containerRuntimeCtor?: typeof ContainerRuntime;
+    // (undocumented)
+    containerScope?: FluidObject;
+    // (undocumented)
+    context: IContainerContext;
+    // (undocumented)
+    existing: boolean;
+    // (undocumented)
+    registryEntries: NamedFluidDataStoreRegistryEntries;
+    // (undocumented)
+    requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+    // (undocumented)
+    runtimeOptions?: IContainerRuntimeOptions;
 }
 
 // @public
@@ -642,6 +652,15 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
     readonly stage: "upload";
     readonly uploadDuration: number;
 }
+
+// @public (undocumented)
+export function loadRuntimeBlob(params: IContainerRuntimeParams, path: string[]): Promise<string | undefined>;
+
+// @public
+export const mixinSummaryHandler: (handler: (runtime: ContainerRuntime) => Promise<{
+    path: string[];
+    content: string;
+} | undefined>, Base?: typeof ContainerRuntime) => typeof ContainerRuntime;
 
 // @public
 export const neverCancelledSummaryToken: ISummaryCancellationToken;

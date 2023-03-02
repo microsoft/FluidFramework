@@ -30,6 +30,7 @@ export {
 } from "./summarizerNode";
 export {
 	addBlobToSummary,
+	addBlobToSummaryViaPath,
 	addSummarizeResultToSummary,
 	addTreeToSummary,
 	calculateStats,

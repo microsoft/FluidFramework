@@ -424,7 +424,7 @@ export interface IContainerRuntimeParams {
 	runtimeOptions?: IContainerRuntimeOptions;
 	containerScope?: FluidObject;
 	containerRuntimeCtor?: typeof ContainerRuntime;
-};
+}
 
 /**
  * Accepted header keys for requests coming to the runtime.
@@ -667,7 +667,10 @@ export class ContainerRuntime
 			pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 		const storage = !pendingRuntimeState
 			? context.storage
-			: new SerializedSnapshotStorage(() => context.storage, pendingRuntimeState.snapshotBlobs);
+			: new SerializedSnapshotStorage(
+					() => context.storage,
+					pendingRuntimeState.snapshotBlobs,
+			  );
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -3424,16 +3427,20 @@ export const mixinSummaryHandler = (
 	Base: typeof ContainerRuntime = ContainerRuntime,
 ) =>
 	class RuntimeWithSummarizerHandler extends Base {
-		async summarize(...args: any[]) {
-			const result = await super.summarize(...args);
+		async summarize(options) {
+			const result = await super.summarize(options);
 			const content = await handler(this);
 			if (content !== undefined) {
-				addBlobToSummaryViaPath(result.summary, result.stats, content.path, content.content);
+				addBlobToSummaryViaPath(
+					result.summary,
+					result.stats,
+					content.path,
+					content.content,
+				);
 			}
 			return result;
 		}
 	} as typeof ContainerRuntime;
-
 
 // Helper API to load extra blobs in snapshot
 // This API only works for blobs that are saved in storage, i.e. this API would only work for load from storage scenarios
@@ -3453,7 +3460,7 @@ export async function loadRuntimeBlob(params: IContainerRuntimeParams, path: str
 				baseSnapshot = baseSnapshot?.trees[name];
 			}
 		}
-		
+
 		if (baseSnapshot && blobName) {
 			// We got the blob!
 			assert(storage !== undefined, "attached state should have storage");
@@ -3463,27 +3470,4 @@ export async function loadRuntimeBlob(params: IContainerRuntimeParams, path: str
 	}
 
 	return extraBlob;
-}
-
-// This example API should not be hear, it should be somewhere else, possibly in test code or examples.
-async function sample(params: IContainerRuntimeParams)
-{	
-	// Blob path in container snapshots
-	const path = ["loop", "guestComponents"];
-
-	const extraBlob = await loadRuntimeBlob(params, path);
-	console.log(extraBlob?.length ?? 0);
-
-	// Loop specific code to create blob content during summary
-	const handler = async (_runtime) => {
-		return { path, content: "sample payload"};
-	};
-
-	// Add ability to generate that blob during summaries
-	// Please note that handler will be called (and thus blobs will be created) only for summaries that are submiteed to storage
-	// It will not be involved when saving stashed ops (aka local state with uncommited changes)
-	return ContainerRuntime.loadRuntime({
-		...params,
-		containerRuntimeCtor: mixinSummaryHandler(handler, params.containerRuntimeCtor),
-	});
 }

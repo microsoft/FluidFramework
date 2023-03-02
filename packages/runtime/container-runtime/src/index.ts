@@ -6,6 +6,7 @@
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
+	IContainerRuntimeParams,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
@@ -17,6 +18,8 @@ export {
 	RuntimeMessage,
 	agentSchedulerId,
 	ContainerRuntime,
+	loadRuntimeBlob,
+	mixinSummaryHandler,
 	RuntimeHeaders,
 	AllowTombstoneRequestHeaderKey,
 	TombstoneResponseHeaderKey,
