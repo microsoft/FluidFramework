@@ -118,6 +118,7 @@ async function loadSummarizer(
 		summarizerContainer,
 		"default",
 	);
+	// todo
 	return {
 		containerRuntime: defaultDataStore.context.containerRuntime as ContainerRuntime,
 		summaryCollection,
