@@ -4,13 +4,13 @@
  */
 
 export interface ISecretManager {
-    /**
-     * Encrypts secret.
-     */
-    encryptSecret(secret: string): string;
+	/**
+	 * Encrypts secret.
+	 */
+	encryptSecret(secret: string): string;
 
-    /**
-     * Decrypts secret.
-     */
-    decryptSecret(encryptedSecret: string): string;
+	/**
+	 * Decrypts secret.
+	 */
+	decryptSecret(encryptedSecret: string): string;
 }

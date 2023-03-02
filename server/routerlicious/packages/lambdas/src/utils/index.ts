@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 export { generateClientId } from "./clientIdGenerator";
-export { createNackMessage, createRoomJoinMessage, createRoomLeaveMessage } from "./messageGenerator";
+export {
+	createNackMessage,
+	createRoomJoinMessage,
+	createRoomLeaveMessage,
+} from "./messageGenerator";
 export { NoOpLambda } from "./noOpLambda";
 export { getRandomInt } from "./random";
 export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";
