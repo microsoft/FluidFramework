@@ -37,20 +37,19 @@ export abstract class PackageCommand<
 			exclusive: ["dir", "packages"],
 		}),
 		private: Flags.boolean({
-			description: "Skip packages which are not private",
+			description: "Only include private packages (or non-private packages for --no-private)",
 			exclusive: ["skipPrivate"],
-		}),
-		skipPrivate: Flags.boolean({
-			description: "Skip packages which are private",
-			exclusive: ["private"],
+			allowNo: true,
 		}),
 		scope: Flags.string({
-			description: "Comma separated list of package scopes to filter to.",
+			description: "Package scopes to filter to.",
 			exclusive: ["skipScope"],
+			multiple: true,
 		}),
 		skipScope: releaseGroupFlag({
-			description: "Comma separated list of package scopes to filter out.",
+			description: "Package scopes to filter out.",
 			exclusive: ["scope"],
+			multiple: true,
 		}),
 		...BaseCommand.flags,
 	};
@@ -64,10 +63,7 @@ export abstract class PackageCommand<
 		const packages = directories.filter((directory) => {
 			const json: PackageJson = readJSONSync(path.join(directory, "package.json"));
 			const isPrivate: boolean = json.private ?? false;
-			if (this.flags.private && !isPrivate) {
-				return false;
-			}
-			if (this.flags.skipPrivate && isPrivate) {
+			if (this.flags.private !== undefined && this.flags.private !== isPrivate) {
 				return false;
 			}
 			if (scopeIn !== undefined) {
@@ -159,8 +155,8 @@ export abstract class PackageCommand<
 	}
 }
 
-function scopesToPrefix(scopes: undefined | string): string[] | undefined {
-	return scopes === undefined ? undefined : scopes.split(",").map((s) => `${s}/`);
+function scopesToPrefix(scopes: undefined | string[]): string[] | undefined {
+	return scopes === undefined ? undefined : scopes.map((s) => `${s}/`);
 }
 
 function listNames(strings: string[]): string {
