@@ -21,6 +21,7 @@ import {
 	NodeChangeComposer,
 	IdAllocator,
 	CrossFieldManager,
+	RevisionIndexer,
 } from "../../../feature-libraries";
 import {
 	RepairDataStore,
@@ -37,7 +38,6 @@ import {
 } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { assertDeltaEqual, deepFreeze } from "../../utils";
-import { RevisionIndexer } from "../../../feature-libraries/modular-schema";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
