@@ -94,11 +94,10 @@ describe("ChunkedForest", () => {
 		const checkout: Checkout<DefaultEditBuilder, DefaultChangeset> = {
 			forest,
 			changeFamily: defaultChangeFamily,
-			submitEdit: (edit, revision) => {
-				const delta = editManager.addLocalChange(revision, edit);
+			submitEdit: (edit) => {
+				const delta = editManager.addLocalChange(mintRevisionTag(), edit);
 				forest.applyDelta(delta);
 			},
-			mintRevision: mintRevisionTag,
 		};
 
 		assert(chunk.isShared(), "chunk should be shared after forest initialization");

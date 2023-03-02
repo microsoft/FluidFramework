@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/common-utils";
 import { v4 as uuid } from "uuid";
 import {
 	AnchorSet,
-	Checkout,
 	Commit,
 	EditManager,
 	mintRevisionTag,
@@ -149,13 +148,12 @@ export class TestTree {
 	public runTransaction(command: SucceedingCommand): TestTreeEdit {
 		const trueCommand = commandWithResult(command);
 		let changeset: DefaultChangeset | undefined;
-		const checkout: Checkout<DefaultEditBuilder, DefaultChangeset> = {
+		const checkout = {
 			forest: this.forest,
 			changeFamily: defaultChangeFamily,
 			submitEdit: (change: DefaultChangeset): void => {
 				changeset = change;
 			},
-			mintRevision: mintRevisionTag,
 		};
 		const result = runSynchronousTransaction(checkout, trueCommand);
 		assert(

@@ -24,6 +24,9 @@ export interface FieldChangeHandler<
 }
 
 /**
+ * A callback that returns the index of the changeset with the given RevisionTag among the changesets being composed
+ * or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
+ * compose or rebase operation.
  * @alpha
  */
 export type RevisionIndexer = (tag: RevisionTag) => number;

@@ -18,10 +18,6 @@ import {
 	FieldChange,
 	ModularChangeset,
 	ChangesetLocalId,
-	NodeChangeComposer,
-	IdAllocator,
-	CrossFieldManager,
-	RevisionIndexer,
 } from "../../../feature-libraries";
 import {
 	RepairDataStore,
@@ -573,90 +569,6 @@ describe("ModularChangeFamily", () => {
 			const composed2 = family.compose([tagChange(change1, tag1), tagChange(change1, tag2)]);
 			assert.deepEqual(composed2, expected2);
 		});
-
-		it("concatenates revisions", () => {
-			const rev1 = mintRevisionTag();
-			const rev2 = mintRevisionTag();
-			const rev3 = mintRevisionTag();
-			const rev4 = mintRevisionTag();
-
-			let indexerWasTested = false;
-			const rebaser = {
-				compose: (
-					changes: TaggedChange<RevisionTag[]>[],
-					composeChild: NodeChangeComposer,
-					genId: IdAllocator,
-					crossFieldManager: CrossFieldManager,
-					revisionIndexer: RevisionIndexer,
-				): RevisionTag => {
-					const revs: number[] = [];
-					for (const change of changes) {
-						revs.push(...change.change.map((c) => revisionIndexer(c)));
-					}
-					assert.deepEqual(revs, [0, 1, 2, 3]);
-					indexerWasTested = true;
-					return rev4;
-				},
-			} as unknown as FieldChangeRebaser<RevisionTag>;
-
-			const handler = { rebaser } as unknown as FieldChangeHandler<RevisionTag[]>;
-			const field = new FieldKind(
-				brand("ChecksRevIndexing"),
-				Multiplicity.Value,
-				handler,
-				(a, b) => false,
-				new Set(),
-			);
-			const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]));
-
-			const changeA: ModularChangeset = {
-				changes: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: field.identifier,
-							change: brand([rev1, rev2]),
-						},
-					],
-				]),
-				revisions: [{ tag: rev1 }, { tag: rev2 }],
-			};
-			const changeB: ModularChangeset = {
-				changes: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: field.identifier,
-							change: brand([rev3]),
-						},
-					],
-				]),
-			};
-			const changeC: ModularChangeset = {
-				changes: new Map([
-					[
-						fieldA,
-						{
-							fieldKind: field.identifier,
-							change: brand([rev4]),
-						},
-					],
-				]),
-				revisions: [{ tag: rev4 }],
-			};
-			const composed = dummyFamily.compose([
-				makeAnonChange(changeA),
-				tagChange(changeB, rev3),
-				makeAnonChange(changeC),
-			]);
-			assert.deepEqual(composed.revisions, [
-				{ tag: rev1 },
-				{ tag: rev2 },
-				{ tag: rev3 },
-				{ tag: rev4 },
-			]);
-			assert(indexerWasTested);
-		});
 	});
 
 	describe("invert", () => {
@@ -900,5 +812,105 @@ describe("ModularChangeFamily", () => {
 		editor.setValue(path, testValue);
 		const changes = editor.getChanges();
 		assert.deepEqual(changes, [nodeValueOverwrite]);
+	});
+
+	it("concatenates and indexes revisions", () => {
+		const rev1 = mintRevisionTag();
+		const rev2 = mintRevisionTag();
+		const rev3 = mintRevisionTag();
+		const rev4 = mintRevisionTag();
+
+		let composeWasTested = false;
+		let rebaseWasTested = false;
+		const compose: FieldChangeRebaser<RevisionTag[]>["compose"] = (
+			changes: TaggedChange<RevisionTag[]>[],
+			composeChild,
+			genId,
+			crossFieldManager,
+			revisionIndexer,
+		): RevisionTag[] => {
+			const revsIndices: number[] = [rev1, rev2, rev3, rev4].map((c) => revisionIndexer(c));
+			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
+			composeWasTested = true;
+			return [];
+		};
+		const rebase: FieldChangeRebaser<RevisionTag[]>["rebase"] = (
+			change: RevisionTag[],
+			over: TaggedChange<RevisionTag[]>,
+			rebaseChild,
+			genId,
+			crossFieldManager,
+			revisionIndexer,
+		): RevisionTag[] => {
+			const revsIndices: number[] = [rev1, rev2, rev4].map((c) => revisionIndexer(c));
+			assert.deepEqual(revsIndices, [0, 1, 2]);
+			rebaseWasTested = true;
+			return change;
+		};
+		const handler = {
+			rebaser: {
+				compose,
+				rebase,
+			},
+		} as unknown as FieldChangeHandler<RevisionTag[]>;
+		const field = new FieldKind(
+			brand("ChecksRevIndexing"),
+			Multiplicity.Value,
+			handler,
+			(a, b) => false,
+			new Set(),
+		);
+		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]));
+
+		const changeA: ModularChangeset = {
+			changes: new Map([
+				[
+					fieldA,
+					{
+						fieldKind: field.identifier,
+						change: brand([rev1, rev2]),
+					},
+				],
+			]),
+			revisions: [{ tag: rev1 }, { tag: rev2 }],
+		};
+		const changeB: ModularChangeset = {
+			changes: new Map([
+				[
+					fieldA,
+					{
+						fieldKind: field.identifier,
+						change: brand([rev3]),
+					},
+				],
+			]),
+		};
+		const changeC: ModularChangeset = {
+			changes: new Map([
+				[
+					fieldA,
+					{
+						fieldKind: field.identifier,
+						change: brand([rev4]),
+					},
+				],
+			]),
+			revisions: [{ tag: rev4 }],
+		};
+		const composed = dummyFamily.compose([
+			makeAnonChange(changeA),
+			tagChange(changeB, rev3),
+			makeAnonChange(changeC),
+		]);
+		assert.deepEqual(composed.revisions, [
+			{ tag: rev1 },
+			{ tag: rev2 },
+			{ tag: rev3 },
+			{ tag: rev4 },
+		]);
+		assert(composeWasTested);
+		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
+		assert.deepEqual(rebased.revisions, [{ tag: rev4 }]);
+		assert(rebaseWasTested);
 	});
 });

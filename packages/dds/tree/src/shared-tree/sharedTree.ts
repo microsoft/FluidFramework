@@ -24,7 +24,6 @@ import {
 	AnchorSet,
 	UpPath,
 	EditManager,
-	mintRevisionTag,
 } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
@@ -156,7 +155,6 @@ class SharedTree
 			forest,
 			changeFamily: this.changeFamily,
 			submitEdit: (edit) => this.submitEdit(edit),
-			mintRevision: mintRevisionTag,
 		};
 
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);

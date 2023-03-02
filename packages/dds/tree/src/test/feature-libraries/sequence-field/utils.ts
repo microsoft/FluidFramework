@@ -32,18 +32,11 @@ export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Cha
 	return shallowCompose(changes.map(makeAnonChange));
 }
 
-export function shallowCompose<T>(
-	changes: TaggedChange<SF.Changeset<T>>[],
-	revisionIndexer?: RevisionIndexer,
-): SF.Changeset<T> {
-	return composeI(
-		changes,
-		(children) => {
-			assert(children.length === 1, "Should only have one child to compose");
-			return children[0].change;
-		},
-		revisionIndexer,
-	);
+export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
+	return composeI(changes, (children) => {
+		assert(children.length === 1, "Should only have one child to compose");
+		return children[0].change;
+	});
 }
 
 export function numberTag(integer: number): RevisionTag {
@@ -58,7 +51,6 @@ const integerRevisionIndexer = (tag: RevisionTag): number => {
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
-	revisionIndexer?: RevisionIndexer,
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
@@ -67,7 +59,7 @@ function composeI<T>(
 		composer,
 		idAllocator,
 		moveEffects,
-		revisionIndexer ?? integerRevisionIndexer,
+		integerRevisionIndexer,
 	);
 
 	if (moveEffects.isInvalidated) {

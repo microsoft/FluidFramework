@@ -139,12 +139,7 @@ export class ModularChangeFamily
 				revInfos.push({ tag: taggedChange.revision });
 			}
 		}
-		const revisionIndexer: RevisionIndexer = (tag: RevisionTag): number => {
-			const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
-			assert(index !== -1, "Unable to index unknown revision");
-			return index;
-		};
-
+		const revisionIndexer: RevisionIndexer = revisionIndexFromInfo(revInfos);
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
@@ -386,17 +381,13 @@ export class ModularChangeFamily
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
 		const revInfos: RevisionInfo[] = [];
-		if (change.revisions !== undefined) {
-			revInfos.push(...change.revisions);
-		}
 		if (over.change.revisions !== undefined) {
 			revInfos.push(...over.change.revisions);
 		}
-		const revisionIndexer: RevisionIndexer = (tag: RevisionTag): number => {
-			const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
-			assert(index !== -1, "Unable to index unknown revision");
-			return index;
-		};
+		if (change.revisions !== undefined) {
+			revInfos.push(...change.revisions);
+		}
+		const revisionIndexer: RevisionIndexer = revisionIndexFromInfo(revInfos);
 		const rebasedFields = this.rebaseFieldMap(
 			change.changes,
 			tagChange(over.change.changes, over.revision),
@@ -590,6 +581,14 @@ export class ModularChangeFamily
 	): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver, anchors);
 	}
+}
+
+function revisionIndexFromInfo(revInfos: readonly RevisionInfo[]): RevisionIndexer {
+	return (tag: RevisionTag): number => {
+		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
+		assert(index !== -1, "Unable to index unknown revision");
+		return index;
+	};
 }
 
 export function getFieldKind(

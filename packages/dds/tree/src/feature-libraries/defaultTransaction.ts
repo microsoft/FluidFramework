@@ -17,7 +17,7 @@ import {
 import { ForestRepairDataStore } from "./forestRepairDataStore";
 
 export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
-	{ forest, changeFamily, submitEdit, mintRevision }: Checkout<TEditor, TChange>,
+	{ forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>,
 	command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
 ): TransactionResult {
 	// These revision numbers are solely used within the scope of this transaction for the purpose of
@@ -63,9 +63,8 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
 		// not expected to happen in transactions but that could change in the future.
 		const anonChanges = changes.map((c) => makeAnonChange(c));
-		const revision = mintRevision();
 		const edit = changeFamily.rebaser.compose(anonChanges);
-		submitEdit(edit, revision);
+		submitEdit(edit);
 	}
 
 	return result;

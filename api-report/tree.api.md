@@ -975,7 +975,7 @@ export interface RepairDataStore<TTree = Delta.ProtoNode> extends ReadonlyRepair
 // @alpha
 export const replaceField: unique symbol;
 
-// @alpha (undocumented)
+// @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
 // @alpha (undocumented)
