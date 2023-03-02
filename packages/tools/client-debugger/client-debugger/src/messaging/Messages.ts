@@ -10,8 +10,14 @@
  */
 export interface IDebuggerMessage<TData = unknown> {
 	/**
-	 * The source of the event.
+	 * Identifies the source of the message.
 	 * Can be used to filter the messages being listened to / accepted.
+	 *
+	 * @remarks
+	 *
+	 * All messages sent by this library will have the same `source`: {@link debuggerMessageSource}.
+	 * Listeners that only want to accept messages coming from this library can filter to those with
+	 * a matching source.
 	 */
 	source: string;
 
