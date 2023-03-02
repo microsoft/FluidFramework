@@ -27,6 +27,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 `bindToContext` in IFluidDataStoreContext was deprecated in 2.0.0-internal.2.0.0. This is a heads up that it will be removed in 2.0.0-internal.5.0.0. Its usage in FluidDataStoreRuntime was removed in this release.
 
 ### getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn
+
 getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn. The functionality to update the base GC details of nodes has been moved to summarizer nodes. These will be removed in 2.0.0-internal.5.0.0.
 
 ## 2.0.0-internal.4.0.0 Breaking changes
