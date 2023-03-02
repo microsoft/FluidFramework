@@ -36,7 +36,6 @@ import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/loca
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
-import { DevToolsExtensionLogger } from "@fluid-tools/client-debugger";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
@@ -209,7 +208,6 @@ async function createWebLoader(
 		urlResolver: testOrderer ? new LocalResolver() : urlResolver,
 		documentServiceFactory,
 		codeLoader,
-		logger: DevToolsExtensionLogger.create(""),
 	});
 }
 
