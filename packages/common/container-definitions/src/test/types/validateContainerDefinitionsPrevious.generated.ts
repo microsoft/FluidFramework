@@ -1288,78 +1288,6 @@ use_old_InterfaceDeclaration_IRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidBrowserPackage": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_isFluidBrowserPackage():
-    TypeOnly<typeof old.isFluidBrowserPackage>;
-declare function use_current_VariableDeclaration_isFluidBrowserPackage(
-    use: TypeOnly<typeof current.isFluidBrowserPackage>);
-use_current_VariableDeclaration_isFluidBrowserPackage(
-    get_old_VariableDeclaration_isFluidBrowserPackage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidBrowserPackage": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_isFluidBrowserPackage():
-    TypeOnly<typeof current.isFluidBrowserPackage>;
-declare function use_old_VariableDeclaration_isFluidBrowserPackage(
-    use: TypeOnly<typeof old.isFluidBrowserPackage>);
-use_old_VariableDeclaration_isFluidBrowserPackage(
-    get_current_VariableDeclaration_isFluidBrowserPackage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidCodeDetails": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_isFluidCodeDetails():
-    TypeOnly<typeof old.isFluidCodeDetails>;
-declare function use_current_VariableDeclaration_isFluidCodeDetails(
-    use: TypeOnly<typeof current.isFluidCodeDetails>);
-use_current_VariableDeclaration_isFluidCodeDetails(
-    get_old_VariableDeclaration_isFluidCodeDetails());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidCodeDetails": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_isFluidCodeDetails():
-    TypeOnly<typeof current.isFluidCodeDetails>;
-declare function use_old_VariableDeclaration_isFluidCodeDetails(
-    use: TypeOnly<typeof old.isFluidCodeDetails>);
-use_old_VariableDeclaration_isFluidCodeDetails(
-    get_current_VariableDeclaration_isFluidCodeDetails());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidPackage": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_isFluidPackage():
-    TypeOnly<typeof old.isFluidPackage>;
-declare function use_current_VariableDeclaration_isFluidPackage(
-    use: TypeOnly<typeof current.isFluidPackage>);
-use_current_VariableDeclaration_isFluidPackage(
-    get_old_VariableDeclaration_isFluidPackage());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidPackage": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_isFluidPackage():
-    TypeOnly<typeof current.isFluidPackage>;
-declare function use_old_VariableDeclaration_isFluidPackage(
-    use: TypeOnly<typeof old.isFluidPackage>);
-use_old_VariableDeclaration_isFluidPackage(
-    get_current_VariableDeclaration_isFluidPackage());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISnapshotTreeWithBlobContents": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISnapshotTreeWithBlobContents():
@@ -1476,3 +1404,75 @@ declare function use_old_TypeAliasDeclaration_ReadOnlyInfo(
     use: TypeOnly<old.ReadOnlyInfo>);
 use_old_TypeAliasDeclaration_ReadOnlyInfo(
     get_current_TypeAliasDeclaration_ReadOnlyInfo());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidBrowserPackage": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_isFluidBrowserPackage():
+    TypeOnly<typeof old.isFluidBrowserPackage>;
+declare function use_current_VariableDeclaration_isFluidBrowserPackage(
+    use: TypeOnly<typeof current.isFluidBrowserPackage>);
+use_current_VariableDeclaration_isFluidBrowserPackage(
+    get_old_VariableDeclaration_isFluidBrowserPackage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidBrowserPackage": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_isFluidBrowserPackage():
+    TypeOnly<typeof current.isFluidBrowserPackage>;
+declare function use_old_VariableDeclaration_isFluidBrowserPackage(
+    use: TypeOnly<typeof old.isFluidBrowserPackage>);
+use_old_VariableDeclaration_isFluidBrowserPackage(
+    get_current_VariableDeclaration_isFluidBrowserPackage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidCodeDetails": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_isFluidCodeDetails():
+    TypeOnly<typeof old.isFluidCodeDetails>;
+declare function use_current_VariableDeclaration_isFluidCodeDetails(
+    use: TypeOnly<typeof current.isFluidCodeDetails>);
+use_current_VariableDeclaration_isFluidCodeDetails(
+    get_old_VariableDeclaration_isFluidCodeDetails());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidCodeDetails": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_isFluidCodeDetails():
+    TypeOnly<typeof current.isFluidCodeDetails>;
+declare function use_old_VariableDeclaration_isFluidCodeDetails(
+    use: TypeOnly<typeof old.isFluidCodeDetails>);
+use_old_VariableDeclaration_isFluidCodeDetails(
+    get_current_VariableDeclaration_isFluidCodeDetails());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidPackage": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_isFluidPackage():
+    TypeOnly<typeof old.isFluidPackage>;
+declare function use_current_VariableDeclaration_isFluidPackage(
+    use: TypeOnly<typeof current.isFluidPackage>);
+use_current_VariableDeclaration_isFluidPackage(
+    get_old_VariableDeclaration_isFluidPackage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isFluidPackage": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_isFluidPackage():
+    TypeOnly<typeof current.isFluidPackage>;
+declare function use_old_VariableDeclaration_isFluidPackage(
+    use: TypeOnly<typeof old.isFluidPackage>);
+use_old_VariableDeclaration_isFluidPackage(
+    get_current_VariableDeclaration_isFluidPackage());

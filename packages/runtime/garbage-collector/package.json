@@ -44,7 +44,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:report": "npm test -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --generate --dir .",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"nyc": {

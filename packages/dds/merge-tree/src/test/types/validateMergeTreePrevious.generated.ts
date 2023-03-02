@@ -16,54 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_addProperties": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_addProperties():
-    TypeOnly<typeof old.addProperties>;
-declare function use_current_FunctionDeclaration_addProperties(
-    use: TypeOnly<typeof current.addProperties>);
-use_current_FunctionDeclaration_addProperties(
-    get_old_FunctionDeclaration_addProperties());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_addProperties": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_addProperties():
-    TypeOnly<typeof current.addProperties>;
-declare function use_old_FunctionDeclaration_addProperties(
-    use: TypeOnly<typeof old.addProperties>);
-use_old_FunctionDeclaration_addProperties(
-    get_current_FunctionDeclaration_addProperties());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_appendToMergeTreeDeltaRevertibles": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
-    TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>;
-declare function use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>);
-use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
-    get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_appendToMergeTreeDeltaRevertibles": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
-    TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>;
-declare function use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>);
-use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
-    get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_AttributionPolicy": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_AttributionPolicy():
@@ -184,30 +136,6 @@ use_old_ClassDeclaration_Client(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_clone": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_clone():
-    TypeOnly<typeof old.clone>;
-declare function use_current_FunctionDeclaration_clone(
-    use: TypeOnly<typeof current.clone>);
-use_current_FunctionDeclaration_clone(
-    get_old_FunctionDeclaration_clone());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_clone": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_clone():
-    TypeOnly<typeof current.clone>;
-declare function use_old_FunctionDeclaration_clone(
-    use: TypeOnly<typeof old.clone>);
-use_old_FunctionDeclaration_clone(
-    get_current_FunctionDeclaration_clone());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_CollaborationWindow": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_CollaborationWindow():
@@ -232,102 +160,6 @@ use_old_ClassDeclaration_CollaborationWindow(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_combine": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_combine():
-    TypeOnly<typeof old.combine>;
-declare function use_current_FunctionDeclaration_combine(
-    use: TypeOnly<typeof current.combine>);
-use_current_FunctionDeclaration_combine(
-    get_old_FunctionDeclaration_combine());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_combine": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_combine():
-    TypeOnly<typeof current.combine>;
-declare function use_old_FunctionDeclaration_combine(
-    use: TypeOnly<typeof old.combine>);
-use_old_FunctionDeclaration_combine(
-    get_current_FunctionDeclaration_combine());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_compareNumbers": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_compareNumbers():
-    TypeOnly<typeof old.compareNumbers>;
-declare function use_current_VariableDeclaration_compareNumbers(
-    use: TypeOnly<typeof current.compareNumbers>);
-use_current_VariableDeclaration_compareNumbers(
-    get_old_VariableDeclaration_compareNumbers());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_compareNumbers": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_compareNumbers():
-    TypeOnly<typeof current.compareNumbers>;
-declare function use_old_VariableDeclaration_compareNumbers(
-    use: TypeOnly<typeof old.compareNumbers>);
-use_old_VariableDeclaration_compareNumbers(
-    get_current_VariableDeclaration_compareNumbers());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_compareReferencePositions": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_compareReferencePositions():
-    TypeOnly<typeof old.compareReferencePositions>;
-declare function use_current_FunctionDeclaration_compareReferencePositions(
-    use: TypeOnly<typeof current.compareReferencePositions>);
-use_current_FunctionDeclaration_compareReferencePositions(
-    get_old_FunctionDeclaration_compareReferencePositions());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_compareReferencePositions": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_compareReferencePositions():
-    TypeOnly<typeof current.compareReferencePositions>;
-declare function use_old_FunctionDeclaration_compareReferencePositions(
-    use: TypeOnly<typeof old.compareReferencePositions>);
-use_old_FunctionDeclaration_compareReferencePositions(
-    get_current_FunctionDeclaration_compareReferencePositions());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_compareStrings": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_compareStrings():
-    TypeOnly<typeof old.compareStrings>;
-declare function use_current_VariableDeclaration_compareStrings(
-    use: TypeOnly<typeof current.compareStrings>);
-use_current_VariableDeclaration_compareStrings(
-    get_old_VariableDeclaration_compareStrings());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_compareStrings": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_compareStrings():
-    TypeOnly<typeof current.compareStrings>;
-declare function use_old_VariableDeclaration_compareStrings(
-    use: TypeOnly<typeof old.compareStrings>);
-use_old_VariableDeclaration_compareStrings(
-    get_current_VariableDeclaration_compareStrings());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_ConflictAction": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_ConflictAction():
@@ -348,246 +180,6 @@ declare function use_old_TypeAliasDeclaration_ConflictAction(
     use: TypeOnly<old.ConflictAction<any,any>>);
 use_old_TypeAliasDeclaration_ConflictAction(
     get_current_TypeAliasDeclaration_ConflictAction());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createAnnotateMarkerOp": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createAnnotateMarkerOp():
-    TypeOnly<typeof old.createAnnotateMarkerOp>;
-declare function use_current_FunctionDeclaration_createAnnotateMarkerOp(
-    use: TypeOnly<typeof current.createAnnotateMarkerOp>);
-use_current_FunctionDeclaration_createAnnotateMarkerOp(
-    get_old_FunctionDeclaration_createAnnotateMarkerOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createAnnotateMarkerOp": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createAnnotateMarkerOp():
-    TypeOnly<typeof current.createAnnotateMarkerOp>;
-declare function use_old_FunctionDeclaration_createAnnotateMarkerOp(
-    use: TypeOnly<typeof old.createAnnotateMarkerOp>);
-use_old_FunctionDeclaration_createAnnotateMarkerOp(
-    get_current_FunctionDeclaration_createAnnotateMarkerOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createAnnotateRangeOp": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createAnnotateRangeOp():
-    TypeOnly<typeof old.createAnnotateRangeOp>;
-declare function use_current_FunctionDeclaration_createAnnotateRangeOp(
-    use: TypeOnly<typeof current.createAnnotateRangeOp>);
-use_current_FunctionDeclaration_createAnnotateRangeOp(
-    get_old_FunctionDeclaration_createAnnotateRangeOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createAnnotateRangeOp": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createAnnotateRangeOp():
-    TypeOnly<typeof current.createAnnotateRangeOp>;
-declare function use_old_FunctionDeclaration_createAnnotateRangeOp(
-    use: TypeOnly<typeof old.createAnnotateRangeOp>);
-use_old_FunctionDeclaration_createAnnotateRangeOp(
-    get_current_FunctionDeclaration_createAnnotateRangeOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createDetachedLocalReferencePosition": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createDetachedLocalReferencePosition():
-    TypeOnly<typeof old.createDetachedLocalReferencePosition>;
-declare function use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
-    use: TypeOnly<typeof current.createDetachedLocalReferencePosition>);
-use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
-    get_old_FunctionDeclaration_createDetachedLocalReferencePosition());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createDetachedLocalReferencePosition": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createDetachedLocalReferencePosition():
-    TypeOnly<typeof current.createDetachedLocalReferencePosition>;
-declare function use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
-    use: TypeOnly<typeof old.createDetachedLocalReferencePosition>);
-use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
-    get_current_FunctionDeclaration_createDetachedLocalReferencePosition());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createGroupOp": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createGroupOp():
-    TypeOnly<typeof old.createGroupOp>;
-declare function use_current_FunctionDeclaration_createGroupOp(
-    use: TypeOnly<typeof current.createGroupOp>);
-use_current_FunctionDeclaration_createGroupOp(
-    get_old_FunctionDeclaration_createGroupOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createGroupOp": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createGroupOp():
-    TypeOnly<typeof current.createGroupOp>;
-declare function use_old_FunctionDeclaration_createGroupOp(
-    use: TypeOnly<typeof old.createGroupOp>);
-use_old_FunctionDeclaration_createGroupOp(
-    get_current_FunctionDeclaration_createGroupOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy():
-    TypeOnly<typeof old.createInsertOnlyAttributionPolicy>;
-declare function use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    use: TypeOnly<typeof current.createInsertOnlyAttributionPolicy>);
-use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy():
-    TypeOnly<typeof current.createInsertOnlyAttributionPolicy>;
-declare function use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    use: TypeOnly<typeof old.createInsertOnlyAttributionPolicy>);
-use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
-    get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertOp": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createInsertOp():
-    TypeOnly<typeof old.createInsertOp>;
-declare function use_current_FunctionDeclaration_createInsertOp(
-    use: TypeOnly<typeof current.createInsertOp>);
-use_current_FunctionDeclaration_createInsertOp(
-    get_old_FunctionDeclaration_createInsertOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertOp": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createInsertOp():
-    TypeOnly<typeof current.createInsertOp>;
-declare function use_old_FunctionDeclaration_createInsertOp(
-    use: TypeOnly<typeof old.createInsertOp>);
-use_old_FunctionDeclaration_createInsertOp(
-    get_current_FunctionDeclaration_createInsertOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertSegmentOp": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createInsertSegmentOp():
-    TypeOnly<typeof old.createInsertSegmentOp>;
-declare function use_current_FunctionDeclaration_createInsertSegmentOp(
-    use: TypeOnly<typeof current.createInsertSegmentOp>);
-use_current_FunctionDeclaration_createInsertSegmentOp(
-    get_old_FunctionDeclaration_createInsertSegmentOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createInsertSegmentOp": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createInsertSegmentOp():
-    TypeOnly<typeof current.createInsertSegmentOp>;
-declare function use_old_FunctionDeclaration_createInsertSegmentOp(
-    use: TypeOnly<typeof old.createInsertSegmentOp>);
-use_old_FunctionDeclaration_createInsertSegmentOp(
-    get_current_FunctionDeclaration_createInsertSegmentOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createMap": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createMap():
-    TypeOnly<typeof old.createMap>;
-declare function use_current_FunctionDeclaration_createMap(
-    use: TypeOnly<typeof current.createMap>);
-use_current_FunctionDeclaration_createMap(
-    get_old_FunctionDeclaration_createMap());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createMap": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createMap():
-    TypeOnly<typeof current.createMap>;
-declare function use_old_FunctionDeclaration_createMap(
-    use: TypeOnly<typeof old.createMap>);
-use_old_FunctionDeclaration_createMap(
-    get_current_FunctionDeclaration_createMap());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createRemoveRangeOp": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createRemoveRangeOp():
-    TypeOnly<typeof old.createRemoveRangeOp>;
-declare function use_current_FunctionDeclaration_createRemoveRangeOp(
-    use: TypeOnly<typeof current.createRemoveRangeOp>);
-use_current_FunctionDeclaration_createRemoveRangeOp(
-    get_old_FunctionDeclaration_createRemoveRangeOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createRemoveRangeOp": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createRemoveRangeOp():
-    TypeOnly<typeof current.createRemoveRangeOp>;
-declare function use_old_FunctionDeclaration_createRemoveRangeOp(
-    use: TypeOnly<typeof old.createRemoveRangeOp>);
-use_old_FunctionDeclaration_createRemoveRangeOp(
-    get_current_FunctionDeclaration_createRemoveRangeOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_debugMarkerToString": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_debugMarkerToString():
-    TypeOnly<typeof old.debugMarkerToString>;
-declare function use_current_FunctionDeclaration_debugMarkerToString(
-    use: TypeOnly<typeof current.debugMarkerToString>);
-use_current_FunctionDeclaration_debugMarkerToString(
-    get_old_FunctionDeclaration_debugMarkerToString());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_debugMarkerToString": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_debugMarkerToString():
-    TypeOnly<typeof current.debugMarkerToString>;
-declare function use_old_FunctionDeclaration_debugMarkerToString(
-    use: TypeOnly<typeof old.debugMarkerToString>);
-use_old_FunctionDeclaration_debugMarkerToString(
-    get_current_FunctionDeclaration_debugMarkerToString());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -636,78 +228,6 @@ declare function use_old_InterfaceDeclaration_Dictionary(
     use: TypeOnly<old.Dictionary<any,any>>);
 use_old_InterfaceDeclaration_Dictionary(
     get_current_InterfaceDeclaration_Dictionary());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_discardMergeTreeDeltaRevertible": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible():
-    TypeOnly<typeof old.discardMergeTreeDeltaRevertible>;
-declare function use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
-    use: TypeOnly<typeof current.discardMergeTreeDeltaRevertible>);
-use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
-    get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_discardMergeTreeDeltaRevertible": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible():
-    TypeOnly<typeof current.discardMergeTreeDeltaRevertible>;
-declare function use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
-    use: TypeOnly<typeof old.discardMergeTreeDeltaRevertible>);
-use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
-    get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_extend": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_extend():
-    TypeOnly<typeof old.extend>;
-declare function use_current_FunctionDeclaration_extend(
-    use: TypeOnly<typeof current.extend>);
-use_current_FunctionDeclaration_extend(
-    get_old_FunctionDeclaration_extend());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_extend": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_extend():
-    TypeOnly<typeof current.extend>;
-declare function use_old_FunctionDeclaration_extend(
-    use: TypeOnly<typeof old.extend>);
-use_old_FunctionDeclaration_extend(
-    get_current_FunctionDeclaration_extend());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_extendIfUndefined": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_extendIfUndefined():
-    TypeOnly<typeof old.extendIfUndefined>;
-declare function use_current_FunctionDeclaration_extendIfUndefined(
-    use: TypeOnly<typeof current.extendIfUndefined>);
-use_current_FunctionDeclaration_extendIfUndefined(
-    get_old_FunctionDeclaration_extendIfUndefined());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_extendIfUndefined": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_extendIfUndefined():
-    TypeOnly<typeof current.extendIfUndefined>;
-declare function use_old_FunctionDeclaration_extendIfUndefined(
-    use: TypeOnly<typeof old.extendIfUndefined>);
-use_old_FunctionDeclaration_extendIfUndefined(
-    get_current_FunctionDeclaration_extendIfUndefined());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1432,174 +952,6 @@ use_old_InterfaceDeclaration_IMergeTreeTextHelper(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalBlockAction": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IncrementalBlockAction():
-    TypeOnly<old.IncrementalBlockAction<any>>;
-declare function use_current_InterfaceDeclaration_IncrementalBlockAction(
-    use: TypeOnly<current.IncrementalBlockAction<any>>);
-use_current_InterfaceDeclaration_IncrementalBlockAction(
-    get_old_InterfaceDeclaration_IncrementalBlockAction());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalBlockAction": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IncrementalBlockAction():
-    TypeOnly<current.IncrementalBlockAction<any>>;
-declare function use_old_InterfaceDeclaration_IncrementalBlockAction(
-    use: TypeOnly<old.IncrementalBlockAction<any>>);
-use_old_InterfaceDeclaration_IncrementalBlockAction(
-    get_current_InterfaceDeclaration_IncrementalBlockAction());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_IncrementalExecOp": {"forwardCompat": false}
-*/
-declare function get_old_EnumDeclaration_IncrementalExecOp():
-    TypeOnly<old.IncrementalExecOp>;
-declare function use_current_EnumDeclaration_IncrementalExecOp(
-    use: TypeOnly<current.IncrementalExecOp>);
-use_current_EnumDeclaration_IncrementalExecOp(
-    get_old_EnumDeclaration_IncrementalExecOp());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "EnumDeclaration_IncrementalExecOp": {"backCompat": false}
-*/
-declare function get_current_EnumDeclaration_IncrementalExecOp():
-    TypeOnly<current.IncrementalExecOp>;
-declare function use_old_EnumDeclaration_IncrementalExecOp(
-    use: TypeOnly<old.IncrementalExecOp>);
-use_old_EnumDeclaration_IncrementalExecOp(
-    get_current_EnumDeclaration_IncrementalExecOp());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IncrementalMapState": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_IncrementalMapState():
-    TypeOnly<old.IncrementalMapState<any>>;
-declare function use_current_ClassDeclaration_IncrementalMapState(
-    use: TypeOnly<current.IncrementalMapState<any>>);
-use_current_ClassDeclaration_IncrementalMapState(
-    get_old_ClassDeclaration_IncrementalMapState());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_IncrementalMapState": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_IncrementalMapState():
-    TypeOnly<current.IncrementalMapState<any>>;
-declare function use_old_ClassDeclaration_IncrementalMapState(
-    use: TypeOnly<old.IncrementalMapState<any>>);
-use_old_ClassDeclaration_IncrementalMapState(
-    get_current_ClassDeclaration_IncrementalMapState());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentAction": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IncrementalSegmentAction():
-    TypeOnly<old.IncrementalSegmentAction<any>>;
-declare function use_current_InterfaceDeclaration_IncrementalSegmentAction(
-    use: TypeOnly<current.IncrementalSegmentAction<any>>);
-use_current_InterfaceDeclaration_IncrementalSegmentAction(
-    get_old_InterfaceDeclaration_IncrementalSegmentAction());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentAction": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IncrementalSegmentAction():
-    TypeOnly<current.IncrementalSegmentAction<any>>;
-declare function use_old_InterfaceDeclaration_IncrementalSegmentAction(
-    use: TypeOnly<old.IncrementalSegmentAction<any>>);
-use_old_InterfaceDeclaration_IncrementalSegmentAction(
-    get_current_InterfaceDeclaration_IncrementalSegmentAction());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentActions": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IncrementalSegmentActions():
-    TypeOnly<old.IncrementalSegmentActions<any>>;
-declare function use_current_InterfaceDeclaration_IncrementalSegmentActions(
-    use: TypeOnly<current.IncrementalSegmentActions<any>>);
-use_current_InterfaceDeclaration_IncrementalSegmentActions(
-    get_old_InterfaceDeclaration_IncrementalSegmentActions());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IncrementalSegmentActions": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IncrementalSegmentActions():
-    TypeOnly<current.IncrementalSegmentActions<any>>;
-declare function use_old_InterfaceDeclaration_IncrementalSegmentActions(
-    use: TypeOnly<old.IncrementalSegmentActions<any>>);
-use_old_InterfaceDeclaration_IncrementalSegmentActions(
-    get_current_InterfaceDeclaration_IncrementalSegmentActions());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_InsertContext": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_InsertContext():
-    TypeOnly<old.InsertContext>;
-declare function use_current_InterfaceDeclaration_InsertContext(
-    use: TypeOnly<current.InsertContext>);
-use_current_InterfaceDeclaration_InsertContext(
-    get_old_InterfaceDeclaration_InsertContext());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_InsertContext": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_InsertContext():
-    TypeOnly<current.InsertContext>;
-declare function use_old_InterfaceDeclaration_InsertContext(
-    use: TypeOnly<old.InsertContext>);
-use_old_InterfaceDeclaration_InsertContext(
-    get_current_InterfaceDeclaration_InsertContext());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_internedSpaces": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_internedSpaces():
-    TypeOnly<typeof old.internedSpaces>;
-declare function use_current_FunctionDeclaration_internedSpaces(
-    use: TypeOnly<typeof current.internedSpaces>);
-use_current_FunctionDeclaration_internedSpaces(
-    get_old_FunctionDeclaration_internedSpaces());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_internedSpaces": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_internedSpaces():
-    TypeOnly<typeof current.internedSpaces>;
-declare function use_old_FunctionDeclaration_internedSpaces(
-    use: TypeOnly<typeof old.internedSpaces>);
-use_old_FunctionDeclaration_internedSpaces(
-    get_current_FunctionDeclaration_internedSpaces());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IRBAugmentation": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IRBAugmentation():
@@ -1768,6 +1120,150 @@ use_old_InterfaceDeclaration_ISegmentChanges(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IncrementalBlockAction": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IncrementalBlockAction():
+    TypeOnly<old.IncrementalBlockAction<any>>;
+declare function use_current_InterfaceDeclaration_IncrementalBlockAction(
+    use: TypeOnly<current.IncrementalBlockAction<any>>);
+use_current_InterfaceDeclaration_IncrementalBlockAction(
+    get_old_InterfaceDeclaration_IncrementalBlockAction());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IncrementalBlockAction": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IncrementalBlockAction():
+    TypeOnly<current.IncrementalBlockAction<any>>;
+declare function use_old_InterfaceDeclaration_IncrementalBlockAction(
+    use: TypeOnly<old.IncrementalBlockAction<any>>);
+use_old_InterfaceDeclaration_IncrementalBlockAction(
+    get_current_InterfaceDeclaration_IncrementalBlockAction());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_IncrementalExecOp": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_IncrementalExecOp():
+    TypeOnly<old.IncrementalExecOp>;
+declare function use_current_EnumDeclaration_IncrementalExecOp(
+    use: TypeOnly<current.IncrementalExecOp>);
+use_current_EnumDeclaration_IncrementalExecOp(
+    get_old_EnumDeclaration_IncrementalExecOp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_IncrementalExecOp": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_IncrementalExecOp():
+    TypeOnly<current.IncrementalExecOp>;
+declare function use_old_EnumDeclaration_IncrementalExecOp(
+    use: TypeOnly<old.IncrementalExecOp>);
+use_old_EnumDeclaration_IncrementalExecOp(
+    get_current_EnumDeclaration_IncrementalExecOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_IncrementalMapState": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_IncrementalMapState():
+    TypeOnly<old.IncrementalMapState<any>>;
+declare function use_current_ClassDeclaration_IncrementalMapState(
+    use: TypeOnly<current.IncrementalMapState<any>>);
+use_current_ClassDeclaration_IncrementalMapState(
+    get_old_ClassDeclaration_IncrementalMapState());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_IncrementalMapState": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_IncrementalMapState():
+    TypeOnly<current.IncrementalMapState<any>>;
+declare function use_old_ClassDeclaration_IncrementalMapState(
+    use: TypeOnly<old.IncrementalMapState<any>>);
+use_old_ClassDeclaration_IncrementalMapState(
+    get_current_ClassDeclaration_IncrementalMapState());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IncrementalSegmentAction": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IncrementalSegmentAction():
+    TypeOnly<old.IncrementalSegmentAction<any>>;
+declare function use_current_InterfaceDeclaration_IncrementalSegmentAction(
+    use: TypeOnly<current.IncrementalSegmentAction<any>>);
+use_current_InterfaceDeclaration_IncrementalSegmentAction(
+    get_old_InterfaceDeclaration_IncrementalSegmentAction());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IncrementalSegmentAction": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IncrementalSegmentAction():
+    TypeOnly<current.IncrementalSegmentAction<any>>;
+declare function use_old_InterfaceDeclaration_IncrementalSegmentAction(
+    use: TypeOnly<old.IncrementalSegmentAction<any>>);
+use_old_InterfaceDeclaration_IncrementalSegmentAction(
+    get_current_InterfaceDeclaration_IncrementalSegmentAction());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IncrementalSegmentActions": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IncrementalSegmentActions():
+    TypeOnly<old.IncrementalSegmentActions<any>>;
+declare function use_current_InterfaceDeclaration_IncrementalSegmentActions(
+    use: TypeOnly<current.IncrementalSegmentActions<any>>);
+use_current_InterfaceDeclaration_IncrementalSegmentActions(
+    get_old_InterfaceDeclaration_IncrementalSegmentActions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IncrementalSegmentActions": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IncrementalSegmentActions():
+    TypeOnly<current.IncrementalSegmentActions<any>>;
+declare function use_old_InterfaceDeclaration_IncrementalSegmentActions(
+    use: TypeOnly<old.IncrementalSegmentActions<any>>);
+use_old_InterfaceDeclaration_IncrementalSegmentActions(
+    get_current_InterfaceDeclaration_IncrementalSegmentActions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_InsertContext": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_InsertContext():
+    TypeOnly<old.InsertContext>;
+declare function use_current_InterfaceDeclaration_InsertContext(
+    use: TypeOnly<current.InsertContext>);
+use_current_InterfaceDeclaration_InsertContext(
+    get_old_InterfaceDeclaration_InsertContext());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_InsertContext": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_InsertContext():
+    TypeOnly<current.InsertContext>;
+declare function use_old_InterfaceDeclaration_InsertContext(
+    use: TypeOnly<old.InsertContext>);
+use_old_InterfaceDeclaration_InsertContext(
+    get_current_InterfaceDeclaration_InsertContext());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_KeyComparer": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_KeyComparer():
@@ -1912,30 +1408,6 @@ use_old_ClassDeclaration_Marker(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_matchProperties": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_matchProperties():
-    TypeOnly<typeof old.matchProperties>;
-declare function use_current_FunctionDeclaration_matchProperties(
-    use: TypeOnly<typeof current.matchProperties>);
-use_current_FunctionDeclaration_matchProperties(
-    get_old_FunctionDeclaration_matchProperties());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_matchProperties": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_matchProperties():
-    TypeOnly<typeof current.matchProperties>;
-declare function use_old_FunctionDeclaration_matchProperties(
-    use: TypeOnly<typeof old.matchProperties>);
-use_old_FunctionDeclaration_matchProperties(
-    get_current_FunctionDeclaration_matchProperties());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_MaxNodesInBlock": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_MaxNodesInBlock():
@@ -1956,30 +1428,6 @@ declare function use_old_VariableDeclaration_MaxNodesInBlock(
     use: TypeOnly<typeof old.MaxNodesInBlock>);
 use_old_VariableDeclaration_MaxNodesInBlock(
     get_current_VariableDeclaration_MaxNodesInBlock());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_maxReferencePosition": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_maxReferencePosition():
-    TypeOnly<typeof old.maxReferencePosition>;
-declare function use_current_FunctionDeclaration_maxReferencePosition(
-    use: TypeOnly<typeof current.maxReferencePosition>);
-use_current_FunctionDeclaration_maxReferencePosition(
-    get_old_FunctionDeclaration_maxReferencePosition());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_maxReferencePosition": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_maxReferencePosition():
-    TypeOnly<typeof current.maxReferencePosition>;
-declare function use_old_FunctionDeclaration_maxReferencePosition(
-    use: TypeOnly<typeof old.maxReferencePosition>);
-use_old_FunctionDeclaration_maxReferencePosition(
-    get_current_FunctionDeclaration_maxReferencePosition());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2296,30 +1744,6 @@ use_old_InterfaceDeclaration_MinListener(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_minReferencePosition": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_minReferencePosition():
-    TypeOnly<typeof old.minReferencePosition>;
-declare function use_current_FunctionDeclaration_minReferencePosition(
-    use: TypeOnly<typeof current.minReferencePosition>);
-use_current_FunctionDeclaration_minReferencePosition(
-    get_old_FunctionDeclaration_minReferencePosition());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_minReferencePosition": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_minReferencePosition():
-    TypeOnly<typeof current.minReferencePosition>;
-declare function use_old_FunctionDeclaration_minReferencePosition(
-    use: TypeOnly<typeof old.minReferencePosition>);
-use_old_FunctionDeclaration_minReferencePosition(
-    get_current_FunctionDeclaration_minReferencePosition());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_NodeAction": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_NodeAction():
@@ -2364,30 +1788,6 @@ declare function use_old_VariableDeclaration_NonCollabClient(
     use: TypeOnly<typeof old.NonCollabClient>);
 use_old_VariableDeclaration_NonCollabClient(
     get_current_VariableDeclaration_NonCollabClient());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_ordinalToArray": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_ordinalToArray():
-    TypeOnly<typeof old.ordinalToArray>;
-declare function use_current_FunctionDeclaration_ordinalToArray(
-    use: TypeOnly<typeof current.ordinalToArray>);
-use_current_FunctionDeclaration_ordinalToArray(
-    get_old_FunctionDeclaration_ordinalToArray());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_ordinalToArray": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_ordinalToArray():
-    TypeOnly<typeof current.ordinalToArray>;
-declare function use_old_FunctionDeclaration_ordinalToArray(
-    use: TypeOnly<typeof old.ordinalToArray>);
-use_old_FunctionDeclaration_ordinalToArray(
-    get_current_FunctionDeclaration_ordinalToArray());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2536,30 +1936,6 @@ use_old_InterfaceDeclaration_QProperty(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_RangeStackMap": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_RangeStackMap():
-    TypeOnly<old.RangeStackMap>;
-declare function use_current_TypeAliasDeclaration_RangeStackMap(
-    use: TypeOnly<current.RangeStackMap>);
-use_current_TypeAliasDeclaration_RangeStackMap(
-    get_old_TypeAliasDeclaration_RangeStackMap());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_RangeStackMap": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_RangeStackMap():
-    TypeOnly<current.RangeStackMap>;
-declare function use_old_TypeAliasDeclaration_RangeStackMap(
-    use: TypeOnly<old.RangeStackMap>);
-use_old_TypeAliasDeclaration_RangeStackMap(
-    get_current_TypeAliasDeclaration_RangeStackMap());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_RBColor": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_RBColor():
@@ -2656,6 +2032,30 @@ use_old_InterfaceDeclaration_RBNodeActions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_RangeStackMap": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_RangeStackMap():
+    TypeOnly<old.RangeStackMap>;
+declare function use_current_TypeAliasDeclaration_RangeStackMap(
+    use: TypeOnly<current.RangeStackMap>);
+use_current_TypeAliasDeclaration_RangeStackMap(
+    get_old_TypeAliasDeclaration_RangeStackMap());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_RangeStackMap": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_RangeStackMap():
+    TypeOnly<current.RangeStackMap>;
+declare function use_old_TypeAliasDeclaration_RangeStackMap(
+    use: TypeOnly<old.RangeStackMap>);
+use_old_TypeAliasDeclaration_RangeStackMap(
+    get_current_TypeAliasDeclaration_RangeStackMap());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_RedBlackTree": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_RedBlackTree():
@@ -2724,294 +2124,6 @@ declare function use_old_EnumDeclaration_ReferenceType(
     use: TypeOnly<old.ReferenceType>);
 use_old_EnumDeclaration_ReferenceType(
     get_current_EnumDeclaration_ReferenceType());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_refGetRangeLabels": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_refGetRangeLabels():
-    TypeOnly<typeof old.refGetRangeLabels>;
-declare function use_current_VariableDeclaration_refGetRangeLabels(
-    use: TypeOnly<typeof current.refGetRangeLabels>);
-use_current_VariableDeclaration_refGetRangeLabels(
-    get_old_VariableDeclaration_refGetRangeLabels());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_refGetRangeLabels": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_refGetRangeLabels():
-    TypeOnly<typeof current.refGetRangeLabels>;
-declare function use_old_VariableDeclaration_refGetRangeLabels(
-    use: TypeOnly<typeof old.refGetRangeLabels>);
-use_old_VariableDeclaration_refGetRangeLabels(
-    get_current_VariableDeclaration_refGetRangeLabels());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_refGetTileLabels": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_refGetTileLabels():
-    TypeOnly<typeof old.refGetTileLabels>;
-declare function use_current_VariableDeclaration_refGetTileLabels(
-    use: TypeOnly<typeof current.refGetTileLabels>);
-use_current_VariableDeclaration_refGetTileLabels(
-    get_old_VariableDeclaration_refGetTileLabels());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_refGetTileLabels": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_refGetTileLabels():
-    TypeOnly<typeof current.refGetTileLabels>;
-declare function use_old_VariableDeclaration_refGetTileLabels(
-    use: TypeOnly<typeof old.refGetTileLabels>);
-use_old_VariableDeclaration_refGetTileLabels(
-    get_current_VariableDeclaration_refGetTileLabels());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabel": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_refHasRangeLabel():
-    TypeOnly<typeof old.refHasRangeLabel>;
-declare function use_current_FunctionDeclaration_refHasRangeLabel(
-    use: TypeOnly<typeof current.refHasRangeLabel>);
-use_current_FunctionDeclaration_refHasRangeLabel(
-    get_old_FunctionDeclaration_refHasRangeLabel());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabel": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_refHasRangeLabel():
-    TypeOnly<typeof current.refHasRangeLabel>;
-declare function use_old_FunctionDeclaration_refHasRangeLabel(
-    use: TypeOnly<typeof old.refHasRangeLabel>);
-use_old_FunctionDeclaration_refHasRangeLabel(
-    get_current_FunctionDeclaration_refHasRangeLabel());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabels": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_refHasRangeLabels():
-    TypeOnly<typeof old.refHasRangeLabels>;
-declare function use_current_FunctionDeclaration_refHasRangeLabels(
-    use: TypeOnly<typeof current.refHasRangeLabels>);
-use_current_FunctionDeclaration_refHasRangeLabels(
-    get_old_FunctionDeclaration_refHasRangeLabels());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasRangeLabels": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_refHasRangeLabels():
-    TypeOnly<typeof current.refHasRangeLabels>;
-declare function use_old_FunctionDeclaration_refHasRangeLabels(
-    use: TypeOnly<typeof old.refHasRangeLabels>);
-use_old_FunctionDeclaration_refHasRangeLabels(
-    get_current_FunctionDeclaration_refHasRangeLabels());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasTileLabel": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_refHasTileLabel():
-    TypeOnly<typeof old.refHasTileLabel>;
-declare function use_current_FunctionDeclaration_refHasTileLabel(
-    use: TypeOnly<typeof current.refHasTileLabel>);
-use_current_FunctionDeclaration_refHasTileLabel(
-    get_old_FunctionDeclaration_refHasTileLabel());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasTileLabel": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_refHasTileLabel():
-    TypeOnly<typeof current.refHasTileLabel>;
-declare function use_old_FunctionDeclaration_refHasTileLabel(
-    use: TypeOnly<typeof old.refHasTileLabel>);
-use_old_FunctionDeclaration_refHasTileLabel(
-    get_current_FunctionDeclaration_refHasTileLabel());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasTileLabels": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_refHasTileLabels():
-    TypeOnly<typeof old.refHasTileLabels>;
-declare function use_current_FunctionDeclaration_refHasTileLabels(
-    use: TypeOnly<typeof current.refHasTileLabels>);
-use_current_FunctionDeclaration_refHasTileLabels(
-    get_old_FunctionDeclaration_refHasTileLabels());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refHasTileLabels": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_refHasTileLabels():
-    TypeOnly<typeof current.refHasTileLabels>;
-declare function use_old_FunctionDeclaration_refHasTileLabels(
-    use: TypeOnly<typeof old.refHasTileLabels>);
-use_old_FunctionDeclaration_refHasTileLabels(
-    get_current_FunctionDeclaration_refHasTileLabels());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refTypeIncludesFlag": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_refTypeIncludesFlag():
-    TypeOnly<typeof old.refTypeIncludesFlag>;
-declare function use_current_FunctionDeclaration_refTypeIncludesFlag(
-    use: TypeOnly<typeof current.refTypeIncludesFlag>);
-use_current_FunctionDeclaration_refTypeIncludesFlag(
-    get_old_FunctionDeclaration_refTypeIncludesFlag());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_refTypeIncludesFlag": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_refTypeIncludesFlag():
-    TypeOnly<typeof current.refTypeIncludesFlag>;
-declare function use_old_FunctionDeclaration_refTypeIncludesFlag(
-    use: TypeOnly<typeof old.refTypeIncludesFlag>);
-use_old_FunctionDeclaration_refTypeIncludesFlag(
-    get_current_FunctionDeclaration_refTypeIncludesFlag());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedMarkerIdKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_reservedMarkerIdKey():
-    TypeOnly<typeof old.reservedMarkerIdKey>;
-declare function use_current_VariableDeclaration_reservedMarkerIdKey(
-    use: TypeOnly<typeof current.reservedMarkerIdKey>);
-use_current_VariableDeclaration_reservedMarkerIdKey(
-    get_old_VariableDeclaration_reservedMarkerIdKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedMarkerIdKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_reservedMarkerIdKey():
-    TypeOnly<typeof current.reservedMarkerIdKey>;
-declare function use_old_VariableDeclaration_reservedMarkerIdKey(
-    use: TypeOnly<typeof old.reservedMarkerIdKey>);
-use_old_VariableDeclaration_reservedMarkerIdKey(
-    get_current_VariableDeclaration_reservedMarkerIdKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedMarkerSimpleTypeKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_reservedMarkerSimpleTypeKey():
-    TypeOnly<typeof old.reservedMarkerSimpleTypeKey>;
-declare function use_current_VariableDeclaration_reservedMarkerSimpleTypeKey(
-    use: TypeOnly<typeof current.reservedMarkerSimpleTypeKey>);
-use_current_VariableDeclaration_reservedMarkerSimpleTypeKey(
-    get_old_VariableDeclaration_reservedMarkerSimpleTypeKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedMarkerSimpleTypeKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_reservedMarkerSimpleTypeKey():
-    TypeOnly<typeof current.reservedMarkerSimpleTypeKey>;
-declare function use_old_VariableDeclaration_reservedMarkerSimpleTypeKey(
-    use: TypeOnly<typeof old.reservedMarkerSimpleTypeKey>);
-use_old_VariableDeclaration_reservedMarkerSimpleTypeKey(
-    get_current_VariableDeclaration_reservedMarkerSimpleTypeKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedRangeLabelsKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_reservedRangeLabelsKey():
-    TypeOnly<typeof old.reservedRangeLabelsKey>;
-declare function use_current_VariableDeclaration_reservedRangeLabelsKey(
-    use: TypeOnly<typeof current.reservedRangeLabelsKey>);
-use_current_VariableDeclaration_reservedRangeLabelsKey(
-    get_old_VariableDeclaration_reservedRangeLabelsKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedRangeLabelsKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_reservedRangeLabelsKey():
-    TypeOnly<typeof current.reservedRangeLabelsKey>;
-declare function use_old_VariableDeclaration_reservedRangeLabelsKey(
-    use: TypeOnly<typeof old.reservedRangeLabelsKey>);
-use_old_VariableDeclaration_reservedRangeLabelsKey(
-    get_current_VariableDeclaration_reservedRangeLabelsKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedTileLabelsKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_reservedTileLabelsKey():
-    TypeOnly<typeof old.reservedTileLabelsKey>;
-declare function use_current_VariableDeclaration_reservedTileLabelsKey(
-    use: TypeOnly<typeof current.reservedTileLabelsKey>);
-use_current_VariableDeclaration_reservedTileLabelsKey(
-    get_old_VariableDeclaration_reservedTileLabelsKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_reservedTileLabelsKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_reservedTileLabelsKey():
-    TypeOnly<typeof current.reservedTileLabelsKey>;
-declare function use_old_VariableDeclaration_reservedTileLabelsKey(
-    use: TypeOnly<typeof old.reservedTileLabelsKey>);
-use_old_VariableDeclaration_reservedTileLabelsKey(
-    get_current_VariableDeclaration_reservedTileLabelsKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_revertMergeTreeDeltaRevertibles": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
-    TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>;
-declare function use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>);
-use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
-    get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_revertMergeTreeDeltaRevertibles": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
-    TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>;
-declare function use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
-    use: TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>);
-use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
-    get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -3304,30 +2416,6 @@ use_old_ClassDeclaration_TextSegment(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_toRemovalInfo": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_toRemovalInfo():
-    TypeOnly<typeof old.toRemovalInfo>;
-declare function use_current_FunctionDeclaration_toRemovalInfo(
-    use: TypeOnly<typeof current.toRemovalInfo>);
-use_current_FunctionDeclaration_toRemovalInfo(
-    get_old_FunctionDeclaration_toRemovalInfo());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_toRemovalInfo": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_toRemovalInfo():
-    TypeOnly<typeof current.toRemovalInfo>;
-declare function use_old_FunctionDeclaration_toRemovalInfo(
-    use: TypeOnly<typeof old.toRemovalInfo>);
-use_old_FunctionDeclaration_toRemovalInfo(
-    get_current_FunctionDeclaration_toRemovalInfo());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_Trackable": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_Trackable():
@@ -3468,3 +2556,915 @@ declare function use_old_VariableDeclaration_UniversalSequenceNumber(
     use: TypeOnly<typeof old.UniversalSequenceNumber>);
 use_old_VariableDeclaration_UniversalSequenceNumber(
     get_current_VariableDeclaration_UniversalSequenceNumber());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_addProperties": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_addProperties():
+    TypeOnly<typeof old.addProperties>;
+declare function use_current_FunctionDeclaration_addProperties(
+    use: TypeOnly<typeof current.addProperties>);
+use_current_FunctionDeclaration_addProperties(
+    get_old_FunctionDeclaration_addProperties());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_addProperties": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_addProperties():
+    TypeOnly<typeof current.addProperties>;
+declare function use_old_FunctionDeclaration_addProperties(
+    use: TypeOnly<typeof old.addProperties>);
+use_old_FunctionDeclaration_addProperties(
+    get_current_FunctionDeclaration_addProperties());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendToMergeTreeDeltaRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
+    TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>;
+declare function use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>);
+use_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    get_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_appendToMergeTreeDeltaRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles():
+    TypeOnly<typeof current.appendToMergeTreeDeltaRevertibles>;
+declare function use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof old.appendToMergeTreeDeltaRevertibles>);
+use_old_FunctionDeclaration_appendToMergeTreeDeltaRevertibles(
+    get_current_FunctionDeclaration_appendToMergeTreeDeltaRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_clone": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_clone():
+    TypeOnly<typeof old.clone>;
+declare function use_current_FunctionDeclaration_clone(
+    use: TypeOnly<typeof current.clone>);
+use_current_FunctionDeclaration_clone(
+    get_old_FunctionDeclaration_clone());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_clone": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_clone():
+    TypeOnly<typeof current.clone>;
+declare function use_old_FunctionDeclaration_clone(
+    use: TypeOnly<typeof old.clone>);
+use_old_FunctionDeclaration_clone(
+    get_current_FunctionDeclaration_clone());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_combine": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_combine():
+    TypeOnly<typeof old.combine>;
+declare function use_current_FunctionDeclaration_combine(
+    use: TypeOnly<typeof current.combine>);
+use_current_FunctionDeclaration_combine(
+    get_old_FunctionDeclaration_combine());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_combine": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_combine():
+    TypeOnly<typeof current.combine>;
+declare function use_old_FunctionDeclaration_combine(
+    use: TypeOnly<typeof old.combine>);
+use_old_FunctionDeclaration_combine(
+    get_current_FunctionDeclaration_combine());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_compareNumbers": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_compareNumbers():
+    TypeOnly<typeof old.compareNumbers>;
+declare function use_current_VariableDeclaration_compareNumbers(
+    use: TypeOnly<typeof current.compareNumbers>);
+use_current_VariableDeclaration_compareNumbers(
+    get_old_VariableDeclaration_compareNumbers());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_compareNumbers": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_compareNumbers():
+    TypeOnly<typeof current.compareNumbers>;
+declare function use_old_VariableDeclaration_compareNumbers(
+    use: TypeOnly<typeof old.compareNumbers>);
+use_old_VariableDeclaration_compareNumbers(
+    get_current_VariableDeclaration_compareNumbers());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_compareReferencePositions": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_compareReferencePositions():
+    TypeOnly<typeof old.compareReferencePositions>;
+declare function use_current_FunctionDeclaration_compareReferencePositions(
+    use: TypeOnly<typeof current.compareReferencePositions>);
+use_current_FunctionDeclaration_compareReferencePositions(
+    get_old_FunctionDeclaration_compareReferencePositions());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_compareReferencePositions": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_compareReferencePositions():
+    TypeOnly<typeof current.compareReferencePositions>;
+declare function use_old_FunctionDeclaration_compareReferencePositions(
+    use: TypeOnly<typeof old.compareReferencePositions>);
+use_old_FunctionDeclaration_compareReferencePositions(
+    get_current_FunctionDeclaration_compareReferencePositions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_compareStrings": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_compareStrings():
+    TypeOnly<typeof old.compareStrings>;
+declare function use_current_VariableDeclaration_compareStrings(
+    use: TypeOnly<typeof current.compareStrings>);
+use_current_VariableDeclaration_compareStrings(
+    get_old_VariableDeclaration_compareStrings());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_compareStrings": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_compareStrings():
+    TypeOnly<typeof current.compareStrings>;
+declare function use_old_VariableDeclaration_compareStrings(
+    use: TypeOnly<typeof old.compareStrings>);
+use_old_VariableDeclaration_compareStrings(
+    get_current_VariableDeclaration_compareStrings());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createAnnotateMarkerOp": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createAnnotateMarkerOp():
+    TypeOnly<typeof old.createAnnotateMarkerOp>;
+declare function use_current_FunctionDeclaration_createAnnotateMarkerOp(
+    use: TypeOnly<typeof current.createAnnotateMarkerOp>);
+use_current_FunctionDeclaration_createAnnotateMarkerOp(
+    get_old_FunctionDeclaration_createAnnotateMarkerOp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createAnnotateMarkerOp": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createAnnotateMarkerOp():
+    TypeOnly<typeof current.createAnnotateMarkerOp>;
+declare function use_old_FunctionDeclaration_createAnnotateMarkerOp(
+    use: TypeOnly<typeof old.createAnnotateMarkerOp>);
+use_old_FunctionDeclaration_createAnnotateMarkerOp(
+    get_current_FunctionDeclaration_createAnnotateMarkerOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createAnnotateRangeOp": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createAnnotateRangeOp():
+    TypeOnly<typeof old.createAnnotateRangeOp>;
+declare function use_current_FunctionDeclaration_createAnnotateRangeOp(
+    use: TypeOnly<typeof current.createAnnotateRangeOp>);
+use_current_FunctionDeclaration_createAnnotateRangeOp(
+    get_old_FunctionDeclaration_createAnnotateRangeOp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createAnnotateRangeOp": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createAnnotateRangeOp():
+    TypeOnly<typeof current.createAnnotateRangeOp>;
+declare function use_old_FunctionDeclaration_createAnnotateRangeOp(
+    use: TypeOnly<typeof old.createAnnotateRangeOp>);
+use_old_FunctionDeclaration_createAnnotateRangeOp(
+    get_current_FunctionDeclaration_createAnnotateRangeOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDetachedLocalReferencePosition": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createDetachedLocalReferencePosition():
+    TypeOnly<typeof old.createDetachedLocalReferencePosition>;
+declare function use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
+    use: TypeOnly<typeof current.createDetachedLocalReferencePosition>);
+use_current_FunctionDeclaration_createDetachedLocalReferencePosition(
+    get_old_FunctionDeclaration_createDetachedLocalReferencePosition());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createDetachedLocalReferencePosition": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createDetachedLocalReferencePosition():
+    TypeOnly<typeof current.createDetachedLocalReferencePosition>;
+declare function use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
+    use: TypeOnly<typeof old.createDetachedLocalReferencePosition>);
+use_old_FunctionDeclaration_createDetachedLocalReferencePosition(
+    get_current_FunctionDeclaration_createDetachedLocalReferencePosition());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createGroupOp": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createGroupOp():
+    TypeOnly<typeof old.createGroupOp>;
+declare function use_current_FunctionDeclaration_createGroupOp(
+    use: TypeOnly<typeof current.createGroupOp>);
+use_current_FunctionDeclaration_createGroupOp(
+    get_old_FunctionDeclaration_createGroupOp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createGroupOp": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createGroupOp():
+    TypeOnly<typeof current.createGroupOp>;
+declare function use_old_FunctionDeclaration_createGroupOp(
+    use: TypeOnly<typeof old.createGroupOp>);
+use_old_FunctionDeclaration_createGroupOp(
+    get_current_FunctionDeclaration_createGroupOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy():
+    TypeOnly<typeof old.createInsertOnlyAttributionPolicy>;
+declare function use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    use: TypeOnly<typeof current.createInsertOnlyAttributionPolicy>);
+use_current_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    get_old_FunctionDeclaration_createInsertOnlyAttributionPolicy());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertOnlyAttributionPolicy": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy():
+    TypeOnly<typeof current.createInsertOnlyAttributionPolicy>;
+declare function use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    use: TypeOnly<typeof old.createInsertOnlyAttributionPolicy>);
+use_old_FunctionDeclaration_createInsertOnlyAttributionPolicy(
+    get_current_FunctionDeclaration_createInsertOnlyAttributionPolicy());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertOp": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createInsertOp():
+    TypeOnly<typeof old.createInsertOp>;
+declare function use_current_FunctionDeclaration_createInsertOp(
+    use: TypeOnly<typeof current.createInsertOp>);
+use_current_FunctionDeclaration_createInsertOp(
+    get_old_FunctionDeclaration_createInsertOp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertOp": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createInsertOp():
+    TypeOnly<typeof current.createInsertOp>;
+declare function use_old_FunctionDeclaration_createInsertOp(
+    use: TypeOnly<typeof old.createInsertOp>);
+use_old_FunctionDeclaration_createInsertOp(
+    get_current_FunctionDeclaration_createInsertOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertSegmentOp": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createInsertSegmentOp():
+    TypeOnly<typeof old.createInsertSegmentOp>;
+declare function use_current_FunctionDeclaration_createInsertSegmentOp(
+    use: TypeOnly<typeof current.createInsertSegmentOp>);
+use_current_FunctionDeclaration_createInsertSegmentOp(
+    get_old_FunctionDeclaration_createInsertSegmentOp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createInsertSegmentOp": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createInsertSegmentOp():
+    TypeOnly<typeof current.createInsertSegmentOp>;
+declare function use_old_FunctionDeclaration_createInsertSegmentOp(
+    use: TypeOnly<typeof old.createInsertSegmentOp>);
+use_old_FunctionDeclaration_createInsertSegmentOp(
+    get_current_FunctionDeclaration_createInsertSegmentOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createMap": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createMap():
+    TypeOnly<typeof old.createMap>;
+declare function use_current_FunctionDeclaration_createMap(
+    use: TypeOnly<typeof current.createMap>);
+use_current_FunctionDeclaration_createMap(
+    get_old_FunctionDeclaration_createMap());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createMap": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createMap():
+    TypeOnly<typeof current.createMap>;
+declare function use_old_FunctionDeclaration_createMap(
+    use: TypeOnly<typeof old.createMap>);
+use_old_FunctionDeclaration_createMap(
+    get_current_FunctionDeclaration_createMap());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createRemoveRangeOp": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createRemoveRangeOp():
+    TypeOnly<typeof old.createRemoveRangeOp>;
+declare function use_current_FunctionDeclaration_createRemoveRangeOp(
+    use: TypeOnly<typeof current.createRemoveRangeOp>);
+use_current_FunctionDeclaration_createRemoveRangeOp(
+    get_old_FunctionDeclaration_createRemoveRangeOp());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createRemoveRangeOp": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createRemoveRangeOp():
+    TypeOnly<typeof current.createRemoveRangeOp>;
+declare function use_old_FunctionDeclaration_createRemoveRangeOp(
+    use: TypeOnly<typeof old.createRemoveRangeOp>);
+use_old_FunctionDeclaration_createRemoveRangeOp(
+    get_current_FunctionDeclaration_createRemoveRangeOp());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_debugMarkerToString": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_debugMarkerToString():
+    TypeOnly<typeof old.debugMarkerToString>;
+declare function use_current_FunctionDeclaration_debugMarkerToString(
+    use: TypeOnly<typeof current.debugMarkerToString>);
+use_current_FunctionDeclaration_debugMarkerToString(
+    get_old_FunctionDeclaration_debugMarkerToString());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_debugMarkerToString": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_debugMarkerToString():
+    TypeOnly<typeof current.debugMarkerToString>;
+declare function use_old_FunctionDeclaration_debugMarkerToString(
+    use: TypeOnly<typeof old.debugMarkerToString>);
+use_old_FunctionDeclaration_debugMarkerToString(
+    get_current_FunctionDeclaration_debugMarkerToString());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_discardMergeTreeDeltaRevertible": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible():
+    TypeOnly<typeof old.discardMergeTreeDeltaRevertible>;
+declare function use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof current.discardMergeTreeDeltaRevertible>);
+use_current_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    get_old_FunctionDeclaration_discardMergeTreeDeltaRevertible());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_discardMergeTreeDeltaRevertible": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible():
+    TypeOnly<typeof current.discardMergeTreeDeltaRevertible>;
+declare function use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    use: TypeOnly<typeof old.discardMergeTreeDeltaRevertible>);
+use_old_FunctionDeclaration_discardMergeTreeDeltaRevertible(
+    get_current_FunctionDeclaration_discardMergeTreeDeltaRevertible());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_extend": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_extend():
+    TypeOnly<typeof old.extend>;
+declare function use_current_FunctionDeclaration_extend(
+    use: TypeOnly<typeof current.extend>);
+use_current_FunctionDeclaration_extend(
+    get_old_FunctionDeclaration_extend());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_extend": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_extend():
+    TypeOnly<typeof current.extend>;
+declare function use_old_FunctionDeclaration_extend(
+    use: TypeOnly<typeof old.extend>);
+use_old_FunctionDeclaration_extend(
+    get_current_FunctionDeclaration_extend());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_extendIfUndefined": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_extendIfUndefined():
+    TypeOnly<typeof old.extendIfUndefined>;
+declare function use_current_FunctionDeclaration_extendIfUndefined(
+    use: TypeOnly<typeof current.extendIfUndefined>);
+use_current_FunctionDeclaration_extendIfUndefined(
+    get_old_FunctionDeclaration_extendIfUndefined());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_extendIfUndefined": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_extendIfUndefined():
+    TypeOnly<typeof current.extendIfUndefined>;
+declare function use_old_FunctionDeclaration_extendIfUndefined(
+    use: TypeOnly<typeof old.extendIfUndefined>);
+use_old_FunctionDeclaration_extendIfUndefined(
+    get_current_FunctionDeclaration_extendIfUndefined());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_internedSpaces": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_internedSpaces():
+    TypeOnly<typeof old.internedSpaces>;
+declare function use_current_FunctionDeclaration_internedSpaces(
+    use: TypeOnly<typeof current.internedSpaces>);
+use_current_FunctionDeclaration_internedSpaces(
+    get_old_FunctionDeclaration_internedSpaces());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_internedSpaces": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_internedSpaces():
+    TypeOnly<typeof current.internedSpaces>;
+declare function use_old_FunctionDeclaration_internedSpaces(
+    use: TypeOnly<typeof old.internedSpaces>);
+use_old_FunctionDeclaration_internedSpaces(
+    get_current_FunctionDeclaration_internedSpaces());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_matchProperties": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_matchProperties():
+    TypeOnly<typeof old.matchProperties>;
+declare function use_current_FunctionDeclaration_matchProperties(
+    use: TypeOnly<typeof current.matchProperties>);
+use_current_FunctionDeclaration_matchProperties(
+    get_old_FunctionDeclaration_matchProperties());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_matchProperties": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_matchProperties():
+    TypeOnly<typeof current.matchProperties>;
+declare function use_old_FunctionDeclaration_matchProperties(
+    use: TypeOnly<typeof old.matchProperties>);
+use_old_FunctionDeclaration_matchProperties(
+    get_current_FunctionDeclaration_matchProperties());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_maxReferencePosition": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_maxReferencePosition():
+    TypeOnly<typeof old.maxReferencePosition>;
+declare function use_current_FunctionDeclaration_maxReferencePosition(
+    use: TypeOnly<typeof current.maxReferencePosition>);
+use_current_FunctionDeclaration_maxReferencePosition(
+    get_old_FunctionDeclaration_maxReferencePosition());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_maxReferencePosition": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_maxReferencePosition():
+    TypeOnly<typeof current.maxReferencePosition>;
+declare function use_old_FunctionDeclaration_maxReferencePosition(
+    use: TypeOnly<typeof old.maxReferencePosition>);
+use_old_FunctionDeclaration_maxReferencePosition(
+    get_current_FunctionDeclaration_maxReferencePosition());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_minReferencePosition": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_minReferencePosition():
+    TypeOnly<typeof old.minReferencePosition>;
+declare function use_current_FunctionDeclaration_minReferencePosition(
+    use: TypeOnly<typeof current.minReferencePosition>);
+use_current_FunctionDeclaration_minReferencePosition(
+    get_old_FunctionDeclaration_minReferencePosition());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_minReferencePosition": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_minReferencePosition():
+    TypeOnly<typeof current.minReferencePosition>;
+declare function use_old_FunctionDeclaration_minReferencePosition(
+    use: TypeOnly<typeof old.minReferencePosition>);
+use_old_FunctionDeclaration_minReferencePosition(
+    get_current_FunctionDeclaration_minReferencePosition());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_ordinalToArray": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_ordinalToArray():
+    TypeOnly<typeof old.ordinalToArray>;
+declare function use_current_FunctionDeclaration_ordinalToArray(
+    use: TypeOnly<typeof current.ordinalToArray>);
+use_current_FunctionDeclaration_ordinalToArray(
+    get_old_FunctionDeclaration_ordinalToArray());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_ordinalToArray": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_ordinalToArray():
+    TypeOnly<typeof current.ordinalToArray>;
+declare function use_old_FunctionDeclaration_ordinalToArray(
+    use: TypeOnly<typeof old.ordinalToArray>);
+use_old_FunctionDeclaration_ordinalToArray(
+    get_current_FunctionDeclaration_ordinalToArray());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_refGetRangeLabels": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_refGetRangeLabels():
+    TypeOnly<typeof old.refGetRangeLabels>;
+declare function use_current_VariableDeclaration_refGetRangeLabels(
+    use: TypeOnly<typeof current.refGetRangeLabels>);
+use_current_VariableDeclaration_refGetRangeLabels(
+    get_old_VariableDeclaration_refGetRangeLabels());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_refGetRangeLabels": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_refGetRangeLabels():
+    TypeOnly<typeof current.refGetRangeLabels>;
+declare function use_old_VariableDeclaration_refGetRangeLabels(
+    use: TypeOnly<typeof old.refGetRangeLabels>);
+use_old_VariableDeclaration_refGetRangeLabels(
+    get_current_VariableDeclaration_refGetRangeLabels());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_refGetTileLabels": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_refGetTileLabels():
+    TypeOnly<typeof old.refGetTileLabels>;
+declare function use_current_VariableDeclaration_refGetTileLabels(
+    use: TypeOnly<typeof current.refGetTileLabels>);
+use_current_VariableDeclaration_refGetTileLabels(
+    get_old_VariableDeclaration_refGetTileLabels());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_refGetTileLabels": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_refGetTileLabels():
+    TypeOnly<typeof current.refGetTileLabels>;
+declare function use_old_VariableDeclaration_refGetTileLabels(
+    use: TypeOnly<typeof old.refGetTileLabels>);
+use_old_VariableDeclaration_refGetTileLabels(
+    get_current_VariableDeclaration_refGetTileLabels());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasRangeLabel": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_refHasRangeLabel():
+    TypeOnly<typeof old.refHasRangeLabel>;
+declare function use_current_FunctionDeclaration_refHasRangeLabel(
+    use: TypeOnly<typeof current.refHasRangeLabel>);
+use_current_FunctionDeclaration_refHasRangeLabel(
+    get_old_FunctionDeclaration_refHasRangeLabel());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasRangeLabel": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_refHasRangeLabel():
+    TypeOnly<typeof current.refHasRangeLabel>;
+declare function use_old_FunctionDeclaration_refHasRangeLabel(
+    use: TypeOnly<typeof old.refHasRangeLabel>);
+use_old_FunctionDeclaration_refHasRangeLabel(
+    get_current_FunctionDeclaration_refHasRangeLabel());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasRangeLabels": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_refHasRangeLabels():
+    TypeOnly<typeof old.refHasRangeLabels>;
+declare function use_current_FunctionDeclaration_refHasRangeLabels(
+    use: TypeOnly<typeof current.refHasRangeLabels>);
+use_current_FunctionDeclaration_refHasRangeLabels(
+    get_old_FunctionDeclaration_refHasRangeLabels());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasRangeLabels": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_refHasRangeLabels():
+    TypeOnly<typeof current.refHasRangeLabels>;
+declare function use_old_FunctionDeclaration_refHasRangeLabels(
+    use: TypeOnly<typeof old.refHasRangeLabels>);
+use_old_FunctionDeclaration_refHasRangeLabels(
+    get_current_FunctionDeclaration_refHasRangeLabels());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasTileLabel": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_refHasTileLabel():
+    TypeOnly<typeof old.refHasTileLabel>;
+declare function use_current_FunctionDeclaration_refHasTileLabel(
+    use: TypeOnly<typeof current.refHasTileLabel>);
+use_current_FunctionDeclaration_refHasTileLabel(
+    get_old_FunctionDeclaration_refHasTileLabel());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasTileLabel": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_refHasTileLabel():
+    TypeOnly<typeof current.refHasTileLabel>;
+declare function use_old_FunctionDeclaration_refHasTileLabel(
+    use: TypeOnly<typeof old.refHasTileLabel>);
+use_old_FunctionDeclaration_refHasTileLabel(
+    get_current_FunctionDeclaration_refHasTileLabel());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasTileLabels": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_refHasTileLabels():
+    TypeOnly<typeof old.refHasTileLabels>;
+declare function use_current_FunctionDeclaration_refHasTileLabels(
+    use: TypeOnly<typeof current.refHasTileLabels>);
+use_current_FunctionDeclaration_refHasTileLabels(
+    get_old_FunctionDeclaration_refHasTileLabels());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refHasTileLabels": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_refHasTileLabels():
+    TypeOnly<typeof current.refHasTileLabels>;
+declare function use_old_FunctionDeclaration_refHasTileLabels(
+    use: TypeOnly<typeof old.refHasTileLabels>);
+use_old_FunctionDeclaration_refHasTileLabels(
+    get_current_FunctionDeclaration_refHasTileLabels());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refTypeIncludesFlag": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_refTypeIncludesFlag():
+    TypeOnly<typeof old.refTypeIncludesFlag>;
+declare function use_current_FunctionDeclaration_refTypeIncludesFlag(
+    use: TypeOnly<typeof current.refTypeIncludesFlag>);
+use_current_FunctionDeclaration_refTypeIncludesFlag(
+    get_old_FunctionDeclaration_refTypeIncludesFlag());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_refTypeIncludesFlag": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_refTypeIncludesFlag():
+    TypeOnly<typeof current.refTypeIncludesFlag>;
+declare function use_old_FunctionDeclaration_refTypeIncludesFlag(
+    use: TypeOnly<typeof old.refTypeIncludesFlag>);
+use_old_FunctionDeclaration_refTypeIncludesFlag(
+    get_current_FunctionDeclaration_refTypeIncludesFlag());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedMarkerIdKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_reservedMarkerIdKey():
+    TypeOnly<typeof old.reservedMarkerIdKey>;
+declare function use_current_VariableDeclaration_reservedMarkerIdKey(
+    use: TypeOnly<typeof current.reservedMarkerIdKey>);
+use_current_VariableDeclaration_reservedMarkerIdKey(
+    get_old_VariableDeclaration_reservedMarkerIdKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedMarkerIdKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_reservedMarkerIdKey():
+    TypeOnly<typeof current.reservedMarkerIdKey>;
+declare function use_old_VariableDeclaration_reservedMarkerIdKey(
+    use: TypeOnly<typeof old.reservedMarkerIdKey>);
+use_old_VariableDeclaration_reservedMarkerIdKey(
+    get_current_VariableDeclaration_reservedMarkerIdKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedMarkerSimpleTypeKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_reservedMarkerSimpleTypeKey():
+    TypeOnly<typeof old.reservedMarkerSimpleTypeKey>;
+declare function use_current_VariableDeclaration_reservedMarkerSimpleTypeKey(
+    use: TypeOnly<typeof current.reservedMarkerSimpleTypeKey>);
+use_current_VariableDeclaration_reservedMarkerSimpleTypeKey(
+    get_old_VariableDeclaration_reservedMarkerSimpleTypeKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedMarkerSimpleTypeKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_reservedMarkerSimpleTypeKey():
+    TypeOnly<typeof current.reservedMarkerSimpleTypeKey>;
+declare function use_old_VariableDeclaration_reservedMarkerSimpleTypeKey(
+    use: TypeOnly<typeof old.reservedMarkerSimpleTypeKey>);
+use_old_VariableDeclaration_reservedMarkerSimpleTypeKey(
+    get_current_VariableDeclaration_reservedMarkerSimpleTypeKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedRangeLabelsKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_reservedRangeLabelsKey():
+    TypeOnly<typeof old.reservedRangeLabelsKey>;
+declare function use_current_VariableDeclaration_reservedRangeLabelsKey(
+    use: TypeOnly<typeof current.reservedRangeLabelsKey>);
+use_current_VariableDeclaration_reservedRangeLabelsKey(
+    get_old_VariableDeclaration_reservedRangeLabelsKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedRangeLabelsKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_reservedRangeLabelsKey():
+    TypeOnly<typeof current.reservedRangeLabelsKey>;
+declare function use_old_VariableDeclaration_reservedRangeLabelsKey(
+    use: TypeOnly<typeof old.reservedRangeLabelsKey>);
+use_old_VariableDeclaration_reservedRangeLabelsKey(
+    get_current_VariableDeclaration_reservedRangeLabelsKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedTileLabelsKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_reservedTileLabelsKey():
+    TypeOnly<typeof old.reservedTileLabelsKey>;
+declare function use_current_VariableDeclaration_reservedTileLabelsKey(
+    use: TypeOnly<typeof current.reservedTileLabelsKey>);
+use_current_VariableDeclaration_reservedTileLabelsKey(
+    get_old_VariableDeclaration_reservedTileLabelsKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_reservedTileLabelsKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_reservedTileLabelsKey():
+    TypeOnly<typeof current.reservedTileLabelsKey>;
+declare function use_old_VariableDeclaration_reservedTileLabelsKey(
+    use: TypeOnly<typeof old.reservedTileLabelsKey>);
+use_old_VariableDeclaration_reservedTileLabelsKey(
+    get_current_VariableDeclaration_reservedTileLabelsKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_revertMergeTreeDeltaRevertibles": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
+    TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>;
+declare function use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>);
+use_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    get_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_revertMergeTreeDeltaRevertibles": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles():
+    TypeOnly<typeof current.revertMergeTreeDeltaRevertibles>;
+declare function use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    use: TypeOnly<typeof old.revertMergeTreeDeltaRevertibles>);
+use_old_FunctionDeclaration_revertMergeTreeDeltaRevertibles(
+    get_current_FunctionDeclaration_revertMergeTreeDeltaRevertibles());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_toRemovalInfo": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_toRemovalInfo():
+    TypeOnly<typeof old.toRemovalInfo>;
+declare function use_current_FunctionDeclaration_toRemovalInfo(
+    use: TypeOnly<typeof current.toRemovalInfo>);
+use_current_FunctionDeclaration_toRemovalInfo(
+    get_old_FunctionDeclaration_toRemovalInfo());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_toRemovalInfo": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_toRemovalInfo():
+    TypeOnly<typeof current.toRemovalInfo>;
+declare function use_old_FunctionDeclaration_toRemovalInfo(
+    use: TypeOnly<typeof old.toRemovalInfo>);
+use_old_FunctionDeclaration_toRemovalInfo(
+    get_current_FunctionDeclaration_toRemovalInfo());
