@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-web-cache",
-	"version": "2.0.0-internal.3.2.0",
+	"version": "2.0.0-internal.3.3.0",
 	"description": "Implementation of the driver caching API for a web browser",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -35,19 +35,19 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "jest",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --generate --dir .",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
-		"@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/telemetry-utils": ">=2.0.0-internal.3.2.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/odsp-driver-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/telemetry-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"idb": "^6.1.2"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.10.0-132908",
+		"@fluid-tools/build-cli": "0.11.0-134585",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.10.0-132908",
+		"@fluidframework/build-tools": "0.11.0-134585",
 		"@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@2.0.0-internal.3.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.22.2",

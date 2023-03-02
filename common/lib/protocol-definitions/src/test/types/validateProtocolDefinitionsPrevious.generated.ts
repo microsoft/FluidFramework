@@ -1024,30 +1024,6 @@ use_old_InterfaceDeclaration_ISnapshotTreeEx(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsoDate": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_IsoDate():
-    TypeOnly<old.IsoDate>;
-declare function use_current_TypeAliasDeclaration_IsoDate(
-    use: TypeOnly<current.IsoDate>);
-use_current_TypeAliasDeclaration_IsoDate(
-    get_old_TypeAliasDeclaration_IsoDate());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IsoDate": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_IsoDate():
-    TypeOnly<current.IsoDate>;
-declare function use_old_TypeAliasDeclaration_IsoDate(
-    use: TypeOnly<old.IsoDate>);
-use_old_TypeAliasDeclaration_IsoDate(
-    get_current_TypeAliasDeclaration_IsoDate());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ISummaryAck": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ISummaryAck():
@@ -1476,6 +1452,30 @@ declare function use_old_InterfaceDeclaration_IVersion(
     use: TypeOnly<old.IVersion>);
 use_old_InterfaceDeclaration_IVersion(
     get_current_InterfaceDeclaration_IVersion());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IsoDate": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_IsoDate():
+    TypeOnly<old.IsoDate>;
+declare function use_current_TypeAliasDeclaration_IsoDate(
+    use: TypeOnly<current.IsoDate>);
+use_current_TypeAliasDeclaration_IsoDate(
+    get_old_TypeAliasDeclaration_IsoDate());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_IsoDate": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_IsoDate():
+    TypeOnly<current.IsoDate>;
+declare function use_old_TypeAliasDeclaration_IsoDate(
+    use: TypeOnly<old.IsoDate>);
+use_old_TypeAliasDeclaration_IsoDate(
+    get_current_TypeAliasDeclaration_IsoDate());
 
 /*
 * Validate forward compat by using old type in place of current type

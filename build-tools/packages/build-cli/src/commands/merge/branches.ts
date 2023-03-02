@@ -12,7 +12,7 @@ import { createPullRequest, getUserAccess, pullRequestExists, pullRequestInfo } 
  * It looks for the last common commit between two branches and computes the remaining commits to be merged.
  * Later, it creates a pull request based on the batch size passed.
  */
-export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
+export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	static description = "Sync branches depending on the batch size passed";
 
 	static flags = {
@@ -45,7 +45,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch.flags> {
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 
 		const context = await this.getContext();
 		const gitRepo = context.gitRepo;

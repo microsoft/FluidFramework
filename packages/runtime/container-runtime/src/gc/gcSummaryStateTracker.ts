@@ -63,8 +63,6 @@ export class GCSummaryStateTracker {
 	constructor(
 		// Tells whether GC should run or not.
 		private readonly shouldRunGC: boolean,
-		// Tells whether GC state should be tracked across summaries or not.
-		private readonly trackGCState: boolean,
 		// Tells whether tombstone mode is enabled or not.
 		private readonly tombstoneMode: boolean,
 		private readonly mc: MonitoringContext,
@@ -159,38 +157,37 @@ export class GCSummaryStateTracker {
 		 * Otherwise, write the GC summary tree. In the tree, for each of these that changed, write a summary blob and
 		 * for each of these that did not change, write a summary handle.
 		 */
-		if (this.trackGCState) {
-			this.pendingSummaryData = {
+		this.pendingSummaryData = {
+			serializedGCState,
+			serializedTombstones,
+			serializedDeletedNodes,
+		};
+
+		if (trackState && !fullTree && this.latestSummaryData !== undefined) {
+			// If nothing changed since last summary, send a summary handle for the entire GC data.
+			if (
+				this.latestSummaryData.serializedGCState === serializedGCState &&
+				this.latestSummaryData.serializedTombstones === serializedTombstones
+			) {
+				const stats = mergeStats();
+				stats.handleNodeCount++;
+				return {
+					summary: {
+						type: SummaryType.Handle,
+						handle: `/${gcTreeKey}`,
+						handleType: SummaryType.Tree,
+					},
+					stats,
+				};
+			}
+
+			// If some state changed, build a GC summary tree.
+			return this.buildGCSummaryTree(
 				serializedGCState,
 				serializedTombstones,
 				serializedDeletedNodes,
-			};
-			if (trackState && !fullTree && this.latestSummaryData !== undefined) {
-				// If nothing changed since last summary, send a summary handle for the entire GC data.
-				if (
-					this.latestSummaryData.serializedGCState === serializedGCState &&
-					this.latestSummaryData.serializedTombstones === serializedTombstones
-				) {
-					const stats = mergeStats();
-					stats.handleNodeCount++;
-					return {
-						summary: {
-							type: SummaryType.Handle,
-							handle: `/${gcTreeKey}`,
-							handleType: SummaryType.Tree,
-						},
-						stats,
-					};
-				}
-
-				// If some state changed, build a GC summary tree.
-				return this.buildGCSummaryTree(
-					serializedGCState,
-					serializedTombstones,
-					serializedDeletedNodes,
-					true /* trackState */,
-				);
-			}
+				true /* trackState */,
+			);
 		}
 		// If not tracking GC state, build a GC summary tree without any summary handles.
 		return this.buildGCSummaryTree(
@@ -290,10 +287,8 @@ export class GCSummaryStateTracker {
 		// Update latest state from pending.
 		if (result.wasSummaryTracked) {
 			this.latestSummaryGCVersion = this.currentGCVersion;
-			if (this.trackGCState) {
-				this.latestSummaryData = this.pendingSummaryData;
-				this.pendingSummaryData = undefined;
-			}
+			this.latestSummaryData = this.pendingSummaryData;
+			this.pendingSummaryData = undefined;
 			return undefined;
 		}
 
@@ -328,12 +323,10 @@ export class GCSummaryStateTracker {
 		}
 
 		// If tracking state across summaries, update latest summary data from the snapshot's GC data.
-		if (this.trackGCState) {
-			this.latestSummaryData = {
-				serializedGCState: JSON.stringify(generateSortedGCState(gcSnapshotData.gcState)),
-				serializedTombstones: JSON.stringify(gcSnapshotData.tombstones),
-				serializedDeletedNodes: JSON.stringify(gcSnapshotData.deletedNodes),
-			};
-		}
+		this.latestSummaryData = {
+			serializedGCState: JSON.stringify(generateSortedGCState(gcSnapshotData.gcState)),
+			serializedTombstones: JSON.stringify(gcSnapshotData.tombstones),
+			serializedDeletedNodes: JSON.stringify(gcSnapshotData.deletedNodes),
+		};
 	}
 }

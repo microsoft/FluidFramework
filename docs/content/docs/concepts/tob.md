@@ -26,10 +26,10 @@ no new changes to the data structures, all clients reach an identical state in a
 Fluid guarantees eventual consistency via total order broadcast. That is, when a DDS is changed locally by a client,
 that change -- that is, the operation -- is first sent to the Fluid service, which does three things:
 
-* Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order
+*   Assigns a monotonically increasing sequence number to the operation; this is the "total order" part of total order
   broadcast.
-* Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast.
-* Stores the operation's data (see [data persistence](#data-persistence)).
+*   Broadcasts the operation to all other connected clients; this is the "broadcast" part of total order broadcast.
+*   Stores the operation's data (see [data persistence](#data-persistence)).
 
 This means that each client receives every operation relayed from the server with enough information to apply them in
 the correct order. The clients can then apply the operations to their local state -- which means that each client will
@@ -39,8 +39,8 @@ eventually be consistent with the client that originated the change.
 ## Operations
 
 Fluid is also efficient when communicating with the server. When you change a data structure, Fluid doesn't send the
-whole data structure to the server. Rather, it sends operations. For example, consider the [SharedSequence][] data
-structure. When a client inserts, appends, or deletes items in the sequence, Fluid sends the server the operation that
+whole data structure to the server. Rather, it sends operations. For example, consider the [SharedString][] data
+structure. When a client inserts, appends, or deletes items in the string, Fluid sends the server the operation that
 was performed and the data that was inserted/appended/etc. When the Fluid service broadcasts the operation to all the
 other connected clients, it again sends only the operation itself, not the full data structure. This efficiency in
 bytes-over-wire helps both performance and bandwidth.
@@ -85,13 +85,14 @@ Data Objects' data structures will be summarized.
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 

@@ -16,78 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_assertOdspEndpoint": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_assertOdspEndpoint():
-    TypeOnly<typeof old.assertOdspEndpoint>;
-declare function use_current_FunctionDeclaration_assertOdspEndpoint(
-    use: TypeOnly<typeof current.assertOdspEndpoint>);
-use_current_FunctionDeclaration_assertOdspEndpoint(
-    get_old_FunctionDeclaration_assertOdspEndpoint());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_assertOdspEndpoint": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_assertOdspEndpoint():
-    TypeOnly<typeof current.assertOdspEndpoint>;
-declare function use_old_FunctionDeclaration_assertOdspEndpoint(
-    use: TypeOnly<typeof old.assertOdspEndpoint>);
-use_old_FunctionDeclaration_assertOdspEndpoint(
-    get_current_FunctionDeclaration_assertOdspEndpoint());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_assertRouterliciousEndpoint": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_assertRouterliciousEndpoint():
-    TypeOnly<typeof old.assertRouterliciousEndpoint>;
-declare function use_current_FunctionDeclaration_assertRouterliciousEndpoint(
-    use: TypeOnly<typeof current.assertRouterliciousEndpoint>);
-use_current_FunctionDeclaration_assertRouterliciousEndpoint(
-    get_old_FunctionDeclaration_assertRouterliciousEndpoint());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_assertRouterliciousEndpoint": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_assertRouterliciousEndpoint():
-    TypeOnly<typeof current.assertRouterliciousEndpoint>;
-declare function use_old_FunctionDeclaration_assertRouterliciousEndpoint(
-    use: TypeOnly<typeof old.assertRouterliciousEndpoint>);
-use_old_FunctionDeclaration_assertRouterliciousEndpoint(
-    get_current_FunctionDeclaration_assertRouterliciousEndpoint());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createFluidTestDriver": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createFluidTestDriver():
-    TypeOnly<typeof old.createFluidTestDriver>;
-declare function use_current_FunctionDeclaration_createFluidTestDriver(
-    use: TypeOnly<typeof current.createFluidTestDriver>);
-use_current_FunctionDeclaration_createFluidTestDriver(
-    get_old_FunctionDeclaration_createFluidTestDriver());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createFluidTestDriver": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createFluidTestDriver():
-    TypeOnly<typeof current.createFluidTestDriver>;
-declare function use_old_FunctionDeclaration_createFluidTestDriver(
-    use: TypeOnly<typeof old.createFluidTestDriver>);
-use_old_FunctionDeclaration_createFluidTestDriver(
-    get_current_FunctionDeclaration_createFluidTestDriver());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_CreateFromEnvConfigParam": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_CreateFromEnvConfigParam():
@@ -180,30 +108,6 @@ declare function use_old_InterfaceDeclaration_FluidTestDriverConfig(
     use: TypeOnly<old.FluidTestDriverConfig>);
 use_old_InterfaceDeclaration_FluidTestDriverConfig(
     get_current_InterfaceDeclaration_FluidTestDriverConfig());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_generateOdspHostStoragePolicy": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_generateOdspHostStoragePolicy():
-    TypeOnly<typeof old.generateOdspHostStoragePolicy>;
-declare function use_current_VariableDeclaration_generateOdspHostStoragePolicy(
-    use: TypeOnly<typeof current.generateOdspHostStoragePolicy>);
-use_current_VariableDeclaration_generateOdspHostStoragePolicy(
-    get_old_VariableDeclaration_generateOdspHostStoragePolicy());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_generateOdspHostStoragePolicy": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_generateOdspHostStoragePolicy():
-    TypeOnly<typeof current.generateOdspHostStoragePolicy>;
-declare function use_old_VariableDeclaration_generateOdspHostStoragePolicy(
-    use: TypeOnly<typeof old.generateOdspHostStoragePolicy>);
-use_old_VariableDeclaration_generateOdspHostStoragePolicy(
-    get_current_VariableDeclaration_generateOdspHostStoragePolicy());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -444,3 +348,99 @@ declare function use_old_ClassDeclaration_TinyliciousTestDriver(
     use: TypeOnly<old.TinyliciousTestDriver>);
 use_old_ClassDeclaration_TinyliciousTestDriver(
     get_current_ClassDeclaration_TinyliciousTestDriver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_assertOdspEndpoint": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_assertOdspEndpoint():
+    TypeOnly<typeof old.assertOdspEndpoint>;
+declare function use_current_FunctionDeclaration_assertOdspEndpoint(
+    use: TypeOnly<typeof current.assertOdspEndpoint>);
+use_current_FunctionDeclaration_assertOdspEndpoint(
+    get_old_FunctionDeclaration_assertOdspEndpoint());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_assertOdspEndpoint": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_assertOdspEndpoint():
+    TypeOnly<typeof current.assertOdspEndpoint>;
+declare function use_old_FunctionDeclaration_assertOdspEndpoint(
+    use: TypeOnly<typeof old.assertOdspEndpoint>);
+use_old_FunctionDeclaration_assertOdspEndpoint(
+    get_current_FunctionDeclaration_assertOdspEndpoint());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_assertRouterliciousEndpoint": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_assertRouterliciousEndpoint():
+    TypeOnly<typeof old.assertRouterliciousEndpoint>;
+declare function use_current_FunctionDeclaration_assertRouterliciousEndpoint(
+    use: TypeOnly<typeof current.assertRouterliciousEndpoint>);
+use_current_FunctionDeclaration_assertRouterliciousEndpoint(
+    get_old_FunctionDeclaration_assertRouterliciousEndpoint());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_assertRouterliciousEndpoint": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_assertRouterliciousEndpoint():
+    TypeOnly<typeof current.assertRouterliciousEndpoint>;
+declare function use_old_FunctionDeclaration_assertRouterliciousEndpoint(
+    use: TypeOnly<typeof old.assertRouterliciousEndpoint>);
+use_old_FunctionDeclaration_assertRouterliciousEndpoint(
+    get_current_FunctionDeclaration_assertRouterliciousEndpoint());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createFluidTestDriver": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createFluidTestDriver():
+    TypeOnly<typeof old.createFluidTestDriver>;
+declare function use_current_FunctionDeclaration_createFluidTestDriver(
+    use: TypeOnly<typeof current.createFluidTestDriver>);
+use_current_FunctionDeclaration_createFluidTestDriver(
+    get_old_FunctionDeclaration_createFluidTestDriver());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createFluidTestDriver": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createFluidTestDriver():
+    TypeOnly<typeof current.createFluidTestDriver>;
+declare function use_old_FunctionDeclaration_createFluidTestDriver(
+    use: TypeOnly<typeof old.createFluidTestDriver>);
+use_old_FunctionDeclaration_createFluidTestDriver(
+    get_current_FunctionDeclaration_createFluidTestDriver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_generateOdspHostStoragePolicy": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_generateOdspHostStoragePolicy():
+    TypeOnly<typeof old.generateOdspHostStoragePolicy>;
+declare function use_current_VariableDeclaration_generateOdspHostStoragePolicy(
+    use: TypeOnly<typeof current.generateOdspHostStoragePolicy>);
+use_current_VariableDeclaration_generateOdspHostStoragePolicy(
+    get_old_VariableDeclaration_generateOdspHostStoragePolicy());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_generateOdspHostStoragePolicy": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_generateOdspHostStoragePolicy():
+    TypeOnly<typeof current.generateOdspHostStoragePolicy>;
+declare function use_old_VariableDeclaration_generateOdspHostStoragePolicy(
+    use: TypeOnly<typeof old.generateOdspHostStoragePolicy>);
+use_old_VariableDeclaration_generateOdspHostStoragePolicy(
+    get_current_VariableDeclaration_generateOdspHostStoragePolicy());
