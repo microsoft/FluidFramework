@@ -44,15 +44,3 @@ export interface DevToolsInitAcknowledgement extends IDebuggerMessage {
 	type: typeof devToolsInitAcknowledgementType;
 	data: undefined;
 }
-
-/**
- * Form of message response used in message passing using chrome.runtime, where
- * direct responses are supported.
- */
-export interface MessageResponse {
-	/**
-	 * Whether or not the message was processed correctly.
-	 * `false` likely indicates an error.
-	 */
-	success: boolean;
-}
