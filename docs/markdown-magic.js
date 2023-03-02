@@ -4,7 +4,7 @@
  */
 
 const chalk = require("chalk");
-const markdownMagic = require("@tylerbu/markdown-magic");
+const markdownMagic = require("markdown-magic");
 const process = require("process");
 
 const config = require("./md-magic.config.js");

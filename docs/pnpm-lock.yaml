@@ -1,72 +1,74 @@
 lockfileVersion: 5.4
 
-specifiers:
-  '@fluid-tools/api-markdown-documenter': ^0.6.0
-  '@microsoft/api-extractor-model': ^7.23.0
-  '@tylerbu/dl-cli': 1.1.2-tylerbu-0
-  '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
-  '@vscode/codicons': 0.0.28
-  '@vscode/ripgrep': ^1.14.2
-  broken-link-checker: ^0.7.8
-  chalk: ^2.4.2
-  concurrently: ^6.5.1
-  copyfiles: ^2.4.1
-  cpy: ^8.1.2
-  cross-env: ^7.0.3
-  deepdash: ^5.3.9
-  fs-extra: ^10.1.0
-  glob: ^7.2.3
-  hugo-extended: ^0.93.3
-  linkcheck-bin: 3.0.0-0
-  markdown-magic-package-json: ^2.0.2
-  markdown-magic-package-scripts: ^1.2.2
-  markdown-magic-template: ^1.0.1
-  markdownlint-cli2: ^0.4.0
-  markdownlint-rule-emphasis-style: ^1.0.1
-  markdownlint-rule-github-internal-links: ^0.0.2
-  markdownlint-rule-helpers: ^0.15.0
-  node-fetch: ^2.6.9
-  pm2: ^5.2.2
-  replace-in-file: ^6.3.5
-  rimraf: ^2.7.1
-  run-script-os: ^1.1.6
-  serve: ^14.2.0
-  shelljs: ^0.8.5
-  start-server-and-test: ^1.15.4
+importers:
 
-dependencies:
-  '@fluid-tools/api-markdown-documenter': 0.6.0
-  '@microsoft/api-extractor-model': 7.26.4
-  '@tylerbu/dl-cli': 1.1.2-tylerbu-0
-  '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
-  '@vscode/codicons': 0.0.28
-  '@vscode/ripgrep': 1.14.2
-  broken-link-checker: 0.7.8
-  chalk: 2.4.2
-  concurrently: 6.5.1
-  copyfiles: 2.4.1
-  cpy: 8.1.2
-  cross-env: 7.0.3
-  deepdash: 5.3.9
-  fs-extra: 10.1.0
-  glob: 7.2.3
-  hugo-extended: 0.93.3
-  linkcheck-bin: 3.0.0-0
-  markdown-magic-package-json: 2.0.2
-  markdown-magic-package-scripts: 1.2.2
-  markdown-magic-template: 1.0.1
-  markdownlint-cli2: 0.4.0
-  markdownlint-rule-emphasis-style: 1.0.1
-  markdownlint-rule-github-internal-links: 0.0.2
-  markdownlint-rule-helpers: 0.15.0
-  node-fetch: 2.6.9
-  pm2: 5.2.2
-  replace-in-file: 6.3.5
-  rimraf: 2.7.1
-  run-script-os: 1.1.6
-  serve: 14.2.0
-  shelljs: 0.8.5
-  start-server-and-test: 1.15.4
+  .:
+    specifiers:
+      '@fluid-tools/api-markdown-documenter': ^0.6.0
+      '@microsoft/api-extractor-model': ^7.23.0
+      '@tylerbu/dl-cli': 1.1.2-tylerbu-0
+      '@vscode/codicons': 0.0.28
+      '@vscode/ripgrep': ^1.14.2
+      broken-link-checker: ^0.7.8
+      chalk: ^2.4.2
+      concurrently: ^6.5.1
+      copyfiles: ^2.4.1
+      cpy: ^8.1.2
+      cross-env: ^7.0.3
+      deepdash: ^5.3.9
+      fs-extra: ^10.1.0
+      glob: ^7.2.3
+      hugo-extended: ^0.93.3
+      linkcheck-bin: 3.0.0-0
+      markdown-magic: npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1
+      markdown-magic-package-json: ^2.0.2
+      markdown-magic-package-scripts: ^1.2.2
+      markdown-magic-template: ^1.0.1
+      markdownlint-cli2: ^0.4.0
+      markdownlint-rule-emphasis-style: ^1.0.1
+      markdownlint-rule-github-internal-links: ^0.0.2
+      markdownlint-rule-helpers: ^0.15.0
+      node-fetch: ^2.6.9
+      pm2: ^5.2.2
+      replace-in-file: ^6.3.5
+      rimraf: ^2.7.1
+      run-script-os: ^1.1.6
+      serve: ^14.2.0
+      shelljs: ^0.8.5
+      start-server-and-test: ^1.15.4
+    dependencies:
+      '@fluid-tools/api-markdown-documenter': 0.6.0
+      '@microsoft/api-extractor-model': 7.26.4
+      '@tylerbu/dl-cli': 1.1.2-tylerbu-0
+      '@vscode/codicons': 0.0.28
+      '@vscode/ripgrep': 1.14.2
+      broken-link-checker: 0.7.8
+      chalk: 2.4.2
+      concurrently: 6.5.1
+      copyfiles: 2.4.1
+      cpy: 8.1.2
+      cross-env: 7.0.3
+      deepdash: 5.3.9
+      fs-extra: 10.1.0
+      glob: 7.2.3
+      hugo-extended: 0.93.3
+      linkcheck-bin: 3.0.0-0
+      markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
+      markdown-magic-package-json: 2.0.2
+      markdown-magic-package-scripts: 1.2.2_bfrwj6ys6wock6p526xv5vf35u
+      markdown-magic-template: 1.0.1_bfrwj6ys6wock6p526xv5vf35u
+      markdownlint-cli2: 0.4.0
+      markdownlint-rule-emphasis-style: 1.0.1
+      markdownlint-rule-github-internal-links: 0.0.2
+      markdownlint-rule-helpers: 0.15.0
+      node-fetch: 2.6.9
+      pm2: 5.2.2
+      replace-in-file: 6.3.5
+      rimraf: 2.7.1
+      run-script-os: 1.1.6
+      serve: 14.2.0
+      shelljs: 0.8.5
+      start-server-and-test: 1.15.4
 
 packages:
 
@@ -3505,21 +3507,29 @@ packages:
       findup: 0.1.5
     dev: false
 
-  /markdown-magic-package-scripts/1.2.2:
+  /markdown-magic-package-scripts/1.2.2_bfrwj6ys6wock6p526xv5vf35u:
     resolution: {integrity: sha512-dlCojsiJLV9BcL8ar03qycI0H5quM47Ei+mh14It0dTYhLAoH8B/91J0/pLDX3Wba9wTkPCbEKzNVvV8ea0WlQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       findup: 0.1.5
+      markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
       sort-scripts: 1.0.1
     dev: false
 
-  /markdown-magic-template/1.0.1:
+  /markdown-magic-template/1.0.1_bfrwj6ys6wock6p526xv5vf35u:
     resolution: {integrity: sha512-eoYa+jZHd7TIijM0xuBJWC7rEF75OgFnN0/cwNDbLsmeYCAprR5x0EvZFaHVl2deJN+ziBN3rQ9/m/TD7n4bAQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       lodash.template: 4.5.0
+      markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
     dev: false
 
   /markdown-table/2.0.0:
