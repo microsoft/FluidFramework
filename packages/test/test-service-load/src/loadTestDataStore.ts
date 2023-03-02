@@ -573,7 +573,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			config.testConfig.content?.useVariableOpSize === true
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
-		const largeOpRate = Math.max((config.testConfig.content?.largeOpRate ?? 1) / clientSendCount, 1);
+		const largeOpRate = Math.max(
+			(config.testConfig.content?.largeOpRate ?? 1) / clientSendCount,
+			1,
+		);
 		// To avoid having all clients send their large payloads at roughly the same time
 		const largeOpJitter = Math.floor(Math.random() * largeOpRate);
 		// To avoid growing the file size unnecessarily, not all clients should be sending large ops
