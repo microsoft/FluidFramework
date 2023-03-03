@@ -48,7 +48,7 @@ import {
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 //
-// TODO: Needs to be replaced with version from common-utils
+// #ADO 3585: TODO: Use version in common-utils instead
 //
 export async function scheduleIdleTask<T>(
 	callback: (deadline: IdleDeadline) => T,
