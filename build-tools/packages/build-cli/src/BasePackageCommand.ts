@@ -155,7 +155,7 @@ export abstract class PackageCommand<
 	}
 }
 
-function scopesToPrefix(scopes: undefined | string[]): string[] | undefined {
+function scopesToPrefix(scopes: string[] | undefined): string[] | undefined {
 	return scopes === undefined ? undefined : scopes.map((s) => `${s}/`);
 }
 
