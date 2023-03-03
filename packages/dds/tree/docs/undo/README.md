@@ -174,7 +174,8 @@ This may need to be characterized as a combination of input context regions and 
 Here we detail the vision for the first implementation of undo.
 
 This first version aims to achieve some basic undo functionality with a minimum amount of code changes and complexity.
-To that end, we mostly reuse the existing code paths for changesets by always sending concrete undos over the wire.
+To that end, we mostly reuse the existing code paths for changesets by always sending
+[concrete undos](#abstract-vs-concrete-undo-messages) over the wire.
 The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
 
@@ -193,7 +194,7 @@ This could lead to some data loss in scenarios where the change to be undone del
 
 In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
 To that end, we need to maintain a tree of undoable commits.
-That tree is a sparse copy of the commit tree maintained by the `EditManager` for branch management.
+That tree is a sparse copy of the commit tree maintained by `EditManager` and `Checkout`s for branch management.
 
 The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
 Each branch however only ever sees a single spine of this tree, which therefore looks like a linked-list to said branch.
@@ -201,7 +202,6 @@ Each branch however only ever sees a single spine of this tree, which therefore 
 The tree is sparse because it does **_not_** contain the following kinds of edits:
 
 -   Edits authored by other clients (this is only a concern for the part of the tree that represents the trunk).
--   Edit authored on other branches.
 -   Undo edits.
 
 Note that some of these edits in the tree may be part of the trunk while others may be on a branch.
@@ -218,14 +218,12 @@ When a new edit is made by the local client, one of two things must happen:
 
 #### Forking
 
-When a branch is forked
-(whether from the trunk or an existing branch)
-the new branch can simply obtain the head undoable commit pointer from the parent branch.
+When a branch is forked, the new branch can simply obtain the head undoable commit pointer from the parent branch.
 This helps keep forking cheap.
 
 #### Pulling
 
-When a branch is pulled, it must re-attach whatever undoable commits it has to the head of undo list maintained by the parent branch.
+When a branch is pulled, it must re-attach whatever undoable commits it has to the head of the undo list maintained by the parent branch.
 This can be done by finding the lowest common ancestor in between the two branches,
 and attaching to the tip of the parent branch all of the commits on the child branch that lie under the common ancestor.
 
