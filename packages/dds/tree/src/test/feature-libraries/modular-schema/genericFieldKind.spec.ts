@@ -13,6 +13,7 @@ import {
 	GenericChangeset,
 	genericFieldKind,
 	IdAllocator,
+	CrossFieldManager,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -143,10 +144,9 @@ const childDecoder = (nodeChange: JsonCompatibleReadOnly): NodeChangeset => {
 	return nodeChangeFromValueChange(valueChange);
 };
 
-const crossFieldManager = {
+const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
 	getOrCreate: unexpectedDelegate,
-	consume: unexpectedDelegate,
 };
 
 describe("Generic FieldKind", () => {

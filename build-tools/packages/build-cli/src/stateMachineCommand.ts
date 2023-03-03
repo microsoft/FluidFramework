@@ -2,12 +2,17 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Flags } from "@oclif/core";
+import { Command, Flags, Interfaces } from "@oclif/core";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
 import { BaseCommand } from "./base";
 import { StateHandler } from "./handlers";
+
+// type Flags<T extends typeof Command> = Interfaces.InferredFlags<
+// 	typeof StateMachineCommand["baseFlags"] & T["flags"]
+// >;
+// type Args<T extends typeof BaseCommand> = Interfaces.InferredArgs<T["args"]>;
 
 /**
  * A base CLI command that uses an internal state machine to govern its behavior. Subclasses must provide a state
@@ -25,11 +30,8 @@ import { StateHandler } from "./handlers";
  * The command also provides a `state` flag that can be used to initialize the state machine to a specific state. This
  * is intended for testing.
  */
-export abstract class StateMachineCommand<
-	T extends typeof StateMachineCommand.flags,
-> extends BaseCommand<T> {
+export abstract class StateMachineCommand<T extends typeof Command> extends BaseCommand<T> {
 	static flags = {
-		...BaseCommand.flags,
 		// Test mode flags
 		testMode: Flags.boolean({
 			default: false,
@@ -93,7 +95,7 @@ export abstract class StateMachineCommand<
 	 * of their `run` method.
 	 */
 	protected async stateLoop(): Promise<void> {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 
 		if (flags.testMode === true) {
 			const machineStates = this.machine.states();
@@ -105,7 +107,7 @@ export abstract class StateMachineCommand<
 				const handled = await this.handler?.handleState(
 					flags.state,
 					this.machine,
-					this.processedFlags.testMode,
+					flags.testMode,
 					this.logger,
 					this.data,
 				);
@@ -125,7 +127,7 @@ export abstract class StateMachineCommand<
 				const handled = await this.handler?.handleState(
 					state,
 					this.machine,
-					this.processedFlags.testMode,
+					flags.testMode,
 					this.logger,
 					this.data,
 				);

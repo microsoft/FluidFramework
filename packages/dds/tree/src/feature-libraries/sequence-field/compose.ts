@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { clone, fail } from "../../util";
+import { fail } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
@@ -21,6 +21,7 @@ import {
 	InputSpanningMark,
 	ObjectMark,
 	Reattach,
+	Skip,
 } from "./format";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
@@ -41,6 +42,7 @@ import {
 	isBlockedReattach,
 	getOffsetAtRevision,
 	isObjMark,
+	cloneMark,
 } from "./utils";
 
 /**
@@ -221,7 +223,7 @@ function composeMarks<TNodeChange>(
 				case "Delete": {
 					// For now the deletion obliterates all other modifications.
 					// In the long run we want to preserve them.
-					return clone(composeMark(newMark, newRev, composeChild));
+					return composeMark(newMark, newRev, composeChild);
 				}
 				case "MoveOut":
 				case "ReturnFrom": {
@@ -434,7 +436,7 @@ function composeChildChanges<TNodeChange>(
 
 function composeWithBaseChildChanges<
 	TNodeChange,
-	TMark extends InputSpanningMark<TNodeChange> &
+	TMark extends Exclude<InputSpanningMark<TNodeChange>, Skip> &
 		ObjectMark<TNodeChange> &
 		HasChanges<TNodeChange> &
 		HasRevisionTag,
@@ -451,7 +453,7 @@ function composeWithBaseChildChanges<
 		composeChild,
 	);
 
-	const cloned = clone(newMark);
+	const cloned = cloneMark(newMark);
 	if (newRevision !== undefined && cloned.type !== "Modify") {
 		cloned.revision = newRevision;
 	}
@@ -494,7 +496,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		return mark;
 	}
 
-	const cloned = clone(mark);
+	const cloned = cloneMark(mark);
 	assert(!isSkipMark(cloned), 0x4de /* Cloned should be same type as input mark */);
 	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
 		cloned.revision = revision;

@@ -5,6 +5,7 @@
 ```ts
 
 import { ContainerMetadata } from '@fluid-tools/client-debugger';
+import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
@@ -45,27 +46,42 @@ export interface ContainerSelectionDropdownProps {
 }
 
 // @public
+export function ContainerSummaryView(props: ContainerSummaryViewProps): React_2.ReactElement;
+
+// @internal
+export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
+
+// @public
+export type ContainerSummaryViewProps = HasClientDebugger;
+
+// @public
+export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {
+}
+
+// @public
 export const defaultRenderOptions: Required<RenderOptions>;
 
 // @public
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
 // @public
-export interface FluidClientDebuggerProps {
+export function FluidClientDebuggers(props: FluidClientDebuggersProps): React_2.ReactElement;
+
+// @public
+export interface FluidClientDebuggersProps {
     renderOptions?: RenderOptions;
 }
 
 // @public
-export function FluidClientDebuggers(props: FluidClientDebuggerProps): React_2.ReactElement;
-
-// @internal
 export interface HasClientDebugger {
     clientDebugger: IFluidClientDebugger;
 }
 
-// @internal
-export interface HasContainerId {
-    containerId: string;
+// @public
+export interface IContainerActions {
+    closeContainer?: () => void;
+    forceDisconnect?: () => void;
+    tryConnect?: () => void;
 }
 
 // @internal

@@ -37,7 +37,7 @@
 		"tsc:watch": "tsc --watch",
 		"tsfmt": "tsfmt --verify",
 		"tsfmt:fix": "tsfmt --replace",
-		"typetests:gen": "flub generate typetests --generate --dir .",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {

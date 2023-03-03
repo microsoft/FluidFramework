@@ -16,6 +16,54 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_InsecureTinyliciousTokenProvider": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_InsecureTinyliciousTokenProvider():
+    TypeOnly<old.InsecureTinyliciousTokenProvider>;
+declare function use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
+    use: TypeOnly<current.InsecureTinyliciousTokenProvider>);
+use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
+    get_old_ClassDeclaration_InsecureTinyliciousTokenProvider());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_InsecureTinyliciousTokenProvider": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_InsecureTinyliciousTokenProvider():
+    TypeOnly<current.InsecureTinyliciousTokenProvider>;
+declare function use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
+    use: TypeOnly<old.InsecureTinyliciousTokenProvider>);
+use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
+    get_current_ClassDeclaration_InsecureTinyliciousTokenProvider());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_InsecureTinyliciousUrlResolver": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_InsecureTinyliciousUrlResolver():
+    TypeOnly<old.InsecureTinyliciousUrlResolver>;
+declare function use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
+    use: TypeOnly<current.InsecureTinyliciousUrlResolver>);
+use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
+    get_old_ClassDeclaration_InsecureTinyliciousUrlResolver());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_InsecureTinyliciousUrlResolver": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_InsecureTinyliciousUrlResolver():
+    TypeOnly<current.InsecureTinyliciousUrlResolver>;
+declare function use_old_ClassDeclaration_InsecureTinyliciousUrlResolver(
+    use: TypeOnly<old.InsecureTinyliciousUrlResolver>);
+use_old_ClassDeclaration_InsecureTinyliciousUrlResolver(
+    get_current_ClassDeclaration_InsecureTinyliciousUrlResolver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createTinyliciousCreateNewRequest": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createTinyliciousCreateNewRequest():
@@ -84,51 +132,3 @@ declare function use_old_VariableDeclaration_defaultTinyliciousPort(
     use: TypeOnly<typeof old.defaultTinyliciousPort>);
 use_old_VariableDeclaration_defaultTinyliciousPort(
     get_current_VariableDeclaration_defaultTinyliciousPort());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_InsecureTinyliciousTokenProvider": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_InsecureTinyliciousTokenProvider():
-    TypeOnly<old.InsecureTinyliciousTokenProvider>;
-declare function use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
-    use: TypeOnly<current.InsecureTinyliciousTokenProvider>);
-use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
-    get_old_ClassDeclaration_InsecureTinyliciousTokenProvider());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_InsecureTinyliciousTokenProvider": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_InsecureTinyliciousTokenProvider():
-    TypeOnly<current.InsecureTinyliciousTokenProvider>;
-declare function use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
-    use: TypeOnly<old.InsecureTinyliciousTokenProvider>);
-use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
-    get_current_ClassDeclaration_InsecureTinyliciousTokenProvider());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_InsecureTinyliciousUrlResolver": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_InsecureTinyliciousUrlResolver():
-    TypeOnly<old.InsecureTinyliciousUrlResolver>;
-declare function use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
-    use: TypeOnly<current.InsecureTinyliciousUrlResolver>);
-use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
-    get_old_ClassDeclaration_InsecureTinyliciousUrlResolver());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_InsecureTinyliciousUrlResolver": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_InsecureTinyliciousUrlResolver():
-    TypeOnly<current.InsecureTinyliciousUrlResolver>;
-declare function use_old_ClassDeclaration_InsecureTinyliciousUrlResolver(
-    use: TypeOnly<old.InsecureTinyliciousUrlResolver>);
-use_old_ClassDeclaration_InsecureTinyliciousUrlResolver(
-    get_current_ClassDeclaration_InsecureTinyliciousUrlResolver());

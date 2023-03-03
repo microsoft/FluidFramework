@@ -4,6 +4,8 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
+import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -46,6 +48,32 @@ export enum ContainerStateChangeKind {
     Disposed = "disposed"
 }
 
+// @public
+export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
+    // (undocumented)
+    type: "CONTAINER_STATE_CHANGE";
+}
+
+// @public
+export interface ContainerStateChangeMessageData extends HasContainerId {
+    containerState: ContainerStateMetadata;
+}
+
+// @public
+export interface ContainerStateMetadata extends ContainerMetadata {
+    // (undocumented)
+    attachState: AttachState;
+    audienceId?: string;
+    // (undocumented)
+    clientId?: string;
+    closed: boolean;
+    // (undocumented)
+    connectionState: ConnectionState;
+}
+
+// @public
+export const debuggerMessageSource: string;
+
 // @internal
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
     constructor();
@@ -70,6 +98,21 @@ export interface FluidClientDebuggerProps {
     containerNickname?: string;
 }
 
+// @public
+export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
+    // (undocumented)
+    type: "GET_CONTAINER_LIST";
+}
+
+// @public
+export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_CONTAINER_STATE";
+}
+
+// @public
+export type GetContainerStateMessageData = HasContainerId;
+
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
 
@@ -78,6 +121,24 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
+
+// @internal
+export function handleIncomingMessage(message: Partial<IDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+
+// @internal
+export function handleIncomingWindowMessage(event: MessageEvent<Partial<IDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+
+// @public
+export interface HasContainerId {
+    containerId: string;
+}
+
+// @public
+export interface IDebuggerMessage<TData = unknown> {
+    data: TData;
+    source: string;
+    type: string;
+}
 
 // @internal
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
@@ -96,8 +157,16 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "disposed", listener: () => void): any;
 }
 
+// @internal
+export interface InboundHandlers {
+    [type: string]: (message: IDebuggerMessage) => boolean;
+}
+
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
+
+// @internal
+export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage;
 
 // @internal
 export interface LogEntry {
@@ -108,6 +177,25 @@ export interface LogEntry {
 export enum MemberChangeKind {
     Added = "Added",
     Removed = "Removed"
+}
+
+// @internal
+export interface MessageLoggingOptions {
+    context?: string;
+}
+
+// @internal
+export function postMessageToWindow<TMessage extends IDebuggerMessage>(message: TMessage, loggingOptions?: MessageLoggingOptions): void;
+
+// @public
+export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
+    // (undocumented)
+    type: "REGISTRY_CHANGE";
+}
+
+// @public
+export interface RegistryChangeMessageData {
+    containers: ContainerMetadata[];
 }
 
 // @internal

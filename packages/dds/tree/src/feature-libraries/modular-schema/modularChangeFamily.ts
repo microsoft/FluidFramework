@@ -25,7 +25,6 @@ import {
 import {
 	addToNestedSet,
 	brand,
-	clone,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
 	JsonCompatibleReadOnly,
@@ -150,7 +149,7 @@ export class ModularChangeFamily
 			revisionIndexer,
 		);
 
-		while (crossFieldTable.fieldsToUpdate.size > 0) {
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
 			for (const field of fieldsToUpdate) {
@@ -168,6 +167,11 @@ export class ModularChangeFamily
 				field.change = brand(amendedChange);
 			}
 		}
+
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			"Should not need more than one amend pass.",
+		);
 		return makeModularChangeset(composedFields, maxId, revInfos);
 	}
 
@@ -245,7 +249,7 @@ export class ModularChangeFamily
 		let valueChange: ValueChange | undefined;
 		for (const change of changes) {
 			if (change.change.valueChange !== undefined) {
-				valueChange = clone(change.change.valueChange);
+				valueChange = { ...change.change.valueChange };
 				valueChange.revision ??= change.revision;
 			}
 			if (change.change.fieldChanges !== undefined) {
@@ -281,7 +285,7 @@ export class ModularChangeFamily
 			crossFieldTable,
 		);
 
-		while (crossFieldTable.fieldsToUpdate.size > 0) {
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
 			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
@@ -297,6 +301,11 @@ export class ModularChangeFamily
 				fieldChange.change = brand(amendedChange);
 			}
 		}
+
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			"Should not need more than one amend pass.",
+		);
 
 		const revInfo = change.change.revisions;
 		return makeModularChangeset(
@@ -396,7 +405,7 @@ export class ModularChangeFamily
 			revisionIndexer,
 		);
 
-		while (crossFieldTable.fieldsToUpdate.size > 0) {
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
 			for (const { fieldChange, baseChange } of fieldsToUpdate) {
@@ -413,6 +422,11 @@ export class ModularChangeFamily
 				fieldChange.change = brand(amendedChange);
 			}
 		}
+
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			"Should not need more than one amend pass.",
+		);
 
 		return makeModularChangeset(rebasedFields, maxId, change.revisions);
 	}
@@ -666,28 +680,33 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
 			newValue: unknown,
+			invalidateDependents: boolean,
 		) => {
-			const dependents =
-				target === CrossFieldTarget.Source
-					? crossFieldTable.srcDependents
-					: crossFieldTable.dstDependents;
-			const dependent = tryGetFromNestedMap(dependents, revision, id);
-			if (dependent !== undefined) {
-				crossFieldTable.fieldsToUpdate.add(dependent);
-			}
+			if (invalidateDependents) {
+				const dependents =
+					target === CrossFieldTarget.Source
+						? crossFieldTable.srcDependents
+						: crossFieldTable.dstDependents;
+				const dependent = tryGetFromNestedMap(dependents, revision, id);
+				if (dependent !== undefined) {
+					crossFieldTable.fieldsToUpdate.add(dependent);
+				}
 
-			if (nestedSetContains(getQueries(target), revision, id)) {
-				manager.fieldInvalidated = true;
+				if (nestedSetContains(getQueries(target), revision, id)) {
+					manager.fieldInvalidated = true;
+				}
 			}
-
 			return getOrAddInNestedMap(getMap(target), revision, id, newValue);
 		},
 		get: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: ChangesetLocalId,
+			addDependency: boolean,
 		) => {
-			addToNestedSet(getQueries(target), revision, id);
+			if (addDependency) {
+				addToNestedSet(getQueries(target), revision, id);
+			}
 			return tryGetFromNestedMap(getMap(target), revision, id);
 		},
 	};
