@@ -88,18 +88,6 @@ use_old_TypeAliasDeclaration_AttributionKey(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_BindState": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedEnumDeclaration_BindState": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_CreateChildSummarizerNodeFn": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_CreateChildSummarizerNodeFn():
@@ -244,6 +232,30 @@ use_old_EnumDeclaration_FlushMode(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_FlushModeExperimental": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_FlushModeExperimental():
+    TypeOnly<old.FlushModeExperimental>;
+declare function use_current_EnumDeclaration_FlushModeExperimental(
+    use: TypeOnly<current.FlushModeExperimental>);
+use_current_EnumDeclaration_FlushModeExperimental(
+    get_old_EnumDeclaration_FlushModeExperimental());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_FlushModeExperimental": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_FlushModeExperimental():
+    TypeOnly<current.FlushModeExperimental>;
+declare function use_old_EnumDeclaration_FlushModeExperimental(
+    use: TypeOnly<old.FlushModeExperimental>);
+use_old_EnumDeclaration_FlushModeExperimental(
+    get_current_EnumDeclaration_FlushModeExperimental());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAttachMessage": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAttachMessage():
@@ -371,7 +383,6 @@ declare function get_old_InterfaceDeclaration_IFluidDataStoreChannel():
 declare function use_current_InterfaceDeclaration_IFluidDataStoreChannel(
     use: TypeOnly<current.IFluidDataStoreChannel>);
 use_current_InterfaceDeclaration_IFluidDataStoreChannel(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IFluidDataStoreChannel());
 
 /*
@@ -996,7 +1007,6 @@ declare function get_old_InterfaceDeclaration_ITelemetryContext():
 declare function use_current_InterfaceDeclaration_ITelemetryContext(
     use: TypeOnly<current.ITelemetryContext>);
 use_current_InterfaceDeclaration_ITelemetryContext(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITelemetryContext());
 
 /*
