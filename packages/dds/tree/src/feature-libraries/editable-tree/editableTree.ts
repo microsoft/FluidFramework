@@ -343,8 +343,10 @@ export interface EditableField
 const editableTreeSlot = anchorSlot<EditableTree>();
 
 function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): EditableTree {
-	const anchor = cursor.buildAnchor() ?? fail("invalid");
-	const anchorNode = context.forest.anchors.locate(anchor) ?? fail("invalid");
+	const anchor = cursor.buildAnchor();
+	const anchorNode =
+		context.forest.anchors.locate(anchor) ??
+		fail("cursor should point to a node that is not the root of the AnchorSet");
 	const map = anchorNode.slotMap(editableTreeSlot);
 	const cached = map.get(editableTreeSlot);
 	if (cached !== undefined) {
