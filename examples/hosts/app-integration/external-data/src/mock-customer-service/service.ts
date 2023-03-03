@@ -191,12 +191,11 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * This data will be forwarded to our own subscribers.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
-		const sessionUrl = "";
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const sessionData = request.body?.sessionData as unknown;
+		const sessionUrl = request.body?.sessionUrl as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const taskListId = request.body?.taskListId as string;
-		if (sessionData === undefined) {
+		if (sessionUrl === undefined) {
 			const errorMessage =
 				'No session data provided by client. Expected under "sessionUrl" property.';
 			console.error(formatLogMessage(errorMessage));

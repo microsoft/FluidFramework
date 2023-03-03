@@ -19,7 +19,6 @@ import type {
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import { customerServicePort } from "../mock-customer-service-interface";
-import { IContainer } from "@fluidframework/container-definitions";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {
@@ -301,13 +300,12 @@ export class TaskList extends DataObject implements ITaskList {
 	 * Register container session data with the customer service.
 	 * @returns A promise that resolves when the registration call returns successfully.
 	 */
-	public async registerWithCustomerService(container: IContainer): Promise<void> {
+	public async registerWithCustomerService(url: string): Promise<void> {
 		console.log("TASK-LIST: Registering client with customer service...");
 		// clientId -- for the particular client (check wayne's code to see what it's checking against)
 		// containerId -- for the fluid session (loader has it when loading the container)
 		// documentId -- ?? might be only solved by odsp-driver/push channel
 
-		// console.log(container.service);
 		const taskListId = "1";
 		try {
 			await fetch(
@@ -318,7 +316,7 @@ export class TaskList extends DataObject implements ITaskList {
 						"Access-Control-Allow-Origin": "*",
 						"Content-Type": "application/json",
 					},
-					body: JSON.stringify({ sessionData: "" }),
+					body: JSON.stringify({ sessionUrl: url }),
 				},
 			);
 		} catch (error) {

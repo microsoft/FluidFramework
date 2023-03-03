@@ -33,6 +33,6 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 * {@inheritDoc IAppModel.registerWithCustomerService}
 	 */
 	public readonly registerWithCustomerService = (): void => {
-		this.taskList.registerWithCustomerService(this.container).catch(console.error);
+		this.taskList.registerWithCustomerService(this.container.resolvedUrl).catch(console.error);
 	};
 }
