@@ -789,6 +789,28 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([makeAnonChange(move), makeAnonChange(deletion)]);
 		assert.deepEqual(actual, expected);
 	});
+
+	it("move ○ move with no net effect (back and forward)", () => {
+		const move1 = Change.move(1, 1, 0);
+		const move2 = Change.move(0, 1, 1);
+		const expected = shallowCompose([
+			tagChange(Change.move(1, 1, 1), tag2),
+			makeAnonChange([]),
+		]);
+		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
+		assert.deepEqual(actual, expected);
+	});
+
+	it("move ○ move with no net effect (forward and back)", () => {
+		const move1 = Change.move(0, 1, 1);
+		const move2 = Change.move(1, 1, 0);
+		const expected = shallowCompose([
+			tagChange(Change.move(0, 1, 0), tag2),
+			makeAnonChange([]),
+		]);
+		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
+		assert.deepEqual(actual, expected);
+	});
 });
 function tagggedChange(
 	reviveA: SF.Changeset<never>,

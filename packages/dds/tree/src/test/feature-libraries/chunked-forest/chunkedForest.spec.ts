@@ -16,7 +16,6 @@ import {
 	AnchorSet,
 	Checkout,
 	EditManager,
-	FieldKey,
 	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,

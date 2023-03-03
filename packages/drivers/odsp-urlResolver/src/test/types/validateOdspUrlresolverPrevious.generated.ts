@@ -16,30 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isOdspUrl": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_isOdspUrl():
-    TypeOnly<typeof old.isOdspUrl>;
-declare function use_current_VariableDeclaration_isOdspUrl(
-    use: TypeOnly<typeof current.isOdspUrl>);
-use_current_VariableDeclaration_isOdspUrl(
-    get_old_VariableDeclaration_isOdspUrl());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isOdspUrl": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_isOdspUrl():
-    TypeOnly<typeof current.isOdspUrl>;
-declare function use_old_VariableDeclaration_isOdspUrl(
-    use: TypeOnly<typeof old.isOdspUrl>);
-use_old_VariableDeclaration_isOdspUrl(
-    get_current_VariableDeclaration_isOdspUrl());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OdspUrlResolver": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OdspUrlResolver():
@@ -60,3 +36,27 @@ declare function use_old_ClassDeclaration_OdspUrlResolver(
     use: TypeOnly<old.OdspUrlResolver>);
 use_old_ClassDeclaration_OdspUrlResolver(
     get_current_ClassDeclaration_OdspUrlResolver());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isOdspUrl": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_isOdspUrl():
+    TypeOnly<typeof old.isOdspUrl>;
+declare function use_current_VariableDeclaration_isOdspUrl(
+    use: TypeOnly<typeof current.isOdspUrl>);
+use_current_VariableDeclaration_isOdspUrl(
+    get_old_VariableDeclaration_isOdspUrl());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_isOdspUrl": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_isOdspUrl():
+    TypeOnly<typeof current.isOdspUrl>;
+declare function use_old_VariableDeclaration_isOdspUrl(
+    use: TypeOnly<typeof old.isOdspUrl>);
+use_old_VariableDeclaration_isOdspUrl(
+    get_current_VariableDeclaration_isOdspUrl());

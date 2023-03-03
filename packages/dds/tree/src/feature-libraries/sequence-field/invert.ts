@@ -171,6 +171,7 @@ function invertMark<TNodeChange>(
 						mark.revision ?? revision,
 						mark.id,
 						invertChild(mark.changes, inputIndex),
+						true,
 					);
 				}
 				return [
@@ -201,7 +202,9 @@ function invertMark<TNodeChange>(
 						CrossFieldTarget.Destination,
 						mark.revision ?? revision,
 						mark.id,
+						true,
 					);
+
 					if (movedChanges !== undefined) {
 						invertedMark.changes = movedChanges;
 					}
@@ -231,7 +234,9 @@ function transferMovedChanges<TNodeChange>(
 				CrossFieldTarget.Destination,
 				mark.revision ?? revision,
 				mark.id,
+				true,
 			);
+
 			if (change !== undefined) {
 				mark.changes = change;
 			}

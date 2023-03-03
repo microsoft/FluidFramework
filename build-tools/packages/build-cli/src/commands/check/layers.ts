@@ -11,7 +11,7 @@ import { BaseCommand } from "../../base";
 
 const packagesMdFileName = "PACKAGES.md";
 
-export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
+export class CheckLayers extends BaseCommand<typeof CheckLayers> {
 	static description =
 		"Checks that the dependencies between Fluid Framework packages are properly layered.";
 
@@ -37,7 +37,7 @@ export class CheckLayers extends BaseCommand<typeof CheckLayers.flags> {
 	};
 
 	async run() {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 		const timer = new Timer(flags.timer);
 
 		const context = await this.getContext();

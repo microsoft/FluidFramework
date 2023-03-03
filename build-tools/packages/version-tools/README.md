@@ -78,7 +78,7 @@ $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.10.0
+@fluid-tools/version-tools/0.11.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
@@ -92,7 +92,7 @@ USAGE
 <!-- prettier-ignore-start -->
 <!-- commands -->
 * [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
-* [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv help [COMMANDS]`](#fluv-help-commands)
 * [`fluv version VERSION`](#fluv-version-version)
 * [`fluv version latest`](#fluv-version-latest)
 
@@ -123,18 +123,18 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.3.6/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.1.3/src/commands/autocomplete/index.ts)_
 
-## `fluv help [COMMAND]`
+## `fluv help [COMMANDS]`
 
 Display help for fluv.
 
 ```
 USAGE
-  $ fluv help [COMMAND] [-n]
+  $ fluv help [COMMANDS] [-n]
 
 ARGUMENTS
-  COMMAND  Command to show help for.
+  COMMANDS  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
@@ -143,7 +143,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.14/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.6/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -151,7 +151,7 @@ Convert version strings between regular semver and the Fluid internal version sc
 
 ```
 USAGE
-  $ fluv version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
+  $ fluv version VERSION [--json] [-t major|minor|patch|current] [--publicVersion <value>]
 
 ARGUMENTS
   VERSION  The version to convert.
@@ -228,6 +228,11 @@ EXAMPLES
 This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
 oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
 PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
+
+---
+
+Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
+removed once we have upgraded to Node 16 in the repo.
 
 ## Trademark
 

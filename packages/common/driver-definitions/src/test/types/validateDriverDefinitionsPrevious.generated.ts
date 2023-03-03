@@ -232,30 +232,6 @@ use_old_InterfaceDeclaration_IContainerPackageInfo(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDeltasFetchResult": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IDeltasFetchResult():
-    TypeOnly<old.IDeltasFetchResult>;
-declare function use_current_InterfaceDeclaration_IDeltasFetchResult(
-    use: TypeOnly<current.IDeltasFetchResult>);
-use_current_InterfaceDeclaration_IDeltasFetchResult(
-    get_old_InterfaceDeclaration_IDeltasFetchResult());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDeltasFetchResult": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IDeltasFetchResult():
-    TypeOnly<current.IDeltasFetchResult>;
-declare function use_old_InterfaceDeclaration_IDeltasFetchResult(
-    use: TypeOnly<old.IDeltasFetchResult>);
-use_old_InterfaceDeclaration_IDeltasFetchResult(
-    get_current_InterfaceDeclaration_IDeltasFetchResult());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IDeltaStorageService": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IDeltaStorageService():
@@ -276,6 +252,30 @@ declare function use_old_InterfaceDeclaration_IDeltaStorageService(
     use: TypeOnly<old.IDeltaStorageService>);
 use_old_InterfaceDeclaration_IDeltaStorageService(
     get_current_InterfaceDeclaration_IDeltaStorageService());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltasFetchResult": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDeltasFetchResult():
+    TypeOnly<old.IDeltasFetchResult>;
+declare function use_current_InterfaceDeclaration_IDeltasFetchResult(
+    use: TypeOnly<current.IDeltasFetchResult>);
+use_current_InterfaceDeclaration_IDeltasFetchResult(
+    get_old_InterfaceDeclaration_IDeltasFetchResult());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDeltasFetchResult": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDeltasFetchResult():
+    TypeOnly<current.IDeltasFetchResult>;
+declare function use_old_InterfaceDeclaration_IDeltasFetchResult(
+    use: TypeOnly<old.IDeltasFetchResult>);
+use_old_InterfaceDeclaration_IDeltasFetchResult(
+    get_current_InterfaceDeclaration_IDeltasFetchResult());
 
 /*
 * Validate forward compat by using old type in place of current type
