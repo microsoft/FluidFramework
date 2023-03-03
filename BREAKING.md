@@ -19,11 +19,26 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.4.0.0 Upcoming changes
 
+-   [bindToContext deprecated in IFluidDataStoreContext](#bindToContext-deprecated-in-IFluidDataStoreContext)
+-   [getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn](#getBaseGCDetails-deprecated-in-IFluidDataStoreContext-and-CreateChildSummarizerNodeFn)
+
+### bindToContext deprecated in IFluidDataStoreContext
+
+`bindToContext` in IFluidDataStoreContext was deprecated in 2.0.0-internal.2.0.0. This is a heads up that it will be removed in 2.0.0-internal.5.0.0. Its usage in FluidDataStoreRuntime was removed in this release.
+
+### getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn
+
+getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn. The functionality to update the base GC details of nodes has been moved to summarizer nodes. These will be removed in 2.0.0-internal.5.0.0.
+
 ## 2.0.0-internal.4.0.0 Breaking changes
 
 -   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
 -   [Some test packages no longer published](#some-test-packages-no-longer-published)
 -   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
+-   [IFluidTokenProvider removed](#IFluidTokenProvider-removed)
+-   [Summarizer node and related items removed](#Summarizer-node-and-related-items-removed)
+-   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
+-   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
 
 ### Container and RelativeLoader no longer exported
 
@@ -43,6 +58,39 @@ These have been moved to the `@fluid-internal` scope and are no longer published
 ### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
 
 `IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### IFluidTokenProvider removed
+
+The IFluidTokenProvider interface was deprecated in 2.0.0-internal.3.2.0, and is now removed.
+
+### Summarizer node and related items removed
+
+The following functions, interfaces, and types currently available in `@fluidframework/runtime-utils` were deprecated in 2.0.0-internal.3.0.0 and are now removed.
+
+-   `createRootSummarizerNode`
+-   `createRootSummarizerNodeWithGC`
+-   `IFetchSnapshotResult`
+-   `IRootSummarizerNode`
+-   `IRootSummarizerNodeWithGC`
+-   `ISummarizerNodeRootContract`
+-   `RefreshSummaryResult`
+
+### web-code-loader and ICodeAllowList removed
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### Container and IContainer no longer raise events when a new listener is registered
+
+`Container` and `IContainer` had previously raised the `connected`, `disconnected`, `dirty`, and `saved` events when a new listener was registered and the corresponding state was true. This behavior has been removed. To avoid issues, add checks to the state of the container before registering listeners.
+
+```diff
+	// Ensure client is connected
++	if (container.connectionState !== ConnectionState.Connected) {
+		await new Promise<void>((resolve) => {
+			container.once("connected", resolve);
+		});
++   }
+```
 
 # 2.0.0-internal.3.0.0
 

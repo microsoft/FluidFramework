@@ -71,6 +71,18 @@
 		"broken": {
 			"InterfaceDeclaration_IConnectionDetails": {
 				"backCompat": false
+			},
+			"RemovedVariableDeclaration_IFluidTokenProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IFluidTokenProvider": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

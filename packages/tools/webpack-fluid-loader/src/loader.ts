@@ -24,11 +24,6 @@ import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-
 import { IUser } from "@fluidframework/protocol-definitions";
 import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
-import {
-	extractPackageIdentifierDetails,
-	resolveFluidPackageEnvironment,
-	WebCodeLoader,
-} from "@fluidframework/web-code-loader";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -39,6 +34,11 @@ import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
 import { OdspPersistentCache } from "./odspPersistantCache";
 import { OdspUrlResolver } from "./odspUrlResolver";
+import {
+	extractPackageIdentifierDetails,
+	resolveFluidPackageEnvironment,
+	WebCodeLoader,
+} from "./webCodeLoader";
 
 export interface IDevServerUser extends IUser {
 	name: string;
