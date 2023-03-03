@@ -5,14 +5,9 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { DocumentType } from "@fluidframework/test-version-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { DocumentMap } from "./DocumentMap";
-
-export type DocumentType =
-	/** Document with a SharedMap with a 5Mb value - more info on DocumentMap.ts */
-	| "MediumDocumentMap"
-	/** Document with a SharedMap with a 10Mb value - more info on DocumentMap.ts */
-	| "LargeDocumentMap";
 
 export interface DocumentProps {
 	testName: string;

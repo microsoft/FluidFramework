@@ -18,6 +18,7 @@ export {
 	describeNoCompat,
 	ITestObjectProviderOptions,
 } from "./describeCompat";
+export { describeE2EDocs, DocumentType, DescribeE2EDocInfo } from "./describeE2eDocs";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
 export {
 	ensurePackageInstalled,

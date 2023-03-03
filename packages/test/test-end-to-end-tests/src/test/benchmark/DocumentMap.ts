@@ -7,10 +7,11 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -20,7 +21,6 @@ import {
 } from "@fluidframework/test-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 import { DocumentLoader, DocumentProps } from "./DocumentCreator";
 
@@ -46,7 +46,7 @@ const validateMapKeys = (map: SharedMap, count: number, expectedSize: number): v
 };
 
 export class DocumentMap implements DocumentLoader {
-	private _logger: ITelemetryBufferedLogger | TelemetryNullLogger | undefined;
+	private _logger: ITelemetryLogger | undefined;
 	private testContainerConfig: ITestContainerConfig | undefined;
 	private loader: IHostLoader | undefined;
 	private _mainContainer: IContainer | undefined;
@@ -83,17 +83,16 @@ export class DocumentMap implements DocumentLoader {
 		this.documentSize = documentSize;
 	}
 	public async initializeDocument() {
-		this._logger = getTestLogger?.() ?? new TelemetryNullLogger();
-		// ChildLogger.create(getTestLogger?.(), undefined, {
-		// 	all: {
-		// 		runId: undefined,
-		// 		driverType: this.props.driverType,
-		// 		driverEndpointName: this.props.driverEndpointName,
-		// 		profile: "",
-		// 		benchmarkType: "E2ETime",
-		// 		name: this.props.testName,
-		// 	},
-		// });
+		this._logger = ChildLogger.create(getTestLogger?.(), undefined, {
+			all: {
+				runId: undefined,
+				driverType: this.props.driverType,
+				driverEndpointName: this.props.driverEndpointName,
+				profile: "",
+				benchmarkType: "E2ETime",
+				name: this.props.testName,
+			},
+		});
 
 		this.testContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
