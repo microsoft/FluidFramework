@@ -347,22 +347,21 @@ function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): Edita
 	const anchorNode =
 		context.forest.anchors.locate(anchor) ??
 		fail("cursor should point to a node that is not the root of the AnchorSet");
-	const map = anchorNode.slotMap(editableTreeSlot);
-	const cached = map.get(editableTreeSlot);
+	const cached = anchorNode.slots.get(editableTreeSlot);
 	if (cached !== undefined) {
 		context.forest.anchors.forget(anchor);
 		return cached;
 	}
 	const newTarget = new NodeProxyTarget(context, cursor, anchorNode, anchor);
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
-	map.set(editableTreeSlot, output);
+	anchorNode.slots.set(editableTreeSlot, output);
 	anchorNode.on("afterDelete", cleanupTree);
 	return output;
 }
 
 function cleanupTree(anchor: AnchorNode): void {
-	const map = anchor.slotMap(editableTreeSlot);
-	const cached = map.get(editableTreeSlot) ?? fail("tree should only be cleaned up once");
+	const cached =
+		anchor.slots.get(editableTreeSlot) ?? fail("tree should only be cleaned up once");
 	(cached[proxyTargetSymbol] as NodeProxyTarget).free();
 }
 
@@ -490,7 +489,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
 
 		this.proxy = adaptWithProxy(this, nodeProxyHandler);
-		anchorNode.slotMap(editableTreeSlot).set(editableTreeSlot, this.proxy);
+		anchorNode.slots.set(editableTreeSlot, this.proxy);
 		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
 	}
 
@@ -509,7 +508,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
-		this.anchorNode.slotMap(editableTreeSlot).delete(editableTreeSlot);
+		this.anchorNode.slots.delete(editableTreeSlot);
 		this.removeDeleteCallback();
 		this.context.forest.anchors.forget(anchor);
 	}

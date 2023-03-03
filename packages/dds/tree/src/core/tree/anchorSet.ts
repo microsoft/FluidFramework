@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { createEmitter, ISubscribable } from "../../events";
-import { brand, Brand, Covariant, fail, Opaque, ReferenceCountedBase } from "../../util";
+import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
 import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
@@ -41,21 +41,40 @@ export interface AnchorLocator {
 /**
  * @alpha
  */
-export type AnchorKeyBrand = Brand<number, "AnchorKey">;
+export type AnchorKeyBrand = Brand<number, "AnchorSlot">;
 
 /**
  * @alpha
  */
-export type AnchorKey<TContent> = Opaque<AnchorKeyBrand> & Covariant<TContent>;
+export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 
 /**
- * Data stashed on an anchor.
  * @alpha
  */
-export interface MapSubset<K, V> {
-	get(key: K): V | undefined;
+export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
+	unknown,
+	infer TContent
+>
+	? TContent
+	: never;
+
+/**
+ * @alpha
+ */
+export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
+
+/**
+ * A Map where the keys carry the types of values which they correspond to.
+ *
+ * @remarks
+ * These APIs are designed so that a Map can be used to implement this type.
+ *
+ * @alpha
+ */
+export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
+	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
 	has(key: K): boolean;
-	set(key: K, value: V): this;
+	set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
 	delete(key: K): boolean;
 }
 
@@ -90,21 +109,14 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 	/**
 	 * Allows access to data stored on the Anchor in "slots".
 	 * Use {@link anchorSlot} to create slots.
-	 *
-	 * @remarks
-	 * This is not fully type safe.
 	 */
-	slotMap<T extends AnchorKey<unknown>>(
-		slot: T,
-	): T extends AnchorKey<infer TContent>
-		? MapSubset<T, TContent>
-		: Map<AnchorKey<unknown>, unknown>;
+	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 
 	/**
 	 * Gets a child of this node.
 	 *
 	 * @remarks
-	 * This does not return an AnchorNode since there might not be one, and lazily creating one here would have messy lifetime management (See {@link getOrCreateChildRef})
+	 * This does not return an AnchorNode since there might not be one, and lazily creating one here would have messy lifetime management (See {@link AnchorNode#getOrCreateChildRef})
 	 * If an AnchorNode is requires, use the AnchorSet to track then locate the returned path.
 	 * TODO:
 	 * Revisit this API.
@@ -135,12 +147,12 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
  * ```
  * @alpha
  */
-export function anchorSlot<TContent>(): AnchorKey<TContent> {
+export function anchorSlot<TContent>(): AnchorSlot<TContent> {
 	return brand(slotCounter++);
 }
 
 /**
- * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorKey}.
+ * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorSlot}.
  * This allows the keys to be small integers, which are efficient to use as keys in maps.
  */
 let slotCounter = 0;
@@ -539,7 +551,7 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	 */
 	public readonly children: Map<FieldKey, PathNode[]> = new Map();
 
-	private readonly slots: Map<AnchorKey<unknown>, unknown> = new Map();
+	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
 
 	/**
 	 * Construct a PathNode with refcount 1.
@@ -582,16 +594,6 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		const node =
 			this.anchorSet.locate(anchor) ?? fail("cannot reference child that does not exist");
 		return [anchor, node];
-	}
-
-	slotMap<T extends AnchorKey<unknown>>(
-		slot: T,
-	): T extends AnchorKey<infer TContent>
-		? MapSubset<T, TContent>
-		: Map<AnchorKey<unknown>, unknown> {
-		return this.slots as T extends AnchorKey<infer TContent>
-			? MapSubset<T, TContent>
-			: Map<AnchorKey<unknown>, unknown>;
 	}
 
 	/**

@@ -21,10 +21,7 @@ export interface AnchorEvents {
 }
 
 // @alpha (undocumented)
-export type AnchorKey<TContent> = Opaque<AnchorKeyBrand> & Covariant<TContent>;
-
-// @alpha (undocumented)
-export type AnchorKeyBrand = Brand<number, "AnchorKey">;
+export type AnchorKeyBrand = Brand<number, "AnchorSlot">;
 
 // @alpha
 export interface AnchorLocator {
@@ -35,7 +32,7 @@ export interface AnchorLocator {
 export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
     child(key: FieldKey, index: number): UpPath<AnchorNode>;
     getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
-    slotMap<T extends AnchorKey<unknown>>(slot: T): T extends AnchorKey<infer TContent> ? MapSubset<T, TContent> : Map<AnchorKey<unknown>, unknown>;
+    readonly slots: BrandedMapSubset<AnchorSlot<any>>;
 }
 
 // @alpha @sealed
@@ -50,14 +47,35 @@ export class AnchorSet {
     track(path: UpPath | null): Anchor;
 }
 
+// @alpha (undocumented)
+export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
+
 // @alpha
-export function anchorSlot<TContent>(): AnchorKey<TContent>;
+export function anchorSlot<TContent>(): AnchorSlot<TContent>;
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @alpha
 export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
+
+// @alpha (undocumented)
+export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
+
+// @alpha (undocumented)
+export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<unknown, infer TContent> ? TContent : never;
+
+// @alpha
+export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
+    // (undocumented)
+    delete(key: K): boolean;
+    // (undocumented)
+    get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
+    // (undocumented)
+    has(key: K): boolean;
+    // (undocumented)
+    set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
+}
 
 // @alpha @sealed
 export abstract class BrandedType<ValueType, Name extends string> {
@@ -732,18 +750,6 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha
 export interface MakeNominal {
-}
-
-// @alpha
-export interface MapSubset<K, V> {
-    // (undocumented)
-    delete(key: K): boolean;
-    // (undocumented)
-    get(key: K): V | undefined;
-    // (undocumented)
-    has(key: K): boolean;
-    // (undocumented)
-    set(key: K, value: V): this;
 }
 
 // @alpha
