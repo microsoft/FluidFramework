@@ -684,7 +684,10 @@ export class SharedPropertyTree extends SharedObject {
 				);
 				const lastDelta = commitMetadata.sequenceNumber;
 
-				const dm = (this.runtime.deltaManager as any).deltaManager;
+				let dm = (this.runtime.deltaManager as any).deltaManager;
+				if (dm.deltaManager !== undefined) {
+					dm = dm.deltaManager;
+				}
 				await dm.getDeltas(
 					"DocumentOpen",
 					firstDelta,
