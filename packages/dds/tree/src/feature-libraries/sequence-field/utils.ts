@@ -7,7 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
 	addToNestedSet,
-	clone,
 	fail,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
@@ -126,6 +125,22 @@ export function isBlockedReattach<TNodeChange>(
 
 export function isConflicted(mark: CanConflict): mark is Conflicted {
 	return mark.conflictsWith !== undefined;
+}
+
+export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
+	if (isSkipMark(mark)) {
+		return mark;
+	}
+	const objMark = mark as Exclude<TMark, Skip>;
+	const clone = { ...objMark };
+	if (clone.type === "Insert") {
+		// TODO: also do this for Revive marks once they carry content
+		clone.content = [...clone.content];
+	}
+	if (isAttach(clone) && clone.lineage !== undefined) {
+		clone.lineage = [...clone.lineage];
+	}
+	return clone;
 }
 
 export function getAttachLength(attach: Attach): number {
@@ -665,7 +680,7 @@ export class DetachedNodeTracker {
 			for (let i = splitMarks.length - 1; i > 0; i--) {
 				iter.push(splitMarks[i]);
 			}
-			const cloned = clone(mark);
+			const cloned = cloneMark(mark);
 			if (isReattach(cloned)) {
 				let remainder: Reattach<T> = cloned;
 				for (let i = 1; i < cloned.count; ++i) {
