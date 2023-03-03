@@ -7,8 +7,6 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
 	addToNestedSet,
-	clone,
-	deleteFromNestedMap,
 	fail,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
@@ -55,7 +53,6 @@ import { MarkQueue } from "./markQueue";
 import {
 	applyMoveEffectsToMark,
 	getMoveEffect,
-	getOrAddEffect,
 	makeMergeable,
 	MoveEffectTable,
 	MoveMark,
@@ -128,6 +125,22 @@ export function isBlockedReattach<TNodeChange>(
 
 export function isConflicted(mark: CanConflict): mark is Conflicted {
 	return mark.conflictsWith !== undefined;
+}
+
+export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
+	if (isSkipMark(mark)) {
+		return mark;
+	}
+	const objMark = mark as Exclude<TMark, Skip>;
+	const clone = { ...objMark };
+	if (clone.type === "Insert") {
+		// TODO: also do this for Revive marks once they carry content
+		clone.content = [...clone.content];
+	}
+	if (isAttach(clone) && clone.lineage !== undefined) {
+		clone.lineage = [...clone.lineage];
+	}
+	return clone;
 }
 
 export function getAttachLength(attach: Attach): number {
@@ -484,14 +497,15 @@ function tryMergeMoves<T>(
 	const rev = left.revision ?? revision;
 	const oppEnd =
 		target === CrossFieldTarget.Source ? CrossFieldTarget.Destination : CrossFieldTarget.Source;
-	const prevMergeId = getMoveEffect(moveEffects, oppEnd, rev, left.id).mergeRight;
+
+	const prevMergeId = getMoveEffect(moveEffects, oppEnd, rev, left.id, false).mergeRight;
 	if (prevMergeId !== undefined && prevMergeId !== right.id) {
 		makeMergeable(moveEffects, oppEnd, rev, prevMergeId, right.id);
 	} else {
 		makeMergeable(moveEffects, oppEnd, rev, left.id, right.id);
 	}
 
-	const leftEffect = getOrAddEffect(moveEffects, target, rev, left.id);
+	const leftEffect = getMoveEffect(moveEffects, target, rev, left.id);
 	if (leftEffect.mergeRight === right.id) {
 		const rightEffect = getMoveEffect(moveEffects, target, rev, right.id);
 		assert(rightEffect.mergeLeft === left.id, 0x56d /* Inconsistent merge info */);
@@ -666,7 +680,7 @@ export class DetachedNodeTracker {
 			for (let i = splitMarks.length - 1; i > 0; i--) {
 				iter.push(splitMarks[i]);
 			}
-			const cloned = clone(mark);
+			const cloned = cloneMark(mark);
 			if (isReattach(cloned)) {
 				let remainder: Reattach<T> = cloned;
 				for (let i = 1; i < cloned.count; ++i) {
@@ -855,18 +869,25 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 		mapSrc,
 		mapDst,
 
-		get: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) => {
-			const result = tryGetFromNestedMap(getMap(target), revision, id);
-			addToNestedSet(getQueries(target), revision, id);
-			return result;
+		get: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: MoveId,
+			addDependency: boolean,
+		) => {
+			if (addDependency) {
+				addToNestedSet(getQueries(target), revision, id);
+			}
+			return tryGetFromNestedMap(getMap(target), revision, id);
 		},
 		getOrCreate: (
 			target: CrossFieldTarget,
 			revision: RevisionTag | undefined,
 			id: MoveId,
 			defaultValue: T,
+			invalidateDependents: boolean,
 		) => {
-			if (nestedSetContains(getQueries(target), revision, id)) {
+			if (invalidateDependents && nestedSetContains(getQueries(target), revision, id)) {
 				table.isInvalidated = true;
 			}
 			return getOrAddInNestedMap<RevisionTag | undefined, MoveId, T>(
@@ -876,8 +897,6 @@ export function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 				defaultValue,
 			);
 		},
-		consume: (target: CrossFieldTarget, revision: RevisionTag | undefined, id: MoveId) =>
-			deleteFromNestedMap(getMap(target), revision, id),
 
 		reset: () => {
 			table.isInvalidated = false;

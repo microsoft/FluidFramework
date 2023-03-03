@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
 import inquirer from "inquirer";
 import { Machine } from "jssm";
 
@@ -34,7 +33,6 @@ export const askForReleaseType: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { bumpType: inputBumpType, context, releaseVersion } = data;
-	assert(context !== undefined, "Context is undefined.");
 
 	const currentBranch = await context.gitRepo.getCurrentBranchName();
 	const currentVersion = releaseVersion;

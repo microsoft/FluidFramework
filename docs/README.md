@@ -9,8 +9,9 @@ The site is generated using [Hugo](https://gohugo.io/).
 To quickly get started previewing the website's contents locally, open the docs folder in a terminal and install the dependencies using npm.
 
 ```bash
+npm i -g pnpm
 cd docs
-npm install
+pnpm install
 ```
 
 Then, start the server.
@@ -342,6 +343,7 @@ The following npm scripts are supported in this directory:
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
+| `ci:start` | `pm2 serve.js` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
@@ -352,6 +354,7 @@ The following npm scripts are supported in this directory:
 | `linkcheck:reflinks` | Checks the `public` folder for HTML files with broken MarkDown reference links. |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
+| `preinstall` | `node ../scripts/only-pnpm.cjs` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 
 <!-- prettier-ignore-end -->

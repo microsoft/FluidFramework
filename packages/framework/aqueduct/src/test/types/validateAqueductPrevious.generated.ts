@@ -184,6 +184,102 @@ use_old_InterfaceDeclaration_DataObjectTypes(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDataObjectProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IDataObjectProps():
+    TypeOnly<old.IDataObjectProps>;
+declare function use_current_InterfaceDeclaration_IDataObjectProps(
+    use: TypeOnly<current.IDataObjectProps>);
+use_current_InterfaceDeclaration_IDataObjectProps(
+    get_old_InterfaceDeclaration_IDataObjectProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IDataObjectProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IDataObjectProps():
+    TypeOnly<current.IDataObjectProps>;
+declare function use_old_InterfaceDeclaration_IDataObjectProps(
+    use: TypeOnly<old.IDataObjectProps>);
+use_old_InterfaceDeclaration_IDataObjectProps(
+    get_current_InterfaceDeclaration_IDataObjectProps());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRootDataObjectFactory": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IRootDataObjectFactory():
+    TypeOnly<old.IRootDataObjectFactory>;
+declare function use_current_InterfaceDeclaration_IRootDataObjectFactory(
+    use: TypeOnly<current.IRootDataObjectFactory>);
+use_current_InterfaceDeclaration_IRootDataObjectFactory(
+    get_old_InterfaceDeclaration_IRootDataObjectFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IRootDataObjectFactory": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IRootDataObjectFactory():
+    TypeOnly<current.IRootDataObjectFactory>;
+declare function use_old_InterfaceDeclaration_IRootDataObjectFactory(
+    use: TypeOnly<old.IRootDataObjectFactory>);
+use_old_InterfaceDeclaration_IRootDataObjectFactory(
+    get_current_InterfaceDeclaration_IRootDataObjectFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_PureDataObject": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_PureDataObject():
+    TypeOnly<old.PureDataObject>;
+declare function use_current_ClassDeclaration_PureDataObject(
+    use: TypeOnly<current.PureDataObject>);
+use_current_ClassDeclaration_PureDataObject(
+    get_old_ClassDeclaration_PureDataObject());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_PureDataObject": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_PureDataObject():
+    TypeOnly<current.PureDataObject>;
+declare function use_old_ClassDeclaration_PureDataObject(
+    use: TypeOnly<old.PureDataObject>);
+use_old_ClassDeclaration_PureDataObject(
+    get_current_ClassDeclaration_PureDataObject());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_PureDataObjectFactory": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_PureDataObjectFactory():
+    TypeOnly<old.PureDataObjectFactory<any,any>>;
+declare function use_current_ClassDeclaration_PureDataObjectFactory(
+    use: TypeOnly<current.PureDataObjectFactory<any,any>>);
+use_current_ClassDeclaration_PureDataObjectFactory(
+    get_old_ClassDeclaration_PureDataObjectFactory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_PureDataObjectFactory": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_PureDataObjectFactory():
+    TypeOnly<current.PureDataObjectFactory<any,any>>;
+declare function use_old_ClassDeclaration_PureDataObjectFactory(
+    use: TypeOnly<old.PureDataObjectFactory<any,any>>);
+use_old_ClassDeclaration_PureDataObjectFactory(
+    get_current_ClassDeclaration_PureDataObjectFactory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_defaultFluidObjectRequestHandler": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_defaultFluidObjectRequestHandler():
@@ -328,54 +424,6 @@ use_old_FunctionDeclaration_getObjectWithIdFromContainer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDataObjectProps": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IDataObjectProps():
-    TypeOnly<old.IDataObjectProps>;
-declare function use_current_InterfaceDeclaration_IDataObjectProps(
-    use: TypeOnly<current.IDataObjectProps>);
-use_current_InterfaceDeclaration_IDataObjectProps(
-    get_old_InterfaceDeclaration_IDataObjectProps());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IDataObjectProps": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IDataObjectProps():
-    TypeOnly<current.IDataObjectProps>;
-declare function use_old_InterfaceDeclaration_IDataObjectProps(
-    use: TypeOnly<old.IDataObjectProps>);
-use_old_InterfaceDeclaration_IDataObjectProps(
-    get_current_InterfaceDeclaration_IDataObjectProps());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootDataObjectFactory": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IRootDataObjectFactory():
-    TypeOnly<old.IRootDataObjectFactory>;
-declare function use_current_InterfaceDeclaration_IRootDataObjectFactory(
-    use: TypeOnly<current.IRootDataObjectFactory>);
-use_current_InterfaceDeclaration_IRootDataObjectFactory(
-    get_old_InterfaceDeclaration_IRootDataObjectFactory());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IRootDataObjectFactory": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IRootDataObjectFactory():
-    TypeOnly<current.IRootDataObjectFactory>;
-declare function use_old_InterfaceDeclaration_IRootDataObjectFactory(
-    use: TypeOnly<old.IRootDataObjectFactory>);
-use_old_InterfaceDeclaration_IRootDataObjectFactory(
-    get_current_InterfaceDeclaration_IRootDataObjectFactory());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_mountableViewRequestHandler": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_mountableViewRequestHandler():
@@ -396,54 +444,6 @@ declare function use_old_VariableDeclaration_mountableViewRequestHandler(
     use: TypeOnly<typeof old.mountableViewRequestHandler>);
 use_old_VariableDeclaration_mountableViewRequestHandler(
     get_current_VariableDeclaration_mountableViewRequestHandler());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PureDataObject": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_PureDataObject():
-    TypeOnly<old.PureDataObject>;
-declare function use_current_ClassDeclaration_PureDataObject(
-    use: TypeOnly<current.PureDataObject>);
-use_current_ClassDeclaration_PureDataObject(
-    get_old_ClassDeclaration_PureDataObject());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PureDataObject": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_PureDataObject():
-    TypeOnly<current.PureDataObject>;
-declare function use_old_ClassDeclaration_PureDataObject(
-    use: TypeOnly<old.PureDataObject>);
-use_old_ClassDeclaration_PureDataObject(
-    get_current_ClassDeclaration_PureDataObject());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PureDataObjectFactory": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_PureDataObjectFactory():
-    TypeOnly<old.PureDataObjectFactory<any,any>>;
-declare function use_current_ClassDeclaration_PureDataObjectFactory(
-    use: TypeOnly<current.PureDataObjectFactory<any,any>>);
-use_current_ClassDeclaration_PureDataObjectFactory(
-    get_old_ClassDeclaration_PureDataObjectFactory());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_PureDataObjectFactory": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_PureDataObjectFactory():
-    TypeOnly<current.PureDataObjectFactory<any,any>>;
-declare function use_old_ClassDeclaration_PureDataObjectFactory(
-    use: TypeOnly<old.PureDataObjectFactory<any,any>>);
-use_old_ClassDeclaration_PureDataObjectFactory(
-    get_current_ClassDeclaration_PureDataObjectFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
