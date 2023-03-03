@@ -65,6 +65,7 @@ machine_name: "Fluid Unified Release Process";
 Init 'success'
 => CheckShouldRunOptionalChecks 'success'
 => CheckValidReleaseGroup 'success'
+=> CheckDependenciesInstalled 'success'
 => CheckPolicy 'success'
 => CheckAssertTagging 'success'
 => CheckHasRemote 'success'
@@ -81,6 +82,7 @@ CheckShouldRunOptionalChecks 'failure'
 [
 Init
 CheckValidReleaseGroup
+CheckDependenciesInstalled
 CheckHasRemote
 CheckBranchUpToDate
 ] 'failure' -> Failed;
@@ -264,11 +266,6 @@ state DoChecks: {
    background-color : steelblue;
    text-color       : white;
 };
-
-// state PromptToCommitReleasedDepsBump: {
-//   background-color : #ffdddd;
-//   text-color       : black;
-// };
 
 state AskForReleaseType: {
    background-color : purple;
