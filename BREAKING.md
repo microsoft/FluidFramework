@@ -44,6 +44,7 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 -   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
 -   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
 -   [driver-utils members deprecated](#driver-utils-members-deprecated)
+-   [Aqueduct members deprecated](#Aqueduct-members-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -126,6 +127,13 @@ The following members of the `@fluidframework/driver-utils` package have been de
 -   `convertSnapshotAndBlobsToSummaryTree`
 -   `ISummaryTreeAssemblerProps`
 -   `SummaryTreeAssembler`
+
+### Aqueduct members deprecated
+
+The following members of the `@fluidframework/aqueduct` package have been deprecated and will be removed in an upcoming release:
+
+-   `waitForAttach()`
+    -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
