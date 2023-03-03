@@ -43,10 +43,10 @@
 		"jsonschema": "^1.2.6"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-134585",
+		"@fluid-tools/build-cli": "0.11.0-135362",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-134585",
-		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.0.0-internal.3.1.0",
+		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluidframework/debugger-previous": "npm:@fluidframework/debugger@2.0.0-internal.3.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
 		"@rushstack/eslint-config": "^2.5.1",
@@ -61,10 +61,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"version": "2.0.0-internal.3.2.0",
-		"previousVersionStyle": "~previousMinor",
-		"baselineRange": ">=2.0.0-internal.3.1.0 <2.0.0-internal.3.2.0",
-		"baselineVersion": "2.0.0-internal.3.1.0",
 		"broken": {}
 	}
 }
