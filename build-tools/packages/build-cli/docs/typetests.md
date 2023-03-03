@@ -19,24 +19,64 @@ USAGE
     <value> | -g client|server|azure|build-tools] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
 
 FLAGS
-  -d, --dir=<value>            Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
-  -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --dir or --packages.
-                               <options: client|server|azure|build-tools>
-  -g, --skipScope=<option>...  Package scopes to filter out.
-                               <options: client|server|azure|build-tools>
-  -n, --normalize              Removes any unrecognized data from "typeValidation" in the package.json
-  -p, --previous               Use the version immediately before the current version.
-  -r, --remove                 Remove the test "-previous" version dependency. This is also done implicitly (without
-                               this flag) if type tests are disabled.
-  -v, --verbose                Verbose logging.
-  --disable                    Set the "typeValidation.disabled" setting to "true" in the package.json
-  --enable                     Remove the "typeValidation.disabled" setting in the package.json
-  --exact=<value>              An exact string to use as the previous version constraint. The string will be used as-is.
-  --packages                   Run on all independent packages in the repo. This is an alternative to using the --dir
-                               flag for independent packages.
-  --[no-]private               Only include private packages (or non-private packages for --no-private)
-  --reset                      Resets the broken type test settings in package.json.
-  --scope=<value>...           Package scopes to filter to.
+  -d, --dir=<value>
+      Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
+
+  -g, --releaseGroup=<option>
+      Run on all packages within this release group. Cannot be used with --dir or --packages.
+      <options: client|server|azure|build-tools>
+
+  -g, --skipScope=<option>...
+      Package scopes to filter out.
+      <options: client|server|azure|build-tools>
+
+  -n, --normalize
+      Removes any unrecognized data from "typeValidation" in the package.json
+
+  -p, --previous
+      Use the version immediately before the current version.
+
+      This is done by decrementing the least significant non-zero component (as separated by ".").
+
+      This means that "1.2.3" to "1.2.2" and "1.2.0" to "1.1.0".
+
+      This usually produces the version of the release that was made closest to the current version from a branch
+      perspective.
+      For example if the version on main is "1.2.3",
+      the closest release history wise would be the first release of the previous minor, so "1.1.0" even if there were
+      other point releases on the "1.1" branch.
+
+      If targeting prerelease versions, skipping versions, or using skipping some alternative numbering scheme use
+      "--exact" to specify the desired version instead.
+
+  -r, --remove
+      Remove the test "-previous" version dependency. This is also done implicitly (without this flag) if type tests are
+      disabled.
+
+  -v, --verbose
+      Verbose logging.
+
+  --disable
+      Set the "typeValidation.disabled" setting to "true" in the package.json
+
+  --enable
+      Remove the "typeValidation.disabled" setting in the package.json
+
+  --exact=<value>
+      An exact string to use as the previous version constraint. The string will be used as-is.
+
+  --packages
+      Run on all independent packages in the repo. This is an alternative to using the --dir flag for independent
+      packages.
+
+  --[no-]private
+      Only include private packages (or non-private packages for --no-private)
+
+  --reset
+      Resets the broken type test settings in package.json.
+
+  --scope=<value>...
+      Package scopes to filter to.
 
 DESCRIPTION
   Updates configuration for type tests in package.json files. If the previous version changes after running preparation,

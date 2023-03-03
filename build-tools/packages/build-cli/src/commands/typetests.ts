@@ -26,7 +26,18 @@ export default class PrepareTypeTestsCommand extends PackageCommand<
 		}),
 		previous: Flags.boolean({
 			char: "p",
-			description: `Use the version immediately before the current version.`,
+			description: `Use the version immediately before the current version.
+
+This is done by decrementing the least significant non-zero component (as separated by ".").
+
+This means that "1.2.3" to "1.2.2" and "1.2.0" to "1.1.0".
+
+This usually produces the version of the release that was made closest to the current version from a branch perspective.
+For example if the version on main is "1.2.3",
+the closest release history wise would be the first release of the previous minor, so "1.1.0" even if there were other point releases on the "1.1" branch.
+
+If targeting prerelease versions, skipping versions, or using skipping some alternative numbering scheme use "--exact" to specify the desired version instead.
+			`,
 			exclusive: ["exact", "remove", "disable"],
 		}),
 		remove: Flags.boolean({
@@ -128,7 +139,7 @@ interface TypeTestConfigActions {
  * For example if the version on main is `1.2.3`,
  * the closest release history wise would be the first release of the previous minor, so `1.1.0` even if there were other point releases on the `1.1` branch.
  */
-function previousVersion(version: string): string {
+export function previousVersion(version: string): string {
 	const parts = version.split(".");
 	for (let index = parts.length - 1; index >= 0; index--) {
 		const element = parts[index];
