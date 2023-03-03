@@ -38,6 +38,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [IFluidTokenProvider removed](#IFluidTokenProvider-removed)
 -   [Summarizer node and related items removed](#Summarizer-node-and-related-items-removed)
 -   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
+-   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
 
 ### Container and RelativeLoader no longer exported
 
@@ -77,6 +78,19 @@ The following functions, interfaces, and types currently available in `@fluidfra
 ### web-code-loader and ICodeAllowList removed
 
 The `@fluidframework/web-code-loader` and the `ICodeAllowList` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### Container and IContainer no longer raise events when a new listener is registered
+
+`Container` and `IContainer` had previously raised the `connected`, `disconnected`, `dirty`, and `saved` events when a new listener was registered and the corresponding state was true. This behavior has been removed. To avoid issues, add checks to the state of the container before registering listeners.
+
+```diff
+	// Ensure client is connected
++	if (container.connectionState !== ConnectionState.Connected) {
+		await new Promise<void>((resolve) => {
+			container.once("connected", resolve);
+		});
++   }
+```
 
 # 2.0.0-internal.3.0.0
 
