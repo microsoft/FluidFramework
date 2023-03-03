@@ -15,7 +15,7 @@ import {
 	FieldKinds,
 	TreeSchemaIdentifier,
 } from "@fluid-internal/tree";
-import { convertPSetSchemaToSharedTreeLls } from "../schemaConverter";
+import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
 
 const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");
 
@@ -96,7 +96,7 @@ describe("LlsSchemaConverter", () => {
 
 	it("Enum", () => {
 		const schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(
+		convertPropertyToSharedTreeStorageSchema(
 			schemaRepository,
 			fieldSchema(FieldKinds.optional, [tableTypeName]),
 		);
@@ -110,7 +110,7 @@ describe("LlsSchemaConverter", () => {
 
 	it("Missing Refs", () => {
 		const schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(
+		convertPropertyToSharedTreeStorageSchema(
 			schemaRepository,
 			fieldSchema(FieldKinds.optional, [tableTypeName]),
 		);
@@ -141,7 +141,7 @@ describe("LlsSchemaConverter", () => {
 
 	it("Check Structure", () => {
 		const schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(
+		convertPropertyToSharedTreeStorageSchema(
 			schemaRepository,
 			fieldSchema(FieldKinds.optional, [tableTypeName]),
 		);
@@ -177,7 +177,7 @@ describe("LlsSchemaConverter", () => {
 
 	it("Inheritance Translation", () => {
 		const schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(
+		convertPropertyToSharedTreeStorageSchema(
 			schemaRepository,
 			fieldSchema(FieldKinds.optional, [tableTypeName]),
 		);

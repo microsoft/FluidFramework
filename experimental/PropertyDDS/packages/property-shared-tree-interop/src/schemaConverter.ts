@@ -87,7 +87,7 @@ function getChildrenForType(
 	return childrenTypes;
 }
 
-export function convertPSetSchemaToSharedTreeLls(
+export function convertPropertyToSharedTreeStorageSchema(
 	repository: StoredSchemaRepository,
 	rootFieldSchema: FieldSchema,
 ): void {
@@ -106,7 +106,7 @@ export function convertPSetSchemaToSharedTreeLls(
 		const unprocessedTypeID = unprocessedTypeIds.pop();
 
 		if (!unprocessedTypeID) {
-			return;
+			fail(`Found undefined value in stack of unprocessed type ids.`);
 		}
 
 		referencedTypeIDs.add(unprocessedTypeID);

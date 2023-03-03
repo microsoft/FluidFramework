@@ -16,7 +16,7 @@ import {
 	rootFieldKey,
 } from "@fluid-internal/tree";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { convertPSetSchemaToSharedTreeLls } from "../schemaConverter";
+import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
 import personSchema from "./personSchema";
 
 describe("schema converter", () => {
@@ -28,7 +28,7 @@ describe("schema converter", () => {
 		const schemaRepository = createSchemaRepository();
 		assert.throws(
 			() =>
-				convertPSetSchemaToSharedTreeLls(
+				convertPropertyToSharedTreeStorageSchema(
 					schemaRepository,
 					fieldSchema(FieldKinds.optional, [brand("Test:ErroneousType-1.0.0")]),
 				),
@@ -40,14 +40,14 @@ describe("schema converter", () => {
 			"Expected exception was not thrown",
 		);
 		const rootFieldSchema = fieldSchema(FieldKinds.optional, [brand("Test:Optional-1.0.0")]);
-		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
+		convertPropertyToSharedTreeStorageSchema(schemaRepository, rootFieldSchema);
 		expect(lookupGlobalFieldSchema(schemaRepository, rootFieldKey)).toEqual(rootFieldSchema);
 	});
 
 	it(`can use "NodeProperty" as root`, () => {
 		const rootFieldSchema = fieldSchema(FieldKinds.optional, [brand("NodeProperty")]);
 		const schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
+		convertPropertyToSharedTreeStorageSchema(schemaRepository, rootFieldSchema);
 
 		expect(schemaRepository.globalFieldSchema.size).toEqual(1);
 		const expectedRootFieldSchema = fieldSchema(FieldKinds.optional, [
@@ -78,7 +78,7 @@ describe("schema converter", () => {
 	it("can convert property with array context", () => {
 		const rootFieldSchema = fieldSchema(FieldKinds.optional, [brand("Test:Person-1.0.0")]);
 		const schemaRepository = createSchemaRepository();
-		convertPSetSchemaToSharedTreeLls(schemaRepository, rootFieldSchema);
+		convertPropertyToSharedTreeStorageSchema(schemaRepository, rootFieldSchema);
 		const addressSchema = lookupTreeSchema(schemaRepository, brand("Test:Address-1.0.0"));
 		expect(addressSchema).toMatchObject({
 			name: "Test:Address-1.0.0",
