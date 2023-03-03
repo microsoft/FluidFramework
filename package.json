@@ -82,7 +82,7 @@
 		"test:stress": "lerna run test:stress --stream --no-bail --no-sort",
 		"tsc": "lerna run tsc --stream",
 		"tsc:fast": "fluid-build  --root . -s tsc",
-		"typetests:gen": "flub generate typetests --generate --releaseGroup client",
+		"typetests:gen": "pnpm -r typetests:gen",
 		"typetests:prepare": "flub generate typetests --prepare --releaseGroup client --pin",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
 		"watch:esnext": "lerna run --parallel build:esnext -- --watch",
@@ -124,8 +124,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.10.0",
-		"@fluidframework/build-tools": "^0.10.0",
+		"@fluid-tools/build-cli": "0.11.0-135362",
+		"@fluidframework/build-tools": "0.11.0-135362",
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.17.9",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -145,51 +145,6 @@
 	"engines": {
 		"node": ">=14.13.0",
 		"npm": "^6"
-	},
-	"fluidBuild": {
-		"repoPackages": {
-			"build": "common/build",
-			"common-def": "common/lib/common-definitions",
-			"common-utils": "common/lib/common-utils",
-			"protocol-def": "common/lib/protocol-definitions",
-			"azure": "azure",
-			"build-tools": "build-tools",
-			"server": "server/routerlicious",
-			"client": {
-				"directory": "",
-				"ignoredDirs": []
-			},
-			"tools": [
-				"tools/api-markdown-documenter",
-				"tools/benchmark",
-				"tools/getkeys",
-				"tools/test-tools",
-				"server/tinylicious"
-			],
-			"services": {
-				"directory": "server",
-				"ignoredDirs": [
-					"routerlicious",
-					"tinylicious"
-				]
-			}
-		},
-		"policy": {
-			"additionalLockfilePaths": [
-				"common/build/build-common",
-				"common/build/eslint-config-fluid",
-				"docs",
-				"server/gitrest",
-				"server/historian",
-				"tools/telemetry-generator"
-			]
-		},
-		"branchReleaseTypes": {
-			"main": "minor",
-			"lts": "minor",
-			"release/**": "patch",
-			"next": "major"
-		}
 	},
 	"packageManager": "pnpm@7.27.0",
 	"pnpm": {

@@ -27,6 +27,7 @@ import {
 	ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
+	createSummarizer,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
@@ -92,14 +93,6 @@ async function createMainContainerAndSummarizer(
 	};
 }
 
-async function createSummarizer(
-	provider: ITestObjectProvider,
-	containerConfig?: ITestContainerConfig,
-): Promise<ISummarizer> {
-	const result = await createMainContainerAndSummarizer(provider, containerConfig);
-	return result.summarizer;
-}
-
 async function createSummarizerFromContainer(
 	provider: ITestObjectProvider,
 	container: IContainer,
@@ -145,7 +138,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	});
 
 	it("On demand summaries", async () => {
-		const summarizer = await createSummarizer(provider);
+		const { summarizer } = await createMainContainerAndSummarizer(provider);
 
 		let result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
 		let negResult: ISummarizeResults | undefined = summarizer.summarizeOnDemand({
@@ -200,7 +193,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	});
 
 	it("should fail on demand summary on stopped summarizer", async () => {
-		const summarizer = await createSummarizer(provider);
+		const { summarizer } = await createMainContainerAndSummarizer(provider);
 		let result: ISummarizeResults | undefined = summarizer.summarizeOnDemand({
 			reason: "test",
 		});
@@ -232,6 +225,20 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		assert(result === undefined, "Should not have attempted summary with disposed summarizer");
 	});
 
+	it("summarizer client should be read-only", async () => {
+		const container1 = await createContainer(provider, {});
+		const dsContainer1 = await requestFluidObject<ITestDataObject>(container1, "default");
+		const readOnlyContainer1 = dsContainer1._context.deltaManager.readOnlyInfo.readonly;
+		assert(readOnlyContainer1 !== true, "Non-summarizer container 1 should not be readonly");
+
+		const { container: summarizerContainer } = await createSummarizer(provider, container1);
+		const dsSummarizer = await requestFluidObject<ITestDataObject>(
+			summarizerContainer,
+			"default",
+		);
+		const readOnlySummarizer = dsSummarizer._context.deltaManager.readOnlyInfo.readonly;
+		assert(readOnlySummarizer === true, "Summarizer should be readonly");
+	});
 	it("should generate summary tree", async () => {
 		const container = await createContainer(provider, {});
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(
@@ -492,7 +499,7 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 	});
 
 	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async () => {
-		const summarizer = await createSummarizer(provider);
+		const { summarizer } = await createMainContainerAndSummarizer(provider);
 
 		// Summarize
 		const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });

@@ -8,6 +8,7 @@ import {
     IWholeSummaryPayload,
     IWriteSummaryResponse,
     NetworkError,
+    isNetworkError,
 } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -336,7 +337,6 @@ export function create(
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => {
                 const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
-                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
                 return deleteSummary(
                     repoManager,
                     fsManager,
@@ -344,7 +344,25 @@ export function create(
                     softDelete,
                     repoPerDocEnabled,
                     getExternalWriterParams(request.query?.config as string | undefined));
-            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            }).catch((error) => {
+                if (isNetworkError(error)) {
+                    if (error.code === 400 && error.message.startsWith("Repo does not exist")) {
+                        // Document is already deleted, so there is nothing to do. This is a deletion success.
+                        const lumberjackProperties = {
+                            ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+                            [BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
+                            [BaseGitRestTelemetryProperties.softDelete]: softDelete,
+                        };
+                        Lumberjack.info(
+                            "Attempted to delete document that was already deleted or did not exist",
+                            lumberjackProperties,
+                        );
+                        return;
+                    }
+                }
+
+                logAndThrowApiError(error, request, repoManagerParams);
+            });
         handleResponse(resultP, response, undefined, undefined, 204);
     });
 
