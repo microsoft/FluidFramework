@@ -103,7 +103,6 @@ api-report/tree.api.md                                                    @micro
 api-report/undo-redo.api.md                                               @microsoft/fluid-cr-framework
 api-report/view-adapters.api.md                                           @microsoft/fluid-cr-framework
 api-report/view-interfaces.api.md                                         @microsoft/fluid-cr-framework
-api-report/web-code-loader.api.md                                         @microsoft/fluid-cr-loader
 
 # No owners for package.json files to avoid review spam when mono-repo dependencies are updated
 package.json @msfluid-bot
