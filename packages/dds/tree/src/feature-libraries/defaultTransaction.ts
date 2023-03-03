@@ -59,7 +59,11 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 	}
 
 	if (result === TransactionResult.Apply) {
-		const edit = changeFamily.rebaser.compose(changes.map((c) => makeAnonChange(c)));
+		// Using anonymous changes makes it impossible to chronologically order them during composition.
+		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
+		// not expected to happen in transactions but that could change in the future.
+		const anonChanges = changes.map((c) => makeAnonChange(c));
+		const edit = changeFamily.rebaser.compose(anonChanges);
 		submitEdit(edit);
 	}
 

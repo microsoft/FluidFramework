@@ -41,6 +41,10 @@ const crossFieldManager = {
 	invalidate: unexpectedDelegate,
 };
 
+const revisionIndexer = (tag: RevisionTag) => {
+	assert.fail("Unexpected revision index query");
+};
+
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
 	assert.deepEqual(child, nodeChange1);
 	return { type: Delta.MarkType.Modify, setValue: "value3" };
@@ -108,6 +112,7 @@ describe("Value field changesets", () => {
 			simpleChildComposer,
 			idAllocator,
 			crossFieldManager,
+			revisionIndexer,
 		);
 
 		assert.deepEqual(composed, change2);
@@ -120,6 +125,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			change1WithChildChange,
 		);
@@ -136,6 +142,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			change1,
 		);
@@ -146,6 +153,7 @@ describe("Value field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			childChange3,
 		);
@@ -178,6 +186,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			change2,
 		);
@@ -200,6 +209,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			childChange3,
 		);
@@ -287,6 +297,7 @@ describe("Optional field changesets", () => {
 			childComposer,
 			idAllocator,
 			crossFieldManager,
+			revisionIndexer,
 		);
 		assert.deepEqual(composed, change3);
 	});
@@ -303,6 +314,7 @@ describe("Optional field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			expected,
 		);
@@ -340,6 +352,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			change2,
 		);
@@ -364,6 +377,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionIndexer,
 			),
 			expected,
 		);

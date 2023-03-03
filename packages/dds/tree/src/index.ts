@@ -147,6 +147,8 @@ export {
 	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
+	RevisionIndexer,
+	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
