@@ -24,14 +24,6 @@ export interface FieldChangeHandler<
 }
 
 /**
- * A callback that returns the index of the changeset with the given RevisionTag among the changesets being composed
- * or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
- * compose or rebase operation.
- * @alpha
- */
-export type RevisionIndexer = (tag: RevisionTag) => number;
-
-/**
  * @alpha
  */
 export interface FieldChangeRebaser<TChangeset> {
@@ -274,6 +266,19 @@ export interface ModularChangeset {
 	readonly revisions?: readonly RevisionInfo[];
 	changes: FieldChangeMap;
 }
+
+/**
+ * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
+ * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
+ * compose or rebase operation.
+ *
+ * During composition, the index reflects the order of the changeset within the overall composed changeset that is
+ * being produced.
+ *
+ * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
+ * @alpha
+ */
+export type RevisionIndexer = (tag: RevisionTag) => number;
 
 /**
  * @alpha
