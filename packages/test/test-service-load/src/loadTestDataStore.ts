@@ -595,6 +595,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				)
 			) {
 				const opSize = getOpSizeInBytes();
+				// The key name matters, as it can directly affect the size of the snapshot.
+				// For now, we want to key to be constantly overwritten so that the snapshot size
+				// does not grow relative to the number of clients or the frequency of the large ops.
 				dataModel.sharedmap.set("largeOpKey", generateContentOfSize(opSize));
 				config.logger.sendTelemetryEvent({
 					eventName: "LargeTestPayload",
