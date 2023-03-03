@@ -9,6 +9,7 @@ import * as path from "path";
 import { defaultLogger } from "../../../common/logging";
 import { ScriptDependencies } from "../../../common/npmPackage";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
+import { getPackageDetails } from "../../../typeValidator/packageJson";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -195,12 +196,13 @@ export class GenVerTask extends LeafTask {
 	}
 }
 
-export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+export class TypeValidationTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
-		return JSON.stringify(this.package.packageJson);
+		const details = await getPackageDetails(this.package.directory);
+		const content =
+			JSON.stringify(this.package.packageJson) + JSON.stringify(details.typeValidation);
+		return content;
 	}
-}
 
-export class TypeValidationTask extends PackageJsonChangedTask {
 	protected addDependentTasks(dependentTasks: LeafTask[]): void {}
 }
