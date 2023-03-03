@@ -32,8 +32,8 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 	const { sharedMap, renderChild } = props;
 
 	const [entries, setEntries] = React.useState<[string, unknown][]>([...sharedMap.entries()]);
-	const [collapsed, setCollapsed] = React.useState<{[key: string]: boolean}>(() => {
-		const collapsedState: {[key: string]: boolean} = {};
+	const [collapsed, setCollapsed] = React.useState<{ [key: string]: boolean }>(() => {
+		const collapsedState: { [key: string]: boolean } = {};
 		// eslint-disable-next-line unicorn/no-array-for-each
 		entries.forEach(([key]) => {
 			collapsedState[key] = true;
@@ -43,35 +43,34 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 
 	React.useEffect(() => {
 		function updateEntries(): void {
-		  const newEntries = [...sharedMap.entries()];
-		  setEntries(newEntries);
-	  
-		  const newCollapsed = { ...collapsed };
-	  
-		  for (const [key] of newEntries) {
-			if (collapsed[key] === undefined) {
-			  newCollapsed[key] = true;
+			const newEntries = [...sharedMap.entries()];
+			setEntries(newEntries);
+
+			const newCollapsed = { ...collapsed };
+
+			for (const [key] of newEntries) {
+				if (collapsed[key] === undefined) {
+					newCollapsed[key] = true;
+				}
 			}
-		  }
-	  
-		  for (const key of Object.keys(collapsed)) {
-			if (!newEntries.some(([k]) => k === key)) {
-			  // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			  delete newCollapsed[key];
+
+			for (const key of Object.keys(collapsed)) {
+				if (!newEntries.some(([k]) => k === key)) {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete newCollapsed[key];
+				}
 			}
-		  }
-	  
-		  setCollapsed(newCollapsed);
+
+			setCollapsed(newCollapsed);
 		}
-	  
+
 		setEntries([...sharedMap.entries()]);
 		sharedMap.on("valueChanged", updateEntries);
-	  
+
 		return (): void => {
-		  sharedMap.off("valueChanged", updateEntries);
+			sharedMap.off("valueChanged", updateEntries);
 		};
-	  }, [sharedMap, setEntries, collapsed]);
-	  
+	}, [sharedMap, setEntries, collapsed]);
 
 	const toggleCollapse = (key: string): void => {
 		setCollapsed({
@@ -80,16 +79,15 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 		});
 	};
 
-
 	const iconStyle = {
 		display: "flex",
 		alignItems: "center",
 		backgroundColor: "rgb(237, 235, 233)",
-	}
+	};
 
 	const mapEntryViewStyle = {
-		marginLeft: "50px" 
-	}
+		marginLeft: "50px",
+	};
 
 	return (
 		<div>
@@ -106,7 +104,7 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 					</div>
 					{!collapsed[key] && (
 						<div style={mapEntryViewStyle}>
-							<MapEntryView data={value} renderChild={renderChild}/>
+							<MapEntryView data={value} renderChild={renderChild} />
 						</div>
 					)}
 				</div>

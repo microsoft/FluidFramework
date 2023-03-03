@@ -48,18 +48,16 @@ function getTableValue(data: unknown, _renderChild: RenderChild): React.ReactNod
 			opacity: 0.6,
 			fontWeight: "lighter",
 			fontSize: "small",
-		}
+		};
 
 		const dataStyle = {
 			fontWeight: "lighter",
 			fontSize: "medium",
-		}
+		};
 
 		return (
 			<>
-				<span style={dataTypeStyle}>
-					{typeof data}
-				</span>
+				<span style={dataTypeStyle}>{typeof data}</span>
 				<span style={dataStyle}> {data} </span>
 			</>
 		);
@@ -67,4 +65,3 @@ function getTableValue(data: unknown, _renderChild: RenderChild): React.ReactNod
 
 	return <>{_renderChild(data)}</>;
 }
-
