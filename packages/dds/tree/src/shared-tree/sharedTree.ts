@@ -13,17 +13,18 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import {
-	ICheckout,
 	TransactionResult,
 	IForestSubscription,
 	StoredSchemaRepository,
 	InMemoryStoredSchemaRepository,
-	Checkout as TransactionCheckout,
+	TransactionCheckout,
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
 	UpPath,
 	EditManager,
+	IEditableForest,
+	SharedTreeBranch,
 } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
@@ -34,7 +35,6 @@ import {
 	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultEditBuilder,
-	IDefaultEditBuilder,
 	UnwrappedEditableField,
 	getEditableTreeContext,
 	SchemaEditor,
@@ -44,16 +44,15 @@ import {
 	buildForest,
 	ContextuallyTypedNodeData,
 	ModularChangeset,
+	IDefaultEditBuilder,
 } from "../feature-libraries";
 
 /**
- * Collaboratively editable tree distributed data-structure,
- * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
- *
- * See [the README](../../README.md) for details.
+ * Provides a means for interacting with a SharedTree.
+ * This includes reading data from the tree and running transactions to mutate the tree.
  * @alpha
  */
-export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObject, AnchorLocator {
+export interface ISharedTreeCheckout extends AnchorLocator {
 	/**
 	 * Gets or sets the root field of the tree.
 	 *
@@ -72,7 +71,7 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
 	set root(data: ContextuallyTypedNodeData | undefined);
 
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTree.root}.
+	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeCheckout.root}.
 	 *
 	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
 	 */
@@ -95,14 +94,73 @@ export interface ISharedTree extends ICheckout<IDefaultEditBuilder>, ISharedObje
 	 * Something should ensure the document contents are always in schema.
 	 */
 	readonly storedSchema: StoredSchemaRepository;
+	/**
+	 * Current contents.
+	 * Updated by edits (local and remote).
+	 * Use `runTransaction` to create a local edit.
+	 */
+	readonly forest: IForestSubscription;
+
+	/**
+	 * Run `transaction` to edit this forest.
+	 * While `transaction` is running, its intermediate states will be visible on the IForestSubscription.
+	 *
+	 * TODO: support nesting (perhaps via "commands"),
+	 * and do this in a way where there is control over which transaction's intermediate versions are displayed.
+	 */
+	runTransaction(
+		transaction: (
+			forest: IForestSubscription,
+			editor: IDefaultEditBuilder,
+		) => TransactionResult,
+	): TransactionResult;
+
+	/**
+	 * Spawn a new checkout which is based off of the current state of this checkout.
+	 * Any mutations of the new checkout will not apply to this checkout until the new checkout is merged back in.
+	 */
+	fork(): ISharedTreeCheckoutFork;
 }
+
+/**
+ * An `ISharedTreeCheckout` which has been forked from a pre-existing checkout.
+ * @alpha
+ */
+export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
+	/**
+	 * Rebase the changes that have been applied to this checkout over all the changes in the base checkout that have
+	 * occurred since this checkout last pulled (or was forked).
+	 */
+	pull(): void;
+
+	/**
+	 * Apply all the changes on this checkout to the base checkout from which it was forked. If the base checkout has new
+	 * changes since this checkout last pulled (or was forked), then this checkout's changes will be rebased over those first.
+	 * After the merge completes, this checkout may no longer be forked or mutated.
+	 */
+	merge(): void;
+
+	/**
+	 * Whether or not this checkout has been merged into its base checkout via `merge()`.
+	 * If it has, then it may no longer be forked or mutated.
+	 */
+	isMerged(): boolean;
+}
+
+/**
+ * Collaboratively editable tree distributed data-structure,
+ * powered by {@link @fluidframework/shared-object-base#ISharedObject}.
+ *
+ * See [the README](../../README.md) for details.
+ * @alpha
+ */
+export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
- * TODO: expose or implement Checkout.
  */
 class SharedTree
 	extends SharedTreeCore<
@@ -114,7 +172,7 @@ class SharedTree
 {
 	public readonly context: EditableTreeContext;
 	public readonly forest: IForestSubscription;
-	public readonly storedSchema: SchemaEditor;
+	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 	/**
 	 * Rather than implementing TransactionCheckout, have a member that implements it.
 	 * This allows keeping the `IEditableForest` private.
@@ -162,7 +220,7 @@ class SharedTree
 
 	public locate(anchor: Anchor): UpPath | undefined {
 		assert(this.editManager.anchors !== undefined, 0x407 /* editManager must have anchors */);
-		return this.editManager.anchors?.locate(anchor);
+		return this.editManager.anchors.locate(anchor);
 	}
 
 	public get root(): UnwrappedEditableField {
@@ -177,6 +235,15 @@ class SharedTree
 		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => TransactionResult,
 	): TransactionResult {
 		return runSynchronousTransaction(this.transactionCheckout, transaction);
+	}
+
+	public fork(): ISharedTreeCheckoutFork {
+		return new SharedTreeCheckout(
+			this.createBranch(),
+			this.changeFamily,
+			this.storedSchema.inner.clone(),
+			this.forest.clone(this.storedSchema, new AnchorSet()),
+		);
 	}
 
 	/**
@@ -227,5 +294,71 @@ export class SharedTreeFactory implements IChannelFactory {
 		const tree = new SharedTree(id, runtime, this.attributes, "SharedTree");
 		tree.initializeLocal();
 		return tree;
+	}
+}
+
+class SharedTreeCheckout implements ISharedTreeCheckoutFork {
+	public readonly context: EditableTreeContext;
+	public readonly submitEdit: TransactionCheckout<
+		IDefaultEditBuilder,
+		DefaultChangeset
+	>["submitEdit"];
+
+	public constructor(
+		private readonly branch: SharedTreeBranch<DefaultChangeset>,
+		public readonly changeFamily: DefaultChangeFamily,
+		public readonly storedSchema: InMemoryStoredSchemaRepository,
+		public readonly forest: IEditableForest,
+	) {
+		this.context = getEditableTreeContext(forest, this);
+		branch.on("onChange", (change) => {
+			const delta = this.changeFamily.intoDelta(change);
+			this.forest.applyDelta(delta);
+			this.forest.anchors.applyDelta(delta);
+		});
+		this.submitEdit = (edit) => this.branch.applyChange(edit);
+	}
+
+	public locate(anchor: Anchor): UpPath | undefined {
+		return this.forest.anchors.locate(anchor);
+	}
+
+	public pull(): void {
+		this.branch.pull();
+	}
+
+	public fork(): ISharedTreeCheckoutFork {
+		const storedSchema = this.storedSchema.clone();
+		return new SharedTreeCheckout(
+			this.branch.fork(),
+			this.changeFamily,
+			storedSchema,
+			this.forest.clone(storedSchema, new AnchorSet()),
+		);
+	}
+
+	public merge(): void {
+		this.branch.merge();
+	}
+
+	public isMerged(): boolean {
+		return this.branch.isMerged();
+	}
+
+	public get root(): UnwrappedEditableField {
+		return this.context.unwrappedRoot;
+	}
+
+	public set root(data: ContextuallyTypedNodeData | undefined) {
+		this.context.unwrappedRoot = data;
+	}
+
+	public runTransaction(
+		transaction: (
+			forest: IForestSubscription,
+			editor: IDefaultEditBuilder,
+		) => TransactionResult,
+	): TransactionResult {
+		return runSynchronousTransaction(this, transaction);
 	}
 }
