@@ -25,7 +25,7 @@ function constructTree(numOfSegments: number): MergeTree {
 	return mergeTree;
 }
 
-describe("insertion perf", () => {
+describe("MergeTree insertion", () => {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert into empty tree",

@@ -16,6 +16,222 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IClientConfig": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IClientConfig():
+    TypeOnly<old.IClientConfig>;
+declare function use_current_InterfaceDeclaration_IClientConfig(
+    use: TypeOnly<current.IClientConfig>);
+use_current_InterfaceDeclaration_IClientConfig(
+    get_old_InterfaceDeclaration_IClientConfig());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IClientConfig": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IClientConfig():
+    TypeOnly<current.IClientConfig>;
+declare function use_old_InterfaceDeclaration_IClientConfig(
+    use: TypeOnly<old.IClientConfig>);
+use_old_InterfaceDeclaration_IClientConfig(
+    get_current_InterfaceDeclaration_IClientConfig());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspAuthRequestInfo": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspAuthRequestInfo():
+    TypeOnly<old.IOdspAuthRequestInfo>;
+declare function use_current_InterfaceDeclaration_IOdspAuthRequestInfo(
+    use: TypeOnly<current.IOdspAuthRequestInfo>);
+use_current_InterfaceDeclaration_IOdspAuthRequestInfo(
+    get_old_InterfaceDeclaration_IOdspAuthRequestInfo());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspAuthRequestInfo": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspAuthRequestInfo():
+    TypeOnly<current.IOdspAuthRequestInfo>;
+declare function use_old_InterfaceDeclaration_IOdspAuthRequestInfo(
+    use: TypeOnly<old.IOdspAuthRequestInfo>);
+use_old_InterfaceDeclaration_IOdspAuthRequestInfo(
+    get_current_InterfaceDeclaration_IOdspAuthRequestInfo());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspDriveItem": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspDriveItem():
+    TypeOnly<old.IOdspDriveItem>;
+declare function use_current_InterfaceDeclaration_IOdspDriveItem(
+    use: TypeOnly<current.IOdspDriveItem>);
+use_current_InterfaceDeclaration_IOdspDriveItem(
+    get_old_InterfaceDeclaration_IOdspDriveItem());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspDriveItem": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspDriveItem():
+    TypeOnly<current.IOdspDriveItem>;
+declare function use_old_InterfaceDeclaration_IOdspDriveItem(
+    use: TypeOnly<old.IOdspDriveItem>);
+use_old_InterfaceDeclaration_IOdspDriveItem(
+    get_current_InterfaceDeclaration_IOdspDriveItem());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspTokens": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspTokens():
+    TypeOnly<old.IOdspTokens>;
+declare function use_current_InterfaceDeclaration_IOdspTokens(
+    use: TypeOnly<current.IOdspTokens>);
+use_current_InterfaceDeclaration_IOdspTokens(
+    get_old_InterfaceDeclaration_IOdspTokens());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspTokens": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspTokens():
+    TypeOnly<current.IOdspTokens>;
+declare function use_old_InterfaceDeclaration_IOdspTokens(
+    use: TypeOnly<old.IOdspTokens>);
+use_old_InterfaceDeclaration_IOdspTokens(
+    get_current_InterfaceDeclaration_IOdspTokens());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_OdspErrorResponse": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_OdspErrorResponse():
+    TypeOnly<old.OdspErrorResponse>;
+declare function use_current_InterfaceDeclaration_OdspErrorResponse(
+    use: TypeOnly<current.OdspErrorResponse>);
+use_current_InterfaceDeclaration_OdspErrorResponse(
+    get_old_InterfaceDeclaration_OdspErrorResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_OdspErrorResponse": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_OdspErrorResponse():
+    TypeOnly<current.OdspErrorResponse>;
+declare function use_old_InterfaceDeclaration_OdspErrorResponse(
+    use: TypeOnly<old.OdspErrorResponse>);
+use_old_InterfaceDeclaration_OdspErrorResponse(
+    get_current_InterfaceDeclaration_OdspErrorResponse());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_OdspErrorResponseInnerError": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_OdspErrorResponseInnerError():
+    TypeOnly<old.OdspErrorResponseInnerError>;
+declare function use_current_InterfaceDeclaration_OdspErrorResponseInnerError(
+    use: TypeOnly<current.OdspErrorResponseInnerError>);
+use_current_InterfaceDeclaration_OdspErrorResponseInnerError(
+    get_old_InterfaceDeclaration_OdspErrorResponseInnerError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_OdspErrorResponseInnerError": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_OdspErrorResponseInnerError():
+    TypeOnly<current.OdspErrorResponseInnerError>;
+declare function use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
+    use: TypeOnly<old.OdspErrorResponseInnerError>);
+use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
+    get_current_InterfaceDeclaration_OdspErrorResponseInnerError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_OdspRedirectError": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_OdspRedirectError():
+    TypeOnly<old.OdspRedirectError>;
+declare function use_current_ClassDeclaration_OdspRedirectError(
+    use: TypeOnly<current.OdspRedirectError>);
+use_current_ClassDeclaration_OdspRedirectError(
+    get_old_ClassDeclaration_OdspRedirectError());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_OdspRedirectError": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_OdspRedirectError():
+    TypeOnly<current.OdspRedirectError>;
+declare function use_old_ClassDeclaration_OdspRedirectError(
+    use: TypeOnly<old.OdspRedirectError>);
+use_old_ClassDeclaration_OdspRedirectError(
+    get_current_ClassDeclaration_OdspRedirectError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_OdspServiceReadOnlyErrorCode": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_OdspServiceReadOnlyErrorCode():
+    TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>;
+declare function use_current_VariableDeclaration_OdspServiceReadOnlyErrorCode(
+    use: TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>);
+use_current_VariableDeclaration_OdspServiceReadOnlyErrorCode(
+    get_old_VariableDeclaration_OdspServiceReadOnlyErrorCode());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_OdspServiceReadOnlyErrorCode": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_OdspServiceReadOnlyErrorCode():
+    TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>;
+declare function use_old_VariableDeclaration_OdspServiceReadOnlyErrorCode(
+    use: TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>);
+use_old_VariableDeclaration_OdspServiceReadOnlyErrorCode(
+    get_current_VariableDeclaration_OdspServiceReadOnlyErrorCode());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TokenRequestCredentials": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_TokenRequestCredentials():
+    TypeOnly<old.TokenRequestCredentials>;
+declare function use_current_TypeAliasDeclaration_TokenRequestCredentials(
+    use: TypeOnly<current.TokenRequestCredentials>);
+use_current_TypeAliasDeclaration_TokenRequestCredentials(
+    get_old_TypeAliasDeclaration_TokenRequestCredentials());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_TokenRequestCredentials": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_TokenRequestCredentials():
+    TypeOnly<current.TokenRequestCredentials>;
+declare function use_old_TypeAliasDeclaration_TokenRequestCredentials(
+    use: TypeOnly<old.TokenRequestCredentials>);
+use_old_TypeAliasDeclaration_TokenRequestCredentials(
+    get_current_TypeAliasDeclaration_TokenRequestCredentials());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_authRequestWithRetry": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_authRequestWithRetry():
@@ -472,6 +688,30 @@ use_old_VariableDeclaration_getRefreshTokenFn(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse():
+    TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>;
+declare function use_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
+    use: TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>);
+use_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
+    get_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse():
+    TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>;
+declare function use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
+    use: TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>);
+use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
+    get_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_getServer": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_getServer():
@@ -520,30 +760,6 @@ use_old_FunctionDeclaration_getSiteUrl(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse():
-    TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>;
-declare function use_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
-    use: TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>);
-use_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
-    get_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse():
-    TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>;
-declare function use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
-    use: TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>);
-use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
-    get_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "FunctionDeclaration_hasFacetCodes": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_hasFacetCodes():
@@ -564,102 +780,6 @@ declare function use_old_FunctionDeclaration_hasFacetCodes(
     use: TypeOnly<typeof old.hasFacetCodes>);
 use_old_FunctionDeclaration_hasFacetCodes(
     get_current_FunctionDeclaration_hasFacetCodes());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IClientConfig": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IClientConfig():
-    TypeOnly<old.IClientConfig>;
-declare function use_current_InterfaceDeclaration_IClientConfig(
-    use: TypeOnly<current.IClientConfig>);
-use_current_InterfaceDeclaration_IClientConfig(
-    get_old_InterfaceDeclaration_IClientConfig());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IClientConfig": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IClientConfig():
-    TypeOnly<current.IClientConfig>;
-declare function use_old_InterfaceDeclaration_IClientConfig(
-    use: TypeOnly<old.IClientConfig>);
-use_old_InterfaceDeclaration_IClientConfig(
-    get_current_InterfaceDeclaration_IClientConfig());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOdspAuthRequestInfo": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IOdspAuthRequestInfo():
-    TypeOnly<old.IOdspAuthRequestInfo>;
-declare function use_current_InterfaceDeclaration_IOdspAuthRequestInfo(
-    use: TypeOnly<current.IOdspAuthRequestInfo>);
-use_current_InterfaceDeclaration_IOdspAuthRequestInfo(
-    get_old_InterfaceDeclaration_IOdspAuthRequestInfo());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOdspAuthRequestInfo": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IOdspAuthRequestInfo():
-    TypeOnly<current.IOdspAuthRequestInfo>;
-declare function use_old_InterfaceDeclaration_IOdspAuthRequestInfo(
-    use: TypeOnly<old.IOdspAuthRequestInfo>);
-use_old_InterfaceDeclaration_IOdspAuthRequestInfo(
-    get_current_InterfaceDeclaration_IOdspAuthRequestInfo());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOdspDriveItem": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IOdspDriveItem():
-    TypeOnly<old.IOdspDriveItem>;
-declare function use_current_InterfaceDeclaration_IOdspDriveItem(
-    use: TypeOnly<current.IOdspDriveItem>);
-use_current_InterfaceDeclaration_IOdspDriveItem(
-    get_old_InterfaceDeclaration_IOdspDriveItem());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOdspDriveItem": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IOdspDriveItem():
-    TypeOnly<current.IOdspDriveItem>;
-declare function use_old_InterfaceDeclaration_IOdspDriveItem(
-    use: TypeOnly<old.IOdspDriveItem>);
-use_old_InterfaceDeclaration_IOdspDriveItem(
-    get_current_InterfaceDeclaration_IOdspDriveItem());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOdspTokens": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IOdspTokens():
-    TypeOnly<old.IOdspTokens>;
-declare function use_current_InterfaceDeclaration_IOdspTokens(
-    use: TypeOnly<current.IOdspTokens>);
-use_current_InterfaceDeclaration_IOdspTokens(
-    get_old_InterfaceDeclaration_IOdspTokens());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IOdspTokens": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IOdspTokens():
-    TypeOnly<current.IOdspTokens>;
-declare function use_old_InterfaceDeclaration_IOdspTokens(
-    use: TypeOnly<old.IOdspTokens>);
-use_old_InterfaceDeclaration_IOdspTokens(
-    get_current_InterfaceDeclaration_IOdspTokens());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -708,102 +828,6 @@ declare function use_old_FunctionDeclaration_isPushChannelHostname(
     use: TypeOnly<typeof old.isPushChannelHostname>);
 use_old_FunctionDeclaration_isPushChannelHostname(
     get_current_FunctionDeclaration_isPushChannelHostname());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_OdspErrorResponse": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_OdspErrorResponse():
-    TypeOnly<old.OdspErrorResponse>;
-declare function use_current_InterfaceDeclaration_OdspErrorResponse(
-    use: TypeOnly<current.OdspErrorResponse>);
-use_current_InterfaceDeclaration_OdspErrorResponse(
-    get_old_InterfaceDeclaration_OdspErrorResponse());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_OdspErrorResponse": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_OdspErrorResponse():
-    TypeOnly<current.OdspErrorResponse>;
-declare function use_old_InterfaceDeclaration_OdspErrorResponse(
-    use: TypeOnly<old.OdspErrorResponse>);
-use_old_InterfaceDeclaration_OdspErrorResponse(
-    get_current_InterfaceDeclaration_OdspErrorResponse());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_OdspErrorResponseInnerError": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_OdspErrorResponseInnerError():
-    TypeOnly<old.OdspErrorResponseInnerError>;
-declare function use_current_InterfaceDeclaration_OdspErrorResponseInnerError(
-    use: TypeOnly<current.OdspErrorResponseInnerError>);
-use_current_InterfaceDeclaration_OdspErrorResponseInnerError(
-    get_old_InterfaceDeclaration_OdspErrorResponseInnerError());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_OdspErrorResponseInnerError": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_OdspErrorResponseInnerError():
-    TypeOnly<current.OdspErrorResponseInnerError>;
-declare function use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
-    use: TypeOnly<old.OdspErrorResponseInnerError>);
-use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
-    get_current_InterfaceDeclaration_OdspErrorResponseInnerError());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_OdspRedirectError": {"forwardCompat": false}
-*/
-declare function get_old_ClassDeclaration_OdspRedirectError():
-    TypeOnly<old.OdspRedirectError>;
-declare function use_current_ClassDeclaration_OdspRedirectError(
-    use: TypeOnly<current.OdspRedirectError>);
-use_current_ClassDeclaration_OdspRedirectError(
-    get_old_ClassDeclaration_OdspRedirectError());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_OdspRedirectError": {"backCompat": false}
-*/
-declare function get_current_ClassDeclaration_OdspRedirectError():
-    TypeOnly<current.OdspRedirectError>;
-declare function use_old_ClassDeclaration_OdspRedirectError(
-    use: TypeOnly<old.OdspRedirectError>);
-use_old_ClassDeclaration_OdspRedirectError(
-    get_current_ClassDeclaration_OdspRedirectError());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_OdspServiceReadOnlyErrorCode": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_OdspServiceReadOnlyErrorCode():
-    TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>;
-declare function use_current_VariableDeclaration_OdspServiceReadOnlyErrorCode(
-    use: TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>);
-use_current_VariableDeclaration_OdspServiceReadOnlyErrorCode(
-    get_old_VariableDeclaration_OdspServiceReadOnlyErrorCode());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_OdspServiceReadOnlyErrorCode": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_OdspServiceReadOnlyErrorCode():
-    TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>;
-declare function use_old_VariableDeclaration_OdspServiceReadOnlyErrorCode(
-    use: TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>);
-use_old_VariableDeclaration_OdspServiceReadOnlyErrorCode(
-    get_current_VariableDeclaration_OdspServiceReadOnlyErrorCode());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -948,30 +972,6 @@ declare function use_old_FunctionDeclaration_throwOdspNetworkError(
     use: TypeOnly<typeof old.throwOdspNetworkError>);
 use_old_FunctionDeclaration_throwOdspNetworkError(
     get_current_FunctionDeclaration_throwOdspNetworkError());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TokenRequestCredentials": {"forwardCompat": false}
-*/
-declare function get_old_TypeAliasDeclaration_TokenRequestCredentials():
-    TypeOnly<old.TokenRequestCredentials>;
-declare function use_current_TypeAliasDeclaration_TokenRequestCredentials(
-    use: TypeOnly<current.TokenRequestCredentials>);
-use_current_TypeAliasDeclaration_TokenRequestCredentials(
-    get_old_TypeAliasDeclaration_TokenRequestCredentials());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_TokenRequestCredentials": {"backCompat": false}
-*/
-declare function get_current_TypeAliasDeclaration_TokenRequestCredentials():
-    TypeOnly<current.TokenRequestCredentials>;
-declare function use_old_TypeAliasDeclaration_TokenRequestCredentials(
-    use: TypeOnly<old.TokenRequestCredentials>);
-use_old_TypeAliasDeclaration_TokenRequestCredentials(
-    get_current_TypeAliasDeclaration_TokenRequestCredentials());
 
 /*
 * Validate forward compat by using old type in place of current type

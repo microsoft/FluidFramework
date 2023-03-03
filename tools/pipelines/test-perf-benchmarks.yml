@@ -36,6 +36,7 @@ parameters:
   default:
     - "@fluid-internal/tree"
     - "@fluid-experimental/tree"
+    - "@fluidframework/merge-tree"
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the

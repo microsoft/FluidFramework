@@ -40,7 +40,7 @@
 		"test:mocha": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --generate --dir .",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"nyc": {
@@ -65,9 +65,9 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/benchmark": "^0.46.0",
-		"@fluid-tools/build-cli": "^0.10.0",
+		"@fluid-tools/build-cli": "0.11.0-134585",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.10.0",
+		"@fluidframework/build-tools": "0.11.0-134585",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@microsoft/api-extractor": "^7.22.2",

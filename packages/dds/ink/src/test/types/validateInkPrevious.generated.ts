@@ -208,6 +208,54 @@ use_old_InterfaceDeclaration_IInkStroke(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPen": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPen():
+    TypeOnly<old.IPen>;
+declare function use_current_InterfaceDeclaration_IPen(
+    use: TypeOnly<current.IPen>);
+use_current_InterfaceDeclaration_IPen(
+    get_old_InterfaceDeclaration_IPen());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPen": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPen():
+    TypeOnly<current.IPen>;
+declare function use_old_InterfaceDeclaration_IPen(
+    use: TypeOnly<old.IPen>);
+use_old_InterfaceDeclaration_IPen(
+    get_current_InterfaceDeclaration_IPen());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IStylusOperation": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IStylusOperation():
+    TypeOnly<old.IStylusOperation>;
+declare function use_current_InterfaceDeclaration_IStylusOperation(
+    use: TypeOnly<current.IStylusOperation>);
+use_current_InterfaceDeclaration_IStylusOperation(
+    get_old_InterfaceDeclaration_IStylusOperation());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IStylusOperation": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IStylusOperation():
+    TypeOnly<current.IStylusOperation>;
+declare function use_old_InterfaceDeclaration_IStylusOperation(
+    use: TypeOnly<old.IStylusOperation>);
+use_old_InterfaceDeclaration_IStylusOperation(
+    get_current_InterfaceDeclaration_IStylusOperation());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_Ink": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_Ink():
@@ -276,51 +324,3 @@ declare function use_old_ClassDeclaration_InkFactory(
     use: TypeOnly<old.InkFactory>);
 use_old_ClassDeclaration_InkFactory(
     get_current_ClassDeclaration_InkFactory());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPen": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IPen():
-    TypeOnly<old.IPen>;
-declare function use_current_InterfaceDeclaration_IPen(
-    use: TypeOnly<current.IPen>);
-use_current_InterfaceDeclaration_IPen(
-    get_old_InterfaceDeclaration_IPen());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IPen": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IPen():
-    TypeOnly<current.IPen>;
-declare function use_old_InterfaceDeclaration_IPen(
-    use: TypeOnly<old.IPen>);
-use_old_InterfaceDeclaration_IPen(
-    get_current_InterfaceDeclaration_IPen());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IStylusOperation": {"forwardCompat": false}
-*/
-declare function get_old_InterfaceDeclaration_IStylusOperation():
-    TypeOnly<old.IStylusOperation>;
-declare function use_current_InterfaceDeclaration_IStylusOperation(
-    use: TypeOnly<current.IStylusOperation>);
-use_current_InterfaceDeclaration_IStylusOperation(
-    get_old_InterfaceDeclaration_IStylusOperation());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IStylusOperation": {"backCompat": false}
-*/
-declare function get_current_InterfaceDeclaration_IStylusOperation():
-    TypeOnly<current.IStylusOperation>;
-declare function use_old_InterfaceDeclaration_IStylusOperation(
-    use: TypeOnly<old.IStylusOperation>);
-use_old_InterfaceDeclaration_IStylusOperation(
-    get_current_InterfaceDeclaration_IStylusOperation());
