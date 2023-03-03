@@ -355,16 +355,13 @@ function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): Edita
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
 	map.set(editableTreeSlot, output);
 	anchorNode.on("afterDelete", cleanupTree);
-	map.get(editableTreeSlot);
 	return output;
 }
 
 function cleanupTree(anchor: AnchorNode): void {
 	const map = anchor.slotMap(editableTreeSlot);
-	const cached = map.get(editableTreeSlot);
-	if (cached !== undefined) {
-		(cached[proxyTargetSymbol] as NodeProxyTarget).free();
-	}
+	const cached = map.get(editableTreeSlot) ?? fail("tree should only be cleaned up once");
+	(cached[proxyTargetSymbol] as NodeProxyTarget).free();
 }
 
 export function makeField(
@@ -479,6 +476,8 @@ function getPrimaryArrayKey(
  * the fields of {@link EditableTree} by means of the cursors.
  */
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
+	public readonly proxy: EditableTree;
+	private readonly removeDeleteCallback: () => void;
 	constructor(
 		context: ProxyContext,
 		cursor: ITreeSubscriptionCursor,
@@ -487,6 +486,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	) {
 		super(context, cursor, anchor);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
+
+		this.proxy = adaptWithProxy(this, nodeProxyHandler);
+		anchorNode.slotMap(editableTreeSlot).set(editableTreeSlot, this.proxy);
+		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
 	}
 
 	protected buildAnchor(): Anchor {
@@ -505,6 +508,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		// After this point this node will not be usable,
 		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
 		this.anchorNode.slotMap(editableTreeSlot).delete(editableTreeSlot);
+		this.removeDeleteCallback();
 		this.context.forest.anchors.forget(anchor);
 	}
 
