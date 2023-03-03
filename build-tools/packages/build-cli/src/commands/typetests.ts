@@ -187,9 +187,12 @@ function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConf
 /**
  * Update package.json
  */
-function updatePackageJsonFile(packageDir: string, f: (json: PackageJson) => void): void {
+function updatePackageJsonFile(
+	packageDir: string,
+	packageTransformer: (json: PackageJson) => void,
+): void {
 	const packagePath = path.join(packageDir, "package.json");
 	const pkgJson: PackageJson = readJsonSync(packagePath);
-	f(pkgJson);
+	packageTransformer(pkgJson);
 	writeJsonSync(path.join(packagePath), sortPackageJson(pkgJson), { spaces: "\t" });
 }
