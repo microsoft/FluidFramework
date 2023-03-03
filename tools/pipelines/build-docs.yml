@@ -139,6 +139,7 @@ stages:
             echo repoToTrigger ${{ variables.repoToTrigger }}
             echo shouldDeploy ${{ variables.shouldDeploy }}
             echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
+            echo publishGuardianBaselines ${{ variables.publishGuardianBaselines }}
           displayName: Show Variables
 
     - job: component_detection
