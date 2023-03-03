@@ -60,13 +60,13 @@ describe("SequenceField - Invert", () => {
 
 	it("delete => revive", () => {
 		const input = Change.delete(0, 2);
-		const expected = Change.revive(0, 2, tag1, fakeRepair, 0);
+		const expected = Change.revive(0, 2, tag1, 0);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("revert-only active revive => delete", () => {
-		const revive = Change.revive(0, 2, tag1, fakeRepair, 0);
+		const revive = Change.revive(0, 2, tag1, 0);
 		const modify = Change.modify(0, TestChange.mint([], 42));
 		const input = composeAnonChanges([revive, modify]);
 		const expected = Change.delete(0, 2);
@@ -106,7 +106,7 @@ describe("SequenceField - Invert", () => {
 	it("revert-only blocked revive => no-op", () => {
 		const input = composeAnonChanges([
 			Change.modify(0, childChange1),
-			Change.revive(1, 2, tag1, fakeRepair, 1, tag2, undefined, tag3),
+			Change.revive(1, 2, tag1, 1, undefined, tag2, undefined, tag3),
 			Change.modify(1, childChange2),
 		]);
 		const expected = composeAnonChanges([
@@ -118,7 +118,7 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("intentional active revive => delete", () => {
-		const input = Change.intentionalRevive(0, 2, tag1, fakeRepair, 0);
+		const input = Change.intentionalRevive(0, 2, tag1, 0);
 		const expected = Change.delete(0, 2);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -127,7 +127,7 @@ describe("SequenceField - Invert", () => {
 	it("intentional conflicted revive => skip", () => {
 		const input = composeAnonChanges([
 			Change.modify(0, childChange1),
-			Change.intentionalRevive(0, 2, tag1, fakeRepair, 0, tag2),
+			Change.intentionalRevive(0, 2, tag1, 0, undefined, tag2),
 			Change.modify(0, childChange2),
 		]);
 		const expected = composeAnonChanges([

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { mintRevisionTag, RevisionTag, tagChange, tagInverse } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze, fakeRepair } from "../../utils";
+import { deepFreeze } from "../../utils";
 import {
 	checkDeltaEquality,
 	compose,
@@ -34,8 +34,8 @@ const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
 	],
 	["Insert", (i) => Change.insert(i, 2, 42)],
 	["Delete", (i) => Change.delete(i, 2)],
-	["Revive", (i) => Change.revive(2, 2, tag1, fakeRepair, i)],
-	["ConflictedRevive", (i) => Change.revive(2, 2, tag2, fakeRepair, i, tag3)],
+	["Revive", (i) => Change.revive(2, 2, tag1, i)],
+	["ConflictedRevive", (i) => Change.revive(2, 2, tag2, i, undefined, tag3)],
 	["MoveOut", (i) => Change.move(i, 2, 1)],
 	["MoveIn", (i) => Change.move(1, 2, i)],
 	["ReturnFrom", (i) => Change.return(i, 2, 1, tag4)],
@@ -261,10 +261,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revisionTag2 = mintRevisionTag();
 		const delB = tagChange(Change.delete(1, 1), mintRevisionTag());
 		const delABC = tagChange(Change.delete(0, 3), revisionTag2);
-		const revABC = tagChange(
-			Change.revive(0, 3, revisionTag2, fakeRepair, 0),
-			mintRevisionTag(),
-		);
+		const revABC = tagChange(Change.revive(0, 3, revisionTag2, 0), mintRevisionTag());
 		const delABC2 = rebaseTagged(delABC, delB);
 		const invDelABC = invert(delABC);
 		const revABC2 = rebaseTagged(revABC, tagInverse(invDelABC, delABC2.revision));
@@ -303,10 +300,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revisionTag2 = mintRevisionTag();
 		const addB = tagChange(Change.insert(1, 1), mintRevisionTag());
 		const delAC = tagChange(Change.delete(0, 2), revisionTag2);
-		const revAC = tagChange(
-			Change.revive(0, 2, revisionTag2, fakeRepair, 0),
-			mintRevisionTag(),
-		);
+		const revAC = tagChange(Change.revive(0, 2, revisionTag2, 0), mintRevisionTag());
 		const delAC2 = rebaseTagged(delAC, addB);
 		const invDelAC = invert(delAC);
 		const revAC2 = rebaseTagged(revAC, tagInverse(invDelAC, delAC2.revision));

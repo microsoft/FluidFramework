@@ -22,7 +22,7 @@ import {
 } from "../../../feature-libraries";
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { composeAnonChanges } from "./utils";
 
@@ -92,7 +92,7 @@ describe("SequenceField - toDelta", () => {
 			assert.equal(count, 1);
 			return contentCursor;
 		}
-		const changeset = Change.revive(0, 1, tag, reviver, 0);
+		const changeset = Change.revive(0, 1, tag, 0, reviver);
 		const actual = toDelta(changeset);
 		const expected: Delta.MarkList = [
 			{
@@ -105,7 +105,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("conflicted revive => skip", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, fakeRepair, 0, tag2),
+			Change.revive(0, 1, tag, 0, undefined, tag2),
 			Change.modify(1, childChange1),
 		]);
 		const actual = toDelta(changeset);
@@ -115,7 +115,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("blocked revive => nil", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, fakeRepair, 0, tag2, undefined, tag3),
+			Change.revive(0, 1, tag, 0, undefined, tag2, undefined, tag3),
 			Change.modify(1, childChange1),
 		]);
 		const actual = toDelta(changeset);

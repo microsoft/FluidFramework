@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { NodeReviver, SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { fakeRepair } from "../../utils";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
@@ -33,7 +33,7 @@ export const cases: {
 		createModifyChangeset(1, TestChange.mint([], 2)),
 	]),
 	delete: createDeleteChangeset(1, 3),
-	revive: createReviveChangeset(2, 2, tag, fakeRepair, 0),
+	revive: createReviveChangeset(2, 2, tag, 0),
 	move: createMoveChangeset(1, 2, 2),
 	return: createReturnChangeset(1, 3, 0, tag),
 };
@@ -58,8 +58,8 @@ function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachedBy: RevisionTag,
-	reviver: NodeReviver,
 	detachIndex?: number,
+	reviver = fakeRepair,
 	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
 	lastDetachedBy?: RevisionTag,
@@ -88,8 +88,8 @@ function createIntentionalReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachedBy: RevisionTag,
-	reviver: NodeReviver,
 	detachIndex?: number,
+	reviver = fakeRepair,
 	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
