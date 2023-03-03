@@ -90,7 +90,6 @@ describe("Matrix memory usage", () => {
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
 					title = `Insert and remove a row and column ${x} times`;
-					only = true;
 					private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
@@ -111,7 +110,6 @@ describe("Matrix memory usage", () => {
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
 					title = `Set a 3-character string in ${x} cells`;
-					only = true;
 					private localMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
@@ -131,7 +129,6 @@ describe("Matrix memory usage", () => {
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
 					title = `Set a number in ${x} cells`;
-					only = true;
 					private localMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
