@@ -108,7 +108,7 @@ importers:
       rimraf: ^2.6.2
       semver: ^7.3.7
       semver-utils: ^1.1.4
-      simple-git: ^3.14.1
+      simple-git: ^3.16.1
       sort-json: ^2.0.1
       strip-ansi: ^6.0.0
       table: ^6.8.0
@@ -141,7 +141,7 @@ importers:
       oclif: 3.7.0
       semver: 7.3.7
       semver-utils: 1.1.4
-      simple-git: 3.14.1
+      simple-git: 3.16.1
       sort-json: 2.0.1
       strip-ansi: 6.0.1
       table: 6.8.0
@@ -10488,8 +10488,8 @@ packages:
       simple-concat: 1.0.1
     dev: false
 
-  /simple-git/3.14.1:
-    resolution: {integrity: sha512-1ThF4PamK9wBORVGMK9HK5si4zoGS2GpRO7tkAFObA4FZv6dKaCVHLQT+8zlgiBm6K2h+wEU9yOaFCu/SR3OyA==}
+  /simple-git/3.16.1:
+    resolution: {integrity: sha512-xzRxMKiy1zEYeHGXgAzvuXffDS0xgsq07Oi4LWEEcVH29vLpcZ2tyQRWyK0NLLlCVaKysZeem5tC1qHEOxsKwA==}
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
