@@ -5,14 +5,14 @@ importers:
   .:
     specifiers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/tool-utils': ^0.59.4003
+      '@fluidframework/tool-utils': ^0.35.0
       azure-keyvault: ^3.0.4
       eslint: ~8.6.0
       ms-rest-azure: ^2.6.0
       prettier: ~2.6.2
       typescript: ~4.5.5
     dependencies:
-      '@fluidframework/tool-utils': 0.59.4003
+      '@fluidframework/tool-utils': 0.35.6
       azure-keyvault: 3.0.5
       ms-rest-azure: 2.6.2
     devDependencies:
@@ -70,49 +70,48 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/common-definitions/0.20.1:
-    resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
+  /@fluidframework/common-definitions/0.19.1:
+    resolution: {integrity: sha512-H+wEaxuIHODVNqyY8XSMY6ww7ndrRfht9CXKUAUzdQjUN1Oi++YonKcD3CXWZod6afxZ6abDmltIO9wLrjOJzg==}
     dev: false
 
-  /@fluidframework/common-utils/0.32.2:
-    resolution: {integrity: sha512-PoGX7/l0vWKt5JaAxcgFOdGje30Q6qSE06YzFIKh9Ba3oq7B60+TFqu7c2ErQt6sNddmvcAcAiLVNaTGAip3vw==}
+  /@fluidframework/common-utils/0.27.2:
+    resolution: {integrity: sha512-0SQcus/0bpxPNGFVsLl+1CB++9rlB66/sKOP1TXot191JAAxQmJgCctXQ2ycTtCOe69S8ZFStNu2T5I0IxQYsg==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-definitions': 0.19.1
       '@types/events': 3.0.0
+      assert: 2.0.0
       base64-js: 1.5.1
-      buffer: 6.0.3
       events: 3.3.0
       lodash: 4.17.21
       sha.js: 2.4.11
     dev: false
 
-  /@fluidframework/core-interfaces/0.43.1000:
-    resolution: {integrity: sha512-RU7BxVQUaleOz+415dig6m3cE7tDAtFJP1IRlfOj83meKoQyMclRyXIKQpE5HD0EhI1BLRtl/nc4YsZDa9AHbA==}
+  /@fluidframework/core-interfaces/0.35.6:
+    resolution: {integrity: sha512-4x3HTGoemJbT8vOwpreVY3zuoynERuBQFC62gyPNVi3r1kQ/jy19kBWJn+SC8qzh4sdqSXm3LfsPi6QiE6qqdA==}
     dev: false
 
-  /@fluidframework/driver-definitions/0.46.2000:
-    resolution: {integrity: sha512-I0NzrWuU638M5OyeQGHKO+5kjUbNHeSt0XsI7f0/rwz2sygvAVJcYyyqt0NWLK/CvxWvZZwvexSPyFdmLo3E1g==}
+  /@fluidframework/driver-definitions/0.35.6:
+    resolution: {integrity: sha512-bRAGreq1FWAUob3MnuGtpFYMk7IiGTdpEPk+Sr8jYXmbBq1lP79uAo2mhtiGqE3pEprv4bwTMetqhLwHrMWZ0A==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 0.43.1000
-      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/common-definitions': 0.19.1
+      '@fluidframework/core-interfaces': 0.35.6
+      '@fluidframework/protocol-definitions': 0.1019.0
     dev: false
 
-  /@fluidframework/driver-utils/0.59.4003_debug@4.3.4:
-    resolution: {integrity: sha512-W2ulHo6nsZ89aSMfTinWIS/Ca+4X4G/4EhDOFrpxbbnfdY0FJG1C5DA3OByUnObMTkf/+gOoIXJkiuf5PA2ZUQ==}
+  /@fluidframework/driver-utils/0.35.6:
+    resolution: {integrity: sha512-ckIDWMAb+uj0VzjOAojQV4mX83kCZlA3GhlmU7cFKdiwzD0nptWEA+VcHun644c23QzUWp5xlkxdAqHlPOLIfQ==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/core-interfaces': 0.43.1000
-      '@fluidframework/driver-definitions': 0.46.2000
-      '@fluidframework/gitresources': 0.1036.5001
-      '@fluidframework/protocol-base': 0.1036.5001
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/telemetry-utils': 0.59.4003
-      axios: 0.26.1_debug@4.3.4
+      '@fluidframework/common-definitions': 0.19.1
+      '@fluidframework/common-utils': 0.27.2
+      '@fluidframework/core-interfaces': 0.35.6
+      '@fluidframework/driver-definitions': 0.35.6
+      '@fluidframework/gitresources': 0.1019.0
+      '@fluidframework/protocol-base': 0.1019.0
+      '@fluidframework/protocol-definitions': 0.1019.0
+      '@fluidframework/telemetry-utils': 0.35.6
+      assert: 2.0.0
       uuid: 8.3.2
     transitivePeerDependencies:
-      - debug
       - supports-color
     dev: false
 
@@ -142,67 +141,56 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/gitresources/0.1036.5001:
-    resolution: {integrity: sha512-Beg1A/eR7wCPYYb5u5iqqc092NkWnSvl4XCn2ImA4FDKtnYggD2/KYd9Hp0feM6Z99aU4FYSBidL2NewWlvF7A==}
+  /@fluidframework/gitresources/0.1019.0:
+    resolution: {integrity: sha512-29wAJDIRmCwkcCtxTnX9jl5lcrdN7CKIjn3kzRVL76V5S71nJnJkmdV4p8Zh0d+Bkoal47r4HF8kmDKVrB8jOw==}
     dev: false
 
-  /@fluidframework/odsp-doclib-utils/0.59.4003_debug@4.3.4:
-    resolution: {integrity: sha512-JgPPOutPR2XyPD8SEfcR6VaL6oPxEJfPPhwOtR1LEAF1EFwjicCAwNS616izAho3X/jG7xmziPsFo4GUutRQJg==}
+  /@fluidframework/odsp-doclib-utils/0.35.6:
+    resolution: {integrity: sha512-HxC4HrHRhTDYYhAulpE34hT1OAcLXLz0xvHj7vKfRUmP0O05kpNs4bdd2/nDtbA65/UzLi40xK7AGLlRFHh2HQ==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/driver-definitions': 0.46.2000
-      '@fluidframework/driver-utils': 0.59.4003_debug@4.3.4
-      '@fluidframework/odsp-driver-definitions': 0.59.4003
-      '@fluidframework/telemetry-utils': 0.59.4003
+      '@fluidframework/common-utils': 0.27.2
+      '@fluidframework/driver-definitions': 0.35.6
+      '@fluidframework/driver-utils': 0.35.6
       node-fetch: 2.6.9
     transitivePeerDependencies:
-      - debug
       - encoding
       - supports-color
     dev: false
 
-  /@fluidframework/odsp-driver-definitions/0.59.4003:
-    resolution: {integrity: sha512-TuqRJzkslmB1fVs+I+/UWFikvR07TMZ71vAGbfEa7hBoKRK3DcDC76h8k2fodkNZwzwycgHpmUwP+ZCluJqrHA==}
+  /@fluidframework/protocol-base/0.1019.0:
+    resolution: {integrity: sha512-zbPish+d1VW+rN2chJXnk4FC7iPAb+rpBBr/6j/48rq+p/+9qujK55RbVPmEV3c7kDxrqW4OuiKDW9LeRA2+8A==}
     dependencies:
-      '@fluidframework/driver-definitions': 0.46.2000
-    dev: false
-
-  /@fluidframework/protocol-base/0.1036.5001:
-    resolution: {integrity: sha512-Btjy2bWVbVsmzNTBxTQZ9l/WXljsjDpGbBgJsn9GLacrTG9aDDtIVMXuwLAcEV1IVkxGcIipXryvfhbPHDYcMg==}
-    dependencies:
-      '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/gitresources': 0.1036.5001
-      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/common-utils': 0.27.2
+      '@fluidframework/gitresources': 0.1019.0
+      '@fluidframework/protocol-definitions': 0.1019.0
+      assert: 2.0.0
       lodash: 4.17.21
     dev: false
 
-  /@fluidframework/protocol-definitions/0.1028.2000:
-    resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
+  /@fluidframework/protocol-definitions/0.1019.0:
+    resolution: {integrity: sha512-LykbhvYPrXCY+xYjolDtcm2j0t0/BxGu1f6ths9UKf9QLZ0rsIqicGSK/7tJH7Rv5Qc5E8QKzDbRSF//sAOVEA==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-definitions': 0.19.1
     dev: false
 
-  /@fluidframework/telemetry-utils/0.59.4003:
-    resolution: {integrity: sha512-R44ySnm159ymNiKnCXjEur2uebQmWcef/rBB8RbaEVrN6iTWtSpG/N9gJUhcCDEI4WrHo5KwiL1HfaTe+0TS0g==}
+  /@fluidframework/telemetry-utils/0.35.6:
+    resolution: {integrity: sha512-dEZhWkSfz3RWaWYnk2OwHXHLIiMVxCqjPlLRqXLfemguh9EvEMdt6HPyP68nLguFY4dXB3KFTpLvM4/DXkiqVg==}
     dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/common-definitions': 0.19.1
+      '@fluidframework/common-utils': 0.27.2
       debug: 4.3.4
       events: 3.3.0
-      uuid: 8.3.2
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /@fluidframework/tool-utils/0.59.4003:
-    resolution: {integrity: sha512-sDouGaV4TBK3R8kacU/2fnd66Nv5AnAAKjbSk/BDieHtrlQU12O0vkmeJ3UAappLbsj4jSQ/C1pRB621N7ezBw==}
+  /@fluidframework/tool-utils/0.35.6:
+    resolution: {integrity: sha512-mNBLkRFb2q5NpRwu6T+rnQ63XQjNtVLDcF7cyIoZB4b8hq8Z2FJhjh2lbtmxZjX6pjxSDTZZ36F6VJLMI9lS7A==}
     dependencies:
-      '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/odsp-doclib-utils': 0.59.4003_debug@4.3.4
-      '@fluidframework/protocol-base': 0.1036.5001
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      async-mutex: 0.3.2
+      '@fluidframework/common-utils': 0.27.2
+      '@fluidframework/odsp-doclib-utils': 0.35.6
+      '@fluidframework/protocol-base': 0.1019.0
+      '@fluidframework/protocol-definitions': 0.1019.0
       debug: 4.3.4
       jwt-decode: 2.2.0
       proper-lockfile: 4.1.2
@@ -623,10 +611,13 @@ packages:
     engines: {node: '>=0.8'}
     dev: false
 
-  /async-mutex/0.3.2:
-    resolution: {integrity: sha512-HuTK7E7MT7jZEh1P9GtRW9+aTWiDWWi9InbZ5hjxrnRa39KS4BW04+xLBhYNS2aXhHUIKZSw3gj4Pn1pj+qGAA==}
+  /assert/2.0.0:
+    resolution: {integrity: sha512-se5Cd+js9dXJnu6Ag2JFc00t+HmHOen+8Q+L7O9zI0PqQXr20uk2J0XQqMxZEeo5U50o8Nvmmx7dZrl+Ufr35A==}
     dependencies:
-      tslib: 2.5.0
+      es6-object-assign: 1.1.0
+      is-nan: 1.3.2
+      object-is: 1.1.5
+      util: 0.12.5
     dev: false
 
   /async/2.6.4:
@@ -642,7 +633,6 @@ packages:
   /available-typed-arrays/1.0.5:
     resolution: {integrity: sha512-DMD0KiN46eipeziST1LPP/STfDU0sufISXmjSgvVsoU2tqxctQeASejWcfNtxYKqETM1UxQ8sp2OrSBWpHY6sw==}
     engines: {node: '>= 0.4'}
-    dev: true
 
   /aws-sign2/0.7.0:
     resolution: {integrity: sha512-08kcGqnYf/YmjoRhfxyu+CLxBjUtHLXLXX/vUfx9l2LYzG3c1m61nrpyFUZI6zeS+Li/wWMMidD9KgrqtGq3mA==}
@@ -656,14 +646,6 @@ packages:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
       follow-redirects: 1.15.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /axios/0.26.1_debug@4.3.4:
-    resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
-    dependencies:
-      follow-redirects: 1.15.2_debug@4.3.4
     transitivePeerDependencies:
       - debug
     dev: false
@@ -710,13 +692,6 @@ packages:
     resolution: {integrity: sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==}
     dev: false
 
-  /buffer/6.0.3:
-    resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
-    dependencies:
-      base64-js: 1.5.1
-      ieee754: 1.2.1
-    dev: false
-
   /builtin-modules/3.3.0:
     resolution: {integrity: sha512-zhaCDicdLuWN5UbN5IMnFqNMhNfo919sH85y2/ea+5Yg9TsTkeZxpL+JLbp6cgYFS4sRLp3YV4S6yDuqVWHYOw==}
     engines: {node: '>=6'}
@@ -727,7 +702,6 @@ packages:
     dependencies:
       function-bind: 1.1.1
       get-intrinsic: 1.2.0
-    dev: true
 
   /callsites/3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
@@ -876,7 +850,6 @@ packages:
     dependencies:
       has-property-descriptors: 1.0.0
       object-keys: 1.1.1
-    dev: true
 
   /delayed-stream/1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
@@ -1006,6 +979,10 @@ packages:
       is-date-object: 1.0.5
       is-symbol: 1.0.4
     dev: true
+
+  /es6-object-assign/1.1.0:
+    resolution: {integrity: sha512-MEl9uirslVwqQU369iHNWZXsI8yaZYGg/D65aOgZkeyFJwHYSxilf7rQzXKI7DdDuBPrBXbfk3sl9hJhmd5AUw==}
+    dev: false
 
   /escape-string-regexp/1.0.5:
     resolution: {integrity: sha512-vbRorB5FUQWvla16U8R/qgaFIya2qGzwDrNmCZuYKrbdSUMG6I1ZCGQRefkRVhuOkIGVne7BQ35DSfo1qvJqFg==}
@@ -1426,23 +1403,10 @@ packages:
         optional: true
     dev: false
 
-  /follow-redirects/1.15.2_debug@4.3.4:
-    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dependencies:
-      debug: 4.3.4
-    dev: false
-
   /for-each/0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
     dependencies:
       is-callable: 1.2.7
-    dev: true
 
   /forever-agent/0.6.1:
     resolution: {integrity: sha512-j0KLYPhm6zeac4lz3oJ3o65qvgQCcPubiyotZrXqEaG4hNagNYO8qdlUrX5vwqv9ohqeT/Z3j6+yW067yWWdUw==}
@@ -1463,7 +1427,6 @@ packages:
 
   /function-bind/1.1.1:
     resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
-    dev: true
 
   /function.prototype.name/1.1.5:
     resolution: {integrity: sha512-uN7m/BzVKQnCUF/iW8jYea67v++2u7m5UgENbHRtdDVclOUP+FMPlCNdmk0h/ysGyo2tavMJEDqJAkJdRa1vMA==}
@@ -1489,7 +1452,6 @@ packages:
       function-bind: 1.1.1
       has: 1.0.3
       has-symbols: 1.0.3
-    dev: true
 
   /get-symbol-description/1.0.0:
     resolution: {integrity: sha512-2EmdH1YvIQiZpltCNgkuiUnyukzxM/R6NDJX31Ke3BG1Nq5b0S2PhX59UKi9vZpPDQVdqn+1IcaAwnzTT5vCjw==}
@@ -1560,7 +1522,6 @@ packages:
     resolution: {integrity: sha512-d65bNlIadxvpb/A2abVdlqKqV563juRnZ1Wtk6s1sIR8uNsXR70xqIzVqxVf1eTqDunwT2MkczEeaezCKTZhwA==}
     dependencies:
       get-intrinsic: 1.2.0
-    dev: true
 
   /graceful-fs/4.2.10:
     resolution: {integrity: sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==}
@@ -1598,7 +1559,6 @@ packages:
     resolution: {integrity: sha512-62DVLZGoiEBDHQyqG4w9xCuZ7eJEwNmJRWw2VY84Oedb7WFcA27fiEVe8oUQx9hAUJ4ekurquucTGwsyO1XGdQ==}
     dependencies:
       get-intrinsic: 1.2.0
-    dev: true
 
   /has-proto/1.0.1:
     resolution: {integrity: sha512-7qE+iP+O+bgF9clE5+UoBFzE65mlBiVj3tKCrlNQ0Ogwm0BjpT/gK4SlLYDMybDh5I3TCTKnPPa0oMG7JDYrhg==}
@@ -1608,21 +1568,18 @@ packages:
   /has-symbols/1.0.3:
     resolution: {integrity: sha512-l3LCuF6MgDNwTDKkdYGEihYjt5pRPbEg46rtlmnSPlUbgmB8LOIrKJbYYFBSbnPaJexMKtiPO8hmeRjRz2Td+A==}
     engines: {node: '>= 0.4'}
-    dev: true
 
   /has-tostringtag/1.0.0:
     resolution: {integrity: sha512-kFjcSNhnlGV1kyoGk7OXKSawH5JOb/LzUc5w9B02hOTO0dfFRjbHQKvg1d6cf3HbeUmtU9VbbV3qzZ2Teh97WQ==}
     engines: {node: '>= 0.4'}
     dependencies:
       has-symbols: 1.0.3
-    dev: true
 
   /has/1.0.3:
     resolution: {integrity: sha512-f2dvO0VU6Oej7RkWJGrehjbzMAjFp5/VKPp5tTpWIV4JHHZK1/BxbFRtf/siA2SWTe09caDmVtYYzWEIbBS4zw==}
     engines: {node: '>= 0.4.0'}
     dependencies:
       function-bind: 1.1.1
-    dev: true
 
   /hosted-git-info/2.8.9:
     resolution: {integrity: sha512-mxIDAb9Lsm6DoOJ7xH+5+X4y1LU/4Hi50L9C5sIswK3JzULS4bwk1FvjdBgvYR4bzT4tuUQiC15FE2f5HbLvYw==}
@@ -1644,10 +1601,6 @@ packages:
       assert-plus: 1.0.0
       jsprim: 2.0.2
       sshpk: 1.17.0
-    dev: false
-
-  /ieee754/1.2.1:
-    resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
     dev: false
 
   /ignore/4.0.6:
@@ -1697,6 +1650,14 @@ packages:
       side-channel: 1.0.4
     dev: true
 
+  /is-arguments/1.1.1:
+    resolution: {integrity: sha512-8Q7EARjzEnKpt/PCD7e1cgUS0a6X8u5tdSiMqXhojOdoV9TsMsiO+9VLC5vAmO8N7/GmXn7yjR8qnA6bVAEzfA==}
+    engines: {node: '>= 0.4'}
+    dependencies:
+      call-bind: 1.0.2
+      has-tostringtag: 1.0.0
+    dev: false
+
   /is-array-buffer/3.0.1:
     resolution: {integrity: sha512-ASfLknmY8Xa2XtB4wmbz13Wu202baeA18cJBCeCy0wXUHZF0IPyVEXqKEcd+t2fNSLLL1vC6k7lxZEojNbISXQ==}
     dependencies:
@@ -1737,7 +1698,6 @@ packages:
   /is-callable/1.2.7:
     resolution: {integrity: sha512-1BC0BVFhS/p0qtw6enp8e+8OD0UrK0oFLztSjNzhcKA3WDuJxxAPXzPuPtKkjEY9UUoEWlX/8fgKeu2S8i9JTA==}
     engines: {node: '>= 0.4'}
-    dev: true
 
   /is-core-module/2.11.0:
     resolution: {integrity: sha512-RRjxlvLDkD1YJwDbroBHMb+cukurkDWNyHx7D3oNB5x9rb5ogcksMC5wHCadcXoo67gVr/+3GFySh3134zi6rw==}
@@ -1757,12 +1717,27 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /is-generator-function/1.0.10:
+    resolution: {integrity: sha512-jsEjy9l3yiXEQ+PsXdmBwEPcOxaXWLspKdplFUVI9vq1iZgIekeC0L167qeu86czQaxed3q/Uzuw0swL0irL8A==}
+    engines: {node: '>= 0.4'}
+    dependencies:
+      has-tostringtag: 1.0.0
+    dev: false
+
   /is-glob/4.0.3:
     resolution: {integrity: sha512-xelSayHH36ZgE7ZWhli7pW34hNbNl8Ojv5KVmkJD4hBdD3th8Tfk9vYasLM+mXWOZhFkgZfxhLSnrwRr4elSSg==}
     engines: {node: '>=0.10.0'}
     dependencies:
       is-extglob: 2.1.1
     dev: true
+
+  /is-nan/1.3.2:
+    resolution: {integrity: sha512-E+zBKpQ2t6MEo1VsonYmluk9NxGrbzpeeLC2xIViuO2EjU2xsXsBPwTr3Ykv9l08UYEVEdWeRZNouaZqF6RN0w==}
+    engines: {node: '>= 0.4'}
+    dependencies:
+      call-bind: 1.0.2
+      define-properties: 1.1.4
+    dev: false
 
   /is-negative-zero/2.0.2:
     resolution: {integrity: sha512-dqJvarLawXsFbNDeJW7zAz8ItJ9cd28YufuuFzh0G8pNHjJMnY08Dv7sYX2uF5UpQOwieAeOExEYAWWfu7ZZUA==}
@@ -1823,7 +1798,6 @@ packages:
       for-each: 0.3.3
       gopd: 1.0.1
       has-tostringtag: 1.0.0
-    dev: true
 
   /is-typedarray/1.0.0:
     resolution: {integrity: sha512-cyA56iCMHAh5CdzjJIa4aohJyeO1YbwLi3Jc35MmRU6poroFjIGZzUzupGiRPOjgHg9TLu43xbpwXk523fMxKA==}
@@ -2112,10 +2086,17 @@ packages:
     resolution: {integrity: sha512-geUvdk7c+eizMNUDkRpW1wJwgfOiOeHbxBR/hLXK1aT6zmVSO0jsQcs7fj6MGw89jC/cjGfLcNOrtMYtGqm81g==}
     dev: true
 
+  /object-is/1.1.5:
+    resolution: {integrity: sha512-3cyDsyHgtmi7I7DfSSI2LDp6SK2lwvtbg0p0R1e0RvTqF5ceGx+K2dfSjm1bKDMVCFEDAQvy+o8c6a7VujOddw==}
+    engines: {node: '>= 0.4'}
+    dependencies:
+      call-bind: 1.0.2
+      define-properties: 1.1.4
+    dev: false
+
   /object-keys/1.1.1:
     resolution: {integrity: sha512-NuAESUOUMrlIXOfHKzD6bpPu3tYt3xvjNdRIQ+FeT0lNb4K8WR70CaDxhuNguS2XG+GjkyMwOzsN5ZktImfhLA==}
     engines: {node: '>= 0.4'}
-    dev: true
 
   /object.assign/4.1.4:
     resolution: {integrity: sha512-1mxKf0e58bvyjSCtKYY4sRe9itRk3PJpquJOjeIkz885CczcI4IvJJDLPS72oowuSh+pBxUFROpX+TU++hxhZQ==}
@@ -2659,10 +2640,6 @@ packages:
     resolution: {integrity: sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==}
     dev: true
 
-  /tslib/2.5.0:
-    resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
-    dev: false
-
   /tsutils/3.21.0_typescript@4.5.5:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
     engines: {node: '>= 6'}
@@ -2742,6 +2719,16 @@ packages:
     dependencies:
       punycode: 2.3.0
 
+  /util/0.12.5:
+    resolution: {integrity: sha512-kZf/K6hEIrWHI6XqOFUiiMa+79wE/D8Q+NCNAWclkyg3b4d2k7s0QGepNjiABc+aR3N1PAyHL7p6UcLY6LmrnA==}
+    dependencies:
+      inherits: 2.0.4
+      is-arguments: 1.1.1
+      is-generator-function: 1.0.10
+      is-typed-array: 1.1.10
+      which-typed-array: 1.1.9
+    dev: false
+
   /uuid/3.4.0:
     resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
     deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
@@ -2804,7 +2791,6 @@ packages:
       gopd: 1.0.1
       has-tostringtag: 1.0.0
       is-typed-array: 1.1.10
-    dev: true
 
   /which/2.0.2:
     resolution: {integrity: sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==}
