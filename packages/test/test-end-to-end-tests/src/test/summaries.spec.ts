@@ -334,9 +334,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			const TestDataObjectType1 = "@fluid-example/test-dataStore1";
 			const dataStoreFactory1 = new DataObjectFactory(
-				TestDataObjectType1,
+				"@fluid-example/test-dataStore1",
 				TestDataObject1,
 				[],
 				[],
@@ -367,27 +366,25 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 				ContainerRuntimeFactoryWithDefaultDataStore,
 				registryStoreEntries,
 			);
-			const summarizer = createSummarizerResult.summarizer;
-			assert.doesNotThrow(
-				async () => summarizeNow(summarizer, "test"),
+			await assert.doesNotReject(
+				summarizeNow(createSummarizerResult.summarizer, "test"),
 				"Summarizing should not throw",
 			);
 
 			// In summarizer, load the data store should fail.
 			await assert.rejects(
-				async () =>
-					requestFluidObject<TestDataObject1>(createSummarizerResult.container, "/"),
+				requestFluidObject<TestDataObject1>(createSummarizerResult.container, "/"),
 				(e) =>
 					e.message ===
 					"Non interactive/summarizer client's data object should not be initialized",
-				"This validates that a summarizer client doesn't fully initialize the data object.",
+				"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
 			);
 
 			// Load second container, load the data store will also call initializingFromExisting and succeed.
 			const container2 = await provider.loadContainer(runtimeFactory);
 			await assert.doesNotReject(
-				async () => requestFluidObject<TestDataObject1>(container2, "/"),
-				"This validates that an interactive client doesn't fully initialize the data object.",
+				requestFluidObject<TestDataObject1>(container2, "/"),
+				"Loading data store in second interactive client should not throw.",
 			);
 		},
 	);
