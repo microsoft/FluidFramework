@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseEvent,
-	ITelemetryBaseLogger,
-	ITelemetryProperties,
-} from "@fluidframework/common-definitions";
+import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	TelemetryLogger,
 	MultiSinkLogger,
@@ -89,7 +85,7 @@ export class DevToolsExtensionLogger extends TelemetryLogger {
 	public send(event: ITelemetryBaseEvent): void {
 		// TODO: ability to disable the logger so this becomes a no-op
 
-		const newEvent: ITelemetryProperties = this.prepareEvent(event);
+		const newEvent: ITelemetryBaseEvent = this.prepareEvent(event);
 
 		postMessageToWindow<TelemetryEventMessage>(
 			{

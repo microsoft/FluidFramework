@@ -87,7 +87,8 @@ export interface IContainerActions {
 // @internal
 export enum PanelView {
     Audience = "Audience",
-    ContainerData = "Data"
+    ContainerData = "Data",
+    Telemetry = "Telemetry"
 }
 
 // @internal

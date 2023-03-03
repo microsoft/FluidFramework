@@ -98,6 +98,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 					/>
 				);
 				break;
+			// TODO: add the Telemetry view here, without ReactContext
 			default:
 				throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 		}
@@ -147,10 +148,14 @@ export enum PanelView {
 	 */
 	Audience = "Audience",
 
+	/**
+	 * Display view of Telemetry events
+	 */
+	Telemetry = "Telemetry",
+
 	// TODOs:
 	// - Container state history
 	// - Network stats
-	// - Telemetry
 	// - Ops/message latency stats
 }
 

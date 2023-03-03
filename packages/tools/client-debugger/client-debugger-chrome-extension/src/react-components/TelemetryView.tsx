@@ -11,7 +11,7 @@ import {
 	InboundHandlers,
 	TelemetryEventMessage,
 } from "@fluid-tools/client-debugger";
-
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel:Telemetry)";
@@ -29,7 +29,7 @@ export function TelemetryView(): React.ReactElement {
 		);
 	}
 
-	const [messages, setMessages] = React.useState<string[]>([]);
+	const [telemetryEvents, setTelemetryEvents] = React.useState<ITelemetryBaseEvent[]>([]);
 
 	React.useEffect(() => {
 		/**
@@ -38,7 +38,7 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			["TELEMETRY_EVENT"]: (untypedMessage) => {
 				const message: TelemetryEventMessage = untypedMessage as TelemetryEventMessage;
-				setMessages([JSON.stringify(message.data.contents), ...messages]);
+				setTelemetryEvents([message.data.contents, ...telemetryEvents]);
 				return true;
 			},
 		};
@@ -57,14 +57,48 @@ export function TelemetryView(): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, messages, setMessages]);
+	}, [messageRelay, telemetryEvents, setTelemetryEvents]);
+
+	function mapEventCategoryToBackgroundColor(eventCategory: string): string {
+		switch (eventCategory) {
+			case "generic":
+				return "#b8ebf2";
+			case "performance":
+				return "#4cf5a3";
+			case "error":
+				return "#f54c4f";
+			default:
+				return "#d2d3d4";
+		}
+	}
+
+	function replacer(key, value): unknown {
+		// Filtering out properties
+		if (key === "eventName" || key === "category") {
+			return undefined;
+		}
+		return value;
+	}
 
 	return (
 		<div>
-			<p>Telemetry events (newest first):</p>
+			<h3>Telemetry events (newest first):</h3>
 			<ul>
-				{messages.map((message) => (
-					<li>{message}</li>
+				{telemetryEvents.map((message) => (
+					<div
+						style={{
+							border: "1px solid black",
+							backgroundColor: mapEventCategoryToBackgroundColor(message.category),
+							padding: "5px",
+						}}
+					>
+						<h4 style={{ margin: "0px" }}>
+							EventName: {message.eventName}
+							<br />
+							Category: {message.category}
+						</h4>
+						<p>{JSON.stringify(message, replacer, "  ")}</p>
+					</div>
 				))}
 			</ul>
 		</div>

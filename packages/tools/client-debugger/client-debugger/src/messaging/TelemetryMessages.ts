@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { IDebuggerMessage } from "./Messages";
 
 // #region Outbound messages
@@ -16,7 +17,7 @@ export interface TelemetryEventMessageData {
 	/**
 	 * Contents of the telemetry event
 	 */
-	contents: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+	contents: ITelemetryBaseEvent;
 }
 
 /**

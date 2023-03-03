@@ -12,6 +12,7 @@ import { PanelView, PanelViewSelectionMenu } from "@fluid-tools/client-debugger-
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { ContainerDataView } from "./ContainerDataView";
 import { AudienceView } from "./AudienceView";
+import { TelemetryView } from "./TelemetryView";
 
 /**
  * {@link ContainerView} input props.
@@ -42,6 +43,9 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 				break;
 			case PanelView.Audience:
 				innerView = <AudienceView containerId={containerId} />;
+				break;
+			case PanelView.Telemetry:
+				innerView = <TelemetryView />;
 				break;
 			default:
 				throw new Error(`Unrecognized RootView selection value: "${viewSelection}".`);

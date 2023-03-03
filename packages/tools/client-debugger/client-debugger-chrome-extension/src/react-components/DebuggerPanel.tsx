@@ -20,7 +20,6 @@ import { extensionMessageSource } from "../messaging";
 import { ContainerView } from "./ContainerView";
 import { Waiting } from "./Waiting";
 import { MessageRelayContext } from "./MessageRelayContext";
-import { TelemetryView } from "./TelemetryView";
 
 const loggingContext = "EXTENSION(DebuggerPanel)";
 
@@ -137,10 +136,7 @@ function PopulatedDebuggerPanel(props: PopulatedDebuggerPanelProps): React.React
 		selectedContainerId === undefined ? (
 			<div>Select a Container to view its state.</div>
 		) : (
-			<div>
-				<ContainerView containerId={selectedContainerId} />
-				<TelemetryView />
-			</div>
+			<ContainerView containerId={selectedContainerId} />
 		);
 
 	return (

@@ -222,7 +222,7 @@ export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMe
 
 // @public
 export interface TelemetryEventMessageData {
-    contents: any;
+    contents: ITelemetryBaseEvent;
 }
 
 ```
