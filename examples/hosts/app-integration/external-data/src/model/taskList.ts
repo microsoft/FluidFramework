@@ -7,6 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
@@ -300,7 +301,7 @@ export class TaskList extends DataObject implements ITaskList {
 	 * Register container session data with the customer service.
 	 * @returns A promise that resolves when the registration call returns successfully.
 	 */
-	public async registerWithCustomerService(url: string): Promise<void> {
+	public async registerWithCustomerService(url: IResolvedUrl | undefined): Promise<void> {
 		console.log("TASK-LIST: Registering client with customer service...");
 		// clientId -- for the particular client (check wayne's code to see what it's checking against)
 		// containerId -- for the fluid session (loader has it when loading the container)
