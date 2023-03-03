@@ -169,6 +169,95 @@ Partial undo would allow such a user to only undo the changes within the region 
 This could be achieved by including in the undo message a characterization of the region of the document to be affected by the undo.
 This may need to be characterized as a combination of input context regions and output context regions.
 
+## V1 Undo
+
+Here we detail the vision for the first implementation of undo.
+
+This first version aims to achieve some basic undo functionality with a minimum amount of code changes and complexity.
+To that end, we mostly reuse the existing code paths for changesets by always sending concrete undos over the wire.
+The undo edit is created by inverting the edit that needs to be undone,
+and rebasing that inverse over all the changes that have been applied since.
+
+Sending concrete undo edits alleviates the need establish and maintain distributed consensus on an undo window.
+It does however require sending rebased changes over the wire.
+
+### Concrete Undo of Unsequenced Changes
+
+Using concrete undos even when the change to be undone has not been sequence is somewhat problematic
+because we cannot know in advance the exact impact of the change to undo.
+
+For this V1, we simply produce a "best attempt" undo based on the most up to date version of the change to be undone.
+This could lead to some data loss in scenarios where the change to be undone deletes a subtree under which content is concurrently inserted.
+
+### Undo Tree
+
+In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
+To that end, we need to maintain a tree of undoable commits.
+That tree is a sparse copy of the commit tree maintained by the `EditManager` for branch management.
+
+The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
+Each branch however only ever sees a single spine of this tree, which therefore looks like a linked-list to said branch.
+
+The tree is sparse because it does **_not_** contain the following kinds of edits:
+
+-   Edits authored by other clients (this is only a concern for the part of the tree that represents the trunk).
+-   Edit authored on other branches.
+-   Undo edits.
+
+Note that some of these edits in the tree may be part of the trunk while others may be on a branch.
+Each branch need only maintain a "head" pointer to the child-most commit on the branch.
+
+#### Adding New Commits
+
+When a new edit is made by the local client, one of two things must happen:
+
+-   If the edit is not an undo then an undoable commit node is added under the head undoable commit maintained by the branch on which the edit was made.
+    This new undoable commit becomes the new head undoable commit for this branch.
+-   If the edit is an undo then the head undoable commit maintained by the branch on which the edit was made is popped.
+    The parent of the undone commit becomes the new head undoable commit for this branch.
+
+#### Forking
+
+When a branch is forked
+(whether from the trunk or an existing branch)
+the new branch can simply obtain the head undoable commit pointer from the parent branch.
+This helps keep forking cheap.
+
+#### Pulling
+
+When a branch is pulled, it must re-attach whatever undoable commits it has to the head of undo list maintained by the parent branch.
+This can be done by finding the lowest common ancestor in between the two branches,
+and attaching to the tip of the parent branch all of the commits on the child branch that lie under the common ancestor.
+
+Note that all the commits from the child branch will undergo rebasing so the undoable commit nodes for them will need to be remade.
+It would not be valid to simply update the existing child branch's undo commit node objects by updating the edits and repair data (see below) within.
+That's because it's possible that the child branch may itself be the parent branch of some other child branch,
+whose undo queue includes those commit nodes.
+The child-most branch's commit nodes should not be affected by the fact that its parent branch executed a pull.
+
+#### Dropping Old Commits
+
+As sequenced edits fall out of the collab window,
+we have the option to either drop or retain the corresponding commit nodes in the undo tree.
+We can let the application pick a maximum length for the undo queue of the user.
+
+Retaining commits that fall out of the collab window muddies the statement that this commit tree is a sparse version of the normal commit tree.
+It can be still be thought of as sparse if we ignore the fact that sequenced commits get dropped from it as the collab window advances.
+
+### Repair Data
+
+Creating a concrete undo edit requires access to the repair data associated with the edit to be undone.
+
+This data can be stored in a repair data store that is co-located with the edit on the undoable commit tree.
+This approach has the following pros and cons:
+
+-   Con: This approach fails to take advantage of repair data store's ability to store repair data for multiple edits.
+    Storing the repair data separately for each edit can lead to additional memory overhead because document paths are not shared between edits.
+-   Pro: This approach does not require that repair data stores be able to remove repair data from their internal storage
+    (which is not yet supported).
+    This may also make up for the overhead mentioned above because it makes it faster to discard repair data
+    (we just drop the reference to the store that contains the repair data).
+
 ## Glossary
 
 ### Interim Change
