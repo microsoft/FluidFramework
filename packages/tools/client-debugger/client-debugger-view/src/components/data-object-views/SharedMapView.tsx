@@ -34,10 +34,11 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 	const [entries, setEntries] = React.useState<[string, unknown][]>([...sharedMap.entries()]);
 	const [collapsed, setCollapsed] = React.useState<{ [key: string]: boolean }>(() => {
 		const collapsedState: { [key: string]: boolean } = {};
-		// eslint-disable-next-line unicorn/no-array-for-each
-		entries.forEach(([key]) => {
+
+		for (const [key] of entries) {
 			collapsedState[key] = true;
-		});
+		}
+
 		return collapsedState;
 	});
 

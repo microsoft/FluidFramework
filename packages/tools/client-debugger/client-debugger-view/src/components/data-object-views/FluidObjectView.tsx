@@ -47,7 +47,12 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
 		return <Spinner />;
 	}
 
-	const objectType = "Fluid Object";
+	const dataTypeStyle = {
+		color: "blue",
+		opacity: 0.6,
+		fontWeight: "lighter",
+		fontSize: "small",
+	};
 
 	// TODO: is this the right type check for this?
 	const sharedObject = resolvedData as ISharedObject;
@@ -63,16 +68,7 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
 			renderOptions[dataObjectType](sharedObject, (data) => (
 				<>
 					<div>
-						<span
-							style={{
-								color: "blue",
-								opacity: 0.6,
-								fontWeight: "lighter",
-								fontSize: "small",
-							}}
-						>
-							{objectType}
-						</span>
+						<span style={dataTypeStyle}>{"Fluid Object"}</span>
 					</div>
 					<div>
 						<DynamicDataView data={data} renderOptions={renderOptions} />
