@@ -109,7 +109,7 @@ The following members of the `@fluidframework/driver-utils` package have been de
 The following members of the `@fluidframework/aqueduct` package have been deprecated and will be removed in an upcoming release:
 
 -   `waitForAttach()`
-    -   Instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
+    -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
