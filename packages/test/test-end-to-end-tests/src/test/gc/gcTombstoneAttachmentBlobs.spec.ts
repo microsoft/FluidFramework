@@ -56,7 +56,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 			// Send an op to transition the container to write mode.
 			dataStore._root.set("transition to write", "true");
-			await waitForContainerConnection(container, true);
+			await waitForContainerConnection(container);
 
 			const { summarizer } = await createSummarizer(
 				provider,
@@ -463,7 +463,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				const { summarizer } = await createSummarizer(
 					provider,
@@ -538,7 +538,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				// Upload the same blob. This will get de-duped and we will get back another local handle. Both the these
 				// localIds should be mapped to the same storageId.
@@ -648,7 +648,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				const { summarizer } = await createSummarizer(
 					provider,
@@ -748,7 +748,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		async function createContainerAndDataStore() {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
-			await waitForContainerConnection(mainContainer, true);
+			await waitForContainerConnection(mainContainer);
 			return { mainContainer, mainDataStore };
 		}
 

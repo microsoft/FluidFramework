@@ -81,7 +81,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		container = await provider.makeTestContainer(defaultGCConfig);
 		mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
-		await waitForContainerConnection(container, true);
+		await waitForContainerConnection(container);
 	});
 
 	/**

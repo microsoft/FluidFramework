@@ -33,6 +33,8 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 ## 2.0.0-internal.4.0.0 Breaking changes
 
 -   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+-   [Remove `ensureContainerConnected()` in `@fluidframework/test-utils`](#remove-ensurecontainerconnected-in-fluidframeworktest-utils)
+-   [New default parameter values for `waitForContainerConnection()` in `@fluidframework/test-utils`](#new-default-parameter-values-for-waitforcontainerconnection-in-fluidframeworktest-utils)
 -   [Some test packages no longer published](#some-test-packages-no-longer-published)
 -   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
 -   [IFluidTokenProvider removed](#IFluidTokenProvider-removed)
@@ -43,6 +45,24 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 ### Container and RelativeLoader no longer exported
 
 Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
+### Remove `ensureContainerConnected()` in `@fluidframework/test-utils`
+
+This function was [deprecated in a previous release](#200-internal240-upcoming-changes) and has now been removed.
+Use `waitForContainerConnection()` from the same package instead.
+See [the note](#new-default-parameter-values-for-waitforcontainerconnection-in-fluidframeworktest-utils) about breaking
+changes in that function in this release.
+
+### New default parameter values for `waitForContainerConnection()` in `@fluidframework/test-utils`
+
+The default value for the `failOnContainerClose` parameter has changed from `false` to `true` for function
+`waitForContainerConnection()` exported by `@fluidframework/test-utils`.
+
+This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
+immediately, instead of potentially being hidden by a timeout.
+
+Most use cases should prefer `true`; explicit passing of `false` should only be necessary when the caller expects the
+Container to connect _or_ close for some reason.
 
 ### Some test packages no longer published
 

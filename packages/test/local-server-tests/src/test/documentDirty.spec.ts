@@ -52,7 +52,7 @@ describe("Document Dirty", () => {
 		 */
 		async function waitForContainerReconnection(c: IContainer): Promise<void> {
 			assert.notStrictEqual(c.connectionState, ConnectionState.Connected);
-			return waitForContainerConnection(c, true);
+			return waitForContainerConnection(c);
 		}
 
 		/**
@@ -374,7 +374,7 @@ describe("Document Dirty", () => {
 		describe("Force readonly", () => {
 			it(`sets operations when force readonly and then turn off force readonly to process them`, async () => {
 				container.forceReadonly?.(true);
-				await waitForContainerConnection(container, true);
+				await waitForContainerConnection(container);
 
 				// Set values in DDSes in force read only state.
 				sharedMap.set("key", "value");
@@ -407,7 +407,7 @@ describe("Document Dirty", () => {
 
 				// force readonly
 				container.forceReadonly?.(true);
-				await waitForContainerConnection(container, true);
+				await waitForContainerConnection(container);
 
 				await loaderContainerTracker.ensureSynchronized();
 

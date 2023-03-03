@@ -46,7 +46,7 @@ describe("Logging Last Connection Mode ", () => {
 	 */
 	async function waitForContainerReconnection(c: IContainer): Promise<void> {
 		assert.notStrictEqual(c.connectionState, ConnectionState.Connected);
-		return waitForContainerConnection(c, true);
+		return waitForContainerConnection(c);
 	}
 
 	const logger = new MockLogger();
