@@ -609,6 +609,13 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				});
 			} else {
 				dataModel.counter.increment(1);
+				config.logger.sendTelemetryEvent({
+					eventName: "SmallTestPayload",
+					runId: config.runId,
+					largeOpJitter,
+					opsSent,
+					largeOpRate,
+				});
 			}
 
 			opsSent++;
