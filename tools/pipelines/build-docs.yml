@@ -80,8 +80,6 @@ variables:
     value: true
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
-  - name: buildDirectory
-    value: $(Build.SourcesDirectory)/docs
 
 # no PR triggers
 trigger:
@@ -195,7 +193,7 @@ stages:
         - task: Cache@2
           displayName: Cache pnpm store
           inputs:
-            key: '"pnpm-store" | "$(Agent.OS)" | ${{ variables.buildDirectory }}/pnpm-lock.yaml'
+            key: '"pnpm-store" | "$(Agent.OS)" | $(Build.SourcesDirectory)/docs/pnpm-lock.yaml'
             path: ${{ variables.pnpmStorePath }}
 
         - task: Bash@3
@@ -210,7 +208,7 @@ stages:
           displayName: Install dependencies
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ variables.buildDirectory }}
+            workingDirectory: $(Build.SourcesDirectory)/docs
             script: |
               pnpm i --frozen-lockfile
 
@@ -218,20 +216,20 @@ stages:
           displayName: npm run build
           inputs:
             command: 'custom'
-            workingDir: ${{ variables.buildDirectory }}
+            workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: ${{ variables.buildDirectory }}/public
+            BuildDropPath: $(Build.SourcesDirectory)/docs/public
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish site build artifact'
           inputs:
-            targetPath: '${{ variables.buildDirectory }}/public'
+            targetPath: '$(Build.SourcesDirectory)/docs/public'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
 
@@ -287,11 +285,11 @@ stages:
           inputs:
             GdnBreakPolicyMinSev: Warning
             GdnBreakAllTools: true
-            GdnBreakBaselineFiles: '${{ variables.buildDirectory }}/.gdnbaselines'
+            GdnBreakBaselineFiles: '$(Build.SourcesDirectory)/docs/.gdnbaselines'
             GdnBreakGdnToolESLint: true
             GdnBreakGdnToolESLintSeverity: Warning
             GdnBreakPolicy: M365
-            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
+            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Baselines'
@@ -318,7 +316,7 @@ stages:
           inputs:
             source: current
             artifact: fluidframework-docs
-            path: '${{ variables.buildDirectory }}/public'
+            path: '$(Build.SourcesDirectory)/docs/public'
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
