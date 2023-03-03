@@ -605,6 +605,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					largeOpJitter,
 					opSize,
 					opsSent,
+					largeOpRate,
 				});
 			} else {
 				dataModel.counter.increment(1);
