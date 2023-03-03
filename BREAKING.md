@@ -102,6 +102,15 @@ The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from th
 The following members of the `@fluidframework/driver-utils` package have been deprecated and will be removed in an upcoming release:
 
 -   `waitForConnectedState`
+-   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
+-   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
