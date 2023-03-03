@@ -55,7 +55,6 @@ const executableToLeafTask: {
 	"prettier": PrettierTask,
 	"gen-version": GenVerTask,
 	"api-extractor": ApiExtractorTask,
-	"fluid-type-validator": TypeValidationTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
 };
