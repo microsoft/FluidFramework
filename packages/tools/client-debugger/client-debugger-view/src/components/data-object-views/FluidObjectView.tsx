@@ -75,7 +75,7 @@ export function FluidObjectView(props: FluidObjectViewProps): React.ReactElement
 						</span>
 					</div>
 					<div>
-						<DynamicDataView data={data} renderOptions={renderOptions} />{" "}
+						<DynamicDataView data={data} renderOptions={renderOptions} />
 					</div>
 				</>
 			))
