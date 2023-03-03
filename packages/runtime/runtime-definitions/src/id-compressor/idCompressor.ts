@@ -37,11 +37,6 @@ export interface IIdCompressorCore {
 	takeNextCreationRange(): IdCreationRange;
 
 	/**
-	 * Returns an iterable of all IDs created by this compressor.
-	 */
-	getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
-
-	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
 	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */

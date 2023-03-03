@@ -376,8 +376,6 @@ export interface IIdCompressor {
 // @public
 export interface IIdCompressorCore {
     finalizeCreationRange(range: IdCreationRange): void;
-    // Warning: (ae-incompatible-release-tags) The symbol "getAllIdsFromLocalSession" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
-    getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId>;
     serialize(withSession: boolean): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;

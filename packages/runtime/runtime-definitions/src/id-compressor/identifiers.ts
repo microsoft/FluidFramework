@@ -10,14 +10,6 @@
 export type CompressedId = FinalCompressedId | LocalCompressedId;
 
 /**
- * The ID of the string that has been interned, which can be used by a {@link StringInterner} to retrieve the original string.
- * @alpha
- */
-export type InternedStringId = number & {
-	readonly InternedStringId: "e221abc9-9d17-4493-8db0-70c871a1c27c";
-};
-
-/**
  * A brand for identity types that are unique within a particular session (SharedTree instance).
  */
 export interface SessionUnique {

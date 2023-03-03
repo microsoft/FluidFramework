@@ -285,13 +285,15 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 
 	/**
 	 * The size of each newly created ID cluster.
-	 * Must only be set with a value upon which consensus has been reached. Value must be greater than zero and less than
-	 * `IdCompressor.maxClusterSize`.
 	 */
 	public get clusterCapacity(): number {
 		return this.newClusterCapacity;
 	}
 
+	/**
+	 * Must only be set with a value upon which consensus has been reached. Value must be greater than zero and less than
+	 * `IdCompressor.maxClusterSize`.
+	 */
 	public set clusterCapacity(value: number) {
 		assert(value > 0, 0x481 /* Clusters must have a positive capacity */);
 		assert(
@@ -439,13 +441,6 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 		// All reserved IDs are contiguous and finalized during the Compressor's construction, therefore they are always the lowest
 		// final IDs, beginning at 0
 		return index as SessionSpaceCompressedId & FinalCompressedId;
-	}
-
-	/**
-	 * Returns an iterable of all IDs created by this compressor.
-	 */
-	public getAllIdsFromLocalSession(): IterableIterator<SessionSpaceCompressedId> {
-		return this.sessionIdNormalizer[Symbol.iterator]();
 	}
 
 	/**

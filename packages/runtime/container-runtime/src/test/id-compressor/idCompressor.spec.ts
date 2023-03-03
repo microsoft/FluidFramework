@@ -257,59 +257,6 @@ describe("IdCompressor", () => {
 		});
 	});
 
-	describe("can enumerate all locally created IDs", () => {
-		const idCount = 10;
-		it("created without finalization", () => {
-			const compressor = createCompressor(Client.Client1, idCount);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < idCount; i++) {
-				ids.push(compressor.generateCompressedId());
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
-		});
-
-		it("created with finalization", () => {
-			const compressor = createCompressor(Client.Client1, idCount);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < idCount; i++) {
-				if (i === Math.floor(idCount / 2)) {
-					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-				}
-				ids.push(compressor.generateCompressedId());
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
-		});
-
-		it("created with expanded finalization", () => {
-			const compressor = createCompressor(Client.Client1, idCount);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < idCount * 4; i++) {
-				if (i !== 0 && i % Math.floor(idCount / 3) === 0) {
-					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-				}
-				ids.push(compressor.generateCompressedId());
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
-		});
-
-		it("created with overrides", () => {
-			const capacity = 100;
-			const compressor = createCompressor(Client.Client1, capacity);
-			const ids: SessionSpaceCompressedId[] = [];
-			for (let i = 0; i < capacity; i++) {
-				if (i === 1) {
-					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
-				}
-				ids.push(compressor.generateCompressedId(i % 3 === 0 ? undefined : `override${i}`));
-			}
-			const returnedIds = [...compressor.getAllIdsFromLocalSession()];
-			assert.deepEqual(returnedIds, ids);
-		});
-	});
-
 	describe("can produce a creation range", () => {
 		const tests: {
 			title: string;
