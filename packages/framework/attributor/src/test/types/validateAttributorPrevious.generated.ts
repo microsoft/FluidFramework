@@ -40,54 +40,6 @@ use_old_ClassDeclaration_Attributor(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createRuntimeAttributor": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_createRuntimeAttributor():
-    TypeOnly<typeof old.createRuntimeAttributor>;
-declare function use_current_FunctionDeclaration_createRuntimeAttributor(
-    use: TypeOnly<typeof current.createRuntimeAttributor>);
-use_current_FunctionDeclaration_createRuntimeAttributor(
-    get_old_FunctionDeclaration_createRuntimeAttributor());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_createRuntimeAttributor": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_createRuntimeAttributor():
-    TypeOnly<typeof current.createRuntimeAttributor>;
-declare function use_old_FunctionDeclaration_createRuntimeAttributor(
-    use: TypeOnly<typeof old.createRuntimeAttributor>);
-use_old_FunctionDeclaration_createRuntimeAttributor(
-    get_current_FunctionDeclaration_createRuntimeAttributor());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_enableOnNewFileKey": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_enableOnNewFileKey():
-    TypeOnly<typeof old.enableOnNewFileKey>;
-declare function use_current_VariableDeclaration_enableOnNewFileKey(
-    use: TypeOnly<typeof current.enableOnNewFileKey>);
-use_current_VariableDeclaration_enableOnNewFileKey(
-    get_old_VariableDeclaration_enableOnNewFileKey());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_enableOnNewFileKey": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_enableOnNewFileKey():
-    TypeOnly<typeof current.enableOnNewFileKey>;
-declare function use_old_VariableDeclaration_enableOnNewFileKey(
-    use: TypeOnly<typeof old.enableOnNewFileKey>);
-use_old_VariableDeclaration_enableOnNewFileKey(
-    get_current_VariableDeclaration_enableOnNewFileKey());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAttributor": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAttributor():
@@ -184,30 +136,6 @@ use_old_InterfaceDeclaration_IRuntimeAttributor(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mixinAttributor": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_mixinAttributor():
-    TypeOnly<typeof old.mixinAttributor>;
-declare function use_current_VariableDeclaration_mixinAttributor(
-    use: TypeOnly<typeof current.mixinAttributor>);
-use_current_VariableDeclaration_mixinAttributor(
-    get_old_VariableDeclaration_mixinAttributor());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_mixinAttributor": {"backCompat": false}
-*/
-declare function get_current_VariableDeclaration_mixinAttributor():
-    TypeOnly<typeof current.mixinAttributor>;
-declare function use_old_VariableDeclaration_mixinAttributor(
-    use: TypeOnly<typeof old.mixinAttributor>);
-use_old_VariableDeclaration_mixinAttributor(
-    get_current_VariableDeclaration_mixinAttributor());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_OpStreamAttributor": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_OpStreamAttributor():
@@ -228,3 +156,75 @@ declare function use_old_ClassDeclaration_OpStreamAttributor(
     use: TypeOnly<old.OpStreamAttributor>);
 use_old_ClassDeclaration_OpStreamAttributor(
     get_current_ClassDeclaration_OpStreamAttributor());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createRuntimeAttributor": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_createRuntimeAttributor():
+    TypeOnly<typeof old.createRuntimeAttributor>;
+declare function use_current_FunctionDeclaration_createRuntimeAttributor(
+    use: TypeOnly<typeof current.createRuntimeAttributor>);
+use_current_FunctionDeclaration_createRuntimeAttributor(
+    get_old_FunctionDeclaration_createRuntimeAttributor());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_createRuntimeAttributor": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_createRuntimeAttributor():
+    TypeOnly<typeof current.createRuntimeAttributor>;
+declare function use_old_FunctionDeclaration_createRuntimeAttributor(
+    use: TypeOnly<typeof old.createRuntimeAttributor>);
+use_old_FunctionDeclaration_createRuntimeAttributor(
+    get_current_FunctionDeclaration_createRuntimeAttributor());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_enableOnNewFileKey": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_enableOnNewFileKey():
+    TypeOnly<typeof old.enableOnNewFileKey>;
+declare function use_current_VariableDeclaration_enableOnNewFileKey(
+    use: TypeOnly<typeof current.enableOnNewFileKey>);
+use_current_VariableDeclaration_enableOnNewFileKey(
+    get_old_VariableDeclaration_enableOnNewFileKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_enableOnNewFileKey": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_enableOnNewFileKey():
+    TypeOnly<typeof current.enableOnNewFileKey>;
+declare function use_old_VariableDeclaration_enableOnNewFileKey(
+    use: TypeOnly<typeof old.enableOnNewFileKey>);
+use_old_VariableDeclaration_enableOnNewFileKey(
+    get_current_VariableDeclaration_enableOnNewFileKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_mixinAttributor": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_mixinAttributor():
+    TypeOnly<typeof old.mixinAttributor>;
+declare function use_current_VariableDeclaration_mixinAttributor(
+    use: TypeOnly<typeof current.mixinAttributor>);
+use_current_VariableDeclaration_mixinAttributor(
+    get_old_VariableDeclaration_mixinAttributor());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_mixinAttributor": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_mixinAttributor():
+    TypeOnly<typeof current.mixinAttributor>;
+declare function use_old_VariableDeclaration_mixinAttributor(
+    use: TypeOnly<typeof old.mixinAttributor>);
+use_old_VariableDeclaration_mixinAttributor(
+    get_current_VariableDeclaration_mixinAttributor());
