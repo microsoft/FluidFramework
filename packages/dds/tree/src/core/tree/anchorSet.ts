@@ -127,22 +127,23 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 
 	/**
 	 * Gets a child AnchorNode (creating it if needed), and a Anchor owning a ref to it.
-	 * Caller is responsible for freeing the returned Anchor, and should not use the AnchorNode after that.
+	 * Caller is responsible for freeing the returned Anchor, and must not use the AnchorNode after that.
 	 */
 	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
 }
 
 /**
- * Define a slot on anchors in which data can be stored.
+ * Define a strongly typed slot on anchors in which data can be stored.
  *
  * @remarks
+ * This is mainly useful for caching data associated with a location in the tree.
+ *
  * Example usage:
  * ```typescript
  * const counterSlot = anchorSlot<number>();
  *
  * function useSlot(anchor: AnchorNode): void {
- * 	const map = anchor.slotMap(counterSlot);
- * 	map.set(counterSlot, map.get(counterSlot) ?? 0);
+ * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
  * }
  * ```
  * @alpha
