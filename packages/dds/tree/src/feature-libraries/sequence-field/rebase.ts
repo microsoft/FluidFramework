@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { clone, fail } from "../../util";
+import { fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
@@ -26,6 +26,7 @@ import {
 	dequeueRelatedReattaches,
 	isSkipLikeDetach,
 	getOffsetAtRevision,
+	cloneMark,
 } from "./utils";
 import {
 	Attach,
@@ -136,7 +137,7 @@ function rebaseMarkList<TNodeChange>(
 					updateLineage(lineageRequests, baseRevision);
 					baseDetachOffset = 0;
 				}
-				factory.push(clone(currMark));
+				factory.push(cloneMark(currMark));
 			}
 		} else if (currMark === undefined) {
 			if (isDetachMark(baseMark)) {
@@ -404,7 +405,7 @@ function rebaseMark<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 ): CellSpanningMark<TNodeChange> {
 	if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark) || isSkipLikeDetach(baseMark)) {
-		return clone(currMark);
+		return cloneMark(currMark);
 	}
 	const baseType = baseMark.type;
 	switch (baseType) {
@@ -418,7 +419,7 @@ function rebaseMark<TNodeChange>(
 				// See skipped test: Revive ↷ [Revive, undo(Revive)] => Revive
 				if (currMark.isIntention || currMark.conflictsWith === baseMarkRevision) {
 					const reattach = {
-						...(clone(currMark) as Reattach<TNodeChange>),
+						...cloneMark(currMark as Reattach<TNodeChange>),
 						// Update the characterization of the deleted content
 						detachedBy: baseMarkRevision,
 						detachIndex: baseInputOffset,
@@ -430,7 +431,7 @@ function rebaseMark<TNodeChange>(
 				// After this, the only way for the reattach to recover from the conflict is for the nodes to be
 				// revived and for the original deletion (currMark.detachedBy) to be re-applied.
 				return {
-					...clone(currMark),
+					...cloneMark(currMark),
 					lastDetachedBy: baseMarkRevision,
 					detachIndex: baseInputOffset,
 				};
@@ -469,7 +470,7 @@ function rebaseMark<TNodeChange>(
 						0x4fa /* Invalid reattach mark overlap */,
 					);
 					// The nodes that currMark aims to detach are being reattached by baseMark
-					const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
+					const newCurrMark: ReturnFrom<TNodeChange> = cloneMark(currMark);
 					delete newCurrMark.conflictsWith;
 					delete newCurrMark.detachIndex;
 					getOrAddEffect(
@@ -490,7 +491,7 @@ function rebaseMark<TNodeChange>(
 						);
 						// The nodes that currMark aims to reattach are being reattached by baseMark
 						return {
-							...clone(currMark),
+							...cloneMark(currMark),
 							conflictsWith: baseMarkRevision,
 						};
 					}
@@ -506,7 +507,7 @@ function rebaseMark<TNodeChange>(
 							).pairedMarkStatus = PairedMarkUpdate.Deactivated;
 						}
 						return {
-							...clone(currMark),
+							...cloneMark(currMark),
 							conflictsWith: baseMarkRevision,
 						};
 					}
@@ -520,7 +521,7 @@ function rebaseMark<TNodeChange>(
 						currMark.lastDetachedBy === baseMark.detachedBy,
 						0x4fd /* Invalid revive mark overlap */,
 					);
-					const revive = clone(currMark);
+					const revive = cloneMark(currMark);
 					delete revive.lastDetachedBy;
 					return revive;
 				}
@@ -531,17 +532,17 @@ function rebaseMark<TNodeChange>(
 		case "Modify": {
 			if (isModify(currMark)) {
 				return {
-					...clone(currMark),
+					...cloneMark(currMark),
 					changes: rebaseChild(currMark.changes, baseMark.changes),
 				};
 			}
-			return clone(currMark);
+			return currMark;
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
 			if (!isSkipMark(currMark)) {
 				const baseMarkRevision = baseMark.revision ?? baseRevision;
-				const newCurrMark = clone(currMark);
+				const newCurrMark = cloneMark(currMark);
 				if (newCurrMark.type === "ReturnFrom") {
 					// The nodes that currMark aims to detach are being detached by baseMark
 					newCurrMark.conflictsWith = baseMarkRevision;
@@ -673,7 +674,7 @@ function handleCurrAttach<T>(
 	offset: number,
 	baseRevision: RevisionTag | undefined,
 ) {
-	const rebasedMark = clone(currMark);
+	const rebasedMark = cloneMark(currMark);
 
 	// If the changeset we are rebasing over has the same revision as an event in rebasedMark's lineage,
 	// we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.

@@ -127,11 +127,7 @@ describe("SharedTree", () => {
 		await provider.opProcessingController.pauseProcessing(container3);
 
 		// Delete Z
-		tree2.runTransaction((forest, editor) => {
-			const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-			field.delete(0, 1);
-			return TransactionResult.Apply;
-		});
+		remove(tree2, 0, 1);
 
 		// Ensure tree2 has a chance to send deletion of Z
 		await provider.opProcessingController.processOutgoing(container2);
@@ -251,16 +247,40 @@ describe("SharedTree", () => {
 			assert.equal(peekTestValue(tree2), value);
 
 			// Delete node
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.delete(0, 1);
-				return TransactionResult.Apply;
-			});
+			remove(tree1, 0, 1);
 
 			await provider.ensureSynchronized();
 
 			assert.equal(peekTestValue(tree1), undefined);
 			assert.equal(peekTestValue(tree2), undefined);
+		});
+
+		it("can handle competing deletes", async () => {
+			for (const index of [0, 1, 2, 3]) {
+				const provider = await TestTreeProvider.create(4);
+				const [tree1, tree2, tree3, tree4] = provider.trees;
+				const sequence: JsonableTree[] = [
+					{ type: brand("Number"), value: 0 },
+					{ type: brand("Number"), value: 1 },
+					{ type: brand("Number"), value: 2 },
+					{ type: brand("Number"), value: 3 },
+				];
+				initializeTestTree(tree1, sequence);
+				await provider.ensureSynchronized();
+
+				remove(tree1, index, 1);
+				remove(tree2, index, 1);
+				remove(tree3, index, 1);
+
+				await provider.ensureSynchronized();
+
+				const expectedSequence = [0, 1, 2, 3];
+				expectedSequence.splice(index, 1);
+				validateRootField(tree1, expectedSequence);
+				validateRootField(tree2, expectedSequence);
+				validateRootField(tree3, expectedSequence);
+				validateRootField(tree4, expectedSequence);
+			}
 		});
 
 		it("can insert and delete a node in an optional field", async () => {
@@ -537,11 +557,7 @@ describe("SharedTree", () => {
 			});
 
 			// Delete b
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.delete(1, 1);
-				return TransactionResult.Apply;
-			});
+			remove(tree2, 1, 1);
 
 			await provider.ensureSynchronized();
 
@@ -1360,11 +1376,7 @@ describe("SharedTree", () => {
 			moveToDetachedField(tree2.forest, readCursor);
 			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
 			readCursor.free();
-			tree2.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.delete(0, 1);
-				return TransactionResult.Apply;
-			});
+			remove(tree2, 0, 1);
 			readCursor = tree2.forest.allocateCursor();
 			moveToDetachedField(tree2.forest, readCursor);
 			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
@@ -1456,18 +1468,25 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: ISharedTreeCheckout,
-	state?: JsonableTree,
+	tree: ISharedTree,
+	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
-	tree.storedSchema.update(schema);
+	if (state === undefined) {
+		tree.storedSchema.update(schema);
+		return;
+	}
 
-	if (state !== undefined) {
+	if (!Array.isArray(state)) {
+		initializeTestTree(tree, [state], schema);
+	} else {
+		tree.storedSchema.update(schema);
+
 		// Apply an edit to the tree which inserts a node with a value
 		tree.runTransaction((forest, editor) => {
-			const writeCursor = singleTextCursor(state);
+			const writeCursors = state.map(singleTextCursor);
 			const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-			field.insert(0, writeCursor);
+			field.insert(0, writeCursors);
 
 			return TransactionResult.Apply;
 		});
@@ -1531,6 +1550,14 @@ function insert(tree: ISharedTreeCheckout, index: number, ...values: string[]): 
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
 		field.insert(index, nodes);
+		return TransactionResult.Apply;
+	});
+}
+
+function remove(tree: ISharedTree, index: number, count: number): void {
+	tree.runTransaction((forest, editor) => {
+		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		field.delete(index, count);
 		return TransactionResult.Apply;
 	});
 }

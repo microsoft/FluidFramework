@@ -16,30 +16,6 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_generateToken": {"forwardCompat": false}
-*/
-declare function get_old_FunctionDeclaration_generateToken():
-    TypeOnly<typeof old.generateToken>;
-declare function use_current_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof current.generateToken>);
-use_current_FunctionDeclaration_generateToken(
-    get_old_FunctionDeclaration_generateToken());
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_generateToken": {"backCompat": false}
-*/
-declare function get_current_FunctionDeclaration_generateToken():
-    TypeOnly<typeof current.generateToken>;
-declare function use_old_FunctionDeclaration_generateToken(
-    use: TypeOnly<typeof old.generateToken>);
-use_old_FunctionDeclaration_generateToken(
-    get_current_FunctionDeclaration_generateToken());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IUser": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IUser():
@@ -84,3 +60,27 @@ declare function use_old_EnumDeclaration_ScopeType(
     use: TypeOnly<old.ScopeType>);
 use_old_EnumDeclaration_ScopeType(
     get_current_EnumDeclaration_ScopeType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_generateToken": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_generateToken():
+    TypeOnly<typeof old.generateToken>;
+declare function use_current_FunctionDeclaration_generateToken(
+    use: TypeOnly<typeof current.generateToken>);
+use_current_FunctionDeclaration_generateToken(
+    get_old_FunctionDeclaration_generateToken());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_generateToken": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_generateToken():
+    TypeOnly<typeof current.generateToken>;
+declare function use_old_FunctionDeclaration_generateToken(
+    use: TypeOnly<typeof old.generateToken>);
+use_old_FunctionDeclaration_generateToken(
+    get_current_FunctionDeclaration_generateToken());
