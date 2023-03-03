@@ -114,7 +114,6 @@ export class CheckpointManager implements ICheckpointManager {
 
     private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
-        Lumberjack.info(`Writing checkpoint to global database.`, lumberProperties);
 
         if (this.localDocumentCollection) {
             if(!noActiveClients) {
@@ -124,9 +123,6 @@ export class CheckpointManager implements ICheckpointManager {
                 await this.writeScribeCheckpointToCollection(this.localDocumentCollection, checkpoint);
             } else {
                 // No active clients, delete from local collection, write to global collection
-                Lumberjack.info(`Writing checkpoint to global database`, lumberProperties);
-                await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
-
                 Lumberjack.info(`Removing checkpoint data from the local database. No active clients.`, lumberProperties);
                 await this.localDocumentCollection.deleteOne({
                     documentId: this.documentId,
@@ -134,8 +130,11 @@ export class CheckpointManager implements ICheckpointManager {
                 }).catch((error) => {
                     Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
                 });
+                Lumberjack.info(`Writing checkpoint to global database`, lumberProperties);
+                await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
             }
         } else {
+            Lumberjack.info(`Checkpoint to defalt global database.`, lumberProperties);
             await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
         }
     }
