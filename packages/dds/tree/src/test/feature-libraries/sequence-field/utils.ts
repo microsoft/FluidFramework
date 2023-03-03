@@ -39,11 +39,23 @@ export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.
 	});
 }
 
+/**
+ * Mints a `RevisionTag` based on the given number.
+ * This is safe in the context of 'FieldKind' testing because `RevisionTag`s are only expected to be value-equatable.
+ *
+ * This function is meant for testing purposes only.
+ * RevisionTags minted by this function are meant to be consumed by `integerRevisionIndexer`.
+ *
+ * @param integer - A number reflecting the relative order of the changeset with that revision compared to other changeset
+ * (where higher number means newer changeset/revision).
+ * @returns The same number masquerading as a `RevisionTag`.
+ */
 export function numberTag(integer: number): RevisionTag {
 	return integer as unknown as RevisionTag;
 }
 
 const integerRevisionIndexer = (tag: RevisionTag): number => {
+	// If the revision index query is expected for the given test, use a `RevisionTag` produced by `numberTag`.
 	assert(typeof tag === "number", "Unexpected revision index query");
 	return tag;
 };
