@@ -138,7 +138,7 @@ export class ModularChangeFamily
 				revInfos.push({ tag: taggedChange.revision });
 			}
 		}
-		const revisionIndexer: RevisionIndexer = revisionIndexFromInfo(revInfos);
+		const revisionIndexer: RevisionIndexer = revisionIndexerFromInfo(revInfos);
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
@@ -396,7 +396,7 @@ export class ModularChangeFamily
 		if (change.revisions !== undefined) {
 			revInfos.push(...change.revisions);
 		}
-		const revisionIndexer: RevisionIndexer = revisionIndexFromInfo(revInfos);
+		const revisionIndexer: RevisionIndexer = revisionIndexerFromInfo(revInfos);
 		const rebasedFields = this.rebaseFieldMap(
 			change.changes,
 			tagChange(over.change.changes, over.revision),
@@ -597,7 +597,7 @@ export class ModularChangeFamily
 	}
 }
 
-function revisionIndexFromInfo(revInfos: readonly RevisionInfo[]): RevisionIndexer {
+function revisionIndexerFromInfo(revInfos: readonly RevisionInfo[]): RevisionIndexer {
 	return (tag: RevisionTag): number => {
 		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
 		assert(index !== -1, "Unable to index unknown revision");
