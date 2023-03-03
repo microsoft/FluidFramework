@@ -632,7 +632,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: createFakeRepairData(tag1, 1, 2),
+				content: createFakeRepairData(tag1, 0, 2),
 				count: 2,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -659,7 +659,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: createFakeRepairData(tag1, 1, 1),
+				content: createFakeRepairData(tag1, 0, 1),
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -667,7 +667,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: createFakeRepairData(tag2, 1, 1),
+				content: createFakeRepairData(tag2, 2, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 1,
@@ -697,7 +697,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: createFakeRepairData(tag2, 0, 1),
+				content: createFakeRepairData(tag2, 2, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 0,
