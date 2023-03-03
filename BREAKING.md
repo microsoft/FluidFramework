@@ -15,6 +15,16 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.3.0
+
+## 2.0.0-internal.3.0.0 Upcoming changes
+
+-   [attachGraph and bind methods in IFluidHandle deprecated](#attachGraph-and-bind-methods-in-IFluidHandle-deprecated)
+
+### attachGraph and bind methods in IFluidHandle deprecated
+
+`attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
