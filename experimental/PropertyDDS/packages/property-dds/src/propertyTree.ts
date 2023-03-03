@@ -188,13 +188,18 @@ export class SharedPropertyTree extends SharedObject {
 	 */
 	protected onConnect() {
 		// on connect we scope all deltas such that we only get relevant changes
-		// since we know the paths already at constuction time this is okay
+		// since we know the paths already at construction time this is okay
 		this.scopeFutureDeltasToPaths(this.options.paths);
 	}
 
 	private scopeFutureDeltasToPaths(paths?: string[]) {
-		const socket = (this.runtime.deltaManager as any).deltaManager.deltaManager
-			.connectionManager.connection.socket;
+		// Backdoor to emit "partial_checkout" events on the socket. The delta manager at container runtime layer is
+		// a proxy and the delta manager at the container context layer is yet another proxy, so account for that.
+		let dm = (this.runtime.deltaManager as any).deltaManager;
+		if (dm.deltaManager !== undefined) {
+			dm = dm.deltaManager;
+		}
+		const socket = dm.connectionManager.connection.socket;
 		socket.emit("partial_checkout", { paths });
 	}
 

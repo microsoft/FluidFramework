@@ -17,9 +17,14 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 # 2.0.0-internal.3.3.0
 
-## 2.0.0-internal.3.0.0 Upcoming changes
+## 2.0.0-internal.3.3.0 Upcoming changes
 
+-   [deltaManager property in IConnectableRuntime moved](#deltaManager-property-in-IConnectableRuntime-moved)
 -   [attachGraph and bind methods in IFluidHandle deprecated](#attachGraph-and-bind-methods-in-IFluidHandle-deprecated)
+
+### deltaManager property in IConnectableRuntime moved
+
+The deltaManager property in IConnectableRuntime has been moved to ISummarizerRuntime directly. ISummarizerRuntime extends IConnectableRuntime so it hasn't been changed.
 
 ### attachGraph and bind methods in IFluidHandle deprecated
 
