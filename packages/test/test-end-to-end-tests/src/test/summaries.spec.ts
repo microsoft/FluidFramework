@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
 	Summarizer,
@@ -16,7 +16,7 @@ import {
 	DefaultSummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime";
-import { ISummaryContext } from "@fluidframework/driver-definitions";
+import { DriverHeader, ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -26,13 +26,13 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	createSummarizerFromFactory,
-	EventAndErrorTrackingLogger,
-	createAndAttachContainer,
+	summarizeNow,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
 	getContainerRuntimeApi,
 	ITestDataObject,
+	itExpects,
 	TestDataObjectType,
 } from "@fluidframework/test-version-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -129,8 +129,8 @@ class TestDataObject1 extends DataObject {
 	protected async initializingFromExisting(): Promise<void> {
 		// This test data object will verify full initialization isn't for summarizer client.
 		if (this.context.clientDetails.capabilities.interactive === false) {
-			throw new Error(
-				"Non interactive / summarizer client's data object should not be initialized",
+			throw Error(
+				"Non interactive/summarizer client's data object should not be initialized",
 			);
 		}
 	}
@@ -342,14 +342,9 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			undefined,
 			[],
 		);
-		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 
 		// Create a container for the first client.
-		const container1 = await createAndAttachContainer(
-			provider.defaultCodeDetails,
-			loader,
-			provider.driver.createCreateNewRequest(provider.documentId),
-		);
+		const container1 = await provider.createContainer(runtimeFactory);
 		assert.doesNotThrow(
 			async () => requestFluidObject<TestDataObject1>(container1, "/"),
 			"Initial creation of container and data store should succeed.",
@@ -365,49 +360,43 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			registryStoreEntries,
 		);
 		const summarizer = createSummarizerResult.summarizer;
-		assert.doesNotThrow(() => {
-			summarizer.summarizeOnDemand({ reason: "test" });
+		assert.doesNotThrow(async () => {
+			await summarizeNow(summarizer, "test");
 		});
 
 		// In summarizer, load the data store should fail.
-		const summarizerContainer = await provider.loadContainer(runtimeFactory);
-		assert.doesNotThrow(
-			async () => requestFluidObject<TestDataObject1>(summarizerContainer, "/"),
+		const requestHeader = {
+			[LoaderHeader.clientDetails]: {
+				capabilities: { interactive: false },
+				type: "summarizer",
+			},
+			[DriverHeader.summarizingClient]: true,
+		};
+		const summarizerContainer = await provider.loadContainer(
+			runtimeFactory,
+			undefined,
+			requestHeader,
+		);
+
+		const expectedErrors = [
+			{
+				eventName: "Error",
+				error: "Non interactive/summarizer client's data object should not be initialized",
+			},
+		];
+		itExpects(
 			"This validates the summarizer client doesn't fully initialize the data object.",
+			expectedErrors,
+			async () => requestFluidObject<TestDataObject1>(summarizerContainer, "/"),
 		);
 
 		// Load second container, load the data store again should success.
-		const url = (await container1.getAbsoluteUrl("/")) as string;
-		const container2 = await loader.resolve({ url });
+		const container2 = await provider.loadContainer(runtimeFactory);
 		assert.doesNotThrow(
 			async () => requestFluidObject<TestDataObject1>(container2, "/"),
 			(e) => e.message === "Test should not hit this point",
 			"This validates that an interactive client doesn't fully initialize the data object.",
 		);
-
-		// clean up the error message in provider's logger
-		// const expectedErrors = [
-		// 	{
-		// 		eventName: "fluid:telemetry:ContainerRuntime:Outbox:ReferenceSequenceNumberMismatch",
-		// 		error: "Submission of an out of order message",
-		// 	},
-		// 	// A container will not close when an out of order message was detected.
-		// 	// The error below is due to the artificial repro of interleaving op processing and flushing
-		// 	{
-		// 		eventName: "fluid:telemetry:Container:ContainerClose",
-		// 		error: "Found a non-Sequential sequenceNumber",
-		// 	},
-		// ];
-
-		// itExpects(
-		// 	"Reference sequence number mismatch when doing op reentry - early flush enabled - submits two batches",
-		// 	expectedErrors,
-		// 	async () => {
-		// 		// By default, we would flush a batch when we detect a reference sequence number mismatch
-		// 		await processOutOfOrderOp({});
-		// 		assert.strictEqual(capturedBatches.length, 2);
-		// 	},
-		// );
 	});
 
 	/**
