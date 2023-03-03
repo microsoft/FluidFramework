@@ -35,8 +35,8 @@ const taskList2: TaskData = {
 };
 
 const startingExternalData: TaskListData = {
-	1: taskList1,
-	2: taskList2,
+	"task-list-1": taskList1,
+	"task-list-2": taskList2,
 };
 
 /**
@@ -81,7 +81,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 *
 	 * @remarks This is async to simulate the more-realistic scenario of a network request.
 	 */
-	public async fetchData(taskListId: number): Promise<Response> {
+	public async fetchData(taskListId: string): Promise<Response> {
 		const jsonData = { taskList: { [taskListId]: this.data[taskListId] } };
 		return new Response(JSON.stringify(jsonData), {
 			status: 200,
@@ -96,7 +96,9 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @returns A promise that resolves when the write completes.
 	 */
 	public async writeData(data: TaskListData): Promise<Response> {
-		this.data = data;
+		for (const taskListId of Object.keys(data)) {
+			this.data[taskListId] = data[taskListId];
+		}
 
 		// Emit for debug views to update
 		this.emit("debugDataWritten", this.data);

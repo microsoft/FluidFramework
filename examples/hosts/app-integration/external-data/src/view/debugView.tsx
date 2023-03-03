@@ -17,9 +17,9 @@ async function pollForServiceUpdates(
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
-		const taskListId = "1";
+		const taskListId = "task-list-1";
 		const response = await fetch(
-			`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}}`,
+			`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}`,
 			{
 				method: "GET",
 				headers: {
@@ -258,7 +258,7 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
 	const writeToExternalServer = async (): Promise<void> => {
-		const taskListId = "1";
+		const taskListId = "task-list-1";
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {

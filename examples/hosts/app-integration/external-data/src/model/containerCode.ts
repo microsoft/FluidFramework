@@ -12,8 +12,6 @@ import type { ITaskList, IAppModel } from "../model-interface";
 import { AppModel } from "./appModel";
 import { TaskListInstantiationFactory } from "./taskList";
 
-const taskListId = "task-list";
-
 /*
  * This is a server origin signal that lets the client know that the external source of truth
  * for the data has changed. On receiving this, the client should take some action, such as
@@ -27,10 +25,12 @@ const SignalType = {
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-	public constructor() {
+	private readonly _taskListId: string;
+	public constructor(taskListId: string) {
 		super(
 			new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
 		);
+		this._taskListId = taskListId;
 	}
 
 	/**
@@ -38,7 +38,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskList = await runtime.createDataStore(TaskListInstantiationFactory.type);
-		await taskList.trySetAlias(taskListId);
+		await taskList.trySetAlias(this._taskListId);
 	}
 
 	/**
@@ -60,7 +60,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 		container: IContainer,
 	): Promise<AppModel> {
 		const taskList = await requestFluidObject<ITaskList>(
-			await runtime.getRootDataStore(taskListId),
+			await runtime.getRootDataStore(this._taskListId),
 			"",
 		);
 		// Register listener only once the model is fully loaded and ready

@@ -216,7 +216,7 @@ export class TaskList extends DataObject implements ITaskList {
 	public async importExternalData(): Promise<void> {
 		console.log("TASK-LIST: Fetching external data from service...");
 
-		const taskListId = "1";
+		const taskListId = "task-list-1";
 		let incomingExternalData: [
 			string,
 			{
@@ -301,25 +301,21 @@ export class TaskList extends DataObject implements ITaskList {
 	 * Register container session data with the customer service.
 	 * @returns A promise that resolves when the registration call returns successfully.
 	 */
-	public async registerWithCustomerService(url: IResolvedUrl | undefined): Promise<void> {
+	public async registerWithCustomerService(
+		taskListId: string,
+		url: IResolvedUrl | undefined,
+	): Promise<void> {
 		console.log("TASK-LIST: Registering client with customer service...");
-		// clientId -- for the particular client (check wayne's code to see what it's checking against)
-		// containerId -- for the fluid session (loader has it when loading the container)
-		// documentId -- ?? might be only solved by odsp-driver/push channel
 
-		const taskListId = "1";
 		try {
-			await fetch(
-				`http://localhost:${customerServicePort}/register-session-url/${taskListId}`,
-				{
-					method: "POST",
-					headers: {
-						"Access-Control-Allow-Origin": "*",
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ sessionUrl: url }),
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
 				},
-			);
+				body: JSON.stringify({ sessionUrl: url, taskListId }),
+			});
 		} catch (error) {
 			console.error(`Customer service registration failed:\n${error}`);
 
@@ -453,7 +449,7 @@ export class TaskList extends DataObject implements ITaskList {
  * scenario, the fourth argument is not used.
  */
 export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
-	"task-list",
+	"task-list-1",
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},

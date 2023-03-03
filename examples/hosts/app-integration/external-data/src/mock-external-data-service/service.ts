@@ -135,11 +135,12 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * ```
 	 */
 	expressApp.get("/fetch-tasks/:taskListId", (request, result) => {
+		console.log(request.params);
 		const taskListId = request.params?.taskListId;
 		if (taskListId === undefined) {
 			result.status(400).json({ message: "Missing parameter taskListId in request url" });
 		}
-		externalDataSource.fetchData(Number.parseInt(taskListId, 10)).then(
+		externalDataSource.fetchData(taskListId).then(
 			(response) => {
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
@@ -178,9 +179,13 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 *
 	 * Expected input data format: {@link TaskListData}.
 	 */
-	expressApp.post("/set-tasks", (request, result) => {
+	expressApp.post("/set-tasks/", (request, result) => {
+		console.log("request.body");
+		console.log(request.body);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
+		console.log("messageData");
+		console.log(messageData);
 		if (messageData === undefined) {
 			const errorMessage = 'No task list data provided. Expected under "taskList" property.';
 			console.error(formatLogMessage(errorMessage));
