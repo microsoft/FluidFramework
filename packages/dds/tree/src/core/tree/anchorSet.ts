@@ -518,7 +518,7 @@ enum Status {
  *
  * - Not all forests will have node objects: some may use compressed binary formats with no objects to reference.
  *
- * - Anchors are need even when not using forests, and for nodes that are outside the currently loaded part of the
+ * - Anchors are needed even when not using forests, and for nodes that are outside the currently loaded part of the
  * forest.
  *
  * - Forest in general do not need to support up pointers, but they are needed for anchors.
