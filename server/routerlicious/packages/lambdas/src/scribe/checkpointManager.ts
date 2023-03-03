@@ -115,43 +115,47 @@ export class CheckpointManager implements ICheckpointManager {
     private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
         Lumberjack.info(`Writing checkpoint to global database.`, lumberProperties);
-        const checkpointFilter =  {
+
+        if (this.localDocumentCollection) {
+            if(!noActiveClients) {
+                // If there are active clients, we write to the local collection
+                Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
+                // Use upsert in case document does not exist in the local database
+                await this.writeScribeCheckpointToCollection(this.localDocumentCollection, checkpoint);
+            } else {
+                // No active clients, delete from local collection, write to global collection
+                Lumberjack.info(`Writing checkpoint to global database`, lumberProperties);
+                await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
+
+                Lumberjack.info(`Removing checkpoint data from the local database. No active clients.`, lumberProperties);
+                await this.localDocumentCollection.deleteOne({
+                    documentId: this.documentId,
+                    tenantId: this.tenantId,
+                }).catch((error) => {
+                    Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
+                });
+            }
+        } else {
+            await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
+        }
+    }
+
+    private async writeScribeCheckpointToCollection(collection: ICollection<IDocument>, checkpoint: IScribe) {
+        const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
+        const checkpointFilter = {
             documentId: this.documentId,
             tenantId: this.tenantId,
         }
-
         const checkpointData = {
             // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
             // given some data is user generated.
             scribe: JSON.stringify(checkpoint),
         }
-        // Write to local document collection if active clients, else clear the data
-        if (this.localDocumentCollection) {
-            if(!noActiveClients) {
-                Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
-                // Use upsert in case document does not exist in the local database
-                await this.localDocumentCollection.upsert(checkpointFilter, checkpointData, null)
-                    .catch((error) => {
-                        Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
-                });
-            } else {
-                // No active clients, delete from local collection, write to global collection
-                await this.writeToGlobalDB(checkpointFilter, checkpointData, lumberProperties);
-                Lumberjack.info(`Removing checkpoint data from the local database. No active clients.`, lumberProperties);
-                await this.localDocumentCollection.deleteOne(checkpointFilter).catch((error) => {
-                    Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
-                });
-            }
-        } else {
-            await this.writeToGlobalDB(checkpointFilter, checkpointData, lumberProperties);
-        }
-    }
-
-    private async writeToGlobalDB(filter: any, set: any, lumberProperties: { tenantId: string, documentId: string }) {
-        Lumberjack.info(`Writing to global db`, lumberProperties);
-        await this.documentCollection.upsert(filter, set, null).catch((error) => {
-            Lumberjack.error(`Error writing checkpoint to global database`, lumberProperties, error);
-        });
+        await (collection === this.localDocumentCollection ? this.localDocumentCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
+                Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
+            }) : this.documentCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
+                Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
+            }));
     }
 
     /**
