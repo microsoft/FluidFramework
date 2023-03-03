@@ -126,9 +126,12 @@ export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<
  */
 export interface HasListeners<E extends Events<E>> {
 	/**
-	 * When no `eventName` is provided, returns true iff there are no listeners at all.
+	 * When no `eventName` is provided, returns true iff there are any listeners.
 	 *
-	 * When `eventName` is provided, returns true iff there are no listeners for that event.
+	 * When `eventName` is provided, returns true iff there are listeners for that event.
+	 *
+	 * @remarks
+	 * This can be used to know when its safe to cleanup data-structures which only exist to fire events for their listeners.
 	 */
 	hasListeners(eventName?: keyof Events<E>): boolean;
 }
