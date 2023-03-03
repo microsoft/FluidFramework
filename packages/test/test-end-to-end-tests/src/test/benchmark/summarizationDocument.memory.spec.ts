@@ -56,13 +56,10 @@ describeE2EDocs(
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				title = "";
+				title = docData?.testTitle ?? "";
 				dataObject2map: SharedMap | undefined;
 				container: IContainer | undefined;
 				summarizerClient: { container: IContainer; summarizer: ISummarizer } | undefined;
-				before() {
-					this.title = docData.testTitle;
-				}
 				async run() {
 					this.container = await documentMap.loadDocument();
 					assert(this.container !== undefined, "container needs to be defined.");

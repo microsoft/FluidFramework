@@ -11,7 +11,6 @@ import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
-const testName = "Load a 5Mb document";
 describeE2EDocs(
 	"Load Document - memory benchmarks",
 	(getTestObjectProvider, getDocumentInfo) => {
@@ -36,11 +35,8 @@ describeE2EDocs(
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				title = "";
+				title = docData?.testTitle ?? "";
 				container: IContainer | undefined;
-				before() {
-					this.title = docData.testTitle;
-				}
 				async run() {
 					this.container = await documentMap.loadDocument();
 					assert(this.container !== undefined, "container needs to be defined.");
