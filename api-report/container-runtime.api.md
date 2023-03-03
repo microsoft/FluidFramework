@@ -120,8 +120,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
     // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: string[]): string[];
-    // (undocumented)
-    get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -337,8 +336,6 @@ export interface IConnectableRuntime {
     // (undocumented)
     readonly connected: boolean;
     // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
     once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
@@ -532,6 +529,8 @@ export interface ISummarizerInternalsProvider {
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     disposeFn?(): void;
     // (undocumented)
