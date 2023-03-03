@@ -63,10 +63,6 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {
-			"EnumDeclaration_DriverErrorType": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

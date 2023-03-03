@@ -95,7 +95,6 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -444,6 +443,7 @@ declare function get_current_InterfaceDeclaration_IConnectableRuntime():
 declare function use_old_InterfaceDeclaration_IConnectableRuntime(
     use: TypeOnly<old.IConnectableRuntime>);
 use_old_InterfaceDeclaration_IConnectableRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectableRuntime());
 
 /*
@@ -1416,7 +1416,6 @@ declare function get_old_EnumDeclaration_RuntimeHeaders():
 declare function use_current_EnumDeclaration_RuntimeHeaders(
     use: TypeOnly<current.RuntimeHeaders>);
 use_current_EnumDeclaration_RuntimeHeaders(
-    // @ts-expect-error compatibility expected to be broken
     get_old_EnumDeclaration_RuntimeHeaders());
 
 /*

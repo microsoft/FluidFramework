@@ -14,7 +14,7 @@ import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk
 
 import {
 	AnchorSet,
-	Checkout,
+	TransactionCheckout,
 	EditManager,
 	FieldKey,
 	mintRevisionTag,
@@ -91,7 +91,7 @@ describe("ChunkedForest", () => {
 		chunkCursor.firstNode();
 		initializeForest(forest, [chunkCursor]);
 
-		const checkout: Checkout<DefaultEditBuilder, DefaultChangeset> = {
+		const checkout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset> = {
 			forest,
 			changeFamily: defaultChangeFamily,
 			submitEdit: (edit) => {

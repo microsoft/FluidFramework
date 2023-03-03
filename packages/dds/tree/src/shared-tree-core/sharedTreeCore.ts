@@ -36,6 +36,10 @@ import {
 	RevisionTag,
 	mintRevisionTag,
 	minimumPossibleSequenceNumber,
+	SharedTreeBranch,
+	Rebaser,
+	findAncestor,
+	GraphCommit,
 } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
@@ -202,7 +206,7 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	public submitEdit(edit: TChange): void {
+	protected submitEdit(edit: TChange): void {
 		const revision = mintRevisionTag();
 		const delta = this.editManager.addLocalChange(revision, edit);
 		// Edits performed before the first attach are treated as sequenced because they will be included
@@ -250,6 +254,36 @@ export class SharedTreeCore<
 		this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
 		this.indexEventEmitter.emit("newLocalState", delta);
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
+	}
+
+	/**
+	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
+	 * This can be used to support asynchronous checkouts of the tree.
+	 */
+	protected createBranch(): SharedTreeBranch<TChange> {
+		const branch = new SharedTreeBranch(
+			() => this.editManager.getLocalBranchHead(),
+			(forked) => {
+				const changeToForked = forked.pull();
+				const changes: GraphCommit<TChange>[] = [];
+				const localBranchHead = this.editManager.getLocalBranchHead();
+				const ancestor = findAncestor(
+					[forked.getHead(), changes],
+					(c) => c === localBranchHead,
+				);
+				assert(
+					ancestor === localBranchHead,
+					"Expected merging checkout branches to be related",
+				);
+				for (const { change } of changes) {
+					this.submitEdit(change);
+				}
+				return changeToForked;
+			},
+			this.stableId,
+			new Rebaser(this.changeFamily.rebaser),
+		);
+		return branch;
 	}
 
 	protected onDisconnect() {}

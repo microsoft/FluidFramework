@@ -664,6 +664,30 @@ use_old_InterfaceDeclaration_TokenResponse(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getKeyForCacheEntry": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_getKeyForCacheEntry():
+    TypeOnly<typeof old.getKeyForCacheEntry>;
+declare function use_current_FunctionDeclaration_getKeyForCacheEntry(
+    use: TypeOnly<typeof current.getKeyForCacheEntry>);
+use_current_FunctionDeclaration_getKeyForCacheEntry(
+    get_old_FunctionDeclaration_getKeyForCacheEntry());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_getKeyForCacheEntry": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_getKeyForCacheEntry():
+    TypeOnly<typeof current.getKeyForCacheEntry>;
+declare function use_old_FunctionDeclaration_getKeyForCacheEntry(
+    use: TypeOnly<typeof old.getKeyForCacheEntry>);
+use_old_FunctionDeclaration_getKeyForCacheEntry(
+    get_current_FunctionDeclaration_getKeyForCacheEntry());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_isTokenFromCache": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_isTokenFromCache():
