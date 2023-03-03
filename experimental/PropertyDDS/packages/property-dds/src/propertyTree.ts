@@ -677,6 +677,12 @@ export class SharedPropertyTree extends SharedObject {
 				this.remoteTipView = cloneDeep(this.tipView);
 				this.remoteChanges = [];
 
+				/**
+				 * Commenting this code out - It is part of an experimental feature, which is not used in production.
+				 * It only works, if the corresponding server side component (Moira) is running, which is not the case
+				 * on the Azure backend.
+				 */
+				/*
 				let missingDeltas: ISequencedDocumentMessage[] = [];
 				const firstDelta = Math.min(
 					commitMetadata.minimumSequenceNumber,
@@ -725,6 +731,7 @@ export class SharedPropertyTree extends SharedObject {
 				}
 
 				this.skipSequenceNumber = lastDelta ?? -1;
+				*/
 			}
 		} catch (e) {
 			this.tipView = {};
