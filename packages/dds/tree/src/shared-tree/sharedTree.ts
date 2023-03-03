@@ -319,7 +319,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.submitEdit = (edit) => this.branch.applyChange(edit);
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
 

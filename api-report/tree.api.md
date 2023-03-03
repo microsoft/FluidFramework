@@ -495,6 +495,11 @@ export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
 export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
 
 // @alpha (undocumented)
+export interface HasListeners<E extends Events<E>> {
+    hasListeners(eventName?: keyof Events<E>): boolean;
+}
+
+// @alpha (undocumented)
 export type IdAllocator = () => ChangesetLocalId;
 
 // @alpha
