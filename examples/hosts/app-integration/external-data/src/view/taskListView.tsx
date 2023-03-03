@@ -4,7 +4,7 @@
  */
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
 
@@ -131,7 +131,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
 	const [lastSaved, setLastSaved] = useState<number | undefined>();
 	const [failedUpdate, setFailedUpdate] = useState(false);
-	const handleSaveChanges = async (): Promise<void> => {
+	const handleSaveChanges = useCallback(() => {
 		taskList
 			.writeToExternalServer()
 			.then(() => {
@@ -140,9 +140,10 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			})
 			.catch((error) => {
 				console.log(error);
+
 				setFailedUpdate(true);
 			});
-	};
+	}, [taskList]);
 	useEffect(() => {
 		const updateTasks = (): void => {
 			setTasks(taskList.getDraftTasks());
