@@ -23,8 +23,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ### attachGraph and bind methods in IFluidHandle deprecated
 
-`attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid framework and should not be used. They will be removed in a future release.
-
+`attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
 
 # 2.0.0-internal.3.0.0
 
