@@ -387,15 +387,6 @@ export const fakeRepair = createFakeRepair(
 		`revision ${revisionInner} index ${indexInner}`,
 );
 
-// export function fakeRepair(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
-// 	return makeArray(count, (currentIndex) =>
-// 		singleTextCursor({
-// 			type: brand("FakeRepairedNode"),
-// 			value: `revision ${revision} index ${index + currentIndex}`,
-// 		}),
-// 	);
-// }
-
 export function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
