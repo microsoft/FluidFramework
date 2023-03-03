@@ -441,7 +441,7 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 	): TreeNavigationResult;
 
 	/**
-	 * Call when disposing of this target, iff it has an anchor.
+	 * Called when disposing of this target, iff it has an anchor.
 	 */
 	protected abstract forgetAnchor(anchor: T): void;
 }
