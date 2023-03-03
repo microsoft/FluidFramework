@@ -134,7 +134,7 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 	}
 	const objMark = mark as Exclude<TMark, Skip>;
 	const clone = { ...objMark };
-	if (clone.type === "Insert") {
+	if (clone.type === "Insert" || clone.type === "Revive") {
 		// TODO: also do this for Revive marks once they carry content
 		clone.content = [...clone.content];
 	}
