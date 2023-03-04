@@ -4,12 +4,13 @@
  */
 import { strict as assert } from "assert";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeE2EDocs, DescribeE2EDocInfo } from "@fluidframework/test-version-utils";
+import { describeE2EDocsRuntime, DescribeE2EDocInfo } from "@fluidframework/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
-describeE2EDocs("Runtime benchmarks", "Load Document", (getTestObjectProvider, getDocumentInfo) => {
+const scenarioTitle = "Load Document";
+describeE2EDocsRuntime(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
 	let docData: DescribeE2EDocInfo | undefined;
@@ -20,18 +21,19 @@ describeE2EDocs("Runtime benchmarks", "Load Document", (getTestObjectProvider, g
 		docData = getDocumentInfo();
 
 		documentMap = DocumentCreator.create({
-			testName: docData.testTitle,
+			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
 			driverEndpointName: provider.driver.endpointName,
 			driverType: provider.driver.type,
+			benchmarkType: "E2ETime",
 		});
 		await documentMap.initializeDocument();
 		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
 	});
 
 	benchmark({
-		title: "Load Document",
+		title: scenarioTitle,
 		benchmarkFnAsync: async () => {
 			const container = await documentMap.loadDocument();
 			await provider.ensureSynchronized();

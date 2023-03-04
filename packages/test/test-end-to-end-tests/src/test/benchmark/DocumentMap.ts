@@ -82,6 +82,8 @@ export class DocumentMap implements IDocumentLoader {
 	public constructor(private readonly props: IDocumentProps, documentSize: number) {
 		this.documentSize = documentSize;
 	}
+
+	// add argument to identify the type of benchmarkType = "E2ETime" | "E2EThroughput"
 	public async initializeDocument() {
 		this._logger = ChildLogger.create(getTestLogger?.(), undefined, {
 			all: {
@@ -89,7 +91,7 @@ export class DocumentMap implements IDocumentLoader {
 				driverType: this.props.driverType,
 				driverEndpointName: this.props.driverEndpointName,
 				profile: "",
-				benchmarkType: "E2ETime",
+				benchmarkType: this.props.benchmarkType,
 				name: this.props.testName,
 			},
 		});

@@ -5,7 +5,7 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { DocumentType } from "@fluidframework/test-version-utils";
+import { DocumentType, BenchmarkType } from "@fluidframework/test-version-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { DocumentMap } from "./DocumentMap";
 
@@ -15,6 +15,7 @@ export interface IDocumentProps {
 	driverType: TestDriverTypes;
 	driverEndpointName: string | undefined;
 	documentType: DocumentType;
+	benchmarkType: BenchmarkType;
 }
 export interface IDocumentLoader {
 	initializeDocument(): Promise<void>;

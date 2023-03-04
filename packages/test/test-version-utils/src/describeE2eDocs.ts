@@ -20,13 +20,15 @@ export type DocumentType =
 	/** Document with a SharedMap with a 10Mb value */
 	| "LargeDocumentMap";
 
+export type BenchmarkType = "E2ETime" | "E2EMemory";
+export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
+
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType;
 }
 
-export type DescribeE2EDocCompatSuite = (
-	testType: string,
+export type DescribeE2EDocSuite = (
 	title: string,
 	tests: (
 		this: Mocha.Suite,
@@ -34,10 +36,21 @@ export type DescribeE2EDocCompatSuite = (
 		documentType: () => DescribeE2EDocInfo,
 	) => void,
 	docTypes?: DescribeE2EDocInfo[],
+	testType?: string,
 ) => Mocha.Suite | void;
 
-function createE2EDocsCompatDescribe(docTypes: DescribeE2EDocInfo[]): DescribeE2EDocCompatSuite {
-	const d: DescribeE2EDocCompatSuite = (testType, title, tests) => {
+function createE2EDocsDescribe(docTypes: DescribeE2EDocInfo[]): DescribeE2EDocSuite {
+	const d: DescribeE2EDocSuite = (title, tests, testType) => {
+		const name = `${title} - ${testType}`;
+		describe(name, createE2EDocCompatSuite(title, tests, docTypes));
+	};
+	return d;
+}
+function createE2EDocsDescribeWithType(
+	testType: BenchmarkTypeDescription,
+	docTypes: DescribeE2EDocInfo[],
+): DescribeE2EDocSuite {
+	const d: DescribeE2EDocSuite = (title, tests) => {
 		const name = `${title} - ${testType}`;
 		describe(name, createE2EDocCompatSuite(title, tests, docTypes));
 	};
@@ -128,8 +141,7 @@ function createE2EDocCompatSuite(
 		}
 	};
 }
-
-export const describeE2EDocs: DescribeE2EDocCompatSuite = createE2EDocsCompatDescribe([
+const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	{
 		testTitle: "10Mb Map",
 		documentType: "LargeDocumentMap",
@@ -138,4 +150,14 @@ export const describeE2EDocs: DescribeE2EDocCompatSuite = createE2EDocsCompatDes
 		testTitle: "5Mb Map",
 		documentType: "MediumDocumentMap",
 	},
-]);
+];
+
+export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe(E2EDefaultDocumentTypes);
+export const describeE2EDocsRuntime: DescribeE2EDocSuite = createE2EDocsDescribeWithType(
+	"Runtime benchmarks",
+	E2EDefaultDocumentTypes,
+);
+export const describeE2EDocsMemory: DescribeE2EDocSuite = createE2EDocsDescribeWithType(
+	"Memory benchmarks",
+	E2EDefaultDocumentTypes,
+);
