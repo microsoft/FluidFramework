@@ -42,19 +42,20 @@ import * as Delta from "./delta";
  *
  * Current implementation:
  *
- * - Performs inserts in the first pass
+ * - First pass: performs inserts top-down and move-outs bottom-up (it also performs value updates)
  *
- * - Does not perform move-ins in the first pass
+ * - Second pass: performs move-ins top-down and deletes bottom-up
  *
- * - Skips the second pass if no move-outs were encountered in the first pass
- *
- * - Does not leverage the move table
+ * - Skips the second pass if no moves or deletes were encountered in the first pass
  *
  * Future work:
  *
  * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
  *
- * - Leverage move table when it gets added to Delta
+ * - Avoid moving the visitor through parts of the document that do not need changing in the current pass.
+ * This could be done by assigning IDs to nodes of interest and asking the visitor to jump to these nodes in order to edit them.
+ *
+ * - Leverage the move table if one ever gets added to Delta
  */
 
 /**
