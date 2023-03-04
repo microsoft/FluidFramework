@@ -1,0 +1,311 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# cloudbuild-client pipeline
+# This pipeline builds the main branch docs each time the client packages are built
+
+name: $(Build.BuildId)
+
+parameters:
+- name: releaseBuildOverride
+  displayName: Release Build (default = not released)
+  type: string
+  default: none
+  values:
+    - none
+    - prerelease
+    - release
+- name: publishOverride
+  displayName: Publish Override (default = based on branch)
+  type: string
+  default: default
+  values:
+    - default
+    - skip
+    - force
+- name: buildToolsVersionToInstall
+  displayName: Fluid build tools version (default = installs version in repo)
+  type: string
+  default: repo
+- name: nonScopedPackages
+  displayName: Non-scoped packages to publish
+  type: object
+  default:
+  - fluid-framework
+- name: taskTest
+  type: object
+  default:
+  - ci:test:mocha
+  - ci:test:jest
+  - ci:test:realsvc:local
+  - ci:test:realsvc:tinylicious
+  - ci:test:stress:tinylicious
+  - test:copyresults
+
+variables:
+  - name: isMain
+    value: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
+  # skip injected CG detection as we manually trigger it in a parallel job
+  - name: skipComponentGovernanceDetection
+    value: true
+  - name: pnpmStorePath
+    value: $(Pipeline.Workspace)/.pnpm-store
+  - name: buildDirectory
+    value: $(Build.SourcesDirectory)
+  - name: tagName
+    value: client
+
+# trigger:
+#   branches:
+#     include:
+#     - main
+#   paths:
+#     include:
+#     - packages
+#     - examples
+#     - experimental
+#     - lerna.json
+#     - package.json
+#     - pnpm-lock.yaml
+#     - pnpm-workspace.yaml
+
+resources:
+  pipelines:
+  - pipeline: client
+    source: Build - client packages
+    trigger:
+      branches:
+        include:
+        - main
+
+# no PR triggers
+pr: none
+
+stages:
+- stage: build
+  displayName: 'Nx Cloud Build'
+  jobs:
+    # Job - Build
+    - job: build
+      displayName: Build
+      pool: Large
+      variables:
+        ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+          targetBranchName: $(System.PullRequest.TargetBranch)
+          NX_BRANCH: $(System.PullRequest.PullRequestNumber)
+        ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+          NX_BRANCH: $(Build.SourceBranchName)
+      steps:
+      # Setup
+      - checkout: self
+        clean: true
+
+      - task: Bash@3
+        displayName: Patch source
+        inputs:
+          targetType: 'filePath'
+          workingDirectory: $(Build.SourcesDirectory)
+          filePath: $(Build.SourcesDirectory)/scripts/cloudbuild-patch.sh
+
+      # Install
+      - task: UseNode@1
+        displayName: Use Node 14.x
+        inputs:
+          version: 14.x
+
+      - task: Cache@2
+        displayName: Cache pnpm store
+        inputs:
+          # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+          # in the cache key
+          key: 'pnpm-store | "$(Agent.OS)" | ${{ variables.buildDirectory }}/pnpm-lock.yaml'
+          path: ${{ variables.pnpmStorePath }}
+          restoreKeys: |
+            pnpm-store | "$(Agent.OS)"
+
+      - task: Bash@3
+        displayName: Install and configure pnpm
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ variables.buildDirectory }}
+          script: |
+            npm i -g pnpm
+            pnpm config set store-dir $(pnpmStorePath)
+
+      - task: Bash@3
+        displayName: Install dependencies
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ variables.buildDirectory }}
+          script: |
+            pnpm i --frozen-lockfile
+
+      # Set version
+      # - template: templates/include-set-package-version.yml
+      #   parameters:
+      #     buildDirectory: ${{ variables.buildDirectory }}
+      #     tagName: ${{ variables.tagName }}
+      #     usesPrettier: true
+
+      # Build
+      - task: Npm@1
+        displayName: npm run ci:build
+        inputs:
+          command: 'custom'
+          workingDir: ${{ variables.buildDirectory }}
+          customCommand: 'run ci:build'
+
+      # Lint
+      - task: Npm@1
+        displayName: npm run lint
+        inputs:
+          command: 'custom'
+          workingDir: ${{ variables.buildDirectory }}
+          customCommand: 'run lint'
+
+      # Test
+      - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
+        # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
+        - script: |
+            echo "##vso[task.setvariable variable=startTest]true"
+          displayName: Start Test
+
+        - ${{ each taskTestStep in parameters.taskTest }}:
+          # Test - No coverage
+          - task: Npm@1
+            displayName: npm run ${{ taskTestStep }}
+            inputs:
+              command: 'custom'
+              workingDir: ${{ variables.buildDirectory }}
+              customCommand: 'run ${{ taskTestStep }}'
+            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+        # Test - Upload results
+        - task: PublishTestResults@2
+          displayName: Publish Test Results
+          inputs:
+            testResultsFormat: 'JUnit'
+            testResultsFiles: '**/*junit-report.xml'
+            searchFolder: ${{ variables.buildDirectory }}/nyc
+            mergeTestResults: false
+          condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+      # Pack
+      - task: Bash@3
+        displayName: npm pack
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ variables.buildDirectory }}
+          script: |
+            mkdir $(Build.ArtifactStagingDirectory)/pack/
+            mkdir $(Build.ArtifactStagingDirectory)/pack/scoped/
+            mkdir $(Build.ArtifactStagingDirectory)/test-files/
+            mkdir $(Build.ArtifactStagingDirectory)/logs/
+            mv ${{ variables.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log $(Build.ArtifactStagingDirectory)/logs/
+            if [[ "${{ variables.publishNonScopedPackages }}" == "True" ]]; then
+              mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
+            fi
+            if [ -f "lerna.json" ]; then
+              npx lerna exec --no-private --no-sort -- pnpm i pack && \
+              npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
+              npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
+
+              # This saves a list of the packages in the working directory in topological order to a temporary file.
+              # Each package name is modified to match the packed tar files.
+              npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
+            else
+              pnpm i pack && \
+              mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
+            fi
+
+      - ${{ each parameter in parameters.nonScopedPackages }}:
+        - task: Bash@3
+          displayName: Move Non-Scoped Package ${{parameter}}
+          inputs:
+            targetType: 'inline'
+            workingDirectory: ${{ variables.buildDirectory }}
+            script: |
+              mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
+
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - pack
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/pack'
+            artifactName: 'pack'
+            publishLocation: 'pipeline'
+
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Test Files
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
+            artifactName: 'test-files'
+            publishLocation: 'pipeline'
+
+        - task: PublishPipelineArtifact@1
+          displayName: Publish Artifact - Tinylicious Log
+          inputs:
+            targetPath: '$(Build.ArtifactStagingDirectory)/logs'
+            artifactName: 'tinyliciousLog'
+            publishLocation: 'pipeline'
+
+      # Collect/publish/run bundle analysis
+      - task: Npm@1
+        displayName: npm run bundle-analysis:collect
+        inputs:
+          command: 'custom'
+          workingDir: ${{ variables.buildDirectory }}
+          customCommand: 'run bundle-analysis:collect'
+
+      - task: Npm@1
+        displayName: run bundle size comparison
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+        env:
+          ADO_API_TOKEN: $(System.AccessToken)
+          DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
+          TARGET_BRANCH_NAME: ${{ variables.targetBranchName }}
+        inputs:
+          command: 'custom'
+          workingDir: ${{ variables.buildDirectory }}
+          customCommand: 'run bundle-analysis:run'
+
+      # Docs
+      - task: Npm@1
+        displayName: npm run ci:build:docs
+        inputs:
+          command: 'custom'
+          workingDir: ${{ variables.buildDirectory }}
+          customCommand: 'run ci:build:docs'
+
+      # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
+      # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
+      # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
+      # at the beginning of the CI job.
+      - task: Bash@3
+        displayName: Reset lockfile
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ variables.buildDirectory }}
+          script: |
+            git checkout HEAD -- pnpm-lock.yaml
+
+      # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+      - task: Bash@3
+        displayName: Prune pnpm store
+        inputs:
+          targetType: 'inline'
+          workingDirectory: ${{ variables.buildDirectory }}
+          script: |
+            pnpm store prune
+
+
+      - task: Bash@3
+        displayName: Check for extraneous modified files
+        inputs:
+          targetType: 'inline'
+          script: |
+            git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
+            if [ `cat git_status.log | wc -l` != "0" ]; then
+              cat git_status.log
+              echo "##vso[task.logissue type=error]Build should not create extraneous files"
+              exit -1;
+            fi

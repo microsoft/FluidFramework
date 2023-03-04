@@ -1,0 +1,75 @@
+{
+	"tasksRunnerOptions": {
+		"default": {
+			"runner": "@nrwl/nx-cloud",
+			"options": {
+				"parallel": 6,
+				"cacheableOperations": ["build:compile", "build:genver", "lint", "format"],
+				"accessToken": "ZmY4MzQ3MDUtOWU1YS00MzJiLTg4ZTgtY2M3OWNlZjlhODk4fHJlYWQtd3JpdGU="
+			}
+		}
+	},
+	"namedInputs": {
+		"default": ["{projectRoot}/**/*"],
+		"src": [
+			"{projectRoot}/package.json",
+			"{projectRoot}/tsconfig.*",
+			"{projectRoot}/src/**/*",
+			"!{projectRoot}/src/test/**/*"
+		],
+		"test": ["{projectRoot}/package.json", "{projectRoot}/src/test/**/*"],
+		"docs": [
+			"{projectRoot}/package.json",
+			"{projectRoot}/api-extractor.json",
+			"{projectRoot}/src/test/**/*"
+		]
+	},
+	"targetDefaults": {
+		"build": {
+			"inputs": ["src"],
+			"dependsOn": ["^build"],
+			"outputs": ["{projectRoot}/dist", "{projectRoot}/lib", "{projectRoot}/*.tsbuildinfo"]
+		},
+		"build:compile": {
+			"inputs": ["src"],
+			"dependsOn": ["^build:compile"],
+			"outputs": ["{projectRoot}/dist"]
+		},
+		"format": {
+			"inputs": ["src"],
+			"dependsOn": [],
+			"outputs": ["{projectRoot}/src/**/*"]
+		},
+		"build:esnext": {
+			"dependsOn": ["^build:esnext"],
+			"outputs": ["{projectRoot}/lib"]
+		},
+		"lint": {
+			"inputs": ["src"],
+			"dependsOn": ["^lint"]
+		},
+		"test": {
+			"inputs": ["test"],
+			"dependsOn": ["^test"],
+			"outputs": ["{projectRoot}/dist/test"]
+		},
+		"build:commonjs": {
+			"inputs": ["src"],
+			"dependsOn": ["^build:commonjs"],
+			"outputs": ["{projectRoot}/dist"]
+		},
+		"build:test": {
+			"inputs": ["src"],
+			"dependsOn": ["^build:test"],
+			"outputs": ["{projectRoot}/dist/test"]
+		},
+		"tsc": {
+			"inputs": ["src", "^src"],
+			"dependsOn": ["^tsc"],
+			"outputs": ["{projectRoot}/dist"]
+		},
+		"build:docs": {
+			"dependsOn": ["^build:docs"]
+		}
+	}
+}

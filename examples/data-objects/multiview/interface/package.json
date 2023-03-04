@@ -64,6 +64,15 @@
 			}
 		}
 	},
+	"nx": {
+		"targets": {
+			"build:compile": {
+				"outputs": [
+					"{projectRoot}/lib"
+				]
+			}
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
