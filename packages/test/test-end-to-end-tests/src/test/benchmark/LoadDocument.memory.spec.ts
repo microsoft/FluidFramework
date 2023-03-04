@@ -50,11 +50,11 @@ describeE2EDocs(
 	},
 	[
 		{
-			testTitle: "Generate summary tree 10Mb document",
+			testTitle: "Load 10Mb document",
 			documentType: "LargeDocumentMap",
 		},
 		{
-			testTitle: "Generate summary tree 5Mb document",
+			testTitle: "Load 5Mb document",
 			documentType: "MediumDocumentMap",
 		},
 	],

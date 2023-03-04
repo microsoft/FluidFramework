@@ -53,7 +53,7 @@ describeE2EDocs(
 		});
 
 		benchmark({
-			title: docData?.testTitle ?? "",
+			title: "Summarize Document",
 			benchmarkFnAsync: async () => {
 				const container = await documentMap.loadDocument();
 				await provider.ensureSynchronized();

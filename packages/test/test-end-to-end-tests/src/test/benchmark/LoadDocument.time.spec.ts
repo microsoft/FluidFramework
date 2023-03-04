@@ -33,7 +33,7 @@ describeE2EDocs(
 		});
 
 		benchmark({
-			title: docData?.testTitle ?? "",
+			title: "Load Document",
 			benchmarkFnAsync: async () => {
 				const container = await documentMap.loadDocument();
 				await provider.ensureSynchronized();
@@ -43,11 +43,11 @@ describeE2EDocs(
 	},
 	[
 		{
-			testTitle: "Generate summary tree 10Mb document",
+			testTitle: "Load 10Mb document",
 			documentType: "LargeDocumentMap",
 		},
 		{
-			testTitle: "Generate summary tree 5Mb document",
+			testTitle: "Load 5Mb document",
 			documentType: "MediumDocumentMap",
 		},
 	],

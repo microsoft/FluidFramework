@@ -56,7 +56,7 @@ describeE2EDocs(
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				title = docData?.testTitle ?? "";
+				title = "Summarize document";
 				dataObject2map: SharedMap | undefined;
 				container: IContainer | undefined;
 				summarizerClient: { container: IContainer; summarizer: ISummarizer } | undefined;

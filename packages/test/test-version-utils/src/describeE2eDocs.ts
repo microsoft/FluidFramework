@@ -37,12 +37,11 @@ export type DescribeE2EDocCompatSuite = (
 
 function createE2EDocsCompatDescribe(): DescribeE2EDocCompatSuite {
 	const d: DescribeE2EDocCompatSuite = (name, tests, docTypes) =>
-		describe(name, createE2EDocCompatSuite(name, tests, docTypes));
+		describe(name, createE2EDocCompatSuite(tests, docTypes));
 	return d;
 }
 
 function createE2EDocCompatSuite(
-	name: string,
 	tests: (
 		this: Mocha.Suite,
 		provider: () => ITestObjectProvider,
@@ -100,7 +99,9 @@ function createE2EDocCompatSuite(
 							}
 							return provider;
 						},
-						() => doctype,
+						() => {
+							return doctype;
+						},
 					);
 
 					afterEach(function (done: Mocha.Done) {
