@@ -35,7 +35,7 @@ describeE2EDocs(
 
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				title = docData?.testTitle ?? "";
+				title = "Load Document";
 				container: IContainer | undefined;
 				async run() {
 					this.container = await documentMap.loadDocument();
