@@ -21,8 +21,8 @@ import {
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
-	UpPath,
 	EditManager,
+	AnchorNode,
 	IEditableForest,
 	SharedTreeBranch,
 } from "../core";
@@ -218,7 +218,7 @@ class SharedTree
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): AnchorNode | undefined {
 		assert(this.editManager.anchors !== undefined, 0x407 /* editManager must have anchors */);
 		return this.editManager.anchors.locate(anchor);
 	}
@@ -319,7 +319,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.submitEdit = (edit) => this.branch.applyChange(edit);
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
 

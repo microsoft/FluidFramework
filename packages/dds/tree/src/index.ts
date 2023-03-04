@@ -81,6 +81,15 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
+	AnchorEvents,
 } from "./core";
 
 export {
@@ -105,7 +114,15 @@ export {
 	fail,
 } from "./util";
 
-export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
+export {
+	Events,
+	IsEvent,
+	ISubscribable,
+	createEmitter,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
+} from "./events";
 
 export {
 	cursorToJsonObject,
@@ -147,6 +164,8 @@ export {
 	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
+	RevisionIndexer,
+	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
