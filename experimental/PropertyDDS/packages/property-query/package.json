@@ -51,6 +51,7 @@
 		"sinon": "^7.4.2"
 	},
 	"typeValidation": {
-		"disabled": true
+		"disabled": true,
+		"broken": {}
 	}
 }
