@@ -22,7 +22,7 @@ import {
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
-import { DocumentLoader, DocumentProps } from "./DocumentCreator";
+import { IDocumentLoader, IDocumentProps } from "./DocumentCreator";
 
 const defaultDataStoreId = "default";
 const mapId = "mapId";
@@ -45,7 +45,7 @@ const validateMapKeys = (map: SharedMap, count: number, expectedSize: number): v
 	}
 };
 
-export class DocumentMap implements DocumentLoader {
+export class DocumentMap implements IDocumentLoader {
 	private _logger: ITelemetryLogger | undefined;
 	private testContainerConfig: ITestContainerConfig | undefined;
 	private loader: IHostLoader | undefined;
@@ -79,7 +79,7 @@ export class DocumentMap implements DocumentLoader {
 	 * @param props - Properties for initializing the Document Creator.
 	 * @param documentSize - Size of the document to be created 1=5Mb, 2=10Mb, etc.
 	 */
-	public constructor(private readonly props: DocumentProps, documentSize: number) {
+	public constructor(private readonly props: IDocumentProps, documentSize: number) {
 		this.documentSize = documentSize;
 	}
 	public async initializeDocument() {

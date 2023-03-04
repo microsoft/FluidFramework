@@ -11,7 +11,8 @@ import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
 describeE2EDocs(
-	"Summarization Document - runtime benchmarks",
+	"Runtime benchmarks",
+	"Summarization Document",
 	(getTestObjectProvider, getDocumentInfo) => {
 		let documentMap: DocumentMap;
 		let provider: ITestObjectProvider;
@@ -74,14 +75,4 @@ describeE2EDocs(
 			},
 		});
 	},
-	[
-		{
-			testTitle: "Generate summary tree 10Mb document",
-			documentType: "LargeDocumentMap",
-		},
-		{
-			testTitle: "Generate summary tree 5Mb document",
-			documentType: "MediumDocumentMap",
-		},
-	],
 );

@@ -11,51 +11,38 @@ import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
-describeE2EDocs(
-	"Load Document - memory benchmarks",
-	(getTestObjectProvider, getDocumentInfo) => {
-		let documentMap: DocumentMap;
-		let provider: ITestObjectProvider;
-		let docData: DescribeE2EDocInfo;
+describeE2EDocs("Memory benchmarks", "Load Document", (getTestObjectProvider, getDocumentInfo) => {
+	let documentMap: DocumentMap;
+	let provider: ITestObjectProvider;
+	let docData: DescribeE2EDocInfo;
 
-		before(async () => {
-			provider = getTestObjectProvider();
-			assert(getDocumentInfo !== undefined, "documentType needs to be defined.");
-			docData = getDocumentInfo();
-			documentMap = DocumentCreator.create({
-				testName: docData.testTitle,
-				provider,
-				documentType: docData.documentType,
-				driverEndpointName: provider.driver.endpointName,
-				driverType: provider.driver.type,
-			});
-			await documentMap.initializeDocument();
-			assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
+	before(async () => {
+		provider = getTestObjectProvider();
+		assert(getDocumentInfo !== undefined, "documentType needs to be defined.");
+		docData = getDocumentInfo();
+		documentMap = DocumentCreator.create({
+			testName: docData.testTitle,
+			provider,
+			documentType: docData.documentType,
+			driverEndpointName: provider.driver.endpointName,
+			driverType: provider.driver.type,
 		});
+		await documentMap.initializeDocument();
+		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
+	});
 
-		benchmarkMemory(
-			new (class implements IMemoryTestObject {
-				title = "Load Document";
-				container: IContainer | undefined;
-				async run() {
-					this.container = await documentMap.loadDocument();
-					assert(this.container !== undefined, "container needs to be defined.");
-					this.container.close();
-				}
-				beforeIteration() {
-					this.container = undefined;
-				}
-			})(),
-		);
-	},
-	[
-		{
-			testTitle: "Load 10Mb document",
-			documentType: "LargeDocumentMap",
-		},
-		{
-			testTitle: "Load 5Mb document",
-			documentType: "MediumDocumentMap",
-		},
-	],
-);
+	benchmarkMemory(
+		new (class implements IMemoryTestObject {
+			title = "Load Document";
+			container: IContainer | undefined;
+			async run() {
+				this.container = await documentMap.loadDocument();
+				assert(this.container !== undefined, "container needs to be defined.");
+				this.container.close();
+			}
+			beforeIteration() {
+				this.container = undefined;
+			}
+		})(),
+	);
+});

@@ -26,22 +26,26 @@ export interface DescribeE2EDocInfo {
 }
 
 export type DescribeE2EDocCompatSuite = (
-	name: string,
+	testType: string,
+	title: string,
 	tests: (
 		this: Mocha.Suite,
 		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
 		documentType: () => DescribeE2EDocInfo,
 	) => void,
-	docTypes: DescribeE2EDocInfo[],
+	docTypes?: DescribeE2EDocInfo[],
 ) => Mocha.Suite | void;
 
-function createE2EDocsCompatDescribe(): DescribeE2EDocCompatSuite {
-	const d: DescribeE2EDocCompatSuite = (name, tests, docTypes) =>
-		describe(name, createE2EDocCompatSuite(tests, docTypes));
+function createE2EDocsCompatDescribe(docTypes: DescribeE2EDocInfo[]): DescribeE2EDocCompatSuite {
+	const d: DescribeE2EDocCompatSuite = (testType, title, tests) => {
+		const name = `${title} - ${testType}`;
+		describe(name, createE2EDocCompatSuite(title, tests, docTypes));
+	};
 	return d;
 }
 
 function createE2EDocCompatSuite(
+	title: string,
 	tests: (
 		this: Mocha.Suite,
 		provider: () => ITestObjectProvider,
@@ -56,7 +60,8 @@ function createE2EDocCompatSuite(
 	return function (this: Mocha.Suite) {
 		for (const config of configs) {
 			for (const doctype of docTypes) {
-				describe(doctype.testTitle, function () {
+				const name = `${title} - ${doctype.testTitle}`;
+				describe(name, function () {
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
 					before(async function () {
@@ -124,4 +129,13 @@ function createE2EDocCompatSuite(
 	};
 }
 
-export const describeE2EDocs: DescribeE2EDocCompatSuite = createE2EDocsCompatDescribe();
+export const describeE2EDocs: DescribeE2EDocCompatSuite = createE2EDocsCompatDescribe([
+	{
+		testTitle: "10Mb Map",
+		documentType: "LargeDocumentMap",
+	},
+	{
+		testTitle: "5Mb Map",
+		documentType: "MediumDocumentMap",
+	},
+]);
