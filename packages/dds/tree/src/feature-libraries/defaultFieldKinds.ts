@@ -37,8 +37,8 @@ import {
 	NodeReviver,
 	isolatedFieldChangeRebaser,
 } from "./modular-schema";
-import { mapTreeFromCursor, singleMapTreeCursor } from "./mapTreeCursor";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
+import { chunkTree, defaultChunkPolicy } from "./chunked-forest";
 
 type BrandedFieldKind<
 	TName extends string,
@@ -397,12 +397,12 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 				};
 			} else {
 				const modify = deltaFromChild(change.changes);
-				const cursor = singleTextCursor(newValue);
-				const mutableTree = mapTreeFromCursor(cursor);
+				const cursor = chunkTree(newValue, defaultChunkPolicy).cursor();
+				cursor.firstNode();
 				mark = {
 					...modify,
 					type: Delta.MarkType.InsertAndModify,
-					content: singleMapTreeCursor(mutableTree),
+					content: cursor,
 				};
 			}
 
@@ -623,24 +623,29 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 };
 
 function deltaFromInsertAndChange(
-	insertedContent: JsonableTree | undefined,
+	insertedContent: ITreeCursorSynchronous | undefined,
 	nodeChange: NodeChangeset | undefined,
-	index: number,
 	deltaFromNode: ToDelta,
 ): Delta.Mark[] {
 	if (insertedContent !== undefined) {
-		const content = mapTreeFromCursor(singleTextCursor(insertedContent));
+		const content = chunkTree(insertedContent, defaultChunkPolicy).cursor();
+		content.firstNode();
 		if (nodeChange !== undefined) {
 			const nodeDelta = deltaFromNode(nodeChange);
 			return [
 				{
 					...nodeDelta,
 					type: Delta.MarkType.InsertAndModify,
-					content: singleMapTreeCursor(content),
+					content,
 				},
 			];
 		}
-		return [{ type: Delta.MarkType.Insert, content: [singleMapTreeCursor(content)] }];
+		return [
+			{
+				type: Delta.MarkType.Insert,
+				content: [content],
+			},
+		];
 	}
 
 	if (nodeChange !== undefined) {
@@ -663,12 +668,17 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 
 		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
 			const update = change.fieldChange?.newContent;
-			const content: JsonableTree | ITreeCursorSynchronous | undefined =
-				update === undefined || "set" in update ? update?.set : update.revert;
+			let content: ITreeCursorSynchronous | undefined;
+			if (update === undefined) {
+				content = undefined;
+			} else if ("set" in update) {
+				content = singleTextCursor(update.set);
+			} else {
+				content = update.revert;
+			}
 			const insertDelta = deltaFromInsertAndChange(
 				content,
 				change.childChange,
-				0,
 				deltaFromChild,
 			);
 
