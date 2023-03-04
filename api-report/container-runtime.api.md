@@ -118,8 +118,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
     // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: string[]): string[];
-    // (undocumented)
-    get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -334,8 +333,6 @@ export interface IConnectableRuntime {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
-    // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)

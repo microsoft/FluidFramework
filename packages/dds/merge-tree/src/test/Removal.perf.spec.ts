@@ -8,7 +8,7 @@ import { MergeTreeDeltaType } from "../ops";
 import { markRangeRemoved } from "./testUtils";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 
-describe("removal perf", () => {
+describe("MergeTree remove", () => {
 	let summary;
 
 	benchmark({

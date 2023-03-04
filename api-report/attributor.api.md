@@ -54,6 +54,8 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
     get(key: AttributionKey): AttributionInfo;
     // (undocumented)
     has(key: AttributionKey): boolean;
+    // (undocumented)
+    readonly isEnabled: boolean;
 }
 
 // @alpha

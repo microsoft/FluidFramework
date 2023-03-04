@@ -98,15 +98,15 @@ export interface ISummarizerRuntime {
 	readonly logger: ITelemetryLogger;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
+	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	disposeFn?(): void;
 	closeFn(): void;
 }
 
-//* Remove deltaManager
 /** The subset of ISummarizerRuntime required for Summarizer run coordination */
 export type IConnectableRuntime2 = Pick<
 	ISummarizerRuntime,
-	"disposed" | "connected" | "clientId" | "once" | "deltaManager"
+	"disposed" | "connected" | "clientId" | "once"
 >;
 
 /** Options affecting summarize behavior. */
