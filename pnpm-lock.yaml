@@ -6913,7 +6913,7 @@ importers:
   packages/framework/attributor:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/attributor-previous': npm:@fluidframework/attributor@2.0.0-internal.3.1.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
@@ -6963,7 +6963,7 @@ importers:
       lz4js: 0.2.0
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/attributor-previous': /@fluidframework/attributor/2.0.0-internal.3.1.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
@@ -12541,50 +12541,6 @@ packages:
       easy-table: 1.2.0
       mocha: 10.2.0
 
-  /@fluid-tools/build-cli/0.11.0-134585:
-    resolution: {integrity: sha512-CLiWQ1TApZeRqWFQ1b7L//s9ak6hevspodSWKgBGrjkw+I/rWyD5a72+leNkOIoN4PrIO7vv3MFtMYL/N7QA7Q==}
-    engines: {node: '>=14.0.0'}
-    hasBin: true
-    dependencies:
-      '@fluid-tools/version-tools': 0.11.0-135362
-      '@fluidframework/build-tools': 0.11.0-135362
-      '@fluidframework/bundle-size-tools': 0.11.0-135362
-      '@oclif/core': 1.20.4
-      '@oclif/plugin-autocomplete': 1.4.6
-      '@oclif/plugin-commands': 2.2.10
-      '@oclif/plugin-help': 5.2.6
-      '@oclif/plugin-not-found': 2.3.21
-      '@oclif/plugin-plugins': 2.3.2
-      '@oclif/test': 2.3.8
-      '@octokit/core': 4.2.0
-      '@rushstack/node-core-library': 3.53.2
-      chalk: 2.4.2
-      date-fns: 2.29.3
-      fs-extra: 9.1.0
-      inquirer: 8.2.5
-      inquirer-table-prompt: 0.2.1
-      jssm: 5.86.3
-      jssm-viz-cli: 5.86.3
-      minimatch: 7.4.2
-      npm-check-updates: 16.4.3
-      oclif: 3.7.0
-      semver: 7.3.8
-      semver-utils: 1.1.4
-      simple-git: 3.16.1
-      sort-json: 2.0.1
-      strip-ansi: 6.0.1
-      table: 6.8.1
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - bluebird
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-    dev: true
-
   /@fluid-tools/build-cli/0.11.0-135362:
     resolution: {integrity: sha512-an4fPu/cFCt4nKZuBfz5GiN4H6j6Jas1mbu8cgmgk66oFNXpH1KOXeUuEhskej0XyE6mo9l17LWc7ymGY6/q8A==}
     engines: {node: '>=14.0.0'}
@@ -17679,18 +17635,6 @@ packages:
 
   /@oclif/linewrap/1.0.0:
     resolution: {integrity: sha512-Ups2dShK52xXa8w6iBWLgcjPJWjais6KPJQq3gQ/88AY6BXoTX+MIGFPrWQO1KLMiQfoTpcLnUwloN4brrVUHw==}
-    dev: true
-
-  /@oclif/plugin-autocomplete/1.4.6:
-    resolution: {integrity: sha512-dawJk8Eb5dxsHTEttKZIOJkJ9PPKB59hL8BrqdCkr+WB4Xerm3G6rNeGWErOVYcOLe8y+nWAeYUE8OHNPn2E9g==}
-    engines: {node: '>=12.0.0'}
-    dependencies:
-      '@oclif/core': 2.4.0
-      chalk: 4.1.2
-      debug: 4.3.4
-      fs-extra: 9.1.0
-    transitivePeerDependencies:
-      - supports-color
     dev: true
 
   /@oclif/plugin-autocomplete/2.1.3:
