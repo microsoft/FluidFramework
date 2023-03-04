@@ -264,3 +264,26 @@ changing the type to `number` is an Incomparable Change since it could cause cod
 However changing the implementation to produce a better error in this case, or updating the documentation to reflect the actual behavior is a compatible change.
 
 This mostly means that APIs that do not work as documented can have their documentation changed to reflect the previously incorrectly documented behavior and/or the runtime behavior in those cases can be changed (usually fixed or the quality of error improved).
+
+## Globals
+
+The Package should not use globals (note that this means actual globals, like members on `globalThis` not module scope).
+This allows user code to use and depend on packages which do use globals without risk of collisions.
+Any exceptions to this need to be documented.
+
+## Enums
+
+The Package should specify if enums it declares can have more items added later or not.
+This can be seen as a special case of Version Type Variance defined above.
+
+The [non_exhaustive attribute in Rust](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute) is an example of this.
+It has actual compiler support, but it can also just be a convention (and possible a linter rule to help).
+
+# Related work
+
+Rust's [non_exhaustive attribute in Rust](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute).
+
+Rust's [Coherence and Orphan Rules](https://github.com/Ixrec/rust-orphan-rules) are designed to avoid possible future conflicts.
+
+Rust's [rust-semverver](https://github.com/rust-lang/rust-semverver) and Fluid's type tests are example tooling to try and help discover changes which break user code's ability to compile.
+As far as I'm aware neither currently attempts to address rules for SUpported Patterns which the compiler doesn't capture.
