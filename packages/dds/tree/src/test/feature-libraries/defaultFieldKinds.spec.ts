@@ -24,7 +24,11 @@ import { brand, JsonCompatibleReadOnly } from "../../util";
 import { assertMarkListEqual, fakeRepair } from "../utils";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
-const tree1 = { type: nodeType, value: "value1" };
+const tree1 = {
+	type: nodeType,
+	value: "value1",
+	fields: { foo: [{ type: nodeType, value: "value3" }] },
+};
 const tree2 = { type: nodeType, value: "value2" };
 const tree3 = { type: nodeType, value: "value3" };
 const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
