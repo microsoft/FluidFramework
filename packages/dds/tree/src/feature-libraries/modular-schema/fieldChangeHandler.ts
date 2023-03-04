@@ -40,6 +40,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -50,6 +51,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -85,6 +87,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -95,6 +98,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TaggedChange<TChangeset>,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 }
 
@@ -243,7 +247,33 @@ export interface ModularChangeset {
 	 * If undefined then this changeset contains no IDs.
 	 */
 	maxId?: ChangesetLocalId;
+	/**
+	 * The revisions included in this changeset, ordered temporally (oldest to newest).
+	 * Undefined for anonymous changesets.
+	 * Should never be empty.
+	 */
+	readonly revisions?: readonly RevisionInfo[];
 	changes: FieldChangeMap;
+}
+
+/**
+ * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
+ * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
+ * compose or rebase operation.
+ *
+ * During composition, the index reflects the order of the changeset within the overall composed changeset that is
+ * being produced.
+ *
+ * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
+ * @alpha
+ */
+export type RevisionIndexer = (tag: RevisionTag) => number;
+
+/**
+ * @alpha
+ */
+export interface RevisionInfo {
+	readonly tag: RevisionTag;
 }
 
 /**

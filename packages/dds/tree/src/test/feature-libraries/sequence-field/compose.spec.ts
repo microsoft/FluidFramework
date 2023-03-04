@@ -10,20 +10,19 @@ import {
 	tagChange,
 	TaggedChange,
 	TreeSchemaIdentifier,
-	mintRevisionTag,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
+import { compose, composeNoVerify, normalizeMoveIds, numberTag, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tag1: RevisionTag = mintRevisionTag();
-const tag2: RevisionTag = mintRevisionTag();
-const tag3: RevisionTag = mintRevisionTag();
-const tag4: RevisionTag = mintRevisionTag();
+const tag1: RevisionTag = numberTag(1);
+const tag2: RevisionTag = numberTag(2);
+const tag3: RevisionTag = numberTag(3);
+const tag4: RevisionTag = numberTag(4);
 
 describe("SequenceField - Compose", () => {
 	describe("associativity of triplets", () => {
@@ -575,8 +574,7 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	// TODO: This test's success depends on the sort order of the revision tags. Find a way to make it stable.
-	it.skip("delete1 ○ delete2 ○ revive (delete1)", () => {
+	it("delete1 ○ delete2 ○ revive (delete1)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
 		// The revive needs lineage to describe the precise gap in which it is reviving the nodes.
@@ -594,13 +592,12 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
 			tagChange(delete2, tag2),
-			makeAnonChange(revive),
+			tagChange(revive, tag3),
 		]);
 		assert.deepEqual(actual, expected);
 	});
 
-	// TODO: This test's success depends on the sort order of the revision tags. Find a way to make it stable.
-	it.skip("delete1 ○ delete2 ○ revive (delete2)", () => {
+	it("delete1 ○ delete2 ○ revive (delete2)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
 		const revive = Change.revive(0, 2, tag2, 0);
@@ -608,7 +605,7 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([
 			tagChange(delete1, tag1),
 			tagChange(delete2, tag2),
-			makeAnonChange(revive),
+			tagChange(revive, tag3),
 		]);
 		assert.deepEqual(actual, expected);
 	});

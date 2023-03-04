@@ -234,6 +234,13 @@ export class EditManager<
 		return this.trunk;
 	}
 
+	/**
+	 * @returns the head commit of the local branch
+	 */
+	public getLocalBranchHead(): GraphCommit<TChangeset> {
+		return this.localBranch;
+	}
+
 	public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
 		return getPathFromBase(this.localBranch, this.trunk).map((c) => c.change);
 	}

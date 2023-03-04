@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	Checkout,
+	TransactionCheckout,
 	IForestSubscription,
 	ProgressiveEditBuilder,
 	RevisionTag,
@@ -17,7 +17,7 @@ import {
 import { ForestRepairDataStore } from "./forestRepairDataStore";
 
 export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
-	{ forest, changeFamily, submitEdit }: Checkout<TEditor, TChange>,
+	{ forest, changeFamily, submitEdit }: TransactionCheckout<TEditor, TChange>,
 	command: (forest: IForestSubscription, editor: TEditor) => TransactionResult,
 ): TransactionResult {
 	// These revision numbers are solely used within the scope of this transaction for the purpose of
@@ -61,7 +61,11 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 	}
 
 	if (result === TransactionResult.Apply) {
-		const edit = changeFamily.rebaser.compose(changes.map((c) => makeAnonChange(c)));
+		// Using anonymous changes makes it impossible to chronologically order them during composition.
+		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
+		// not expected to happen in transactions but that could change in the future.
+		const anonChanges = changes.map((c) => makeAnonChange(c));
+		const edit = changeFamily.rebaser.compose(anonChanges);
 		submitEdit(edit);
 	}
 
