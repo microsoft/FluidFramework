@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.17.9
       '@microsoft/api-extractor': ^7.22.2
@@ -19,7 +19,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.19.24
       '@microsoft/api-extractor': 7.33.6
@@ -34,12 +34,12 @@ importers:
 
   packages/azure-client:
     specifiers:
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/aqueduct': ^1.4.0-121020
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@1.1.1
       '@fluidframework/azure-local-service': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': ^1.4.0-121020
@@ -91,12 +91,12 @@ importers:
       axios: 0.21.4
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/aqueduct': 1.4.0-121020
       '@fluidframework/azure-client-previous': /@fluidframework/azure-client/1.1.1
       '@fluidframework/azure-local-service': link:../azure-local-service
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/counter': 1.4.0-121020
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-client-utils': 1.4.0-121020
@@ -152,10 +152,10 @@ importers:
 
   packages/azure-service-utils:
     specifiers:
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@1.1.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.22.2
@@ -176,10 +176,10 @@ importers:
       jsrsasign: 10.6.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/azure-service-utils-previous': /@fluidframework/azure-service-utils/1.1.1
       '@fluidframework/build-common': 1.1.0
-      '@fluidframework/build-tools': 0.11.0-134585
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.33.6
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -365,7 +365,7 @@ importers:
 
   packages/test/scenario-runner:
     specifiers:
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/aqueduct': ^1.4.0-121020
       '@fluidframework/azure-client': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
@@ -437,7 +437,7 @@ importers:
       tinylicious: 0.6.0
       uuid: 8.3.2
     devDependencies:
-      '@fluid-tools/build-cli': 0.11.0-134585
+      '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
@@ -842,23 +842,24 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli/0.11.0-134585:
-    resolution: {integrity: sha512-CLiWQ1TApZeRqWFQ1b7L//s9ak6hevspodSWKgBGrjkw+I/rWyD5a72+leNkOIoN4PrIO7vv3MFtMYL/N7QA7Q==}
+  /@fluid-tools/build-cli/0.11.0-135362:
+    resolution: {integrity: sha512-an4fPu/cFCt4nKZuBfz5GiN4H6j6Jas1mbu8cgmgk66oFNXpH1KOXeUuEhskej0XyE6mo9l17LWc7ymGY6/q8A==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.11.0-134585
-      '@fluidframework/build-tools': 0.11.0-134585
-      '@fluidframework/bundle-size-tools': 0.11.0-134585
-      '@oclif/core': 1.20.4
-      '@oclif/plugin-autocomplete': 1.3.6
-      '@oclif/plugin-commands': 2.2.1
-      '@oclif/plugin-help': 5.2.4
-      '@oclif/plugin-not-found': 2.3.8
-      '@oclif/plugin-plugins': 2.1.7
-      '@oclif/test': 2.2.10
+      '@fluid-tools/version-tools': 0.11.0-135362
+      '@fluidframework/build-tools': 0.11.0-135362
+      '@fluidframework/bundle-size-tools': 0.11.0-135362
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 2.1.3
+      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
+      '@oclif/plugin-plugins': 2.3.2
+      '@oclif/test': 2.3.8
       '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.53.2
+      async: 3.2.4
       chalk: 2.4.2
       date-fns: 2.29.3
       fs-extra: 9.1.0
@@ -868,11 +869,12 @@ packages:
       jssm-viz-cli: 5.88.4
       minimatch: 7.4.2
       npm-check-updates: 16.6.5
-      oclif: 3.6.3
+      oclif: 3.7.0
       semver: 7.3.8
       semver-utils: 1.1.4
-      simple-git: 3.16.0
+      simple-git: 3.16.1
       sort-json: 2.0.1
+      sort-package-json: 1.54.0
       strip-ansi: 6.0.1
       table: 6.8.1
       type-fest: 2.19.0
@@ -886,18 +888,17 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.11.0-134585:
-    resolution: {integrity: sha512-1y+0/Pspurc2Y8GSOHiLlwWiO+YEd6LQ6tW/NPGkqo7VVNogXs2p2KcowBEV/4nV5NqQxzhlhXDLgK/AEA8cuw==}
+  /@fluid-tools/version-tools/0.11.0-135362:
+    resolution: {integrity: sha512-+Ea62I/NvhnfDpzjJjAJ1aYQy7wYtjhnw2rCMRtLpNeuSNMOZU3eBDWuf9JV+Gyw4osgwddh+KEkfwaiNjo+Fg==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 1.20.4
-      '@oclif/plugin-autocomplete': 1.3.6
-      '@oclif/plugin-commands': 2.2.1
-      '@oclif/plugin-help': 5.2.4
-      '@oclif/plugin-not-found': 2.3.8
-      '@oclif/plugin-plugins': 2.1.7
-      '@oclif/test': 2.2.10
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-autocomplete': 2.1.3
+      '@oclif/plugin-commands': 2.2.10
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
+      '@oclif/plugin-plugins': 2.3.2
       chalk: 2.4.2
       semver: 7.3.8
       table: 6.8.1
@@ -1019,13 +1020,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.11.0-134585:
-    resolution: {integrity: sha512-1+K87yHGfD8G/FEMYeaAYEoZ1CM2IGA9inERyQq/I1X9hPTYk1P3SmgssxNLxw9gT7ynQkEwtFt9j3ryXi7/HA==}
+  /@fluidframework/build-tools/0.11.0-135362:
+    resolution: {integrity: sha512-+UNJnyX9DzuVV8IMND1GATC6dwC5TArivntbFW2XIOycIAAewzKOmnQCxKZ7fz6yTQP2HTSiIjw+xXIeXzaE3g==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.11.0-134585
-      '@fluidframework/bundle-size-tools': 0.11.0-134585
+      '@fluid-tools/version-tools': 0.11.0-135362
+      '@fluidframework/bundle-size-tools': 0.11.0-135362
       '@octokit/core': 4.1.0
       '@rushstack/node-core-library': 3.53.2
       async: 3.2.4
@@ -1060,8 +1061,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.11.0-134585:
-    resolution: {integrity: sha512-NCu5C/y8BbhzkYOJwN/ha/Phrq4AzzQT0A7Hjir3D8Eeu2oH36HF6rWNa+Y0hIy2EaqhoY50zRXdCyqqiFC7rQ==}
+  /@fluidframework/bundle-size-tools/0.11.0-135362:
+    resolution: {integrity: sha512-LDiK3fhchOB/3Sc9mJmukLilz7WBBSPxIJ5R6h6ALQn2hFs8ogvmPilfgRt2cg7b+6blkbF3mSvcjNCSKW9J9A==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -2677,7 +2678,7 @@ packages:
     engines: {node: '>= 10.14.2'}
     dependencies:
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       chalk: 4.1.2
       jest-message-util: 26.6.2
       jest-util: 26.6.2
@@ -2693,7 +2694,7 @@ packages:
       '@jest/test-result': 26.6.2
       '@jest/transform': 26.6.2
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       exit: 0.1.2
@@ -2863,7 +2864,7 @@ packages:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.4
       '@types/istanbul-reports': 3.0.1
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       '@types/yargs': 15.0.14
       chalk: 4.1.2
     dev: true
@@ -4074,8 +4075,8 @@ packages:
       - debug
     dev: true
 
-  /@oclif/color/1.0.2:
-    resolution: {integrity: sha512-HqTFeMjfLOZajxqffSkyDWFUB3YqsSLRcsvnvITGRzhO0Ip4Qwp0VHVwh+qe0TjJYEltmOgzoxsR1LZPQIHNBQ==}
+  /@oclif/color/1.0.4:
+    resolution: {integrity: sha512-HEcVnSzpQkjskqWJyVN3tGgR0H0F8GrBmDjgQ1N0ZwwktYa4y9kfV07P/5vt5BjPXNyslXHc4KAO8Bt7gmErCA==}
     engines: {node: '>=12.0.0'}
     dependencies:
       ansi-styles: 4.3.0
@@ -4085,42 +4086,8 @@ packages:
       tslib: 2.5.0
     dev: true
 
-  /@oclif/core/1.20.4:
-    resolution: {integrity: sha512-giug32M4YhSYNYKQwE1L57/+k5gp1+Bq3/0vKNQmzAY1tizFGhvBJc6GIRZasHjU+xtZLutQvrVrJo7chX3hxg==}
-    engines: {node: '>=14.0.0'}
-    dependencies:
-      '@oclif/linewrap': 1.0.0
-      '@oclif/screen': 3.0.3
-      ansi-escapes: 4.3.2
-      ansi-styles: 4.3.0
-      cardinal: 2.1.1
-      chalk: 4.1.2
-      clean-stack: 3.0.1
-      cli-progress: 3.11.2
-      debug: 4.3.4_supports-color@8.1.1
-      ejs: 3.1.8
-      fs-extra: 9.1.0
-      get-package-type: 0.1.0
-      globby: 11.1.0
-      hyperlinker: 1.0.0
-      indent-string: 4.0.0
-      is-wsl: 2.2.0
-      js-yaml: 3.14.1
-      natural-orderby: 2.0.3
-      object-treeify: 1.1.33
-      password-prompt: 1.1.2
-      semver: 7.3.8
-      string-width: 4.2.3
-      strip-ansi: 6.0.1
-      supports-color: 8.1.1
-      supports-hyperlinks: 2.3.0
-      tslib: 2.5.0
-      widest-line: 3.1.0
-      wrap-ansi: 7.0.0
-    dev: true
-
-  /@oclif/core/2.0.11:
-    resolution: {integrity: sha512-BMKkcgKhrn0RfZVaXObpadO80C3hCM9jHaRHwQEb0G/ASo34YAjKXt8hX027Mc4XBmsYeIutJrEMx9GZr0v1Hw==}
+  /@oclif/core/2.4.0:
+    resolution: {integrity: sha512-wWUnOOfQQty0k1Cstm/iWW6pbG0mHzU7rcUtab2Sni9kjBPCcy6ENTgpsWbb/WdITopqtXmvpYII2fgcjKdzUA==}
     engines: {node: '>=14.0.0'}
     dependencies:
       '@types/cli-progress': 3.11.0
@@ -4129,7 +4096,7 @@ packages:
       cardinal: 2.1.1
       chalk: 4.1.2
       clean-stack: 3.0.1
-      cli-progress: 3.11.2
+      cli-progress: 3.12.0
       debug: 4.3.4_supports-color@8.1.1
       ejs: 3.1.8
       fs-extra: 9.1.0
@@ -4153,15 +4120,11 @@ packages:
       wrap-ansi: 7.0.0
     dev: true
 
-  /@oclif/linewrap/1.0.0:
-    resolution: {integrity: sha512-Ups2dShK52xXa8w6iBWLgcjPJWjais6KPJQq3gQ/88AY6BXoTX+MIGFPrWQO1KLMiQfoTpcLnUwloN4brrVUHw==}
-    dev: true
-
-  /@oclif/plugin-autocomplete/1.3.6:
-    resolution: {integrity: sha512-XmSuuVohfGPAi2ouoCbWbVUjaaxprK+4KsNOkUafK2rqCMmmoK/VuAQvv539yMpM9IhSvARwS7NnGvFY9HmZVw==}
+  /@oclif/plugin-autocomplete/2.1.3:
+    resolution: {integrity: sha512-BJh34vob3tnt8XFHGzqyRiOrmuVEDpMBKB+4Vgdmi4OejjaBKSTQq3Und076AKo6RM1E19SPUz/RUIo/Hp1lWg==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 1.20.4
+      '@oclif/core': 2.4.0
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -4169,37 +4132,37 @@ packages:
       - supports-color
     dev: true
 
-  /@oclif/plugin-commands/2.2.1:
-    resolution: {integrity: sha512-mCv5Dlxkxg5sNaatFgbol9rKS9nBqPydRfxW0vusfzwuYZhxpdrvpgqkjcCO3LnQHSqX4qW5UCF6ZU0bBgnMBQ==}
+  /@oclif/plugin-commands/2.2.10:
+    resolution: {integrity: sha512-fUOegX6RrJLC+euU/gPbBH6VX6aqh5vRpsg4r1NUlKvCSIJjCI78TSHUKECU+GQmvNA+3ql6tlD7hZ4rBTjKbg==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 1.20.4
+      '@oclif/core': 2.4.0
       lodash: 4.17.21
     dev: true
 
-  /@oclif/plugin-help/5.2.4:
-    resolution: {integrity: sha512-7fVB/M1cslwHJTmyNGGDYBizi54NHcKCxHAbDSD16EbjosKxFwncRylVC/nsMgKZEufMDKZaVYI2lYRY3GHlSQ==}
+  /@oclif/plugin-help/5.2.6:
+    resolution: {integrity: sha512-nvpSbIOGtPIct3+OqXca3OIu5liyIynascncAXZy4JDD7z8rIGZ3NYJH2M4JhMVyGxCDZxQuLVsdALyIt67G5g==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.0.11
+      '@oclif/core': 2.4.0
     dev: true
 
-  /@oclif/plugin-not-found/2.3.8:
-    resolution: {integrity: sha512-PfUVr67dHORFSeQthUwrPMJB/mRRNT4ENNdbafCOlL0HqC+WTuFy5nih+qnHBEli15RaOuMNoW3kR5MyBH82hA==}
+  /@oclif/plugin-not-found/2.3.21:
+    resolution: {integrity: sha512-6N0gTWQhl5nuE5bXipv5+8vH5cHyGgEd3MKJHQYxFnHIFwwb9jJnFl0BZ0fo7Jrjd9HZYCLT7rjnouS7p1Dl1w==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/color': 1.0.2
-      '@oclif/core': 1.20.4
+      '@oclif/color': 1.0.4
+      '@oclif/core': 2.4.0
       fast-levenshtein: 3.0.0
       lodash: 4.17.21
     dev: true
 
-  /@oclif/plugin-plugins/2.1.7:
-    resolution: {integrity: sha512-z3nJWFskBKSimw8HUmlYyoaGEJlbjoFRT0xuiip4x7bccWn/Jyp4OWUzXcEdas6mnzmtBpNcQ5VxLaHIfad70Q==}
+  /@oclif/plugin-plugins/2.3.2:
+    resolution: {integrity: sha512-jq/ik7A7bCO/oQp0/Znnpu8/JBXifAQ2OF2KmswbNYt7EpsLqz2DaI/CvkrXRSb+Edzx4Xx3usEgSyocVN/u2A==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/color': 1.0.2
-      '@oclif/core': 1.20.4
+      '@oclif/color': 1.0.4
+      '@oclif/core': 2.4.0
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -4217,7 +4180,7 @@ packages:
     resolution: {integrity: sha512-eMwDOzxPdN1X0y5G0W/GJXFRUvevT6gOrbbRLPoboTUwcFRqhFOJ7jCqGUTomeDfMRgAb3O+3bcD64lIb/y+FA==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 2.0.11
+      '@oclif/core': 2.4.0
       chalk: 4.1.2
       debug: 4.3.4
       fs-extra: 9.1.0
@@ -4228,18 +4191,12 @@ packages:
       - supports-color
     dev: true
 
-  /@oclif/screen/3.0.3:
-    resolution: {integrity: sha512-KX8gMYA9ujBPOd1HFsV9e0iEx7Uoj8AG/3YsW4TtWQTg4lJvr82qNm7o/cFQfYRIt+jw7Ew/4oL4A22zOT+IRA==}
-    engines: {node: '>=12.0.0'}
-    deprecated: Deprecated in favor of @oclif/core
-    dev: true
-
-  /@oclif/test/2.2.10:
-    resolution: {integrity: sha512-tz6tH79F0Kw1kWv/8BgTov+WtIeFDdq1PNUkW43U0Rh4HOA1SafPbXCpzhM9A6O7YXS+tq8ayuZdkyOXXJY6Ww==}
+  /@oclif/test/2.3.8:
+    resolution: {integrity: sha512-usE2GeE2S+feOgf8uFLUUVDKt0N3orH+pc1bKkKQtCNAFDvdyAdAMcBS+1PnmCn+cSxaez0bCQ6xOpxA9s7x3A==}
     engines: {node: '>=12.0.0'}
     dependencies:
-      '@oclif/core': 1.20.4
-      fancy-test: 2.0.7
+      '@oclif/core': 2.4.0
+      fancy-test: 2.0.12
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -4890,7 +4847,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 5.1.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
     dev: true
 
   /@types/graceful-fs/4.1.5:
@@ -5069,7 +5026,7 @@ packages:
   /@types/ws/6.0.4:
     resolution: {integrity: sha512-PpPrX7SZW9re6+Ha8ojZG4Se8AZXgf0GK6zmfqEuCsY49LFDNXO3SByp44X3dFEqtB73lkCDAdUazhAjVPiNwg==}
     dependencies:
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
 
   /@types/yargs-parser/21.0.0:
     resolution: {integrity: sha512-iO9ZQHkZxHn4mSakYV0vFHAVDyEOIJQrV2uZ06HxEPcx+mt8swXoZHIbaaJ2crJYFfErySgktuTZ3BeLz+XmFA==}
@@ -7052,8 +7009,8 @@ packages:
       restore-cursor: 3.1.0
     dev: true
 
-  /cli-progress/3.11.2:
-    resolution: {integrity: sha512-lCPoS6ncgX4+rJu5bS3F/iCz17kZ9MPZ6dpuTtI0KXKABkhyXIdYB3Inby1OpaGti3YlI3EeEkM9AuWpelJrVA==}
+  /cli-progress/3.12.0:
+    resolution: {integrity: sha512-tRkV3HJ1ASwm19THiiLIXLO7Im7wlTuKnvkYaTkyoAPefqjNg7W7DHKUlGRxy9vxDvbyCYQkQozvptuMkGCg8A==}
     engines: {node: '>=4'}
     dependencies:
       string-width: 4.2.3
@@ -9306,8 +9263,8 @@ packages:
     engines: {node: '> 0.1.90'}
     dev: true
 
-  /fancy-test/2.0.7:
-    resolution: {integrity: sha512-E9qiHMi/Wf3y0PLwoRbgr8SRTcvQY+6gx9d/qaVNT6N5AQ79iZr08ftY2Ki5KRC5LS02GoVD/CYT4t/KwwC/Pw==}
+  /fancy-test/2.0.12:
+    resolution: {integrity: sha512-S7qVQNaViLTMzn71huZvrUCV59ldq+enQ1EQOkdNbl4q4Om97gwqbYKvZoglsnzCWRRFaFP+qHynpdqaLdiZqg==}
     engines: {node: '>=12.0.0'}
     dependencies:
       '@types/chai': 4.3.4
@@ -9316,7 +9273,7 @@ packages:
       '@types/sinon': 10.0.13
       lodash: 4.17.21
       mock-stdin: 1.0.0
-      nock: 13.2.9
+      nock: 13.3.0
       stdout-stderr: 0.1.13
     transitivePeerDependencies:
       - supports-color
@@ -11724,7 +11681,7 @@ packages:
     dependencies:
       '@jest/types': 26.6.2
       '@types/graceful-fs': 4.1.5
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       anymatch: 3.1.2
       fb-watchman: 2.0.2
       graceful-fs: 4.2.10
@@ -11885,7 +11842,7 @@ packages:
       '@jest/environment': 26.6.2
       '@jest/test-result': 26.6.2
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       chalk: 4.1.2
       emittery: 0.7.2
       exit: 0.1.2
@@ -11986,7 +11943,7 @@ packages:
     engines: {node: '>= 10.14.2'}
     dependencies:
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       chalk: 4.1.2
       graceful-fs: 4.2.10
       is-ci: 2.0.0
@@ -12023,7 +11980,7 @@ packages:
     dependencies:
       '@jest/test-result': 26.6.2
       '@jest/types': 26.6.2
-      '@types/node': 14.18.33
+      '@types/node': 15.14.9
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       jest-util: 26.6.2
@@ -13636,8 +13593,8 @@ packages:
       - supports-color
     dev: true
 
-  /nock/13.2.9:
-    resolution: {integrity: sha512-1+XfJNYF1cjGB+TKMWi29eZ0b82QOvQs2YoLNzbpWGqFMtRQHTa57osqdGj4FrFPgkO4D4AZinzUJR9VvW3QUA==}
+  /nock/13.3.0:
+    resolution: {integrity: sha512-HHqYQ6mBeiMc+N038w8LkMpDCRquCHWeNmN3v6645P3NhN2+qXOBqvPqo7Rt1VyCMzKhJ733wZqw5B7cQVFNPg==}
     engines: {node: '>= 10.13'}
     dependencies:
       debug: 4.3.4
@@ -14348,14 +14305,14 @@ packages:
     resolution: {integrity: sha512-PX1wu0AmAdPqOL1mWhqmlOd8kOIZQwGZw6rh7uby9fTc5lhaOWFLX3I6R1hrF9k3zUY40e6igsLGkDXK92LJNg==}
     dev: true
 
-  /oclif/3.6.3:
-    resolution: {integrity: sha512-S4pSWrPB9fm6IIiXBWtmNkeSWvGfw8Vb51hS6TTyv0fa2xU4sdcDU0YYKM3oFqpfapyf3aH0YjQTofJKU5joSw==}
+  /oclif/3.7.0:
+    resolution: {integrity: sha512-LtLc7/3lOQ0d6/JKGj8QriIK/MiIcjZXVX3WoynbXUswG/X8oIsSr1+F6Q69VVbXnjbYlbfiP+uYASr36Mrjzg==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      '@oclif/core': 2.0.11
-      '@oclif/plugin-help': 5.2.4
-      '@oclif/plugin-not-found': 2.3.8
+      '@oclif/core': 2.4.0
+      '@oclif/plugin-help': 5.2.6
+      '@oclif/plugin-not-found': 2.3.21
       '@oclif/plugin-warn-if-update-available': 2.0.26
       aws-sdk: 2.1311.0
       concurrently: 7.6.0
@@ -16272,8 +16229,8 @@ packages:
       once: 1.4.0
       simple-concat: 1.0.1
 
-  /simple-git/3.16.0:
-    resolution: {integrity: sha512-zuWYsOLEhbJRWVxpjdiXl6eyAyGo/KzVW+KFhhw9MqEEJttcq+32jTWSGyxTdf9e/YCohxRE+9xpWFj9FdiJNw==}
+  /simple-git/3.16.1:
+    resolution: {integrity: sha512-xzRxMKiy1zEYeHGXgAzvuXffDS0xgsq07Oi4LWEEcVH29vLpcZ2tyQRWyK0NLLlCVaKysZeem5tC1qHEOxsKwA==}
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1

@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKinds,
 	singleTextCursor,
 	getSchemaString,
 	jsonableTreeFromCursor,
 	namedTreeSchema,
+	IDefaultEditBuilder,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree } from "../../shared-tree";
+import { ISharedTree, ISharedTreeCheckout } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -29,6 +31,7 @@ import {
 	fieldSchema,
 	GlobalFieldKey,
 	SchemaData,
+	IForestSubscription,
 } from "../../core";
 import { SharedTreeCore } from "../../shared-tree-core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
@@ -67,19 +70,20 @@ describe("SharedTree", () => {
 		const expectedSchema = getSchemaString(testSchema);
 
 		// Apply an edit to the first tree which inserts a node with a value
-		initializeTestTreeWithValue(provider.trees[0], value);
+		initializeTestTree(provider.trees[0]);
+		pushTestValue(provider.trees[0], value);
 
 		// Ensure that the first tree has the state we expect
-		assert.equal(getTestValue(provider.trees[0]), value);
+		assert.equal(peekTestValue(provider.trees[0]), value);
 		assert.equal(getSchemaString(provider.trees[0].storedSchema), expectedSchema);
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
-		assert.equal(getTestValue(provider.trees[1]), value);
+		assert.equal(peekTestValue(provider.trees[1]), value);
 		// Ensure second tree got the schema from initialization:
 		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
 		// Ensure that a tree which connects after the edit has already happened also catches up
 		const joinedLaterTree = await provider.createTree();
-		assert.equal(getTestValue(joinedLaterTree), value);
+		assert.equal(peekTestValue(joinedLaterTree), value);
 		// Ensure schema catchup works:
 		assert.equal(getSchemaString(provider.trees[1].storedSchema), expectedSchema);
 	});
@@ -88,11 +92,12 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const [summarizingTree] = provider.trees;
 		const value = 42;
-		initializeTestTreeWithValue(summarizingTree, value);
+		initializeTestTree(summarizingTree);
+		pushTestValue(summarizingTree, value);
 		await provider.summarize();
 		await provider.ensureSynchronized();
 		const loadingTree = await provider.createTree();
-		assert.equal(getTestValue(loadingTree), value);
+		assert.equal(peekTestValue(loadingTree), value);
 		assert.equal(getSchemaString(loadingTree.storedSchema), getSchemaString(testSchema));
 	});
 
@@ -234,20 +239,20 @@ describe("SharedTree", () => {
 			const [tree1, tree2] = provider.trees;
 
 			// Insert node
-			initializeTestTreeWithValue(tree1, value);
+			pushTestValue(tree1, value);
 
 			await provider.ensureSynchronized();
 
 			// Validate insertion
-			assert.equal(getTestValue(tree2), value);
+			assert.equal(peekTestValue(tree2), value);
 
 			// Delete node
 			remove(tree1, 0, 1);
 
 			await provider.ensureSynchronized();
 
-			assert.equal(getTestValue(tree1), undefined);
-			assert.equal(getTestValue(tree2), undefined);
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
 		});
 
 		it("can handle competing deletes", async () => {
@@ -284,7 +289,7 @@ describe("SharedTree", () => {
 			const [tree1, tree2] = provider.trees;
 
 			// Insert node
-			initializeTestTreeWithValue(tree1, value);
+			pushTestValue(tree1, value);
 
 			// Delete node
 			tree1.runTransaction((forest, editor) => {
@@ -294,8 +299,8 @@ describe("SharedTree", () => {
 			});
 
 			await provider.ensureSynchronized();
-			assert.equal(getTestValue(tree1), undefined);
-			assert.equal(getTestValue(tree2), undefined);
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
 
 			// Set node
 			tree1.runTransaction((forest, editor) => {
@@ -305,8 +310,8 @@ describe("SharedTree", () => {
 			});
 
 			await provider.ensureSynchronized();
-			assert.equal(getTestValue(tree1), 43);
-			assert.equal(getTestValue(tree2), 43);
+			assert.equal(peekTestValue(tree1), 43);
+			assert.equal(peekTestValue(tree2), 43);
 		});
 
 		it("can edit a global field", async () => {
@@ -314,7 +319,7 @@ describe("SharedTree", () => {
 			const [tree1, tree2] = provider.trees;
 
 			// Insert root node
-			initializeTestTreeWithValue(tree1, 42);
+			pushTestValue(tree1, 42);
 
 			// Insert child in global field
 			tree1.runTransaction((forest, editor) => {
@@ -657,6 +662,289 @@ describe("SharedTree", () => {
 			assert(compareUpPaths(childPath, expected));
 		});
 	});
+
+	describe("Checkouts", () => {
+		it("are isolated from the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			pushTestValue(tree, "root");
+			const checkout = tree.fork();
+			pushTestValue(checkout, "checkout");
+			assert.equal(peekTestValue(tree), "root");
+			assert.equal(peekTestValue(checkout), "checkout");
+		});
+
+		it("are isolated from their base checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const baseCheckout = tree.fork();
+			pushTestValue(baseCheckout, "base");
+			const checkout = baseCheckout.fork();
+			pushTestValue(checkout, "checkout");
+			assert.equal(peekTestValue(baseCheckout), "base");
+			assert.equal(peekTestValue(checkout), "checkout");
+		});
+
+		it("provide isolation from the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkout = tree.fork();
+			assert.equal(peekTestValue(tree), undefined);
+			assert.equal(peekTestValue(checkout), undefined);
+			pushTestValue(tree, "root");
+			assert.equal(peekTestValue(tree), "root");
+			assert.equal(peekTestValue(checkout), undefined);
+		});
+
+		it("provide isolation from their base checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const baseCheckout = tree.fork();
+			const checkout = baseCheckout.fork();
+			assert.equal(peekTestValue(baseCheckout), undefined);
+			assert.equal(peekTestValue(checkout), undefined);
+			pushTestValue(baseCheckout, "base");
+			assert.equal(peekTestValue(baseCheckout), "base");
+			assert.equal(peekTestValue(checkout), undefined);
+		});
+
+		it("merge changes into the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkout = tree.fork();
+			pushTestValue(checkout, "checkout");
+			checkout.merge();
+			assert.equal(peekTestValue(tree), "checkout");
+		});
+
+		it("merge changes into their base checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const baseCheckout = tree.fork();
+			const checkout = baseCheckout.fork();
+			pushTestValue(checkout, "checkout");
+			checkout.merge();
+			assert.equal(peekTestValue(baseCheckout), "checkout");
+		});
+
+		it("merge changes through multiple checkouts", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkoutA = tree.fork();
+			const checkoutB = checkoutA.fork();
+			const checkoutC = checkoutB.fork();
+			pushTestValue(checkoutC, "checkout");
+			checkoutC.merge();
+			assert.equal(peekTestValue(checkoutA), undefined);
+			assert.equal(peekTestValue(checkoutB), "checkout");
+			checkoutB.merge();
+			assert.equal(peekTestValue(checkoutA), "checkout");
+			assert.equal(peekTestValue(checkoutB), "checkout");
+		});
+
+		it("merge correctly when multiple ancestors are mutated", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkoutA = tree.fork();
+			const checkoutB = checkoutA.fork();
+			const checkoutC = checkoutB.fork();
+			pushTestValue(checkoutA, "A");
+			pushTestValue(checkoutB, "B");
+			pushTestValue(checkoutC, "C");
+
+			checkoutC.merge();
+			assert.equal(peekTestValue(checkoutA), "A");
+			assert.equal(peekTestValue(checkoutB), "C");
+			checkoutB.merge();
+			assert.equal(peekTestValue(checkoutA), "C");
+		});
+
+		it("can perform a complicated merge scenario", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkoutA = tree.fork();
+			const checkoutB = checkoutA.fork();
+			const checkoutC = checkoutB.fork();
+			pushTestValue(checkoutA, "A1");
+			pushTestValue(checkoutB, "B1");
+			pushTestValue(checkoutC, "C1");
+			checkoutC.merge();
+			pushTestValue(tree, "R1");
+			pushTestValue(checkoutA, "A2");
+			pushTestValue(checkoutB, "B2");
+			checkoutB.merge();
+			const checkoutD = checkoutA.fork();
+			pushTestValue(checkoutA, "A3");
+			checkoutD.pull();
+			assert.equal(peekTestValue(checkoutD), "A3");
+			pushTestValue(checkoutA, "A4");
+			pushTestValue(checkoutD, "D1");
+			pushTestValue(tree, "R2");
+			checkoutD.merge();
+			checkoutA.merge();
+			pushTestValue(tree, "R3");
+			assert.deepEqual(
+				[...getTestValues(tree)],
+				["R1", "R2", "A1", "A2", "B1", "C1", "B2", "A3", "A4", "D1", "R3"].reverse(),
+			);
+		});
+
+		it("can pull changes in from the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkout = tree.fork();
+			pushTestValue(tree, "root");
+			assert.equal(peekTestValue(checkout), undefined);
+			checkout.pull();
+			assert.equal(peekTestValue(checkout), "root");
+		});
+
+		it("can pull changes in from a base checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const baseCheckout = tree.fork();
+			const checkout = baseCheckout.fork();
+			pushTestValue(baseCheckout, "base");
+			assert.equal(peekTestValue(checkout), undefined);
+			checkout.pull();
+			assert.equal(peekTestValue(checkout), "base");
+		});
+
+		it("submit edits to Fluid when merging into the root checkout", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			const baseCheckout = tree1.fork();
+			const checkout = baseCheckout.fork();
+			// Modify the checkout, but tree2 should remain unchanged until the edit merges all the way up
+			pushTestValue(checkout, "42");
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree2), undefined);
+			checkout.merge();
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree2), undefined);
+			baseCheckout.merge();
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree2), "42");
+		});
+
+		it("do not squash commits", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			const baseCheckout = tree1.fork();
+			const checkout = baseCheckout.fork();
+			pushTestValue(checkout, "A");
+			pushTestValue(checkout, "B");
+			checkout.merge();
+			baseCheckout.merge();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 2);
+		});
+
+		it("update anchors after merging into the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			pushTestValue(tree, "A");
+			let cursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			const checkout = tree.fork();
+			pushTestValue(checkout, "B");
+			checkout.merge();
+			cursor = tree.forest.allocateCursor();
+			tree.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
+		it("update anchors", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkout = tree.fork();
+			pushTestValue(checkout, "A");
+			let cursor = checkout.forest.allocateCursor();
+			moveToDetachedField(checkout.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			pushTestValue(checkout, "B");
+			cursor = checkout.forest.allocateCursor();
+			checkout.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
+		it("update anchors after merging into a base checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const baseCheckout = tree.fork();
+			pushTestValue(baseCheckout, "A");
+			let cursor = baseCheckout.forest.allocateCursor();
+			moveToDetachedField(baseCheckout.forest, cursor);
+			cursor.firstNode();
+			const anchor = cursor.buildAnchor();
+			cursor.clear();
+			const checkout = tree.fork();
+			pushTestValue(checkout, "B");
+			checkout.merge();
+			cursor = baseCheckout.forest.allocateCursor();
+			baseCheckout.forest.tryMoveCursorToNode(anchor, cursor);
+			assert.equal(cursor.value, "A");
+			cursor.clear();
+		});
+
+		it("are disposed after merging", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkoutA = tree.fork();
+			const checkoutB = checkoutA.fork();
+			const checkoutC = checkoutB.fork();
+			assert.equal(checkoutA.isMerged(), false);
+			assert.equal(checkoutB.isMerged(), false);
+			assert.equal(checkoutC.isMerged(), false);
+			checkoutA.merge();
+			assert.equal(checkoutA.isMerged(), true);
+			assert.equal(checkoutB.isMerged(), true);
+			assert.equal(checkoutC.isMerged(), true);
+		});
+
+		it("can be read after disposal", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			pushTestValue(tree, "root");
+			const checkout = tree.fork();
+			checkout.merge();
+			assert.equal(peekTestValue(checkout), "root");
+		});
+
+		it("cannot be mutated after disposal", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const checkout = tree.fork();
+			checkout.merge();
+			const expectedError = "Branch is already merged";
+			assert.throws(
+				() => checkout.pull(),
+				(e) => validateAssertionError(e, expectedError),
+			);
+			assert.throws(
+				() => checkout.fork(),
+				(e) => validateAssertionError(e, expectedError),
+			);
+			assert.throws(
+				() => checkout.merge(),
+				(e) => validateAssertionError(e, expectedError),
+			);
+			assert.throws(
+				() => pushTestValue(checkout, "unused"),
+				(e) => validateAssertionError(e, expectedError),
+			);
+		});
+	});
+
 	describe.skip("Fuzz Test fail cases", () => {
 		it("Invalid operation", async () => {
 			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
@@ -1181,9 +1469,14 @@ const testSchema: SchemaData = {
  */
 function initializeTestTree(
 	tree: ISharedTree,
-	state: JsonableTree | JsonableTree[],
+	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
+	if (state === undefined) {
+		tree.storedSchema.update(schema);
+		return;
+	}
+
 	if (!Array.isArray(state)) {
 		initializeTestTree(tree, [state], schema);
 	} else {
@@ -1202,16 +1495,21 @@ function initializeTestTree(
 
 /**
  * Inserts a single node under the root of the tree with the given value.
- * Use {@link getTestValue} to read the value.
+ * Use {@link peekTestValue} to read the value.
  */
-function initializeTestTreeWithValue(tree: ISharedTree, value: TreeValue): void {
-	initializeTestTree(tree, { type: brand("TestValue"), value });
+function pushTestValue(tree: ISharedTreeCheckout, value: TreeValue): void {
+	tree.runTransaction((_: IForestSubscription, editor: IDefaultEditBuilder) => {
+		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		field.insert(0, writeCursor);
+		return TransactionResult.Apply;
+	});
 }
 
 /**
- * Reads a value in a tree set by {@link initializeTestTreeWithValue} if it exists.
+ * Reads a value in a tree set by {@link pushTestValue} if it exists.
  */
-function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
+function peekTestValue({ forest }: ISharedTreeCheckout): TreeValue | undefined {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (!readCursor.firstNode()) {
@@ -1224,6 +1522,21 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
 }
 
 /**
+ * Reads a value in a tree set by {@link pushTestValue} if it exists.
+ */
+function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
+	if (readCursor.firstNode()) {
+		yield readCursor.value;
+		while (readCursor.nextNode()) {
+			yield readCursor.value;
+		}
+		readCursor.free();
+	}
+}
+
+/**
  * Helper function to insert node at a given index.
  *
  * TODO: delete once the JSON editing API is ready for use.
@@ -1232,7 +1545,7 @@ function getTestValue({ forest }: ISharedTree): TreeValue | undefined {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTree, index: number, ...values: string[]): void {
+function insert(tree: ISharedTreeCheckout, index: number, ...values: string[]): void {
 	tree.runTransaction((forest, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
@@ -1260,7 +1573,7 @@ function remove(tree: ISharedTree, index: number, count: number): void {
  * @param tree - The tree to verify.
  * @param expected - The expected values for the nodes in the root field of the tree.
  */
-function validateRootField(tree: ISharedTree, expected: Value[]): void {
+function validateRootField(tree: ISharedTreeCheckout, expected: Value[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	let hasNode = readCursor.firstNode();
@@ -1273,7 +1586,7 @@ function validateRootField(tree: ISharedTree, expected: Value[]): void {
 	readCursor.free();
 }
 
-function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
+function validateTree(tree: ISharedTreeCheckout, expected: JsonableTree[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
