@@ -6914,7 +6914,7 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/build-cli': 0.11.0-135362
-      '@fluidframework/attributor-previous': npm:@fluidframework/attributor@2.0.0-internal.3.1.0
+      '@fluidframework/attributor-previous': npm:@fluidframework/attributor@2.0.0-internal.3.2.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/common-utils': ^1.1.1
@@ -6964,7 +6964,7 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli': 0.11.0-135362
-      '@fluidframework/attributor-previous': /@fluidframework/attributor/2.0.0-internal.3.1.0
+      '@fluidframework/attributor-previous': /@fluidframework/attributor/2.0.0-internal.3.2.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -8892,7 +8892,7 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
-      '@fluidframework/test-driver-definitions-previous': npm:@fluidframework/test-driver-definitions@2.0.0-internal.3.1.0
+      '@fluidframework/test-driver-definitions-previous': npm:@fluidframework/test-driver-definitions@2.0.0-internal.3.2.0
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
@@ -8915,7 +8915,7 @@ importers:
       '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/test-driver-definitions-previous': /@fluidframework/test-driver-definitions/2.0.0-internal.3.1.0
+      '@fluidframework/test-driver-definitions-previous': /@fluidframework/test-driver-definitions/2.0.0-internal.3.2.0
       '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
@@ -12807,28 +12807,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/attributor/2.0.0-internal.3.1.0:
-    resolution: {integrity: sha512-8oGCM8JT/UBar7zu9dOfYHGLVsZVnqf/XlV2n9iqFscx7UBLApfYWtXjAaYBrU78sKT2YTZeBHUOgj0UNgTyVg==}
-    dependencies:
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/container-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/container-runtime': 2.0.0-internal.3.2.2
-      '@fluidframework/container-runtime-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/container-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
-      '@fluidframework/datastore-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
-      lz4js: 0.2.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-    dev: true
-
-  /@fluidframework/attributor/2.0.0-internal.3.2.2:
-    resolution: {integrity: sha512-3B+AX6HydWyfYYVIcp+hw4QLxOTbABZbdtdtmFZIq5du5xseppPWHwl0XpyHkpqjs32LWZubR8GbqcpHPLk88Q==}
+  /@fluidframework/attributor/2.0.0-internal.3.2.0:
+    resolution: {integrity: sha512-mnzXA+AaJLTeWjzVRzPeC7ZE0Ov9eDrY77jsvpMQkMK03R8gU+btlGGe84k7HXfrzU7AeVVQk23Fdw4McJSULA==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': 2.0.0-internal.3.2.2
@@ -13892,7 +13872,7 @@ packages:
     resolution: {integrity: sha512-LZMcnGk1ccVak3NOsLaM1emUNIS6+Un3Ivdweo0uz8GF5WJSgeDTLxthjwX3GO6OQ7xiUpMk0OLXyAeguBjmCg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.2
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
       mocha: 10.2.0
     dev: true
 
@@ -14645,8 +14625,8 @@ packages:
       uuid: 8.3.2
     dev: true
 
-  /@fluidframework/test-driver-definitions/2.0.0-internal.3.2.2:
-    resolution: {integrity: sha512-F/gbsN5sZWFzi4QgWXzZ+BJ2t/DOwwTQKOFgQZ6LYuvrxaYez5yiNj/9HEbCgwXOang8g7qCBde9MjecPc88tg==}
+  /@fluidframework/test-driver-definitions/2.0.0-internal.3.2.0:
+    resolution: {integrity: sha512-ZFuLpORr7mlb5s9XZBym3irazL8N270PNymK1nx/jqDHNvPL4z+j2syUoQ21dJLl3JEyxfQmdC80SF8XvXi3cg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
@@ -14670,7 +14650,7 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': 2.0.0-internal.3.2.0
       '@fluidframework/server-local-server': 0.1038.2000
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.2
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
       '@fluidframework/test-pairwise-generator': 2.0.0-internal.3.2.0
       '@fluidframework/test-runtime-utils': 2.0.0-internal.3.2.0
       '@fluidframework/tinylicious-driver': 2.0.0-internal.3.2.0
@@ -14693,7 +14673,7 @@ packages:
       '@fluid-tools/benchmark': 0.45.112032
       '@fluidframework/agent-scheduler': 2.0.0-internal.3.2.0
       '@fluidframework/aqueduct': 2.0.0-internal.3.2.0
-      '@fluidframework/attributor': 2.0.0-internal.3.2.2
+      '@fluidframework/attributor': 2.0.0-internal.3.2.0
       '@fluidframework/cell': 2.0.0-internal.3.2.0
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -14725,7 +14705,7 @@ packages:
       '@fluidframework/sequence': 2.0.0-internal.3.2.2
       '@fluidframework/shared-object-base': 2.0.0-internal.3.2.2
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.2
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
       '@fluidframework/test-loader-utils': 2.0.0-internal.3.2.0
       '@fluidframework/test-pairwise-generator': 2.0.0-internal.3.2.0
       '@fluidframework/test-runtime-utils': 2.0.0-internal.3.2.0
@@ -14851,7 +14831,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.2
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
       '@fluidframework/test-runtime-utils': 2.0.0-internal.3.2.0_debug@4.3.4
       best-random: 1.0.3
       debug: 4.3.4
@@ -14868,7 +14848,7 @@ packages:
     dependencies:
       '@fluid-experimental/sequence-deprecated': 2.0.0-internal.3.2.2
       '@fluidframework/aqueduct': 2.0.0-internal.3.2.0
-      '@fluidframework/attributor': 2.0.0-internal.3.2.2
+      '@fluidframework/attributor': 2.0.0-internal.3.2.0
       '@fluidframework/cell': 2.0.0-internal.3.2.0
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -14889,7 +14869,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/sequence': 2.0.0-internal.3.2.2
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.2
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
       '@fluidframework/test-drivers': 2.0.0-internal.3.2.0
       '@fluidframework/test-utils': 2.0.0-internal.3.2.0
       nconf: 0.12.0
