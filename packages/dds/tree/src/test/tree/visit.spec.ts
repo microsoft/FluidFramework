@@ -35,19 +35,18 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 ];
 
 function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
-	let callIndex = 0;
+	const actualCalls: unknown[][] = [];
 	const makeChecker =
 		(name: string) =>
 		(...args: unknown[]) => {
-			assert.deepStrictEqual([name, ...args], expected[callIndex]);
-			callIndex += 1;
+			actualCalls.push([name, ...args]);
 		};
 	const visitor: DeltaVisitor = {} as any;
 	for (const methodName of visitorMethods) {
 		visitor[methodName] = makeChecker(methodName);
 	}
 	visit(delta, visitor);
-	assert.strictEqual(callIndex, expected.length);
+	assert.deepEqual(actualCalls, expected);
 }
 
 function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): void {
@@ -139,7 +138,14 @@ describe("visit", () => {
 			type: Delta.MarkType.Delete,
 			count: 10,
 		};
-		testTreeVisit([mark], [["onDelete", 0, 10]]);
+		testTreeVisit(
+			[mark],
+			[
+				["exitField", rootKey],
+				["enterField", rootKey],
+				["onDelete", 0, 10],
+			],
+		);
 	});
 
 	it("delete child", () => {
@@ -154,6 +160,12 @@ describe("visit", () => {
 			},
 		];
 		const expected: VisitScript = [
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
 			["onDelete", 42, 10],
@@ -185,10 +197,18 @@ describe("visit", () => {
 		const expected: VisitScript = [
 			["enterNode", 0],
 			["enterField", fooKey],
-			["onDelete", 0, 10],
-			["onInsert", 3, content],
-			["enterNode", 5],
+			["onInsert", 13, content],
+			["enterNode", 15],
 			["onSetValue", 1],
+			["exitNode", 15],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onDelete", 0, 10],
+			["enterNode", 5],
 			["exitNode", 5],
 			["exitField", fooKey],
 			["exitNode", 0],
@@ -383,6 +403,162 @@ describe("visit", () => {
 			["exitField", fooKey],
 			["enterField", barKey],
 			["exitField", barKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		];
+
+		testVisit(delta, expected);
+	});
+
+	it("move in under delete", () => {
+		const moveId: Delta.MoveId = brand(1);
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 2,
+			moveId,
+		};
+
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 2,
+			moveId,
+		};
+
+		const delta: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.ModifyAndDelete,
+						fields: new Map([[fooKey, [moveIn]]]),
+					},
+					moveOut,
+				],
+			],
+		]);
+
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["onMoveOut", 1, 2, moveId],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onMoveIn", 0, 2, moveId],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["onDelete", 0, 1],
+			["exitField", rootKey],
+		];
+
+		testVisit(delta, expected);
+	});
+
+	it("move in under move-out", () => {
+		const moveId1: Delta.MoveId = brand(1);
+		const moveId2: Delta.MoveId = brand(2);
+
+		const moveIn1: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: moveId1,
+		};
+
+		const moveOut2: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 2,
+			moveId: moveId2,
+		};
+
+		const moveIn2: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 2,
+			moveId: moveId2,
+		};
+
+		const delta: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.ModifyAndMoveOut,
+						moveId: moveId1,
+						fields: new Map([[fooKey, [moveIn2]]]),
+					},
+					moveOut2,
+					moveIn1,
+				],
+			],
+		]);
+
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["onMoveOut", 0, 1, moveId1],
+			["onMoveOut", 0, 2, moveId2],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["onMoveIn", 0, 1, moveId1],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onMoveIn", 0, 2, moveId2],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", rootKey],
+		];
+
+		testVisit(delta, expected);
+	});
+
+	it("delete under move-out", () => {
+		const moveId1: Delta.MoveId = brand(1);
+
+		const moveIn1: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: moveId1,
+		};
+
+		const del: Delta.Delete = {
+			type: Delta.MarkType.Delete,
+			count: 2,
+		};
+
+		const delta: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.ModifyAndMoveOut,
+						moveId: moveId1,
+						fields: new Map([[fooKey, [del]]]),
+					},
+					moveIn1,
+				],
+			],
+		]);
+
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["onMoveOut", 0, 1, moveId1],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["onMoveIn", 0, 1, moveId1],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["onDelete", 0, 2],
+			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
 		];
