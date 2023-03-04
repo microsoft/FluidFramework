@@ -63,6 +63,7 @@
 		"@fluidframework/protocol-definitions": "^1.1.0"
 	},
 	"devDependencies": {
+		"@fluid-experimental/oldest-client-observer-previous": "npm:@fluid-experimental/oldest-client-observer@2.0.0-internal.3.2.0",
 		"@fluid-internal/test-dds-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluid-tools/build-cli": "0.11.0-135362",
 		"@fluidframework/build-common": "^1.1.0",
@@ -87,7 +88,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"disabled": true,
 		"broken": {}
 	}
 }

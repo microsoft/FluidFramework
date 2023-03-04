@@ -7235,6 +7235,7 @@ importers:
 
   packages/framework/oldest-client-observer:
     specifiers:
+      '@fluid-experimental/oldest-client-observer-previous': npm:@fluid-experimental/oldest-client-observer@2.0.0-internal.3.2.0
       '@fluid-internal/test-dds-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/build-common': ^1.1.0
@@ -7267,6 +7268,7 @@ importers:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/protocol-definitions': 1.1.0
     devDependencies:
+      '@fluid-experimental/oldest-client-observer-previous': /@fluid-experimental/oldest-client-observer/2.0.0-internal.3.2.0
       '@fluid-internal/test-dds-utils': link:../../dds/test-dds-utils
       '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/build-common': 1.1.0
@@ -12495,6 +12497,15 @@ packages:
       react: 17.0.2
       tslib: 2.5.0
     dev: false
+
+  /@fluid-experimental/oldest-client-observer/2.0.0-internal.3.2.0:
+    resolution: {integrity: sha512-FKYLSHQFcXVtRaMQ0hglc2IgrHts9XI1o+YI4EGNQ5rhfv4im3h+v5I4JVWYXTe2pId5C41r26BEr6MSGaHVhw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': 2.0.0-internal.3.2.2
+      '@fluidframework/protocol-definitions': 1.1.0
+    dev: true
 
   /@fluid-experimental/sequence-deprecated/2.0.0-internal.3.2.2:
     resolution: {integrity: sha512-en6cuHzq1oZqqq9j5KUctCliagudHYIqORLByUGowe5pj1uqrVdodoZk0gQfAbFPNGSJyXSiBca76hj8HdJ5xA==}
