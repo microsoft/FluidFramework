@@ -71,6 +71,7 @@ declare function get_old_InterfaceDeclaration_IProvideRuntimeAttributor():
 declare function use_current_InterfaceDeclaration_IProvideRuntimeAttributor(
     use: TypeOnly<current.IProvideRuntimeAttributor>);
 use_current_InterfaceDeclaration_IProvideRuntimeAttributor(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IProvideRuntimeAttributor());
 
 /*
@@ -119,6 +120,7 @@ declare function get_old_InterfaceDeclaration_IRuntimeAttributor():
 declare function use_current_InterfaceDeclaration_IRuntimeAttributor(
     use: TypeOnly<current.IRuntimeAttributor>);
 use_current_InterfaceDeclaration_IRuntimeAttributor(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IRuntimeAttributor());
 
 /*

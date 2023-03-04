@@ -101,6 +101,13 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IProvideRuntimeAttributor": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IRuntimeAttributor": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
