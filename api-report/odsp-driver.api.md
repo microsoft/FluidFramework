@@ -10,6 +10,7 @@ import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
+import { IDriverFactoryOptions } from '@fluidframework/driver-definitions';
 import { IEntry } from '@fluidframework/odsp-driver-definitions';
 import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
@@ -124,6 +125,8 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     //
     // (undocumented)
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // (undocumented)
+    readonly driverFactoryOptions: IDriverFactoryOptions;
     // (undocumented)
     protected persistedCache: IPersistedCache;
     // (undocumented)
