@@ -12,7 +12,7 @@ import { describeE2EDocsMemory, DescribeE2EDocInfo } from "@fluidframework/test-
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
-const scenarioTitle = "Summarization Document";
+const scenarioTitle = "Summarize Document";
 describeE2EDocsMemory(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;

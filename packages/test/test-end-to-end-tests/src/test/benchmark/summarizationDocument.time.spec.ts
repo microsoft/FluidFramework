@@ -10,7 +10,7 @@ import { benchmark } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
-const scenarioTitle = "Summarization Document";
+const scenarioTitle = "Summarize Document";
 describeE2EDocsRuntime(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
