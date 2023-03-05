@@ -75,8 +75,17 @@ export {
 	PathRootPrefix,
 	isSkipMark,
 	emptyDelta,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
 	inCursorField,
 	inCursorNode,
+	AnchorEvents,
 } from "./tree";
 
 export {

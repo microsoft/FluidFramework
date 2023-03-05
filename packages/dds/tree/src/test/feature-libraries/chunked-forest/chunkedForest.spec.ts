@@ -16,7 +16,6 @@ import {
 	AnchorSet,
 	TransactionCheckout,
 	EditManager,
-	FieldKey,
 	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
@@ -42,8 +41,6 @@ import {
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
-
-const fooKey: FieldKey = brand("foo");
 
 describe("ChunkedForest", () => {
 	testForest({

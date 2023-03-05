@@ -47,6 +47,7 @@ import {
 	OutputSpanningMark,
 	SkipLikeDetach,
 	MoveId,
+	Revive,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -133,8 +134,7 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 	}
 	const objMark = mark as Exclude<TMark, Skip>;
 	const clone = { ...objMark };
-	if (clone.type === "Insert") {
-		// TODO: also do this for Revive marks once they carry content
+	if (clone.type === "Insert" || clone.type === "Revive") {
 		clone.content = [...clone.content];
 	}
 	if (isAttach(clone) && clone.lineage !== undefined) {
@@ -472,6 +472,7 @@ export function tryExtendMark<T>(
 				rhs.lastDetachedBy === lhsReattach.lastDetachedBy &&
 				lhsReattach.detachIndex + lhsReattach.count === rhs.detachIndex
 			) {
+				(lhsReattach as Revive).content.push(...rhs.content);
 				lhsReattach.count += rhs.count;
 				return true;
 			}
