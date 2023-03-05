@@ -180,6 +180,8 @@ The normal variance composition rules apply, so an `out` interface can only take
 
 > **_NOTE:_** This section focuses on type level details, however this same policy can help with clarifying whats supported even if its not modeled by the type systems. For example an interface that is documented as requiring an integer can be broadened to accept floating point values if its a member of an "in" interface, but not for an "out" one. This reasoning is useful, even if both cases just use the type `number`.
 
+> **_NOTE:_** Another way to get some tooling support for this is to transform the types when exporting them either manually in the source or as part of publishing. For example if API-extractor could replace `@out` interfaces with types that are not constructable (extend a class with a protected member and private constructor).
+
 ## Optional Function Arguments
 
 TypeScript has soundness issues with functions and optional arguments.
@@ -280,6 +282,8 @@ The [non_exhaustive attribute in Rust](https://doc.rust-lang.org/reference/attri
 It has actual compiler support, but it can also just be a convention (and possible a linter rule to help).
 
 # Related work
+
+[semver-ts](https://www.semver-ts.org/) addresses a very similar topic, but focuses on compile errors and not the more general "issues" of which compile errors are a subset. It coverers how this relates to variance and it's section on "Avoiding user constructibility" suggests several approaches including the approach of doing so through documentation, which is what the proposed "@out" tag above does.
 
 Rust's [non_exhaustive attribute in Rust](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute).
 
