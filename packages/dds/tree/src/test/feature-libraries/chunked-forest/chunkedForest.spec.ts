@@ -73,9 +73,9 @@ describe("ChunkedForest", () => {
 		);
 		const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
 			defaultChangeFamily,
+			uuid(),
 			anchors,
 		);
-		editManager.initSessionId(uuid());
 		const cursor = singleTextCursor(initialState);
 		const chunk = new TestChunk(
 			cursor.type,
