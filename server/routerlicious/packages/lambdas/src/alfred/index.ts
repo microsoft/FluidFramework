@@ -482,8 +482,11 @@ export function configureWebSocketServices(
             if(httpServer !== undefined && eventEmitter !== undefined) {
 
                 // Only for debugging purposes
-                eventEmitter.on('broadcast-signal', () => {
-                    console.log(`ALFRED: Trigger broadcast-signal event`);
+                eventEmitter.on('broadcast-signal', (_, containerUrl) => {
+                    const documentId = containerUrl.split('/').pop();
+                    const tenantId = containerUrl.split('/').pop().pop();
+                    const roomFromBroadcastSignal: IRoom = { tenantId, documentId }
+                    console.log(`ALFRED: Trigger broadcast-signal event to tenantId: ${tenantId} documentId: ${documentId}`);
                     const signalMessageRuntimeMessage : ISignalMessage = {
                         clientId: null, // system signal
                         content: JSON.stringify({
@@ -499,7 +502,7 @@ export function configureWebSocketServices(
                     }
                     console.log("\nsignalMessageRuntimeMessage\n");
                     console.log(signalMessageRuntimeMessage);
-                    socket.emitToRoom(getRoomId(room), "signal", signalMessageRuntimeMessage );
+                    socket.emitToRoom(getRoomId(roomFromBroadcastSignal), "signal", signalMessageRuntimeMessage );
                 });
             }
 
