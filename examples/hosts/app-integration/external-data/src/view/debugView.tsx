@@ -6,7 +6,7 @@
 import isEqual from "lodash.isequal";
 import React, { useEffect, useState } from "react";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel, TaskData } from "../model-interface";
+import type { IAppModel, TaskData, TaskListData } from "../model-interface";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -16,19 +16,23 @@ async function pollForServiceUpdates(
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
-		const response = await fetch(`http://localhost:${externalDataServicePort}/fetch-tasks`, {
-			method: "GET",
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Content-Type": "application/json",
+		const taskListId = "task-list-1";
+		const response = await fetch(
+			`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}`,
+			{
+				method: "GET",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
 			},
-		});
+		);
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
-		const newData = responseBody.taskList as TaskData;
-		if (newData !== undefined && !isEqual(newData, externalData)) {
+		const newData = responseBody.taskList as TaskListData;
+		if (newData !== undefined && !isEqual(newData[taskListId], externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
-			setExternalData(newData);
+			setExternalData(newData[taskListId]);
 		}
 	} catch (error) {
 		console.error("APP: An error was encountered while polling external data:", error);
@@ -253,6 +257,7 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
 	const writeToExternalServer = async (): Promise<void> => {
+		const taskListId = "task-list-1";
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {
@@ -267,7 +272,7 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 					"Access-Control-Allow-Origin": "*",
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ taskList: formattedTasks }),
+				body: JSON.stringify({ taskList: { [taskListId]: formattedTasks } }),
 			});
 		} catch (error) {
 			console.error(`Task list submition failed due to an error:\n${error}`);

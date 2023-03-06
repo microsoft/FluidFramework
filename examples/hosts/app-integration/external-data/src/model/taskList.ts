@@ -7,6 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
@@ -15,9 +16,10 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskList,
-	TaskData,
+	TaskListData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
+import { customerServicePort } from "../mock-customer-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {
@@ -108,6 +110,8 @@ export class TaskList extends DataObject implements ITaskList {
 	 * TODO: Update^ when the sync mechanism is appropriately defined.
 	 */
 	private _draftData: SharedMap | undefined;
+
+	private _errorFlagCount: number = 0;
 
 	private get externalDataSnapshot(): SharedMap {
 		if (this._externalDataSnapshot === undefined) {
@@ -214,6 +218,7 @@ export class TaskList extends DataObject implements ITaskList {
 	public async importExternalData(): Promise<void> {
 		console.log("TASK-LIST: Fetching external data from service...");
 
+		const taskListId = "task-list-1";
 		let incomingExternalData: [
 			string,
 			{
@@ -223,7 +228,7 @@ export class TaskList extends DataObject implements ITaskList {
 		][];
 		try {
 			const response = await fetch(
-				`http://localhost:${externalDataServicePort}/fetch-tasks`,
+				`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}`,
 				{
 					method: "GET",
 					headers: {
@@ -237,8 +242,11 @@ export class TaskList extends DataObject implements ITaskList {
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody.taskList as TaskData;
-			incomingExternalData = Object.entries(data);
+			const data = responseBody.taskList as TaskListData;
+			// TODO: do some check to ensure that the requested taskListId matches the
+			// returned taskList id.
+
+			incomingExternalData = Object.entries(data[taskListId]);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {
 			console.error(`Task list fetch failed due to an error:\n${error}`);
@@ -289,6 +297,39 @@ export class TaskList extends DataObject implements ITaskList {
 			}
 		}
 	}
+
+	/**
+	 * Register container session data with the customer service.
+	 * @returns A promise that resolves when the registration call returns successfully.
+	 */
+	public async registerWithCustomerService(
+		taskListId: string,
+		containerUrlData: IFluidResolvedUrl | undefined,
+	): Promise<void> {
+		try {
+			if (containerUrlData?.url === undefined) {
+				console.log(`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`);
+				console.error(
+					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
+				);
+				return;
+			}
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ containerUrl: containerUrlData.url, taskListId }),
+			});
+		} catch (error) {
+			console.error(`Customer service registration failed:\n${error}`);
+
+			// TODO: Display error status to user? Attempt some number of retries on failure?
+
+			return;
+		}
+	}
 	/**
 	 * Save the current data in the container back to the external data source.
 	 *
@@ -304,6 +345,12 @@ export class TaskList extends DataObject implements ITaskList {
 		// the "save" button case this might be fine (the user saves what they see), but in more-automatic
 		// sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
 		// as what we do for summarization).
+
+		this._errorFlagCount++;
+		// Force update failures every 3 calls to showcase retry logic.
+		if (this._errorFlagCount % 3 === 0) {
+			throw new Error("Simulated error to demonstrate failure writing to external service.");
+		}
 		const tasks = this.getDraftTasks();
 		const formattedTasks = {};
 		for (const task of tasks) {
@@ -312,6 +359,7 @@ export class TaskList extends DataObject implements ITaskList {
 				priority: task.draftPriority,
 			};
 		}
+
 		try {
 			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
 				method: "POST",
@@ -414,7 +462,7 @@ export class TaskList extends DataObject implements ITaskList {
  * scenario, the fourth argument is not used.
  */
 export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
-	"task-list",
+	"task-list-1",
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},

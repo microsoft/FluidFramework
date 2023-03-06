@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { assertValidTaskListData, TaskData, TaskListData } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -83,12 +83,14 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 *
 	 * ```json
 	 * {
-	 *  taskList: {
-	 *      [id: string]: {
-	 *          name: string,
-	 *          priority: number
-	 *      }
-	 *  }
+	 *		taskList: {
+	 * 			[ taskListId: string]: {
+	 *      		[id: string]: {
+	 *      	    	name: string,
+	 *      	    	priority: number
+	 *      		}
+	 * 			}
+	 *  	}
 	 * }
 	 * ```
 	 */
@@ -121,27 +123,34 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 *
 	 * ```json
 	 * {
-	 *  taskList: {
-	 *      [id: string]: {
-	 *          name: string,
-	 *          priority: number
-	 *      }
-	 *  }
+	 *		taskList: {
+	 * 			[ taskListId: string]: {
+	 *      		[id: string]: {
+	 *      	    	name: string,
+	 *      	    	priority: number
+	 *      		}
+	 * 			}
+	 *  	}
 	 * }
 	 * ```
 	 */
-	expressApp.get("/fetch-tasks", (_, result) => {
-		externalDataSource.fetchData().then(
+	expressApp.get("/fetch-tasks/:taskListId", (request, result) => {
+		console.log(request.params);
+		const taskListId = request.params?.taskListId;
+		if (taskListId === undefined) {
+			result.status(400).json({ message: "Missing parameter taskListId in request url" });
+		}
+		externalDataSource.fetchData(taskListId).then(
 			(response) => {
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
 					unknown
 				>;
 
-				let taskList: TaskData;
+				let taskListData: TaskListData;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskList = assertValidTaskData((responseBody as any).taskList);
+					taskListData = assertValidTaskListData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
@@ -149,9 +158,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					return;
 				}
 
-				console.log(formatLogMessage("Returning current task list:"), taskList);
+				console.log(formatLogMessage("Returning current task list:"), taskListData);
 
-				result.send({ taskList });
+				result.send({ taskList: taskListData });
 			},
 			(error) => {
 				console.error(
@@ -168,26 +177,30 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskData}.
+	 * Expected input data format: {@link TaskListData}.
 	 */
-	expressApp.post("/set-tasks", (request, result) => {
+	expressApp.post("/set-tasks/", (request, result) => {
+		console.log("request.body");
+		console.log(request.body);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
+		console.log("messageData");
+		console.log(messageData);
 		if (messageData === undefined) {
 			const errorMessage = 'No task list data provided. Expected under "taskList" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskListData: TaskListData;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskListData = assertValidTaskListData(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskData).then(
+			externalDataSource.writeData(taskListData).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();

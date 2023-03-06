@@ -9,19 +9,24 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { assertValidTaskListData, TaskListData } from "../model-interface";
+import { ClientManager } from "../utilities";
 
 /**
  * Submits notifications of changes to Fluid Service.
  */
-function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
+function echoExternalDataWebhookToFluid(
+	data: TaskListData,
+	fluidServiceUrl: string,
+	containerUrl: string,
+): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	// TODO: we will need to add details (like ContainerId) to the message body or the url,
-	// so this message body format will evolve
-	const messageBody = JSON.stringify({ data });
+	const messageBody = JSON.stringify({ data, containerUrl });
+	console.log(messageBody);
+	console.log("messageBody");
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -34,6 +39,27 @@ function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string)
 			"CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:",
 			error,
 		);
+	});
+}
+
+/**
+ * Registers for webhook on receiving a specific resource to register for.
+ */
+async function registerForWebhook(
+	port: string,
+	externalDataServiceWebhookRegistrationUrl: string,
+): Promise<void> {
+	// Register with external data service for webhook notifications.
+	await fetch(externalDataServiceWebhookRegistrationUrl, {
+		method: "POST",
+		headers: {
+			"Access-Control-Allow-Origin": "*",
+			"Content-Type": "application/json",
+		},
+		body: JSON.stringify({
+			// External data service will call our webhook echoer to notify our subscribers of the data changes.
+			url: `http://localhost:${port}/external-data-webhook`,
+		}),
 	});
 }
 
@@ -82,28 +108,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		return `CUSTOMER SERVICE (${port}): ${message}`;
 	}
 
-	// Register with external data service for webhook notifications.
-	try {
-		await fetch(externalDataServiceWebhookRegistrationUrl, {
-			method: "POST",
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				// External data service will call our webhook echoer to notify our subscribers of the data changes.
-				url: `http://localhost:${port}/external-data-webhook`,
-			}),
-		});
-	} catch (error) {
-		console.error(
-			formatLogMessage(
-				`Registering for data update notifications webhook with the external data service failed due to an error.`,
-			),
-			error,
-		);
-		throw error;
-	}
+	/**
+	 * Client manager for managing clients session to resourse on external data service.
+	 */
+	const clientManager = new ClientManager<TaskListData>();
 
 	const expressApp = express();
 	expressApp.use(express.json());
@@ -123,12 +131,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *
 	 * ```json
 	 * {
-	 *  taskList: {
-	 *      [id: string]: {
-	 *          name: string,
-	 *          priority: number
-	 *      }
-	 *  }
+	 *		taskList: {
+	 * 			[ taskListId: string]: {
+	 *      		[id: string]: {
+	 *      	    	name: string,
+	 *      	    	priority: number
+	 *      		}
+	 * 			}
+	 *  	}
 	 * }
 	 * ```
 	 *
@@ -143,9 +153,9 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskListData: TaskListData;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskListData = assertValidTaskListData(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);
@@ -153,12 +163,68 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
+			// Retrieve exact Fluid session address for taskList
+			const taskListId = Object.keys(taskListData.taskList)[0];
+			const containerUrl = clientManager.getClientSession(taskListId) as string;
+
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl);
+			echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
+			result.send();
+		}
+	});
+
+	/**
+	 * "Echoes" the external data services data update notifications to our own webhook subscribers.
+	 *
+	 * Expected input data format:
+	 *
+	 * ```json
+	 * {
+	 *		taskList: {
+	 * 			[ taskListId: string]: {
+	 *      		[id: string]: {
+	 *      	    	name: string,
+	 *      	    	priority: number
+	 *      		}
+	 * 			}
+	 *  	}
+	 * }
+	 * ```
+	 *
+	 * This data will be forwarded to our own subscribers.
+	 */
+	expressApp.post("/register-session-url", (request, result) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const containerUrl = request.body?.containerUrl as string;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const taskListId = request.body?.taskListId as string;
+		if (containerUrl === undefined) {
+			const errorMessage =
+				'No session data provided by client. Expected under "sessionUrl" property.';
+			console.error(formatLogMessage(errorMessage));
+			result.status(400).json({ message: errorMessage });
+		} else {
+			clientManager.registerClient(containerUrl, taskListId);
+			console.log(
+				formatLogMessage(
+					`Registered containerUrl ${containerUrl} with external query: ${taskListId}".`,
+				),
+			);
+			registerForWebhook(port.toString(), externalDataServiceWebhookRegistrationUrl).catch(
+				(error) => {
+					console.error(
+						formatLogMessage(
+							`Registering for data update notifications webhook with the external data service failed due to an error.`,
+						),
+						error,
+					);
+					throw error;
+				},
+			);
 			result.send();
 		}
 	});
