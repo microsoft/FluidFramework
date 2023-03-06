@@ -258,16 +258,63 @@ function Benchmark(options) {
 	this.times = { ...this.times };
 }
 
-/**
- * The Deferred constructor.
- *
- * @constructor
- * @memberOf Benchmark
- * @param {Object} clone - The cloned benchmark instance.
- */
-function Deferred(clone) {
-	this.benchmark = clone;
-	clock(this);
+class Deferred {
+	/**
+	 * @param {Object} clone - The cloned benchmark instance.
+	 */
+	constructor(clone) {
+		this.benchmark = clone;
+		clock(this);
+	}
+
+	/**
+	 * Handles cycling/completing the deferred benchmark.
+	 *
+	 * @memberOf Benchmark.Deferred
+	 */
+	resolve() {
+		const deferred = this;
+		const clone = deferred.benchmark;
+		const bench = clone._original;
+
+		if (bench.aborted) {
+			// cycle() -> clone cycle/complete event -> compute()'s invoked bench.run() cycle/complete.
+			deferred.teardown();
+			clone.running = false;
+			cycle(deferred);
+		} else if (++deferred.cycles < clone.count) {
+			clone.compiled.call(deferred, globalThis, timer);
+		} else {
+			timer.stop(deferred);
+			deferred.teardown();
+			delay(clone, () => {
+				cycle(deferred);
+			});
+		}
+	}
+
+	/**
+	 * The deferred benchmark instance.
+	 * @type Object
+	 */
+	benchmark = null;
+
+	/**
+	 * The number of deferred cycles performed while benchmarking.
+	 * @type number
+	 */
+	cycles = 0;
+
+	/**
+	 * The time taken to complete the deferred benchmark (secs).
+	 * @type number
+	 */
+	elapsed = 0;
+
+	/**
+	 * @type number
+	 */
+	timeStamp = 0;
 }
 
 /**
@@ -360,32 +407,6 @@ function isHostType(object, property) {
 }
 
 /* ------------------------------------------------------------------------ */
-
-/**
- * Handles cycling/completing the deferred benchmark.
- *
- * @memberOf Benchmark.Deferred
- */
-function resolve() {
-	const deferred = this;
-	const clone = deferred.benchmark;
-	const bench = clone._original;
-
-	if (bench.aborted) {
-		// cycle() -> clone cycle/complete event -> compute()'s invoked bench.run() cycle/complete.
-		deferred.teardown();
-		clone.running = false;
-		cycle(deferred);
-	} else if (++deferred.cycles < clone.count) {
-		clone.compiled.call(deferred, globalThis, timer);
-	} else {
-		timer.stop(deferred);
-		deferred.teardown();
-		delay(clone, () => {
-			cycle(deferred);
-		});
-	}
-}
 
 /* ------------------------------------------------------------------------ */
 
@@ -1738,46 +1759,6 @@ Object.assign(Benchmark.prototype, {
 	on,
 	reset,
 	run,
-});
-
-/* ------------------------------------------------------------------------ */
-
-Object.assign(Deferred.prototype, {
-	/**
-	 * The deferred benchmark instance.
-	 *
-	 * @memberOf Benchmark.Deferred
-	 * @type Object
-	 */
-	benchmark: null,
-
-	/**
-	 * The number of deferred cycles performed while benchmarking.
-	 *
-	 * @memberOf Benchmark.Deferred
-	 * @type number
-	 */
-	cycles: 0,
-
-	/**
-	 * The time taken to complete the deferred benchmark (secs).
-	 *
-	 * @memberOf Benchmark.Deferred
-	 * @type number
-	 */
-	elapsed: 0,
-
-	/**
-	 * A timestamp of when the deferred benchmark started (ms).
-	 *
-	 * @memberOf Benchmark.Deferred
-	 * @type number
-	 */
-	timeStamp: 0,
-});
-
-Object.assign(Deferred.prototype, {
-	resolve,
 });
 
 /* ------------------------------------------------------------------------ */
