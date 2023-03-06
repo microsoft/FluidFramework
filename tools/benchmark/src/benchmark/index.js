@@ -1,5 +1,4 @@
 /* eslint-disable no-new-func */
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable no-template-curly-in-string */
 /* eslint-disable jsdoc/require-hyphen-before-param-description */
 /* eslint-disable no-bitwise */
@@ -553,10 +552,8 @@ class Benchmark {
 	 * @returns {Array} The listeners array.
 	 */
 	listeners(type) {
-		const object = this;
-		const events = object.events || (object.events = {});
-
-		return _.has(events, type) ? events[type] : (events[type] = []);
+		this.events ??= {};
+		return _.has(this.events, type) ? this.events[type] : (this.events[type] = []);
 	}
 
 	/**
@@ -585,11 +582,10 @@ class Benchmark {
 	 * bench.off();
 	 */
 	off(type, listener) {
-		const object = this;
-		const events = object.events;
+		const events = this.events;
 
 		if (!events) {
-			return object;
+			return this;
 		}
 		_.each(type ? type.split(" ") : events, (listeners, type) => {
 			let index;
@@ -608,7 +604,7 @@ class Benchmark {
 				}
 			}
 		});
-		return object;
+		return this;
 	}
 
 	/**
@@ -702,14 +698,12 @@ class Benchmark {
 	 * @returns {number} Returns `-1` if slower, `1` if faster, and `0` if indeterminate.
 	 */
 	compare(other) {
-		const bench = this;
-
 		// Exit early if comparing the same benchmark.
-		if (bench === other) {
+		if (this === other) {
 			return 0;
 		}
 		let zStat;
-		const sample1 = bench.stats.sample;
+		const sample1 = this.stats.sample;
 		const sample2 = other.stats.sample;
 		const size1 = sample1.length;
 		const size2 = sample2.length;
@@ -1722,13 +1716,5 @@ function cycle(clone, options) {
 	}
 }
 
-/* ------------------------------------------------------------------------ */
-
-// Expose Deferred, Event
-Object.assign(Benchmark, {
-	Deferred,
-	Event,
-});
-
 // eslint-disable-next-line import/no-default-export
-export { Benchmark as default, Benchmark };
+export { Benchmark as default, Benchmark, Deferred, Event };
