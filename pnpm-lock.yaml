@@ -4165,6 +4165,7 @@ importers:
       '@fluidframework/container-loader': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/core-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -4209,6 +4210,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils': link:../../../packages/common/core-utils
       '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
@@ -5963,6 +5965,7 @@ importers:
       '@fluidframework/container-loader': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/container-runtime': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/core-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -6004,6 +6007,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
@@ -22146,7 +22150,7 @@ packages:
   /axios/0.21.4_debug@4.3.2:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.2
+      follow-redirects: 1.15.2_debug@4.3.2
     transitivePeerDependencies:
       - debug
 
@@ -27510,6 +27514,17 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+
+  /follow-redirects/1.15.2_debug@4.3.2:
+    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dependencies:
+      debug: 4.3.2
 
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
