@@ -4,7 +4,6 @@
 /* eslint-disable jsdoc/require-hyphen-before-param-description */
 /* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable unicorn/no-unsafe-regex */
 /* eslint-disable unicorn/better-regex */
 /* eslint-disable no-func-assign */
 /* eslint-disable @typescript-eslint/no-this-alias */
@@ -485,7 +484,7 @@ class Benchmark {
 	 */
 	run(options) {
 		const bench = this;
-		const event = Event("start");
+		const event = new Event("start");
 
 		// Set `running` to `false` so `reset()` won't call `abort()`.
 		bench.running = false;
@@ -527,7 +526,7 @@ class Benchmark {
 	emit(type) {
 		let listeners;
 		const object = this;
-		const event = Event(type);
+		const event = new Event(type);
 		const events = object.events;
 		const args = ((arguments[0] = event), arguments);
 
@@ -648,7 +647,7 @@ class Benchmark {
 		const resetting = calledBy.reset;
 
 		if (bench.running) {
-			event = Event("abort");
+			event = new Event("abort");
 			bench.emit(event);
 			if (!event.cancelled || resetting) {
 				// Avoid infinite recursion.
@@ -828,7 +827,7 @@ class Benchmark {
 		} while ((data = queue[index++]));
 
 		// If changed emit the `reset` event and if it isn't cancelled reset the benchmark.
-		if (changes.length && (bench.emit((event = Event("reset"))), !event.cancelled)) {
+		if (changes.length && (bench.emit((event = new Event("reset"))), !event.cancelled)) {
 			_.each(changes, (data) => {
 				data.destination[data.key] = data.value;
 			});
@@ -894,21 +893,60 @@ class Deferred {
 	timeStamp = 0;
 }
 
-/**
- * The Event constructor.
- *
- * @constructor
- * @memberOf Benchmark
- * @param {Object|string} type - The event type.
- */
-function Event(type) {
-	const event = this;
-	if (type instanceof Event) {
-		return type;
+class Event {
+	/**
+	 * A flag to indicate if the emitters listener iteration is aborted.
+	 * @type boolean
+	 */
+	aborted = false;
+
+	/**
+	 * A flag to indicate if the default action is cancelled.
+	 * @type boolean
+	 */
+	cancelled = false;
+
+	/**
+	 * The object whose listeners are currently being processed.
+	 * @type Object
+	 */
+	currentTarget = undefined;
+
+	/**
+	 * The return value of the last executed listener.
+	 * @type Mixed
+	 */
+	result = undefined;
+
+	/**
+	 * The object to which the event was originally emitted.
+	 * @type Object
+	 */
+	target = undefined;
+
+	/**
+	 * A timestamp of when the event was created (ms).
+	 * @type number
+	 */
+	timeStamp = 0;
+
+	/**
+	 * The event type.
+	 * @type string
+	 */
+	type = "";
+
+	/**
+	 * The Event constructor.
+	 * @param {Object|string} type - The event type.
+	 */
+	constructor(type) {
+		if (type instanceof Event) {
+			return type;
+		}
+		this.timeStamp = +_.now();
+		Object.assign(this, typeof type == "string" ? { type } : type);
 	}
-	return event instanceof Event
-		? Object.assign(event, { timeStamp: +_.now() }, typeof type == "string" ? { type } : type)
-		: new Event(type);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1062,7 +1100,7 @@ function invoke(benches, name) {
 		// Emit "cycle" event.
 		eventProps.type = "cycle";
 		eventProps.target = last;
-		const cycleEvent = Event(eventProps);
+		const cycleEvent = new Event(eventProps);
 		options.onCycle.call(benches, cycleEvent);
 
 		// Choose next benchmark if not exiting early.
@@ -1080,7 +1118,7 @@ function invoke(benches, name) {
 		} else {
 			// Emit "complete" event.
 			eventProps.type = "complete";
-			options.onComplete.call(benches, Event(eventProps));
+			options.onComplete.call(benches, new Event(eventProps));
 		}
 		// When used as a listener `event.aborted = true` will cancel the rest of
 		// the "complete" listeners because they were already called above and when
@@ -1130,7 +1168,7 @@ function invoke(benches, name) {
 		bench = result[index];
 		eventProps.type = "start";
 		eventProps.target = bench;
-		options.onStart.call(benches, Event(eventProps));
+		options.onStart.call(benches, new Event(eventProps));
 
 		// Start method execution.
 		if (isAsync(bench)) {
@@ -1625,7 +1663,7 @@ function cycle(clone, options) {
 			bench.cycles = cycles;
 		}
 		if (clone.error) {
-			event = Event("error");
+			event = new Event("error");
 			event.message = clone.error;
 			clone.emit(event);
 			if (!event.cancelled) {
@@ -1660,7 +1698,7 @@ function cycle(clone, options) {
 		}
 	}
 	// Should we exit early?
-	event = Event("cycle");
+	event = new Event("cycle");
 	clone.emit(event);
 	if (event.aborted) {
 		clone.abort();
@@ -1683,66 +1721,6 @@ function cycle(clone, options) {
 		clone.emit("complete");
 	}
 }
-
-/* ------------------------------------------------------------------------ */
-
-Object.assign(Event.prototype, {
-	/**
-	 * A flag to indicate if the emitters listener iteration is aborted.
-	 *
-	 * @memberOf Benchmark.Event
-	 * @type boolean
-	 */
-	aborted: false,
-
-	/**
-	 * A flag to indicate if the default action is cancelled.
-	 *
-	 * @memberOf Benchmark.Event
-	 * @type boolean
-	 */
-	cancelled: false,
-
-	/**
-	 * The object whose listeners are currently being processed.
-	 *
-	 * @memberOf Benchmark.Event
-	 * @type Object
-	 */
-	currentTarget: undefined,
-
-	/**
-	 * The return value of the last executed listener.
-	 *
-	 * @memberOf Benchmark.Event
-	 * @type Mixed
-	 */
-	result: undefined,
-
-	/**
-	 * The object to which the event was originally emitted.
-	 *
-	 * @memberOf Benchmark.Event
-	 * @type Object
-	 */
-	target: undefined,
-
-	/**
-	 * A timestamp of when the event was created (ms).
-	 *
-	 * @memberOf Benchmark.Event
-	 * @type number
-	 */
-	timeStamp: 0,
-
-	/**
-	 * The event type.
-	 *
-	 * @memberOf Benchmark.Event
-	 * @type string
-	 */
-	type: "",
-});
 
 /* ------------------------------------------------------------------------ */
 
