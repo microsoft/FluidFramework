@@ -399,8 +399,8 @@ export class ScribeLambda implements IPartitionLambda {
             ...getLumberBaseProperties(this.documentId, this.tenantId),
             checkpointReason: reason,
             lastOffset: this.lastOffset,
-            deliCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
-            deliCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
+            scribeCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
+            scribeCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
             kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
             kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
         };
