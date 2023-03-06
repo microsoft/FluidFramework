@@ -1,11 +1,9 @@
 /* eslint-disable no-new-func */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable no-constant-condition */
-/* eslint-disable eqeqeq */
 /* eslint-disable no-template-curly-in-string */
 /* eslint-disable jsdoc/require-hyphen-before-param-description */
 /* eslint-disable no-bitwise */
-/* eslint-disable prefer-const */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable unicorn/no-unsafe-regex */
 /* eslint-disable unicorn/better-regex */
@@ -34,10 +32,6 @@
  */
 
 import _ from "lodash";
-
-/** Detect free variable `define`. */
-const freeDefine =
-	typeof define == "function" && typeof define.amd == "object" && define.amd && define;
 
 /** Used to assign each benchmark an incremented id. */
 let counter = 0;
@@ -190,15 +184,6 @@ function runInContext(context) {
 	const calledBy = {};
 
 	/**
-	 * An object used to flag environments/features.
-	 *
-	 * @static
-	 * @memberOf Benchmark
-	 * @type Object
-	 */
-	const support = {};
-
-	/**
 	 * Timer object used by `clock()` and `Deferred#resolve`.
 	 *
 	 * @private
@@ -239,62 +224,9 @@ function runInContext(context) {
 	 * The Benchmark constructor.
 	 *
 	 * @constructor
-	 * @param {string} name - A name to identify the benchmark.
-	 * @param {Function|string} fn - The test to benchmark.
 	 * @param {Object} [options={}] Options object.
 	 * @example
 	 *
-	 * // basic usage (the `new` operator is optional)
-	 * var bench = new Benchmark(fn);
-	 *
-	 * // or using a name first
-	 * var bench = new Benchmark('foo', fn);
-	 *
-	 * // or with options
-	 * var bench = new Benchmark('foo', fn, {
-	 *
-	 *   // displayed by `Benchmark#toString` if `name` is not available
-	 *   'id': 'xyz',
-	 *
-	 *   // called when the benchmark starts running
-	 *   'onStart': onStart,
-	 *
-	 *   // called after each run cycle
-	 *   'onCycle': onCycle,
-	 *
-	 *   // called when aborted
-	 *   'onAbort': onAbort,
-	 *
-	 *   // called when a test errors
-	 *   'onError': onError,
-	 *
-	 *   // called when reset
-	 *   'onReset': onReset,
-	 *
-	 *   // called when the benchmark completes running
-	 *   'onComplete': onComplete,
-	 *
-	 *   // compiled/called before the test loop
-	 *   'setup': setup,
-	 *
-	 *   // compiled/called after the test loop
-	 *   'teardown': teardown
-	 * });
-	 *
-	 * // or name and options
-	 * var bench = new Benchmark('foo', {
-	 *
-	 *   // a flag to indicate the benchmark is deferred
-	 *   'defer': true,
-	 *
-	 *   // benchmark test function
-	 *   'fn': function(deferred) {
-	 *     // call `Deferred#resolve` when the deferred test is finished
-	 *     deferred.resolve();
-	 *   }
-	 * });
-	 *
-	 * // or options only
 	 * var bench = new Benchmark({
 	 *
 	 *   // benchmark name
@@ -303,40 +235,14 @@ function runInContext(context) {
 	 *   // benchmark test as a string
 	 *   'fn': '[1,2,3,4].sort()'
 	 * });
-	 *
-	 * // a test's `this` binding is set to the benchmark instance
-	 * var bench = new Benchmark('foo', function() {
-	 *   'My name is '.concat(this.name); // "My name is foo"
-	 * });
 	 */
-	function Benchmark(name, fn, options) {
+	function Benchmark(options) {
 		const bench = this;
 
-		// Allow instance creation without the `new` operator.
-		if (!(bench instanceof Benchmark)) {
-			return new Benchmark(name, fn, options);
-		}
-		// Juggle arguments.
-		if (_.isPlainObject(name)) {
-			// 1 argument (options).
-			options = name;
-		} else if (_.isFunction(name)) {
-			// 2 arguments (fn, options).
-			options = fn;
-			fn = name;
-		} else if (_.isPlainObject(fn)) {
-			// 2 arguments (name, options).
-			options = fn;
-			fn = null;
-			bench.name = name;
-		} else {
-			// 3 arguments (name, fn [, options]).
-			bench.name = name;
-		}
 		setOptions(bench, options);
 
 		bench.id || (bench.id = ++counter);
-		bench.fn == null && (bench.fn = fn);
+		bench.fn ??= fn;
 
 		bench.stats = cloneDeep(bench.stats);
 		bench.times = cloneDeep(bench.times);
@@ -450,7 +356,7 @@ function runInContext(context) {
 			return false;
 		}
 		const type = typeof object[property];
-		return !rePrimitive.test(type) && (type != "object" || !!object[property]);
+		return !rePrimitive.test(type) && (type !== "object" || !!object[property]);
 	}
 
 	/**
@@ -598,7 +504,6 @@ function runInContext(context) {
 		 * Fetches the next bench or executes `onComplete` callback.
 		 */
 		function getNext(event) {
-			let cycleEvent;
 			const last = bench;
 			const async = isAsync(last);
 
@@ -609,7 +514,7 @@ function runInContext(context) {
 			// Emit "cycle" event.
 			eventProps.type = "cycle";
 			eventProps.target = last;
-			cycleEvent = Event(eventProps);
+			const cycleEvent = Event(eventProps);
 			options.onCycle.call(benches, cycleEvent);
 
 			// Choose next benchmark if not exiting early.
@@ -646,7 +551,7 @@ function runInContext(context) {
 			// Avoid using `instanceof` here because of IE memory leak issues with host objects.
 			const async = args[0] && args[0].async;
 			return (
-				name == "run" &&
+				name === "run" &&
 				object instanceof Benchmark &&
 				((async == null ? object.options.async : async) || object.defer)
 			);
@@ -915,10 +820,9 @@ function runInContext(context) {
 		const bench = this;
 
 		// Exit early if comparing the same benchmark.
-		if (bench == other) {
+		if (bench === other) {
 			return 0;
 		}
-		let critical;
 		let zStat;
 		const sample1 = bench.stats.sample;
 		const sample2 = other.stats.sample;
@@ -959,11 +863,11 @@ function runInContext(context) {
 			// ...the z-stat is greater than 1.96 or less than -1.96
 			// http://www.statisticslectures.com/topics/mannwhitneyu/
 			zStat = getZ(u);
-			return abs(zStat) > 1.96 ? (u == u1 ? 1 : -1) : 0;
+			return abs(zStat) > 1.96 ? (u === u1 ? 1 : -1) : 0;
 		}
 		// ...the U value is less than or equal the critical U value.
-		critical = maxSize < 5 || minSize < 3 ? 0 : uTable[maxSize][minSize - 3];
-		return u <= critical ? (u == u1 ? 1 : -1) : 0;
+		const critical = maxSize < 5 || minSize < 3 ? 0 : uTable[maxSize][minSize - 3];
+		return u <= critical ? (u === u1 ? 1 : -1) : 0;
 	}
 
 	/**
@@ -1014,7 +918,7 @@ function runInContext(context) {
 							currValue = [];
 						}
 						// Check if an array has changed its length.
-						if (currValue.length != value.length) {
+						if (currValue.length !== value.length) {
 							changed = true;
 							currValue = currValue.slice(0, value.length);
 							currValue.length = value.length;
@@ -1045,42 +949,6 @@ function runInContext(context) {
 			});
 		}
 		return bench;
-	}
-
-	/**
-	 * Displays relevant benchmark information when coerced to a string.
-	 *
-	 * @name toString
-	 * @memberOf Benchmark
-	 * @returns {string} A string representation of the benchmark instance.
-	 */
-	function toStringBench() {
-		const bench = this;
-		const error = bench.error;
-		const hz = bench.hz;
-		const id = bench.id;
-		const stats = bench.stats;
-		const size = stats.sample.length;
-		const pm = "\xb1";
-		let result = bench.name || (_.isNaN(id) ? id : `<Test #${id}>`);
-
-		if (error) {
-			let errorStr;
-			if (!_.isObject(error)) {
-				errorStr = String(error);
-			} else if (!_.isError(Error)) {
-				errorStr = join(error);
-			} else {
-				// Error#name and Error#message properties are non-enumerable.
-				errorStr = join({ name: error.name, message: error.message, ...error });
-			}
-			result += `: ${errorStr}`;
-		} else {
-			result += ` x ${formatNumber(
-				hz.toFixed(hz < 100 ? 2 : 0),
-			)} ops/sec ${pm}${stats.rme.toFixed(2)}% (${size} run${size == 1 ? "" : "s"} sampled)`;
-		}
-		return result;
 	}
 
 	/* ------------------------------------------------------------------------ */
@@ -1154,7 +1022,7 @@ function runInContext(context) {
 					bench.count = 1;
 					compiled =
 						decompilable &&
-						(compiled.call(bench, context, timer) || {}).uid == templateData.uid &&
+						(compiled.call(bench, context, timer) || {}).uid === templateData.uid &&
 						compiled;
 					bench.count = count;
 				}
@@ -1214,12 +1082,12 @@ function runInContext(context) {
 			});
 
 			// Use API of chosen timer.
-			if (timer.unit == "ns") {
+			if (timer.unit === "ns") {
 				Object.assign(templateData, {
 					begin: interpolate("s#=n#()"),
 					end: interpolate("r#=n#(s#);r#=r#[0]+(r#[1]/1e9)"),
 				});
-			} else if (timer.unit == "us") {
+			} else if (timer.unit === "us") {
 				if (timer.ns.stop) {
 					Object.assign(templateData, {
 						begin: interpolate("s#=n#.start()"),
@@ -1275,7 +1143,7 @@ function runInContext(context) {
 
 			// Get average smallest measurable time.
 			while (count--) {
-				if (unit == "us") {
+				if (unit === "us") {
 					divisor = 1e6;
 					if (ns.stop) {
 						ns.start();
@@ -1284,7 +1152,7 @@ function runInContext(context) {
 						begin = ns();
 						while (!(measured = ns() - begin)) {}
 					}
-				} else if (unit == "ns") {
+				} else if (unit === "ns") {
 					divisor = 1e9;
 					begin = (begin = ns())[0] + begin[1] / divisor;
 					while (!(measured = (measured = ns())[0] + measured[1] / divisor - begin)) {}
@@ -1335,7 +1203,7 @@ function runInContext(context) {
 		timer = _.minBy(timers, "res");
 
 		// Error if there are no working timers.
-		if (timer.res == Infinity) {
+		if (timer.res === Infinity) {
 			throw new Error("Benchmark.js was unable to find a working timer.");
 		}
 		// Resolve time span required to achieve a percent uncertainty of at most 1%.
@@ -1388,14 +1256,14 @@ function runInContext(context) {
 			const type = event.type;
 
 			if (bench.running) {
-				if (type == "start") {
+				if (type === "start") {
 					// Note: `clone.minTime` prop is inited in `clock()`.
 					clone.count = bench.initCount;
 				} else {
-					if (type == "error") {
+					if (type === "error") {
 						bench.error = clone.error;
 					}
-					if (type == "abort") {
+					if (type === "abort") {
 						bench.abort();
 						bench.emit("cycle");
 					} else {
@@ -1435,7 +1303,7 @@ function runInContext(context) {
 			};
 
 			// Exit early for aborted or unclockable tests.
-			if (done || clone.hz == Infinity) {
+			if (done || clone.hz === Infinity) {
 				maxedOut = !(size = sample.length = queue.length = 0);
 			}
 
@@ -1478,7 +1346,7 @@ function runInContext(context) {
 					done = true;
 					times.elapsed = (now - times.timeStamp) / 1e3;
 				}
-				if (bench.hz != Infinity) {
+				if (bench.hz !== Infinity) {
 					bench.hz = 1 / mean;
 					times.cycle = mean * bench.count;
 					times.period = mean;
@@ -1575,7 +1443,7 @@ function runInContext(context) {
 				if (count <= clone.count) {
 					count += Math.ceil((minTime - clocked) / period);
 				}
-				clone.running = count != Infinity;
+				clone.running = count !== Infinity;
 			}
 		}
 		// Should we exit early?
@@ -1792,7 +1660,6 @@ function runInContext(context) {
 		invoke,
 		join,
 		runInContext,
-		support,
 	});
 
 	/* ------------------------------------------------------------------------ */
@@ -2048,7 +1915,6 @@ function runInContext(context) {
 		on,
 		reset,
 		run,
-		toString: toStringBench,
 	});
 
 	/* ------------------------------------------------------------------------ */
