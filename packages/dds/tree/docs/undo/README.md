@@ -139,7 +139,8 @@ the only difference between the message sent when undoing an edit that lies with
 and undoing an edit that lies outside it,
 would be that the latter includes additional historical data.
 
-This is the approach we currently intend to implement.
+This is the approach we currently intend to implement long term.
+(See [V1 Undo](#v1-undo) for short-term horizon)
 
 One challenge with this approach is that it could result in attempting to send prohibitively large amounts of historical data.
 That's because applying the undo _may_ require historical data not only from the edit to be undone,
@@ -171,7 +172,8 @@ This may need to be characterized as a combination of input context regions and 
 
 ## V1 Undo
 
-Here we detail the vision for the first implementation of undo.
+Here we detail the vision for the first implementation of undo/redo.
+This implementation is meant to satisfy our needs for parity with experimental (AKA legacy) SharedTree.
 
 This first version aims to achieve some basic undo functionality with a minimum amount of code changes and complexity.
 To that end, we mostly reuse the existing code paths for changesets by always sending
@@ -180,6 +182,7 @@ The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
 
 Sending concrete undo edits alleviates the need establish and maintain distributed consensus on an undo window.
+It also means summaries do not need to include repair data.
 It does however require sending rebased changes over the wire.
 
 ### Concrete Undo of Unsequenced Changes
@@ -193,7 +196,7 @@ This could lead to some data loss in scenarios where the change to be undone del
 ### Undo Tree
 
 In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
-To that end, we need to maintain a tree of undoable commits.
+To that end, we need to maintain a tree of undoable commits (based on the `GraphCommit` structure defined in `src\core\rebase\types.ts`).
 That tree is a sparse copy of the commit tree maintained by `EditManager` and `Checkout`s for branch management.
 
 The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
