@@ -169,11 +169,11 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         }
     }
 
-    public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
+    public async findOrCreate(query: any, value: any): Promise<{ value: T; existing: boolean; }> {
         const req = async () => {
             const result = await this.collection.findOneAndUpdate(
-                query,
-                {setOnInsert: value},
+                {query},
+                {$setOnInsert: value},
                 {upsert: true,
                 returnDocument: "before"}
             );
@@ -189,11 +189,11 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         );
     }
 
-    public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean; }> {
+    public async findAndUpdate(query: any, value: any): Promise<{ value: T; existing: boolean; }> {
         const req = async () => {
             const result = await this.collection.findOneAndUpdate(
                 query,
-                {set: value},
+                {$set: value},
                 {returnDocument: "before"});
 
             return result.value

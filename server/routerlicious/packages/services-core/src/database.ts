@@ -78,7 +78,7 @@ export interface ICollection<T> {
      * @param query - data we want to find
      * @param value - data to insert to the database if we cannot find query
      */
-    findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean; }>;
+    findOrCreate(query: any, value: any): Promise<{ value: T; existing: boolean; }>;
 
     /**
      * Finds query in the database and replace its value.
@@ -87,7 +87,7 @@ export interface ICollection<T> {
      * @param query - data we want to find
      * @param value - data to update to the database
      */
-    findAndUpdate(query: any, value: T): Promise<{
+    findAndUpdate(query: any, value: any): Promise<{
         value: T;
         existing: boolean;
     }>;

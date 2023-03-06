@@ -668,6 +668,7 @@ importers:
       '@types/ioredis': ^4.22.0
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.0
+      '@types/mongodb': 3.1.17
       '@types/node': ^14.18.0
       '@types/sinon': ^9.0.9
       '@types/uuid': ^8.3.0
@@ -728,6 +729,7 @@ importers:
       '@types/ioredis': 4.28.10
       '@types/lru-cache': 5.1.1
       '@types/mocha': 10.0.1
+      '@types/mongodb': 3.1.17
       '@types/node': 14.18.34
       '@types/sinon': 9.0.11
       '@types/uuid': 8.3.4
@@ -4379,7 +4381,7 @@ packages:
   /@octokit/types/2.15.0:
     resolution: {integrity: sha512-0mnpenB8rLhBVu8VUklp38gWi+EatjvcEcLWcdProMKauSaQWWepOAybZ714sOGsEyhXPlIcHICggn8HUsCXVw==}
     dependencies:
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@octokit/types/6.41.0:
@@ -4695,6 +4697,13 @@ packages:
       '@types/node': 18.0.0
     dev: true
 
+  /@types/bson/4.2.0:
+    resolution: {integrity: sha512-ELCPqAdroMdcuxqwMgUpifQyRoTpyYCNr1V9xKyF40VsBobsj+BbWNRvwGchMgBPGqkw655ypkjj2MEF5ywVwg==}
+    deprecated: This is a stub types definition. bson provides its own type definitions, so you do not need this installed.
+    dependencies:
+      bson: 4.7.0
+    dev: true
+
   /@types/bytes/3.1.1:
     resolution: {integrity: sha512-lOGyCnw+2JVPKU3wIV0srU0NyALwTBJlVSx5DfMQOFuuohA8y9S8orImpuIQikZ0uIQ8gehrRjxgQC1rLRi11w==}
     dev: true
@@ -4704,7 +4713,7 @@ packages:
     dependencies:
       '@types/http-cache-semantics': 4.0.1
       '@types/keyv': 3.1.4
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
       '@types/responselike': 1.0.0
     dev: true
 
@@ -4719,7 +4728,7 @@ packages:
   /@types/cli-progress/3.11.0:
     resolution: {integrity: sha512-XhXhBv1R/q2ahF3BM7qT5HLzJNlIL0wbcGyZVjqOTqAybAnsLisd7gy1UCyIqpL+5Iv6XhlSyzjLCnI2sIdbCg==}
     dependencies:
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/compression/0.0.33:
@@ -4731,7 +4740,7 @@ packages:
   /@types/connect/3.4.35:
     resolution: {integrity: sha512-cdeYyv4KWoEgpBISTxWvqYsVy444DOqehiF3fM3ne10AmJ62RSyNkUnxMJXHQWRQQX2eR94m5y1IZyDwBjV9FQ==}
     dependencies:
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/cookie-parser/1.4.3:
@@ -4807,7 +4816,7 @@ packages:
     resolution: {integrity: sha512-ZUxbzKl0IfJILTS6t7ip5fQQM/J3TJYubDm3nMbgubNNYS62eXeUpoLUC8/7fJNiFYHTrGPQn7hspDUzIHX3UA==}
     dependencies:
       '@types/minimatch': 3.0.5
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/http-cache-semantics/4.0.1:
@@ -4849,7 +4858,7 @@ packages:
   /@types/keyv/3.1.4:
     resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
     dependencies:
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/lodash/4.14.184:
@@ -4873,6 +4882,13 @@ packages:
 
   /@types/mocha/10.0.1:
     resolution: {integrity: sha512-/fvYntiO1GeICvqbQ3doGDIP97vWmvFt83GKguJ6prmQM2iXZfFcq6YE8KteFyRtX2/h5Hf91BYvPodJKFYv5Q==}
+    dev: true
+
+  /@types/mongodb/3.1.17:
+    resolution: {integrity: sha512-u6tSIpfdsgK74aE0TuyqZYhHscw+gHs6dQNSsFUTFXubhhxCqovmV3nJRS0YKSw0sfqbzUgGzbG5+yorUPRnFg==}
+    dependencies:
+      '@types/bson': 4.2.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/morgan/1.9.3:
@@ -4935,7 +4951,7 @@ packages:
   /@types/responselike/1.0.0:
     resolution: {integrity: sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==}
     dependencies:
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/semver/6.2.3:
@@ -4946,7 +4962,7 @@ packages:
     resolution: {integrity: sha512-z5xyF6uh8CbjAu9760KDKsH2FcDxZ2tFCsA4HIMWE6IkiYMXfVoa+4f9KX+FN0ZLsaMw1WNG2ETLA6N+/YA+cg==}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/sinon/10.0.13:
@@ -4979,7 +4995,7 @@ packages:
     resolution: {integrity: sha512-tLfnlJf6A5mB6ddqF159GqcDizfzbMUB1/DeT59/wBNqzRTNNKsaw79A/1TZ84X+f/EwWH8FeuSkjlCLyqS/zQ==}
     dependencies:
       '@types/cookiejar': 2.1.2
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/supertest/2.0.12:
@@ -5000,7 +5016,7 @@ packages:
     resolution: {integrity: sha512-4UqPv+2567NhMQuMLdKAyK4yzrfCqwaTt6bLhHEs8PFcxbHILsrxaY63n4wgE/BRLDWDQeI+WcTmkXKExh9hQg==}
     dependencies:
       '@types/expect': 1.20.4
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
     dev: true
 
   /@types/webidl-conversions/7.0.0:
@@ -5010,7 +5026,7 @@ packages:
   /@types/whatwg-url/8.2.2:
     resolution: {integrity: sha512-FtQu10RWgn3D9U4aazdwIE2yzphmTJREDqNdODHrbrZmmMqI0vMheC/6NE/J1Yveaj8H+ela+YwWTjq5PGmuhA==}
     dependencies:
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
       '@types/webidl-conversions': 7.0.0
     dev: false
 
@@ -6220,7 +6236,6 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       buffer: 5.7.1
-    dev: false
 
   /btoa-lite/1.0.0:
     resolution: {integrity: sha512-gvW7InbIyF8AicrqWoptdW08pUxuhq8BEgowNajy9RhiE86fmGAGl+bLKo6oB8QP0CkqHLowfN0oJdKC/J6LbA==}
@@ -7715,7 +7730,7 @@ packages:
     dependencies:
       '@types/cookie': 0.4.1
       '@types/cors': 2.8.12
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
       accepts: 1.3.8
       base64id: 2.0.0
       cookie: 0.4.2
@@ -8452,7 +8467,7 @@ packages:
     dependencies:
       '@types/chai': 4.3.3
       '@types/lodash': 4.14.184
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
       '@types/sinon': 10.0.13
       lodash: 4.17.21
       mock-stdin: 1.0.0
@@ -10216,7 +10231,7 @@ packages:
     resolution: {integrity: sha512-7vuh85V5cdDofPyxn58nrPjBktZo0u9x1g8WtjQol+jZDaE+fhN+cIvTj11GndBnMnyfrUOG1sZQxCdjKh+DKg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/node': 18.0.0
+      '@types/node': 14.18.34
       merge-stream: 2.0.0
       supports-color: 8.1.1
     dev: true
@@ -14662,7 +14677,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.3.8
       typescript: 4.5.5
-      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack: 5.75.0
     dev: true
 
   /ts-morph/7.3.0:
