@@ -13,7 +13,13 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 
+/**
+ * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
+ */
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
+	 */
 	public static create(
 		documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[],
 	) {
@@ -37,13 +43,22 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
 
 	private readonly protocolToDocumentFactoryMap: Map<string, IDocumentServiceFactory>;
 
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
+	 */
 	constructor(documentServiceFactories: IDocumentServiceFactory[]) {
 		this.protocolToDocumentFactoryMap = new Map();
 		documentServiceFactories.forEach((factory: IDocumentServiceFactory) => {
 			this.protocolToDocumentFactoryMap.set(factory.protocolName, factory);
 		});
 	}
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
+	 */
 	public readonly protocolName = "none:";
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
+	 */
 	async createDocumentService(
 		resolvedUrl: IResolvedUrl,
 		logger?: ITelemetryBaseLogger,
@@ -64,6 +79,9 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
 		return factory.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
 	}
 
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
+	 */
 	public async createContainer(
 		createNewSummary: ISummaryTree,
 		createNewResolvedUrl: IResolvedUrl,

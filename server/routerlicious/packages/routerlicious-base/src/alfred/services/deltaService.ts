@@ -79,8 +79,7 @@ export class DeltaService implements IDeltaService {
         documentId: string,
         from?: number,
         to?: number) {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (!existingRef) {

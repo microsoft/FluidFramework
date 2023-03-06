@@ -44,7 +44,7 @@
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.fuzz.spec.js' -r @fluidframework/mocha-test-setup --unhandled-rejections=strict",
 		"testfarm": "node dist/test/testFarm.js",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --generate --dir .",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"nyc": {
@@ -85,14 +85,14 @@
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluid-internal/test-dds-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluid-tools/benchmark": "^0.45.0",
-		"@fluid-tools/build-cli": "^0.10.0",
+		"@fluid-tools/benchmark": "^0.46.0",
+		"@fluid-tools/build-cli": "0.11.0-135362",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.10.0",
+		"@fluidframework/build-tools": "0.11.0-135362",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/gitresources": "^0.1038.2000",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.3.1.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.3.2.0",
 		"@fluidframework/server-services-client": "^0.1038.2000",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -114,10 +114,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"version": "2.0.0-internal.3.2.0",
-		"previousVersionStyle": "~previousMinor",
-		"baselineRange": ">=2.0.0-internal.3.1.0 <2.0.0-internal.3.2.0",
-		"baselineVersion": "2.0.0-internal.3.1.0",
 		"broken": {}
 	}
 }

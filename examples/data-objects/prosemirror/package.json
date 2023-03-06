@@ -104,5 +104,9 @@
 				"library": "main"
 			}
 		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }
