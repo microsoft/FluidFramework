@@ -18,7 +18,6 @@ import {
     throttle,
     IThrottleMiddlewareOptions,
     getParam,
-    getTokenFromRequest,
     validateTokenRevocationClaims,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
@@ -181,7 +180,6 @@ export function create(
     router.post(
         "/:tenantId/document/:id/revokeToken",
         validateRequestParams("tenantId", "id"),
-        getTokenFromRequest(),
         validateTokenRevocationClaims(),
         verifyStorageToken(tenantManager, config),
         throttle(tenantThrottler, winston, tenantThrottleOptions),
@@ -193,7 +191,7 @@ export function create(
                 `Received token revocation request.`,
                 lumberjackProperties);
             // TODO: add implementation here.
-            response.status(503).json("Token revocation is not supported for now");
+            response.status(501).json("Token revocation is not supported for now");
         });
     return router;
 }

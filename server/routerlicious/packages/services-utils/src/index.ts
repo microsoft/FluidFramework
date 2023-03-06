@@ -12,7 +12,6 @@ export {
 	respondWithNetworkError,
 	validateTokenClaims,
 	verifyStorageToken,
-	getTokenFromRequest,
 	validateTokenRevocationClaims,
 } from "./auth";
 export { parseBoolean } from "./conversion";
