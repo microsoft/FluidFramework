@@ -13,7 +13,7 @@ import { releaseGroupFlag } from "../flags";
 /**
  * The root `info` command.
  */
-export default class InfoCommand extends BaseCommand<typeof InfoCommand.flags> {
+export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 	static description = "Get info about the repo, release groups, and packages.";
 
 	static flags = {
@@ -31,7 +31,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand.flags> {
 	};
 
 	async run(): Promise<void> {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 		const context = await this.getContext();
 		let packages =
 			flags.releaseGroup !== undefined && isMonoRepoKind(flags.releaseGroup)

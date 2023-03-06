@@ -39,11 +39,7 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	ensureFluidResolvedUrl,
-	MultiUrlResolver,
-	MultiDocumentServiceFactory,
-} from "@fluidframework/driver-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -289,10 +285,8 @@ export class Loader implements IHostLoader {
 		);
 
 		this.services = {
-			urlResolver: MultiUrlResolver.create(loaderProps.urlResolver),
-			documentServiceFactory: MultiDocumentServiceFactory.create(
-				loaderProps.documentServiceFactory,
-			),
+			urlResolver: loaderProps.urlResolver,
+			documentServiceFactory: loaderProps.documentServiceFactory,
 			codeLoader: loaderProps.codeLoader,
 			options: loaderProps.options ?? {},
 			scope,
