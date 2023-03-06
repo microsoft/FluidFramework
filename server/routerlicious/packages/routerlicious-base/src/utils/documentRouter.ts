@@ -26,10 +26,8 @@ export async function createDocumentRouter(
 	config: nconf.Provider,
 ): Promise<IPartitionLambdaFactory<IPartitionConfig>> {
 	const pluginConfig = config.get("documentLambda") as string | object;
-	// eslint-disable-next-line @typescript-eslint/no-require-imports
-	const plugin = (
-		typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)
-	) as IPlugin;
+	const plugin = // eslint-disable-next-line @typescript-eslint/no-require-imports
+		(typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;
 
 	// Factory used to create document lambda processors
 	const factory = await plugin.create(config);
