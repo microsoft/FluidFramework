@@ -266,12 +266,8 @@ function Benchmark(options) {
  * @param {Object} clone - The cloned benchmark instance.
  */
 function Deferred(clone) {
-	const deferred = this;
-	if (!(deferred instanceof Deferred)) {
-		return new Deferred(clone);
-	}
-	deferred.benchmark = clone;
-	clock(deferred);
+	this.benchmark = clone;
+	clock(this);
 }
 
 /**
@@ -1470,7 +1466,7 @@ function run(options) {
 		// For clones created within `compute()`.
 		if (bench._original) {
 			if (bench.defer) {
-				Deferred(bench);
+				new Deferred(bench);
 			} else {
 				cycle(bench, options);
 			}
