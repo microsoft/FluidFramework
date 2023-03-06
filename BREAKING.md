@@ -236,10 +236,19 @@ The @fluid-experimental/get-container package was deprecated in version 0.39 and
 -   [Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver](#Support-for-passing-empty-string-in-IUrlResolver.getAbsoluteUrl-relativeUrl-argument-in-OdspDriverUrlResolverForShareLink-and-OdspDriverUrlResolver)
 -   [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
 -   [Deprecate internal connection details from `IConnectionDetails`](#deprecate-internal-connection-details-from-IConnectionDetails)
+[Deprecated ContainerServices in `@fluidframework/aqueduct`](#deprecated-ContainerServices)
 
 ### Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver
 
 Now if an empty string is passed, then the relativeUrl or data store path will be derived from the resolved url if possible.
+
+### Deprecated ContainerServices in `@fluidframework/aqueduct`
+
+Deprecating `BaseContainerService`, `ContainerServiceRegistryEntries`, `generateContainerServicesRequestHandler` and `serviceRoutePathRoot` in `@fluidframework/aqueduct`, no longer exposing these to runtime. See `@fluidframework/synthesize#DependencyContainer` for replacement. Reasons for deprecation:
+
+-   `serviceRoutePathRoot` : Seems to only be used internally
+-   `BaseContainerService` : reason, tbd
+-   `initialClients` and `version` : reason, tbd
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 

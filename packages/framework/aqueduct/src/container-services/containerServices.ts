@@ -13,14 +13,21 @@ import {
 } from "@fluidframework/runtime-utils";
 
 // TODO: should this just be "s"?
+/**
+ * @deprecated See {@link @fluidframework/synthesize#DependencyContainer}
+ */
 export const serviceRoutePathRoot = "_services";
 
+/**
+ * @deprecated See {@link @fluidframework/synthesize#DependencyContainer}
+ */
 export type ContainerServiceRegistryEntries = Iterable<
 	[string, (runtime: IContainerRuntime) => Promise<FluidObject>]
 >;
 
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
+ * @deprecated See {@link @fluidframework/synthesize#DependencyContainer}
  */
 export abstract class BaseContainerService implements IFluidRouter {
 	public get IFluidRouter() {
@@ -59,6 +66,7 @@ class SingletonContainerServiceFactory {
 /**
  * Given a collection of IContainerServices will produce a RequestHandler for them all
  * @param serviceRegistry - Collection of Container Services
+ * @deprecated See {@link @fluidframework/synthesize#DependencyContainer}
  */
 export const generateContainerServicesRequestHandler = (
 	serviceRegistry: ContainerServiceRegistryEntries,

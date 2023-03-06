@@ -54,7 +54,7 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
 }
 
-// @public
+// @public @deprecated
 export abstract class BaseContainerService implements IFluidRouter {
     constructor(runtime: IContainerRuntime);
     // (undocumented)
@@ -75,7 +75,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
     protected readonly defaultFactory: IFluidDataStoreFactory;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type ContainerServiceRegistryEntries = Iterable<[
 string,
 (runtime: IContainerRuntime) => Promise<FluidObject>
@@ -107,7 +107,7 @@ export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, reque
 // @public
 export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @public
+// @public @deprecated
 export const generateContainerServicesRequestHandler: (serviceRegistry: ContainerServiceRegistryEntries) => RuntimeRequestHandler;
 
 // @public
@@ -196,7 +196,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     readonly type: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const serviceRoutePathRoot = "_services";
 
 // @public @deprecated (undocumented)
