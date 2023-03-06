@@ -84,6 +84,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         const scribeSessionMetric = createSessionMetric(tenantId, documentId,
             LumberEventName.ScribeSessionResult, this.serviceConfiguration);
 
+        const lumberProperties = getLumberBaseProperties(tenantId, documentId);
+
         try {
             const tenant = await this.tenantManager.getTenant(tenantId, documentId);
             gitManager = tenant.gitManager;
@@ -91,8 +93,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             summaryReader = new SummaryReader(tenantId, documentId, gitManager, this.enableWholeSummaryUpload);
             [latestSummary, document] = await Promise.all([
                 summaryReader.readLastSummary(),
-                this.documentCollection.findOne({ documentId, tenantId }),
+                this.localDocumentCollection.findOne({ documentId, tenantId }),
             ]);
+
+            if (!document) {
+                Lumberjack.info(`Document not found in local collection. Querying the global collection.`, lumberProperties);
+                document = await this.documentCollection.findOne({ documentId, tenantId });
+            } else {
+                Lumberjack.info(`Document retrieved from local collection.`, lumberProperties);
+            }
 
             if (!isDocumentValid(document)) {
                 // Document sessions can be joined (via Alfred) after a document is functionally deleted.
@@ -102,7 +111,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                     errorMessage,
                     { messageMetaData },
                 );
-                Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
+                Lumberjack.error(errorMessage, lumberProperties);
                 return new NoOpLambda(context);
             }
             if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
@@ -110,7 +119,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 const errMsg =
                     `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
                 context.log?.error(errMsg, { messageMetaData });
-                Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
+                Lumberjack.error(errMsg, lumberProperties);
                 if (this.serviceConfiguration.enforceDiscoveryFlow) {
                     // This can/will prevent any users from creating a valid session in this location
                     // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
@@ -121,7 +130,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         } catch (error) {
             const errorMessage = "Scribe lambda creation failed.";
             context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });
-            Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId), error);
+            Lumberjack.error(errorMessage, lumberProperties, error);
             await this.sendLambdaStartResult(tenantId, documentId, { lambdaName: LambdaName.Scribe, success: false });
             scribeSessionMetric?.error("Scribe lambda creation failed", error);
 
@@ -133,15 +142,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         if (document.scribe === undefined || document.scribe === null) {
             const message = "New document. Setting empty scribe checkpoint";
             context.log?.info(message, { messageMetaData });
-            Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+            Lumberjack.info(message, lumberProperties);
             lastCheckpoint = DefaultScribe;
         } else if (document.scribe === "") {
             const message = "Existing document. Fetching checkpoint from summary";
             context.log?.info(message, { messageMetaData });
-            Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
+            Lumberjack.info(message, lumberProperties);
             if (!latestSummary.fromSummary) {
                 context.log?.error(`Summary can't be fetched`, { messageMetaData });
-                Lumberjack.error(`Summary can't be fetched`, getLumberBaseProperties(documentId, tenantId));
+                Lumberjack.error(`Summary can't be fetched`, lumberProperties);
                 lastCheckpoint = DefaultScribe;
             } else {
                 lastCheckpoint = JSON.parse(latestSummary.scribe);
@@ -153,7 +162,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 lastCheckpoint.logOffset = -1;
                 const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
                 context.log?.info(checkpointMessage, { messageMetaData });
-                Lumberjack.info(checkpointMessage, getLumberBaseProperties(documentId, tenantId));
+                Lumberjack.info(checkpointMessage, lumberProperties);
             }
         } else {
             lastCheckpoint = JSON.parse(document.scribe);
