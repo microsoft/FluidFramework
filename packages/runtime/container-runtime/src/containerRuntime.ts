@@ -1562,7 +1562,7 @@ export class ContainerRuntime
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
 	 */
-	public async getEntryPoint(): Promise<FluidObject | undefined> {
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
 		return this.entryPoint;
 	}
 	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
