@@ -684,7 +684,7 @@ function runInContext(context) {
 			args = slice.call(arguments, 2);
 		} else {
 			// 2 arguments (array, options).
-			options = _.assign(options, name);
+			options = Object.assign(options, name);
 			name = options.name;
 			args = _.isArray((args = "args" in options ? options.args : [])) ? args : [args];
 			queued = options.queued;
@@ -903,10 +903,10 @@ function runInContext(context) {
 	 */
 	function clone(options) {
 		const bench = this;
-		const result = new bench.constructor(_.assign({}, bench, options));
+		const result = new bench.constructor({ ...bench, ...options });
 
 		// Correct the `options` object.
-		result.options = _.assign({}, cloneDeep(bench.options), cloneDeep(options));
+		result.options = { ...cloneDeep(bench.options), ...cloneDeep(options) };
 
 		// Copy own custom properties.
 		_.forOwn(bench, function (value, key) {
@@ -1004,7 +1004,10 @@ function runInContext(context) {
 		// For more information see http://www.jslab.dk/articles/non.recursive.preorder.traversal.part4.
 		let data = {
 			destination: bench,
-			source: _.assign({}, cloneDeep(bench.constructor.prototype), cloneDeep(bench.options)),
+			source: {
+				...cloneDeep(bench.constructor.prototype),
+				...cloneDeep(bench.options),
+			},
 		};
 
 		do {
@@ -1083,7 +1086,7 @@ function runInContext(context) {
 				errorStr = join(error);
 			} else {
 				// Error#name and Error#message properties are non-enumerable.
-				errorStr = join(_.assign({ name: error.name, message: error.message }, error));
+				errorStr = join({ name: error.name, message: error.message, ...error });
 			}
 			result += `: ${errorStr}`;
 		} else {
@@ -1217,7 +1220,7 @@ function runInContext(context) {
 
 			templateData.uid = uid + uidCounter++;
 
-			_.assign(templateData, {
+			Object.assign(templateData, {
 				setup: interpolate("m#.setup()"),
 				fn: interpolate(`m#.fn(${fnArg})`),
 				fnArg,
@@ -1226,29 +1229,29 @@ function runInContext(context) {
 
 			// Use API of chosen timer.
 			if (timer.unit == "ns") {
-				_.assign(templateData, {
+				Object.assign(templateData, {
 					begin: interpolate("s#=n#()"),
 					end: interpolate("r#=n#(s#);r#=r#[0]+(r#[1]/1e9)"),
 				});
 			} else if (timer.unit == "us") {
 				if (timer.ns.stop) {
-					_.assign(templateData, {
+					Object.assign(templateData, {
 						begin: interpolate("s#=n#.start()"),
 						end: interpolate("r#=n#.microseconds()/1e6"),
 					});
 				} else {
-					_.assign(templateData, {
+					Object.assign(templateData, {
 						begin: interpolate("s#=n#()"),
 						end: interpolate("r#=(n#()-s#)/1e6"),
 					});
 				}
 			} else if (timer.ns.now) {
-				_.assign(templateData, {
+				Object.assign(templateData, {
 					begin: interpolate("s#=(+n#.now())"),
 					end: interpolate("r#=((+n#.now())-s#)/1e3"),
 				});
 			} else {
-				_.assign(templateData, {
+				Object.assign(templateData, {
 					begin: interpolate("s#=new n#().getTime()"),
 					end: interpolate("r#=(new n#().getTime()-s#)/1e3"),
 				});
@@ -1379,7 +1382,7 @@ function runInContext(context) {
 		 */
 		function enqueue() {
 			queue.push(
-				_.assign(bench.clone(), {
+				Object.assign(bench.clone(), {
 					_original: bench,
 					events: {
 						abort: [update],
@@ -1468,7 +1471,7 @@ function runInContext(context) {
 				// Compute the relative margin of error.
 				rme = (moe / mean) * 100 || 0;
 
-				_.assign(bench.stats, {
+				Object.assign(bench.stats, {
 					deviation: sd,
 					mean,
 					moe,
@@ -1800,7 +1803,7 @@ function runInContext(context) {
 		onStart: undefined,
 	};
 
-	_.assign(Benchmark, {
+	Object.assign(Benchmark, {
 		formatNumber,
 		invoke,
 		join,
