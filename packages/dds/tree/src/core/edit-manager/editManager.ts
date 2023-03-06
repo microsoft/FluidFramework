@@ -61,8 +61,6 @@ export class EditManager<
 	 */
 	private localBranch: GraphCommit<TChangeset>;
 
-	private localSessionId?: SessionId;
-
 	private minimumSequenceNumber: number = -1;
 
 	public readonly computationName: string = "EditManager";
@@ -83,6 +81,8 @@ export class EditManager<
 
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
+		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
+		public readonly localSessionId: SessionId,
 		public readonly anchors?: AnchorSet,
 	) {
 		super();
@@ -132,20 +132,6 @@ export class EditManager<
 
 			// TODO: when arbitrary local branching is added, the local branches will need to be considered here as well
 		}
-	}
-
-	/**
-	 * Sets the ID that uniquely identifies the session for the document being edited.
-	 * This function must be called before new changes (local or sequenced) are fed to this `EditManager`.
-	 * This function must be called exactly once.
-	 * @param id - The ID for the session associated with this `EditManager` instance.
-	 */
-	public initSessionId(id: SessionId): void {
-		assert(
-			this.localSessionId === undefined,
-			0x427 /* The session ID should only be set once */,
-		);
-		this.localSessionId = id;
 	}
 
 	public isEmpty(): boolean {
@@ -234,6 +220,13 @@ export class EditManager<
 		return this.trunk;
 	}
 
+	/**
+	 * @returns the head commit of the local branch
+	 */
+	public getLocalBranchHead(): GraphCommit<TChangeset> {
+		return this.localBranch;
+	}
+
 	public getLocalChanges(): readonly RecursiveReadonly<TChangeset>[] {
 		return getPathFromBase(this.localBranch, this.trunk).map((c) => c.change);
 	}
@@ -243,11 +236,6 @@ export class EditManager<
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 	): Delta.Root {
-		assert(
-			this.localSessionId !== undefined,
-			0x429 /* The session ID should be set before processing changes */,
-		);
-
 		if (newCommit.sessionId === this.localSessionId) {
 			// `newCommit` should correspond to the oldest change in `localChanges`, so we move it into trunk.
 			// `localChanges` are already rebased to the trunk, so we can use the stored change instead of rebasing the
@@ -315,11 +303,6 @@ export class EditManager<
 	}
 
 	private pushToLocalBranch(revision: RevisionTag, change: TChangeset): void {
-		assert(
-			this.localSessionId !== undefined,
-			0x42a /* The session ID should be set before processing changes */,
-		);
-
 		this.localBranch = mintCommit(this.localBranch, {
 			revision,
 			sessionId: this.localSessionId,

@@ -11,13 +11,12 @@ import {
 	JsonableTree,
 	ITreeCursor,
 	TaggedChange,
-	RevisionTag,
 	ITreeCursorSynchronous,
 	tagChange,
 	TreeSchemaIdentifier,
 	FieldSchema,
 } from "../core";
-import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -39,6 +38,7 @@ import {
 	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
+import { chunkTree, defaultChunkPolicy } from "./chunked-forest";
 
 type BrandedFieldKind<
 	TName extends string,
@@ -186,7 +186,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	encoder: new UnitEncoder(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: 0): Delta.FieldChanges => ({}),
+	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 };
 
 /**
@@ -205,9 +205,12 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	encoder: new ValueEncoder<number>(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change: number): Delta.FieldChanges => ({
-		beforeShallow: [{ index: 0, setValue: change }],
-	}),
+	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
+		{
+			type: Delta.MarkType.Modify,
+			setValue: change,
+		},
+	],
 };
 
 /**
@@ -244,12 +247,9 @@ export type NodeUpdate =
 	| { set: JsonableTree }
 	| {
 			/**
-			 * The tag of the change that deleted the node being restored.
-			 *
-			 * Undefined when the operation is the product of a tag-less change being inverted.
-			 * It is invalid to try convert such an operation to a delta.
+			 * The node being restored.
 			 */
-			revert: RevisionTag | undefined;
+			revert: ITreeCursorSynchronous;
 	  };
 
 export interface ValueChangeset {
@@ -296,13 +296,15 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 	invert: (
 		{ revision, change }: TaggedChange<ValueChangeset>,
 		invertChild: NodeChangeInverter,
+		reviver: NodeReviver,
 	): ValueChangeset => {
 		const inverse: ValueChangeset = {};
 		if (change.changes !== undefined) {
-			inverse.changes = invertChild(change.changes);
+			inverse.changes = invertChild(change.changes, 0);
 		}
 		if (change.value !== undefined) {
-			inverse.value = { revert: revision };
+			assert(revision !== undefined, "Unable to revert to undefined revision");
+			inverse.value = { revert: reviver(revision, 0, 1)[0] };
 		}
 		return inverse;
 	},
@@ -382,32 +384,31 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 	encoder: valueFieldEncoder,
 	editor: valueFieldEditor,
 
-	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
-		const fieldChanges: Mutable<Delta.FieldChanges> = {};
+	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
 		if (change.value !== undefined) {
-			let newValue: ITreeCursorSynchronous;
-			if ("revert" in change.value) {
-				const revision = change.value.revert;
-				assert(revision !== undefined, 0x477 /* Unable to revert to undefined revision */);
-				newValue = reviver(revision, 0, 1)[0];
-			} else {
-				newValue = singleTextCursor(change.value.set);
-			}
-			fieldChanges.shallow = [
-				{ type: Delta.MarkType.Delete, count: 1 },
-				{
+			let mark: Delta.Mark;
+			const newValue: ITreeCursorSynchronous =
+				"revert" in change.value ? change.value.revert : singleTextCursor(change.value.set);
+			if (change.changes === undefined) {
+				mark = {
 					type: Delta.MarkType.Insert,
 					content: [newValue],
-				},
-			];
-		}
-		if (change.changes !== undefined) {
-			const modify = deltaFromChild(change.changes, 0);
-			if (modify) {
-				fieldChanges.afterShallow = [{ ...modify, index: 0 }];
+				};
+			} else {
+				const modify = deltaFromChild(change.changes);
+				const cursor = chunkTree(newValue, defaultChunkPolicy).cursor();
+				cursor.firstNode();
+				mark = {
+					...modify,
+					type: Delta.MarkType.InsertAndModify,
+					content: cursor,
+				};
 			}
+
+			return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
 		}
-		return fieldChanges;
+
+		return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
 	},
 };
 
@@ -494,6 +495,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
+		reviver: NodeReviver,
 	): OptionalChangeset => {
 		const inverse: OptionalChangeset = {};
 
@@ -501,12 +503,13 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		if (fieldChange !== undefined) {
 			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
 			if (!fieldChange.wasEmpty) {
-				inverse.fieldChange.newContent = { revert: revision };
+				assert(revision !== undefined, "Unable to revert to undefined revision");
+				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0] };
 			}
 		}
 
 		if (change.childChange !== undefined) {
-			inverse.childChange = invertChild(change.childChange);
+			inverse.childChange = invertChild(change.childChange, 0);
 		}
 
 		return inverse;
@@ -618,6 +621,39 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 	},
 };
 
+function deltaFromInsertAndChange(
+	insertedContent: ITreeCursorSynchronous | undefined,
+	nodeChange: NodeChangeset | undefined,
+	deltaFromNode: ToDelta,
+): Delta.Mark[] {
+	if (insertedContent !== undefined) {
+		const content = chunkTree(insertedContent, defaultChunkPolicy).cursor();
+		content.firstNode();
+		if (nodeChange !== undefined) {
+			const nodeDelta = deltaFromNode(nodeChange);
+			return [
+				{
+					...nodeDelta,
+					type: Delta.MarkType.InsertAndModify,
+					content,
+				},
+			];
+		}
+		return [
+			{
+				type: Delta.MarkType.Insert,
+				content: [content],
+			},
+		];
+	}
+
+	if (nodeChange !== undefined) {
+		return [deltaFromNode(nodeChange)];
+	}
+
+	return [];
+}
+
 /**
  * 0 or 1 items.
  */
@@ -629,48 +665,27 @@ export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = n
 		encoder: optionalFieldEncoder,
 		editor: optionalFieldEditor,
 
-		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta, reviver: NodeReviver) => {
-			const fieldChanges: Mutable<Delta.FieldChanges> = {};
+		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
 			const update = change.fieldChange?.newContent;
-			const shallow = [];
+			let content: ITreeCursorSynchronous | undefined;
+			if (update === undefined) {
+				content = undefined;
+			} else if ("set" in update) {
+				content = singleTextCursor(update.set);
+			} else {
+				content = update.revert;
+			}
+			const insertDelta = deltaFromInsertAndChange(
+				content,
+				change.childChange,
+				deltaFromChild,
+			);
+
 			if (change.fieldChange !== undefined && !change.fieldChange.wasEmpty) {
-				shallow.push({ type: Delta.MarkType.Delete, count: 1 });
+				return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
 			}
-			if (update !== undefined) {
-				if ("set" in update) {
-					shallow.push({
-						type: Delta.MarkType.Insert,
-						content: [singleTextCursor(update.set)],
-					});
-				} else {
-					const revision = update.revert;
-					assert(
-						revision !== undefined,
-						0x478 /* Unable to revert to undefined revision */,
-					);
-					const content = reviver(revision, 0, 1);
-					shallow.push({
-						type: Delta.MarkType.Insert,
-						content,
-					});
-				}
-			}
-			if (shallow.length > 0) {
-				fieldChanges.shallow = shallow;
-			}
-			if (change.childChange !== undefined) {
-				const childDelta = deltaFromChild(change.childChange, 0);
-				if (childDelta) {
-					// TODO: the changeset should be able to represent changes to both the subtree present before
-					// the change and the subtree present after the change.
-					if (update === undefined) {
-						fieldChanges.beforeShallow = [{ index: 0, ...childDelta }];
-					} else {
-						fieldChanges.afterShallow = [{ index: 0, ...childDelta }];
-					}
-				}
-			}
-			return fieldChanges;
+
+			return insertDelta;
 		},
 	},
 	(types, other) =>

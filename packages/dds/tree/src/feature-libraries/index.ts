@@ -101,10 +101,12 @@ export {
 	GenericChangeset,
 	genericFieldKind,
 	NodeReviver,
+	RevisionIndexer,
+	RevisionInfo,
 	TypedSchema,
 } from "./modular-schema";
 
-export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	EditManagerIndex,

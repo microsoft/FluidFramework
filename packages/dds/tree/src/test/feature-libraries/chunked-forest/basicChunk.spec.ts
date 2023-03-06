@@ -22,7 +22,7 @@ import {
 	chunkTree,
 	TreeChunk,
 } from "../../../feature-libraries";
-import { brand } from "../../../util";
+import { brand, ReferenceCountedBase } from "../../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { uniformChunk } from "../../../feature-libraries/chunked-forest";
 // eslint-disable-next-line import/no-internal-modules
@@ -39,7 +39,6 @@ import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenc
 import { jsonNumber } from "../../../domains";
 import {
 	ChunkedCursor,
-	ReferenceCountedBase,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunk";
 import { emptyShape, testData } from "./uniformChunkTestData";

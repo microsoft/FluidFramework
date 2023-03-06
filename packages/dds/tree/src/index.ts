@@ -72,7 +72,6 @@ export {
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
-	ICheckout,
 	TransactionResult,
 	FieldAnchor,
 	RevisionTag,
@@ -82,6 +81,15 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
+	AnchorEvents,
 	FieldKindSpecifier,
 } from "./core";
 
@@ -107,7 +115,15 @@ export {
 	fail,
 } from "./util";
 
-export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
+export {
+	Events,
+	IsEvent,
+	ISubscribable,
+	createEmitter,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
+} from "./events";
 
 export {
 	cursorToJsonObject,
@@ -149,6 +165,8 @@ export {
 	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
+	RevisionIndexer,
+	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
@@ -214,6 +232,11 @@ export const FieldKinds = {
 	sequence: FieldKindsOriginal.sequence as FieldKind<FieldEditor<any>, Multiplicity.Sequence>,
 } as const;
 
-export { ISharedTree, SharedTreeFactory } from "./shared-tree";
+export {
+	ISharedTree,
+	ISharedTreeCheckout,
+	ISharedTreeCheckoutFork,
+	SharedTreeFactory,
+} from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";

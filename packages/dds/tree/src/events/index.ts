@@ -12,4 +12,6 @@ export {
 	TransformEvents,
 	UnionToIntersection,
 	IEmitter,
+	NoListenersCallback,
+	HasListeners,
 } from "./events";
