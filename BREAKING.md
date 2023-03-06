@@ -45,6 +45,7 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 -   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
 -   [driver-utils members deprecated](#driver-utils-members-deprecated)
 -   [Aqueduct members deprecated](#Aqueduct-members-deprecated)
+-   [IDocumentServiceFactory.protocolName deprecated](#IDocumentServiceFactory.protocolName-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -134,6 +135,10 @@ The following members of the `@fluidframework/aqueduct` package have been deprec
 
 -   `waitForAttach()`
     -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
+
+### IDocumentServiceFactory.protocolName deprecated
+
+Document service factories should not be distinguished by unique non-standard protocols, and so the `IDocumentServiceFactory.protocolName` member will be removed in an upcoming release. Instead prefer to map urls to factories using standards-compliant components of the url (e.g. host name, path, etc.).
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

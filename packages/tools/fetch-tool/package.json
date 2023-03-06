@@ -33,6 +33,7 @@
 		"@fluid-tools/fluidapp-odsp-urlresolver": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-runtime": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/datastore": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/driver-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",

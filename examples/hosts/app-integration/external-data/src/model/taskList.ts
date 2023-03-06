@@ -111,6 +111,8 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	private _draftData: SharedMap | undefined;
 
+	private _errorFlagCount: number = 0;
+
 	private get externalDataSnapshot(): SharedMap {
 		if (this._externalDataSnapshot === undefined) {
 			throw new Error("The externalDataSnapshot SharedMap has not yet been initialized.");
@@ -344,6 +346,12 @@ export class TaskList extends DataObject implements ITaskList {
 		// the "save" button case this might be fine (the user saves what they see), but in more-automatic
 		// sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
 		// as what we do for summarization).
+
+		this._errorFlagCount++;
+		// Force update failures every 3 calls to showcase retry logic.
+		if (this._errorFlagCount % 3 === 0) {
+			throw new Error("Simulated error to demonstrate failure writing to external service.");
+		}
 		const tasks = this.getDraftTasks();
 		const formattedTasks = {};
 		for (const task of tasks) {
@@ -352,6 +360,7 @@ export class TaskList extends DataObject implements ITaskList {
 				priority: task.draftPriority,
 			};
 		}
+
 		try {
 			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
 				method: "POST",
