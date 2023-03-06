@@ -48,7 +48,6 @@ function echoExternalDataWebhookToFluid(
 async function registerForWebhook(
 	port: string,
 	externalDataServiceWebhookRegistrationUrl: string,
-	taskListId: string,
 ): Promise<void> {
 	// Register with external data service for webhook notifications.
 	await fetch(externalDataServiceWebhookRegistrationUrl, {
@@ -59,7 +58,7 @@ async function registerForWebhook(
 		},
 		body: JSON.stringify({
 			// External data service will call our webhook echoer to notify our subscribers of the data changes.
-			url: `http://localhost:${port}/external-data-webhook?taskListId=${taskListId}`,
+			url: `http://localhost:${port}/external-data-webhook`,
 		}),
 	});
 }
@@ -215,19 +214,17 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Registered containerUrl ${containerUrl} with external query: ${taskListId}".`,
 				),
 			);
-			registerForWebhook(
-				port.toString(),
-				externalDataServiceWebhookRegistrationUrl,
-				taskListId,
-			).catch((error) => {
-				console.error(
-					formatLogMessage(
-						`Registering for data update notifications webhook with the external data service failed due to an error.`,
-					),
-					error,
-				);
-				throw error;
-			});
+			registerForWebhook(port.toString(), externalDataServiceWebhookRegistrationUrl).catch(
+				(error) => {
+					console.error(
+						formatLogMessage(
+							`Registering for data update notifications webhook with the external data service failed due to an error.`,
+						),
+						error,
+					);
+					throw error;
+				},
+			);
 			result.send();
 		}
 	});
