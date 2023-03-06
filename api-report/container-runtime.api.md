@@ -418,38 +418,6 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
-// @public @deprecated
-export interface IPendingFlush {
-    // (undocumented)
-    type: "flush";
-}
-
-// @public @deprecated (undocumented)
-export interface IPendingLocalState {
-    pendingStates: IPendingState[];
-}
-
-// @public @deprecated
-export interface IPendingMessage {
-    // (undocumented)
-    clientSequenceNumber: number;
-    // (undocumented)
-    content: any;
-    // (undocumented)
-    localOpMetadata: unknown;
-    // (undocumented)
-    messageType: ContainerMessageType;
-    // (undocumented)
-    opMetadata: Record<string, unknown> | undefined;
-    // (undocumented)
-    referenceSequenceNumber: number;
-    // (undocumented)
-    type: "message";
-}
-
-// @public @deprecated (undocumented)
-export type IPendingState = IPendingMessage | IPendingFlush;
-
 // @public @deprecated (undocumented)
 export interface IProvideSummarizer {
     // @deprecated (undocumented)

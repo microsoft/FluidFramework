@@ -15,7 +15,6 @@ import { pkgVersion } from "./packageVersion";
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
- * @deprecated - This interface will no longer be exported in a future version
  */
 export interface IPendingMessage {
 	type: "message";
@@ -30,20 +29,13 @@ export interface IPendingMessage {
 /**
  * This represents an explicit flush call and is added to the pending queue when flush is called on the ContainerRuntime
  * to flush pending messages.
- * @deprecated Use batch metadata on IPendingMessage instead. To be removed in 2.0.0-internal.4.0.0 (AB#2496)
  */
 export interface IPendingFlush {
 	type: "flush";
 }
 
-/**
- * @deprecated - This interface will no longer be exported in a future version
- */
 export type IPendingState = IPendingMessage | IPendingFlush;
 
-/**
- * @deprecated - This interface will no longer be exported in a future version
- */
 export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information
