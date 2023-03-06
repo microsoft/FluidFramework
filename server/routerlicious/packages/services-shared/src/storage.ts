@@ -121,8 +121,7 @@ export class DocumentStorage implements IDocumentStorage {
         values: [string, ICommittedProposal][],
         enableDiscovery: boolean = false,
     ): Promise<IDocumentDetails> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
         const lumberjackProperties = {
             [BaseTelemetryProperties.tenantId]: tenantId,
@@ -258,22 +257,20 @@ export class DocumentStorage implements IDocumentStorage {
     }
 
     public async getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
         return gitManager.getCommits(documentId, count);
     }
 
     public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
         return gitManager.getCommit(sha);
     }
 
     public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const versions = await tenant.gitManager.getCommits(documentId, 1);
+        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+        const versions = await gitManager.getCommits(documentId, 1);
         if (versions.length === 0) {
             return {
                 cache: { blobs: [], commits: [], refs: { [documentId]: (null as unknown) as string }, trees: [] },
@@ -281,7 +278,7 @@ export class DocumentStorage implements IDocumentStorage {
             };
         }
 
-        const fullTree = await tenant.gitManager.getFullTree(versions[0].sha);
+        const fullTree = await gitManager.getFullTree(versions[0].sha);
 
         let code: string = (null as unknown) as string;
         if (fullTree.quorumValues) {
@@ -373,8 +370,7 @@ export class DocumentStorage implements IDocumentStorage {
     }
 
     private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+        const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {
             // Fetch ops from logTail and insert into deltas collection.

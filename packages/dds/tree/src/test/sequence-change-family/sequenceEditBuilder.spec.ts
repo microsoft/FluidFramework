@@ -108,9 +108,12 @@ describe("SequenceEditBuilder", () => {
 		const expected: Delta.Root = new Map([
 			[
 				rootKey,
-				{
-					beforeShallow: [{ index: 0, setValue: 42 }],
-				},
+				[
+					{
+						type: Delta.MarkType.Modify,
+						setValue: 42,
+					},
+				],
 			],
 		]);
 		assert.deepEqual(deltas, [expected]);
@@ -118,16 +121,39 @@ describe("SequenceEditBuilder", () => {
 
 	it("Can set a child node value", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const innerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 5, setValue: 42 }],
-		};
-		const outerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDelta]]) }],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.Modify,
+														setValue: 42,
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+						]),
+					},
+				],
+			],
+		]);
 		builder.setValue(root_foo2_foo5, 42);
 		assert.deepEqual(deltas, [expected]);
 	});
@@ -137,14 +163,12 @@ describe("SequenceEditBuilder", () => {
 		const expected: Delta.Root = new Map([
 			[
 				rootKey,
-				{
-					shallow: [
-						{
-							type: Delta.MarkType.Insert,
-							content: [nodeXCursor],
-						},
-					],
-				},
+				[
+					{
+						type: Delta.MarkType.Insert,
+						content: [nodeXCursor],
+					},
+				],
 			],
 		]);
 		builder.insert(root, singleTextCursor(nodeX));
@@ -153,22 +177,39 @@ describe("SequenceEditBuilder", () => {
 
 	it("Can insert a child node", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const innerFooDelta: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.Insert,
-					content: [nodeXCursor],
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.Insert,
+														content: [nodeXCursor],
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const outerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDelta]]) }],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.insert(root_foo2_foo5, singleTextCursor(nodeX));
 		assert.deepEqual(deltas, [expected]);
 	});
@@ -178,14 +219,12 @@ describe("SequenceEditBuilder", () => {
 		const expected: Delta.Root = new Map([
 			[
 				rootKey,
-				{
-					shallow: [
-						{
-							type: Delta.MarkType.Delete,
-							count: 1,
-						},
-					],
-				},
+				[
+					{
+						type: Delta.MarkType.Delete,
+						count: 1,
+					},
+				],
 			],
 		]);
 		builder.delete(root, 1);
@@ -194,344 +233,492 @@ describe("SequenceEditBuilder", () => {
 
 	it("Can delete child nodes", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const innerFooDelta: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.Delete,
-					count: 10,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.Delete,
+														count: 10,
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const outerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDelta]]) }],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.delete(root_foo2_foo5, 10);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes to the right within a field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const fooDelta: Delta.FieldChanges = {
-			shallow: [
-				2,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 10,
-				},
-				5,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 10,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.MoveOut,
+										moveId,
+										count: 10,
+									},
+									5,
+									{
+										type: Delta.MarkType.MoveIn,
+										moveId,
+										count: 10,
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo2, 10, root_foo17);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes to the left within a field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const fooDelta: Delta.FieldChanges = {
-			shallow: [
-				2,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 10,
-				},
-				15,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 10,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.MoveIn,
+										moveId,
+										count: 10,
+									},
+									15,
+									{
+										type: Delta.MarkType.MoveOut,
+										moveId,
+										count: 10,
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo17, 10, root_foo2);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes into their own midst", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const fooDelta: Delta.FieldChanges = {
-			shallow: [
-				2,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 15,
-				},
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 15,
-				},
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId: moveId2,
-					count: 5,
-				},
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId: moveId2,
-					count: 5,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.MoveOut,
+										moveId,
+										count: 15,
+									},
+									{
+										type: Delta.MarkType.MoveIn,
+										moveId,
+										count: 15,
+									},
+									{
+										type: Delta.MarkType.MoveIn,
+										moveId: moveId2,
+										count: 5,
+									},
+									{
+										type: Delta.MarkType.MoveOut,
+										moveId: moveId2,
+										count: 5,
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo2, 20, root_foo17);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes across fields of the same parent", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const fooDelta: Delta.FieldChanges = {
-			shallow: [
-				2,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 10,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.MoveOut,
+										moveId,
+										count: 10,
+									},
+								],
+							],
+							[
+								barKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.MoveIn,
+										moveId,
+										count: 10,
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const barDelta: Delta.FieldChanges = {
-			shallow: [
-				2,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 10,
-				},
-			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [
-				{
-					index: 0,
-					fields: new Map([
-						[fooKey, fooDelta],
-						[barKey, barDelta],
-					]),
-				},
-			],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo2, 10, root_bar2);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes to the right across subtrees of the same field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 3,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.MoveOut,
+														moveId,
+														count: 3,
+													},
+												],
+											],
+										]),
+									},
+									14,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.MoveIn,
+														moveId,
+														count: 3,
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const innerFooDeltaDst: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 3,
-				},
-			],
-		};
-		const outerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [
-				{ index: 2, fields: new Map([[fooKey, innerFooDeltaSrc]]) },
-				{ index: 17, fields: new Map([[fooKey, innerFooDeltaDst]]) },
-			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo2_foo5, 3, root_foo17_foo5);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes to the left across subtrees of the same field", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 3,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.MoveIn,
+														moveId,
+														count: 3,
+													},
+												],
+											],
+										]),
+									},
+									14,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.MoveOut,
+														moveId,
+														count: 3,
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const innerFooDeltaDst: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 3,
-				},
-			],
-		};
-		const outerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [
-				{ index: 2, fields: new Map([[fooKey, innerFooDeltaDst]]) },
-				{ index: 17, fields: new Map([[fooKey, innerFooDeltaSrc]]) },
-			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, outerFooDelta]]) }],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo17_foo5, 3, root_foo2_foo5);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes across subtrees of different fields", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 3,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.MoveOut,
+														moveId,
+														count: 3,
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+							[
+								barKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												barKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.MoveIn,
+														moveId,
+														count: 3,
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const innerBarDeltaDst: Delta.FieldChanges = {
-			shallow: [
-				5,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 3,
-				},
-			],
-		};
-		const outerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 2, fields: new Map([[fooKey, innerFooDeltaSrc]]) }],
-		};
-		const outerBarDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 2, fields: new Map([[barKey, innerBarDeltaDst]]) }],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [
-				{
-					index: 0,
-					fields: new Map([
-						[fooKey, outerFooDelta],
-						[barKey, outerBarDelta],
-					]),
-				},
-			],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo2_foo5, 3, root_bar2_bar5);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes across deep subtrees of different fields", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const innerFooDeltaSrc: Delta.FieldChanges = {
-			shallow: [
-				7,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 3,
-				},
+		const expected: Delta.Root = new Map([
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												fooKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.Modify,
+														fields: new Map([
+															[
+																fooKey,
+																[
+																	7,
+																	{
+																		type: Delta.MarkType
+																			.MoveOut,
+																		moveId,
+																		count: 3,
+																	},
+																],
+															],
+														]),
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+							[
+								barKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.Modify,
+										fields: new Map([
+											[
+												barKey,
+												[
+													5,
+													{
+														type: Delta.MarkType.Modify,
+														fields: new Map([
+															[
+																barKey,
+																[
+																	7,
+																	{
+																		type: Delta.MarkType.MoveIn,
+																		moveId,
+																		count: 3,
+																	},
+																],
+															],
+														]),
+													},
+												],
+											],
+										]),
+									},
+								],
+							],
+						]),
+					},
+				],
 			],
-		};
-		const innerBarDeltaDst: Delta.FieldChanges = {
-			shallow: [
-				7,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 3,
-				},
-			],
-		};
-		const midFooDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 5, fields: new Map([[fooKey, innerFooDeltaSrc]]) }],
-		};
-		const midBarDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 5, fields: new Map([[barKey, innerBarDeltaDst]]) }],
-		};
-		const outerFooDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 2, fields: new Map([[fooKey, midFooDelta]]) }],
-		};
-		const outerBarDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 2, fields: new Map([[barKey, midBarDelta]]) }],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [
-				{
-					index: 0,
-					fields: new Map([
-						[fooKey, outerFooDelta],
-						[barKey, outerBarDelta],
-					]),
-				},
-			],
-		};
-		const expected: Delta.Root = new Map([[rootKey, rootDelta]]);
+		]);
 		builder.move(root_foo2_foo5_foo7, 3, root_bar2_bar5_bar7);
 		assert.deepEqual(deltas, [expected]);
 	});
 
 	it("Can move nodes to a detached tree", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const fooDelta: Delta.FieldChanges = {
-			shallow: [
-				2,
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 10,
-				},
-			],
-		};
-		const detachedDelta: Delta.FieldChanges = {
-			shallow: [
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 10,
-				},
-			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
-		};
 		const expected: Delta.Root = new Map([
-			[rootKey, rootDelta],
-			[detachedKey, detachedDelta],
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.MoveOut,
+										moveId,
+										count: 10,
+									},
+								],
+							],
+						]),
+					},
+				],
+			],
+			[
+				detachedKey,
+				[
+					{
+						type: Delta.MarkType.MoveIn,
+						moveId,
+						count: 10,
+					},
+				],
+			],
 		]);
 		builder.move(root_foo2, 10, detached);
 		assert.deepEqual(deltas, [expected]);
@@ -539,31 +726,38 @@ describe("SequenceEditBuilder", () => {
 
 	it("Can move nodes from a detached tree", () => {
 		const { builder, deltas } = makeBuilderToDeltas();
-		const fooDelta: Delta.FieldChanges = {
-			shallow: [
-				2,
-				{
-					type: Delta.MarkType.MoveIn,
-					moveId,
-					count: 10,
-				},
-			],
-		};
-		const detachedDelta: Delta.FieldChanges = {
-			shallow: [
-				{
-					type: Delta.MarkType.MoveOut,
-					moveId,
-					count: 10,
-				},
-			],
-		};
-		const rootDelta: Delta.FieldChanges = {
-			beforeShallow: [{ index: 0, fields: new Map([[fooKey, fooDelta]]) }],
-		};
 		const expected: Delta.Root = new Map([
-			[rootKey, rootDelta],
-			[detachedKey, detachedDelta],
+			[
+				rootKey,
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
+								[
+									2,
+									{
+										type: Delta.MarkType.MoveIn,
+										moveId,
+										count: 10,
+									},
+								],
+							],
+						]),
+					},
+				],
+			],
+			[
+				detachedKey,
+				[
+					{
+						type: Delta.MarkType.MoveOut,
+						moveId,
+						count: 10,
+					},
+				],
+			],
 		]);
 		builder.move(detached, 10, root_foo2);
 		assert.deepEqual(deltas, [expected]);
@@ -578,9 +772,12 @@ describe("SequenceEditBuilder", () => {
 			new Map([
 				[
 					rootKey,
-					{
-						beforeShallow: [{ index: 0, setValue: 42 }],
-					},
+					[
+						{
+							type: Delta.MarkType.Modify,
+							setValue: 42,
+						},
+					],
 				],
 			]),
 		);
@@ -591,9 +788,12 @@ describe("SequenceEditBuilder", () => {
 			new Map([
 				[
 					rootKey,
-					{
-						beforeShallow: [{ index: 0, setValue: 43 }],
-					},
+					[
+						{
+							type: Delta.MarkType.Modify,
+							setValue: 43,
+						},
+					],
 				],
 			]),
 		);
@@ -604,9 +804,12 @@ describe("SequenceEditBuilder", () => {
 			new Map([
 				[
 					rootKey,
-					{
-						beforeShallow: [{ index: 0, setValue: 44 }],
-					},
+					[
+						{
+							type: Delta.MarkType.Modify,
+							setValue: 44,
+						},
+					],
 				],
 			]),
 		);

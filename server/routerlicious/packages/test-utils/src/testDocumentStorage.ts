@@ -73,8 +73,7 @@ export class TestDocumentStorage implements IDocumentStorage {
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
 	): Promise<IDocumentDetails> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-		const gitManager = tenant.gitManager;
+		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
 		const blobsShaCache = new Set<string>();
 		const handle = await writeSummaryTree(gitManager, summary, blobsShaCache, undefined);
@@ -198,15 +197,13 @@ export class TestDocumentStorage implements IDocumentStorage {
 		documentId: string,
 		count: number,
 	): Promise<ICommitDetails[]> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-		const gitManager = tenant.gitManager;
+		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
 		return gitManager.getCommits(documentId, count);
 	}
 
 	public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
-		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-		const gitManager = tenant.gitManager;
+		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
 		return gitManager.getCommit(sha);
 	}

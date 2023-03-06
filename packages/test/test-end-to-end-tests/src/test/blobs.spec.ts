@@ -180,7 +180,7 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 		]);
 	});
 
-	it("attach sends an op with compression enabled", async function () {
+	it("attach sends ops with compression enabled", async function () {
 		const container = await provider.makeTestContainer({
 			...testContainerConfig,
 			runtimeOptions: {
@@ -202,10 +202,14 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 			}),
 		);
 
-		const blob = await dataStore._runtime.uploadBlob(
-			stringToBuffer("some random text", "utf-8"),
-		);
-		dataStore._root.set("my blob", blob);
+		for (let i = 0; i < 5; i++) {
+			const blob = await dataStore._runtime.uploadBlob(
+				stringToBuffer("some random text", "utf-8"),
+			);
+
+			dataStore._root.set(`Blob #${i}`, blob);
+		}
+
 		await blobOpP;
 	});
 });
