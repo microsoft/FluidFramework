@@ -31,7 +31,7 @@ describeE2EDocsRuntime(scenarioTitle, (getTestObjectProvider, getDocumentInfo) =
 		title: scenarioTitle,
 		benchmarkFnAsync: async () => {
 			const container = await documentMap.loadDocument();
-			assert(this.container !== undefined, "container needs to be defined.");
+			assert(container !== undefined, "container needs to be defined.");
 			container.close();
 		},
 	});
