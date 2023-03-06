@@ -236,7 +236,7 @@ The @fluid-experimental/get-container package was deprecated in version 0.39 and
 -   [Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver](#Support-for-passing-empty-string-in-IUrlResolver.getAbsoluteUrl-relativeUrl-argument-in-OdspDriverUrlResolverForShareLink-and-OdspDriverUrlResolver)
 -   [Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`](#deprecate-ensurecontainerconnected-in-fluidframeworktest-utils)
 -   [Deprecate internal connection details from `IConnectionDetails`](#deprecate-internal-connection-details-from-IConnectionDetails)
-[Deprecated ContainerServices in `@fluidframework/aqueduct`](#deprecated-ContainerServices)
+-   [Deprecated ContainerServices in @fluidframework/aqueduct](#deprecated-ContainerServices-in-@fluidframework/aqueduct)
 
 ### Support for passing empty string in `IUrlResolver.getAbsoluteUrl` relativeUrl argument in OdspDriverUrlResolverForShareLink and OdspDriverUrlResolver
 
