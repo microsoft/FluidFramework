@@ -99,30 +99,4 @@ export class ClientManager<TData = unknown> {
 			);
 		}
 	}
-
-	// /**
-	//  * Submits notifications of changes to webhook subscribers.
-	//  */
-	// public notifySubscribers(data: TData): void {
-	// 	console.log(
-	// 		`EXTERNAL DATA SERVICE WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
-	// 	);
-
-	// 	const messageBody = JSON.stringify({ data });
-	// 	for (const subscriberUrl of this._subscribers) {
-	// 		fetch(subscriberUrl, {
-	// 			method: "POST",
-	// 			headers: {
-	// 				"Access-Control-Allow-Origin": "*",
-	// 				"Content-Type": "application/json",
-	// 			},
-	// 			body: messageBody,
-	// 		}).catch((error) => {
-	// 			console.error(
-	// 				"EXTERNAL DATA SERVICE WEBHOOK: Encountered an error while notifying subscribers:",
-	// 				error,
-	// 			);
-	// 		});
-	// 	}
-	// }
 }

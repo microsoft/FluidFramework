@@ -25,8 +25,6 @@ function echoExternalDataWebhookToFluid(
 	);
 
 	const messageBody = JSON.stringify({ data, containerUrl });
-	console.log(messageBody);
-	console.log("messageBody");
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
