@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { createSummarizer, ITestObjectProvider, summarizeNow } from "@fluidframework/test-utils";
-import { describeE2EDocsRuntime, DescribeE2EDocInfo } from "@fluidframework/test-version-utils";
+import { describeE2EDocsRuntime } from "@fluidframework/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
@@ -14,7 +14,6 @@ const scenarioTitle = "Summarize Document";
 describeE2EDocsRuntime(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
-	let docData: DescribeE2EDocInfo | undefined;
 	let summaryVersion: string;
 
 	async function waitForSummary(summarizer: ISummarizer): Promise<string> {
@@ -27,7 +26,7 @@ describeE2EDocsRuntime(scenarioTitle, (getTestObjectProvider, getDocumentInfo) =
 	before(async () => {
 		provider = getTestObjectProvider();
 		assert(getDocumentInfo !== undefined, "documentType needs to be defined.");
-		docData = getDocumentInfo();
+		const docData = getDocumentInfo();
 
 		documentMap = DocumentCreator.create({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,

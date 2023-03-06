@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeE2EDocsMemory, DescribeE2EDocInfo } from "@fluidframework/test-version-utils";
+import { describeE2EDocsMemory } from "@fluidframework/test-version-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { DocumentCreator } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
@@ -15,11 +15,10 @@ const scenarioTitle = "Load Document";
 describeE2EDocsMemory(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
-	let docData: DescribeE2EDocInfo;
 
 	before(async () => {
 		provider = getTestObjectProvider();
-		docData = getDocumentInfo();
+		const docData = getDocumentInfo();
 		documentMap = DocumentCreator.create({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
