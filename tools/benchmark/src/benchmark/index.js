@@ -622,13 +622,14 @@ class Benchmark {
 	 * bench.on('start cycle', listener);
 	 */
 	on(type, listener) {
-		const object = this;
-		const events = object.events || (object.events = {});
+		this.events ??= {};
 
 		_.each(type.split(" "), (type) => {
-			(_.has(events, type) ? events[type] : (events[type] = [])).push(listener);
+			(_.has(this.events, type) ? this.events[type] : (this.events[type] = [])).push(
+				listener,
+			);
 		});
-		return object;
+		return this;
 	}
 
 	/* ------------------------------------------------------------------------ */
@@ -638,29 +639,27 @@ class Benchmark {
 	 * @returns {Object} The benchmark instance.
 	 */
 	abort() {
-		let event;
-		const bench = this;
 		const resetting = calledBy.reset;
 
-		if (bench.running) {
-			event = new Event("abort");
-			bench.emit(event);
+		if (this.running) {
+			const event = new Event("abort");
+			this.emit(event);
 			if (!event.cancelled || resetting) {
 				// Avoid infinite recursion.
 				calledBy.abort = true;
-				bench.reset();
+				this.reset();
 				delete calledBy.abort;
 
-				clearTimeout(bench._timerId);
-				delete bench._timerId;
+				clearTimeout(this._timerId);
+				delete this._timerId;
 
 				if (!resetting) {
-					bench.aborted = true;
-					bench.running = false;
+					this.aborted = true;
+					this.running = false;
 				}
 			}
 		}
-		return bench;
+		return this;
 	}
 
 	/**
@@ -675,14 +674,13 @@ class Benchmark {
 	 * });
 	 */
 	clone(options) {
-		const bench = this;
-		const result = new bench.constructor({ ...bench, ...options });
+		const result = new Benchmark({ ...this, ...options });
 
 		// Correct the `options` object.
-		result.options = { ...bench.options, ...options };
+		result.options = { ...this.options, ...options };
 
 		// Copy own custom properties.
-		_.forOwn(bench, (value, key) => {
+		_.forOwn(this, (value, key) => {
 			if (!_.has(result, key)) {
 				result[key] = cloneDeep(value);
 			}
