@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -461,6 +461,19 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * @alpha
 	 */
 	forceReadonly?(readonly: boolean);
+
+	/**
+	 * Exposes the entryPoint for the container.
+	 * Use this as the primary way of getting access to the user-defined logic within the container.
+	 * If the method is undefined or the returned promise returns undefined (meaning that exposing the entryPoint
+	 * hasn't been implemented in a particular scenario) fall back to the current approach of requesting the default
+	 * object of the container through the request pattern.
+	 *
+	 * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
+	 * request() method), this method will no longer be optional, and it will become the only way to access
+	 * the entryPoint for the container.
+	 */
+	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 /**
