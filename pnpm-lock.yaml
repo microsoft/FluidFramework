@@ -9874,6 +9874,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-runtime': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/datastore': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -9900,6 +9901,7 @@ importers:
       '@fluid-tools/fluidapp-odsp-urlresolver': link:../../drivers/fluidapp-odsp-urlResolver
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
