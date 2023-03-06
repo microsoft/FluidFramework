@@ -45,7 +45,7 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 -   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
 -   [driver-utils members deprecated](#driver-utils-members-deprecated)
 -   [Aqueduct members deprecated](#Aqueduct-members-deprecated)
--	[Some Interval APIs on SharedString deprecated](#some-interval-apis-on-sharedstring-deprecated)
+-   [Some Interval APIs on SharedString deprecated](#some-interval-apis-on-sharedstring-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
