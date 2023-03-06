@@ -275,12 +275,13 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 				body: JSON.stringify({ taskList: { [taskListId]: formattedTasks } }),
 			});
 		} catch (error) {
-			console.error(`Task list submition failed due to an error:\n${error}`);
+			console.error(`Task list submission failed due to an error:\n${error}`);
 
 			// TODO: display error status to user?
 		}
 		// Send signal to simulate RuntimeSignal that will get sent from alfred in the dev branch
-		model.sendCustomDebugSignal();
+		// model.sendCustomDebugSignal();
+		console.log(model);
 	};
 
 	return (
