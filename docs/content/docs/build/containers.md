@@ -12,9 +12,9 @@ A container is represented by the `FluidContainer` type and consists of a collec
 
 This article will explain:
 
-- How to create and load containers.
-- The APIs to interact with them.
-- The container lifecycle.
+-   How to create and load containers.
+-   The APIs to interact with them.
+-   The container lifecycle.
 
 ## Creating & loading
 
@@ -27,8 +27,8 @@ These common APIs enable your code to specify what shared objects should live in
 
 Your code must define a schema that represents the structure of the data within the container. A schema can specify:
 
-- Some initial shared objects that are created as soon as the container is created, and are immediately and always available to all connected clients.
-- The types of shared objects that can be added to the container at runtime and persisted in the container for use by all connected clients.
+-   Some initial shared objects that are created as soon as the container is created, and are immediately and always available to all connected clients.
+-   The types of shared objects that can be added to the container at runtime and persisted in the container for use by all connected clients.
 
 The same schema definition that is used to create the container must be provided when clients subsequently load the container. For more information about initial objects and dynamic object creation see [Data modeling]({{< relref "data-modeling.md" >}}).
 
@@ -66,8 +66,8 @@ const containerId = await container.attach();
 
 Notes:
 
-- `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
-- It is a good practice to destructure the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example using `services`, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
+-   `client` represents an object defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
+-   It is a good practice to destructure the object that is returned by `createContainer` into its two main parts; `container` and `services`. For an example using `services`, see [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}).
 
 A newly created container is in a *detached* state. A detached container is stored on the local client only and therefore no data is shared with other clients yet.
 This is the point where you can create initial data to populate your shared objects if needed.
@@ -147,9 +147,10 @@ user.on("active", () => {
 ```
 
 Notes:
-- Connection is established by default whenever an existing container is loaded or a new container is attached.
-- Also by default, the container will try to reconnect automatically if connection is lost.
-- You likely want to ensure that all pending changes are saved prior to calling `disconnect`.
+
+-   Connection is established by default whenever an existing container is loaded or a new container is attached.
+-   Also by default, the container will try to reconnect automatically if connection is lost.
+-   You likely want to ensure that all pending changes are saved prior to calling `disconnect`.
 See the following section on dirty/saved state for more details on that topic.
 
 
@@ -278,13 +279,14 @@ references to useful services you can use to build richer apps. An example of a 
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 

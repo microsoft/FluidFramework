@@ -11,18 +11,25 @@ const sourceDirectoryPath = path.resolve(__dirname, "src");
 const buildDirectoryPath = path.resolve(__dirname, "dist");
 
 module.exports = {
-	mode: "production",
+	mode: "development", // TODO: production
+	devtool: "inline-source-map", // TODO: remove this
 	entry: {
+		// The Devtools script and view
+		"devtools/DevtoolsScript": path.join(sourceDirectoryPath, "devtools", "DevtoolsScript.ts"),
+		"devtools/RootView": path.join(sourceDirectoryPath, "devtools", "RootView.tsx"),
+
 		// The Background script
-		BackgroundScript: path.join(sourceDirectoryPath, "BackgroundScript.ts"),
+		"background/BackgroundScript": path.join(
+			sourceDirectoryPath,
+			"background",
+			"BackgroundScript.ts",
+		),
 
-		// The Content scripts
-		OpenDebuggerView: path.join(sourceDirectoryPath, "InjectDebuggerOpenScript.ts"),
-		CloseDebuggerView: path.join(sourceDirectoryPath, "InjectDebuggerCloseScript.ts"),
+		// The Content script
+		"content/ContentScript": path.join(sourceDirectoryPath, "content", "ContentScript.ts"),
 
-		// The Injected scripts
-		OpenDebuggerPanelScript: path.join(sourceDirectoryPath, "OpenDebuggerPanelScript.ts"),
-		CloseDebuggerPanelScript: path.join(sourceDirectoryPath, "CloseDebuggerPanelScript.ts"),
+		// The action button pop-up script
+		"popup/PopupScript": path.join(sourceDirectoryPath, "popup", "PopupScript.ts"),
 	},
 	output: {
 		path: buildDirectoryPath,
@@ -30,7 +37,7 @@ module.exports = {
 		publicPath: "",
 	},
 	resolve: {
-		extensions: [".ts", ".tsx", ".js"],
+		extensions: [".js", "jsx", ".ts", ".tsx"],
 	},
 	module: {
 		rules: [

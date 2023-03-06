@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-import React, { useEffect, useRef, useState } from "react";
+
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
 
@@ -146,6 +147,21 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 		}
 		taskList.setUnresolvedChanges(unresolved);
 	};
+	const [lastSaved, setLastSaved] = useState<number | undefined>();
+	const [failedUpdate, setFailedUpdate] = useState(false);
+	const handleSaveChanges = useCallback(() => {
+		taskList
+			.writeToExternalServer()
+			.then(() => {
+				setLastSaved(Date.now());
+				setFailedUpdate(false);
+			})
+			.catch((error) => {
+				console.log(error);
+
+				setFailedUpdate(true);
+			});
+	}, [taskList]);
 	useEffect(() => {
 		const updateTasks = (): void => {
 			setTasks(taskList.getDraftTasks());
@@ -173,6 +189,36 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 		// TODO: Conflict UI
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>Client App</h2>
+			{lastSaved !== undefined && !failedUpdate && (
+				<h4
+					style={{
+						display: "inline-block",
+						backgroundColor: "#a4c995",
+						padding: "5px",
+						fontWeight: "normal",
+					}}
+				>
+					Last successful save:{" "}
+					{new Date(lastSaved).toLocaleString("en-US", {
+						hour: "numeric",
+						minute: "numeric",
+						second: "numeric",
+					})}
+				</h4>
+			)}
+			{failedUpdate && (
+				<h4
+					style={{
+						display: "inline-block",
+						backgroundColor: "#ff9b9b",
+						padding: "5px",
+						fontWeight: "normal",
+					}}
+				>
+					Push To External Service failed. Try again.
+				</h4>
+			)}
+
 			<table>
 				<thead>
 					<tr>
@@ -183,7 +229,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				</thead>
 				<tbody>{taskRows}</tbody>
 			</table>
-			<button onClick={taskList.writeToExternalServer}>Write to External Source</button>
+			<button onClick={handleSaveChanges}>Write to External Source</button>
 		</div>
 	);
 };

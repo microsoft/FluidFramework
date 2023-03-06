@@ -114,6 +114,8 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	private _draftData: SharedMap | undefined;
 
+	private _errorFlagCount: number = 0;
+
 	private get externalDataSnapshot(): SharedMap {
 		if (this._externalDataSnapshot === undefined) {
 			throw new Error("The externalDataSnapshot SharedMap has not yet been initialized.");
@@ -315,6 +317,12 @@ export class TaskList extends DataObject implements ITaskList {
 		// the "save" button case this might be fine (the user saves what they see), but in more-automatic
 		// sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
 		// as what we do for summarization).
+
+		this._errorFlagCount++;
+		// Force update failures every 3 calls to showcase retry logic.
+		if (this._errorFlagCount % 3 === 0) {
+			throw new Error("Simulated error to demonstrate failure writing to external service.");
+		}
 		const tasks = this.getDraftTasks();
 		const formattedTasks = {};
 		for (const task of tasks) {
@@ -323,6 +331,7 @@ export class TaskList extends DataObject implements ITaskList {
 				priority: task.draftPriority,
 			};
 		}
+
 		try {
 			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
 				method: "POST",
@@ -366,6 +375,32 @@ export class TaskList extends DataObject implements ITaskList {
 			throw new Error("draftData was not initialized");
 		}
 		this._draftData = await draft.get();
+
+		// Check for other connected clients each time a new runtime is initialized
+		const audience = this.runtime.getAudience();
+		let clientSize = 0;
+		let loneClient = true;
+		const client = this.runtime.clientId;
+		// Ensure that the current client is interactive, not a summarizer.
+		if (
+			client !== undefined &&
+			(audience.getMember(client)?.details.capabilities.interactive ?? false)
+		) {
+			// Increase the count of all non-summarizer clients
+			for (const [_, value] of audience.getMembers()) {
+				if (value.details.capabilities.interactive) {
+					clientSize++;
+					if (clientSize > 1) {
+						loneClient = false;
+						break;
+					}
+				}
+			}
+			// Manually fetch data if client is alone in container.
+			if (loneClient) {
+				await this.importExternalData();
+			}
+		}
 
 		this._draftData.on("valueChanged", (changed) => {
 			if (changed.previousValue === undefined) {

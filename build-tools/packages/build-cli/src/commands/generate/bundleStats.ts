@@ -9,7 +9,7 @@ import path from "path";
 
 import { BaseCommand } from "../../base";
 
-export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats.flags> {
+export default class GenerateBundlestats extends BaseCommand<typeof GenerateBundlestats> {
 	static description = `Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later consumption`;
 	static flags = {
 		packageMetadataPath: Flags.file({
@@ -27,7 +27,7 @@ export default class GenerateBundlestats extends BaseCommand<typeof GenerateBund
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.processedFlags;
+		const flags = this.flags;
 		const lernaOutput =
 			flags.packageMetadataPath ??
 			JSON.parse(execSync("npx lerna list --all --json").toString());

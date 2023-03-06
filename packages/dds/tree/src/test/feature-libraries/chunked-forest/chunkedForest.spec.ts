@@ -14,9 +14,8 @@ import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk
 
 import {
 	AnchorSet,
-	Checkout,
+	TransactionCheckout,
 	EditManager,
-	FieldKey,
 	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
@@ -42,8 +41,6 @@ import {
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
-
-const fooKey: FieldKey = brand("foo");
 
 describe("ChunkedForest", () => {
 	testForest({
@@ -91,7 +88,7 @@ describe("ChunkedForest", () => {
 		chunkCursor.firstNode();
 		initializeForest(forest, [chunkCursor]);
 
-		const checkout: Checkout<DefaultEditBuilder, DefaultChangeset> = {
+		const checkout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset> = {
 			forest,
 			changeFamily: defaultChangeFamily,
 			submitEdit: (edit) => {
