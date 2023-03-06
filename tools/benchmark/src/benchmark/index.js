@@ -1,3 +1,4 @@
+/* eslint-disable no-eval */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable no-constant-condition */
 /* eslint-disable eqeqeq */
@@ -34,12 +35,6 @@
  */
 
 import _ from "lodash";
-
-/** Used to determine if values are of the language type Object. */
-const objectTypes = {
-	function: true,
-	object: true,
-};
 
 /** Detect free variable `define`. */
 const freeDefine =
@@ -442,7 +437,7 @@ function runInContext(context) {
 			const anchor = Benchmark;
 			const prop = `${uid}createFunction`;
 
-			runScript(`Benchmark.${prop}=function(${args}){${body}}`);
+			eval(`Benchmark.${prop}=function(${args}){${body}}`);
 			result = anchor[prop];
 			delete anchor[prop];
 			return result;
@@ -554,39 +549,6 @@ function runInContext(context) {
 		}
 		const type = typeof object[property];
 		return !rePrimitive.test(type) && (type != "object" || !!object[property]);
-	}
-
-	/**
-	 * Runs a snippet of JavaScript via script injection.
-	 *
-	 * @private
-	 * @param {string} code - The code to run.
-	 */
-	function runScript(code) {
-		const anchor = freeDefine ? define.amd : Benchmark;
-		const script = doc.createElement("script");
-		let sibling = doc.getElementsByTagName("script")[0];
-		let parent = sibling.parentNode;
-		const prop = `${uid}runScript`;
-		const prefix = `(${freeDefine ? "define.amd." : "Benchmark."}${prop}||function(){})();`;
-
-		// Firefox 2.0.0.2 cannot use script injection as intended because it executes
-		// asynchronously, but that's OK because script injection is only used to avoid
-		// the previously commented JaegerMonkey bug.
-		try {
-			// Remove the inserted script *before* running the code to avoid differences
-			// in the expected script element count/order of the document.
-			script.appendChild(doc.createTextNode(prefix + code));
-			anchor[prop] = function () {
-				destroyElement(script);
-			};
-		} catch (e) {
-			parent = parent.cloneNode(false);
-			sibling = null;
-			script.text = code;
-		}
-		parent.insertBefore(script, sibling);
-		delete anchor[prop];
 	}
 
 	/**
@@ -1736,7 +1698,7 @@ function runInContext(context) {
 			// Fix TraceMonkey bug associated with clock fallbacks.
 			// For more information see http://bugzil.la/509069.
 			if (support.browser) {
-				runScript(`${uid}=1;delete ${uid}`);
+				eval(`${uid}=1;delete ${uid}`);
 			}
 			// We're done.
 			clone.emit("complete");
