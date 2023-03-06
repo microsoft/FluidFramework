@@ -306,22 +306,22 @@ export class TaskList extends DataObject implements ITaskList {
 		containerUrlData: IFluidResolvedUrl | undefined,
 	): Promise<void> {
 		console.log("TASK-LIST: Registering client with customer service...");
+		console.log(containerUrlData);
 		try {
-			if (containerUrlData?.url !== undefined) {
-				await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
-					method: "POST",
-					headers: {
-						"Access-Control-Allow-Origin": "*",
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({ containerUrl: containerUrlData.url, taskListId }),
-				});
-			} else {
+			if (containerUrlData?.url === undefined) {
 				console.error(
 					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
 				);
 				return;
 			}
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ containerUrl: containerUrlData.url, taskListId }),
+			});
 		} catch (error) {
 			console.error(`Customer service registration failed:\n${error}`);
 

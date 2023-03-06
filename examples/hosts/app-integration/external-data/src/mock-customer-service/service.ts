@@ -209,6 +209,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
+			clientManager.registerClient(containerUrl, taskListId);
+			console.log(
+				formatLogMessage(
+					`Registered containerUrl ${containerUrl} with external query: ${taskListId}".`,
+				),
+			);
 			registerForWebhook(
 				port.toString(),
 				externalDataServiceWebhookRegistrationUrl,
@@ -222,12 +228,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				);
 				throw error;
 			});
-			clientManager.registerClient(containerUrl, taskListId);
-			console.log(
-				formatLogMessage(
-					`Registered containerUrl ${containerUrl} with external query: ${taskListId}".`,
-				),
-			);
 			result.send();
 		}
 	});
