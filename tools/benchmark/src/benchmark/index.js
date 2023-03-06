@@ -1,3 +1,4 @@
+/* eslint-disable no-new-func */
 /* eslint-disable no-eval */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable no-constant-condition */
@@ -181,14 +182,8 @@ function runInContext(context) {
 	const toString = objectProto.toString;
 	const unshift = arrayRef.unshift;
 
-	/** Detect DOM document object. */
-	const doc = isHostType(context, "document") && context.document;
-
 	/** Used to access Node.js's high resolution timer. */
 	const processObject = isHostType(context, "process") && context.process;
-
-	/** Used to prevent a `removeChild` memory leak in IE < 9. */
-	const trash = doc && doc.createElement("div");
 
 	/** Used to integrity check compiled tests. */
 	const uid = `uid${+_.now()}`;
@@ -206,15 +201,6 @@ function runInContext(context) {
 	const support = {};
 
 	(function () {
-		/**
-		 * Detect if running in a browser environment.
-		 *
-		 * @memberOf Benchmark.support
-		 * @type boolean
-		 */
-		support.browser =
-			doc && isHostType(context, "navigator") && !isHostType(context, "phantom");
-
 		/**
 		 * Detect if the Timers API exists.
 		 *
@@ -423,35 +409,6 @@ function runInContext(context) {
 	});
 
 	/**
-	 * Creates a function from the given arguments string and body.
-	 *
-	 * @private
-	 * @param {string} args - The comma separated function arguments.
-	 * @param {string} body - The function body.
-	 * @returns {Function} The new function.
-	 */
-	function createFunction() {
-		// Lazy define.
-		createFunction = function (args, body) {
-			let result;
-			const anchor = Benchmark;
-			const prop = `${uid}createFunction`;
-
-			eval(`Benchmark.${prop}=function(${args}){${body}}`);
-			result = anchor[prop];
-			delete anchor[prop];
-			return result;
-		};
-		// Fix JaegerMonkey bug.
-		// For more information see http://bugzil.la/639720.
-		createFunction =
-			support.browser && (createFunction("", `return"${uid}"`) || _.noop)() == uid
-				? createFunction
-				: Function;
-		return createFunction.apply(null, arguments);
-	}
-
-	/**
 	 * Delay the execution of a function based on the benchmark's `delay` property.
 	 *
 	 * @private
@@ -460,17 +417,6 @@ function runInContext(context) {
 	 */
 	function delay(bench, fn) {
 		bench._timerId = _.delay(fn, bench.delay * 1e3);
-	}
-
-	/**
-	 * Destroys the given element.
-	 *
-	 * @private
-	 * @param {Element} element - The element to destroy.
-	 */
-	function destroyElement(element) {
-		trash.appendChild(element);
-		trash.innerHTML = "";
 	}
 
 	/**
@@ -499,38 +445,6 @@ function runInContext(context) {
 				return sum + x;
 			}) / sample.length || 0
 		);
-	}
-
-	/**
-	 * Gets the source code of a function.
-	 *
-	 * @private
-	 * @param {Function} fn - The function.
-	 * @returns {string} The function's source code.
-	 */
-	function getSource(fn) {
-		let result = "";
-		// Trim string.
-		result = (result || "").replace(/^\s+|\s+$/g, "");
-
-		// Detect strings containing only the "use strict" directive.
-		return /^(?:\/\*+[\w\W]*?\*\/|\/\/.*?[\n\r\u2028\u2029]|\s)*(["'])use strict\1;?$/.test(
-			result,
-		)
-			? ""
-			: result;
-	}
-
-	/**
-	 * Checks if an object is of the specified class.
-	 *
-	 * @private
-	 * @param {*} value - The value to check.
-	 * @param {string} name - The name of the class.
-	 * @returns {boolean} Returns `true` if the value is of the specified class, else `false`.
-	 */
-	function isClassOf(value, name) {
-		return value != null && toString.call(value) == `[object ${name}]`;
 	}
 
 	/**
@@ -1340,18 +1254,18 @@ function runInContext(context) {
 				});
 			}
 			// Define `timer` methods.
-			timer.start = createFunction(
+			timer.start = Function(
 				interpolate("o#"),
 				interpolate("var n#=this.ns,${begin};o#.elapsed=0;o#.timeStamp=s#"),
 			);
 
-			timer.stop = createFunction(
+			timer.stop = Function(
 				interpolate("o#"),
 				interpolate("var n#=this.ns,s#=o#.timeStamp,${end};o#.elapsed=r#"),
 			);
 
 			// Create compiled test.
-			return createFunction(
+			return Function(
 				interpolate("window,t#"),
 				`var global = window, clearTimeout = global.clearTimeout, setTimeout = global.setTimeout;\n${interpolate(
 					body,
@@ -1695,11 +1609,6 @@ function runInContext(context) {
 				cycle(clone);
 			}
 		} else {
-			// Fix TraceMonkey bug associated with clock fallbacks.
-			// For more information see http://bugzil.la/509069.
-			if (support.browser) {
-				eval(`${uid}=1;delete ${uid}`);
-			}
 			// We're done.
 			clone.emit("complete");
 		}
