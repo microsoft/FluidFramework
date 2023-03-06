@@ -41,6 +41,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [Summarizer node and related items removed](#Summarizer-node-and-related-items-removed)
 -   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
 -   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
+-   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
 
 ### Container and RelativeLoader no longer exported
 
@@ -111,6 +112,15 @@ The `@fluidframework/web-code-loader` and the `ICodeAllowList` were deprecated i
 		});
 +   }
 ```
+
+### Remove deprecated PendingStateManager interfaces
+
+The following interfaces used by the `PendingStateManager` are no longer be exported:
+
+-   `IPendingMessage`
+-   `IPendingFlush`
+-   `IPendingState`
+-   `IPendingLocalState`
 
 # 2.0.0-internal.3.0.0
 
