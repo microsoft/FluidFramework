@@ -139,11 +139,11 @@ function runAttributionCollectionSuite(
 
 // Note: channel functionality is left unimplemented.
 export class TreeAttributionCollection implements IAttributionCollection<AttributionKey> {
-	private readonly entries: RedBlackTree<number, AttributionKey | undefined> = new RedBlackTree(
+	private readonly entries: RedBlackTree<number, AttributionKey | null> = new RedBlackTree(
 		compareNumbers,
 	);
 
-	public constructor(private _length: number, baseEntry?: AttributionKey) {
+	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
 		if (baseEntry !== undefined) {
 			this.entries.put(0, baseEntry);
 		}
@@ -157,7 +157,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 		assert(offset >= 0 && offset < this._length, 0x443 /* Requested offset should be valid */);
 		const node = this.entries.floor(offset);
 		assert(node !== undefined, 0x444 /* Collection should have at least one entry */);
-		return node.data;
+		return node.data === null ? undefined : node.data;
 	}
 
 	public get length(): number {
@@ -197,12 +197,12 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 	}
 
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
-		const results: { offset: number; key: AttributionKey | undefined }[] = [];
+		const results: { offset: number; key: AttributionKey | null }[] = [];
 		this.entries.map(({ key, data }) => {
 			results.push({ offset: key, key: data });
 			return true;
 		});
-		return { root: results };
+		return { root: results, length: this.length };
 	}
 
 	public clone(): TreeAttributionCollection {
@@ -230,9 +230,7 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 		let cumulativeSegPos = 0;
 		let currentInfo = seqs[curIndex];
 		const getCurrentKey = () =>
-			!currentInfo
-				? undefined
-				: typeof currentInfo === "object"
+			typeof currentInfo === "object"
 				? currentInfo
 				: ({ type: "op", seq: currentInfo } as const);
 
@@ -255,8 +253,8 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 		}
 	}
 
-	public addOrUpdateChannel(): void {
-		throw new Error("unimplmeented");
+	public update(): void {
+		throw new Error("unimplemented");
 	}
 
 	/**

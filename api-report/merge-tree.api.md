@@ -299,10 +299,6 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 
 // @alpha (undocumented)
 export interface IAttributionCollection<T> {
-    // Warning: (ae-forgotten-export) The symbol "AttributionChangeEntry" needs to be exported by the entry point index.d.ts
-    //
-    // @internal (undocumented)
-    ackDeltas(deltas: AttributionChangeEntry[], propertyManager: PropertiesManager | undefined): void;
     // @internal (undocumented)
     append(other: IAttributionCollection<T>): void;
     // (undocumented)
@@ -317,6 +313,8 @@ export interface IAttributionCollection<T> {
     readonly length: number;
     // @internal (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
+    // @internal
+    update(name: string | undefined, channel: IAttributionCollection<T>): any;
 }
 
 // @internal @sealed (undocumented)

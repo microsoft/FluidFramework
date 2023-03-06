@@ -74,7 +74,7 @@ const insertOnlyAttributionPolicyCallbacks: MergeTreeCallbacks = {
 						: { type: "op", seq: segment.seq };
 				const attribution = new AttributionCollection(segment.cachedLength, key);
 				if (segment.attribution !== undefined) {
-					segment.attribution.addOrUpdateChannel(undefined, attribution);
+					segment.attribution.update(undefined, attribution);
 				} else {
 					segment.attribution = attribution;
 				}
@@ -96,7 +96,7 @@ const insertOnlyAttributionPolicyCallbacks: MergeTreeCallbacks = {
 				seq: segment.seq,
 			});
 			if (segment.attribution !== undefined) {
-				segment.attribution.addOrUpdateChannel(undefined, attribution);
+				segment.attribution.update(undefined, attribution);
 			} else {
 				segment.attribution = attribution;
 			}
@@ -132,7 +132,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 								segment.attribution ??= new AttributionCollection(
 									segment.cachedLength,
 								);
-								segment.attribution.addOrUpdateChannel(
+								segment.attribution.update(
 									channelName,
 									new AttributionCollection(segment.cachedLength, key),
 								);
@@ -145,7 +145,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 					for (const { segment } of deltaSegments) {
 						if (segment.properties?.[propName] !== undefined) {
 							segment.attribution ??= new AttributionCollection(segment.cachedLength);
-							segment.attribution.addOrUpdateChannel(
+							segment.attribution.update(
 								channelName,
 								new AttributionCollection(segment.cachedLength, key),
 							);
@@ -172,7 +172,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 								segment.attribution ??= new AttributionCollection(
 									segment.cachedLength,
 								);
-								segment.attribution.addOrUpdateChannel(
+								segment.attribution.update(
 									channelName,
 									new AttributionCollection(segment.cachedLength, key),
 								);
@@ -185,7 +185,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 					for (const { segment } of deltaSegments) {
 						if (segment.properties?.[propName] !== undefined) {
 							segment.attribution ??= new AttributionCollection(segment.cachedLength);
-							segment.attribution.addOrUpdateChannel(
+							segment.attribution.update(
 								channelName,
 								new AttributionCollection(segment.cachedLength, key),
 							);

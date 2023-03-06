@@ -38,8 +38,9 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 }
 
 export interface IAttributionCollectionSpec<T> {
-	root: Iterable<{ offset: number; key: T | undefined }>;
-	channels?: { [name: string]: Iterable<{ offset: number; key: T | undefined }> };
+	root: Iterable<{ offset: number; key: T | null }>;
+	channels?: { [name: string]: Iterable<{ offset: number; key: T | null }> };
+	length: number;
 }
 
 /**
@@ -101,8 +102,16 @@ export interface IAttributionCollection<T> {
 	/** @internal */
 	clone(): IAttributionCollection<T>;
 
-	/** @internal */
-	addOrUpdateChannel(name: string | undefined, channel: IAttributionCollection<T>);
+	/**
+	 * TODO: re-evaluate this API, even if it is internal. There may be a cleaner representation.
+	 * Updates this collection with new attribution data.
+	 * @param name - Name of the channel that requires an update. Undefined signifies the root channel.
+	 * Updates apply only to the individual channel (i.e. if an attribution policy needs to update the root
+	 * channel and 4 other channels, it should call `.update` 5 times).
+	 * @param channel - Updated collection for
+	 * @internal
+	 */
+	update(name: string | undefined, channel: IAttributionCollection<T>);
 }
 
 // note: treats null and undefined as equivalent
@@ -143,7 +152,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		return Object.entries(this.channels ?? {});
 	}
 
-	public constructor(private _length: number, baseEntry?: AttributionKey) {
+	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
 		if (baseEntry !== undefined) {
 			this.offsets.push(0);
 			this.keys.push(baseEntry);
@@ -199,7 +208,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		if (this.channels) {
 			splitCollection.channels = {};
 			for (const [key, collection] of this.channelEntries) {
-				splitCollection[key] = collection.splitAt(pos);
+				splitCollection.channels[key] = collection.splitAt(pos);
 			}
 		}
 
@@ -208,14 +217,6 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		this.offsets.splice(spliceIndex);
 		this._length = pos;
 		return splitCollection;
-	}
-
-	// TODO: clean up private static
-	private static makeEmptyCollection(length: number): AttributionCollection {
-		const collection = new AttributionCollection(length);
-		collection.keys.push(null);
-		collection.offsets.push(0);
-		return collection;
 	}
 
 	public append(other: AttributionCollection): void {
@@ -232,13 +233,15 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		if (other.channels !== undefined || this.channels !== undefined) {
 			this.channels ??= {};
 			for (const [key, collection] of other.channelEntries) {
-				const thisCollection = (this.channels[key] ??=
-					AttributionCollection.makeEmptyCollection(this.length));
+				const thisCollection = (this.channels[key] ??= new AttributionCollection(
+					this.length,
+					null,
+				));
 				thisCollection.append(collection);
 			}
 			for (const [key, collection] of this.channelEntries) {
 				if (other.channels?.[key] === undefined) {
-					collection.append(AttributionCollection.makeEmptyCollection(other.length));
+					collection.append(new AttributionCollection(other.length, null));
 				}
 			}
 		}
@@ -246,13 +249,16 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 	}
 
 	public getAll(): IAttributionCollectionSpec<AttributionKey> {
-		const results: { offset: number; key: AttributionKey | undefined }[] = new Array(
+		const root: IAttributionCollectionSpec<AttributionKey>["root"] = new Array(
 			this.keys.length,
 		);
 		for (let i = 0; i < this.keys.length; i++) {
-			results[i] = { offset: this.offsets[i], key: this.get(i) };
+			root[i] = { offset: this.offsets[i], key: this.keys[i] };
 		}
-		const result: IAttributionCollectionSpec<AttributionKey> = { root: results };
+		const result: IAttributionCollectionSpec<AttributionKey> = {
+			root,
+			length: this.length,
+		};
 		if (this.channels !== undefined) {
 			result.channels = {};
 			for (const [key, collection] of this.channelEntries) {
@@ -269,25 +275,25 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		if (this.channels !== undefined) {
 			const channelsCopy = {};
 			for (const [key, collection] of this.channelEntries) {
-				channelsCopy[key] = collection;
+				channelsCopy[key] = collection.clone();
 			}
 			copy.channels = channelsCopy;
 		}
 		return copy;
 	}
 
-	public addOrUpdateChannel(name: string | undefined, channel: AttributionCollection) {
+	public update(name: string | undefined, channel: AttributionCollection) {
+		assert(
+			channel.length === this.length,
+			"AttributionCollection channel update should have consistent segment length",
+		);
 		if (name === undefined) {
-			assert(
-				channel.length === this.length,
-				"AttributionCollection channel update should have consistent segment length",
-			);
 			this.offsets = [...channel.offsets];
 			this.keys = [...channel.keys];
 		} else {
 			this.channels ??= {};
 			if (this.channels[name] !== undefined) {
-				this.channels[name].addOrUpdateChannel(undefined, channel);
+				this.channels[name].update(undefined, channel);
 			} else {
 				this.channels[name] = channel;
 			}
@@ -357,6 +363,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	/**
 	 * Condenses attribution information on consecutive segments into a `SerializedAttributionCollection`
+	 *
+	 * Note: this operates on segments rather than attribution collections directly so that it can handle cases
+	 * where only some segments have attribution defined.
 	 */
 	public static serializeAttributionCollections(
 		segments: Iterable<{
@@ -364,51 +373,35 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			cachedLength: number;
 		}>,
 	): SerializedAttributionCollection {
-		const allCollectionSpecs: {
-			spec: IAttributionCollectionSpec<AttributionKey>;
-			length: number;
-		}[] = [];
+		const allCollectionSpecs: IAttributionCollectionSpec<AttributionKey>[] = [];
 
-		let segmentsWithAttribution = 0;
-		let segmentsWithoutAttribution = 0;
 		const allChannelNames = new Set<string>();
 		for (const segment of segments) {
-			if (segment.attribution) {
-				segmentsWithAttribution++;
-				const spec = segment.attribution.getAll();
-				allCollectionSpecs.push({ spec, length: segment.cachedLength });
-				if (spec.channels) {
-					for (const name of Object.keys(spec.channels)) {
-						allChannelNames.add(name);
-					}
+			const collection =
+				segment.attribution ?? new AttributionCollection(segment.cachedLength, null);
+			const spec = collection.getAll();
+			allCollectionSpecs.push(spec);
+			if (spec.channels) {
+				for (const name of Object.keys(spec.channels)) {
+					allChannelNames.add(name);
 				}
-			} else {
-				segmentsWithoutAttribution++;
-				allCollectionSpecs.push({
-					spec: AttributionCollection.makeEmptyCollection(segment.cachedLength).getAll(),
-					length: segment.cachedLength,
-				});
 			}
 		}
-		assert(
-			segmentsWithAttribution === 0 || segmentsWithoutAttribution === 0,
-			0x446 /* Expected either all segments or no segments to have attribution information. */,
-		);
 
 		const extractSequenceOffsets = (
 			getSpecEntries: (
 				spec: IAttributionCollectionSpec<AttributionKey>,
-			) => Iterable<{ offset: number; key: AttributionKey | undefined }>,
+			) => Iterable<{ offset: number; key: AttributionKey | null }>,
 		): SerializedAttributionCollection => {
 			const posBreakpoints: number[] = [];
 			const seqs: (number | AttributionKey | null)[] = [];
-			let mostRecentAttributionKey: AttributionKey | undefined;
+			let mostRecentAttributionKey: AttributionKey | null | undefined;
 			let cumulativePos = 0;
 
-			for (const { spec, length } of allCollectionSpecs) {
+			for (const spec of allCollectionSpecs) {
 				for (const { offset, key } of getSpecEntries(spec)) {
 					if (
-						!mostRecentAttributionKey ||
+						mostRecentAttributionKey === undefined ||
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
 					) {
 						posBreakpoints.push(offset + cumulativePos);
@@ -417,7 +410,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 					mostRecentAttributionKey = key;
 				}
 
-				cumulativePos += length;
+				cumulativePos += spec.length;
 			}
 
 			return { posBreakpoints, seqs, length: cumulativePos };
@@ -428,7 +421,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			const channels: { [name: string]: SequenceOffsets } = {};
 			for (const name of allChannelNames) {
 				const { posBreakpoints, seqs } = extractSequenceOffsets(
-					(spec) => spec.channels?.[name] ?? [{ offset: 0, key: undefined }],
+					(spec) => spec.channels?.[name] ?? [{ offset: 0, key: null }],
 				);
 				channels[name] = { posBreakpoints, seqs };
 			}
