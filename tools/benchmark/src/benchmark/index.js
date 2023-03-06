@@ -1,6 +1,5 @@
 /* eslint-disable no-new-func */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable no-constant-condition */
 /* eslint-disable no-template-curly-in-string */
 /* eslint-disable jsdoc/require-hyphen-before-param-description */
 /* eslint-disable no-bitwise */
@@ -8,8 +7,6 @@
 /* eslint-disable unicorn/no-unsafe-regex */
 /* eslint-disable unicorn/better-regex */
 /* eslint-disable no-func-assign */
-/* eslint-disable prefer-arrow-callback */
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-implied-eval */
@@ -241,7 +238,7 @@ function runInContext(context) {
 
 		setOptions(bench, options);
 
-		bench.id || (bench.id = ++counter);
+		bench.id ??= ++counter;
 		bench.fn ??= fn;
 
 		bench.stats = cloneDeep(bench.stats);
@@ -295,7 +292,7 @@ function runInContext(context) {
 	 * @param {*} value - The value to clone.
 	 * @returns {*} The cloned value.
 	 */
-	const cloneDeep = _.partial(_.cloneDeepWith, _, function (value) {
+	const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
 		// Only clone primitives, arrays, and plain objects.
 		if (!_.isArray(value) && !_.isPlainObject(value)) {
 			return value;
@@ -335,7 +332,7 @@ function runInContext(context) {
 	 */
 	function getMean(sample) {
 		return (
-			_.reduce(sample, function (sum, x) {
+			_.reduce(sample, (sum, x) => {
 				return sum + x;
 			}) / sample.length || 0
 		);
@@ -372,11 +369,11 @@ function runInContext(context) {
 			...cloneDeep(options),
 		};
 
-		_.forOwn(options, function (value, key) {
+		_.forOwn(options, (value, key) => {
 			if (value != null) {
 				// Add event listeners.
 				if (/^on[A-Z]/.test(key)) {
-					_.each(key.split(" "), function (key) {
+					_.each(key.split(" "), (key) => {
 						object.on(key.slice(2).toLowerCase(), value);
 					});
 				} else if (!_.has(object, key)) {
@@ -408,7 +405,7 @@ function runInContext(context) {
 		} else {
 			timer.stop(deferred);
 			deferred.teardown();
-			delay(clone, function () {
+			delay(clone, () => {
 				cycle(deferred);
 			});
 		}
@@ -614,8 +611,8 @@ function runInContext(context) {
 		const length = (object = Object(object)).length;
 		const arrayLike = length === length >>> 0;
 
-		separator2 || (separator2 = ": ");
-		_.each(object, function (value, key) {
+		separator2 ??= ": ";
+		_.each(object, (value, key) => {
 			result.push(arrayLike ? value : key + separator2 + value);
 		});
 		return result.join(separator1 || ",");
@@ -638,12 +635,12 @@ function runInContext(context) {
 		const events = object.events;
 		const args = ((arguments[0] = event), arguments);
 
-		event.currentTarget || (event.currentTarget = object);
-		event.target || (event.target = object);
+		event.currentTarget ??= object;
+		event.target ??= object;
 		delete event.result;
 
 		if (events && (listeners = _.has(events, event.type) && events[event.type])) {
-			_.each(listeners.slice(), function (listener) {
+			_.each(listeners.slice(), (listener) => {
 				if ((event.result = listener.apply(object, args)) === false) {
 					event.cancelled = true;
 				}
@@ -701,7 +698,7 @@ function runInContext(context) {
 		if (!events) {
 			return object;
 		}
-		_.each(type ? type.split(" ") : events, function (listeners, type) {
+		_.each(type ? type.split(" ") : events, (listeners, type) => {
 			let index;
 			if (typeof listeners == "string") {
 				type = listeners;
@@ -740,7 +737,7 @@ function runInContext(context) {
 		const object = this;
 		const events = object.events || (object.events = {});
 
-		_.each(type.split(" "), function (type) {
+		_.each(type.split(" "), (type) => {
 			(_.has(events, type) ? events[type] : (events[type] = [])).push(listener);
 		});
 		return object;
@@ -800,7 +797,7 @@ function runInContext(context) {
 		result.options = { ...cloneDeep(bench.options), ...cloneDeep(options) };
 
 		// Copy own custom properties.
-		_.forOwn(bench, function (value, key) {
+		_.forOwn(bench, (value, key) => {
 			if (!_.has(result, key)) {
 				result[key] = cloneDeep(value);
 			}
@@ -837,7 +834,7 @@ function runInContext(context) {
 		function getScore(xA, sampleB) {
 			return _.reduce(
 				sampleB,
-				function (total, xB) {
+				(total, xB) => {
 					return total + (xB > xA ? 0 : xB < xA ? 1 : 0.5);
 				},
 				0,
@@ -847,7 +844,7 @@ function runInContext(context) {
 		function getU(sampleA, sampleB) {
 			return _.reduce(
 				sampleA,
-				function (total, xA) {
+				(total, xA) => {
 					return total + getScore(xA, sampleB);
 				},
 				0,
@@ -901,7 +898,7 @@ function runInContext(context) {
 		};
 
 		do {
-			_.forOwn(data.source, function (value, key) {
+			_.forOwn(data.source, (value, key) => {
 				let changed;
 				const destination = data.destination;
 				let currValue = destination[key];
@@ -944,7 +941,7 @@ function runInContext(context) {
 
 		// If changed emit the `reset` event and if it isn't cancelled reset the benchmark.
 		if (changes.length && (bench.emit((event = Event("reset"))), !event.cancelled)) {
-			_.each(changes, function (data) {
+			_.each(changes, (data) => {
 				data.destination[data.key] = data.value;
 			});
 		}
@@ -1190,7 +1187,8 @@ function runInContext(context) {
 		// enable benchmarking via the --enable-benchmarking command
 		// line switch in at least Chrome 7 to use chrome.Interval
 		try {
-			if ((timer.ns = new (context.chrome || context.chromium).Interval())) {
+			// eslint-disable-next-line no-constant-condition
+			if ((timer.ns = new (context.chrome ?? context.chromium).Interval())) {
 				timers.push({ ns: timer.ns, res: getRes("us"), unit: "us" });
 			}
 		} catch (e) {}
@@ -1208,7 +1206,7 @@ function runInContext(context) {
 		}
 		// Resolve time span required to achieve a percent uncertainty of at most 1%.
 		// For more information see http://spiff.rit.edu/classes/phys273/uncert/uncert.html.
-		options.minTime || (options.minTime = max(timer.res / 2 / 0.01, 0.05));
+		options.minTime ??= options.minTime = max(timer.res / 2 / 0.01, 0.05);
 		return clock.apply(null, arguments);
 	}
 
@@ -1222,7 +1220,7 @@ function runInContext(context) {
 	 * @param {Object} options - The options object.
 	 */
 	function compute(bench, options) {
-		options || (options = {});
+		options ??= {};
 
 		const async = options.async;
 		let elapsed = 0;
@@ -1383,7 +1381,7 @@ function runInContext(context) {
 	 * @param {Object} options - The options object.
 	 */
 	function cycle(clone, options) {
-		options || (options = {});
+		options ??= {};
 
 		let deferred;
 		if (clone instanceof Deferred) {
@@ -1459,7 +1457,7 @@ function runInContext(context) {
 			if (deferred) {
 				clone.compiled.call(deferred, context, timer);
 			} else if (async) {
-				delay(clone, function () {
+				delay(clone, () => {
 					cycle(clone, options);
 				});
 			} else {
