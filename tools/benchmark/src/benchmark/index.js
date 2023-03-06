@@ -142,6 +142,16 @@ const uTable = {
 	],
 };
 
+const defaultOptions = {
+	async: false,
+	defer: false,
+	delay: 0.005,
+	initCount: 1,
+	maxTime: 5,
+	minSamples: 5,
+	minTime: 0,
+};
+
 /* -------------------------------------------------------------------------- */
 
 /** Used for `Array` and `Object` method references. */
@@ -225,15 +235,27 @@ let timer = {
  * });
  */
 function Benchmark(options) {
-	const bench = this;
+	this.options = {
+		...cloneDeep(defaultOptions),
+		...cloneDeep(options),
+	};
 
-	setOptions(bench, options);
+	_.forOwn(this.options, (value, key) => {
+		if (value != null) {
+			// Add event listeners.
+			if (/^on[A-Z]/.test(key)) {
+				_.each(key.split(" "), (key) => {
+					this.on(key.slice(2).toLowerCase(), value);
+				});
+			} else if (!_.has(this, key)) {
+				this[key] = cloneDeep(value);
+			}
+		}
+	});
 
-	bench.id ??= ++counter;
-	bench.fn ??= fn;
-
-	bench.stats = cloneDeep(bench.stats);
-	bench.times = cloneDeep(bench.times);
+	this.id ??= ++counter;
+	this.stats = cloneDeep(this.stats);
+	this.times = cloneDeep(this.times);
 }
 
 /**
@@ -339,33 +361,6 @@ function isHostType(object, property) {
 	}
 	const type = typeof object[property];
 	return !rePrimitive.test(type) && (type !== "object" || !!object[property]);
-}
-
-/**
- * A helper function for setting options/event handlers.
- *
- * @private
- * @param {Object} object - The benchmark or suite instance.
- * @param {Object} [options={}] - Options object.
- */
-function setOptions(object, options) {
-	options = object.options = {
-		...cloneDeep(object.constructor.options),
-		...cloneDeep(options),
-	};
-
-	_.forOwn(options, (value, key) => {
-		if (value != null) {
-			// Add event listeners.
-			if (/^on[A-Z]/.test(key)) {
-				_.each(key.split(" "), (key) => {
-					object.on(key.slice(2).toLowerCase(), value);
-				});
-			} else if (!_.has(object, key)) {
-				object[key] = cloneDeep(value);
-			}
-		}
-	});
 }
 
 /* ------------------------------------------------------------------------ */
@@ -930,7 +925,7 @@ function reset() {
  * @returns {number} The time taken.
  */
 function clock() {
-	const options = Benchmark.options;
+	const options = defaultOptions;
 	const templateData = {};
 	const timers = [{ ns: timer.ns, res: max(0.0015, getRes("ms")), unit: "ms" }];
 
@@ -1370,7 +1365,7 @@ function cycle(clone, options) {
 
 	// Continue, if not aborted between cycles.
 	if (clone.running) {
-		// `minTime` is set to `Benchmark.options.minTime` in `clock()`.
+		// `minTime` is set to `defaultOptions.minTime` in `clock()`.
 		cycles = ++clone.cycles;
 		clocked = deferred ? deferred.elapsed : clock(clone);
 		minTime = clone.minTime;
@@ -1487,140 +1482,6 @@ function run(options) {
 	}
 	return bench;
 }
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * The default options copied by benchmark instances.
- *
- * @static
- * @memberOf Benchmark
- * @type Object
- */
-Benchmark.options = {
-	/**
-	 * A flag to indicate that benchmark cycles will execute asynchronously
-	 * by default.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type boolean
-	 */
-	async: false,
-
-	/**
-	 * A flag to indicate that the benchmark clock is deferred.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type boolean
-	 */
-	defer: false,
-
-	/**
-	 * The delay between test cycles (secs).
-	 * @memberOf Benchmark.options
-	 * @type number
-	 */
-	delay: 0.005,
-
-	/**
-	 * Displayed by `Benchmark#toString` when a `name` is not available
-	 * (auto-generated if absent).
-	 *
-	 * @memberOf Benchmark.options
-	 * @type string
-	 */
-	id: undefined,
-
-	/**
-	 * The default number of times to execute a test on a benchmark's first cycle.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type number
-	 */
-	initCount: 1,
-
-	/**
-	 * The maximum time a benchmark is allowed to run before finishing (secs).
-	 *
-	 * Note: Cycle delays aren't counted toward the maximum time.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type number
-	 */
-	maxTime: 5,
-
-	/**
-	 * The minimum sample size required to perform statistical analysis.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type number
-	 */
-	minSamples: 5,
-
-	/**
-	 * The time needed to reduce the percent uncertainty of measurement to 1% (secs).
-	 *
-	 * @memberOf Benchmark.options
-	 * @type number
-	 */
-	minTime: 0,
-
-	/**
-	 * The name of the benchmark.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type string
-	 */
-	name: undefined,
-
-	/**
-	 * An event listener called when the benchmark is aborted.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type Function
-	 */
-	onAbort: undefined,
-
-	/**
-	 * An event listener called when the benchmark completes running.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type Function
-	 */
-	onComplete: undefined,
-
-	/**
-	 * An event listener called after each run cycle.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type Function
-	 */
-	onCycle: undefined,
-
-	/**
-	 * An event listener called when a test errors.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type Function
-	 */
-	onError: undefined,
-
-	/**
-	 * An event listener called when the benchmark is reset.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type Function
-	 */
-	onReset: undefined,
-
-	/**
-	 * An event listener called when the benchmark starts running.
-	 *
-	 * @memberOf Benchmark.options
-	 * @type Function
-	 */
-	onStart: undefined,
-};
 
 Object.assign(Benchmark, {
 	formatNumber,
