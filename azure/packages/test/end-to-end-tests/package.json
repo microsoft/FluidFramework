@@ -64,7 +64,6 @@
 		"@fluidframework/fluid-static": "^1.4.0-121020",
 		"@fluidframework/map": "^1.4.0-121020",
 		"@fluidframework/matrix": "^1.4.0-121020",
-		"@fluidframework/mocha-test-setup": "^1.4.0-121020",
 		"@fluidframework/sequence": "^1.4.0-121020",
 		"@fluidframework/server-services-client": "^0.1036.5000",
 		"@fluidframework/telemetry-utils": "^1.4.0-121020",
