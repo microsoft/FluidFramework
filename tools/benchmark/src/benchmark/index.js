@@ -227,31 +227,6 @@ function runInContext(context) {
 		 * @type boolean
 		 */
 		support.timeout = isHostType(context, "setTimeout") && isHostType(context, "clearTimeout");
-
-		/**
-		 * Detect if function decompilation is support.
-		 *
-		 * @name decompilation
-		 * @memberOf Benchmark.support
-		 * @type boolean
-		 */
-		try {
-			// Safari 2.x removes commas in object literals from `Function#toString` results.
-			// See http://webk.it/11609 for more details.
-			// Firefox 3.6 and Opera 9.25 strip grouping parentheses from `Function#toString` results.
-			// See http://bugzil.la/559438 for more details.
-			support.decompilation =
-				// eslint-disable-next-line no-new-func
-				Function(
-					`return (${function (x) {
-						return { x: "" + (1 + x) + "", y: 0 };
-					}})`
-						// Avoid issues with code added by Istanbul.
-						.replace(/__cov__[^;]+;/g, ""),
-				)()(0).x === "1";
-		} catch (e) {
-			support.decompilation = false;
-		}
 	})();
 
 	/**
@@ -540,12 +515,6 @@ function runInContext(context) {
 	 */
 	function getSource(fn) {
 		let result = "";
-		if (isStringable(fn)) {
-			result = String(fn);
-		} else if (support.decompilation) {
-			// Escape the `{` for Firefox 1.
-			result = _.result(/^[^{]+\{([\s\S]*)\}\s*$/.exec(fn), 1);
-		}
 		// Trim string.
 		result = (result || "").replace(/^\s+|\s+$/g, "");
 
@@ -585,17 +554,6 @@ function runInContext(context) {
 		}
 		const type = typeof object[property];
 		return !rePrimitive.test(type) && (type != "object" || !!object[property]);
-	}
-
-	/**
-	 * Checks if a value can be safely coerced to a string.
-	 *
-	 * @private
-	 * @param {*} value - The value to check.
-	 * @returns {boolean} Returns `true` if the value can be coerced, else `false`.
-	 */
-	function isStringable(value) {
-		return _.isString(value) || (_.has(value, "toString") && _.isFunction(value.toString));
 	}
 
 	/**
@@ -1283,11 +1241,7 @@ function runInContext(context) {
 				clone = deferred.benchmark;
 			}
 			const bench = clone._original;
-			const stringable = isStringable(bench.fn);
 			const count = (bench.count = clone.count);
-			const decompilable =
-				stringable ||
-				(support.decompilation && (clone.setup !== _.noop || clone.teardown !== _.noop));
 			const id = bench.id;
 			const name = bench.name || (typeof id == "number" ? `<Test #${id}>` : id);
 			let result = 0;
@@ -1319,8 +1273,8 @@ function runInContext(context) {
 			let compiled =
 				(bench.compiled =
 				clone.compiled =
-					createCompiled(bench, decompilable, deferred, funcBody));
-			const isEmpty = !(templateData.fn || stringable);
+					createCompiled(bench, deferred, funcBody));
+			const isEmpty = !templateData.fn;
 
 			try {
 				if (isEmpty) {
@@ -1347,14 +1301,10 @@ function runInContext(context) {
 			// Fallback when a test exits early or errors during pretest.
 			if (!compiled && !deferred && !isEmpty) {
 				funcBody =
-					`${
-						stringable || (decompilable && !clone.error)
-							? "function f#(){${fn}\n}var r#,s#,m#=this,i#=m#.count"
-							: "var r#,s#,m#=this,f#=m#.fn,i#=m#.count"
-					},n#=t#.ns;\${setup}\n\${begin};m#.f#=f#;while(i#--){m#.f#()}\${end};` +
+					`var r#,s#,m#=this,f#=m#.fn,i#=m#.count,n#=t#.ns;\${setup}\n\${begin};m#.f#=f#;while(i#--){m#.f#()}\${end};` +
 					`delete m#.f#;\${teardown}\nreturn{elapsed:r#}`;
 
-				compiled = createCompiled(bench, decompilable, deferred, funcBody);
+				compiled = createCompiled(bench, deferred, funcBody);
 
 				try {
 					// Pretest one more time to check for errors.
@@ -1374,7 +1324,7 @@ function runInContext(context) {
 				compiled =
 					bench.compiled =
 					clone.compiled =
-						createCompiled(bench, decompilable, deferred, funcBody);
+						createCompiled(bench, deferred, funcBody);
 				result = compiled.call(deferred || bench, context, timer).elapsed;
 			}
 			return result;
@@ -1385,17 +1335,17 @@ function runInContext(context) {
 		/**
 		 * Creates a compiled function from the given function `body`.
 		 */
-		function createCompiled(bench, decompilable, deferred, body) {
+		function createCompiled(bench, deferred, body) {
 			const fn = bench.fn;
 			const fnArg = deferred ? getFirstArgument(fn) || "deferred" : "";
 
 			templateData.uid = uid + uidCounter++;
 
 			_.assign(templateData, {
-				setup: decompilable ? getSource(bench.setup) : interpolate("m#.setup()"),
-				fn: decompilable ? getSource(fn) : interpolate(`m#.fn(${fnArg})`),
+				setup: interpolate("m#.setup()"),
+				fn: interpolate(`m#.fn(${fnArg})`),
 				fnArg,
-				teardown: decompilable ? getSource(bench.teardown) : interpolate("m#.teardown()"),
+				teardown: interpolate("m#.teardown()"),
 			});
 
 			// Use API of chosen timer.
