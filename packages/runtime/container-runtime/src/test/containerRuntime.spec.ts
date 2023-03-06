@@ -942,7 +942,8 @@ describe("Runtime", () => {
 				);
 
 				// The entryPoint should be undefined because the deprecated load() method was used
-				const actualEntryPoint = await containerRuntime.getEntryPoint();
+				assert(containerRuntime.getEntryPoint !== undefined); // The function should exist, though
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
 				assert.strictEqual(
 					actualEntryPoint,
 					undefined,
@@ -962,7 +963,7 @@ describe("Runtime", () => {
 				});
 
 				// The entryPoint should come from the provided initialization function.
-				const actualEntryPoint = await containerRuntime.getEntryPoint();
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
 				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
 				assert.deepEqual(
 					actualEntryPoint,
