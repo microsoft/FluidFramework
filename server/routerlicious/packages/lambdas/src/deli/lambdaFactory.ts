@@ -86,43 +86,44 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         let document: IDocument;
 
         try {
-            gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
-
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
             document = await this.collection.findOne({ documentId, tenantId });
+
+            // Check if the document was deleted prior.
+            if (!isDocumentValid(document)) {
+                // (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
+                // Document sessions can be joined (via Alfred) after a document is functionally deleted.
+                const errorMessage = `Received attempt to connect to a missing/deleted document.`;
+                context.log?.error(
+                    errorMessage,
+                    { messageMetaData },
+                );
+                Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
+                return new NoOpLambda(context);
+            }
+
+            if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
+                // Session for this document is either nonexistent or exists in a different location.
+                const errMsg =
+                    `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
+                context.log?.error(errMsg, { messageMetaData });
+                Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
+                if (this.serviceConfiguration.enforceDiscoveryFlow) {
+                    // This can/will prevent any users from creating a valid session in this location
+                    // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
+                    // to prevent lambda creation would mark the document as corrupted, which is worse.
+                    return new NoOpLambda(context);
+                }
+            }
+
+            gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
         } catch (error) {
             const errMsg = "Deli lambda creation failed";
             context.log?.error(`${errMsg}. Exception: ${inspect(error)}`, { messageMetaData });
             Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId), error);
             this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
             throw error;
-        }
-
-        // Check if the document was deleted prior.
-        if (!isDocumentValid(document)) {
-            // (Old, from tanviraumi:) Temporary guard against failure until we figure out what causing this to trigger.
-            // Document sessions can be joined (via Alfred) after a document is functionally deleted.
-            const errorMessage = `Received attempt to connect to a missing/deleted document.`;
-            context.log?.error(
-                errorMessage,
-                { messageMetaData },
-            );
-            Lumberjack.error(errorMessage, getLumberBaseProperties(documentId, tenantId));
-            return new NoOpLambda(context);
-        }
-        if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
-            // Session for this document is either nonexistent or exists in a different location.
-            const errMsg =
-                `Received attempt to connect to invalid session: ${JSON.stringify(document.session)}`;
-            context.log?.error(errMsg, { messageMetaData });
-            Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
-            if (this.serviceConfiguration.enforceDiscoveryFlow) {
-                // This can/will prevent any users from creating a valid session in this location
-                // for the liftime of this NoOpLambda. This is not ideal; however, throwing an error
-                // to prevent lambda creation would mark the document as corrupted, which is worse.
-                return new NoOpLambda(context);
-            }
         }
 
         let lastCheckpoint: IDeliState;

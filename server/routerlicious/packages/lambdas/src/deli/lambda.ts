@@ -720,6 +720,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
     private logSessionEndMetrics(closeType: LambdaCloseType) {
         if (this.sessionMetric?.isCompleted()) {
+            Lumberjack.info("Session metric already completed. Creating a new one.", getLumberBaseProperties(this.documentId, this.tenantId));
             this.sessionMetric = createSessionMetric(
                 this.tenantId,
                 this.documentId,
@@ -1727,6 +1728,11 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
                 const lumberjackProperties = {
                     ...getLumberBaseProperties(this.documentId, this.tenantId),
                     checkpointReason,
+                    lastOffset: this.logOffset,
+                    deliCheckpointOffset: checkpointParams.deliCheckpointMessage.offset,
+                    deliCheckpointPartition: checkpointParams.deliCheckpointMessage.partition,
+                    kafkaCheckpointOffset: checkpointParams.kafkaCheckpointMessage?.offset,
+                    kafkaCheckpointPartition: checkpointParams.kafkaCheckpointMessage?.partition,
                 };
                 Lumberjack.info(checkpointResult, lumberjackProperties);
             },
