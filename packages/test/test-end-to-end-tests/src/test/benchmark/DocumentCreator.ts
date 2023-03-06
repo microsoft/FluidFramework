@@ -4,19 +4,23 @@
  */
 
 import { IContainer } from "@fluidframework/container-definitions";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { DocumentType, BenchmarkType } from "@fluidframework/test-version-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { DocumentMap } from "./DocumentMap";
 
-export interface IDocumentProps {
+export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
-	driverType: TestDriverTypes;
-	driverEndpointName: string | undefined;
 	documentType: DocumentType;
 	benchmarkType: BenchmarkType;
 }
+
+export interface IDocumentProps extends IDocumentCreatorProps {
+	logger: ITelemetryLogger | undefined;
+}
+
 export interface IDocumentLoader {
 	initializeDocument(): Promise<void>;
 	loadDocument(): Promise<IContainer>;
@@ -28,14 +32,22 @@ export class DocumentCreator {
 	 * Creates a new DocumentCreator using configuration parameters.
 	 * @param props - Properties for initializing the Document Creator.
 	 */
-	static create(props: IDocumentProps) {
+	static create(props: IDocumentCreatorProps) {
+		const logger = ChildLogger.create(getTestLogger?.(), undefined, {
+			all: {
+				driverType: props.provider.driver.type,
+				driverEndpointName: props.provider.driver.endpointName,
+				benchmarkType: props.benchmarkType,
+				name: props.testName,
+				type: props.documentType,
+			},
+		});
+		const documentProps: IDocumentProps = { ...props, logger };
+
 		switch (props.documentType) {
 			case "MediumDocumentMap":
-				return new DocumentMap(props, 1);
-				break;
 			case "LargeDocumentMap":
-				return new DocumentMap(props, 2);
-				break;
+				return new DocumentMap(documentProps);
 			default:
 				throw new Error("Invalid document type");
 		}

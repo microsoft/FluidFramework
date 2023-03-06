@@ -33,8 +33,6 @@ describeE2EDocsRuntime(scenarioTitle, (getTestObjectProvider, getDocumentInfo) =
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
-			driverEndpointName: provider.driver.endpointName,
-			driverType: provider.driver.type,
 			benchmarkType: "E2ETime",
 		});
 		await documentMap.initializeDocument();

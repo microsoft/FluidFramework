@@ -19,18 +19,14 @@ describeE2EDocsMemory(scenarioTitle, (getTestObjectProvider, getDocumentInfo) =>
 
 	before(async () => {
 		provider = getTestObjectProvider();
-		assert(getDocumentInfo !== undefined, "documentType needs to be defined.");
 		docData = getDocumentInfo();
 		documentMap = DocumentCreator.create({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
-			driverEndpointName: provider.driver.endpointName,
-			driverType: provider.driver.type,
 			benchmarkType: "E2EMemory",
 		});
 		await documentMap.initializeDocument();
-		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
 	});
 
 	benchmarkMemory(

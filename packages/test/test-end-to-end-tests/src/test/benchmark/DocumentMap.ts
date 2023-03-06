@@ -7,11 +7,9 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -23,6 +21,12 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 import { IDocumentLoader, IDocumentProps } from "./DocumentCreator";
+
+export enum DocumentSize {
+	NotDefined = 0,
+	Medium = 1,
+	Large = 2,
+}
 
 const defaultDataStoreId = "default";
 const mapId = "mapId";
@@ -46,20 +50,19 @@ const validateMapKeys = (map: SharedMap, count: number, expectedSize: number): v
 };
 
 export class DocumentMap implements IDocumentLoader {
-	private _logger: ITelemetryLogger | undefined;
 	private testContainerConfig: ITestContainerConfig | undefined;
 	private loader: IHostLoader | undefined;
+	private readonly documentSize: DocumentSize = DocumentSize.NotDefined;
 	private _mainContainer: IContainer | undefined;
 	private dataObject1: ITestFluidObject | undefined;
 	private dataObject1map: SharedMap | undefined;
 	private _fileName: string = "";
 	private _containerUrl: IResolvedUrl | undefined;
-	private documentSize: number = 0; // 1 = 5Mb, 2 = 10Mb
+	public get logger() {
+		return this.props.logger;
+	}
 	public get mainContainer() {
 		return this._mainContainer;
-	}
-	public get logger() {
-		return this._logger;
 	}
 	public get fileName() {
 		return this._fileName;
@@ -79,23 +82,21 @@ export class DocumentMap implements IDocumentLoader {
 	 * @param props - Properties for initializing the Document Creator.
 	 * @param documentSize - Size of the document to be created 1=5Mb, 2=10Mb, etc.
 	 */
-	public constructor(private readonly props: IDocumentProps, documentSize: number) {
-		this.documentSize = documentSize;
+	public constructor(private readonly props: IDocumentProps) {
+		switch (this.props.documentType) {
+			case "MediumDocumentMap":
+				this.documentSize = DocumentSize.Medium;
+				break;
+			case "LargeDocumentMap":
+				this.documentSize = DocumentSize.Large;
+				break;
+			default:
+				throw new Error("Invalid document type");
+		}
 	}
 
 	// add argument to identify the type of benchmarkType = "E2ETime" | "E2EThroughput"
 	public async initializeDocument() {
-		this._logger = ChildLogger.create(getTestLogger?.(), undefined, {
-			all: {
-				runId: undefined,
-				driverType: this.props.driverType,
-				driverEndpointName: this.props.driverEndpointName,
-				profile: "",
-				benchmarkType: this.props.benchmarkType,
-				name: this.props.testName,
-			},
-		});
-
 		this.testContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
@@ -113,7 +114,7 @@ export class DocumentMap implements IDocumentLoader {
 				chunkSizeInBytes: 600 * 1024,
 			},
 		};
-		this.testContainerConfig.loaderProps = { logger: this.logger };
+		this.testContainerConfig.loaderProps = { logger: this.props.logger };
 
 		this.loader = this.props.provider.makeTestLoader(this.testContainerConfig);
 		this._mainContainer = await this.loader.createDetachedContainer(
@@ -127,16 +128,6 @@ export class DocumentMap implements IDocumentLoader {
 		this.dataObject1map = await this.dataObject1.getSharedObject<SharedMap>(mapId);
 		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 
-		switch (this.props.documentType) {
-			case "MediumDocumentMap":
-				this.documentSize = 1;
-				break;
-			case "LargeDocumentMap":
-				this.documentSize = 2;
-				break;
-			default:
-				throw new Error("Invalid document type");
-		}
 		setMapKeys(this.dataObject1map, this.documentSize, largeString);
 		this.fileName = uuid();
 
@@ -160,8 +151,7 @@ export class DocumentMap implements IDocumentLoader {
 			url: requestUrl,
 		};
 
-		// const testRequest: IRequest = { url: requestUrl };
-		assert(this.loader !== undefined, "loader should be initialized");
+		assert(this.loader !== undefined, "loader should be initialized when loading a document");
 		const container2 = await this.loader.resolve(testRequest);
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(
 			container2,

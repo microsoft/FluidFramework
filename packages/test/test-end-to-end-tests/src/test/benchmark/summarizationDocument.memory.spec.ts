@@ -34,8 +34,6 @@ describeE2EDocsMemory(scenarioTitle, (getTestObjectProvider, getDocumentInfo) =>
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
-			driverEndpointName: provider.driver.endpointName,
-			driverType: provider.driver.type,
 			benchmarkType: "E2EMemory",
 		});
 		await documentMap.initializeDocument();
