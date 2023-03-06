@@ -37,7 +37,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLogger,
 		private readonly captureProtocolSummary: () => ISummaryTree,
-		private options: ILoaderOptions,
+		private readonly options: ILoaderOptions,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
 	}
@@ -61,7 +61,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 
 		this.options.summarizeProtocolTree =
 			this.options.summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
-		if (this.options.summarizeProtocolTree) {
+		if (this.options.summarizeProtocolTree === true) {
 			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
 			this._storageService = new ProtocolTreeStorageService(
 				retriableStorage,
