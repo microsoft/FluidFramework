@@ -3,16 +3,31 @@
  * Licensed under the MIT License.
  */
 
-export { Anchor, AnchorLocator, AnchorSet } from "./anchorSet";
+export {
+	Anchor,
+	AnchorLocator,
+	AnchorSet,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	AnchorEvents,
+} from "./anchorSet";
 export {
 	ITreeCursor,
 	CursorLocationType,
+	castCursorToSynchronous,
 	mapCursorField,
 	mapCursorFields,
 	forEachNode,
 	forEachField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,
+	inCursorField,
+	inCursorNode,
 } from "./cursor";
 export {
 	GlobalFieldKeySymbol,
@@ -28,6 +43,7 @@ export {
 	FieldUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	UpPathDefault,
 } from "./pathTree";
 export {
 	FieldMapObject,
@@ -67,3 +83,5 @@ import * as Delta from "./delta";
 export { Delta };
 
 export { SparseNode, getDescendant } from "./sparseTree";
+
+export { isSkipMark, emptyDelta } from "./deltaUtil";

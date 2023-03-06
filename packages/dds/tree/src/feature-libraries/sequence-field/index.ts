@@ -58,9 +58,9 @@ export {
 export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 export { MarkListFactory } from "./markListFactory";
-export { NodeChangeRebaser, rebase } from "./rebase";
-export { invert, NodeChangeInverter } from "./invert";
-export { compose, NodeChangeComposer } from "./compose";
+export { amendRebase, NodeChangeRebaser, rebase } from "./rebase";
+export { amendInvert, invert, NodeChangeInverter } from "./invert";
+export { amendCompose, compose, NodeChangeComposer } from "./compose";
 export {
 	areComposable,
 	areRebasable,
@@ -69,13 +69,15 @@ export {
 	isDetachMark,
 	isReattach,
 	DetachedNodeTracker,
+	newCrossFieldTable,
+	newMoveEffectTable,
+	CrossFieldTable,
 } from "./utils";
 export {
 	isMoveMark,
 	MoveMark,
 	MoveEffectTable,
 	MoveEffect,
-	newMoveEffectTable,
 	PairedMarkUpdate,
 	splitMarkOnOutput,
 } from "./moveEffectTable";

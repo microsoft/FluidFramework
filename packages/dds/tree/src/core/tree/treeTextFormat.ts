@@ -44,7 +44,7 @@ import { FieldKey, NodeData } from "./types";
  * but even in those cases consider lists of key value pairs for serialization and using `Map`
  * for runtime.
  *
- * @public
+ * @alpha
  */
 export interface FieldMapObject<TChild> {
 	[key: string]: TChild[];
@@ -53,14 +53,14 @@ export interface FieldMapObject<TChild> {
 /**
  * Json comparable tree node, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
- * @public
+ * @alpha
  */
 export interface GenericTreeNode<TChild> extends GenericFieldsNode<TChild>, NodeData {}
 
 /**
  * Json comparable field collection, generic over child type.
  * Json compatibility assumes `TChild` is also json compatible.
- * @public
+ * @alpha
  */
 export interface GenericFieldsNode<TChild> {
 	[FieldScope.local]?: FieldMapObject<TChild>;
@@ -72,6 +72,7 @@ export interface GenericFieldsNode<TChild> {
  * Can be passed to `JSON.stringify()` to produce a human-readable/editable JSON tree.
  *
  * JsonableTrees should not store empty fields.
+ * @alpha
  */
 export interface JsonableTree extends GenericTreeNode<JsonableTree> {}
 
@@ -86,6 +87,7 @@ export function scopeFromKey(key: FieldKey): [FieldScope, LocalFieldKey | Global
 
 /**
  * Derives the scope using the type of `key`.
+ * @alpha
  */
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol {
 	return typeof key === "symbol";
@@ -117,6 +119,7 @@ export function getGenericTreeField<T>(
 
 /**
  * The scope of a {@link FieldKey}.
+ * @alpha
  */
 export const enum FieldScope {
 	local = "fields",

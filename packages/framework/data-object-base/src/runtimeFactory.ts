@@ -5,6 +5,8 @@
 
 import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import {
 	NamedFluidDataStoreRegistryEntries,
@@ -21,6 +23,9 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		private readonly defaultStoreFactory: IFluidDataStoreFactory,
 		storeFactories: IFluidDataStoreFactory[] = [defaultStoreFactory],
 		private readonly requestHandlers: RuntimeRequestHandler[] = [],
+		private readonly initializeEntryPoint?: (
+			runtime: IContainerRuntime,
+		) => Promise<FluidObject>,
 	) {
 		super();
 		this.registry = (
@@ -39,14 +44,13 @@ export class RuntimeFactory extends RuntimeFactoryHelper {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<ContainerRuntime> {
-		const runtime: ContainerRuntime = await ContainerRuntime.load(
+		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
 			context,
-			this.registry,
-			buildRuntimeRequestHandler(...this.requestHandlers),
-			undefined, // runtimeOptions
-			undefined, // containerScope
+			registryEntries: this.registry,
+			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			existing,
-		);
+			initializeEntryPoint: this.initializeEntryPoint,
+		});
 
 		return runtime;
 	}

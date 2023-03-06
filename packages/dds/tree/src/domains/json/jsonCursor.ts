@@ -98,6 +98,7 @@ const adapter: CursorAdapter<JsonCompatible> = {
  * Used to read a Jsonable tree for testing and benchmarking.
  *
  * @returns an {@link ITreeCursorSynchronous} for a single {@link JsonCompatible}.
+ * @alpha
  */
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
 	return singleStackTreeCursor(root, adapter);
@@ -106,6 +107,7 @@ export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous {
 /**
  * Extract a JS object tree from the contents of the given ITreeCursor.
  * Assumes that ITreeCursor contains only unaugmented JsonTypes.
+ * @alpha
  */
 export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 	const type = reader.type;

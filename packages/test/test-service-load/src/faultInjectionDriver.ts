@@ -27,6 +27,9 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
+	/**
+	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
+	 */
 	public get protocolName() {
 		return this.internal.protocolName;
 	}
@@ -274,7 +277,9 @@ export class FaultInjectionDocumentDeltaConnection
 
 	public goOffline() {
 		this.online = false;
-		this.injectDisconnect();
+		if (!this.disposed) {
+			this.injectDisconnect();
+		}
 	}
 
 	public goOnline() {
@@ -338,7 +343,11 @@ export class FaultInjectionDocumentStorageService implements IDocumentStorageSer
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
-		this.throwIfOffline();
+		// Intentionally return blobs even while offline. Current driver behavior is to cache the initial
+		// snapshot which means readBlob() calls will succeed regardless of connection status. While
+		// depending on this behavior is not advised, it's more accurate to real usage. Additionally, very
+		// long service response delays can cause offline injection to interfere with Container load, which
+		// is not expected to succeed offline, as well as interfering with the test setup itself.
 		return this.internal.readBlob(id);
 	}
 

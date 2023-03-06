@@ -19,9 +19,9 @@ localhost.
 
 To get started you need the following installed.
 
-- [Node.js](https://nodejs.org/en/download) -- {{< include file="_includes/node-versions.md" >}}
-- Code editor -- we recommend [Visual Studio Code](https://code.visualstudio.com/).
-- [Git](https://git-scm.com/downloads)
+-   [Node.js](https://nodejs.org/en/download) -- {{< include file="_includes/node-versions.md" >}}
+-   Code editor -- we recommend [Visual Studio Code](https://code.visualstudio.com/).
+-   [Git](https://git-scm.com/downloads)
 
 ## Getting started
 
@@ -56,4 +56,4 @@ that the state of the dice changes in both clients.
 
 ## Next step
 
-Walk through the code of this dice roller app with [Tutorial: DiceRoller application]({{< relref "tutorial.md" >}}) 
+Walk through the code of this dice roller app with [Tutorial: DiceRoller application]({{< relref "tutorial.md" >}})

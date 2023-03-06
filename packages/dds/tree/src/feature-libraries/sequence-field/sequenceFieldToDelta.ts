@@ -4,27 +4,19 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, fail, OffsetListFactory } from "../../util";
+import { brandOpaque, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
-import { applyModifyToTree } from "../deltaUtils";
-import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
 import { singleTextCursor } from "../treeTextCursor";
-import { NodeReviver } from "../modular-schema";
 import { MarkList, ProtoNode } from "./format";
-import { getInputLength, isSkipMark } from "./utils";
+import { isSkipMark } from "./utils";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange, index: number | undefined) => Delta.Modify;
-
-const ERR_NO_REVISION_ON_REVIVE =
-	"Unable to get convert revive mark to delta due to missing revision tag";
+export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	reviver: NodeReviver,
 ): Delta.MarkList {
 	const out = new OffsetListFactory<Delta.Mark>();
-	let inputIndex = 0;
 	for (const mark of marks) {
 		if (isSkipMark(mark)) {
 			out.pushOffset(mark);
@@ -52,7 +44,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Modify": {
-					const modify = deltaFromChild(mark.changes, inputIndex);
+					const modify = deltaFromChild(mark.changes);
 					if (modify.setValue !== undefined || modify.fields !== undefined) {
 						out.pushContent(modify);
 					} else {
@@ -82,13 +74,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					if (mark.conflictsWith === undefined) {
 						const insertMark: Delta.Insert = {
 							type: Delta.MarkType.Insert,
-							content: reviver(
-								mark.detachedBy ??
-									mark.lastDetachedBy ??
-									fail(ERR_NO_REVISION_ON_REVIVE),
-								mark.detachIndex,
-								mark.count,
-							),
+							content: mark.content,
 						};
 						out.pushContent(insertMark);
 					} else if (mark.lastDetachedBy === undefined) {
@@ -100,7 +86,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 					unreachableCase(type);
 			}
 		}
-		inputIndex += getInputLength(mark);
 	}
 	return out.list;
 }
@@ -119,16 +104,12 @@ function makeDeltaInsert<TNodeChange>(
 	// TODO: consider processing modifications at the same time as cloning to avoid unnecessary cloning
 	const cursors = content.map(singleTextCursor);
 	if (changes !== undefined) {
-		const mutableTree = mapTreeFromCursor(cursors[0]);
-		const outModifications = applyModifyToTree(mutableTree, deltaFromChild(changes, undefined));
-		const cursor = singleMapTreeCursor(mutableTree);
-		return outModifications.size > 0
-			? {
-					type: Delta.MarkType.InsertAndModify,
-					content: singleMapTreeCursor(mutableTree),
-					fields: outModifications,
-			  }
-			: { type: Delta.MarkType.Insert, content: [cursor] };
+		const outModifications = deltaFromChild(changes);
+		return {
+			...outModifications,
+			type: Delta.MarkType.InsertAndModify,
+			content: cursors[0],
+		};
 	} else {
 		return { type: Delta.MarkType.Insert, content: cursors };
 	}

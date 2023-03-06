@@ -4,9 +4,8 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { Delta, FieldKey, getMapTreeField, MapTree } from "../core";
-import { fail, OffsetListFactory } from "../util";
-import { mapTreeFromCursor } from "./mapTreeCursor";
+import { Delta, FieldKey, isSkipMark } from "../core";
+import { Mutable } from "../util";
 
 /**
  * Converts a `Delta.FieldMarks` whose tree content is represented with by `TIn` instances
@@ -60,7 +59,7 @@ export function mapMark<TIn, TOut>(
 	mark: Delta.Mark<TIn>,
 	func: (tree: TIn) => TOut,
 ): Delta.Mark<TOut> {
-	if (Delta.isSkipMark(mark)) {
+	if (isSkipMark(mark)) {
 		return mark;
 	}
 	const type = mark.type;
@@ -111,11 +110,17 @@ export function mapMark<TIn, TOut>(
 			};
 		}
 		case Delta.MarkType.InsertAndModify: {
-			return {
+			const out: Mutable<Delta.InsertAndModify<TOut>> = {
 				type: Delta.MarkType.InsertAndModify,
 				content: func(mark.content),
-				fields: mapFieldMarks(mark.fields, func),
 			};
+			if (mark.fields !== undefined) {
+				out.fields = mapFieldMarks(mark.fields, func);
+			}
+			if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+				out.setValue = mark.setValue;
+			}
+			return out;
 		}
 		case Delta.MarkType.Delete:
 		case Delta.MarkType.MoveIn:
@@ -124,108 +129,4 @@ export function mapMark<TIn, TOut>(
 		default:
 			unreachableCase(type);
 	}
-}
-
-/**
- * Converts inserted content into the format expected in Delta instances.
- * This involves applying the following changes:
- *
- * - Updating node values
- *
- * - Inserting new subtrees within the inserted content
- *
- * - Deleting parts of the inserted content
- *
- * The only kind of change that is not applied by this function is MoveIn.
- *
- * @param tree - The subtree to apply modifications to. Updated in place.
- * @param modify - The modifications to either apply or collect.
- * @returns The remaining modifications that the consumer of the Delta will apply on the given node.
- * May be empty if all modifications are applied by the function.
- */
-export function applyModifyToTree(
-	tree: MapTree,
-	modify: Delta.Modify,
-): Map<FieldKey, Delta.MarkList> {
-	const outFieldsMarks: Map<FieldKey, Delta.MarkList> = new Map();
-	// Use `hasOwnProperty` to detect when setValue is set to `undefined`.
-	if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-		tree.value = modify.setValue;
-	}
-	if (modify.fields !== undefined) {
-		const modifyFields = modify.fields;
-		for (const key of modifyFields.keys()) {
-			// Modifications to inserted trees may include changes to empty fields
-			const outNodes = getMapTreeField(tree, key, true);
-			const outMarks = new OffsetListFactory<Delta.Mark>();
-			let index = 0;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			for (const mark of modifyFields.get(key)!) {
-				if (Delta.isSkipMark(mark)) {
-					index += mark;
-					outMarks.pushOffset(mark);
-				} else {
-					// Inline into `switch(mark.type)` once we upgrade to TS 4.7
-					const type = mark.type;
-					switch (type) {
-						case Delta.MarkType.Insert: {
-							const mapTreeContent: MapTree[] = mark.content.map(mapTreeFromCursor);
-							outNodes.splice(index, 0, ...mapTreeContent);
-							index += mark.content.length;
-							outMarks.pushOffset(mark.content.length);
-							break;
-						}
-						case Delta.MarkType.InsertAndModify: {
-							if (mark.fields.size > 0) {
-								outMarks.pushContent({
-									type: Delta.MarkType.Modify,
-									fields: mark.fields,
-								});
-							}
-							outNodes.splice(index, 0, mapTreeFromCursor(mark.content));
-							index += 1;
-							break;
-						}
-						case Delta.MarkType.MoveIn:
-						case Delta.MarkType.MoveInAndModify:
-							// TODO: convert into a MoveIn/MoveInAndModify
-							fail("Not implemented");
-						case Delta.MarkType.Modify: {
-							const clonedFields = applyModifyToTree(outNodes[index], mark);
-							if (clonedFields.size > 0) {
-								outMarks.pushContent({
-									type: Delta.MarkType.Modify,
-									fields: clonedFields,
-								});
-							}
-							index += 1;
-							break;
-						}
-						case Delta.MarkType.Delete: {
-							outNodes.splice(index, mark.count);
-							break;
-						}
-						case Delta.MarkType.ModifyAndDelete: {
-							// TODO: convert move-out of inserted content into insert at the destination
-							fail("Not implemented");
-						}
-						case Delta.MarkType.MoveOut:
-						case Delta.MarkType.ModifyAndMoveOut:
-							// TODO: convert move-out of inserted content into insert at the destination
-							fail("Not implemented");
-						default:
-							unreachableCase(type);
-					}
-				}
-			}
-			if (outMarks.list.length > 0) {
-				outFieldsMarks.set(key, outMarks.list);
-			}
-			if (outNodes.length === 0) {
-				tree.fields.delete(key);
-			}
-		}
-	}
-
-	return outFieldsMarks;
 }

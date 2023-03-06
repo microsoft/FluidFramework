@@ -16,6 +16,7 @@ import {
 
 /**
  * A {@link SchemaData} with a {@link SchemaPolicy}.
+ * @alpha
  */
 export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy>
 	extends SchemaData {
@@ -29,6 +30,7 @@ export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy
  * Events for {@link StoredSchemaRepository}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
+ * @alpha
  */
 export interface SchemaEvents {
 	/**
@@ -46,6 +48,7 @@ export interface SchemaEvents {
  * Mutable collection of stored schema.
  *
  * TODO: could implement more fine grained dependency tracking.
+ * @alpha
  */
 export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
 	extends Dependee,

@@ -4,24 +4,13 @@
 
 ```ts
 
+import { AttributionInfo } from '@fluidframework/runtime-definitions';
+import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { ContainerRuntime } from '@fluidframework/container-runtime';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IUser } from '@fluidframework/protocol-definitions';
-
-// @alpha
-export interface AttributionInfo {
-    timestamp: number;
-    user: IUser;
-}
-
-// @alpha
-export interface AttributionKey {
-    seq: number;
-    type: "op";
-}
 
 // @alpha
 export class Attributor implements IAttributor {
@@ -65,6 +54,8 @@ export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
     get(key: AttributionKey): AttributionInfo;
     // (undocumented)
     has(key: AttributionKey): boolean;
+    // (undocumented)
+    readonly isEnabled: boolean;
 }
 
 // @alpha

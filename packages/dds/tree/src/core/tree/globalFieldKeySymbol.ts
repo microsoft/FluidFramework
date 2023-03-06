@@ -12,6 +12,7 @@ import { brand, Brand, fail } from "../../util";
  * and avoids the possibility of colliding with local field keys.
  *
  * Must only be produced using {@link symbolFromKey}.
+ * @alpha
  */
 export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
 
@@ -21,6 +22,7 @@ const keyMap: Map<GlobalFieldKeySymbol, GlobalFieldKey> = new Map();
 
 /**
  * @returns a symbol to use for `key`.
+ * @alpha
  */
 export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol {
 	const sym = symbolMap.get(key);
@@ -35,6 +37,7 @@ export function symbolFromKey(key: GlobalFieldKey): GlobalFieldKeySymbol {
 
 /**
  * @returns the original {@link GlobalFieldKey} for the symbol.
+ * @alpha
  */
 export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey {
 	return keyMap.get(key) ?? fail("missing key for symbol");
@@ -42,6 +45,7 @@ export function keyFromSymbol(key: GlobalFieldKeySymbol): GlobalFieldKey {
 
 /**
  * @returns true iff `key` is a {@link GlobalFieldKeySymbol}.
+ * @alpha
  */
 export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol {
 	return keyMap.has(key as GlobalFieldKeySymbol);

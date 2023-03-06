@@ -25,6 +25,7 @@ export {
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
 } from "./nestedMap";
+export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
 export {
 	areSafelyAssignable,
@@ -55,7 +56,9 @@ export {
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
 	makeArray,
+	mapIterable,
 	Mutable,
 	RecursiveReadonly,
-	unreachableCase,
+	zipIterables,
 } from "./utils";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";

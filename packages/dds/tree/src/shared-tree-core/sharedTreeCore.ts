@@ -26,7 +26,21 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
-import { ChangeFamily, Commit, EditManager, SeqNumber, AnchorSet, Delta } from "../core";
+import {
+	ChangeFamily,
+	Commit,
+	EditManager,
+	SeqNumber,
+	AnchorSet,
+	Delta,
+	RevisionTag,
+	mintRevisionTag,
+	minimumPossibleSequenceNumber,
+	SharedTreeBranch,
+	Rebaser,
+	findAncestor,
+	GraphCommit,
+} from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
 
@@ -75,13 +89,7 @@ export class SharedTreeCore<
 	TChangeFamily extends ChangeFamily<any, TChange>,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
-	/**
-	 * A random ID that uniquely identifies this client in the collab session.
-	 * This is sent alongside every op to identify which client the op originated from.
-	 *
-	 * This is needed because the client ID given by the Fluid protocol is not stable across reconnections.
-	 */
-	private readonly stableId: string;
+	private readonly editManager: EditManager<TChange, TChangeFamily>;
 
 	/**
 	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
@@ -93,7 +101,7 @@ export class SharedTreeCore<
 	 * This is number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
-	private detachedRevision: SeqNumber | undefined = brand(Number.MIN_SAFE_INTEGER);
+	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
 
 	/**
 	 * The indexes available to this tree.
@@ -117,9 +125,13 @@ export class SharedTreeCore<
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		indexes: TIndexes | ((events: ISubscribable<IndexEvents<TChange>>) => TIndexes),
+		indexes:
+			| TIndexes
+			| ((
+					events: ISubscribable<IndexEvents<TChange>>,
+					editManager: EditManager<TChange, TChangeFamily>,
+			  ) => TIndexes),
 		public readonly changeFamily: TChangeFamily,
-		public readonly editManager: EditManager<TChange, TChangeFamily>,
 		anchors: AnchorSet,
 
 		// Base class arguments
@@ -130,9 +142,16 @@ export class SharedTreeCore<
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		this.stableId = uuid();
-		editManager.initSessionId(this.stableId);
-		this.indexes = isReadonlyArray(indexes) ? indexes : indexes(this.indexEventEmitter);
+		/**
+		 * A random ID that uniquely identifies this client in the collab session.
+		 * This is sent alongside every op to identify which client the op originated from.
+		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
+		 */
+		const localSessionId = uuid();
+		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
+		this.indexes = isReadonlyArray(indexes)
+			? indexes
+			: indexes(this.indexEventEmitter, this.editManager);
 		this.summaryElements = this.indexes
 			.map((i) => i.summaryElement)
 			.filter((e): e is SummaryElement => e !== undefined);
@@ -192,26 +211,27 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	public submitEdit(edit: TChange): void {
-		const delta = this.editManager.addLocalChange(edit);
+	protected submitEdit(edit: TChange): void {
+		const revision = mintRevisionTag();
+		const delta = this.editManager.addLocalChange(revision, edit);
 		// Edits performed before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
 		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			const commit: Commit<TChange> = {
-				changeset: edit,
-				refNumber: this.detachedRevision,
-				seqNumber: newRevision,
-				sessionId: this.stableId,
+				revision,
+				sessionId: this.editManager.localSessionId,
+				change: edit,
 			};
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(commit);
+			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
 		}
 		this.indexEventEmitter.emit("newLocalChange", edit);
 		this.indexEventEmitter.emit("newLocalState", delta);
 		const message: Message = {
-			originatorId: this.stableId,
+			revision,
+			originatorId: this.editManager.localSessionId,
 			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
 		};
 		this.submitLocalMessage(message);
@@ -222,20 +242,53 @@ export class SharedTreeCore<
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { originatorId: stableClientId, changeset } = message.contents as Message;
+		const { revision, originatorId: stableClientId, changeset } = message.contents as Message;
 		const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
 		const commit: Commit<TChange> = {
+			revision,
 			sessionId: stableClientId,
-			seqNumber: brand(message.sequenceNumber),
-			refNumber: brand(message.referenceSequenceNumber),
-			changeset: changes,
+			change: changes,
 		};
 
-		const delta = this.editManager.addSequencedChange(commit);
+		const delta = this.editManager.addSequencedChange(
+			commit,
+			brand(message.sequenceNumber),
+			brand(message.referenceSequenceNumber),
+		);
 		const sequencedChange = this.editManager.getLastSequencedChange();
 		this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
 		this.indexEventEmitter.emit("newLocalState", delta);
-		this.editManager.advanceMinimumSequenceNumber(message.minimumSequenceNumber);
+		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
+	}
+
+	/**
+	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
+	 * This can be used to support asynchronous checkouts of the tree.
+	 */
+	protected createBranch(): SharedTreeBranch<TChange> {
+		const branch = new SharedTreeBranch(
+			() => this.editManager.getLocalBranchHead(),
+			(forked) => {
+				const changeToForked = forked.pull();
+				const changes: GraphCommit<TChange>[] = [];
+				const localBranchHead = this.editManager.getLocalBranchHead();
+				const ancestor = findAncestor(
+					[forked.getHead(), changes],
+					(c) => c === localBranchHead,
+				);
+				assert(
+					ancestor === localBranchHead,
+					"Expected merging checkout branches to be related",
+				);
+				for (const { change } of changes) {
+					this.submitEdit(change);
+				}
+				return changeToForked;
+			},
+			this.editManager.localSessionId,
+			new Rebaser(this.changeFamily.rebaser),
+		);
+		return branch;
 	}
 
 	protected onDisconnect() {}
@@ -271,6 +324,10 @@ export class SharedTreeCore<
  * The format of messages that SharedTree sends and receives.
  */
 interface Message {
+	/**
+	 * The revision tag for the change in this message
+	 */
+	readonly revision: RevisionTag;
 	/**
 	 * The stable ID that identifies the originator of the message.
 	 */

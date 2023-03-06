@@ -8,6 +8,7 @@
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 
 import { assert } from "@fluidframework/common-utils";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { IAttributionCollection } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
@@ -26,28 +27,6 @@ import {
 } from "./referencePositions";
 import { SegmentGroupCollection } from "./segmentGroupCollection";
 import { PropertiesManager, PropertiesRollback } from "./segmentPropertiesManager";
-
-// TODO: this should reference a shared interface in @fluidframework/runtime-definitions so it's usable from
-// here and @fluidframework/attributor
-/**
- * @alpha
- * @remarks - This will eventually be exported by a different package. Its export will be removed.
- */
-export interface AttributionKey {
-	/**
-	 * The type of attribution this key corresponds to.
-	 *
-	 * Keys currently all represent op-based attribution, so have the form `{ type: "op", key: sequenceNumber }`.
-	 * Thus, they can be used with an `OpStreamAttributor` to recover timestamp/user information.
-	 *
-	 * @remarks - If we want to support different types of attribution, a reasonable extensibility point is to make
-	 * AttributionKey a discriminated union on the 'type' field. This would empower
-	 * consumers with the ability to implement different attribution policies.
-	 */
-	type: "op";
-
-	seq: number;
-}
 
 /**
  * Common properties for a node in a merge tree.

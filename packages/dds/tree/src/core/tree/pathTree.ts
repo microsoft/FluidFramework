@@ -6,6 +6,12 @@
 import { FieldKey } from "./types";
 
 /**
+ * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
+ * @alpha
+ */
+export type UpPathDefault = UpPath;
+
+/**
  * Path from a location in the tree upward.
  * UpPaths can be used with deduplicated upper parts to allow
  * working with paths localized to part of the tree without incurring
@@ -16,12 +22,13 @@ import { FieldKey } from "./types";
  *
  * UpPaths can be mutated over time and should be considered to be invalidated when any edits occurs:
  * Use of an UpPath that was acquired before the most recent edit is undefined behavior.
+ * @alpha
  */
-export interface UpPath {
+export interface UpPath<TParent = UpPathDefault> {
 	/**
 	 * The parent, or undefined in the case where this path is a member of a detached sequence.
 	 */
-	readonly parent: UpPath | undefined;
+	readonly parent: TParent | undefined;
 	/**
 	 * The Field under which this path points.
 	 * Note that if `parent` returns `undefined`, this key corresponds to a detached sequence.
@@ -37,6 +44,7 @@ export interface UpPath {
  * Path from a field in the tree upward.
  *
  * See {@link UpPath}.
+ * @alpha
  */
 export interface FieldUpPath {
 	/**

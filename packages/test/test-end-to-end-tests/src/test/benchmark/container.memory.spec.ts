@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { v4 as uuid } from "uuid";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -21,14 +22,16 @@ import {
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
-const id = "fluid-test://localhost/containerTest";
-const testRequest: IRequest = { url: id };
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let loader: Loader;
+	let fileName: string;
+	let containerUrl: IResolvedUrl;
+
 	const loaderContainerTracker = new LoaderContainerTracker();
 
 	function createLoader(props?: Partial<ILoaderProps>): Loader {
@@ -44,20 +47,16 @@ describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) 
 		});
 	}
 
-	before(function () {
-		provider = getTestObjectProvider();
-
-		// TODO: Convert these to mocked unit test. These are all API tests and doesn't
-		// need the service.  For now disable the tests other than local driver
-		if (provider.driver.type !== "local") {
-			this.skip();
-		}
-	});
 	before(async () => {
+		provider = getTestObjectProvider();
 		loader = createLoader();
 		loaderContainerTracker.add(loader);
 		const container = await loader.createDetachedContainer(codeDetails);
-		await container.attach(provider.driver.createCreateNewRequest("containerTest"));
+
+		fileName = uuid();
+		await container.attach(provider.driver.createCreateNewRequest(fileName));
+		assert(container.resolvedUrl);
+		containerUrl = container.resolvedUrl;
 	});
 	afterEach(() => {
 		loaderContainerTracker.reset();
@@ -115,6 +114,8 @@ describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) 
 		new (class implements IMemoryTestObject {
 			title = "Load existing container";
 			async run() {
+				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
+				const testRequest: IRequest = { url: requestUrl };
 				const testResolved = await loader.services.urlResolver.resolve(testRequest);
 				ensureFluidResolvedUrl(testResolved);
 				const container = await Container.load(loader, {

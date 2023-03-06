@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { clone, fail, unreachableCase } from "../../util";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { fail } from "../../util";
 import { RevisionTag, TaggedChange } from "../../core";
-import { IdAllocator } from "../modular-schema";
+import {
+	CrossFieldManager,
+	CrossFieldTarget,
+	IdAllocator,
+	RevisionIndexer,
+} from "../modular-schema";
 import {
 	getInputLength,
 	getOutputLength,
@@ -26,6 +31,7 @@ import {
 	dequeueRelatedReattaches,
 	isSkipLikeDetach,
 	getOffsetAtRevision,
+	cloneMark,
 } from "./utils";
 import {
 	Attach,
@@ -46,9 +52,8 @@ import { ComposeQueue } from "./compose";
 import {
 	getMoveEffect,
 	getOrAddEffect,
+	MoveEffect,
 	MoveEffectTable,
-	MoveEnd,
-	newMoveEffectTable,
 	PairedMarkUpdate,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
@@ -73,8 +78,16 @@ export function rebase<TNodeChange>(
 	base: TaggedChange<Changeset<TNodeChange>>,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
+	manager: CrossFieldManager,
 ): Changeset<TNodeChange> {
-	return rebaseMarkList(change, base.change, base.revision, rebaseChild, genId);
+	return rebaseMarkList(
+		change,
+		base.change,
+		base.revision,
+		rebaseChild,
+		genId,
+		manager as MoveEffectTable<TNodeChange>,
+	);
 }
 
 export type NodeChangeRebaser<TNodeChange> = (
@@ -88,8 +101,8 @@ function rebaseMarkList<TNodeChange>(
 	baseRevision: RevisionTag | undefined,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
+	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
 ): MarkList<TNodeChange> {
-	const moveEffects = newMoveEffectTable<TNodeChange>();
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects, true);
 	const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
 
@@ -129,7 +142,7 @@ function rebaseMarkList<TNodeChange>(
 					updateLineage(lineageRequests, baseRevision);
 					baseDetachOffset = 0;
 				}
-				factory.push(clone(currMark));
+				factory.push(cloneMark(currMark));
 			}
 		} else if (currMark === undefined) {
 			if (isDetachMark(baseMark)) {
@@ -137,7 +150,22 @@ function rebaseMarkList<TNodeChange>(
 				baseDetachOffset += detachLength;
 				baseInputIndex += detachLength;
 			} else if (isAttach(baseMark)) {
-				factory.pushOffset(getOutputLength(baseMark));
+				if (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") {
+					const effect = getMoveEffect(
+						moveEffects,
+						CrossFieldTarget.Destination,
+						baseMark.revision ?? baseRevision,
+						baseMark.id,
+					);
+					if (effect.movedMark !== undefined) {
+						factory.push(effect.movedMark);
+						delete effect.movedMark;
+					} else {
+						factory.pushOffset(getOutputLength(baseMark));
+					}
+				} else {
+					factory.pushOffset(getOutputLength(baseMark));
+				}
 			}
 		} else {
 			assert(
@@ -178,7 +206,7 @@ function rebaseMarkList<TNodeChange>(
 		updateLineage(lineageRequests, baseRevision);
 	}
 
-	return applyMoveEffects(baseRevision, baseMarkList, factory.list, moveEffects);
+	return factory.list;
 }
 
 class RebaseQueue<T> {
@@ -382,7 +410,7 @@ function rebaseMark<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 ): CellSpanningMark<TNodeChange> {
 	if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark) || isSkipLikeDetach(baseMark)) {
-		return clone(currMark);
+		return cloneMark(currMark);
 	}
 	const baseType = baseMark.type;
 	switch (baseType) {
@@ -396,7 +424,7 @@ function rebaseMark<TNodeChange>(
 				// See skipped test: Revive ↷ [Revive, undo(Revive)] => Revive
 				if (currMark.isIntention || currMark.conflictsWith === baseMarkRevision) {
 					const reattach = {
-						...(clone(currMark) as Reattach<TNodeChange>),
+						...cloneMark(currMark as Reattach<TNodeChange>),
 						// Update the characterization of the deleted content
 						detachedBy: baseMarkRevision,
 						detachIndex: baseInputOffset,
@@ -408,7 +436,7 @@ function rebaseMark<TNodeChange>(
 				// After this, the only way for the reattach to recover from the conflict is for the nodes to be
 				// revived and for the original deletion (currMark.detachedBy) to be re-applied.
 				return {
-					...clone(currMark),
+					...cloneMark(currMark),
 					lastDetachedBy: baseMarkRevision,
 					detachIndex: baseInputOffset,
 				};
@@ -419,7 +447,7 @@ function rebaseMark<TNodeChange>(
 			) {
 				getOrAddEffect(
 					moveEffects,
-					MoveEnd.Dest,
+					CrossFieldTarget.Destination,
 					currMark.revision,
 					currMark.id,
 				).shouldRemove = true;
@@ -447,12 +475,12 @@ function rebaseMark<TNodeChange>(
 						0x4fa /* Invalid reattach mark overlap */,
 					);
 					// The nodes that currMark aims to detach are being reattached by baseMark
-					const newCurrMark = clone(currMark) as ReturnFrom<TNodeChange>;
+					const newCurrMark: ReturnFrom<TNodeChange> = cloneMark(currMark);
 					delete newCurrMark.conflictsWith;
 					delete newCurrMark.detachIndex;
 					getOrAddEffect(
 						moveEffects,
-						MoveEnd.Dest,
+						CrossFieldTarget.Destination,
 						newCurrMark.revision,
 						newCurrMark.id,
 					).pairedMarkStatus = PairedMarkUpdate.Reactivated;
@@ -468,7 +496,7 @@ function rebaseMark<TNodeChange>(
 						);
 						// The nodes that currMark aims to reattach are being reattached by baseMark
 						return {
-							...clone(currMark),
+							...cloneMark(currMark),
 							conflictsWith: baseMarkRevision,
 						};
 					}
@@ -478,13 +506,13 @@ function rebaseMark<TNodeChange>(
 						if (currMarkType === "ReturnTo") {
 							getOrAddEffect(
 								moveEffects,
-								MoveEnd.Source,
+								CrossFieldTarget.Source,
 								currMark.revision,
 								currMark.id,
 							).pairedMarkStatus = PairedMarkUpdate.Deactivated;
 						}
 						return {
-							...clone(currMark),
+							...cloneMark(currMark),
 							conflictsWith: baseMarkRevision,
 						};
 					}
@@ -498,7 +526,7 @@ function rebaseMark<TNodeChange>(
 						currMark.lastDetachedBy === baseMark.detachedBy,
 						0x4fd /* Invalid revive mark overlap */,
 					);
-					const revive = clone(currMark);
+					const revive = cloneMark(currMark);
 					delete revive.lastDetachedBy;
 					return revive;
 				}
@@ -509,24 +537,24 @@ function rebaseMark<TNodeChange>(
 		case "Modify": {
 			if (isModify(currMark)) {
 				return {
-					...clone(currMark),
+					...cloneMark(currMark),
 					changes: rebaseChild(currMark.changes, baseMark.changes),
 				};
 			}
-			return clone(currMark);
+			return currMark;
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
 			if (!isSkipMark(currMark)) {
 				const baseMarkRevision = baseMark.revision ?? baseRevision;
-				const newCurrMark = clone(currMark);
+				const newCurrMark = cloneMark(currMark);
 				if (newCurrMark.type === "ReturnFrom") {
 					// The nodes that currMark aims to detach are being detached by baseMark
 					newCurrMark.conflictsWith = baseMarkRevision;
 					newCurrMark.detachIndex = baseInputOffset;
 					getOrAddEffect(
 						moveEffects,
-						MoveEnd.Dest,
+						CrossFieldTarget.Destination,
 						newCurrMark.revision,
 						newCurrMark.id,
 					).pairedMarkStatus = PairedMarkUpdate.Deactivated;
@@ -544,7 +572,7 @@ function rebaseMark<TNodeChange>(
 					delete (newCurrMark as CanConflict).conflictsWith;
 					const effect = getOrAddEffect(
 						moveEffects,
-						MoveEnd.Source,
+						CrossFieldTarget.Source,
 						newCurrMark.revision,
 						newCurrMark.id,
 					);
@@ -569,7 +597,7 @@ function rebaseMark<TNodeChange>(
 				} else {
 					getOrAddEffect(
 						moveEffects,
-						MoveEnd.Dest,
+						CrossFieldTarget.Destination,
 						baseMark.revision ?? baseRevision,
 						baseMark.id,
 					).movedMark = newCurrMark;
@@ -582,11 +610,28 @@ function rebaseMark<TNodeChange>(
 	}
 }
 
-function applyMoveEffects<TNodeChange>(
+export function amendRebase<TNodeChange>(
+	rebasedMarks: MarkList<TNodeChange>,
+	baseMarks: TaggedChange<MarkList<TNodeChange>>,
+	genId: IdAllocator,
+	crossFieldManager: CrossFieldManager,
+	revisionIndexer: RevisionIndexer,
+): Changeset<TNodeChange> {
+	return amendRebaseI(
+		baseMarks.revision,
+		baseMarks.change,
+		rebasedMarks,
+		crossFieldManager as MoveEffectTable<TNodeChange>,
+		revisionIndexer,
+	);
+}
+
+function amendRebaseI<TNodeChange>(
 	baseRevision: RevisionTag | undefined,
 	baseMarks: MarkList<TNodeChange>,
 	rebasedMarks: MarkList<TNodeChange>,
-	moveEffects: MoveEffectTable<TNodeChange>,
+	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
+	revisionIndexer: RevisionIndexer,
 ): Changeset<TNodeChange> {
 	// Is it correct to use ComposeQueue here?
 	// If we used a special AmendRebaseQueue, we could ignore any base marks which don't have associated move-ins
@@ -597,6 +642,7 @@ function applyMoveEffects<TNodeChange>(
 		rebasedMarks,
 		() => fail("Should not generate new IDs when applying move effects"),
 		moveEffects,
+		revisionIndexer,
 	);
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 
@@ -605,7 +651,7 @@ function applyMoveEffects<TNodeChange>(
 		if (isObjMark(baseMark) && (baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")) {
 			const effect = getMoveEffect(
 				moveEffects,
-				MoveEnd.Dest,
+				CrossFieldTarget.Destination,
 				baseMark.revision ?? baseRevision,
 				baseMark.id,
 			);
@@ -637,7 +683,7 @@ function handleCurrAttach<T>(
 	offset: number,
 	baseRevision: RevisionTag | undefined,
 ) {
-	const rebasedMark = clone(currMark);
+	const rebasedMark = cloneMark(currMark);
 
 	// If the changeset we are rebasing over has the same revision as an event in rebasedMark's lineage,
 	// we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.

@@ -196,6 +196,9 @@ export function allowsRepoSuperset(
 	return true;
 }
 
+/**
+ * @alpha
+ */
 export function isNeverField(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,

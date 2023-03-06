@@ -2,20 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import {
-	IOverflowSetItemProps,
-	IconButton,
-	Link,
-	OverflowSet,
-	Stack,
-	initializeIcons,
-} from "@fluentui/react";
+import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
 import React from "react";
 
-import { HasClientDebugger, HasContainerId } from "../CommonProps";
+import { HasClientDebugger } from "../CommonProps";
+import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
-import { ContainerDataView } from "./ContainerDataView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 
@@ -25,8 +18,8 @@ import { DataObjectsView } from "./DataObjectsView";
 // - Move Container action bar (connection / disposal buttons) to summary header, rather than in
 //   the Container data view.
 
-// Initialize Fluent icons used this library's components.
-initializeIcons();
+// Ensure FluentUI icons are initialized for use below.
+initializeFluentUiIcons();
 
 /**
  * `className` used by {@link ClientDebugView}.
@@ -40,7 +33,7 @@ export const clientDebugViewClassName = `fluid-client-debugger-view`;
  *
  * @internal
  */
-export interface ClientDebugViewProps extends HasClientDebugger, HasContainerId {
+export interface ClientDebugViewProps extends HasClientDebugger {
 	/**
 	 * Rendering policies for different kinds of Fluid client and object data.
 	 *
@@ -71,26 +64,25 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 
 		container.on("closed", onContainerClose);
 
+		setIsContainerClosed(container.closed);
+
 		return (): void => {
 			container.off("closed", onContainerClose);
 		};
 	}, [container, setIsContainerClosed]);
 
-	// UI state
-	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
-		RootView.Container,
+	// Inner view selection
+	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
+		PanelView.ContainerData,
 	);
 
 	let view: React.ReactElement;
 	if (isContainerClosed) {
-		view = <div>The container has been disposed.</div>;
+		view = <div>The Container has been closed.</div>;
 	} else {
 		let innerView: React.ReactElement;
-		switch (rootViewSelection) {
-			case RootView.Container:
-				innerView = <ContainerDataView clientDebugger={clientDebugger} />;
-				break;
-			case RootView.Data:
+		switch (innerViewSelection) {
+			case PanelView.ContainerData:
 				innerView = (
 					<DataObjectsView
 						clientDebugger={clientDebugger}
@@ -98,7 +90,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 					/>
 				);
 				break;
-			case RootView.Audience:
+			case PanelView.Audience:
 				innerView = (
 					<AudienceView
 						clientDebugger={clientDebugger}
@@ -107,13 +99,13 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 				);
 				break;
 			default:
-				throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
+				throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 		}
 		view = (
 			<Stack tokens={{ childrenGap: 10 }}>
-				<ViewSelectionMenu
-					currentSelection={rootViewSelection}
-					updateSelection={updateRootViewSelection}
+				<PanelViewSelectionMenu
+					currentSelection={innerViewSelection}
+					updateSelection={setInnerViewSelection}
 				/>
 				{innerView}
 			</Stack>
@@ -140,47 +132,54 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 }
 
 /**
- * Root view options for the container visualizer.
+ * View options for the container visualizer.
+ *
+ * @internal
  */
-enum RootView {
+export enum PanelView {
 	/**
-	 * Corresponds with {@link ContainerDataView}.
+	 * Display view of Container data.
 	 */
-	Container = "Container",
+	ContainerData = "Data",
 
 	/**
-	 * Corresponds with {@link DataObjectsView}.
-	 */
-	Data = "Data",
-
-	/**
-	 * Corresponds with {@link AudienceView}.
+	 * Display view of Audience participants / history.
 	 */
 	Audience = "Audience",
+
+	// TODOs:
+	// - Container state history
+	// - Network stats
+	// - Telemetry
+	// - Ops/message latency stats
 }
 
 /**
- * {@link ViewSelectionMenu} input props.
+ * {@link PanelViewSelectionMenu} input props.
+ *
+ * @internal
  */
-interface ViewSelectionMenuProps {
+export interface PanelViewSelectionMenuProps {
 	/**
 	 * The currently-selected inner app view.
 	 */
-	currentSelection: RootView;
+	currentSelection: PanelView;
 
 	/**
 	 * Updates the inner app view to the one specified.
 	 */
-	updateSelection(newSelection: RootView): void;
+	updateSelection(newSelection: PanelView): void;
 }
 
 /**
- * Menu for selecting the inner app view to be displayed.
+ * Menu for selecting the inner app view to be displayed in the debug panel.
+ *
+ * @internal
  */
-function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
+export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
 	const { currentSelection, updateSelection } = props;
 
-	const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([_, flag]) => ({
+	const options: IOverflowSetItemProps[] = Object.entries(PanelView).map(([_, flag]) => ({
 		key: flag,
 	}));
 
@@ -193,7 +192,7 @@ function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
 				aria-label={item.key}
 				styles={{ root: { marginRight: 10 } }}
 				disabled={item.key === currentSelection}
-				onClick={(): void => updateSelection(item.key as RootView)}
+				onClick={(): void => updateSelection(item.key as PanelView)}
 			>
 				{item.key}
 			</Link>

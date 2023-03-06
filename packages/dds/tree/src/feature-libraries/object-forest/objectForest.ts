@@ -136,11 +136,23 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			onMoveOut: (index: number, count: number, id?: Delta.MoveId): void => {
 				const [parent, key] = cursor.getParent();
 				const sourceField = getMapTreeField(parent, key, false);
-				const field = this.detachRangeOfChildren(sourceField, index, index + count);
+				const startIndex = index;
+				const endIndex = index + count;
+				assertValidIndex(startIndex, sourceField, true);
+				assertValidIndex(endIndex, sourceField, true);
+				assert(
+					startIndex <= endIndex,
+					0x371 /* detached range's end must be after its start */,
+				);
+				const newField = sourceField.splice(startIndex, endIndex - startIndex);
+				const field = this.addFieldAsDetached(newField);
 				if (id !== undefined) {
 					moves.set(id, field);
 				} else {
 					this.delete(field);
+				}
+				if (sourceField.length === 0) {
+					parent.fields.delete(key);
 				}
 			},
 			onMoveIn: (index: number, count: number, id: Delta.MoveId): void => {
@@ -188,18 +200,6 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			this.roots.fields.set(key, field);
 		}
 		return detached;
-	}
-
-	private detachRangeOfChildren(
-		field: ObjectField,
-		startIndex: number,
-		endIndex: number,
-	): DetachedField {
-		assertValidIndex(startIndex, field, true);
-		assertValidIndex(endIndex, field, true);
-		assert(startIndex <= endIndex, 0x371 /* detached range's end must be after its start */);
-		const newField = field.splice(startIndex, endIndex - startIndex);
-		return this.addFieldAsDetached(newField);
 	}
 
 	private delete(field: DetachedField): void {
@@ -466,6 +466,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
+ * @alpha
  */
 export function buildForest(schema: StoredSchemaRepository, anchors?: AnchorSet): IEditableForest {
 	return new ObjectForest(schema, anchors);

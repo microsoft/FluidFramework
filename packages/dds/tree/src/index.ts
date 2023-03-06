@@ -30,6 +30,9 @@ export {
 	JsonableTree,
 	Delta,
 	rootFieldKey,
+	rootField,
+	rootFieldKeySymbol,
+	fieldSchema,
 	FieldScope,
 	GlobalFieldKeySymbol,
 	symbolFromKey,
@@ -52,6 +55,7 @@ export {
 	LocalFieldKey,
 	GlobalFieldKey,
 	TreeSchemaIdentifier,
+	TreeSchemaBuilder,
 	NamedTreeSchema,
 	Named,
 	FieldSchema,
@@ -68,7 +72,6 @@ export {
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
-	ICheckout,
 	TransactionResult,
 	FieldAnchor,
 	RevisionTag,
@@ -78,6 +81,15 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
+	AnchorEvents,
 } from "./core";
 
 export {
@@ -99,9 +111,18 @@ export {
 	JsonCompatible,
 	JsonCompatibleObject,
 	NestedMap,
+	fail,
 } from "./util";
 
-export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
+export {
+	Events,
+	IsEvent,
+	ISubscribable,
+	createEmitter,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
+} from "./events";
 
 export {
 	cursorToJsonObject,
@@ -124,6 +145,7 @@ export {
 	ModularChangeFamily,
 	ModularChangeset,
 	ModularEditBuilder,
+	EditDescription,
 	FieldChangeHandler,
 	FieldEditor,
 	FieldChangeRebaser,
@@ -140,6 +162,10 @@ export {
 	NodeChangeRebaser,
 	NodeChangeEncoder,
 	NodeChangeDecoder,
+	CrossFieldManager,
+	CrossFieldTarget,
+	RevisionIndexer,
+	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
@@ -177,6 +203,38 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
+	singleTextCursor,
+	namedTreeSchema,
+	singleStackTreeCursor,
+	CursorAdapter,
+	CursorWithNode,
+	parentField,
 } from "./feature-libraries";
 
-export { ISharedTree, SharedTreeFactory } from "./shared-tree";
+// Export subset of FieldKinds in an API-Extractor compatible way:
+import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
+/**
+ * @alpha
+ */
+interface FieldKinds {
+	value: FieldKind;
+	optional: FieldKind;
+	sequence: FieldKind;
+}
+/**
+ * @alpha
+ */
+const FieldKinds: FieldKinds = FieldKindsOriginal;
+/**
+ * @alpha
+ */
+export { FieldKinds };
+
+export {
+	ISharedTree,
+	ISharedTreeCheckout,
+	ISharedTreeCheckoutFork,
+	SharedTreeFactory,
+} from "./shared-tree";
+
+export { StableId, UuidString } from "./id-compressor";

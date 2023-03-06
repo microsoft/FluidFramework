@@ -32,6 +32,7 @@ import type { IEditableForest } from "./editableForest";
  * Events for {@link IForestSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
+ * @alpha
  */
 export interface ForestEvents {
 	/**
@@ -50,6 +51,7 @@ export interface ForestEvents {
  * For now (might change later) downloading new parts of the forest counts as a change.
  *
  * When invalidating, all outstanding cursors must be freed or cleared.
+ * @alpha
  */
 export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
 	/**
@@ -126,6 +128,7 @@ export function moveToDetachedField(
 /**
  * Anchor to a field.
  * This is structurally based on the parent, so it will move only as the parent moves.
+ * @alpha
  */
 export interface FieldAnchor {
 	/**
@@ -138,6 +141,7 @@ export interface FieldAnchor {
 
 /**
  * ITreeCursor supporting IForestSubscription and its changes over time.
+ * @alpha
  */
 export interface ITreeSubscriptionCursor extends ITreeCursor {
 	/**
@@ -186,6 +190,9 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 	// getParentInfo(id: NodeId): TreeLocation;
 }
 
+/**
+ * @alpha
+ */
 export enum ITreeSubscriptionCursorState {
 	/**
 	 * On the current revision of the forest.
@@ -201,6 +208,9 @@ export enum ITreeSubscriptionCursorState {
 	Freed,
 }
 
+/**
+ * @alpha
+ */
 export const enum TreeNavigationResult {
 	/**
 	 * Attempt to navigate cursor to a key or index that is outside the client's view.

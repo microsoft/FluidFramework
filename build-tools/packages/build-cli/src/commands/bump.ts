@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import type { ArgInput } from "@oclif/core/lib/interfaces";
 import { strict as assert } from "assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
@@ -30,13 +29,15 @@ import {
 } from "../lib";
 import { isReleaseGroup } from "../releaseGroups";
 
-export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
+export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	static summary =
 		"Bumps the version of a release group or package to the next minor, major, or patch version.";
 
 	static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release.`;
 
-	static args: ArgInput = [packageOrReleaseGroupArg];
+	static args = {
+		package_or_release_group: packageOrReleaseGroupArg,
+	};
 
 	static flags = {
 		bumpType: bumpTypeFlag({
@@ -49,6 +50,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 			description:
 				"An exact string to use as the version. The string must be a valid semver string.",
 			exclusive: ["bumpType", "scheme"],
+		}),
+		exactDepType: Flags.string({
+			description:
+				"When using the exact flag, controls the type of dependency that is used between packages within the release group.",
+			dependsOn: ["exact"],
+			options: ["^", "~", ""],
+			default: "^",
 		}),
 		scheme: versionSchemeFlag({
 			description: "Override the version scheme used by the release group or package.",
@@ -84,8 +92,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 	private readonly finalMessages: string[] = [];
 
 	public async run(): Promise<void> {
-		const args = this.processedArgs;
-		const flags = this.processedFlags;
+		const args = this.args;
+		const flags = this.flags;
 
 		const context = await this.getContext();
 		const bumpType: VersionBumpType | undefined = flags.bumpType;
@@ -99,11 +107,18 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 		let repoVersion: ReleaseVersion;
 		let packageOrReleaseGroup: Package | MonoRepo;
 		let scheme: VersionScheme | undefined;
+		const exactDepType = flags.exactDepType ?? "^";
 		const exactVersion: semver.SemVer | null = semver.parse(flags.exact);
 		const updatedPackages: Package[] = [];
 
 		if (bumpType === undefined && exactVersion === null) {
 			this.error(`Either --bumpType or --exact must be provided.`);
+		}
+
+		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
+			// Shouldn't get here since oclif should catch the invalid arguments earlier, but this helps inform TypeScript
+			// that the exactDepType will be one of the enum values.
+			this.error(`Invalid exactDepType: ${exactDepType}`);
 		}
 
 		if (isReleaseGroup(args.package_or_release_group)) {
@@ -165,6 +180,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
+		this.log(`Exact dependency type: ${exactDepType}`);
 		this.log(`Install: ${shouldInstall ? chalk.green("yes") : "no"}`);
 		this.log(`Commit: ${shouldCommit ? chalk.green("yes") : "no"}`);
 		this.logHr();
@@ -185,7 +201,13 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand.flags> {
 			}
 		}
 
-		const logs = await bumpReleaseGroup(context, bumpArg, packageOrReleaseGroup, scheme);
+		const logs = await bumpReleaseGroup(
+			context,
+			bumpArg,
+			packageOrReleaseGroup,
+			scheme,
+			exactDepType,
+		);
 		this.verbose(logs);
 
 		if (shouldInstall) {

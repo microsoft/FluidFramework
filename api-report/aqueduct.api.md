@@ -26,7 +26,7 @@ import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidDependencySynthesizer } from '@fluidframework/synthesize';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
-import { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
+import type { IFluidMountableViewClass } from '@fluidframework/view-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IProvideFluidHandle } from '@fluidframework/core-interfaces';
@@ -41,7 +41,7 @@ import { RuntimeRequestHandler } from '@fluidframework/request-handler';
 
 // @public
 export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements IProvideFluidDataStoreRegistry {
-    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined);
+    constructor(registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer | undefined, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions | undefined, initializeEntryPoint?: ((runtime: IContainerRuntime) => Promise<FluidObject>) | undefined);
     protected containerHasInitialized(runtime: IContainerRuntime): Promise<void>;
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
@@ -67,7 +67,7 @@ export abstract class BaseContainerService implements IFluidRouter {
 
 // @public
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
-    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions);
+    constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions, initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
     // (undocumented)
     static readonly defaultDataStoreId = "default";
@@ -199,7 +199,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 // @public (undocumented)
 export const serviceRoutePathRoot = "_services";
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function waitForAttach(dataStoreRuntime: IFluidDataStoreRuntime): Promise<void>;
 
 ```

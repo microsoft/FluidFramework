@@ -15,7 +15,7 @@ import {
 	ITreeCursor,
 	IForestSubscription,
 	TransactionResult,
-	Checkout as TransactionCheckout,
+	TransactionCheckout,
 	UpPath,
 	FieldKey,
 	SchemaDataAndPolicy,
@@ -25,12 +25,19 @@ import { ISubscribable } from "../../events";
 import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
 import { runSynchronousTransaction } from "../defaultTransaction";
 import { singleMapTreeCursor } from "../mapTreeCursor";
-import { ProxyTarget, EditableField, proxifyField, UnwrappedEditableField } from "./editableTree";
-import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "./utilities";
+import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "../contextuallyTyped";
+import {
+	ProxyTarget,
+	EditableField,
+	unwrappedField,
+	UnwrappedEditableField,
+	makeField,
+} from "./editableTree";
 
 /**
  * A common context of a "forest" of EditableTrees.
  * It handles group operations like transforming cursors into anchors for edits.
+ * @alpha
  */
 export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
@@ -201,7 +208,9 @@ export class ProxyContext implements EditableTreeContext {
 		const rootSchema = lookupGlobalFieldSchema(this.schema, rootFieldKey);
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
-		const proxifiedField = proxifyField(this, rootSchema, cursor, unwrap);
+		const proxifiedField = unwrap
+			? unwrappedField(this, rootSchema, cursor)
+			: makeField(this, rootSchema, cursor);
 		cursor.free();
 		return proxifiedField;
 	}
@@ -299,7 +308,7 @@ export class ProxyContext implements EditableTreeContext {
  * A simple API for a Forest to interact with the tree.
  *
  * @param forest - the Forest
- * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases.
+ * @param transactionCheckout - the TransactionCheckout applied to a transaction, not required in read-only usecases.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */

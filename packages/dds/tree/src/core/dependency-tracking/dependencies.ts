@@ -12,7 +12,7 @@ import { MakeNominal } from "../../util";
 /**
  * Computation, with a name.
  *
- * @public
+ * @alpha
  */
 export interface NamedComputation {
 	/**
@@ -45,7 +45,7 @@ export interface NamedComputation {
  *
  * Provides a callback ({@link Dependent.markInvalid}) for the `Dependee` to invoke when it is invalidated.
  *
- * @public
+ * @alpha
  */
 export interface Dependent extends NamedComputation {
 	/**
@@ -69,7 +69,7 @@ export interface Dependent extends NamedComputation {
  * Particular instances and/or subclasses can be used to indicate invalidations
  * that can optionally be handled less conservatively than the base invalidated case.
  *
- * @public
+ * @alpha
  */
 export class InvalidationToken {
 	protected readonly _typeCheck!: MakeNominal;
@@ -93,7 +93,7 @@ export class InvalidationToken {
  * Dependencies are only used for invalidation,
  * so there is no need to make a `Dependee` when the source data is immutable.
  *
- * @public
+ * @alpha
  */
 export interface Dependee extends NamedComputation {
 	/**

@@ -10,14 +10,14 @@
  *
  * This code assumes values will not be undefined (keys can be undefined).
  *
- * @public
+ * @alpha
  */
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
  *
- * @public
+ * @alpha
  */
 export function tryAddToNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -41,7 +41,7 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.
  *
- * @public
+ * @alpha
  */
 export function setInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -58,7 +58,7 @@ export function setInNestedMap<Key1, Key2, Value>(
  * Returns the value at (key1, key2) after setting it.
  * This is equivalent to a get or default that adds the default to the map.
  *
- * @public
+ * @alpha
  */
 export function getOrAddInMap<Key, Value>(map: Map<Key, Value>, key: Key, value: Value): Value {
 	const currentValue = map.get(key);
@@ -72,7 +72,7 @@ export function getOrAddInMap<Key, Value>(map: Map<Key, Value>, key: Key, value:
 /**
  * Returns the value at (key1, key2) in map, or undefined if not present.
  *
- * @public
+ * @alpha
  */
 export function tryGetFromNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -90,7 +90,7 @@ export function tryGetFromNestedMap<Key1, Key2, Value>(
  * If (key1, key2) is not in the map, add value to the map.
  * Returns whatever is at (key1, key2) in map (which will be value if it was empty before).
  *
- * @public
+ * @alpha
  */
 export function getOrAddInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -110,7 +110,7 @@ export function getOrAddInNestedMap<Key1, Key2, Value>(
  * If (key1, key2) is not in map, returns value.
  * If (key1, key2) is in map, return its entry.
  *
- * @public
+ * @alpha
  */
 export function getOrDefaultInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -130,7 +130,7 @@ export function getOrDefaultInNestedMap<Key1, Key2, Value>(
  *
  * @returns true iff found.
  *
- * @public
+ * @alpha
  */
 export function deleteFromNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -152,7 +152,7 @@ export function deleteFromNestedMap<Key1, Key2, Value>(
  * Map with two keys; same semantics as NestedMap, but maintains a size count for the entire collection.
  * Note: undefined is not supported as a value, and will cause incorrect behavior.
  *
- * @public
+ * @alpha
  */
 export class SizedNestedMap<Key1, Key2, Value> {
 	private readonly nestedMap: NestedMap<Key1, Key2, Value> = new Map();

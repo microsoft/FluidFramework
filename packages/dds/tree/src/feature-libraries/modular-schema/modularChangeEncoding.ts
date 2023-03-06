@@ -12,12 +12,13 @@ import {
 	LocalFieldKey,
 	symbolFromKey,
 } from "../../core";
-import { brand, JsonCompatibleReadOnly } from "../../util";
+import { brand, JsonCompatibleReadOnly, Mutable } from "../../util";
+import { ChangesetLocalId } from "./crossFieldQueries";
 import {
-	ChangesetLocalId,
 	FieldChangeMap,
 	ModularChangeset,
 	NodeChangeset,
+	RevisionInfo,
 	ValueChange,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
@@ -34,6 +35,7 @@ interface EncodedNodeChangeset {
 interface EncodedModularChangeset {
 	maxId?: ChangesetLocalId;
 	changes: EncodedFieldChangeMap;
+	revisions?: readonly RevisionInfo[];
 }
 
 /**
@@ -62,6 +64,7 @@ export function encodeForJsonFormat0(
 ): EncodedModularChangeset & JsonCompatibleReadOnly {
 	return {
 		maxId: change.maxId,
+		revisions: change.revisions as readonly RevisionInfo[] & JsonCompatibleReadOnly,
 		changes: encodeFieldChangesForJson(fieldKinds, change.changes),
 	};
 }
@@ -116,9 +119,12 @@ export function decodeJsonFormat0(
 	change: JsonCompatibleReadOnly,
 ): ModularChangeset {
 	const encodedChange = change as unknown as EncodedModularChangeset;
-	const decoded: ModularChangeset = {
+	const decoded: Mutable<ModularChangeset> = {
 		changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
 	};
+	if (encodedChange.revisions !== undefined) {
+		decoded.revisions = encodedChange.revisions;
+	}
 	if (encodedChange.maxId !== undefined) {
 		decoded.maxId = encodedChange.maxId;
 	}

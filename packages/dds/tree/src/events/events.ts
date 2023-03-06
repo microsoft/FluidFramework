@@ -18,6 +18,7 @@ export type UnionToIntersection<T> = (T extends any ? (k: T) => unknown : never)
 
 /**
  * `true` iff the given type is an acceptable shape for an event
+ * @alpha
  */
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
@@ -32,6 +33,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
  * ```
  * Any object type is a valid {@link Events}, but only the event-like properties of that
  * type will be included.
+ * @alpha
  */
 export type Events<E> = {
 	[P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
@@ -73,6 +75,7 @@ export type TransformEvents<E extends Events<E>, Target extends IEvent = IEvent>
  *   error: (errorCode: number) => void;
  * }>
  * ```
+ * @alpha
  */
 export interface ISubscribable<E extends Events<E>> {
 	/**
@@ -87,6 +90,7 @@ export interface ISubscribable<E extends Events<E>> {
 
 /**
  * An object which can emit events to subscribed listeners.
+ * @alpha
  */
 export interface IEmitter<E extends Events<E>> {
 	/**
@@ -102,9 +106,34 @@ export interface IEmitter<E extends Events<E>> {
  *
  * A class can delegate handling {@link ISubscribable} to the returned value while using it to emit the events.
  * See also `EventEmitter` which be used as a base class to implement {@link ISubscribable} via extension.
+ * @alpha
  */
-export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitter<E> {
-	return new ComposableEventEmitter<E>();
+export function createEmitter<E extends Events<E>>(
+	noListeners?: NoListenersCallback<E>,
+): ISubscribable<E> & IEmitter<E> & HasListeners<E> {
+	return new ComposableEventEmitter<E>(noListeners);
+}
+
+/**
+ * Called when the last listener for `eventName` is removed.
+ * Useful for determining when to clean up resources related to detecting when the event might occurs.
+ * @alpha
+ */
+export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
+
+/**
+ * @alpha
+ */
+export interface HasListeners<E extends Events<E>> {
+	/**
+	 * When no `eventName` is provided, returns true iff there are any listeners.
+	 *
+	 * When `eventName` is provided, returns true iff there are listeners for that event.
+	 *
+	 * @remarks
+	 * This can be used to know when its safe to cleanup data-structures which only exist to fire events for their listeners.
+	 */
+	hasListeners(eventName?: keyof Events<E>): boolean;
 }
 
 /**
@@ -138,12 +167,12 @@ export function createEmitter<E extends Events<E>>(): ISubscribable<E> & IEmitte
  * }
  * ```
  */
-export class EventEmitter<E extends Events<E>> implements ISubscribable<E> {
+export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasListeners<E> {
 	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
-	protected constructor() {}
+	protected constructor(private readonly noListeners?: NoListenersCallback<E>) {}
 
 	protected emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
 		const listeners = this.listeners.get(eventName);
@@ -179,14 +208,22 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E> {
 		);
 		if (listeners.size === 0) {
 			this.listeners.delete(eventName);
+			this.noListeners?.(eventName);
 		}
+	}
+
+	public hasListeners(eventName?: keyof Events<E>): boolean {
+		if (eventName === undefined) {
+			return this.listeners.size !== 0;
+		}
+		return this.listeners.has(eventName);
 	}
 }
 
 // This class exposes the constructor and the `emit` method of `EventEmitter`, elevating them from protected to public
 class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implements IEmitter<E> {
-	public constructor() {
-		super();
+	public constructor(noListeners?: NoListenersCallback<E>) {
+		super(noListeners);
 	}
 
 	public emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {

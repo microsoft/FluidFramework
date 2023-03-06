@@ -21,17 +21,20 @@ import { Brand } from "../../util";
  * Optionally validate loaded data against schema.
  * 2. Persist the whole schema.
  * Use the identifier to associate it with schema when loading to check that the schema match.
+ * @alpha
  */
 export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
 
 /**
  * SchemaIdentifier for a Tree.
  * Also known as "Definition"
+ * @alpha
  */
 export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.
+ * @alpha
  */
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
@@ -40,6 +43,7 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
  * Refers to an exact stable policy (ex: specific version of a policy),
  * for how to handle (ex: edit and merge edits to) fields marked with this kind.
  * Persisted in documents as part of stored schema.
+ * @alpha
  */
 export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
 
@@ -47,6 +51,7 @@ export type FieldKindIdentifier = Brand<string, "tree.FieldKindIdentifier">;
  * SchemaIdentifier for a "global field",
  * meaning a field which has the same meaning for all usages within the document
  * (not scoped to a specific TreeSchema like LocalFieldKey).
+ * @alpha
  */
 export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
 
@@ -68,6 +73,7 @@ export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
  *
  * TODO: come up with a final design for how to handle primitives / values.
  * This design is just a placeholder.
+ * @alpha
  */
 export enum ValueSchema {
 	Nothing,
@@ -112,9 +118,13 @@ export enum ValueSchema {
  * - Constrain the types allowed based on which types guarantee their data will always meet the constraints.
  *
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
+ * @alpha
  */
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
+/**
+ * @alpha
+ */
 export interface FieldSchema {
 	readonly kind: FieldKindIdentifier;
 	/**
@@ -124,6 +134,9 @@ export interface FieldSchema {
 	readonly types?: TreeTypeSet;
 }
 
+/**
+ * @alpha
+ */
 export interface TreeSchema {
 	/**
 	 * Schema for fields with keys scoped to this TreeSchema.
@@ -203,10 +216,16 @@ export interface TreeSchema {
 	readonly value: ValueSchema;
 }
 
+/**
+ * @alpha
+ */
 export interface Named<TName> {
 	readonly name: TName;
 }
 
+/**
+ * @alpha
+ */
 export type NamedTreeSchema = TreeSchema & Named<TreeSchemaIdentifier>;
 export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
 
@@ -215,6 +234,7 @@ export type NamedFieldSchema = Named<GlobalFieldKey> & FieldSchema;
  *
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
+ * @alpha
  */
 export interface SchemaData {
 	readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
@@ -224,6 +244,7 @@ export interface SchemaData {
 /**
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
+ * @alpha
  */
 export interface SchemaPolicy {
 	/**
