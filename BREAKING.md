@@ -244,11 +244,9 @@ Now if an empty string is passed, then the relativeUrl or data store path will b
 
 ### Deprecated ContainerServices in `@fluidframework/aqueduct`
 
-Deprecating `BaseContainerService`, `ContainerServiceRegistryEntries`, `generateContainerServicesRequestHandler` and `serviceRoutePathRoot` in `@fluidframework/aqueduct`, no longer exposing these to runtime. See `@fluidframework/synthesize#DependencyContainer` for replacement. Reasons for deprecation:
+Deprecating `BaseContainerService`, `ContainerServiceRegistryEntries`, `generateContainerServicesRequestHandler` and `serviceRoutePathRoot` in `@fluidframework/aqueduct`, no longer exposing these to runtime. See `@fluidframework/synthesize#DependencyContainer` for replacement. Reason for deprecation:
 
--   `serviceRoutePathRoot` : Seems to only be used internally
--   `BaseContainerService` : reason, tbd
--   `initialClients` and `version` : reason, tbd
+Aqueduct supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
 
 ### Deprecate `ensureContainerConnected()` in `@fluidframework/test-utils`
 
