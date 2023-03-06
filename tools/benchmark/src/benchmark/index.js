@@ -1206,7 +1206,9 @@ function runInContext(context) {
 		}
 		// Resolve time span required to achieve a percent uncertainty of at most 1%.
 		// For more information see http://spiff.rit.edu/classes/phys273/uncert/uncert.html.
-		options.minTime ??= options.minTime = max(timer.res / 2 / 0.01, 0.05);
+		if (!options.minTime) {
+			options.minTime = max(timer.res / 2 / 0.01, 0.05);
+		}
 		return clock.apply(null, arguments);
 	}
 
