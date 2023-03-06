@@ -199,7 +199,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 // @public (undocumented)
 export const serviceRoutePathRoot = "_services";
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function waitForAttach(dataStoreRuntime: IFluidDataStoreRuntime): Promise<void>;
 
 ```

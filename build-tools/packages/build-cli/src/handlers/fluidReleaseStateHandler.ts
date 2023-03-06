@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import { Command } from "@oclif/core";
-import { strict as assert } from "assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
@@ -20,9 +19,9 @@ import {
 	checkAssertTagging,
 	checkBranchName,
 	checkBranchUpToDate,
+	checkDependenciesInstalled,
 	checkDoesReleaseFromReleaseBranch,
 	checkHasRemote,
-	checkInstallBuildTools,
 	checkMainNextIntegrated,
 	checkNoPrereleaseDependencies,
 	checkOnReleaseBranch,
@@ -60,79 +59,79 @@ export interface FluidReleaseStateHandlerData {
 	/**
 	 * The {@link Context}.
 	 */
-	context?: Context;
+	context: Context;
 
 	/**
 	 * The release group or package that is being released.
 	 */
-	releaseGroup?: ReleaseGroup | ReleasePackage;
+	releaseGroup: ReleaseGroup | ReleasePackage;
 
 	/**
 	 * The version scheme used by the release group or package being released.
 	 */
-	versionScheme?: VersionScheme;
+	versionScheme: VersionScheme;
 
 	/**
 	 * The bump type used for this release.
 	 */
-	bumpType?: VersionBumpType;
+	bumpType: VersionBumpType;
 
 	/**
 	 * An {@link InstructionalPromptWriter} that the command can use to display instructional prompts.
 	 */
-	promptWriter?: InstructionalPromptWriter;
+	promptWriter: InstructionalPromptWriter;
 
 	/**
 	 * The version being released.
 	 */
-	releaseVersion?: ReleaseVersion;
+	releaseVersion: ReleaseVersion;
 
 	/**
 	 * True if all optional checks should be skipped.
 	 */
-	shouldSkipChecks?: boolean;
+	shouldSkipChecks: boolean;
 
 	/**
 	 * True if repo policy should be checked. This also affects assert tagging, which runs as part of policy.
 	 */
-	shouldCheckPolicy?: boolean;
+	shouldCheckPolicy: boolean;
 
 	/**
 	 * True if the branch names should be checked.
 	 */
-	shouldCheckBranch?: boolean;
+	shouldCheckBranch: boolean;
 
 	/**
 	 * True if the branch must be up-to-date with the remote.
 	 */
-	shouldCheckBranchUpdate?: boolean;
+	shouldCheckBranchUpdate: boolean;
 
 	/**
 	 * True if changes should be committed automatically.
 	 */
-	shouldCommit?: boolean;
+	shouldCommit: boolean;
 
 	/**
 	 * True if `npm install` should be run on changed release groups and packages.
 	 */
-	shouldInstall?: boolean;
+	shouldInstall: boolean;
 
 	/**
 	 * True if the main and next branches should be checked to confirm that they are merged.
 	 */
-	shouldCheckMainNextIntegrated?: boolean;
+	shouldCheckMainNextIntegrated: boolean;
 
 	/**
 	 * The {@link Command} class that represents the release command, which is {@link ReleaseCommand}. This is used to
 	 * get the command name and arguments for printing instructions to run the command again.
 	 */
-	command?: Command;
+	command: Command;
 
 	/**
 	 * A function that the state handlers can call to exit the application if needed. If this is undefined then the
 	 * handler function will not exit the app itself.
 	 */
-	exitFunc?: (code?: number) => void;
+	exitFunc: (code?: number) => void;
 }
 
 /**
@@ -148,9 +147,6 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 		log: CommandLogger,
 		data: FluidReleaseStateHandlerData,
 	): Promise<boolean> {
-		const { context } = data;
-		assert(context !== undefined, "Context is undefined.");
-
 		let superShouldHandle = false;
 		let result = false;
 
@@ -232,8 +228,8 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 				break;
 			}
 
-			case "CheckInstallBuildTools": {
-				result = await checkInstallBuildTools(state, machine, testMode, log, data);
+			case "CheckDependenciesInstalled": {
+				result = await checkDependenciesInstalled(state, machine, testMode, log, data);
 				break;
 			}
 
