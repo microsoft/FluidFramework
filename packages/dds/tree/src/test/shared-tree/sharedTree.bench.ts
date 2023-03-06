@@ -11,9 +11,11 @@ import {
 	EditableField,
 	FieldKinds,
 	getField,
+	isEditableField,
 	isUnwrappedNode,
 	namedTreeSchema,
 	singleTextCursor,
+	UnwrappedEditableField,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
@@ -85,7 +87,9 @@ function getTestSchema(fieldKind: { identifier: FieldKindIdentifier }): SchemaDa
 	testSchemaMap.set(dataSchema.name, dataSchema);
 	return {
 		treeSchema: testSchemaMap,
-		globalFieldSchema: new Map([]),
+		globalFieldSchema: new Map([
+			[rootFieldKey, fieldSchema(FieldKinds.value, [rootSchemaName])],
+		]),
 	};
 }
 
@@ -374,7 +378,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 	});
-	describe("EditableTree", () => {
+	describe("EditableTree bench", () => {
 		for (const dataType of testSubtrees.keys()) {
 			for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 				let provider: ITestTreeProvider;
@@ -385,7 +389,7 @@ describe("SharedTree benchmarks", () => {
 					title: `Deep Tree (${dataType}) with Editable Tree: reads with ${numberOfNodes} nodes`,
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
-							getTestSchema(FieldKinds.sequence),
+							getTestSchema(FieldKinds.optional),
 							[{ type: rootSchemaName }],
 							1,
 						);
@@ -630,12 +634,13 @@ function insertNodesToEditableTree(
 	assert(node !== undefined);
 	switch (shape) {
 		case TreeShape.Deep:
-			treeRoot[createField](localFieldKey, [singleTextCursor(node)]);
+			treeRoot[createField](localFieldKey, singleTextCursor(node));
 			assert(isUnwrappedNode(treeRoot));
 			field_0 = treeRoot[getField](localFieldKey);
 			assert(field_0 !== undefined);
 			currentNode = field_0.getNode(0);
 			for (let i = 0; i < numberOfNodes; i++) {
+				assert(isUnwrappedNode(currentNode));
 				currentNode[createField](localFieldKey, singleTextCursor(node));
 				currentNode = currentNode[getField](localFieldKey).getNode(0);
 			}
@@ -824,22 +829,24 @@ function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
 }
 
 function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeShape) {
-	assert(isUnwrappedNode(tree.root));
-	let currField;
-	let currNode;
 	switch (shape) {
-		case TreeShape.Deep:
-			currNode = tree.root;
+		case TreeShape.Deep: {
+			let currentNode: UnwrappedEditableField = tree.root;
 			for (let j = 0; j < numberOfNodes - 1; j++) {
-				currField = currNode[getField](localFieldKey);
-				currNode = currField.getNode(0);
+				assert(isUnwrappedNode(currentNode));
+				currentNode = currentNode.foo as UnwrappedEditableField;
 			}
 			break;
-		case TreeShape.Wide:
-			for (let j = 0; j < numberOfNodes - 1; j++) {
-				tree.root[getField](localFieldKey).getNode(j);
+		}
+		case TreeShape.Wide: {
+			const root = tree.root;
+			assert(isUnwrappedNode(root));
+			const field = root.foo as UnwrappedEditableField;
+			assert(isEditableField(field));
+			for (const iterator of field) {
 			}
 			break;
+		}
 		default:
 			unreachableCase(shape);
 	}
@@ -875,22 +882,22 @@ function getEditableLeafNode(
 	shape: TreeShape,
 ): EditableField {
 	assert(isUnwrappedNode(tree.root));
-	let currField;
-	let currNode;
+	let currentField;
+	let currentNode;
 	switch (shape) {
 		case TreeShape.Deep:
-			currField = tree.root[getField](localFieldKey);
-			currNode = currField.getNode(0);
+			currentField = tree.root[getField](localFieldKey);
+			currentNode = currentField.getNode(0);
 			for (let j = 0; j < numberOfNodes; j++) {
-				currField = currNode[getField](localFieldKey);
-				currNode = currField.getNode(0);
+				currentField = currentNode[getField](localFieldKey);
+				currentNode = currentField.getNode(0);
 			}
-			assert(currField !== undefined);
-			return currField;
+			assert(currentField !== undefined);
+			return currentField;
 		case TreeShape.Wide:
-			currField = tree.root[getField](localFieldKey);
-			assert(currField !== undefined);
-			return currField;
+			currentField = tree.root[getField](localFieldKey);
+			assert(currentField !== undefined);
+			return currentField;
 		default:
 			unreachableCase(shape);
 	}
