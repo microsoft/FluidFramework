@@ -7,14 +7,6 @@
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
 declare class Benchmark {
-	static formatNumber(num: number): string;
-	static join(obj: Object, separator1?: string, separator2?: string): string;
-	static invoke(benches: Benchmark[], name: string | Object, ...args: any[]): any[];
-	static runInContext(context: Object): Function;
-
-	static options: Benchmark.Options;
-	static version: string;
-
 	constructor(options: Benchmark.Options);
 
 	id: number;

@@ -294,7 +294,7 @@ function runInContext(context) {
 	 */
 	const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
 		// Only clone primitives, arrays, and plain objects.
-		if (!_.isArray(value) && !_.isPlainObject(value)) {
+		if (!Array.isArray(value) && !_.isPlainObject(value)) {
 			return value;
 		}
 	});
@@ -439,11 +439,6 @@ function runInContext(context) {
 	 * @returns {Array} A new array of values returned from each method invoked.
 	 * @example
 	 *
-	 * // invoke `reset` on all benchmarks
-	 * Benchmark.invoke(benches, 'reset');
-	 *
-	 * // invoke `emit` with arguments
-	 * Benchmark.invoke(benches, 'emit', 'complete', listener);
 	 *
 	 * // invoke `run(true)`, treat benchmarks as a queue, and register invoke callbacks
 	 * Benchmark.invoke(benches, {
@@ -470,7 +465,6 @@ function runInContext(context) {
 	function invoke(benches, name) {
 		let args;
 		let bench;
-		let queued;
 		let index = -1;
 		const eventProps = { currentTarget: benches };
 		let options = { onStart: _.noop, onCycle: _.noop, onComplete: _.noop };
@@ -567,17 +561,12 @@ function runInContext(context) {
 			// If we reached the last index then return `false`.
 			return (queued ? benches.length : index < result.length) ? index : (index = false);
 		}
-		// Juggle arguments.
-		if (_.isString(name)) {
-			// 2 arguments (array, name).
-			args = slice.call(arguments, 2);
-		} else {
-			// 2 arguments (array, options).
-			options = Object.assign(options, name);
-			name = options.name;
-			args = _.isArray((args = "args" in options ? options.args : [])) ? args : [args];
-			queued = options.queued;
-		}
+
+		options = Object.assign(options, name);
+		name = options.name;
+		args = Array.isArray((args = "args" in options ? options.args : [])) ? args : [args];
+		const queued = options.queued;
+
 		// Start iterating over the array.
 		if (raiseIndex() !== false) {
 			// Emit "start" event.
@@ -908,9 +897,9 @@ function runInContext(context) {
 					return;
 				}
 				if (_.isObjectLike(value)) {
-					if (_.isArray(value)) {
+					if (Array.isArray(value)) {
 						// Check if an array value has changed to a non-array value.
-						if (!_.isArray(currValue)) {
+						if (!Array.isArray(currValue)) {
 							changed = true;
 							currValue = [];
 						}
