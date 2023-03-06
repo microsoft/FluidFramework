@@ -134,13 +134,6 @@ export function benchmark(args: BenchmarkArguments): Test {
 		if (isInPerformanceTestingMode) {
 			await options.before();
 
-			const benchmarkOptions: Benchmark.Options = {
-				maxTime: options.maxBenchmarkDurationSeconds,
-				minSamples: options.minSampleCount,
-				minTime: options.minSampleDurationSeconds,
-				defer: isAsync,
-			};
-
 			const benchmarkFunction: (deferred: {
 				resolve: Mocha.Done;
 			}) => void | Promise<unknown> = isAsync
@@ -152,12 +145,17 @@ export function benchmark(args: BenchmarkArguments): Test {
 				  }
 				: argsBenchmarkFn;
 
+			const benchmarkOptions: Benchmark.Options = {
+				maxTime: options.maxBenchmarkDurationSeconds,
+				minSamples: options.minSampleCount,
+				minTime: options.minSampleDurationSeconds,
+				defer: isAsync,
+				name: args.title,
+				fn: benchmarkFunction,
+			};
+
 			await new Promise<void>((resolve) => {
-				const benchmarkInstance = new Benchmark(
-					args.title,
-					benchmarkFunction,
-					benchmarkOptions,
-				);
+				const benchmarkInstance = new Benchmark(benchmarkOptions);
 				// Run a garbage collection, if possible, before the test.
 				// This helps noise from allocations before the test (ex: from previous tests or startup) from
 				// impacting the test.

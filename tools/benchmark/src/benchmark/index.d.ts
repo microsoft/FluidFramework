@@ -13,12 +13,8 @@ declare class Benchmark {
 	static runInContext(context: Object): Function;
 
 	static options: Benchmark.Options;
-	static support: Benchmark.Support;
 	static version: string;
 
-	constructor(fn: Function | string, options?: Benchmark.Options);
-	constructor(name: string, fn: Function | string, options?: Benchmark.Options);
-	constructor(name: string, options?: Benchmark.Options);
 	constructor(options: Benchmark.Options);
 
 	id: number;
@@ -72,12 +68,6 @@ declare namespace Benchmark {
 		teardown?: Function | string | undefined;
 		fn?: Function | string | undefined;
 		queued?: boolean | undefined;
-	}
-
-	export interface Support {
-		browser: boolean;
-		timeout: boolean;
-		decompilation: boolean;
 	}
 
 	export interface Stats {
