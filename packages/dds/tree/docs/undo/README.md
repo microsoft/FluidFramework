@@ -193,10 +193,22 @@ because we cannot know in advance the exact impact of the change to undo.
 For this V1, we simply produce a "best attempt" undo based on the most up to date version of the change to be undone.
 This could lead to some data loss in scenarios where the change to be undone deletes a subtree under which content is concurrently inserted.
 
-### Undo Tree
+### Undo Commit Tree
 
 In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
-To that end, we need to maintain a tree of undoable commits (based on the `GraphCommit` structure defined in `src\core\rebase\types.ts`).
+To that end, we need to maintain a tree of undoable commits where each node may look like this:
+
+```typescript
+interface UndoableCommit<TChange> {
+	/* The commit to undo */
+	readonly commit: GraphCommit<TChange>;
+	/* The repair data associated with the commit */
+	readonly repairData: ReadonlyRepairDataStore;
+	/* The next undoable commit. */
+	readonly parent?: UndoableCommit<TChange>;
+}
+```
+
 That tree is a sparse copy of the commit tree maintained by `EditManager` and `Checkout`s for branch management.
 
 The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
@@ -236,6 +248,11 @@ That's because it's possible that the child branch may itself be the parent bran
 whose undo queue includes those commit nodes.
 The child-most branch's commit nodes should not be affected by the fact that its parent branch executed a pull.
 
+One simple way to characterize what needs to happen
+(and possibly to implement it)
+is to replay (the rebased version of) the local branch edits onto a new fork of the parent branch.
+This would however require knowing which of those local edits were undo, redos, or normal edits.
+
 #### Dropping Old Commits
 
 As sequenced edits fall out of the collab window,
@@ -258,6 +275,35 @@ This approach has the following pros and cons:
     (which is not yet supported).
     This may also make up for the overhead mentioned above because it makes it faster to discard repair data
     (we just drop the reference to the store that contains the repair data).
+
+### Redo
+
+Redo support can be achieved using a similar approach to that of undo.
+
+#### Adding New Commits
+
+Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over later edits.
+This is preferable to rebasing the original change over later edits for two reasons:
+
+-   It is better at mitigating data-loss caused by undo.
+    For example, undoing an insert will delete any content that has since been added under the inserted node.
+    Applying the inverse of the undo will restore that content while re-applying the original insert will not.
+-   It is more efficient as it doesn't require as much rebasing.
+
+Redoable commits are effectively undoable commits and can therefore use the same `UndoableCommit` structure described above.
+
+#### Redo Commit Tree
+
+The tree of redoable commits is maintained across branches in similarly to the undoable commits tree.
+The key differences are as follows:
+
+-   When a new edit is made by the local client:
+    -   If the edit is an undo then the commit is pushed onto the tip of the redoable commit list.
+        The head pointer for the redoable commits should now point to that commit node.
+    -   If the edit is a redo then the head pointer for the redoable commits is popped.
+        The parent redo commit (if any) becomes the head redo commit for that branch.
+        Note that this is done in addition to adding a new undoable commit (see [Adding New Commits](#adding-new-commits) above).
+    -   If the edit is neither and undo nor a redo then the head pointer for the redoable commits is cleared for that branch.
 
 ## Glossary
 
