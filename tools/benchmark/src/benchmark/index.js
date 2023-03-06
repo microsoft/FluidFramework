@@ -217,45 +217,624 @@ let timer = {
 };
 
 /* ------------------------------------------------------------------------ */
+class Benchmark {
+	/**
+	 * The number of times a test was executed.
+	 * @type number
+	 */
+	count = 0;
 
-/**
- * The Benchmark constructor.
- *
- * @constructor
- * @param {Object} [options={}] Options object.
- * @example
- *
- * var bench = new Benchmark({
- *
- *   // benchmark name
- *   'name': 'foo',
- *
- *   // benchmark test as a string
- *   'fn': '[1,2,3,4].sort()'
- * });
- */
-function Benchmark(options) {
-	this.options = {
-		...defaultOptions,
-		...options,
+	/**
+	 * The number of cycles performed while benchmarking.
+	 * @type number
+	 */
+	cycles = 0;
+
+	/**
+	 * The number of executions per second.
+	 * @type number
+	 */
+	hz = 0;
+
+	/**
+	 * The compiled test function.
+	 * @type {Function|string}
+	 */
+	compiled = undefined;
+
+	/**
+	 * The error object if the test failed.
+	 * @type Object
+	 */
+	error = undefined;
+
+	/**
+	 * The test to benchmark.
+	 * @type {Function|string}
+	 */
+	fn = undefined;
+
+	/**
+	 * A flag to indicate if the benchmark is aborted.
+	 * @type boolean
+	 */
+	aborted = false;
+
+	/**
+	 * A flag to indicate if the benchmark is running.
+	 * @type boolean
+	 */
+	running = false;
+
+	/**
+	 * Compiled into the test and executed immediately **before** the test loop.
+	 * @type {Function|string}
+	 * @example
+	 *
+	 * // basic usage
+	 * var bench = Benchmark({
+	 *   'setup': function() {
+	 *     var c = this.count,
+	 *         element = document.getElementById('container');
+	 *     while (c--) {
+	 *       element.appendChild(document.createElement('div'));
+	 *     }
+	 *   },
+	 *   'fn': function() {
+	 *     element.removeChild(element.lastChild);
+	 *   }
+	 * });
+	 *
+	 * // compiles to something like:
+	 * var c = this.count,
+	 *     element = document.getElementById('container');
+	 * while (c--) {
+	 *   element.appendChild(document.createElement('div'));
+	 * }
+	 * var start = new Date;
+	 * while (count--) {
+	 *   element.removeChild(element.lastChild);
+	 * }
+	 * var end = new Date - start;
+	 *
+	 * // or using strings
+	 * var bench = Benchmark({
+	 *   'setup': '\
+	 *     var a = 0;\n\
+	 *     (function() {\n\
+	 *       (function() {\n\
+	 *         (function() {',
+	 *   'fn': 'a += 1;',
+	 *   'teardown': '\
+	 *          }())\n\
+	 *        }())\n\
+	 *      }())'
+	 * });
+	 *
+	 * // compiles to something like:
+	 * var a = 0;
+	 * (function() {
+	 *   (function() {
+	 *     (function() {
+	 *       var start = new Date;
+	 *       while (count--) {
+	 *         a += 1;
+	 *       }
+	 *       var end = new Date - start;
+	 *     }())
+	 *   }())
+	 * }())
+	 */
+	setup = _.noop;
+
+	/**
+	 * Compiled into the test and executed immediately **after** the test loop.
+	 * @type {Function|string}
+	 */
+	teardown = _.noop;
+
+	/**
+	 * An object of stats including mean, margin or error, and standard deviation.
+	 * @type Object
+	 */
+	stats = {
+		/**
+		 * The margin of error.
+		 *
+		 * @memberOf Benchmark#stats
+		 * @type number
+		 */
+		moe: 0,
+
+		/**
+		 * The relative margin of error (expressed as a percentage of the mean).
+		 *
+		 * @memberOf Benchmark#stats
+		 * @type number
+		 */
+		rme: 0,
+
+		/**
+		 * The standard error of the mean.
+		 *
+		 * @memberOf Benchmark#stats
+		 * @type number
+		 */
+		sem: 0,
+
+		/**
+		 * The sample standard deviation.
+		 *
+		 * @memberOf Benchmark#stats
+		 * @type number
+		 */
+		deviation: 0,
+
+		/**
+		 * The sample arithmetic mean (secs).
+		 *
+		 * @memberOf Benchmark#stats
+		 * @type number
+		 */
+		mean: 0,
+
+		/**
+		 * The array of sampled periods.
+		 *
+		 * @memberOf Benchmark#stats
+		 * @type Array
+		 */
+		sample: [],
+
+		/**
+		 * The sample variance.
+		 *
+		 * @memberOf Benchmark#stats
+		 * @type number
+		 */
+		variance: 0,
 	};
 
-	_.forOwn(this.options, (value, key) => {
-		if (value != null) {
-			// Add event listeners.
-			if (/^on[A-Z]/.test(key)) {
-				_.each(key.split(" "), (key) => {
-					this.on(key.slice(2).toLowerCase(), value);
-				});
-			} else if (!_.has(this, key)) {
-				this[key] = cloneDeep(value);
+	/**
+	 * An object of timing data including cycle, elapsed, period, start, and stop.
+	 * @type Object
+	 */
+	times = {
+		/**
+		 * The time taken to complete the last cycle (secs).
+		 *
+		 * @memberOf Benchmark#times
+		 * @type number
+		 */
+		cycle: 0,
+
+		/**
+		 * The time taken to complete the benchmark (secs).
+		 *
+		 * @memberOf Benchmark#times
+		 * @type number
+		 */
+		elapsed: 0,
+
+		/**
+		 * The time taken to execute the test once (secs).
+		 *
+		 * @memberOf Benchmark#times
+		 * @type number
+		 */
+		period: 0,
+
+		/**
+		 * A timestamp of when the benchmark started (ms).
+		 *
+		 * @memberOf Benchmark#times
+		 * @type number
+		 */
+		timeStamp: 0,
+	};
+
+	/**
+	 * The Benchmark constructor.
+	 * @param {Object} [options={}] Options object.
+	 * @example
+	 *
+	 * var bench = new Benchmark({
+	 *
+	 *   // benchmark name
+	 *   'name': 'foo',
+	 *
+	 *   // benchmark test as a string
+	 *   'fn': '[1,2,3,4].sort()'
+	 * });
+	 */
+	constructor(options) {
+		this.options = {
+			...defaultOptions,
+			...options,
+		};
+
+		_.forOwn(this.options, (value, key) => {
+			if (value != null) {
+				// Add event listeners.
+				if (/^on[A-Z]/.test(key)) {
+					_.each(key.split(" "), (key) => {
+						this.on(key.slice(2).toLowerCase(), value);
+					});
+				} else if (!_.has(this, key)) {
+					this[key] = cloneDeep(value);
+				}
+			}
+		});
+
+		this.id ??= ++counter;
+		this.stats = cloneDeep(this.stats);
+		this.times = { ...this.times };
+	}
+
+	/**
+	 * Runs the benchmark.
+	 * @param {Object} [options={}] - Options object.
+	 * @returns {Object} The benchmark instance.
+	 * @example
+	 *
+	 * // basic usage
+	 * bench.run();
+	 *
+	 * // or with options
+	 * bench.run({ 'async': true });
+	 */
+	run(options) {
+		const bench = this;
+		const event = Event("start");
+
+		// Set `running` to `false` so `reset()` won't call `abort()`.
+		bench.running = false;
+		bench.reset();
+		bench.running = true;
+
+		bench.count = bench.initCount;
+		bench.times.timeStamp = +_.now();
+		bench.emit(event);
+
+		if (!event.cancelled) {
+			options = {
+				async: (options = options && options.async) == null ? bench.async : options,
+			};
+
+			// For clones created within `compute()`.
+			if (bench._original) {
+				if (bench.defer) {
+					new Deferred(bench);
+				} else {
+					cycle(bench, options);
+				}
+			}
+			// For original benchmarks.
+			else {
+				compute(bench, options);
 			}
 		}
-	});
+		return bench;
+	}
 
-	this.id ??= ++counter;
-	this.stats = cloneDeep(this.stats);
-	this.times = { ...this.times };
+	/**
+	 * Executes all registered listeners of the specified event type.
+	 *
+	 * @param {Object|string} type - The event type or object.
+	 * @param {...*} [args] - Arguments to invoke the listener with.
+	 * @returns {*} Returns the return value of the last listener executed.
+	 */
+	emit(type) {
+		let listeners;
+		const object = this;
+		const event = Event(type);
+		const events = object.events;
+		const args = ((arguments[0] = event), arguments);
+
+		event.currentTarget ??= object;
+		event.target ??= object;
+		delete event.result;
+
+		if (events && (listeners = _.has(events, event.type) && events[event.type])) {
+			_.each(listeners.slice(), (listener) => {
+				if ((event.result = listener.apply(object, args)) === false) {
+					event.cancelled = true;
+				}
+				return !event.aborted;
+			});
+		}
+		return event.result;
+	}
+
+	/**
+	 * Returns an array of event listeners for a given type that can be manipulated
+	 * to add or remove listeners.
+	 *
+	 * @param {string} type - The event type.
+	 * @returns {Array} The listeners array.
+	 */
+	listeners(type) {
+		const object = this;
+		const events = object.events || (object.events = {});
+
+		return _.has(events, type) ? events[type] : (events[type] = []);
+	}
+
+	/**
+	 * Unregisters a listener for the specified event type(s),
+	 * or unregisters all listeners for the specified event type(s),
+	 * or unregisters all listeners for all event types.
+	 *
+	 * @param {string} [type] - The event type.
+	 * @param {Function} [listener] - The function to unregister.
+	 * @returns {Object} The current instance.
+	 * @example
+	 *
+	 * // unregister a listener for an event type
+	 * bench.off('cycle', listener);
+	 *
+	 * // unregister a listener for multiple event types
+	 * bench.off('start cycle', listener);
+	 *
+	 * // unregister all listeners for an event type
+	 * bench.off('cycle');
+	 *
+	 * // unregister all listeners for multiple event types
+	 * bench.off('start cycle complete');
+	 *
+	 * // unregister all listeners for all event types
+	 * bench.off();
+	 */
+	off(type, listener) {
+		const object = this;
+		const events = object.events;
+
+		if (!events) {
+			return object;
+		}
+		_.each(type ? type.split(" ") : events, (listeners, type) => {
+			let index;
+			if (typeof listeners == "string") {
+				type = listeners;
+				listeners = _.has(events, type) && events[type];
+			}
+			if (listeners) {
+				if (listener) {
+					index = _.indexOf(listeners, listener);
+					if (index > -1) {
+						listeners.splice(index, 1);
+					}
+				} else {
+					listeners.length = 0;
+				}
+			}
+		});
+		return object;
+	}
+
+	/**
+	 * Registers a listener for the specified event type(s).
+	 *
+	 * @param {string} type - The event type.
+	 * @param {Function} listener - The function to register.
+	 * @returns {Object} The current instance.
+	 * @example
+	 *
+	 * // register a listener for an event type
+	 * bench.on('cycle', listener);
+	 *
+	 * // register a listener for multiple event types
+	 * bench.on('start cycle', listener);
+	 */
+	on(type, listener) {
+		const object = this;
+		const events = object.events || (object.events = {});
+
+		_.each(type.split(" "), (type) => {
+			(_.has(events, type) ? events[type] : (events[type] = [])).push(listener);
+		});
+		return object;
+	}
+
+	/* ------------------------------------------------------------------------ */
+
+	/**
+	 * Aborts the benchmark without recording times.
+	 * @returns {Object} The benchmark instance.
+	 */
+	abort() {
+		let event;
+		const bench = this;
+		const resetting = calledBy.reset;
+
+		if (bench.running) {
+			event = Event("abort");
+			bench.emit(event);
+			if (!event.cancelled || resetting) {
+				// Avoid infinite recursion.
+				calledBy.abort = true;
+				bench.reset();
+				delete calledBy.abort;
+
+				clearTimeout(bench._timerId);
+				delete bench._timerId;
+
+				if (!resetting) {
+					bench.aborted = true;
+					bench.running = false;
+				}
+			}
+		}
+		return bench;
+	}
+
+	/**
+	 * Creates a new benchmark using the same test and options.
+	 *
+	 * @param {Object} options - Options object to overwrite cloned options.
+	 * @returns {Object} The new benchmark instance.
+	 * @example
+	 *
+	 * var bizarro = bench.clone({
+	 *   'name': 'doppelganger'
+	 * });
+	 */
+	clone(options) {
+		const bench = this;
+		const result = new bench.constructor({ ...bench, ...options });
+
+		// Correct the `options` object.
+		result.options = { ...bench.options, ...options };
+
+		// Copy own custom properties.
+		_.forOwn(bench, (value, key) => {
+			if (!_.has(result, key)) {
+				result[key] = cloneDeep(value);
+			}
+		});
+
+		return result;
+	}
+
+	/**
+	 * Determines if a benchmark is faster than another.
+	 *
+	 * @param {Object} other - The benchmark to compare.
+	 * @returns {number} Returns `-1` if slower, `1` if faster, and `0` if indeterminate.
+	 */
+	compare(other) {
+		const bench = this;
+
+		// Exit early if comparing the same benchmark.
+		if (bench === other) {
+			return 0;
+		}
+		let zStat;
+		const sample1 = bench.stats.sample;
+		const sample2 = other.stats.sample;
+		const size1 = sample1.length;
+		const size2 = sample2.length;
+		const maxSize = max(size1, size2);
+		const minSize = min(size1, size2);
+		const u1 = getU(sample1, sample2);
+		const u2 = getU(sample2, sample1);
+		const u = min(u1, u2);
+
+		function getScore(xA, sampleB) {
+			return _.reduce(
+				sampleB,
+				(total, xB) => {
+					return total + (xB > xA ? 0 : xB < xA ? 1 : 0.5);
+				},
+				0,
+			);
+		}
+
+		function getU(sampleA, sampleB) {
+			return _.reduce(
+				sampleA,
+				(total, xA) => {
+					return total + getScore(xA, sampleB);
+				},
+				0,
+			);
+		}
+
+		function getZ(u) {
+			return (u - (size1 * size2) / 2) / sqrt((size1 * size2 * (size1 + size2 + 1)) / 12);
+		}
+		// Reject the null hypothesis the two samples come from the
+		// same population (i.e. have the same median) if...
+		if (size1 + size2 > 30) {
+			// ...the z-stat is greater than 1.96 or less than -1.96
+			// http://www.statisticslectures.com/topics/mannwhitneyu/
+			zStat = getZ(u);
+			return abs(zStat) > 1.96 ? (u === u1 ? 1 : -1) : 0;
+		}
+		// ...the U value is less than or equal the critical U value.
+		const critical = maxSize < 5 || minSize < 3 ? 0 : uTable[maxSize][minSize - 3];
+		return u <= critical ? (u === u1 ? 1 : -1) : 0;
+	}
+
+	/**
+	 * Reset properties and abort if running.
+	 *
+	 * @returns {Object} The benchmark instance.
+	 */
+	reset() {
+		const bench = this;
+		if (bench.running && !calledBy.abort) {
+			// No worries, `reset()` is called within `abort()`.
+			calledBy.reset = true;
+			bench.abort();
+			delete calledBy.reset;
+			return bench;
+		}
+		let event;
+		let index = 0;
+		const changes = [];
+		const queue = [];
+
+		// A non-recursive solution to check if properties have changed.
+		// For more information see http://www.jslab.dk/articles/non.recursive.preorder.traversal.part4.
+		let data = {
+			destination: bench,
+			source: {
+				...cloneDeep(bench.constructor.prototype),
+				...bench.options,
+			},
+		};
+
+		do {
+			_.forOwn(data.source, (value, key) => {
+				let changed;
+				const destination = data.destination;
+				let currValue = destination[key];
+
+				// Skip pseudo private properties and event listeners.
+				if (/^_|^events$|^on[A-Z]/.test(key)) {
+					return;
+				}
+				if (_.isObjectLike(value)) {
+					if (Array.isArray(value)) {
+						// Check if an array value has changed to a non-array value.
+						if (!Array.isArray(currValue)) {
+							changed = true;
+							currValue = [];
+						}
+						// Check if an array has changed its length.
+						if (currValue.length !== value.length) {
+							changed = true;
+							currValue = currValue.slice(0, value.length);
+							currValue.length = value.length;
+						}
+					}
+					// Check if an object has changed to a non-object value.
+					else if (!_.isObjectLike(currValue)) {
+						changed = true;
+						currValue = {};
+					}
+					// Register a changed object.
+					if (changed) {
+						changes.push({ destination, key, value: currValue });
+					}
+					queue.push({ destination: currValue, source: value });
+				}
+				// Register a changed primitive.
+				else if (!_.eq(currValue, value) && value !== undefined) {
+					changes.push({ destination, key, value });
+				}
+			});
+		} while ((data = queue[index++]));
+
+		// If changed emit the `reset` event and if it isn't cancelled reset the benchmark.
+		if (changes.length && (bench.emit((event = Event("reset"))), !event.cancelled)) {
+			_.each(changes, (data) => {
+				data.destination[data.key] = data.value;
+			});
+		}
+		return bench;
+	}
 }
 
 class Deferred {
@@ -269,8 +848,6 @@ class Deferred {
 
 	/**
 	 * Handles cycling/completing the deferred benchmark.
-	 *
-	 * @memberOf Benchmark.Deferred
 	 */
 	resolve() {
 		const deferred = this;
@@ -407,21 +984,6 @@ function isHostType(object, property) {
 }
 
 /* ------------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * Converts a number to a more readable comma-separated string representation.
- *
- * @static
- * @memberOf Benchmark
- * @param {number} number - The number to convert.
- * @returns {string} The more readable string representation.
- */
-function formatNumber(number) {
-	number = String(number).split(".");
-	return number[0].replace(/(?=(?:\d{3})+$)(?!\b)/g, ",") + (number[1] ? `.${number[1]}` : "");
-}
 
 /**
  * Invokes a method on all items in an array.
@@ -603,334 +1165,6 @@ function join(object, separator1, separator2) {
 }
 
 /* ------------------------------------------------------------------------ */
-
-/**
- * Executes all registered listeners of the specified event type.
- *
- * @memberOf Benchmark
- * @param {Object|string} type - The event type or object.
- * @param {...*} [args] - Arguments to invoke the listener with.
- * @returns {*} Returns the return value of the last listener executed.
- */
-function emit(type) {
-	let listeners;
-	const object = this;
-	const event = Event(type);
-	const events = object.events;
-	const args = ((arguments[0] = event), arguments);
-
-	event.currentTarget ??= object;
-	event.target ??= object;
-	delete event.result;
-
-	if (events && (listeners = _.has(events, event.type) && events[event.type])) {
-		_.each(listeners.slice(), (listener) => {
-			if ((event.result = listener.apply(object, args)) === false) {
-				event.cancelled = true;
-			}
-			return !event.aborted;
-		});
-	}
-	return event.result;
-}
-
-/**
- * Returns an array of event listeners for a given type that can be manipulated
- * to add or remove listeners.
- *
- * @memberOf Benchmark
- * @param {string} type - The event type.
- * @returns {Array} The listeners array.
- */
-function listeners(type) {
-	const object = this;
-	const events = object.events || (object.events = {});
-
-	return _.has(events, type) ? events[type] : (events[type] = []);
-}
-
-/**
- * Unregisters a listener for the specified event type(s),
- * or unregisters all listeners for the specified event type(s),
- * or unregisters all listeners for all event types.
- *
- * @memberOf Benchmark
- * @param {string} [type] - The event type.
- * @param {Function} [listener] - The function to unregister.
- * @returns {Object} The current instance.
- * @example
- *
- * // unregister a listener for an event type
- * bench.off('cycle', listener);
- *
- * // unregister a listener for multiple event types
- * bench.off('start cycle', listener);
- *
- * // unregister all listeners for an event type
- * bench.off('cycle');
- *
- * // unregister all listeners for multiple event types
- * bench.off('start cycle complete');
- *
- * // unregister all listeners for all event types
- * bench.off();
- */
-function off(type, listener) {
-	const object = this;
-	const events = object.events;
-
-	if (!events) {
-		return object;
-	}
-	_.each(type ? type.split(" ") : events, (listeners, type) => {
-		let index;
-		if (typeof listeners == "string") {
-			type = listeners;
-			listeners = _.has(events, type) && events[type];
-		}
-		if (listeners) {
-			if (listener) {
-				index = _.indexOf(listeners, listener);
-				if (index > -1) {
-					listeners.splice(index, 1);
-				}
-			} else {
-				listeners.length = 0;
-			}
-		}
-	});
-	return object;
-}
-
-/**
- * Registers a listener for the specified event type(s).
- *
- * @memberOf Benchmark
- * @param {string} type - The event type.
- * @param {Function} listener - The function to register.
- * @returns {Object} The current instance.
- * @example
- *
- * // register a listener for an event type
- * bench.on('cycle', listener);
- *
- * // register a listener for multiple event types
- * bench.on('start cycle', listener);
- */
-function on(type, listener) {
-	const object = this;
-	const events = object.events || (object.events = {});
-
-	_.each(type.split(" "), (type) => {
-		(_.has(events, type) ? events[type] : (events[type] = [])).push(listener);
-	});
-	return object;
-}
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * Aborts the benchmark without recording times.
- *
- * @memberOf Benchmark
- * @returns {Object} The benchmark instance.
- */
-function abort() {
-	let event;
-	const bench = this;
-	const resetting = calledBy.reset;
-
-	if (bench.running) {
-		event = Event("abort");
-		bench.emit(event);
-		if (!event.cancelled || resetting) {
-			// Avoid infinite recursion.
-			calledBy.abort = true;
-			bench.reset();
-			delete calledBy.abort;
-
-			clearTimeout(bench._timerId);
-			delete bench._timerId;
-
-			if (!resetting) {
-				bench.aborted = true;
-				bench.running = false;
-			}
-		}
-	}
-	return bench;
-}
-
-/**
- * Creates a new benchmark using the same test and options.
- *
- * @memberOf Benchmark
- * @param {Object} options - Options object to overwrite cloned options.
- * @returns {Object} The new benchmark instance.
- * @example
- *
- * var bizarro = bench.clone({
- *   'name': 'doppelganger'
- * });
- */
-function clone(options) {
-	const bench = this;
-	const result = new bench.constructor({ ...bench, ...options });
-
-	// Correct the `options` object.
-	result.options = { ...bench.options, ...options };
-
-	// Copy own custom properties.
-	_.forOwn(bench, (value, key) => {
-		if (!_.has(result, key)) {
-			result[key] = cloneDeep(value);
-		}
-	});
-
-	return result;
-}
-
-/**
- * Determines if a benchmark is faster than another.
- *
- * @memberOf Benchmark
- * @param {Object} other - The benchmark to compare.
- * @returns {number} Returns `-1` if slower, `1` if faster, and `0` if indeterminate.
- */
-function compare(other) {
-	const bench = this;
-
-	// Exit early if comparing the same benchmark.
-	if (bench === other) {
-		return 0;
-	}
-	let zStat;
-	const sample1 = bench.stats.sample;
-	const sample2 = other.stats.sample;
-	const size1 = sample1.length;
-	const size2 = sample2.length;
-	const maxSize = max(size1, size2);
-	const minSize = min(size1, size2);
-	const u1 = getU(sample1, sample2);
-	const u2 = getU(sample2, sample1);
-	const u = min(u1, u2);
-
-	function getScore(xA, sampleB) {
-		return _.reduce(
-			sampleB,
-			(total, xB) => {
-				return total + (xB > xA ? 0 : xB < xA ? 1 : 0.5);
-			},
-			0,
-		);
-	}
-
-	function getU(sampleA, sampleB) {
-		return _.reduce(
-			sampleA,
-			(total, xA) => {
-				return total + getScore(xA, sampleB);
-			},
-			0,
-		);
-	}
-
-	function getZ(u) {
-		return (u - (size1 * size2) / 2) / sqrt((size1 * size2 * (size1 + size2 + 1)) / 12);
-	}
-	// Reject the null hypothesis the two samples come from the
-	// same population (i.e. have the same median) if...
-	if (size1 + size2 > 30) {
-		// ...the z-stat is greater than 1.96 or less than -1.96
-		// http://www.statisticslectures.com/topics/mannwhitneyu/
-		zStat = getZ(u);
-		return abs(zStat) > 1.96 ? (u === u1 ? 1 : -1) : 0;
-	}
-	// ...the U value is less than or equal the critical U value.
-	const critical = maxSize < 5 || minSize < 3 ? 0 : uTable[maxSize][minSize - 3];
-	return u <= critical ? (u === u1 ? 1 : -1) : 0;
-}
-
-/**
- * Reset properties and abort if running.
- *
- * @memberOf Benchmark
- * @returns {Object} The benchmark instance.
- */
-function reset() {
-	const bench = this;
-	if (bench.running && !calledBy.abort) {
-		// No worries, `reset()` is called within `abort()`.
-		calledBy.reset = true;
-		bench.abort();
-		delete calledBy.reset;
-		return bench;
-	}
-	let event;
-	let index = 0;
-	const changes = [];
-	const queue = [];
-
-	// A non-recursive solution to check if properties have changed.
-	// For more information see http://www.jslab.dk/articles/non.recursive.preorder.traversal.part4.
-	let data = {
-		destination: bench,
-		source: {
-			...cloneDeep(bench.constructor.prototype),
-			...bench.options,
-		},
-	};
-
-	do {
-		_.forOwn(data.source, (value, key) => {
-			let changed;
-			const destination = data.destination;
-			let currValue = destination[key];
-
-			// Skip pseudo private properties and event listeners.
-			if (/^_|^events$|^on[A-Z]/.test(key)) {
-				return;
-			}
-			if (_.isObjectLike(value)) {
-				if (Array.isArray(value)) {
-					// Check if an array value has changed to a non-array value.
-					if (!Array.isArray(currValue)) {
-						changed = true;
-						currValue = [];
-					}
-					// Check if an array has changed its length.
-					if (currValue.length !== value.length) {
-						changed = true;
-						currValue = currValue.slice(0, value.length);
-						currValue.length = value.length;
-					}
-				}
-				// Check if an object has changed to a non-object value.
-				else if (!_.isObjectLike(currValue)) {
-					changed = true;
-					currValue = {};
-				}
-				// Register a changed object.
-				if (changed) {
-					changes.push({ destination, key, value: currValue });
-				}
-				queue.push({ destination: currValue, source: value });
-			}
-			// Register a changed primitive.
-			else if (!_.eq(currValue, value) && value !== undefined) {
-				changes.push({ destination, key, value });
-			}
-		});
-	} while ((data = queue[index++]));
-
-	// If changed emit the `reset` event and if it isn't cancelled reset the benchmark.
-	if (changes.length && (bench.emit((event = Event("reset"))), !event.cancelled)) {
-		_.each(changes, (data) => {
-			data.destination[data.key] = data.value;
-		});
-	}
-	return bench;
-}
 
 /* ------------------------------------------------------------------------ */
 
@@ -1449,317 +1683,6 @@ function cycle(clone, options) {
 		clone.emit("complete");
 	}
 }
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * Runs the benchmark.
- *
- * @memberOf Benchmark
- * @param {Object} [options={}] - Options object.
- * @returns {Object} The benchmark instance.
- * @example
- *
- * // basic usage
- * bench.run();
- *
- * // or with options
- * bench.run({ 'async': true });
- */
-function run(options) {
-	const bench = this;
-	const event = Event("start");
-
-	// Set `running` to `false` so `reset()` won't call `abort()`.
-	bench.running = false;
-	bench.reset();
-	bench.running = true;
-
-	bench.count = bench.initCount;
-	bench.times.timeStamp = +_.now();
-	bench.emit(event);
-
-	if (!event.cancelled) {
-		options = {
-			async: (options = options && options.async) == null ? bench.async : options,
-		};
-
-		// For clones created within `compute()`.
-		if (bench._original) {
-			if (bench.defer) {
-				new Deferred(bench);
-			} else {
-				cycle(bench, options);
-			}
-		}
-		// For original benchmarks.
-		else {
-			compute(bench, options);
-		}
-	}
-	return bench;
-}
-
-Object.assign(Benchmark, {
-	formatNumber,
-	invoke,
-	join,
-});
-
-/* ------------------------------------------------------------------------ */
-
-Object.assign(Benchmark.prototype, {
-	/**
-	 * The number of times a test was executed.
-	 *
-	 * @memberOf Benchmark
-	 * @type number
-	 */
-	count: 0,
-
-	/**
-	 * The number of cycles performed while benchmarking.
-	 *
-	 * @memberOf Benchmark
-	 * @type number
-	 */
-	cycles: 0,
-
-	/**
-	 * The number of executions per second.
-	 *
-	 * @memberOf Benchmark
-	 * @type number
-	 */
-	hz: 0,
-
-	/**
-	 * The compiled test function.
-	 *
-	 * @memberOf Benchmark
-	 * @type {Function|string}
-	 */
-	compiled: undefined,
-
-	/**
-	 * The error object if the test failed.
-	 *
-	 * @memberOf Benchmark
-	 * @type Object
-	 */
-	error: undefined,
-
-	/**
-	 * The test to benchmark.
-	 *
-	 * @memberOf Benchmark
-	 * @type {Function|string}
-	 */
-	fn: undefined,
-
-	/**
-	 * A flag to indicate if the benchmark is aborted.
-	 *
-	 * @memberOf Benchmark
-	 * @type boolean
-	 */
-	aborted: false,
-
-	/**
-	 * A flag to indicate if the benchmark is running.
-	 *
-	 * @memberOf Benchmark
-	 * @type boolean
-	 */
-	running: false,
-
-	/**
-	 * Compiled into the test and executed immediately **before** the test loop.
-	 *
-	 * @memberOf Benchmark
-	 * @type {Function|string}
-	 * @example
-	 *
-	 * // basic usage
-	 * var bench = Benchmark({
-	 *   'setup': function() {
-	 *     var c = this.count,
-	 *         element = document.getElementById('container');
-	 *     while (c--) {
-	 *       element.appendChild(document.createElement('div'));
-	 *     }
-	 *   },
-	 *   'fn': function() {
-	 *     element.removeChild(element.lastChild);
-	 *   }
-	 * });
-	 *
-	 * // compiles to something like:
-	 * var c = this.count,
-	 *     element = document.getElementById('container');
-	 * while (c--) {
-	 *   element.appendChild(document.createElement('div'));
-	 * }
-	 * var start = new Date;
-	 * while (count--) {
-	 *   element.removeChild(element.lastChild);
-	 * }
-	 * var end = new Date - start;
-	 *
-	 * // or using strings
-	 * var bench = Benchmark({
-	 *   'setup': '\
-	 *     var a = 0;\n\
-	 *     (function() {\n\
-	 *       (function() {\n\
-	 *         (function() {',
-	 *   'fn': 'a += 1;',
-	 *   'teardown': '\
-	 *          }())\n\
-	 *        }())\n\
-	 *      }())'
-	 * });
-	 *
-	 * // compiles to something like:
-	 * var a = 0;
-	 * (function() {
-	 *   (function() {
-	 *     (function() {
-	 *       var start = new Date;
-	 *       while (count--) {
-	 *         a += 1;
-	 *       }
-	 *       var end = new Date - start;
-	 *     }())
-	 *   }())
-	 * }())
-	 */
-	setup: _.noop,
-
-	/**
-	 * Compiled into the test and executed immediately **after** the test loop.
-	 *
-	 * @memberOf Benchmark
-	 * @type {Function|string}
-	 */
-	teardown: _.noop,
-
-	/**
-	 * An object of stats including mean, margin or error, and standard deviation.
-	 *
-	 * @memberOf Benchmark
-	 * @type Object
-	 */
-	stats: {
-		/**
-		 * The margin of error.
-		 *
-		 * @memberOf Benchmark#stats
-		 * @type number
-		 */
-		moe: 0,
-
-		/**
-		 * The relative margin of error (expressed as a percentage of the mean).
-		 *
-		 * @memberOf Benchmark#stats
-		 * @type number
-		 */
-		rme: 0,
-
-		/**
-		 * The standard error of the mean.
-		 *
-		 * @memberOf Benchmark#stats
-		 * @type number
-		 */
-		sem: 0,
-
-		/**
-		 * The sample standard deviation.
-		 *
-		 * @memberOf Benchmark#stats
-		 * @type number
-		 */
-		deviation: 0,
-
-		/**
-		 * The sample arithmetic mean (secs).
-		 *
-		 * @memberOf Benchmark#stats
-		 * @type number
-		 */
-		mean: 0,
-
-		/**
-		 * The array of sampled periods.
-		 *
-		 * @memberOf Benchmark#stats
-		 * @type Array
-		 */
-		sample: [],
-
-		/**
-		 * The sample variance.
-		 *
-		 * @memberOf Benchmark#stats
-		 * @type number
-		 */
-		variance: 0,
-	},
-
-	/**
-	 * An object of timing data including cycle, elapsed, period, start, and stop.
-	 *
-	 * @memberOf Benchmark
-	 * @type Object
-	 */
-	times: {
-		/**
-		 * The time taken to complete the last cycle (secs).
-		 *
-		 * @memberOf Benchmark#times
-		 * @type number
-		 */
-		cycle: 0,
-
-		/**
-		 * The time taken to complete the benchmark (secs).
-		 *
-		 * @memberOf Benchmark#times
-		 * @type number
-		 */
-		elapsed: 0,
-
-		/**
-		 * The time taken to execute the test once (secs).
-		 *
-		 * @memberOf Benchmark#times
-		 * @type number
-		 */
-		period: 0,
-
-		/**
-		 * A timestamp of when the benchmark started (ms).
-		 *
-		 * @memberOf Benchmark#times
-		 * @type number
-		 */
-		timeStamp: 0,
-	},
-});
-
-Object.assign(Benchmark.prototype, {
-	abort,
-	clone,
-	compare,
-	emit,
-	listeners,
-	off,
-	on,
-	reset,
-	run,
-});
 
 /* ------------------------------------------------------------------------ */
 
