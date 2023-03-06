@@ -17,7 +17,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";

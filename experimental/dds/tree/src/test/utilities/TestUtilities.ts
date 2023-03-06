@@ -6,8 +6,9 @@
 import { resolve } from 'path';
 import { v5 as uuidv5 } from 'uuid';
 import { expect } from 'chai';
+import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
 import { SummaryCollection, DefaultSummaryConfiguration } from '@fluidframework/container-runtime';
-import { Container, Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
+import { Loader, waitContainerToCatchUp } from '@fluidframework/container-loader';
 import { requestFluidObject } from '@fluidframework/runtime-utils';
 import {
 	MockContainerRuntimeFactory,
@@ -23,7 +24,6 @@ import {
 	createAndAttachContainer,
 	ITestObjectProvider,
 } from '@fluidframework/test-utils';
-import { LocalServerTestDriver } from '@fluidframework/test-drivers';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import type { IContainer, IHostLoader } from '@fluidframework/container-definitions';
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
@@ -225,7 +225,7 @@ export interface LocalServerSharedTreeTestingComponents {
 	/** The SharedTree created and set up. */
 	tree: SharedTree;
 	/** The container created and set up. */
-	container: Container;
+	container: IContainer;
 	/** Handles to any blobs uploaded via `blobs` */
 	uploadedBlobs: IFluidHandle<ArrayBufferLike>[];
 }
@@ -353,17 +353,14 @@ export async function setUpLocalServerTestSharedTree(
 	}
 
 	let provider: TestObjectProvider;
-	let container: Container;
+	let container: IContainer;
 
 	if (testObjectProvider !== undefined) {
 		provider = testObjectProvider;
 		const driver = new LocalServerTestDriver();
 		const loader = makeTestLoader(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.loadTestContainer` instead.
-		container = (await loader.resolve(
-			{ url: await driver.createContainerUrl(treeId), headers },
-			pendingLocalState
-		)) as Container;
+		container = await loader.resolve({ url: await driver.createContainerUrl(treeId), headers }, pendingLocalState);
 		await waitContainerToCatchUp(container);
 	} else {
 		const driver = new LocalServerTestDriver();
@@ -371,11 +368,7 @@ export async function setUpLocalServerTestSharedTree(
 		testObjectProviders.push(provider);
 		// Once ILoaderOptions is specificable, this should use `provider.makeTestContainer` instead.
 		const loader = makeTestLoader(provider);
-		container = (await createAndAttachContainer(
-			defaultCodeDetails,
-			loader,
-			driver.createCreateNewRequest(treeId)
-		)) as Container;
+		container = await createAndAttachContainer(defaultCodeDetails, loader, driver.createCreateNewRequest(treeId));
 	}
 
 	const dataObject = await requestFluidObject<ITestFluidObject>(container, '/');
