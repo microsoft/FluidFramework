@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 import type { IAppModel, IAppModelEvents, ITaskList } from "../model-interface";
 
@@ -34,7 +35,10 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 */
 	public readonly registerWithCustomerService = (taskListId: string): void => {
 		this.taskList
-			.registerWithCustomerService(taskListId, this.container?.resolvedUrl)
+			.registerWithCustomerService(
+				taskListId,
+				this.container?.resolvedUrl as IFluidResolvedUrl,
+			)
 			.catch(console.error);
 	};
 }

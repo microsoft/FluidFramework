@@ -15,14 +15,18 @@ import { ClientManager } from "../utilities";
 /**
  * Submits notifications of changes to Fluid Service.
  */
-function echoExternalDataWebhookToFluid(data: TaskListData, fluidServiceUrl: string): void {
+function echoExternalDataWebhookToFluid(
+	data: TaskListData,
+	fluidServiceUrl: string,
+	containerUrl: string,
+): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	// TODO: we will need to add details (like ContainerId) to the message body or the url,
-	// so this message body format will evolve
-	const messageBody = JSON.stringify({ data });
+	const messageBody = JSON.stringify({ data, containerUrl });
+	console.log(messageBody);
+	console.log("messageBody");
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -160,12 +164,16 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
+			// Retrieve exact Fluid session address for taskList
+			const taskListId = Object.keys(taskListData.taskList)[0];
+			const containerUrl = clientManager.getClientSession(taskListId) as string;
+
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl);
+			echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
 			result.send();
 		}
 	});
@@ -192,10 +200,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const sessionUrl = request.body?.sessionUrl as string;
+		const containerUrl = request.body?.containerUrl as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const taskListId = request.body?.taskListId as string;
-		if (sessionUrl === undefined) {
+		if (containerUrl === undefined) {
 			const errorMessage =
 				'No session data provided by client. Expected under "sessionUrl" property.';
 			console.error(formatLogMessage(errorMessage));
@@ -214,11 +222,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				);
 				throw error;
 			});
-
-			clientManager.registerClient(sessionUrl, taskListId);
+			clientManager.registerClient(containerUrl, taskListId);
 			console.log(
 				formatLogMessage(
-					`Registered sessionUrl ${sessionUrl} with external query: ${taskListId}".`,
+					`Registered containerUrl ${containerUrl} with external query: ${taskListId}".`,
 				),
 			);
 			result.send();

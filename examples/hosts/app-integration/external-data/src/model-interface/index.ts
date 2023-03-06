@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 /**
@@ -156,7 +156,7 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 */
 	readonly registerWithCustomerService: (
 		taskListId: string,
-		url: IResolvedUrl | undefined,
+		url: IFluidResolvedUrl | undefined,
 	) => Promise<void>;
 
 	// TODO: Should there be an imperative API to trigger importing changes from the external source?

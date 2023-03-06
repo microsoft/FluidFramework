@@ -7,7 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
@@ -303,19 +303,25 @@ export class TaskList extends DataObject implements ITaskList {
 	 */
 	public async registerWithCustomerService(
 		taskListId: string,
-		url: IResolvedUrl | undefined,
+		containerUrlData: IFluidResolvedUrl | undefined,
 	): Promise<void> {
 		console.log("TASK-LIST: Registering client with customer service...");
-
 		try {
-			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ sessionUrl: url, taskListId }),
-			});
+			if (containerUrlData?.url !== undefined) {
+				await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ containerUrl: containerUrlData.url, taskListId }),
+				});
+			} else {
+				console.error(
+					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
+				);
+				return;
+			}
 		} catch (error) {
 			console.error(`Customer service registration failed:\n${error}`);
 
