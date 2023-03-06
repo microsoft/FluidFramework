@@ -26,7 +26,6 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 import { IAnyDriverError } from "./driverError";
-import { IDriverFactoryOptions } from "./factory";
 import { IResolvedUrl } from "./urlResolver";
 
 export interface IDeltasFetchResult {
@@ -304,6 +303,11 @@ export interface IDocumentServicePolicies {
 	 * Do not connect to delta stream
 	 */
 	readonly storageOnly?: boolean;
+
+	/**
+	 * Summarizer uploads the protocol tree too when summarizing.
+	 */
+	readonly summarizeProtocolTree?: boolean;
 }
 
 export interface IDocumentService {
@@ -349,11 +353,6 @@ export interface IDocumentServiceFactory {
 	 * Name of the protocol used by factory
 	 */
 	protocolName: string;
-
-	/**
-	 * Factory options which are going to be used to set different features based on factory.
-	 */
-	driverFactoryOptions?: IDriverFactoryOptions;
 
 	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.

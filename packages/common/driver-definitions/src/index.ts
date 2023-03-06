@@ -43,8 +43,3 @@ export {
 	IWebResolvedUrl,
 	IUrlResolver,
 } from "./urlResolver";
-export {
-	DriverFactoryLoaderOptions,
-	IDriverFactoryLoaderOptions,
-	IDriverFactoryOptions,
-} from "./factory";

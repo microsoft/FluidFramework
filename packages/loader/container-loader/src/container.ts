@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
-	DriverFactoryLoaderOptions,
 	IDocumentService,
 	IDocumentStorageService,
 	IFluidResolvedUrl,
@@ -665,10 +664,7 @@ export class Container
 
 		const summarizeProtocolTree =
 			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.loader.services.options.summarizeProtocolTree ??
-			this.serviceFactory.driverFactoryOptions?.[
-				DriverFactoryLoaderOptions.summarizeProtocolTree
-			];
+			this.loader.services.options.summarizeProtocolTree;
 
 		this.options = {
 			...this.loader.services.options,
@@ -743,9 +739,8 @@ export class Container
 		this.storageService = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
-			this.options.summarizeProtocolTree === true
-				? () => this.captureProtocolSummary()
-				: undefined,
+			() => this.captureProtocolSummary(),
+			this.options,
 		);
 
 		const isDomAvailable =

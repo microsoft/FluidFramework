@@ -5,8 +5,6 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
-	DriverFactoryLoaderOptions,
-	IDriverFactoryOptions,
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -53,7 +51,6 @@ import {
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 	public readonly protocolName = "fluid-odsp:";
 
-	public readonly driverFactoryOptions: IDriverFactoryOptions = {};
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
@@ -222,9 +219,6 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 		protected persistedCache: IPersistedCache = new LocalPersistentCache(),
 		private readonly hostPolicy: HostStoragePolicy = {},
 	) {
-		// By default enable single commit summary for odsp driver.
-		this.driverFactoryOptions[DriverFactoryLoaderOptions.summarizeProtocolTree] = true;
-
 		if (this.hostPolicy.isolateSocketCache === true) {
 			// create the key to separate the socket reuse cache
 			this.socketReferenceKeyPrefix = uuid();

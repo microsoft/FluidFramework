@@ -50,12 +50,6 @@ export enum DriverErrorType {
 }
 
 // @public
-export enum DriverFactoryLoaderOptions {
-    // (undocumented)
-    summarizeProtocolTree = "summarizeProtocolTree"
-}
-
-// @public
 export enum DriverHeader {
     // (undocumented)
     createNew = "createNew",
@@ -167,13 +161,13 @@ export interface IDocumentService {
 export interface IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    driverFactoryOptions?: IDriverFactoryOptions;
     protocolName: string;
 }
 
 // @public (undocumented)
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
+    readonly summarizeProtocolTree?: boolean;
 }
 
 // @public
@@ -210,18 +204,6 @@ export interface IDriverErrorBase {
     readonly errorType: DriverErrorType;
     readonly message: string;
     online?: string;
-}
-
-// @public
-export interface IDriverFactoryLoaderOptions {
-    // (undocumented)
-    [DriverFactoryLoaderOptions.summarizeProtocolTree]: boolean;
-}
-
-// @public (undocumented)
-export interface IDriverFactoryOptions extends Partial<IDriverFactoryLoaderOptions> {
-    // (undocumented)
-    [index: string]: any;
 }
 
 // @public (undocumented)
