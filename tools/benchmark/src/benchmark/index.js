@@ -236,8 +236,8 @@ let timer = {
  */
 function Benchmark(options) {
 	this.options = {
-		...cloneDeep(defaultOptions),
-		...cloneDeep(options),
+		...defaultOptions,
+		...options,
 	};
 
 	_.forOwn(this.options, (value, key) => {
@@ -255,7 +255,7 @@ function Benchmark(options) {
 
 	this.id ??= ++counter;
 	this.stats = cloneDeep(this.stats);
-	this.times = cloneDeep(this.times);
+	this.times = { ...this.times };
 }
 
 /**
@@ -757,7 +757,7 @@ function clone(options) {
 	const result = new bench.constructor({ ...bench, ...options });
 
 	// Correct the `options` object.
-	result.options = { ...cloneDeep(bench.options), ...cloneDeep(options) };
+	result.options = { ...bench.options, ...options };
 
 	// Copy own custom properties.
 	_.forOwn(bench, (value, key) => {
@@ -856,7 +856,7 @@ function reset() {
 		destination: bench,
 		source: {
 			...cloneDeep(bench.constructor.prototype),
-			...cloneDeep(bench.options),
+			...bench.options,
 		},
 	};
 
