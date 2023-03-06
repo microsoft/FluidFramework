@@ -115,7 +115,7 @@ The `@fluidframework/web-code-loader` and the `ICodeAllowList` were deprecated i
 
 ### Remove deprecated PendingStateManager interfaces
 
-The following interfaces used by the `PendingStateManager` are no longer be exported:
+The following interfaces used by the `PendingStateManager` are no longer exported:
 
 -   `IPendingMessage`
 -   `IPendingFlush`
