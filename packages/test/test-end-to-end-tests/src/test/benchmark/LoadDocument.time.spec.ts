@@ -16,7 +16,6 @@ describeE2EDocsRuntime(scenarioTitle, (getTestObjectProvider, getDocumentInfo) =
 
 	before(async () => {
 		provider = getTestObjectProvider();
-		assert(getDocumentInfo !== undefined, "documentType needs to be defined.");
 		const docData = getDocumentInfo(); // returns the document to be processed.
 
 		documentMap = DocumentCreator.create({
