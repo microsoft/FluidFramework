@@ -81,6 +81,7 @@ export class EditManager<
 
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
+		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
 		public readonly anchors?: AnchorSet,
 	) {
