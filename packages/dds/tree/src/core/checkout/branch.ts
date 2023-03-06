@@ -5,29 +5,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { EventEmitter } from "../../events";
-import { fail } from "../../util";
 import { findAncestor, GraphCommit, mintCommit, mintRevisionTag, Rebaser } from "../rebase";
-
-export class Transaction<T> {
-	private readonly stack: T[] = [];
-
-	public start(state: T): void {
-		this.stack.push(state);
-	}
-
-	public commit(): T {
-		return this.stack.pop() ?? fail("No transaction in progress; cannot commit.");
-	}
-
-	public abort(): void {
-		assert(this.stack.length !== 0, "No transaction in progress; cannot abort.");
-		this.stack.pop();
-	}
-
-	public isTransacting(): boolean {
-		return this.stack.length !== 0;
-	}
-}
 
 /**
  * The events emitted by a `SharedTreeBranch`

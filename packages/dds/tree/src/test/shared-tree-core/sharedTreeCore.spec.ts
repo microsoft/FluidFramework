@@ -19,19 +19,106 @@ import {
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	Index,
+	IndexEvents,
 	SharedTreeCore,
 	SummaryElement,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { AnchorSet } from "../../core";
+import { AnchorSet, ChangeFamily, rootFieldKeySymbol } from "../../core";
 import {
 	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultChangeset,
+	DefaultEditBuilder,
+	singleTextCursor,
 } from "../../feature-libraries";
+import { brand } from "../../util";
+import { ISubscribable } from "../../events";
 
 describe("SharedTreeCore", () => {
+	describe("emits", () => {
+		it("local change event after a change", async () => {
+			let newLocalChange = 0;
+			const tree = createTree((events) => {
+				events.on("newLocalChange", () => (newLocalChange += 1));
+				return [new MockIndex()];
+			});
+
+			changeTree(tree);
+			assert.equal(newLocalChange, 1);
+			changeTree(tree);
+			assert.equal(newLocalChange, 2);
+		});
+
+		it("local change event after a change in a transaction", async () => {
+			let newLocalChange = 0;
+			const tree = createTree((events) => {
+				events.on("newLocalChange", () => (newLocalChange += 1));
+				return [new MockIndex()];
+			});
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(newLocalChange, 1);
+			changeTree(tree);
+			assert.equal(newLocalChange, 2);
+		});
+
+		it("no local change event when committing a transaction", async () => {
+			let newLocalChange = 0;
+			const tree = createTree((events) => {
+				events.on("newLocalChange", () => (newLocalChange += 1));
+				return [new MockIndex()];
+			});
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(newLocalChange, 1);
+			tree.commitTransaction();
+			assert.equal(newLocalChange, 1);
+		});
+
+		it("local state event after a change", async () => {
+			let newLocalState = 0;
+			const tree = createTree((events) => {
+				events.on("newLocalState", () => (newLocalState += 1));
+				return [new MockIndex()];
+			});
+
+			changeTree(tree);
+			assert.equal(newLocalState, 1);
+			changeTree(tree);
+			assert.equal(newLocalState, 2);
+		});
+
+		it("local state event after a change in a transaction", async () => {
+			let newLocalState = 0;
+			const tree = createTree((events) => {
+				events.on("newLocalState", () => (newLocalState += 1));
+				return [new MockIndex()];
+			});
+
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(newLocalState, 1);
+			changeTree(tree);
+			assert.equal(newLocalState, 2);
+		});
+
+		it("no local state event when committing a transaction", async () => {
+			let newLocalState = 0;
+			const tree = createTree((events) => {
+				events.on("newLocalState", () => (newLocalState += 1));
+				return [new MockIndex()];
+			});
+
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(newLocalState, 1);
+			tree.commitTransaction();
+			assert.equal(newLocalState, 1);
+		});
+	});
+
 	it("summarizes without indexes", async () => {
 		const tree = createTree([]);
 		const { summary, stats } = await tree.summarize();
@@ -145,8 +232,8 @@ describe("SharedTreeCore", () => {
 	}
 
 	function createTree<TIndexes extends readonly Index[]>(
-		indexes: TIndexes,
-	): SharedTreeCore<DefaultChangeset, DefaultChangeFamily, TIndexes> {
+		indexes: TIndexes | ((events: ISubscribable<IndexEvents<DefaultChangeset>>) => TIndexes),
+	): SharedTreeCore<DefaultChangeset, DefaultEditBuilder, DefaultChangeFamily, TIndexes> {
 		const runtime = new MockFluidDataStoreRuntime();
 		const attributes: IChannelAttributes = {
 			type: "TestSharedTree",
@@ -223,3 +310,14 @@ describe("SharedTreeCore", () => {
 		}
 	}
 });
+
+/** Makes an arbitrary change to the given tree */
+function changeTree<
+	TChange,
+	TEditor extends DefaultEditBuilder,
+	TChangeFamily extends ChangeFamily<TEditor, TChange>,
+	TIndexes extends readonly Index[],
+>(tree: SharedTreeCore<TChange, TEditor, TChangeFamily, TIndexes>): void {
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
+}

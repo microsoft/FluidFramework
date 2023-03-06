@@ -40,6 +40,7 @@ import {
 	Rebaser,
 	findAncestor,
 	GraphCommit,
+	RepairDataStore,
 } from "../core";
 import { brand, fail, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
@@ -86,7 +87,8 @@ export interface IndexEvents<TChangeset> {
  */
 export class SharedTreeCore<
 	TChange,
-	TChangeFamily extends ChangeFamily<any, TChange>,
+	TEditor,
+	TChangeFamily extends ChangeFamily<TEditor, TChange>,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
 	private readonly editManager: EditManager<TChange, TChangeFamily>;
@@ -113,6 +115,8 @@ export class SharedTreeCore<
 	 * Provides events that indexes can subscribe to
 	 */
 	private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
+
+	public readonly editor: TEditor;
 
 	/**
 	 * @param indexes - A list of indexes, either as an array or as a factory function
@@ -159,6 +163,12 @@ export class SharedTreeCore<
 			new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
 			0x350 /* Index summary element keys must be unique */,
 		);
+
+		this.editor = this.changeFamily.buildEditor((change) => {
+			const { revision } = this.applyChange(change);
+			const peek = this.transactionStack[this.transactionStack.length - 1];
+			peek?.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		}, anchors);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -211,38 +221,40 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	protected submitEdit(edit: TChange): void {
-		const revision = this.applyChange(edit);
-		// Edits are not submitted if we are in a transaction; they will be submitted when the transaction finishes.
-		if (!this.isTransacting()) {
-			const message: Message = {
-				revision,
-				originatorId: this.editManager.localSessionId,
-				changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
-			};
-			this.submitLocalMessage(message);
-		}
+	private submitCommit({ revision, change }: Commit<TChange>): void {
+		const message: Message = {
+			revision,
+			originatorId: this.editManager.localSessionId,
+			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, change),
+		};
+		this.submitLocalMessage(message);
 	}
 
-	private applyChange(change: TChange): RevisionTag {
+	protected applyChange(change: TChange): Commit<TChange> {
 		const revision = mintRevisionTag();
+		const commit = {
+			change,
+			revision,
+			sessionId: this.editManager.localSessionId,
+		};
 		const delta = this.editManager.addLocalChange(revision, change);
 		// Edits performed before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
 		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
-			const commit: Commit<TChange> = {
-				revision,
-				sessionId: this.editManager.localSessionId,
-				change,
-			};
 			this.detachedRevision = newRevision;
 			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
 		}
 		this.indexEventEmitter.emit("newLocalChange", change);
 		this.indexEventEmitter.emit("newLocalState", delta);
-		return revision;
+
+		if (!this.isTransacting()) {
+			this.submitCommit(commit);
+		}
+
+		// TODO: need return?
+		return commit;
 	}
 
 	protected processCore(
@@ -269,28 +281,39 @@ export class SharedTreeCore<
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	private readonly transactionStack: GraphCommit<TChange>[] = [];
-	public startTransaction(): void {
-		this.transactionStack.push(this.editManager.getLocalBranchHead());
+	private readonly transactionStack: {
+		startCommit: GraphCommit<TChange>;
+		repairStore?: RepairDataStore;
+	}[] = [];
+
+	public startTransaction(repairStore?: RepairDataStore): void {
+		this.transactionStack.push({
+			startCommit: this.editManager.getLocalBranchHead(),
+			repairStore,
+		});
 	}
 
 	public commitTransaction(): void {
-		assert(this.transactionStack.pop() !== undefined, "No transaction to abort");
+		const { startCommit } = this.transactionStack.pop() ?? fail("No transaction to commit");
+
+		const squashCommit = this.editManager.squashLocalChanges(startCommit.revision);
+		this.submitCommit(squashCommit);
 	}
 
 	public abortTransaction(): void {
-		const startingLocalBranchHead =
+		const { startCommit, repairStore } =
 			this.transactionStack.pop() ?? fail("No transaction to abort");
 
 		const rollbackDelta = this.editManager.rollbackLocalChanges(
-			startingLocalBranchHead.revision,
+			startCommit.revision,
+			repairStore,
 		);
 
 		this.indexEventEmitter.emit("newLocalState", rollbackDelta);
 	}
 
 	public isTransacting(): boolean {
-		assert(false, "TODO");
+		return this.transactionStack.length !== 0;
 	}
 
 	/**
@@ -313,7 +336,7 @@ export class SharedTreeCore<
 					"Expected merging checkout branches to be related",
 				);
 				for (const { change } of changes) {
-					this.submitEdit(change);
+					this.applyChange(change);
 				}
 				return changeToForked;
 			},

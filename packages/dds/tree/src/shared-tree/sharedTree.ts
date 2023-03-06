@@ -43,7 +43,9 @@ import {
 	ContextuallyTypedNodeData,
 	ModularChangeset,
 	IDefaultEditBuilder,
+	ForestRepairDataStore,
 } from "../feature-libraries";
+import { fail } from "../util";
 
 /**
  * Provides a means for interacting with a SharedTree.
@@ -98,6 +100,13 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 * Use `runTransaction` to create a local edit.
 	 */
 	readonly forest: IForestSubscription;
+
+	readonly transaction: {
+		start: () => void;
+		commit: () => void;
+		abort: () => void;
+		inProgress: () => void;
+	};
 
 	/**
 	 * Run `transaction` to edit this forest.
@@ -163,6 +172,7 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
 class SharedTree
 	extends SharedTreeCore<
 		DefaultChangeset,
+		DefaultEditBuilder,
 		DefaultChangeFamily,
 		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
 	>
@@ -171,6 +181,9 @@ class SharedTree
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+
+	public readonly transaction: ISharedTreeCheckout["transaction"];
+
 	/**
 	 * Rather than implementing TransactionCheckout, have a member that implements it.
 	 * This allows keeping the `IEditableForest` private.
@@ -202,10 +215,18 @@ class SharedTree
 
 		this.forest = forest;
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
+
+		this.transaction = {
+			start: () => this.startTransaction(new ForestRepairDataStore(() => this.forest)),
+			commit: () => this.commitTransaction(),
+			abort: () => this.abortTransaction(),
+			inProgress: () => this.isTransacting(),
+		};
+
 		this.transactionCheckout = {
 			forest,
 			changeFamily: this.changeFamily,
-			submitEdit: (edit) => this.submitEdit(edit),
+			submitEdit: (edit) => this.applyChange(edit),
 		};
 
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);
@@ -310,6 +331,13 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		});
 		this.submitEdit = (edit) => this.branch.applyChange(edit);
 	}
+
+	public readonly transaction = {
+		start: () => fail("TODO"),
+		commit: () => fail("TODO"),
+		abort: () => fail("TODO"),
+		inProgress: () => fail("TODO"),
+	};
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);

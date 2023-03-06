@@ -949,6 +949,77 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Transactions", () => {
+		function describeBasicTransactionTests(
+			title: string,
+			checkoutFactory: () => Promise<ISharedTreeCheckout>,
+		) {
+			describe(title, () => {
+				it("update the tree while open", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValue(checkout, 42);
+					assert.equal(peekTestValue(checkout), 42);
+				});
+
+				it("update the tree after committing", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValue(checkout, 42);
+					checkout.transaction.commit();
+					assert.equal(peekTestValue(checkout), 42);
+				});
+
+				it("revert the tree after aborting", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValue(checkout, 42);
+					checkout.transaction.abort();
+					assert.equal(peekTestValue(checkout), undefined);
+				});
+			});
+		}
+
+		describeBasicTransactionTests("on the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			return provider.trees[0];
+		});
+
+		describeBasicTransactionTests("on a forked checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			return provider.trees[0].fork();
+		});
+
+		it("don't send ops before committing", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			tree1.transaction.start();
+			pushTestValue(tree1, 42);
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 0);
+			tree1.transaction.commit();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 1);
+			assert.deepEqual(peekTestValue(tree2), 42);
+		});
+
+		it("send only one op after committing", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			tree1.transaction.start();
+			pushTestValue(tree1, 42);
+			pushTestValue(tree1, 43);
+			tree1.transaction.commit();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 1);
+			assert.deepEqual([...getTestValues(tree2)].reverse(), [42, 43]);
+		});
+	});
+
 	describe.skip("Fuzz Test fail cases", () => {
 		it("Invalid operation", async () => {
 			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
@@ -1550,7 +1621,7 @@ function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
  * @param value - The value of the inserted node.
  */
 function insert(tree: ISharedTreeCheckout, index: number, ...values: string[]): void {
-	tree.runTransaction((forest, editor) => {
+	tree.runTransaction((_, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
 		field.insert(index, nodes);

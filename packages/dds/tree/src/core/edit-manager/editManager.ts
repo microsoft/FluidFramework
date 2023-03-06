@@ -28,7 +28,9 @@ import {
 	Rebaser,
 	assertIsRevisionTag,
 	tagInverse,
+	mintRevisionTag,
 } from "../rebase";
+import { ReadonlyRepairDataStore } from "../repair";
 
 export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
@@ -298,17 +300,38 @@ export class EditManager<
 		return this.changeFamily.intoDelta(change);
 	}
 
-	public rollbackLocalChanges(revision: RevisionTag): Delta.Root {
+	public squashLocalChanges(revision: RevisionTag): Commit<TChangeset> {
 		const commits: GraphCommit<TChangeset>[] = [];
-		const rollback = findAncestor([this.localBranch, commits], (c) => c.revision === revision);
-		assert(rollback !== undefined, "Expected local branch to be ahead of transaction start");
-		this.localBranch = rollback;
+		const squashStart = findAncestor(
+			[this.localBranch, commits],
+			(c) => c.revision === revision,
+		);
+		assert(squashStart !== undefined, "Expected local branch to be ahead of squash revision");
+		const change = this.changeFamily.rebaser.compose(commits);
+		const squashedCommit = mintCommit(squashStart, {
+			revision: mintRevisionTag(),
+			sessionId: this.localSessionId,
+			change,
+		});
+		this.localBranch = squashedCommit;
+		return squashedCommit;
+	}
+
+	public rollbackLocalChanges(
+		revision: RevisionTag,
+		repairStore?: ReadonlyRepairDataStore,
+	): Delta.Root {
+		const commits: GraphCommit<TChangeset>[] = [];
+		const rollbackTo = findAncestor(
+			[this.localBranch, commits],
+			(c) => c.revision === revision,
+		);
+		assert(rollbackTo !== undefined, "Expected local branch to be ahead of rollback revision");
+		this.localBranch = rollbackTo;
 
 		// TODO: This area can probably be revisited and written a little better
 		const inverses = commits
-			.map((c) =>
-				tagInverse(this.changeFamily.rebaser.invert(c /* TODO repair store */), c.revision),
-			)
+			.map((c) => tagInverse(this.changeFamily.rebaser.invert(c, repairStore), c.revision))
 			.reverse();
 
 		if (this.anchors !== undefined) {
