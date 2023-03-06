@@ -1,5 +1,4 @@
 /* eslint-disable no-new-func */
-/* eslint-disable no-eval */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
 /* eslint-disable no-constant-condition */
 /* eslint-disable eqeqeq */
@@ -7,7 +6,6 @@
 /* eslint-disable jsdoc/require-hyphen-before-param-description */
 /* eslint-disable no-bitwise */
 /* eslint-disable prefer-const */
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable unicorn/no-unsafe-regex */
 /* eslint-disable unicorn/better-regex */
@@ -199,16 +197,6 @@ function runInContext(context) {
 	 * @type Object
 	 */
 	const support = {};
-
-	(function () {
-		/**
-		 * Detect if the Timers API exists.
-		 *
-		 * @memberOf Benchmark.support
-		 * @type boolean
-		 */
-		support.timeout = isHostType(context, "setTimeout") && isHostType(context, "clearTimeout");
-	})();
 
 	/**
 	 * Timer object used by `clock()` and `Deferred#resolve`.
@@ -660,8 +648,7 @@ function runInContext(context) {
 			return (
 				name == "run" &&
 				object instanceof Benchmark &&
-				(((async == null ? object.options.async : async) && support.timeout) ||
-					object.defer)
+				((async == null ? object.options.async : async) || object.defer)
 			);
 		}
 
@@ -876,10 +863,9 @@ function runInContext(context) {
 				bench.reset();
 				delete calledBy.abort;
 
-				if (support.timeout) {
-					clearTimeout(bench._timerId);
-					delete bench._timerId;
-				}
+				clearTimeout(bench._timerId);
+				delete bench._timerId;
+
 				if (!resetting) {
 					bench.aborted = true;
 					bench.running = false;
@@ -1648,9 +1634,7 @@ function runInContext(context) {
 
 		if (!event.cancelled) {
 			options = {
-				async:
-					((options = options && options.async) == null ? bench.async : options) &&
-					support.timeout,
+				async: (options = options && options.async) == null ? bench.async : options,
 			};
 
 			// For clones created within `compute()`.
