@@ -14,30 +14,24 @@ export class Bubblebench extends DataObject {
 	}
 	private maybeTree?: ISharedTree = undefined;
 	private maybeAppState?: AppState = undefined;
-	static treeFactory = new SharedTreeFactory();
 
 	protected async initializingFirstTime() {
 		this.maybeTree = this.runtime.createChannel(
-			"unique-bubblebench-key-1337",
-			Bubblebench.treeFactory.type,
+			/* id: */ undefined,
+			new SharedTreeFactory().type,
 		) as ISharedTree;
 
 		this.initializeTree(this.maybeTree);
 
-		this.root.set("unique-bubblebench-key-1337", this.maybeTree.handle);
+		this.root.set("tree", this.maybeTree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.maybeTree = await this.root
-			.get<IFluidHandle<ISharedTree>>("unique-bubblebench-key-1337")!
-			.get();
+		this.maybeTree = await this.root.get<IFluidHandle<ISharedTree>>("tree")!.get();
 	}
 
 	protected async hasInitialized() {
-		if (this.tree === undefined) {
-			throw new Error("hasInitialized called but tree is still undefined");
-		}
 		this.maybeAppState = new AppState(
 			this.tree.root as ClientTreeProxy[] & EditableField,
 			/* stageWidth: */ 640,
