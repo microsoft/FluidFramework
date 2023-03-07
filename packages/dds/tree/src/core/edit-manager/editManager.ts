@@ -301,6 +301,11 @@ export class EditManager<
 		return this.changeFamily.intoDelta(change);
 	}
 
+	/**
+	 * Given a revision on the local branch, replace all commits after it with a single commit containing
+	 * an equivalent composition of changes.
+	 * @returns the new commit (which is now the head of the local branch)
+	 */
 	public squashLocalChanges(startRevision: RevisionTag): Commit<TChangeset> {
 		const [squashStart, commits] = this.findLocalCommit(startRevision);
 		// Anonymize the commits from this transaction by stripping their revision tags.
@@ -318,6 +323,11 @@ export class EditManager<
 		}
 	}
 
+	/**
+	 * Given a revision on the local branch, remove all commits after it.
+	 * @param repairStore - an optional repair data store to assist with generating inverses of the removed commits
+	 * @returns an iterator of deltas where each delta describes the change from rolling back one of the removed commits.
+	 */
 	public *rollbackLocalChanges(
 		startRevision: RevisionTag,
 		repairStore?: ReadonlyRepairDataStore,

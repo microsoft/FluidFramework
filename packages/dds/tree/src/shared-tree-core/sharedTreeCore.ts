@@ -301,10 +301,6 @@ export class SharedTreeCore<
 		}
 	}
 
-	public isTransacting(): boolean {
-		return this.transactions.size !== 0;
-	}
-
 	/**
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.

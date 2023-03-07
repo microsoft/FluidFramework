@@ -200,7 +200,6 @@ class SharedTree
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-
 	public readonly transaction: ISharedTreeCheckout["transaction"];
 
 	/**
@@ -407,6 +406,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	}
 }
 
+/** Helper for running an `ITransactionCheckout`-style transaction as a `start()`/`end()`-style transaction */
 function runTransaction(
 	checkout: ISharedTreeCheckout,
 	transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult,

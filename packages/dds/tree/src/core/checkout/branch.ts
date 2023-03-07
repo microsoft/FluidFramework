@@ -115,10 +115,6 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 		}
 	}
 
-	public isTransacting(): boolean {
-		return this.transactions.size !== 0;
-	}
-
 	private popTransaction(): [
 		GraphCommit<TChange>,
 		GraphCommit<TChange>[],

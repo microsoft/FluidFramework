@@ -48,7 +48,6 @@ const stringKey = "String";
  * which were based on a given session's branch, to the document history
  */
 // TODO: Remove commits when they are no longer in the collab window
-// TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
 export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 	public readonly summaryElement?: SummaryElement = this;
