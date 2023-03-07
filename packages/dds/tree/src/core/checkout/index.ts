@@ -3,6 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { SharedTreeBranch, SharedTreeBranchEvents } from "./branch";
 export { TransactionResult } from "./checkout";
-export { TransactionStack } from "./transactionStack";

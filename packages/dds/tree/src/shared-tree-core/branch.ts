@@ -4,11 +4,17 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { EventEmitter } from "../../events";
-import { ChangeFamily } from "../change-family";
-import { findAncestor, GraphCommit, mintCommit, mintRevisionTag, Rebaser } from "../rebase";
-import { RepairDataStore } from "../repair";
-import { AnchorSet } from "../tree";
+import {
+	AnchorSet,
+	ChangeFamily,
+	findAncestor,
+	GraphCommit,
+	mintCommit,
+	mintRevisionTag,
+	Rebaser,
+	RepairDataStore,
+} from "../core";
+import { EventEmitter } from "../events";
 import { TransactionStack } from "./transactionStack";
 
 /**

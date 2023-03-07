@@ -36,15 +36,15 @@ import {
 	RevisionTag,
 	mintRevisionTag,
 	minimumPossibleSequenceNumber,
-	SharedTreeBranch,
 	Rebaser,
 	findAncestor,
 	GraphCommit,
 	RepairDataStore,
-	TransactionStack,
 } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
+import { TransactionStack } from "./transactionStack";
+import { SharedTreeBranch } from "./branch";
 
 /**
  * The events emitted by a {@link SharedTreeCore}

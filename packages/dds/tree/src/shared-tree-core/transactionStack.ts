@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../util";
-import { RevisionTag } from "../rebase";
-import { RepairDataStore } from "../repair";
+import { RepairDataStore, RevisionTag } from "../core";
+import { fail } from "../util";
 
 /**
  * A helper class that organizes the state needed for managing nesting transactions.

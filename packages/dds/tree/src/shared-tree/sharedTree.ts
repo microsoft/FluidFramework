@@ -22,9 +22,8 @@ import {
 	AnchorSet,
 	AnchorNode,
 	IEditableForest,
-	SharedTreeBranch,
 } from "../core";
-import { SharedTreeCore } from "../shared-tree-core";
+import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	EditableTreeContext,

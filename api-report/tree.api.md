@@ -615,7 +615,6 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {
 // @alpha
 export interface ISharedTreeCheckout extends AnchorLocator {
     readonly context: EditableTreeContext;
-    // (undocumented)
     readonly editor: IDefaultEditBuilder;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeCheckoutFork;
@@ -623,12 +622,10 @@ export interface ISharedTreeCheckout extends AnchorLocator {
     set root(data: ContextuallyTypedNodeData | undefined);
     runTransaction(transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult): TransactionResult;
     readonly storedSchema: StoredSchemaRepository;
-    // (undocumented)
     readonly transaction: {
         start: () => void;
         commit: () => void;
         abort: () => void;
-        inProgress: () => void;
     };
 }
 
