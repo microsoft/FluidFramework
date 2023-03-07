@@ -169,7 +169,10 @@ export class SharedTreeCore<
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.editor = this.changeFamily.buildEditor((change) => this.applyChange(change), anchors);
+		this.editor = this.changeFamily.buildEditor(
+			(change) => this.applyChange(change, false),
+			anchors,
+		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -243,14 +246,14 @@ export class SharedTreeCore<
 	 * Update the state of the tree (including all indexes) according to the given change.
 	 * If there is not currently a transaction open, the change will be submitted to Fluid.
 	 */
-	protected applyChange(change: TChange): void {
+	protected applyChange(change: TChange, rebaseAnchors: boolean): void {
 		const revision = mintRevisionTag();
 		const commit = {
 			change,
 			revision,
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(revision, change);
+		const delta = this.editManager.addLocalChange(revision, change, rebaseAnchors);
 		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
@@ -321,7 +324,7 @@ export class SharedTreeCore<
 					"Expected merging checkout branches to be related",
 				);
 				for (const { change } of changes) {
-					this.applyChange(change);
+					this.applyChange(change, true);
 				}
 				return changeToForked;
 			},

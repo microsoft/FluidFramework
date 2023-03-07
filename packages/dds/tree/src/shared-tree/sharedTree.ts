@@ -242,7 +242,7 @@ class SharedTree
 		this.transactionCheckout = {
 			forest,
 			changeFamily: defaultChangeFamily,
-			submitEdit: (edit) => this.applyChange(edit),
+			submitEdit: (edit) => this.applyChange(edit, false),
 		};
 
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);

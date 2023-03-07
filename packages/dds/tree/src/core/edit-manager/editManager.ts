@@ -290,11 +290,14 @@ export class EditManager<
 		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
 	}
 
-	public addLocalChange(revision: RevisionTag, change: TChangeset): Delta.Root {
+	public addLocalChange(
+		revision: RevisionTag,
+		change: TChangeset,
+		rebaseAnchors = true,
+	): Delta.Root {
 		this.pushToLocalBranch(revision, change);
 
-		// TODO: Anchors are currently getting rebased twice sometimes. Editor rebases them, and so do we here.
-		if (this.anchors !== undefined) {
+		if (rebaseAnchors && this.anchors !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		}
 

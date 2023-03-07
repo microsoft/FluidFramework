@@ -1006,6 +1006,21 @@ describe("SharedTree", () => {
 					checkout.transaction.abort();
 					assert.equal(peekTestValue(checkout), undefined);
 				});
+
+				it("update anchors correctly", async () => {
+					const checkout = await checkoutFactory();
+					pushTestValue(checkout, "A");
+					let cursor = checkout.forest.allocateCursor();
+					moveToDetachedField(checkout.forest, cursor);
+					cursor.firstNode();
+					const anchor = cursor.buildAnchor();
+					cursor.clear();
+					pushTestValue(checkout, "B");
+					cursor = checkout.forest.allocateCursor();
+					checkout.forest.tryMoveCursorToNode(anchor, cursor);
+					assert.equal(cursor.value, "A");
+					cursor.clear();
+				});
 			});
 		}
 
