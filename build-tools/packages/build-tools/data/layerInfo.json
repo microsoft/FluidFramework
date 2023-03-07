@@ -7,7 +7,6 @@
 				"packages": [
 					"@fluidframework/common-definitions",
 					"@fluidframework/core-interfaces",
-					"@fluidframework/core-utils",
 					"@fluidframework/gitresources"
 				]
 			},
@@ -33,6 +32,10 @@
 			"Base-Utils": {
 				"packages": ["@fluidframework/common-utils"],
 				"deps": ["Base-Definitions"]
+			},
+			"Core-Utils": {
+				"packages": ["@fluidframework/core-utils"],
+				"deps": []
 			},
 			"Protocol-Utils": {
 				"packages": ["@fluidframework/protocol-base"],
@@ -79,7 +82,7 @@
 			},
 			"Runtime": {
 				"dirs": ["experimental/dds/", "packages/dds/", "packages/runtime/"],
-				"deps": ["Container-Definitions", "Driver-Utils", "Container-Utils"]
+				"deps": ["Container-Definitions", "Container-Utils", "Core-Utils", "Driver-Utils"]
 			},
 			"Framework": {
 				"packages": ["@fluid-experimental/data-objects", "@fluidframework/fluid-static"],
