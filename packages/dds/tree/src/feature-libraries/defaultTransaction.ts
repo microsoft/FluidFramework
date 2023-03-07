@@ -43,7 +43,9 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 	const result = command(forest, editor);
 	const changes = editor.getChanges();
 	const inverses = changes
-		.map((change, index) => changeFamily.rebaser.invert(tagChange(change, revisions[index])))
+		.map((change, index) =>
+			changeFamily.rebaser.invert(tagChange(change, revisions[index]), repairStore),
+		)
 		.reverse();
 
 	// TODO: in the non-abort case, optimize this to not rollback the edit,
@@ -54,12 +56,16 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 			// TODO: maybe unify logic to edit forest and its anchors here with that in ProgressiveEditBuilder.
 			// TODO: update schema in addition to anchors and tree data (in both places).
 			changeFamily.rebaser.rebaseAnchors(forest.anchors, inverse);
-			forest.applyDelta(changeFamily.intoDelta(inverse, repairStore));
+			forest.applyDelta(changeFamily.intoDelta(inverse));
 		}
 	}
 
 	if (result === TransactionResult.Apply) {
-		const edit = changeFamily.rebaser.compose(changes.map((c) => makeAnonChange(c)));
+		// Using anonymous changes makes it impossible to chronologically order them during composition.
+		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
+		// not expected to happen in transactions but that could change in the future.
+		const anonChanges = changes.map((c) => makeAnonChange(c));
+		const edit = changeFamily.rebaser.compose(anonChanges);
 		submitEdit(edit);
 	}
 

@@ -50,6 +50,8 @@ import {
 	ValueChange,
 	ModularChangeset,
 	IdAllocator,
+	RevisionInfo,
+	RevisionIndexer,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -85,6 +87,7 @@ export class ModularChangeFamily
 	private normalizeFieldChanges(
 		changes: readonly FieldChange[],
 		genId: IdAllocator,
+		revisionIndexer: RevisionIndexer,
 	): {
 		fieldKind: FieldKind;
 		changesets: FieldChangeset[];
@@ -107,8 +110,15 @@ export class ModularChangeFamily
 				return convertGenericChange(
 					genericChange,
 					handler,
-					(children) => this.composeNodeChanges(children, genId, newCrossFieldTable()),
+					(children) =>
+						this.composeNodeChanges(
+							children,
+							genId,
+							newCrossFieldTable(),
+							revisionIndexer,
+						),
 					genId,
+					revisionIndexer,
 				) as FieldChangeset;
 			}
 			return change.change;
@@ -117,7 +127,18 @@ export class ModularChangeFamily
 	}
 
 	compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-		let maxId = changes.reduce((max, change) => Math.max(change.change.maxId ?? -1, max), -1);
+		let maxId = -1;
+		const revInfos: RevisionInfo[] = [];
+		for (const taggedChange of changes) {
+			const change = taggedChange.change;
+			maxId = Math.max(change.maxId ?? -1, maxId);
+			if (change.revisions !== undefined) {
+				revInfos.push(...change.revisions);
+			} else if (taggedChange.revision !== undefined) {
+				revInfos.push({ tag: taggedChange.revision });
+			}
+		}
+		const revisionIndexer: RevisionIndexer = revisionIndexerFromInfo(revInfos);
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
@@ -132,6 +153,7 @@ export class ModularChangeFamily
 				.map((change) => tagChange(change.change.changes, change.revision)),
 			genId,
 			crossFieldTable,
+			revisionIndexer,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -143,9 +165,11 @@ export class ModularChangeFamily
 					field.fieldKind,
 				).rebaser.amendCompose(
 					field.change,
-					(children) => this.composeNodeChanges(children, genId, crossFieldTable),
+					(children) =>
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionIndexer),
 					genId,
 					newCrossFieldManager(crossFieldTable),
+					revisionIndexer,
 				);
 				field.change = brand(amendedChange);
 			}
@@ -155,13 +179,14 @@ export class ModularChangeFamily
 			crossFieldTable.fieldsToUpdate.size === 0,
 			"Should not need more than one amend pass.",
 		);
-		return makeModularChangeset(composedFields, maxId, 0);
+		return makeModularChangeset(composedFields, maxId, revInfos, 0);
 	}
 
 	private composeFieldMaps(
 		changes: TaggedChange<FieldChangeMap>[],
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
+		revisionIndexer: RevisionIndexer,
 	): FieldChangeMap {
 		const fieldChanges = new Map<FieldKey, FieldChange[]>();
 		for (const change of changes) {
@@ -187,6 +212,7 @@ export class ModularChangeFamily
 				const { fieldKind, changesets } = this.normalizeFieldChanges(
 					changesForField,
 					genId,
+					revisionIndexer,
 				);
 				assert(
 					changesets.length === changesForField.length,
@@ -199,9 +225,11 @@ export class ModularChangeFamily
 				);
 				const composedChange = fieldKind.changeHandler.rebaser.compose(
 					taggedChangesets,
-					(children) => this.composeNodeChanges(children, genId, crossFieldTable),
+					(children) =>
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionIndexer),
 					genId,
 					manager,
+					revisionIndexer,
 				);
 
 				composedField = {
@@ -222,6 +250,7 @@ export class ModularChangeFamily
 		changes: TaggedChange<NodeChangeset>[],
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
+		revisionIndexer: RevisionIndexer,
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
@@ -239,7 +268,12 @@ export class ModularChangeFamily
 			}
 		}
 
-		const composedFieldChanges = this.composeFieldMaps(fieldChanges, genId, crossFieldTable);
+		const composedFieldChanges = this.composeFieldMaps(
+			fieldChanges,
+			genId,
+			crossFieldTable,
+			revisionIndexer,
+		);
 		const composedNodeChange: NodeChangeset = {};
 		if (valueChange !== undefined) {
 			composedNodeChange.valueChange = valueChange;
@@ -256,26 +290,39 @@ export class ModularChangeFamily
 		return composedNodeChange;
 	}
 
-	invert(change: TaggedChange<ModularChangeset>): ModularChangeset {
+	/**
+	 * @param change - The change to invert.
+	 * @param repairStore - The store to query for repair data.
+	 */
+	invert(
+		change: TaggedChange<ModularChangeset>,
+		repairStore?: ReadonlyRepairDataStore,
+	): ModularChangeset {
 		let maxId = change.change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
+		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
+
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.changes, change.revision),
 			genId,
+			resolvedRepairStore,
+			undefined,
 			crossFieldTable,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
-			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
+			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
 					fieldChange.fieldKind,
 				).rebaser.amendInvert(
 					fieldChange.change,
 					originalRevision,
+					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+						resolvedRepairStore.getNodes(revision, path, fieldKey, index, count),
 					genId,
 					newCrossFieldManager(crossFieldTable),
 				);
@@ -288,12 +335,19 @@ export class ModularChangeFamily
 			"Should not need more than one amend pass.",
 		);
 
-		return makeModularChangeset(invertedFields, maxId, 0);
+		const revInfo = change.change.revisions;
+		return makeModularChangeset(
+			invertedFields,
+			maxId,
+			revInfo !== undefined ? Array.from(revInfo).reverse() : undefined,
+		);
 	}
 
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
+		repairStore: ReadonlyRepairDataStore,
+		path: UpPath | undefined,
 		crossFieldTable: CrossFieldTable<InvertData>,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
@@ -301,18 +355,33 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of changes.change) {
 			const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
 
+			const reviver = (
+				revisionTag: RevisionTag,
+				index: number,
+				count: number,
+			): Delta.ProtoNode[] => repairStore.getNodes(revisionTag, path, field, index, count);
+
 			const manager = newCrossFieldManager(crossFieldTable);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
 			).rebaser.invert(
 				{ revision, change: fieldChange.change },
-				(childChanges) =>
+				(childChanges, index) =>
 					this.invertNodeChange(
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
+						repairStore,
+						index === undefined
+							? undefined
+							: {
+									parent: path,
+									parentField: field,
+									parentIndex: index,
+							  },
 					),
+				reviver,
 				genId,
 				manager,
 			);
@@ -324,7 +393,9 @@ export class ModularChangeFamily
 			invertedFields.set(field, invertedFieldChange);
 
 			const invertData: InvertData = {
+				fieldKey: field,
 				fieldChange: invertedFieldChange,
+				path,
 				originalRevision: changes.revision,
 			};
 
@@ -338,6 +409,8 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
+		repairStore: ReadonlyRepairDataStore,
+		path?: UpPath,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -346,14 +419,18 @@ export class ModularChangeFamily
 				!("revert" in change.change.valueChange),
 				0x4a9 /* Inverting inverse changes is currently not supported */,
 			);
+			assert(path !== undefined, "Only existing nodes can have their value restored");
 			const revision = change.change.valueChange.revision ?? change.revision;
-			inverse.valueChange = { revert: revision };
+			assert(revision !== undefined, "Unable to revert to undefined revision");
+			inverse.valueChange = { value: repairStore.getValue(revision, path) };
 		}
 
 		if (change.change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
 				{ ...change, change: change.change.fieldChanges },
 				genId,
+				repairStore,
+				path,
 				crossFieldTable,
 			);
 		}
@@ -366,11 +443,20 @@ export class ModularChangeFamily
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
 		const constraintState = new ConstraintHelper();
+		const revInfos: RevisionInfo[] = [];
+		if (over.change.revisions !== undefined) {
+			revInfos.push(...over.change.revisions);
+		}
+		if (change.revisions !== undefined) {
+			revInfos.push(...change.revisions);
+		}
+		const revisionIndexer: RevisionIndexer = revisionIndexerFromInfo(revInfos);
 		const rebasedFields = this.rebaseFieldMap(
 			change.changes,
 			tagChange(over.change.changes, over.revision),
 			genId,
 			crossFieldTable,
+			revisionIndexer,
 			constraintState,
 		);
 
@@ -386,6 +472,7 @@ export class ModularChangeFamily
 					baseChange,
 					genId,
 					newCrossFieldManager(crossFieldTable),
+					revisionIndexer,
 				);
 				fieldChange.change = brand(amendedChange);
 			}
@@ -396,7 +483,12 @@ export class ModularChangeFamily
 			"Should not need more than one amend pass.",
 		);
 
-		return makeModularChangeset(rebasedFields, maxId, constraintState.violationCount);
+		return makeModularChangeset(
+			rebasedFields,
+			maxId,
+			change.revisions,
+			constraintState.violationCount,
+		);
 	}
 
 	private rebaseFieldMap(
@@ -404,6 +496,7 @@ export class ModularChangeFamily
 		over: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
+		revisionIndexer: RevisionIndexer,
 		constraintState: any,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
@@ -416,7 +509,7 @@ export class ModularChangeFamily
 				const {
 					fieldKind,
 					changesets: [fieldChangeset, baseChangeset],
-				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId);
+				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionIndexer);
 
 				const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
 				const taggedBaseChange = { revision, change: baseChangeset };
@@ -430,10 +523,12 @@ export class ModularChangeFamily
 							{ revision, change: baseChild },
 							genId,
 							crossFieldTable,
+							revisionIndexer,
 							constraintState,
 						),
 					genId,
 					manager,
+					revisionIndexer,
 				);
 
 				const rebasedFieldChange: FieldChange = {
@@ -459,6 +554,7 @@ export class ModularChangeFamily
 		over: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
+		revisionIndexer: RevisionIndexer,
 		constraintState: any,
 	): NodeChangeset {
 		if (
@@ -488,6 +584,7 @@ export class ModularChangeFamily
 				},
 				genId,
 				crossFieldTable,
+				revisionIndexer,
 				constraintState,
 			),
 		};
@@ -497,9 +594,8 @@ export class ModularChangeFamily
 		anchors.applyDelta(this.intoDelta(over));
 	}
 
-	intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
-		// Return empty delta if constraint violated
-		return this.intoDeltaImpl(change.changes, repairStore ?? dummyRepairDataStore, undefined);
+	intoDelta(change: ModularChangeset): Delta.Root {
+		return this.intoDeltaImpl(change.changes);
 	}
 
 	/**
@@ -508,63 +604,30 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(
-		change: FieldChangeMap,
-		repairStore: ReadonlyRepairDataStore,
-		path: UpPath | undefined,
-	): Delta.Root {
+	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
-				(childChange, index): Delta.Modify =>
-					this.deltaFromNodeChange(
-						childChange,
-						repairStore,
-						index === undefined
-							? undefined
-							: {
-									parent: path,
-									parentField: field,
-									parentIndex: index,
-							  },
-					),
-				(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
-					repairStore.getNodes(revision, path, field, index, count),
+				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
 			);
 			delta.set(field, deltaField);
 		}
 		return delta;
 	}
 
-	private deltaFromNodeChange(
-		change: NodeChangeset,
-		repairStore: ReadonlyRepairDataStore,
-		path?: UpPath,
-	): Delta.Modify {
+	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		const valueChange = change.valueChange;
 		if (valueChange !== undefined) {
-			if ("revert" in valueChange) {
-				assert(
-					path !== undefined,
-					0x4aa /* Only existing nodes can have their value restored */,
-				);
-				assert(
-					valueChange.revert !== undefined,
-					0x4ab /* Unable to revert to undefined revision */,
-				);
-				modify.setValue = repairStore.getValue(valueChange.revert, path);
-			} else {
-				modify.setValue = valueChange.value;
-			}
+			modify.setValue = valueChange.value;
 		}
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges);
 		}
 
 		if (change.valueConstraint !== undefined) {
@@ -580,6 +643,14 @@ export class ModularChangeFamily
 	): ModularEditBuilder {
 		return new ModularEditBuilder(this, changeReceiver, anchors);
 	}
+}
+
+function revisionIndexerFromInfo(revInfos: readonly RevisionInfo[]): RevisionIndexer {
+	return (tag: RevisionTag): number => {
+		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
+		assert(index !== -1, "Unable to index unknown revision");
+		return index;
+	};
 }
 
 export function getFieldKind(
@@ -629,7 +700,9 @@ class ConstraintHelper {
 
 interface InvertData {
 	originalRevision: RevisionTag | undefined;
+	fieldKey: FieldKey;
 	fieldChange: FieldChange;
+	path: UpPath | undefined;
 }
 
 type ComposeData = FieldChange;
@@ -727,10 +800,14 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 
 function makeModularChangeset(
 	changes: FieldChangeMap,
-	maxId: number,
-	constraintViolationCount: number,
+	maxId: number = -1,
+	revisions: readonly RevisionInfo[] | undefined = undefined,
+	constraintViolationCount = 0,
 ): ModularChangeset {
-	const changeset: ModularChangeset = { changes, constraintViolationCount };
+	const changeset: Mutable<ModularChangeset> = { changes };
+	if (revisions !== undefined && revisions.length > 0) {
+		changeset.revisions = revisions;
+	}
 	if (maxId >= 0) {
 		changeset.maxId = brand(maxId);
 	}
@@ -787,7 +864,7 @@ export class ModularEditBuilder
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
 		const changeMap = this.buildChangeMap(path, field, fieldKind, change);
-		this.applyChange(makeModularChangeset(changeMap, maxId, 0));
+		this.applyChange(makeModularChangeset(changeMap, maxId));
 	}
 
 	submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
@@ -795,8 +872,6 @@ export class ModularEditBuilder
 			makeAnonChange(
 				makeModularChangeset(
 					this.buildChangeMap(change.path, change.field, change.fieldKind, change.change),
-					-1,
-					0,
 				),
 			),
 		);

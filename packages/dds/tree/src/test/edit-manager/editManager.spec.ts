@@ -65,8 +65,11 @@ function editManagerFactory(options: {
 } {
 	const family = changeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(family, anchors);
-	manager.initSessionId(options.sessionId ?? localSessionId);
+	const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
+		family,
+		options.sessionId ?? localSessionId,
+		anchors,
+	);
 	return { manager, anchors };
 }
 

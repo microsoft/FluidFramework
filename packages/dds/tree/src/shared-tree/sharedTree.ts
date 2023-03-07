@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -21,8 +20,7 @@ import {
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
-	UpPath,
-	EditManager,
+	AnchorNode,
 	IEditableForest,
 	SharedTreeBranch,
 } from "../core";
@@ -171,7 +169,7 @@ class SharedTree
 	implements ISharedTree
 {
 	public readonly context: EditableTreeContext;
-	public readonly forest: IForestSubscription;
+	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 	/**
 	 * Rather than implementing TransactionCheckout, have a member that implements it.
@@ -188,18 +186,13 @@ class SharedTree
 		const anchors = new AnchorSet();
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
-		const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
-			defaultChangeFamily,
-			anchors,
-		);
 		super(
-			(events) => [
+			(events, editManager) => [
 				new SchemaIndex(runtime, events, schema),
 				new ForestIndex(runtime, events, forest),
 				new EditManagerIndex(runtime, editManager),
 			],
 			defaultChangeFamily,
-			editManager,
 			anchors,
 			id,
 			runtime,
@@ -218,9 +211,8 @@ class SharedTree
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
-		assert(this.editManager.anchors !== undefined, 0x407 /* editManager must have anchors */);
-		return this.editManager.anchors.locate(anchor);
+	public locate(anchor: Anchor): AnchorNode | undefined {
+		return this.forest.anchors.locate(anchor);
 	}
 
 	public get root(): UnwrappedEditableField {
@@ -319,7 +311,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.submitEdit = (edit) => this.branch.applyChange(edit);
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
 
