@@ -6,7 +6,6 @@ import * as path from "path";
 
 import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 
-import { PreviousVersionStyle } from "../typeValidator/packageJson";
 import { getFluidBuildConfig } from "./fluidUtils";
 import { Logger, defaultLogger } from "./logging";
 import { MonoRepo, MonoRepoKind, isMonoRepoKind } from "./monoRepo";
@@ -57,6 +56,79 @@ export interface IFluidBuildConfig {
 }
 
 /**
+ * A type representing the different version constraint styles we use when determining the previous version for type
+ * test generation.
+ *
+ * The "base" versions are calculated by zeroing out all version segments lower than the base. That is, for a version v,
+ * the baseMajor version is `${v.major}.0.0` and the baseMinor version is `${v.major}.${v.minor}.0`.
+ *
+ * The "previous" versions work similarly, but the major/minor/patch segment is reduced by 1. That is, for a version v,
+ * the previousMajor version is `${min(v.major - 1, 1)}.0.0`, the previousMinor version is
+ * `${v.major}.${min(v.minor - 1, 0)}.0`, and the previousPatch is `${v.major}.${v.minor}.${min(v.patch - 1, 0)}.0`.
+ *
+ * The "previous" versions never roll back below 1 for the major version and 0 for minor and patch. That is, the
+ * previousMajor, previousMinor, and previousPatch versions for `1.0.0` are all `1.0.0`.
+ *
+ * @example
+ *
+ * Given the version 2.3.5:
+ *
+ * baseMajor: 2.0.0
+ * baseMinor: 2.3.0
+ * ~baseMinor: ~2.3.0
+ * previousPatch: 2.3.4
+ * previousMinor: 2.2.0
+ * previousMajor: 1.0.0
+ * ^previousMajor: ^1.0.0
+ * ^previousMinor: ^2.2.0
+ * ~previousMajor: ~1.0.0
+ * ~previousMinor: ~2.2.0
+ *
+ * @example
+ *
+ * Given the version 2.0.0-internal.2.3.5:
+ *
+ * baseMajor: 2.0.0-internal.2.0.0
+ * baseMinor: 2.0.0-internal.2.3.0
+ * ~baseMinor: >=2.0.0-internal.2.3.0 <2.0.0-internal.3.0.0
+ * previousPatch: 2.0.0-internal.2.3.4
+ * previousMinor: 2.0.0-internal.2.2.0
+ * previousMajor: 2.0.0-internal.1.0.0
+ * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
+ * ^previousMinor: >=2.0.0-internal.2.2.0 <2.0.0-internal.3.0.0
+ * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
+ * ~previousMinor: >=2.0.0-internal.2.2.0 <2.0.0-internal.2.2.0
+ *
+ * @example
+ *
+ * Given the version 2.0.0-internal.2.0.0:
+ *
+ * baseMajor: 2.0.0-internal.2.0.0
+ * baseMinor: 2.0.0-internal.2.0.0
+ * ~baseMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
+ * previousPatch: 2.0.0-internal.2.0.0
+ * previousMinor: 2.0.0-internal.2.0.0
+ * previousMajor: 2.0.0-internal.1.0.0
+ * ^previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.2.0.0
+ * ^previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.3.0.0
+ * ~previousMajor: >=2.0.0-internal.1.0.0 <2.0.0-internal.1.1.0
+ * ~previousMinor: >=2.0.0-internal.2.0.0 <2.0.0-internal.2.1.0
+ *
+ * @internal
+ */
+export type PreviousVersionStyle =
+	| "baseMajor"
+	| "baseMinor"
+	| "previousPatch"
+	| "previousMinor"
+	| "previousMajor"
+	| "~baseMinor"
+	| "^previousMajor"
+	| "^previousMinor"
+	| "~previousMajor"
+	| "~previousMinor";
+
+/**
  * Policy configuration for the `check:policy` command.
  */
 export interface PolicyConfig {
@@ -81,11 +153,6 @@ export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
 export interface ITypeValidationConfig {
 	/**
-	 * The version of the package. Should match the version field in package.json.
-	 */
-	version: string;
-
-	/**
 	 * An object containing types that are known to be broken.
 	 */
 	broken: BrokenCompatTypes;
@@ -94,24 +161,6 @@ export interface ITypeValidationConfig {
 	 * If true, disables type test preparation and generation for the package.
 	 */
 	disabled?: boolean;
-
-	/**
-	 * The previous version style that was used when the prepare phase was run. This value is cached so that
-	 * generation can work even on branches without the correct config.
-	 */
-	previousVersionStyle?: PreviousVersionStyle;
-
-	/**
-	 * The version range used as the "previous" version to compare against when generating type tests. This may be
-	 * an exact version or a range string.
-	 */
-	baselineRange?: string;
-
-	/**
-	 * The exact version used as the "previous" version to compare against when generating type tests. This should
-	 * always be an exact version.
-	 */
-	baselineVersion?: string;
 }
 
 /**

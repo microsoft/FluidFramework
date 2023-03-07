@@ -170,6 +170,23 @@ describe("SharedString", () => {
 			}
 		});
 
+		it("can handle empty annotations in text", async () => {
+			const text = "hello world";
+			const startingProps = Object.entries({});
+			sharedString.insertText(0, text, startingProps);
+			for (let i = 0; i < text.length; i++) {
+				const actualProps = sharedString.getPropertiesAtPosition(i);
+				assert(
+					actualProps !== undefined,
+					"Properties are undefined when they should be empty",
+				);
+				assert(
+					startingProps.toString() === Object.entries(actualProps).toString(),
+					`Properties are not empty at position ${i}`,
+				);
+			}
+		});
+
 		it("can insert marker", () => {
 			sharedString.insertText(0, "hello world");
 			// Insert a simple marker.
@@ -243,7 +260,7 @@ describe("SharedString", () => {
 				sharedString.insertText(0, `${insertText}${i}`);
 			}
 
-			// Verify that summary data is correcy.
+			// Verify that summary data is correct.
 			let summaryTree = verifyAndReturnSummaryTree();
 
 			// Load a new SharedString from the snapshot and verify it is loaded correctly.
