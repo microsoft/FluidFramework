@@ -92,16 +92,6 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
 }
 
-// @public @deprecated
-export class BlobCacheStorageService extends DocumentStorageServiceProxy {
-    // @deprecated
-    constructor(internalStorageService: IDocumentStorageService, blobs: Map<string, ArrayBufferLike>);
-    // @deprecated (undocumented)
-    get policies(): IDocumentStorageServicePolicies | undefined;
-    // @deprecated (undocumented)
-    readBlob(id: string): Promise<ArrayBufferLike>;
-}
-
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 

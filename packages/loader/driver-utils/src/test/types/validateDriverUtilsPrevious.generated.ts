@@ -64,26 +64,14 @@ use_old_ClassDeclaration_BlobAggregationStorage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobCacheStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_BlobCacheStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BlobCacheStorageService():
-    TypeOnly<old.BlobCacheStorageService>;
-declare function use_current_ClassDeclaration_BlobCacheStorageService(
-    use: TypeOnly<current.BlobCacheStorageService>);
-use_current_ClassDeclaration_BlobCacheStorageService(
-    get_old_ClassDeclaration_BlobCacheStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobCacheStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_BlobCacheStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BlobCacheStorageService():
-    TypeOnly<current.BlobCacheStorageService>;
-declare function use_old_ClassDeclaration_BlobCacheStorageService(
-    use: TypeOnly<old.BlobCacheStorageService>);
-use_old_ClassDeclaration_BlobCacheStorageService(
-    get_current_ClassDeclaration_BlobCacheStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -4,7 +4,6 @@
  */
 
 export { BlobAggregationStorage, SnapshotExtractor } from "./blobAggregationStorage";
-export { BlobCacheStorageService } from "./blobCacheStorageService";
 export { buildSnapshotTree } from "./buildSnapshotTree";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export { EmptyDocumentDeltaStorageService } from "./emptyDocumentDeltaStorageService";

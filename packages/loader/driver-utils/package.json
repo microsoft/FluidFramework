@@ -115,6 +115,10 @@
 			"RemovedClassDeclaration_MultiDocumentServiceFactory": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_BlobCacheStorageService": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
