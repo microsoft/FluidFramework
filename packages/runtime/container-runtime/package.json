@@ -121,6 +121,22 @@
 			"ClassDeclaration_ContainerRuntime": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPendingFlush": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPendingLocalState": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPendingMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IPendingState": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
