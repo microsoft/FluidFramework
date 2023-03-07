@@ -328,9 +328,12 @@ export class EditManager<
 
 	/**
 	 * Given a revision on the local branch, remove all commits after it.
+	 * @param startRevision - the revision on the local branch that will become the new head
 	 * @param repairStore - an optional repair data store to assist with generating inverses of the removed commits
 	 * @returns an iterator of deltas where each delta describes the change from rolling back one of the removed commits.
 	 */
+	// TODO: This is emitting a delta for each change rather than a single squashed delta because composing the changes causes a rollback test to fail.
+	// It seems that this is likely a bug in compose; when the bug is fixed, this method can return a single delta composed of all the inverse deltas.
 	public *rollbackLocalChanges(
 		startRevision: RevisionTag,
 		repairStore?: ReadonlyRepairDataStore,

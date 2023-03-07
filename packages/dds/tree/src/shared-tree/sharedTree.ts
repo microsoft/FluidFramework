@@ -94,7 +94,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	/**
 	 * Current contents.
 	 * Updated by edits (local and remote).
-	 * Use `runTransaction` to create a local edit. TODO
+	 * Use `editor` to create a local edit.
 	 */
 	readonly forest: IForestSubscription;
 
@@ -115,8 +115,8 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 */
 	readonly transaction: {
 		/**
-		 * Start a new transaction. If a transaction is already in progress when this new transaction starts, then it will remain in
-		 * progress when the new transaction is committed or aborted.
+		 * Start a new transaction. If a transaction is already in progress when this new transaction starts, then this transaction
+		 * will be "nested" inside of it, i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
 		 */
 		start: () => void;
 		/**
@@ -411,7 +411,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	}
 }
 
-/** Helper for running an `ITransactionCheckout`-style transaction as a `start()`/`end()`-style transaction */
+/** Helper for running a `TransactionCheckout`-style transaction as a `start()`/`end()`-style transaction */
 function runTransaction(
 	checkout: ISharedTreeCheckout,
 	transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult,
