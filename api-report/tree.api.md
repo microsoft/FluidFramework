@@ -626,6 +626,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
         start: () => void;
         commit: () => void;
         abort: () => void;
+        inProgress(): boolean;
     };
 }
 

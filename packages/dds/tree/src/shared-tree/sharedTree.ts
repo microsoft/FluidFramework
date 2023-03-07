@@ -128,6 +128,10 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 		 * Close this transaction and revert the state of the tree to what it was before this transaction began.
 		 */
 		abort: () => void;
+		/**
+		 * True if there is at least one transaction currently in progress on this checkout, otherwise false.
+		 */
+		inProgress(): boolean;
 	};
 
 	/**
@@ -237,6 +241,7 @@ class SharedTree
 			start: () => this.startTransaction(new ForestRepairDataStore(() => this.forest)),
 			commit: () => this.commitTransaction(),
 			abort: () => this.abortTransaction(),
+			inProgress: () => this.isTransacting(),
 		};
 
 		this.transactionCheckout = {
@@ -359,6 +364,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
 		commit: () => this.branch.commitTransaction(),
 		abort: () => this.branch.abortTransaction(),
+		inProgress: () => this.branch.isTransacting(),
 	};
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
