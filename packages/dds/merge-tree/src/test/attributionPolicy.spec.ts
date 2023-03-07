@@ -169,6 +169,27 @@ describe("Attribution Policy", () => {
 			client.insertTextRemote(0, "123", undefined, ++seq, seq - 1, remoteUserLongId);
 			assert.deepEqual(client.getAllAttributionSeqs(), [undefined, undefined, undefined]);
 		});
+
+		it("can correctly combine segment attribution on append", () => {
+			client.insertTextRemote(
+				0,
+				"1",
+				{ foo: "bar", bar: 1 },
+				++seq,
+				seq - 1,
+				remoteUserLongId,
+			);
+			client.insertTextRemote(1, "2", { bar: 1 }, ++seq, seq - 1, remoteUserLongId);
+			client.annotateRangeRemote(0, 1, { foo: null }, ++seq, seq - 1, remoteUserLongId);
+			client.updateMinSeq(seq);
+			let segmentCount = 0;
+			client.walkSegments(() => {
+				segmentCount++;
+				return true;
+			});
+			assert.equal(segmentCount, 1);
+			assert.deepEqual(client.getAllAttributionSeqs(channelName), [seq, undefined]);
+		});
 	});
 
 	describe("using an attribution policy which tracks insertion and annotation", () => {

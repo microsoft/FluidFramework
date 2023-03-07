@@ -6,7 +6,9 @@
 export {
 	IAttributionCollection,
 	IAttributionCollectionSerializer,
+	IAttributionCollectionSpec,
 	SerializedAttributionCollection,
+	SequenceOffsets,
 } from "./attributionCollection";
 export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
 export { IIntegerRange } from "./base";

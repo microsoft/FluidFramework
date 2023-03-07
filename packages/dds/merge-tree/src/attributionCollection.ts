@@ -37,6 +37,9 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
 	length: number;
 }
 
+/**
+ * @internal
+ */
 export interface IAttributionCollectionSpec<T> {
 	root: Iterable<{ offset: number; key: T | null }>;
 	channels?: { [name: string]: Iterable<{ offset: number; key: T | null }> };

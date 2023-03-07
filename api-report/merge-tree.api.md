@@ -305,8 +305,6 @@ export interface IAttributionCollection<T> {
     readonly channelNames: Iterable<string>;
     // @internal (undocumented)
     clone(): IAttributionCollection<T>;
-    // Warning: (ae-forgotten-export) The symbol "IAttributionCollectionSpec" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     getAll(): IAttributionCollectionSpec<T>;
     getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
@@ -325,6 +323,24 @@ export interface IAttributionCollectionSerializer {
         attribution?: IAttributionCollection<AttributionKey>;
         cachedLength: number;
     }>): SerializedAttributionCollection;
+}
+
+// @internal (undocumented)
+export interface IAttributionCollectionSpec<T> {
+    // (undocumented)
+    channels?: {
+        [name: string]: Iterable<{
+            offset: number;
+            key: T | null;
+        }>;
+    };
+    // (undocumented)
+    length: number;
+    // (undocumented)
+    root: Iterable<{
+        offset: number;
+        key: T | null;
+    }>;
 }
 
 // @public (undocumented)
@@ -1199,8 +1215,13 @@ export class SegmentGroupCollection {
     get size(): number;
 }
 
-// Warning: (ae-forgotten-export) The symbol "SequenceOffsets" needs to be exported by the entry point index.d.ts
-//
+// @internal (undocumented)
+export interface SequenceOffsets {
+    // (undocumented)
+    posBreakpoints: number[];
+    seqs: (number | AttributionKey | null)[];
+}
+
 // @internal (undocumented)
 export interface SerializedAttributionCollection extends SequenceOffsets {
     // (undocumented)
