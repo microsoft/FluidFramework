@@ -113,6 +113,9 @@
 		"broken": {
 			"InterfaceDeclaration_IConnectableRuntime": {
 				"backCompat": false
+			},
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
 			}
 		}
 	}
