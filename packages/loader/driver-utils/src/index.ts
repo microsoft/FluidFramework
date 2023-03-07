@@ -17,7 +17,6 @@ export {
 	isUnpackedRuntimeMessage,
 	MessageType2,
 } from "./messageRecognition";
-export { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
 export {
 	AuthorizationError,
 	canRetryOnError,

@@ -13,8 +13,6 @@ import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentDeltaStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
-import { IDocumentService } from '@fluidframework/driver-definitions';
-import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IDocumentStorageServicePolicies } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
@@ -30,7 +28,6 @@ import { IStreamResult } from '@fluidframework/driver-definitions';
 import { ISummaryContext } from '@fluidframework/driver-definitions';
 import { ISummaryHandle } from '@fluidframework/protocol-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
-import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryErrorEvent } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITelemetryProperties } from '@fluidframework/common-definitions';
@@ -275,20 +272,6 @@ export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErr
 export enum MessageType2 {
     // (undocumented)
     Accept = "accept"
-}
-
-// @public @deprecated (undocumented)
-export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
-    // @deprecated
-    constructor(documentServiceFactories: IDocumentServiceFactory[]);
-    // @deprecated (undocumented)
-    static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory;
-    // @deprecated (undocumented)
-    createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // @deprecated (undocumented)
-    createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // @deprecated (undocumented)
-    readonly protocolName = "none:";
 }
 
 // @public (undocumented)

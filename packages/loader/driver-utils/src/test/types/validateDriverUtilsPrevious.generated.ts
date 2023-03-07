@@ -388,26 +388,14 @@ use_old_EnumDeclaration_MessageType2(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiDocumentServiceFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_MultiDocumentServiceFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MultiDocumentServiceFactory():
-    TypeOnly<old.MultiDocumentServiceFactory>;
-declare function use_current_ClassDeclaration_MultiDocumentServiceFactory(
-    use: TypeOnly<current.MultiDocumentServiceFactory>);
-use_current_ClassDeclaration_MultiDocumentServiceFactory(
-    get_old_ClassDeclaration_MultiDocumentServiceFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiDocumentServiceFactory": {"backCompat": false}
+* "RemovedClassDeclaration_MultiDocumentServiceFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MultiDocumentServiceFactory():
-    TypeOnly<current.MultiDocumentServiceFactory>;
-declare function use_old_ClassDeclaration_MultiDocumentServiceFactory(
-    use: TypeOnly<old.MultiDocumentServiceFactory>);
-use_old_ClassDeclaration_MultiDocumentServiceFactory(
-    get_current_ClassDeclaration_MultiDocumentServiceFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
