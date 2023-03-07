@@ -29,7 +29,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -158,8 +157,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // @deprecated (undocumented)
-    get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
     // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
@@ -420,38 +417,6 @@ export interface INackSummaryResult {
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
-
-// @public @deprecated
-export interface IPendingFlush {
-    // (undocumented)
-    type: "flush";
-}
-
-// @public @deprecated (undocumented)
-export interface IPendingLocalState {
-    pendingStates: IPendingState[];
-}
-
-// @public @deprecated
-export interface IPendingMessage {
-    // (undocumented)
-    clientSequenceNumber: number;
-    // (undocumented)
-    content: any;
-    // (undocumented)
-    localOpMetadata: unknown;
-    // (undocumented)
-    messageType: ContainerMessageType;
-    // (undocumented)
-    opMetadata: Record<string, unknown> | undefined;
-    // (undocumented)
-    referenceSequenceNumber: number;
-    // (undocumented)
-    type: "message";
-}
-
-// @public @deprecated (undocumented)
-export type IPendingState = IPendingMessage | IPendingFlush;
 
 // @public @deprecated (undocumented)
 export interface IProvideSummarizer {

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container, Loader } from "@fluidframework/container-loader";
+import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -37,7 +37,7 @@ describe("Document Dirty", () => {
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
 	let documentServiceFactory: LocalDocumentServiceFactory;
 	let loaderContainerTracker: LoaderContainerTracker;
-	let container: Container;
+	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let containerRuntime: IContainerRuntime;
 	let sharedMap: SharedMap;
@@ -50,9 +50,9 @@ describe("Document Dirty", () => {
 		/**
 		 * Waits for the "connected" event from the given container.
 		 */
-		async function waitForContainerReconnection(c: Container): Promise<void> {
-			assert.equal(c.connected, false);
-			return waitForContainerConnection(c, true);
+		async function waitForContainerReconnection(c: IContainer): Promise<void> {
+			assert.notStrictEqual(c.connectionState, ConnectionState.Connected);
+			return waitForContainerConnection(c);
 		}
 
 		/**
@@ -68,6 +68,11 @@ describe("Document Dirty", () => {
 					"No superfluous transition event, dirty and clean count should match when state is clean",
 				);
 			});
+
+			if (!containerRuntime.isDirty) {
+				// Give one count for the initial clean state
+				wasMarkedCleanContainerCount += 1;
+			}
 			container.on("saved", () => {
 				wasMarkedCleanContainerCount += 1;
 				assert.equal(container.isDirty, false, "Document is marked clean");
@@ -93,6 +98,10 @@ describe("Document Dirty", () => {
 				);
 			});
 
+			if (containerRuntime.isDirty) {
+				// Give one count for the initial dirty state
+				wasMarkedDirtyContainerCount += 1;
+			}
 			container.on("dirty", () => {
 				wasMarkedDirtyContainerCount += 1;
 				assert.equal(container.isDirty, true, "Document is marked dirty");
@@ -142,7 +151,7 @@ describe("Document Dirty", () => {
 			loaderContainerTracker = new LoaderContainerTracker();
 
 			// Create the first container, component and DDSes.
-			container = (await createContainer()) as Container;
+			container = await createContainer();
 			dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
@@ -364,8 +373,8 @@ describe("Document Dirty", () => {
 
 		describe("Force readonly", () => {
 			it(`sets operations when force readonly and then turn off force readonly to process them`, async () => {
-				container.forceReadonly(true);
-				await waitForContainerConnection(container, true);
+				container.forceReadonly?.(true);
+				await waitForContainerConnection(container);
 
 				// Set values in DDSes in force read only state.
 				sharedMap.set("key", "value");
@@ -375,9 +384,9 @@ describe("Document Dirty", () => {
 				// Document should have been marked dirty again due to pending DDS ops
 				checkDirtyState("after value set while force readonly", true, 0);
 
-				container.forceReadonly(false);
+				container.forceReadonly?.(false);
 				assert(
-					container.connected,
+					container.connectionState === ConnectionState.Connected,
 					"Setting readonly to false should not cause disconnection",
 				);
 
@@ -397,17 +406,17 @@ describe("Document Dirty", () => {
 				checkDirtyState("after value set", true, 0);
 
 				// force readonly
-				container.forceReadonly(true);
-				await waitForContainerConnection(container, true);
+				container.forceReadonly?.(true);
+				await waitForContainerConnection(container);
 
 				await loaderContainerTracker.ensureSynchronized();
 
 				// Document should have been marked dirty again due to pending DDS ops
 				checkDirtyState("after value set while force readonly", true, 0);
 
-				container.forceReadonly(false);
+				container.forceReadonly?.(false);
 				assert(
-					container.connected,
+					container.connectionState === ConnectionState.Connected,
 					"Setting readonly to false should not cause disconnection",
 				);
 
@@ -468,6 +477,11 @@ describe("Document Dirty", () => {
 					"No superfluous transition event1, clean should be only one more then dirty when state is clean",
 				);
 			});
+
+			if (!containerRuntime.isDirty) {
+				// Give one count for the initial saved state
+				wasMarkedCleanContainerCount += 1;
+			}
 			container.on("saved", () => {
 				wasMarkedCleanContainerCount += 1;
 				assert.equal(container.isDirty, false, "Document is marked clean");
@@ -493,6 +507,10 @@ describe("Document Dirty", () => {
 				);
 			});
 
+			if (containerRuntime.isDirty) {
+				// Give one count for the initial dirty state
+				wasMarkedDirtyContainerCount += 1;
+			}
 			container.on("dirty", () => {
 				wasMarkedDirtyContainerCount += 1;
 				assert.equal(container.isDirty, true, "Document is marked dirty");
@@ -536,7 +554,7 @@ describe("Document Dirty", () => {
 			loaderContainerTracker = new LoaderContainerTracker();
 
 			// Create the first container, component and DDSes.
-			container = (await createDetachedContainer()) as Container;
+			container = await createDetachedContainer();
 			dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 			sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);

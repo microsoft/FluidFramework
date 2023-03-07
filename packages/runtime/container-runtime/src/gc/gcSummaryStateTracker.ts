@@ -15,14 +15,9 @@ import {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
-import {
-	mergeStats,
-	ReadAndParseBlob,
-	RefreshSummaryResult,
-	SummaryTreeBuilder,
-} from "@fluidframework/runtime-utils";
+import { mergeStats, ReadAndParseBlob, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
-import { IContainerRuntimeMetadata, metadataBlobName } from "../summary";
+import { IContainerRuntimeMetadata, metadataBlobName, RefreshSummaryResult } from "../summary";
 import {
 	currentGCVersion,
 	GCVersion,
