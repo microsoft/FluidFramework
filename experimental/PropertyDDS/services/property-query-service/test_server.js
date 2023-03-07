@@ -59,30 +59,23 @@ let argv = require("yargs")
 let command = argv._[0] || "json";
 
 require("./server.js").then(async (materializedHistoryServer) => {
-	let request = require("request");
+	let axios = require("axios");
 	let _ = require("lodash");
 	let generateGUID = require("@fluid-experimental/property-common").GuidUtils.generateGUID;
 
 	let postData = function (url, data) {
-		return new Promise(function (resolve, reject) {
-			request.post(
-				url,
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(data),
-				},
-				(err, httpResponse, body) => {
-					if (httpResponse.statusCode !== 200) {
-						reject(new Error(body));
-					} else {
-						resolve(body);
-					}
-				},
-			);
-		});
-	};
+		return axios.post(url, data, {
+		  headers: {
+			'Content-Type': 'application/json',
+		  },
+		})
+		  .then(response => {
+			return response.data;
+		  })
+		  .catch(error => {
+			throw new Error(error.response.data);
+		  });
+	  }
 
 	let createBranch = function ({ branchGuid, rootCommitGuid, metaData }) {
 		return postData(`http://localhost:${targets.port}/v1/branch`, {
