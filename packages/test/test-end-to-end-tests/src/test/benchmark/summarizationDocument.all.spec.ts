@@ -12,7 +12,7 @@ import {
 	describeE2EDocsMemory,
 	BenchmarkType,
 } from "@fluidframework/test-version-utils";
-import { benchmarkFull, DocumentCreator } from "./DocumentCreator";
+import { benchmarkFull, createDocument } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
 const scenarioTitle = "Summarize Document";
@@ -31,8 +31,8 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	before(async () => {
 		provider = getTestObjectProvider();
-		const docData = getDocumentInfo();
-		documentMap = DocumentCreator.create({
+		const docData = getDocumentInfo(); // returns the type of document to be processed.
+		documentMap = createDocument({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
@@ -54,40 +54,38 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		summarizerClient.close();
 	});
 
-	class benchmarkObj {
+	class BenchmarkObj {
 		dataObject2map: SharedMap | undefined;
 		container: IContainer | undefined;
 		summarizerClient: { container: IContainer; summarizer: ISummarizer } | undefined;
 		minSampleCount = 10;
 	}
 
-	const t = new benchmarkObj();
+	const obj = new BenchmarkObj();
 
-	benchmarkFull<benchmarkObj>(
-		benchmarkType,
-		scenarioTitle,
-		async () => {
-			t.container = await documentMap.loadDocument();
-			assert(t.container !== undefined, "container needs to be defined.");
+	benchmarkFull<BenchmarkObj>(scenarioTitle, benchmarkType, {
+		run: async () => {
+			obj.container = await documentMap.loadDocument();
+			assert(obj.container !== undefined, "container needs to be defined.");
 			await provider.ensureSynchronized();
 
-			t.summarizerClient = await createSummarizer(
+			obj.summarizerClient = await createSummarizer(
 				provider,
-				t.container,
+				obj.container,
 				summaryVersion,
 				undefined,
 				undefined,
 				documentMap.logger,
 			);
-			summaryVersion = await waitForSummary(t.summarizerClient.summarizer);
+			summaryVersion = await waitForSummary(obj.summarizerClient.summarizer);
 			assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
-			t.summarizerClient.summarizer.close();
+			obj.summarizerClient.summarizer.close();
 		},
-		t,
-		() => {
-			t.dataObject2map = undefined;
-			t.container = undefined;
-			t.summarizerClient = undefined;
+		obj,
+		beforeIteration: () => {
+			obj.dataObject2map = undefined;
+			obj.container = undefined;
+			obj.summarizerClient = undefined;
 		},
-	);
+	});
 });

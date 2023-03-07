@@ -32,34 +32,40 @@ export interface IDocumentLoader {
 	loadDocument(): Promise<IContainer>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export class DocumentCreator {
-	/**
-	 * Creates a new DocumentCreator using configuration parameters.
-	 * @param props - Properties for initializing the Document Creator.
-	 */
-	static create(props: IDocumentCreatorProps) {
-		const logger = ChildLogger.create(getTestLogger?.(), undefined, {
-			all: {
-				driverType: props.provider.driver.type,
-				driverEndpointName: props.provider.driver.endpointName,
-				benchmarkType: props.benchmarkType,
-				name: props.testName,
-				type: props.documentType,
-			},
-		});
-		const documentProps: IDocumentProps = { ...props, logger };
+/**
+ * Creates a new {@link DocumentMap} using configuration parameters.
+ * @param props - Properties for initializing the Document Creator.
+ */
+export function createDocument(props: IDocumentCreatorProps) {
+	const logger = ChildLogger.create(getTestLogger?.(), undefined, {
+		all: {
+			driverType: props.provider.driver.type,
+			driverEndpointName: props.provider.driver.endpointName,
+			benchmarkType: props.benchmarkType,
+			testDocument: props.testName,
+			testDocumentType: props.documentType,
+		},
+	});
+	const documentProps: IDocumentProps = { ...props, logger };
 
-		switch (props.documentType) {
-			case "MediumDocumentMap":
-			case "LargeDocumentMap":
-				return new DocumentMap(documentProps);
-			default:
-				throw new Error("Invalid document type");
-		}
+	switch (props.documentType) {
+		case "MediumDocumentMap":
+		case "LargeDocumentMap":
+			return new DocumentMap(documentProps);
+		default:
+			throw new Error("Invalid document type");
 	}
 }
 
+export interface IBenchmarkParameters {
+	readonly run: () => Promise<void>;
+	readonly obj: any;
+	readonly beforeIteration?: () => void;
+	readonly afterIteration?: () => void;
+	readonly before?: () => void;
+	readonly after?: () => void;
+	readonly onCycle?: () => void;
+}
 /**
  * In order to share the files between memory and benchmark tests, we need to create a test object that can be passed and used
  * in both tests. This function creates the test object and calls the appropriate test function.
@@ -76,35 +82,29 @@ export class DocumentCreator {
  */
 export function benchmarkFull<T>(
 	this: any,
+	title: string,
 	benchmarkType: BenchmarkType,
-	scenario: string,
-	run: () => Promise<void>,
-	obj: T,
-	beforeIteration?: () => void,
-	afterIteration?: () => void,
-	before?: () => void,
-	after?: () => void,
-	onCycle?: () => void,
+	params: IBenchmarkParameters,
 ) {
 	if (benchmarkType === "E2EMemory") {
 		const t: IMemoryTestObject = {
-			title: scenario,
-			...obj,
-			run: run.bind(this),
-			beforeIteration: beforeIteration?.bind(this),
-			afterIteration: afterIteration?.bind(this),
-			before: before?.bind(this),
-			after: after?.bind(this),
+			title,
+			...params.obj,
+			run: params.run.bind(this),
+			beforeIteration: params.beforeIteration?.bind(this),
+			afterIteration: params.afterIteration?.bind(this),
+			before: params.before?.bind(this),
+			after: params.after?.bind(this),
 		};
 		benchmarkMemory(t);
 	} else {
 		const t: BenchmarkArguments = {
-			title: scenario,
-			...obj,
-			benchmarkFnAsync: run.bind(this),
-			before: before?.bind(this),
-			after: after?.bind(this),
-			onCycle: onCycle?.bind(this),
+			title,
+			...params.obj,
+			benchmarkFnAsync: params.run.bind(this),
+			before: params.before?.bind(this),
+			after: params.after?.bind(this),
+			onCycle: params.onCycle?.bind(this),
 		};
 		benchmark(t);
 	}

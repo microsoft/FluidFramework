@@ -10,7 +10,7 @@ import {
 	describeE2EDocsMemory,
 	BenchmarkType,
 } from "@fluidframework/test-version-utils";
-import { benchmarkFull, DocumentCreator } from "./DocumentCreator";
+import { benchmarkFull, createDocument } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
 const scenarioTitle = "Load Document";
@@ -23,8 +23,8 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	before(async () => {
 		provider = getTestObjectProvider();
-		const docData = getDocumentInfo();
-		documentMap = DocumentCreator.create({
+		const docData = getDocumentInfo(); // returns the type of document to be processed.
+		documentMap = createDocument({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
@@ -33,24 +33,24 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		await documentMap.initializeDocument();
 	});
 
-	class benchmarkObj {
+	class BenchmarkObj {
 		container: IContainer | undefined;
 		minSampleCount = 10;
 	}
 
-	const t = new benchmarkObj();
+	const obj = new BenchmarkObj();
 
-	benchmarkFull<benchmarkObj>(
-		benchmarkType,
-		scenarioTitle,
-		async () => {
-			t.container = await documentMap.loadDocument();
-			assert(t.container !== undefined, "container needs to be defined.");
-			t.container.close();
+	benchmarkFull<BenchmarkObj>(scenarioTitle, benchmarkType, {
+		run: async () => {
+			obj.container = await documentMap.loadDocument();
+			assert(obj.container !== undefined, "container needs to be defined.");
+			obj.container.close();
 		},
-		t,
-		() => {
-			t.container = undefined;
+		obj,
+		beforeIteration: () => {
+			if (obj.container !== undefined) {
+				obj.container = undefined;
+			}
 		},
-	);
+	});
 });

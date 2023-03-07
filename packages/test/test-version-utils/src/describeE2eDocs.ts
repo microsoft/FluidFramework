@@ -125,11 +125,11 @@ function createE2EDocCompatSuite(
 					);
 
 					afterEach(function (done: Mocha.Done) {
-						const logErrors = getUnexpectedLogErrorException(provider.logger);
 						// if the test failed for another reason
 						// then we don't need to check errors
 						// and fail the after each as well
 						if (this.currentTest?.state === "passed") {
+							const logErrors = getUnexpectedLogErrorException(provider.logger);
 							done(logErrors);
 						} else {
 							done();
