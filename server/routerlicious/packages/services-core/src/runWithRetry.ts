@@ -148,10 +148,10 @@ export async function requestWithRetry<T>(
                     Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`, telemetryProperties);
                 }
             } catch (error) {
-                Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
                 if (onErrorFn !== undefined) {
                     onErrorFn(error);
                 }
+                Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
                 if (shouldRetry !== undefined && shouldRetry(error) === false) {
                     Lumberjack.error(
                         `Should not retry ${callName} for the current error, rejecting`,
