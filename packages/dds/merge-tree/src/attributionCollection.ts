@@ -77,6 +77,7 @@ export interface IAttributionCollectionSerializer {
 export interface IAttributionCollection<T> {
 	/**
 	 * Retrieves the attribution key associated with the provided offset.
+	 * @param channel - When specified, gets an attribution key associated with a particular channel.
 	 */
 	getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
 

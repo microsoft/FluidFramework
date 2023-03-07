@@ -461,7 +461,7 @@ export class TestClient extends Client {
 	}
 
 	/**
-	 * TODO: update this doc
+	 * @param channel - Attribution channel name to request information from.
 	 * @returns an array of all attribution seq#s from the current perspective.
 	 * The `i`th entry of the array is the attribution key for the character at position `i`.
 	 * Validates segments either all have attribution information or none of them.

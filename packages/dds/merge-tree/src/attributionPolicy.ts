@@ -52,14 +52,6 @@ function createAttributionPolicyFromCallbacks({
 	};
 }
 
-// todo: evaluate if this is really necessary given we could just subscribe a bunch of events. maybe less verbose this way? or if not, remove.
-function combineMergeTreeCallbacks(callbacks: MergeTreeCallbacks[]): MergeTreeCallbacks {
-	return {
-		delta: (...args) => callbacks.forEach(({ delta }) => delta(...args)),
-		maintenance: (...args) => callbacks.forEach(({ maintenance }) => maintenance(...args)),
-	};
-}
-
 const insertOnlyAttributionPolicyCallbacks: MergeTreeCallbacks = {
 	delta: (opArgs, { deltaSegments, operation }) => {
 		if (operation !== MergeTreeDeltaType.INSERT) {
@@ -73,11 +65,7 @@ const insertOnlyAttributionPolicyCallbacks: MergeTreeCallbacks = {
 						? { type: "detached", id: 0 }
 						: { type: "op", seq: segment.seq };
 				const attribution = new AttributionCollection(segment.cachedLength, key);
-				if (segment.attribution !== undefined) {
-					segment.attribution.update(undefined, attribution);
-				} else {
-					segment.attribution = attribution;
-				}
+				segment.attribution?.update(undefined, attribution);
 			}
 		}
 	},
@@ -95,22 +83,35 @@ const insertOnlyAttributionPolicyCallbacks: MergeTreeCallbacks = {
 				type: "op",
 				seq: segment.seq,
 			});
-			if (segment.attribution !== undefined) {
-				segment.attribution.update(undefined, attribution);
-			} else {
-				segment.attribution = attribution;
+			segment.attribution?.update(undefined, attribution);
+		}
+	},
+};
+
+const ensureAttributionCollectionCallbacks: MergeTreeCallbacks = {
+	delta: ({ op, sequencedMessage }, { deltaSegments, operation }) => {
+		if (sequencedMessage !== undefined && op.type === MergeTreeDeltaType.INSERT) {
+			for (const { segment } of deltaSegments) {
+				segment.attribution = new AttributionCollection(segment.cachedLength);
+			}
+		}
+	},
+	maintenance: ({ deltaSegments, operation }, opArgs) => {
+		if (
+			operation === MergeTreeMaintenanceType.ACKNOWLEDGED &&
+			opArgs?.op.type === MergeTreeDeltaType.INSERT
+		) {
+			for (const { segment } of deltaSegments) {
+				segment.attribution = new AttributionCollection(segment.cachedLength);
 			}
 		}
 	},
 };
 
-// TODO: addOrUpdateChannel needs a good way of not resetting other channels
 function createPropertyTrackingMergeTreeCallbacks(
-	...propertiesToTrack: (string | { propName: string; channelName: string })[]
+	...propertiesToTrack: string[]
 ): MergeTreeCallbacks {
-	const toTrack = propertiesToTrack.map((entry) =>
-		typeof entry === "string" ? { propName: entry, channelName: entry } : entry,
-	);
+	const toTrack = propertiesToTrack.map((entry) => ({ propName: entry, channelName: entry }));
 	return {
 		delta: ({ op, sequencedMessage }, { deltaSegments, operation }) => {
 			if (sequencedMessage === undefined) {
@@ -129,10 +130,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 					if (op.props[propName] !== undefined) {
 						for (const { segment } of deltaSegments) {
 							if (!(segment.propertyManager?.hasPendingProperty(propName) ?? false)) {
-								segment.attribution ??= new AttributionCollection(
-									segment.cachedLength,
-								);
-								segment.attribution.update(
+								segment.attribution?.update(
 									channelName,
 									new AttributionCollection(segment.cachedLength, key),
 								);
@@ -144,8 +142,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 				for (const { propName, channelName } of toTrack) {
 					for (const { segment } of deltaSegments) {
 						if (segment.properties?.[propName] !== undefined) {
-							segment.attribution ??= new AttributionCollection(segment.cachedLength);
-							segment.attribution.update(
+							segment.attribution?.update(
 								channelName,
 								new AttributionCollection(segment.cachedLength, key),
 							);
@@ -169,10 +166,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 					if (op.props[propName] !== undefined) {
 						for (const { segment } of deltaSegments) {
 							if (!(segment.propertyManager?.hasPendingProperty(propName) ?? false)) {
-								segment.attribution ??= new AttributionCollection(
-									segment.cachedLength,
-								);
-								segment.attribution.update(
+								segment.attribution?.update(
 									channelName,
 									new AttributionCollection(segment.cachedLength, key),
 								);
@@ -184,8 +178,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 				for (const { propName, channelName } of toTrack) {
 					for (const { segment } of deltaSegments) {
 						if (segment.properties?.[propName] !== undefined) {
-							segment.attribution ??= new AttributionCollection(segment.cachedLength);
-							segment.attribution.update(
+							segment.attribution?.update(
 								channelName,
 								new AttributionCollection(segment.cachedLength, key),
 							);
@@ -197,6 +190,13 @@ function createPropertyTrackingMergeTreeCallbacks(
 	};
 }
 
+function combineMergeTreeCallbacks(callbacks: MergeTreeCallbacks[]): MergeTreeCallbacks {
+	return {
+		delta: (...args) => callbacks.forEach(({ delta }) => delta(...args)),
+		maintenance: (...args) => callbacks.forEach(({ maintenance }) => maintenance(...args)),
+	};
+}
+
 /**
  * @alpha
  * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
@@ -204,24 +204,58 @@ function createPropertyTrackingMergeTreeCallbacks(
  * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
-	return createAttributionPolicyFromCallbacks(insertOnlyAttributionPolicyCallbacks);
+	return createAttributionPolicyFromCallbacks(
+		combineMergeTreeCallbacks([
+			ensureAttributionCollectionCallbacks,
+			insertOnlyAttributionPolicyCallbacks,
+		]),
+	);
 }
 
+/**
+ *
+ * @param propertiesToTrack - List of property names for which attribution should be tracked.
+ * @returns - A policy which only attributes annotation of the properties specified.
+ * Keys for each property are stored under attribution channels of the same name--see example below.
+ * Content is only attributed at ack time, unless the container is in a detached state.
+ * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
+ * @example
+ *
+ * ```typescript
+ * // Use this policy when creating your merge-tree:
+ * const policy = createPropertyTrackingAttributionPolicyFactory("bold", "italic");
+ * // ... later, you can get attribution keys for the last time the "bold" and "italic"
+ * // properties were changed on a segment using `getAtOffset`:
+ * const lastBoldedAttributionKey = segment.attribution?.getAtOffset(0, "bold");
+ * const lastItalicizedAttributionKey = segment.attribution?.getAtOffset(0, "italic");
+ * ```
+ * @alpha
+ */
 export function createPropertyTrackingAttributionPolicyFactory(
-	...propertiesToTrack: (string | { propName: string; channelName: string })[]
-): () => AttributionPolicy {
-	return () =>
-		createAttributionPolicyFromCallbacks(
-			createPropertyTrackingMergeTreeCallbacks(...propertiesToTrack),
-		);
-}
-
-export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
-	...propertiesToTrack: (string | { propName: string; channelName: string })[]
+	...propertiesToTrack: string[]
 ): () => AttributionPolicy {
 	return () =>
 		createAttributionPolicyFromCallbacks(
 			combineMergeTreeCallbacks([
+				ensureAttributionCollectionCallbacks,
+				createPropertyTrackingMergeTreeCallbacks(...propertiesToTrack),
+			]),
+		);
+}
+
+/**
+ * Creates an attribution policy which tracks insertion as well as annotation of certain property names.
+ * This combines the policies creatable using {@link createPropertyTrackingAttributionPolicyFactory} and
+ * {@link createInsertOnlyAttributionPolicy}: see there for more details.
+ * @alpha
+ */
+export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
+	...propertiesToTrack: string[]
+): () => AttributionPolicy {
+	return () =>
+		createAttributionPolicyFromCallbacks(
+			combineMergeTreeCallbacks([
+				ensureAttributionCollectionCallbacks,
 				insertOnlyAttributionPolicyCallbacks,
 				createPropertyTrackingMergeTreeCallbacks(...propertiesToTrack),
 			]),

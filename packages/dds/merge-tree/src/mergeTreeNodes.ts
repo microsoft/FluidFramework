@@ -449,7 +449,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 					0x044 /* "On annotate ack, missing segment property manager!" */,
 				);
 				this.propertyManager.ackPendingProperties(opArgs.op);
-				break;
+				return true;
 
 			case MergeTreeDeltaType.INSERT:
 				assert(
@@ -458,7 +458,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 				);
 				this.seq = opArgs.sequencedMessage!.sequenceNumber;
 				this.localSeq = undefined;
-				break;
+				return true;
 
 			case MergeTreeDeltaType.REMOVE:
 				const removalInfo: IRemovalInfo | undefined = toRemovalInfo(this);
@@ -476,8 +476,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			default:
 				throw new Error(`${opArgs.op.type} is in unrecognized operation type`);
 		}
-
-		return true;
 	}
 
 	public splitAt(pos: number): ISegment | undefined {

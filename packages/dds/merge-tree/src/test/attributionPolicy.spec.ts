@@ -15,7 +15,6 @@ import { TestClient } from "./testClient";
 describe("Attribution Policy", () => {
 	const localUserLongId = "localUser";
 	const remoteUserLongId = "remoteUser";
-	const channelName = "fooProp";
 	let client: TestClient;
 	let seq: number = 0;
 	beforeEach(() => {
@@ -40,7 +39,7 @@ describe("Attribution Policy", () => {
 		it("attributes local property change on ack", () => {
 			client.applyMsg(client.makeOpMessage(client.insertTextLocal(0, "123"), ++seq));
 			const annotateOp = client.annotateRangeLocal(1, 2, { foo: 1 }, undefined);
-			assert.deepEqual(client.getAllAttributionSeqs(channelName), [
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
 				undefined,
 				undefined,
 				undefined,
@@ -49,13 +48,13 @@ describe("Attribution Policy", () => {
 			client.applyMsg(
 				client.makeOpMessage(client.annotateRangeLocal(0, 3, { bar: 2 }, undefined), ++seq),
 			);
-			assert.deepEqual(client.getAllAttributionSeqs(channelName), [undefined, 2, undefined]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, 2, undefined]);
 		});
 
 		it("attributes remote property changes", () => {
 			client.insertTextRemote(0, "123", undefined, ++seq, seq - 1, remoteUserLongId);
 			client.annotateRangeRemote(1, 2, { foo: 1 }, ++seq, seq - 1, remoteUserLongId);
-			assert.deepEqual(client.getAllAttributionSeqs(channelName), [undefined, 2, undefined]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, 2, undefined]);
 		});
 
 		it("uses LWW semantics for conflicting attribution of props", () => {
@@ -65,20 +64,20 @@ describe("Attribution Policy", () => {
 			assert.equal(client.getPropertiesAtPosition(1)?.foo, 1);
 			// Since the value of property "foo" is from a local change, the attribution information associated with
 			// it should not be updated on account of the remote op.
-			assert.deepEqual(client.getAllAttributionSeqs(channelName), [
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
 				undefined,
 				undefined,
 				undefined,
 			]); // TODO: or [undefined, -1, undefined]
 			client.applyMsg(client.makeOpMessage(localPropChange, ++seq, seq - 1, localUserLongId));
 			assert.deepEqual(
-				client.getAllAttributionSeqs(channelName),
+				client.getAllAttributionSeqs("foo"),
 				[undefined, seq, undefined],
 				"property change should have been attributed to the winning, local op",
 			);
 			client.annotateRangeRemote(1, 2, { foo: 3 }, ++seq, seq - 1, remoteUserLongId);
 			assert.deepEqual(
-				client.getAllAttributionSeqs(channelName),
+				client.getAllAttributionSeqs("foo"),
 				[undefined, seq, undefined],
 				"second property change should have been attributed to a remote change",
 			);
@@ -87,18 +86,18 @@ describe("Attribution Policy", () => {
 		describe("attributes properties set on a segment at insertion time", () => {
 			it("for remote insertions", () => {
 				client.insertTextRemote(0, "123", { foo: "bar" }, ++seq, seq - 1, remoteUserLongId);
-				assert.deepEqual(client.getAllAttributionSeqs(channelName), [1, 1, 1]);
+				assert.deepEqual(client.getAllAttributionSeqs("foo"), [1, 1, 1]);
 			});
 
 			it("for local insertions", () => {
 				const mergeTreeOp = client.insertTextLocal(0, "123", { foo: "bar" });
-				assert.deepEqual(client.getAllAttributionSeqs(channelName), [
+				assert.deepEqual(client.getAllAttributionSeqs("foo"), [
 					undefined,
 					undefined,
 					undefined,
 				]);
 				client.applyMsg(client.makeOpMessage(mergeTreeOp, ++seq));
-				assert.deepEqual(client.getAllAttributionSeqs(channelName), [1, 1, 1]);
+				assert.deepEqual(client.getAllAttributionSeqs("foo"), [1, 1, 1]);
 			});
 		});
 	}
@@ -139,10 +138,7 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory: createPropertyTrackingAttributionPolicyFactory({
-						channelName,
-						propName: "foo",
-					}),
+					policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -152,13 +148,13 @@ describe("Attribution Policy", () => {
 
 		it("ignores segments inserted locally", () => {
 			const mergeTreeOp = client.insertTextLocal(0, "123");
-			assert.deepEqual(client.getAllAttributionSeqs(channelName), [
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
 				undefined,
 				undefined,
 				undefined,
 			]);
 			client.applyMsg(client.makeOpMessage(mergeTreeOp, ++seq));
-			assert.deepEqual(client.getAllAttributionSeqs(channelName), [
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [
 				undefined,
 				undefined,
 				undefined,
@@ -188,7 +184,7 @@ describe("Attribution Policy", () => {
 				return true;
 			});
 			assert.equal(segmentCount, 1);
-			assert.deepEqual(client.getAllAttributionSeqs(channelName), [seq, undefined]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [seq, undefined]);
 		});
 	});
 
@@ -197,10 +193,8 @@ describe("Attribution Policy", () => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory: createPropertyTrackingAndInsertionAttributionPolicyFactory({
-						channelName,
-						propName: "foo",
-					}),
+					policyFactory:
+						createPropertyTrackingAndInsertionAttributionPolicyFactory("foo"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -212,19 +206,11 @@ describe("Attribution Policy", () => {
 	});
 
 	describe("using an attribution policy which tracks annotation of multiple properties", () => {
-		const channelName1 = "fooProp";
-		const channelName2 = "barProp";
 		beforeEach(() => {
 			client = new TestClient({
 				attribution: {
 					track: true,
-					policyFactory: createPropertyTrackingAttributionPolicyFactory(
-						{
-							channelName: channelName1,
-							propName: "foo",
-						},
-						{ channelName: channelName2, propName: "bar" },
-					),
+					policyFactory: createPropertyTrackingAttributionPolicyFactory("foo", "bar"),
 				},
 			});
 			client.startOrUpdateCollaboration(localUserLongId);
@@ -238,8 +224,8 @@ describe("Attribution Policy", () => {
 			client.applyMsg(
 				client.makeOpMessage(client.annotateRangeLocal(0, 3, { bar: 2 }, undefined), ++seq),
 			);
-			assert.deepEqual(client.getAllAttributionSeqs(channelName1), [undefined, 2, undefined]);
-			assert.deepEqual(client.getAllAttributionSeqs(channelName2), [3, 3, 3]);
+			assert.deepEqual(client.getAllAttributionSeqs("foo"), [undefined, 2, undefined]);
+			assert.deepEqual(client.getAllAttributionSeqs("bar"), [3, 3, 3]);
 		});
 	});
 });
