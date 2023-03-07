@@ -293,6 +293,44 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 
 Creating a concrete undo (or redo) edit requires access to the repair data associated with the edit to be undone/redone.
 
+#### Deriving Repair Data
+
+Repair data needs to be created when an edit is made on a local branch.
+
+##### For New Local Edits
+
+This can be done by creating a repair store with access to the forest that drives the application UI for this branch
+and passing the `Delta` for the edit to the repair data store _before_ that same delta is applied to the forest.
+This is the same data-flow as what is currently being used to rollback transactions (whether they are aborted or not).
+In the future this may change to a model where the repair data is queried from the forest as part of applying the `Delta` to it.
+
+##### For Rebased Local Edits
+
+Repair data also needs to be (re)created when a local edit is rebased in the face of changes on the parent branch (possibly the trunk).
+In that case, we need to reapply the rebased version of the original edits to a separate forest solely for the purpose of generating the repair data.
+"Separate" here means that the forest is not the forest that drives updates to the application's UI.
+
+The reason we need to use a separate forest is that the normal forest gets updated with a more efficient delta
+(which takes into account the fact that the original version of the rebased changes had already been applied).
+For example, if a local edit deleted some node foo,
+and that edit needed to be rebased over an incoming edit that edits foo in some way,
+then the forest that drives the UI should receive an empty `Delta`.
+However, for the purpose of getting the correct repair data for the rebased edits,
+we do need to get some forest into the state where foo exists and the incoming edit has been applied to it,
+so that we can gather the correct repair data for foo and associate that repair data with the rebased edit.
+
+There are two ways we can get a forest into that state:
+
+1. Fork the forest that drives the UI for that branch,
+   apply the inverse of the original (i.e., unrebased) local edits,
+   then apply the incoming edit(s).
+2. Fork the forest that drives the UI for the parent branch.
+
+Option #2 is bound to be more efficient but may require a more complex contract between parent and child branches.
+These options should be explored during implementation.
+
+#### Managing Repair Data
+
 This data can be stored in a repair data store that is co-located with the edit on the relevant commit tree.
 This approach has the following pros and cons:
 
