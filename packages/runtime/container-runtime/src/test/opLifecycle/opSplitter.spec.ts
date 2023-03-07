@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -328,25 +329,25 @@ describe("OpSplitter", () => {
 				for (const batch of batchesSubmitted) {
 					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch.messages[0] as BatchMessage).deserializedContent.type,
+						(batch.messages[0] as BatchMessage).type,
 						ContainerMessageType.ChunkedOp,
 					);
 					assert.equal(batch.referenceSequenceNumber, 0);
 				}
 
 				assert.equal(result.content.length, 4);
-				const lastChunk = result.content[0].deserializedContent.contents as IChunkedOp;
+				const lastChunk = JSON.parse(result.content[0].contents!).contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 				assert.deepStrictEqual(result.content.slice(1), new Array(3).fill(emptyMessage));
 				assert.equal(
 					!extraOp ||
-						result.content[0].deserializedContent.contents?.contents?.length === 0,
+						JSON.parse(result.content[0].contents!).contents?.contents?.length === 0,
 					true,
 				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
-						((x.messages[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
+						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
 							.contents,
 				);
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
@@ -389,7 +390,7 @@ describe("OpSplitter", () => {
 				for (const batch of batchesSubmitted) {
 					assert.equal(batch.messages.length, 1);
 					assert.equal(
-						(batch.messages[0] as BatchMessage).deserializedContent.type,
+						(batch.messages[0] as BatchMessage).type,
 						ContainerMessageType.ChunkedOp,
 					);
 					assert.equal(batch.referenceSequenceNumber, 0);
@@ -397,17 +398,17 @@ describe("OpSplitter", () => {
 
 				assert.equal(result.content.length, 1);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
-				const lastChunk = result.content[0].deserializedContent.contents as IChunkedOp;
+				const lastChunk = JSON.parse(result.content[0].contents!).contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 				assert.equal(
 					!extraOp ||
-						result.content[0].deserializedContent.contents?.contents?.length === 0,
+						JSON.parse(result.content[0].contents!).contents?.contents?.length === 0,
 					true,
 				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
-						((x.messages[0] as BatchMessage).deserializedContent.contents as IChunkedOp)
+						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
 							.contents,
 				);
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
@@ -430,8 +431,8 @@ describe("OpSplitter", () => {
 	});
 
 	const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
-		assert.deepStrictEqual(result.contents, original.deserializedContent.contents);
-		assert.strictEqual(result.type, original.deserializedContent.type);
+		assert.deepStrictEqual(result.contents, JSON.parse(original.contents!));
+		assert.strictEqual(result.type, original.type);
 		assert.strictEqual(result.metadata, original.metadata);
 		assert.strictEqual(result.compression, original.compression);
 	};
@@ -440,10 +441,7 @@ describe("OpSplitter", () => {
 		const contents = { value: crypto.randomBytes(contentSizeInBytes / 2).toString("hex") };
 		return {
 			localOpMetadata: undefined,
-			deserializedContent: {
-				contents,
-				type: ContainerMessageType.FluidDataStoreOp,
-			},
+			type: ContainerMessageType.FluidDataStoreOp,
 			referenceSequenceNumber: Infinity,
 			metadata: { meta: "data" },
 			compression: CompressionAlgorithms.lz4,

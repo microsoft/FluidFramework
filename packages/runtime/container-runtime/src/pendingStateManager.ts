@@ -57,7 +57,6 @@ export interface IRuntimeStateHandler {
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	): void;
-	rollback(type: ContainerMessageType, content: any, localOpMetadata: unknown): void;
 	orderSequentially(callback: () => void): void;
 }
 

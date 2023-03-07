@@ -1239,7 +1239,6 @@ export class ContainerRuntime
 				close: this.closeFn,
 				connected: () => this.connected,
 				reSubmit: this.reSubmit.bind(this),
-				rollback: this.rollback.bind(this),
 				orderSequentially: this.orderSequentially.bind(this),
 			},
 			pendingRuntimeState?.pending,
@@ -2008,8 +2007,10 @@ export class ContainerRuntime
 				try {
 					checkpoint.rollback((message: BatchMessage) =>
 						this.rollback(
-							message.deserializedContent.type,
-							message.deserializedContent.contents,
+							message.type,
+							message.contents === undefined
+								? undefined
+								: JSON.parse(message.contents).contents,
 							message.localOpMetadata,
 						),
 					);
@@ -2827,7 +2828,7 @@ export class ContainerRuntime
 
 		const message: BatchMessage = {
 			contents: serializedContent,
-			deserializedContent: JSON.parse(serializedContent), // Deep copy in case caller changes reference object
+			type,
 			metadata,
 			localOpMetadata,
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,

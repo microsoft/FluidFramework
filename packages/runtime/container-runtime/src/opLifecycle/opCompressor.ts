@@ -79,7 +79,7 @@ export class OpCompressor {
 
 	private serializeBatch(batch: IBatch): string {
 		try {
-			return JSON.stringify(batch.content.map((message) => message.deserializedContent));
+			return `[${batch.content.map((message) => message.contents).join(",")}]`;
 		} catch (e: any) {
 			if (e.message === "Invalid string length") {
 				// This is how JSON.stringify signals that

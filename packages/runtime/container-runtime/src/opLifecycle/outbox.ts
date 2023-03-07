@@ -241,7 +241,7 @@ export class Outbox {
 			for (const message of batch.content) {
 				this.params.containerContext.submitFn(
 					MessageType.Operation,
-					message.deserializedContent,
+					message.contents === undefined ? undefined : JSON.parse(message.contents),
 					true, // batch
 					message.metadata,
 				);
@@ -270,9 +270,9 @@ export class Outbox {
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
 			this.params.pendingStateManager.onSubmitMessage(
-				message.deserializedContent.type,
+				message.type,
 				message.referenceSequenceNumber,
-				message.deserializedContent.contents,
+				message.contents === undefined ? undefined : JSON.parse(message.contents),
 				message.localOpMetadata,
 				message.metadata,
 			);

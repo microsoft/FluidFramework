@@ -111,7 +111,6 @@ describe("Pending State Manager", () => {
 					close: (error?: ICriticalContainerError) => (closeError = error),
 					connected: () => true,
 					reSubmit: () => {},
-					rollback: () => {},
 					orderSequentially: (callback: () => void) => {
 						callback();
 					},
@@ -290,7 +289,6 @@ describe("Pending State Manager", () => {
 					close: () => {},
 					connected: () => true,
 					reSubmit: () => {},
-					rollback: () => {},
 					orderSequentially: () => {},
 				},
 				{ pendingStates },
