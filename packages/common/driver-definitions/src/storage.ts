@@ -303,6 +303,11 @@ export interface IDocumentServicePolicies {
 	 * Do not connect to delta stream
 	 */
 	readonly storageOnly?: boolean;
+
+	/**
+	 * Summarizer uploads the protocol tree too when summarizing.
+	 */
+	readonly summarizeProtocolTree?: boolean;
 }
 
 export interface IDocumentService {

@@ -773,9 +773,8 @@ export class Container
 		this.storageService = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
-			this.options.summarizeProtocolTree === true
-				? () => this.captureProtocolSummary()
-				: undefined,
+			() => this.captureProtocolSummary(),
+			this.options,
 		);
 
 		const isDomAvailable =
