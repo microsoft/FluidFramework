@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+	FieldChangeEncoder,
 	FieldChangeHandler,
 	FieldKinds,
 	IdAllocator,
@@ -248,28 +249,7 @@ describe("Value field changesets", () => {
 		["with repair data", revertChange2],
 	];
 
-	describe("encoding", () => {
-		const encoder = fieldHandler.encoder;
-		const version = 0;
-
-		for (const [name, data] of encodingTestData) {
-			describe(name, () => {
-				it("roundtrip", () => {
-					const encoded = encoder.encodeForJson(version, data, childEncoder1);
-					const decoded = encoder.decodeJson(version, encoded, childDecoder1);
-					assert.deepEqual(decoded, data);
-				});
-
-				it("json roundtrip", () => {
-					const encoded = JSON.stringify(
-						encoder.encodeForJson(version, data, childEncoder1),
-					);
-					const decoded = encoder.decodeJson(version, JSON.parse(encoded), childDecoder1);
-					assert.deepEqual(decoded, data);
-				});
-			});
-		}
-	});
+	runEncodingTests(fieldHandler.encoder, encodingTestData);
 });
 
 describe("Optional field changesets", () => {
@@ -444,8 +424,14 @@ describe("Optional field changesets", () => {
 		["with repair data", revertChange2],
 	];
 
+	runEncodingTests(fieldHandler.encoder, encodingTestData);
+});
+
+function runEncodingTests<TChangeset>(
+	encoder: FieldChangeEncoder<TChangeset>,
+	encodingTestData: [string, TChangeset][],
+) {
 	describe("encoding", () => {
-		const encoder = fieldHandler.encoder;
 		const version = 0;
 
 		for (const [name, data] of encodingTestData) {
@@ -466,4 +452,4 @@ describe("Optional field changesets", () => {
 			});
 		}
 	});
-});
+}
