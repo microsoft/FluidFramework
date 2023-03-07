@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
-	IFluidTokenProvider,
 	IContainerContext,
 	IDeltaManager,
 	IRuntime,
@@ -92,9 +91,6 @@ import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	addTreeToSummary,
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
@@ -117,10 +113,13 @@ import {
 	aliasBlobName,
 	blobsTreeName,
 	chunksBlobName,
+	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
+	IFetchSnapshotResult,
+	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
 	Summarizer,
@@ -1459,19 +1458,6 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
-	}
-
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
-	 */
-	public get IFluidTokenProvider() {
-		if (this.options?.intelligence) {
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return {
-				intelligence: this.options.intelligence,
-			} as IFluidTokenProvider;
-		}
-		return undefined;
 	}
 
 	/**

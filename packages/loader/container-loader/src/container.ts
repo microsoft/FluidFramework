@@ -15,7 +15,7 @@ import { assert, performance, unreachableCase } from "@fluidframework/common-uti
 import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	IContainer,
 	IContainerEvents,
 	IDeltaManager,
@@ -74,7 +74,6 @@ import {
 	raiseConnectedEvent,
 	TelemetryLogger,
 	connectedEventName,
-	disconnectedEventName,
 	normalizeError,
 	MonitoringContext,
 	loggerToMonitoringContext,
@@ -764,43 +763,6 @@ export class Container
 			};
 			document.addEventListener("visibilitychange", this.visibilityEventHandler);
 		}
-
-		// We observed that most users of platform do not check Container.connected event on load, causing bugs.
-		// As such, we are raising events when new listener pops up.
-		// Note that we can raise both "disconnected" & "connect" events at the same time,
-		// if we are in connecting stage.
-		this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
-			// Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
-			Promise.resolve()
-				.then(() => {
-					switch (event) {
-						case dirtyContainerEvent:
-							if (this._dirtyContainer) {
-								listener();
-							}
-							break;
-						case savedContainerEvent:
-							if (!this._dirtyContainer) {
-								listener();
-							}
-							break;
-						case connectedEventName:
-							if (this.connected) {
-								listener(this.clientId);
-							}
-							break;
-						case disconnectedEventName:
-							if (!this.connected) {
-								listener();
-							}
-							break;
-						default:
-					}
-				})
-				.catch((error) => {
-					this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
-				});
-		});
 	}
 
 	/**
@@ -1748,7 +1710,7 @@ export class Container
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		deltaManager.inboundSignal.pause();
 
-		deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+		deltaManager.on("connect", (details: IConnectionDetailsInternal, _opsBehind?: number) => {
 			assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
