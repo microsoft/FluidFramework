@@ -134,9 +134,7 @@ The following members of the `@fluidframework/driver-utils` package have been de
 The following members of the `@fluidframework/aqueduct` package have been deprecated and will be removed in an upcoming release:
 
 -   `waitForAttach()`
-
     -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
-
 -   `BaseContainerService`, `ContainerServiceRegistryEntries`, `generateContainerServicesRequestHandler()` and `serviceRoutePathRoot`
     -   Aqueduct supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
 
