@@ -5,6 +5,10 @@
 			"progressIntervalMs": 5000,
 			"numClients": 5,
 			"totalSendCount": 1200,
+			"faultInjectionMs": {
+				"min": 0,
+				"max": 20000
+			},
 			"optionOverrides": {
 				"tinylicious": {
 					"comment": "SessionExpiry: 20 seconds. Inactive Timeout: 40 seconds. Sweep Timeout: 45 seconds.",
@@ -20,7 +24,7 @@
 					"comment": "SessionExpiry: 20 seconds. Inactive Timeout: 40 seconds. Sweep Timeout: 45 seconds.",
 					"configurations": {
 						"Fluid.GarbageCollection.RunSessionExpiry": [true],
-						"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": [true],
+						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [10000],
 						"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [40000],
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [45000],
 						"Fluid.GarbageCollection.TestOverride.SessionExpiryMs": [20000],
@@ -49,7 +53,7 @@
 					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
 						"Fluid.GarbageCollection.RunSessionExpiry": [true],
-						"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": [true],
+						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [450000],
 						"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [1200000],
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
 						"Fluid.GarbageCollection.TestOverride.SessionExpiryMs": [900000],
@@ -82,7 +86,7 @@
 					"comment": "SessionExpiry: 15 mins. Inactive Timeout: 20 mins. Sweep Timeout: 22 mins.",
 					"configurations": {
 						"Fluid.GarbageCollection.RunSessionExpiry": [true],
-						"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache": [true],
+						"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs": [450000],
 						"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs": [1200000],
 						"Fluid.GarbageCollection.TestOverride.SweepTimeoutMs": [1320000],
 						"Fluid.GarbageCollection.TestOverride.SessionExpiryMs": [900000],

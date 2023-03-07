@@ -86,11 +86,10 @@ export class EpochTracker implements IPersistedFileCache {
 		this.rateLimiter = new RateLimiter(24);
 
 		// Matches the TestOverride logic for the policy defined in odspDocumentStorageServiceBase.ts
-		this.snapshotCacheExpiryTimeoutMs = loggerToMonitoringContext(logger).config.getBoolean(
-			"Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache",
-		)
-			? 0
-			: defaultCacheExpiryTimeoutMs;
+		this.snapshotCacheExpiryTimeoutMs =
+			loggerToMonitoringContext(logger).config.getNumber(
+				"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs",
+			) ?? defaultCacheExpiryTimeoutMs;
 	}
 
 	// public for UT purposes only!
