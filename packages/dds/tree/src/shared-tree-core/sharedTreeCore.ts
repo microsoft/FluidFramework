@@ -86,12 +86,11 @@ export interface IndexEvents<TChangeset> {
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
 export class SharedTreeCore<
-	TChange,
 	TEditor,
-	TChangeFamily extends ChangeFamily<TEditor, TChange>,
+	TChange,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
-	private readonly editManager: EditManager<TChange, TChangeFamily>;
+	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
 
 	/**
 	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
@@ -133,9 +132,9 @@ export class SharedTreeCore<
 			| TIndexes
 			| ((
 					events: ISubscribable<IndexEvents<TChange>>,
-					editManager: EditManager<TChange, TChangeFamily>,
+					editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>,
 			  ) => TIndexes),
-		public readonly changeFamily: TChangeFamily,
+		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		anchors: AnchorSet,
 
 		// Base class arguments

@@ -25,9 +25,8 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { AnchorSet, ChangeFamily, rootFieldKeySymbol } from "../../core";
+import { AnchorSet, rootFieldKeySymbol } from "../../core";
 import {
-	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultChangeset,
 	DefaultEditBuilder,
@@ -233,7 +232,7 @@ describe("SharedTreeCore", () => {
 
 	function createTree<TIndexes extends readonly Index[]>(
 		indexes: TIndexes | ((events: ISubscribable<IndexEvents<DefaultChangeset>>) => TIndexes),
-	): SharedTreeCore<DefaultChangeset, DefaultEditBuilder, DefaultChangeFamily, TIndexes> {
+	): SharedTreeCore<DefaultEditBuilder, DefaultChangeset, TIndexes> {
 		const runtime = new MockFluidDataStoreRuntime();
 		const attributes: IChannelAttributes = {
 			type: "TestSharedTree",
@@ -312,12 +311,9 @@ describe("SharedTreeCore", () => {
 });
 
 /** Makes an arbitrary change to the given tree */
-function changeTree<
-	TChange,
-	TEditor extends DefaultEditBuilder,
-	TChangeFamily extends ChangeFamily<TEditor, TChange>,
-	TIndexes extends readonly Index[],
->(tree: SharedTreeCore<TChange, TEditor, TChangeFamily, TIndexes>): void {
+function changeTree<TChange, TEditor extends DefaultEditBuilder, TIndexes extends readonly Index[]>(
+	tree: SharedTreeCore<TEditor, TChange, TIndexes>,
+): void {
 	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
 }

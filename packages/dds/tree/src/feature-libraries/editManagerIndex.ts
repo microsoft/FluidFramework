@@ -50,9 +50,7 @@ const stringKey = "String";
 // TODO: Remove commits when they are no longer in the collab window
 // TODO: Try to reduce this to a single type parameter
 // TODO: Move logic into Rebaser if possible
-export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any, TChangeset>>
-	implements Index, SummaryElement
-{
+export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 	public readonly summaryElement?: SummaryElement = this;
 	public readonly key = "EditManager";
 
@@ -60,7 +58,7 @@ export class EditManagerIndex<TChangeset, TChangeFamily extends ChangeFamily<any
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly editManager: EditManager<TChangeset, TChangeFamily>,
+		private readonly editManager: EditManager<TChangeset, ChangeFamily<unknown, TChangeset>>,
 	) {
 		this.editDataBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.editManager);

@@ -171,10 +171,9 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
  */
 class SharedTree
 	extends SharedTreeCore<
-		DefaultChangeset,
 		DefaultEditBuilder,
-		DefaultChangeFamily,
-		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+		DefaultChangeset,
+		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
 	>
 	implements ISharedTree
 {
@@ -225,7 +224,7 @@ class SharedTree
 
 		this.transactionCheckout = {
 			forest,
-			changeFamily: this.changeFamily,
+			changeFamily: defaultChangeFamily,
 			submitEdit: (edit) => this.applyChange(edit),
 		};
 
@@ -256,7 +255,7 @@ class SharedTree
 	public fork(): ISharedTreeCheckoutFork {
 		return new SharedTreeCheckout(
 			this.createBranch(),
-			this.changeFamily,
+			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
 			this.forest.clone(this.storedSchema, new AnchorSet()),
 		);
