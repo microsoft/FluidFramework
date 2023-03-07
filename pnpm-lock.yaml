@@ -16,7 +16,7 @@ importers:
       c8: ^7.7.1
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
-      jest: ^26.6.0
+      jest: ^26.6.3
       lerna: ^5.6.2
       mocha: ^10.0.0
       prettier: ~2.6.2
@@ -74,12 +74,12 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -125,11 +125,11 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -164,12 +164,12 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -212,11 +212,11 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -264,14 +264,14 @@ importers:
       eslint: ~8.6.0
       html-loader: ^3.1.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       office-ui-fabric-react: ^7.189.0
       prettier: ~2.6.2
       process: ^0.11.10
       prop-types: ^15.7.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-collapsible: ^2.7.0
       react-dom: ^17.0.1
@@ -334,11 +334,11 @@ importers:
       html-loader: 3.1.2_webpack@5.75.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       sass-loader: 7.3.1_webpack@5.75.0
       source-map-loader: 2.0.2_webpack@5.75.0
@@ -452,12 +452,12 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -501,11 +501,11 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -538,13 +538,13 @@ importers:
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       less: ~4.1.3
       less-loader: ^11.1.0
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
@@ -580,12 +580,12 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       less: 4.1.3
       less-loader: 11.1.0_less@4.1.3+webpack@5.75.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       style-loader: 1.3.0_webpack@5.75.0
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -621,11 +621,11 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
@@ -662,10 +662,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -776,11 +776,11 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
@@ -814,10 +814,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -921,11 +921,11 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -956,10 +956,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -990,11 +990,11 @@ importers:
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
@@ -1028,10 +1028,10 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       style-loader: 1.3.0_webpack@5.75.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
@@ -1074,11 +1074,11 @@ importers:
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
@@ -1123,10 +1123,10 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       style-loader: 1.3.0_webpack@5.75.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
@@ -1156,11 +1156,11 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1189,10 +1189,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -1216,7 +1216,7 @@ importers:
       concurrently: ^6.2.0
       eslint: ~8.6.0
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       rimraf: ^2.6.2
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -1237,7 +1237,7 @@ importers:
       concurrently: 6.3.0
       eslint: 8.6.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
       typescript: 4.5.5
@@ -1266,11 +1266,11 @@ importers:
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
@@ -1303,10 +1303,10 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       style-loader: 1.3.0_webpack@5.75.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
@@ -1337,11 +1337,11 @@ importers:
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
@@ -1374,10 +1374,10 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       style-loader: 1.3.0_webpack@5.75.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
@@ -1408,11 +1408,11 @@ importers:
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       style-loader: ^1.0.0
@@ -1445,10 +1445,10 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       style-loader: 1.3.0_webpack@5.75.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
@@ -1480,11 +1480,11 @@ importers:
       eslint: ~8.6.0
       fluid-framework: '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1515,10 +1515,10 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -1673,13 +1673,13 @@ importers:
       debug: ^4.1.1
       eslint: ~8.6.0
       events: ^3.1.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       jsdom: ^16.7.0
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -1733,12 +1733,12 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_2cl7ee4giuqtv3mbfsdzwlm7qe
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_3nf72a6occo7wapx332jdhmmty
       jsdom: 16.7.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       source-map-loader: 2.0.2_webpack@5.75.0
       style-loader: 1.3.0_webpack@5.75.0
@@ -1998,12 +1998,12 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       rimraf: ^2.6.2
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
@@ -2044,11 +2044,11 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -2085,11 +2085,11 @@ importers:
       cross-env: ^7.0.2
       css-loader: ^1.0.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -2133,10 +2133,10 @@ importers:
       css-loader: 1.0.1_webpack@5.75.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       source-map-loader: 2.0.2_webpack@5.75.0
       style-loader: 1.3.0_webpack@5.75.0
@@ -2292,11 +2292,11 @@ importers:
       cross-env: ^7.0.2
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -2340,10 +2340,10 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -2409,14 +2409,14 @@ importers:
       express: ^4.16.3
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       lodash.isequal: ^4.5.0
       node-fetch: ^2.6.9
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -2498,11 +2498,11 @@ importers:
       eslint-plugin-unused-imports: 2.0.0_eslint@8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       start-server-and-test: 1.14.0
       stream-http: 3.2.0
@@ -2540,12 +2540,12 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       rimraf: ^2.6.2
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
@@ -2581,11 +2581,11 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -2625,12 +2625,12 @@ importers:
       css-loader: ^1.0.0
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       rimraf: ^2.6.2
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
@@ -2672,11 +2672,11 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -2735,12 +2735,12 @@ importers:
       eslint-plugin-unused-imports: ~2.0.0
       events: ^3.1.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
       process: ^0.11.10
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -2806,11 +2806,11 @@ importers:
       eslint-plugin-unused-imports: 2.0.0_eslint@8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
       process: 0.11.10
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       style-loader: 1.3.0_webpack@5.75.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
@@ -3000,13 +3000,13 @@ importers:
       eslint: ~8.6.0
       events: ^3.1.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       jsonwebtoken: ^8.4.0
       lodash: ^4.17.21
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^2.6.2
@@ -3070,10 +3070,10 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       sass: 1.56.1
       sass-loader: 7.3.1_webpack@5.75.0
@@ -3133,13 +3133,13 @@ importers:
       eslint: ~8.6.0
       events: ^3.1.0
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       jsonwebtoken: ^8.4.0
       lodash: ^4.17.21
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
       react-virtualized-auto-sizer: ^1.0.6
@@ -3208,10 +3208,10 @@ importers:
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       sass: 1.56.1
       sass-loader: 7.3.1_webpack@5.75.0
@@ -3272,8 +3272,8 @@ importers:
       chai: ^4.2.0
       concurrently: ^6.2.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jsdoc: 3.6.7
       lighthouse: ^9.6.8
       lodash: ^4.17.21
@@ -3320,7 +3320,7 @@ importers:
       concurrently: 6.3.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
+      jest-junit: 10.0.0
       jsdoc: 3.6.7
       lighthouse: 9.6.8
       nyc: 15.1.0
@@ -3601,8 +3601,8 @@ importers:
       html-webpack-plugin: ^5.5.0
       identity-obj-proxy: ^3.0.0
       istanbul-instrumenter-loader: ^3.0.1
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-transform-file: ^1.1.1
       jsdoc: 3.6.7
       lighthouse: ^9.6.8
@@ -3682,7 +3682,7 @@ importers:
       identity-obj-proxy: 3.0.0
       istanbul-instrumenter-loader: 3.0.1_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
+      jest-junit: 10.0.0
       jest-transform-file: 1.1.1
       jsdoc: 3.6.7
       lighthouse: 9.6.8
@@ -3771,8 +3771,8 @@ importers:
       babel-loader: ^8.0.5
       concurrently: ^6.2.0
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       nyc: ^15.0.0
       prettier: ~2.6.2
       rimraf: ^2.6.2
@@ -3797,7 +3797,7 @@ importers:
       concurrently: 6.3.0
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
+      jest-junit: 10.0.0
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 2.7.1
@@ -4328,11 +4328,11 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
@@ -4364,10 +4364,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -4448,11 +4448,11 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
@@ -4487,10 +4487,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -4523,12 +4523,12 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       ot-json1: ^1.0.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
@@ -4563,10 +4563,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -4599,11 +4599,11 @@ importers:
       concurrently: ^6.2.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-puppeteer: ^6.1.1
       prettier: ~2.6.2
-      puppeteer: ^18.2.1
+      puppeteer: ^1.20.0
       react: ^17.0.1
       rimraf: ^2.6.2
       ts-jest: ^26.4.4
@@ -4638,10 +4638,10 @@ importers:
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
-      jest-puppeteer: 6.2.0_puppeteer@18.2.1
+      jest-junit: 10.0.0
+      jest-puppeteer: 6.2.0_puppeteer@1.20.0
       prettier: 2.6.2
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
       rimraf: 2.7.1
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
@@ -6110,7 +6110,7 @@ importers:
       eslint: ~8.6.0
       fake-indexeddb: 3.1.4
       idb: ^6.1.2
-      jest: ^26.6.0
+      jest: ^26.6.3
       prettier: ~2.6.2
       rimraf: ^2.6.2
       typescript: ~4.5.5
@@ -9636,8 +9636,8 @@ importers:
       eslint-plugin-jest: ~27.1.5
       good-fences: ^1.1.1
       html-webpack-plugin: ^5.5.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       jest-webextension-mock: ^3.7.22
       prettier: ~2.6.2
       react: ^17.0.1
@@ -9688,7 +9688,7 @@ importers:
       good-fences: 1.1.2
       html-webpack-plugin: 5.5.0_webpack@5.75.0
       jest: 26.6.3
-      jest-junit: 15.0.0
+      jest-junit: 10.0.0
       jest-webextension-mock: 3.8.7
       prettier: 2.6.2
       rimraf: 2.7.1
@@ -9743,8 +9743,8 @@ importers:
       eslint-plugin-jest: ~27.1.5
       eslint-plugin-react: ~7.28.0
       eslint-plugin-react-hooks: ~4.6.0
-      jest: ^26.6.0
-      jest-junit: ^15.0.0
+      jest: ^26.6.3
+      jest-junit: ^10.0.0
       prettier: ~2.6.2
       re-resizable: ^6.9.9
       react: ^17.0.1
@@ -9812,7 +9812,7 @@ importers:
       eslint-plugin-react: 7.28.0_eslint@8.6.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.6.0
       jest: 26.6.3
-      jest-junit: 15.0.0
+      jest-junit: 10.0.0
       prettier: 2.6.2
       rimraf: 2.7.1
       start-server-and-test: 1.14.0
@@ -15971,6 +15971,15 @@ packages:
       - supports-color
     dev: true
 
+  /@jest/types/24.9.0:
+    resolution: {integrity: sha512-XKK7ze1apu5JWQ5eZjHITP66AX+QsLlbaJRBGYr8pNzwcAE2JVkwnf0yqjHTsDRcjR0mujy/NmZMXw5kl+kGBw==}
+    engines: {node: '>= 6'}
+    dependencies:
+      '@types/istanbul-lib-coverage': 2.0.3
+      '@types/istanbul-reports': 1.1.2
+      '@types/yargs': 13.0.12
+    dev: true
+
   /@jest/types/26.6.2:
     resolution: {integrity: sha512-fC6QCp7Sc5sX6g8Tvbmj4XUTbyrik0akgRy03yjXbQaBWWNWGE7SGtJk98m0N8nzegD/7SggrUlivxo5ax4KWQ==}
     engines: {node: '>= 10.14.2'}
@@ -20248,6 +20257,13 @@ packages:
       '@types/istanbul-lib-coverage': 2.0.3
     dev: true
 
+  /@types/istanbul-reports/1.1.2:
+    resolution: {integrity: sha512-P/W9yOX/3oPZSpaYOCQzGqgCQRXn0FFO/V8bWrCQs+wLmvVVxk6CRBXALEvNs9OHIatlnlFokfhuDo2ug01ciw==}
+    dependencies:
+      '@types/istanbul-lib-coverage': 2.0.3
+      '@types/istanbul-lib-report': 3.0.0
+    dev: true
+
   /@types/istanbul-reports/3.0.1:
     resolution: {integrity: sha512-c3mAZEuK0lvBp8tmuL74XRKn1+y2dcwOUpH7x4WrF6gk1GIgiluDRgMYQtw2OFcBvAJWlt6ASU3tSqxp0Uu0Aw==}
     dependencies:
@@ -22209,6 +22225,10 @@ packages:
     dependencies:
       stack-chain: 1.3.7
     dev: false
+
+  /async-limiter/1.0.1:
+    resolution: {integrity: sha512-csOlWGAcRFJaI6m+F2WKdnMKr4HhdhFVBk0H/QbJFMCr+uO2kwohwXQPxw/9OCxp05r5ghVBFSyioixx3gfkNQ==}
+    dev: true
 
   /async-listener/0.6.10:
     resolution: {integrity: sha512-gpuo6xOyF4D5DE5WvyqZdPA3NGhiT6Qf07l7DCB0wwDEsLvDIbCr6j9S5aj5Ch96dLace5tXVzWBZkxU/c5ohw==}
@@ -25556,10 +25576,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
-  /devtools-protocol/0.0.1045489:
-    resolution: {integrity: sha512-D+PTmWulkuQW4D1NTiCRCFxF7pQPn0hgp4YyX4wAQ6xYXKOadSWPR3ENGDQ47MW/Ewc9v2rpC/UEEGahgBYpSQ==}
-    dev: true
-
   /devtools-protocol/0.0.981744:
     resolution: {integrity: sha512-0cuGS8+jhR67Fy7qG3i3Pc7Aw494sb9yG9QgpG97SFVWwolgYjlhJg7n+UaHxOQT30d1TYu/EYe9k01ivLErIg==}
     dev: true
@@ -27128,6 +27144,18 @@ packages:
   /extract-files/9.0.0:
     resolution: {integrity: sha512-CvdFfHkC95B4bBBk36hcEmvdR2awOdhhVUYH6S/zrVj3477zven/fJMYg7121h4T1xHZC+tetUpubpAhxwI7hQ==}
     engines: {node: ^10.17.0 || ^12.0.0 || >= 13.7.0}
+
+  /extract-zip/1.7.0:
+    resolution: {integrity: sha512-xoh5G1W/PB0/27lXgMQyIhP5DSY/LhoCsOyZgb+6iMmRtCwVBo55uKaMoEYrDCKQhWvqEip5ZPKAc6eFNyf/MA==}
+    hasBin: true
+    dependencies:
+      concat-stream: 1.6.2
+      debug: 2.6.9
+      mkdirp: 0.5.6
+      yauzl: 2.10.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /extract-zip/2.0.1:
     resolution: {integrity: sha512-GDhU9ntwuKyGXdZBUgTIe+vXnWj0fppUEtMDL0+idd5Sta8TGpHssn/eusA9mrPr9qNDym6SxAYZjNvCn/9RBg==}
@@ -30612,6 +30640,11 @@ packages:
       - supports-color
     dev: true
 
+  /jest-get-type/24.9.0:
+    resolution: {integrity: sha512-lUseMzAley4LhIcpSP9Jf+fTrQ4a1yHQwLNeeVa2cEmbCGeoZAtYPOIv8JaxLD/sUpKxetKGP+gsHl8f8TSj8Q==}
+    engines: {node: '>= 6'}
+    dev: true
+
   /jest-get-type/26.3.0:
     resolution: {integrity: sha512-TpfaviN1R2pQWkIihlfEanwOXK0zcxrKEE4MlU6Tn7keoXdN6/3gK/xl0yEh8DOunn5pOVGKf8hB4R9gVh04ig==}
     engines: {node: '>= 10.14.2'}
@@ -30670,13 +30703,14 @@ packages:
       - utf-8-validate
     dev: true
 
-  /jest-junit/15.0.0:
-    resolution: {integrity: sha512-Z5sVX0Ag3HZdMUnD5DFlG+1gciIFSy7yIVPhOdGUi8YJaI9iLvvBb530gtQL2CHmv0JJeiwRZenr0VrSR7frvg==}
-    engines: {node: '>=10.12.0'}
+  /jest-junit/10.0.0:
+    resolution: {integrity: sha512-dbOVRyxHprdSpwSAR9/YshLwmnwf+RSl5hf0kCGlhAcEeZY9aRqo4oNmaT0tLC16Zy9D0zekDjWkjHGjXlglaQ==}
+    engines: {node: '>=8.0.0'}
     dependencies:
-      mkdirp: 1.0.4
-      strip-ansi: 6.0.1
-      uuid: 8.3.2
+      jest-validate: 24.9.0
+      mkdirp: 0.5.6
+      strip-ansi: 5.2.0
+      uuid: 3.4.0
       xml: 1.0.1
     dev: true
 
@@ -30756,27 +30790,27 @@ packages:
       jest-resolve: 26.6.2
     dev: true
 
-  /jest-puppeteer/6.2.0_2cl7ee4giuqtv3mbfsdzwlm7qe:
+  /jest-puppeteer/6.2.0_3nf72a6occo7wapx332jdhmmty:
     resolution: {integrity: sha512-4Ynkgcf9FkHlTNEpdsojGLb3KtsToWqjO6SCigxb9Qj3HzIqhzJzNbDJ/XhiciNDpqDe6KHW9sZ6fjHphNLr6g==}
     peerDependencies:
       puppeteer: '>= 1.5.0'
     dependencies:
       expect-puppeteer: 6.1.1
       jest-environment-puppeteer: 6.2.0_debug@4.3.4
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
     transitivePeerDependencies:
       - debug
       - supports-color
     dev: true
 
-  /jest-puppeteer/6.2.0_puppeteer@18.2.1:
+  /jest-puppeteer/6.2.0_puppeteer@1.20.0:
     resolution: {integrity: sha512-4Ynkgcf9FkHlTNEpdsojGLb3KtsToWqjO6SCigxb9Qj3HzIqhzJzNbDJ/XhiciNDpqDe6KHW9sZ6fjHphNLr6g==}
     peerDependencies:
       puppeteer: '>= 1.5.0'
     dependencies:
       expect-puppeteer: 6.1.1
       jest-environment-puppeteer: 6.2.0
-      puppeteer: 18.2.1
+      puppeteer: 1.20.0
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30942,6 +30976,18 @@ packages:
       ci-info: 3.8.0
       graceful-fs: 4.2.10
       picomatch: 2.3.1
+    dev: true
+
+  /jest-validate/24.9.0:
+    resolution: {integrity: sha512-HPIt6C5ACwiqSiwi+OfSSHbK8sG7akG8eATl+IPKaeIjtPOeBUd/g3J7DghugzxrGjI93qS/+RPKe1H6PqvhRQ==}
+    engines: {node: '>= 6'}
+    dependencies:
+      '@jest/types': 24.9.0
+      camelcase: 5.3.1
+      chalk: 2.4.1
+      jest-get-type: 24.9.0
+      leven: 3.1.0
+      pretty-format: 24.9.0
     dev: true
 
   /jest-validate/26.6.2:
@@ -35520,6 +35566,16 @@ packages:
       renderkid: 3.0.0
     dev: true
 
+  /pretty-format/24.9.0:
+    resolution: {integrity: sha512-00ZMZUiHaJrNfk33guavqgvfJS30sLYf0f8+Srklv0AMPodGGHcoHgksZ3OThYnIvOd+8yMCn0YiEOogjlgsnA==}
+    engines: {node: '>= 6'}
+    dependencies:
+      '@jest/types': 24.9.0
+      ansi-regex: 4.1.1
+      ansi-styles: 3.2.1
+      react-is: 16.13.1
+    dev: true
+
   /pretty-format/26.6.2:
     resolution: {integrity: sha512-7AeGuCYNGmycyQbCqd/3PWH4eOoX/OiCa0uphp57NVTeAGdJGaAliecxwBDHYQCIvrW7aDBZCYeNTP/WX69mkg==}
     engines: {node: '>= 10'}
@@ -35975,40 +36031,22 @@ packages:
       - utf-8-validate
     dev: true
 
-  /puppeteer-core/18.2.1:
-    resolution: {integrity: sha512-MRtTAZfQTluz3U2oU/X2VqVWPcR1+94nbA2V6ZrSZRVEwLqZ8eclZ551qGFQD/vD2PYqHJwWOW/fpC721uznVw==}
-    engines: {node: '>=14.1.0'}
-    dependencies:
-      cross-fetch: 3.1.5
-      debug: 4.3.4
-      devtools-protocol: 0.0.1045489
-      extract-zip: 2.0.1
-      https-proxy-agent: 5.0.1
-      proxy-from-env: 1.1.0
-      rimraf: 3.0.2
-      tar-fs: 2.1.1
-      unbzip2-stream: 1.4.3
-      ws: 8.9.0
-    transitivePeerDependencies:
-      - bufferutil
-      - encoding
-      - supports-color
-      - utf-8-validate
-    dev: true
-
-  /puppeteer/18.2.1:
-    resolution: {integrity: sha512-7+UhmYa7wxPh2oMRwA++k8UGVDxh3YdWFB52r9C3tM81T6BU7cuusUSxImz0GEYSOYUKk/YzIhkQ6+vc0gHbxQ==}
-    engines: {node: '>=14.1.0'}
+  /puppeteer/1.20.0:
+    resolution: {integrity: sha512-bt48RDBy2eIwZPrkgbcwHtb51mj2nKvHOPMaSH2IsWiv7lOG9k9zhaRzpDZafrk05ajMc3cu+lSQYYOfH2DkVQ==}
+    engines: {node: '>=6.4.0'}
     deprecated: < 19.2.0 is no longer supported
     requiresBuild: true
     dependencies:
-      https-proxy-agent: 5.0.1
+      debug: 4.3.4
+      extract-zip: 1.7.0
+      https-proxy-agent: 2.2.4
+      mime: 2.6.0
       progress: 2.0.3
       proxy-from-env: 1.1.0
-      puppeteer-core: 18.2.1
+      rimraf: 2.7.1
+      ws: 6.2.2
     transitivePeerDependencies:
       - bufferutil
-      - encoding
       - supports-color
       - utf-8-validate
     dev: true
@@ -41395,6 +41433,20 @@ packages:
       write-json-file: 3.2.0
     dev: true
 
+  /ws/6.2.2:
+    resolution: {integrity: sha512-zmhltoSR8u1cnDsD43TX59mzoMZsLKqUweyYBAIvTngR3shc0W6aOZylZmq/7hqyVxPdi+5Ud2QInblgyE72fw==}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: ^5.0.2
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+    dependencies:
+      async-limiter: 1.0.1
+    dev: true
+
   /ws/7.4.5:
     resolution: {integrity: sha512-xzyu3hFvomRfXKH8vOFMU3OguG6oOvhXMo3xsGy3xWExqaM2dxBbVxuD99O7m3ZUFMvvscsZDqxfgMaRr/Nr1g==}
     engines: {node: '>=8.3.0'}
@@ -41458,19 +41510,6 @@ packages:
 
   /ws/8.5.0:
     resolution: {integrity: sha512-BWX0SWVgLPzYwF8lTzEy1egjhS4S4OEAHfsO8o65WOVsrnSRGaSiUaa9e0ggGlkMTtBlmOpEXiie9RUcBO86qg==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: ^5.0.2
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-    dev: true
-
-  /ws/8.9.0:
-    resolution: {integrity: sha512-Ja7nszREasGaYUYCI2k4lCKIRTt+y7XuqVoHR44YpI49TtryyqbqvDMn5eqfW7e6HzTukDRIsXqzVHScqRcafg==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
