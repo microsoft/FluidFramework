@@ -37,7 +37,7 @@ describe("AnchorSet", () => {
 
 	// TODO: Fix bug in move handling.
 	// See https://github.com/microsoft/FluidFramework/pull/14358 and https://dev.azure.com/fluidframework/internal/_workitems/edit/3559
-	it.skip("can move withing field", () => {
+	it.skip("can move within field", () => {
 		const anchors = new AnchorSet();
 		const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
 		const anchor1 = anchors.track(makePath([rootFieldKeySymbol, 1]));

@@ -199,7 +199,7 @@ describe("visit", () => {
 		testTreeVisit(delta, expected);
 	});
 
-	it("move child to the right", () => {
+	it("move node to the right", () => {
 		// start with 0123 then move 1 so the order is 0213
 
 		const moveId: Delta.MoveId = brand(1);
