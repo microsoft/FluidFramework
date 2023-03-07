@@ -282,6 +282,15 @@ class SharedTree
 			this.events.emit("afterBatch");
 		}
 	}
+
+	/**
+	 * @override
+	 */
+	protected submitEdit(edit: DefaultChangeset): void {
+		this.events.emit("beforeBatch");
+		super.submitEdit(edit);
+		this.events.emit("afterBatch");
+	}
 }
 
 /**

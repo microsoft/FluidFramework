@@ -37,6 +37,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 		const revision = mintRevisionTag();
 		revisions.push(revision);
 		repairStore.capture(delta, revision);
+		// TODO: CheckoutEvents batch events for this
 		forest.applyDelta(delta);
 	}, forest.anchors);
 
@@ -51,6 +52,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 	// TODO: in the non-abort case, optimize this to not rollback the edit,
 	// then reapply it (when the local edit is added) when possible.
 	{
+		// TODO: CheckoutEvents batch events for this.
 		// Roll back changes
 		for (const inverse of inverses) {
 			// TODO: maybe unify logic to edit forest and its anchors here with that in ProgressiveEditBuilder.

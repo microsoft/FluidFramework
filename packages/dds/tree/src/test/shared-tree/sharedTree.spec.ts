@@ -549,19 +549,40 @@ describe("SharedTree", () => {
 			pushTestValue(tree1, value);
 
 			const root = tree1.context.root.getNode(0);
-			// TODO: once branches/transactions are properly integrated, this should be set to 1.
-			// Number of change event per edit.
-			const eventsPerEdit = 3;
-			let count = 0;
-			const unsubscribe = root[on]("changed", () => count++);
-			assert.equal(count, 0);
+
+			const log: string[] = [];
+			const unsubscribe = root[on]("changed", () => log.push("change"));
+			const unsubscribeBefore = tree1.events.on("beforeBatch", () => log.push("before"));
+			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
+			log.push("editStart");
 			root[valueSymbol] = 5;
-			assert.equal(count, 1 * eventsPerEdit);
+			log.push("editStart");
 			root[valueSymbol] = 6;
-			assert.equal(count, 2 * eventsPerEdit);
+			log.push("unsubscribe");
 			unsubscribe();
+			unsubscribeBefore();
+			unsubscribeAfter();
+			log.push("editStart");
 			root[valueSymbol] = 7;
-			assert.equal(count, 2 * eventsPerEdit);
+
+			// TODO: once branches/transactions are properly integrated, duplicate events should no longer occur.
+			// TODO: before and after events are not produced in all cases yet.
+			assert.deepEqual(log, [
+				"editStart",
+				"change",
+				"change",
+				"before",
+				"change",
+				"after",
+				"editStart",
+				"change",
+				"change",
+				"before",
+				"change",
+				"after",
+				"unsubscribe",
+				"editStart",
+			]);
 		});
 	});
 
