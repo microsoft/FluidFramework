@@ -188,7 +188,6 @@ We do not currently know of a reason why this would be problematic,
 or of any other issue or special requirement associated with sending rebased changes over the wire.
 
 Using concrete undos even when the change to be undone has not been sequenced is somewhat problematic
-Using concrete undos even when the change to be undone has not been sequence is somewhat problematic
 because we cannot know in advance the exact impact of the change to undo.
 
 For this V1, we simply produce a "best attempt" undo based on the most up to date version of the change to be undone.
