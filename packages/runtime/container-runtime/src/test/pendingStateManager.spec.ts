@@ -279,7 +279,6 @@ describe("Pending State Manager", () => {
 		});
 	});
 
-	// TODO: Remove in 2.0.0-internal.4.0.0 once only new format is written in getLocalState()
 	describe("Local state processing", () => {
 		function createPendingStateManager(pendingStates): any {
 			return new PendingStateManager(
@@ -295,6 +294,7 @@ describe("Pending State Manager", () => {
 			);
 		}
 
+		// TODO: Remove in 2.0.0-internal.5.0.0 once only new format is written in getLocalState() AB#2496
 		describe("Constructor conversion", () => {
 			it("Empty local state", () => {
 				{
@@ -390,7 +390,7 @@ describe("Pending State Manager", () => {
 			});
 		});
 
-		it("getLocalState writes old format", async () => {
+		it("getLocalState writes new format", async () => {
 			const pendingStateManager = createPendingStateManager([
 				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: true } },
 				{ type: "message", referenceSequenceNumber: 0 },
@@ -417,7 +417,6 @@ describe("Pending State Manager", () => {
 					localOpMetadata: undefined,
 					opMetadata: { batch: false },
 				},
-				{ type: "flush" },
 				{
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -430,7 +429,6 @@ describe("Pending State Manager", () => {
 					localOpMetadata: undefined,
 					opMetadata: { batch: false },
 				},
-				{ type: "flush" },
 				{ type: "message", referenceSequenceNumber: 0, localOpMetadata: undefined },
 				/* eslint-enable max-len */
 			]);

@@ -34,28 +34,33 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
-	describe("Container Runtime", () => {
-		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		});
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
 
+	const getMockContext = (
+		settings: Record<string, ConfigTypes> = {},
+		logger: ITelemetryLogger = new MockLogger(),
+	): Partial<IContainerContext> => ({
+		attachState: AttachState.Attached,
+		deltaManager: new MockDeltaManager(),
+		quorum: new MockQuorumClients(),
+		taggedLogger: mixinMonitoringContext(
+			logger,
+			configProvider(settings),
+		) as unknown as MockLogger,
+		clientDetails: { capabilities: { interactive: true } },
+		closeFn: (_error?: ICriticalContainerError): void => {},
+		updateDirtyContainerState: (_dirty: boolean) => {},
+	});
+
+	describe("Container Runtime", () => {
 		describe("flushMode setting", () => {
 			let containerRuntime: ContainerRuntime;
-			const getMockContext = (): Partial<IContainerContext> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: new MockLogger(),
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-				};
-			};
 
 			it("Default flush mode", async () => {
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -96,7 +101,7 @@ describe("Runtime", () => {
 					const submittedOpsMetdata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
 					let opFakeSequenceNumber = 1;
-					const getMockContext = (): Partial<IContainerContext> => {
+					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
 						return {
 							attachState: AttachState.Attached,
 							deltaManager: new MockDeltaManager(),
@@ -132,7 +137,7 @@ describe("Runtime", () => {
 						"orderSequentially callback exception";
 
 					beforeEach(async () => {
-						mockContext = getMockContext();
+						mockContext = getMockContextForOrderSequentially();
 						containerRuntime = await ContainerRuntime.loadRuntime({
 							context: mockContext as IContainerContext,
 							registryEntries: [],
@@ -255,21 +260,6 @@ describe("Runtime", () => {
 
 		describe("Op reentry enforcement", () => {
 			let containerRuntime: ContainerRuntime;
-			const getMockContext = (
-				settings: Record<string, ConfigTypes> = {},
-				logger: ITelemetryLogger = new MockLogger(),
-			): Partial<IContainerContext> => ({
-				attachState: AttachState.Attached,
-				deltaManager: new MockDeltaManager(),
-				quorum: new MockQuorumClients(),
-				taggedLogger: mixinMonitoringContext(
-					logger,
-					configProvider(settings),
-				) as unknown as MockLogger,
-				clientDetails: { capabilities: { interactive: true } },
-				closeFn: (_error?: ICriticalContainerError): void => {},
-				updateDirtyContainerState: (_dirty: boolean) => {},
-			});
 
 			it("By default, don't enforce the op reentry check", async () => {
 				containerRuntime = await ContainerRuntime.load(
@@ -388,7 +378,7 @@ describe("Runtime", () => {
 					let containerRuntime: ContainerRuntime;
 					const containerErrors: ICriticalContainerError[] = [];
 
-					const getMockContext = (): Partial<IContainerContext> => ({
+					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => ({
 						attachState: AttachState.Attached,
 						deltaManager: new MockDeltaManager(),
 						quorum: new MockQuorumClients(),
@@ -398,7 +388,6 @@ describe("Runtime", () => {
 								"Fluid.ContainerRuntime.EnableRollback": true,
 							}),
 						) as unknown as MockLogger,
-						supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
 						clientDetails: { capabilities: { interactive: true } },
 						closeFn: (error?: ICriticalContainerError): void => {
 							if (error !== undefined) {
@@ -410,7 +399,7 @@ describe("Runtime", () => {
 
 					beforeEach(async () => {
 						containerRuntime = await ContainerRuntime.loadRuntime({
-							context: getMockContext() as IContainerContext,
+							context: getMockContextForOrderSequentially() as IContainerContext,
 							registryEntries: [],
 							existing: false,
 							runtimeOptions: {
@@ -534,22 +523,23 @@ describe("Runtime", () => {
 			let containerRuntime: ContainerRuntime;
 			const mockLogger = new MockLogger();
 			const containerErrors: ICriticalContainerError[] = [];
-			const getMockContext = (): Partial<IContainerContext> => {
-				return {
-					clientId: "fakeClientId",
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: mockLogger,
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (error?: ICriticalContainerError): void => {
-						if (error !== undefined) {
-							containerErrors.push(error);
-						}
-					},
-					updateDirtyContainerState: (_dirty: boolean) => {},
+			const getMockContextForPendingStateProgressTracking =
+				(): Partial<IContainerContext> => {
+					return {
+						clientId: "fakeClientId",
+						attachState: AttachState.Attached,
+						deltaManager: new MockDeltaManager(),
+						quorum: new MockQuorumClients(),
+						taggedLogger: mockLogger,
+						clientDetails: { capabilities: { interactive: true } },
+						closeFn: (error?: ICriticalContainerError): void => {
+							if (error !== undefined) {
+								containerErrors.push(error);
+							}
+						},
+						updateDirtyContainerState: (_dirty: boolean) => {},
+					};
 				};
-			};
 			const getMockPendingStateManager = (): PendingStateManager => {
 				let pendingMessages = 0;
 				return {
@@ -593,9 +583,8 @@ describe("Runtime", () => {
 
 			beforeEach(async () => {
 				containerErrors.length = 0;
-
 				containerRuntime = await ContainerRuntime.loadRuntime({
-					context: getMockContext() as IContainerContext,
+					context: getMockContextForPendingStateProgressTracking() as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
@@ -785,17 +774,6 @@ describe("Runtime", () => {
 
 		describe("User input validations", () => {
 			let containerRuntime: ContainerRuntime;
-			const getMockContext = (): Partial<IContainerContext> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: new MockLogger(),
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-				};
-			};
 
 			before(async () => {
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -821,88 +799,177 @@ describe("Runtime", () => {
 			});
 		});
 
-		it("supports mixin classes", async () => {
-			const makeMixin = <T>(
-				Base: typeof ContainerRuntime,
-				methodName: string,
-				methodReturn: T,
-			) =>
-				class MixinContainerRuntime extends Base {
-					public static async load(
-						context: IContainerContext,
-						registryEntries: NamedFluidDataStoreRegistryEntries,
-						requestHandler?:
-							| ((
-									request: IRequest,
-									runtime: IContainerRuntime,
-							  ) => Promise<IResponse>)
-							| undefined,
-						runtimeOptions?: IContainerRuntimeOptions,
-						containerScope?: FluidObject,
-						existing?: boolean | undefined,
-						containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
-					): Promise<ContainerRuntime> {
-						return Base.load(
-							context,
-							registryEntries,
-							requestHandler,
-							runtimeOptions,
-							containerScope,
-							existing,
-							containerRuntimeCtor,
-						);
-					}
+		describe("Supports mixin classes", () => {
+			it("old load method works", async () => {
+				const makeMixin = <T>(
+					Base: typeof ContainerRuntime,
+					methodName: string,
+					methodReturn: T,
+				) =>
+					class MixinContainerRuntime extends Base {
+						public static async load(
+							context: IContainerContext,
+							registryEntries: NamedFluidDataStoreRegistryEntries,
+							requestHandler?:
+								| ((
+										request: IRequest,
+										runtime: IContainerRuntime,
+								  ) => Promise<IResponse>)
+								| undefined,
+							runtimeOptions?: IContainerRuntimeOptions,
+							containerScope?: FluidObject,
+							existing?: boolean | undefined,
+							containerRuntimeCtor: typeof ContainerRuntime = MixinContainerRuntime,
+						): Promise<ContainerRuntime> {
+							return Base.load(
+								context,
+								registryEntries,
+								requestHandler,
+								runtimeOptions,
+								containerScope,
+								existing,
+								containerRuntimeCtor,
+							);
+						}
 
-					public [methodName](): T {
-						return methodReturn;
-					}
-				} as typeof ContainerRuntime;
+						public [methodName](): T {
+							return methodReturn;
+						}
+					} as typeof ContainerRuntime;
 
-			const getMockContext = (): Partial<IContainerContext> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: new MockLogger(),
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
+				const runtime = await makeMixin(
+					makeMixin(ContainerRuntime, "method1", "mixed in return"),
+					"method2",
+					42,
+				).load(
+					getMockContext() as IContainerContext,
+					[],
+					undefined, // requestHandler
+					{}, // runtimeOptions
+				);
+
+				assert.equal(
+					(runtime as unknown as { method1: () => any }).method1(),
+					"mixed in return",
+				);
+				assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
+			});
+
+			it("new loadRuntime method works", async () => {
+				const makeMixin = <T>(
+					Base: typeof ContainerRuntime,
+					methodName: string,
+					methodReturn: T,
+				) =>
+					class MixinContainerRuntime extends Base {
+						public static async loadRuntime(params: {
+							context: IContainerContext;
+							containerRuntimeCtor?: typeof ContainerRuntime;
+							initializeEntryPoint: (
+								containerRuntime: IContainerRuntime,
+							) => Promise<FluidObject>;
+							existing: boolean;
+							runtimeOptions: IContainerRuntimeOptions;
+							registryEntries: NamedFluidDataStoreRegistryEntries;
+							containerScope: FluidObject;
+						}): Promise<ContainerRuntime> {
+							// Note: we're mutating the parameter object here, normally a no-no, but shouldn't be
+							// an issue in our tests.
+							params.containerRuntimeCtor =
+								params.containerRuntimeCtor ?? MixinContainerRuntime;
+							params.containerScope = params.containerScope ?? params.context.scope;
+							return Base.loadRuntime(params);
+						}
+
+						public [methodName](): T {
+							return methodReturn;
+						}
+					} as typeof ContainerRuntime;
+
+				const myEntryPoint: FluidObject = {
+					myProp: "myValue",
 				};
-			};
 
-			const runtime = await makeMixin(
-				makeMixin(ContainerRuntime, "method1", "mixed in return"),
-				"method2",
-				42,
-			).load(
-				getMockContext() as IContainerContext,
-				[],
-				undefined, // requestHandler
-				{}, // runtimeOptions
-			);
+				const runtime = await makeMixin(
+					makeMixin(ContainerRuntime, "method1", "mixed in return"),
+					"method2",
+					42,
+				).loadRuntime({
+					context: getMockContext() as IContainerContext,
+					initializeEntryPoint: async (containerRuntime) => myEntryPoint,
+					existing: false,
+					registryEntries: [],
+				});
 
-			assert.equal(
-				(runtime as unknown as { method1: () => any }).method1(),
-				"mixed in return",
-			);
-			assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
+				assert.equal(
+					(runtime as unknown as { method1: () => any }).method1(),
+					"mixed in return",
+				);
+				assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
+			});
+		});
+
+		describe("EntryPoint initialized correctly", () => {
+			it("when using old load method", async () => {
+				const myResponse: IResponse = {
+					mimeType: "myMimeType",
+					value: "hello!",
+					status: 200,
+				};
+				const containerRuntime = await ContainerRuntime.load(
+					getMockContext() as IContainerContext,
+					[], // registryEntries
+					async (req, ctrRuntime) => myResponse,
+					{}, // runtimeOptions
+					undefined, // containerScope
+					false, // existing
+					undefined, // containerRuntimeCtor
+				);
+				const request: IRequest = { url: "myUrl" };
+
+				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+				const responseFromRequestMethod = await containerRuntime.request(request);
+				assert.deepEqual(
+					responseFromRequestMethod,
+					myResponse,
+					"request method in runtime did not return the expected object",
+				);
+
+				// The entryPoint should be undefined because the deprecated load() method was used
+				assert(containerRuntime.getEntryPoint !== undefined); // The function should exist, though
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				assert.strictEqual(
+					actualEntryPoint,
+					undefined,
+					"entryPoint was not undefined as expected",
+				);
+			});
+
+			it("when using new loadRuntime method", async () => {
+				const myEntryPoint: FluidObject = {
+					myProp: "myValue",
+				};
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					initializeEntryPoint: async (ctrRuntime) => myEntryPoint,
+					existing: false,
+					registryEntries: [],
+				});
+
+				// The entryPoint should come from the provided initialization function.
+				const actualEntryPoint = await containerRuntime.getEntryPoint?.();
+				assert(actualEntryPoint !== undefined, "entryPoint was not initialized");
+				assert.deepEqual(
+					actualEntryPoint,
+					myEntryPoint,
+					"entryPoint does not match expected object",
+				);
+			});
 		});
 
 		describe("Op content modification", () => {
 			let containerRuntime: ContainerRuntime;
 			let pendingStateManager: PendingStateManager;
-
-			const getMockContext = (): Partial<IContainerContext> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: new MockDeltaManager(),
-					quorum: new MockQuorumClients(),
-					taggedLogger: new MockLogger(),
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-				};
-			};
 
 			beforeEach(async () => {
 				containerRuntime = await ContainerRuntime.loadRuntime({
@@ -938,7 +1005,7 @@ describe("Runtime", () => {
 		describe("Container logging when loaded", () => {
 			let mockLogger: MockLogger;
 
-			const getMockContext = (
+			const localGetMockContext = (
 				featureGates: Record<string, ConfigTypes> = {},
 			): Partial<IContainerContext> => {
 				return {
@@ -990,7 +1057,7 @@ describe("Runtime", () => {
 
 			it("Container load stats", async () => {
 				await ContainerRuntime.loadRuntime({
-					context: getMockContext({}) as IContainerContext,
+					context: localGetMockContext({}) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
@@ -1013,7 +1080,7 @@ describe("Runtime", () => {
 					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
 				};
 				await ContainerRuntime.loadRuntime({
-					context: getMockContext(featureGates) as IContainerContext,
+					context: localGetMockContext(featureGates) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
@@ -1041,7 +1108,7 @@ describe("Runtime", () => {
 				mockLogger.clear();
 			});
 
-			const getMockContext = (
+			const localGetMockContext = (
 				features?: ReadonlyMap<string, unknown>,
 			): Partial<IContainerContext> => {
 				return {
@@ -1066,7 +1133,7 @@ describe("Runtime", () => {
 			].forEach((features) => {
 				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
 					const runtime = await ContainerRuntime.loadRuntime({
-						context: getMockContext(features) as IContainerContext,
+						context: localGetMockContext(features) as IContainerContext,
 						registryEntries: [],
 						existing: false,
 						runtimeOptions: {
@@ -1086,7 +1153,7 @@ describe("Runtime", () => {
 
 			it("Loader supported for async FlushMode", async () => {
 				const runtime = await ContainerRuntime.loadRuntime({
-					context: getMockContext(
+					context: localGetMockContext(
 						new Map([["referenceSequenceNumbers", true]]),
 					) as IContainerContext,
 					registryEntries: [],

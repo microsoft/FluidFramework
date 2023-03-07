@@ -30,7 +30,13 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import {
+	assert,
+	LazyPromise,
+	Trace,
+	TypedEventEmitter,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -605,13 +611,16 @@ export class ContainerRuntime
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
 	 * - context - Context of the container.
-	 * - registryEntries - Mapping to the stores.
-	 * - existing - When loading from an existing snapshot
-	 * - requestHandler - Request handlers for the container runtime
+	 * - registryEntries - Mapping from data store types to their corresponding factories.
+	 * - existing - Pass 'true' if loading from an existing snapshot.
+	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
 	 * - runtimeOptions - Additional options to be passed to the runtime
 	 * - containerScope - runtime services provided with context
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
+	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
 		context: IContainerContext;
@@ -621,6 +630,7 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
@@ -630,6 +640,7 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
+			initializeEntryPoint,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -754,6 +765,8 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			storage,
 			requestHandler,
+			undefined, // summaryConfiguration
+			initializeEntryPoint,
 		);
 
 		if (pendingRuntimeState) {
@@ -1019,6 +1032,7 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super();
 
@@ -1422,6 +1436,8 @@ export class ContainerRuntime
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
+
+		this.entryPoint = new LazyPromise(async () => initializeEntryPoint?.(this));
 	}
 
 	/**
@@ -1527,6 +1543,14 @@ export class ContainerRuntime
 			return exceptionToResponse(error);
 		}
 	}
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
+	 */
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+		return this.entryPoint;
+	}
+	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
 
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;

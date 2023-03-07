@@ -161,6 +161,7 @@ export interface IDocumentService {
 export interface IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
+    // @deprecated
     protocolName: string;
 }
 
