@@ -100,6 +100,8 @@ export {
 	GenericChangeset,
 	genericFieldKind,
 	NodeReviver,
+	RevisionIndexer,
+	RevisionInfo,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.

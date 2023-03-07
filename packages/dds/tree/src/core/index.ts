@@ -75,8 +75,17 @@ export {
 	PathRootPrefix,
 	isSkipMark,
 	emptyDelta,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
 	inCursorField,
 	inCursorNode,
+	AnchorEvents,
 } from "./tree";
 
 export {
@@ -130,6 +139,9 @@ export {
 
 export {
 	ChangeRebaser,
+	findAncestor,
+	findCommonAncestor,
+	GraphCommit,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -140,11 +152,12 @@ export {
 	tagInverse,
 	SessionId,
 	mintRevisionTag,
+	Rebaser,
 } from "./rebase";
 
-export { ICheckout, TransactionResult } from "./checkout";
+export { SharedTreeBranch, SharedTreeBranchEvents, TransactionResult } from "./checkout";
 
-export { Checkout } from "./transaction";
+export { Checkout as TransactionCheckout } from "./transaction";
 
 export {
 	Adapters,

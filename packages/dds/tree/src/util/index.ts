@@ -46,7 +46,6 @@ export {
 export { StackyIterator } from "./stackyIterator";
 export {
 	clone,
-	compareArrays,
 	compareSets,
 	fail,
 	getOrAddEmptyToMap,
