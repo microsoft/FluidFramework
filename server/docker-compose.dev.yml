@@ -173,7 +173,7 @@ services:
   redis:
     image: "redis:alpine"
   mongodb:
-    image: "mongo:3.6"
+    image: "mongo:4"
   rabbitmq:
     image: "rabbitmq:alpine"
 volumes:
