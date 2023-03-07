@@ -5,7 +5,13 @@
 
 import { strict as assert } from "assert";
 import { Container } from "@fluidframework/container-loader";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	IGCRuntimeOptions,
+	IContainerRuntimeParams,
+	loadRuntimeBlob,
+	mixinSummaryHandler,
+} from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -18,7 +24,14 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { MockLogger } from "@fluidframework/telemetry-utils";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
+import {
+	AttachState,
+	IContainer,
+	IContainerContext,
+	LoaderHeader,
+} from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";
@@ -162,6 +175,101 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				);
 			},
 		);
+
+		it.only("sample", async () => {
+			settings["Fluid.GarbageCollection.Test.SweepAttachmentBlobs"] = false;
+			settings["Fluid.GarbageCollection.RunSweep"] = false;
+			// This example API
+			async function containerRuntimeWithBlob(params: IContainerRuntimeParams) {
+				// Blob path in container snapshots
+				const path = ["loop", "guestComponents"];
+
+				const extraBlob = await loadRuntimeBlob(params, path);
+				console.log(extraBlob?.length ?? 0);
+
+				// Loop specific code to create blob content during summary
+				const handler = async (_runtime) => {
+					return { path, content: "sample payload" };
+				};
+
+				// Add ability to generate that blob during summaries
+				// Please note that handler will be called (and thus blobs will be created) only for summaries that are submiteed to storage
+				// It will not be involved when saving stashed ops (aka local state with uncommited changes)
+				return ContainerRuntime.loadRuntime({
+					...params,
+					containerRuntimeCtor: mixinSummaryHandler(handler, params.containerRuntimeCtor),
+				});
+			}
+
+			const {
+				dataStore: mainDataStore,
+				summarizer,
+				summarizerContainer,
+			} = await createDataStoreAndSummarizer();
+
+			const getMockContext = (): Partial<IContainerContext> => {
+				return {
+					attachState: AttachState.Attached,
+					deltaManager: new MockDeltaManager(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: new MockLogger(),
+					clientDetails: { capabilities: { interactive: true } },
+					closeFn: (_error?): void => {},
+					updateDirtyContainerState: (_dirty: boolean) => {},
+				};
+			};
+
+			const runtime = await containerRuntimeWithBlob({
+				context: getMockContext() as IContainerContext,
+				registryEntries: [],
+				existing: false,
+				runtimeOptions: undefined,
+				containerScope: {},
+			});
+
+			(summarizer as any).runtime = runtime;
+
+			// Upload an attachment blob.
+			const blobContents = "Blob contents";
+			const blobHandle = await mainDataStore._runtime.uploadBlob(
+				stringToBuffer(blobContents, "utf-8"),
+			);
+
+			// Reference and then unreference the blob so that it's unreferenced in the next summary.
+			mainDataStore._root.set("blob1", blobHandle);
+			mainDataStore._root.delete("blob1");
+
+			// Summarize so that the above attachment blobs are marked unreferenced.
+			await provider.ensureSynchronized();
+			const sum = await summarizeNow(summarizer);
+			const container = await loadContainer(sum.summaryVersion);
+
+			// Wait for sweep timeout so that the blobs are ready to be deleted.
+			// await delay(sweepTimeoutMs + 10);
+
+			// Send an op to update the current reference timestamp that GC uses to make sweep ready objects.
+			mainDataStore._root.set("key", "value");
+			await provider.ensureSynchronized();
+
+			// Summarize so that the sweep ready blobs are deleted.
+			const summary2 = await summarizeNow(summarizer);
+			const container2 = await loadContainer(summary2.summaryVersion);
+
+			// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
+			// not have access to the blob's handle since it loaded after the blob was deleted.
+			await validateBlobRetrievalFails(
+				container2,
+				blobHandle.absolutePath,
+				"Container2: Blob1",
+			);
+
+			// Retrieving the blob in the summarizer container should fail as well.
+			await validateBlobRetrievalFails(
+				summarizerContainer,
+				blobHandle.absolutePath,
+				"Summarizer: Blob1",
+			);
+		});
 
 		itExpects(
 			"fails retrieval of blobs that are de-duped in same container and are deleted",

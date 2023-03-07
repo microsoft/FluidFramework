@@ -11,14 +11,7 @@ import {
 	PureDataObject,
 } from "@fluidframework/aqueduct";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-	AttachState,
-	IContainer,
-	IContainerContext,
-	ICriticalContainerError,
-	IRuntimeFactory,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
+import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
 	ContainerRuntime,
@@ -27,12 +20,6 @@ import {
 	ISummaryNackMessage,
 	neverCancelledSummaryToken,
 	SummaryCollection,
-	IContainerRuntimeParams,
-	loadRuntimeBlob,
-	mixinSummaryHandler as trythis,
-	PendingStateManager,
-	ContainerMessageType,
-	DataStores,
 } from "@fluidframework/container-runtime";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
@@ -54,7 +41,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluidframework/test-version-utils";
-import { MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import { UndoRedoStackManager } from "@fluidframework/undo-redo";
 
 interface ProvideSearchContent {
@@ -356,7 +342,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		});
 	}
 
-	describe.only("Realize DataStore during Search while waiting for Summary Ack", () => {
+	describe("Realize DataStore during Search while waiting for Summary Ack", () => {
 		beforeEach(async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
@@ -451,119 +437,6 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 				summaryRefSeq: ackedSummary.summaryOp.referenceSequenceNumber,
 				summaryLogger: logger,
 			});
-		});
-
-		it("sample", async () => {
-			const summarizerClient = await getNewSummarizer();
-			// Wait for all pending ops to be processed by all clients.
-			await provider.ensureSynchronized();
-			// This example API
-			async function containerRuntimeWithBlob(params: IContainerRuntimeParams) {
-				// Blob path in container snapshots
-				const path = ["loop", "guestComponents"];
-
-				const extraBlob = await loadRuntimeBlob(params, path);
-				console.log(extraBlob?.length ?? 0);
-
-				// Loop specific code to create blob content during summary
-				const handler = async (_runtime) => {
-					return { path, content: "sample payload" };
-				};
-
-				// Add ability to generate that blob during summaries
-				// Please note that handler will be called (and thus blobs will be created) only for summaries that are submiteed to storage
-				// It will not be involved when saving stashed ops (aka local state with uncommited changes)
-				return ContainerRuntime.loadRuntime({
-					...params,
-					containerRuntimeCtor: trythis(handler, params.containerRuntimeCtor),
-				});
-			}
-			const getMockContext = (): Partial<IContainerContext> => {
-				return {
-					attachState: AttachState.Attached,
-					deltaManager: mainContainer.deltaManager,
-					quorum: new MockQuorumClients(),
-					taggedLogger: logger,
-					clientDetails: { capabilities: { interactive: true } },
-					closeFn: (_error?: ICriticalContainerError): void => {},
-					updateDirtyContainerState: (_dirty: boolean) => {},
-				};
-			};
-			const runtime = await containerRuntimeWithBlob({
-				context: getMockContext() as IContainerContext,
-				registryEntries: [],
-				existing: false,
-				runtimeOptions: undefined,
-				containerScope: {},
-			});
-			function patchRuntime(
-				pendingStateManager2: PendingStateManager,
-				_maxReconnects: number | undefined = undefined,
-			) {
-				const runtime2 = runtime as any;
-				runtime2.pendingStateManager = pendingStateManager2;
-				runtime2.dataStores = getMockDataStores();
-				runtime2.maxConsecutiveReconnects =
-					_maxReconnects ?? runtime2.maxConsecutiveReconnects;
-			}
-			const getMockPendingStateManager = (): PendingStateManager => {
-				let pendingMessages = 0;
-				return {
-					replayPendingStates: () => {},
-					hasPendingMessages: (): boolean => pendingMessages > 0,
-					processMessage: (_message: ISequencedDocumentMessage, _local: boolean) => {
-						return { localAck: false, localOpMetadata: undefined };
-					},
-					processPendingLocalMessage: (_message: ISequencedDocumentMessage) => {
-						return undefined;
-					},
-					get pendingMessagesCount() {
-						return pendingMessages;
-					},
-					onSubmitMessage: (
-						_type: ContainerMessageType,
-						_clientSequenceNumber: number,
-						_referenceSequenceNumber: number,
-						_content: any,
-						_localOpMetadata: unknown,
-						_opMetadata: Record<string, unknown> | undefined,
-					) => pendingMessages++,
-				} as unknown as PendingStateManager;
-			};
-			const getMockDataStores = (): DataStores => {
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				return {
-					processFluidDataStoreOp: (
-						_message: ISequencedDocumentMessage,
-						_local: boolean,
-						_localMessageMetadata: unknown,
-					) => {},
-					setConnectionState: (_connected: boolean, _clientId?: string) => {},
-				} as DataStores;
-			};
-			const pendingStateManager = getMockPendingStateManager();
-			patchRuntime(pendingStateManager);
-			runtime.setConnectionState(true);
-			summarizerClient.containerRuntime = runtime;
-
-			// Submit a summary
-			const result = (await summarizerClient.containerRuntime.submitSummary({
-				fullTree: false,
-				refreshLatestAck: false,
-				summaryLogger: logger,
-				cancellationToken: neverCancelledSummaryToken,
-			})) as any;
-			const res = await summarizerClient.containerRuntime.summarize({
-				fullTree: false,
-				trackState: true,
-				summaryLogger: logger,
-				runGC: false,
-			});
-			console.error("stop here");
-			console.error(result.summaryTree);
-			assert.strictEqual(result.summaryTree, "submit", `${res.summary}`);
-
-			await waitForSummaryOp(summarizerClient.containerRuntime);
 		});
 
 		afterEach(() => {

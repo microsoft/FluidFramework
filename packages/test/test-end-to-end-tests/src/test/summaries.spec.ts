@@ -6,10 +6,18 @@
 import { strict as assert } from "assert";
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import {
+	AttachState,
+	IContainer,
+	IContainerContext,
+	LoaderHeader,
+} from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
+	IContainerRuntimeParams,
+	loadRuntimeBlob,
+	mixinSummaryHandler,
 	Summarizer,
 	ISummarizer,
 	ISummarizeResults,
@@ -32,6 +40,7 @@ import {
 	ITestDataObject,
 	TestDataObjectType,
 } from "@fluidframework/test-version-utils";
+import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 
 const defaultDataStoreId = "default";
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
@@ -179,6 +188,92 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 		ackNackResult = await result.receivedSummaryAckOrNack;
 		assert(ackNackResult.success, "summary op should be acked");
+	});
+
+	it.only("sample use for customized containerRuntimeWithBlob", async () => {
+		const blobContents = "sample payload";
+		// sample API
+		async function containerRuntimeWithBlob(params: IContainerRuntimeParams) {
+			// Blob path in container snapshots
+			const path = ["loop", "guestComponents"];
+
+			const extraBlob = await loadRuntimeBlob(params, path);
+			console.log(extraBlob?.length ?? 0);
+
+			// Loop specific code to create blob content during summary
+			const handler = async (_runtime) => {
+				return { path, content: blobContents };
+			};
+
+			// Add ability to generate that blob during summaries
+			// Please note that handler will be called (and thus blobs will be created) only for summaries that are submiteed to storage
+			// It will not be involved when saving stashed ops (aka local state with uncommited changes)
+			return ContainerRuntime.loadRuntime({
+				...params,
+				containerRuntimeCtor: mixinSummaryHandler(handler, params.containerRuntimeCtor),
+			});
+		}
+
+		const getMockContext = (): Partial<IContainerContext> => {
+			return {
+				attachState: AttachState.Attached,
+				deltaManager: new MockDeltaManager(),
+				quorum: new MockQuorumClients(),
+				taggedLogger: new MockLogger(),
+				clientDetails: { capabilities: { interactive: true } },
+				closeFn: (_error?): void => {},
+				updateDirtyContainerState: (_dirty: boolean) => {},
+			};
+		};
+
+		async function loadContainer(summaryVersion: string) {
+			return provider.loadTestContainer(testContainerConfig, {
+				[LoaderHeader.version]: summaryVersion,
+			});
+		}
+
+		const runtime = await containerRuntimeWithBlob({
+			context: getMockContext() as IContainerContext,
+			registryEntries: [],
+			existing: false,
+			runtimeOptions: undefined,
+			containerScope: {},
+		});
+
+		const summarizer = await createSummarizer(provider);
+		(summarizer as any).containerRuntime = runtime;
+
+		const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
+
+		const submitResult = await result.summarySubmitted;
+		assert(submitResult.success, "on-demand summary should submit");
+		assert(
+			submitResult.data.stage === "submit",
+			"on-demand summary submitted data stage should be submit",
+		);
+		assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
+
+		const broadcastResult = await result.summaryOpBroadcasted;
+		assert(broadcastResult.success, "summary op should be broadcast");
+
+		const ackNackResult = await result.receivedSummaryAckOrNack;
+		assert(ackNackResult.success, "summary op should be acked");
+		const version = ackNackResult.data.summaryAckOp.contents.handle;
+		const container = await loadContainer(version);
+		const defaultDataStore = await requestFluidObject<ITestDataObject>(
+			container,
+			defaultDataStoreId,
+		);
+		const blobHandle = await defaultDataStore._runtime.uploadBlob(
+			stringToBuffer(blobContents, "utf-8"),
+		);
+		defaultDataStore._root.set("blob1", blobHandle);
+		const blobNodePath = blobHandle.absolutePath;
+		const response = await container.request({ url: blobNodePath });
+		const content = bufferToString(response.value, "utf8");
+		assert.strictEqual(content, blobContents, "blob has the wrong content");
+		await flushPromises();
+		console.log("hi");
 	});
 
 	it("should fail on demand summary on stopped summarizer", async () => {
