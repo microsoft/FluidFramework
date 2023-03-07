@@ -22,7 +22,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 import { IDocumentLoader, IDocumentProps } from "./DocumentCreator";
 
-export enum DocumentSize {
+enum numberOfKeysInMap {
 	NotDefined = 0,
 	Medium = 1,
 	Large = 2,
@@ -35,67 +35,54 @@ const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
 const generateRandomStringOfSize = (sizeInBytes: number): string =>
 	crypto.randomBytes(sizeInBytes / 2).toString("hex");
 
-const setMapKeys = (map: SharedMap, count: number, item: string): void => {
+function setMapKeys(map: SharedMap, count: number, item: string): void {
 	for (let i = 0; i < count; i++) {
 		map.set(`key${i}`, item);
 	}
-};
+}
 
-const validateMapKeys = (map: SharedMap, count: number, expectedSize: number): void => {
+function validateMapKeys(map: SharedMap, count: number, expectedSize: number): void {
 	for (let i = 0; i < count; i++) {
-		const key = map.get(`key${i}`);
-		assert(key !== undefined);
-		assert(key.length === expectedSize);
+		const value = map.get(`key${i}`);
+		assert(value !== undefined);
+		assert(value.length === expectedSize);
 	}
-};
+}
 
 export class DocumentMap implements IDocumentLoader {
 	private testContainerConfig: ITestContainerConfig | undefined;
 	private loader: IHostLoader | undefined;
-	private readonly documentSize: DocumentSize = DocumentSize.NotDefined;
+	private readonly numberOfKeysInMap: numberOfKeysInMap = numberOfKeysInMap.NotDefined;
 	private _mainContainer: IContainer | undefined;
 	private dataObject1: ITestFluidObject | undefined;
 	private dataObject1map: SharedMap | undefined;
-	private _fileName: string = "";
-	private _containerUrl: IResolvedUrl | undefined;
+	private fileName: string = "";
+	private containerUrl: IResolvedUrl | undefined;
 	public get logger() {
 		return this.props.logger;
 	}
 	public get mainContainer() {
 		return this._mainContainer;
 	}
-	public get fileName() {
-		return this._fileName;
-	}
-	public set fileName(fileName: string) {
-		this._fileName = fileName;
-	}
-	public get containerUrl() {
-		return this._containerUrl;
-	}
-	public set containerUrl(containerUrl: IResolvedUrl | undefined) {
-		this._containerUrl = containerUrl;
-	}
 
 	/**
 	 * Creates a new DocumentCreator using configuration parameters.
 	 * @param props - Properties for initializing the Document Creator.
-	 * @param documentSize - Size of the document to be created 1=5Mb, 2=10Mb, etc.
+	 * @param numberOfKeysInMap - Size of the document to be created 1=5Mb, 2=10Mb, etc.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
 		switch (this.props.documentType) {
 			case "MediumDocumentMap":
-				this.documentSize = DocumentSize.Medium;
+				this.numberOfKeysInMap = numberOfKeysInMap.Medium;
 				break;
 			case "LargeDocumentMap":
-				this.documentSize = DocumentSize.Large;
+				this.numberOfKeysInMap = numberOfKeysInMap.Large;
 				break;
 			default:
 				throw new Error("Invalid document type");
 		}
 	}
 
-	// add argument to identify the type of benchmarkType = "E2ETime" | "E2EThroughput"
 	public async initializeDocument() {
 		this.testContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
@@ -113,8 +100,8 @@ export class DocumentMap implements IDocumentLoader {
 				},
 				chunkSizeInBytes: 600 * 1024,
 			},
+			loaderProps: { logger: this.props.logger },
 		};
-		this.testContainerConfig.loaderProps = { logger: this.props.logger };
 
 		this.loader = this.props.provider.makeTestLoader(this.testContainerConfig);
 		this._mainContainer = await this.loader.createDetachedContainer(
@@ -128,7 +115,7 @@ export class DocumentMap implements IDocumentLoader {
 		this.dataObject1map = await this.dataObject1.getSharedObject<SharedMap>(mapId);
 		const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 
-		setMapKeys(this.dataObject1map, this.documentSize, largeString);
+		setMapKeys(this.dataObject1map, this.numberOfKeysInMap, largeString);
 		this.fileName = uuid();
 
 		await this._mainContainer.attach(
@@ -140,6 +127,7 @@ export class DocumentMap implements IDocumentLoader {
 	}
 
 	public async loadDocument(): Promise<IContainer> {
+		assert(this.loader !== undefined, "loader should be initialized when loading a document");
 		const requestUrl = await this.props.provider.driver.createContainerUrl(
 			this.fileName,
 			this.containerUrl,
@@ -151,15 +139,13 @@ export class DocumentMap implements IDocumentLoader {
 			url: requestUrl,
 		};
 
-		assert(this.loader !== undefined, "loader should be initialized when loading a document");
 		const container2 = await this.loader.resolve(testRequest);
 		const dataObject2 = await requestFluidObject<ITestFluidObject>(
 			container2,
 			defaultDataStoreId,
 		);
 		const dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-		dataObject2map.set("setup", "done");
-		validateMapKeys(dataObject2map, this.documentSize, maxMessageSizeInBytes);
+		validateMapKeys(dataObject2map, this.numberOfKeysInMap, maxMessageSizeInBytes);
 
 		return container2;
 	}

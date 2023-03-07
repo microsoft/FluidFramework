@@ -30,6 +30,9 @@ export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType;
 }
+export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
+	benchmarkType: BenchmarkType;
+}
 
 export type DescribeE2EDocSuite = (
 	title: string,
@@ -125,11 +128,11 @@ function createE2EDocCompatSuite(
 					);
 
 					afterEach(function (done: Mocha.Done) {
-						const logErrors = getUnexpectedLogErrorException(provider.logger);
 						// if the test failed for another reason
 						// then we don't need to check errors
 						// and fail the after each as well
 						if (this.currentTest?.state === "passed") {
+							const logErrors = getUnexpectedLogErrorException(provider.logger);
 							done(logErrors);
 						} else {
 							done();
@@ -167,3 +170,26 @@ export const describeE2EDocsMemory: DescribeE2EDocSuite = createE2EDocsDescribeW
 	"Memory benchmarks",
 	E2EDefaultDocumentTypes,
 );
+
+function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
+	let isMemoryUsageTest: boolean = false;
+	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
+	for (const flag of ["--grep", "--fgrep"]) {
+		const flagIndex = childArgs.indexOf(flag);
+		if (flagIndex > 0) {
+			console.log("childArgs", childArgs[flagIndex + 1]);
+			isMemoryUsageTest = childArgs[flagIndex + 1] === "@MemoryUsage" ? true : false;
+			break;
+		}
+	}
+	const isMemoryTest: boolean =
+		process.env.FLUID_E2E_MEMORY !== undefined ? true : isMemoryUsageTest ?? false;
+	console.log(`IsMemoryTest: ${isMemoryTest}`);
+
+	return isMemoryTest === true ? describeE2EDocsMemory : describeE2EDocsRuntime;
+}
+
+export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
+export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {
+	return currentType === describeE2EDocsMemory ? "E2EMemory" : "E2ETime";
+};
