@@ -33,13 +33,9 @@ import {
 	ContainerMessageType,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
-	IContainerRuntimeParams,
-	loadRuntimeBlob,
-	mixinSummaryHandler,
 } from "../containerRuntime";
 import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
-import { neverCancelledSummaryToken } from "../summary";
 
 describe("Runtime", () => {
 	describe("Container Runtime", () => {
@@ -638,48 +634,6 @@ describe("Runtime", () => {
 					"",
 					undefined,
 				);
-				it.only("uses sample", async () => {
-					// This example API
-					async function containerRuntimeWithBlob(params: IContainerRuntimeParams) {
-						// Blob path in container snapshots
-						const path = ["loop", "guestComponents"];
-	
-						const extraBlob = await loadRuntimeBlob(params, path);
-						console.log(extraBlob?.length ?? 0);
-	
-						// Loop specific code to create blob content during summary
-						const handler = async (_runtime) => {
-							return { path, content: "sample payload" };
-						};
-	
-						// Add ability to generate that blob during summaries
-						// Please note that handler will be called (and thus blobs will be created) only for summaries that are submiteed to storage
-						// It will not be involved when saving stashed ops (aka local state with uncommited changes)
-						return ContainerRuntime.loadRuntime({
-							...params,
-							containerRuntimeCtor: mixinSummaryHandler(
-								handler,
-								params.containerRuntimeCtor,
-							),
-						});
-					}
-	
-					const runtime = await containerRuntimeWithBlob({
-						context: getMockContext() as IContainerContext,
-						registryEntries: [],
-						existing: false,
-						runtimeOptions: undefined,
-						containerScope: {},
-					});
-					const pendingStateManager = getMockPendingStateManager();
-					patchRuntime(pendingStateManager);
-					runtime.setConnectionState(true);
-					const result = await runtime.submitSummary({
-						summaryLogger: new MockLogger(),
-						cancellationToken: neverCancelledSummaryToken,
-					});
-					console.log(result);
-				});
 
 			it(
 				`No progress for ${maxReconnects} connection state changes and pending state will ` +
@@ -1156,8 +1110,6 @@ describe("Runtime", () => {
 					},
 				]);
 			});
-
-			
 		});
 	});
 });
