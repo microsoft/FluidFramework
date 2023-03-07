@@ -211,7 +211,11 @@ export type IdAllocator = () => ChangesetLocalId;
 export interface NodeChangeset {
 	fieldChanges?: FieldChangeMap;
 	valueChange?: ValueChange;
-	valueConstraint?: Value;
+	valueConstraint?: ValueConstraint;
+}
+
+export interface ValueConstraint {
+	value: Value;
 }
 
 /**

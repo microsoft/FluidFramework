@@ -122,7 +122,14 @@ export class ModularChangeFamily
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
 		const composedFields = this.composeFieldMaps(
-			changes.map((change) => tagChange(change.change.changes, change.revision)),
+			changes
+				.filter(
+					(change) =>
+						(change.change.constraintViolationCount !== undefined &&
+							change.change.constraintViolationCount < 1) ||
+						change.change.constraintViolationCount === undefined,
+				)
+				.map((change) => tagChange(change.change.changes, change.revision)),
 			genId,
 			crossFieldTable,
 		);
@@ -148,7 +155,7 @@ export class ModularChangeFamily
 			crossFieldTable.fieldsToUpdate.size === 0,
 			"Should not need more than one amend pass.",
 		);
-		return makeModularChangeset(composedFields, maxId);
+		return makeModularChangeset(composedFields, maxId, 0);
 	}
 
 	private composeFieldMaps(
@@ -228,7 +235,7 @@ export class ModularChangeFamily
 				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
 			}
 			if (change.change.valueConstraint !== undefined) {
-				valueConstraint = clone(change.change.valueConstraint);
+				valueConstraint = { ...change.change.valueConstraint };
 			}
 		}
 
@@ -281,7 +288,7 @@ export class ModularChangeFamily
 			"Should not need more than one amend pass.",
 		);
 
-		return makeModularChangeset(invertedFields, maxId);
+		return makeModularChangeset(invertedFields, maxId, 0);
 	}
 
 	private invertFieldMap(
@@ -358,11 +365,13 @@ export class ModularChangeFamily
 		let maxId = change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
+		const constraintState = new ConstraintHelper();
 		const rebasedFields = this.rebaseFieldMap(
 			change.changes,
 			tagChange(over.change.changes, over.revision),
 			genId,
 			crossFieldTable,
+			constraintState,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -387,7 +396,7 @@ export class ModularChangeFamily
 			"Should not need more than one amend pass.",
 		);
 
-		return makeModularChangeset(rebasedFields, maxId);
+		return makeModularChangeset(rebasedFields, maxId, constraintState.violationCount);
 	}
 
 	private rebaseFieldMap(
@@ -395,6 +404,7 @@ export class ModularChangeFamily
 		over: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
+		constraintState: any,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -420,6 +430,7 @@ export class ModularChangeFamily
 							{ revision, change: baseChild },
 							genId,
 							crossFieldTable,
+							constraintState,
 						),
 					genId,
 					manager,
@@ -448,7 +459,21 @@ export class ModularChangeFamily
 		over: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
+		constraintState: any,
 	): NodeChangeset {
+		if (
+			change.valueConstraint !== undefined &&
+			over.change.valueChange !== undefined &&
+			over.change.valueChange !== change.valueConstraint
+		) {
+			constraintState.increment();
+			console.log(
+				"Value constraint violated!!",
+				over.change.valueChange,
+				change.valueConstraint,
+			);
+		}
+
 		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
 			return change;
 		}
@@ -463,6 +488,7 @@ export class ModularChangeFamily
 				},
 				genId,
 				crossFieldTable,
+				constraintState,
 			),
 		};
 	}
@@ -542,7 +568,7 @@ export class ModularChangeFamily
 		}
 
 		if (change.valueConstraint !== undefined) {
-			modify.valueConstraint = this.intoDeltaImpl(change.valueConstraint, repairStore, path);
+			modify.valueConstraint = change.valueConstraint;
 		}
 
 		return modify;
@@ -591,6 +617,14 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 		dstDependents: new Map(),
 		fieldsToUpdate: new Set(),
 	};
+}
+
+class ConstraintHelper {
+	public violationCount = 0;
+
+	public increment() {
+		this.violationCount++;
+	}
 }
 
 interface InvertData {
@@ -691,8 +725,12 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 	}
 }
 
-function makeModularChangeset(changes: FieldChangeMap, maxId: number): ModularChangeset {
-	const changeset: ModularChangeset = { changes };
+function makeModularChangeset(
+	changes: FieldChangeMap,
+	maxId: number,
+	constraintViolationCount: number,
+): ModularChangeset {
+	const changeset: ModularChangeset = { changes, constraintViolationCount };
 	if (maxId >= 0) {
 		changeset.maxId = brand(maxId);
 	}
@@ -749,7 +787,7 @@ export class ModularEditBuilder
 		maxId: ChangesetLocalId = brand(-1),
 	): void {
 		const changeMap = this.buildChangeMap(path, field, fieldKind, change);
-		this.applyChange(makeModularChangeset(changeMap, maxId));
+		this.applyChange(makeModularChangeset(changeMap, maxId, 0));
 	}
 
 	submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
@@ -758,6 +796,7 @@ export class ModularEditBuilder
 				makeModularChangeset(
 					this.buildChangeMap(change.path, change.field, change.fieldKind, change.change),
 					-1,
+					0,
 				),
 			),
 		);
@@ -811,7 +850,9 @@ export class ModularEditBuilder
 	}
 
 	addValueConstraint(path: UpPath, currentValue: Value): void {
-		const nodeChange: NodeChangeset = { valueConstraint: currentValue };
+		const nodeChange: NodeChangeset = {
+			valueConstraint: { value: currentValue },
+		};
 		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
 			path.parentIndex,
 			nodeChange,

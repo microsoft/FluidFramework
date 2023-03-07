@@ -625,6 +625,10 @@ describe("SharedTree", () => {
 	});
 
 	describe("Constraints", () => {
+		// one client changes with constraint
+		// someone else violates constraint
+		// first client learns about second client's change without
+		// theirs
 		it.only("value changed constraint", async () => {
 			const provider = await TestTreeProvider.create(2);
 			insert(provider.trees[0], 0, "a");
