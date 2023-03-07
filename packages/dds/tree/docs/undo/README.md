@@ -193,7 +193,17 @@ because we cannot know in advance the exact impact of the change to undo.
 For this V1, we simply produce a "best attempt" undo based on the most up to date version of the change to be undone.
 This could lead to some data loss in scenarios where the change to be undone deletes a subtree under which content is concurrently inserted.
 
-### Undo Commit Tree
+#### Creating Concrete Redo Edits
+
+Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse all the edits that were applied since the undo.
+This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
+
+-   It is better at mitigating data-loss caused by undo.
+    For example, undoing an insert will delete any content that has since been added under the inserted node.
+    Applying the inverse of the undo will restore that content while re-applying the original insert will not.
+-   It is more efficient as it doesn't require rebasing over as many edits.
+
+### The Undo Commit Tree
 
 In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
 To that end, we need to maintain a tree of undoable commits where each node may look like this:
@@ -213,6 +223,7 @@ That tree is a sparse copy of the commit tree maintained by `EditManager` and `C
 
 The structure forms a tree as opposed to a linked-list because different local branches can share the same ancestor commits.
 Each branch however only ever sees a single spine of this tree, which therefore looks like a linked-list to said branch.
+The rest of the document uses the term "list" when describing operations performed at the scope of a single branch.
 
 The tree is sparse because it does **_not_** contain the following kinds of edits:
 
@@ -222,27 +233,43 @@ The tree is sparse because it does **_not_** contain the following kinds of edit
 Note that some of these edits in the tree may be part of the trunk while others may be on a branch.
 Each branch need only maintain a "head" pointer to the child-most commit on the branch.
 
-#### Adding New Commits
+### The Redo Commit Tree
 
-When a new edit is made by the local client, one of two things must happen:
+The tree of redoable commits is maintained across branches in a similar fashion to the undoable commits tree.
+Redoable commits are effectively undoable commits and can therefore use the same `UndoableCommit` structure described above.
 
--   If the edit is not an undo then an undoable commit node is added under the head undoable commit maintained by the branch on which the edit was made.
-    This new undoable commit becomes the new head undoable commit for this branch.
--   If the edit is an undo then the head undoable commit maintained by the branch on which the edit was made is popped.
-    The parent of the undone commit becomes the new head undoable commit for this branch.
+### Reacting to Local Edits
 
-#### Forking
+The redo and undo commit lists for a branch are updated as follows in the face of new local edits:
 
-When a branch is forked, the new branch can simply obtain the head undoable commit pointer from the parent branch.
+-   If the edit is neither an undo nor a redo:
+    -   A new undoable commit node is pushed onto the undoable commit list.
+        The parent field of the new commit node should point to the previous head undoable commit.
+    -   The head pointer for the redoable commits is cleared for that branch.
+        This effectively drops all the redoable commits for the branch.
+-   If the edit is an undo:
+    -   The head undoable commit is popped.
+        The parent of the undoable commit becomes the new head undoable commit.
+    -   The concrete undo commit is pushed onto the tip of the redoable commit list.
+        The parent field of the new redoable commit node should point to the previous head redoable commit.
+-   If the edit is a redo:
+    -   The head pointer for the redoable commits is popped.
+        The parent of the redoable commit becomes the new head redoable commit.
+    -   The concrete redo commit is pushed onto the undoable commit list.
+        The parent field of the new commit node should point to the previous head undoable commit.
+
+### Forking
+
+When a branch is forked, the new branch can simply obtain the head undoable and redoable commit pointers from the parent branch.
 This helps keep forking cheap.
 
-#### Pulling
+### Pulling
 
-When a branch is pulled, it must re-attach whatever undoable commits it has to the head of the undo list maintained by the parent branch.
+When a branch is pulled, it must re-attach whatever undoable and redoable commits it has to the head of the undo list maintained by the parent branch.
 This can be done by finding the lowest common ancestor in between the two branches,
 and attaching to the tip of the parent branch all of the commits on the child branch that lie under the common ancestor.
 
-Note that all the commits from the child branch will undergo rebasing so the undoable commit nodes for them will need to be remade.
+Note that all the commits from the child branch will undergo rebasing so the undoable/redoable commit nodes for them will need to be remade.
 It would not be valid to simply update the existing child branch's undo commit node objects by updating the edits and repair data (see below) within.
 That's because it's possible that the child branch may itself be the parent branch of some other child branch,
 whose undo queue includes those commit nodes.
@@ -253,7 +280,7 @@ One simple way to characterize what needs to happen
 is to replay (the rebased version of) the local branch edits onto a new fork of the parent branch.
 This would however require knowing which of those local edits were undo, redos, or normal edits.
 
-#### Dropping Old Commits
+### Dropping Old Commits
 
 As sequenced edits fall out of the collab window,
 we have the option to either drop or retain the corresponding commit nodes in the undo tree.
@@ -264,9 +291,9 @@ It can be still be thought of as sparse if we ignore the fact that sequenced com
 
 ### Repair Data
 
-Creating a concrete undo edit requires access to the repair data associated with the edit to be undone.
+Creating a concrete undo (or redo) edit requires access to the repair data associated with the edit to be undone/redone.
 
-This data can be stored in a repair data store that is co-located with the edit on the undoable commit tree.
+This data can be stored in a repair data store that is co-located with the edit on the relevant commit tree.
 This approach has the following pros and cons:
 
 -   Con: This approach fails to take advantage of repair data store's ability to store repair data for multiple edits.
@@ -275,35 +302,6 @@ This approach has the following pros and cons:
     (which is not yet supported).
     This may also make up for the overhead mentioned above because it makes it faster to discard repair data
     (we just drop the reference to the store that contains the repair data).
-
-### Redo
-
-Redo support can be achieved using a similar approach to that of undo.
-
-#### Adding New Commits
-
-Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over later edits.
-This is preferable to rebasing the original change over later edits for two reasons:
-
--   It is better at mitigating data-loss caused by undo.
-    For example, undoing an insert will delete any content that has since been added under the inserted node.
-    Applying the inverse of the undo will restore that content while re-applying the original insert will not.
--   It is more efficient as it doesn't require as much rebasing.
-
-Redoable commits are effectively undoable commits and can therefore use the same `UndoableCommit` structure described above.
-
-#### Redo Commit Tree
-
-The tree of redoable commits is maintained across branches in similarly to the undoable commits tree.
-The key differences are as follows:
-
--   When a new edit is made by the local client:
-    -   If the edit is an undo then the commit is pushed onto the tip of the redoable commit list.
-        The head pointer for the redoable commits should now point to that commit node.
-    -   If the edit is a redo then the head pointer for the redoable commits is popped.
-        The parent redo commit (if any) becomes the head redo commit for that branch.
-        Note that this is done in addition to adding a new undoable commit (see [Adding New Commits](#adding-new-commits) above).
-    -   If the edit is neither and undo nor a redo then the head pointer for the redoable commits is cleared for that branch.
 
 ## Glossary
 
