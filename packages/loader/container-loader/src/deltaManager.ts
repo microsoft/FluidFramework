@@ -230,11 +230,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		batch = false,
 		metadata?: any,
 		compression?: string,
+		referenceSequenceNumber?: number,
 	) {
+		// Back-compat ADO:3455
+		const backCompatRefSeqNum = referenceSequenceNumber ?? this.lastProcessedSequenceNumber;
 		const messagePartial: Omit<IDocumentMessage, "clientSequenceNumber"> = {
 			contents,
 			metadata,
-			referenceSequenceNumber: this.lastProcessedSequenceNumber,
+			referenceSequenceNumber: backCompatRefSeqNum,
 			type,
 			compression,
 		};

@@ -15,15 +15,36 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.3.0
+
+## 2.0.0-internal.3.3.0 Upcoming changes
+
+-   [deltaManager property in IConnectableRuntime moved](#deltaManager-property-in-IConnectableRuntime-moved)
+-   [attachGraph and bind methods in IFluidHandle deprecated](#attachGraph-and-bind-methods-in-IFluidHandle-deprecated)
+
+### deltaManager property in IConnectableRuntime moved
+
+The deltaManager property in IConnectableRuntime has been moved to ISummarizerRuntime directly. ISummarizerRuntime extends IConnectableRuntime so it hasn't been changed.
+
+### attachGraph and bind methods in IFluidHandle deprecated
+
+`attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
 
 -   [For Driver Authors: Document Storage Service policy may become required](#for-driver-authors-document-storage-service-policy-may-become-required)
 -   [Deprecated PendingStateManager interfaces](#Deprecated-PendingStateManager-interfaces)
--   [Deprecated IFluidHTMLView and HTMLViewAdapter](#Deprecated-IFluidHTMLView-and-HTMLViewAdapter)
--   [test-drivers and test-pairwise-generator packages will no longer be published](test-drivers-and-test-pairwise-generator-packages-will-no-longer-be-published)
--   [Container and RelativeLoader Deprecated](#Container-and-RelativeLoader-Deprecated)
+-   [Deprecated IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter](#Deprecated-IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter)
+-   [Some test packages will no longer be published](#some-test-packages-will-no-longer-be-published)
+-   [Container and RelativeLoader deprecated](#container-and-relativeloader-deprecated)
+-   [BlobAggregationStorage and SnapshotExtractor deprecated](#blobaggregationstorage-and-snapshotextractor-deprecated)
+-   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
+-   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
+-   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
+-   [driver-utils members deprecated](#driver-utils-members-deprecated)
+-   [Aqueduct members deprecated](#Aqueduct-members-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -43,20 +64,76 @@ The following interfaces used by the `PendingStateManager` have been deprecated 
 -   `IPendingState`
 -   `IPendingLocalState`
 
-### Deprecated IFluidHTMLView and HTMLViewAdapter
+### Deprecated IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter
 
-`IFluidHTMLView` and `HTMLViewAdapter` have been deprecated. It is recommended not to bundle view code with Fluid data, and instead apply the views from outside the container (see https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/external-views for an example of this approach). For those views, a dedicated view framework is recommended (see view sampler demo https://github.com/microsoft/FluidFramework/tree/main/examples/apps/view-framework-sampler)
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` have been deprecated. It is recommended not to bundle view code with Fluid data, and instead apply the views from outside the container (see https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/external-views for an example of this approach). For those views, a dedicated view framework is recommended (see view sampler demo https://github.com/microsoft/FluidFramework/tree/main/examples/apps/view-framework-sampler)
 
-### test-drivers and test-pairwise-generator packages will no longer be published
+### Some test packages will no longer be published
 
-These packages are currently published as `@fluidframework/test-drivers` and `@fluidframework/test-pairwise-generator`. These will be moved to the `@fluid-internal` scope and will no longer be published.
+These packages are currently published under the `@fluidframework` scope:
 
-### Container and RelativeLoader Deprecated
+-   `@fluidframework/test-drivers`
+-   `@fluidframework/test-pairwise-generator`
+-   `@fluidframework/test-version-utils`
+-   `@fluidframework/test-loader-utils`
+
+These will be moved to the `@fluid-internal` scope and will no longer be published.
+
+### Container and RelativeLoader deprecated
 
 The Container and RelativeLoader classes in `@fluidframework/container-loader` have been deprecated and will be removed in the next major release.
 
 -   Container usage should be replaced with usage of the interface IContainer from `@fluidframework/container-definitions`.
 -   RelativeLoader is an internal class and should not be used directly.
+
+### BlobAggregationStorage and SnapshotExtractor deprecated
+
+The Container and RelativeLoader classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
+the next major release. These classes were experimental and never widely used. There are no replacements.
+
+### Summarizer node and related items deprecated
+
+The following functions, interfaces, and types currently available in `@fluidframework/runtime-utils` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+
+-   `createRootSummarizerNode`
+-   `createRootSummarizerNodeWithGC`
+-   `IFetchSnapshotResult`
+-   `IRootSummarizerNode`
+-   `IRootSummarizerNodeWithGC`
+-   `ISummarizerNodeRootContract`
+-   `RefreshSummaryResult`
+
+### IFluidTokenProvider deprecated
+
+The IFluidTokenProvider interface has been deprecated and will be removed in an upcoming release. Fluid Framework does not prescribe a particular approach to token providers.
+
+`ContainerRuntime.IFluidTokenProvider` has also been deprecated and will be removed in an upcoming release. Token providers, like any dependency, should be accessed using normal provider patterns.
+
+### web-code-loader and ICodeAllowList deprecated
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from the `@fluidframework/container-definitions` package have been deprecated and will be removed in an upcoming release. Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.
+
+### driver-utils members deprecated
+
+The following members of the `@fluidframework/driver-utils` package have been deprecated and will be removed in an upcoming release:
+
+-   `waitForConnectedState`
+-   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
+-   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
+
+### Aqueduct members deprecated
+
+The following members of the `@fluidframework/aqueduct` package have been deprecated and will be removed in an upcoming release:
+
+-   `waitForAttach()`
+    -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

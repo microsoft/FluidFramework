@@ -32,6 +32,7 @@ See the [package README](./packages/external-controller/README.md) for more info
 
 For information on adding and removing dependencies, see [Managing
 dependencies](https://github.com/microsoft/FluidFramework/wiki/Managing-dependencies) in our wiki.
+
 ### Dependency overrides
 
 The root package.json of this release group contains the following dependency adjustments/overrides.

@@ -43,17 +43,35 @@
  * @packageDocumentation
  */
 
-export { MemberChangeKind } from "./Audience";
+export { MemberChangeKind } from "./AudienceMetadata";
+export { ContainerStateChangeKind } from "./Container";
+export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
-
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
 	LogEntry,
 	StateChangeLogEntry,
 } from "./Logs";
-
+export {
+	debuggerMessageSource,
+	HasContainerId,
+	ContainerStateChangeMessage,
+	ContainerStateChangeMessageData,
+	IDebuggerMessage,
+	GetContainerListMessage,
+	GetContainerStateMessage,
+	GetContainerStateMessageData,
+	RegistryChangeMessage,
+	RegistryChangeMessageData,
+	handleIncomingMessage,
+	handleIncomingWindowMessage,
+	InboundHandlers,
+	isDebuggerMessage,
+	MessageLoggingOptions,
+	postMessageToWindow,
+} from "./messaging";
 export {
 	DebuggerRegistry,
 	DebuggerRegistryEvents,

@@ -8,6 +8,7 @@ import {
     IWholeSummaryPayload,
     IWriteSummaryResponse,
     NetworkError,
+    isNetworkError,
 } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -246,6 +247,7 @@ export function create(
      * Retrieves a summary.
      * If sha is "latest", returns latest summary for owner/repo.
      */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.get("/repos/:owner/:repo/git/summaries/:sha", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         if (!repoManagerParams.storageRoutingId?.tenantId ||
@@ -273,6 +275,7 @@ export function create(
     /**
      * Creates a new summary.
      */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         // request.query type is { [string]: string } but it's actually { [string]: any }
@@ -320,6 +323,7 @@ export function create(
      * Deletes the latest summary for the given document.
      * If header Soft-Delete="true", only flags summary as deleted.
      */
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     router.delete("/repos/:owner/:repo/git/summaries", async (request, response) => {
         const repoManagerParams = getRepoManagerParamsFromRequest(request);
         if (!repoManagerParams.storageRoutingId?.tenantId ||
@@ -333,7 +337,6 @@ export function create(
         const resultP = repoManagerFactory.open(repoManagerParams)
             .then(async (repoManager) => {
                 const fsManager = fileSystemManagerFactory.create(repoManagerParams.fileSystemManagerParams);
-                await checkSoftDeleted(fsManager, repoManager.path, repoManagerParams, repoPerDocEnabled);
                 return deleteSummary(
                     repoManager,
                     fsManager,
@@ -341,7 +344,25 @@ export function create(
                     softDelete,
                     repoPerDocEnabled,
                     getExternalWriterParams(request.query?.config as string | undefined));
-            }).catch((error) => logAndThrowApiError(error, request, repoManagerParams));
+            }).catch((error) => {
+                if (isNetworkError(error)) {
+                    if (error.code === 400 && error.message.startsWith("Repo does not exist")) {
+                        // Document is already deleted, so there is nothing to do. This is a deletion success.
+                        const lumberjackProperties = {
+                            ...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
+                            [BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
+                            [BaseGitRestTelemetryProperties.softDelete]: softDelete,
+                        };
+                        Lumberjack.info(
+                            "Attempted to delete document that was already deleted or did not exist",
+                            lumberjackProperties,
+                        );
+                        return;
+                    }
+                }
+
+                logAndThrowApiError(error, request, repoManagerParams);
+            });
         handleResponse(resultP, response, undefined, undefined, 204);
     });
 

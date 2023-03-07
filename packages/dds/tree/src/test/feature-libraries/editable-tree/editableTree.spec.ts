@@ -151,7 +151,7 @@ describe("editable-tree: read-only", () => {
 			configurable: true,
 			enumerable: true,
 			value: expected,
-			writable: false,
+			writable: true,
 		});
 
 		// primitive node of a sequence field is unwrapped into value
@@ -701,7 +701,6 @@ describe("editable-tree: read-only", () => {
 			"primaryType",
 			"parent",
 		]);
-		assert.equal(proxy.address.phones.primaryType, phonesSchema.name);
 		const act = [...proxy.address.phones].map(
 			(phone: UnwrappedEditableTree): Value | object => {
 				if (isPrimitiveValue(phone)) {
@@ -736,8 +735,6 @@ describe("editable-tree: read-only", () => {
 		const phonesPrimaryField = phonesNode[getField](phonesPrimary.key);
 		assert(isEditableField(phonesPrimaryField));
 		assert.equal(phonesPrimaryField.length, 4);
-		// assert the primary field has no primaryType if accessed without prior unwrapping
-		assert.equal(phonesPrimaryField.primaryType, undefined);
 
 		// get the sequence node with the primary field
 		const simplePhonesNode = phonesPrimaryField.getNode(3);

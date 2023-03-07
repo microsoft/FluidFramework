@@ -5,12 +5,13 @@
 
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { RevisionTag, TreeSchemaIdentifier } from "../../../core";
+import { fakeRepair } from "../../utils";
+import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tag: RevisionTag = brand(42);
+const tag: RevisionTag = mintRevisionTag();
 
 export type TestChangeset = SF.Changeset<TestChange>;
 
@@ -58,11 +59,18 @@ function createReviveChangeset(
 	count: number,
 	detachedBy: RevisionTag,
 	detachIndex?: number,
+	reviver = fakeRepair,
 	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
 	lastDetachedBy?: RevisionTag,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachedBy, detachIndex);
+	const markList = SF.sequenceFieldEditor.revive(
+		startIndex,
+		count,
+		detachedBy,
+		reviver,
+		detachIndex,
+	);
 	const mark = markList[markList.length - 1] as SF.Reattach;
 	if (conflictsWith !== undefined) {
 		mark.conflictsWith = conflictsWith;
@@ -81,6 +89,7 @@ function createIntentionalReviveChangeset(
 	count: number,
 	detachedBy: RevisionTag,
 	detachIndex?: number,
+	reviver = fakeRepair,
 	conflictsWith?: RevisionTag,
 	linage?: SF.LineageEvent[],
 ): SF.Changeset<never> {
@@ -88,6 +97,7 @@ function createIntentionalReviveChangeset(
 		startIndex,
 		count,
 		detachedBy,
+		reviver,
 		detachIndex,
 		true,
 	);

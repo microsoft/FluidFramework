@@ -46,7 +46,7 @@ type policyAction = "handle" | "resolve" | "final";
  * This command is equivalent to `fluid-repo-policy-check`.
  * `fluid-repo-policy-check -s` is equivalent to `flub check policy --stdin`
  */
-export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
+export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	static description =
 		"Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.";
 
@@ -97,13 +97,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 
 	async run() {
 		let handlersToRun: Handler[] = policyHandlers.filter((h) => {
-			if (
-				this.processedFlags.excludeHandler === undefined ||
-				this.processedFlags.excludeHandler.length === 0
-			) {
+			if (this.flags.excludeHandler === undefined || this.flags.excludeHandler.length === 0) {
 				return true;
 			}
-			const shouldRun = this.processedFlags.excludeHandler?.includes(h.name) === false;
+			const shouldRun = this.flags.excludeHandler?.includes(h.name) === false;
 			if (!shouldRun) {
 				this.info(`Excluding handler: ${h.name}`);
 			}
@@ -111,7 +108,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 		});
 
 		// list the handlers then exit
-		if (this.processedFlags.listHandlers) {
+		if (this.flags.listHandlers) {
 			for (const h of handlersToRun) {
 				this.log(
 					`${h.name}\nresolver: ${h.resolver !== undefined} finalHandler: ${
@@ -124,38 +121,36 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 		}
 
 		const pathRegex: RegExp =
-			this.processedFlags.path === undefined
-				? /.?/
-				: new RegExp(this.processedFlags.path, "i");
+			this.flags.path === undefined ? /.?/ : new RegExp(this.flags.path, "i");
 
-		if (this.processedFlags.handler !== undefined) {
-			const handlerRegex: RegExp = new RegExp(this.processedFlags.handler, "i");
+		if (this.flags.handler !== undefined) {
+			const handlerRegex: RegExp = new RegExp(this.flags.handler, "i");
 			this.info(`Filtering handlers by regex: ${handlerRegex}`);
 			handlersToRun = handlersToRun.filter((h) => handlerRegex.test(h.name));
 		}
 
-		if (this.processedFlags.path !== undefined) {
+		if (this.flags.path !== undefined) {
 			this.info(`Filtering file paths by regex: ${pathRegex}`);
 		}
 
-		if (this.processedFlags.fix) {
+		if (this.flags.fix) {
 			this.info("Resolving errors if possible.");
 		}
 
-		if (this.processedFlags.exclusions === undefined) {
+		if (this.flags.exclusions === undefined) {
 			this.error("No exclusions file provided.");
 		}
 
 		let exclusionsFile: string[];
 		try {
-			exclusionsFile = await readJsonAsync(this.processedFlags.exclusions);
+			exclusionsFile = await readJsonAsync(this.flags.exclusions);
 		} catch {
 			this.error("Unable to locate or parse path to exclusions file");
 		}
 
 		const exclusions: RegExp[] = exclusionsFile.map((e: string) => new RegExp(e, "i"));
 
-		if (this.processedFlags.stdin) {
+		if (this.flags.stdin) {
 			const pipeString = await readStdin();
 
 			if (pipeString !== undefined) {
@@ -167,7 +162,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 						);
 				} finally {
 					try {
-						runPolicyCheck(handlersToRun, this.processedFlags.fix);
+						runPolicyCheck(handlersToRun, this.flags.fix);
 					} finally {
 						this.logStats();
 					}
@@ -201,7 +196,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 					);
 			} finally {
 				try {
-					runPolicyCheck(handlersToRun, this.processedFlags.fix);
+					runPolicyCheck(handlersToRun, this.flags.fix);
 				} finally {
 					this.logStats();
 				}
@@ -222,7 +217,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy.flags> {
 				if (result !== undefined && result !== "") {
 					let output = `${newline}file failed policy check: ${file}${newline}${result}`;
 					const resolver = handler.resolver;
-					if (this.processedFlags.fix && resolver) {
+					if (this.flags.fix && resolver) {
 						output += `${newline}attempting to resolve: ${file}`;
 						const resolveResult = runWithPerf(handler.name, "resolve", () =>
 							resolver(file, CheckPolicy.pathToGitRoot),

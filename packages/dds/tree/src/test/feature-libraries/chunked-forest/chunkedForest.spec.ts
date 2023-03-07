@@ -14,9 +14,9 @@ import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk
 
 import {
 	AnchorSet,
-	Checkout,
+	TransactionCheckout,
 	EditManager,
-	FieldKey,
+	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
@@ -37,15 +37,14 @@ import {
 	jsonableTreeFromCursor,
 	runSynchronousTransaction,
 	singleTextCursor,
+	defaultChunkPolicy,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
 
-const fooKey: FieldKey = brand("foo");
-
 describe("ChunkedForest", () => {
 	testForest({
-		suiteName: "",
+		suiteName: "ChunkedForest forest suite",
 		factory: () =>
 			buildChunkedForest(
 				new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData),
@@ -53,8 +52,7 @@ describe("ChunkedForest", () => {
 		skipCursorErrorCheck: true,
 	});
 
-	// TODO: Unskip once BasicChunk implements [cursorChunk]
-	it.skip("doesn't copy data when capturing and restoring repair data", () => {
+	it("doesn't copy data when capturing and restoring repair data", () => {
 		const initialState: JsonableTree = {
 			type: brand("Node"),
 			fields: {
@@ -81,7 +79,7 @@ describe("ChunkedForest", () => {
 			new Map(
 				mapCursorFields(cursor, () => [
 					cursor.getFieldKey(),
-					mapCursorField(cursor, () => chunkTree(cursor)),
+					mapCursorField(cursor, () => chunkTree(cursor, defaultChunkPolicy)),
 				]),
 			),
 			cursor.value,
@@ -90,11 +88,11 @@ describe("ChunkedForest", () => {
 		chunkCursor.firstNode();
 		initializeForest(forest, [chunkCursor]);
 
-		const checkout: Checkout<DefaultEditBuilder, DefaultChangeset> = {
+		const checkout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset> = {
 			forest,
 			changeFamily: defaultChangeFamily,
 			submitEdit: (edit) => {
-				const delta = editManager.addLocalChange(edit);
+				const delta = editManager.addLocalChange(mintRevisionTag(), edit);
 				forest.applyDelta(delta);
 			},
 		};

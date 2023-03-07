@@ -20,7 +20,6 @@ import {
 	ChangesetLocalId,
 } from "../../../feature-libraries";
 import {
-	RepairDataStore,
 	makeAnonChange,
 	RevisionTag,
 	tagChange,
@@ -30,6 +29,7 @@ import {
 	Delta,
 	FieldKey,
 	UpPath,
+	mintRevisionTag,
 } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { assertDeltaEqual, deepFreeze } from "../../utils";
@@ -41,8 +41,8 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: (change, deltaFromChild): Delta.FieldChanges =>
-		change === 0 ? {} : { beforeShallow: [{ index: 0, setValue: change.new }] },
+	intoDelta: (change, deltaFromChild) =>
+		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
 };
 
 const valueField = new FieldKind(
@@ -60,7 +60,7 @@ const singleNodeEncoder: FieldChangeEncoder<NodeChangeset> = {
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
-	invert: (change, invertChild) => invertChild(change.change),
+	invert: (change, invertChild) => invertChild(change.change, 0),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -78,10 +78,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	encoder: singleNodeEncoder,
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): Delta.FieldChanges => {
-		const childDelta = deltaFromChild(change, 0);
-		return childDelta !== undefined ? { beforeShallow: [{ index: 0, ...childDelta }] } : {};
-	},
+	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
 };
 
 const singleNodeField = new FieldKind(
@@ -96,7 +93,7 @@ type IdChangeset = ChangesetLocalId;
 
 const idFieldRebaser: FieldChangeRebaser<IdChangeset> = {
 	compose: (changes, composeChild, genId): IdChangeset => genId(),
-	invert: (change, invertChild, genId): IdChangeset => genId(),
+	invert: (change, invertChild, reviver, genId): IdChangeset => genId(),
 	rebase: (change, over, rebaseChild, genId): IdChangeset => genId(),
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -107,7 +104,7 @@ const idFieldHandler: FieldChangeHandler<IdChangeset> = {
 	rebaser: idFieldRebaser,
 	encoder: new FieldKinds.ValueEncoder<IdChangeset & JsonCompatibleReadOnly>(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild) => ({}),
+	intoDelta: (change, deltaFromChild) => [],
 };
 
 /**
@@ -121,20 +118,14 @@ const idField = new FieldKind(
 	new Set(),
 );
 
-const noRepair: RepairDataStore = {
-	capture: () => {},
-	getNodes: () => assert.fail(),
-	getValue: () => assert.fail(),
-};
-
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[singleNodeField, valueField, idField].map((field) => [field.identifier, field]),
 );
 
 const family = new ModularChangeFamily(fieldKinds);
 
-const tag1: RevisionTag = brand(1);
-const tag2: RevisionTag = brand(2);
+const tag1: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
@@ -296,7 +287,7 @@ const nodeValueOverwrite: ModularChangeset = {
 	]),
 };
 
-const detachedBy: RevisionTag = brand(42);
+const detachedBy = mintRevisionTag();
 const nodeValueRevert: ModularChangeset = {
 	changes: new Map([
 		[
@@ -305,7 +296,7 @@ const nodeValueRevert: ModularChangeset = {
 				fieldKind: genericFieldKind.identifier,
 				change: brand(
 					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { revert: detachedBy },
+						valueChange: { value: testValue },
 					}),
 				),
 			},
@@ -492,7 +483,7 @@ describe("ModularChangeFamily", () => {
 				{
 					changes: new Map([[fieldB, change2B]]),
 				},
-				brand(2),
+				tag2,
 			);
 
 			deepFreeze(change1);
@@ -531,6 +522,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
+				revisions: [{ tag: tag1 }, { tag: tag2 }],
 			};
 
 			assert.deepEqual(composed, expected);
@@ -555,6 +547,7 @@ describe("ModularChangeFamily", () => {
 					[fieldA, { fieldKind: idField.identifier, revision: tag1, change: brand(id0) }],
 					[fieldB, { fieldKind: idField.identifier, revision: tag2, change: brand(id0) }],
 				]),
+				revisions: [{ tag: tag1 }, { tag: tag2 }],
 			};
 
 			const composed1 = family.compose([tagChange(change1, tag1), tagChange(change2, tag2)]);
@@ -563,6 +556,7 @@ describe("ModularChangeFamily", () => {
 			const expected2: ModularChangeset = {
 				maxId: id1,
 				changes: new Map([[fieldA, { fieldKind: idField.identifier, change: brand(id1) }]]),
+				revisions: [{ tag: tag1 }, { tag: tag2 }],
 			};
 
 			const composed2 = family.compose([tagChange(change1, tag1), tagChange(change1, tag2)]);
@@ -701,50 +695,55 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const innerFieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: 1 }],
-			};
-			const outerFieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, fields: new Map([[fieldA, innerFieldADelta]]) }],
-			};
-			const fieldBDelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: 2 }],
-			};
+			const valueDelta1: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: 1,
+				},
+			];
+
+			const valueDelta2: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: 2,
+				},
+			];
+
+			const nodeDelta: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					fields: new Map([[fieldA, valueDelta1]]),
+				},
+			];
+
 			const expectedDelta: Delta.Root = new Map([
-				[fieldA, outerFieldADelta],
-				[fieldB, fieldBDelta],
+				[fieldA, nodeDelta],
+				[fieldB, valueDelta2],
 			]);
 
 			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
 		});
 
 		it("value overwrite", () => {
-			const fieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: testValue }],
-			};
-			const expectedDelta: Delta.Root = new Map([[fieldA, fieldADelta]]);
+			const nodeDelta: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: testValue,
+				},
+			];
+			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
 			assertDeltaEqual(family.intoDelta(nodeValueOverwrite), expectedDelta);
 		});
 
 		it("value revert", () => {
-			const fieldADelta: Delta.FieldChanges = {
-				beforeShallow: [{ index: 0, setValue: testValue }],
-			};
-			const expectedDelta: Delta.Root = new Map([[fieldA, fieldADelta]]);
-			const repair: RepairDataStore = {
-				capture: (TreeDestruction) => assert.fail(),
-				getNodes: () => assert.fail(),
-				getValue: (revision, path) => {
-					assert.equal(revision, detachedBy);
-					assert.deepEqual(path, {
-						parent: undefined,
-						parentField: fieldA,
-						parentIndex: 0,
-					});
-					return testValue;
+			const nodeDelta: Delta.MarkList = [
+				{
+					type: Delta.MarkType.Modify,
+					setValue: testValue,
 				},
-			};
-			const actual = family.intoDelta(nodeValueRevert, repair);
+			];
+			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
+			const actual = family.intoDelta(nodeValueRevert);
 			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
@@ -793,5 +792,105 @@ describe("ModularChangeFamily", () => {
 		editor.setValue(path, testValue);
 		const changes = editor.getChanges();
 		assert.deepEqual(changes, [nodeValueOverwrite]);
+	});
+
+	it("concatenates and indexes revisions", () => {
+		const rev1 = mintRevisionTag();
+		const rev2 = mintRevisionTag();
+		const rev3 = mintRevisionTag();
+		const rev4 = mintRevisionTag();
+
+		let composeWasTested = false;
+		let rebaseWasTested = false;
+		const compose: FieldChangeRebaser<RevisionTag[]>["compose"] = (
+			changes: TaggedChange<RevisionTag[]>[],
+			composeChild,
+			genId,
+			crossFieldManager,
+			revisionIndexer,
+		): RevisionTag[] => {
+			const revsIndices: number[] = [rev1, rev2, rev3, rev4].map((c) => revisionIndexer(c));
+			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
+			composeWasTested = true;
+			return [];
+		};
+		const rebase: FieldChangeRebaser<RevisionTag[]>["rebase"] = (
+			change: RevisionTag[],
+			over: TaggedChange<RevisionTag[]>,
+			rebaseChild,
+			genId,
+			crossFieldManager,
+			revisionIndexer,
+		): RevisionTag[] => {
+			const revsIndices: number[] = [rev1, rev2, rev4].map((c) => revisionIndexer(c));
+			assert.deepEqual(revsIndices, [0, 1, 2]);
+			rebaseWasTested = true;
+			return change;
+		};
+		const handler = {
+			rebaser: {
+				compose,
+				rebase,
+			},
+		} as unknown as FieldChangeHandler<RevisionTag[]>;
+		const field = new FieldKind(
+			brand("ChecksRevIndexing"),
+			Multiplicity.Value,
+			handler,
+			(a, b) => false,
+			new Set(),
+		);
+		const dummyFamily = new ModularChangeFamily(new Map([[field.identifier, field]]));
+
+		const changeA: ModularChangeset = {
+			changes: new Map([
+				[
+					fieldA,
+					{
+						fieldKind: field.identifier,
+						change: brand([rev1, rev2]),
+					},
+				],
+			]),
+			revisions: [{ tag: rev1 }, { tag: rev2 }],
+		};
+		const changeB: ModularChangeset = {
+			changes: new Map([
+				[
+					fieldA,
+					{
+						fieldKind: field.identifier,
+						change: brand([rev3]),
+					},
+				],
+			]),
+		};
+		const changeC: ModularChangeset = {
+			changes: new Map([
+				[
+					fieldA,
+					{
+						fieldKind: field.identifier,
+						change: brand([rev4]),
+					},
+				],
+			]),
+			revisions: [{ tag: rev4 }],
+		};
+		const composed = dummyFamily.compose([
+			makeAnonChange(changeA),
+			tagChange(changeB, rev3),
+			makeAnonChange(changeC),
+		]);
+		assert.deepEqual(composed.revisions, [
+			{ tag: rev1 },
+			{ tag: rev2 },
+			{ tag: rev3 },
+			{ tag: rev4 },
+		]);
+		assert(composeWasTested);
+		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
+		assert.deepEqual(rebased.revisions, [{ tag: rev4 }]);
+		assert(rebaseWasTested);
 	});
 });

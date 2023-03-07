@@ -6,6 +6,15 @@
 import structuredClone from "@ungap/structured-clone";
 
 /**
+ * Subset of Map interface.
+ * @alpha
+ */
+export interface MapGetSet<K, V> {
+	get(key: K): V | undefined;
+	set(key: K, value: V): this;
+}
+
+/**
  * Make all transitive properties in T readonly
  */
 export type RecursiveReadonly<T> = {
@@ -128,7 +137,7 @@ export function compareSets<T>({
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
+export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -142,13 +151,47 @@ export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K)
  * Gets the list associated with the provided key, if it exists.
  * Otherwise, creates an entry with an empty list, and returns that list.
  */
-export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
+export function getOrAddEmptyToMap<K, V>(map: MapGetSet<K, V[]>, key: K): V[] {
 	let collection = map.get(key);
 	if (collection === undefined) {
 		collection = [];
 		map.set(key, collection);
 	}
 	return collection;
+}
+
+/**
+ * Map one iterable to another by transforming each element one at a time
+ * @param iterable - the iterable to transform
+ * @param map - the transformation function to run on each element of the iterable
+ * @returns a new iterable of elements which have been transformed by the `map` function
+ */
+export function* mapIterable<T, U>(iterable: Iterable<T>, map: (t: T) => U): Iterable<U> {
+	for (const t of iterable) {
+		yield map(t);
+	}
+}
+
+/**
+ * Returns an iterable of tuples containing pairs of elements from the given iterables
+ * @param iterableA - an iterable to zip together with `iterableB`
+ * @param iterableB - an iterable to zip together with `iterableA`
+ * @returns in iterable of tuples of elements zipped together from `iterableA` and `iterableB`.
+ * If the input iterables are of different lengths, then the extra elements in the longer will be ignored.
+ */
+export function* zipIterables<T, U>(
+	iterableA: Iterable<T>,
+	iterableB: Iterable<U>,
+): Iterable<[T, U]> {
+	const iteratorA = iterableA[Symbol.iterator]();
+	const iteratorB = iterableB[Symbol.iterator]();
+	for (
+		let nextA = iteratorA.next(), nextB = iteratorB.next();
+		!nextA.done && !nextB.done;
+		nextA = iteratorA.next(), nextB = iteratorB.next()
+	) {
+		yield [nextA.value, nextB.value];
+	}
 }
 
 /**

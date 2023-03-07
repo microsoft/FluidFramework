@@ -56,7 +56,7 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly tenantId: string | undefined;
 }
 
-// @public (undocumented)
+// @public @deprecated
 export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
     protected constructor(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking: boolean, packingLevel: number, blobCutOffSize?: number | undefined);
     // (undocumented)
@@ -95,12 +95,13 @@ export class BlobAggregationStorage extends SnapshotExtractor implements IDocume
     static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
 }
 
-// @public
+// @public @deprecated
 export class BlobCacheStorageService extends DocumentStorageServiceProxy {
+    // @deprecated
     constructor(internalStorageService: IDocumentStorageService, blobs: Map<string, ArrayBufferLike>);
-    // (undocumented)
+    // @deprecated (undocumented)
     get policies(): IDocumentStorageServicePolicies | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     readBlob(id: string): Promise<ArrayBufferLike>;
 }
 
@@ -116,10 +117,10 @@ export const canRetryOnError: (error: any) => boolean;
 // @public
 export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): ISummaryTree;
 
-// @public
+// @public @deprecated
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
 
-// @public
+// @public @deprecated
 export function convertSnapshotAndBlobsToSummaryTree(snapshot: ISnapshotTree, blobs: Map<string, ArrayBuffer>): ISummaryTree;
 
 // @public
@@ -174,9 +175,9 @@ export type DriverErrorTelemetryProps = ITelemetryProperties & {
     driverVersion: string | undefined;
 };
 
-// @public
+// @public @deprecated
 export class EmptyDocumentDeltaStorageService implements IDocumentDeltaStorageService {
-    // (undocumented)
+    // @deprecated (undocumented)
     fetchMessages(from: number, _to: number | undefined, _abortSignal?: AbortSignal, _cachedOnly?: boolean, _fetchReason?: string): IStream<ISequencedDocumentMessage[]>;
 }
 
@@ -250,8 +251,9 @@ export function isRuntimeMessage(message: {
     type: string;
 }): boolean;
 
-// @public
+// @public @deprecated
 export interface ISummaryTreeAssemblerProps {
+    // @deprecated
     unreferenced?: true;
 }
 
@@ -272,32 +274,33 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
 
-// @public
+// @public @deprecated
 export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValue> {
-    // (undocumented)
+    // @deprecated (undocumented)
     [Symbol.iterator](): IterableIterator<[TKey, TValue]>;
+    // @deprecated
     constructor(expiryMs: number);
-    // (undocumented)
+    // @deprecated (undocumented)
     clear(): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     delete(key: TKey): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     entries(): IterableIterator<[TKey, TValue]>;
-    // (undocumented)
+    // @deprecated (undocumented)
     forEach(callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void, thisArg?: any): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     get(key: TKey): TValue | undefined;
-    // (undocumented)
+    // @deprecated (undocumented)
     has(key: TKey): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     keys(): IterableIterator<TKey>;
-    // (undocumented)
+    // @deprecated (undocumented)
     set(key: TKey, value: TValue): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     get size(): number;
-    // (undocumented)
+    // @deprecated (undocumented)
     valueOf(): Object;
-    // (undocumented)
+    // @deprecated (undocumented)
     values(): IterableIterator<TValue>;
 }
 
@@ -307,26 +310,27 @@ export enum MessageType2 {
     Accept = "accept"
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
+    // @deprecated
     constructor(documentServiceFactories: IDocumentServiceFactory[]);
-    // (undocumented)
+    // @deprecated (undocumented)
     static create(documentServiceFactory: IDocumentServiceFactory | IDocumentServiceFactory[]): IDocumentServiceFactory;
-    // (undocumented)
+    // @deprecated (undocumented)
     createContainer(createNewSummary: ISummaryTree, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
+    // @deprecated (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly protocolName = "none:";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class MultiUrlResolver implements IUrlResolver {
-    // (undocumented)
+    // @deprecated (undocumented)
     static create(urlResolver: IUrlResolver | IUrlResolver[]): IUrlResolver;
-    // (undocumented)
+    // @deprecated (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
-    // (undocumented)
+    // @deprecated (undocumented)
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
@@ -430,7 +434,7 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 // @public (undocumented)
 export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
 
-// @public (undocumented)
+// @public @deprecated
 export abstract class SnapshotExtractor {
     // (undocumented)
     protected readonly aggregatedBlobName = "__big";
@@ -454,13 +458,19 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 // @public (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
 
-// @public
+// @public @deprecated
 export class SummaryTreeAssembler {
+    // @deprecated
     constructor(props?: ISummaryTreeAssemblerProps | undefined);
+    // @deprecated
     addAttachment(id: string): void;
+    // @deprecated
     addBlob(key: string, content: string | Uint8Array): void;
+    // @deprecated
     addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
+    // @deprecated
     addTree(key: string, summary: ISummaryTree): void;
+    // @deprecated
     get summary(): ISummaryTree;
 }
 
@@ -484,7 +494,7 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
     readonly errorType = DriverErrorType.usageError;
 }
 
-// @public
+// @public @deprecated
 export function waitForConnectedState(minDelay: number): Promise<void>;
 
 // (No @packageDocumentation comment for this package)
