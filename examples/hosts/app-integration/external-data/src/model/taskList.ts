@@ -308,7 +308,9 @@ export class TaskList extends DataObject implements ITaskList {
 	): Promise<void> {
 		try {
 			if (containerUrlData?.url === undefined) {
-				console.log(`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`);
+				console.log(
+					`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`,
+				);
 				console.error(
 					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
 				);
