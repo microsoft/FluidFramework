@@ -359,9 +359,7 @@ export class MongoDbFactory implements core.IDbFactory {
         const options: MongoClientOptions = {
             keepAlive: true,
             keepAliveInitialDelay: 180000,
-            connectTimeoutMS: 1000,
-            maxConnecting: 100,
-            socketTimeoutMS: 120000
+            socketTimeoutMS: 120000,
         };
 
         if (this.connectionPoolMinSize) {
