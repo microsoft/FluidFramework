@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	TreeSchemaIdentifier,
@@ -14,7 +15,7 @@ import {
 	Value,
 	PathRootPrefix,
 } from "../../core";
-import { compareArrays, fail, ReferenceCountedBase } from "../../util";
+import { fail, ReferenceCountedBase } from "../../util";
 import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
 import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
 
