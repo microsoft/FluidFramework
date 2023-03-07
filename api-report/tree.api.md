@@ -648,6 +648,18 @@ interface Insert<TTree = ProtoNode> {
     readonly type: typeof MarkType.Insert;
 }
 
+// @alpha
+interface InsertAndModify<TTree = ProtoNode> {
+    // (undocumented)
+    readonly content: TTree;
+    // (undocumented)
+    readonly fields?: FieldMarks<TTree>;
+    // (undocumented)
+    readonly setValue?: Value;
+    // (undocumented)
+    readonly type: typeof MarkType.InsertAndModify;
+}
+
 declare namespace InternalTypes {
     export {
         TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
@@ -663,18 +675,6 @@ declare namespace InternalTypes {
         TypedValue,
         PrimitiveValueSchema
     }
-}
-
-// @alpha
-interface InsertAndModify<TTree = ProtoNode> {
-    // (undocumented)
-    readonly content: TTree;
-    // (undocumented)
-    readonly fields?: FieldMarks<TTree>;
-    // (undocumented)
-    readonly setValue?: Value;
-    // (undocumented)
-    readonly type: typeof MarkType.InsertAndModify;
 }
 
 // @alpha
@@ -1026,6 +1026,21 @@ export function namedTreeSchema(data: Partial<TreeSchemaBuilder> & Named<TreeSch
 export type NameFromBranded<T extends BrandedType<any, string>> = T extends BrandedType<any, infer Name> ? Name : never;
 
 // @alpha
+interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeSchemaIdentifier> {
+    // (undocumented)
+    readonly typeCheck?: Invariant<Names>;
+}
+
+// @alpha
+type NamesFromSchema<T extends TypedSchema.LabeledTreeSchema[]> = T extends [
+infer Head,
+...infer Tail
+] ? [
+TypedSchema.Assume<Head, TypedSchema.LabeledTreeSchema>["typeInfo"]["name"],
+...NamesFromSchema<TypedSchema.Assume<Tail, TypedSchema.LabeledTreeSchema[]>>
+] : [];
+
+// @alpha
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 // @alpha
@@ -1068,6 +1083,11 @@ export type NodeReviver = (revision: RevisionTag, index: number, count: number) 
 
 // @alpha
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
+
+// @alpha
+type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<MapKey, MapValue> & {
+    get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
+};
 
 // @alpha
 export interface ObservingDependent extends Dependent {
@@ -1154,6 +1174,13 @@ export interface RepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown
 
 // @alpha
 export const replaceField: unique symbol;
+
+// @alpha
+type RequiredFields<T> = [
+    {
+    [P in keyof T as undefined extends T[P] ? never : P]: T[P];
+}
+][_dummy];
 
 // @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
