@@ -232,7 +232,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			});
 		}
 
-		const runtime = await containerRuntimeWithBlob({
+		const runtimeWithBlob = await containerRuntimeWithBlob({
 			context: getMockContext() as IContainerContext,
 			registryEntries: [],
 			existing: false,
@@ -241,7 +241,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		});
 
 		const summarizer = await createSummarizer(provider);
-		(summarizer as any).containerRuntime = runtime;
+		(summarizer as any).containerRuntime = runtimeWithBlob;
 
 		const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
 
@@ -258,6 +258,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 		const ackNackResult = await result.receivedSummaryAckOrNack;
 		assert(ackNackResult.success, "summary op should be acked");
+		
 		const version = ackNackResult.data.summaryAckOp.contents.handle;
 		const container = await loadContainer(version);
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(
@@ -268,12 +269,11 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			stringToBuffer(blobContents, "utf-8"),
 		);
 		defaultDataStore._root.set("blob1", blobHandle);
-		const blobNodePath = blobHandle.absolutePath;
-		const response = await container.request({ url: blobNodePath });
+		const response = await container.request({ url: blobHandle.absolutePath });
 		const content = bufferToString(response.value, "utf8");
+		
 		assert.strictEqual(content, blobContents, "blob has the wrong content");
 		await flushPromises();
-		console.log("hi");
 	});
 
 	it("should fail on demand summary on stopped summarizer", async () => {
