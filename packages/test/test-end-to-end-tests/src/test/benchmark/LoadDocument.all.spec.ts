@@ -5,11 +5,7 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import {
-	describeE2EDocRun,
-	describeE2EDocsMemory,
-	BenchmarkType,
-} from "@fluidframework/test-version-utils";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
 import { benchmarkFull, createDocument } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
@@ -18,8 +14,7 @@ const scenarioTitle = "Load Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
-	const benchmarkType: BenchmarkType =
-		describeE2EDocRun === describeE2EDocsMemory ? "E2EMemory" : "E2ETime";
+	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
 
 	before(async () => {
 		provider = getTestObjectProvider();

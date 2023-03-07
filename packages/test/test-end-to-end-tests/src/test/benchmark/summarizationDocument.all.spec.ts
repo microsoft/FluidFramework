@@ -7,11 +7,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { createSummarizer, ITestObjectProvider, summarizeNow } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
-import {
-	describeE2EDocRun,
-	describeE2EDocsMemory,
-	BenchmarkType,
-} from "@fluidframework/test-version-utils";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
 import { benchmarkFull, createDocument } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
@@ -20,8 +16,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let documentMap: DocumentMap;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
-	const benchmarkType: BenchmarkType =
-		describeE2EDocRun === describeE2EDocsMemory ? "E2EMemory" : "E2ETime";
+	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
 	async function waitForSummary(summarizer: ISummarizer): Promise<string> {
 		// Wait for all pending ops to be processed by all clients.
 		await provider.ensureSynchronized();

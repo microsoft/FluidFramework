@@ -187,3 +187,6 @@ function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
 }
 
 export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
+export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): BenchmarkType => {
+	return currentType === describeE2EDocsMemory ? "E2EMemory" : "E2ETime";
+};
