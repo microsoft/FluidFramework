@@ -18,6 +18,9 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 // @alpha
 export interface AnchorEvents {
     afterDelete(anchor: AnchorNode): void;
+    childrenChange(anchor: AnchorNode): void;
+    subtreeChange(anchor: AnchorNode): void;
+    valueChange(anchor: AnchorNode, value: Value): void;
 }
 
 // @alpha (undocumented)
@@ -36,15 +39,23 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 }
 
 // @alpha @sealed
-export class AnchorSet {
+export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
+    internalizePath(path: UpPath): UpPath;
     isEmpty(): boolean;
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
-    moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
+    // (undocumented)
+    on<K extends keyof AnchorSetRootEvents>(eventName: K, listener: AnchorSetRootEvents[K]): () => void;
     track(path: UpPath | null): Anchor;
+}
+
+// @alpha
+export interface AnchorSetRootEvents {
+    childrenChange(anchors: AnchorSet): void;
+    treeChange(anchors: AnchorSet): void;
 }
 
 // @alpha (undocumented)
@@ -124,6 +135,14 @@ export interface ChangeRebaser<TChangeset> {
 
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
+// @alpha
+export interface CheckoutEvents {
+    // (undocumented)
+    afterBatch(): void;
+    // (undocumented)
+    beforeBatch(): void;
+}
 
 // @alpha
 export type ChildCollection = FieldKey | RootField;
@@ -615,6 +634,7 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {
 // @alpha
 export interface ISharedTreeCheckout extends AnchorLocator {
     readonly context: EditableTreeContext;
+    readonly events: ISubscribable<CheckoutEvents>;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeCheckoutFork;
     get root(): UnwrappedEditableField;

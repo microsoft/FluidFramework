@@ -8,4 +8,5 @@ export {
 	ISharedTreeCheckout,
 	ISharedTreeCheckoutFork,
 	SharedTreeFactory,
+	CheckoutEvents,
 } from "./sharedTree";

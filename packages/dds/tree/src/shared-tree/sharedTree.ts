@@ -44,6 +44,22 @@ import {
 	ModularChangeset,
 	IDefaultEditBuilder,
 } from "../feature-libraries";
+import { IEmitter, ISubscribable, createEmitter } from "../events";
+
+/**
+ * Events for {@link ISharedTreeCheckout}.
+ * When these events are triggered, the checkout is in a consistent state.
+ *
+ * @remarks
+ * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
+ *
+ * @alpha
+ */
+export interface CheckoutEvents {
+	beforeBatch(): void;
+
+	afterBatch(): void;
+}
 
 /**
  * Provides a means for interacting with a SharedTree.
@@ -118,6 +134,11 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 * Any mutations of the new checkout will not apply to this checkout until the new checkout is merged back in.
 	 */
 	fork(): ISharedTreeCheckoutFork;
+
+	/**
+	 * Events about this checkout.
+	 */
+	readonly events: ISubscribable<CheckoutEvents>;
 }
 
 /**
@@ -177,6 +198,8 @@ class SharedTree
 	 */
 	private readonly transactionCheckout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>;
 
+	public readonly events: ISubscribable<CheckoutEvents> & IEmitter<CheckoutEvents>;
+
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -200,6 +223,7 @@ class SharedTree
 			telemetryContextPrefix,
 		);
 
+		this.events = createEmitter<CheckoutEvents>();
 		this.forest = forest;
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 		this.transactionCheckout = {
@@ -253,7 +277,9 @@ class SharedTree
 		localOpMetadata: unknown,
 	) {
 		if (!this.storedSchema.tryHandleOp(message)) {
+			this.events.emit("beforeBatch");
 			super.processCore(message, local, localOpMetadata);
+			this.events.emit("afterBatch");
 		}
 	}
 }
@@ -290,6 +316,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 class SharedTreeCheckout implements ISharedTreeCheckoutFork {
+	public readonly events = createEmitter<CheckoutEvents>();
 	public readonly context: EditableTreeContext;
 	public readonly submitEdit: TransactionCheckout<
 		IDefaultEditBuilder,
@@ -305,8 +332,10 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.context = getEditableTreeContext(forest, this);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
+			this.events.emit("beforeBatch");
 			this.forest.applyDelta(delta);
 			this.forest.anchors.applyDelta(delta);
+			this.events.emit("afterBatch");
 		});
 		this.submitEdit = (edit) => this.branch.applyChange(edit);
 	}

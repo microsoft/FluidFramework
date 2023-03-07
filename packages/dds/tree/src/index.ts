@@ -90,6 +90,7 @@ export {
 	anchorSlot,
 	UpPathDefault,
 	AnchorEvents,
+	AnchorSetRootEvents,
 } from "./core";
 
 export {
@@ -235,6 +236,7 @@ export {
 	ISharedTreeCheckout,
 	ISharedTreeCheckoutFork,
 	SharedTreeFactory,
+	CheckoutEvents,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";
