@@ -8,7 +8,7 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { createSummarizer, ITestObjectProvider, summarizeNow } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
-import { benchmarkFull, createDocument } from "./DocumentCreator";
+import { benchmarkAll, createDocument } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
 const scenarioTitle = "Summarize Document";
@@ -58,7 +58,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	const obj = new BenchmarkObj();
 
-	benchmarkFull<BenchmarkObj>(scenarioTitle, benchmarkType, {
+	benchmarkAll<BenchmarkObj>(scenarioTitle, benchmarkType, {
 		run: async () => {
 			obj.container = await documentMap.loadDocument();
 			assert(obj.container !== undefined, "container needs to be defined.");

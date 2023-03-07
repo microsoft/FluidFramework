@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
-import { benchmarkFull, createDocument } from "./DocumentCreator";
+import { benchmarkAll, createDocument } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
 const scenarioTitle = "Load Document";
@@ -35,7 +35,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	const obj = new BenchmarkObj();
 
-	benchmarkFull<BenchmarkObj>(scenarioTitle, benchmarkType, {
+	benchmarkAll<BenchmarkObj>(scenarioTitle, benchmarkType, {
 		run: async () => {
 			obj.container = await documentMap.loadDocument();
 			assert(obj.container !== undefined, "container needs to be defined.");

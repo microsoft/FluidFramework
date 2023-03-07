@@ -80,7 +80,7 @@ export interface IBenchmarkParameters {
  * @param after - function to be called after the test.
  * @param onCycle - function to be called after each cycle of the test (only for time tests)
  */
-export function benchmarkFull<T>(
+export function benchmarkAll<T>(
 	this: any,
 	title: string,
 	benchmarkType: BenchmarkType,
