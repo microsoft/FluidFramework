@@ -164,11 +164,7 @@ export class SharedTreeCore<
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.editor = this.changeFamily.buildEditor((change) => {
-			const { revision } = this.applyChange(change);
-			const peek = this.transactionStack[this.transactionStack.length - 1];
-			peek?.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
-		}, anchors);
+		this.editor = this.changeFamily.buildEditor((change) => this.applyChange(change), anchors);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -221,11 +217,20 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	private submitCommit({ revision, change }: Commit<TChange>): void {
+	private submitCommit(commit: Commit<TChange>): void {
+		// Edits submitted before the first attach are treated as sequenced because they will be included
+		// in the attach summary that is uploaded to the service.
+		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
+		if (this.detachedRevision !== undefined) {
+			// TODO: How do we handle this code path now?
+			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
+			this.detachedRevision = newRevision;
+			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
+		}
 		const message: Message = {
-			revision,
+			revision: commit.revision,
 			originatorId: this.editManager.localSessionId,
-			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, change),
+			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, commit.change),
 		};
 		this.submitLocalMessage(message);
 	}
@@ -238,22 +243,18 @@ export class SharedTreeCore<
 			sessionId: this.editManager.localSessionId,
 		};
 		const delta = this.editManager.addLocalChange(revision, change);
-		// Edits performed before the first attach are treated as sequenced because they will be included
-		// in the attach summary that is uploaded to the service.
-		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
-		if (this.detachedRevision !== undefined) {
-			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
-			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
-		}
-		this.indexEventEmitter.emit("newLocalChange", change);
-		this.indexEventEmitter.emit("newLocalState", delta);
-
-		if (!this.isTransacting()) {
+		if (this.isTransacting()) {
+			const transactionData = this.transactionStack[this.transactionStack.length - 1];
+			assert(transactionData !== undefined, "Expected transaction stack to be non-empty");
+			transactionData.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		} else {
 			this.submitCommit(commit);
 		}
 
-		// TODO: need return?
+		this.indexEventEmitter.emit("newLocalChange", change);
+		this.indexEventEmitter.emit("newLocalState", delta);
+
+		// TODO need return?
 		return commit;
 	}
 
@@ -309,7 +310,9 @@ export class SharedTreeCore<
 			repairStore,
 		);
 
-		this.indexEventEmitter.emit("newLocalState", rollbackDelta);
+		for (const delta of rollbackDelta) {
+			this.indexEventEmitter.emit("newLocalState", delta);
+		}
 	}
 
 	public isTransacting(): boolean {
@@ -320,7 +323,7 @@ export class SharedTreeCore<
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
 	 */
-	protected createBranch(): SharedTreeBranch<TChange> {
+	protected createBranch(): SharedTreeBranch<TEditor, TChange> {
 		const branch = new SharedTreeBranch(
 			() => this.editManager.getLocalBranchHead(),
 			(forked) => {
@@ -342,6 +345,8 @@ export class SharedTreeCore<
 			},
 			this.editManager.localSessionId,
 			new Rebaser(this.changeFamily.rebaser),
+			this.changeFamily,
+			new AnchorSet(),
 		);
 		return branch;
 	}

@@ -27,8 +27,8 @@ import {
 	SessionId,
 	Rebaser,
 	assertIsRevisionTag,
-	tagInverse,
 	mintRevisionTag,
+	tagChange,
 } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 
@@ -293,6 +293,7 @@ export class EditManager<
 	public addLocalChange(revision: RevisionTag, change: TChangeset): Delta.Root {
 		this.pushToLocalBranch(revision, change);
 
+		// TODO: Anchors are currently getting rebased twice sometimes. Editor rebases them, and so do we here.
 		if (this.anchors !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		}
@@ -300,47 +301,48 @@ export class EditManager<
 		return this.changeFamily.intoDelta(change);
 	}
 
-	public squashLocalChanges(revision: RevisionTag): Commit<TChangeset> {
+	public squashLocalChanges(startRevision: RevisionTag): Commit<TChangeset> {
 		const commits: GraphCommit<TChangeset>[] = [];
 		const squashStart = findAncestor(
 			[this.localBranch, commits],
-			(c) => c.revision === revision,
+			(c) => c.revision === startRevision,
 		);
 		assert(squashStart !== undefined, "Expected local branch to be ahead of squash revision");
-		const change = this.changeFamily.rebaser.compose(commits);
-		const squashedCommit = mintCommit(squashStart, {
+		// TODO: Is this the way?
+		const anonymousChanges = commits.map(({ change }) => ({ change, revision: undefined }));
+		const anonymousChange = this.changeFamily.rebaser.compose(anonymousChanges);
+		this.localBranch = mintCommit(squashStart, {
 			revision: mintRevisionTag(),
 			sessionId: this.localSessionId,
-			change,
+			change: anonymousChange,
 		});
-		this.localBranch = squashedCommit;
-		return squashedCommit;
+		return this.localBranch;
 	}
 
-	public rollbackLocalChanges(
-		revision: RevisionTag,
+	public *rollbackLocalChanges(
+		startRevision: RevisionTag,
 		repairStore?: ReadonlyRepairDataStore,
-	): Delta.Root {
+	): Iterable<Delta.Root> {
 		const commits: GraphCommit<TChangeset>[] = [];
 		const rollbackTo = findAncestor(
 			[this.localBranch, commits],
-			(c) => c.revision === revision,
+			(c) => c.revision === startRevision,
 		);
 		assert(rollbackTo !== undefined, "Expected local branch to be ahead of rollback revision");
 		this.localBranch = rollbackTo;
 
 		// TODO: This area can probably be revisited and written a little better
-		const inverses = commits
-			.map((c) => tagInverse(this.changeFamily.rebaser.invert(c, repairStore), c.revision))
-			.reverse();
-
-		if (this.anchors !== undefined) {
-			for (const { change } of inverses) {
+		for (let i = commits.length - 1; i >= 0; i--) {
+			const { change, revision } = commits[i];
+			if (this.anchors !== undefined) {
 				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 			}
+			const inverse = this.changeFamily.rebaser.invert(
+				tagChange(change, revision),
+				repairStore,
+			);
+			yield this.changeFamily.intoDelta(inverse);
 		}
-
-		return this.changeFamily.intoDelta(this.changeFamily.rebaser.compose(inverses));
 	}
 
 	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {

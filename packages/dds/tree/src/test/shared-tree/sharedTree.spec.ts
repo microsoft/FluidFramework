@@ -10,7 +10,6 @@ import {
 	getSchemaString,
 	jsonableTreeFromCursor,
 	namedTreeSchema,
-	IDefaultEditBuilder,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
@@ -31,7 +30,6 @@ import {
 	fieldSchema,
 	GlobalFieldKey,
 	SchemaData,
-	IForestSubscription,
 	EditManager,
 } from "../../core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
@@ -236,6 +234,21 @@ describe("SharedTree", () => {
 		assert(t2.editManager.getTrunk().length < 10);
 	});
 
+	it("can process changes while detached", async () => {
+		const onCreate = (t: ISharedTree) => {
+			pushTestValue(t, "B");
+			pushTestValue(t, "A");
+			validateRootField(t, ["A", "B"]);
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			undefined,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const [tree] = provider.trees;
+		validateRootField(tree, ["A", "B"]);
+	});
+
 	describe("Editing", () => {
 		it("can insert and delete a node in a sequence field", async () => {
 			const value = "42";
@@ -381,10 +394,7 @@ describe("SharedTree", () => {
 			}
 		});
 
-		it("can abandon a transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1] = provider.trees;
-
+		function abortTransaction(checkout: ISharedTreeCheckout): void {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
@@ -395,8 +405,8 @@ describe("SharedTree", () => {
 					],
 				},
 			};
-			initializeTestTree(tree1, initialState);
-			tree1.runTransaction((forest, editor) => {
+			initializeTestTree(checkout, initialState);
+			checkout.runTransaction((forest, editor) => {
 				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
 				const root0Path = {
 					parent: undefined,
@@ -444,7 +454,19 @@ describe("SharedTree", () => {
 				return TransactionResult.Abort;
 			});
 
-			validateTree(tree1, [initialState]);
+			validateTree(checkout, [initialState]);
+		}
+
+		it("can abandon a transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1] = provider.trees;
+			abortTransaction(tree1);
+		});
+
+		it("can abandon a transaction on a branch", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree] = provider.trees;
+			abortTransaction(tree.fork());
 		});
 
 		it("can insert multiple nodes", async () => {
@@ -950,6 +972,13 @@ describe("SharedTree", () => {
 	});
 
 	describe("Transactions", () => {
+		/** like `pushTestValue`, but does not wrap the operation in a transaction */
+		function pushTestValueDirect(checkout: ISharedTreeCheckout, value: TreeValue): void {
+			const field = checkout.editor.sequenceField(undefined, rootFieldKeySymbol);
+			const nodes = singleTextCursor({ type: brand("Node"), value });
+			field.insert(0, nodes);
+		}
+
 		function describeBasicTransactionTests(
 			title: string,
 			checkoutFactory: () => Promise<ISharedTreeCheckout>,
@@ -958,14 +987,14 @@ describe("SharedTree", () => {
 				it("update the tree while open", async () => {
 					const checkout = await checkoutFactory();
 					checkout.transaction.start();
-					pushTestValue(checkout, 42);
+					pushTestValueDirect(checkout, 42);
 					assert.equal(peekTestValue(checkout), 42);
 				});
 
 				it("update the tree after committing", async () => {
 					const checkout = await checkoutFactory();
 					checkout.transaction.start();
-					pushTestValue(checkout, 42);
+					pushTestValueDirect(checkout, 42);
 					checkout.transaction.commit();
 					assert.equal(peekTestValue(checkout), 42);
 				});
@@ -973,7 +1002,7 @@ describe("SharedTree", () => {
 				it("revert the tree after aborting", async () => {
 					const checkout = await checkoutFactory();
 					checkout.transaction.start();
-					pushTestValue(checkout, 42);
+					pushTestValueDirect(checkout, 42);
 					checkout.transaction.abort();
 					assert.equal(peekTestValue(checkout), undefined);
 				});
@@ -996,7 +1025,7 @@ describe("SharedTree", () => {
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
 			tree1.transaction.start();
-			pushTestValue(tree1, 42);
+			pushTestValueDirect(tree1, 42);
 			await provider.ensureSynchronized();
 			assert.equal(opsReceived, 0);
 			tree1.transaction.commit();
@@ -1011,12 +1040,36 @@ describe("SharedTree", () => {
 			let opsReceived = 0;
 			tree2.on("op", () => (opsReceived += 1));
 			tree1.transaction.start();
-			pushTestValue(tree1, 42);
-			pushTestValue(tree1, 43);
+			pushTestValueDirect(tree1, 42);
+			pushTestValueDirect(tree1, 43);
 			tree1.transaction.commit();
 			await provider.ensureSynchronized();
 			assert.equal(opsReceived, 1);
 			assert.deepEqual([...getTestValues(tree2)].reverse(), [42, 43]);
+		});
+
+		it("process changes while detached", async () => {
+			const onCreate = (t: ISharedTree) => {
+				t.transaction.start();
+				pushTestValueDirect(t, "A");
+				t.transaction.commit();
+				t.transaction.start();
+				pushTestValue(t, "B");
+				t.transaction.commit();
+				const checkout = t.fork();
+				checkout.transaction.start();
+				pushTestValueDirect(checkout, "C");
+				checkout.transaction.commit();
+				checkout.merge();
+				validateRootField(t, ["A", "B", "C"].reverse());
+			};
+			const provider = await TestTreeProvider.create(
+				1,
+				undefined,
+				new SharedTreeTestFactory(onCreate),
+			);
+			const [tree] = provider.trees;
+			validateRootField(tree, ["A", "B", "C"].reverse());
 		});
 	});
 
@@ -1543,7 +1596,7 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: ISharedTree,
+	tree: ISharedTreeCheckout,
 	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
@@ -1572,13 +1625,8 @@ function initializeTestTree(
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
  */
-function pushTestValue(tree: ISharedTreeCheckout, value: TreeValue): void {
-	tree.runTransaction((_: IForestSubscription, editor: IDefaultEditBuilder) => {
-		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
-		return TransactionResult.Apply;
-	});
+function pushTestValue(checkout: ISharedTreeCheckout, value: TreeValue): void {
+	insert(checkout, 0, value);
 }
 
 /**
@@ -1616,11 +1664,11 @@ function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
  *
  * TODO: delete once the JSON editing API is ready for use.
  *
- * @param tree - The tree on which to perform the insert.
+ * @param checkout - The tree on which to perform the insert.
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTreeCheckout, index: number, ...values: string[]): void {
+function insert(tree: ISharedTreeCheckout, index: number, ...values: TreeValue[]): void {
 	tree.runTransaction((_, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));

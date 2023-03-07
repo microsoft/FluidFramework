@@ -38,14 +38,12 @@ import {
 	SchemaEditor,
 	DefaultChangeset,
 	EditManagerIndex,
-	runSynchronousTransaction,
 	buildForest,
 	ContextuallyTypedNodeData,
 	ModularChangeset,
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
 } from "../feature-libraries";
-import { fail } from "../util";
 
 /**
  * Provides a means for interacting with a SharedTree.
@@ -97,9 +95,11 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	/**
 	 * Current contents.
 	 * Updated by edits (local and remote).
-	 * Use `runTransaction` to create a local edit.
+	 * Use `runTransaction` to create a local edit. TODO
 	 */
 	readonly forest: IForestSubscription;
+
+	readonly editor: IDefaultEditBuilder;
 
 	readonly transaction: {
 		start: () => void;
@@ -245,9 +245,12 @@ class SharedTree
 	}
 
 	public runTransaction(
-		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => TransactionResult,
+		transaction: (
+			forest: IForestSubscription,
+			editor: IDefaultEditBuilder,
+		) => TransactionResult,
 	): TransactionResult {
-		return runSynchronousTransaction(this.transactionCheckout, transaction);
+		return runTransaction(this, transaction);
 	}
 
 	public fork(): ISharedTreeCheckoutFork {
@@ -318,7 +321,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	>["submitEdit"];
 
 	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultChangeset>,
+		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
@@ -329,14 +332,18 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 			this.forest.applyDelta(delta);
 			this.forest.anchors.applyDelta(delta);
 		});
-		this.submitEdit = (edit) => this.branch.applyChange(edit);
+		this.submitEdit = (edit) => branch.applyChange(edit);
+	}
+
+	public get editor() {
+		return this.branch.editor;
 	}
 
 	public readonly transaction = {
-		start: () => fail("TODO"),
-		commit: () => fail("TODO"),
-		abort: () => fail("TODO"),
-		inProgress: () => fail("TODO"),
+		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
+		commit: () => this.branch.commitTransaction(),
+		abort: () => this.branch.abortTransaction(),
+		inProgress: () => this.branch.isTransacting(),
 	};
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -379,6 +386,20 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 			editor: IDefaultEditBuilder,
 		) => TransactionResult,
 	): TransactionResult {
-		return runSynchronousTransaction(this, transaction);
+		return runTransaction(this, transaction);
 	}
+}
+
+function runTransaction(
+	checkout: ISharedTreeCheckout,
+	transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult,
+) {
+	checkout.transaction.start();
+	const result = transaction(checkout.forest, checkout.editor);
+	if (result === TransactionResult.Apply) {
+		checkout.transaction.commit();
+	} else {
+		checkout.transaction.abort();
+	}
+	return result;
 }
