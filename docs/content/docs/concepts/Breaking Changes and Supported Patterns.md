@@ -2,7 +2,7 @@
 
 Scope: This document is about how changes to packages written in TypeScript impact users of those packages which also use TypeScript.
 
-Audience: This document is intended for developers of TypeScript packages as well authors of TypeScript code which uses those packages.
+Audience: This document is intended for developers of TypeScript packages as well as authors of TypeScript code which uses those packages.
 
 Status: This document is an early stage proposal. The policies proposed here are NOT the policies currently adopted for the Fluid Framework packages.
 
@@ -42,7 +42,7 @@ The challenge is to pick Supported Patterns and associated design patterns for t
 1. Maximize the ease of making user code supported, and make it easy to tell if user code is supported.
 2. Make it easy for developers of the package to know if a change is Incompatible.
 3. Maximize package developer's ability to make useful changes be Backwards Compatible.
-4. Maximize ease of adopting Incompatible Changes in SUpported User Code. For example use the compiler to assist Supported Users know where they have to update their code to reduce the risk of broken runtime behavior if the necessary adjustment is missed.
+4. Maximize ease of adopting Incompatible Changes in Supported User Code. For example use the compiler to inform Supported Users where they have to update their code to reduce the risk of broken runtime behavior if the necessary adjustment is missed.
 
 ## Why Trivial Supported Patterns are not enough:
 
@@ -52,7 +52,7 @@ Such a User would be broken by any possible package change.
 
 Another simple approach would be to define Supported Patterns as TypeScript code which uses the package APIs in such a way that it compiles.
 Unfortunately doesn't solve the problem: nearly everything is still incompatible change since TypeScript lets you traverse modules objects, inspect the code implementing functions etc.
-Its possible to write programs which break for pretty much much change with modifies the code.
+It's possible to write programs which break for pretty much any change.
 
 A more reasonable but simple supported pattern would be all code that only uses assumes the APIs behave as they are documented.
 This is more on the right track, but it has issues with ambiguity which tends to lead to one of:
@@ -135,7 +135,7 @@ There are a few approaches that can be taken to resolve this:
 
 Interestingly these three cases correspond to [covariant, contravariant and invariant from type systems](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>), including in TypeScript which added [explicit use of them in 4.7](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7.html#optional-variance-annotations-for-type-parameters).
 
-Just like TypeScript added support for explicitly restricting usage of generic types based on the variance annotations on its type parameters, we can restricted the Supported Patterns of The Package based based on variance annotations we add to its types.
+Just like TypeScript added support for explicitly restricting usage of generic types based on the variance annotations on its type parameters, we can restrict the Supported Patterns of The Package based on variance annotations we add to its types.
 In our example this could look like:
 
 ```typescript
@@ -163,14 +163,14 @@ interface Name {
 
 To solve this issue with User Code 3, we need to decide who owns the unused portion of the namespace on types defined in the package.
 Rather than documenting this for every time, a single default policy should be clearly stated, and exception to it can be documented.
-Defaulting to the package owing the namespace is probably best, since the User Code can just accept that that use is not supported or extend it using private symbols without conflicting if needed.
+Defaulting to the package owning the namespace is probably best, since the User Code can just accept that that use is not supported or extend it using private symbols without conflicting if needed.
 
 These same variance annotations and rules can be applied to all types in the package, defaulting to invariant if not marked.
 Classes can default to "out" when marked with `@sealed` (which [already exists](https://api-extractor.com/pages/tsdoc/tag_sealed/)).
 Classes which are not `@sealed` are invariant by default since almost any modification to them could break User Code.
 The normal variance composition rules apply, so an `out` interface can only take `in` or invariant types as parameters to any methods on it.
 
-`const` module members can be typed as "out" by unless documented otherwise.
+`const` module members can be typed as "out" unless documented otherwise.
 
 > **_NOTE:_** Our current type tests attempt to validate all types as if they were invariant.
 > The "out" aspect is covered by the backwards compatibility testing and the "in" is covered by the forwards compatibility testing.
@@ -178,7 +178,7 @@ The normal variance composition rules apply, so an `out` interface can only take
 > It is theoretically possible to provide tooling level assistance about this for the user code side as well.
 > There isn't a clear robust solution, but many common cases may be coverable with not too complex custom linter rule.
 
-> **_NOTE:_** This section focuses on type level details, however this same policy can help with clarifying whats supported even if its not modeled by the type systems. For example an interface that is documented as requiring an integer can be broadened to accept floating point values if its a member of an "in" interface, but not for an "out" one. This reasoning is useful, even if both cases just use the type `number`.
+> **_NOTE:_** This section focuses on type level details, however this same policy can help with clarifying what's supported even if it's not modeled by the type systems. For example an interface that is documented as requiring an integer can be broadened to accept floating point values if it's a member of an "in" interface, but not for an "out" one. This reasoning is useful, even if both cases just use the type `number`.
 
 > **_NOTE:_** Another way to get some tooling support for this is to transform the types when exporting them either manually in the source or as part of publishing. For example if API-extractor could replace `@out` interfaces with types that are not constructable (extend a class with a protected member and private constructor).
 
@@ -202,7 +202,7 @@ function processItems(items: string[], f: (item: string) => string): string[] {
 
 // Functions with optional arguments can be assigned to types missing those arguments, as is done here.
 // When combined with allowing passing more arguments than needed, optional arguments can be passed incorrectly typed and unexpected data.
-// In this case the array ends up [1, 2, 3]: its not even an array of strings like its type requires.
+// In this case the array ends up [1, 2, 3]: it's not even an array of strings like its type requires.
 const notActuallyStrings: string[] = processItems(["a", "b", "c"], processItem);
 alert(notActuallyStrings);
 ```
@@ -221,7 +221,7 @@ They also make adding extra arguments to callback function types an incompatible
 
 This makes the most pragmatic solution to do all of:
 
-1. Try and do #2 above (avoid casting functions to have more arguments). The package must do this everywhere its relevant and technically only User Code code that follows this will be considered a supported pattern.
+1. Try and do #2 above (avoid casting functions to have more arguments). The package must do this everywhere it's relevant and technically only User Code that follows this will be considered a supported pattern.
 2. Since we are relying on avoiding implicit casting away of arguments for correctness, adding new arguments to callback functions needs to be considered an Incompatible change, even though it almost always compiles and usually works.
 3. Prefer patterns that avoid optional arguments since enforcing these rules is hard and unlikely to be done robustly without compiler assistance.
 
@@ -237,7 +237,7 @@ Some alternatives to using optional arguments:
 
 ## Module name collisions
 
-User Code which could be broken by a member being added to an module in the Package should not be supported.
+User Code which could be broken by a member being added to a module in the Package should not be supported.
 This specifically means User Code that does things like:
 
 ```typescript
@@ -249,7 +249,7 @@ Is not supported.
 
 ## Imports for other than the root
 
-User code which imports any path not at the root of the package should be unsupported (unless the package explicitly documents otherwise).
+User code which imports any path not at the root of the package is not supported.
 This allows refactoring the package's internals.
 
 ## Undocumented behavior
@@ -258,7 +258,7 @@ User code which depends on any behavior of the package which is undocumented sho
 
 ## Broken behavior
 
-User code which can not work due to a bugs in The Package is not Supported.
+User code which can not work due to a bug in The Package is not Supported.
 This makes changes to the package that cause APIs to not perform as documented incompatible, and fixing such issues compatible.
 
 For example if a function in the package takes in a `number | string`, and always fails to behave as documented when given a string,
@@ -283,11 +283,11 @@ It has actual compiler support, but it can also just be a convention (and possib
 
 # Related work
 
-[semver-ts](https://www.semver-ts.org/) addresses a very similar topic, but focuses on compile errors and not the more general "issues" of which compile errors are a subset. It coverers how this relates to variance and it's section on "Avoiding user constructibility" suggests several approaches including the approach of doing so through documentation, which is what the proposed "@out" tag above does.
+[semver-ts](https://www.semver-ts.org/) addresses a very similar topic, but focuses on compile errors and not the more general "issues" of which compile errors are a subset. It covers how this relates to variance and its section on "Avoiding user constructibility" suggests several approaches including the approach of doing so through documentation, which is what the proposed "@out" tag above does.
 
 Rust's [non_exhaustive attribute in Rust](https://doc.rust-lang.org/reference/attributes/type_system.html#the-non_exhaustive-attribute).
 
 Rust's [Coherence and Orphan Rules](https://github.com/Ixrec/rust-orphan-rules) are designed to avoid possible future conflicts.
 
 Rust's [rust-semverver](https://github.com/rust-lang/rust-semverver) and Fluid's type tests are example tooling to try and help discover changes which break user code's ability to compile.
-As far as I'm aware neither currently attempts to address rules for SUpported Patterns which the compiler doesn't capture.
+As far as I'm aware neither currently attempts to address rules for Supported Patterns which the compiler doesn't capture.
