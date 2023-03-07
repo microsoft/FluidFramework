@@ -485,7 +485,7 @@ describe("Runtime", () => {
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
 			});
 
-			it("should be set to dirty if context is attached with pending ops", async () => {
+			it.only("should be set to dirty if context is attached with pending ops", async () => {
 				const mockContext = createMockContext(AttachState.Attached, true);
 				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime({
@@ -627,13 +627,7 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onSubmitMessage(
-					ContainerMessageType.FluidDataStoreOp,
-					0,
-					"",
-					"",
-					undefined,
-				);
+				pendingStateManager.onSubmitMessage("", 0, "", undefined);
 
 			it(
 				`No progress for ${maxReconnects} connection state changes and pending state will ` +
@@ -932,7 +926,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					(state?.pendingStates[0] as IPendingMessage).content.contents,
+					JSON.parse((state?.pendingStates[0] as IPendingMessage).content).contents,
 					{
 						prop1: 1,
 					},

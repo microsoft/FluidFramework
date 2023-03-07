@@ -791,7 +791,7 @@ export class ContainerRuntime
 		opMetadata: Record<string, unknown> | undefined,
 	) => void {
 		// eslint-disable-next-line @typescript-eslint/unbound-method
-		return this.reSubmit;
+		return this.reSubmitCore;
 	}
 
 	public get disposeFn(): (error?: ICriticalContainerError) => void {
@@ -1685,15 +1685,14 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState(newState);
 	}
 
-	private async applyStashedOp(
-		type: ContainerMessageType,
-		op: ISequencedDocumentMessage,
-	): Promise<unknown> {
-		switch (type) {
+	private async applyStashedOp(op: string): Promise<unknown> {
+		const { type, contents } = JSON.parse(op);
+		const messageType: ContainerMessageType = type;
+		switch (messageType) {
 			case ContainerMessageType.FluidDataStoreOp:
-				return this.dataStores.applyStashedOp(op);
+				return this.dataStores.applyStashedOp(contents);
 			case ContainerMessageType.Attach:
-				return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
+				return this.dataStores.applyStashedAttachOp(contents as unknown as IAttachMessage);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -1702,7 +1701,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			default:
-				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
+				unreachableCase(messageType, `Unknown ContainerMessageType: ${messageType}`);
 		}
 	}
 
@@ -2977,13 +2976,22 @@ export class ContainerRuntime
 		}
 	}
 
+	private reSubmit(
+		content: string,
+		localOpMetadata: unknown,
+		opMetadata: Record<string, unknown> | undefined,
+	) {
+		const { contents, type } = JSON.parse(content);
+		this.reSubmitCore(type, contents, localOpMetadata, opMetadata);
+	}
+
 	/**
 	 * Finds the right store and asks it to resubmit the message. This typically happens when we
 	 * reconnect and there are pending messages.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	private reSubmit(
+	private reSubmitCore(
 		type: ContainerMessageType,
 		content: any,
 		localOpMetadata: unknown,

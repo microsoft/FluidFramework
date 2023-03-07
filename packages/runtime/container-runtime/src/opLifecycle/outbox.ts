@@ -270,9 +270,9 @@ export class Outbox {
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
 			this.params.pendingStateManager.onSubmitMessage(
-				message.type,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				message.contents!,
 				message.referenceSequenceNumber,
-				message.contents === undefined ? undefined : JSON.parse(message.contents),
 				message.localOpMetadata,
 				message.metadata,
 			);

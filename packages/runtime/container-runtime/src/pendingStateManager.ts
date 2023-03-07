@@ -9,7 +9,6 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import Deque from "double-ended-queue";
-import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
 
 /**
@@ -18,10 +17,9 @@ import { pkgVersion } from "./packageVersion";
  */
 export interface IPendingMessage {
 	type: "message";
-	messageType: ContainerMessageType;
 	clientSequenceNumber: number;
 	referenceSequenceNumber: number;
-	content: any;
+	content: string;
 	localOpMetadata: unknown;
 	opMetadata: Record<string, unknown> | undefined;
 }
@@ -47,13 +45,9 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
-	applyStashedOp: (
-		type: ContainerMessageType,
-		content: ISequencedDocumentMessage,
-	) => Promise<unknown>;
+	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(
-		type: ContainerMessageType,
-		content: any,
+		content: string | undefined,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	): void;
@@ -139,6 +133,9 @@ export class PendingStateManager implements IDisposable {
 
 				// Skip over "flush" messages
 				if (initialState.type === "message") {
+					if (typeof initialState.content !== "string") {
+						initialState.content = JSON.stringify(initialState.content);
+					}
 					if (initialState.opMetadata?.batch) {
 						currentlyBatching = true;
 					} else if (initialState.opMetadata?.batch === false) {
@@ -170,15 +167,13 @@ export class PendingStateManager implements IDisposable {
 	 * @param localOpMetadata - The local metadata associated with the message.
 	 */
 	public onSubmitMessage(
-		type: ContainerMessageType,
+		content: string,
 		referenceSequenceNumber: number,
-		content: any,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
 		const pendingMessage: IPendingMessage = {
 			type: "message",
-			messageType: type,
 			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
 			referenceSequenceNumber,
 			content,
@@ -208,10 +203,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-			const localOpMetadata = await this.stateHandler.applyStashedOp(
-				nextMessage.messageType,
-				nextMessage.content,
-			);
+			const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
 			nextMessage.localOpMetadata = localOpMetadata;
 
 			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
@@ -237,32 +229,17 @@ export class PendingStateManager implements IDisposable {
 		);
 		this.pendingMessages.shift();
 
-		if (pendingMessage.messageType !== message.type) {
-			// Close the container because this could indicate data corruption.
-			this.stateHandler.close(
-				DataProcessingError.create(
-					"pending local message type mismatch",
-					"unexpectedAckReceived",
-					message,
-					{
-						expectedMessageType: pendingMessage.messageType,
-					},
-				),
-			);
-			return;
-		}
-
-		const pendingMessageContent = JSON.stringify(pendingMessage.content);
-		const messageContent = JSON.stringify(message.contents);
-
+		const messageContent = JSON.stringify({ type: message.type, contents: message.contents });
 		// Stringified content does not match
-		if (pendingMessageContent !== messageContent) {
-			// Close the container because this could indicate data corruption.
+		if (pendingMessage.content !== messageContent) {
 			this.stateHandler.close(
 				DataProcessingError.create(
 					"pending local message content mismatch",
 					"unexpectedAckReceived",
 					message,
+					{
+						expectedMessageType: JSON.parse(pendingMessage.content).type,
+					},
 				),
 			);
 			return;
@@ -401,7 +378,6 @@ export class PendingStateManager implements IDisposable {
 					while (pendingMessagesCount >= 0) {
 						// check is >= because batch end may be last pending message
 						this.stateHandler.reSubmit(
-							pendingMessage.messageType,
 							pendingMessage.content,
 							pendingMessage.localOpMetadata,
 							pendingMessage.opMetadata,
@@ -423,7 +399,6 @@ export class PendingStateManager implements IDisposable {
 				});
 			} else {
 				this.stateHandler.reSubmit(
-					pendingMessage.messageType,
 					pendingMessage.content,
 					pendingMessage.localOpMetadata,
 					pendingMessage.opMetadata,
