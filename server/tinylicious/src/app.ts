@@ -79,10 +79,14 @@ export function create(
 	// API to broadcast a signal to a container
 	app.use(
 		Router().post("/broadcast-signal", (req, res) => {
-			const taskListData = req.body.data;
-			const containerUrl = req.body.containerUrl;
-			eventEmitter.emit("broadcast-signal", taskListData, containerUrl);
-			res.status(200).send("Triggering debug signal from tinylicious");
+			try {
+				const taskListData = req.body?.data;
+				const containerUrl = req.body?.containerUrl;
+				eventEmitter.emit("broadcast-signal", taskListData, containerUrl);
+				res.status(200).send("Triggering debug signal from tinylicious");
+			} catch(error) {
+				res.status(500).send(error);
+			}
 		}),
 	);
 

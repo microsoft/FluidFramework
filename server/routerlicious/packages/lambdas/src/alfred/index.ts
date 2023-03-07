@@ -483,8 +483,8 @@ export function configureWebSocketServices(
 
                 // Only for debugging purposes
                 eventEmitter.on('broadcast-signal', (_, containerUrl) => {
-                    const documentId = containerUrl.split('/').pop();
-                    const tenantId = containerUrl.split('/').pop().pop();
+                    const documentId = containerUrl.split('/')[containerUrl.split('/').length - 1];
+                    const tenantId = containerUrl.split('/')[containerUrl.split('/').length - 2];
                     const roomFromBroadcastSignal: IRoom = { tenantId, documentId }
                     console.log(`ALFRED: Trigger broadcast-signal event to tenantId: ${tenantId} documentId: ${documentId}`);
                     const signalMessageRuntimeMessage : ISignalMessage = {

@@ -81,6 +81,10 @@ export class ClientManager<TData = unknown> {
 			this._clientMapping.set(client, taskListId);
 			console.log(`CUSTOMER SERVICE: "${client}" has been registered with ${taskListId}.`);
 		}
+		console.log(`CUSTOMER SERVICE CLIENT MAPPING`);
+		console.log(this._clientMapping);
+		console.log(`CUSTOMER SERVICE TASKLIST MAPPING`);
+		console.log(this._taskListMapping);
 	}
 
 	/**

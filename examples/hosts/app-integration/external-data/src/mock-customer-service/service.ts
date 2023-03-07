@@ -167,7 +167,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 
 			console.log(
 				formatLogMessage(
-					`Data update received from external data service. Notifying webhook subscribers.`,
+					`Data update received from external data service. Notifying webhook subscribers at ${containerUrl}`,
 				),
 			);
 			echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
