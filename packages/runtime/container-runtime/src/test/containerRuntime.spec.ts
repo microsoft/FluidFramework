@@ -34,7 +34,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
+import { PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -932,7 +932,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					(state?.pendingStates[0] as IPendingMessage).content.contents,
+					state?.pendingStates[0].content.contents,
 					{
 						prop1: 1,
 					},
