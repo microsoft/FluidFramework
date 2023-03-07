@@ -64,18 +64,19 @@ require("./server.js").then(async (materializedHistoryServer) => {
 	let generateGUID = require("@fluid-experimental/property-common").GuidUtils.generateGUID;
 
 	let postData = function (url, data) {
-		return axios.post(url, data, {
-		  headers: {
-			'Content-Type': 'application/json',
-		  },
-		})
-		  .then(response => {
-			return response.data;
-		  })
-		  .catch(error => {
-			throw new Error(error.response.data);
-		  });
-	  }
+		return axios
+			.post(url, data, {
+				headers: {
+					"Content-Type": "application/json",
+				},
+			})
+			.then((response) => {
+				return response.data;
+			})
+			.catch((error) => {
+				throw new Error(error.response.data);
+			});
+	};
 
 	let createBranch = function ({ branchGuid, rootCommitGuid, metaData }) {
 		return postData(`http://localhost:${targets.port}/v1/branch`, {

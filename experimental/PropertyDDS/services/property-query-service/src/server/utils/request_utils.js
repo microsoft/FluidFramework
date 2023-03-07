@@ -346,16 +346,16 @@
 				startTime = startTime || lastStartTime;
 				attempt++;
 				axios(in_params.requestParams, {
-				  headers: {
-					'Content-Type': 'application/json',
-				  },
+					headers: {
+						"Content-Type": "application/json",
+					},
 				})
-				  .then(response => {
-					in_params.requestCallbackHandler(callback, response.data);
-				  })
-				  .catch(error => {
-					console.error(error);
-				  });
+					.then((response) => {
+						in_params.requestCallbackHandler(callback, response.data);
+					})
+					.catch((error) => {
+						console.error(error);
+					});
 			},
 			// Callback called after success or final retry
 			// Might receive 1 or 2 results depending on the type of request handler callback that was provided
