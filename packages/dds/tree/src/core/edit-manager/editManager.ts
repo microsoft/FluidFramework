@@ -302,36 +302,29 @@ export class EditManager<
 	}
 
 	public squashLocalChanges(startRevision: RevisionTag): Commit<TChangeset> {
-		const commits: GraphCommit<TChangeset>[] = [];
-		const squashStart = findAncestor(
-			[this.localBranch, commits],
-			(c) => c.revision === startRevision,
-		);
-		assert(squashStart !== undefined, "Expected local branch to be ahead of squash revision");
-		// TODO: Is this the way?
-		const anonymousChanges = commits.map(({ change }) => ({ change, revision: undefined }));
-		const anonymousChange = this.changeFamily.rebaser.compose(anonymousChanges);
-		this.localBranch = mintCommit(squashStart, {
-			revision: mintRevisionTag(),
-			sessionId: this.localSessionId,
-			change: anonymousChange,
-		});
-		return this.localBranch;
+		const [squashStart, commits] = this.findLocalCommit(startRevision);
+		// Anonymize the commits from this transaction by stripping their revision tags.
+		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
+		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
+
+		{
+			const change = this.changeFamily.rebaser.compose(anonymousCommits);
+			this.localBranch = mintCommit(squashStart, {
+				revision: mintRevisionTag(),
+				sessionId: this.localSessionId,
+				change,
+			});
+			return this.localBranch;
+		}
 	}
 
 	public *rollbackLocalChanges(
 		startRevision: RevisionTag,
 		repairStore?: ReadonlyRepairDataStore,
 	): Iterable<Delta.Root> {
-		const commits: GraphCommit<TChangeset>[] = [];
-		const rollbackTo = findAncestor(
-			[this.localBranch, commits],
-			(c) => c.revision === startRevision,
-		);
-		assert(rollbackTo !== undefined, "Expected local branch to be ahead of rollback revision");
+		const [rollbackTo, commits] = this.findLocalCommit(startRevision);
 		this.localBranch = rollbackTo;
 
-		// TODO: This area can probably be revisited and written a little better
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const { change, revision } = commits[i];
 			if (this.anchors !== undefined) {
@@ -343,6 +336,15 @@ export class EditManager<
 			);
 			yield this.changeFamily.intoDelta(inverse);
 		}
+	}
+
+	private findLocalCommit(
+		revision: RevisionTag,
+	): [commit: GraphCommit<TChangeset>, commitsAfter: GraphCommit<TChangeset>[]] {
+		const commits: GraphCommit<TChangeset>[] = [];
+		const commit = findAncestor([this.localBranch, commits], (c) => c.revision === revision);
+		assert(commit !== undefined, "Expected local branch to contain revision");
+		return [commit, commits];
 	}
 
 	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {
