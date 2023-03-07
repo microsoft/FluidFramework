@@ -167,3 +167,23 @@ export const describeE2EDocsMemory: DescribeE2EDocSuite = createE2EDocsDescribeW
 	"Memory benchmarks",
 	E2EDefaultDocumentTypes,
 );
+
+function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
+	let isMemoryUsageTest: boolean = false;
+	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
+	for (const flag of ["--grep", "--fgrep"]) {
+		const flagIndex = childArgs.indexOf(flag);
+		if (flagIndex > 0) {
+			console.log("childArgs", childArgs[flagIndex + 1]);
+			isMemoryUsageTest = childArgs[flagIndex + 1] === "@MemoryUsage" ? true : false;
+			break;
+		}
+	}
+	const isMemoryTest: boolean =
+		process.env.FLUID_E2E_MEMORY !== undefined ? true : isMemoryUsageTest ?? false;
+	console.log(`IsMemoryTest: ${isMemoryTest}`);
+
+	return isMemoryTest === true ? describeE2EDocsMemory : describeE2EDocsRuntime;
+}
+
+export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
