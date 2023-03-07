@@ -109,6 +109,67 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_BaseSegment": {
+				"backCompat": false
+			},
+			"ClassDeclaration_IncrementalMapState": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"backCompat": false
+			},
+			"ClassDeclaration_MergeBlock": {
+				"backCompat": false
+			},
+			"ClassDeclaration_MergeNode": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_AttributionPolicy": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAttributionCollection": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IAttributionCollectionSerializer": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IConsensusInfo": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IHierBlock": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeBlock": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeNodeCommon": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_InsertContext": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISegmentChanges": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_SerializedAttributionCollection": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SerializedAttributionCollection": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_IMergeNode": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SortedSegmentSetItem": {
+				"backCompat": false
+			}
+		}
 	}
 }

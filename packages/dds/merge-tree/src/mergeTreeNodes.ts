@@ -9,7 +9,7 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { IAttributionCollection } from "./attributionCollection";
+import { IAttributionCollection, IAttributionCollectionInternal } from "./attributionCollection";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferenceCollection } from "./localReference";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
@@ -382,6 +382,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public localSeq?: number;
 	public localRemovedSeq?: number;
 
+	private get attributionI(): IAttributionCollectionInternal<AttributionKey> | undefined {
+		return this.attribution as IAttributionCollectionInternal<AttributionKey> | undefined;
+	}
+
 	public addProperties(
 		newProps: PropertySet,
 		op?: ICombiningOp,
@@ -421,7 +425,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		// TODO: copy removed client overlap and branch removal info
 		b.removedSeq = this.removedSeq;
 		b.seq = this.seq;
-		b.attribution = this.attribution?.clone();
+		b.attribution = this.attributionI?.clone();
 	}
 
 	public canAppend(segment: ISegment): boolean {
@@ -501,9 +505,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 				if (this.localRefs) {
 					this.localRefs.split(pos, leafSegment);
 				}
-				if (this.attribution) {
-					leafSegment.attribution = this.attribution.splitAt(pos);
-				}
+				leafSegment.attribution = this.attributionI?.splitAt(pos);
 			}
 			return leafSegment;
 		}
@@ -528,12 +530,13 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		// Note: Must call 'appendLocalRefs' before modifying this segment's length as
 		//       'this.cachedLength' is used to adjust the offsets of the local refs.
 		LocalReferenceCollection.append(this, other);
-		if (this.attribution) {
+		const attribution = this.attributionI;
+		if (attribution) {
 			assert(
 				other.attribution !== undefined,
 				0x4bd /* attribution should be set on appendee */,
 			);
-			this.attribution.append(other.attribution);
+			attribution.append(other.attribution);
 		} else {
 			assert(
 				other.attribution === undefined,

@@ -9,7 +9,7 @@ import {
 	OpAttributionKey,
 	DetachedAttributionKey,
 } from "@fluidframework/runtime-definitions";
-import { AttributionPolicy } from "./mergeTree";
+import { AttributionPolicy, AttributionPolicyInternal } from "./mergeTree";
 import { Client } from "./client";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import {
@@ -20,9 +20,6 @@ import {
 import { ISegment } from "./mergeTreeNodes";
 import { MergeTreeDeltaType } from "./ops";
 
-/**
- * @internal
- */
 export interface SerializedAttributionCollection {
 	/**
 	 * Parallel array with posBreakpoints which tracks the seq of insertion.
@@ -36,10 +33,6 @@ export interface SerializedAttributionCollection {
 	length: number;
 }
 
-/**
- * @internal
- * @sealed
- */
 export interface IAttributionCollectionSerializer {
 	/**
 	 * @internal
@@ -63,6 +56,7 @@ export interface IAttributionCollectionSerializer {
 
 /**
  * @alpha
+ * @sealed
  */
 export interface IAttributionCollection<T> {
 	/**
@@ -74,23 +68,27 @@ export interface IAttributionCollection<T> {
 	 * Total length of all attribution keys in this collection.
 	 */
 	readonly length: number;
+}
 
+/**
+ * Internal members which all implementations of IAttributionCollection<T> must implement.
+ *
+ * Note that this interface isn't exported from the package index, and this kind of statement can
+ * only be made since it is marked sealed.
+ */
+export interface IAttributionCollectionInternal<T> extends IAttributionCollection<T> {
 	/**
 	 * Retrieve all key/offset pairs stored on this segment. Entries should be ordered by offset, such that
 	 * the `i`th result's attribution key applies to offsets in the open range between the `i`th offset and the
 	 * `i+1`th offset.
 	 * The last entry's key applies to the open interval from the last entry's offset to this collection's length.
-	 * @internal
 	 */
 	getAll(): Iterable<{ offset: number; key: T }>;
 
-	/** @internal */
 	splitAt(pos: number): IAttributionCollection<T>;
 
-	/** @internal */
 	append(other: IAttributionCollection<T>): void;
 
-	/** @internal */
 	clone(): IAttributionCollection<T>;
 }
 
@@ -247,7 +245,9 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 		for (const segment of segments) {
 			if (segment.attribution) {
 				segmentsWithAttribution++;
-				for (const { offset, key } of segment.attribution?.getAll() ?? []) {
+				for (const { offset, key } of (
+					segment.attribution as AttributionCollection
+				)?.getAll() ?? []) {
 					if (
 						!mostRecentAttributionKey ||
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)
@@ -286,7 +286,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
-	return {
+	const policy: AttributionPolicyInternal = {
 		attach: (client: Client) => {
 			assert(
 				unsubscribe === undefined,
@@ -354,4 +354,5 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 		},
 		serializer: AttributionCollection,
 	};
+	return policy;
 }

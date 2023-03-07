@@ -13,7 +13,11 @@ import {
 	take,
 } from "@fluid-internal/stochastic-test-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
-import { AttributionCollection, SerializedAttributionCollection } from "../attributionCollection";
+import {
+	AttributionCollection,
+	IAttributionCollectionInternal,
+	SerializedAttributionCollection,
+} from "../attributionCollection";
 import { BaseSegment, ISegment } from "../mergeTreeNodes";
 
 describe("AttributionCollection", () => {
@@ -129,8 +133,11 @@ describe("AttributionCollection", () => {
 	});
 
 	describe(".populateAttributionCollections", () => {
+		type ISegmentInternal = ISegment & {
+			attribution?: IAttributionCollectionInternal<AttributionKey>;
+		};
 		it("correctly splits segment boundaries on breakpoints", () => {
-			const segments = [{ cachedLength: 5 }, { cachedLength: 4 }] as ISegment[];
+			const segments = [{ cachedLength: 5 }, { cachedLength: 4 }] as ISegmentInternal[];
 			AttributionCollection.populateAttributionCollections(segments, {
 				length: 9,
 				posBreakpoints: [0, 2, 5, 7],
@@ -152,7 +159,7 @@ describe("AttributionCollection", () => {
 		});
 
 		it("correctly splits segment boundaries between breakpoints", () => {
-			const segments = [{ cachedLength: 4 }, { cachedLength: 5 }] as ISegment[];
+			const segments = [{ cachedLength: 4 }, { cachedLength: 5 }] as ISegmentInternal[];
 			AttributionCollection.populateAttributionCollections(segments, {
 				length: 9,
 				posBreakpoints: [0, 2, 5, 7],

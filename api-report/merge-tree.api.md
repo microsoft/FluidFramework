@@ -23,14 +23,8 @@ export function appendToMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDri
 
 // @alpha @sealed
 export interface AttributionPolicy {
-    // @internal
-    attach: (client: Client) => void;
-    // @internal
-    detach: () => void;
-    // @internal (undocumented)
-    isAttached: boolean;
-    // @internal
-    serializer: IAttributionCollectionSerializer;
+    // (undocumented)
+    readonly _brand?: unique symbol;
 }
 
 // @public (undocumented)
@@ -297,31 +291,10 @@ export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined, c
 // @public (undocumented)
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T>;
 
-// @alpha (undocumented)
+// @alpha @sealed (undocumented)
 export interface IAttributionCollection<T> {
-    // @internal (undocumented)
-    append(other: IAttributionCollection<T>): void;
-    // @internal (undocumented)
-    clone(): IAttributionCollection<T>;
-    // @internal
-    getAll(): Iterable<{
-        offset: number;
-        key: T;
-    }>;
     getAtOffset(offset: number): T;
     readonly length: number;
-    // @internal (undocumented)
-    splitAt(pos: number): IAttributionCollection<T>;
-}
-
-// @internal @sealed (undocumented)
-export interface IAttributionCollectionSerializer {
-    populateAttributionCollections(segments: Iterable<ISegment>, summary: SerializedAttributionCollection): void;
-    // (undocumented)
-    serializeAttributionCollections(segments: Iterable<{
-        attribution?: IAttributionCollection<AttributionKey>;
-        cachedLength: number;
-    }>): SerializedAttributionCollection;
 }
 
 // @public (undocumented)
@@ -1192,15 +1165,6 @@ export class SegmentGroupCollection {
     pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
-}
-
-// @internal (undocumented)
-export interface SerializedAttributionCollection {
-    // (undocumented)
-    length: number;
-    // (undocumented)
-    posBreakpoints: number[];
-    seqs: (number | AttributionKey)[];
 }
 
 // @internal (undocumented)

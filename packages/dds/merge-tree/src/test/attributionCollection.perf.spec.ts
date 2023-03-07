@@ -10,6 +10,7 @@ import {
 	areEqualAttributionKeys,
 	AttributionCollection as NewAttributionCollection,
 	IAttributionCollection,
+	IAttributionCollectionInternal,
 	SerializedAttributionCollection,
 } from "../attributionCollection";
 import { TextSegmentGranularity } from "../textSegment";
@@ -17,11 +18,11 @@ import { compareNumbers, ISegment } from "../mergeTreeNodes";
 import { RedBlackTree } from "../collections";
 
 interface IAttributionCollectionCtor {
-	new (key: AttributionKey, length: number): IAttributionCollection<AttributionKey>;
+	new (key: AttributionKey, length: number): IAttributionCollectionInternal<AttributionKey>;
 
 	serializeAttributionCollections(
 		segments: Iterable<{
-			attribution?: IAttributionCollection<AttributionKey>;
+			attribution?: IAttributionCollectionInternal<AttributionKey>;
 			cachedLength: number;
 		}>,
 	): SerializedAttributionCollection;
@@ -37,7 +38,7 @@ function getCollectionSizes(
 	baseSuiteType: BenchmarkType,
 ): {
 	name: string;
-	collection: IAttributionCollection<AttributionKey>;
+	collection: IAttributionCollectionInternal<AttributionKey>;
 	type: BenchmarkType;
 }[] {
 	const singleKeyCollection = new ctor({ type: "op", seq: 5 }, 42);
@@ -264,7 +265,9 @@ export class TreeAttributionCollection implements IAttributionCollection<Attribu
 		for (const segment of segments) {
 			if (segment.attribution) {
 				segmentsWithAttribution++;
-				for (const { offset, key: info } of segment.attribution?.getAll() ?? []) {
+				for (const { offset, key: info } of (
+					segment.attribution as IAttributionCollectionInternal<AttributionKey>
+				)?.getAll() ?? []) {
 					if (
 						!mostRecentAttributionKey ||
 						!areEqualAttributionKeys(info, mostRecentAttributionKey)

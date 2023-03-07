@@ -466,6 +466,10 @@ export interface IMergeTreeAttributionOptions {
  * @sealed
  */
 export interface AttributionPolicy {
+	readonly _brand?: unique symbol;
+}
+
+export interface AttributionPolicyInternal extends AttributionPolicy {
 	/**
 	 * Enables tracking attribution information for operations on this merge-tree.
 	 * This function is expected to subscribe to appropriate change events in order
@@ -535,7 +539,7 @@ export class MergeTree {
 		return this.segmentsToScour;
 	}
 
-	public readonly attributionPolicy: AttributionPolicy | undefined;
+	public readonly attributionPolicy: AttributionPolicyInternal | undefined;
 
 	/**
 	 * Whether or not all blocks in the mergeTree currently have information about local partial lengths computed.
@@ -554,7 +558,8 @@ export class MergeTree {
 	public constructor(public options?: IMergeTreeOptions) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
-		this.attributionPolicy = options?.attribution?.policyFactory?.();
+		this.attributionPolicy =
+			options?.attribution?.policyFactory?.() as AttributionPolicyInternal;
 	}
 
 	private _root: IRootMergeBlock;

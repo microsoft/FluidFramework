@@ -23,6 +23,7 @@ declare function get_old_InterfaceDeclaration_AttributionPolicy():
 declare function use_current_InterfaceDeclaration_AttributionPolicy(
     use: TypeOnly<current.AttributionPolicy>);
 use_current_InterfaceDeclaration_AttributionPolicy(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_AttributionPolicy());
 
 /*
@@ -35,6 +36,7 @@ declare function get_current_InterfaceDeclaration_AttributionPolicy():
 declare function use_old_InterfaceDeclaration_AttributionPolicy(
     use: TypeOnly<old.AttributionPolicy>);
 use_old_InterfaceDeclaration_AttributionPolicy(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_AttributionPolicy());
 
 /*
@@ -59,6 +61,7 @@ declare function get_current_ClassDeclaration_BaseSegment():
 declare function use_old_ClassDeclaration_BaseSegment(
     use: TypeOnly<old.BaseSegment>);
 use_old_ClassDeclaration_BaseSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_BaseSegment());
 
 /*
@@ -251,31 +254,20 @@ declare function get_current_InterfaceDeclaration_IAttributionCollection():
 declare function use_old_InterfaceDeclaration_IAttributionCollection(
     use: TypeOnly<old.IAttributionCollection<any>>);
 use_old_InterfaceDeclaration_IAttributionCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAttributionCollection());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAttributionCollectionSerializer": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IAttributionCollectionSerializer": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IAttributionCollectionSerializer():
-    TypeOnly<old.IAttributionCollectionSerializer>;
-declare function use_current_InterfaceDeclaration_IAttributionCollectionSerializer(
-    use: TypeOnly<current.IAttributionCollectionSerializer>);
-use_current_InterfaceDeclaration_IAttributionCollectionSerializer(
-    get_old_InterfaceDeclaration_IAttributionCollectionSerializer());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAttributionCollectionSerializer": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IAttributionCollectionSerializer": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IAttributionCollectionSerializer():
-    TypeOnly<current.IAttributionCollectionSerializer>;
-declare function use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
-    use: TypeOnly<old.IAttributionCollectionSerializer>);
-use_old_InterfaceDeclaration_IAttributionCollectionSerializer(
-    get_current_InterfaceDeclaration_IAttributionCollectionSerializer());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -323,6 +315,7 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -371,6 +364,7 @@ declare function get_current_InterfaceDeclaration_IHierBlock():
 declare function use_old_InterfaceDeclaration_IHierBlock(
     use: TypeOnly<old.IHierBlock>);
 use_old_InterfaceDeclaration_IHierBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IHierBlock());
 
 /*
@@ -539,6 +533,7 @@ declare function get_current_InterfaceDeclaration_IMergeBlock():
 declare function use_old_InterfaceDeclaration_IMergeBlock(
     use: TypeOnly<old.IMergeBlock>);
 use_old_InterfaceDeclaration_IMergeBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeBlock());
 
 /*
@@ -563,6 +558,7 @@ declare function get_current_TypeAliasDeclaration_IMergeNode():
 declare function use_old_TypeAliasDeclaration_IMergeNode(
     use: TypeOnly<old.IMergeNode>);
 use_old_TypeAliasDeclaration_IMergeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_IMergeNode());
 
 /*
@@ -587,6 +583,7 @@ declare function get_current_InterfaceDeclaration_IMergeNodeCommon():
 declare function use_old_InterfaceDeclaration_IMergeNodeCommon(
     use: TypeOnly<old.IMergeNodeCommon>);
 use_old_InterfaceDeclaration_IMergeNodeCommon(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeNodeCommon());
 
 /*
@@ -1115,6 +1112,7 @@ declare function get_current_InterfaceDeclaration_ISegmentChanges():
 declare function use_old_InterfaceDeclaration_ISegmentChanges(
     use: TypeOnly<old.ISegmentChanges>);
 use_old_InterfaceDeclaration_ISegmentChanges(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISegmentChanges());
 
 /*
@@ -1187,6 +1185,7 @@ declare function get_current_ClassDeclaration_IncrementalMapState():
 declare function use_old_ClassDeclaration_IncrementalMapState(
     use: TypeOnly<old.IncrementalMapState<any>>);
 use_old_ClassDeclaration_IncrementalMapState(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_IncrementalMapState());
 
 /*
@@ -1259,6 +1258,7 @@ declare function get_current_InterfaceDeclaration_InsertContext():
 declare function use_old_InterfaceDeclaration_InsertContext(
     use: TypeOnly<old.InsertContext>);
 use_old_InterfaceDeclaration_InsertContext(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_InsertContext());
 
 /*
@@ -1403,6 +1403,7 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*
@@ -1451,6 +1452,7 @@ declare function get_current_ClassDeclaration_MergeBlock():
 declare function use_old_ClassDeclaration_MergeBlock(
     use: TypeOnly<old.MergeBlock>);
 use_old_ClassDeclaration_MergeBlock(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MergeBlock());
 
 /*
@@ -1475,6 +1477,7 @@ declare function get_current_ClassDeclaration_MergeNode():
 declare function use_old_ClassDeclaration_MergeNode(
     use: TypeOnly<old.MergeNode>);
 use_old_ClassDeclaration_MergeNode(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_MergeNode());
 
 /*
@@ -2248,26 +2251,14 @@ use_old_ClassDeclaration_SegmentGroupCollection(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedAttributionCollection": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_SerializedAttributionCollection": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_SerializedAttributionCollection():
-    TypeOnly<old.SerializedAttributionCollection>;
-declare function use_current_InterfaceDeclaration_SerializedAttributionCollection(
-    use: TypeOnly<current.SerializedAttributionCollection>);
-use_current_InterfaceDeclaration_SerializedAttributionCollection(
-    get_old_InterfaceDeclaration_SerializedAttributionCollection());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_SerializedAttributionCollection": {"backCompat": false}
+* "RemovedInterfaceDeclaration_SerializedAttributionCollection": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_SerializedAttributionCollection():
-    TypeOnly<current.SerializedAttributionCollection>;
-declare function use_old_InterfaceDeclaration_SerializedAttributionCollection(
-    use: TypeOnly<old.SerializedAttributionCollection>);
-use_old_InterfaceDeclaration_SerializedAttributionCollection(
-    get_current_InterfaceDeclaration_SerializedAttributionCollection());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -2339,6 +2330,7 @@ declare function get_current_TypeAliasDeclaration_SortedSegmentSetItem():
 declare function use_old_TypeAliasDeclaration_SortedSegmentSetItem(
     use: TypeOnly<old.SortedSegmentSetItem>);
 use_old_TypeAliasDeclaration_SortedSegmentSetItem(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_SortedSegmentSetItem());
 
 /*
@@ -2411,6 +2403,7 @@ declare function get_current_ClassDeclaration_TextSegment():
 declare function use_old_ClassDeclaration_TextSegment(
     use: TypeOnly<old.TextSegment>);
 use_old_ClassDeclaration_TextSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TextSegment());
 
 /*
