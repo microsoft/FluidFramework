@@ -99,21 +99,41 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 */
 	readonly forest: IForestSubscription;
 
+	/**
+	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
+	 */
 	readonly editor: IDefaultEditBuilder;
 
+	/**
+	 * An collection of functions for managing transactions. Transactions allow edits to be batched into atomic units.
+	 * Edits made during a transaction will update the local state of the tree immediately, but will be squashed into a single edit
+	 * when the transaction is committed. If the transaction is aborted, the local state will be reset to what it was before
+	 * the transaction began. Transactions may nest, meaning that a transaction may be started while a transaction is already
+	 * ongoing.
+	 *
+	 * TODO: Provide an option to avoid updating local state during a transaction.
+	 */
 	readonly transaction: {
+		/**
+		 * Start a new transaction. If a transaction is already in progress when this new transaction starts, then it will remain in
+		 * progress when the new transaction is committed or aborted.
+		 */
 		start: () => void;
+		/**
+		 * Close this transaction by squashing its edits and committing them as a single edit. If this is the root local branch and there are no
+		 * ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+		 */
 		commit: () => void;
+		/**
+		 * Close this transaction and revert the state of the tree to what it was before this transaction began.
+		 */
 		abort: () => void;
-		inProgress: () => void;
 	};
 
 	/**
 	 * Run `transaction` to edit this forest.
 	 * While `transaction` is running, its intermediate states will be visible on the IForestSubscription.
-	 *
-	 * TODO: support nesting (perhaps via "commands"),
-	 * and do this in a way where there is control over which transaction's intermediate versions are displayed.
 	 */
 	runTransaction(
 		transaction: (
@@ -219,7 +239,6 @@ class SharedTree
 			start: () => this.startTransaction(new ForestRepairDataStore(() => this.forest)),
 			commit: () => this.commitTransaction(),
 			abort: () => this.abortTransaction(),
-			inProgress: () => this.isTransacting(),
 		};
 
 		this.transactionCheckout = {
@@ -342,7 +361,6 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
 		commit: () => this.branch.commitTransaction(),
 		abort: () => this.branch.abortTransaction(),
-		inProgress: () => this.branch.isTransacting(),
 	};
 
 	public locate(anchor: Anchor): AnchorNode | undefined {

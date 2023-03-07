@@ -116,8 +116,11 @@ export class SharedTreeCore<
 	 */
 	private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
 
+	/**
+	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
+	 */
 	public readonly editor: TEditor;
-
 	private readonly transactions = new TransactionStack();
 
 	/**
@@ -224,7 +227,6 @@ export class SharedTreeCore<
 		// in the attach summary that is uploaded to the service.
 		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
 		if (this.detachedRevision !== undefined) {
-			// TODO: How do we handle this code path now?
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
 			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
@@ -237,6 +239,10 @@ export class SharedTreeCore<
 		this.submitLocalMessage(message);
 	}
 
+	/**
+	 * Update the state of the tree (including all indexes) according to the given change.
+	 * If there is not currently a transaction open, the change will be submitted to Fluid.
+	 */
 	protected applyChange(change: TChange): void {
 		const revision = mintRevisionTag();
 		const commit = {
@@ -290,8 +296,7 @@ export class SharedTreeCore<
 
 	public abortTransaction(): void {
 		const { startRevision, repairStore } = this.transactions.pop();
-		const rollbackDelta = this.editManager.rollbackLocalChanges(startRevision, repairStore);
-		for (const delta of rollbackDelta) {
+		for (const delta of this.editManager.rollbackLocalChanges(startRevision, repairStore)) {
 			this.indexEventEmitter.emit("newLocalState", delta);
 		}
 	}
