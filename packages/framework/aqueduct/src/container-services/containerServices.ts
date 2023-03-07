@@ -27,15 +27,24 @@ export type ContainerServiceRegistryEntries = Iterable<
 
 /**
  * This class is a simple starter class for building a Container Service. It simply provides routing
- * @deprecated See {@link @fluidframework/synthesize#DependencyContainer}
+ * @deprecated Use {@link @fluidframework/synthesize#DependencyContainer} as a replacement for this class
  */
 export abstract class BaseContainerService implements IFluidRouter {
+	/**
+	 * @deprecated Use {@link @fluidframework/synthesize#DependencyContainer} as a replacement for this class
+	 */
 	public get IFluidRouter() {
 		return this;
 	}
 
+	/**
+	 * @deprecated Use {@link @fluidframework/synthesize#DependencyContainer} as a replacement for this class
+	 */
 	constructor(protected readonly runtime: IContainerRuntime) {}
 
+	/**
+	 * @deprecated Use {@link @fluidframework/synthesize#DependencyContainer} as a replacement for this class
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return {
 			status: 200,
