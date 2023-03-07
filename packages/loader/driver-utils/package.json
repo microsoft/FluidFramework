@@ -119,6 +119,10 @@
 			"RemovedClassDeclaration_BlobCacheStorageService": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

@@ -148,26 +148,14 @@ use_old_TypeAliasDeclaration_DriverErrorTelemetryProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EmptyDocumentDeltaStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_EmptyDocumentDeltaStorageService():
-    TypeOnly<old.EmptyDocumentDeltaStorageService>;
-declare function use_current_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    use: TypeOnly<current.EmptyDocumentDeltaStorageService>);
-use_current_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    get_old_ClassDeclaration_EmptyDocumentDeltaStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EmptyDocumentDeltaStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_EmptyDocumentDeltaStorageService():
-    TypeOnly<current.EmptyDocumentDeltaStorageService>;
-declare function use_old_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    use: TypeOnly<old.EmptyDocumentDeltaStorageService>);
-use_old_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    get_current_ClassDeclaration_EmptyDocumentDeltaStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -6,7 +6,6 @@
 export { BlobAggregationStorage, SnapshotExtractor } from "./blobAggregationStorage";
 export { buildSnapshotTree } from "./buildSnapshotTree";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
-export { EmptyDocumentDeltaStorageService } from "./emptyDocumentDeltaStorageService";
 export { UsageError } from "./error";
 export { ensureFluidResolvedUrl, isFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
