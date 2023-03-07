@@ -32,7 +32,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 
 const defaultDataStoreId = "default";
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
@@ -350,7 +350,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 		await container.attach(provider.driver.createCreateNewRequest(provider.documentId));
 
-		await waitForContainerConnection(container, true);
+		await waitForContainerConnection(container);
 
 		// Send an op to trigger summary. We should not get the "IncrementalSummaryViolation" error log.
 		defaultDataStore._root.set("key", "value");
