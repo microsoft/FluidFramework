@@ -17,12 +17,13 @@ import {
 	IConfigRange,
 	TestOperation,
 	resolveRanges,
+	insert,
 } from "./mergeTreeOperationRunner";
 import { TestClient } from "./testClient";
 import { TestClientLogger } from "./testClientLogger";
 
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
+	client.annotateRangeLocal(opStart, opEnd, { trackedProp: client.longClientId }, undefined);
 
 const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOperationRunnerConfig =
 	{
@@ -30,7 +31,7 @@ const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOpe
 		modLen: { min: 1, max: 8 },
 		opsPerRoundRange: { min: 10, max: 40 },
 		rounds: 10,
-		operations: [annotateRange, removeRange],
+		operations: [removeRange, annotateRange, insert],
 		growthFunc: (input: number) => input * 2,
 	};
 
@@ -50,7 +51,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 								track: true,
 								policyFactory:
 									createPropertyTrackingAndInsertionAttributionPolicyFactory(
-										"trackedProp1",
+										"trackedProp",
 									),
 							},
 						}),
@@ -88,12 +89,13 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 							const attribution0 = attributions[i];
 							const attributionC = getAttributionAtPosition(clients[c], i);
 							if (attribution0 !== attributionC) {
-								assert.equal(
+								assert.deepEqual(
 									attribution0,
 									attributionC,
-									`${reason}:\n${preWorkload}\n${TestClientLogger.toString(
-										clients,
-									)}`,
+									`${reason}:\n${preWorkload}\n${TestClientLogger.toString([
+										clients[0],
+										clients[c],
+									])}`,
 								);
 							}
 						}

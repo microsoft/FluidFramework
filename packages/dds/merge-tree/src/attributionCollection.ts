@@ -107,12 +107,11 @@ export interface IAttributionCollection<T> {
 	clone(): IAttributionCollection<T>;
 
 	/**
-	 * TODO: re-evaluate this API, even if it is internal. There may be a cleaner representation.
 	 * Updates this collection with new attribution data.
 	 * @param name - Name of the channel that requires an update. Undefined signifies the root channel.
 	 * Updates apply only to the individual channel (i.e. if an attribution policy needs to update the root
 	 * channel and 4 other channels, it should call `.update` 5 times).
-	 * @param channel - Updated collection for
+	 * @param channel - Updated collection for that channel.
 	 * @internal
 	 */
 	update(name: string | undefined, channel: IAttributionCollection<T>);
@@ -234,8 +233,6 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 			}
 		}
 
-		// TODO: Write unit tests in attribution collection for changed behavior.
-		// other thing to consider: need to handle gaps holistically in all this logic.
 		if (other.channels !== undefined || this.channels !== undefined) {
 			this.channels ??= {};
 			for (const [key, collection] of other.channelEntries) {
