@@ -562,7 +562,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 */
 	private async createAndReferenceDataObject(): Promise<boolean> {
 		// Give each data object a unique id w.r.t. this data object's id.
-		const dataObjectId = `${this.nodeId}/ds-${uuid}`;
+		const dataObjectId = `${this.nodeId}/ds-${uuid()}`;
 		console.log(`########## Creating data object [${dataObjectId}]`);
 
 		const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
