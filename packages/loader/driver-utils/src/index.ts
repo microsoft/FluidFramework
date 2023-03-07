@@ -18,7 +18,6 @@ export {
 	MessageType2,
 } from "./messageRecognition";
 export { MultiDocumentServiceFactory } from "./multiDocumentServiceFactory";
-export { configurableUrlResolver, MultiUrlResolver } from "./multiUrlResolver";
 export {
 	AuthorizationError,
 	canRetryOnError,

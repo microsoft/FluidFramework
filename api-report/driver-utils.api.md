@@ -118,9 +118,6 @@ export const canRetryOnError: (error: any) => boolean;
 export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): ISummaryTree;
 
 // @public @deprecated
-export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
-
-// @public @deprecated
 export function convertSnapshotAndBlobsToSummaryTree(snapshot: ISnapshotTree, blobs: Map<string, ArrayBuffer>): ISummaryTree;
 
 // @public
@@ -292,16 +289,6 @@ export class MultiDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // @deprecated (undocumented)
     readonly protocolName = "none:";
-}
-
-// @public @deprecated (undocumented)
-export class MultiUrlResolver implements IUrlResolver {
-    // @deprecated (undocumented)
-    static create(urlResolver: IUrlResolver | IUrlResolver[]): IUrlResolver;
-    // @deprecated (undocumented)
-    getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string>;
-    // @deprecated (undocumented)
-    resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
 // @public (undocumented)

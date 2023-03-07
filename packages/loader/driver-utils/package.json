@@ -103,6 +103,14 @@
 			"RemovedClassDeclaration_MapWithExpiration": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_MultiUrlResolver": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_configurableUrlResolver": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

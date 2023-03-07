@@ -412,26 +412,14 @@ use_old_ClassDeclaration_MultiDocumentServiceFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiUrlResolver": {"forwardCompat": false}
+* "RemovedClassDeclaration_MultiUrlResolver": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MultiUrlResolver():
-    TypeOnly<old.MultiUrlResolver>;
-declare function use_current_ClassDeclaration_MultiUrlResolver(
-    use: TypeOnly<current.MultiUrlResolver>);
-use_current_ClassDeclaration_MultiUrlResolver(
-    get_old_ClassDeclaration_MultiUrlResolver());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiUrlResolver": {"backCompat": false}
+* "RemovedClassDeclaration_MultiUrlResolver": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MultiUrlResolver():
-    TypeOnly<current.MultiUrlResolver>;
-declare function use_old_ClassDeclaration_MultiUrlResolver(
-    use: TypeOnly<old.MultiUrlResolver>);
-use_old_ClassDeclaration_MultiUrlResolver(
-    get_current_ClassDeclaration_MultiUrlResolver());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -820,26 +808,14 @@ use_old_FunctionDeclaration_combineAppAndProtocolSummary(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_configurableUrlResolver": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_configurableUrlResolver": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_configurableUrlResolver():
-    TypeOnly<typeof old.configurableUrlResolver>;
-declare function use_current_FunctionDeclaration_configurableUrlResolver(
-    use: TypeOnly<typeof current.configurableUrlResolver>);
-use_current_FunctionDeclaration_configurableUrlResolver(
-    get_old_FunctionDeclaration_configurableUrlResolver());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_configurableUrlResolver": {"backCompat": false}
+* "RemovedFunctionDeclaration_configurableUrlResolver": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_configurableUrlResolver():
-    TypeOnly<typeof current.configurableUrlResolver>;
-declare function use_old_FunctionDeclaration_configurableUrlResolver(
-    use: TypeOnly<typeof old.configurableUrlResolver>);
-use_old_FunctionDeclaration_configurableUrlResolver(
-    get_current_FunctionDeclaration_configurableUrlResolver());
 
 /*
 * Validate forward compat by using old type in place of current type
