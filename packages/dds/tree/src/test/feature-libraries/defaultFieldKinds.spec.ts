@@ -95,7 +95,6 @@ describe("Value field changesets", () => {
 	const change1 = fieldHandler.editor.set(singleTextCursor(tree1));
 	const change2 = fieldHandler.editor.set(singleTextCursor(tree2));
 
-	const detachedBy: RevisionTag = mintRevisionTag();
 	const revertChange2: FieldKinds.ValueChangeset = {
 		value: { revert: singleTextCursor(tree1) },
 	};
@@ -244,19 +243,32 @@ describe("Value field changesets", () => {
 		assertMarkListEqual(actual, expected);
 	});
 
-	it("can be encoded in JSON", () => {
+	const encodingTestData: [string, FieldKinds.ValueChangeset][] = [
+		["with child change", change1WithChildChange],
+		["with repair data", revertChange2],
+	];
+
+	describe("encoding", () => {
+		const encoder = fieldHandler.encoder;
 		const version = 0;
 
-		const encoded = JSON.stringify(
-			fieldHandler.encoder.encodeForJson(version, change1WithChildChange, childEncoder1),
-		);
+		for (const [name, data] of encodingTestData) {
+			describe(name, () => {
+				it("roundtrip", () => {
+					const encoded = encoder.encodeForJson(version, data, childEncoder1);
+					const decoded = encoder.decodeJson(version, encoded, childDecoder1);
+					assert.deepEqual(decoded, data);
+				});
 
-		const decoded = fieldHandler.encoder.decodeJson(
-			version,
-			JSON.parse(encoded),
-			childDecoder1,
-		);
-		assert.deepEqual(decoded, change1WithChildChange);
+				it("json roundtrip", () => {
+					const encoded = JSON.stringify(
+						encoder.encodeForJson(version, data, childEncoder1),
+					);
+					const decoded = encoder.decodeJson(version, JSON.parse(encoded), childDecoder1);
+					assert.deepEqual(decoded, data);
+				});
+			});
+		}
 	});
 });
 
@@ -427,18 +439,31 @@ describe("Optional field changesets", () => {
 		assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2), expected);
 	});
 
-	it("can be encoded in JSON", () => {
+	const encodingTestData: [string, FieldKinds.OptionalChangeset][] = [
+		["change", change1],
+		["with repair data", revertChange2],
+	];
+
+	describe("encoding", () => {
+		const encoder = fieldHandler.encoder;
 		const version = 0;
 
-		const encoded = JSON.stringify(
-			fieldHandler.encoder.encodeForJson(version, change1, childEncoder1),
-		);
+		for (const [name, data] of encodingTestData) {
+			describe(name, () => {
+				it("roundtrip", () => {
+					const encoded = encoder.encodeForJson(version, data, childEncoder1);
+					const decoded = encoder.decodeJson(version, encoded, childDecoder1);
+					assert.deepEqual(decoded, data);
+				});
 
-		const decoded = fieldHandler.encoder.decodeJson(
-			version,
-			JSON.parse(encoded),
-			childDecoder1,
-		);
-		assert.deepEqual(decoded, change1);
+				it("json roundtrip", () => {
+					const encoded = JSON.stringify(
+						encoder.encodeForJson(version, data, childEncoder1),
+					);
+					const decoded = encoder.decodeJson(version, JSON.parse(encoded), childDecoder1);
+					assert.deepEqual(decoded, data);
+				});
+			});
+		}
 	});
 });
