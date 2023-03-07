@@ -321,6 +321,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	/**
 	 * Returns an equivalent path making as much of it with PathNodes as possible.
 	 * This allows future operations (like fine, track, locate) on this path (and derived ones) to be faster.
+	 *
+	 * @remarks
+	 * Also ensures that any PathNode in the path is from this AnchorSet.
 	 */
 	public internalizePath(path: UpPath): UpPath {
 		if (path instanceof PathNode) {
@@ -328,15 +331,30 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				return path;
 			}
 		}
-		const parent = path.parent ?? this.root;
+
+		if (path.parent === undefined) {
+			const child = this.root.tryGetChild(path.parentField, path.parentIndex);
+			if (child !== undefined) {
+				return child;
+			}
+			// if input is	PathNode but from wrong anchorSet, replace with new UpPath.
+			return path instanceof PathNode
+				? {
+						parent: undefined,
+						parentField: path.parentField,
+						parentIndex: path.parentIndex,
+				  }
+				: path;
+		}
+		const parent = path.parent;
 		const parentPath = this.internalizePath(parent);
-		if (parentPath === parent) {
-			return path;
-		} else if (parentPath instanceof PathNode) {
+		if (parentPath instanceof PathNode) {
 			const child = parentPath.tryGetChild(path.parentField, path.parentIndex);
 			if (child !== undefined) {
 				return child;
 			}
+		} else if (parentPath === parent && !(path instanceof PathNode)) {
+			return path;
 		}
 		return {
 			parent: parentPath,

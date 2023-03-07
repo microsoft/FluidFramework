@@ -210,6 +210,8 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	EditableTreeEvents,
+	on,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:

@@ -11,6 +11,8 @@ import {
 	jsonableTreeFromCursor,
 	namedTreeSchema,
 	IDefaultEditBuilder,
+	on,
+	valueSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
@@ -33,6 +35,7 @@ import {
 	SchemaData,
 	IForestSubscription,
 	EditManager,
+	ValueSchema,
 } from "../../core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
 
@@ -527,6 +530,38 @@ describe("SharedTree", () => {
 			};
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
+		});
+	});
+
+	describe("Events", () => {
+		it("triggers events for changes", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(1);
+			const [tree1] = provider.trees;
+			tree1.storedSchema.update({
+				globalFieldSchema: new Map([
+					[globalFieldKey, fieldSchema(FieldKinds.value, [testValueSchema.name])],
+				]),
+				treeSchema: new Map([[testValueSchema.name, testValueSchema]]),
+			});
+
+			// Insert node
+			pushTestValue(tree1, value);
+
+			const root = tree1.context.root.getNode(0);
+			// TODO: once branches/transactions are properly integrated, this should be set to 1.
+			// Number of change event per edit.
+			const eventsPerEdit = 3;
+			let count = 0;
+			const unsubscribe = root[on]("changed", () => count++);
+			assert.equal(count, 0);
+			root[valueSymbol] = 5;
+			assert.equal(count, 1 * eventsPerEdit);
+			root[valueSymbol] = 6;
+			assert.equal(count, 2 * eventsPerEdit);
+			unsubscribe();
+			root[valueSymbol] = 7;
+			assert.equal(count, 2 * eventsPerEdit);
 		});
 	});
 
@@ -1459,6 +1494,7 @@ const rootNodeSchema = namedTreeSchema({
 	},
 	extraLocalFields: fieldSchema(FieldKinds.sequence),
 	globalFields: [globalFieldKey],
+	value: ValueSchema.Serializable,
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
@@ -1497,13 +1533,18 @@ function initializeTestTree(
 	}
 }
 
+const testValueSchema = namedTreeSchema({
+	name: brand("TestValue"),
+	value: ValueSchema.Serializable,
+});
+
 /**
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
  */
 function pushTestValue(tree: ISharedTreeCheckout, value: TreeValue): void {
 	tree.runTransaction((_: IForestSubscription, editor: IDefaultEditBuilder) => {
-		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
+		const writeCursor = singleTextCursor({ type: testValueSchema.name, value });
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		field.insert(0, writeCursor);
 		return TransactionResult.Apply;

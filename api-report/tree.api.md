@@ -292,6 +292,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     readonly [indexSymbol]: number;
+    // (undocumented)
+    [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
     readonly [parentField]: {
         readonly parent: EditableField;
         readonly index: number;
@@ -315,6 +317,11 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     readonly schema: SchemaDataAndPolicy;
     get unwrappedRoot(): UnwrappedEditableField;
     set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
+}
+
+// @alpha
+export interface EditableTreeEvents {
+    changed(): void;
 }
 
 // @alpha
@@ -980,6 +987,9 @@ export interface ObservingDependent extends Dependent {
     listDependees(): Iterable<Dependee>;
     registerDependee(dependee: Dependee): void;
 }
+
+// @alpha
+export const on: unique symbol;
 
 // @alpha
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
