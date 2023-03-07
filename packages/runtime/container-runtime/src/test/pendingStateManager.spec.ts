@@ -296,14 +296,110 @@ describe("Pending State Manager", () => {
 			);
 		}
 
+		// TODO: Remove in 2.0.0-internal.5.0.0 once only new format is written in getLocalState() AB#2496
+		describe("Constructor conversion", () => {
+			it("Empty local state", () => {
+				{
+					const pendingStateManager = createPendingStateManager(undefined);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+				}
+				{
+					const pendingStateManager = createPendingStateManager([]);
+					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+				}
+			});
+
+			it("Only flush messages", () => {
+				const pendingStateManager = createPendingStateManager([
+					{ type: "flush" },
+					{ type: "flush" },
+				]);
+				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
+			});
+
+			it("New format", () => {
+				const messages = [
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: false } },
+					{ type: "message" },
+				];
+				const pendingStateManager = createPendingStateManager(messages);
+				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
+			});
+
+			it("Ends with no flush", () => {
+				const pendingStateManager = createPendingStateManager([
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "message" },
+				]);
+				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: false } },
+				]);
+			});
+
+			it("Ends with flush", () => {
+				const pendingStateManager = createPendingStateManager([
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "flush" },
+					{ type: "message" },
+					{ type: "flush" },
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "flush" },
+				]);
+				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message", opMetadata: { batch: false } },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message", opMetadata: { batch: false } },
+				]);
+			});
+
+			it("Mix of new and old", () => {
+				const pendingStateManager = createPendingStateManager([
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: false } },
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "flush" },
+					{ type: "message" },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "message" },
+					{ type: "flush" },
+				]);
+				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), [
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: false } },
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message", opMetadata: { batch: false } },
+					{ type: "message" },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: true } },
+					{ type: "message" },
+					{ type: "message", opMetadata: { batch: false } },
+				]);
+			});
+		});
+
 		it("getLocalState writes new format", async () => {
 			const pendingStateManager = createPendingStateManager([
-				{ referenceSequenceNumber: 0, opMetadata: { batch: true } },
-				{ referenceSequenceNumber: 0 },
-				{ referenceSequenceNumber: 0, opMetadata: { batch: false } },
-				{ referenceSequenceNumber: 0, opMetadata: { batch: true } },
-				{ referenceSequenceNumber: 0, opMetadata: { batch: false } },
-				{ referenceSequenceNumber: 0 },
+				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: true } },
+				{ type: "message", referenceSequenceNumber: 0 },
+				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: false } },
+				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: true } },
+				{ type: "message", referenceSequenceNumber: 0, opMetadata: { batch: false } },
+				{ type: "message", referenceSequenceNumber: 0 },
 			]);
 
 			await pendingStateManager.applyStashedOpsAt(0);
@@ -311,27 +407,31 @@ describe("Pending State Manager", () => {
 			assert.deepStrictEqual(pendingStateManager.getLocalState().pendingStates, [
 				/* eslint-disable max-len */
 				{
+					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: { batch: true },
 				},
-				{ referenceSequenceNumber: 0, localOpMetadata: undefined },
+				{ type: "message", referenceSequenceNumber: 0, localOpMetadata: undefined },
 				{
+					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: { batch: false },
 				},
 				{
+					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: { batch: true },
 				},
 				{
+					type: "message",
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: { batch: false },
 				},
-				{ referenceSequenceNumber: 0, localOpMetadata: undefined },
+				{ type: "message", referenceSequenceNumber: 0, localOpMetadata: undefined },
 				/* eslint-enable max-len */
 			]);
 		});

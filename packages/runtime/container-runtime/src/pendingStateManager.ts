@@ -17,6 +17,7 @@ import { pkgVersion } from "./packageVersion";
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
  */
 export interface IPendingMessage {
+	type: "message";
 	messageType: ContainerMessageType;
 	clientSequenceNumber: number;
 	referenceSequenceNumber: number;
@@ -25,11 +26,23 @@ export interface IPendingMessage {
 	opMetadata: Record<string, unknown> | undefined;
 }
 
+/**
+ * This represents an explicit flush call and is added to the pending queue when flush is called on the ContainerRuntime
+ * to flush pending messages.
+ * ! TODO: Remove in "2.0.0-internal.5.0.0" AB#2496
+ */
+export interface IPendingFlush {
+	type: "flush";
+}
+
+/** ! TODO: Remove in "2.0.0-internal.5.0.0" AB#2496 */
+export type IPendingState = IPendingMessage | IPendingFlush;
+
 export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information
 	 */
-	pendingStates: IPendingMessage[];
+	pendingStates: IPendingState[];
 }
 
 export interface IRuntimeStateHandler {
@@ -61,7 +74,7 @@ export interface IRuntimeStateHandler {
  */
 export class PendingStateManager implements IDisposable {
 	private readonly pendingMessages = new Deque<IPendingMessage>();
-	private readonly initialMessages: Deque<IPendingMessage>;
+	private readonly initialMessages = new Deque<IPendingMessage>();
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
 		this.pendingMessages.clear();
@@ -108,7 +121,37 @@ export class PendingStateManager implements IDisposable {
 		private readonly stateHandler: IRuntimeStateHandler,
 		initialLocalState: IPendingLocalState | undefined,
 	) {
-		this.initialMessages = new Deque<IPendingMessage>(initialLocalState?.pendingStates ?? []);
+		/**
+		 * Convert old local state format to the new format
+		 * The old format contained "flush" messages as the indicator of batch ends
+		 * The new format instead uses batch metadata on the last message to indicate batch ends
+		 * ! TODO: Remove this conversion in "2.0.0-internal.5.0.0" as version from "2.0.0-internal.4.0.0" will be new format
+		 * AB#2496 tracks removal
+		 */
+		if (initialLocalState?.pendingStates) {
+			const pendingStates = initialLocalState?.pendingStates;
+			let currentlyBatching = false;
+			for (let i = 0; i < pendingStates.length; i++) {
+				const initialState = pendingStates[i];
+
+				// Skip over "flush" messages
+				if (initialState.type === "message") {
+					if (initialState.opMetadata?.batch) {
+						currentlyBatching = true;
+					} else if (initialState.opMetadata?.batch === false) {
+						currentlyBatching = false;
+					} else if (
+						// End of batch if we are currently batching and this is last message or next message is flush
+						currentlyBatching &&
+						(i === pendingStates.length - 1 || pendingStates[i + 1].type === "flush")
+					) {
+						currentlyBatching = false;
+						initialState.opMetadata = { ...initialState.opMetadata, batch: false };
+					}
+					this.initialMessages.push(initialState);
+				}
+			}
+		}
 	}
 
 	public get disposed() {
@@ -131,6 +174,7 @@ export class PendingStateManager implements IDisposable {
 		opMetadata: Record<string, unknown> | undefined,
 	) {
 		const pendingMessage: IPendingMessage = {
+			type: "message",
 			messageType: type,
 			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
 			referenceSequenceNumber,
