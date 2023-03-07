@@ -179,8 +179,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             );
 
             return result.value
-                ? { value: result.value, existing: true } as { value: T; existing: boolean; }
-                : { value, existing: false } as { value: T; existing: boolean; };
+                ? { value: result.value, existing: true }
+                : { value, existing: false }
         };
         return this.requestWithRetry(
             req, // request
@@ -197,8 +197,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
                 {returnDocument: "before"});
 
             return result.value
-                ? { value: result.value, existing: true } as { value: T; existing: boolean; }
-                : { value, existing: false } as { value: T; existing: boolean; };
+                ? { value: result.value, existing: true }
+                : { value, existing: false }
         };
         return this.requestWithRetry(
             req, // request
