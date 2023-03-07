@@ -12,7 +12,7 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IConnectionDetails,
@@ -597,6 +597,41 @@ export class Container
 	}
 	private get codeLoader() {
 		return this.loader.services.codeLoader;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
+	 */
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
+		// allow it since they mean a kind of read-only state for the Container.
+		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
+		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
+			throw new UsageError("The container is disposing or disposed");
+		}
+		while (this._context === undefined) {
+			await new Promise<void>((resolve, reject) => {
+				const contextChangedHandler = () => {
+					resolve();
+					this.off("disposed", disposedHandler);
+				};
+				const disposedHandler = (error) => {
+					reject(error ?? "The Container is disposed");
+					this.off("contextChanged", contextChangedHandler);
+				};
+				this.once("contextChanged", contextChangedHandler);
+				this.once("disposed", disposedHandler);
+			});
+			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
+			// should have set this._context; making sure.
+			assert(
+				this._context !== undefined,
+				"Context still not defined after contextChanged event",
+			);
+		}
+		// Disable lint rule for the sake of more complete stack traces
+		// eslint-disable-next-line no-return-await
+		return await this._context.getEntryPoint?.();
 	}
 
 	constructor(

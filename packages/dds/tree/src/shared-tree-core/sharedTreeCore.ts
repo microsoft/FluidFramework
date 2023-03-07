@@ -89,13 +89,7 @@ export class SharedTreeCore<
 	TChangeFamily extends ChangeFamily<any, TChange>,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
-	/**
-	 * A random ID that uniquely identifies this client in the collab session.
-	 * This is sent alongside every op to identify which client the op originated from.
-	 *
-	 * This is needed because the client ID given by the Fluid protocol is not stable across reconnections.
-	 */
-	private readonly stableId: string;
+	private readonly editManager: EditManager<TChange, TChangeFamily>;
 
 	/**
 	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
@@ -131,9 +125,13 @@ export class SharedTreeCore<
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		indexes: TIndexes | ((events: ISubscribable<IndexEvents<TChange>>) => TIndexes),
+		indexes:
+			| TIndexes
+			| ((
+					events: ISubscribable<IndexEvents<TChange>>,
+					editManager: EditManager<TChange, TChangeFamily>,
+			  ) => TIndexes),
 		public readonly changeFamily: TChangeFamily,
-		public readonly editManager: EditManager<TChange, TChangeFamily>,
 		anchors: AnchorSet,
 
 		// Base class arguments
@@ -144,9 +142,16 @@ export class SharedTreeCore<
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		this.stableId = uuid();
-		editManager.initSessionId(this.stableId);
-		this.indexes = isReadonlyArray(indexes) ? indexes : indexes(this.indexEventEmitter);
+		/**
+		 * A random ID that uniquely identifies this client in the collab session.
+		 * This is sent alongside every op to identify which client the op originated from.
+		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
+		 */
+		const localSessionId = uuid();
+		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
+		this.indexes = isReadonlyArray(indexes)
+			? indexes
+			: indexes(this.indexEventEmitter, this.editManager);
 		this.summaryElements = this.indexes
 			.map((i) => i.summaryElement)
 			.filter((e): e is SummaryElement => e !== undefined);
@@ -216,7 +221,7 @@ export class SharedTreeCore<
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			const commit: Commit<TChange> = {
 				revision,
-				sessionId: this.stableId,
+				sessionId: this.editManager.localSessionId,
 				change: edit,
 			};
 			this.detachedRevision = newRevision;
@@ -226,7 +231,7 @@ export class SharedTreeCore<
 		this.indexEventEmitter.emit("newLocalState", delta);
 		const message: Message = {
 			revision,
-			originatorId: this.stableId,
+			originatorId: this.editManager.localSessionId,
 			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
 		};
 		this.submitLocalMessage(message);
@@ -280,7 +285,7 @@ export class SharedTreeCore<
 				}
 				return changeToForked;
 			},
-			this.stableId,
+			this.editManager.localSessionId,
 			new Rebaser(this.changeFamily.rebaser),
 		);
 		return branch;
