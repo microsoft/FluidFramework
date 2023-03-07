@@ -12813,7 +12813,7 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-experimental/attributor/2.0.0-internal.3.2.2:
+  /@fluidframework/attributor/2.0.0-internal.3.2.2:
     resolution: {integrity: sha512-3B+AX6HydWyfYYVIcp+hw4QLxOTbABZbdtdtmFZIq5du5xseppPWHwl0XpyHkpqjs32LWZubR8GbqcpHPLk88Q==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -14669,7 +14669,7 @@ packages:
       '@fluid-tools/benchmark': 0.45.112032
       '@fluidframework/agent-scheduler': 2.0.0-internal.3.2.0
       '@fluidframework/aqueduct': 2.0.0-internal.3.2.0
-      '@fluid-experimental/attributor': 2.0.0-internal.3.2.2
+      '@fluidframework/attributor': 2.0.0-internal.3.2.2
       '@fluidframework/cell': 2.0.0-internal.3.2.0
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -14844,7 +14844,7 @@ packages:
     dependencies:
       '@fluid-experimental/sequence-deprecated': 2.0.0-internal.3.2.2
       '@fluidframework/aqueduct': 2.0.0-internal.3.2.0
-      '@fluid-experimental/attributor': 2.0.0-internal.3.2.2
+      '@fluidframework/attributor': 2.0.0-internal.3.2.2
       '@fluidframework/cell': 2.0.0-internal.3.2.0
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
