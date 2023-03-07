@@ -181,12 +181,13 @@ To that end, we mostly reuse the existing code paths for changesets by always se
 The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
 
-Sending concrete undo edits alleviates the need establish and maintain distributed consensus on an undo window.
-It also means summaries do not need to include repair data.
+Sending concrete undo edits alleviates the need to establish and maintain distributed consensus on an undo window.It also means summaries do not need to include repair data.
 It does however require sending rebased changes over the wire.
+Rebased changes may contain lineage entries, which we haven't sent over the wire before.
+We do not currently know of a reason why this would be problematic,
+or of any other issue or special requirement associated with sending rebased changes over the wire.
 
-### Concrete Undo of Unsequenced Changes
-
+Using concrete undos even when the change to be undone has not been sequenced is somewhat problematic
 Using concrete undos even when the change to be undone has not been sequence is somewhat problematic
 because we cannot know in advance the exact impact of the change to undo.
 
@@ -195,8 +196,7 @@ This could lead to some data loss in scenarios where the change to be undone del
 
 #### Creating Concrete Redo Edits
 
-Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse all the edits that were applied since the undo.
-This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
+Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over all the edits that were applied since the undo.This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
 
 -   It is better at mitigating data-loss caused by undo.
     For example, undoing an insert will delete any content that has since been added under the inserted node.
