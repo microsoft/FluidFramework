@@ -132,15 +132,6 @@
 			"RemovedTypeAliasDeclaration_IPendingState": {
 				"backCompat": false,
 				"forwardCompat": false
-			},
-			"InterfaceDeclaration_IPendingMessage": {
-				"backCompat": false
-			},
-			"TypeAliasDeclaration_IPendingState": {
-				"backCompat": false
-			},
-			"InterfaceDeclaration_IPendingLocalState": {
-				"backCompat": false
 			}
 		}
 	}
