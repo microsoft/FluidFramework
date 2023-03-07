@@ -253,6 +253,15 @@ export type NodeUpdate =
 			revert: ITreeCursorSynchronous;
 	  };
 
+type EncodedNodeUpdate =
+	| { set: JsonableTree }
+	| {
+			/**
+			 * The node being restored.
+			 */
+			revert: JsonableTree;
+	  };
+
 export interface ValueChangeset {
 	value?: NodeUpdate;
 	changes?: NodeChangeset;
@@ -323,7 +332,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 });
 
 interface EncodedValueChangeset {
-	value?: NodeUpdate;
+	value?: EncodedNodeUpdate;
 	changes?: JsonCompatibleReadOnly;
 }
 
@@ -335,7 +344,12 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 	) => {
 		const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
 		if (change.value !== undefined) {
-			encoded.value = change.value;
+			encoded.value =
+				"revert" in change.value
+					? {
+							revert: jsonableTreeFromCursor(change.value.revert),
+					  }
+					: change.value;
 		}
 
 		if (change.changes !== undefined) {
@@ -353,7 +367,12 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 		const encoded = change as EncodedValueChangeset;
 		const decoded: ValueChangeset = {};
 		if (encoded.value !== undefined) {
-			decoded.value = encoded.value;
+			decoded.value =
+				"revert" in encoded.value
+					? {
+							revert: singleTextCursor(encoded.value.revert),
+					  }
+					: encoded.value;
 		}
 
 		if (encoded.changes !== undefined) {
@@ -580,8 +599,20 @@ const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
+interface EncodedOptionalFieldChange {
+	/**
+	 * The new content for the trait. If undefined, the trait will be cleared.
+	 */
+	newContent?: EncodedNodeUpdate;
+
+	/**
+	 * Whether the field was empty in the state this change is based on.
+	 */
+	wasEmpty: boolean;
+}
+
 interface EncodedOptionalChangeset {
-	fieldChange?: OptionalFieldChange;
+	fieldChange?: EncodedOptionalFieldChange;
 	childChange?: JsonCompatibleReadOnly;
 }
 
@@ -593,7 +624,18 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 	) => {
 		const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
 		if (change.fieldChange !== undefined) {
-			encoded.fieldChange = change.fieldChange;
+			encoded.fieldChange =
+				change.fieldChange.newContent !== undefined &&
+				"revert" in change.fieldChange.newContent
+					? {
+							...change.fieldChange,
+							newContent: {
+								revert: jsonableTreeFromCursor(
+									change.fieldChange.newContent.revert,
+								),
+							},
+					  }
+					: change.fieldChange;
 		}
 
 		if (change.childChange !== undefined) {
@@ -611,7 +653,18 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 		const encoded = change as EncodedOptionalChangeset;
 		const decoded: OptionalChangeset = {};
 		if (encoded.fieldChange !== undefined) {
-			decoded.fieldChange = encoded.fieldChange;
+			decoded.fieldChange = {
+				wasEmpty: encoded.fieldChange.wasEmpty,
+			};
+
+			if (encoded.fieldChange.newContent !== undefined) {
+				decoded.fieldChange.newContent =
+					"revert" in encoded.fieldChange.newContent
+						? {
+								revert: singleTextCursor(encoded.fieldChange.newContent.revert),
+						  }
+						: encoded.fieldChange.newContent;
+			}
 		}
 
 		if (encoded.childChange !== undefined) {
