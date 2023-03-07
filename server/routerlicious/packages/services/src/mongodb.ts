@@ -180,7 +180,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
             return result.value
                 ? { value: result.value, existing: true }
-                : { value, existing: false }
+                : { value, existing: false };
         };
         return this.requestWithRetry(
             req, // request
@@ -198,7 +198,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
             return result.value
                 ? { value: result.value, existing: true }
-                : { value, existing: false }
+                : { value, existing: false };
         };
         return this.requestWithRetry(
             req, // request
