@@ -108,7 +108,7 @@ export function areEqualAttributionKeys(a: AttributionKey, b: AttributionKey): b
 	}
 }
 
-export class AttributionCollection implements IAttributionCollection<AttributionKey> {
+export class AttributionCollection implements IAttributionCollectionInternal<AttributionKey> {
 	private offsets: number[];
 	private keys: AttributionKey[];
 

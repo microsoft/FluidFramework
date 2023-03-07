@@ -137,7 +137,7 @@ function runAttributionCollectionSuite(
 	});
 }
 
-export class TreeAttributionCollection implements IAttributionCollection<AttributionKey> {
+export class TreeAttributionCollection implements IAttributionCollectionInternal<AttributionKey> {
 	private readonly entries: RedBlackTree<number, AttributionKey> = new RedBlackTree(
 		compareNumbers,
 	);
