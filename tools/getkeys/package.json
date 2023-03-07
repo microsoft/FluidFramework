@@ -35,5 +35,19 @@
     "eslint": "~8.6.0",
     "prettier": "~2.6.2",
     "typescript": "~4.5.5"
+  },
+  "overrides": {
+    "ms-rest-azure": {
+      "request": {
+        "qs": "^6.11.0"
+      }
+    },
+    "azure-keyvault": {
+      "ms-rest": {
+        "request": {
+          "qs": "^6.11.0"
+        }
+      }
+    }
   }
 }

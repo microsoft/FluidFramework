@@ -541,8 +541,8 @@ importers:
       jest: ^26.6.0
       jest-junit: ^15.0.0
       jest-puppeteer: ^6.1.1
-      less: ~3.9.0
-      less-loader: ^4.1.0
+      less: ~4.1.3
+      less-loader: ^11.1.0
       prettier: ~2.6.2
       puppeteer: ^18.2.1
       react: ^17.0.1
@@ -582,8 +582,8 @@ importers:
       jest: 26.6.3
       jest-junit: 15.0.0
       jest-puppeteer: 6.2.0_puppeteer@18.2.1
-      less: 3.9.0
-      less-loader: 4.1.0_less@3.9.0+webpack@5.75.0
+      less: 4.1.3
+      less-loader: 11.1.0_less@4.1.3+webpack@5.75.0
       prettier: 2.6.2
       puppeteer: 18.2.1
       rimraf: 2.7.1
@@ -3914,7 +3914,7 @@ importers:
       sleep-promise: 8.0.1
       stats-percentile: 3.1.0
       typescript: ~4.5.5
-      wait-on: 3.2.0
+      wait-on: 7.0.1
       yargs: 13.2.2
     dependencies:
       '@fluid-experimental/property-changeset': link:../../packages/property-changeset
@@ -3976,7 +3976,7 @@ importers:
       sinon-chai: 3.3.0_chai@4.3.7+sinon@7.5.0
       stats-percentile: 3.1.0
       typescript: 4.5.5
-      wait-on: 3.2.0
+      wait-on: 7.0.1
       yargs: 13.2.2
 
   experimental/dds/ot/ot:
@@ -22345,6 +22345,15 @@ packages:
     transitivePeerDependencies:
       - debug
 
+  /axios/0.27.2:
+    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
+    dependencies:
+      follow-redirects: 1.15.2
+      form-data: 4.0.0
+    transitivePeerDependencies:
+      - debug
+    dev: true
+
   /axios/1.3.4:
     resolution: {integrity: sha512-toYm+Bsyl6VC5wSkfkbbNB6ROv7KY93PEBBL6xyDczaIHasAiv4wPqQ/c4RjoQzipxRD2W5g21cOqQulZ7rHwQ==}
     dependencies:
@@ -24607,6 +24616,12 @@ packages:
 
   /cookiejar/2.1.3:
     resolution: {integrity: sha512-JxbCBUdrfr6AQjOXrxoTvAMJO4HBTUIlBzslcJPAz+/KT8yk53fXun51u+RenNYvad/+Vc2DIz5o9UxlCDymFQ==}
+    dev: true
+
+  /copy-anything/2.0.6:
+    resolution: {integrity: sha512-1j20GZTsvKNkc4BY3NpMOM8tt///wY3FpIzozTOFO2ffuZcV61nojHXVKIy3WM+7ADCy5FVhdZYHYDdgTU0yJw==}
+    dependencies:
+      is-what: 3.14.1
     dev: true
 
   /copy-concurrently/1.0.5:
@@ -28963,15 +28978,10 @@ packages:
       minimalistic-crypto-utils: 1.0.1
     dev: true
 
-  /hoek/5.0.4:
-    resolution: {integrity: sha512-Alr4ZQgoMlnere5FZJsIyfIjORBqZll5POhDsF4q64dPuJR6rNxXdDxtHSQq8OXRurhmx+PWYEE8bXRROY8h0w==}
-    engines: {node: '>=8.9.0'}
-    deprecated: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).
-    dev: true
-
   /hoek/6.1.3:
     resolution: {integrity: sha512-YXXAAhmF9zpQbC7LEcREFtXfGq5K1fmd+4PHkBq8NUqmzW3G+Dq10bI/i0KucLRwss3YYFQ0fSfoxBZYiGUqtQ==}
     deprecated: This module has moved and is now available at @hapi/hoek. Please update your dependencies as this version is no longer maintained an may contain bugs and security issues.
+    dev: false
 
   /hoist-non-react-statics/3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
@@ -30360,6 +30370,10 @@ packages:
       get-intrinsic: 1.1.3
     dev: true
 
+  /is-what/3.14.1:
+    resolution: {integrity: sha512-sNxgpk9793nzSs7bA6JQJGeIuRBQhAaNGG77kzYQgMkrID+lS6SlK07K5LaptscDlSaIgH+GPFzf+d75FVxozA==}
+    dev: true
+
   /is-whitespace-character/1.0.4:
     resolution: {integrity: sha512-SDweEzfIZM0SJV0EUga669UTKlmL0Pq8Lno0QDQsPnvECB3IM2aP0gdx5TrU0A01MAPfViaZiI2V1QMZLaKK5w==}
     dev: true
@@ -30417,6 +30431,7 @@ packages:
     engines: {node: '>=4.0.0'}
     dependencies:
       punycode: 2.1.1
+    dev: false
 
   /isexe/2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
@@ -31276,16 +31291,6 @@ packages:
     engines: {node: '>= 0.6.0'}
     dev: true
 
-  /joi/13.7.0:
-    resolution: {integrity: sha512-xuY5VkHfeOYK3Hdi91ulocfuFopwgbSORmIwzcwHKESQhC7w1kD5jaVSPnqDxS2I8t3RZ9omCKAxNwXN5zG1/Q==}
-    engines: {node: '>=8.9.0'}
-    deprecated: This version has been deprecated in accordance with the hapi support policy (hapi.im/support). Please upgrade to the latest version to get the best features, bug fixes, and security patches. If you are unable to upgrade at this time, paid support is available for older versions (hapi.im/commercial).
-    dependencies:
-      hoek: 5.0.4
-      isemail: 3.2.0
-      topo: 3.0.3
-    dev: true
-
   /joi/14.3.1:
     resolution: {integrity: sha512-LQDdM+pkOrpAn4Lp+neNIFV3axv1Vna3j38bisbQhETPMANYRbFJFUyOZcOClYvM/hppMhGWuKSFEK9vjrB+bQ==}
     deprecated: This module has moved and is now available at @hapi/joi. Please update your dependencies as this version is no longer maintained an may contain bugs and security issues.
@@ -31973,35 +31978,36 @@ packages:
       - supports-color
     dev: true
 
-  /less-loader/4.1.0_less@3.9.0+webpack@5.75.0:
-    resolution: {integrity: sha512-KNTsgCE9tMOM70+ddxp9yyt9iHqgmSs0yTZc5XH5Wo+g80RWRIYNqE58QJKm/yMud5wZEvz50ugRDuzVIkyahg==}
-    engines: {node: '>= 4.8 < 5.0.0 || >= 5.10'}
+  /less-loader/11.1.0_less@4.1.3+webpack@5.75.0:
+    resolution: {integrity: sha512-C+uDBV7kS7W5fJlUjq5mPBeBVhYpTIm5gB09APT9o3n/ILeaXVsiSFTbZpTJCJwQ/Crczfn3DmfQFwxYusWFug==}
+    engines: {node: '>= 14.15.0'}
     peerDependencies:
-      less: ^2.3.1 || ^3.0.0
-      webpack: ^2.0.0 || ^3.0.0 || ^4.0.0 || 5.75
+      less: ^3.5.0 || ^4.0.0
+      webpack: ^5.0.0 || 5.75
     dependencies:
-      clone: 2.1.2
-      less: 3.9.0
-      loader-utils: 1.4.2
-      pify: 3.0.0
+      klona: 2.0.5
+      less: 4.1.3
       webpack: 5.75.0_webpack-cli@4.10.0
     dev: true
 
-  /less/3.9.0:
-    resolution: {integrity: sha512-31CmtPEZraNUtuUREYjSqRkeETFdyEHSEPAGq4erDlUXtda7pzNmctdljdIagSb589d/qXGWiiP31R5JVf+v0w==}
-    engines: {node: '>=4'}
+  /less/4.1.3:
+    resolution: {integrity: sha512-w16Xk/Ta9Hhyei0Gpz9m7VS8F28nieJaL/VyShID7cYvP6IL5oHeL6p4TXSDJqZE/lNv0oJ2pGVjJsRkfwm5FA==}
+    engines: {node: '>=6'}
     hasBin: true
     dependencies:
-      clone: 2.1.2
+      copy-anything: 2.0.6
+      parse-node-version: 1.0.1
+      tslib: 2.5.0
     optionalDependencies:
       errno: 0.1.8
       graceful-fs: 4.2.10
       image-size: 0.5.5
+      make-dir: 2.1.0
       mime: 1.6.0
-      mkdirp: 0.5.6
-      promise: 7.3.1
-      request: 2.88.2
+      needle: 3.2.0
       source-map: 0.6.1
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /level-codec/9.0.2:
@@ -33719,6 +33725,20 @@ packages:
       randexp: 0.4.6
     dev: true
 
+  /needle/3.2.0:
+    resolution: {integrity: sha512-oUvzXnyLiVyVGoianLijF9O/RecZUf7TkBfimjGrLM4eQhXyeJwM6GeAWccwfQ9aa4gMCZKqhAOuLaMIcQxajQ==}
+    engines: {node: '>= 4.4.x'}
+    hasBin: true
+    requiresBuild: true
+    dependencies:
+      debug: 3.2.7
+      iconv-lite: 0.6.3
+      sax: 1.2.4
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+    optional: true
+
   /negotiator/0.6.3:
     resolution: {integrity: sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==}
     engines: {node: '>= 0.6'}
@@ -35249,6 +35269,11 @@ packages:
     resolution: {integrity: sha512-xjU87V0VyHZybn2RrCX5TIFGxTVZE6zqqZWMPlIKiSKuWh/X5WZdt+w1Ki1nXB+8L/KtL+nZ4iq+sfI6MrhhMw==}
     dependencies:
       xtend: 4.0.2
+    dev: true
+
+  /parse-node-version/1.0.1:
+    resolution: {integrity: sha512-3YHlOa/JgH6Mnpr05jP9eDG254US9ek25LyIxZlDItp2iJtwyaXQb57lBYLdT3MowkUFYEV2XXNAYIPlESvJlA==}
+    engines: {node: '>= 0.10'}
     dev: true
 
   /parse-passwd/1.0.0:
@@ -37659,10 +37684,6 @@ packages:
     resolution: {integrity: sha512-Cun9QucwK6MIrp3mry/Y7hqD1oFqTYLQ4pGxaHTjIdaFDWRGGLikqp6u8LcWJnzpoALg9hap+JGk8sFIUuEGNA==}
     dev: true
 
-  /rx/4.1.0:
-    resolution: {integrity: sha512-CiaiuN6gapkdl+cZUr67W6I8jquN4lkak3vtIsIWCl4XIPP8ffsoyN6/+PuGXnQy8Cu8W2y9Xxh31Rq4M6wUug==}
-    dev: true
-
   /rxjs/6.6.7:
     resolution: {integrity: sha512-hTdwr+7yYNIT5n4AMYp85KA6yw2Va0FLa3Rguvbpa4W3I5xynaBZo41cM3XM+4Q6fRMj3sBYIR1VAmZMXYJvRQ==}
     engines: {npm: '>=2.0.0'}
@@ -39747,6 +39768,7 @@ packages:
     deprecated: This module has moved and is now available at @hapi/topo. Please update your dependencies as this version is no longer maintained an may contain bugs and security issues.
     dependencies:
       hoek: 6.1.3
+    dev: false
 
   /totalist/1.1.0:
     resolution: {integrity: sha512-gduQwd1rOdDMGxFG1gEvhV88Oirdo2p+KjoYFU7k2g+i7n6AFFbDQ5kMPUsW0pNbfQsB/cwXvT1i4Bue0s9g5g==}
@@ -40984,18 +41006,6 @@ packages:
       xml-name-validator: 3.0.0
     dev: true
 
-  /wait-on/3.2.0:
-    resolution: {integrity: sha512-QUGNKlKLDyY6W/qHdxaRlXUAgLPe+3mLL/tRByHpRNcHs/c7dZXbu+OnJWGNux6tU1WFh/Z8aEwvbuzSAu79Zg==}
-    engines: {node: '>=4.0.0'}
-    hasBin: true
-    dependencies:
-      core-js: 2.6.12
-      joi: 13.7.0
-      minimist: 1.2.8
-      request: 2.88.2
-      rx: 4.1.0
-    dev: true
-
   /wait-on/6.0.0_debug@4.3.2:
     resolution: {integrity: sha512-tnUJr9p5r+bEYXPUdRseolmz5XqJTTj98JgOsfBn7Oz2dxfE2g3zw1jE+Mo8lopM3j3et/Mq1yW7kKX6qw7RVw==}
     engines: {node: '>=10.0.0'}
@@ -41029,6 +41039,20 @@ packages:
     hasBin: true
     dependencies:
       axios: 0.25.0_debug@4.3.4
+      joi: 17.7.0
+      lodash: 4.17.21
+      minimist: 1.2.8
+      rxjs: 7.8.0
+    transitivePeerDependencies:
+      - debug
+    dev: true
+
+  /wait-on/7.0.1:
+    resolution: {integrity: sha512-9AnJE9qTjRQOlTZIldAaf/da2eW0eSRSgcqq85mXQja/DW3MriHxkpODDSUEg+Gri/rKEcXUZHe+cevvYItaog==}
+    engines: {node: '>=12.0.0'}
+    hasBin: true
+    dependencies:
+      axios: 0.27.2
       joi: 17.7.0
       lodash: 4.17.21
       minimist: 1.2.8
