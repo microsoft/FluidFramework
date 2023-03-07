@@ -83,6 +83,7 @@ declare function get_current_TypeAliasDeclaration_AttributionKey():
 declare function use_old_TypeAliasDeclaration_AttributionKey(
     use: TypeOnly<old.AttributionKey>);
 use_old_TypeAliasDeclaration_AttributionKey(
+    // @ts-expect-error compatibility expected to be broken
     get_current_TypeAliasDeclaration_AttributionKey());
 
 /*

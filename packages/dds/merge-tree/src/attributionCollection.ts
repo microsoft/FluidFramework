@@ -141,6 +141,8 @@ export function areEqualAttributionKeys(
 			return a.seq === (b as OpAttributionKey).seq;
 		case "detached":
 			return a.id === (b as DetachedAttributionKey).id;
+		case "local":
+			return true;
 		default:
 			unreachableCase(a, "Unhandled AttributionKey type");
 	}
@@ -404,6 +406,10 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 			for (const spec of allCollectionSpecs) {
 				for (const { offset, key } of getSpecEntries(spec)) {
+					assert(
+						key?.type !== "local",
+						"local attribution keys should never be put in summaries",
+					);
 					if (
 						mostRecentAttributionKey === undefined ||
 						!areEqualAttributionKeys(key, mostRecentAttributionKey)

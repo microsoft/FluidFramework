@@ -71,6 +71,9 @@
 			},
 			"InterfaceDeclaration_IFluidDataStoreChannel": {
 				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_AttributionKey": {
+				"backCompat": false
 			}
 		}
 	}

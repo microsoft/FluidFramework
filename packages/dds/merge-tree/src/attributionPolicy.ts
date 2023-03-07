@@ -5,26 +5,39 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionPolicy } from "./mergeTree";
 import { Client } from "./client";
-import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import {
-	MergeTreeDeltaCallback,
-	MergeTreeMaintenanceCallback,
+	IMergeTreeDeltaCallbackArgs,
+	IMergeTreeDeltaOpArgs,
+	IMergeTreeMaintenanceCallbackArgs,
+	IMergeTreeSegmentDelta,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 import { MergeTreeDeltaType } from "./ops";
 import { AttributionCollection } from "./attributionCollection";
 
-interface MergeTreeCallbacks {
-	delta: MergeTreeDeltaCallback;
-	maintenance: MergeTreeMaintenanceCallback;
+// Note: these thinly wrap MergeTreeDeltaCallback and MergeTreeMaintenanceCallback to provide the client.
+// This is because the base callbacks don't always have enough information to infer whether the op being
+// processed is in a detached or attached state, which may affect the attribution key.
+interface AttributionCallbacks {
+	delta: (
+		opArgs: IMergeTreeDeltaOpArgs,
+		deltaArgs: IMergeTreeDeltaCallbackArgs,
+		client: Client,
+	) => void;
+	maintenance: (
+		maintenanceArgs: IMergeTreeMaintenanceCallbackArgs,
+		opArgs: IMergeTreeDeltaOpArgs | undefined,
+		client: Client,
+	) => void;
 }
 
 function createAttributionPolicyFromCallbacks({
 	delta,
 	maintenance,
-}: MergeTreeCallbacks): AttributionPolicy {
+}: AttributionCallbacks): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
 	return {
 		attach: (client: Client) => {
@@ -33,12 +46,15 @@ function createAttributionPolicyFromCallbacks({
 				0x557 /* cannot attach to multiple clients at once */,
 			);
 
-			client.on("delta", delta);
-			client.on("maintenance", maintenance);
+			const deltaSubscribed = (opArgs, deltaArgs) => delta(opArgs, deltaArgs, client);
+			const maintenanceSubscribed = (args, opArgs) => maintenance(args, opArgs, client);
+
+			client.on("delta", deltaSubscribed);
+			client.on("maintenance", maintenanceSubscribed);
 
 			unsubscribe = () => {
-				client.off("delta", delta);
-				client.off("maintenance", maintenance);
+				client.off("delta", deltaSubscribed);
+				client.off("maintenance", maintenanceSubscribed);
 			};
 		},
 		detach: () => {
@@ -52,145 +68,120 @@ function createAttributionPolicyFromCallbacks({
 	};
 }
 
-const insertOnlyAttributionPolicyCallbacks: MergeTreeCallbacks = {
-	delta: (opArgs, { deltaSegments, operation }) => {
-		if (operation !== MergeTreeDeltaType.INSERT) {
-			return;
-		}
-
-		for (const { segment } of deltaSegments) {
-			if (segment.seq !== undefined && segment.seq !== UnassignedSequenceNumber) {
-				const key: AttributionKey =
-					segment.seq === UniversalSequenceNumber
-						? { type: "detached", id: 0 }
-						: { type: "op", seq: segment.seq };
-				const attribution = new AttributionCollection(segment.cachedLength, key);
-				segment.attribution?.update(undefined, attribution);
-			}
-		}
-	},
-	maintenance: ({ deltaSegments, operation }, opArgs) => {
-		if (
-			operation !== MergeTreeMaintenanceType.ACKNOWLEDGED ||
-			opArgs === undefined ||
-			opArgs.op.type !== MergeTreeDeltaType.INSERT
-		) {
-			return;
-		}
-		for (const { segment } of deltaSegments) {
-			assert(segment.seq !== undefined, 0x558 /* segment.seq should be set after ack. */);
-			const attribution = new AttributionCollection(segment.cachedLength, {
-				type: "op",
-				seq: segment.seq,
-			});
-			segment.attribution?.update(undefined, attribution);
-		}
-	},
-};
-
-const ensureAttributionCollectionCallbacks: MergeTreeCallbacks = {
-	delta: ({ op, sequencedMessage }, { deltaSegments, operation }) => {
-		if (sequencedMessage !== undefined && op.type === MergeTreeDeltaType.INSERT) {
+const ensureAttributionCollectionCallbacks: AttributionCallbacks = {
+	delta: ({ op }, { deltaSegments }) => {
+		if (op.type === MergeTreeDeltaType.INSERT) {
 			for (const { segment } of deltaSegments) {
 				segment.attribution = new AttributionCollection(segment.cachedLength);
 			}
 		}
 	},
-	maintenance: ({ deltaSegments, operation }, opArgs) => {
+	maintenance: () => {},
+};
+
+const getAttributionKey = (
+	client: Client,
+	msg: ISequencedDocumentMessage | undefined,
+): AttributionKey => {
+	if (msg) {
+		return { type: "op", seq: msg.sequenceNumber };
+	}
+	const collabWindow = client.getCollabWindow();
+	return collabWindow.collaborating ? { type: "local" } : { type: "detached", id: 0 };
+};
+
+const attributeInsertionOnSegments = (
+	deltaSegments: IMergeTreeSegmentDelta[],
+	key: AttributionKey,
+): void => {
+	for (const { segment } of deltaSegments) {
+		if (segment.seq !== undefined) {
+			segment.attribution?.update(
+				undefined,
+				new AttributionCollection(segment.cachedLength, key),
+			);
+		}
+	}
+};
+
+const insertOnlyAttributionPolicyCallbacks: AttributionCallbacks = {
+	delta: (opArgs, { deltaSegments, operation }, client) => {
+		if (operation === MergeTreeDeltaType.INSERT) {
+			attributeInsertionOnSegments(
+				deltaSegments,
+				getAttributionKey(client, opArgs.sequencedMessage),
+			);
+		}
+	},
+	maintenance: ({ deltaSegments, operation }, opArgs, client) => {
 		if (
 			operation === MergeTreeMaintenanceType.ACKNOWLEDGED &&
 			opArgs?.op.type === MergeTreeDeltaType.INSERT
 		) {
-			for (const { segment } of deltaSegments) {
-				segment.attribution = new AttributionCollection(segment.cachedLength);
-			}
+			attributeInsertionOnSegments(
+				deltaSegments,
+				getAttributionKey(client, opArgs.sequencedMessage),
+			);
 		}
 	},
 };
 
-function createPropertyTrackingMergeTreeCallbacks(
-	...propertiesToTrack: string[]
-): MergeTreeCallbacks {
-	const toTrack = propertiesToTrack.map((entry) => ({ propName: entry, channelName: entry }));
-	return {
-		delta: ({ op, sequencedMessage }, { deltaSegments, operation }) => {
-			if (sequencedMessage === undefined) {
-				// Only attribute acked operations.
-				// TODO: how does this work with detached? write test cases!!
-				return;
-			}
+function createPropertyTrackingMergeTreeCallbacks(...propNames: string[]): AttributionCallbacks {
+	const toTrack = propNames.map((entry) => ({ propName: entry, channelName: entry }));
+	const attributeAnnotateOnSegments = (
+		deltaSegments: IMergeTreeSegmentDelta[],
+		{ op, sequencedMessage }: IMergeTreeDeltaOpArgs,
+		key: AttributionKey,
+	): void => {
+		for (const { segment } of deltaSegments) {
+			for (const { propName, channelName } of toTrack) {
+				const shouldAttributeInsert =
+					op.type === MergeTreeDeltaType.INSERT &&
+					segment.properties?.[propName] !== undefined;
 
-			// TODO: detached
-			const key: AttributionKey =
-				sequencedMessage === undefined
-					? { type: "detached", id: 0 }
-					: { type: "op", seq: sequencedMessage.sequenceNumber };
-			if (op.type === MergeTreeDeltaType.ANNOTATE) {
-				for (const { propName, channelName } of toTrack) {
-					if (op.props[propName] !== undefined) {
-						for (const { segment } of deltaSegments) {
-							if (!(segment.propertyManager?.hasPendingProperty(propName) ?? false)) {
-								segment.attribution?.update(
-									channelName,
-									new AttributionCollection(segment.cachedLength, key),
-								);
-							}
-						}
-					}
+				const isLocal = sequencedMessage === undefined;
+				const shouldAttributeAnnotate =
+					op.type === MergeTreeDeltaType.ANNOTATE &&
+					// Only attribute annotations which change the tracked property
+					op.props[propName] !== undefined &&
+					// Local changes to the tracked property always take effect
+					(isLocal ||
+						// Acked changes only take effect if there isn't a pending local change
+						(!isLocal && !segment.propertyManager?.hasPendingProperty(propName)));
+
+				if (shouldAttributeInsert || shouldAttributeAnnotate) {
+					segment.attribution?.update(
+						channelName,
+						new AttributionCollection(segment.cachedLength, key),
+					);
 				}
-			} else if (op.type === MergeTreeDeltaType.INSERT) {
-				for (const { propName, channelName } of toTrack) {
-					for (const { segment } of deltaSegments) {
-						if (segment.properties?.[propName] !== undefined) {
-							segment.attribution?.update(
-								channelName,
-								new AttributionCollection(segment.cachedLength, key),
-							);
-						}
-					}
-				}
+			}
+		}
+	};
+	return {
+		delta: (opArgs, { deltaSegments }, client) => {
+			const { op, sequencedMessage } = opArgs;
+			if (op.type === MergeTreeDeltaType.ANNOTATE || op.type === MergeTreeDeltaType.INSERT) {
+				attributeAnnotateOnSegments(
+					deltaSegments,
+					opArgs,
+					getAttributionKey(client, sequencedMessage),
+				);
 			}
 		},
-		maintenance: ({ deltaSegments, operation }, opArgs) => {
-			if (operation !== MergeTreeMaintenanceType.ACKNOWLEDGED || opArgs === undefined) {
-				return;
-			}
-			const { op, sequencedMessage } = opArgs;
-
-			const key: AttributionKey =
-				sequencedMessage === undefined
-					? { type: "detached", id: 0 }
-					: { type: "op", seq: sequencedMessage.sequenceNumber };
-			if (op.type === MergeTreeDeltaType.ANNOTATE) {
-				for (const { propName, channelName } of toTrack) {
-					if (op.props[propName] !== undefined) {
-						for (const { segment } of deltaSegments) {
-							if (!(segment.propertyManager?.hasPendingProperty(propName) ?? false)) {
-								segment.attribution?.update(
-									channelName,
-									new AttributionCollection(segment.cachedLength, key),
-								);
-							}
-						}
-					}
-				}
-			} else if (op.type === MergeTreeDeltaType.INSERT) {
-				for (const { propName, channelName } of toTrack) {
-					for (const { segment } of deltaSegments) {
-						if (segment.properties?.[propName] !== undefined) {
-							segment.attribution?.update(
-								channelName,
-								new AttributionCollection(segment.cachedLength, key),
-							);
-						}
-					}
-				}
+		maintenance: ({ deltaSegments, operation }, opArgs, client) => {
+			if (operation === MergeTreeMaintenanceType.ACKNOWLEDGED && opArgs !== undefined) {
+				attributeAnnotateOnSegments(
+					deltaSegments,
+					opArgs,
+					getAttributionKey(client, opArgs.sequencedMessage),
+				);
 			}
 		},
 	};
 }
 
-function combineMergeTreeCallbacks(callbacks: MergeTreeCallbacks[]): MergeTreeCallbacks {
+function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): AttributionCallbacks {
 	return {
 		delta: (...args) => callbacks.forEach(({ delta }) => delta(...args)),
 		maintenance: (...args) => callbacks.forEach(({ maintenance }) => maintenance(...args)),
@@ -200,8 +191,6 @@ function combineMergeTreeCallbacks(callbacks: MergeTreeCallbacks[]): MergeTreeCa
 /**
  * @alpha
  * @returns - An {@link AttributionPolicy} which tracks only insertion of content.
- * Content is only attributed at ack time, unless the container is in a detached state.
- * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
  */
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	return createAttributionPolicyFromCallbacks(
@@ -213,12 +202,10 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 }
 
 /**
- *
- * @param propertiesToTrack - List of property names for which attribution should be tracked.
+ * @param propNames - List of property names for which attribution should be tracked.
  * @returns - A policy which only attributes annotation of the properties specified.
  * Keys for each property are stored under attribution channels of the same name--see example below.
- * Content is only attributed at ack time, unless the container is in a detached state.
- * Detached content is attributed with a {@link @fluidframework/runtime-definitions#DetachedAttributionKey}.
+ *
  * @example
  *
  * ```typescript
@@ -232,13 +219,13 @@ export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
  * @alpha
  */
 export function createPropertyTrackingAttributionPolicyFactory(
-	...propertiesToTrack: string[]
+	...propNames: string[]
 ): () => AttributionPolicy {
 	return () =>
 		createAttributionPolicyFromCallbacks(
 			combineMergeTreeCallbacks([
 				ensureAttributionCollectionCallbacks,
-				createPropertyTrackingMergeTreeCallbacks(...propertiesToTrack),
+				createPropertyTrackingMergeTreeCallbacks(...propNames),
 			]),
 		);
 }
@@ -250,14 +237,14 @@ export function createPropertyTrackingAttributionPolicyFactory(
  * @alpha
  */
 export function createPropertyTrackingAndInsertionAttributionPolicyFactory(
-	...propertiesToTrack: string[]
+	...propNames: string[]
 ): () => AttributionPolicy {
 	return () =>
 		createAttributionPolicyFromCallbacks(
 			combineMergeTreeCallbacks([
 				ensureAttributionCollectionCallbacks,
 				insertOnlyAttributionPolicyCallbacks,
-				createPropertyTrackingMergeTreeCallbacks(...propertiesToTrack),
+				createPropertyTrackingMergeTreeCallbacks(...propNames),
 			]),
 		);
 }
