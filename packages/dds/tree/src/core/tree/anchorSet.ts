@@ -507,13 +507,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 		let parent: UpPath | undefined;
 		const moveTable = new Map<Delta.MoveId, UpPath>();
 
-		// Run `f` on anchorNode for parent if there is such an anchorNode.
-		const maybeWithNode: (f: (anchorNode: PathNode) => void, r?: () => void) => void = (
-			f,
-			r,
-		) => {
-			if (parent === undefined && r !== undefined) {
-				r();
+		// Run `withNode` on anchorNode for parent if there is such an anchorNode.
+		// If at root, run `withRoot` instead.
+		const maybeWithNode: (
+			withNode: (anchorNode: PathNode) => void,
+			withRoot?: () => void,
+		) => void = (withNode, withRoot) => {
+			if (parent === undefined && withRoot !== undefined) {
+				withRoot();
+				return;
 			}
 			assert(parent !== undefined, "parent must exist");
 			// TODO:Perf:
@@ -521,7 +523,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
 			parent = this.internalizePath(parent);
 			if (parent instanceof PathNode) {
-				f(parent);
+				withNode(parent);
 			}
 		};
 
