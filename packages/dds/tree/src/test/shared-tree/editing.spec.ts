@@ -7,6 +7,7 @@ import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
 import { brand, JsonCompatible } from "../../util";
 import { rootFieldKeySymbol, UpPath } from "../../core";
+import { fakeRepair } from "../utils";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
@@ -197,7 +198,7 @@ describe("Editing", () => {
 
 			const revABC = tree2.runTransaction((forest, editor) => {
 				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.revive(0, 3, seqDelABC.revision, 1);
+				field.revive(0, 3, seqDelABC.revision, fakeRepair, 1);
 			});
 
 			const seqRevABC = sequencer.sequence(revABC);
@@ -223,7 +224,7 @@ describe("Editing", () => {
 
 			const revABC = tree2.runTransaction((forest, editor) => {
 				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.revive(0, 3, seqDelABC.revision, 1, true);
+				field.revive(0, 3, seqDelABC.revision, fakeRepair, 1, true);
 			});
 
 			const seqRevABC = sequencer.sequence(revABC);

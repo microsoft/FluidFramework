@@ -25,9 +25,9 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 
 /**
- * BaseContainerRuntimeFactory produces container runtimes with a given data store and service registry, as well as
- * given request handlers.  It can be subclassed to implement a first-time initialization procedure for the containers
- * it creates.
+ * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
+ * request handlers, runtimeOptions, and entryPoint initialization function.
+ * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
  */
 export class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper
@@ -40,15 +40,20 @@ export class BaseContainerRuntimeFactory
 
 	/**
 	 * @param registryEntries - The data store registry for containers produced
-	 * @param serviceRegistry - The service registry for containers produced
+	 * @param dependencyContainer -
 	 * @param requestHandlers - Request handlers for containers produced
 	 * @param runtimeOptions - The runtime options passed to the ContainerRuntime when instantiating it
+	 * @param initializeEntryPoint - Function that will initialize the entryPoint of the ContainerRuntime instances
+	 * created with this factory
 	 */
 	constructor(
 		private readonly registryEntries: NamedFluidDataStoreRegistryEntries,
 		private readonly dependencyContainer?: IFluidDependencySynthesizer,
 		private readonly requestHandlers: RuntimeRequestHandler[] = [],
 		private readonly runtimeOptions?: IContainerRuntimeOptions,
+		private readonly initializeEntryPoint?: (
+			runtime: IContainerRuntime,
+		) => Promise<FluidObject>,
 	) {
 		super();
 		this.registry = new FluidDataStoreRegistry(registryEntries);
@@ -74,14 +79,15 @@ export class BaseContainerRuntimeFactory
 		);
 		scope.IFluidDependencySynthesizer = dc;
 
-		const runtime: ContainerRuntime = await ContainerRuntime.load(
+		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
 			context,
-			this.registryEntries,
-			buildRuntimeRequestHandler(...this.requestHandlers),
-			this.runtimeOptions,
-			scope,
+			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			existing,
-		);
+			runtimeOptions: this.runtimeOptions,
+			registryEntries: this.registryEntries,
+			containerScope: scope,
+			initializeEntryPoint: this.initializeEntryPoint,
+		});
 
 		// we register the runtime so developers of providers can use it in the factory pattern.
 		dc.register(IContainerRuntime, runtime);

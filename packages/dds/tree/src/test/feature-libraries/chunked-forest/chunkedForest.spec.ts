@@ -16,7 +16,6 @@ import {
 	AnchorSet,
 	TransactionCheckout,
 	EditManager,
-	FieldKey,
 	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
@@ -42,8 +41,6 @@ import {
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
-
-const fooKey: FieldKey = brand("foo");
 
 describe("ChunkedForest", () => {
 	testForest({
@@ -73,9 +70,9 @@ describe("ChunkedForest", () => {
 		);
 		const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
 			defaultChangeFamily,
+			uuid(),
 			anchors,
 		);
-		editManager.initSessionId(uuid());
 		const cursor = singleTextCursor(initialState);
 		const chunk = new TestChunk(
 			cursor.type,

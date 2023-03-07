@@ -105,7 +105,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return change.map(
 				({ index, nodeChange }: GenericChange): GenericChange => ({
 					index,
-					nodeChange: invertChild(nodeChange),
+					nodeChange: invertChild(nodeChange, index),
 				}),
 			);
 		},
@@ -177,7 +177,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				delta.push(offset);
 				nodeIndex = index;
 			}
-			delta.push(deltaFromChild(nodeChange, index));
+			delta.push(deltaFromChild(nodeChange));
 			nodeIndex += 1;
 		}
 		return delta;
