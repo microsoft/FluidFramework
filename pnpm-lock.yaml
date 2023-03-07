@@ -3870,6 +3870,7 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       async: ^3.2.2
       aws-sdk: 2.547.0
+      axios: ^0.26.0
       basicauth-middleware: 2.0.0
       body-parser: ^1.18.3
       chai: ^4.2.0
@@ -3904,8 +3905,6 @@ importers:
       prettier: ~2.6.2
       promisify: 0.0.3
       qs: 6.11.0
-      request: ^2.88.0
-      request-promise-native: 1.0.7
       rimraf: ^2.6.2
       rmfr: 2.0.0
       sanitize: 2.1.0
@@ -3922,6 +3921,7 @@ importers:
       '@fluid-experimental/property-properties': link:../../packages/property-properties
       '@fluid-experimental/property-query': link:../../packages/property-query
       async: 3.2.4
+      axios: 0.26.1
       basicauth-middleware: 2.0.0
       body-parser: 1.20.1
       chalk: 2.4.1
@@ -3969,8 +3969,6 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       promisify: 0.0.3
-      request: 2.88.2
-      request-promise-native: 1.0.7_request@2.88.2
       rimraf: 2.7.1
       sinon: 7.5.0
       sinon-chai: 3.3.0_chai@4.3.7+sinon@7.5.0
@@ -37399,29 +37397,6 @@ packages:
     engines: {node: '>= 0.8.x'}
     dev: true
 
-  /request-promise-core/1.1.2_request@2.88.2:
-    resolution: {integrity: sha512-UHYyq1MO8GsefGEt7EprS8UrXsm1TxEvFUX1IMTuSLU2Rh7fTIdFtl8xD7JiEYiWU2dl+NYAjCTksTehQUxPag==}
-    engines: {node: '>=0.10.0'}
-    peerDependencies:
-      request: ^2.34
-    dependencies:
-      lodash: 4.17.21
-      request: 2.88.2
-    dev: true
-
-  /request-promise-native/1.0.7_request@2.88.2:
-    resolution: {integrity: sha512-rIMnbBdgNViL37nZ1b3L/VfPOpSi0TqVDQPAvO6U14lMzOLrt5nilxCQqtDKhZeDiW0/hkCXGoQjhgJd/tCh6w==}
-    engines: {node: '>=0.12.0'}
-    deprecated: request-promise-native has been deprecated because it extends the now deprecated request package, see https://github.com/request/request/issues/3142
-    peerDependencies:
-      request: ^2.34
-    dependencies:
-      request: 2.88.2
-      request-promise-core: 1.1.2_request@2.88.2
-      stealthy-require: 1.1.1
-      tough-cookie: 2.5.0
-    dev: true
-
   /request/2.88.2:
     resolution: {integrity: sha512-MsvtOrfG9ZcrOwAW+Qi+F6HbD0CWXEh9ou77uOb7FM2WPhwT7smM833PzanhJLsgXjN89Ir6V2PczXNnMpwKhw==}
     engines: {node: '>= 6'}
@@ -38703,11 +38678,6 @@ packages:
       strip-ansi: 6.0.1
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /stealthy-require/1.1.1:
-    resolution: {integrity: sha512-ZnWpYnYugiOVEY5GkcuJK1io5V8QmNYChG62gSit9pQVGErXtrKuPC55ITaVSukmMta5qpMU7vqLt2Lnni4f/g==}
-    engines: {node: '>=0.10.0'}
     dev: true
 
   /store2/2.14.2:
