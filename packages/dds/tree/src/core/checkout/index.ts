@@ -5,3 +5,4 @@
 
 export { SharedTreeBranch, SharedTreeBranchEvents } from "./branch";
 export { TransactionResult } from "./checkout";
+export { TransactionStack } from "./transactionStack";

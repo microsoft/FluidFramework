@@ -41,8 +41,9 @@ import {
 	findAncestor,
 	GraphCommit,
 	RepairDataStore,
+	TransactionStack,
 } from "../core";
-import { brand, fail, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
+import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
 
 /**
@@ -116,6 +117,8 @@ export class SharedTreeCore<
 	private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
 
 	public readonly editor: TEditor;
+
+	private readonly transactions = new TransactionStack();
 
 	/**
 	 * @param indexes - A list of indexes, either as an array or as a factory function
@@ -234,7 +237,7 @@ export class SharedTreeCore<
 		this.submitLocalMessage(message);
 	}
 
-	protected applyChange(change: TChange): Commit<TChange> {
+	protected applyChange(change: TChange): void {
 		const revision = mintRevisionTag();
 		const commit = {
 			change,
@@ -242,19 +245,13 @@ export class SharedTreeCore<
 			sessionId: this.editManager.localSessionId,
 		};
 		const delta = this.editManager.addLocalChange(revision, change);
-		if (this.isTransacting()) {
-			const transactionData = this.transactionStack[this.transactionStack.length - 1];
-			assert(transactionData !== undefined, "Expected transaction stack to be non-empty");
-			transactionData.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
-		} else {
+		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
 
 		this.indexEventEmitter.emit("newLocalChange", change);
 		this.indexEventEmitter.emit("newLocalState", delta);
-
-		// TODO need return?
-		return commit;
 	}
 
 	protected processCore(
@@ -281,41 +278,26 @@ export class SharedTreeCore<
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	private readonly transactionStack: {
-		startCommit: GraphCommit<TChange>;
-		repairStore?: RepairDataStore;
-	}[] = [];
-
 	public startTransaction(repairStore?: RepairDataStore): void {
-		this.transactionStack.push({
-			startCommit: this.editManager.getLocalBranchHead(),
-			repairStore,
-		});
+		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
 	}
 
 	public commitTransaction(): void {
-		const { startCommit } = this.transactionStack.pop() ?? fail("No transaction to commit");
-
-		const squashCommit = this.editManager.squashLocalChanges(startCommit.revision);
+		const { startRevision } = this.transactions.pop();
+		const squashCommit = this.editManager.squashLocalChanges(startRevision);
 		this.submitCommit(squashCommit);
 	}
 
 	public abortTransaction(): void {
-		const { startCommit, repairStore } =
-			this.transactionStack.pop() ?? fail("No transaction to abort");
-
-		const rollbackDelta = this.editManager.rollbackLocalChanges(
-			startCommit.revision,
-			repairStore,
-		);
-
+		const { startRevision, repairStore } = this.transactions.pop();
+		const rollbackDelta = this.editManager.rollbackLocalChanges(startRevision, repairStore);
 		for (const delta of rollbackDelta) {
 			this.indexEventEmitter.emit("newLocalState", delta);
 		}
 	}
 
 	public isTransacting(): boolean {
-		return this.transactionStack.length !== 0;
+		return this.transactions.size !== 0;
 	}
 
 	/**

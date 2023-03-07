@@ -155,7 +155,12 @@ export {
 	Rebaser,
 } from "./rebase";
 
-export { SharedTreeBranch, SharedTreeBranchEvents, TransactionResult } from "./checkout";
+export {
+	SharedTreeBranch,
+	SharedTreeBranchEvents,
+	TransactionResult,
+	TransactionStack,
+} from "./checkout";
 
 export { Checkout as TransactionCheckout } from "./transaction";
 

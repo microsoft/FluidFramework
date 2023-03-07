@@ -5,11 +5,11 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { EventEmitter } from "../../events";
-import { fail } from "../../util";
 import { ChangeFamily } from "../change-family";
 import { findAncestor, GraphCommit, mintCommit, mintRevisionTag, Rebaser } from "../rebase";
 import { RepairDataStore } from "../repair";
 import { AnchorSet } from "../tree";
+import { TransactionStack } from "./transactionStack";
 
 /**
  * The events emitted by a `SharedTreeBranch`
@@ -29,6 +29,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 > {
 	private head: GraphCommit<TChange>;
 	public readonly editor: TEditor;
+	private readonly transactions = new TransactionStack();
 	private readonly forks = new Set<SharedTreeBranch<TEditor, TChange>>();
 	private disposed = false;
 
@@ -61,8 +62,12 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 			sessionId: this.sessionId,
 			change,
 		});
-		const peek = this.transactionStack[this.transactionStack.length - 1];
-		peek?.repairStore?.capture(this.changeFamily.intoDelta(change), this.head.revision);
+
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(change),
+			this.head.revision,
+		);
+
 		this.emit("onChange", change);
 	}
 
@@ -73,47 +78,37 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 		return this.head;
 	}
 
-	private readonly transactionStack: {
-		startCommit: GraphCommit<TChange>;
-		repairStore?: RepairDataStore;
-	}[] = [];
-
 	public startTransaction(repairStore?: RepairDataStore): void {
-		this.transactionStack.push({
-			startCommit: this.head,
-			repairStore,
-		});
+		this.transactions.push(this.head.revision, repairStore);
 	}
 
 	public commitTransaction(): void {
-		const { startCommit } = this.transactionStack.pop() ?? fail("No transaction to commit");
+		const [startCommit, commits] = this.popTransaction();
 
-		const commits: GraphCommit<TChange>[] = [];
-		const ancestor = findAncestor([this.head, commits], (c) => c === startCommit);
-		assert(ancestor !== undefined, "Expected branch to be ahead of squash revision");
-		// TODO: Is this the way?
-		const anonymousChanges = commits.map(({ change }) => ({ change, revision: undefined }));
-		const anonymousChange = this.changeFamily.rebaser.compose(anonymousChanges);
-		this.head = mintCommit(startCommit, {
-			revision: mintRevisionTag(),
-			sessionId: this.sessionId,
-			change: anonymousChange,
-		});
-		// TODO is this right? Does the squash go into the repair data of the upper transaction?
-		const peek = this.transactionStack[this.transactionStack.length - 1];
-		peek?.repairStore?.capture(
-			this.changeFamily.intoDelta(anonymousChange),
-			this.head.revision,
-		);
+		// Anonymize the commits from this transaction by stripping their revision tags.
+		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
+		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
+
+		{
+			// Squash the changes and make the squash commit the new head of this branch
+			const change = this.changeFamily.rebaser.compose(anonymousCommits);
+			this.head = mintCommit(startCommit, {
+				revision: mintRevisionTag(),
+				sessionId: this.sessionId,
+				change,
+			});
+
+			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
+			// then update the repair data store for that transaction
+			this.transactions.repairStore?.capture(
+				this.changeFamily.intoDelta(change),
+				this.head.revision,
+			);
+		}
 	}
 
 	public abortTransaction(): void {
-		const { startCommit, repairStore } =
-			this.transactionStack.pop() ?? fail("No transaction to abort");
-
-		const commits: GraphCommit<TChange>[] = [];
-		const ancestor = findAncestor([this.head, commits], (c) => c === startCommit);
-		assert(ancestor !== undefined, "Expected branch to be ahead of rollback revision");
+		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.head = startCommit;
 		for (let i = commits.length - 1; i >= 0; i--) {
 			this.emit("onChange", this.changeFamily.rebaser.invert(commits[i], repairStore));
@@ -121,7 +116,22 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 	}
 
 	public isTransacting(): boolean {
-		return this.transactionStack.length !== 0;
+		return this.transactions.size !== 0;
+	}
+
+	private popTransaction(): [
+		GraphCommit<TChange>,
+		GraphCommit<TChange>[],
+		RepairDataStore | undefined,
+	] {
+		const { startRevision, repairStore } = this.transactions.pop();
+		const commits: GraphCommit<TChange>[] = [];
+		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
+		assert(
+			startCommit !== undefined,
+			"Expected branch to be ahead of transaction start revision",
+		);
+		return [startCommit, commits, repairStore];
 	}
 
 	/**
