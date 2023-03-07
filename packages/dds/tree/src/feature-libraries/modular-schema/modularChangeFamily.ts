@@ -560,7 +560,7 @@ export class ModularChangeFamily
 		if (
 			change.valueConstraint !== undefined &&
 			over.change.valueChange !== undefined &&
-			over.change.valueChange !== change.valueConstraint
+			over.change.valueChange.value !== change.valueConstraint.value
 		) {
 			constraintState.increment();
 			console.log(
@@ -804,7 +804,7 @@ function makeModularChangeset(
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount = 0,
 ): ModularChangeset {
-	const changeset: Mutable<ModularChangeset> = { changes };
+	const changeset: Mutable<ModularChangeset> = { changes, constraintViolationCount };
 	if (revisions !== undefined && revisions.length > 0) {
 		changeset.revisions = revisions;
 	}
