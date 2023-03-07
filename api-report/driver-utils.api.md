@@ -274,36 +274,6 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLogger, event: ITelemetryErrorEvent, error?: any): void;
 
-// @public @deprecated
-export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValue> {
-    // @deprecated (undocumented)
-    [Symbol.iterator](): IterableIterator<[TKey, TValue]>;
-    // @deprecated
-    constructor(expiryMs: number);
-    // @deprecated (undocumented)
-    clear(): void;
-    // @deprecated (undocumented)
-    delete(key: TKey): boolean;
-    // @deprecated (undocumented)
-    entries(): IterableIterator<[TKey, TValue]>;
-    // @deprecated (undocumented)
-    forEach(callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void, thisArg?: any): void;
-    // @deprecated (undocumented)
-    get(key: TKey): TValue | undefined;
-    // @deprecated (undocumented)
-    has(key: TKey): boolean;
-    // @deprecated (undocumented)
-    keys(): IterableIterator<TKey>;
-    // @deprecated (undocumented)
-    set(key: TKey, value: TValue): this;
-    // @deprecated (undocumented)
-    get size(): number;
-    // @deprecated (undocumented)
-    valueOf(): Object;
-    // @deprecated (undocumented)
-    values(): IterableIterator<TValue>;
-}
-
 // @public (undocumented)
 export enum MessageType2 {
     // (undocumented)

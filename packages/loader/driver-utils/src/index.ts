@@ -11,7 +11,6 @@ export { EmptyDocumentDeltaStorageService } from "./emptyDocumentDeltaStorageSer
 export { UsageError } from "./error";
 export { ensureFluidResolvedUrl, isFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
-export { MapWithExpiration } from "./mapWithExpiration";
 export {
 	canBeCoalescedByService,
 	isRuntimeMessage,

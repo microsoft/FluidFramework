@@ -99,6 +99,11 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_MapWithExpiration": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
