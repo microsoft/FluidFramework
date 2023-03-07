@@ -668,7 +668,6 @@ importers:
       '@types/ioredis': ^4.22.0
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.0
-      '@types/mongodb': 3.1.17
       '@types/node': ^14.18.0
       '@types/sinon': ^9.0.9
       '@types/uuid': ^8.3.0
@@ -729,7 +728,6 @@ importers:
       '@types/ioredis': 4.28.10
       '@types/lru-cache': 5.1.1
       '@types/mocha': 10.0.1
-      '@types/mongodb': 3.1.17
       '@types/node': 14.18.34
       '@types/sinon': 9.0.11
       '@types/uuid': 8.3.4
@@ -4697,13 +4695,6 @@ packages:
       '@types/node': 18.0.0
     dev: true
 
-  /@types/bson/4.2.0:
-    resolution: {integrity: sha512-ELCPqAdroMdcuxqwMgUpifQyRoTpyYCNr1V9xKyF40VsBobsj+BbWNRvwGchMgBPGqkw655ypkjj2MEF5ywVwg==}
-    deprecated: This is a stub types definition. bson provides its own type definitions, so you do not need this installed.
-    dependencies:
-      bson: 4.7.0
-    dev: true
-
   /@types/bytes/3.1.1:
     resolution: {integrity: sha512-lOGyCnw+2JVPKU3wIV0srU0NyALwTBJlVSx5DfMQOFuuohA8y9S8orImpuIQikZ0uIQ8gehrRjxgQC1rLRi11w==}
     dev: true
@@ -4882,13 +4873,6 @@ packages:
 
   /@types/mocha/10.0.1:
     resolution: {integrity: sha512-/fvYntiO1GeICvqbQ3doGDIP97vWmvFt83GKguJ6prmQM2iXZfFcq6YE8KteFyRtX2/h5Hf91BYvPodJKFYv5Q==}
-    dev: true
-
-  /@types/mongodb/3.1.17:
-    resolution: {integrity: sha512-u6tSIpfdsgK74aE0TuyqZYhHscw+gHs6dQNSsFUTFXubhhxCqovmV3nJRS0YKSw0sfqbzUgGzbG5+yorUPRnFg==}
-    dependencies:
-      '@types/bson': 4.2.0
-      '@types/node': 14.18.34
     dev: true
 
   /@types/morgan/1.9.3:
@@ -6236,6 +6220,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       buffer: 5.7.1
+    dev: false
 
   /btoa-lite/1.0.0:
     resolution: {integrity: sha512-gvW7InbIyF8AicrqWoptdW08pUxuhq8BEgowNajy9RhiE86fmGAGl+bLKo6oB8QP0CkqHLowfN0oJdKC/J6LbA==}
