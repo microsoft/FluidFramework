@@ -205,7 +205,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			const path = ["loop", "guestComponents"];
 
 			const extraBlob = await loadRuntimeBlob(params, path);
-			console.log(extraBlob?.length ?? 0);
 
 			// Loop specific code to create blob content during summary
 			const handler = async (_runtime) => {
