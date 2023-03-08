@@ -27,6 +27,7 @@ export {
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
 } from "./RegistryMessages";
+export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
