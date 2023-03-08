@@ -404,7 +404,10 @@ export class ModularChangeFamily
 				!("revert" in change.change.valueChange),
 				0x4a9 /* Inverting inverse changes is currently not supported */,
 			);
-			assert(path !== undefined, 0x59d /* Only existing nodes can have their value restored */);
+			assert(
+				path !== undefined,
+				0x59d /* Only existing nodes can have their value restored */,
+			);
 			const revision = change.change.valueChange.revision ?? change.revision;
 			assert(revision !== undefined, 0x59e /* Unable to revert to undefined revision */);
 			inverse.valueChange = { value: repairStore.getValue(revision, path) };

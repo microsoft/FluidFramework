@@ -185,7 +185,10 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 				);
 				const commits: GraphCommit<TChange>[] = [];
 				const ancestor = findAncestor([forked.head, commits], (c) => c === this.head);
-				assert(ancestor === this.head, 0x595 /* Expected merging checkout branches to be related */);
+				assert(
+					ancestor === this.head,
+					0x595 /* Expected merging checkout branches to be related */,
+				);
 				this.head = forked.head;
 				assert(this.forks.delete(forked), 0x596 /* Invalid checkout merge */);
 				const change = this.rebaser.changeRebaser.compose(commits);
