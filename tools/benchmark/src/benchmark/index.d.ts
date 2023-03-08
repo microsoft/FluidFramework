@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable @typescript-eslint/ban-types */
 // Type definitions for Benchmark v2.1.4
 // Project: https://benchmarkjs.com

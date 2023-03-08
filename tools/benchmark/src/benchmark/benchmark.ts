@@ -1,37 +1,166 @@
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable prefer-spread */
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
+/* eslint-disable @typescript-eslint/prefer-optional-chain */
+/* eslint-disable prefer-rest-params */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
+/* eslint-disable no-bitwise */
+/* eslint-disable no-param-reassign */
+/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-new-func */
 /* eslint-disable no-template-curly-in-string */
-/* eslint-disable jsdoc/require-hyphen-before-param-description */
-/* eslint-disable no-bitwise */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable unicorn/better-regex */
-/* eslint-disable no-func-assign */
 /* eslint-disable @typescript-eslint/no-this-alias */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-implied-eval */
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable @typescript-eslint/unbound-method */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable unicorn/no-unsafe-regex */
+/* eslint-disable unicorn/better-regex */
+/* eslint-disable @typescript-eslint/no-implied-eval */
 /* eslint-disable tsdoc/syntax */
-/* eslint-disable no-undef */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/ban-types */
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /*!
  * Benchmark.js
  * Copyright 2010-2016 Mathias Bynens
  * Based on JSLitmus.js, copyright Robert Kieffer
  * Modified by John-David Dalton
+ * Modified by Microsoft
  * Available under MIT license
  */
 
 import _ from "lodash";
+
+export interface Options {
+	/**
+	 * A flag to indicate that benchmark cycles will execute asynchronously
+	 * by default.
+	 */
+	async?: boolean | undefined;
+	/**
+	 * A flag to indicate that the benchmark clock is deferred.
+	 */
+	defer?: boolean | undefined;
+	/**
+	 * The delay between test cycles (secs).
+	 */
+	delay?: number | undefined;
+	/**
+	 * Displayed by `Benchmark#toString` when a `name` is not available
+	 * (auto-generated if absent).
+	 */
+	id?: string | undefined;
+	/**
+	 * The default number of times to execute a test on a benchmark's first cycle.
+	 */
+	initCount?: number | undefined;
+
+	/**
+	 * The maximum time a benchmark is allowed to run before finishing (secs).
+	 *
+	 * Note: Cycle delays aren't counted toward the maximum time.
+	 */
+	maxTime?: number | undefined;
+	/**
+	 * The minimum sample size required to perform statistical analysis.
+	 */
+	minSamples?: number | undefined;
+
+	/**
+	 * The time needed to reduce the percent uncertainty of measurement to 1% (secs).
+	 */
+	minTime?: number | undefined;
+
+	/**
+	 * The name of the benchmark.
+	 */
+	name?: string | undefined;
+
+	/**
+	 * An event listener called when the benchmark is aborted.
+	 */
+	onAbort?: Function | undefined;
+
+	/**
+	 * An event listener called when the benchmark completes running.
+	 */
+	onComplete?: Function | undefined;
+	/**
+	 * An event listener called after each run cycle.
+	 */
+	onCycle?: Function | undefined;
+
+	/**
+	 * An event listener called when a test errors.
+	 */
+	onError?: Function | undefined;
+	/**
+	 * An event listener called when the benchmark is reset.
+	 */
+	onReset?: Function | undefined;
+	/**
+	 * An event listener called when the benchmark starts running.
+	 */
+	onStart?: Function | undefined;
+
+	setup?: Function | string | undefined;
+
+	teardown?: Function | string | undefined;
+
+	fn?: Function | string | undefined;
+
+	queued?: boolean | undefined;
+}
+
+export interface Stats {
+	moe: number;
+	rme: number;
+	sem: number;
+	deviation: number;
+	mean: number;
+	sample: any[];
+	variance: number;
+}
+
+export interface Times {
+	cycle: number;
+	elapsed: number;
+	period: number;
+	timeStamp: number;
+}
+
+export interface Result {
+	count: number;
+	cycles: number;
+	hz: number;
+	error: Error;
+	aborted: boolean;
+
+	stats: Stats;
+	times: Times;
+}
+
+// export function runBenchmark(fn: Function, optionsInput?: Options): Result {
+// 	const options = { ...defaultOptions, ...optionsInput };
+
+// 	bench.count = 0;
+// 	let timeStamp = +_.now();
+// 	options.onStart?.();
+
+// 	options = {
+// 		async:
+// 			((options = options && options.async) == null ? bench.async : options) &&
+// 			support.timeout,
+// 	};
+
+// 	compute(bench, options);
+// }
 
 /** Used to assign each benchmark an incremented id. */
 let counter = 0;
@@ -159,21 +288,15 @@ const defaultOptions = {
 
 /** Used for `Array` and `Object` method references. */
 const arrayRef = [];
-const objectProto = Object.prototype;
 
 /** Native method shortcuts. */
 const abs = Math.abs;
 const floor = Math.floor;
-const log = Math.log;
 const max = Math.max;
 const min = Math.min;
 const pow = Math.pow;
-const push = arrayRef.push;
 const shift = arrayRef.shift;
-const slice = arrayRef.slice;
 const sqrt = Math.sqrt;
-const toString = objectProto.toString;
-const unshift = arrayRef.unshift;
 
 /** Used to access Node.js's high resolution timer. */
 const processObject = isHostType(globalThis, "process") && globalThis.process;
@@ -182,7 +305,7 @@ const processObject = isHostType(globalThis, "process") && globalThis.process;
 const uid = `uid${+_.now()}`;
 
 /** Used to avoid infinite recursion when methods call each other. */
-const calledBy = {};
+const calledBy: any = {};
 
 /**
  * Timer object used by `clock()` and `Deferred#resolve`.
@@ -190,7 +313,7 @@ const calledBy = {};
  * @private
  * @type Object
  */
-let timer = {
+let timer: any = {
 	/**
 	 * The timer namespace object or constructor.
 	 *
@@ -220,54 +343,54 @@ let timer = {
 };
 
 /* ------------------------------------------------------------------------ */
-class Benchmark {
+export class Benchmark {
 	/**
 	 * The number of times a test was executed.
 	 * @type number
 	 */
-	count = 0;
+	count: number = 0;
 
 	/**
 	 * The number of cycles performed while benchmarking.
 	 * @type number
 	 */
-	cycles = 0;
+	cycles: number = 0;
 
 	/**
 	 * The number of executions per second.
 	 * @type number
 	 */
-	hz = 0;
+	hz: number = 0;
 
 	/**
 	 * The compiled test function.
 	 * @type {Function|string}
 	 */
-	compiled = undefined;
+	compiled!: Function | string;
 
 	/**
 	 * The error object if the test failed.
 	 * @type Object
 	 */
-	error = undefined;
+	error?: object;
 
 	/**
 	 * The test to benchmark.
 	 * @type {Function|string}
 	 */
-	fn = undefined;
+	fn!: Function | string;
 
 	/**
 	 * A flag to indicate if the benchmark is aborted.
 	 * @type boolean
 	 */
-	aborted = false;
+	aborted: boolean = false;
 
 	/**
 	 * A flag to indicate if the benchmark is running.
 	 * @type boolean
 	 */
-	running = false;
+	running: boolean = false;
 
 	/**
 	 * Compiled into the test and executed immediately **before** the test loop.
@@ -328,19 +451,19 @@ class Benchmark {
 	 *   }())
 	 * }())
 	 */
-	setup = _.noop;
+	setup: Function | string = _.noop;
 
 	/**
 	 * Compiled into the test and executed immediately **after** the test loop.
 	 * @type {Function|string}
 	 */
-	teardown = _.noop;
+	teardown: Function | string = _.noop;
 
 	/**
 	 * An object of stats including mean, margin or error, and standard deviation.
 	 * @type Object
 	 */
-	stats = {
+	stats: Stats = {
 		/**
 		 * The margin of error.
 		 *
@@ -402,7 +525,7 @@ class Benchmark {
 	 * An object of timing data including cycle, elapsed, period, start, and stop.
 	 * @type Object
 	 */
-	times = {
+	times: Times = {
 		/**
 		 * The time taken to complete the last cycle (secs).
 		 *
@@ -436,9 +559,22 @@ class Benchmark {
 		timeStamp: 0,
 	};
 
+	options: Options;
+	id: number;
+
+	_timerId: any;
+	delay: any;
+	initCount!: number;
+	async: boolean | undefined;
+	_original: any;
+	defer: any;
+	events: any;
+	minTime: any;
+	minSamples: any;
+	maxTime!: number;
+
 	/**
 	 * The Benchmark constructor.
-	 * @param {Object} [options={}] Options object.
 	 * @example
 	 *
 	 * var bench = new Benchmark({
@@ -450,7 +586,7 @@ class Benchmark {
 	 *   'fn': '[1,2,3,4].sort()'
 	 * });
 	 */
-	constructor(options) {
+	constructor(options: Options) {
 		this.options = {
 			...defaultOptions,
 			...options,
@@ -461,7 +597,7 @@ class Benchmark {
 				// Add event listeners.
 				if (/^on[A-Z]/.test(key)) {
 					_.each(key.split(" "), (key) => {
-						this.on(key.slice(2).toLowerCase(), value);
+						this.on(key.slice(2).toLowerCase(), value as Function);
 					});
 				} else if (!_.has(this, key)) {
 					this[key] = cloneDeep(value);
@@ -470,7 +606,7 @@ class Benchmark {
 		});
 
 		this.id ??= ++counter;
-		this.stats = cloneDeep(this.stats);
+		this.stats = cloneDeep(this.stats) as Stats;
 		this.times = { ...this.times };
 	}
 
@@ -486,7 +622,7 @@ class Benchmark {
 	 * // or with options
 	 * bench.run({ 'async': true });
 	 */
-	run(options) {
+	run(options: Options): Benchmark {
 		const bench = this;
 		const event = new Event("start");
 
@@ -501,7 +637,7 @@ class Benchmark {
 
 		if (!event.cancelled) {
 			options = {
-				async: (options = options && options.async) == null ? bench.async : options,
+				async: options?.async == null ? bench.async : options?.async,
 			};
 
 			// For clones created within `compute()`.
@@ -527,7 +663,7 @@ class Benchmark {
 	 * @param {...*} [args] - Arguments to invoke the listener with.
 	 * @returns {*} Returns the return value of the last listener executed.
 	 */
-	emit(type) {
+	emit(type: object | string): any {
 		let listeners;
 		const object = this;
 		const event = new Event(type);
@@ -556,7 +692,7 @@ class Benchmark {
 	 * @param {string} type - The event type.
 	 * @returns {Array} The listeners array.
 	 */
-	listeners(type) {
+	listeners(type: string): any[] {
 		this.events ??= {};
 		return _.has(this.events, type) ? this.events[type] : (this.events[type] = []);
 	}
@@ -586,7 +722,7 @@ class Benchmark {
 	 * // unregister all listeners for all event types
 	 * bench.off();
 	 */
-	off(type, listener) {
+	off(type: string, listener: Function): object {
 		const events = this.events;
 
 		if (!events) {
@@ -626,7 +762,7 @@ class Benchmark {
 	 * // register a listener for multiple event types
 	 * bench.on('start cycle', listener);
 	 */
-	on(type, listener) {
+	on(type: string, listener: Function): object {
 		this.events ??= {};
 
 		_.each(type.split(" "), (type) => {
@@ -643,7 +779,7 @@ class Benchmark {
 	 * Aborts the benchmark without recording times.
 	 * @returns {Object} The benchmark instance.
 	 */
-	abort() {
+	abort(): object {
 		const resetting = calledBy.reset;
 
 		if (this.running) {
@@ -678,7 +814,7 @@ class Benchmark {
 	 *   'name': 'doppelganger'
 	 * });
 	 */
-	clone(options) {
+	clone(options?: Options): Benchmark {
 		const result = new Benchmark({ ...this, ...options });
 
 		// Correct the `options` object.
@@ -700,7 +836,7 @@ class Benchmark {
 	 * @param {Object} other - The benchmark to compare.
 	 * @returns {number} Returns `-1` if slower, `1` if faster, and `0` if indeterminate.
 	 */
-	compare(other) {
+	compare(other: Benchmark): number {
 		// Exit early if comparing the same benchmark.
 		if (this === other) {
 			return 0;
@@ -757,7 +893,7 @@ class Benchmark {
 	 *
 	 * @returns {Object} The benchmark instance.
 	 */
-	reset() {
+	reset(): Benchmark {
 		const bench = this;
 		if (bench.running && !calledBy.abort) {
 			// No worries, `reset()` is called within `abort()`.
@@ -768,15 +904,15 @@ class Benchmark {
 		}
 		let event;
 		let index = 0;
-		const changes = [];
-		const queue = [];
+		const changes: any[] = [];
+		const queue: any[] = [];
 
 		// A non-recursive solution to check if properties have changed.
 		// For more information see http://www.jslab.dk/articles/non.recursive.preorder.traversal.part4.
 		let data = {
 			destination: bench,
 			source: {
-				...cloneDeep(bench.constructor.prototype),
+				...(cloneDeep(bench.constructor.prototype) as any),
 				...bench.options,
 			},
 		};
@@ -833,13 +969,12 @@ class Benchmark {
 	}
 }
 
-class Deferred {
+export class Deferred {
 	/**
-	 * @param {Object} clone - The cloned benchmark instance.
+	 * @param benchmark - The cloned benchmark instance.
 	 */
-	constructor(clone) {
-		this.benchmark = clone;
-		clock(this);
+	constructor(public readonly benchmark: Benchmark) {
+		(clock as any)(this);
 	}
 
 	/**
@@ -854,90 +989,87 @@ class Deferred {
 			// cycle() -> clone cycle/complete event -> compute()'s invoked bench.run() cycle/complete.
 			deferred.teardown();
 			clone.running = false;
-			cycle(deferred);
+			(cycle as any)(deferred);
 		} else if (++deferred.cycles < clone.count) {
-			clone.compiled.call(deferred, globalThis, timer);
+			(clone.compiled as Function).call(deferred, globalThis, timer);
 		} else {
 			timer.stop(deferred);
 			deferred.teardown();
 			delay(clone, () => {
-				cycle(deferred);
+				(cycle as any)(deferred);
 			});
 		}
 	}
-
-	/**
-	 * The deferred benchmark instance.
-	 * @type Object
-	 */
-	benchmark = null;
+	teardown() {
+		throw new Error("Method not implemented.");
+	}
 
 	/**
 	 * The number of deferred cycles performed while benchmarking.
 	 * @type number
 	 */
-	cycles = 0;
+	cycles: number = 0;
 
 	/**
 	 * The time taken to complete the deferred benchmark (secs).
 	 * @type number
 	 */
-	elapsed = 0;
+	elapsed: number = 0;
 
 	/**
 	 * @type number
 	 */
-	timeStamp = 0;
+	timeStamp: number = 0;
 }
 
-class Event {
+export class Event {
 	/**
 	 * A flag to indicate if the emitters listener iteration is aborted.
 	 * @type boolean
 	 */
-	aborted = false;
+	aborted: boolean = false;
 
 	/**
 	 * A flag to indicate if the default action is cancelled.
 	 * @type boolean
 	 */
-	cancelled = false;
+	cancelled: boolean = false;
 
 	/**
 	 * The object whose listeners are currently being processed.
 	 * @type Object
 	 */
-	currentTarget = undefined;
+	currentTarget?: object = undefined;
 
 	/**
 	 * The return value of the last executed listener.
 	 * @type Mixed
 	 */
-	result = undefined;
+	result: any = undefined;
 
 	/**
 	 * The object to which the event was originally emitted.
 	 * @type Object
 	 */
-	target = undefined;
+	target?: object = undefined;
 
 	/**
 	 * A timestamp of when the event was created (ms).
 	 * @type number
 	 */
-	timeStamp = 0;
+	timeStamp: number = 0;
 
 	/**
 	 * The event type.
 	 * @type string
 	 */
-	type = "";
+	type: string = "";
 
 	/**
 	 * The Event constructor.
 	 * @param {Object|string} type - The event type.
 	 */
-	constructor(type) {
+	constructor(type: object | string) {
 		if (type instanceof Event) {
 			return type;
 		}
@@ -963,6 +1095,8 @@ const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
 	}
 });
 
+type AnyFunction = (...args: any[]) => any;
+
 /**
  * Delay the execution of a function based on the benchmark's `delay` property.
  *
@@ -970,7 +1104,7 @@ const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
  * @param {Object} bench - The benchmark instance.
  * @param {Object} fn - The function to execute.
  */
-function delay(bench, fn) {
+function delay(bench: Benchmark, fn: AnyFunction) {
 	bench._timerId = _.delay(fn, bench.delay * 1e3);
 }
 
@@ -981,8 +1115,11 @@ function delay(bench, fn) {
  * @param {Function} fn - The function.
  * @returns {string} The argument name.
  */
-function getFirstArgument(fn) {
-	return (!_.has(fn, "toString") && (/^[\s(]*function[^(]*\(([^\s,)]+)/.exec(fn) ?? 0)[1]) || "";
+function getFirstArgument(fn: Function): string {
+	return (
+		(!_.has(fn, "toString") && (/^[\s(]*function[^(]*\(([^\s,)]+)/.exec(fn as any) || 0)[1]) ||
+		""
+	);
 }
 
 /**
@@ -992,12 +1129,11 @@ function getFirstArgument(fn) {
  * @param {Array} sample - The sample.
  * @returns {number} The mean.
  */
-function getMean(sample) {
-	return (
-		_.reduce(sample, (sum, x) => {
-			return sum + x;
-		}) / sample.length || 0
-	);
+function getMean(sample: any[]): number {
+	const v = _.reduce(sample, (sum: number, x: number) => {
+		return sum + x;
+	}) as number;
+	return v / sample.length || 0;
 }
 
 /**
@@ -1010,7 +1146,7 @@ function getMean(sample) {
  * @param {string} property - The property to check.
  * @returns {boolean} Returns `true` if the property value is a non-primitive, else `false`.
  */
-function isHostType(object, property) {
+function isHostType(object: any, property: string): boolean {
 	if (object == null) {
 		return false;
 	}
@@ -1027,7 +1163,7 @@ function isHostType(object, property) {
  * @memberOf Benchmark
  * @param {Array} benches - Array of benchmarks to iterate over.
  * @param {Object|string} name - The name of the method to invoke OR options object.
- * @param {...*} [args] Arguments to invoke the method with.
+ * @param {...*} [args] - Arguments to invoke the method with.
  * @returns {Array} A new array of values returned from each method invoked.
  * @example
  *
@@ -1054,12 +1190,12 @@ function isHostType(object, property) {
  *   'onComplete': onComplete
  * });
  */
-function invoke(benches, name) {
+function invoke(benches: Benchmark[], name: object | string): any[] {
 	let args;
-	let bench;
+	let bench: Benchmark;
 	let index = -1;
-	const eventProps = { currentTarget: benches };
-	let options = { onStart: _.noop, onCycle: _.noop, onComplete: _.noop };
+	const eventProps: any = { currentTarget: benches };
+	let options: Options = { onStart: _.noop, onCycle: _.noop, onComplete: _.noop };
 	const result = _.toArray(benches);
 
 	/**
@@ -1076,8 +1212,8 @@ function invoke(benches, name) {
 			listeners.splice(0, 0, listeners.pop());
 		}
 		// Execute method.
-		result[index] = _.isFunction(bench && bench[name])
-			? bench[name].apply(bench, args)
+		result[index] = _.isFunction(bench && bench[name as any])
+			? bench[name as any].apply(bench, args)
 			: undefined;
 		// If synchronous return `true` until finished.
 		return !async && getNext();
@@ -1086,7 +1222,7 @@ function invoke(benches, name) {
 	/**
 	 * Fetches the next bench or executes `onComplete` callback.
 	 */
-	function getNext(event) {
+	function getNext(event?: any) {
 		const last = bench;
 		const async = isAsync(last);
 
@@ -1098,7 +1234,7 @@ function invoke(benches, name) {
 		eventProps.type = "cycle";
 		eventProps.target = last;
 		const cycleEvent = new Event(eventProps);
-		options.onCycle.call(benches, cycleEvent);
+		options.onCycle?.call(benches, cycleEvent);
 
 		// Choose next benchmark if not exiting early.
 		if (!cycleEvent.aborted && raiseIndex() !== false) {
@@ -1115,7 +1251,7 @@ function invoke(benches, name) {
 		} else {
 			// Emit "complete" event.
 			eventProps.type = "complete";
-			options.onComplete.call(benches, new Event(eventProps));
+			options.onComplete?.call(benches, new Event(eventProps));
 		}
 		// When used as a listener `event.aborted = true` will cancel the rest of
 		// the "complete" listeners because they were already called above and when
@@ -1151,12 +1287,11 @@ function invoke(benches, name) {
 			shift.call(benches);
 		}
 		// If we reached the last index then return `false`.
-		return (queued ? benches.length : index < result.length) ? index : (index = false);
+		return (queued ? benches.length : index < result.length) ? index : ((index as any) = false);
 	}
 
 	options = Object.assign(options, name);
-	name = options.name;
-	args = Array.isArray((args = "args" in options ? options.args : [])) ? args : [args];
+	args = Array.isArray((args = "args" in options ? (options as any).args : [])) ? args : [args];
 	const queued = options.queued;
 
 	// Start iterating over the array.
@@ -1165,7 +1300,7 @@ function invoke(benches, name) {
 		bench = result[index];
 		eventProps.type = "start";
 		eventProps.target = bench;
-		options.onStart.call(benches, new Event(eventProps));
+		options.onStart?.call(benches, new Event(eventProps));
 
 		// Start method execution.
 		if (isAsync(bench)) {
@@ -1188,13 +1323,13 @@ function invoke(benches, name) {
  * @param {Object} bench - The benchmark instance.
  * @returns {number} The time taken.
  */
-function clock() {
+function clock(): number {
 	const options = defaultOptions;
-	const templateData = {};
+	const templateData: any = {};
 	const timers = [{ ns: timer.ns, res: max(0.0015, getRes("ms")), unit: "ms" }];
 
 	// Lazy define for hi-res timers.
-	clock = function (clone) {
+	(clock as any) = function (clone) {
 		let deferred;
 
 		if (clone instanceof Deferred) {
@@ -1203,8 +1338,6 @@ function clock() {
 		}
 		const bench = clone._original;
 		const count = (bench.count = clone.count);
-		const id = bench.id;
-		const name = bench.name || (typeof id == "number" ? `<Test #${id}>` : id);
 		let result = 0;
 
 		// Init `minTime` if needed.
@@ -1234,8 +1367,8 @@ function clock() {
 			(bench.compiled =
 			clone.compiled =
 				createCompiled(bench, deferred, funcBody));
-		const isEmpty = !templateData.fn;
 
+		// Fallback when a test exits early or errors during pretest.
 		if (!deferred) {
 			funcBody =
 				`var r#,s#,m#=this,f#=m#.fn,i#=m#.count,n#=t#.ns;\${setup}\n\${begin};m#.f#=f#;while(i#--){m#.f#()}\${end};` +
@@ -1259,7 +1392,6 @@ function clock() {
 		// If no errors run the full test loop.
 		if (!clone.error) {
 			compiled = bench.compiled = clone.compiled = createCompiled(bench, deferred, funcBody);
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 			result = compiled.call(deferred || bench, globalThis, timer).elapsed;
 		}
 		return result;
@@ -1341,7 +1473,7 @@ function clock() {
 		let count = 30;
 		let divisor = 1e3;
 		const ns = timer.ns;
-		const sample = [];
+		const sample: any[] = [];
 
 		// Get average smallest measurable time.
 		while (count--) {
@@ -1414,7 +1546,7 @@ function clock() {
 	if (!options.minTime) {
 		options.minTime = max(timer.res / 2 / 0.01, 0.05);
 	}
-	return clock.apply(null, arguments);
+	return clock.apply(null, arguments as any);
 }
 
 /* ------------------------------------------------------------------------ */
@@ -1426,14 +1558,14 @@ function clock() {
  * @param {Object} bench - The benchmark instance.
  * @param {Object} options - The options object.
  */
-function compute(bench, options) {
+function compute(bench: Benchmark, options: Options) {
 	options ??= {};
 
 	const async = options.async;
 	let elapsed = 0;
 	const initCount = bench.initCount;
 	const minSamples = bench.minSamples;
-	const queue = [];
+	const queue: any[] = [];
 	const sample = bench.stats.sample;
 
 	/**
@@ -1456,8 +1588,8 @@ function compute(bench, options) {
 	/**
 	 * Updates the clone/original benchmarks to keep their data in sync.
 	 */
-	function update(event) {
-		const clone = this;
+	function update(this: any, event) {
+		const clone: any = this;
 		const type = event.type;
 
 		if (bench.running) {
@@ -1586,7 +1718,7 @@ function compute(bench, options) {
  * @param {Object} clone - The cloned benchmark instance.
  * @param {Object} options - The options object.
  */
-function cycle(clone, options) {
+function cycle(clone: Benchmark, options: Options) {
 	options ??= {};
 
 	let deferred;
@@ -1609,7 +1741,7 @@ function cycle(clone, options) {
 	if (clone.running) {
 		// `minTime` is set to `defaultOptions.minTime` in `clock()`.
 		cycles = ++clone.cycles;
-		clocked = deferred ? deferred.elapsed : clock(clone);
+		clocked = deferred ? deferred.elapsed : (clock as any)(clone);
 		minTime = clone.minTime;
 
 		if (cycles > bench.cycles) {
@@ -1661,19 +1793,16 @@ function cycle(clone, options) {
 		// Start a new cycle.
 		clone.count = count;
 		if (deferred) {
-			clone.compiled.call(deferred, globalThis, timer);
+			(clone.compiled as any).call(deferred, globalThis, timer);
 		} else if (async) {
 			delay(clone, () => {
 				cycle(clone, options);
 			});
 		} else {
-			cycle(clone);
+			(cycle as any)(clone);
 		}
 	} else {
 		// We're done.
 		clone.emit("complete");
 	}
 }
-
-// eslint-disable-next-line import/no-default-export
-export { Benchmark as default, Benchmark, Deferred, Event };
