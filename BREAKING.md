@@ -42,6 +42,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
 -   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
 -   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
+-   [driver-utils members removed](#driver-utils-members-removed)
 
 ### Container and RelativeLoader no longer exported
 
@@ -121,6 +122,21 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 -   `IPendingFlush`
 -   `IPendingState`
 -   `IPendingLocalState`
+
+### driver-utils members removed
+
+The following members of the `@fluidframework/driver-utils` package have been deprecated and will be removed in an upcoming release:
+
+-   `waitForConnectedState`
+-   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
+-   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
 
 # 2.0.0-internal.3.3.0
 
