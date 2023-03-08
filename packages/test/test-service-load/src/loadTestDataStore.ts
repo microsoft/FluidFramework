@@ -609,10 +609,9 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					opsSent,
 					largeOpRate,
 				});
-			} else {
-				dataModel.counter.increment(1);
 			}
 
+			dataModel.counter.increment(1);
 			opsSent++;
 		};
 
@@ -645,7 +644,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  };
 
 		try {
-			while (opsSent < clientSendCount && !this.disposed) {
+			while (dataModel.counter.value < clientSendCount && !this.disposed) {
 				// this enables a quick ramp down. due to restart, some clients can lag
 				// leading to a slow ramp down. so if there are less than half the clients
 				// and it's partner is done, return true to complete the runner.
@@ -661,6 +660,16 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				await sendSingleOpAndThenWait();
 			}
 			return !this.runtime.disposed;
+		} catch (error) {
+			config.logger.sendTelemetryEvent(
+				{
+					eventName: "OpSendInterrupted",
+					runId: config.runId,
+					documentOpCount: dataModel.counter.value,
+					localOpCount: opsSent,
+				},
+				error,
+			);
 		} finally {
 			dataModel.printStatus();
 		}
