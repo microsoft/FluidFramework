@@ -48,7 +48,7 @@ export function DynamicDataView(props: DynamicDataViewProps): React.ReactElement
 
 	// Render primitives and falsy types via their string representation
 	if (typeof data !== "object") {
-		return <>{data}</>;
+		return <> {data} </>;
 	}
 
 	if ((data as IProvideFluidLoadable)?.IFluidLoadable !== undefined) {

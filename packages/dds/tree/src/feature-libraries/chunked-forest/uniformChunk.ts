@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	TreeSchemaIdentifier,
@@ -14,9 +15,9 @@ import {
 	Value,
 	PathRootPrefix,
 } from "../../core";
-import { compareArrays, fail } from "../../util";
+import { fail, ReferenceCountedBase } from "../../util";
 import { prefixFieldPath, prefixPath, SynchronousCursor } from "../treeCursorUtils";
-import { ChunkedCursor, cursorChunk, dummyRoot, ReferenceCountedBase, TreeChunk } from "./chunk";
+import { ChunkedCursor, cursorChunk, dummyRoot, TreeChunk } from "./chunk";
 
 /**
  * Create a tree chunk with ref count 1.

@@ -1,6 +1,12 @@
-# @fluidframework/attributor
+# @fluid-experimental/attributor
 
 This package contains definitions and implementations for framework-provided attribution functionality.
+
+## Status
+
+All attribution APIs (both in this package and elsewhere in `@fluidframework` packages) are marked as [alpha](https://api-extractor.com/pages/tsdoc/tag_alpha/) to enable fast iteration (as third-party use is not officially supported, breaking API changes can be made in minor versions).
+
+Despite this, the APIs are generally ready for early adoption--feel free to play around with them in local setups and provide feedback on their shape, usability, or other factors!
 
 ## Quickstart
 
@@ -9,7 +15,7 @@ When you instantiate your container runtime, pass a scope which implements `IPro
 
 ```typescript
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { mixinAttributor, createRuntimeAttributor } from "@fluidframework/attributor";
+import { mixinAttributor, createRuntimeAttributor } from "@fluid-experimental/attributor";
 
 const ContainerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 

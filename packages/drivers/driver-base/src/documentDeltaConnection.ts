@@ -30,6 +30,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 	EventEmitterWithErrorHandling,
+	normalizeError,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
@@ -81,10 +82,30 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		assert(
-			this._disposed || this.socket.connected,
-			0x244 /* "Socket is closed, but connection is not!" */,
-		);
+		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		try {
+			(Error as any).stackTraceLimit = 50;
+			assert(
+				this._disposed || this.socket.connected,
+				0x244 /* "Socket is closed, but connection is not!" */,
+			);
+		} catch (error) {
+			const normalizedError = normalizeError(error, {
+				props: {
+					details: JSON.stringify({
+						disposed: this._disposed,
+						socketConnected: this.socket?.connected,
+						clientId: this._details?.clientId,
+						conenctionId: this.connectionId,
+					}),
+				},
+			});
+			throw normalizedError;
+		} finally {
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
+		}
 		return this._disposed;
 	}
 
@@ -120,6 +141,7 @@ export class DocumentDeltaConnection
 		public documentId: string,
 		logger: ITelemetryLogger,
 		private readonly enableLongPollingDowngrades: boolean = false,
+		protected readonly connectionId?: string,
 	) {
 		super((name, error) => {
 			logger.sendErrorEvent(
@@ -223,7 +245,27 @@ export class DocumentDeltaConnection
 	}
 
 	private checkNotClosed() {
-		assert(!this.disposed, 0x20c /* "connection disposed" */);
+		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		try {
+			(Error as any).stackTraceLimit = 50;
+			assert(!this.disposed, 0x20c /* "connection disposed" */);
+		} catch (error) {
+			const normalizedError = normalizeError(error, {
+				props: {
+					details: JSON.stringify({
+						disposed: this._disposed,
+						socketConnected: this.socket?.connected,
+						clientId: this._details?.clientId,
+						conenctionId: this.connectionId,
+					}),
+				},
+			});
+			throw normalizedError;
+		} finally {
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
+		}
 	}
 
 	/**
@@ -329,6 +371,8 @@ export class DocumentDeltaConnection
 						disposed: this._disposed,
 						socketConnected: this.socket?.connected,
 						trackedListenerCount: this.trackedListeners.size,
+						clientId: this.clientId,
+						connectionId: this.connectionId,
 					}),
 				},
 				error,
@@ -354,6 +398,8 @@ export class DocumentDeltaConnection
 			details: JSON.stringify({
 				disposed: this._disposed,
 				socketConnected: this.socket.connected,
+				clientId: this._details?.clientId,
+				connectionId: this.connectionId,
 			}),
 		});
 		this.disconnect(
@@ -388,8 +434,11 @@ export class DocumentDeltaConnection
 			eventName: "AfterDisconnectEvent",
 			driverVersion,
 			details: JSON.stringify({
+				disposed: this._disposed,
+				clientId: this.clientId,
 				socketConnected: this.socket.connected,
 				disconnectListenerCount: this.listenerCount("disconnect"),
+				connectionId: this.connectionId,
 			}),
 		});
 		// user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear

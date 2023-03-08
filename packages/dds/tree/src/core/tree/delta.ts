@@ -130,7 +130,7 @@ import { FieldKey, Value } from "./types";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export type Root<TTree = ProtoNode> = FieldChangeMap<TTree>;
+export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
 /**
  * The default representation for inserted content.
@@ -142,7 +142,16 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Represents a change being made to a part of the tree.
  * @alpha
  */
-export type Mark<TTree = ProtoNode> = Skip | Delete | MoveOut | MoveIn | Insert<TTree>;
+export type Mark<TTree = ProtoNode> =
+	| Skip
+	| Modify<TTree>
+	| Delete
+	| MoveOut
+	| MoveIn
+	| Insert<TTree>
+	| ModifyAndDelete<TTree>
+	| ModifyAndMoveOut<TTree>
+	| InsertAndModify<TTree>;
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
@@ -163,9 +172,10 @@ export type Skip = number;
  * Describes modifications made to a subtree.
  * @alpha
  */
-export interface NodeChanges<TTree = ProtoNode> {
+export interface Modify<TTree = ProtoNode> {
+	readonly type: typeof MarkType.Modify;
 	readonly setValue?: Value;
-	readonly fields?: FieldChangeMap<TTree>;
+	readonly fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -175,6 +185,16 @@ export interface NodeChanges<TTree = ProtoNode> {
 export interface Delete {
 	readonly type: typeof MarkType.Delete;
 	readonly count: number;
+}
+
+/**
+ * Describes the deletion of a single node.
+ * Includes descriptions of the modifications the node.
+ * @alpha
+ */
+export interface ModifyAndDelete<TTree = ProtoNode> {
+	readonly type: typeof MarkType.ModifyAndDelete;
+	readonly fields: FieldMarks<TTree>;
 }
 
 /**
@@ -188,6 +208,21 @@ export interface MoveOut {
 	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
 	 */
 	readonly moveId: MoveId;
+}
+
+/**
+ * Describes the moving out of a single node.
+ * Includes descriptions of the modifications made to the node.
+ * @alpha
+ */
+export interface ModifyAndMoveOut<TTree = ProtoNode> {
+	readonly type: typeof MarkType.ModifyAndMoveOut;
+	/**
+	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
+	 */
+	readonly moveId: MoveId;
+	readonly setValue?: Value;
+	readonly fields?: FieldMarks<TTree>;
 }
 
 /**
@@ -214,6 +249,18 @@ export interface Insert<TTree = ProtoNode> {
 }
 
 /**
+ * Describes the insertion of a single node.
+ * Includes descriptions of the modifications made to the nodes.
+ * @alpha
+ */
+export interface InsertAndModify<TTree = ProtoNode> {
+	readonly type: typeof MarkType.InsertAndModify;
+	readonly content: TTree;
+	readonly setValue?: Value;
+	readonly fields?: FieldMarks<TTree>;
+}
+
+/**
  * Uniquely identifies a MoveOut/MoveIn pair within a delta.
  * @alpha
  */
@@ -227,48 +274,18 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 /**
  * @alpha
  */
-export type FieldChangeMap<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
-
-/**
- * @alpha
- */
-export interface FieldChanges<TTree = ProtoNode> {
-	/**
-	 * Changes to the subtrees contained in the field before any of the shallow changes are applied.
-	 * Ordered by ascending index.
-	 */
-	readonly beforeShallow?: readonly NestedChange<TTree>[];
-
-	/**
-	 * Changes to apply to the contents of the field.
-	 */
-	readonly shallow?: MarkList<TTree>;
-
-	/**
-	 * Changes to the subtrees contained in the field after all the shallow changes are applied.
-	 * Ordered by ascending index.
-	 */
-	readonly afterShallow?: readonly NestedChange<TTree>[];
-}
-
-/**
- * @alpha
- */
-export interface ChildIndex {
-	readonly index: number;
-}
-
-/**
- * @alpha
- */
-export type NestedChange<TTree = ProtoNode> = ChildIndex & NodeChanges<TTree>;
+export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 /**
  * @alpha
  */
 export const MarkType = {
-	Insert: 0,
-	MoveIn: 1,
-	Delete: 2,
-	MoveOut: 3,
+	Modify: 0,
+	Insert: 1,
+	InsertAndModify: 2,
+	MoveIn: 3,
+	Delete: 4,
+	ModifyAndDelete: 5,
+	MoveOut: 6,
+	ModifyAndMoveOut: 7,
 } as const;
