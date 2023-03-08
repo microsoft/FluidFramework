@@ -77,7 +77,7 @@ function removeMoveInfo(segment: Partial<IMoveInfo>): void {
 	delete segment.movedSeqs;
 	delete segment.localMovedSeq;
 	delete segment.movedClientIds;
-	delete segment.wasObliteratedOnInsert;
+	delete segment.wasMovedOnInsert;
 }
 
 /**

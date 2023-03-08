@@ -1461,7 +1461,7 @@ for (const incremental of [true, false]) {
 		});
 
 		// reduced from seed 440
-		it("wasObliteratedOnInsert remains after leaf node is split", () => {
+		it("wasMovedOnInsert remains after leaf node is split", () => {
 			const helper = new ReconnectTestHelper();
 
 			// CD-B-A

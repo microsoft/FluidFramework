@@ -503,7 +503,7 @@ export class PartialSequenceLengths {
 			PartialSequenceLengths.accumulateMoveClientOverlap(
 				firstGte,
 				[segment.clientId],
-				segment.wasObliteratedOnInsert ? -segment.cachedLength : segmentLen,
+				segment.wasMovedOnInsert ? -segment.cachedLength : segmentLen,
 			);
 		}
 	}
@@ -563,7 +563,7 @@ export class PartialSequenceLengths {
 				if (moveClientOverlap.length !== moveClientOverlapWithoutLocal.length) {
 					overlapObliterateClients.put(segment.clientId, {
 						clientId: segment.clientId,
-						seglen: segment.wasObliteratedOnInsert
+						seglen: segment.wasMovedOnInsert
 							? -segment.cachedLength
 							: obliterateOverlapLen ?? segmentLen,
 					});
@@ -648,10 +648,10 @@ export class PartialSequenceLengths {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = moveIsLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
 
-			if (segment.wasObliteratedOnInsert) {
+			if (segment.wasMovedOnInsert) {
 				assert(
 					moveInfo.movedSeq !== -1,
-					"wasObliteratedOnInsert should only be set on acked obliterates",
+					"wasMovedOnInsert should only be set on acked obliterates",
 				);
 				segmentLen = 0;
 			} else {
@@ -660,7 +660,7 @@ export class PartialSequenceLengths {
 
 			const hasOverlap = moveInfo.movedClientIds.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
-		} else if (segment.wasObliteratedOnInsert) {
+		} else if (segment.wasMovedOnInsert) {
 			// if this segment was obliterated on insert, its length is only
 			// visible to the client that inserted it
 			segmentLen = 0;
@@ -908,7 +908,7 @@ export class PartialSequenceLengths {
 				// eslint-disable-next-line unicorn/prefer-switch
 				if (seq === segment.seq) {
 					if (
-						segment.wasObliteratedOnInsert &&
+						segment.wasMovedOnInsert &&
 						segment.seq !== undefined &&
 						moveInfo &&
 						moveInfo.movedSeq < segment.seq
@@ -927,7 +927,7 @@ export class PartialSequenceLengths {
 					if (removeHappenedFirst) {
 						remoteObliteratedLen -= segment.cachedLength;
 					} else if (
-						segment.wasObliteratedOnInsert &&
+						segment.wasMovedOnInsert &&
 						segment.seq !== -1 &&
 						segment.seq !== undefined &&
 						moveInfo.movedSeq > segment.seq

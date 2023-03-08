@@ -166,12 +166,12 @@ export interface IMoveInfo {
 	 * the obliterate op was sequenced before the insertion op. In this case,
 	 * the segment is visible only to the inserting client
 	 *
-	 * `wasObliteratedOnInsert` only applies for acked obliterates. That is, if
+	 * `wasMovedOnInsert` only applies for acked obliterates. That is, if
 	 * a segment inserted by a remote client is obliterated on insertion by a local
 	 * and unacked obliterate, we do not consider it as having been obliterated
 	 * on insert
 	 */
-	wasObliteratedOnInsert: boolean;
+	wasMovedOnInsert: boolean;
 }
 
 export function toMoveInfo(maybe: Partial<IMoveInfo> | undefined): IMoveInfo | undefined {

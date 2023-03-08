@@ -108,7 +108,7 @@ function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo, onInsert: boolean)
 	seg.movedSeqs = [moveInfo.movedSeq];
 	seg.movedSeq = moveInfo.movedSeq;
 	seg.localMovedSeq = moveInfo.localMovedSeq;
-	seg.wasObliteratedOnInsert = onInsert;
+	seg.wasMovedOnInsert = onInsert;
 }
 
 function findMinMovedSeq(
@@ -167,7 +167,7 @@ function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveI
 		movedSeq: min?.[0] ?? -1,
 		movedSeqs: min !== undefined ? [min[0]] : [],
 		localMovedSeq: min?.[0] !== undefined ? undefined : minLocal?.[0],
-		wasObliteratedOnInsert: false,
+		wasMovedOnInsert: false,
 	};
 }
 
@@ -2040,7 +2040,7 @@ export class MergeTree {
 			undefined,
 		);
 
-		next.wasObliteratedOnInsert = segment.wasObliteratedOnInsert;
+		next.wasMovedOnInsert = segment.wasMovedOnInsert;
 
 		return { next };
 	};
@@ -2365,7 +2365,7 @@ export class MergeTree {
 				seq !== -1 &&
 				((refSeq < segment.seq && segment.seq !== -1) || segment.seq === -1)
 			) {
-				segment.wasObliteratedOnInsert = true;
+				segment.wasMovedOnInsert = true;
 			}
 
 			if (existingMoveInfo !== undefined) {
