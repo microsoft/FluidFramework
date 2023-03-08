@@ -5,8 +5,13 @@
 
 import { assert } from "@fluidframework/common-utils";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { clone, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
+import { fail } from "../../util";
+import {
+	CrossFieldManager,
+	CrossFieldTarget,
+	IdAllocator,
+	RevisionIndexer,
+} from "../modular-schema";
 import {
 	Changeset,
 	HasChanges,
@@ -16,6 +21,7 @@ import {
 	InputSpanningMark,
 	ObjectMark,
 	Reattach,
+	Skip,
 } from "./format";
 import { GapTracker, IndexTracker } from "./tracker";
 import { MarkListFactory } from "./markListFactory";
@@ -36,6 +42,7 @@ import {
 	isBlockedReattach,
 	getOffsetAtRevision,
 	isObjMark,
+	cloneMark,
 } from "./utils";
 
 /**
@@ -60,6 +67,7 @@ export function compose<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
+	revisionIndexer: RevisionIndexer,
 ): Changeset<TNodeChange> {
 	let composed: Changeset<TNodeChange> = [];
 	for (const change of changes) {
@@ -70,6 +78,7 @@ export function compose<TNodeChange>(
 			composeChild,
 			genId,
 			manager as MoveEffectTable<TNodeChange>,
+			revisionIndexer,
 		);
 	}
 	return composed;
@@ -82,6 +91,7 @@ function composeMarkLists<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
+	revisionIndexer: RevisionIndexer,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 	const queue = new ComposeQueue(
@@ -91,6 +101,7 @@ function composeMarkLists<TNodeChange>(
 		newMarkList,
 		genId,
 		moveEffects,
+		revisionIndexer,
 		(a, b) => composeChildChanges(a, b, newRev, composeChild),
 	);
 	while (!queue.isEmpty()) {
@@ -212,7 +223,7 @@ function composeMarks<TNodeChange>(
 				case "Delete": {
 					// For now the deletion obliterates all other modifications.
 					// In the long run we want to preserve them.
-					return clone(composeMark(newMark, newRev, composeChild));
+					return composeMark(newMark, newRev, composeChild);
 				}
 				case "MoveOut":
 				case "ReturnFrom": {
@@ -425,7 +436,7 @@ function composeChildChanges<TNodeChange>(
 
 function composeWithBaseChildChanges<
 	TNodeChange,
-	TMark extends InputSpanningMark<TNodeChange> &
+	TMark extends Exclude<InputSpanningMark<TNodeChange>, Skip> &
 		ObjectMark<TNodeChange> &
 		HasChanges<TNodeChange> &
 		HasRevisionTag,
@@ -442,7 +453,7 @@ function composeWithBaseChildChanges<
 		composeChild,
 	);
 
-	const cloned = clone(newMark);
+	const cloned = cloneMark(newMark);
 	if (newRevision !== undefined && cloned.type !== "Modify") {
 		cloned.revision = newRevision;
 	}
@@ -485,7 +496,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		return mark;
 	}
 
-	const cloned = clone(mark);
+	const cloned = cloneMark(mark);
 	assert(!isSkipMark(cloned), 0x4de /* Cloned should be same type as input mark */);
 	if (revision !== undefined && cloned.type !== "Modify" && cloned.revision === undefined) {
 		cloned.revision = revision;
@@ -575,10 +586,11 @@ export class ComposeQueue<T> {
 		newMarks: Changeset<T>,
 		genId: IdAllocator,
 		private readonly moveEffects: MoveEffectTable<T>,
+		revisionIndexer: RevisionIndexer,
 		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
 	) {
-		this.baseIndex = new IndexTracker();
-		this.baseGap = new GapTracker();
+		this.baseIndex = new IndexTracker(revisionIndexer);
+		this.baseGap = new GapTracker(revisionIndexer);
 		this.baseMarks = new MarkQueue(
 			baseMarks,
 			baseRevision,

@@ -95,8 +95,8 @@ export function generateRuntimeOptions(
 		],
 		maxBatchSizeInBytes: [716800],
 		enableOpReentryCheck: [true],
-		// Compressed payloads over 1MB will be split into chunked ops of this size
-		chunkSizeInBytes: [307200, 614400, 706800],
+		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
+		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: [undefined],
 	};
 

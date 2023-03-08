@@ -87,10 +87,10 @@
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluid-tools/benchmark": "^0.46.0",
-		"@fluid-tools/build-cli": "0.11.0-134585",
+		"@fluid-tools/build-cli": "0.11.0-135362",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-134585",
-		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.3.1.0",
+		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.3.2.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
@@ -113,22 +113,15 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"version": "2.0.0-internal.3.2.0",
-		"previousVersionStyle": "~previousMinor",
-		"baselineRange": ">=2.0.0-internal.3.1.0 <2.0.0-internal.3.2.0",
-		"baselineVersion": "2.0.0-internal.3.1.0",
 		"broken": {
-			"EnumDeclaration_RuntimeHeaders": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_ContainerRuntime": {
-				"forwardCompat": false
-			},
-			"TypeAliasDeclaration_IPendingState": {
+			"InterfaceDeclaration_IConnectableRuntime": {
 				"backCompat": false
 			},
 			"EnumDeclaration_ContainerMessageType": {
 				"backCompat": false
+			},
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
 			},
 			"InterfaceDeclaration_ContainerRuntimeMessage": {
 				"backCompat": false
@@ -140,6 +133,9 @@
 				"backCompat": false
 			},
 			"InterfaceDeclaration_IPendingMessage": {
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_IPendingState": {
 				"backCompat": false
 			}
 		}

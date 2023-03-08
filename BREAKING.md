@@ -15,6 +15,21 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.3.0
+
+## 2.0.0-internal.3.3.0 Upcoming changes
+
+-   [deltaManager property in IConnectableRuntime moved](#deltaManager-property-in-IConnectableRuntime-moved)
+-   [attachGraph and bind methods in IFluidHandle deprecated](#attachGraph-and-bind-methods-in-IFluidHandle-deprecated)
+
+### deltaManager property in IConnectableRuntime moved
+
+The deltaManager property in IConnectableRuntime has been moved to ISummarizerRuntime directly. ISummarizerRuntime extends IConnectableRuntime so it hasn't been changed.
+
+### attachGraph and bind methods in IFluidHandle deprecated
+
+`attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
+
 # 2.0.0-internal.3.0.0
 
 ## 2.0.0-internal.3.0.0 Upcoming changes
@@ -28,6 +43,10 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [Summarizer node and related items deprecated](#Summarizer-node-and-related-items-deprecated)
 -   [IFluidTokenProvider deprecated](#IFluidTokenProvider-deprecated)
 -   [web-code-loader and ICodeAllowList deprecated](#web-code-loader-and-ICodeAllowList-deprecated)
+-   [driver-utils members deprecated](#driver-utils-members-deprecated)
+-   [Aqueduct members deprecated](#Aqueduct-members-deprecated)
+-   [IDocumentServiceFactory.protocolName deprecated](#IDocumentServiceFactory.protocolName-deprecated)
+-   [Some Interval APIs on SharedString deprecated](#some-interval-apis-on-sharedstring-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -95,6 +114,38 @@ The IFluidTokenProvider interface has been deprecated and will be removed in an 
 ### web-code-loader and ICodeAllowList deprecated
 
 The `@fluidframework/web-code-loader` and the `ICodeAllowList` interface from the `@fluidframework/container-definitions` package have been deprecated and will be removed in an upcoming release. Fluid does not prescribe a particular code loader implementation, rather the code loader should be paired with your code details format.
+
+### driver-utils members deprecated
+
+The following members of the `@fluidframework/driver-utils` package have been deprecated and will be removed in an upcoming release:
+
+-   `waitForConnectedState`
+-   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
+-   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
+
+### Aqueduct members deprecated
+
+The following members of the `@fluidframework/aqueduct` package have been deprecated and will be removed in an upcoming release:
+
+-   `waitForAttach()`
+    -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
+
+### IDocumentServiceFactory.protocolName deprecated
+
+Document service factories should not be distinguished by unique non-standard protocols, and so the `IDocumentServiceFactory.protocolName` member will be removed in an upcoming release. Instead prefer to map urls to factories using standards-compliant components of the url (e.g. host name, path, etc.).
+
+### Some Interval APIs on SharedString deprecated
+
+`IInterval` and `ISerializableInterval` contain several functions marked internal.
+However, the implementations of these functions in `Interval` and `SequenceInterval` were erroneously left exposed.
+All of these internal method implementations have been marked deprecated, and will be correctly tagged internal in a future release.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 
