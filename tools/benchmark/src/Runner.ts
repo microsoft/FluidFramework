@@ -5,7 +5,9 @@
 
 import { assert } from "chai";
 import { Test } from "mocha";
-import Benchmark from "./benchmark";
+// eslint-disable-next-line import/no-internal-modules
+import { Options } from "./benchmark/benchmark";
+import Benchmark from "./benchmark"; // TODO
 import {
 	BenchmarkType,
 	BenchmarkArguments,
@@ -145,7 +147,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 				  }
 				: argsBenchmarkFn;
 
-			const benchmarkOptions: Benchmark.Options = {
+			const benchmarkOptions: Options = {
 				maxTime: options.maxBenchmarkDurationSeconds,
 				minSamples: options.minSampleCount,
 				minTime: options.minSampleDurationSeconds,

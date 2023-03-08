@@ -8,7 +8,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-bitwise */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-new-func */
@@ -16,7 +15,6 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable unicorn/no-unsafe-regex */
 /* eslint-disable unicorn/better-regex */
 /* eslint-disable @typescript-eslint/no-implied-eval */
 /* eslint-disable tsdoc/syntax */
@@ -372,7 +370,7 @@ export class Benchmark {
 	 * The error object if the test failed.
 	 * @type Object
 	 */
-	error?: object;
+	error?: Error;
 
 	/**
 	 * The test to benchmark.
@@ -622,7 +620,7 @@ export class Benchmark {
 	 * // or with options
 	 * bench.run({ 'async': true });
 	 */
-	run(options: Options): Benchmark {
+	run(options?: Options): Benchmark {
 		const bench = this;
 		const event = new Event("start");
 

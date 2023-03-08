@@ -7,7 +7,8 @@ import * as v8 from "v8";
 import { performance } from "perf_hooks";
 import { assert } from "chai";
 import { Test } from "mocha";
-import Benchmark from "./benchmark";
+// eslint-disable-next-line import/no-internal-modules
+import { Stats } from "./benchmark/benchmark";
 import {
 	isParentProcess,
 	isInPerformanceTestingMode,
@@ -39,7 +40,7 @@ export interface MemoryTestData {
 export interface MemoryBenchmarkStats {
 	runs: number;
 	samples: { before: MemoryTestData; after: MemoryTestData };
-	stats: Benchmark.Stats;
+	stats: Stats;
 	aborted: boolean;
 	error?: Error;
 }
@@ -300,7 +301,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 
 		try {
 			const startTime = performance.now();
-			let heapUsedStats: Benchmark.Stats = {
+			let heapUsedStats: Stats = {
 				moe: NaN,
 				rme: NaN,
 				sem: NaN,

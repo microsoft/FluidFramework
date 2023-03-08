@@ -31,7 +31,8 @@ SOFTWARE.
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
-import Benchmark from "./benchmark";
+// eslint-disable-next-line import/no-internal-modules
+import { Stats, Times } from "./benchmark/benchmark";
 import {
 	bold,
 	geometricMean,
@@ -60,8 +61,8 @@ export interface BenchmarkData {
 	readonly cycles: number;
 	readonly hz: number;
 
-	readonly stats: Benchmark.Stats;
-	readonly times: Benchmark.Times;
+	readonly stats: Stats;
+	readonly times: Times;
 }
 
 export const failedData: BenchmarkData = {
@@ -349,12 +350,10 @@ export class BenchmarkReporter {
 	}
 
 	/**
-	 * The Benchmark.Stats object contains a lot of data we don't need and also has vague names,
+	 * The Stats object contains a lot of data we don't need and also has vague names,
 	 * so this method extracts the necessary data and provides friendlier names.
 	 */
-	private outputFriendlyObjectFromStats(
-		benchmarkStats: Benchmark.Stats,
-	): Record<string, unknown> {
+	private outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, unknown> {
 		const obj = {
 			marginOfError: benchmarkStats.moe,
 			relatedMarginOfError: benchmarkStats.rme,

@@ -5,7 +5,8 @@
 
 import { assert } from "chai";
 import { Suite } from "mocha";
-import Benchmark from "./benchmark";
+// eslint-disable-next-line import/no-internal-modules
+import { Stats } from "./benchmark/benchmark";
 import {
 	benchmarkTypes,
 	performanceTestSuiteTag,
@@ -154,26 +155,23 @@ const tTable = {
  * object that the Benchmark library does.
  *
  * @param array - List of numbers for which to compute the statistics.
- * @param percentageOfSamplesToUse - Percentage of samples to use to get the statistics. The samples at the extremes
+ * @param fractionOfSamplesToUse - Percentage of samples to use to get the statistics. The samples at the extremes
  * (lowest, highest) are the ones that get discarded. If an odd number of samples need to be discarded, 1 more sample
  * is discarded from the higher end than the lower end.
  */
-export function getArrayStatistics(
-	array: number[],
-	percentageOfSamplesToUse: number = 1,
-): Benchmark.Stats {
-	if (percentageOfSamplesToUse < 0.1 || percentageOfSamplesToUse > 1) {
+export function getArrayStatistics(array: number[], fractionOfSamplesToUse: number = 1): Stats {
+	if (fractionOfSamplesToUse < 0.1 || fractionOfSamplesToUse > 1) {
 		throw new Error("percentageOfSamplesToUse must be between 0.1 and 1 (inclusive)");
 	}
 	let finalSamples = array;
 
 	// Drop samples if indicated
-	if (percentageOfSamplesToUse < 1) {
+	if (fractionOfSamplesToUse < 1) {
 		// Need to provide an explicit compare function so numbers aren't sorted lexicographically. Also,
 		// spread-copy the array because sort() works in place and we don't want to mutate the original array.
 		finalSamples = [...array].sort((a, b) => a - b);
 		const n = finalSamples.length;
-		const samplesToDrop = Math.round(n * (1 - percentageOfSamplesToUse));
+		const samplesToDrop = Math.round(n * (1 - fractionOfSamplesToUse));
 		finalSamples = finalSamples.splice(Math.floor(samplesToDrop / 2), n - samplesToDrop);
 	}
 
