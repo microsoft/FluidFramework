@@ -11,6 +11,7 @@ import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions"
 import { AudienceView } from "./AudienceView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
+import { TelemetryView } from "./TelemetryView";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -97,6 +98,9 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 						onRenderAudienceMember={renderOptions.onRenderAudienceMember}
 					/>
 				);
+				break;
+			case PanelView.Telemetry:
+				innerView = <TelemetryView />;
 				break;
 			// TODO: add the Telemetry view here, without ReactContext
 			default:
