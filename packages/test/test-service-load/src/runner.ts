@@ -203,7 +203,7 @@ async function runnerProcess(
 	let metricsCleanup: () => void = () => {};
 
 	// Added temporarily to disable attachment blob testing for ODSP.
-	runConfig.testConfig.driverType = driver;
+	// runConfig.testConfig.driverType = driver;
 	const optionsOverride = `${driver}${endpoint !== undefined ? `-${endpoint}` : ""}`;
 	const loaderOptions = generateLoaderOptions(
 		seed,
