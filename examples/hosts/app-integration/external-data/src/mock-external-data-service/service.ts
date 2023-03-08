@@ -122,7 +122,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * ```json
 	 * {
 	 *		taskList: {
-	 * 			[ taskListId: string]: {
+	 * 			[ externalTaskListId: string]: {
 	 *      		[id: string]: {
 	 *      	    	name: string,
 	 *      	    	priority: number
@@ -132,12 +132,14 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * }
 	 * ```
 	 */
-	expressApp.get("/fetch-tasks/:taskListId", (request, result) => {
-		const taskListId = request.params?.taskListId;
-		if (taskListId === undefined) {
-			result.status(400).json({ message: "Missing parameter taskListId in request url" });
+	expressApp.get("/fetch-tasks/:externalTaskListId", (request, result) => {
+		const externalTaskListId = request.params?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			result
+				.status(400)
+				.json({ message: "Missing parameter externalTaskListId in request url" });
 		}
-		externalDataSource.fetchData(taskListId).then(
+		externalDataSource.fetchData(externalTaskListId).then(
 			(response) => {
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
@@ -176,10 +178,12 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 *
 	 * Expected input data format: {@link TaskData}.
 	 */
-	expressApp.post("/set-tasks/:taskListId", (request, result) => {
-		const taskListId = request.params?.taskListId;
-		if (taskListId === undefined) {
-			result.status(400).json({ message: "Missing parameter taskListId in request url" });
+	expressApp.post("/set-tasks/:externalTaskListId", (request, result) => {
+		const externalTaskListId = request.params?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			result
+				.status(400)
+				.json({ message: "Missing parameter externalTaskListId in request url" });
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
@@ -199,7 +203,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskData, taskListId).then(
+			externalDataSource.writeData(taskData, externalTaskListId).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();

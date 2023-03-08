@@ -19,13 +19,13 @@ function echoExternalDataWebhookToFluid(
 	taskData: TaskData,
 	fluidServiceUrl: string,
 	containerUrl: string,
-	taskListId: string,
+	externalTaskListId: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	const messageBody = JSON.stringify({ taskData, containerUrl, taskListId });
+	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -143,7 +143,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 */
 	expressApp.post("/external-data-webhook", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const taskListId = request.body?.taskListId as ExternalTaskListId;
+		const externalTaskListId = request.body?.externalTaskListId as ExternalTaskListId;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const messageData = request.body?.data as TaskData;
 		if (messageData === undefined) {
@@ -162,7 +162,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
-			const containerUrls = clientManager.getClientSessions(taskListId);
+			const containerUrls = clientManager.getClientSessions(externalTaskListId);
 
 			console.log(
 				formatLogMessage(
@@ -170,7 +170,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				),
 			);
 			for (const containerUrl of containerUrls) {
-				echoExternalDataWebhookToFluid(taskData, fluidServiceUrl, containerUrl, taskListId);
+				echoExternalDataWebhookToFluid(
+					taskData,
+					fluidServiceUrl,
+					containerUrl,
+					externalTaskListId,
+				);
 			}
 			result.send();
 		}
@@ -198,17 +203,17 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const containerUrl = request.body?.containerUrl as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const taskListId = request.body?.taskListId as string;
+		const externalTaskListId = request.body?.externalTaskListId as string;
 		if (containerUrl === undefined) {
 			const errorMessage =
 				'No session data provided by client. Expected under "sessionUrl" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			clientManager.registerClient(containerUrl, taskListId);
+			clientManager.registerClient(containerUrl, externalTaskListId);
 			console.log(
 				formatLogMessage(
-					`Registered containerUrl ${containerUrl} with external query: ${taskListId}".`,
+					`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
 				),
 			);
 			registerForWebhook(port.toString(), externalDataServiceWebhookRegistrationUrl).catch(

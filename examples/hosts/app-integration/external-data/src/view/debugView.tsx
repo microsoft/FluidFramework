@@ -17,9 +17,9 @@ async function pollForServiceUpdates(
 	setExternalData: React.Dispatch<React.SetStateAction<Record<string, unknown>>>,
 ): Promise<void> {
 	try {
-		const taskListId = "task-list-1";
+		const externalTaskListId = "task-list-1";
 		const response = await fetch(
-			`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}`,
+			`http://localhost:${externalDataServicePort}/fetch-tasks/${externalTaskListId}`,
 			{
 				method: "GET",
 				headers: {
@@ -258,7 +258,7 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
 	const writeToExternalServer = async (): Promise<void> => {
-		const taskListId = "task-list-1";
+		const externalTaskListId = "task-list-1";
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {
@@ -267,14 +267,17 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 			};
 		}
 		try {
-			await fetch(`http://localhost:${externalDataServicePort}/set-tasks/${taskListId}`, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
+			await fetch(
+				`http://localhost:${externalDataServicePort}/set-tasks/${externalTaskListId}`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ taskList: formattedTasks }),
 				},
-				body: JSON.stringify({ taskList: formattedTasks }),
-			});
+			);
 		} catch (error) {
 			console.error(`Task list submition failed due to an error:\n${error}`);
 

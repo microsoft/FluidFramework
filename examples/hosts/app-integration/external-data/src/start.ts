@@ -37,10 +37,10 @@ const render = (model: IAppModel, showExternalServerView: boolean): void => {
 async function start(): Promise<void> {
 	// TODO: Create a form to input the task list id to import from external server.
 	// Hardcoded it here for now.
-	const taskListId = "task-list-1";
+	const externalTaskListId = "task-list-1";
 
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IAppModel>(
-		new StaticCodeLoader(new TaskListContainerRuntimeFactory(taskListId)),
+		new StaticCodeLoader(new TaskListContainerRuntimeFactory(externalTaskListId)),
 	);
 
 	let id: string;
@@ -55,7 +55,7 @@ async function start(): Promise<void> {
 		model = createResponse.model;
 
 		id = await createResponse.attach();
-		model.registerWithCustomerService(taskListId);
+		model.registerWithCustomerService(externalTaskListId);
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);

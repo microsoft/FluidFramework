@@ -42,7 +42,7 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 * Send custom signal to simulate being the RuntimeMessage signal
 	 * from alfred while that signal is in prototype state on the dev branch.
 	 */
-	readonly registerWithCustomerService: (taskListId: string) => void;
+	readonly registerWithCustomerService: (externalTaskListId: string) => void;
 }
 
 /**
@@ -155,7 +155,7 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 * Register the container url with the customer service in order to be notfied of changes later on.
 	 */
 	readonly registerWithCustomerService: (
-		taskListId: string,
+		externalTaskListId: string,
 		url: IFluidResolvedUrl | undefined,
 	) => Promise<void>;
 

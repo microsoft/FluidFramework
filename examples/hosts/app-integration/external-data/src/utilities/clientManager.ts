@@ -58,29 +58,31 @@ export class ClientManager<TData = unknown> {
 	/**
 	 * Gets the current list of client session URLs.
 	 */
-	public getClientSessions(taskListId: ExternalTaskListId): Set<ClientSessionUrl> {
-		if (this._taskListMapping.get(taskListId) === undefined) {
+	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionUrl> {
+		if (this._taskListMapping.get(externalTaskListId) === undefined) {
 			console.error(
-				`CUSTOMER SERVICE: "${taskListId}" is not registered to a client session.`,
+				`CUSTOMER SERVICE: "${externalTaskListId}" is not registered to a client session.`,
 			);
 		}
-		return this._taskListMapping.get(taskListId) ?? new Set<ClientSessionUrl>();
+		return this._taskListMapping.get(externalTaskListId) ?? new Set<ClientSessionUrl>();
 	}
 
 	/**
 	 * Registers a client session url to an external resource  for the duration of the client session.
 	 */
-	public registerClient(client: ClientSessionUrl, taskListId: ExternalTaskListId): void {
+	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
 		if (this._taskListMapping.get(client) === undefined) {
 			this._taskListMapping.set(client, new Set<ExternalTaskListId>());
 		}
-		this._taskListMapping.get(client)?.add(taskListId);
+		this._taskListMapping.get(client)?.add(externalTaskListId);
 
-		if (this._clientMapping.get(taskListId) === undefined) {
+		if (this._clientMapping.get(externalTaskListId) === undefined) {
 			this._clientMapping.set(client, new Set<ClientSessionUrl>());
 		}
-		this._clientMapping.get(taskListId)?.add(client);
-		console.log(`CUSTOMER SERVICE: "${client}" has been registered with ${taskListId}.`);
+		this._clientMapping.get(externalTaskListId)?.add(client);
+		console.log(
+			`CUSTOMER SERVICE: "${client}" has been registered with ${externalTaskListId}.`,
+		);
 	}
 
 	/**
@@ -88,12 +90,12 @@ export class ClientManager<TData = unknown> {
 	 */
 	public removeClientTaskListRegistration(
 		client: ClientSessionUrl,
-		taskListId: ExternalTaskListId,
+		externalTaskListId: ExternalTaskListId,
 	): void {
 		const clientTaskListIds = this._clientMapping.get(client);
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-		if (clientTaskListIds !== undefined && clientTaskListIds.has(taskListId)) {
-			clientTaskListIds.delete(taskListId);
+		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
+			clientTaskListIds.delete(externalTaskListId);
 		}
 		const taskListClients = this._taskListMapping.get(client);
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain

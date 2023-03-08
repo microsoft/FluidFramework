@@ -82,8 +82,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 *
 	 * @remarks This is async to simulate the more-realistic scenario of a network request.
 	 */
-	public async fetchData(taskListId: string): Promise<Response> {
-		const jsonData = { taskList: this.data[taskListId] };
+	public async fetchData(externalTaskListId: string): Promise<Response> {
+		const jsonData = { taskList: this.data[externalTaskListId] };
 		return new Response(JSON.stringify(jsonData), {
 			status: 200,
 			statusText: "OK",
@@ -96,8 +96,11 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @param data - The string data to write.
 	 * @returns A promise that resolves when the write completes.
 	 */
-	public async writeData(data: TaskData, taskListId: ExternalTaskListId): Promise<Response> {
-		this.data[taskListId] = data;
+	public async writeData(
+		data: TaskData,
+		externalTaskListId: ExternalTaskListId,
+	): Promise<Response> {
+		this.data[externalTaskListId] = data;
 
 		// Emit for debug views to update
 		this.emit("debugDataWritten", this.data);

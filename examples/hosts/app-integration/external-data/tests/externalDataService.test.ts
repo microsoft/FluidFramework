@@ -56,8 +56,8 @@ describe("mock-external-data-service", () => {
 	});
 
 	async function getCurrentExternalData(): Promise<TaskData> {
-		const taskListId = "task-list-1";
-		const fetchResponse = await externalDataSource!.fetchData(taskListId);
+		const externalTaskListId = "task-list-1";
+		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown
@@ -72,16 +72,16 @@ describe("mock-external-data-service", () => {
 
 	it("fetch-tasks: Ensure server yields the data we expect", async () => {
 		const expectedData = await getCurrentExternalData();
-		const taskListId = "task-list-1";
+		const externalTaskListId = "task-list-1";
 		await request(externalDataService!)
-			.get(`/fetch-tasks/${taskListId}`)
+			.get(`/fetch-tasks/${externalTaskListId}`)
 			.expect(200, { taskList: expectedData });
 	});
 
 	it("fetch-tasks: Ensure server rejects fetch with no task list id", async () => {
 		await request(externalDataService!)
 			.get(`/fetch-tasks/`)
-			.expect(400, { message: "Missing parameter taskListId in request url" });
+			.expect(400, { message: "Missing parameter externalTaskListId in request url" });
 	});
 
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
@@ -91,9 +91,9 @@ describe("mock-external-data-service", () => {
 				priority: 37,
 			},
 		};
-		const taskListId = "task-list-1";
+		const externalTaskListId = "task-list-1";
 		await request(externalDataService!)
-			.post(`/set-tasks/${taskListId}`)
+			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ taskList: newData })
 			.expect(200);
 
@@ -102,19 +102,22 @@ describe("mock-external-data-service", () => {
 	});
 
 	it("set-tasks: Ensure server rejects update with no data", async () => {
-		const taskListId = 1;
+		const externalTaskListId = 1;
 		const oldData = await getCurrentExternalData();
-		await request(externalDataService!).post(`/set-tasks/${taskListId}`).send().expect(400);
+		await request(externalDataService!)
+			.post(`/set-tasks/${externalTaskListId}`)
+			.send()
+			.expect(400);
 
 		const currentData = await getCurrentExternalData();
 		expect(currentData).toEqual(oldData); // Sanity check that we didn't blow away data
 	});
 
 	it("set-tasks: Ensure server rejects update with malformed data", async () => {
-		const taskListId = 1;
+		const externalTaskListId = 1;
 		const oldData = await getCurrentExternalData();
 		await request(externalDataService!)
-			.post(`/set-tasks/${taskListId}`)
+			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ tasks: "42:Determine meaning of life:37" })
 			.expect(400);
 
@@ -123,10 +126,10 @@ describe("mock-external-data-service", () => {
 	});
 
 	it("set-tasks: Ensure server rejects update with no task list id", async () => {
-		const taskListId = 1;
+		const externalTaskListId = 1;
 		await request(externalDataService!)
-			.get(`/set-tasks/${taskListId}`)
-			.expect(400, { message: "Missing parameter taskListId in request url" });
+			.get(`/set-tasks/${externalTaskListId}`)
+			.expect(400, { message: "Missing parameter externalTaskListId in request url" });
 	});
 
 	it("register-for-webhook: Registering valid URI succeeds", async () => {

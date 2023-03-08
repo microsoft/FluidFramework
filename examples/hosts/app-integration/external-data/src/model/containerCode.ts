@@ -25,7 +25,7 @@ const SignalType = {
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-	public constructor(private readonly taskListId: string) {
+	public constructor(private readonly externalTaskListId: string) {
 		super(
 			new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
 		);
@@ -36,7 +36,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskList = await runtime.createDataStore(TaskListInstantiationFactory.type);
-		await taskList.trySetAlias(this.taskListId);
+		await taskList.trySetAlias(this.externalTaskListId);
 	}
 
 	/**
@@ -58,7 +58,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 		container: IContainer,
 	): Promise<AppModel> {
 		const taskList = await requestFluidObject<ITaskList>(
-			await runtime.getRootDataStore(this.taskListId),
+			await runtime.getRootDataStore(this.externalTaskListId),
 			"",
 		);
 		// Register listener only once the model is fully loaded and ready

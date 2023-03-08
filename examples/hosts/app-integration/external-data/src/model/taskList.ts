@@ -218,7 +218,7 @@ export class TaskList extends DataObject implements ITaskList {
 	public async importExternalData(): Promise<void> {
 		console.log("TASK-LIST: Fetching external data from service...");
 
-		const taskListId = "task-list-1";
+		const externalTaskListId = "task-list-1";
 		let incomingExternalData: [
 			string,
 			{
@@ -228,7 +228,7 @@ export class TaskList extends DataObject implements ITaskList {
 		][];
 		try {
 			const response = await fetch(
-				`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}`,
+				`http://localhost:${externalDataServicePort}/fetch-tasks/${externalTaskListId}`,
 				{
 					method: "GET",
 					headers: {
@@ -301,7 +301,7 @@ export class TaskList extends DataObject implements ITaskList {
 	 * @returns A promise that resolves when the registration call returns successfully.
 	 */
 	public async registerWithCustomerService(
-		taskListId: string,
+		externalTaskListId: string,
 		containerUrlData: IFluidResolvedUrl | undefined,
 	): Promise<void> {
 		try {
@@ -320,7 +320,7 @@ export class TaskList extends DataObject implements ITaskList {
 					"Access-Control-Allow-Origin": "*",
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ containerUrl: containerUrlData.url, taskListId }),
+				body: JSON.stringify({ containerUrl: containerUrlData.url, externalTaskListId }),
 			});
 		} catch (error) {
 			console.error(`Customer service registration failed:\n${error}`);
