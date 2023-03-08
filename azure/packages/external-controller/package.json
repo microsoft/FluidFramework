@@ -106,6 +106,7 @@
 		"outputName": "jest-junit-report.xml"
 	},
 	"typeValidation": {
-		"disabled": true
+		"disabled": true,
+		"broken": {}
 	}
 }

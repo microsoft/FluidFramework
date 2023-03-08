@@ -17,13 +17,12 @@ import {
 	FieldChange,
 	FieldKinds,
 	NodeChangeset,
-	NodeReviver,
 	SequenceField as SF,
 	singleTextCursor,
 } from "../../../feature-libraries";
 import { brand, brandOpaque, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, noRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { composeAnonChanges } from "./utils";
 
@@ -44,18 +43,14 @@ function fakeRepairData(_revision: RevisionTag, _index: number, count: number): 
 	return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
 }
 
-function toDelta(change: TestChangeset, reviver: NodeReviver = fakeRepairData): Delta.MarkList {
+function toDelta(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, reviver);
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
 }
 
 function toDeltaShallow(change: TestChangeset): Delta.MarkList {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(
-		change,
-		() => fail("Unexpected call to child ToDelta"),
-		fakeRepairData,
-	);
+	return SF.sequenceFieldToDelta(change, () => fail("Unexpected call to child ToDelta"));
 }
 
 const childChange1 = TestChange.mint([0], 1);
@@ -91,14 +86,14 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("revive => insert", () => {
-		const changeset = Change.revive(0, 1, tag, 0);
 		function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
 			assert.equal(revision, tag);
 			assert.equal(index, 0);
 			assert.equal(count, 1);
 			return contentCursor;
 		}
-		const actual = toDelta(changeset, reviver);
+		const changeset = Change.revive(0, 1, tag, 0, reviver);
+		const actual = toDelta(changeset);
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Insert,
@@ -110,7 +105,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("conflicted revive => skip", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, 0, tag2),
+			Change.revive(0, 1, tag, 0, undefined, tag2),
 			Change.modify(1, childChange1),
 		]);
 		const actual = toDelta(changeset);
@@ -120,7 +115,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("blocked revive => nil", () => {
 		const changeset: TestChangeset = composeAnonChanges([
-			Change.revive(0, 1, tag, 0, tag2, undefined, tag3),
+			Change.revive(0, 1, tag, 0, undefined, tag2, undefined, tag3),
 			Change.modify(1, childChange1),
 		]);
 		const actual = toDelta(changeset);
@@ -137,20 +132,21 @@ describe("SequenceField - toDelta", () => {
 			fieldChanges: new Map([[fooField, nestedChange]]),
 		};
 		const changeset: SF.Changeset = [
-			{ type: "Revive", count: 1, detachedBy: tag, detachIndex: 0, changes: nodeChange },
+			{
+				type: "Revive",
+				content: contentCursor,
+				count: 1,
+				detachedBy: tag,
+				detachIndex: 0,
+				changes: nodeChange,
+			},
 		];
 		const fieldChanges = new Map([[fooField, [{ type: Delta.MarkType.Insert, content: [] }]]]);
 		const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: fieldChanges };
 		};
-		function reviver(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] {
-			assert.equal(revision, tag);
-			assert.equal(index, 0);
-			assert.equal(count, 1);
-			return contentCursor;
-		}
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, reviver);
+		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Insert,
@@ -283,7 +279,7 @@ describe("SequenceField - toDelta", () => {
 			assert.deepEqual(child, nodeChange);
 			return { type: Delta.MarkType.Modify, fields: nestedMoveDelta };
 		};
-		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild, noRepair);
+		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
 		assertMarkListEqual(actual, expected);
 	});
 });

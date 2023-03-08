@@ -89,7 +89,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration);
+    protected constructor(context: IContainerContext, registry: IFluidDataStoreRegistry, metadata: IContainerRuntimeMetadata | undefined, electedSummarizerData: ISerializedElection | undefined, chunks: [string, string[]][], dataStoreAliasMap: [string, string][], runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>, containerScope: FluidObject, logger: ITelemetryLogger, existing: boolean, blobManagerSnapshot: IBlobManagerLoadInfo, _storage: IDocumentStorageService, requestHandler?: ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>) | undefined, summaryConfiguration?: ISummaryConfiguration, initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>);
     // (undocumented)
     protected addContainerStateToSummary(summaryTree: ISummaryTreeWithStats, fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): void;
     addedGCOutboundReference(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
@@ -120,8 +120,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     deleteSweepReadyNodes(sweepReadyRoutes: string[]): string[];
     // @deprecated (undocumented)
     deleteUnusedNodes(unusedRoutes: string[]): string[];
-    // (undocumented)
-    get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     dispose(error?: Error): void;
     // (undocumented)
@@ -139,6 +138,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     // (undocumented)
     getAudience(): IAudience;
     getCurrentReferenceTimestampMs(): number | undefined;
+    // (undocumented)
+    getEntryPoint?(): Promise<FluidObject | undefined>;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     // Warning: (ae-forgotten-export) The symbol "GCNodeType" needs to be exported by the entry point index.d.ts
@@ -162,7 +163,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get isDirty(): boolean;
     // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
-    static loadRuntime(params: IContainerRuntimeParams): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
@@ -328,8 +328,6 @@ export interface IConnectableRuntime {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
-    // (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
@@ -542,6 +540,8 @@ export interface ISummarizerInternalsProvider {
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     closeFn(): void;
+    // (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     disposeFn?(): void;
     // (undocumented)

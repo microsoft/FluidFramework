@@ -89,6 +89,11 @@ export interface ILoadTestConfig {
 		 * By default, all ops will be large ops (`largeOpRate` is 1).
 		 */
 		largeOpRate?: number;
+		/**
+		 * How many clients should send large ops if `opSizeinBytes` is specified.
+		 * By default, only one client will send large ops.
+		 */
+		numClients?: number;
 	};
 }
 
