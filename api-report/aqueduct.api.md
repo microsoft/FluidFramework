@@ -56,10 +56,11 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
 
 // @public @deprecated
 export abstract class BaseContainerService implements IFluidRouter {
+    // @deprecated
     constructor(runtime: IContainerRuntime);
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     protected readonly runtime: IContainerRuntime;
@@ -151,6 +152,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
     getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
+    // @deprecated
     protected getService<T extends FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
