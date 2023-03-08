@@ -37,7 +37,6 @@ import { IUrlResolver } from '@fluidframework/driver-definitions';
 import { IVersion } from '@fluidframework/protocol-definitions';
 import { LoaderCachingPolicy } from '@fluidframework/driver-definitions';
 import { LoggingError } from '@fluidframework/telemetry-utils';
-import { SummaryType } from '@fluidframework/protocol-definitions';
 
 // @public (undocumented)
 export class AuthorizationError extends LoggingError implements IAuthorizationError, IFluidErrorBase {
@@ -102,9 +101,6 @@ export const canRetryOnError: (error: any) => boolean;
 
 // @public
 export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): ISummaryTree;
-
-// @public @deprecated
-export function convertSnapshotAndBlobsToSummaryTree(snapshot: ISnapshotTree, blobs: Map<string, ArrayBuffer>): ISummaryTree;
 
 // @public
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree;
@@ -227,12 +223,6 @@ export function isOnline(): OnlineStatus;
 export function isRuntimeMessage(message: {
     type: string;
 }): boolean;
-
-// @public @deprecated
-export interface ISummaryTreeAssemblerProps {
-    // @deprecated
-    unreferenced?: true;
-}
 
 // @public @deprecated
 export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
@@ -380,22 +370,6 @@ export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessag
 
 // @public (undocumented)
 export function streamObserver<T>(stream: IStream<T>, handler: (value: IStreamResult<T>) => void): IStream<T>;
-
-// @public @deprecated
-export class SummaryTreeAssembler {
-    // @deprecated
-    constructor(props?: ISummaryTreeAssemblerProps | undefined);
-    // @deprecated
-    addAttachment(id: string): void;
-    // @deprecated
-    addBlob(key: string, content: string | Uint8Array): void;
-    // @deprecated
-    addHandle(key: string, handleType: SummaryType.Tree | SummaryType.Blob | SummaryType.Attachment, handle: string): void;
-    // @deprecated
-    addTree(key: string, summary: ISummaryTree): void;
-    // @deprecated
-    get summary(): ISummaryTree;
-}
 
 // @public
 export class ThrottlingError extends LoggingError implements IThrottlingWarning, IFluidErrorBase {

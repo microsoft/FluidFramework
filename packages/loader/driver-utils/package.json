@@ -123,6 +123,18 @@
 			"RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SummaryTreeAssembler": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
