@@ -139,8 +139,7 @@ async function createSummary(
 
     Lumberjack.info("Creating summary", lumberjackProperties);
 
-    const { isNew, writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload, isInitialSummary);
-    lumberjackProperties["newDocument"] = isNew;
+    const { writeSummaryResponse } = await wholeSummaryManager.writeSummary(payload, isInitialSummary);
 
     // Waiting to pre-compute and persist latest summary would slow down document creation.
     if (isContainerSummary(payload)) {
