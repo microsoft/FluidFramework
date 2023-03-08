@@ -420,7 +420,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 				cumulativePos += spec.length;
 			}
 
-			return { posBreakpoints, seqs, length: cumulativePos };
+			return { seqs, posBreakpoints, length: cumulativePos };
 		};
 
 		const blobContents = extractSequenceOffsets((spec) => spec.root);
