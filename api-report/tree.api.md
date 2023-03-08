@@ -620,7 +620,6 @@ export interface ISharedTreeCheckout extends AnchorLocator {
     fork(): ISharedTreeCheckoutFork;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
-    runTransaction(transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult): TransactionResult;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start: () => void;
@@ -1070,6 +1069,9 @@ export const rootFieldKey: GlobalFieldKey;
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
+export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => boolean | void): boolean;
+
+// @alpha
 export interface SchemaData {
     // (undocumented)
     readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>;
@@ -1167,14 +1169,6 @@ export interface TaggedChange<TChangeset> {
 
 // @alpha
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
-
-// @alpha (undocumented)
-export enum TransactionResult {
-    // (undocumented)
-    Abort = 0,
-    // (undocumented)
-    Apply = 1
-}
 
 // @alpha (undocumented)
 export interface TreeLocation {

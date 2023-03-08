@@ -13,17 +13,13 @@ import {
 	Anchor,
 	Value,
 	ITreeCursor,
-	IForestSubscription,
-	TransactionResult,
-	TransactionCheckout,
 	UpPath,
 	FieldKey,
 	SchemaDataAndPolicy,
 	ForestEvents,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { DefaultChangeset, DefaultEditBuilder } from "../defaultChangeFamily";
-import { runSynchronousTransaction } from "../defaultTransaction";
+import { DefaultEditBuilder } from "../defaultChangeFamily";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
@@ -120,7 +116,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 /**
  * Implementation of `EditableTreeContext`.
  *
- * `transactionCheckout` is required to edit the EditableTrees.
+ * `runTransaction` is required to edit the EditableTrees.
  */
 export class ProxyContext implements EditableTreeContext {
 	public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
@@ -130,14 +126,14 @@ export class ProxyContext implements EditableTreeContext {
 
 	/**
 	 * @param forest - the Forest
-	 * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases.
+	 * @param runTransaction - a function which executes a given transaction, returning true if it was successful or false if aborted. Not required in read-only use-cases.
 	 */
 	constructor(
 		public readonly forest: IEditableForest,
-		private readonly transactionCheckout?: TransactionCheckout<
-			DefaultEditBuilder,
-			DefaultChangeset
-		>,
+		private readonly runTransaction?: (
+			/** A function which performs a transaction, returning true if the transaction should succeed or false if it should be aborted */
+			transaction: (editor: DefaultEditBuilder) => boolean,
+		) => boolean,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -220,7 +216,10 @@ export class ProxyContext implements EditableTreeContext {
 	}
 
 	public setNodeValue(path: UpPath, value: Value): boolean {
-		return this.runTransaction((editor) => editor.setValue(path, value));
+		return this.run((editor) => {
+			editor.setValue(path, value);
+			return true;
+		});
 	}
 
 	public setValueField(
@@ -228,9 +227,10 @@ export class ProxyContext implements EditableTreeContext {
 		fieldKey: FieldKey,
 		newContent: ITreeCursor,
 	): boolean {
-		return this.runTransaction((editor) => {
+		return this.run((editor) => {
 			const field = editor.valueField(path, fieldKey);
 			field.set(newContent);
+			return true;
 		});
 	}
 
@@ -240,9 +240,10 @@ export class ProxyContext implements EditableTreeContext {
 		newContent: ITreeCursor | undefined,
 		wasEmpty: boolean,
 	): boolean {
-		return this.runTransaction((editor) => {
+		return this.run((editor) => {
 			const field = editor.optionalField(path, fieldKey);
 			field.set(newContent, wasEmpty);
+			return true;
 		});
 	}
 
@@ -252,9 +253,10 @@ export class ProxyContext implements EditableTreeContext {
 		index: number,
 		newContent: ITreeCursor | ITreeCursor[],
 	): boolean {
-		return this.runTransaction((editor) => {
+		return this.run((editor) => {
 			const field = editor.sequenceField(path, fieldKey);
 			field.insert(index, newContent);
+			return true;
 		});
 	}
 
@@ -264,9 +266,10 @@ export class ProxyContext implements EditableTreeContext {
 		index: number,
 		count: number,
 	): boolean {
-		return this.runTransaction((editor) => {
+		return this.run((editor) => {
 			const field = editor.sequenceField(path, fieldKey);
 			field.delete(index, count);
+			return true;
 		});
 	}
 
@@ -277,26 +280,20 @@ export class ProxyContext implements EditableTreeContext {
 		count: number,
 		newContent: ITreeCursor | ITreeCursor[],
 	): boolean {
-		return this.runTransaction((editor) => {
+		return this.run((editor) => {
 			const field = editor.sequenceField(path, fieldKey);
 			field.delete(index, count);
 			field.insert(index, newContent);
+			return true;
 		});
 	}
 
-	private runTransaction(transaction: (editor: DefaultEditBuilder) => void): boolean {
+	private run(transaction: (editor: DefaultEditBuilder) => boolean): boolean {
 		assert(
-			this.transactionCheckout !== undefined,
-			0x45a /* `transactionCheckout` is required to edit the EditableTree */,
+			this.runTransaction !== undefined,
+			0x45a /* `runTransaction` is required to edit the EditableTree */,
 		);
-		const result = runSynchronousTransaction(
-			this.transactionCheckout,
-			(forest: IForestSubscription, editor: DefaultEditBuilder) => {
-				transaction(editor);
-				return TransactionResult.Apply;
-			},
-		);
-		return result === TransactionResult.Apply;
+		return this.runTransaction(transaction);
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
@@ -308,13 +305,16 @@ export class ProxyContext implements EditableTreeContext {
  * A simple API for a Forest to interact with the tree.
  *
  * @param forest - the Forest
- * @param transactionCheckout - the TransactionCheckout applied to a transaction, not required in read-only usecases.
+ * @param runTransaction - a function which executes a given transaction, returning true if it was successful or false if aborted. Not required in read-only use-cases.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
-	transactionCheckout?: TransactionCheckout<DefaultEditBuilder, DefaultChangeset>,
+	runTransaction?: (
+		/** A function which performs a transaction, returning true if the transaction should succeed or false if it should be aborted */
+		transaction: (editor: DefaultEditBuilder) => boolean,
+	) => boolean,
 ): EditableTreeContext {
-	return new ProxyContext(forest, transactionCheckout);
+	return new ProxyContext(forest, runTransaction);
 }

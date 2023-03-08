@@ -21,7 +21,6 @@ import {
 	SchemaPolicy,
 	SeqNumber,
 	SessionId,
-	TransactionResult,
 	RevisionTag,
 } from "../../core";
 import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
@@ -32,9 +31,9 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	runSynchronousTransaction,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
+import { runTransactionOnForest } from "../utils";
 
 export interface TestTreeEdit {
 	sessionId: SessionId;
@@ -48,18 +47,6 @@ export interface TestTreeOptions {
 	sessionId?: string;
 	schemaPolicy?: SchemaPolicy;
 	schemaData?: SchemaData;
-}
-
-/**
- * A command that cannot be aborted.
- */
-export type SucceedingCommand = (forest: IForestSubscription, editor: DefaultEditBuilder) => void;
-
-function commandWithResult(command: SucceedingCommand) {
-	return (forest: IForestSubscription, editor: DefaultEditBuilder) => {
-		command(forest, editor);
-		return TransactionResult.Apply;
-	};
 }
 
 /**
@@ -139,22 +126,25 @@ export class TestTree {
 	}
 
 	/**
-	 * Runs the given `command`, applying the resulting edit to the document.
+	 * Runs the given `transaction`, applying the resulting edit to the document.
+	 * @param transaction - the transaction to run. It may not be aborted.
 	 * @returns A edit that can be sequenced by the `Sequencer`.
 	 */
-	public runTransaction(command: SucceedingCommand): TestTreeEdit {
-		const trueCommand = commandWithResult(command);
+	public runTransaction(
+		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => void,
+	): TestTreeEdit {
 		let changeset: DefaultChangeset | undefined;
-		const checkout = {
-			forest: this.forest,
-			changeFamily: defaultChangeFamily,
-			submitEdit: (change: DefaultChangeset): void => {
-				changeset = change;
+		const result = runTransactionOnForest(
+			this.forest,
+			defaultChangeFamily,
+			(change: DefaultChangeset) => (changeset = change),
+			(forest, editor) => {
+				transaction(forest, editor);
+				return true;
 			},
-		};
-		const result = runSynchronousTransaction(checkout, trueCommand);
+		);
 		assert(
-			result === TransactionResult.Apply && changeset !== undefined,
+			result && changeset !== undefined,
 			"The transaction should result in an edit being submitted",
 		);
 		const revision = mintRevisionTag();

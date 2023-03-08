@@ -24,9 +24,10 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ISharedTree, SharedTreeFactory } from "../shared-tree";
+import { ISharedTree, runSynchronous, SharedTreeFactory } from "../shared-tree";
 import {
 	FieldKinds,
+	ForestRepairDataStore,
 	jsonableTreeFromCursor,
 	mapFieldMarks,
 	mapMarkList,
@@ -48,8 +49,14 @@ import {
 	GlobalFieldKey,
 	rootFieldKey,
 	rootFieldKeySymbol,
-	TransactionResult,
 	Value,
+	ProgressiveEditBuilder,
+	IForestSubscription,
+	mintRevisionTag,
+	tagChange,
+	makeAnonChange,
+	IEditableForest,
+	ChangeFamily,
 } from "../core";
 import { brand, makeArray } from "../util";
 
@@ -425,11 +432,74 @@ export function initializeTestTree(
 	tree.storedSchema.update(schema);
 
 	// Apply an edit to the tree which inserts a node with a value
-	tree.runTransaction((forest, editor) => {
+	runSynchronous(tree, () => {
 		const writeCursor = singleTextCursor(state);
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 		field.insert(0, writeCursor);
-
-		return TransactionResult.Apply;
+		return true;
 	});
+}
+
+/**
+ * Runs a transaction on the given forest.
+ * @param forest - the forest to mutate
+ * @param changeFamily - the change family of the edits
+ * @param submitEdit - a callback that provides the change whenever the forest is mutated
+ * @param transaction - the transaction to run. Use the editor passed to this function to mutate the forest.
+ * If this function returns true, the transaction will be committed. If it returns false, the transaction will be aborted.
+ * @returns true if the transaction was committed, otherwise false
+ */
+export function runTransactionOnForest<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
+	forest: IEditableForest,
+	changeFamily: ChangeFamily<TEditor, TChange>,
+	submitEdit: (edit: TChange) => void,
+	transaction: (forest: IForestSubscription, editor: TEditor) => boolean,
+): boolean {
+	// These revision numbers are solely used within the scope of this transaction for the purpose of
+	// populating and querying the repair data store. Both the revision numbers and the repair data
+	// are scoped to this transaction.
+	const revisions: RevisionTag[] = [];
+	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
+		assert.equal(revision, revisions[revisions.length - 1]);
+		return forest;
+	});
+
+	const editor = changeFamily.buildEditor((edit) => {
+		const delta = changeFamily.intoDelta(edit);
+		const revision = mintRevisionTag();
+		revisions.push(revision);
+		repairStore.capture(delta, revision);
+		forest.applyDelta(delta);
+	}, forest.anchors);
+
+	const result = transaction(forest, editor);
+	const changes = editor.getChanges();
+	const inverses = changes
+		.map((change, index) =>
+			changeFamily.rebaser.invert(tagChange(change, revisions[index]), repairStore),
+		)
+		.reverse();
+
+	// TODO: in the non-abort case, optimize this to not rollback the edit,
+	// then reapply it (when the local edit is added) when possible.
+	{
+		// Roll back changes
+		for (const inverse of inverses) {
+			// TODO: maybe unify logic to edit forest and its anchors here with that in ProgressiveEditBuilder.
+			// TODO: update schema in addition to anchors and tree data (in both places).
+			changeFamily.rebaser.rebaseAnchors(forest.anchors, inverse);
+			forest.applyDelta(changeFamily.intoDelta(inverse));
+		}
+	}
+
+	if (result) {
+		// Using anonymous changes makes it impossible to chronologically order them during composition.
+		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
+		// not expected to happen in transactions but that could change in the future.
+		const anonChanges = changes.map((c) => makeAnonChange(c));
+		const edit = changeFamily.rebaser.compose(anonChanges);
+		submitEdit(edit);
+	}
+
+	return result;
 }

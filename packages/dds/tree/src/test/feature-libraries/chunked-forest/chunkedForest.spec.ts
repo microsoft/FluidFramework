@@ -14,7 +14,6 @@ import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk
 
 import {
 	AnchorSet,
-	TransactionCheckout,
 	EditManager,
 	mintRevisionTag,
 	initializeForest,
@@ -24,7 +23,6 @@ import {
 	mapCursorFields,
 	moveToDetachedField,
 	rootFieldKeySymbol,
-	TransactionResult,
 } from "../../../core";
 import { jsonSchemaData } from "../../../domains";
 import {
@@ -32,15 +30,14 @@ import {
 	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultChangeset,
-	DefaultEditBuilder,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	runSynchronousTransaction,
 	singleTextCursor,
 	defaultChunkPolicy,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
+import { runTransactionOnForest } from "../../utils";
 
 describe("ChunkedForest", () => {
 	testForest({
@@ -88,24 +85,23 @@ describe("ChunkedForest", () => {
 		chunkCursor.firstNode();
 		initializeForest(forest, [chunkCursor]);
 
-		const checkout: TransactionCheckout<DefaultEditBuilder, DefaultChangeset> = {
-			forest,
-			changeFamily: defaultChangeFamily,
-			submitEdit: (edit) => {
-				const delta = editManager.addLocalChange(mintRevisionTag(), edit);
-				forest.applyDelta(delta);
-			},
-		};
-
 		assert(chunk.isShared(), "chunk should be shared after forest initialization");
 		assert.equal(chunk.referenceCount, 2);
 
-		runSynchronousTransaction(checkout, (_, editor) => {
-			const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
-			rootField.delete(0, 1);
-			// Aborting the transaction should restore the forest
-			return TransactionResult.Abort;
-		});
+		runTransactionOnForest(
+			forest,
+			defaultChangeFamily,
+			(edit) => {
+				const delta = editManager.addLocalChange(mintRevisionTag(), edit);
+				forest.applyDelta(delta);
+			},
+			(_, editor) => {
+				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
+				rootField.delete(0, 1);
+				// Aborting the transaction should restore the forest
+				return false;
+			},
+		);
 
 		assert(
 			chunk.isShared(),

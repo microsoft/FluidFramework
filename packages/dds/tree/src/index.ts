@@ -72,7 +72,6 @@ export {
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
-	TransactionResult,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -234,6 +233,7 @@ export {
 	ISharedTree,
 	ISharedTreeCheckout,
 	ISharedTreeCheckoutFork,
+	runSynchronous,
 	SharedTreeFactory,
 } from "./shared-tree";
 

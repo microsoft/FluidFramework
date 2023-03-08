@@ -302,7 +302,6 @@ flowchart
         direction TB
         subgraph core ["core libraries"]
             direction TB
-            checkout
             forest-->schema-stored
             change-family-->repair
             edit-manager-->change-family
@@ -310,8 +309,6 @@ flowchart
             rebase-->tree
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
-            transaction-->change-family
-            transaction-->checkout
             dependency-tracking
             forest-->tree
         end

@@ -25,13 +25,12 @@ import {
 	TestTreeProvider,
 	validateTree,
 } from "../utils";
-import { ISharedTree } from "../../shared-tree";
+import { ISharedTree, runSynchronous } from "../../shared-tree";
 import {
 	JsonableTree,
 	rootFieldKey,
 	rootFieldKeySymbol,
 	moveToDetachedField,
-	TransactionResult,
 	fieldSchema,
 	SchemaData,
 	UpPath,
@@ -89,7 +88,7 @@ export async function performFuzzActions(
 			edit: async (state, operation) => {
 				const { index, contents } = operation;
 				const tree = state.testTreeProvider.trees[index];
-				applyFuzzChange(tree, contents, TransactionResult.Apply);
+				applyFuzzChange(tree, contents, false);
 				return state;
 			},
 			synchronize: async (state) => {
@@ -139,7 +138,7 @@ export async function performFuzzActionsAbort(
 		{
 			edit: async (state, operation) => {
 				const { index, contents } = operation;
-				applyFuzzChange(tree, contents, TransactionResult.Abort);
+				applyFuzzChange(tree, contents, false);
 				return state;
 			},
 			synchronize: async (state) => {
@@ -180,12 +179,12 @@ export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 function applyFuzzChange(
 	tree: ISharedTree,
 	contents: FuzzChange,
-	transactionResult: TransactionResult,
+	transactionResult: boolean,
 ): void {
 	switch (contents.fuzzType) {
 		case "insert":
-			tree.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(contents.parent, contents.field);
+			runSynchronous(tree, () => {
+				const field = tree.editor.sequenceField(contents.parent, contents.field);
 				field.insert(
 					contents.index,
 					singleTextCursor({ type: brand("Test"), value: contents.value }),
@@ -194,8 +193,8 @@ function applyFuzzChange(
 			});
 			break;
 		case "delete":
-			tree.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(
+			runSynchronous(tree, () => {
+				const field = tree.editor.sequenceField(
 					contents.path?.parent,
 					contents.path?.parentField,
 				);
@@ -204,8 +203,8 @@ function applyFuzzChange(
 			});
 			break;
 		case "setPayload":
-			tree.runTransaction((forest, editor) => {
-				editor.setValue(contents.path, contents.value);
+			runSynchronous(tree, () => {
+				tree.editor.setValue(contents.path, contents.value);
 				return transactionResult;
 			});
 			break;
