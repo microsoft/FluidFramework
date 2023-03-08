@@ -34,7 +34,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
+import { IPendingMessageOld, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -474,7 +474,7 @@ describe("Runtime", () => {
 				assert.deepStrictEqual(updateDirtyStateStub.args, [[false]]);
 			});
 
-			it.only("should be set to dirty if context is attached with pending ops", async () => {
+			it("should be set to dirty if context is attached with pending ops", async () => {
 				const mockContext = createMockContext(AttachState.Attached, true);
 				const updateDirtyStateStub = sandbox.stub(mockContext, "updateDirtyContainerState");
 				await ContainerRuntime.loadRuntime({
@@ -993,7 +993,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
-					JSON.parse((state?.pendingStates[0] as IPendingMessage).content).contents,
+					(state?.pendingStates[0] as IPendingMessageOld).content.contents,
 					{
 						prop1: 1,
 					},

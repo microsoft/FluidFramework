@@ -21,7 +21,6 @@ import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../op
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
-	ContainerRuntimeMessage,
 	ICompressionRuntimeOptions,
 } from "../../containerRuntime";
 
@@ -438,9 +437,7 @@ describe("Outbox", () => {
 			createMessage(ContainerMessageType.Attach, "7"),
 		];
 
-		const attachMessages = messages.filter(
-			(x) => x.type === ContainerMessageType.Attach,
-		);
+		const attachMessages = messages.filter((x) => x.type === ContainerMessageType.Attach);
 		assert.ok(attachMessages.length > 0 && attachMessages[0].contents !== undefined);
 		const outbox = getOutbox({
 			context: getMockContext() as IContainerContext,

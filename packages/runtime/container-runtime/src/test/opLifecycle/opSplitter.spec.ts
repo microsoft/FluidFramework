@@ -347,8 +347,10 @@ describe("OpSplitter", () => {
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
-						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
-							.contents,
+						(
+							JSON.parse((x.messages[0] as BatchMessage).contents!)
+								.contents as IChunkedOp
+						).contents,
 				);
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 					(accumulator, current) => `${accumulator}${current}`,
@@ -408,8 +410,10 @@ describe("OpSplitter", () => {
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
-						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
-							.contents,
+						(
+							JSON.parse((x.messages[0] as BatchMessage).contents!)
+								.contents as IChunkedOp
+						).contents,
 				);
 				const sentContent = [...contentSentSeparately, lastChunk.contents].reduce(
 					(accumulator, current) => `${accumulator}${current}`,
