@@ -67,13 +67,13 @@ import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-	readonly encoder: ChangeEncoder<ModularChangeset>;
+	public readonly encoder: ChangeEncoder<ModularChangeset>;
 
-	constructor(readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
+	public constructor(public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
 		this.encoder = new ModularChangeEncoder(this.fieldKinds);
 	}
 
-	get rebaser(): ChangeRebaser<ModularChangeset> {
+	public get rebaser(): ChangeRebaser<ModularChangeset> {
 		return this;
 	}
 
@@ -126,7 +126,7 @@ export class ModularChangeFamily
 		return { fieldKind, changesets: normalizedChanges };
 	}
 
-	compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
+	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
 		let maxId = -1;
 		const revInfos: RevisionInfo[] = [];
 		for (const taggedChange of changes) {
@@ -279,7 +279,7 @@ export class ModularChangeFamily
 	 * @param change - The change to invert.
 	 * @param repairStore - The store to query for repair data.
 	 */
-	invert(
+	public invert(
 		change: TaggedChange<ModularChangeset>,
 		repairStore?: ReadonlyRepairDataStore,
 	): ModularChangeset {
@@ -426,7 +426,10 @@ export class ModularChangeFamily
 		return inverse;
 	}
 
-	rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset {
+	public rebase(
+		change: ModularChangeset,
+		over: TaggedChange<ModularChangeset>,
+	): ModularChangeset {
 		let maxId = change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
@@ -554,11 +557,11 @@ export class ModularChangeFamily
 		};
 	}
 
-	rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
+	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
 		anchors.applyDelta(this.intoDelta(over));
 	}
 
-	intoDelta(change: ModularChangeset): Delta.Root {
+	public intoDelta(change: ModularChangeset): Delta.Root {
 		return this.intoDeltaImpl(change.changes);
 	}
 
@@ -597,7 +600,7 @@ export class ModularChangeFamily
 		return modify;
 	}
 
-	buildEditor(
+	public buildEditor(
 		changeReceiver: (change: ModularChangeset) => void,
 		anchors: AnchorSet,
 	): ModularEditBuilder {
@@ -766,15 +769,15 @@ function makeModularChangeset(
 }
 
 class ModularChangeEncoder extends ChangeEncoder<ModularChangeset> {
-	constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
+	public constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
 		super();
 	}
 
-	encodeForJson(formatVersion: number, change: ModularChangeset): JsonCompatibleReadOnly {
+	public encodeForJson(formatVersion: number, change: ModularChangeset): JsonCompatibleReadOnly {
 		return encodeForJsonFormat0(this.fieldKinds, change);
 	}
 
-	decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): ModularChangeset {
+	public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): ModularChangeset {
 		return decodeJsonFormat0(this.fieldKinds, change);
 	}
 }
@@ -787,7 +790,7 @@ export class ModularEditBuilder
 	extends ProgressiveEditBuilderBase<ModularChangeset>
 	implements ProgressiveEditBuilder<ModularChangeset>
 {
-	constructor(
+	public constructor(
 		family: ChangeFamily<unknown, ModularChangeset>,
 		changeReceiver: (change: ModularChangeset) => void,
 		anchors: AnchorSet,
@@ -807,7 +810,7 @@ export class ModularEditBuilder
 	 * @param change - the change to the field
 	 * @param maxId - the highest `ChangesetLocalId` used in this change
 	 */
-	submitChange(
+	public submitChange(
 		path: UpPath | undefined,
 		field: FieldKey,
 		fieldKind: FieldKindIdentifier,
@@ -818,7 +821,7 @@ export class ModularEditBuilder
 		this.applyChange(makeModularChangeset(changeMap, maxId));
 	}
 
-	submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
+	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
 				makeModularChangeset(
@@ -860,7 +863,7 @@ export class ModularEditBuilder
 		return fieldChangeMap;
 	}
 
-	setValue(path: UpPath, value: Value): void {
+	public setValue(path: UpPath, value: Value): void {
 		const valueChange: ValueChange = value === undefined ? {} : { value };
 		const nodeChange: NodeChangeset = { valueChange };
 		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
