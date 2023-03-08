@@ -10,7 +10,7 @@ import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
-	RevisionIndexer,
+	RevisionHelper,
 } from "../modular-schema";
 import {
 	getInputLength,
@@ -615,14 +615,14 @@ export function amendRebase<TNodeChange>(
 	baseMarks: TaggedChange<MarkList<TNodeChange>>,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
-	revisionIndexer: RevisionIndexer,
+	revisionHelper: RevisionHelper,
 ): Changeset<TNodeChange> {
 	return amendRebaseI(
 		baseMarks.revision,
 		baseMarks.change,
 		rebasedMarks,
 		crossFieldManager as MoveEffectTable<TNodeChange>,
-		revisionIndexer,
+		revisionHelper,
 	);
 }
 
@@ -631,7 +631,7 @@ function amendRebaseI<TNodeChange>(
 	baseMarks: MarkList<TNodeChange>,
 	rebasedMarks: MarkList<TNodeChange>,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
-	revisionIndexer: RevisionIndexer,
+	revisionHelper: RevisionHelper,
 ): Changeset<TNodeChange> {
 	// Is it correct to use ComposeQueue here?
 	// If we used a special AmendRebaseQueue, we could ignore any base marks which don't have associated move-ins
@@ -642,7 +642,7 @@ function amendRebaseI<TNodeChange>(
 		rebasedMarks,
 		() => fail("Should not generate new IDs when applying move effects"),
 		moveEffects,
-		revisionIndexer,
+		revisionHelper,
 	);
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 

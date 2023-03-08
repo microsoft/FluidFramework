@@ -40,7 +40,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): TChangeset;
 
 	/**
@@ -51,7 +51,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): TChangeset;
 
 	/**
@@ -64,7 +64,6 @@ export interface FieldChangeRebaser<TChangeset> {
 		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		isRollback: boolean,
 	): TChangeset;
 
 	/**
@@ -88,7 +87,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): TChangeset;
 
 	/**
@@ -99,7 +98,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TaggedChange<TChangeset>,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): TChangeset;
 }
 
@@ -273,8 +272,21 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 /**
  * @alpha
  */
+export interface RevisionHelper {
+	readonly getIndex: RevisionIndexer;
+	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+}
+
+/**
+ * @alpha
+ */
 export interface RevisionInfo {
 	readonly tag: RevisionTag;
+	/**
+	 * True when the changeset was produced as part of a rebase sandwich as opposed to for the purpose of undo.
+	 * Considered false if undefined.
+	 */
+	readonly isRollback?: boolean;
 }
 
 /**

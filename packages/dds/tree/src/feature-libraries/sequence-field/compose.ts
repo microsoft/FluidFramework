@@ -10,7 +10,7 @@ import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
-	RevisionIndexer,
+	RevisionHelper,
 } from "../modular-schema";
 import {
 	Changeset,
@@ -42,8 +42,8 @@ import {
 	isBlockedReattach,
 	getOffsetAtRevision,
 	isObjMark,
-	isUninsert,
 	cloneMark,
+	isDeleteMark,
 } from "./utils";
 
 /**
@@ -68,7 +68,7 @@ export function compose<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
-	revisionIndexer: RevisionIndexer,
+	revisionHelper: RevisionHelper,
 ): Changeset<TNodeChange> {
 	let composed: Changeset<TNodeChange> = [];
 	for (const change of changes) {
@@ -79,7 +79,7 @@ export function compose<TNodeChange>(
 			composeChild,
 			genId,
 			manager as MoveEffectTable<TNodeChange>,
-			revisionIndexer,
+			revisionHelper,
 		);
 	}
 	return composed;
@@ -92,7 +92,7 @@ function composeMarkLists<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
-	revisionIndexer: RevisionIndexer,
+	revisionHelper: RevisionHelper,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 	const queue = new ComposeQueue(
@@ -102,7 +102,7 @@ function composeMarkLists<TNodeChange>(
 		newMarkList,
 		genId,
 		moveEffects,
-		revisionIndexer,
+		revisionHelper,
 		(a, b) => composeChildChanges(a, b, newRev, composeChild),
 	);
 	while (!queue.isEmpty()) {
@@ -588,11 +588,11 @@ export class ComposeQueue<T> {
 		newMarks: Changeset<T>,
 		genId: IdAllocator,
 		private readonly moveEffects: MoveEffectTable<T>,
-		revisionIndexer: RevisionIndexer,
+		private readonly revisionHelper: RevisionHelper,
 		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
 	) {
-		this.baseIndex = new IndexTracker(revisionIndexer);
-		this.baseGap = new GapTracker(revisionIndexer);
+		this.baseIndex = new IndexTracker(revisionHelper.getIndex);
+		this.baseGap = new GapTracker(revisionHelper.getIndex);
 		this.baseMarks = new MarkQueue(
 			baseMarks,
 			baseRevision,
@@ -613,7 +613,7 @@ export class ComposeQueue<T> {
 		// Detect all inserts in the new marks that will be cancelled by uninserts in the base marks
 		const uninserts = new Set<RevisionTag>();
 		for (const mark of baseMarks) {
-			if (isUninsert(mark) && mark.revision !== undefined) {
+			if (isDeleteMark(mark) && mark.revision !== undefined) {
 				uninserts.add(mark.revision);
 			}
 		}
@@ -786,11 +786,15 @@ export class ComposeQueue<T> {
 				// We know the new insert is getting cancelled out so we need to delay returning it.
 				// The base mark that cancels the insert must appear later in the base marks.
 				return { baseMark: this.baseMarks.dequeue() };
-			} else if (isUninsert(baseMark)) {
+			} else if (
+				isDeleteMark(baseMark) &&
+				baseMark.revision !== undefined &&
+				this.revisionHelper.getInfo(baseMark.revision).isRollback
+			) {
 				// The base mark represents an insert being rolled back.
 				// That insert was concurrent to and sequenced after the attach performed by newNark so
-				// the uninsert should be ordered as the later insert would have been had the changes applied in
-				// sequencing order. This means the uninsert should come first since right now we only support
+				// the delete should be ordered as the later insert would have been had the changes applied in
+				// sequencing order. This means the delete should come first since right now we only support
 				// the merge-left tiebreak policy.
 				// TODO: support merge-right tiebreak policy.
 				return { baseMark: this.baseMarks.dequeue() };

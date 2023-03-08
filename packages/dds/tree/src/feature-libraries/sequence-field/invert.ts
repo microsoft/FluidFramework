@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
-import { Changeset, Delete, Mark, MarkList, ReturnFrom } from "./format";
+import { Changeset, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
@@ -30,7 +30,6 @@ export function invert<TNodeChange>(
 	reviver: NodeReviver,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
-	isRollback: boolean,
 ): Changeset<TNodeChange> {
 	return invertMarkList(
 		change.change,
@@ -38,7 +37,6 @@ export function invert<TNodeChange>(
 		reviver,
 		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
-		isRollback,
 	);
 }
 
@@ -63,7 +61,6 @@ function invertMarkList<TNodeChange>(
 	reviver: NodeReviver,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
-	isRollback: boolean,
 ): MarkList<TNodeChange> {
 	const inverseMarkList = new MarkListFactory<TNodeChange>();
 	let inputIndex = 0;
@@ -76,7 +73,6 @@ function invertMarkList<TNodeChange>(
 			reviver,
 			invertChild,
 			crossFieldManager,
-			isRollback,
 		);
 		inverseMarkList.push(...inverseMarks);
 		inputIndex += getInputLength(mark);
@@ -92,21 +88,18 @@ function invertMark<TNodeChange>(
 	reviver: NodeReviver,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
-	isRollback: boolean,
 ): Mark<TNodeChange>[] {
 	if (isSkipMark(mark)) {
 		return [mark];
 	} else {
 		switch (mark.type) {
 			case "Insert": {
-				const del: Delete<never> = {
-					type: "Delete",
-					count: mark.content.length,
-				};
-				if (isRollback) {
-					del.isRollback = true;
-				}
-				return [del];
+				return [
+					{
+						type: "Delete",
+						count: mark.content.length,
+					},
+				];
 			}
 			case "Delete": {
 				assert(revision !== undefined, "Unable to revert to undefined revision");

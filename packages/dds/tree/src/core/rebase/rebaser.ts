@@ -89,7 +89,7 @@ export class Rebaser<TChange> {
 				};
 				targetRebasePath.push({ ...c, change });
 			}
-			inverses.unshift(tagInverse(this.changeRebaser.invert(c, true), c.revision));
+			inverses.unshift(tagInverse(this.changeRebaser.invert(c, true), c.revision, true));
 		}
 
 		// Compose all changes together to get a single change that represents the entire rebase operation
@@ -142,6 +142,10 @@ export class Rebaser<TChange> {
 		commit: GraphCommit<TChange>,
 		isRollback: boolean,
 	): TaggedChange<TChange> {
-		return tagInverse(this.changeRebaser.invert(commit, isRollback), commit.revision);
+		return tagInverse(
+			this.changeRebaser.invert(commit, isRollback),
+			commit.revision,
+			isRollback,
+		);
 	}
 }

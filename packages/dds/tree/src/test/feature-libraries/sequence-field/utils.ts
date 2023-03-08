@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	ChangesetLocalId,
 	IdAllocator,
-	RevisionIndexer,
+	RevisionHelper,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
@@ -44,7 +44,7 @@ export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.
  * This is safe in the context of 'FieldKind' testing because `RevisionTag`s are only expected to be value-equatable.
  *
  * This function is meant for testing purposes only.
- * RevisionTags minted by this function are meant to be consumed by `integerRevisionIndexer`.
+ * RevisionTags minted by this function are meant to be consumed by `revisionHelper`.
  *
  * @param integer - A number reflecting the relative order of the changeset with that revision compared to other changeset
  * (where higher number means newer changeset/revision).
@@ -60,19 +60,18 @@ const integerRevisionIndexer = (tag: RevisionTag): number => {
 	return tag;
 };
 
+const defaultRevisionHelper: RevisionHelper = {
+	getIndex: integerRevisionIndexer,
+	getInfo: (tag: RevisionTag) => ({ tag }),
+};
+
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(
-		changes,
-		composer,
-		idAllocator,
-		moveEffects,
-		integerRevisionIndexer,
-	);
+	const composed = SF.compose(changes, composer, idAllocator, moveEffects, defaultRevisionHelper);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
@@ -85,7 +84,7 @@ function composeI<T>(
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionIndexer?: RevisionIndexer,
+	revisionHelper?: RevisionHelper,
 ): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
@@ -100,7 +99,7 @@ export function rebase(
 			base,
 			idAllocator,
 			moveEffects,
-			revisionIndexer ?? integerRevisionIndexer,
+			revisionHelper ?? defaultRevisionHelper,
 		);
 		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
@@ -125,10 +124,7 @@ function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.dstQueries.clear();
 }
 
-export function invert(
-	change: TaggedChange<TestChangeset>,
-	isRollback: boolean = false,
-): TestChangeset {
+export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	const table = SF.newCrossFieldTable();
 	let inverted = SF.invert(
 		change,
@@ -136,7 +132,6 @@ export function invert(
 		fakeRepair,
 		() => fail("Sequence fields should not generate IDs during invert"),
 		table,
-		isRollback,
 	);
 
 	if (table.isInvalidated) {

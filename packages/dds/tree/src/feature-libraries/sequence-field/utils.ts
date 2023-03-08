@@ -48,6 +48,7 @@ import {
 	SkipLikeDetach,
 	MoveId,
 	Revive,
+	Delete,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
@@ -337,14 +338,10 @@ export function isDetachMark<TNodeChange>(
 	return false;
 }
 
-export function isUninsert<TNodeChange>(
+export function isDeleteMark<TNodeChange>(
 	mark: Mark<TNodeChange> | undefined,
-): mark is Detach<TNodeChange> {
-	if (isObjMark(mark)) {
-		const type = mark.type;
-		return type === "Delete" && mark.isRollback === true;
-	}
-	return false;
+): mark is Delete<TNodeChange> {
+	return isObjMark(mark) && mark.type === "Delete";
 }
 
 export function isObjMark<TNodeChange>(

@@ -162,11 +162,6 @@ export interface Delete<TNodeChange = NodeChangeType>
 		CanConflict {
 	type: "Delete";
 	count: NodeCount;
-	/**
-	 * True when the mark was produced as part of the rebase sandwich as opposed to for the purpose of undo.
-	 * TODO: represent the tiebreak policy of the original insert being rolled back.
-	 */
-	isRollback?: true;
 }
 
 export interface MoveOut<TNodeChange = NodeChangeType>

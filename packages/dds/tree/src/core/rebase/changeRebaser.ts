@@ -101,6 +101,11 @@ export interface TaggedChange<TChangeset> {
 	 * Considered false if undefined.
 	 */
 	readonly isInverse?: boolean;
+	/**
+	 * True when the changeset was produced as part of a rebase sandwich as opposed to for the purpose of undo.
+	 * Considered false if undefined.
+	 */
+	readonly isRollback?: boolean;
 	readonly change: TChangeset;
 }
 
@@ -115,11 +120,13 @@ export function tagChange<T>(
 export function tagInverse<T>(
 	inverseChange: T,
 	invertedRevision: RevisionTag | undefined,
+	isRollback: boolean = false,
 ): TaggedChange<T> {
 	return {
 		revision: invertedRevision,
 		isInverse: true,
 		change: inverseChange,
+		isRollback,
 	};
 }
 

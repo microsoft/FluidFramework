@@ -11,6 +11,7 @@ import {
 	IdAllocator,
 	NodeChangeset,
 	NodeReviver,
+	RevisionHelper,
 	singleTextCursor,
 } from "../../feature-libraries";
 import {
@@ -48,6 +49,11 @@ const crossFieldManager = {
 
 const revisionIndexer = (tag: RevisionTag) => {
 	assert.fail("Unexpected revision index query");
+};
+
+const revisionHelper: RevisionHelper = {
+	getIndex: revisionIndexer,
+	getInfo: (tag: RevisionTag) => ({ tag }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
@@ -116,7 +122,7 @@ describe("Value field changesets", () => {
 			simpleChildComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionIndexer,
+			revisionHelper,
 		);
 
 		assert.deepEqual(composed, change2);
@@ -129,7 +135,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			change1WithChildChange,
 		);
@@ -146,7 +152,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			change1,
 		);
@@ -157,7 +163,7 @@ describe("Value field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			childChange3,
 		);
@@ -175,7 +181,6 @@ describe("Value field changesets", () => {
 			fakeRepair,
 			idAllocator,
 			crossFieldManager,
-			false,
 		);
 
 		assert.deepEqual(inverted.changes, nodeChange2);
@@ -192,7 +197,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			change2,
 		);
@@ -215,7 +220,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			childChange3,
 		);
@@ -289,7 +294,7 @@ describe("Optional field changesets", () => {
 			childComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionIndexer,
+			revisionHelper,
 		);
 		assert.deepEqual(composed, change3);
 	});
@@ -306,7 +311,7 @@ describe("Optional field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			expected,
 		);
@@ -337,7 +342,6 @@ describe("Optional field changesets", () => {
 				repair,
 				idAllocator,
 				crossFieldManager,
-				false,
 			),
 			expected,
 		);
@@ -353,7 +357,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			change2,
 		);
@@ -378,7 +382,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionHelper,
 			),
 			expected,
 		);

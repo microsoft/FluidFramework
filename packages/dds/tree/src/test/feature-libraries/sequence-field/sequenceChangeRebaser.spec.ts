@@ -172,7 +172,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 							if (!SF.areRebasable(change1.change, change2.change)) {
 								continue;
 							}
-							const inverse2 = tagInverse(invert(change2, true), change2.revision);
+							const inverse2 = tagInverse(invert(change2), change2.revision, true);
 							const r1 = rebaseTagged(change1, change2);
 							tracker.apply(change2);
 							normalizeMoveIds(r1.change);
@@ -239,7 +239,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("Nested inserts rebasing", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
 		const insertB = tagChange(Change.insert(1, 1), tag2);
-		const inverseA = tagInverse(invert(insertA, true), insertA.revision);
+		const inverseA = tagInverse(invert(insertA), insertA.revision, true);
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertA);
 		assert.deepEqual(insertB3.change, insertB.change);
@@ -257,8 +257,8 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("Nested inserts composition", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
 		const insertB = tagChange(Change.insert(1, 1), tag2);
-		const inverseA = tagInverse(invert(insertA, true), insertA.revision);
-		const inverseB = tagInverse(invert(insertB, true), insertB.revision);
+		const inverseA = tagInverse(invert(insertA), insertA.revision, true);
+		const inverseB = tagInverse(invert(insertB), insertB.revision, true);
 
 		const composed = compose([inverseB, inverseA, insertA, insertB]);
 		assert.deepEqual(composed, []);
@@ -268,9 +268,9 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertX = tagChange(Change.insert(0, 1), tag1);
 		const insertA = tagChange(Change.insert(1, 2), tag2);
 		const insertB = tagChange(Change.insert(2, 1), tag3);
-		const inverseA = invert(insertA, true);
+		const inverseA = invert(insertA);
 		const insertA2 = rebaseTagged(insertA, insertX);
-		const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision));
+		const insertB2 = rebaseTagged(insertB, tagInverse(inverseA, insertA.revision, true));
 		const insertB3 = rebaseTagged(insertB2, insertX);
 		const insertB4 = rebaseTagged(insertB3, insertA2);
 		assert.deepEqual(insertB4.change, Change.insert(3, 1));
@@ -281,8 +281,8 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const delABC = tagChange(Change.delete(0, 3), tag2);
 		const revABC = tagChange(Change.revive(0, 3, tag2, 0), tag3);
 		const delABC2 = rebaseTagged(delABC, delB);
-		const invDelABC = invert(delABC, true);
-		const revABC2 = rebaseTagged(revABC, tagInverse(invDelABC, delABC2.revision));
+		const invDelABC = invert(delABC);
+		const revABC2 = rebaseTagged(revABC, tagInverse(invDelABC, delABC2.revision, true));
 		const revABC3 = rebaseTagged(revABC2, delB);
 		const revABC4 = rebaseTagged(revABC3, delABC2);
 		const actual = compose([delABC2, revABC4]);
@@ -295,8 +295,8 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const movABC = tagChange(Change.move(0, 3, 1), tag2);
 		const retABC = tagChange(Change.return(1, 3, 0, tag2), tag3);
 		const movABC2 = rebaseTagged(movABC, delB);
-		const invMovABC = invert(movABC, true);
-		const retABC2 = rebaseTagged(retABC, tagInverse(invMovABC, movABC2.revision));
+		const invMovABC = invert(movABC);
+		const retABC2 = rebaseTagged(retABC, tagInverse(invMovABC, movABC2.revision, true));
 		const retABC3 = rebaseTagged(retABC2, delB);
 		// This next rebase fails for two reasons:
 		// 1: The current rebase code assumes new attach marks will always be independent.
@@ -318,8 +318,8 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const delAC = tagChange(Change.delete(0, 2), tag2);
 		const revAC = tagChange(Change.revive(0, 2, tag2, 0), tag3);
 		const delAC2 = rebaseTagged(delAC, addB);
-		const invDelAC = invert(delAC, true);
-		const revAC2 = rebaseTagged(revAC, tagInverse(invDelAC, delAC2.revision));
+		const invDelAC = invert(delAC);
+		const revAC2 = rebaseTagged(revAC, tagInverse(invDelAC, delAC2.revision, true));
 		const revAC3 = rebaseTagged(revAC2, addB);
 		const revAC4 = rebaseTagged(revAC3, delAC2);
 		const actual = compose([delAC2, revAC4]);

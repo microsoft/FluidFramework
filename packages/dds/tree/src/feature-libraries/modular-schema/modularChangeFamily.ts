@@ -51,7 +51,7 @@ import {
 	ModularChangeset,
 	IdAllocator,
 	RevisionInfo,
-	RevisionIndexer,
+	RevisionHelper,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -87,7 +87,7 @@ export class ModularChangeFamily
 	private normalizeFieldChanges(
 		changes: readonly FieldChange[],
 		genId: IdAllocator,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): {
 		fieldKind: FieldKind;
 		changesets: FieldChangeset[];
@@ -115,10 +115,10 @@ export class ModularChangeFamily
 							children,
 							genId,
 							newCrossFieldTable(),
-							revisionIndexer,
+							revisionHelper,
 						),
 					genId,
-					revisionIndexer,
+					revisionHelper,
 				) as FieldChangeset;
 			}
 			return change.change;
@@ -135,10 +135,14 @@ export class ModularChangeFamily
 			if (change.revisions !== undefined) {
 				revInfos.push(...change.revisions);
 			} else if (taggedChange.revision !== undefined) {
-				revInfos.push({ tag: taggedChange.revision });
+				const info: Mutable<RevisionInfo> = { tag: taggedChange.revision };
+				if (taggedChange.isRollback) {
+					info.isRollback = true;
+				}
+				revInfos.push(info);
 			}
 		}
-		const revisionIndexer: RevisionIndexer = revisionIndexerFromInfo(revInfos);
+		const revisionHelper: RevisionHelper = revisionHelperFromInfo(revInfos);
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
@@ -146,7 +150,7 @@ export class ModularChangeFamily
 			changes.map((change) => tagChange(change.change.changes, change.revision)),
 			genId,
 			crossFieldTable,
-			revisionIndexer,
+			revisionHelper,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -159,10 +163,10 @@ export class ModularChangeFamily
 				).rebaser.amendCompose(
 					field.change,
 					(children) =>
-						this.composeNodeChanges(children, genId, crossFieldTable, revisionIndexer),
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionHelper),
 					genId,
 					newCrossFieldManager(crossFieldTable),
-					revisionIndexer,
+					revisionHelper,
 				);
 				field.change = brand(amendedChange);
 			}
@@ -179,7 +183,7 @@ export class ModularChangeFamily
 		changes: TaggedChange<FieldChangeMap>[],
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): FieldChangeMap {
 		const fieldChanges = new Map<FieldKey, FieldChange[]>();
 		for (const change of changes) {
@@ -205,7 +209,7 @@ export class ModularChangeFamily
 				const { fieldKind, changesets } = this.normalizeFieldChanges(
 					changesForField,
 					genId,
-					revisionIndexer,
+					revisionHelper,
 				);
 				assert(
 					changesets.length === changesForField.length,
@@ -219,10 +223,10 @@ export class ModularChangeFamily
 				const composedChange = fieldKind.changeHandler.rebaser.compose(
 					taggedChangesets,
 					(children) =>
-						this.composeNodeChanges(children, genId, crossFieldTable, revisionIndexer),
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionHelper),
 					genId,
 					manager,
-					revisionIndexer,
+					revisionHelper,
 				);
 
 				composedField = {
@@ -243,7 +247,7 @@ export class ModularChangeFamily
 		changes: TaggedChange<NodeChangeset>[],
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<ComposeData>,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
@@ -261,7 +265,7 @@ export class ModularChangeFamily
 			fieldChanges,
 			genId,
 			crossFieldTable,
-			revisionIndexer,
+			revisionHelper,
 		);
 		const composedNodeChange: NodeChangeset = {};
 		if (valueChange !== undefined) {
@@ -297,7 +301,6 @@ export class ModularChangeFamily
 			resolvedRepairStore,
 			undefined,
 			crossFieldTable,
-			isRollback,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -328,7 +331,12 @@ export class ModularChangeFamily
 		return makeModularChangeset(
 			invertedFields,
 			maxId,
-			revInfo !== undefined ? Array.from(revInfo).reverse() : undefined,
+			revInfo === undefined
+				? undefined
+				: (isRollback
+						? revInfo.map(({ tag }) => ({ tag, isRollback: true }))
+						: Array.from(revInfo)
+				  ).reverse(),
 		);
 	}
 
@@ -338,7 +346,6 @@ export class ModularChangeFamily
 		repairStore: ReadonlyRepairDataStore,
 		path: UpPath | undefined,
 		crossFieldTable: CrossFieldTable<InvertData>,
-		isRollback: boolean,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
 
@@ -362,7 +369,6 @@ export class ModularChangeFamily
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
-						isRollback,
 						repairStore,
 						index === undefined
 							? undefined
@@ -375,7 +381,6 @@ export class ModularChangeFamily
 				reviver,
 				genId,
 				manager,
-				isRollback,
 			);
 
 			const invertedFieldChange: FieldChange = {
@@ -401,7 +406,6 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
-		isRollback: boolean,
 		repairStore: ReadonlyRepairDataStore,
 		path?: UpPath,
 	): NodeChangeset {
@@ -425,7 +429,6 @@ export class ModularChangeFamily
 				repairStore,
 				path,
 				crossFieldTable,
-				isRollback,
 			);
 		}
 
@@ -443,13 +446,13 @@ export class ModularChangeFamily
 		if (change.revisions !== undefined) {
 			revInfos.push(...change.revisions);
 		}
-		const revisionIndexer: RevisionIndexer = revisionIndexerFromInfo(revInfos);
+		const revisionHelper: RevisionHelper = revisionHelperFromInfo(revInfos);
 		const rebasedFields = this.rebaseFieldMap(
 			change.changes,
 			tagChange(over.change.changes, over.revision),
 			genId,
 			crossFieldTable,
-			revisionIndexer,
+			revisionHelper,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -464,7 +467,7 @@ export class ModularChangeFamily
 					baseChange,
 					genId,
 					newCrossFieldManager(crossFieldTable),
-					revisionIndexer,
+					revisionHelper,
 				);
 				fieldChange.change = brand(amendedChange);
 			}
@@ -483,7 +486,7 @@ export class ModularChangeFamily
 		over: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -495,7 +498,7 @@ export class ModularChangeFamily
 				const {
 					fieldKind,
 					changesets: [fieldChangeset, baseChangeset],
-				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionIndexer);
+				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionHelper);
 
 				const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
 				const taggedBaseChange = { revision, change: baseChangeset };
@@ -509,11 +512,11 @@ export class ModularChangeFamily
 							{ revision, change: baseChild },
 							genId,
 							crossFieldTable,
-							revisionIndexer,
+							revisionHelper,
 						),
 					genId,
 					manager,
-					revisionIndexer,
+					revisionHelper,
 				);
 
 				const rebasedFieldChange: FieldChange = {
@@ -539,7 +542,7 @@ export class ModularChangeFamily
 		over: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
-		revisionIndexer: RevisionIndexer,
+		revisionHelper: RevisionHelper,
 	): NodeChangeset {
 		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
 			return change;
@@ -555,7 +558,7 @@ export class ModularChangeFamily
 				},
 				genId,
 				crossFieldTable,
-				revisionIndexer,
+				revisionHelper,
 			),
 		};
 	}
@@ -611,12 +614,16 @@ export class ModularChangeFamily
 	}
 }
 
-function revisionIndexerFromInfo(revInfos: readonly RevisionInfo[]): RevisionIndexer {
-	return (tag: RevisionTag): number => {
+function revisionHelperFromInfo(revInfos: readonly RevisionInfo[]): RevisionHelper {
+	const getIndex = (tag: RevisionTag): number => {
 		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
 		assert(index !== -1, "Unable to index unknown revision");
 		return index;
 	};
+	const getInfo = (tag: RevisionTag): RevisionInfo => {
+		return revInfos[getIndex(tag)];
+	};
+	return { getIndex, getInfo };
 }
 
 export function getFieldKind(
