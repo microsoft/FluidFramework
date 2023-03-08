@@ -32,8 +32,7 @@ import {
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
 } from "../../feature-libraries";
-import { TransactionResult } from "../../shared-tree";
-import { brand, JsonCompatible } from "../../util";
+import { brand, JsonCompatible, TransactionResult } from "../../util";
 import { runTransactionOnForest } from "../utils";
 
 export interface TestTreeEdit {

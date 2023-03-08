@@ -17,7 +17,7 @@ import {
 	namedTreeSchema,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries";
-import { brand, fail } from "../../util";
+import { brand, fail, TransactionResult } from "../../util";
 import {
 	initializeTestTree,
 	ITestTreeProvider,
@@ -25,7 +25,7 @@ import {
 	TestTreeProvider,
 	validateTree,
 } from "../utils";
-import { ISharedTree, runSynchronous, TransactionResult } from "../../shared-tree";
+import { ISharedTree, runSynchronous } from "../../shared-tree";
 import {
 	JsonableTree,
 	rootFieldKey,

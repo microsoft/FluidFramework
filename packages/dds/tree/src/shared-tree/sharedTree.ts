@@ -41,6 +41,7 @@ import {
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
 } from "../feature-libraries";
+import { TransactionResult } from "../util";
 
 /**
  * Provides a means for interacting with a SharedTree.
@@ -374,21 +375,6 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	public set root(data: ContextuallyTypedNodeData | undefined) {
 		this.context.unwrappedRoot = data;
 	}
-}
-
-/**
- * Describes the result of a transaction. Transactions may either succeed and commit, or fail and abort.
- * @alpha
- */
-export enum TransactionResult {
-	/**
-	 * Indicates the transaction succeeded. This value is falsy.
-	 */
-	Commit = 0,
-	/**
-	 * Indicates the transaction failed. This value is truthy.
-	 */
-	Abort = 1,
 }
 
 /**

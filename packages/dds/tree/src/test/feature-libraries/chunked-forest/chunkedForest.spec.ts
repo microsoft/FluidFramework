@@ -36,9 +36,8 @@ import {
 	defaultChunkPolicy,
 } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
-import { brand } from "../../../util";
+import { brand, TransactionResult } from "../../../util";
 import { runTransactionOnForest } from "../../utils";
-import { TransactionResult } from "../../../shared-tree";
 
 describe("ChunkedForest", () => {
 	testForest({

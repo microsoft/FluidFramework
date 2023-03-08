@@ -11,14 +11,9 @@ import {
 	jsonableTreeFromCursor,
 	namedTreeSchema,
 } from "../../feature-libraries";
-import { brand } from "../../util";
+import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import {
-	ISharedTree,
-	ISharedTreeCheckout,
-	runSynchronous,
-	TransactionResult,
-} from "../../shared-tree";
+import { ISharedTree, ISharedTreeCheckout, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,

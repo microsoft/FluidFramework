@@ -24,7 +24,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ISharedTree, SharedTreeFactory, TransactionResult } from "../shared-tree";
+import { ISharedTree, SharedTreeFactory } from "../shared-tree";
 import {
 	FieldKinds,
 	ForestRepairDataStore,
@@ -58,7 +58,7 @@ import {
 	IEditableForest,
 	ChangeFamily,
 } from "../core";
-import { brand, makeArray } from "../util";
+import { brand, makeArray, TransactionResult } from "../util";
 
 // Testing utilities
 
