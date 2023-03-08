@@ -133,7 +133,7 @@ import {
 	SummarizerClientElection,
 	summarizerClientType,
 	SubmitSummaryResult,
-	IConnectableRuntime2,
+	IConnectableRuntime,
 	IGeneratedSummaryStats,
 	ISubmitSummaryOptions,
 	ISummarizer,
@@ -1310,7 +1310,7 @@ export class ContainerRuntime
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
 					this.summaryCollection,
-					async (runtime: IConnectableRuntime2) =>
+					async (runtime: IConnectableRuntime) =>
 						RunWhileConnectedCoordinator.create(
 							runtime,
 							// Summarization runs in summarizer client and needs access to the real (non-proxy) active

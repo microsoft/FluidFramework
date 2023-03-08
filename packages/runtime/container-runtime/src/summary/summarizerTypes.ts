@@ -80,7 +80,6 @@ export interface ISummarizingWarning extends ContainerWarning {
 	readonly logged: boolean;
 }
 
-/** @deprecated - Was an internally-used subset of ISummarizerRuntime, no other replacement provided */
 export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
@@ -89,7 +88,7 @@ export interface IConnectableRuntime {
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
-export interface ISummarizerRuntime {
+export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
@@ -101,12 +100,6 @@ export interface ISummarizerRuntime {
 	closeFn(): void;
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
-
-/** The subset of ISummarizerRuntime required for Summarizer run coordination */
-export type IConnectableRuntime2 = Pick<
-	ISummarizerRuntime,
-	"disposed" | "connected" | "clientId" | "once"
->;
 
 /** Options affecting summarize behavior. */
 export interface ISummarizeOptions {

@@ -6,7 +6,7 @@
 import { assert, Deferred } from "@fluidframework/common-utils";
 import {
 	SummarizerStopReason,
-	IConnectableRuntime2,
+	IConnectableRuntime,
 	ISummaryCancellationToken,
 } from "./summarizerTypes";
 
@@ -60,14 +60,14 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 		return this.stopDeferred.promise;
 	}
 
-	public static async create(runtime: IConnectableRuntime2, active: () => boolean) {
+	public static async create(runtime: IConnectableRuntime, active: () => boolean) {
 		const obj = new RunWhileConnectedCoordinator(runtime, active);
 		await obj.waitStart();
 		return obj;
 	}
 
 	protected constructor(
-		private readonly runtime: IConnectableRuntime2,
+		private readonly runtime: IConnectableRuntime,
 		private readonly active: () => boolean,
 	) {}
 

@@ -327,7 +327,7 @@ export interface ICompressionRuntimeOptions {
     readonly minimumBatchSizeInBytes: number;
 }
 
-// @public @deprecated (undocumented)
+// @public (undocumented)
 export interface IConnectableRuntime {
     // (undocumented)
     readonly clientId: string | undefined;
@@ -526,7 +526,7 @@ export interface ISummarizerInternalsProvider {
 }
 
 // @public (undocumented)
-export interface ISummarizerRuntime {
+export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     readonly clientId: string | undefined;
     // (undocumented)
@@ -688,10 +688,9 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 
 // @public
 export class Summarizer extends EventEmitter implements ISummarizer {
-    // Warning: (ae-forgotten-export) The symbol "IConnectableRuntime2" needs to be exported by the entry point index.d.ts
     constructor(url: string,
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
-    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime2) => Promise<ICancellableSummarizerController>);
+    internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
     close(): void;
     static create(loader: ILoader, url: string): Promise<ISummarizer>;

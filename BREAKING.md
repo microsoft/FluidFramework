@@ -32,6 +32,7 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 `attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
 
 ### Some APIs meant only for internal usage are deprecated
+
 Specifically, `IGarbageCollectionRuntime` and `IConnectableRuntime` in the `@fluidframework/container-runtime` package.
 
 # 2.0.0-internal.3.0.0

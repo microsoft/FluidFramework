@@ -28,7 +28,6 @@ export { SummarizerHandle } from "./summarizerHandle";
 export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics";
 export {
 	IConnectableRuntime,
-	IConnectableRuntime2,
 	IGeneratedSummaryStats,
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOptions,
