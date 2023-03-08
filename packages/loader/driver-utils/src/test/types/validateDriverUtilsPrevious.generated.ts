@@ -1228,23 +1228,11 @@ use_old_FunctionDeclaration_streamObserver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForConnectedState": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_waitForConnectedState": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_waitForConnectedState():
-    TypeOnly<typeof old.waitForConnectedState>;
-declare function use_current_FunctionDeclaration_waitForConnectedState(
-    use: TypeOnly<typeof current.waitForConnectedState>);
-use_current_FunctionDeclaration_waitForConnectedState(
-    get_old_FunctionDeclaration_waitForConnectedState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForConnectedState": {"backCompat": false}
+* "RemovedFunctionDeclaration_waitForConnectedState": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_waitForConnectedState():
-    TypeOnly<typeof current.waitForConnectedState>;
-declare function use_old_FunctionDeclaration_waitForConnectedState(
-    use: TypeOnly<typeof old.waitForConnectedState>);
-use_old_FunctionDeclaration_waitForConnectedState(
-    get_current_FunctionDeclaration_waitForConnectedState());

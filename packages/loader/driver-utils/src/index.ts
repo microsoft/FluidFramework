@@ -35,7 +35,7 @@ export {
 	RetryableError,
 	ThrottlingError,
 } from "./network";
-export { logNetworkFailure, waitForConnectedState } from "./networkUtils";
+export { logNetworkFailure } from "./networkUtils";
 export {
 	emptyMessageStream,
 	ParallelRequests,

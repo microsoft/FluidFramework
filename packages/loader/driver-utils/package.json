@@ -135,6 +135,10 @@
 			"RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_waitForConnectedState": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
