@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import * as child_process from "child_process";
+import detectIndent from "detect-indent";
 import fs from "fs";
 import { pathExistsSync } from "fs-extra";
 import merge from "lodash.merge";
@@ -276,7 +277,7 @@ export const handlers: Handler[] = [
 				json.homepage = homepage;
 			}
 
-			writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
+			writeFile(file, JSON.stringify(sortPackageJson(json), undefined, "\t") + newline);
 
 			return { resolved: resolved };
 		},
@@ -554,6 +555,7 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file, root) => {
 			let json;
+			const indentation = detectIndent(file).indent || "\t";
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -580,7 +582,7 @@ export const handlers: Handler[] = [
 					}
 				}
 
-				writeFile(file, JSON.stringify(json, undefined, 2) + newline);
+				writeFile(file, JSON.stringify(json, undefined, indentation) + newline);
 			}
 			return { resolved: resolved };
 		},
@@ -638,6 +640,7 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file) => {
 			let json;
+			const indentation = detectIndent(file).indent || "\t";
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -650,7 +653,10 @@ export const handlers: Handler[] = [
 
 			if (hasScriptsField) {
 				addPrettier(json);
-				writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
+				writeFile(
+					file,
+					JSON.stringify(sortPackageJson(json), undefined, indentation) + newline,
+				);
 			}
 
 			return { resolved: resolved };
