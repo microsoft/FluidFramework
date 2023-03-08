@@ -16,7 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run typetests:gen",
+		"build:compile": "concurrently npm:typetests:gen npm:tsc",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"clean": "rimraf dist *.tsbuildinfo *.build.log",

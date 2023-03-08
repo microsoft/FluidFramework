@@ -9609,6 +9609,7 @@ importers:
       chai: ^4.2.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
+      cross-env: ^7.0.2
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-chai-expect: ~3.0.0
@@ -9638,6 +9639,7 @@ importers:
       chai: 4.3.7
       concurrently: 6.3.0
       copyfiles: 2.4.1
+      cross-env: 7.0.3
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
