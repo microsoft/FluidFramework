@@ -352,7 +352,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 		this.indexWithinChunk = 0;
 	}
 
-	public fork(): Cursor {
+	public override fork(): Cursor {
 		// Siblings arrays are not modified during navigation and do not need be be copied.
 		// This allows this copy to be shallow, and `this.siblings` below to not be copied as all.
 		return new Cursor(
