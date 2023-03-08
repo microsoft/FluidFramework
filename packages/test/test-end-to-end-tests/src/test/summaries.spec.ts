@@ -6,12 +6,11 @@
 import { strict as assert } from "assert";
 
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluidframework/common-utils";
 import {
 	AttachState,
 	IContainer,
 	IContainerContext,
-	LoaderHeader,
 } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
@@ -192,7 +191,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 	it.only("sample use for customized containerRuntimeWithBlob", async () => {
 		const blobContents = "sample payload";
-		// sample API
+		
+		// sample API to load a containerRuntime which has extra blob in the summary
 		async function containerRuntimeWithBlob(params: IContainerRuntimeParams) {
 			// Blob path in container snapshots
 			const path = ["loop", "guestComponents"];
@@ -226,12 +226,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			};
 		};
 
-		async function loadContainer(summaryVersion: string) {
-			return provider.loadTestContainer(testContainerConfig, {
-				[LoaderHeader.version]: summaryVersion,
-			});
-		}
-
 		const runtimeWithBlob = await containerRuntimeWithBlob({
 			context: getMockContext() as IContainerContext,
 			registryEntries: [],
@@ -240,39 +234,17 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			containerScope: {},
 		});
 
-		const summarizer = await createSummarizer(provider);
-		(summarizer as any).containerRuntime = runtimeWithBlob;
+		await provider.ensureSynchronized();
 
-		const result: ISummarizeResults = summarizer.summarizeOnDemand({ reason: "test" });
+		const result = await runtimeWithBlob.summarize({
+			runGC: false,
+			fullTree: false,
+			trackState: false,
+			summaryLogger: new TelemetryNullLogger(),
+		});
+		const blob = result.summary.tree.loop as ISummaryBlob;
 
-		const submitResult = await result.summarySubmitted;
-		assert(submitResult.success, "on-demand summary should submit");
-		assert(
-			submitResult.data.stage === "submit",
-			"on-demand summary submitted data stage should be submit",
-		);
-		assert(submitResult.data.summaryTree !== undefined, "summary tree should exist");
-
-		const broadcastResult = await result.summaryOpBroadcasted;
-		assert(broadcastResult.success, "summary op should be broadcast");
-
-		const ackNackResult = await result.receivedSummaryAckOrNack;
-		assert(ackNackResult.success, "summary op should be acked");
-		
-		const version = ackNackResult.data.summaryAckOp.contents.handle;
-		const container = await loadContainer(version);
-		const defaultDataStore = await requestFluidObject<ITestDataObject>(
-			container,
-			defaultDataStoreId,
-		);
-		const blobHandle = await defaultDataStore._runtime.uploadBlob(
-			stringToBuffer(blobContents, "utf-8"),
-		);
-		defaultDataStore._root.set("blob1", blobHandle);
-		const response = await container.request({ url: blobHandle.absolutePath });
-		const content = bufferToString(response.value, "utf8");
-		
-		assert.strictEqual(content, blobContents, "blob has the wrong content");
+		assert.strictEqual(blob.content, blobContents, "blob has the wrong content");
 		await flushPromises();
 	});
 
