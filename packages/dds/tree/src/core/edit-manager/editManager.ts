@@ -359,7 +359,7 @@ export class EditManager<
 	): [commit: GraphCommit<TChangeset>, commitsAfter: GraphCommit<TChangeset>[]] {
 		const commits: GraphCommit<TChangeset>[] = [];
 		const commit = findAncestor([this.localBranch, commits], (c) => c.revision === revision);
-		assert(commit !== undefined, "Expected local branch to contain revision");
+		assert(commit !== undefined, 0x599 /* Expected local branch to contain revision */);
 		return [commit, commits];
 	}
 

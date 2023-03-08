@@ -313,7 +313,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 			inverse.changes = invertChild(change.changes, 0);
 		}
 		if (change.value !== undefined) {
-			assert(revision !== undefined, "Unable to revert to undefined revision");
+			assert(revision !== undefined, 0x591 /* Unable to revert to undefined revision */);
 			inverse.value = { revert: reviver(revision, 0, 1)[0] };
 		}
 		return inverse;
@@ -523,7 +523,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		if (fieldChange !== undefined) {
 			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
 			if (!fieldChange.wasEmpty) {
-				assert(revision !== undefined, "Unable to revert to undefined revision");
+				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0] };
 			}
 		}

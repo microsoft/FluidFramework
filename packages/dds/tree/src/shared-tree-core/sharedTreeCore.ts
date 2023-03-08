@@ -322,7 +322,7 @@ export class SharedTreeCore<
 				);
 				assert(
 					ancestor === localBranchHead,
-					"Expected merging checkout branches to be related",
+					0x598 /* Expected merging checkout branches to be related */,
 				);
 				for (const { change } of changes) {
 					this.applyChange(change);
