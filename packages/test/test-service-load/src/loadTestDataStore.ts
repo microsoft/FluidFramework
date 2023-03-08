@@ -670,6 +670,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				},
 				error,
 			);
+			throw error;
 		} finally {
 			dataModel.printStatus();
 		}
