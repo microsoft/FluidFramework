@@ -174,7 +174,7 @@ export class ModularChangeFamily
 
 		assert(
 			crossFieldTable.fieldsToUpdate.size === 0,
-			"Should not need more than one amend pass.",
+			0x59b /* Should not need more than one amend pass. */,
 		);
 		return makeModularChangeset(composedFields, maxId, revInfos);
 	}
@@ -324,7 +324,7 @@ export class ModularChangeFamily
 
 		assert(
 			crossFieldTable.fieldsToUpdate.size === 0,
-			"Should not need more than one amend pass.",
+			0x59c /* Should not need more than one amend pass. */,
 		);
 
 		const revInfo = change.change.revisions;
@@ -416,9 +416,12 @@ export class ModularChangeFamily
 				!("revert" in change.change.valueChange),
 				0x4a9 /* Inverting inverse changes is currently not supported */,
 			);
-			assert(path !== undefined, "Only existing nodes can have their value restored");
+			assert(
+				path !== undefined,
+				0x59d /* Only existing nodes can have their value restored */,
+			);
 			const revision = change.change.valueChange.revision ?? change.revision;
-			assert(revision !== undefined, "Unable to revert to undefined revision");
+			assert(revision !== undefined, 0x59e /* Unable to revert to undefined revision */);
 			inverse.valueChange = { value: repairStore.getValue(revision, path) };
 		}
 
@@ -475,7 +478,7 @@ export class ModularChangeFamily
 
 		assert(
 			crossFieldTable.fieldsToUpdate.size === 0,
-			"Should not need more than one amend pass.",
+			0x59f /* Should not need more than one amend pass. */,
 		);
 
 		return makeModularChangeset(rebasedFields, maxId, change.revisions);
@@ -617,7 +620,7 @@ export class ModularChangeFamily
 function revisionHelperFromInfo(revInfos: readonly RevisionInfo[]): RevisionHelper {
 	const getIndex = (tag: RevisionTag): number => {
 		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
-		assert(index !== -1, "Unable to index unknown revision");
+		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
 		return index;
 	};
 	const getInfo = (tag: RevisionTag): RevisionInfo => {

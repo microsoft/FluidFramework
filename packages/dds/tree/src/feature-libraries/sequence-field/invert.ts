@@ -102,7 +102,7 @@ function invertMark<TNodeChange>(
 				];
 			}
 			case "Delete": {
-				assert(revision !== undefined, "Unable to revert to undefined revision");
+				assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 				return [
 					{
 						type: "Revive",

@@ -51,11 +51,6 @@ describe("DeltaUtils", () => {
 							fields: nestedCursorInsert,
 						},
 						{
-							type: Delta.MarkType.MoveInAndModify,
-							moveId,
-							fields: nestedCursorInsert,
-						},
-						{
 							type: Delta.MarkType.ModifyAndDelete,
 							moveId,
 							fields: nestedCursorInsert,
@@ -117,11 +112,6 @@ describe("DeltaUtils", () => {
 							type: Delta.MarkType.ModifyAndMoveOut,
 							moveId,
 							setValue: 1,
-							fields: nestedMapTreeInsert,
-						},
-						{
-							type: Delta.MarkType.MoveInAndModify,
-							moveId,
 							fields: nestedMapTreeInsert,
 						},
 						{
