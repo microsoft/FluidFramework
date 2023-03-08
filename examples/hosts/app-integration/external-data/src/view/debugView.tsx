@@ -7,7 +7,7 @@ import isEqual from "lodash.isequal";
 import React, { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel, TaskData, TaskListData } from "../model-interface";
+import type { IAppModel, TaskData } from "../model-interface";
 
 /**
  * Helper function used in several of the views to fetch data form the external app
@@ -30,10 +30,10 @@ async function pollForServiceUpdates(
 		);
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
-		const newData = responseBody.taskList as TaskListData;
-		if (newData !== undefined && !isEqual(newData[taskListId], externalData)) {
+		const newData = responseBody.taskList as TaskData;
+		if (newData !== undefined && !isEqual(newData, externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
-			setExternalData(newData[taskListId]);
+			setExternalData(newData);
 		}
 	} catch (error) {
 		console.error("APP: An error was encountered while polling external data:", error);
@@ -267,13 +267,13 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 			};
 		}
 		try {
-			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
+			await fetch(`http://localhost:${externalDataServicePort}/set-tasks/${taskListId}`, {
 				method: "POST",
 				headers: {
 					"Access-Control-Allow-Origin": "*",
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ taskList: { [taskListId]: formattedTasks } }),
+				body: JSON.stringify({ taskList: formattedTasks }),
 			});
 		} catch (error) {
 			console.error(`Task list submition failed due to an error:\n${error}`);

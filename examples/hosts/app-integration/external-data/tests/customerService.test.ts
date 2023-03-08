@@ -79,7 +79,7 @@ describe("mock-customer-service", () => {
 		try {
 			// Update external data
 			const dataUpdateResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/set-tasks`,
+				`http://localhost:${externalDataServicePort}/set-tasks/task-list-UUID`,
 				{
 					method: "POST",
 					headers: {

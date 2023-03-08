@@ -9,22 +9,23 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { assertValidTaskListData, TaskListData } from "../model-interface";
-import { ClientManager } from "../utilities";
+import { assertValidTaskData, TaskData } from "../model-interface";
+import { ClientManager, ExternalTaskListId } from "../utilities";
 
 /**
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	data: TaskListData,
+	taskData: TaskData,
 	fluidServiceUrl: string,
 	containerUrl: string,
+	taskListId: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	const messageBody = JSON.stringify({ data, containerUrl });
+	const messageBody = JSON.stringify({ taskData, containerUrl, taskListId });
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -109,7 +110,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * Client manager for managing clients session to resourse on external data service.
 	 */
-	const clientManager = new ClientManager<TaskListData>();
+	const clientManager = new ClientManager<TaskData>();
 
 	const expressApp = express();
 	expressApp.use(express.json());
@@ -132,7 +133,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *		taskList: {
 	 *			[id: string]: {
 	 *				name: string,
-	 * 				priority: number
+	 *				priority: number
 	 *			}
 	 *		}
 	 *	}
@@ -142,16 +143,18 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 */
 	expressApp.post("/external-data-webhook", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const messageData = request.body?.data as unknown;
+		const taskListId = request.body?.taskListId as ExternalTaskListId;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		const messageData = request.body?.data as TaskData;
 		if (messageData === undefined) {
 			const errorMessage =
 				'No data provided by external data service webhook. Expected under "data" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskListData: TaskListData;
+			let taskData: TaskData;
 			try {
-				taskListData = assertValidTaskListData(messageData);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);
@@ -159,8 +162,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
-			// Retrieve exact Fluid session address for taskList
-			const taskListId = Object.keys(taskListData.taskList)[0];
 			const containerUrls = clientManager.getClientSessions(taskListId);
 
 			console.log(
@@ -169,7 +170,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				),
 			);
 			for (const containerUrl of containerUrls) {
-				echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
+				echoExternalDataWebhookToFluid(taskData, fluidServiceUrl, containerUrl, taskListId);
 			}
 			result.send();
 		}
@@ -183,12 +184,10 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * ```json
 	 * {
 	 *		taskList: {
-	 * 			[ taskListId: string]: {
-	 *      		[id: string]: {
-	 *      	    	name: string,
-	 *      	    	priority: number
-	 *      		}
-	 * 			}
+	 *     		[id: string]: {
+	 *     	    	name: string,
+	 *          	priority: number
+	 *      	}
 	 *  	}
 	 * }
 	 * ```

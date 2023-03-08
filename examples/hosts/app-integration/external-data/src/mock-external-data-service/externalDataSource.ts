@@ -7,6 +7,7 @@ import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
 import { TaskListData, TaskData } from "../model-interface";
+import { ExternalTaskListId } from "../utilities";
 
 const taskList1: TaskData = {
 	12: {
@@ -82,7 +83,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @remarks This is async to simulate the more-realistic scenario of a network request.
 	 */
 	public async fetchData(taskListId: string): Promise<Response> {
-		const jsonData = { taskList: { [taskListId]: this.data[taskListId] } };
+		const jsonData = { taskList: this.data[taskListId] };
 		return new Response(JSON.stringify(jsonData), {
 			status: 200,
 			statusText: "OK",
@@ -95,10 +96,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @param data - The string data to write.
 	 * @returns A promise that resolves when the write completes.
 	 */
-	public async writeData(data: TaskListData): Promise<Response> {
-		for (const taskListId of Object.keys(data)) {
-			this.data[taskListId] = data[taskListId];
-		}
+	public async writeData(data: TaskData, taskListId: ExternalTaskListId): Promise<Response> {
+		this.data[taskListId] = data;
 
 		// Emit for debug views to update
 		this.emit("debugDataWritten", this.data);

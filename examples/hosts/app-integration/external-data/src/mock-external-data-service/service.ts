@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskListData, TaskData, TaskListData } from "../model-interface";
+import { assertValidTaskData, TaskData } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -135,7 +135,6 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * ```
 	 */
 	expressApp.get("/fetch-tasks/:taskListId", (request, result) => {
-		console.log(request.params);
 		const taskListId = request.params?.taskListId;
 		if (taskListId === undefined) {
 			result.status(400).json({ message: "Missing parameter taskListId in request url" });
@@ -147,10 +146,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					unknown
 				>;
 
-				let taskListData: TaskListData;
+				let taskData: TaskData;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskListData = assertValidTaskListData((responseBody as any).taskList);
+					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
@@ -158,9 +157,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					return;
 				}
 
-				console.log(formatLogMessage("Returning current task list:"), taskListData);
+				console.log(formatLogMessage("Returning current task list:"), taskData);
 
-				result.send({ taskList: taskListData });
+				result.send({ taskList: taskData });
 			},
 			(error) => {
 				console.error(
@@ -177,11 +176,13 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskListData}.
+	 * Expected input data format: {@link TaskData}.
 	 */
-	expressApp.post("/set-tasks/", (request, result) => {
-		console.log("request.body");
-		console.log(request.body);
+	expressApp.post("/set-tasks/:taskListId", (request, result) => {
+		const taskListId = request.params?.taskListId;
+		if (taskListId === undefined) {
+			result.status(400).json({ message: "Missing parameter taskListId in request url" });
+		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
 		console.log("messageData");
@@ -191,16 +192,16 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskListData: TaskListData;
+			let taskData: TaskData;
 			try {
-				taskListData = assertValidTaskListData(messageData);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskListData).then(
+			externalDataSource.writeData(taskData, taskListId).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();

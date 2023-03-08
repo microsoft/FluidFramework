@@ -16,7 +16,7 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskList,
-	TaskListData,
+	TaskData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import { customerServicePort } from "../mock-customer-service-interface";
@@ -242,11 +242,8 @@ export class TaskList extends DataObject implements ITaskList {
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody.taskList as TaskListData;
-			// TODO: do some check to ensure that the requested taskListId matches the
-			// returned taskList id.
-
-			incomingExternalData = Object.entries(data[taskListId]);
+			const data = responseBody?.taskList as TaskData;
+			incomingExternalData = Object.entries(data);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {
 			console.error(`Task list fetch failed due to an error:\n${error}`);
@@ -465,7 +462,7 @@ export class TaskList extends DataObject implements ITaskList {
  * scenario, the fourth argument is not used.
  */
 export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
-	"task-list-1",
+	"task-list",
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},

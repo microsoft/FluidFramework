@@ -169,4 +169,4 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// readonly handleExternalMessage: (message) => void;
 }
 
-export { assertValidTaskListData, TaskData, TaskListData } from "./TaskData";
+export { assertValidTaskData, TaskData, TaskListData } from "./TaskData";

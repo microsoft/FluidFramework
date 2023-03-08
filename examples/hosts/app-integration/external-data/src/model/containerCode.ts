@@ -25,12 +25,10 @@ const SignalType = {
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
 export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-	private readonly _taskListId: string;
-	public constructor(taskListId: string) {
+	public constructor(private readonly taskListId: string) {
 		super(
 			new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
 		);
-		this._taskListId = taskListId;
 	}
 
 	/**
@@ -38,7 +36,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskList = await runtime.createDataStore(TaskListInstantiationFactory.type);
-		await taskList.trySetAlias(this._taskListId);
+		await taskList.trySetAlias(this.taskListId);
 	}
 
 	/**
@@ -60,7 +58,7 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 		container: IContainer,
 	): Promise<AppModel> {
 		const taskList = await requestFluidObject<ITaskList>(
-			await runtime.getRootDataStore(this._taskListId),
+			await runtime.getRootDataStore(this.taskListId),
 			"",
 		);
 		// Register listener only once the model is fully loaded and ready
