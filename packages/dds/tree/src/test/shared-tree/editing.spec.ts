@@ -5,8 +5,8 @@
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
-import { JsonCompatible } from "../../util";
-import { rootFieldKeySymbol } from "../../core";
+import { brand, JsonCompatible } from "../../util";
+import { rootFieldKeySymbol, UpPath } from "../../core";
 import { fakeRepair } from "../utils";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
@@ -233,6 +233,45 @@ describe("Editing", () => {
 			tree2.receive(sequenced);
 
 			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
+		});
+
+		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
+		it.skip("intra-field move", () => {
+			const sequencer = new Sequencer();
+			const tree1 = TestTree.fromJson(["a", "b"]);
+
+			const change = tree1.runTransaction((forest, editor) => {
+				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
+				rootField.move(0, 1, 1);
+			});
+
+			const seqChange = sequencer.sequence(change);
+			tree1.receive(seqChange);
+
+			expectJsonTree(tree1, ["b", "a"]);
+		});
+
+		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
+		it.skip("move under move-out", () => {
+			const sequencer = new Sequencer();
+			const tree1 = TestTree.fromJson([{ foo: ["a", "b"] }, "x"]);
+
+			const change = tree1.runTransaction((forest, editor) => {
+				const node1: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+				const fooField = editor.sequenceField(node1, brand("foo"));
+				fooField.move(0, 1, 1);
+				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
+				rootField.move(0, 1, 1);
+			});
+
+			const seqChange = sequencer.sequence(change);
+			tree1.receive(seqChange);
+
+			expectJsonTree(tree1, ["x", { foo: ["b", "a"] }]);
 		});
 	});
 });
