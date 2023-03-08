@@ -12,6 +12,7 @@ import {
 	TelemetryEventMessage,
 } from "@fluid-tools/client-debugger";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
+import { _TelemetryView } from "@fluid-tools/client-debugger-view";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel:Telemetry)";
@@ -59,52 +60,5 @@ export function TelemetryView(): React.ReactElement {
 		};
 	}, [messageRelay, telemetryEvents, setTelemetryEvents]);
 
-	function mapEventCategoryToBackgroundColor(eventCategory: string): string {
-		switch (eventCategory) {
-			case "generic":
-				return "#b8ebf2";
-			case "performance":
-				return "#4cf5a3";
-			case "error":
-				return "#f54c4f";
-			default:
-				return "#d2d3d4";
-		}
-	}
-
-	function replacer(key, value): unknown {
-		// Filtering out properties
-		if (key === "eventName" || key === "category") {
-			return undefined;
-		}
-		return value;
-	}
-
-	return (
-		<div>
-			<h3>Telemetry events (newest first):</h3>
-			<ul>
-				{telemetryEvents.map((message) => (
-					<div
-						style={{
-							border: "1px solid black",
-							backgroundColor: mapEventCategoryToBackgroundColor(message.category),
-							padding: "5px",
-						}}
-					>
-						<h4 style={{ margin: "0px" }}>
-							EventName: {message.eventName}
-							<br />
-							Category: {message.category}
-							<br />
-							ContainerId: {message.containerId} ({message.clientType})
-							<br />
-							DocumentId: {message.docId}
-						</h4>
-						<p>{JSON.stringify(message, replacer, "  ")}</p>
-					</div>
-				))}
-			</ul>
-		</div>
-	);
+	return <_TelemetryView telemetryEvents={telemetryEvents}></_TelemetryView>;
 }
