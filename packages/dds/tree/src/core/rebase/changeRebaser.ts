@@ -52,10 +52,10 @@ export interface ChangeRebaser<TChangeset> {
 
 	/**
 	 * @param changes - The changes to invert.
-	 * @param repairStore - The store to query for repair data.
-	 * If undefined, dummy data will be created instead.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
+	 * @param repairStore - The store to query for repair data.
+	 * If undefined, dummy data will be created instead.
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
