@@ -230,7 +230,6 @@ declare namespace Delta {
         MoveOut,
         ModifyAndMoveOut,
         MoveIn,
-        MoveInAndModify,
         Insert,
         InsertAndModify,
         MoveId,
@@ -617,12 +616,19 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {
 // @alpha
 export interface ISharedTreeCheckout extends AnchorLocator {
     readonly context: EditableTreeContext;
+    readonly editor: IDefaultEditBuilder;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeCheckoutFork;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     runTransaction(transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult): TransactionResult;
     readonly storedSchema: StoredSchemaRepository;
+    readonly transaction: {
+        start: () => void;
+        commit: () => void;
+        abort: () => void;
+        inProgress(): boolean;
+    };
 }
 
 // @alpha
@@ -755,7 +761,7 @@ export interface MakeNominal {
 }
 
 // @alpha
-type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | MoveInAndModify<TTree> | InsertAndModify<TTree>;
+type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | InsertAndModify<TTree>;
 
 // @alpha
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
@@ -775,11 +781,10 @@ const MarkType: {
     readonly Insert: 1;
     readonly InsertAndModify: 2;
     readonly MoveIn: 3;
-    readonly MoveInAndModify: 4;
-    readonly Delete: 5;
-    readonly ModifyAndDelete: 6;
-    readonly MoveOut: 7;
-    readonly ModifyAndMoveOut: 8;
+    readonly Delete: 4;
+    readonly ModifyAndDelete: 5;
+    readonly MoveOut: 6;
+    readonly ModifyAndMoveOut: 7;
 };
 
 // @alpha
@@ -871,15 +876,6 @@ interface MoveIn {
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveIn;
-}
-
-// @alpha
-interface MoveInAndModify<TTree = ProtoNode> {
-    // (undocumented)
-    readonly fields: FieldMarks<TTree>;
-    readonly moveId: MoveId;
-    // (undocumented)
-    readonly type: typeof MarkType.MoveInAndModify;
 }
 
 // @alpha

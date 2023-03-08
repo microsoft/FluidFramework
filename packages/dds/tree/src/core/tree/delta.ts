@@ -151,7 +151,6 @@ export type Mark<TTree = ProtoNode> =
 	| Insert<TTree>
 	| ModifyAndDelete<TTree>
 	| ModifyAndMoveOut<TTree>
-	| MoveInAndModify<TTree>
 	| InsertAndModify<TTree>;
 
 /**
@@ -241,20 +240,6 @@ export interface MoveIn {
 }
 
 /**
- * Describes the moving in of a single node.
- * Includes descriptions of the modifications made to the node.
- * @alpha
- */
-export interface MoveInAndModify<TTree = ProtoNode> {
-	readonly type: typeof MarkType.MoveInAndModify;
-	/**
-	 * The delta should carry exactly one `MoveOut` mark with the same move ID.
-	 */
-	readonly moveId: MoveId;
-	readonly fields: FieldMarks<TTree>;
-}
-
-/**
  * Describes the insertion of a contiguous range of node.
  * @alpha
  */
@@ -300,9 +285,8 @@ export const MarkType = {
 	Insert: 1,
 	InsertAndModify: 2,
 	MoveIn: 3,
-	MoveInAndModify: 4,
-	Delete: 5,
-	ModifyAndDelete: 6,
-	MoveOut: 7,
-	ModifyAndMoveOut: 8,
+	Delete: 4,
+	ModifyAndDelete: 5,
+	MoveOut: 6,
+	ModifyAndMoveOut: 7,
 } as const;
