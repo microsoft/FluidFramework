@@ -196,7 +196,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		assert(ackNackResult.success, "summary op should be acked");
 	});
 
-	it.only("sample use for customized containerRuntimeWithBlob", async () => {
+	it("sample use for customized containerRuntimeWithBlob", async () => {
 		const blobContents = "sample payload";
 
 		// sample API to load a containerRuntime which has extra blob in the summary
