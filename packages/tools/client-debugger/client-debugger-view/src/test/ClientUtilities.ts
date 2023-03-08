@@ -49,7 +49,7 @@ export interface ContainerInfo {
 function initializeTinyliciousClient(): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
 	return new TinyliciousClient({
-		logger: FluidDebuggerLogger.create(""),
+		logger: FluidDebuggerLogger.create(),
 	});
 }
 

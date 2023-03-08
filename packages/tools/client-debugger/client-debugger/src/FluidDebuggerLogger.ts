@@ -32,7 +32,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	 * @param properties - Base properties to add to all events
 	 */
 	public static create(
-		namespace: string,
+		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		return new FluidDebuggerLogger(namespace, properties);
@@ -46,7 +46,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	 * @param properties - Base properties to add to all events
 	 */
 	public static mixinLogger(
-		namespace: string,
+		namespace?: string,
 		baseLogger?: ITelemetryBaseLogger,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
@@ -73,7 +73,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 		return undefined;
 	}
 
-	private constructor(namespace: string, properties?: ITelemetryLoggerPropertyBags) {
+	private constructor(namespace?: string, properties?: ITelemetryLoggerPropertyBags) {
 		super(namespace, properties);
 	}
 

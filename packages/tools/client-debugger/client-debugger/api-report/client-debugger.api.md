@@ -104,8 +104,8 @@ export interface FluidClientDebuggerProps {
 
 // @internal @sealed
 export class FluidDebuggerLogger extends TelemetryLogger {
-    static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }
 
