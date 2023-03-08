@@ -8,31 +8,35 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";
 import { appSchemaData, ClientTreeProxy } from "./schema";
 
+// Key used to store/retrieve the SharedTree instance within the root SharedMap.
+const treeKey = "treeKey";
+
 export class Bubblebench extends DataObject {
 	public static get Name() {
 		return "@fluid-example/bubblebench-sharedtree";
 	}
+
 	private _tree: ISharedTree | undefined;
 	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
-		this.maybeTree = this.runtime.createChannel(
+		this._tree = this.runtime.createChannel(
 			/* id: */ undefined,
 			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this.initializeTree(this.maybeTree);
+		this.initializeTree(this.tree);
 
-		this.root.set("tree", this.maybeTree.handle);
+		this.root.set(treeKey, this.tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.maybeTree = await this.root.get<IFluidHandle<ISharedTree>>("tree")!.get();
+		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
 	}
 
 	protected async hasInitialized() {
-		this.maybeAppState = new AppState(
+		this._appState = new AppState(
 			this.tree.root as ClientTreeProxy[] & EditableField,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
@@ -72,7 +76,7 @@ export class Bubblebench extends DataObject {
 	 * Cannot be accessed until after initialization has complected.
 	 */
 	private get tree(): ISharedTree {
-		return this.maybeTree ?? fail("not initialized");
+		return this._tree ?? fail("not initialized");
 	}
 
 	/**
@@ -80,7 +84,7 @@ export class Bubblebench extends DataObject {
 	 * Cannot be accessed until after initialization has complected.
 	 */
 	public get appState(): AppState {
-		return this.maybeAppState ?? fail("not initialized");
+		return this._appState ?? fail("not initialized");
 	}
 }
 
