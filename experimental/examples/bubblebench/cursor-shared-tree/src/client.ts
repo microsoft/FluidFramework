@@ -5,12 +5,8 @@
 import { IClient } from "@fluid-example/bubblebench-common";
 import { Anchor, brand, FieldKey, ISharedTree } from "@fluid-internal/tree";
 import { Bubble } from "./bubble";
-// eslint-disable-next-line import/no-internal-modules
 import { bubbleSchema, numberSchema } from "./schema";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeNodeHelper } from "./tree-utils/sharedTreeNodeHelper";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeSequenceHelper } from "./tree-utils/sharedTreeSequenceHelper";
+import { SharedTreeNodeHelper, SharedTreeSequenceHelper } from "./tree-utils";
 
 export class Client implements IClient {
     static clientIdFieldKey: FieldKey = brand("clientId");

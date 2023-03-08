@@ -11,8 +11,7 @@ import {
     numberSchema,
     stringSchema,
 } from "./schema";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeSequenceHelper } from "./tree-utils/sharedTreeSequenceHelper";
+import { SharedTreeSequenceHelper } from "./tree-utils";
 
 export class AppState implements IAppState {
     readonly clientsSequenceHelper: SharedTreeSequenceHelper;

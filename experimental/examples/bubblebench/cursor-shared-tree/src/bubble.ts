@@ -4,8 +4,7 @@
  */
 import { IBubble } from "@fluid-example/bubblebench-common";
 import { Anchor, brand, FieldKey, ISharedTree } from "@fluid-internal/tree";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedTreeNodeHelper } from "./tree-utils/sharedTreeNodeHelper";
+import { SharedTreeNodeHelper } from "./tree-utils";
 
 export class Bubble implements IBubble {
     static xFieldKey: FieldKey = brand("x");

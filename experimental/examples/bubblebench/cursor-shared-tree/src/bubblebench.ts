@@ -13,7 +13,6 @@ import {
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";
-// eslint-disable-next-line import/no-internal-modules
 import { appStateSchema, appStateSchemaData } from "./schema";
 
 export class Bubblebench extends DataObject {
