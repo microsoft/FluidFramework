@@ -66,8 +66,6 @@ export class EditManager<
 
 	private minimumSequenceNumber: number = -1;
 
-	public readonly computationName: string = "EditManager";
-
 	private readonly rebaser: Rebaser<TChangeset>;
 
 	/**
@@ -88,7 +86,7 @@ export class EditManager<
 		public readonly localSessionId: SessionId,
 		public readonly anchors?: AnchorSet,
 	) {
-		super();
+		super("EditManager");
 		this.rebaser = new Rebaser(changeFamily.rebaser);
 		this.trunkBase = {
 			revision: nullRevisionTag,
