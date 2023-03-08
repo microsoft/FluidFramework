@@ -6926,7 +6926,6 @@ importers:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/build-cli': 0.11.0-135362
-      '@fluidframework/attributor-previous': npm:@fluidframework/attributor@2.0.0-internal.3.2.0
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/common-utils': ^1.1.1
@@ -6976,7 +6975,6 @@ importers:
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli': 0.11.0-135362
-      '@fluidframework/attributor-previous': /@fluidframework/attributor/2.0.0-internal.3.2.0
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
