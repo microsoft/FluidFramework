@@ -1007,6 +1007,19 @@ describe("SharedTree", () => {
 					assert.equal(peekTestValue(checkout), undefined);
 				});
 
+				it("can nest", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "A");
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "B");
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B"]);
+					checkout.transaction.commit();
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B"]);
+					checkout.transaction.commit();
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B"]);
+				});
+
 				it("can span a checkout fork and merge", async () => {
 					const checkout = await checkoutFactory();
 					checkout.transaction.start();
@@ -1039,6 +1052,18 @@ describe("SharedTree", () => {
 						() => fork.transaction.commit(),
 						(e) => validateAssertionError(e, "No transaction is currently in progress"),
 					);
+				});
+
+				it("do not affect pre-existing forks", async () => {
+					const checkout = await checkoutFactory();
+					const fork = checkout.fork();
+					pushTestValueDirect(checkout, "A");
+					fork.transaction.start();
+					pushTestValueDirect(checkout, "B");
+					fork.transaction.abort();
+					pushTestValueDirect(checkout, "C");
+					fork.merge();
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B", "C"]);
 				});
 
 				it("can commit over a branch that pulls", async () => {
@@ -1075,6 +1100,53 @@ describe("SharedTree", () => {
 					checkout.forest.tryMoveCursorToNode(anchor, cursor);
 					assert.equal(cursor.value, "A");
 					cursor.clear();
+				});
+
+				it("can handle a complicated scenario", async () => {
+					const checkout = await checkoutFactory();
+					pushTestValueDirect(checkout, "A");
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "B");
+					pushTestValueDirect(checkout, "C");
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "D");
+					const fork = checkout.fork();
+					pushTestValueDirect(fork, "E");
+					fork.transaction.start();
+					pushTestValueDirect(fork, "F");
+					pushTestValueDirect(checkout, "G");
+					fork.transaction.commit();
+					pushTestValueDirect(fork, "H");
+					fork.transaction.start();
+					pushTestValueDirect(fork, "I");
+					fork.transaction.abort();
+					fork.merge();
+					pushTestValueDirect(checkout, "J");
+					checkout.transaction.start();
+					const fork2 = checkout.fork();
+					pushTestValueDirect(fork2, "K");
+					pushTestValue(fork2, "L");
+					fork2.merge();
+					checkout.transaction.abort();
+					pushTestValueDirect(checkout, "M");
+					checkout.transaction.commit();
+					pushTestValueDirect(checkout, "N");
+					checkout.transaction.commit();
+					pushTestValueDirect(checkout, "O");
+					assert.deepEqual([...getTestValues(checkout)].reverse(), [
+						"A",
+						"B",
+						"C",
+						"D",
+						"G",
+						"E",
+						"F",
+						"H",
+						"J",
+						"M",
+						"N",
+						"O",
+					]);
 				});
 			});
 		}
