@@ -42,6 +42,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.11.0-135362",
+		"@fluidframework/build-tools": "0.11.0-135362",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/view-interfaces-previous": "npm:@fluidframework/view-interfaces@2.0.0-internal.3.2.0",
