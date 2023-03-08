@@ -54,12 +54,13 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
 }
 
-// @public
+// @public @deprecated
 export abstract class BaseContainerService implements IFluidRouter {
+    // @deprecated
     constructor(runtime: IContainerRuntime);
-    // (undocumented)
+    // @deprecated (undocumented)
     get IFluidRouter(): this;
-    // (undocumented)
+    // @deprecated (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
     protected readonly runtime: IContainerRuntime;
@@ -75,7 +76,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
     protected readonly defaultFactory: IFluidDataStoreFactory;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type ContainerServiceRegistryEntries = Iterable<[
 string,
 (runtime: IContainerRuntime) => Promise<FluidObject>
@@ -107,7 +108,7 @@ export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, reque
 // @public
 export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
 
-// @public
+// @public @deprecated
 export const generateContainerServicesRequestHandler: (serviceRegistry: ContainerServiceRegistryEntries) => RuntimeRequestHandler;
 
 // @public
@@ -151,6 +152,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
     getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
+    // @deprecated
     protected getService<T extends FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
@@ -196,7 +198,7 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     readonly type: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const serviceRoutePathRoot = "_services";
 
 // @public @deprecated (undocumented)
