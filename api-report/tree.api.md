@@ -138,10 +138,7 @@ export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
 export interface CheckoutEvents {
-    // (undocumented)
     afterBatch(): void;
-    // (undocumented)
-    beforeBatch(): void;
 }
 
 // @alpha
@@ -641,8 +638,8 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {
 // @alpha
 export interface ISharedTreeCheckout extends AnchorLocator {
     readonly context: EditableTreeContext;
-    readonly events: ISubscribable<CheckoutEvents>;
     readonly editor: IDefaultEditBuilder;
+    readonly events: ISubscribable<CheckoutEvents>;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeCheckoutFork;
     get root(): UnwrappedEditableField;

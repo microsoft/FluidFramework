@@ -574,7 +574,6 @@ describe("SharedTree", () => {
 
 			const log: string[] = [];
 			const unsubscribe = root[on]("changed", () => log.push("change"));
-			const unsubscribeBefore = tree1.events.on("beforeBatch", () => log.push("before"));
 			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root[valueSymbol] = 5;
@@ -582,24 +581,21 @@ describe("SharedTree", () => {
 			root[valueSymbol] = 6;
 			log.push("unsubscribe");
 			unsubscribe();
-			unsubscribeBefore();
 			unsubscribeAfter();
 			log.push("editStart");
 			root[valueSymbol] = 7;
 
 			// TODO: once branches/transactions are properly integrated, duplicate events should no longer occur.
-			// TODO: before and after events are not produced in all cases yet.
+			// TODO: after events are not produced in all cases yet.
 			assert.deepEqual(log, [
 				"editStart",
 				"change",
 				"change",
-				"before",
 				"change",
 				"after",
 				"editStart",
 				"change",
 				"change",
-				"before",
 				"change",
 				"after",
 				"unsubscribe",

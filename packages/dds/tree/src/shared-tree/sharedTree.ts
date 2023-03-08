@@ -47,16 +47,16 @@ import { IEmitter, ISubscribable, createEmitter } from "../events";
 
 /**
  * Events for {@link ISharedTreeCheckout}.
- * When these events are triggered, the checkout is in a consistent state.
- *
- * @remarks
- * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
- *
  * @alpha
  */
 export interface CheckoutEvents {
-	beforeBatch(): void;
-
+	/**
+	 * A batch of changes has finished processing and the checkout is in a consistent state.
+	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 *
+	 * @remarks
+	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
+	 */
 	afterBatch(): void;
 }
 
@@ -217,7 +217,7 @@ class SharedTree
 	extends SharedTreeCore<
 		DefaultEditBuilder,
 		DefaultChangeset,
-		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
+		readonly [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
 	>
 	implements ISharedTree
 {
@@ -244,11 +244,15 @@ class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
 		super(
-			(events, editManager) => [
-				new SchemaIndex(runtime, events, schema),
-				new ForestIndex(runtime, events, forest),
-				new EditManagerIndex(runtime, editManager),
-			],
+			(events, editManager) => {
+				const indexes = [
+					new SchemaIndex(runtime, events, schema),
+					new ForestIndex(runtime, events, forest),
+					new EditManagerIndex(runtime, editManager),
+				] as const;
+				events.on("newLocalState", () => this.events.emit("afterBatch"));
+				return indexes;
+			},
 			defaultChangeFamily,
 			anchors,
 			id,
@@ -323,19 +327,8 @@ class SharedTree
 		localOpMetadata: unknown,
 	) {
 		if (!this.storedSchema.tryHandleOp(message)) {
-			this.events.emit("beforeBatch");
 			super.processCore(message, local, localOpMetadata);
-			this.events.emit("afterBatch");
 		}
-	}
-
-	/**
-	 * @override
-	 */
-	protected submitEdit(edit: DefaultChangeset): void {
-		this.events.emit("beforeBatch");
-		super.submitEdit(edit);
-		this.events.emit("afterBatch");
 	}
 }
 
@@ -387,7 +380,6 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.context = getEditableTreeContext(forest, this);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
-			this.events.emit("beforeBatch");
 			this.forest.applyDelta(delta);
 			this.events.emit("afterBatch");
 		});
