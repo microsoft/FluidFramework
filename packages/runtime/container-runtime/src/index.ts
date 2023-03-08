@@ -35,7 +35,6 @@ export {
 	IPendingLocalState,
 	IPendingMessage,
 	IPendingState,
-	PendingStateManager,
 } from "./pendingStateManager";
 export {
 	IAckedSummary,
@@ -80,4 +79,3 @@ export {
 	ICancellableSummarizerController,
 } from "./summary";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle";
-export { DataStores } from "./dataStores";
