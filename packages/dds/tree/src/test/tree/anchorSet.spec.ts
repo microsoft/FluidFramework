@@ -5,7 +5,16 @@
 
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
-import { Anchor, AnchorSet, Delta, FieldKey, JsonableTree, UpPath, clonePath } from "../../core";
+import {
+	Anchor,
+	AnchorSet,
+	Delta,
+	FieldKey,
+	JsonableTree,
+	UpPath,
+	clonePath,
+	rootFieldKeySymbol,
+} from "../../core";
 import { brand } from "../../util";
 
 const fieldFoo: FieldKey = brand("foo");
@@ -24,6 +33,37 @@ describe("AnchorSet", () => {
 		checkEquality(anchors.locate(anchor1), path1);
 		checkEquality(anchors.locate(anchor2), path2);
 		checkEquality(anchors.locate(anchor3), path3);
+	});
+
+	// TODO: Fix bug in move handling.
+	// See https://github.com/microsoft/FluidFramework/pull/14358 and https://dev.azure.com/fluidframework/internal/_workitems/edit/3559
+	it.skip("can move within field", () => {
+		const anchors = new AnchorSet();
+		const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
+		const anchor1 = anchors.track(makePath([rootFieldKeySymbol, 1]));
+		const anchor2 = anchors.track(makePath([rootFieldKeySymbol, 2]));
+		const anchor3 = anchors.track(makePath([rootFieldKeySymbol, 3]));
+
+		// start with 0123 then move 1 so the order is 0213
+
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId: brand(1),
+		};
+
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: brand(1),
+		};
+
+		const delta = new Map([[rootFieldKeySymbol, [1, moveOut, 1, moveIn]]]);
+		anchors.applyDelta(delta);
+		checkEquality(anchors.locate(anchor0), makePath([rootFieldKeySymbol, 0]));
+		checkEquality(anchors.locate(anchor1), makePath([rootFieldKeySymbol, 2]));
+		checkEquality(anchors.locate(anchor2), makePath([rootFieldKeySymbol, 1]));
+		checkEquality(anchors.locate(anchor3), makePath([rootFieldKeySymbol, 3]));
 	});
 
 	it("can rebase over insert", () => {
@@ -128,7 +168,7 @@ function setup(): [AnchorSet, Anchor, Anchor, Anchor, Anchor] {
 
 type PathStep = [FieldKey, number];
 
-function makePath(...steps: PathStep[]): UpPath {
+function makePath(...steps: [PathStep, ...PathStep[]]): UpPath {
 	assert(steps.length > 0, "Path cannot be empty");
 	return steps.reduce(
 		(path: UpPath | undefined, step: PathStep) => ({
