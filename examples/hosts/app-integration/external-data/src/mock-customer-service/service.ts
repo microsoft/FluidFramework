@@ -128,16 +128,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * Expected input data format:
 	 *
 	 * ```json
-	 * {
+	 *	{
 	 *		taskList: {
-	 * 			[ taskListId: string]: {
-	 *      		[id: string]: {
-	 *      	    	name: string,
-	 *      	    	priority: number
-	 *      		}
-	 * 			}
-	 *  	}
-	 * }
+	 *			[id: string]: {
+	 *				name: string,
+	 * 				priority: number
+	 *			}
+	 *		}
+	 *	}
 	 * ```
 	 *
 	 * This data will be forwarded to our own subscribers.
@@ -163,14 +161,16 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 
 			// Retrieve exact Fluid session address for taskList
 			const taskListId = Object.keys(taskListData.taskList)[0];
-			const containerUrl = clientManager.getClientSession(taskListId) as string;
+			const containerUrls = clientManager.getClientSessions(taskListId);
 
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers at ${containerUrl}`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
+			for (const containerUrl of containerUrls) {
+				echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
+			}
 			result.send();
 		}
 	});

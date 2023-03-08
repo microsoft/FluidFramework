@@ -29,16 +29,16 @@ export class ClientManager<TData = unknown> {
 	 * Map of active external query id to client session.
 	 * Values are the URLs that will be notified of changes.
 	 */
-	private readonly _taskListMapping: Map<ExternalTaskListId, ClientSessionUrl>;
+	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientSessionUrl>>;
 	/**
 	 * Map of active clients to external query id.
 	 * Values are the URLs that will be notified of changes.
 	 */
-	private readonly _clientMapping: Map<ClientSessionUrl, ExternalTaskListId>;
+	private readonly _clientMapping: Map<ClientSessionUrl, Set<ExternalTaskListId>>;
 
 	public constructor() {
-		this._clientMapping = new Map<ClientSessionUrl, ExternalTaskListId>();
-		this._taskListMapping = new Map<ExternalTaskListId, ClientSessionUrl>();
+		this._clientMapping = new Map<ClientSessionUrl, Set<ExternalTaskListId>>();
+		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionUrl>>();
 	}
 
 	/**
@@ -58,49 +58,52 @@ export class ClientManager<TData = unknown> {
 	/**
 	 * Gets the current list of client session URLs.
 	 */
-	public getClientSession(taskListId: ExternalTaskListId): ClientSessionUrl | undefined {
-		if (this._taskListMapping.has(taskListId)) {
-			return this._taskListMapping.get(taskListId);
-		} else {
+	public getClientSessions(taskListId: ExternalTaskListId): Set<ClientSessionUrl> {
+		if (this._taskListMapping.get(taskListId) === undefined) {
 			console.error(
 				`CUSTOMER SERVICE: "${taskListId}" is not registered to a client session.`,
 			);
 		}
+		return this._taskListMapping.get(taskListId) ?? new Set<ClientSessionUrl>();
 	}
 
 	/**
 	 * Registers a client session url to an external resource  for the duration of the client session.
 	 */
 	public registerClient(client: ClientSessionUrl, taskListId: ExternalTaskListId): void {
-		if (this._taskListMapping.has(client) && this._clientMapping.has(taskListId)) {
-			console.warn(
-				`CUSTOMER SERVICE: "${client}" has already been registered with ${taskListId}.`,
-			);
-		} else {
-			this._taskListMapping.set(taskListId, client);
-			this._clientMapping.set(client, taskListId);
-			console.log(`CUSTOMER SERVICE: "${client}" has been registered with ${taskListId}.`);
+		if (this._taskListMapping.get(client) === undefined) {
+			this._taskListMapping.set(client, new Set<ExternalTaskListId>());
 		}
+
+		this._taskListMapping.get(client)?.add(taskListId);
+
+		if (this._clientMapping.get(taskListId) === undefined) {
+			this._clientMapping.set(client, new Set<ClientSessionUrl>());
+		}
+		this._clientMapping.get(taskListId)?.add(client);
 		console.log(`CUSTOMER SERVICE CLIENT MAPPING`);
 		console.log(this._clientMapping);
 		console.log(`CUSTOMER SERVICE TASKLIST MAPPING`);
 		console.log(this._taskListMapping);
+		console.log(`CUSTOMER SERVICE: "${client}" has been registered with ${taskListId}.`);
 	}
 
 	/**
 	 * De-registers the provided subscriber URL from future notifications.
 	 */
-	public removeClient(client: ClientSessionUrl): void {
-		if (this._clientMapping.has(client)) {
-			const taskListId = this._clientMapping.get(client);
-			if (taskListId !== undefined && this._taskListMapping.has(taskListId)) {
-				this._taskListMapping.delete(taskListId);
-			}
-			this._clientMapping.delete(client);
-		} else {
-			console.warn(
-				`CUSTOMER SERVICE: URL "${client}" is not registered for data notifications.`,
-			);
+	public removeClientTaskListRegistration(
+		client: ClientSessionUrl,
+		taskListId: ExternalTaskListId,
+	): void {
+		const clientTaskListIds = this._clientMapping.get(client);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+		if (clientTaskListIds !== undefined && clientTaskListIds.has(taskListId)) {
+			clientTaskListIds.delete(taskListId);
+		}
+		const taskListClients = this._taskListMapping.get(client);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+		if (taskListClients !== undefined && taskListClients.has(client)) {
+			this._taskListMapping.delete(client);
 		}
 	}
 }
