@@ -72,16 +72,15 @@ describe("mock-external-data-service", () => {
 
 	it("fetch-tasks: Ensure server yields the data we expect", async () => {
 		const expectedData = await getCurrentExternalData();
-		const taskListId = 1;
+		const taskListId = "task-list-1";
 		await request(externalDataService!)
 			.get(`/fetch-tasks/${taskListId}`)
 			.expect(200, { taskList: expectedData });
 	});
 
 	it("fetch-tasks: Ensure server rejects fetch with no task list id", async () => {
-		const taskListId = 1;
 		await request(externalDataService!)
-			.get(`/fetch-tasks/${taskListId}`)
+			.get(`/fetch-tasks/`)
 			.expect(400, { message: "Missing parameter taskListId in request url" });
 	});
 
@@ -92,7 +91,7 @@ describe("mock-external-data-service", () => {
 				priority: 37,
 			},
 		};
-		const taskListId = 1;
+		const taskListId = "task-list-1";
 		await request(externalDataService!)
 			.post(`/set-tasks/${taskListId}`)
 			.send({ taskList: newData })
