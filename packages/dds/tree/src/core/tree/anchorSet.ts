@@ -473,7 +473,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			const offset = dst.parentIndex - srcStart!.parentIndex;
 			for (const moved of toMove) {
 				moved.parentIndex += offset;
-				moved.parentPath = dstPath;
+				moved.parentPath = dstPath ?? this.root;
 				moved.parentField = dst.parentField;
 			}
 		} else {
