@@ -163,13 +163,13 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			const taskListId = Object.keys(taskListData.taskList)[0];
 			const containerUrls = clientManager.getClientSessions(taskListId);
 
-			console.log(
-				formatLogMessage(
-					`Data update received from external data service. Notifying webhook subscribers at ${containerUrl}`,
-				),
-			);
 			for (const containerUrl of containerUrls) {
 				echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
+				console.log(
+					formatLogMessage(
+						`Data update received from external data service. Notifying webhook subscribers at ${containerUrl}`,
+					),
+				);
 			}
 			result.send();
 		}
