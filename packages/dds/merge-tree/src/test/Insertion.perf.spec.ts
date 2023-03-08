@@ -96,7 +96,7 @@ describe("MergeTree insertion", () => {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert at end of large tree",
-		benchmarkFnAsync: async () => {
+		benchmarkFn: () => {
 			for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
 				insertText({
 					mergeTree: endTree,
