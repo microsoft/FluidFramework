@@ -96,6 +96,10 @@ export function TelemetryView(): React.ReactElement {
 							EventName: {message.eventName}
 							<br />
 							Category: {message.category}
+							<br />
+							ContainerId: {message.containerId} ({message.clientType})
+							<br />
+							DocumentId: {message.docId}
 						</h4>
 						<p>{JSON.stringify(message, replacer, "  ")}</p>
 					</div>
