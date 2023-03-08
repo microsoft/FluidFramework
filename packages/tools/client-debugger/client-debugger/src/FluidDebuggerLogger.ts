@@ -103,6 +103,6 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	 * Message logging options used by the logger for messages posted to the console.
 	 */
 	private static readonly RegistryMessageLoggingOptions: MessageLoggingOptions = {
-		context: "DEBUGGER TELEMETRY",
+		context: "Debugger(Logger)",
 	};
 }
