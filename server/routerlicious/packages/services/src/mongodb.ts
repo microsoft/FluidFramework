@@ -14,10 +14,8 @@ const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
 const errorSanitizationMessage = "REDACTED";
-const errorResponseKeysAllowList = [
+const errorResponseKeysAllowList = new Set([
     "_id",
-    "clientId",
-    "clientSequenceNumber",
     "code",
     "codeName",
     "documentId",
@@ -26,11 +24,9 @@ const errorResponseKeysAllowList = [
     "errmsg",
     "errorDetails",
     "errorLabels",
-    "expHash1",
     "index",
     "insertedIds",
     "message",
-    "minimumSequenceNumber",
     "mongoTimestamp",
     "name",
     "nInserted",
@@ -39,20 +35,13 @@ const errorResponseKeysAllowList = [
     "nRemoved",
     "nUpserted",
     "ok",
-    "op",
-    "operation",
-    "referenceSequenceNumber",
     "result",
-    "sequenceNumber",
     "stack",
     "tenantId",
-    "term",
-    "timestamp",
-    "traces",
     "type",
     "upserted",
     "writeErrors",
-    "writeConcernErrors"];
+    "writeConcernErrors"]);
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
     constructor(
@@ -327,11 +316,11 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
     private sanitizeError(error: any) {
         if (error) {
             Object.keys(error).forEach((key) => {
-                if (!errorResponseKeysAllowList.includes(key)) {
-                    error[key] = errorSanitizationMessage;
-                } else if (typeof error[key] === "object") {
+                if (typeof error[key] === "object") {
                     this.sanitizeError(error[key]);
-                }
+                } else if (!errorResponseKeysAllowList.has(key)) {
+                    error[key] = errorSanitizationMessage;
+                }  
             });
         }
     }
