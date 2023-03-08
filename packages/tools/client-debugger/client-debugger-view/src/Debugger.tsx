@@ -2,8 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
-import { useId } from "@fluentui/react-hooks";
 import { Resizable } from "re-resizable";
 import React from "react";
 
@@ -15,7 +13,7 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { RenderOptions } from "./RendererOptions";
-import { ClientDebugView, ContainerSelectionDropdown } from "./components";
+import { ContainerSelectionDropdown, MainView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 
 // Ensure FluentUI icons are initialized.
@@ -56,16 +54,6 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 		getDefaultDebuggerSelectionId(clientDebuggers) ?? undefined,
 	);
 
-	function getDebuggerFromContainerId(containerId: string): IFluidClientDebugger {
-		const match = clientDebuggers.find(
-			(clientDebugger) => clientDebugger.containerId === containerId,
-		);
-		if (match === undefined) {
-			throw new Error(`No debugger found associated with Container ID "${containerId}".`);
-		}
-		return match;
-	}
-
 	React.useEffect(() => {
 		function onDebuggerChanged(): void {
 			const newDebuggerList = getFluidClientDebuggers();
@@ -85,23 +73,6 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
 		};
 	}, [getDefaultDebuggerSelectionId, selectedContainerId, debuggerRegistry, setClientDebuggers]);
-
-	const view =
-		selectedContainerId === undefined ? (
-			<NoDebuggerInstance
-				onRetryDebugger={(): void => {
-					const newDebuggerList = getFluidClientDebuggers();
-					setClientDebuggers(newDebuggerList);
-					const newDefaultId = getDefaultDebuggerSelectionId(newDebuggerList);
-					setSelectedContainerId(newDefaultId);
-				}}
-			/>
-		) : (
-			<ClientDebugView
-				clientDebugger={getDebuggerFromContainerId(selectedContainerId)}
-				renderOptions={props.renderOptions}
-			/>
-		);
 
 	const selectionView: React.ReactElement =
 		clientDebuggers.length > 1 ? (
@@ -131,47 +102,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			className={"debugger-panel"}
 		>
 			{selectionView}
-			{view}
+			<MainView></MainView>
 		</Resizable>
-	);
-}
-
-/**
- * Base props interface used by components below which can re-attempt to find the debugger instance
- * associated with some Container ID.
- */
-interface CanLookForDebugger {
-	/**
-	 * Retry looking for the debugger instance.
-	 */
-	onRetryDebugger(): void;
-}
-
-/**
- * {@link NoDebuggerInstance} input props.
- */
-type NoDebuggerInstanceProps = CanLookForDebugger;
-
-function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement {
-	const { onRetryDebugger } = props;
-
-	const retryButtonTooltipId = useId("retry-button-tooltip");
-
-	// TODO: give more info and link to docs, etc. for using the tooling.
-	return (
-		<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-			<StackItem>
-				<div>No Fluid Client debuggers found.</div>
-			</StackItem>
-			<StackItem>
-				<TooltipHost content="Look again" id={retryButtonTooltipId}>
-					<IconButton
-						onClick={onRetryDebugger}
-						menuIconProps={{ iconName: "Refresh" }}
-						aria-describedby={retryButtonTooltipId}
-					/>
-				</TooltipHost>
-			</StackItem>
-		</Stack>
 	);
 }

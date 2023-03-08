@@ -95,6 +95,9 @@ export interface IContainerActions {
 }
 
 // @internal
+export function MainView(): React_2.ReactElement;
+
+// @internal
 export enum PanelView {
     Audience = "Audience",
     ContainerData = "Data",

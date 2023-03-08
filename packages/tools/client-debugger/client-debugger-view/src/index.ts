@@ -36,6 +36,7 @@ export {
 	ContainerSummaryView,
 	ContainerSummaryViewProps,
 	IContainerActions,
+	MainView,
 	PanelView,
 	PanelViewSelectionMenu,
 	PanelViewSelectionMenuProps,

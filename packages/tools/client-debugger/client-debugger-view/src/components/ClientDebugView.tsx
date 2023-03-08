@@ -28,7 +28,7 @@ initializeFluentUiIcons();
  *
  * @internal
  */
-export const clientDebugViewClassName = `fluid-client-debugger-view`;
+const clientDebugViewClassName = `fluid-client-debugger-view`;
 
 /**
  * {@link ClientDebugView} input props.
