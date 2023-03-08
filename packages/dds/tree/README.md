@@ -302,11 +302,11 @@ flowchart
         direction TB
         subgraph core ["core libraries"]
             direction TB
-            checkout-->rebase
+            checkout
             forest-->schema-stored
             change-family-->repair
             edit-manager-->change-family
-            repair-->rebase
+            rebase-->repair
             rebase-->tree
             schema-stored-->dependency-tracking
             schema-view-->schema-stored

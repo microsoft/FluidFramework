@@ -24,7 +24,7 @@ import {
 	RevisionTag,
 } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { noRepair } from "../../utils";
+import { fakeRepair } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -104,6 +104,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		makeAnonChange(valueChange),
 		unexpectedDelegate,
+		fakeRepair,
 		idAllocator,
 		crossFieldManager,
 	);
@@ -363,6 +364,7 @@ describe("Generic FieldKind", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			makeAnonChange(forward),
 			childInverter,
+			fakeRepair,
 			idAllocator,
 			crossFieldManager,
 		);
@@ -393,7 +395,7 @@ describe("Generic FieldKind", () => {
 
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, noRepair);
+		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta);
 		assert.deepEqual(actual, expected);
 	});
 
