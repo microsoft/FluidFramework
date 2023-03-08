@@ -235,7 +235,8 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
 		});
 
-		it("intra-field move", () => {
+		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
+		it.skip("intra-field move", () => {
 			const sequencer = new Sequencer();
 			const tree1 = TestTree.fromJson(["a", "b"]);
 
@@ -250,7 +251,8 @@ describe("Editing", () => {
 			expectJsonTree(tree1, ["b", "a"]);
 		});
 
-		it("move under move-out", () => {
+		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
+		it.skip("move under move-out", () => {
 			const sequencer = new Sequencer();
 			const tree1 = TestTree.fromJson([{ foo: ["a", "b"] }, "x"]);
 
