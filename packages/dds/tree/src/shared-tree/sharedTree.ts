@@ -351,7 +351,6 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
-			this.forest.anchors.applyDelta(delta);
 		});
 		this.submitEdit = (edit) => branch.applyChange(edit);
 	}

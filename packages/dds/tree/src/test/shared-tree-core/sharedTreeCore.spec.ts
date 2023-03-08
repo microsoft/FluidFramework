@@ -37,84 +37,68 @@ import { ISubscribable } from "../../events";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
-		it("local change event after a change", async () => {
-			let newLocalChange = 0;
+		function countTreeEvent(event: keyof IndexEvents<DefaultChangeset>): {
+			tree: ReturnType<typeof createTree>;
+			counter: { count: number };
+		} {
+			let count = 0;
 			const tree = createTree((events) => {
-				events.on("newLocalChange", () => (newLocalChange += 1));
+				events.on(event, () => (count += 1));
 				return [new MockIndex()];
 			});
+			return { tree, counter: { count } };
+		}
 
+		it("local change event after a change", async () => {
+			const { tree, counter } = countTreeEvent("newLocalChange");
 			changeTree(tree);
-			assert.equal(newLocalChange, 1);
+			assert.equal(counter.count, 1);
 			changeTree(tree);
-			assert.equal(newLocalChange, 2);
+			assert.equal(counter.count, 2);
 		});
 
 		it("local change event after a change in a transaction", async () => {
-			let newLocalChange = 0;
-			const tree = createTree((events) => {
-				events.on("newLocalChange", () => (newLocalChange += 1));
-				return [new MockIndex()];
-			});
+			const { tree, counter } = countTreeEvent("newLocalChange");
 			tree.startTransaction();
 			changeTree(tree);
-			assert.equal(newLocalChange, 1);
+			assert.equal(counter.count, 1);
 			changeTree(tree);
-			assert.equal(newLocalChange, 2);
+			assert.equal(counter.count, 2);
 		});
 
 		it("no local change event when committing a transaction", async () => {
-			let newLocalChange = 0;
-			const tree = createTree((events) => {
-				events.on("newLocalChange", () => (newLocalChange += 1));
-				return [new MockIndex()];
-			});
+			const { tree, counter } = countTreeEvent("newLocalChange");
 			tree.startTransaction();
 			changeTree(tree);
-			assert.equal(newLocalChange, 1);
+			assert.equal(counter.count, 1);
 			tree.commitTransaction();
-			assert.equal(newLocalChange, 1);
+			assert.equal(counter.count, 1);
 		});
 
 		it("local state event after a change", async () => {
-			let newLocalState = 0;
-			const tree = createTree((events) => {
-				events.on("newLocalState", () => (newLocalState += 1));
-				return [new MockIndex()];
-			});
-
+			const { tree, counter } = countTreeEvent("newLocalState");
 			changeTree(tree);
-			assert.equal(newLocalState, 1);
+			assert.equal(counter.count, 1);
 			changeTree(tree);
-			assert.equal(newLocalState, 2);
+			assert.equal(counter.count, 2);
 		});
 
 		it("local state event after a change in a transaction", async () => {
-			let newLocalState = 0;
-			const tree = createTree((events) => {
-				events.on("newLocalState", () => (newLocalState += 1));
-				return [new MockIndex()];
-			});
-
+			const { tree, counter } = countTreeEvent("newLocalState");
 			tree.startTransaction();
 			changeTree(tree);
-			assert.equal(newLocalState, 1);
+			assert.equal(counter.count, 1);
 			changeTree(tree);
-			assert.equal(newLocalState, 2);
+			assert.equal(counter.count, 2);
 		});
 
 		it("no local state event when committing a transaction", async () => {
-			let newLocalState = 0;
-			const tree = createTree((events) => {
-				events.on("newLocalState", () => (newLocalState += 1));
-				return [new MockIndex()];
-			});
-
+			const { tree, counter } = countTreeEvent("newLocalState");
 			tree.startTransaction();
 			changeTree(tree);
-			assert.equal(newLocalState, 1);
+			assert.equal(counter.count, 1);
 			tree.commitTransaction();
-			assert.equal(newLocalState, 1);
+			assert.equal(counter.count, 1);
 		});
 	});
 

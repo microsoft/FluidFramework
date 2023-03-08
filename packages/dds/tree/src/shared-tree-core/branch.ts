@@ -53,7 +53,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 		private readonly sessionId: string,
 		private readonly rebaser: Rebaser<TChange>,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		anchors: AnchorSet,
+		private readonly anchors: AnchorSet,
 	) {
 		super();
 		this.head = getBaseBranch();
@@ -74,6 +74,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 			this.head.revision,
 		);
 
+		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		this.emit("onChange", change);
 	}
 
@@ -117,7 +118,9 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.head = startCommit;
 		for (let i = commits.length - 1; i >= 0; i--) {
-			this.emit("onChange", this.changeFamily.rebaser.invert(commits[i], repairStore));
+			const inverse = this.changeFamily.rebaser.invert(commits[i], repairStore);
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, inverse);
+			this.emit("onChange", inverse);
 		}
 	}
 
@@ -155,6 +158,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 
 		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, baseBranch);
 		this.head = newBranch;
+		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		this.emit("onChange", change);
 		return change;
 	}
@@ -180,6 +184,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 				this.head = forked.head;
 				assert(this.forks.delete(forked), "Invalid checkout merge");
 				const change = this.rebaser.changeRebaser.compose(commits);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				this.emit("onChange", change);
 				return changeToForked;
 			},

@@ -913,7 +913,7 @@ describe("SharedTree", () => {
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
-			const checkout = tree.fork();
+			const checkout = baseCheckout.fork();
 			pushTestValue(checkout, "B");
 			checkout.merge();
 			cursor = baseCheckout.forest.allocateCursor();
