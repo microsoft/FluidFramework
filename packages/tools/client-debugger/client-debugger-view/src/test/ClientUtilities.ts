@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/tinylicious-client";
 
 import {
-	DevToolsExtensionLogger,
+	FluidDebuggerLogger,
 	initializeFluidClientDebugger as initializeFluidClientDebuggerBase,
 } from "@fluid-tools/client-debugger";
 
@@ -49,7 +49,7 @@ export interface ContainerInfo {
 function initializeTinyliciousClient(): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
 	return new TinyliciousClient({
-		logger: DevToolsExtensionLogger.create(""),
+		logger: FluidDebuggerLogger.create(""),
 	});
 }
 

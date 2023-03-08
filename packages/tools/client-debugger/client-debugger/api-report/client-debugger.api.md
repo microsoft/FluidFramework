@@ -94,19 +94,19 @@ export interface DebuggerRegistryEvents extends IEvent {
     (event: "debuggerClosed", listener: (containerId: string) => void): void;
 }
 
-// @internal @sealed
-export class DevToolsExtensionLogger extends TelemetryLogger {
-    static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    static mixinLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
-    send(event: ITelemetryBaseEvent): void;
-}
-
 // @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
     containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
+}
+
+// @internal @sealed
+export class FluidDebuggerLogger extends TelemetryLogger {
+    static create(namespace: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinLogger(namespace: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public

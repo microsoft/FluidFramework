@@ -85,4 +85,4 @@ export {
 	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";
-export { DevToolsExtensionLogger } from "./devToolsExtensionLogger";
+export { FluidDebuggerLogger } from "./FluidDebuggerLogger";

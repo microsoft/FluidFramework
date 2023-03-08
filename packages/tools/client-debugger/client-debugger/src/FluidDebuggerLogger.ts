@@ -25,7 +25,7 @@ import {
  * @sealed
  * @internal
  */
-export class DevToolsExtensionLogger extends TelemetryLogger {
+export class FluidDebuggerLogger extends TelemetryLogger {
 	/**
 	 * Create an instance of this logger
 	 * @param namespace - Telemetry event name prefix to add to all events
@@ -35,7 +35,7 @@ export class DevToolsExtensionLogger extends TelemetryLogger {
 		namespace: string,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
-		return new DevToolsExtensionLogger(namespace, properties);
+		return new FluidDebuggerLogger(namespace, properties);
 	}
 
 	/**
@@ -51,12 +51,12 @@ export class DevToolsExtensionLogger extends TelemetryLogger {
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		if (!baseLogger) {
-			return DevToolsExtensionLogger.create(namespace, properties);
+			return FluidDebuggerLogger.create(namespace, properties);
 		}
 
 		const multiSinkLogger = new MultiSinkLogger(undefined, properties);
 		multiSinkLogger.addLogger(
-			DevToolsExtensionLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
+			FluidDebuggerLogger.create(namespace, this.tryGetBaseLoggerProps(baseLogger)),
 		);
 		multiSinkLogger.addLogger(ChildLogger.create(baseLogger, namespace));
 
@@ -95,7 +95,7 @@ export class DevToolsExtensionLogger extends TelemetryLogger {
 					contents: newEvent,
 				},
 			},
-			DevToolsExtensionLogger.RegistryMessageLoggingOptions,
+			FluidDebuggerLogger.RegistryMessageLoggingOptions,
 		);
 	}
 
