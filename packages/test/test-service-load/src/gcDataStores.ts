@@ -1,8 +1,8 @@
-/* eslint-disable jsdoc/check-indentation */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable jsdoc/check-indentation */
 
 import random from "random-js";
 import { v4 as uuid } from "uuid";
@@ -229,7 +229,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	private readonly blobMapKey = "blobMap";
 
 	/**
-	 * The map that stores the fluid handles to all child data objects.
+	 * The map that stores the Fluid handles to all child data objects.
 	 * Note: This should not be called before "run" is called which initializes it.
 	 */
 	private _dataObjectMap: SharedMap | undefined;
@@ -242,7 +242,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	/**
-	 * The map that stores the fluid handles to all attachment blobs.
+	 * The map that stores the Fluid handles to all attachment blobs.
 	 * Note: This should not be called before "run" is called which initializes it.
 	 */
 	private _blobMap: SharedMap | undefined;

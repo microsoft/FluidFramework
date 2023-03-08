@@ -45,10 +45,10 @@
 		"start:odspdf": "node ./dist/nodeStressTest.js --driver odsp --driverEndpoint odsp-df",
 		"start:reauth": "node ./dist/nodeStressTest.js --profile mini --browserAuth",
 		"start:t9s": "start-server-and-test start:tinylicious:test 7070 start:t9s:run",
-		"start:t9s:gc:ci": "start-server-and-test start:tinylicious:test 7070 start:t9s:gc_ci",
-		"start:t9s:gc:ci_fault": "start-server-and-test start:tinylicious:test 7070 start:t9s:gc_ci_fault",
 		"start:t9s:debug": "node ./dist/nodeStressTest.js --driver tinylicious --profile debug",
 		"start:t9s:gc": "node ./dist/nodeStressTest.js --driver tinylicious --profile gc",
+		"start:t9s:gc:ci": "start-server-and-test start:tinylicious:test 7070 start:t9s:gc_ci",
+		"start:t9s:gc:ci_fault": "start-server-and-test start:tinylicious:test 7070 start:t9s:gc_ci_fault",
 		"start:t9s:gc_ci": "node ./dist/nodeStressTest.js --driver tinylicious --profile gc_ci",
 		"start:t9s:gc_ci_fault": "node ./dist/nodeStressTest.js --driver tinylicious --profile gc_ci_fault",
 		"start:t9s:run": "node ./dist/nodeStressTest.js --driver tinylicious ",
@@ -111,8 +111,8 @@
 		"random-js": "^1.0.8",
 		"start-server-and-test": "^1.11.7",
 		"tinylicious": "0.5.0",
-		"xml": "^1.0.0",
-		"uuid": "^8.3.1"
+		"uuid": "^8.3.1",
+		"xml": "^1.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.11.0-135362",
@@ -123,8 +123,8 @@
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.36",
-		"@types/xml": "^1.0.0",
 		"@types/random-js": "^1.0.31",
+		"@types/xml": "^1.0.0",
 		"concurrently": "^6.2.0",
 		"cross-env": "^7.0.2",
 		"eslint": "~8.6.0",
