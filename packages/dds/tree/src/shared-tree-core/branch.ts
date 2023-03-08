@@ -57,10 +57,13 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 	) {
 		super();
 		this.head = getBaseBranch();
-		this.editor = this.changeFamily.buildEditor((change) => this.applyChange(change), anchors);
+		this.editor = this.changeFamily.buildEditor(
+			(change) => this.applyChange(change, false),
+			anchors,
+		);
 	}
 
-	public applyChange(change: TChange): void {
+	public applyChange(change: TChange, rebaseAnchors = true): void {
 		this.assertNotDisposed();
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
@@ -74,7 +77,9 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 			this.head.revision,
 		);
 
-		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+		if (rebaseAnchors) {
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+		}
 		this.emit("onChange", change);
 	}
 
@@ -167,7 +172,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 */
-	public fork(): SharedTreeBranch<TEditor, TChange> {
+	public fork(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			() => this.head,
@@ -191,7 +196,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 			this.sessionId,
 			this.rebaser,
 			this.changeFamily,
-			new AnchorSet(),
+			anchors,
 		);
 		this.forks.add(fork);
 		return fork;

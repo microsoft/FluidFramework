@@ -41,12 +41,14 @@ describe("SharedTreeCore", () => {
 			tree: ReturnType<typeof createTree>;
 			counter: { count: number };
 		} {
-			let count = 0;
+			const counter = {
+				count: 0,
+			};
 			const tree = createTree((events) => {
-				events.on(event, () => (count += 1));
+				events.on(event, () => (counter.count += 1));
 				return [new MockIndex()];
 			});
-			return { tree, counter: { count } };
+			return { tree, counter };
 		}
 
 		it("local change event after a change", async () => {

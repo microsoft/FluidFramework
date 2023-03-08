@@ -275,11 +275,12 @@ class SharedTree
 	}
 
 	public fork(): ISharedTreeCheckoutFork {
+		const anchors = new AnchorSet();
 		return new SharedTreeCheckout(
-			this.createBranch(),
+			this.createBranch(anchors),
 			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, new AnchorSet()),
+			this.forest.clone(this.storedSchema, anchors),
 		);
 	}
 
@@ -376,11 +377,12 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 
 	public fork(): ISharedTreeCheckoutFork {
 		const storedSchema = this.storedSchema.clone();
+		const anchors = new AnchorSet();
 		return new SharedTreeCheckout(
-			this.branch.fork(),
+			this.branch.fork(anchors),
 			this.changeFamily,
 			storedSchema,
-			this.forest.clone(storedSchema, new AnchorSet()),
+			this.forest.clone(storedSchema, anchors),
 		);
 	}
 

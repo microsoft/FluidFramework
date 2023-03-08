@@ -309,7 +309,7 @@ export class SharedTreeCore<
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
 	 */
-	protected createBranch(): SharedTreeBranch<TEditor, TChange> {
+	protected createBranch(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
 		const branch = new SharedTreeBranch(
 			() => this.editManager.getLocalBranchHead(),
 			(forked) => {
@@ -333,7 +333,7 @@ export class SharedTreeCore<
 			this.editManager.localSessionId,
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
-			new AnchorSet(),
+			anchors,
 		);
 		return branch;
 	}
