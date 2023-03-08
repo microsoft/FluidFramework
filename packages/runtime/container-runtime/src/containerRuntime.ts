@@ -430,6 +430,7 @@ export interface IContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 	runtimeOptions?: IContainerRuntimeOptions;
 	containerScope?: FluidObject;
+	initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	containerRuntimeCtor?: typeof ContainerRuntime;
 }
 
@@ -642,8 +643,8 @@ export class ContainerRuntime
 			requestHandler,
 			runtimeOptions = {},
 			containerScope = {},
-			containerRuntimeCtor = ContainerRuntime,
 			initializeEntryPoint,
+			containerRuntimeCtor = ContainerRuntime,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:

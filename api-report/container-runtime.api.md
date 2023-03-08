@@ -4,12 +4,17 @@
 
 ```ts
 
+import { AliasResult } from '@fluidframework/runtime-definitions';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
+import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
+import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
+import { Deferred } from '@fluidframework/common-utils';
 import { EventEmitter } from 'events';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { FlushMode } from '@fluidframework/runtime-definitions';
+import { IAttachMessage } from '@fluidframework/runtime-definitions';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
@@ -23,7 +28,11 @@ import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { IFluidDataStoreChannel } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreContext } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreContextEvents } from '@fluidframework/runtime-definitions';
+import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
@@ -31,6 +40,8 @@ import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
+import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -39,17 +50,23 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
+import { ISummarizeResult } from '@fluidframework/runtime-definitions';
+import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
 import { ISummaryAck } from '@fluidframework/protocol-definitions';
 import { ISummaryContent } from '@fluidframework/protocol-definitions';
 import { ISummaryNack } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
+import { MonitoringContext } from '@fluidframework/telemetry-utils';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
+import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @public
@@ -163,6 +180,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get isDirty(): boolean;
     // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
+    static loadRuntime(params: IContainerRuntimeParams): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
@@ -221,6 +239,78 @@ export interface ContainerRuntimeMessage {
     contents: any;
     // (undocumented)
     type: ContainerMessageType;
+}
+
+// @public
+export class DataStores implements IDisposable {
+    // Warning: (ae-forgotten-export) The symbol "DataStoreContexts" needs to be exported by the entry point index.d.ts
+    constructor(baseSnapshot: ISnapshotTree | undefined, runtime: ContainerRuntime, submitAttachFn: (attachContent: any) => void, getCreateChildSummarizerNodeFn: (id: string, createParam: CreateChildSummarizerNodeParam) => CreateChildSummarizerNodeFn, deleteChildSummarizerNodeFn: (id: string) => void, baseLogger: ITelemetryBaseLogger, gcNodeUpdated: (nodePath: string, timestampMs: number, packagePath?: readonly string[]) => void, isDataStoreDeleted: (nodePath: string) => boolean, aliasMap: Map<string, string>, contexts?: DataStoreContexts);
+    // (undocumented)
+    get aliases(): ReadonlyMap<string, string>;
+    // (undocumented)
+    applyStashedAttachOp(message: IAttachMessage): Promise<void>;
+    // (undocumented)
+    applyStashedOp(content: any): Promise<unknown>;
+    // (undocumented)
+    readonly attachOpFiredForDataStore: Set<string>;
+    // (undocumented)
+    readonly containerLoadStats: {
+        readonly containerLoadDataStoreCount: number;
+        readonly referencedDataStoreCount: number;
+    };
+    // (undocumented)
+    createDetachedDataStoreCore(pkg: Readonly<string[]>, isRoot: boolean, id?: string): IFluidDataStoreContextDetached;
+    // Warning: (ae-forgotten-export) The symbol "LocalFluidDataStoreContext" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    _createFluidDataStoreContext(pkg: string[], id: string, props?: any): LocalFluidDataStoreContext;
+    // (undocumented)
+    createSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[];
+    // (undocumented)
+    readonly dispose: () => void;
+    // (undocumented)
+    get disposed(): boolean;
+    // Warning: (ae-forgotten-export) The symbol "RuntimeHeaderData" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "FluidDataStoreContext" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    getDataStore(id: string, requestHeaderData: RuntimeHeaderData): Promise<FluidDataStoreContext>;
+    getDataStorePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    getGCNodeType(nodePath: string): GCNodeType | undefined;
+    // (undocumented)
+    get pendingAliases(): Map<string, Promise<AliasResult>>;
+    // (undocumented)
+    processAliasMessage(message: ISequencedDocumentMessage, localOpMetadata: unknown, local: boolean): void;
+    // Warning: (ae-forgotten-export) The symbol "IDataStoreAliasMessage" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    processAliasMessageCore(aliasMessage: IDataStoreAliasMessage): boolean;
+    // (undocumented)
+    processAttachMessage(message: ISequencedDocumentMessage, local: boolean): void;
+    // (undocumented)
+    processFluidDataStoreOp(message: ISequencedDocumentMessage, local: boolean, localMessageMetadata: unknown): void;
+    // (undocumented)
+    processSignal(address: string, message: IInboundSignalMessage, local: boolean): void;
+    // (undocumented)
+    resubmitDataStoreOp(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    rollbackDataStoreOp(content: any, localOpMetadata: unknown): void;
+    // (undocumented)
+    setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId?: string): void;
+    // (undocumented)
+    get size(): number;
+    // (undocumented)
+    summarize(fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    updateStateBeforeGC(): Promise<void>;
+    updateTombstonedRoutes(tombstonedRoutes: string[]): void;
+    updateUnusedRoutes(unusedRoutes: string[]): void;
+    updateUsedRoutes(usedRoutes: string[]): void;
+    // (undocumented)
+    waitIfPendingAlias(maybeAlias: string): Promise<AliasResult>;
 }
 
 // @public (undocumented)
@@ -359,6 +449,8 @@ export interface IContainerRuntimeParams {
     context: IContainerContext;
     // (undocumented)
     existing: boolean;
+    // (undocumented)
+    initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     // (undocumented)
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // (undocumented)
@@ -670,6 +762,25 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @public (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @public
+export class PendingStateManager implements IDisposable {
+    // Warning: (ae-forgotten-export) The symbol "IRuntimeStateHandler" needs to be exported by the entry point index.d.ts
+    constructor(stateHandler: IRuntimeStateHandler, initialLocalState: IPendingLocalState | undefined);
+    applyStashedOpsAt(seqNum?: number): Promise<void>;
+    // (undocumented)
+    readonly dispose: () => void;
+    // (undocumented)
+    get disposed(): boolean;
+    // (undocumented)
+    getLocalState(): IPendingLocalState | undefined;
+    hasPendingMessages(): boolean;
+    onSubmitMessage(type: ContainerMessageType, referenceSequenceNumber: number, content: any, localOpMetadata: unknown, opMetadata: Record<string, unknown> | undefined): void;
+    // (undocumented)
+    get pendingMessagesCount(): number;
+    processPendingLocalMessage(message: ISequencedDocumentMessage): unknown;
+    replayPendingStates(): void;
+}
 
 // @public
 export enum RuntimeHeaders {

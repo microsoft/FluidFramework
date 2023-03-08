@@ -18,10 +18,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
-import {
-	IContainer,
-	LoaderHeader,
-} from "@fluidframework/container-definitions";
+import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";

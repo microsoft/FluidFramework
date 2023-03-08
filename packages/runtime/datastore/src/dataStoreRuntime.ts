@@ -1155,7 +1155,12 @@ export const mixinSummaryHandler = (
 			const summary = await super.summarize(...args);
 			const content = await handler(this);
 			if (content !== undefined) {
-				addBlobToSummaryViaPath(summary.summary, summary.stats, content.path, content.content);
+				addBlobToSummaryViaPath(
+					summary.summary,
+					summary.stats,
+					content.path,
+					content.content,
+				);
 			}
 			return summary;
 		}

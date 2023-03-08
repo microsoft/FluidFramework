@@ -117,7 +117,12 @@ export function addBlobToSummary(
 	summary.stats.totalBlobSize += getBlobSize(content);
 }
 
-export function addBlobToSummaryViaPath(summary: ISummaryTree, stats: ISummaryStats, path: string[], content: string | Uint8Array) {
+export function addBlobToSummaryViaPath(
+	summary: ISummaryTree,
+	stats: ISummaryStats,
+	path: string[],
+	content: string | Uint8Array,
+) {
 	const firstName = path.shift();
 	if (firstName === undefined) {
 		throw new LoggingError("Path can't be empty");

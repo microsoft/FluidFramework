@@ -6,11 +6,7 @@
 import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
-import {
-	AttachState,
-	IContainer,
-	IContainerContext,
-} from "@fluidframework/container-definitions";
+import { AttachState, IContainer, IContainerContext } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
 	IContainerRuntimeParams,
@@ -202,7 +198,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 	it.only("sample use for customized containerRuntimeWithBlob", async () => {
 		const blobContents = "sample payload";
-		
+
 		// sample API to load a containerRuntime which has extra blob in the summary
 		async function containerRuntimeWithBlob(params: IContainerRuntimeParams) {
 			// Blob path in container snapshots
