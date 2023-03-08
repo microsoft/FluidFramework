@@ -14,7 +14,7 @@ const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
 const errorSanitizationMessage = "REDACTED";
-const errorJsonKeyToSanitize = "data";
+const errorResponseKeysToBeRedacted = ["data", "contents"];
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
     constructor(
@@ -260,7 +260,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             InitialRetryIntervalInMs, // retryAfterMs
             (error: any, numRetries: number, retryAfterInterval: number) =>
                 numRetries * retryAfterInterval, // retryAfterIntervalCalculator
-            this.errorSanitizer, /* onErrorFn */
+            (error) => this.errorSanitizer(error), /* onErrorFn */
             this.telemetryEnabled, // telemetryEnabled
         );
     }
@@ -287,12 +287,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
     }
 
     private errorSanitizer(error: any) {
-        for (const key in error) {
-            if (key === errorJsonKeyToSanitize) {
-                error[key] = errorSanitizationMessage;
-            } else if (typeof error[key] === "object") {
-                this.errorSanitizer(error[key]);
-            }
+        if (error) {
+            Object.keys(error).forEach((key) => {
+                if (errorResponseKeysToBeRedacted.includes(key)) {
+                    error[key] = errorSanitizationMessage;
+                } else if (typeof error[key] === "object") {
+                    this.errorSanitizer(error[key]);
+                }
+            });
         }
     }
 }
