@@ -4,8 +4,18 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { EventEmitter } from "../../events";
-import { findAncestor, GraphCommit, mintCommit, mintRevisionTag, Rebaser } from "../rebase";
+import {
+	AnchorSet,
+	ChangeFamily,
+	findAncestor,
+	GraphCommit,
+	mintCommit,
+	mintRevisionTag,
+	Rebaser,
+	RepairDataStore,
+} from "../core";
+import { EventEmitter } from "../events";
+import { TransactionStack } from "./transactionStack";
 
 /**
  * The events emitted by a `SharedTreeBranch`
@@ -20,9 +30,13 @@ export interface SharedTreeBranchEvents<TChange> {
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEvents<TChange>> {
+export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
+	SharedTreeBranchEvents<TChange>
+> {
 	private head: GraphCommit<TChange>;
-	private readonly forks = new Set<SharedTreeBranch<TChange>>();
+	public readonly editor: TEditor;
+	private readonly transactions = new TransactionStack();
+	private readonly forks = new Set<SharedTreeBranch<TEditor, TChange>>();
 	private disposed = false;
 
 	/**
@@ -35,12 +49,38 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	 */
 	public constructor(
 		private readonly getBaseBranch: () => GraphCommit<TChange>,
-		private readonly mergeIntoBase: (forked: SharedTreeBranch<TChange>) => TChange,
+		private readonly mergeIntoBase: (forked: SharedTreeBranch<TEditor, TChange>) => TChange,
 		private readonly sessionId: string,
 		private readonly rebaser: Rebaser<TChange>,
+		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly anchors: AnchorSet,
 	) {
 		super();
 		this.head = getBaseBranch();
+		this.editor = this.changeFamily.buildEditor(
+			(change) => this.applyChange(change, false),
+			anchors,
+		);
+	}
+
+	public applyChange(change: TChange, rebaseAnchors = true): void {
+		this.assertNotDisposed();
+		const revision = mintRevisionTag();
+		this.head = mintCommit(this.head, {
+			revision,
+			sessionId: this.sessionId,
+			change,
+		});
+
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(change),
+			this.head.revision,
+		);
+
+		if (rebaseAnchors) {
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+		}
+		this.emit("onChange", change);
 	}
 
 	/**
@@ -50,20 +90,62 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 		return this.head;
 	}
 
-	/**
-	 * Apply the given change to this branch.
-	 * Emits an `onChange` event.
-	 * @returns the net change to this branch (i.e. `change`)
-	 */
-	public applyChange(change: TChange): TChange {
-		this.assertNotDisposed();
-		this.head = mintCommit(this.head, {
-			revision: mintRevisionTag(),
-			sessionId: this.sessionId,
-			change,
-		});
-		this.emit("onChange", change);
-		return change;
+	public startTransaction(repairStore?: RepairDataStore): void {
+		this.transactions.push(this.head.revision, repairStore);
+	}
+
+	public commitTransaction(): void {
+		const [startCommit, commits] = this.popTransaction();
+
+		// Anonymize the commits from this transaction by stripping their revision tags.
+		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
+		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
+
+		{
+			// Squash the changes and make the squash commit the new head of this branch
+			const change = this.changeFamily.rebaser.compose(anonymousCommits);
+			this.head = mintCommit(startCommit, {
+				revision: mintRevisionTag(),
+				sessionId: this.sessionId,
+				change,
+			});
+
+			// If there is still an ongoing transaction (because this transaction was nested inside of an outer transaction)
+			// then update the repair data store for that transaction
+			this.transactions.repairStore?.capture(
+				this.changeFamily.intoDelta(change),
+				this.head.revision,
+			);
+		}
+	}
+
+	public abortTransaction(): void {
+		const [startCommit, commits, repairStore] = this.popTransaction();
+		this.head = startCommit;
+		for (let i = commits.length - 1; i >= 0; i--) {
+			const inverse = this.changeFamily.rebaser.invert(commits[i], repairStore);
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, inverse);
+			this.emit("onChange", inverse);
+		}
+	}
+
+	public isTransacting(): boolean {
+		return this.transactions.size !== 0;
+	}
+
+	private popTransaction(): [
+		GraphCommit<TChange>,
+		GraphCommit<TChange>[],
+		RepairDataStore | undefined,
+	] {
+		const { startRevision, repairStore } = this.transactions.pop();
+		const commits: GraphCommit<TChange>[] = [];
+		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
+		assert(
+			startCommit !== undefined,
+			"Expected branch to be ahead of transaction start revision",
+		);
+		return [startCommit, commits, repairStore];
 	}
 
 	/**
@@ -81,6 +163,7 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 
 		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, baseBranch);
 		this.head = newBranch;
+		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		this.emit("onChange", change);
 		return change;
 	}
@@ -89,7 +172,7 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 */
-	public fork(): SharedTreeBranch<TChange> {
+	public fork(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			() => this.head,
@@ -106,11 +189,14 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 				this.head = forked.head;
 				assert(this.forks.delete(forked), "Invalid checkout merge");
 				const change = this.rebaser.changeRebaser.compose(commits);
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				this.emit("onChange", change);
 				return changeToForked;
 			},
 			this.sessionId,
 			this.rebaser,
+			this.changeFamily,
+			anchors,
 		);
 		this.forks.add(fork);
 		return fork;
@@ -124,6 +210,10 @@ export class SharedTreeBranch<TChange> extends EventEmitter<SharedTreeBranchEven
 	 */
 	public merge(): TChange {
 		this.assertNotDisposed();
+		assert(
+			this.transactions.size === 0,
+			"Branch may not be merged while transaction is in progress",
+		);
 		const change = this.mergeIntoBase(this);
 		this.dispose();
 		return change;

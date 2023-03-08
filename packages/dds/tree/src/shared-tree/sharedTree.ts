@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -21,12 +20,10 @@ import {
 	Anchor,
 	AnchorLocator,
 	AnchorSet,
-	EditManager,
 	AnchorNode,
 	IEditableForest,
-	SharedTreeBranch,
 } from "../core";
-import { SharedTreeCore } from "../shared-tree-core";
+import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	EditableTreeContext,
@@ -40,11 +37,11 @@ import {
 	SchemaEditor,
 	DefaultChangeset,
 	EditManagerIndex,
-	runSynchronousTransaction,
 	buildForest,
 	ContextuallyTypedNodeData,
 	ModularChangeset,
 	IDefaultEditBuilder,
+	ForestRepairDataStore,
 } from "../feature-libraries";
 
 /**
@@ -97,16 +94,49 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	/**
 	 * Current contents.
 	 * Updated by edits (local and remote).
-	 * Use `runTransaction` to create a local edit.
+	 * Use `editor` to create a local edit.
 	 */
 	readonly forest: IForestSubscription;
 
 	/**
+	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
+	 */
+	readonly editor: IDefaultEditBuilder;
+
+	/**
+	 * An collection of functions for managing transactions. Transactions allow edits to be batched into atomic units.
+	 * Edits made during a transaction will update the local state of the tree immediately, but will be squashed into a single edit
+	 * when the transaction is committed. If the transaction is aborted, the local state will be reset to what it was before
+	 * the transaction began. Transactions may nest, meaning that a transaction may be started while a transaction is already
+	 * ongoing.
+	 *
+	 * TODO: Provide an option to avoid updating local state during a transaction.
+	 */
+	readonly transaction: {
+		/**
+		 * Start a new transaction. If a transaction is already in progress when this new transaction starts, then this transaction
+		 * will be "nested" inside of it, i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
+		 */
+		start: () => void;
+		/**
+		 * Close this transaction by squashing its edits and committing them as a single edit. If this is the root local branch and there are no
+		 * ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+		 */
+		commit: () => void;
+		/**
+		 * Close this transaction and revert the state of the tree to what it was before this transaction began.
+		 */
+		abort: () => void;
+		/**
+		 * True if there is at least one transaction currently in progress on this checkout, otherwise false.
+		 */
+		inProgress(): boolean;
+	};
+
+	/**
 	 * Run `transaction` to edit this forest.
 	 * While `transaction` is running, its intermediate states will be visible on the IForestSubscription.
-	 *
-	 * TODO: support nesting (perhaps via "commands"),
-	 * and do this in a way where there is control over which transaction's intermediate versions are displayed.
 	 */
 	runTransaction(
 		transaction: (
@@ -164,15 +194,17 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
  */
 class SharedTree
 	extends SharedTreeCore<
+		DefaultEditBuilder,
 		DefaultChangeset,
-		DefaultChangeFamily,
-		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
 	>
 	implements ISharedTree
 {
 	public readonly context: EditableTreeContext;
-	public readonly forest: IForestSubscription;
+	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	public readonly transaction: ISharedTreeCheckout["transaction"];
+
 	/**
 	 * Rather than implementing TransactionCheckout, have a member that implements it.
 	 * This allows keeping the `IEditableForest` private.
@@ -188,18 +220,13 @@ class SharedTree
 		const anchors = new AnchorSet();
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
-		const editManager: EditManager<DefaultChangeset, DefaultChangeFamily> = new EditManager(
-			defaultChangeFamily,
-			anchors,
-		);
 		super(
-			(events) => [
+			(events, editManager) => [
 				new SchemaIndex(runtime, events, schema),
 				new ForestIndex(runtime, events, forest),
 				new EditManagerIndex(runtime, editManager),
 			],
 			defaultChangeFamily,
-			editManager,
 			anchors,
 			id,
 			runtime,
@@ -209,18 +236,25 @@ class SharedTree
 
 		this.forest = forest;
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
+
+		this.transaction = {
+			start: () => this.startTransaction(new ForestRepairDataStore(() => this.forest)),
+			commit: () => this.commitTransaction(),
+			abort: () => this.abortTransaction(),
+			inProgress: () => this.isTransacting(),
+		};
+
 		this.transactionCheckout = {
 			forest,
-			changeFamily: this.changeFamily,
-			submitEdit: (edit) => this.submitEdit(edit),
+			changeFamily: defaultChangeFamily,
+			submitEdit: (edit) => this.applyChange(edit),
 		};
 
 		this.context = getEditableTreeContext(forest, this.transactionCheckout);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
-		assert(this.editManager.anchors !== undefined, 0x407 /* editManager must have anchors */);
-		return this.editManager.anchors.locate(anchor);
+		return this.forest.anchors.locate(anchor);
 	}
 
 	public get root(): UnwrappedEditableField {
@@ -232,17 +266,21 @@ class SharedTree
 	}
 
 	public runTransaction(
-		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => TransactionResult,
+		transaction: (
+			forest: IForestSubscription,
+			editor: IDefaultEditBuilder,
+		) => TransactionResult,
 	): TransactionResult {
-		return runSynchronousTransaction(this.transactionCheckout, transaction);
+		return runTransaction(this, transaction);
 	}
 
 	public fork(): ISharedTreeCheckoutFork {
+		const anchors = new AnchorSet();
 		return new SharedTreeCheckout(
-			this.createBranch(),
-			this.changeFamily,
+			this.createBranch(anchors),
+			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, new AnchorSet()),
+			this.forest.clone(this.storedSchema, anchors),
 		);
 	}
 
@@ -305,7 +343,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	>["submitEdit"];
 
 	public constructor(
-		private readonly branch: SharedTreeBranch<DefaultChangeset>,
+		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
@@ -314,10 +352,20 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
-			this.forest.anchors.applyDelta(delta);
 		});
-		this.submitEdit = (edit) => this.branch.applyChange(edit);
+		this.submitEdit = (edit) => branch.applyChange(edit);
 	}
+
+	public get editor() {
+		return this.branch.editor;
+	}
+
+	public readonly transaction = {
+		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
+		commit: () => this.branch.commitTransaction(),
+		abort: () => this.branch.abortTransaction(),
+		inProgress: () => this.branch.isTransacting(),
+	};
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
@@ -329,11 +377,12 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 
 	public fork(): ISharedTreeCheckoutFork {
 		const storedSchema = this.storedSchema.clone();
+		const anchors = new AnchorSet();
 		return new SharedTreeCheckout(
-			this.branch.fork(),
+			this.branch.fork(anchors),
 			this.changeFamily,
 			storedSchema,
-			this.forest.clone(storedSchema, new AnchorSet()),
+			this.forest.clone(storedSchema, anchors),
 		);
 	}
 
@@ -359,6 +408,21 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 			editor: IDefaultEditBuilder,
 		) => TransactionResult,
 	): TransactionResult {
-		return runSynchronousTransaction(this, transaction);
+		return runTransaction(this, transaction);
 	}
+}
+
+/** Helper for running a `TransactionCheckout`-style transaction as a `start()`/`end()`-style transaction */
+function runTransaction(
+	checkout: ISharedTreeCheckout,
+	transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult,
+) {
+	checkout.transaction.start();
+	const result = transaction(checkout.forest, checkout.editor);
+	if (result === TransactionResult.Apply) {
+		checkout.transaction.commit();
+	} else {
+		checkout.transaction.abort();
+	}
+	return result;
 }

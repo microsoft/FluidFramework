@@ -275,26 +275,39 @@ export class ModularChangeFamily
 		return composedNodeChange;
 	}
 
-	invert(change: TaggedChange<ModularChangeset>): ModularChangeset {
+	/**
+	 * @param change - The change to invert.
+	 * @param repairStore - The store to query for repair data.
+	 */
+	invert(
+		change: TaggedChange<ModularChangeset>,
+		repairStore?: ReadonlyRepairDataStore,
+	): ModularChangeset {
 		let maxId = change.change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
+		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
+
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.changes, change.revision),
 			genId,
+			resolvedRepairStore,
+			undefined,
 			crossFieldTable,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
-			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
+			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
 					fieldChange.fieldKind,
 				).rebaser.amendInvert(
 					fieldChange.change,
 					originalRevision,
+					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+						resolvedRepairStore.getNodes(revision, path, fieldKey, index, count),
 					genId,
 					newCrossFieldManager(crossFieldTable),
 				);
@@ -318,6 +331,8 @@ export class ModularChangeFamily
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
+		repairStore: ReadonlyRepairDataStore,
+		path: UpPath | undefined,
 		crossFieldTable: CrossFieldTable<InvertData>,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
@@ -325,18 +340,33 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of changes.change) {
 			const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
 
+			const reviver = (
+				revisionTag: RevisionTag,
+				index: number,
+				count: number,
+			): Delta.ProtoNode[] => repairStore.getNodes(revisionTag, path, field, index, count);
+
 			const manager = newCrossFieldManager(crossFieldTable);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
 			).rebaser.invert(
 				{ revision, change: fieldChange.change },
-				(childChanges) =>
+				(childChanges, index) =>
 					this.invertNodeChange(
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
+						repairStore,
+						index === undefined
+							? undefined
+							: {
+									parent: path,
+									parentField: field,
+									parentIndex: index,
+							  },
 					),
+				reviver,
 				genId,
 				manager,
 			);
@@ -348,7 +378,9 @@ export class ModularChangeFamily
 			invertedFields.set(field, invertedFieldChange);
 
 			const invertData: InvertData = {
+				fieldKey: field,
 				fieldChange: invertedFieldChange,
+				path,
 				originalRevision: changes.revision,
 			};
 
@@ -362,6 +394,8 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
+		repairStore: ReadonlyRepairDataStore,
+		path?: UpPath,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -370,14 +404,18 @@ export class ModularChangeFamily
 				!("revert" in change.change.valueChange),
 				0x4a9 /* Inverting inverse changes is currently not supported */,
 			);
+			assert(path !== undefined, "Only existing nodes can have their value restored");
 			const revision = change.change.valueChange.revision ?? change.revision;
-			inverse.valueChange = { revert: revision };
+			assert(revision !== undefined, "Unable to revert to undefined revision");
+			inverse.valueChange = { value: repairStore.getValue(revision, path) };
 		}
 
 		if (change.change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
 				{ ...change, change: change.change.fieldChanges },
 				genId,
+				repairStore,
+				path,
 				crossFieldTable,
 			);
 		}
@@ -517,8 +555,8 @@ export class ModularChangeFamily
 		anchors.applyDelta(this.intoDelta(over));
 	}
 
-	intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
-		return this.intoDeltaImpl(change.changes, repairStore ?? dummyRepairDataStore, undefined);
+	intoDelta(change: ModularChangeset): Delta.Root {
+		return this.intoDeltaImpl(change.changes);
 	}
 
 	/**
@@ -527,63 +565,30 @@ export class ModularChangeFamily
 	 * @param path - The path of the node being altered by the change as defined by the input context.
 	 * Undefined for the root and for nodes that do not exist in the input context.
 	 */
-	private intoDeltaImpl(
-		change: FieldChangeMap,
-		repairStore: ReadonlyRepairDataStore,
-		path: UpPath | undefined,
-	): Delta.Root {
+	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
 		const delta: Map<FieldKey, Delta.MarkList> = new Map();
 		for (const [field, fieldChange] of change) {
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				fieldChange.change,
-				(childChange, index): Delta.Modify =>
-					this.deltaFromNodeChange(
-						childChange,
-						repairStore,
-						index === undefined
-							? undefined
-							: {
-									parent: path,
-									parentField: field,
-									parentIndex: index,
-							  },
-					),
-				(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
-					repairStore.getNodes(revision, path, field, index, count),
+				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
 			);
 			delta.set(field, deltaField);
 		}
 		return delta;
 	}
 
-	private deltaFromNodeChange(
-		change: NodeChangeset,
-		repairStore: ReadonlyRepairDataStore,
-		path?: UpPath,
-	): Delta.Modify {
+	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
 		const modify: Mutable<Delta.Modify> = {
 			type: Delta.MarkType.Modify,
 		};
 
 		const valueChange = change.valueChange;
 		if (valueChange !== undefined) {
-			if ("revert" in valueChange) {
-				assert(
-					path !== undefined,
-					0x4aa /* Only existing nodes can have their value restored */,
-				);
-				assert(
-					valueChange.revert !== undefined,
-					0x4ab /* Unable to revert to undefined revision */,
-				);
-				modify.setValue = repairStore.getValue(valueChange.revert, path);
-			} else {
-				modify.setValue = valueChange.value;
-			}
+			modify.setValue = valueChange.value;
 		}
 
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, repairStore, path);
+			modify.fields = this.intoDeltaImpl(change.fieldChanges);
 		}
 
 		return modify;
@@ -644,7 +649,9 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 
 interface InvertData {
 	originalRevision: RevisionTag | undefined;
+	fieldKey: FieldKey;
 	fieldChange: FieldChange;
+	path: UpPath | undefined;
 }
 
 type ComposeData = FieldChange;

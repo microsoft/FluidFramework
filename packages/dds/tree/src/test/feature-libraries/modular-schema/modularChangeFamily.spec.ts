@@ -20,7 +20,6 @@ import {
 	ChangesetLocalId,
 } from "../../../feature-libraries";
 import {
-	RepairDataStore,
 	makeAnonChange,
 	RevisionTag,
 	tagChange,
@@ -61,7 +60,7 @@ const singleNodeEncoder: FieldChangeEncoder<NodeChangeset> = {
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
-	invert: (change, invertChild) => invertChild(change.change),
+	invert: (change, invertChild) => invertChild(change.change, 0),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change),
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -79,7 +78,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	encoder: singleNodeEncoder,
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild) => [deltaFromChild(change, 0)],
+	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
 };
 
 const singleNodeField = new FieldKind(
@@ -94,7 +93,7 @@ type IdChangeset = ChangesetLocalId;
 
 const idFieldRebaser: FieldChangeRebaser<IdChangeset> = {
 	compose: (changes, composeChild, genId): IdChangeset => genId(),
-	invert: (change, invertChild, genId): IdChangeset => genId(),
+	invert: (change, invertChild, reviver, genId): IdChangeset => genId(),
 	rebase: (change, over, rebaseChild, genId): IdChangeset => genId(),
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -118,12 +117,6 @@ const idField = new FieldKind(
 	(a, b) => false,
 	new Set(),
 );
-
-const noRepair: RepairDataStore = {
-	capture: () => {},
-	getNodes: () => assert.fail(),
-	getValue: () => assert.fail(),
-};
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[singleNodeField, valueField, idField].map((field) => [field.identifier, field]),
@@ -303,7 +296,7 @@ const nodeValueRevert: ModularChangeset = {
 				fieldKind: genericFieldKind.identifier,
 				change: brand(
 					genericFieldKind.changeHandler.editor.buildChildChange(0, {
-						valueChange: { revert: detachedBy },
+						valueChange: { value: testValue },
 					}),
 				),
 			},
@@ -750,20 +743,7 @@ describe("ModularChangeFamily", () => {
 				},
 			];
 			const expectedDelta: Delta.Root = new Map([[fieldA, nodeDelta]]);
-			const repair: RepairDataStore = {
-				capture: (TreeDestruction) => assert.fail(),
-				getNodes: () => assert.fail(),
-				getValue: (revision, path) => {
-					assert.equal(revision, detachedBy);
-					assert.deepEqual(path, {
-						parent: undefined,
-						parentField: fieldA,
-						parentIndex: 0,
-					});
-					return testValue;
-				},
-			};
-			const actual = family.intoDelta(nodeValueRevert, repair);
+			const actual = family.intoDelta(nodeValueRevert);
 			assertDeltaEqual(actual, expectedDelta);
 		});
 	});

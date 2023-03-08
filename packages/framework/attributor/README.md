@@ -1,4 +1,4 @@
-# @fluidframework/attributor
+# @fluid-experimental/attributor
 
 This package contains definitions and implementations for framework-provided attribution functionality.
 
@@ -15,7 +15,7 @@ When you instantiate your container runtime, pass a scope which implements `IPro
 
 ```typescript
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { mixinAttributor, createRuntimeAttributor } from "@fluidframework/attributor";
+import { mixinAttributor, createRuntimeAttributor } from "@fluid-experimental/attributor";
 
 const ContainerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
