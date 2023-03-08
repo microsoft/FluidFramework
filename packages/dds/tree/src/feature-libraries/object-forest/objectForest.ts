@@ -332,7 +332,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x430 /* Cursor must be current to be used */);
 		return this.innerCursor.exitField();
 	}
-	skipPendingFields(): boolean {
+	override skipPendingFields(): boolean {
 		assert(this.innerCursor !== undefined, 0x431 /* Cursor must be current to be used */);
 		return this.innerCursor.skipPendingFields();
 	}
