@@ -130,7 +130,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * ```json
 	 *	{
 	 *		taskList: {
-	*			[id: string]: {
+	 *			[id: string]: {
 	 *				name: string,
 	 * 				priority: number
 	 *			}

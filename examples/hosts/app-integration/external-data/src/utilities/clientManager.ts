@@ -75,7 +75,7 @@ export class ClientManager<TData = unknown> {
 			this._taskListMapping.set(client, new Set<ExternalTaskListId>());
 		}
 		this._taskListMapping.get(client)?.add(taskListId);
-		
+
 		if (this._clientMapping.get(taskListId) === undefined) {
 			this._clientMapping.set(client, new Set<ClientSessionUrl>());
 		}
