@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { BlobAggregationStorage, SnapshotExtractor } from "./blobAggregationStorage";
 export { buildSnapshotTree } from "./buildSnapshotTree";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export { UsageError } from "./error";

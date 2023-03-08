@@ -139,6 +139,14 @@
 			"RemovedFunctionDeclaration_waitForConnectedState": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_BlobAggregationStorage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SnapshotExtractor": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

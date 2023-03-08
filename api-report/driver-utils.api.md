@@ -51,45 +51,6 @@ export class AuthorizationError extends LoggingError implements IAuthorizationEr
     readonly tenantId: string | undefined;
 }
 
-// @public @deprecated
-export class BlobAggregationStorage extends SnapshotExtractor implements IDocumentStorageService {
-    protected constructor(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking: boolean, packingLevel: number, blobCutOffSize?: number | undefined);
-    // (undocumented)
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    // (undocumented)
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    // (undocumented)
-    static readonly fullDataStoreSummaries = true;
-    // (undocumented)
-    getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike>;
-    // (undocumented)
-    getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null>;
-    // (undocumented)
-    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
-    // (undocumented)
-    protected isRealStorageId(id: string): boolean;
-    // (undocumented)
-    protected loadedFromSummary: boolean;
-    // (undocumented)
-    get policies(): IDocumentStorageServicePolicies | undefined;
-    // (undocumented)
-    readBlob(id: string): Promise<ArrayBufferLike>;
-    // (undocumented)
-    get repositoryUrl(): string;
-    // (undocumented)
-    setBlob(id: string, tree: ISnapshotTree, content: string): void;
-    // (undocumented)
-    static unpackSnapshot(snapshot: ISnapshotTree): Promise<void>;
-    // (undocumented)
-    unpackSnapshot(snapshot: ISnapshotTree): Promise<void>;
-    // (undocumented)
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
-    // (undocumented)
-    protected virtualBlobs: Map<string, ArrayBufferLike>;
-    // (undocumented)
-    static wrap(storage: IDocumentStorageService, logger: ITelemetryLogger, allowPacking?: boolean, packingLevel?: number): BlobAggregationStorage;
-}
-
 // @public
 export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): ISnapshotTree;
 
@@ -346,24 +307,6 @@ export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
 
 // @public (undocumented)
 export function runWithRetry<T>(api: (cancel?: AbortSignal) => Promise<T>, fetchCallName: string, logger: ITelemetryLogger, progress: IProgress): Promise<T>;
-
-// @public @deprecated
-export abstract class SnapshotExtractor {
-    // (undocumented)
-    protected readonly aggregatedBlobName = "__big";
-    // (undocumented)
-    abstract getBlob(id: string, tree: ISnapshotTree): Promise<ArrayBufferLike>;
-    // (undocumented)
-    protected getNextVirtualId(): string;
-    // (undocumented)
-    abstract setBlob(id: string, tree: ISnapshotTree, content: string): any;
-    // (undocumented)
-    unpackSnapshotCore(snapshot: ISnapshotTree, level?: number): Promise<void>;
-    // (undocumented)
-    protected virtualIdCounter: number;
-    // (undocumented)
-    protected readonly virtualIdPrefix = "__";
-}
 
 // @public (undocumented)
 export function streamFromMessages(messagesArg: Promise<ISequencedDocumentMessage[]>): IStream<ISequencedDocumentMessage[]>;

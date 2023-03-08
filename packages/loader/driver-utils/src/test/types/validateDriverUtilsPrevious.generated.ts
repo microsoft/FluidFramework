@@ -40,26 +40,14 @@ use_old_ClassDeclaration_AuthorizationError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobAggregationStorage": {"forwardCompat": false}
+* "RemovedClassDeclaration_BlobAggregationStorage": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BlobAggregationStorage():
-    TypeOnly<old.BlobAggregationStorage>;
-declare function use_current_ClassDeclaration_BlobAggregationStorage(
-    use: TypeOnly<current.BlobAggregationStorage>);
-use_current_ClassDeclaration_BlobAggregationStorage(
-    get_old_ClassDeclaration_BlobAggregationStorage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobAggregationStorage": {"backCompat": false}
+* "RemovedClassDeclaration_BlobAggregationStorage": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BlobAggregationStorage():
-    TypeOnly<current.BlobAggregationStorage>;
-declare function use_old_ClassDeclaration_BlobAggregationStorage(
-    use: TypeOnly<old.BlobAggregationStorage>);
-use_old_ClassDeclaration_BlobAggregationStorage(
-    get_current_ClassDeclaration_BlobAggregationStorage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -568,26 +556,14 @@ use_old_ClassDeclaration_RetryableError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SnapshotExtractor": {"forwardCompat": false}
+* "RemovedClassDeclaration_SnapshotExtractor": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SnapshotExtractor():
-    TypeOnly<old.SnapshotExtractor>;
-declare function use_current_ClassDeclaration_SnapshotExtractor(
-    use: TypeOnly<current.SnapshotExtractor>);
-use_current_ClassDeclaration_SnapshotExtractor(
-    get_old_ClassDeclaration_SnapshotExtractor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SnapshotExtractor": {"backCompat": false}
+* "RemovedClassDeclaration_SnapshotExtractor": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SnapshotExtractor():
-    TypeOnly<current.SnapshotExtractor>;
-declare function use_old_ClassDeclaration_SnapshotExtractor(
-    use: TypeOnly<old.SnapshotExtractor>);
-use_old_ClassDeclaration_SnapshotExtractor(
-    get_current_ClassDeclaration_SnapshotExtractor());
 
 /*
 * Validate forward compat by using old type in place of current type
