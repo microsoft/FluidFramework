@@ -8,12 +8,7 @@ export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export { UsageError } from "./error";
 export { ensureFluidResolvedUrl, isFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
-export {
-	canBeCoalescedByService,
-	isRuntimeMessage,
-	isUnpackedRuntimeMessage,
-	MessageType2,
-} from "./messageRecognition";
+export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition";
 export {
 	AuthorizationError,
 	canRetryOnError,

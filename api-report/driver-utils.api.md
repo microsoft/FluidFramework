@@ -185,9 +185,6 @@ export function isRuntimeMessage(message: {
     type: string;
 }): boolean;
 
-// @public @deprecated
-export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean;
-
 // @public (undocumented)
 export class LocationRedirectionError extends LoggingError implements ILocationRedirectionError, IFluidErrorBase {
     constructor(message: string, redirectUrl: IResolvedUrl, props: DriverErrorTelemetryProps);

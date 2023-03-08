@@ -125,7 +125,7 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 
 ### driver-utils members removed
 
-The following members of the `@fluidframework/driver-utils` package were deprecated in 2.0.0-internal.3.0.0, and are now removed:
+The following members of the `@fluidframework/driver-utils` package were deprecated in 2.0.0-internal.3.0.0 or earlier, and are now removed:
 
 -   `waitForConnectedState`
 -   `MapWithExpiration`
@@ -139,6 +139,7 @@ The following members of the `@fluidframework/driver-utils` package were depreca
 -   `SummaryTreeAssembler`
 -   `BlobAggregationStorage`
 -   `SnapshotExtractor`
+-   `isUnpackedRuntimeMessage`
 
 # 2.0.0-internal.3.3.0
 

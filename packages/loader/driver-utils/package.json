@@ -147,6 +147,10 @@
 			"RemovedClassDeclaration_SnapshotExtractor": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
