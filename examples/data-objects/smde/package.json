@@ -98,5 +98,9 @@
 				}
 			}
 		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }

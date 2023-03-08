@@ -41,7 +41,7 @@ As we can see, the two functions that we must implement are the `IFluidHTMLView`
 `render(elm:HTMLElement)` function. `remove()` is not mandatory and only necessary for clean up operations when the
 view is being removed.
 
-- `IFluidHTMLView` can provide itself as `this` to identify that this Fluid object itself is a view provider. With Fluid,
+-   `IFluidHTMLView` can provide itself as `this` to identify that this Fluid object itself is a view provider. With Fluid,
   each Fluid object uses the identifiers to expose their capabilities and are anonymous interfaces otherwise. As such,
   any caller that does not know if a given Fluid object (`someFluidObject`) provides a view can check by seeing if
   `someObject.IFluidHTMLView` is defined or not. If `someObject.IFluidHTMLView` **does not** return `undefined`, it is
@@ -57,7 +57,7 @@ if (viewable) {
 }
 ```
 
-- `render` is a function that takes in an [HTMLElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement) that
+-   `render` is a function that takes in an [HTMLElement](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement) that
   it can use as the base to render its view. The `elm` parameter passed in here can be modified and returned. If you are
   using React as your view framework, this is where you would pass the `elm` to the `ReactDOM.render` function to start
   rendering React components. Below is a simple example of this concept implemented using React.
@@ -118,13 +118,13 @@ export class Clicker extends DataObject
 By extending the abstract `DataObject` class, we have actually let it do a lot of the necessary set up work for us
 through its constructor. Specifically, the `DataObject` class gives us access to two items
 
-- `root`: The `root` is a `SharedDirectory` [object]({{< relref "SharedDirectory" >}}) which, as the name implies, is a
+-   `root`: The `root` is a `SharedDirectory` [object]({{< relref "SharedDirectory" >}}) which, as the name implies, is a
   directory that is shared amongst all users that are rendering our view in the same session. Any items that are set
   here on a key will be accessible to other users using the same key on their respective client's root. The stored
   values can be primitives or the handles of other `SharedObject` items. If you don't know what handles are, don't
   worry! We'll take a look at them in the next section.
 
-- `runtime`: The `runtime` is an `IFluidDataStoreRuntime` object that manages the Fluid object lifecycle. The key thing
+-   `runtime`: The `runtime` is an `IFluidDataStoreRuntime` object that manages the Fluid object lifecycle. The key thing
   to note here is that it will be used for the creation of other Fluid objects and DDSes.
 
 ```typescript
@@ -298,16 +298,16 @@ export const fluidExport = ClickerInstantiationFactory;
 A good way of understanding what is happening here is thinking about the two different scenarios this our `Clicker will
 be rendered in.
 
-- This is the first time our `Clicker` is being rendered in this session for any user, i.e. some user opened this
+-   This is the first time our `Clicker` is being rendered in this session for any user, i.e. some user opened this
   `Clicker` session for the first time.
-- This is a user who is joining an existing session and is rendering with data that has already been updated, i.e. somebody
+-   This is a user who is joining an existing session and is rendering with data that has already been updated, i.e. somebody
   clicked the `Clicker` a number of times already and now a new user enters to see the already incremented value.
 
 To cater to these two scenarios, the DataObject base class provides three different lifecycle functions:
 
-- `initializingFirstTime` - This code will be run by clients in the first, new session scenario
-- `initializingFromExisting` - This code will be run by clients in the second, existing session scenario
-- `hasInitialized` - This code will be run by clients in both the new and existing session scenarios
+-   `initializingFirstTime` - This code will be run by clients in the first, new session scenario
+-   `initializingFromExisting` - This code will be run by clients in the second, existing session scenario
+-   `hasInitialized` - This code will be run by clients in both the new and existing session scenarios
 
 These all run prior to the first time `render` is called and can be async. As such, this is the perfect place to do any
 setup work, such as assembling any DDSes you will need.
@@ -513,8 +513,8 @@ render() {
 
 This has two interesting sections:
 
-- `this.state.value` - This is where we render the value that we set in our state in the constructor
-- `this.props.counter.increment` - When the user presses the + button, it increments the SharedCounter object passed in
+-   `this.state.value` - This is where we render the value that we set in our state in the constructor
+-   `this.props.counter.increment` - When the user presses the + button, it increments the SharedCounter object passed in
   the props
 
 Now, the portion you will have noticed is missing is where the update on the `props.counter` translates to a

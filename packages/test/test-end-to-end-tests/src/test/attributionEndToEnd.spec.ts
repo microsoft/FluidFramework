@@ -9,7 +9,7 @@ import {
 	createRuntimeAttributor,
 	enableOnNewFileKey,
 	IRuntimeAttributor,
-} from "@fluidframework/attributor";
+} from "@fluid-experimental/attributor";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {

@@ -11,19 +11,7 @@ import {
 	ITreeCursorSynchronous,
 	rootFieldKeySymbol,
 } from "../../core";
-
-export interface ReferenceCounted {
-	referenceAdded(): void;
-
-	referenceRemoved(): void;
-
-	/**
-	 * @returns true if mutating this object may impact other users of it.
-	 *
-	 * Implementations can return true if the refcount is 1 OR the content is logically immutable.
-	 */
-	isShared(): boolean;
-}
+import { ReferenceCounted } from "../../util";
 
 /**
  * Contiguous part of the tree which get stored together in some data format.
@@ -50,34 +38,6 @@ export interface TreeChunk extends ReferenceCounted {
 	 * which would compose better with utilities for processing sequences of nodes.
 	 */
 	cursor(): ChunkedCursor;
-}
-
-/**
- * Base class to assist with implementing ReferenceCounted
- */
-export abstract class ReferenceCountedBase implements ReferenceCounted {
-	private refCount: number = 1;
-
-	public referenceAdded(): void {
-		this.refCount++;
-	}
-
-	public referenceRemoved(): void {
-		this.refCount--;
-		assert(this.refCount >= 0, 0x4c4 /* Negative ref count */);
-		if (this.refCount === 0) {
-			this.dispose();
-		}
-	}
-
-	public isShared(): boolean {
-		return this.refCount > 1;
-	}
-
-	/**
-	 * Called when refcount reaches 0.
-	 */
-	protected abstract dispose(): void;
 }
 
 /**
