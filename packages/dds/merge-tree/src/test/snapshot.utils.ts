@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { IMergeTreeOp } from "../ops";
+import { IMergeTreeOp, ReferenceType } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
@@ -59,6 +59,19 @@ export class TestString {
 
 	public append(text: string, increaseMsn: boolean) {
 		this.insert(this.client.getLength(), text, increaseMsn);
+	}
+
+	public insertMarker(pos: number, increaseMsn: boolean) {
+		this.queue(
+			this.client.insertMarkerLocal(pos, ReferenceType.Simple, {
+				segment: this.pending.length,
+			})!,
+			increaseMsn,
+		);
+	}
+
+	public appendMarker(increaseMsn: boolean) {
+		this.insertMarker(this.client.getLength(), increaseMsn);
 	}
 
 	public removeRange(start: number, end: number, increaseMsn: boolean) {
