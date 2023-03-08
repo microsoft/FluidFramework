@@ -13,8 +13,7 @@ import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
- * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
+ * ! TODO: Remove this interface in "2.0.0-internal.6.0.0" once we only read IPendingMessageNew
  */
 export interface IPendingMessageOld {
 	type: "message";
@@ -26,6 +25,10 @@ export interface IPendingMessageOld {
 	opMetadata: Record<string, unknown> | undefined;
 }
 
+/**
+ * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
+ * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
+ */
 export interface IPendingMessageNew {
 	type: "message";
 	clientSequenceNumber: number;
