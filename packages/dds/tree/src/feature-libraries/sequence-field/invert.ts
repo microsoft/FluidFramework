@@ -6,12 +6,15 @@
 import { assert } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import { fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget, IdAllocator, NodeReviver } from "../modular-schema";
 import { Changeset, Delete, Mark, MarkList, ReturnFrom } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { getInputLength, isConflicted, isObjMark, isSkipMark } from "./utils";
 
-export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
+export type NodeChangeInverter<TNodeChange> = (
+	change: TNodeChange,
+	index: number | undefined,
+) => TNodeChange;
 
 /**
  * Inverts a given changeset.
@@ -24,6 +27,7 @@ export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChan
 export function invert<TNodeChange>(
 	change: TaggedChange<Changeset<TNodeChange>>,
 	invertChild: NodeChangeInverter<TNodeChange>,
+	reviver: NodeReviver,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 	isRollback: boolean,
@@ -31,6 +35,7 @@ export function invert<TNodeChange>(
 	return invertMarkList(
 		change.change,
 		change.revision,
+		reviver,
 		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
 		isRollback,
@@ -40,6 +45,7 @@ export function invert<TNodeChange>(
 export function amendInvert<TNodeChange>(
 	invertedChange: Changeset<TNodeChange>,
 	originalRevision: RevisionTag | undefined,
+	reviver: NodeReviver,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
 ): Changeset<TNodeChange> {
@@ -54,6 +60,7 @@ export function amendInvert<TNodeChange>(
 function invertMarkList<TNodeChange>(
 	markList: MarkList<TNodeChange>,
 	revision: RevisionTag | undefined,
+	reviver: NodeReviver,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 	isRollback: boolean,
@@ -66,6 +73,7 @@ function invertMarkList<TNodeChange>(
 			mark,
 			inputIndex,
 			revision,
+			reviver,
 			invertChild,
 			crossFieldManager,
 			isRollback,
@@ -81,6 +89,7 @@ function invertMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
 	inputIndex: number,
 	revision: RevisionTag | undefined,
+	reviver: NodeReviver,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 	isRollback: boolean,
@@ -100,11 +109,13 @@ function invertMark<TNodeChange>(
 				return [del];
 			}
 			case "Delete": {
+				assert(revision !== undefined, "Unable to revert to undefined revision");
 				return [
 					{
 						type: "Revive",
 						detachedBy: mark.revision ?? revision,
 						detachIndex: inputIndex,
+						content: reviver(revision, inputIndex, mark.count),
 						count: mark.count,
 					},
 				];
@@ -125,7 +136,7 @@ function invertMark<TNodeChange>(
 						: [
 								{
 									type: "Modify",
-									changes: invertChild(mark.changes),
+									changes: invertChild(mark.changes, inputIndex),
 								},
 						  ];
 				}
@@ -136,7 +147,7 @@ function invertMark<TNodeChange>(
 				return [
 					{
 						type: "Modify",
-						changes: invertChild(mark.changes),
+						changes: invertChild(mark.changes, inputIndex),
 					},
 				];
 			}
@@ -157,7 +168,7 @@ function invertMark<TNodeChange>(
 						: [
 								{
 									type: "Modify",
-									changes: invertChild(mark.changes),
+									changes: invertChild(mark.changes, inputIndex),
 								},
 						  ];
 				}
@@ -166,7 +177,8 @@ function invertMark<TNodeChange>(
 						CrossFieldTarget.Destination,
 						mark.revision ?? revision,
 						mark.id,
-						invertChild(mark.changes),
+						invertChild(mark.changes, inputIndex),
+						true,
 					);
 				}
 				return [
@@ -197,7 +209,9 @@ function invertMark<TNodeChange>(
 						CrossFieldTarget.Destination,
 						mark.revision ?? revision,
 						mark.id,
+						true,
 					);
+
 					if (movedChanges !== undefined) {
 						invertedMark.changes = movedChanges;
 					}
@@ -227,7 +241,9 @@ function transferMovedChanges<TNodeChange>(
 				CrossFieldTarget.Destination,
 				mark.revision ?? revision,
 				mark.id,
+				true,
 			);
+
 			if (change !== undefined) {
 				mark.changes = change;
 			}

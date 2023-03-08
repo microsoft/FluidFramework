@@ -20,7 +20,7 @@ export interface FieldChangeHandler<
 	rebaser: FieldChangeRebaser<TChangeset>;
 	encoder: FieldChangeEncoder<TChangeset>;
 	editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta, reviver: NodeReviver): Delta.MarkList;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 }
 
 /**
@@ -40,6 +40,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -50,6 +51,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -59,6 +61,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
+		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 		isRollback: boolean,
@@ -70,6 +73,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	amendInvert(
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
+		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -84,6 +88,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 
 	/**
@@ -94,6 +99,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TaggedChange<TChangeset>,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionIndexer: RevisionIndexer,
 	): TChangeset;
 }
 
@@ -103,12 +109,12 @@ export interface FieldChangeRebaser<TChangeset> {
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (changes: TChangeset[]) => TChangeset;
-	invert: (change: TChangeset) => TChangeset;
+	invert: (change: TChangeset, reviver: NodeReviver) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
-		invert: (change, _invertChild, _genId) => data.invert(change.change),
+		invert: (change, _invertChild, reviver, _genId) => data.invert(change.change, reviver),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
 }
@@ -164,7 +170,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset, index: number | undefined) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
 /**
  * @alpha
@@ -178,7 +184,10 @@ export type NodeReviver = (
 /**
  * @alpha
  */
-export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
+export type NodeChangeInverter = (
+	change: NodeChangeset,
+	index: number | undefined,
+) => NodeChangeset;
 
 /**
  * @alpha
@@ -217,34 +226,18 @@ export interface NodeChangeset {
 /**
  * @alpha
  */
-export type ValueChange =
-	| {
-			/**
-			 * The revision in which this change occurred.
-			 * Undefined when it can be inferred from context.
-			 */
-			revision?: RevisionTag;
+export interface ValueChange {
+	/**
+	 * The revision in which this change occurred.
+	 * Undefined when it can be inferred from context.
+	 */
+	revision?: RevisionTag;
 
-			/**
-			 * Can be left unset to represent the value being cleared.
-			 */
-			value?: Value;
-	  }
-	| {
-			/**
-			 * The revision in which this change occurred.
-			 * Undefined when it can be inferred from context.
-			 */
-			revision?: RevisionTag;
-
-			/**
-			 * The tag of the change that overwrote the value being restored.
-			 *
-			 * Undefined when the operation is the product of a tag-less change being inverted.
-			 * It is invalid to try convert such an operation to a delta.
-			 */
-			revert: RevisionTag | undefined;
-	  };
+	/**
+	 * Can be left unset to represent the value being cleared.
+	 */
+	value?: Value;
+}
 
 /**
  * @alpha
@@ -255,7 +248,33 @@ export interface ModularChangeset {
 	 * If undefined then this changeset contains no IDs.
 	 */
 	maxId?: ChangesetLocalId;
+	/**
+	 * The revisions included in this changeset, ordered temporally (oldest to newest).
+	 * Undefined for anonymous changesets.
+	 * Should never be empty.
+	 */
+	readonly revisions?: readonly RevisionInfo[];
 	changes: FieldChangeMap;
+}
+
+/**
+ * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
+ * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
+ * compose or rebase operation.
+ *
+ * During composition, the index reflects the order of the changeset within the overall composed changeset that is
+ * being produced.
+ *
+ * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
+ * @alpha
+ */
+export type RevisionIndexer = (tag: RevisionTag) => number;
+
+/**
+ * @alpha
+ */
+export interface RevisionInfo {
+	readonly tag: RevisionTag;
 }
 
 /**

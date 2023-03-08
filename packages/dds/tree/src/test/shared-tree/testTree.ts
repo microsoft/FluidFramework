@@ -117,9 +117,9 @@ export class TestTree {
 		this.forest = forest;
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
+			this.sessionId,
 			forest.anchors,
 		);
-		this.editManager.initSessionId(this.sessionId);
 	}
 
 	public jsonRoots(): JsonCompatible[] {

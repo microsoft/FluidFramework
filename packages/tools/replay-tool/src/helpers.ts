@@ -14,10 +14,11 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { TelemetryLogger } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
+import { FluidObject } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/common-utils";
 import {
 	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
@@ -25,6 +26,11 @@ import {
 } from "./replayFluidFactories";
 import { ReplayCodeLoader, ReplayUrlResolver } from "./replayLoaderObject";
 import { mixinDataStoreWithAnyChannel } from "./unknownChannel";
+
+export interface ReplayToolContainerEntryPoint {
+	readonly containerRuntime: ContainerRuntime;
+	readonly ReplayToolContainerEntryPoint: ReplayToolContainerEntryPoint;
+}
 
 const normalizeOpts: ISnapshotNormalizerConfig = {
 	excludedChannelContentTypes: excludeChannelContentDdsFactories.map((f) => f.type),
@@ -103,7 +109,6 @@ export async function loadContainer(
 	documentName: string,
 	strictChannels: boolean,
 	logger?: TelemetryLogger,
-	requestHandlers?: RuntimeRequestHandler[],
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
 	const resolved: IFluidResolvedUrl = {
@@ -158,7 +163,7 @@ export async function loadContainer(
 		},
 	};
 	const codeLoader = new ReplayCodeLoader(
-		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries, requestHandlers),
+		new ReplayRuntimeFactory(runtimeOptions, dataStoreRegistries),
 	);
 
 	// Load the Fluid document while forcing summarizeProtocolTree option
@@ -176,8 +181,9 @@ export async function loadContainer(
 }
 
 export async function uploadSummary(container: IContainer) {
-	const response = await container.request({ url: "/containerRuntime" });
-	const runtime = response.value as ContainerRuntime;
+	const entryPoint: FluidObject<ReplayToolContainerEntryPoint> = await container.getEntryPoint();
+	const runtime = entryPoint?.ReplayToolContainerEntryPoint?.containerRuntime;
+	assert(runtime !== undefined, "ContainerRuntime entryPoint was not initialized");
 	const summaryResult = await runtime.summarize({
 		fullTree: true,
 		trackState: false,

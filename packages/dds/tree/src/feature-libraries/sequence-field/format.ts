@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, RevisionTag } from "../../core";
+import { ITreeCursorSynchronous, JsonableTree, RevisionTag } from "../../core";
 import { ChangesetLocalId, NodeChangeset } from "../modular-schema";
 
 export type NodeChangeType = NodeChangeset;
@@ -225,6 +225,7 @@ export interface Revive<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange>,
 		CanConflict {
 	type: "Revive";
+	content: ITreeCursorSynchronous[];
 	count: NodeCount;
 }
 

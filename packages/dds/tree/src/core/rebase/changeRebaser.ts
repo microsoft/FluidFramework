@@ -4,6 +4,7 @@
  */
 
 import { Invariant } from "../../util";
+import { ReadonlyRepairDataStore } from "../repair";
 import { AnchorSet } from "../tree";
 import type { RevisionTag } from "./types";
 
@@ -51,14 +52,21 @@ export interface ChangeRebaser<TChangeset> {
 
 	/**
 	 * @param changes - The changes to invert.
-	 * @param isRollback - Whether the inverted change is meant rollback a change on a branch as is the case when
+	 * @param repairStore - The store to query for repair data.
+	 * If undefined, dummy data will be created instead.
+	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
 	 * @returns the inverse of `changes`.
 	 *
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
 	 * See {@link ChangeRebaser} for details.
 	 */
-	invert(changes: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
+	invert(
+		changes: TaggedChange<TChangeset>,
+		isRollback: boolean,
+		// TODO: make the repair store mandatory when all usages of this method have repair data support.
+		repairStore?: ReadonlyRepairDataStore,
+	): TChangeset;
 
 	/**
 	 * Rebase `change` over `over`.

@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { jsonString } from "../../domains";
 import { singleTextCursor } from "../../feature-libraries";
-import { FieldKey, Delta, DeltaVisitor, visitDelta } from "../../core";
+import { FieldKey, Delta, DeltaVisitor, visitDelta, rootFieldKeySymbol } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
@@ -36,10 +36,13 @@ const visitorMethods: (keyof DeltaVisitor)[] = [
 
 function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
 	let callIndex = 0;
+	const result: VisitScript = [];
 	const makeChecker =
 		(name: string) =>
 		(...args: unknown[]) => {
-			assert.deepStrictEqual([name, ...args], expected[callIndex]);
+			result.push([name, ...args] as VisitCall);
+			// To break when the first off script event happens, enable this line:
+			// assert.deepStrictEqual([name, ...args], expected[callIndex]);
 			callIndex += 1;
 		};
 	const visitor: DeltaVisitor = {} as any;
@@ -47,7 +50,7 @@ function testVisit(delta: Delta.Root, expected: Readonly<VisitScript>): void {
 		visitor[methodName] = makeChecker(methodName);
 	}
 	visit(delta, visitor);
-	assert.strictEqual(callIndex, expected.length);
+	assert.deepEqual(result, expected);
 }
 
 function testTreeVisit(marks: Delta.MarkList, expected: Readonly<VisitScript>): void {
@@ -194,6 +197,39 @@ describe("visit", () => {
 			["exitNode", 0],
 		];
 		testTreeVisit(delta, expected);
+	});
+
+	it("move node to the right", () => {
+		// start with 0123 then move 1 so the order is 0213
+
+		const moveId: Delta.MoveId = brand(1);
+		const moveOut: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId,
+		};
+
+		const moveIn: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId,
+		};
+
+		const delta = new Map([[rootFieldKeySymbol, [1, moveOut, 1, moveIn]]]);
+
+		const expected: VisitScript = [
+			["enterField", rootFieldKeySymbol],
+			["onMoveOut", 1, 1, moveId],
+
+			// TODO: optimize out needless exit then enter
+			["exitField", rootFieldKeySymbol],
+			["enterField", rootFieldKeySymbol],
+
+			["onMoveIn", 2, 1, moveId],
+			["exitField", rootFieldKeySymbol],
+		];
+
+		testVisit(delta, expected);
 	});
 
 	it("move children to the right", () => {
