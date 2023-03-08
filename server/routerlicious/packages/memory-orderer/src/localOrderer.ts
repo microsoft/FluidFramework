@@ -38,6 +38,7 @@ import {
     IWebSocket,
     ILogger,
     TokenGenerator,
+    IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -103,12 +104,14 @@ export class LocalOrderer implements IOrderer {
         permission: any,
         tokenGenerator: TokenGenerator,
         logger: ILogger,
+        documentRepository: IDocumentRepository,
         gitManager?: IGitManager,
         setup: ILocalOrdererSetup = new LocalOrdererSetup(
             tenantId,
             documentId,
             storage,
             databaseManager,
+            documentRepository,
             gitManager),
         pubSub: IPubSub = new PubSub(),
         broadcasterContext: IContext = new LocalContext(logger),
@@ -279,10 +282,10 @@ export class LocalOrderer implements IOrderer {
             this.setup,
             this.deliContext,
             async (lambdaSetup, context) => {
-                const documentCollection = await lambdaSetup.documentCollectionP();
+                const documentRepository = await lambdaSetup.documentRepositoryP();
                 const lastCheckpoint = JSON.parse(this.dbObject.deli);
                 const checkpointManager =
-                    createDeliCheckpointManagerFromCollection(this.tenantId, this.documentId, documentCollection);
+                    createDeliCheckpointManagerFromCollection(this.tenantId, this.documentId, documentRepository);
                 return new DeliLambda(
                     context,
                     this.tenantId,
@@ -312,12 +315,12 @@ export class LocalOrderer implements IOrderer {
     private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
         // Scribe lambda
         const [
-            documentCollection,
+            documentRepository,
             scribeMessagesCollection,
             protocolHead,
             scribeMessages,
         ] = await Promise.all([
-            setup.documentCollectionP(),
+            setup.documentRepositoryP(),
             setup.scribeDeltaCollectionP(),
             setup.protocolHeadP(),
             setup.scribeMessagesP(),
@@ -353,7 +356,7 @@ export class LocalOrderer implements IOrderer {
             context,
             this.tenantId,
             this.documentId,
-            documentCollection,
+            documentRepository,
             scribeMessagesCollection,
             null /* deltaService */,
             false /* getDeltasViaAlfred */);

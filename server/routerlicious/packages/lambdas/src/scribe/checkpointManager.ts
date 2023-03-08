@@ -7,12 +7,12 @@ import { delay } from "@fluidframework/common-utils";
 import {
     ICollection,
     IContext,
-    IDocument,
     isRetryEnabled,
     IScribe,
     ISequencedOperationMessage,
     runWithRetry,
     IDeltaService,
+    IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
@@ -26,7 +26,7 @@ export class CheckpointManager implements ICheckpointManager {
         protected readonly context: IContext,
         private readonly tenantId: string,
         private readonly documentId: string,
-        private readonly documentCollection: ICollection<IDocument>,
+        private readonly documentRepository: IDocumentRepository,
         private readonly opCollection: ICollection<ISequencedOperationMessage>,
         private readonly deltaService: IDeltaService,
         private readonly getDeltasViaAlfred: boolean
@@ -46,18 +46,18 @@ export class CheckpointManager implements ICheckpointManager {
                 // Verify that the last pending op has been persisted to op storage
                 // If it is, we can checkpoint
                 const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;
-                const lastDelta = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
-                
+                const lastDelta = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber - 1, expectedSequenceNumber + 1);
+
                 // If we don't get the expected delta, retry after a delay
                 if (lastDelta.length === 0 || lastDelta[0].sequenceNumber < expectedSequenceNumber) {
                     const lumberjackProperties = {
                         ...getLumberBaseProperties(this.documentId, this.tenantId),
                         expectedSequenceNumber,
-                        lastDelta: lastDelta.length > 0 ? lastDelta[0].sequenceNumber: -1
+                        lastDelta: lastDelta.length > 0 ? lastDelta[0].sequenceNumber : -1
                     }
                     Lumberjack.info(`Pending ops were not been persisted to op storage. Retrying after delay`, lumberjackProperties);
                     await delay(1500);
-                    const lastDelta1 = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
+                    const lastDelta1 = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber - 1, expectedSequenceNumber + 1);
 
                     if (lastDelta1.length === 0 || lastDelta1[0].sequenceNumber < expectedSequenceNumber) {
                         const errMsg = "Pending ops were not been persisted to op storage. Checkpointing failed";
@@ -111,17 +111,16 @@ export class CheckpointManager implements ICheckpointManager {
     }
 
     private async writeScribeCheckpointState(checkpoint: IScribe) {
-        await this.documentCollection.update(
+        await this.documentRepository.updateDocument(
             {
-                documentId: this.documentId,
                 tenantId: this.tenantId,
+                documentId: this.documentId
             },
             {
                 // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
                 // given some data is user generated.
                 scribe: JSON.stringify(checkpoint),
-            },
-            null);
+            });
     }
 
     /**
@@ -129,15 +128,16 @@ export class CheckpointManager implements ICheckpointManager {
      */
     public async delete(sequenceNumber: number, lte: boolean) {
         // Clears the checkpoint information from mongodb.
-        await this.documentCollection.update(
+        await this.documentRepository.updateDocument(
             {
-                documentId: this.documentId,
                 tenantId: this.tenantId,
+                documentId: this.documentId
             },
             {
-                scribe: "",
-            },
-            null);
+                // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
+                // given some data is user generated.
+                scribe: ""
+            });
 
         // And then delete messagse we no longer will reference
         await this.opCollection

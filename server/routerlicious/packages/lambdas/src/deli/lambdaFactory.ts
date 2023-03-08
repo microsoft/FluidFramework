@@ -9,10 +9,10 @@ import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
     IClientManager,
-    ICollection,
     IContext,
     IDeliState,
     IDocument,
+    IDocumentRepository,
     ILogger,
     IPartitionLambda,
     IPartitionLambdaConfig,
@@ -60,22 +60,34 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
     constructor(
         private readonly operationsDbMongoManager: MongoManager,
-        private readonly collection: ICollection<IDocument>,
+        private readonly documentRepository: IDocumentRepository,
         private readonly tenantManager: ITenantManager,
         private readonly clientManager: IClientManager | undefined,
         private readonly forwardProducer: IProducer,
         private readonly signalProducer: IProducer | undefined,
         private readonly reverseProducer: IProducer,
-        private readonly serviceConfiguration: IServiceConfiguration) {
+        private readonly serviceConfiguration: IServiceConfiguration,
+    ) {
         super();
     }
 
-    public async create(config: IPartitionLambdaConfig, context: IContext): Promise<IPartitionLambda> {
+    public async create(
+        config: IPartitionLambdaConfig,
+        context: IContext,
+    ): Promise<IPartitionLambda> {
         const { documentId, tenantId, leaderEpoch } = config;
-        const sessionMetric = createSessionMetric(tenantId, documentId,
-            LumberEventName.SessionResult, this.serviceConfiguration);
-        const sessionStartMetric = createSessionMetric(tenantId, documentId,
-            LumberEventName.StartSessionResult, this.serviceConfiguration);
+        const sessionMetric = createSessionMetric(
+            tenantId,
+            documentId,
+            LumberEventName.SessionResult,
+            this.serviceConfiguration,
+        );
+        const sessionStartMetric = createSessionMetric(
+            tenantId,
+            documentId,
+            LumberEventName.StartSessionResult,
+            this.serviceConfiguration,
+        );
 
         const messageMetaData = {
             documentId,
@@ -88,7 +100,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         try {
             // Lookup the last sequence number stored
             // TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-            document = await this.collection.findOne({ documentId, tenantId });
+            document = await this.documentRepository.readDocument({ documentId, tenantId });
 
             // Check if the document was deleted prior.
             if (!isDocumentValid(document)) {
@@ -142,8 +154,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 context.log?.info(docExistsMessge, { messageMetaData });
                 Lumberjack.info(docExistsMessge, getLumberBaseProperties(documentId, tenantId));
 
-                const lastCheckpointFromSummary =
-                    await this.loadStateFromSummary(tenantId, documentId, gitManager, context.log);
+                const lastCheckpointFromSummary = await this.loadStateFromSummary(
+                    tenantId,
+                    documentId,
+                    gitManager,
+                    context.log,
+                );
                 if (lastCheckpointFromSummary === undefined) {
                     const errMsg = "Could not load state from summary";
                     context.log?.error(errMsg, { messageMetaData });
@@ -159,7 +175,9 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     // the sequence number is 'n' rather than '0'.
                     lastCheckpoint.logOffset = -1;
                     lastCheckpoint.epoch = leaderEpoch;
-                    const message = `Deli checkpoint from summary: ${JSON.stringify(lastCheckpoint)}`;
+                    const message = `Deli checkpoint from summary: ${JSON.stringify(
+                        lastCheckpoint,
+                    )}`;
                     context.log?.info(message, { messageMetaData });
                     Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
                 }
@@ -181,18 +199,22 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             lastCheckpoint.term = 1;
         }
 
-        const newCheckpoint = FlipTerm ?
-            await this.resetCheckpointOnEpochTick(
-                tenantId,
-                documentId,
-                gitManager,
-                context.log,
-                lastCheckpoint,
-                leaderEpoch,
-            ) :
-            lastCheckpoint;
+        const newCheckpoint = FlipTerm
+            ? await this.resetCheckpointOnEpochTick(
+                    tenantId,
+                    documentId,
+                    gitManager,
+                    context.log,
+                    lastCheckpoint,
+                    leaderEpoch,
+              )
+            : lastCheckpoint;
 
-        const checkpointManager = createDeliCheckpointManagerFromCollection(tenantId, documentId, this.collection);
+        const checkpointManager = createDeliCheckpointManagerFromCollection(
+            tenantId,
+            documentId,
+            this.documentRepository,
+        );
 
         // Should the lambda reaize that term has flipped to send a no-op message at the beginning?
         const deliLambda = new DeliLambda(
@@ -208,18 +230,22 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             this.reverseProducer,
             this.serviceConfiguration,
             sessionMetric,
-            sessionStartMetric);
+            sessionStartMetric,
+        );
 
         deliLambda.on("close", (closeType) => {
             const handler = async () => {
-                if ((closeType === LambdaCloseType.ActivityTimeout || closeType === LambdaCloseType.Error)) {
-                    const query = { documentId, tenantId, session: { $exists: true } };
+                if (
+                    closeType === LambdaCloseType.ActivityTimeout ||
+                    closeType === LambdaCloseType.Error
+                ) {
+                    const filter = { documentId, tenantId, session: { $exists: true } };
                     const data = {
                         "session.isSessionAlive": false,
                         "session.isSessionActive": false,
                         "lastAccessTime": Date.now(),
                     };
-                    await this.collection.update(query, data, null);
+                    await this.documentRepository.updateDocument(filter, data, undefined);
                     const message = `Marked session alive and active as false for closeType:
                         ${JSON.stringify(closeType)}`;
                     context.log?.info(message, { messageMetaData });
@@ -228,32 +254,32 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
             };
             handler().catch((e) => {
                 const message = `Failed to handle session alive and active with exception ${e}`;
-                context.log?.error(
-                    message,
-                    { messageMetaData },
-                );
+                context.log?.error(message, { messageMetaData });
                 Lumberjack.error(message, getLumberBaseProperties(documentId, tenantId), e);
             });
         });
 
         // Fire-and-forget sessionAlive and sessionActive update for session-boot performance.
         // Worst case is that document is allowed to be deleted while active.
-        context.log?.info(
-            `Deli Lambda is marking session as alive and active as true.`,
-            { messageMetaData },
-        );
-        this.collection.update(
-            { documentId, tenantId },
-            {
-                "session.isSessionAlive": true,
-                "session.isSessionActive": true,
-            },
-            null,
-        ).catch((error) => {
-            const errMsg = "Deli Lambda failed to mark session as active.";
-            context.log?.error(`${errMsg} Exception: ${inspect(error)}`, { messageMetaData });
-            Lumberjack.error(`${errMsg}`, getLumberBaseProperties(documentId, tenantId), error);
+        context.log?.info(`Deli Lambda is marking session as alive and active as true.`, {
+            messageMetaData,
         });
+        this.documentRepository
+            .updateDocument(
+                {
+                    tenantId,
+                    documentId,
+                },
+                {
+                    "session.isSessionAlive": true,
+                    "session.isSessionActive": true,
+                },
+            )
+            .catch((error) => {
+                const errMsg = "Deli Lambda failed to mark session as active.";
+                context.log?.error(`${errMsg} Exception: ${inspect(error)}`, { messageMetaData });
+                Lumberjack.error(`${errMsg}`, getLumberBaseProperties(documentId, tenantId), error);
+            });
 
         return deliLambda;
     }
@@ -261,7 +287,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     private logSessionFailureMetrics(
         sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
         sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
-        errMsg: string) {
+        errMsg: string,
+    ) {
         sessionMetric?.error(errMsg);
         sessionStartMetric?.error(errMsg);
     }
@@ -271,7 +298,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         const forwardProducerClosedP = this.forwardProducer.close();
         const signalProducerClosedP = this.signalProducer?.close();
         const reverseProducerClosedP = this.reverseProducer.close();
-        await Promise.all([mongoClosedP, forwardProducerClosedP, signalProducerClosedP, reverseProducerClosedP]);
+        await Promise.all([
+            mongoClosedP,
+            forwardProducerClosedP,
+            signalProducerClosedP,
+            reverseProducerClosedP,
+        ]);
     }
 
     // Fetches last durable deli state from summary. Returns undefined if not present.
@@ -279,12 +311,18 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         tenantId: string,
         documentId: string,
         gitManager: IGitManager,
-        logger: ILogger | undefined): Promise<IDeliState | undefined> {
+        logger: ILogger | undefined,
+    ): Promise<IDeliState | undefined> {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         if (existingRef) {
             try {
-                const content = await gitManager.getContent(existingRef.object.sha, ".serviceProtocol/deli");
-                const summaryCheckpoint = JSON.parse(toUtf8(content.content, content.encoding)) as IDeliState;
+                const content = await gitManager.getContent(
+                    existingRef.object.sha,
+                    ".serviceProtocol/deli",
+                );
+                const summaryCheckpoint = JSON.parse(
+                    toUtf8(content.content, content.encoding),
+                ) as IDeliState;
                 return summaryCheckpoint;
             } catch (exception) {
                 const messageMetaData = {
@@ -297,7 +335,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 Lumberjack.error(
                     errorMessage,
                     getLumberBaseProperties(documentId, tenantId),
-                    exception);
+                    exception,
+                );
                 return undefined;
             }
         }
@@ -317,10 +356,16 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
         gitManager: IGitManager,
         logger: ILogger | undefined,
         checkpoint: IDeliState,
-        leaderEpoch: number): Promise<IDeliState> {
+        leaderEpoch: number,
+    ): Promise<IDeliState> {
         let newCheckpoint = checkpoint;
         if (leaderEpoch !== newCheckpoint.epoch) {
-            const lastSummaryState = await this.loadStateFromSummary(tenantId, documentId, gitManager, logger);
+            const lastSummaryState = await this.loadStateFromSummary(
+                tenantId,
+                documentId,
+                gitManager,
+                logger,
+            );
             if (lastSummaryState === undefined) {
                 newCheckpoint.epoch = leaderEpoch;
             } else {
@@ -334,14 +379,12 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                 // Now create the summary.
                 await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
                 const message = "Created a summary on epoch tick";
-                logger?.info(
-                    message,
-                    {
-                        messageMetaData: {
-                            documentId,
-                            tenantId,
-                        },
-                    });
+                logger?.info(message, {
+                    messageMetaData: {
+                        documentId,
+                        tenantId,
+                    },
+                });
                 Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
             }
         }
@@ -351,14 +394,19 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
     private async createSummaryWithLatestTerm(
         gitManager: IGitManager,
         checkpoint: IDeliState,
-        documentId: string) {
+        documentId: string,
+    ) {
         const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
         const [lastCommit, scribeContent] = await Promise.all([
             gitManager.getCommit(existingRef.object.sha),
-            gitManager.getContent(existingRef.object.sha, ".serviceProtocol/scribe")]);
+            gitManager.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
+        ]);
 
         const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
-        const serviceProtocolEntries = generateServiceProtocolEntries(JSON.stringify(checkpoint), scribe);
+        const serviceProtocolEntries = generateServiceProtocolEntries(
+            JSON.stringify(checkpoint),
+            scribe,
+        );
 
         const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
             gitManager.createTree({ entries: serviceProtocolEntries }),

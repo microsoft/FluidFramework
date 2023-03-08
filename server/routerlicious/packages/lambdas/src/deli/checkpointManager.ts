@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDeliState, IDocument, IQueuedMessage } from "@fluidframework/server-services-core";
+import {
+    IDeliState,
+    IDocumentRepository,
+    IQueuedMessage,
+} from "@fluidframework/server-services-core";
 import { CheckpointReason } from "../utils";
 
 export interface IDeliCheckpointManager {
@@ -41,29 +45,18 @@ export interface ICheckpointParams {
 export function createDeliCheckpointManagerFromCollection(
     tenantId: string,
     documentId: string,
-    collection: ICollection<IDocument>): IDeliCheckpointManager {
+    documentRepository: IDocumentRepository,
+): IDeliCheckpointManager {
     const checkpointManager = {
         writeCheckpoint: async (checkpoint: IDeliState) => {
-            return collection.update(
-                {
-                    documentId,
-                    tenantId,
-                },
-                {
-                    deli: JSON.stringify(checkpoint),
-                },
-                null);
+            await documentRepository.updateDocument({tenantId, documentId}, {
+                deli: JSON.stringify(checkpoint),
+            });
         },
         deleteCheckpoint: async () => {
-            return collection.update(
-                {
-                    documentId,
-                    tenantId,
-                },
-                {
-                    deli: "",
-                },
-                null);
+            await documentRepository.updateDocument({tenantId, documentId}, {
+                deli: "",
+            });
         },
     };
     return checkpointManager;

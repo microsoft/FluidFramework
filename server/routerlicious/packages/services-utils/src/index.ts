@@ -15,7 +15,6 @@ export {
 	validateTokenRevocationClaims,
 } from "./auth";
 export { parseBoolean } from "./conversion";
-export { deleteSummarizedOps } from "./deleteSummarizedOps";
 export { getHostIp } from "./dns";
 export { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";
 export { executeOnInterval, ScheduledJob } from "./executeOnInterval";

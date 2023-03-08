@@ -8,7 +8,7 @@ import express from "express";
 import request from "supertest";
 import nconf from "nconf";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
-import { TestTenantManager, TestThrottler, TestDocumentStorage, TestDbFactory, TestProducer, TestKafka } from "@fluidframework/server-test-utils";
+import { TestTenantManager, TestThrottler, TestDocumentStorage, TestDbFactory, TestProducer, TestKafka, TestDocumentRepository } from "@fluidframework/server-test-utils";
 import { IDocument, MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import * as alfredApp from "../../alfred/app";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
@@ -94,9 +94,8 @@ describe("Routerlicious", () => {
             const tenantToken1 = `Basic ${generateToken(appTenant1.id, document1._id, appTenant1.key, scopes)}`;
             const tenantToken2 = `Basic ${generateToken(appTenant2.id, document1._id, appTenant2.key, scopes)}`;
             const defaultProducer = new TestProducer(new TestKafka());
-            const defaultDb = await defaultMongoManager.getDatabase();
             const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
-            const defaultDocumentsCollection = defaultDb.collection<IDocument>(documentsCollectionName);
+            const defaultDocumentRepository = new TestDocumentRepository();
             let app: express.Application;
             let supertest: request.SuperTest<request.Test>;
             describe("throttling", () => {
@@ -120,7 +119,7 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentRepository);
                     supertest = request(app);
                 });
 
@@ -217,7 +216,7 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentRepository);
                     supertest = request(app);
                 });
 
@@ -289,7 +288,7 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentRepository);
                     supertest = request(app);
                 });
 
@@ -357,7 +356,7 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentRepository);
                     supertest = request(app);
                 });
                 describe("/documents", () => {
@@ -404,7 +403,7 @@ describe("Routerlicious", () => {
                         defaultAppTenants,
                         defaultDeltaService,
                         defaultProducer,
-                        defaultDocumentsCollection);
+                        defaultDocumentRepository);
                     supertest = request(app);
                 });
 
@@ -417,8 +416,8 @@ describe("Routerlicious", () => {
                     it("/:tenantId/session/:id", async () => {
 
                         // Create a new session
-                        Sinon.stub(defaultDocumentsCollection, "upsert").returns(Promise.resolve());
-                        Sinon.stub(defaultDocumentsCollection, "findOne")
+                        Sinon.stub(defaultDocumentRepository, "updateDocument").returns(Promise.resolve());
+                        Sinon.stub(defaultDocumentRepository, "readDocument")
                             .onFirstCall().returns(Promise.resolve({} as IDocument))
                             .onSecondCall().returns(Promise.resolve({
                                 session: {

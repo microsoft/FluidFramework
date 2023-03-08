@@ -5,9 +5,8 @@
 
 import {
     ICache,
-    ICollection,
     IDeltaService,
-    IDocument,
+    IDocumentRepository,
     IDocumentStorage,
     IProducer,
     ITenantManager,
@@ -31,7 +30,7 @@ export function create(
     deltaService: IDeltaService,
     producer: IProducer,
     appTenants: IAlfredTenant[],
-    documentsCollection: ICollection<IDocument>): Router {
+    documentRepository: IDocumentRepository): Router {
     const router: Router = Router();
     const deltasRoute = deltas.create(config, tenantManager, deltaService, appTenants, tenantThrottler, clusterThrottlers);
     const documentsRoute = documents.create(
@@ -42,7 +41,7 @@ export function create(
         singleUseTokenCache,
         config,
         tenantManager,
-        documentsCollection);
+        documentRepository);
     const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottler);
 
     router.use(cors());

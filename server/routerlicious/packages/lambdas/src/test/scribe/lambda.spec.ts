@@ -6,10 +6,11 @@
 // import { IGitManager } from "@fluidframework/server-services-client";
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
-import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
-import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestDeltaManager, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
+import { DefaultServiceConfiguration, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
+import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestDeltaManager, TestDocumentRepository, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
+import Sinon from "sinon";
 import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
 
@@ -21,7 +22,7 @@ describe("Routerlicious", () => {
             const testDocumentId = "test";
 
             let testMongoManager: MongoManager;
-            let testDocumentCollection: ICollection<IDocument>;
+            let testDocumentRepository: TestDocumentRepository;
             let testMessageCollection: TestCollection;
             let testProducer: IProducer;
             let testContext: TestContext;
@@ -57,8 +58,9 @@ describe("Routerlicious", () => {
                 const testData = [{ documentId: testDocumentId, tenantId: testTenantId, sequenceNumber: 0, logOffset: undefined }];
                 const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
                 testMongoManager = new MongoManager(dbFactory);
-                const database = await testMongoManager.getDatabase();
-                testDocumentCollection = database.collection("documents");
+                testDocumentRepository = new TestDocumentRepository();
+                Sinon.replace(testDocumentRepository, "readDocument", Sinon.fake.resolves(_.cloneDeep(testData[0])));
+                Sinon.replace(testDocumentRepository, "updateDocument", Sinon.fake.resolves(undefined));
                 testMessageCollection = new TestCollection([]);
                 testKafka = new TestKafka();
                 testProducer = testKafka.createProducer();
@@ -74,7 +76,7 @@ describe("Routerlicious", () => {
 
                 let factory = new ScribeLambdaFactory(
                     testMongoManager,
-                    testDocumentCollection,
+                    testDocumentRepository,
                     testMessageCollection,
                     testProducer,
                     testDeltaManager,

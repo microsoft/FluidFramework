@@ -7,9 +7,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
     ICache,
     IClientManager,
-    ICollection,
     IDeltaService,
-    IDocument,
     IDocumentStorage,
     IOrdererManager,
     IProducer,
@@ -19,6 +17,7 @@ import {
     IThrottleAndUsageStorageManager,
     IWebServer,
     IWebServerFactory,
+	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -51,7 +50,7 @@ export class AlfredRunner implements IRunner {
         private readonly deltaService: IDeltaService,
         private readonly producer: IProducer,
         private readonly metricClientConfig: any,
-        private readonly documentsCollection: ICollection<IDocument>,
+        private readonly documentRepository: IDocumentRepository,
         private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
         private readonly verifyMaxMessageSize?: boolean,
         private readonly redisCache?: ICache,
@@ -73,7 +72,7 @@ export class AlfredRunner implements IRunner {
             this.appTenants,
             this.deltaService,
             this.producer,
-            this.documentsCollection);
+            this.documentRepository);
         alfred.set("port", this.port);
 
         this.server = this.serverFactory.create(alfred);

@@ -19,6 +19,8 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IWebSocket } from "@fluidframework/server-services-core";
 import { KJUR as jsrsasign } from "jsrsasign";
+import { TestDocumentRepository } from "@fluidframework/server-test-utils";
+import Sinon from "sinon";
 import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "../localDeltaConnectionServer";
 
 describe("LocalDeltaConnectionServer", () => {
@@ -110,7 +112,9 @@ describe("LocalDeltaConnectionServer", () => {
     }
 
     beforeEach(() => {
-        deltaConnectionServer = LocalDeltaConnectionServer.create();
+        const testDocumentRepository = new TestDocumentRepository();
+        Sinon.replace(testDocumentRepository, "updateDocument", Sinon.fake.resolves(undefined));
+        deltaConnectionServer = LocalDeltaConnectionServer.create(undefined, undefined, testDocumentRepository);
     });
 
     afterEach(async () => {

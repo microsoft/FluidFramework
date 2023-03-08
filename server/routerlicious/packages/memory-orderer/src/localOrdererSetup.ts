@@ -11,6 +11,7 @@ import {
     IDatabaseManager,
     IDocument,
     IDocumentDetails,
+    IDocumentRepository,
     IDocumentStorage,
     ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
@@ -23,6 +24,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
         private readonly documentId: string,
         private readonly storage: IDocumentStorage,
         private readonly databaseManager: IDatabaseManager,
+        private readonly documentRepository: IDocumentRepository,
         private readonly gitManager?: IGitManager) {
     }
 
@@ -31,9 +33,16 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
         return this.storage.getOrCreateDocument(this.tenantId, this.documentId);
     }
 
+    /**
+     * @deprecated use documentRepositoryP() instead
+     */
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public documentCollectionP(): Promise<ICollection<IDocument>> {
         return this.databaseManager.getDocumentCollection();
+    }
+ 
+    public async documentRepositoryP(): Promise<IDocumentRepository> {
+        return this.documentRepository;
     }
 
     // eslint-disable-next-line @typescript-eslint/promise-function-async

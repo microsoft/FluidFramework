@@ -10,8 +10,7 @@ import {
     ITenantManager,
     IThrottler,
     ICache,
-    ICollection,
-    IDocument,
+	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -33,7 +32,7 @@ export function create(
     storage: IDocumentStorage,
     producer: IProducer,
     appTenants: IAlfredTenant[],
-    documentsCollection: ICollection<IDocument>) {
+    documentRepository: IDocumentRepository) {
     return {
         api: api.create(
             config,
@@ -45,7 +44,7 @@ export function create(
             deltaService,
             producer,
             appTenants,
-            documentsCollection,
+            documentRepository,
         ),
     };
 }

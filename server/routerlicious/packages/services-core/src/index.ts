@@ -22,7 +22,16 @@ export {
 	IServerConfiguration,
 	IServiceConfiguration,
 } from "./configuration";
-export { ICollection, IDatabaseManager, IDb, IDbEvents, IDbFactory, IRetryable, isRetryEnabled } from "./database";
+export {
+	ICollection,
+	IDatabaseManager,
+	IDb,
+	IDbEvents,
+	IDbFactory,
+	IDocumentRepository,
+	IRetryable,
+	isRetryEnabled,
+} from "./database";
 export { IDeltaService } from "./delta";
 export { IClientSequenceNumber, IDeliState, IDocument, IDocumentDetails, IDocumentStorage, IScribe } from "./document";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
@@ -72,6 +81,7 @@ export {
 export { DefaultMetricClient, IMetricClient } from "./metricClient";
 export { MongoManager } from "./mongo";
 export { MongoDatabaseManager } from "./mongoDatabaseManager";
+export { MongoDocumentRepository } from "./mongoDocumentRepository";
 export { INode, IOrderer, IOrdererConnection, IOrdererManager, IOrdererSocket } from "./orderer";
 export { MaxBatchSize, PendingBoxcar } from "./pendingBoxcar";
 export { IMessageBatch, IPublisher, ITopic } from "./publisher";

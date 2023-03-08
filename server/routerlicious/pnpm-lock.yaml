@@ -110,6 +110,7 @@ importers:
       '@types/nconf': ^0.10.2
       '@types/node': ^14.18.0
       '@types/semver': ^6.0.1
+      '@types/sinon': ^9.0.9
       '@types/uuid': ^8.3.0
       assert: ^2.0.0
       async: ^3.2.2
@@ -128,6 +129,7 @@ importers:
       rimraf: ^3.0.2
       semver: ^6.3.0
       sha.js: ^2.4.11
+      sinon: ^9.2.1
       source-map-loader: ^0.2.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -169,6 +171,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/nconf': 0.10.3
       '@types/node': 14.18.34
+      '@types/sinon': 9.0.11
       '@types/uuid': 8.3.4
       concurrently: 7.5.0
       eslint: 8.27.0
@@ -176,6 +179,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 3.0.2
+      sinon: 9.2.4
       source-map-loader: 0.2.4
       ts-loader: 9.4.2_uyjeyilaoraoef7u6cc2jqrzqe
       typescript: 4.5.5
@@ -255,6 +259,7 @@ importers:
       '@types/mocha': ^10.0.0
       '@types/nock': ^9.3.0
       '@types/node': ^14.18.0
+      '@types/sinon': ^9.0.9
       concurrently: ^7.5.0
       copyfiles: ^2.4.1
       debug: ^4.1.1
@@ -266,6 +271,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^3.0.2
+      sinon: ^9.2.1
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -294,6 +300,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/nock': 9.3.1
       '@types/node': 14.18.34
+      '@types/sinon': 9.0.11
       concurrently: 7.5.0
       copyfiles: 2.4.1
       eslint: 8.27.0
@@ -302,6 +309,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 3.0.2
+      sinon: 9.2.4
       ts-loader: 9.4.2_uyjeyilaoraoef7u6cc2jqrzqe
       typescript: 4.5.5
       webpack: 5.75.0_webpack-cli@4.10.0
@@ -4150,12 +4158,6 @@ packages:
       '@types/node': 18.0.0
     dev: true
 
-  /@types/sinon/10.0.13:
-    resolution: {integrity: sha512-UVjDqJblVNQYvVNUsj0PuYYw0ELRmgt1Nt5Vk0pT5f16ROGfcKJY8o1HVuMOJOpD727RrGB9EGvoaTQE5tgxZQ==}
-    dependencies:
-      '@types/sinonjs__fake-timers': 8.1.2
-    dev: true
-
   /@types/sinon/9.0.11:
     resolution: {integrity: sha512-PwP4UY33SeeVKodNE37ZlOsR9cReypbMJOhZ7BVE0lB+Hix3efCOxiJWiE5Ia+yL9Cn2Ch72EjFTRze8RZsNtg==}
     dependencies:
@@ -7643,7 +7645,7 @@ packages:
       '@types/chai': 4.3.3
       '@types/lodash': 4.14.184
       '@types/node': 18.0.0
-      '@types/sinon': 10.0.13
+      '@types/sinon': 9.0.11
       lodash: 4.17.21
       mock-stdin: 1.0.0
       nock: 13.3.0

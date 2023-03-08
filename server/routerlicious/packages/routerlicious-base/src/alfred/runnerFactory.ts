@@ -100,7 +100,7 @@ export class AlfredResources implements core.IResources {
         public port: any,
         public documentsCollectionName: string,
         public metricClientConfig: any,
-        public documentsCollection: core.ICollection<core.IDocument>,
+        public documentRepository: core.IDocumentRepository,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
         public verifyMaxMessageSize?: boolean,
         public redisCache?: core.ICache,
@@ -123,7 +123,7 @@ export class AlfredResources implements core.IResources {
 }
 
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
-    public async create(config: Provider): Promise<AlfredResources> {
+    public async create(config: Provider, customization?: Record<string, any>): Promise<AlfredResources> {
         // Producer used to publish messages
         const kafkaEndpoint = config.get("kafka:lib:endpoint");
         const kafkaLibrary = config.get("kafka:lib:name");
@@ -298,7 +298,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
         const submitSignalThrottleConfig: Partial<IThrottleConfig> =
             config.get("alfred:throttling:submitSignals") ?? {};
         const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
-
+        const documentRepository = customization?.documentRepository ?? new core.MongoDocumentRepository(documentsCollection);
         const databaseManager = new core.MongoDatabaseManager(
             globalDbEnabled,
             operationsDbMongoManager,
@@ -309,13 +309,15 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             scribeCollectionName);
 
         const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
-        const storage = new services.DocumentStorage(databaseManager, tenantManager, enableWholeSummaryUpload);
+        const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
+        const storage = new services.DocumentStorage(documentRepository, tenantManager, enableWholeSummaryUpload, opsCollection);
 
         const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
         // Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
         // Therefore, default clients will ignore server's 16kb message size limit.
         const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
         const address = `${await utils.getHostIp()}:4000`;
+
 
         // This cache will be used to store connection counts for logging connectionCount metrics.
         let redisCache: core.ICache;
@@ -339,6 +341,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             address,
             storage,
             databaseManager,
+            documentRepository,
             60000,
             () => new NodeWebSocketServer(4000),
             taskMessageSender,
@@ -391,7 +394,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             port,
             documentsCollectionName,
             metricClientConfig,
-            documentsCollection,
+            documentRepository,
             redisThrottleAndUsageStorageManager,
             verifyMaxMessageSize,
             redisCache);
@@ -419,7 +422,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.deltaService,
             resources.producer,
             resources.metricClientConfig,
-            resources.documentsCollection,
+            resources.documentRepository,
             resources.throttleAndUsageStorageManager,
             resources.verifyMaxMessageSize,
             resources.redisCache);

@@ -16,7 +16,8 @@ export async function run<T extends IResources>(
     resourceFactory: IResourcesFactory<T>,
     runnerFactory: IRunnerFactory<T>,
     logger: ILogger | undefined) {
-    const resources = await resourceFactory.create(config);
+    const customization = await (resourceFactory.customize ? resourceFactory.customize(config) : undefined);
+    const resources = await resourceFactory.create(config, customization);
     const runner = await runnerFactory.create(resources);
 
     // Start the runner and then listen for the message to stop it

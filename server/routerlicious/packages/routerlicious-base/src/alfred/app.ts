@@ -10,8 +10,7 @@ import {
     ITenantManager,
     IThrottler,
     ICache,
-    ICollection,
-    IDocument,
+	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -39,7 +38,7 @@ export function create(
     appTenants: IAlfredTenant[],
     deltaService: IDeltaService,
     producer: IProducer,
-    documentsCollection: ICollection<IDocument>) {
+    documentRepository: IDocumentRepository) {
     // Maximum REST request size
     const requestSize = config.get("alfred:restJsonSize");
 
@@ -95,7 +94,7 @@ export function create(
         storage,
         producer,
         appTenants,
-        documentsCollection);
+        documentRepository);
 
     app.use(routes.api);
 

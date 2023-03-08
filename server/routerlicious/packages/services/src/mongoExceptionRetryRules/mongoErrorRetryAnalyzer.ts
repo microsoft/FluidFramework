@@ -51,11 +51,7 @@ export class MongoErrorRetryAnalyzer {
             return this.getRetryRuleFromSet(error, this.mongoNetworkErrorRetryRuleset);
         }
 
-        if (error.name === "MongoError") {
-            return this.getRetryRuleFromSet(error, this.mongoErrorRetryRuleset);
-        }
-
-        return this.defaultRule;
+        return this.getRetryRuleFromSet(error, this.mongoErrorRetryRuleset);
     }
 
     private getRetryRuleFromSet(error: any, ruleSet: IMongoExceptionRetryRule[]): IMongoExceptionRetryRule {
