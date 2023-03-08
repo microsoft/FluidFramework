@@ -126,11 +126,11 @@ export class ProxyContext implements EditableTreeContext {
 
 	/**
 	 * @param forest - the Forest
-	 * @param editor - an editor that makes changes to the forest. Not required in read-only contexts.
+	 * @param editor - an editor that makes changes to the forest.
 	 */
 	constructor(
 		public readonly forest: IEditableForest,
-		private readonly editor?: DefaultEditBuilder,
+		private readonly editor: DefaultEditBuilder,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -213,10 +213,6 @@ export class ProxyContext implements EditableTreeContext {
 	}
 
 	public setNodeValue(path: UpPath, value: Value): void {
-		assert(
-			this.editor !== undefined,
-			0x45a /* an editor is required to edit the EditableTree */,
-		);
 		this.editor.setValue(path, value);
 	}
 
@@ -225,10 +221,6 @@ export class ProxyContext implements EditableTreeContext {
 		fieldKey: FieldKey,
 		newContent: ITreeCursor,
 	): void {
-		assert(
-			this.editor !== undefined,
-			0x45a /* an editor is required to edit the EditableTree */,
-		);
 		const field = this.editor.valueField(path, fieldKey);
 		field.set(newContent);
 	}
@@ -239,10 +231,6 @@ export class ProxyContext implements EditableTreeContext {
 		newContent: ITreeCursor | undefined,
 		wasEmpty: boolean,
 	): void {
-		assert(
-			this.editor !== undefined,
-			0x45a /* an editor is required to edit the EditableTree */,
-		);
 		const field = this.editor.optionalField(path, fieldKey);
 		field.set(newContent, wasEmpty);
 	}
@@ -253,10 +241,6 @@ export class ProxyContext implements EditableTreeContext {
 		index: number,
 		newContent: ITreeCursor | ITreeCursor[],
 	): void {
-		assert(
-			this.editor !== undefined,
-			0x45a /* an editor is required to edit the EditableTree */,
-		);
 		const field = this.editor.sequenceField(path, fieldKey);
 		field.insert(index, newContent);
 	}
@@ -267,10 +251,6 @@ export class ProxyContext implements EditableTreeContext {
 		index: number,
 		count: number,
 	): void {
-		assert(
-			this.editor !== undefined,
-			0x45a /* an editor is required to edit the EditableTree */,
-		);
 		const field = this.editor.sequenceField(path, fieldKey);
 		field.delete(index, count);
 	}
@@ -282,10 +262,6 @@ export class ProxyContext implements EditableTreeContext {
 		count: number,
 		newContent: ITreeCursor | ITreeCursor[],
 	): void {
-		assert(
-			this.editor !== undefined,
-			0x45a /* an editor is required to edit the EditableTree */,
-		);
 		const field = this.editor.sequenceField(path, fieldKey);
 		field.delete(index, count);
 		field.insert(index, newContent);
@@ -300,13 +276,13 @@ export class ProxyContext implements EditableTreeContext {
  * A simple API for a Forest to interact with the tree.
  *
  * @param forest - the Forest
- * @param editor - an editor that makes changes to the forest. Not required in read-only contexts.
+ * @param editor - an editor that makes changes to the forest.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
-	editor?: DefaultEditBuilder,
+	editor: DefaultEditBuilder,
 ): EditableTreeContext {
 	return new ProxyContext(forest, editor);
 }
