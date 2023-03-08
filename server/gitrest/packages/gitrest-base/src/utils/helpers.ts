@@ -232,7 +232,7 @@ export async function getRepoManagerFromWriteAPI(
     } catch (error: any) {
         // If repoPerDocEnabled is true, we want the behavior to be "open or create" for GitRest Write APIs,
         // creating the repository on the fly. So, if the open operation fails with a 400 code (representing
-        // the repo does not exist), we try to create the reposiroty instead.
+        // the repo does not exist), we try to create the repository instead.
         if (repoPerDocEnabled &&
             error instanceof Error &&
             error?.name === "NetworkError" &&
