@@ -106,9 +106,6 @@ export enum DataObjectFactoryType {
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
 
-// @public @deprecated
-export function ensureContainerConnected(container: IContainer): Promise<void>;
-
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {
     constructor(baseLogger: ITelemetryBaseLogger);
