@@ -12,8 +12,8 @@ export class Bubblebench extends DataObject {
 	public static get Name() {
 		return "@fluid-example/bubblebench-sharedtree";
 	}
-	private maybeTree?: ISharedTree = undefined;
-	private maybeAppState?: AppState = undefined;
+	private _tree: ISharedTree | undefined;
+	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
 		this.maybeTree = this.runtime.createChannel(
