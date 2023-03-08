@@ -121,11 +121,11 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 		 * Close this transaction by squashing its edits and committing them as a single edit. If this is the root local branch and there are no
 		 * ongoing transactions remaining, the squashed edit will be submitted to Fluid.
 		 */
-		commit: () => void;
+		commit: () => TransactionResult.Commit;
 		/**
 		 * Close this transaction and revert the state of the tree to what it was before this transaction began.
 		 */
-		abort: () => void;
+		abort: () => TransactionResult.Abort;
 		/**
 		 * True if there is at least one transaction currently in progress on this checkout, otherwise false.
 		 */
@@ -220,8 +220,14 @@ class SharedTree
 
 		this.transaction = {
 			start: () => this.startTransaction(new ForestRepairDataStore(() => this.forest)),
-			commit: () => this.commitTransaction(),
-			abort: () => this.abortTransaction(),
+			commit: () => {
+				this.commitTransaction();
+				return TransactionResult.Commit;
+			},
+			abort: () => {
+				this.abortTransaction();
+				return TransactionResult.Abort;
+			},
 			inProgress: () => this.isTransacting(),
 		};
 
@@ -321,10 +327,16 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		return this.branch.editor;
 	}
 
-	public readonly transaction = {
+	public readonly transaction: ISharedTreeCheckout["transaction"] = {
 		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
-		commit: () => this.branch.commitTransaction(),
-		abort: () => this.branch.abortTransaction(),
+		commit: () => {
+			this.branch.commitTransaction();
+			return TransactionResult.Commit;
+		},
+		abort: () => {
+			this.branch.abortTransaction();
+			return TransactionResult.Abort;
+		},
 		inProgress: () => this.branch.isTransacting(),
 	};
 
@@ -365,23 +377,38 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 }
 
 /**
+ * Describes the result of a transaction. Transactions may either succeed and commit, or fail and abort.
+ * @alpha
+ */
+export enum TransactionResult {
+	/**
+	 * Indicates the transaction succeeded. This value is falsy.
+	 */
+	Commit = 0,
+	/**
+	 * Indicates the transaction failed. This value is truthy.
+	 */
+	Abort = 1,
+}
+
+/**
  * Run a synchronous transaction on the given shared tree checkout. This is a convenience helper around the `SharedTreeCheckout.transaction` APIs.
  * @param checkout - the checkout on which to run the transaction
  * @param transaction - the transaction function. This will be executed immediately. It is passed `checkout` as an argument for convenience.
- * If this function returns false then the transaction will be aborted. Otherwise, it will be committed.
- * @returns true if the the transaction was committed, false if the transaction was aborted.
+ * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
+ * @returns whether or not the transaction was committed or aborted
  * @alpha
  */
 export function runSynchronous(
 	checkout: ISharedTreeCheckout,
-	transaction: (checkout: ISharedTreeCheckout) => boolean | void,
-): boolean {
+	transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void,
+): TransactionResult {
 	checkout.transaction.start();
-	if (transaction(checkout) === false) {
+	if (transaction(checkout) === TransactionResult.Abort) {
 		checkout.transaction.abort();
-		return false;
+		return TransactionResult.Abort;
 	} else {
 		checkout.transaction.commit();
-		return true;
+		return TransactionResult.Commit;
 	}
 }

@@ -623,8 +623,8 @@ export interface ISharedTreeCheckout extends AnchorLocator {
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start: () => void;
-        commit: () => void;
-        abort: () => void;
+        commit: () => TransactionResult.Commit;
+        abort: () => TransactionResult.Abort;
         inProgress(): boolean;
     };
 }
@@ -1069,7 +1069,7 @@ export const rootFieldKey: GlobalFieldKey;
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
-export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => boolean | void): boolean;
+export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void): TransactionResult;
 
 // @alpha
 export interface SchemaData {
@@ -1169,6 +1169,12 @@ export interface TaggedChange<TChangeset> {
 
 // @alpha
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+
+// @alpha
+export enum TransactionResult {
+    Abort = 1,
+    Commit = 0
+}
 
 // @alpha (undocumented)
 export interface TreeLocation {

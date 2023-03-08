@@ -25,7 +25,7 @@ import {
 	TestTreeProvider,
 	validateTree,
 } from "../utils";
-import { ISharedTree, runSynchronous } from "../../shared-tree";
+import { ISharedTree, runSynchronous, TransactionResult } from "../../shared-tree";
 import {
 	JsonableTree,
 	rootFieldKey,
@@ -88,7 +88,7 @@ export async function performFuzzActions(
 			edit: async (state, operation) => {
 				const { index, contents } = operation;
 				const tree = state.testTreeProvider.trees[index];
-				applyFuzzChange(tree, contents, true);
+				applyFuzzChange(tree, contents, TransactionResult.Commit);
 				return state;
 			},
 			synchronize: async (state) => {
@@ -138,7 +138,7 @@ export async function performFuzzActionsAbort(
 		{
 			edit: async (state, operation) => {
 				const { contents } = operation;
-				applyFuzzChange(tree, contents, false);
+				applyFuzzChange(tree, contents, TransactionResult.Abort);
 				return state;
 			},
 			synchronize: async (state) => {
@@ -179,7 +179,7 @@ export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 function applyFuzzChange(
 	tree: ISharedTree,
 	contents: FuzzChange,
-	transactionResult: boolean,
+	transactionResult: TransactionResult,
 ): void {
 	switch (contents.fuzzType) {
 		case "insert":

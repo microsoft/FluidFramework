@@ -32,6 +32,7 @@ import {
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
 } from "../../feature-libraries";
+import { TransactionResult } from "../../shared-tree";
 import { brand, JsonCompatible } from "../../util";
 import { runTransactionOnForest } from "../utils";
 
@@ -138,13 +139,10 @@ export class TestTree {
 			this.forest,
 			defaultChangeFamily,
 			(change: DefaultChangeset) => (changeset = change),
-			(forest, editor) => {
-				transaction(forest, editor);
-				return true;
-			},
+			(forest, editor) => transaction(forest, editor),
 		);
 		assert(
-			result && changeset !== undefined,
+			result === TransactionResult.Commit && changeset !== undefined,
 			"The transaction should result in an edit being submitted",
 		);
 		const revision = mintRevisionTag();

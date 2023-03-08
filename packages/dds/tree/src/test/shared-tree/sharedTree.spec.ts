@@ -13,7 +13,12 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree, ISharedTreeCheckout, runSynchronous } from "../../shared-tree";
+import {
+	ISharedTree,
+	ISharedTreeCheckout,
+	runSynchronous,
+	TransactionResult,
+} from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -443,7 +448,7 @@ describe("SharedTree", () => {
 					82,
 				);
 				// Aborting the transaction should restore the forest
-				return false;
+				return TransactionResult.Abort;
 			});
 
 			validateTree(checkout, [initialState]);
@@ -1460,7 +1465,7 @@ describe("SharedTree", () => {
 					1,
 					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
 				);
-				return false;
+				return TransactionResult.Abort;
 			});
 
 			anchorPath = tree.locate(firstAnchor);
@@ -1475,7 +1480,7 @@ describe("SharedTree", () => {
 			runSynchronous(tree, () => {
 				const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 				field.delete(0, 1);
-				return false;
+				return TransactionResult.Abort;
 			});
 			readCursor = tree.forest.allocateCursor();
 			moveToDetachedField(tree.forest, readCursor);

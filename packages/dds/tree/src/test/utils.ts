@@ -24,7 +24,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ISharedTree, runSynchronous, SharedTreeFactory } from "../shared-tree";
+import { ISharedTree, SharedTreeFactory, TransactionResult } from "../shared-tree";
 import {
 	FieldKinds,
 	ForestRepairDataStore,
@@ -430,14 +430,10 @@ export function initializeTestTree(
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
-
 	// Apply an edit to the tree which inserts a node with a value
-	runSynchronous(tree, () => {
-		const writeCursor = singleTextCursor(state);
-		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
-		return true;
-	});
+	const writeCursor = singleTextCursor(state);
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, writeCursor);
 }
 
 /**
@@ -446,15 +442,15 @@ export function initializeTestTree(
  * @param changeFamily - the change family of the edits
  * @param submitEdit - a callback that provides the change whenever the forest is mutated
  * @param transaction - the transaction to run. Use the editor passed to this function to mutate the forest.
- * If this function returns true, the transaction will be committed. If it returns false, the transaction will be aborted.
+ * If it returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns true if the transaction was committed, otherwise false
  */
 export function runTransactionOnForest<TEditor extends ProgressiveEditBuilder<TChange>, TChange>(
 	forest: IEditableForest,
 	changeFamily: ChangeFamily<TEditor, TChange>,
 	submitEdit: (edit: TChange) => void,
-	transaction: (forest: IForestSubscription, editor: TEditor) => boolean,
-): boolean {
+	transaction: (forest: IForestSubscription, editor: TEditor) => TransactionResult | void,
+): TransactionResult {
 	// These revision numbers are solely used within the scope of this transaction for the purpose of
 	// populating and querying the repair data store. Both the revision numbers and the repair data
 	// are scoped to this transaction.
@@ -472,7 +468,7 @@ export function runTransactionOnForest<TEditor extends ProgressiveEditBuilder<TC
 		forest.applyDelta(delta);
 	}, forest.anchors);
 
-	const result = transaction(forest, editor);
+	const aborted = transaction(forest, editor) === TransactionResult.Abort;
 	const changes = editor.getChanges();
 	const inverses = changes
 		.map((change, index) =>
@@ -492,14 +488,14 @@ export function runTransactionOnForest<TEditor extends ProgressiveEditBuilder<TC
 		}
 	}
 
-	if (result) {
-		// Using anonymous changes makes it impossible to chronologically order them during composition.
-		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
-		// not expected to happen in transactions but that could change in the future.
-		const anonChanges = changes.map((c) => makeAnonChange(c));
-		const edit = changeFamily.rebaser.compose(anonChanges);
-		submitEdit(edit);
+	if (aborted) {
+		return TransactionResult.Abort;
 	}
 
-	return result;
+	// Using anonymous changes makes it impossible to chronologically order them during composition.
+	// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
+	// not expected to happen in transactions but that could change in the future.
+	const anonChanges = changes.map((c) => makeAnonChange(c));
+	submitEdit(changeFamily.rebaser.compose(anonChanges));
+	return TransactionResult.Commit;
 }

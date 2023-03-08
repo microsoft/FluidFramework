@@ -38,6 +38,7 @@ import {
 import { testForest } from "../../forestTestSuite";
 import { brand } from "../../../util";
 import { runTransactionOnForest } from "../../utils";
+import { TransactionResult } from "../../../shared-tree";
 
 describe("ChunkedForest", () => {
 	testForest({
@@ -99,7 +100,7 @@ describe("ChunkedForest", () => {
 				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
 				rootField.delete(0, 1);
 				// Aborting the transaction should restore the forest
-				return false;
+				return TransactionResult.Abort;
 			},
 		);
 
