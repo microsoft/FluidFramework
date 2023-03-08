@@ -210,6 +210,10 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 	 */
 	public merge(): TChange {
 		this.assertNotDisposed();
+		assert(
+			this.transactions.size === 0,
+			"Branch may not be merged while transaction is in progress",
+		);
 		const change = this.mergeIntoBase(this);
 		this.dispose();
 		return change;

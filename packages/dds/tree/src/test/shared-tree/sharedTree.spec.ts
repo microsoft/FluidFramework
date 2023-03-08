@@ -1007,6 +1007,61 @@ describe("SharedTree", () => {
 					assert.equal(peekTestValue(checkout), undefined);
 				});
 
+				it("can span a checkout fork and merge", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					const fork = checkout.fork();
+					pushTestValueDirect(fork, 42);
+					fork.merge();
+					checkout.transaction.commit();
+					assert.equal(peekTestValue(checkout), 42);
+				});
+
+				it("fail if in progress when checkout merges", async () => {
+					const checkout = await checkoutFactory();
+					const fork = checkout.fork();
+					fork.transaction.start();
+					assert.throws(
+						() => fork.merge(),
+						(e) =>
+							validateAssertionError(
+								e,
+								"Branch may not be merged while transaction is in progress",
+							),
+					);
+				});
+
+				it("do not close across forks", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					const fork = checkout.fork();
+					assert.throws(
+						() => fork.transaction.commit(),
+						(e) => validateAssertionError(e, "No transaction is currently in progress"),
+					);
+				});
+
+				it("can commit over a branch that pulls", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, 42);
+					const fork = checkout.fork();
+					checkout.transaction.commit();
+					fork.pull();
+					assert.equal(peekTestValue(fork), 42);
+				});
+
+				it("can handle a pull while in progress", async () => {
+					const checkout = await checkoutFactory();
+					const fork = checkout.fork();
+					fork.transaction.start();
+					pushTestValue(checkout, 42);
+					fork.pull();
+					assert.equal(peekTestValue(fork), 42);
+					fork.transaction.commit();
+					assert.equal(peekTestValue(fork), 42);
+				});
+
 				it("update anchors correctly", async () => {
 					const checkout = await checkoutFactory();
 					pushTestValue(checkout, "A");
