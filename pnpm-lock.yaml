@@ -6290,6 +6290,7 @@ importers:
     specifiers:
       '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/core-interfaces': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -6307,6 +6308,7 @@ importers:
       '@fluidframework/server-services-core': ^0.1038.2000
       '@fluidframework/server-test-utils': ^0.1038.2000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
+      '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
       '@types/jsrsasign': ^8.0.8
       '@types/mocha': ^9.1.1
@@ -6346,9 +6348,11 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/local-driver-previous': /@fluidframework/local-driver/2.0.0-internal.3.2.0
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@microsoft/api-extractor': 7.22.2
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 9.1.1
@@ -22170,7 +22174,7 @@ packages:
   /axios/0.21.4_debug@4.3.2:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.2_debug@4.3.2
+      follow-redirects: 1.15.2
     transitivePeerDependencies:
       - debug
 
@@ -27534,17 +27538,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-
-  /follow-redirects/1.15.2_debug@4.3.2:
-    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dependencies:
-      debug: 4.3.2
 
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
