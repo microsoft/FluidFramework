@@ -69,11 +69,9 @@ const childrenFieldKey: FieldKey = brand("children");
 function initializeTestTree(tree: ISharedTree, state: JsonableTree = initialTestJsonTree) {
 	tree.storedSchema.update(fullSchemaData);
 	// inserts a node with the initial AppState as the root of the tree
-	tree.transaction.start();
 	const writeCursor = singleTextCursor(state);
 	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 	field.insert(0, writeCursor);
-	tree.transaction.commit();
 }
 
 const getJsonNode = (desiredByteSize: number): JsonableTree => {

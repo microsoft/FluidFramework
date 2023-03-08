@@ -225,19 +225,7 @@ class SharedTree
 			inProgress: () => this.isTransacting(),
 		};
 
-		this.context = getEditableTreeContext(
-			forest,
-			(transaction: (editor: DefaultEditBuilder) => boolean) => {
-				this.transaction.start();
-				if (transaction(this.editor)) {
-					this.transaction.commit();
-					return true;
-				} else {
-					this.transaction.abort();
-					return false;
-				}
-			},
-		);
+		this.context = getEditableTreeContext(forest, this.editor);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -322,19 +310,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 	) {
-		this.context = getEditableTreeContext(
-			forest,
-			(transaction: (editor: DefaultEditBuilder) => boolean) => {
-				this.transaction.start();
-				if (transaction(this.editor)) {
-					this.transaction.commit();
-					return true;
-				} else {
-					this.transaction.abort();
-					return false;
-				}
-			},
-		);
+		this.context = getEditableTreeContext(forest, this.editor);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);

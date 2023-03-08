@@ -116,7 +116,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 /**
  * Implementation of `EditableTreeContext`.
  *
- * `runTransaction` is required to edit the EditableTrees.
+ * An editor is required to edit the EditableTrees.
  */
 export class ProxyContext implements EditableTreeContext {
 	public readonly withCursors: Set<ProxyTarget<Anchor | FieldAnchor>> = new Set();
@@ -126,14 +126,11 @@ export class ProxyContext implements EditableTreeContext {
 
 	/**
 	 * @param forest - the Forest
-	 * @param runTransaction - a function which executes a given transaction, returning true if it was successful or false if aborted. Not required in read-only use-cases.
+	 * @param editor - an editor that makes changes to the forest. Not required in read-only contexts.
 	 */
 	constructor(
 		public readonly forest: IEditableForest,
-		private readonly runTransaction?: (
-			/** A function which performs a transaction, returning true if the transaction should succeed or false if it should be aborted */
-			transaction: (editor: DefaultEditBuilder) => boolean,
-		) => boolean,
+		private readonly editor?: DefaultEditBuilder,
 	) {
 		this.eventUnregister = [
 			this.forest.on("beforeDelta", () => {
@@ -215,23 +212,25 @@ export class ProxyContext implements EditableTreeContext {
 		return this.forest.schema;
 	}
 
-	public setNodeValue(path: UpPath, value: Value): boolean {
-		return this.run((editor) => {
-			editor.setValue(path, value);
-			return true;
-		});
+	public setNodeValue(path: UpPath, value: Value): void {
+		assert(
+			this.editor !== undefined,
+			0x45a /* an editor is required to edit the EditableTree */,
+		);
+		this.editor.setValue(path, value);
 	}
 
 	public setValueField(
 		path: UpPath | undefined,
 		fieldKey: FieldKey,
 		newContent: ITreeCursor,
-	): boolean {
-		return this.run((editor) => {
-			const field = editor.valueField(path, fieldKey);
-			field.set(newContent);
-			return true;
-		});
+	): void {
+		assert(
+			this.editor !== undefined,
+			0x45a /* an editor is required to edit the EditableTree */,
+		);
+		const field = this.editor.valueField(path, fieldKey);
+		field.set(newContent);
 	}
 
 	public setOptionalField(
@@ -239,12 +238,13 @@ export class ProxyContext implements EditableTreeContext {
 		fieldKey: FieldKey,
 		newContent: ITreeCursor | undefined,
 		wasEmpty: boolean,
-	): boolean {
-		return this.run((editor) => {
-			const field = editor.optionalField(path, fieldKey);
-			field.set(newContent, wasEmpty);
-			return true;
-		});
+	): void {
+		assert(
+			this.editor !== undefined,
+			0x45a /* an editor is required to edit the EditableTree */,
+		);
+		const field = this.editor.optionalField(path, fieldKey);
+		field.set(newContent, wasEmpty);
 	}
 
 	public insertNodes(
@@ -252,12 +252,13 @@ export class ProxyContext implements EditableTreeContext {
 		fieldKey: FieldKey,
 		index: number,
 		newContent: ITreeCursor | ITreeCursor[],
-	): boolean {
-		return this.run((editor) => {
-			const field = editor.sequenceField(path, fieldKey);
-			field.insert(index, newContent);
-			return true;
-		});
+	): void {
+		assert(
+			this.editor !== undefined,
+			0x45a /* an editor is required to edit the EditableTree */,
+		);
+		const field = this.editor.sequenceField(path, fieldKey);
+		field.insert(index, newContent);
 	}
 
 	public deleteNodes(
@@ -265,12 +266,13 @@ export class ProxyContext implements EditableTreeContext {
 		fieldKey: FieldKey,
 		index: number,
 		count: number,
-	): boolean {
-		return this.run((editor) => {
-			const field = editor.sequenceField(path, fieldKey);
-			field.delete(index, count);
-			return true;
-		});
+	): void {
+		assert(
+			this.editor !== undefined,
+			0x45a /* an editor is required to edit the EditableTree */,
+		);
+		const field = this.editor.sequenceField(path, fieldKey);
+		field.delete(index, count);
 	}
 
 	public replaceNodes(
@@ -279,21 +281,14 @@ export class ProxyContext implements EditableTreeContext {
 		index: number,
 		count: number,
 		newContent: ITreeCursor | ITreeCursor[],
-	): boolean {
-		return this.run((editor) => {
-			const field = editor.sequenceField(path, fieldKey);
-			field.delete(index, count);
-			field.insert(index, newContent);
-			return true;
-		});
-	}
-
-	private run(transaction: (editor: DefaultEditBuilder) => boolean): boolean {
+	): void {
 		assert(
-			this.runTransaction !== undefined,
-			0x45a /* `runTransaction` is required to edit the EditableTree */,
+			this.editor !== undefined,
+			0x45a /* an editor is required to edit the EditableTree */,
 		);
-		return this.runTransaction(transaction);
+		const field = this.editor.sequenceField(path, fieldKey);
+		field.delete(index, count);
+		field.insert(index, newContent);
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {
@@ -305,16 +300,13 @@ export class ProxyContext implements EditableTreeContext {
  * A simple API for a Forest to interact with the tree.
  *
  * @param forest - the Forest
- * @param runTransaction - a function which executes a given transaction, returning true if it was successful or false if aborted. Not required in read-only use-cases.
+ * @param editor - an editor that makes changes to the forest. Not required in read-only contexts.
  * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
-	runTransaction?: (
-		/** A function which performs a transaction, returning true if the transaction should succeed or false if it should be aborted */
-		transaction: (editor: DefaultEditBuilder) => boolean,
-	) => boolean,
+	editor?: DefaultEditBuilder,
 ): EditableTreeContext {
-	return new ProxyContext(forest, runTransaction);
+	return new ProxyContext(forest, editor);
 }

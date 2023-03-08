@@ -88,7 +88,7 @@ export async function performFuzzActions(
 			edit: async (state, operation) => {
 				const { index, contents } = operation;
 				const tree = state.testTreeProvider.trees[index];
-				applyFuzzChange(tree, contents, false);
+				applyFuzzChange(tree, contents, true);
 				return state;
 			},
 			synchronize: async (state) => {
@@ -137,7 +137,7 @@ export async function performFuzzActionsAbort(
 		generator,
 		{
 			edit: async (state, operation) => {
-				const { index, contents } = operation;
+				const { contents } = operation;
 				applyFuzzChange(tree, contents, false);
 				return state;
 			},
