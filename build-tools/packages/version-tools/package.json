@@ -24,9 +24,9 @@
 	"scripts": {
 		"build": "npm run build:genver && npm run clean:manifest && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run build:test",
-		"build:compile": "npm run build:commonjs",
+		"build:compile": "npm run build:commonjs && npm run build:readme",
 		"build:docs": "api-extractor run --local",
-		"build:full": "npm run build && npm run build:manifest && npm run build:readme",
+		"build:full": "npm run build && npm run build:manifest",
 		"build:full:compile": "npm run build:full",
 		"build:genver": "gen-version",
 		"build:manifest": "cross-env NODE_OPTIONS='--experimental-abortcontroller' oclif manifest",
