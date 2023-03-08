@@ -56,7 +56,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 			// Send an op to transition the container to write mode.
 			dataStore._root.set("transition to write", "true");
-			await waitForContainerConnection(container, true);
+			await waitForContainerConnection(container);
 
 			const { summarizer } = await createSummarizer(
 				provider,
@@ -397,8 +397,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			const container3BlobHandle = await container3MainDataStore._runtime.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
 			);
-			// Ideally, this should not reject but currently it will because of a bug with how blob de-dup interacts
-			// with GC.
 			await assert.doesNotReject(
 				container3BlobHandle.get(),
 				"Container3 should be able to get the blob",
@@ -465,7 +463,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				const { summarizer } = await createSummarizer(
 					provider,
@@ -540,7 +538,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				// Upload the same blob. This will get de-duped and we will get back another local handle. Both the these
 				// localIds should be mapped to the same storageId.
@@ -650,7 +648,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				const { summarizer } = await createSummarizer(
 					provider,
@@ -750,7 +748,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		async function createContainerAndDataStore() {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
-			await waitForContainerConnection(mainContainer, true);
+			await waitForContainerConnection(mainContainer);
 			return { mainContainer, mainDataStore };
 		}
 
@@ -989,7 +987,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				);
 
 				// Add the new local handle and then remove all the local handles to unreference the blob.
-				mainDataStore._root.set("local3", localHandle2);
+				mainDataStore._root.set("local3", localHandle3);
 				mainDataStore._root.delete("local1");
 				mainDataStore._root.delete("local2");
 				mainDataStore._root.delete("local3");

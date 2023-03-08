@@ -19,13 +19,19 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /home/node/server
 
 COPY package*.json ./
-COPY lerna.json .
-COPY lerna-package-lock.json .
+COPY pnpm*.yaml ./
+COPY scripts/*.* ./scripts/
 
 COPY packages/gitrest/package*.json packages/gitrest/
 COPY packages/gitrest-base/package*.json packages/gitrest-base/
 
-RUN npm install --unsafe-perm
+RUN npm install --global pnpm
+
+# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
+# can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
+# and be able to change them.
+RUN pnpm install --unsafe-perm
+
 COPY . .
 RUN npm run build
 

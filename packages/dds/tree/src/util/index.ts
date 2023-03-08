@@ -46,7 +46,6 @@ export {
 export { StackyIterator } from "./stackyIterator";
 export {
 	clone,
-	compareArrays,
 	compareSets,
 	fail,
 	getOrAddEmptyToMap,
@@ -57,6 +56,9 @@ export {
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
 	makeArray,
+	mapIterable,
 	Mutable,
 	RecursiveReadonly,
+	zipIterables,
 } from "./utils";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";

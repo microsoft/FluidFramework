@@ -29,7 +29,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
-	BindState,
 	channelsTreeName,
 	CreateChildSummarizerNodeFn,
 	CreateChildSummarizerNodeParam,
@@ -49,6 +48,7 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -70,7 +70,6 @@ import {
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/container-utils";
 
-import { ContainerRuntime } from "./containerRuntime";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -79,9 +78,10 @@ import {
 	WriteFluidDataStoreAttributes,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
-} from "./summaryFormat";
+	summarizerClientType,
+} from "./summary";
+import { ContainerRuntime } from "./containerRuntime";
 import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
-import { summarizerClientType } from "./summarizerClientElection";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -135,7 +135,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 /** Properties necessary for creating a remote FluidDataStoreContext */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshotTree: ISnapshotTree | undefined;
-	readonly getBaseGCDetails: () => Promise<IGarbageCollectionDetailsBase | undefined>;
 }
 
 /**
@@ -245,8 +244,6 @@ export abstract class FluidDataStoreContext
 	protected registry: IFluidDataStoreRegistry | undefined;
 
 	protected detachedRuntimeCreation = false;
-	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
-	public readonly bindToContext: () => void;
 	protected channel: IFluidDataStoreChannel | undefined;
 	private loaded = false;
 	protected pending: ISequencedDocumentMessage[] | undefined = [];
@@ -279,7 +276,6 @@ export abstract class FluidDataStoreContext
 	constructor(
 		props: IFluidDataStoreContextProps,
 		private readonly existing: boolean,
-		private bindState: BindState, // Used to assert for state tracking purposes
 		public readonly isLocalDataStore: boolean,
 		private readonly makeLocallyVisibleFn: () => void,
 	) {
@@ -300,20 +296,6 @@ export abstract class FluidDataStoreContext
 				? this.containerRuntime.attachState
 				: AttachState.Detached;
 
-		this.bindToContext = () => {
-			assert(
-				this.bindState === BindState.NotBound,
-				0x13b /* "datastore context is already in bound state" */,
-			);
-			this.bindState = BindState.Binding;
-			assert(
-				this.channel !== undefined,
-				0x13c /* "undefined channel on datastore context" */,
-			);
-			this.makeLocallyVisible();
-			this.bindState = BindState.Bound;
-		};
-
 		const thisSummarizeInternal = async (
 			fullTree: boolean,
 			trackState: boolean,
@@ -323,7 +305,6 @@ export abstract class FluidDataStoreContext
 		this.summarizerNode = props.createSummarizerNodeFn(
 			thisSummarizeInternal,
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
-			async () => this.getBaseGCDetails(),
 		);
 
 		this.mc = loggerToMonitoringContext(
@@ -740,6 +721,15 @@ export abstract class FluidDataStoreContext
 	 */
 	public makeLocallyVisible() {
 		assert(this.channel !== undefined, 0x2cf /* "undefined channel on datastore context" */);
+		assert(
+			this.channel.visibilityState === VisibilityState.LocallyVisible,
+			0x590 /* Channel must be locally visible */,
+		);
+		this.makeLocallyVisibleFn();
+	}
+
+	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
+	public bindToContext() {
 		this.makeLocallyVisibleFn();
 	}
 
@@ -821,7 +811,12 @@ export abstract class FluidDataStoreContext
 		this._isInMemoryRoot = true;
 	}
 
-	public abstract getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+	/**
+	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 */
+	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
+		return {};
+	}
 
 	public reSubmit(contents: any, localOpMetadata: unknown) {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
@@ -928,7 +923,6 @@ export abstract class FluidDataStoreContext
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-			getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 		) =>
 			this.summarizerNode.createChild(
 				summarizeInternal,
@@ -937,7 +931,6 @@ export abstract class FluidDataStoreContext
 				// DDS will not create failure summaries
 				{ throwOnFailure: true },
 				getGCDataFn,
-				getBaseGCDetailsFn,
 			);
 	}
 
@@ -948,17 +941,13 @@ export abstract class FluidDataStoreContext
 
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	private readonly initSnapshotValue: ISnapshotTree | undefined;
-	private readonly baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 
 	constructor(props: IRemoteFluidDataStoreContextProps) {
-		super(props, true /* existing */, BindState.Bound, false /* isLocalDataStore */, () => {
+		super(props, true /* existing */, false /* isLocalDataStore */, () => {
 			throw new Error("Already attached");
 		});
 
 		this.initSnapshotValue = props.snapshotTree;
-		this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-			return (await props.getBaseGCDetails()) ?? {};
-		});
 
 		if (props.snapshotTree !== undefined) {
 			this.summarizerNode.updateBaseSummaryState(props.snapshotTree);
@@ -1018,10 +1007,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		return this.initialSnapshotDetailsP;
 	}
 
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		return this.baseGCDetailsP;
-	}
-
 	public generateAttachMessage(): IAttachMessage {
 		throw new Error("Cannot attach remote store");
 	}
@@ -1041,7 +1026,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		super(
 			props,
 			props.snapshotTree !== undefined ? true : false /* existing */,
-			props.snapshotTree ? BindState.Bound : BindState.NotBound,
 			true /* isLocalDataStore */,
 			props.makeLocallyVisibleFn,
 		);
@@ -1138,11 +1122,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			isRootDataStore,
 			snapshot,
 		};
-	}
-
-	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
-		// Local data store does not have initial summary.
-		return {};
 	}
 
 	/**

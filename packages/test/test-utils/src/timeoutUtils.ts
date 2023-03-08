@@ -4,8 +4,6 @@
  */
 
 import { assert, Deferred } from "@fluidframework/common-utils";
-import { IContainer } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 
 // @deprecated this value is no longer used
 export const defaultTimeoutDurationMs = 250;
@@ -132,12 +130,6 @@ export async function timeoutAwait<T = void>(
 	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ) {
 	return Promise.race([promise, timeoutPromise<T>(() => {}, timeoutOptions)]);
-}
-
-export async function ensureContainerConnected(container: IContainer): Promise<void> {
-	if (container.connectionState !== ConnectionState.Connected) {
-		return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-	}
 }
 
 // Create a promise based on the timeout options

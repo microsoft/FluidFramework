@@ -3,39 +3,44 @@
  * Licensed under the MIT License.
  */
 
+export { GarbageCollector } from "./garbageCollection";
 export {
-	UnreferencedState,
-	UnreferencedStateTracker,
-	GarbageCollector,
+	currentGCVersion,
+	defaultInactiveTimeoutMs,
+	defaultSessionExpiryDurationMs,
+	disableSweepLogKey,
 	GCNodeType,
+	gcTestModeKey,
+	gcTombstoneGenerationOptionName,
+	GCVersion,
+	gcVersionUpgradeToV2Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
+	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
+	IGCMetadata,
+	IGCRuntimeOptions,
 	IGCStats,
-} from "./garbageCollection";
-export {
-	sendGCUnexpectedUsageEvent,
-	shouldAllowGcTombstoneEnforcement,
-} from "./garbageCollectionHelpers";
-export {
-	defaultSessionExpiryDurationMs,
-	gcTombstoneGenerationOptionName,
+	oneDayMs,
+	runGCKey,
+	runSessionExpiryKey,
+	runSweepKey,
+	stableGCVersion,
+	sweepAttachmentBlobsKey,
 	sweepDatastoresKey,
 	throwOnTombstoneLoadKey,
 	throwOnTombstoneUsageKey,
-	runSessionExpiryKey,
-	oneDayMs,
-	runGCKey,
-	runSweepKey,
-	defaultInactiveTimeoutMs,
-	gcTestModeKey,
-	disableSweepLogKey,
-	gcVersionUpgradeToV2Key,
-	currentGCVersion,
-	stableGCVersion,
-} from "./garbageCollectionConstants";
+	UnreferencedState,
+} from "./gcDefinitions";
+export {
+	getSnapshotDataFromOldSnapshotFormat,
+	sendGCUnexpectedUsageEvent,
+	shouldAllowGcTombstoneEnforcement,
+} from "./gcHelpers";
+export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
 	closuresMapLocalStorageKey,
 	SweepReadyUsageDetectionHandler,
 } from "./gcSweepReadyUsageDetection";
+export { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";

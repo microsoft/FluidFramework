@@ -44,7 +44,7 @@
 		"fluid-framework": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.9.0",
+		"@fluid-tools/build-cli": "0.11.0-135362",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-tools": "^0.2.3074",
@@ -85,5 +85,9 @@
 	"jest-junit": {
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }

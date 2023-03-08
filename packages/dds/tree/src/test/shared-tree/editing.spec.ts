@@ -5,8 +5,9 @@
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
-import { brand, JsonCompatible } from "../../util";
+import { JsonCompatible } from "../../util";
 import { rootFieldKeySymbol } from "../../core";
+import { fakeRepair } from "../utils";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
 describe("Editing", () => {
@@ -32,6 +33,31 @@ describe("Editing", () => {
 			tree4.receive(sequenced);
 
 			expectJsonTree([tree1, tree2, tree3, tree4], ["x", "y"]);
+		});
+
+		it("can handle competing deletes", () => {
+			for (const index of [0, 1, 2, 3]) {
+				const sequencer = new Sequencer();
+				const startingState = ["A", "B", "C", "D"];
+				const tree1 = TestTree.fromJson(startingState);
+				const tree2 = tree1.fork();
+				const tree3 = tree1.fork();
+				const tree4 = tree1.fork();
+
+				const del1 = remove(tree1, index, 1);
+				const del2 = remove(tree2, index, 1);
+				const del3 = remove(tree3, index, 1);
+
+				const sequenced = sequencer.sequence([del1, del2, del3]);
+				tree1.receive(sequenced);
+				tree2.receive(sequenced);
+				tree3.receive(sequenced);
+				tree4.receive(sequenced);
+
+				const expected = [...startingState];
+				expected.splice(index, 1);
+				expectJsonTree([tree1, tree2, tree3, tree4], expected);
+			}
 		});
 
 		it("can rebase local dependent inserts", () => {
@@ -172,7 +198,7 @@ describe("Editing", () => {
 
 			const revABC = tree2.runTransaction((forest, editor) => {
 				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.revive(0, 3, brand(seqDelABC.seqNumber), 1);
+				field.revive(0, 3, seqDelABC.revision, fakeRepair, 1);
 			});
 
 			const seqRevABC = sequencer.sequence(revABC);
@@ -198,7 +224,7 @@ describe("Editing", () => {
 
 			const revABC = tree2.runTransaction((forest, editor) => {
 				const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.revive(0, 3, brand(seqDelABC.seqNumber), 1, true);
+				field.revive(0, 3, seqDelABC.revision, fakeRepair, 1, true);
 			});
 
 			const seqRevABC = sequencer.sequence(revABC);

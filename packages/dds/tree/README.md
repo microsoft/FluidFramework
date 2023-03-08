@@ -302,11 +302,11 @@ flowchart
         direction TB
         subgraph core ["core libraries"]
             direction TB
-            checkout-->forest
+            checkout-->rebase
             forest-->schema-stored
             change-family-->repair
             edit-manager-->change-family
-            repair-->rebase
+            rebase-->repair
             rebase-->tree
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
@@ -316,7 +316,7 @@ flowchart
             forest-->tree
         end
         core-->events-->util
-        id-compressor-->util
+        core-->id-compressor-->util
         feature-->shared-tree-core
         shared-tree-core-->core
         shared-tree-->feature

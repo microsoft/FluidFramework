@@ -52,7 +52,7 @@ describe("Document Dirty", () => {
 		 */
 		async function waitForContainerReconnection(c: IContainer): Promise<void> {
 			assert.notStrictEqual(c.connectionState, ConnectionState.Connected);
-			return waitForContainerConnection(c, true);
+			return waitForContainerConnection(c);
 		}
 
 		/**
@@ -68,6 +68,11 @@ describe("Document Dirty", () => {
 					"No superfluous transition event, dirty and clean count should match when state is clean",
 				);
 			});
+
+			if (!containerRuntime.isDirty) {
+				// Give one count for the initial clean state
+				wasMarkedCleanContainerCount += 1;
+			}
 			container.on("saved", () => {
 				wasMarkedCleanContainerCount += 1;
 				assert.equal(container.isDirty, false, "Document is marked clean");
@@ -93,6 +98,10 @@ describe("Document Dirty", () => {
 				);
 			});
 
+			if (containerRuntime.isDirty) {
+				// Give one count for the initial dirty state
+				wasMarkedDirtyContainerCount += 1;
+			}
 			container.on("dirty", () => {
 				wasMarkedDirtyContainerCount += 1;
 				assert.equal(container.isDirty, true, "Document is marked dirty");
@@ -365,7 +374,7 @@ describe("Document Dirty", () => {
 		describe("Force readonly", () => {
 			it(`sets operations when force readonly and then turn off force readonly to process them`, async () => {
 				container.forceReadonly?.(true);
-				await waitForContainerConnection(container, true);
+				await waitForContainerConnection(container);
 
 				// Set values in DDSes in force read only state.
 				sharedMap.set("key", "value");
@@ -398,7 +407,7 @@ describe("Document Dirty", () => {
 
 				// force readonly
 				container.forceReadonly?.(true);
-				await waitForContainerConnection(container, true);
+				await waitForContainerConnection(container);
 
 				await loaderContainerTracker.ensureSynchronized();
 
@@ -468,6 +477,11 @@ describe("Document Dirty", () => {
 					"No superfluous transition event1, clean should be only one more then dirty when state is clean",
 				);
 			});
+
+			if (!containerRuntime.isDirty) {
+				// Give one count for the initial saved state
+				wasMarkedCleanContainerCount += 1;
+			}
 			container.on("saved", () => {
 				wasMarkedCleanContainerCount += 1;
 				assert.equal(container.isDirty, false, "Document is marked clean");
@@ -493,6 +507,10 @@ describe("Document Dirty", () => {
 				);
 			});
 
+			if (containerRuntime.isDirty) {
+				// Give one count for the initial dirty state
+				wasMarkedDirtyContainerCount += 1;
+			}
 			container.on("dirty", () => {
 				wasMarkedDirtyContainerCount += 1;
 				assert.equal(container.isDirty, true, "Document is marked dirty");

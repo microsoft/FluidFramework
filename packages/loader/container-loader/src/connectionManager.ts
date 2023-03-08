@@ -28,7 +28,6 @@ import {
 	createWriteError,
 	createGenericNetworkError,
 	getRetryDelayFromError,
-	waitForConnectedState,
 	DeltaStreamConnectionForbiddenError,
 	logNetworkFailure,
 	isRuntimeMessage,
@@ -134,6 +133,19 @@ class NoDeltaStream
 		this._disposed = true;
 	}
 }
+
+const waitForOnline = async (): Promise<void> => {
+	// Only wait if we have a strong signal that we're offline - otherwise assume we're online.
+	if (globalThis.navigator?.onLine === false && globalThis.addEventListener !== undefined) {
+		return new Promise<void>((resolve) => {
+			const resolveAndRemoveListener = () => {
+				resolve();
+				globalThis.removeEventListener("online", resolveAndRemoveListener);
+			};
+			globalThis.addEventListener("online", resolveAndRemoveListener);
+		});
+	}
+};
 
 /**
  * Interface to track the current in-progress connection attempt.
@@ -570,12 +582,25 @@ export class ConnectionManager implements IConnectionManager {
 				lastError = origError;
 
 				const retryDelayFromError = getRetryDelayFromError(origError);
-				delayMs = retryDelayFromError ?? Math.min(delayMs * 2, MaxReconnectDelayInMs);
-
 				if (retryDelayFromError !== undefined) {
+					// If the error told us to wait, then we wait.
 					this.props.reconnectionDelayHandler(retryDelayFromError, origError);
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, retryDelayFromError);
+					});
+				} else if (globalThis.navigator?.onLine !== false) {
+					// If the error didn't tell us to wait, let's still wait a little bit before retrying.
+					// We skip this delay if we're confident we're offline, because we probably just need to wait to come back online.
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, delayMs);
+						delayMs = Math.min(delayMs * 2, MaxReconnectDelayInMs);
+					});
 				}
-				await waitForConnectedState(delayMs);
+
+				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
+				// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
+				// should probably live in the driver.
+				await waitForOnline();
 			}
 		}
 
@@ -613,7 +638,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * @param args - The connection arguments
 	 */
 	private triggerConnect(connectionMode: ConnectionMode) {
-		// reconnect() has async await of waitForConnectedState(), and that causes potential race conditions
+		// reconnect() includes async awaits, and that causes potential race conditions
 		// where we might already have a connection. If it were to happen, it's possible that we will connect
 		// with different mode to `connectionMode`. Glancing through the caller chains, it looks like code should be
 		// fine (if needed, reconnect flow will get triggered again). Places where new mode matters should encode it
@@ -662,9 +687,9 @@ export class ConnectionManager implements IConnectionManager {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this._outbound.pause();
 		this._outbound.clear();
-		this.props.disconnectHandler(reason);
-
 		connection.dispose();
+
+		this.props.disconnectHandler(reason);
 
 		this._connectionVerboseProps = {};
 
@@ -886,11 +911,19 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 
+		// If the error tells us to wait before retrying, then do so.
 		const delayMs = getRetryDelayFromError(error);
 		if (error !== undefined && delayMs !== undefined) {
 			this.props.reconnectionDelayHandler(delayMs, error);
-			await waitForConnectedState(delayMs);
+			await new Promise<void>((resolve) => {
+				setTimeout(resolve, delayMs);
+			});
 		}
+
+		// If we believe we're offline, we assume there's no point in trying again until we at least think we're online.
+		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
+		// should probably live in the driver.
+		await waitForOnline();
 
 		this.triggerConnect(requestedMode);
 	}
