@@ -9013,12 +9013,12 @@ importers:
 
   packages/test/test-end-to-end-tests:
     specifiers:
+      '@fluid-experimental/attributor': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-experimental/sequence-deprecated': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/benchmark': ^0.46.0
       '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/agent-scheduler': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/attributor': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/cell': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/common-definitions': ^0.20.1
@@ -9081,11 +9081,11 @@ importers:
       url: ^0.11.0
       uuid: ^8.3.1
     dependencies:
+      '@fluid-experimental/attributor': link:../../framework/attributor
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluid-tools/benchmark': 0.46.133527
       '@fluidframework/agent-scheduler': link:../../framework/agent-scheduler
       '@fluidframework/aqueduct': link:../../framework/aqueduct
-      '@fluidframework/attributor': link:../../framework/attributor
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -9478,10 +9478,10 @@ importers:
 
   packages/test/test-version-utils:
     specifiers:
+      '@fluid-experimental/attributor': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-experimental/sequence-deprecated': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/build-cli': 0.11.0-135362
       '@fluidframework/aqueduct': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/attributor': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/cell': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -9533,9 +9533,9 @@ importers:
       webpack: ^5.72.0
       webpack-cli: ^4.9.2
     dependencies:
+      '@fluid-experimental/attributor': link:../../framework/attributor
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
       '@fluidframework/aqueduct': link:../../framework/aqueduct
-      '@fluidframework/attributor': link:../../framework/attributor
       '@fluidframework/cell': link:../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -22170,7 +22170,7 @@ packages:
   /axios/0.21.4_debug@4.3.2:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.2_debug@4.3.2
+      follow-redirects: 1.15.2
     transitivePeerDependencies:
       - debug
 
@@ -27534,17 +27534,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-
-  /follow-redirects/1.15.2_debug@4.3.2:
-    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dependencies:
-      debug: 4.3.2
 
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
