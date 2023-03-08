@@ -1237,7 +1237,7 @@ export function unwrappedField(
 	assert(
 		fieldKind.multiplicity === Multiplicity.Optional ||
 			fieldKind.multiplicity === Multiplicity.Forbidden,
-		"invalid empty field",
+		0x59a /* invalid empty field */,
 	);
 	return undefined;
 }
