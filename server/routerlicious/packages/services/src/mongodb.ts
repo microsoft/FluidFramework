@@ -14,7 +14,45 @@ const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
 const errorSanitizationMessage = "REDACTED";
-const errorResponseKeysToBeRedacted = ["data", "contents"];
+const errorResponseKeysAllowList = [
+    "_id",
+    "clientId",
+    "clientSequenceNumber",
+    "code",
+    "codeName",
+    "documentId",
+    "driver",
+    "err",
+    "errmsg",
+    "errorDetails",
+    "errorLabels",
+    "expHash1",
+    "index",
+    "insertedIds",
+    "message",
+    "minimumSequenceNumber",
+    "mongoTimestamp",
+    "name",
+    "nInserted",
+    "nMatched",
+    "nModified",
+    "nRemoved",
+    "nUpserted",
+    "ok",
+    "op",
+    "operation",
+    "referenceSequenceNumber",
+    "result",
+    "sequenceNumber",
+    "stack",
+    "tenantId",
+    "term",
+    "timestamp",
+    "traces",
+    "type",
+    "upserted",
+    "writeErrors",
+    "writeConcernErrors"];
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
     constructor(
@@ -260,7 +298,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
             InitialRetryIntervalInMs, // retryAfterMs
             (error: any, numRetries: number, retryAfterInterval: number) =>
                 numRetries * retryAfterInterval, // retryAfterIntervalCalculator
-            (error) => this.errorSanitizer(error), /* onErrorFn */
+            (error) => this.sanitizeError(error), /* onErrorFn */
             this.telemetryEnabled, // telemetryEnabled
         );
     }
@@ -286,13 +324,13 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
         return properties;
     }
 
-    private errorSanitizer(error: any) {
+    private sanitizeError(error: any) {
         if (error) {
             Object.keys(error).forEach((key) => {
-                if (errorResponseKeysToBeRedacted.includes(key)) {
+                if (!errorResponseKeysAllowList.includes(key)) {
                     error[key] = errorSanitizationMessage;
                 } else if (typeof error[key] === "object") {
-                    this.errorSanitizer(error[key]);
+                    this.sanitizeError(error[key]);
                 }
             });
         }

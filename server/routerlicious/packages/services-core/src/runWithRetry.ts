@@ -52,11 +52,11 @@ export async function runWithRetry<T>(
                     Lumberjack.info(`Succeeded in executing ${callName} with ${retryCount} retries`, telemetryProperties);
                 }
             } catch (error) {
-                metricError = error;
-                Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
                 if (onErrorFn !== undefined) {
                     onErrorFn(error);
                 }
+                metricError = error;
+                Lumberjack.error(`Error running ${callName}: retryCount ${retryCount}`, telemetryProperties, error);
                 if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
                     Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
                     break;
