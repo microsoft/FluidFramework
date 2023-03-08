@@ -102,7 +102,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 	 * This test simulates rebasing over an do-undo pair.
 	 * It is different from the above in two ways:
 	 * - The undo(B) changeset bears a different RevisionTag than B
-	 * - The inverse produced by undo(B) us not made up of rollback marks
+	 * - The inverse produced by undo(B) is not a rollback
 	 * TODO: Reactivate and fix tests.
 	 */
 	describe.skip("A ↷ [B, undo(B)] => A", () => {

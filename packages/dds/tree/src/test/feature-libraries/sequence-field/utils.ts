@@ -44,7 +44,7 @@ export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.
  * This is safe in the context of 'FieldKind' testing because `RevisionTag`s are only expected to be value-equatable.
  *
  * This function is meant for testing purposes only.
- * RevisionTags minted by this function are meant to be consumed by `revisionHelper`.
+ * RevisionTags minted by this function are meant to be consumed by `integerRevisionIndexer`.
  *
  * @param integer - A number reflecting the relative order of the changeset with that revision compared to other changeset
  * (where higher number means newer changeset/revision).

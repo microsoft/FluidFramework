@@ -610,17 +610,17 @@ export class ComposeQueue<T> {
 			composeChanges,
 		);
 
-		// Detect all inserts in the new marks that will be cancelled by uninserts in the base marks
-		const uninserts = new Set<RevisionTag>();
+		// Detect all inserts in the new marks that will be cancelled by deletes in the base marks
+		const deletes = new Set<RevisionTag>();
 		for (const mark of baseMarks) {
 			if (isDeleteMark(mark) && mark.revision !== undefined) {
-				uninserts.add(mark.revision);
+				deletes.add(mark.revision);
 			}
 		}
 		for (const mark of newMarks) {
 			if (isObjMark(mark) && mark.type === "Insert") {
 				const newRev = mark.revision ?? this.newRevision;
-				if (newRev !== undefined && uninserts.has(newRev)) {
+				if (newRev !== undefined && deletes.has(newRev)) {
 					this.cancelledInserts.add(newRev);
 				}
 			}
