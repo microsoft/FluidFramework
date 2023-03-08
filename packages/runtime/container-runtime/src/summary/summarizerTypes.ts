@@ -84,21 +84,18 @@ export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
+	/** @deprecated - Moved to `ISummarizerRuntime` as it's no longer needed here */
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
-	readonly disposed: boolean;
-	readonly connected: boolean;
-	readonly clientId: string | undefined;
 	readonly logger: ITelemetryLogger;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	disposeFn?(): void;
 	closeFn(): void;
-	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
 /** Options affecting summarize behavior. */

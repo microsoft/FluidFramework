@@ -47,7 +47,7 @@ export {
 	IBaseSummarizeResult,
 	IBroadcastSummaryResult,
 	ICancellationToken,
-	IConnectableRuntime, // Deprecated
+	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,

@@ -333,7 +333,7 @@ export interface IConnectableRuntime {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposed: boolean;
@@ -528,21 +528,13 @@ export interface ISummarizerInternalsProvider {
 // @public (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
-    readonly clientId: string | undefined;
-    // (undocumented)
     closeFn(): void;
     // (undocumented)
-    readonly connected: boolean;
-    // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // (undocumented)
-    readonly disposed: boolean;
     // (undocumented)
     disposeFn?(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
-    // (undocumented)
-    once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
     readonly summarizerClientId: string | undefined;
 }
 

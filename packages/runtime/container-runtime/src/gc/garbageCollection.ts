@@ -43,10 +43,10 @@ import { ICreateContainerMetadata } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	disableSweepLogKey,
-	IGarbageCollectionRuntime,
 	GCNodeType,
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
+	IGarbageCollectionRuntime,
 	IGCStats,
 	UnreferencedState,
 	IGCMetadata,
