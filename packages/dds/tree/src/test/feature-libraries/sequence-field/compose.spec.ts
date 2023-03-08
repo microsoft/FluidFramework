@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	RevisionTag,
-	makeAnonChange,
-	tagChange,
-	TreeSchemaIdentifier,
-} from "../../../core";
+import { RevisionTag, makeAnonChange, tagChange, TreeSchemaIdentifier } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
