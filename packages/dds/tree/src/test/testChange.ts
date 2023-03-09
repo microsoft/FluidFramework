@@ -221,7 +221,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	}
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-		return rebase(change, over.change);
+		return rebase(change, over.change) ?? { intentions: [] };
 	}
 
 	public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {

@@ -34,6 +34,8 @@ const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	editor: { buildChildChange: () => fail("Child changes not supported") },
 	intoDelta: (change) =>
 		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
+
+	isEmpty: (change) => change === 0,
 };
 
 const valueField = new FieldKind(

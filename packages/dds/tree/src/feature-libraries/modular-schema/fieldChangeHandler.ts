@@ -26,7 +26,7 @@ export interface FieldChangeHandler<
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
 	 * and could be removed from the ModularChangeset tree without changing its behavior.
 	 */
-	isEmpty(change: TChangeset): boolean;	
+	isEmpty(change: TChangeset): boolean;
 }
 
 /**
@@ -231,6 +231,9 @@ export interface NodeChangeset extends HasFieldChanges {
 	valueChange?: ValueChange;
 }
 
+/**
+ * @alpha
+ */
 export interface HasFieldChanges {
 	fieldChanges?: FieldChangeMap;
 }

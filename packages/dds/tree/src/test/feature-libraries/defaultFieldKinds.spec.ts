@@ -181,7 +181,7 @@ describe("Value field changesets", () => {
 	});
 
 	it("can be rebased", () => {
-		const childRebaser = (_1: NodeChangeset, _2: NodeChangeset) =>
+		const childRebaser = (_1: NodeChangeset | undefined, _2: NodeChangeset) =>
 			assert.fail("Should not be called");
 
 		assert.deepEqual(
@@ -198,7 +198,7 @@ describe("Value field changesets", () => {
 	});
 
 	it("can rebase child changes", () => {
-		const childRebaser = (change: NodeChangeset, base: NodeChangeset) => {
+		const childRebaser = (change: NodeChangeset | undefined, base: NodeChangeset) => {
 			assert.deepEqual(change, nodeChange2);
 			assert.deepEqual(base, nodeChange1);
 			return nodeChange3;
@@ -342,7 +342,7 @@ describe("Optional field changesets", () => {
 	});
 
 	it("can be rebased", () => {
-		const childRebaser = (_change: NodeChangeset, _base: NodeChangeset) =>
+		const childRebaser = (_change: NodeChangeset | undefined, _base: NodeChangeset) =>
 			assert.fail("Should not be called");
 		assert.deepEqual(
 			fieldHandler.rebaser.rebase(
@@ -361,7 +361,10 @@ describe("Optional field changesets", () => {
 		const baseChange: FieldKinds.OptionalChangeset = { childChange: nodeChange1 };
 		const changeToRebase: FieldKinds.OptionalChangeset = { childChange: nodeChange2 };
 
-		const childRebaser = (change: NodeChangeset, base: NodeChangeset) => {
+		const childRebaser = (
+			change: NodeChangeset | undefined,
+			base: NodeChangeset,
+		): NodeChangeset | undefined => {
 			assert.deepEqual(change, nodeChange2);
 			assert.deepEqual(base, nodeChange1);
 			return nodeChange3;

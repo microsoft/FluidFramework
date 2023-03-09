@@ -28,6 +28,7 @@ export {
 	FieldChangeRebaser,
 	FieldChangeset,
 	FieldEditor,
+	HasFieldChanges,
 	ModularChangeset,
 	NodeChangeComposer,
 	NodeChangeDecoder,

@@ -65,7 +65,7 @@ export function encodeForJsonFormat0(
 	return {
 		maxId: change.maxId,
 		revisions: change.revisions as readonly RevisionInfo[] & JsonCompatibleReadOnly,
-		changes: encodeFieldChangesForJson(fieldKinds, change.fieldChanges),		
+		changes: encodeFieldChangesForJson(fieldKinds, change.fieldChanges),
 	};
 }
 

@@ -209,6 +209,7 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	HasFieldChanges,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:

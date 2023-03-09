@@ -545,7 +545,7 @@ export class ModularChangeFamily
 		change: FieldChangeMap,
 		over: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
-		crossFieldTable: RebaseTable,		
+		crossFieldTable: RebaseTable,
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionIndexer: RevisionIndexer,
 	): FieldChangeMap {
@@ -564,11 +564,11 @@ export class ModularChangeFamily
 				fieldKind,
 				changesets: [fieldChangeset, baseChangeset],
 			} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionIndexer);
-			
+
 			const { revision } = over;
 			const taggedBaseChange = { revision, change: baseChangeset };
-			const manager = newCrossFieldManager(crossFieldTable);		
-			
+			const manager = newCrossFieldManager(crossFieldTable);
+
 			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
 				fieldChangeset,
 				taggedBaseChange,
@@ -611,8 +611,8 @@ export class ModularChangeFamily
 		change: NodeChangeset | undefined,
 		over: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
-		crossFieldTable: RebaseTable,		
-		parentField: FieldChange | undefined,		
+		crossFieldTable: RebaseTable,
+		parentField: FieldChange | undefined,
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionIndexer: RevisionIndexer,
 	): NodeChangeset | undefined {
@@ -627,7 +627,7 @@ export class ModularChangeFamily
 				change: over.change.fieldChanges,
 			},
 			genId,
-			crossFieldTable,			
+			crossFieldTable,
 			fieldFilter,
 			revisionIndexer,
 		);
@@ -653,11 +653,11 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
+	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
 		anchors.applyDelta(this.intoDelta(over));
 	}
 
-	intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+	public intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
 		return this.intoDeltaImpl(change.fieldChanges);
 	}
 

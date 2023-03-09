@@ -362,6 +362,7 @@ export interface FieldChangeHandler<TChangeset, TEditor extends FieldEditor<TCha
     encoder: FieldChangeEncoder<TChangeset>;
     // (undocumented)
     intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+    isEmpty(change: TChangeset): boolean;
     // (undocumented)
     rebaser: FieldChangeRebaser<TChangeset>;
     // (undocumented)
@@ -375,7 +376,7 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 export interface FieldChangeRebaser<TChangeset> {
     amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
     amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
     compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
@@ -510,6 +511,12 @@ export type GlobalFieldKey = Brand<string, "tree.GlobalFieldKey">;
 
 // @alpha
 export type GlobalFieldKeySymbol = Brand<symbol, "GlobalFieldKeySymbol">;
+
+// @alpha (undocumented)
+export interface HasFieldChanges {
+    // (undocumented)
+    fieldChanges?: FieldChangeMap;
+}
 
 // @alpha (undocumented)
 export interface HasListeners<E extends Events<E>> {
@@ -826,7 +833,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
     // (undocumented)
     readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>;
     // (undocumented)
-    intoDelta(change: ModularChangeset): Delta.Root;
+    intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root;
     // (undocumented)
     invert(change: TaggedChange<ModularChangeset>, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
     // (undocumented)
@@ -838,9 +845,9 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
 }
 
 // @alpha (undocumented)
-export interface ModularChangeset {
+export interface ModularChangeset extends HasFieldChanges {
     // (undocumented)
-    changes: FieldChangeMap;
+    fieldChanges: FieldChangeMap;
     maxId?: ChangesetLocalId;
     readonly revisions?: readonly RevisionInfo[];
 }
@@ -928,12 +935,10 @@ export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnl
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
-export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
+export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset) => NodeChangeset | undefined;
 
 // @alpha
-export interface NodeChangeset {
-    // (undocumented)
-    fieldChanges?: FieldChangeMap;
+export interface NodeChangeset extends HasFieldChanges {
     // (undocumented)
     valueChange?: ValueChange;
 }
