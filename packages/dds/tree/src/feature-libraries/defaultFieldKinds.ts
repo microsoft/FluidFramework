@@ -189,6 +189,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	encoder: new UnitEncoder(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
+	isEmpty: (change: 0) => true,
 };
 
 /**
@@ -213,6 +214,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 			setValue: change,
 		},
 	],
+	isEmpty: (change: number) => change === 0,
 };
 
 /**
@@ -419,6 +421,8 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 
 		return change.changes === undefined ? [] : [deltaFromChild(change.changes, 0)];
 	},
+
+	isEmpty: (change: ValueChangeset) => change.changes === undefined && change.value === undefined,
 };
 
 /**
@@ -690,6 +694,9 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 
 			return insertDelta;
 		},
+
+		isEmpty: (change: OptionalChangeset) =>
+			change.childChange === undefined && change.fieldChange === undefined,
 	},
 	(types, other) =>
 		(other.kind === sequence.identifier || other.kind === optional.identifier) &&

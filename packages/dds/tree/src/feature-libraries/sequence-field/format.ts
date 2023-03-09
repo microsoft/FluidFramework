@@ -312,3 +312,7 @@ export enum Effects {
 	Delete = "Delete",
 	None = "None",
 }
+
+export function isEmpty<T>(change: Changeset<T>): boolean {
+	return change.length === 0;
+}

@@ -57,7 +57,7 @@ export function encodeForJsonFormat0(
 ): EncodedModularChangeset & JsonCompatibleReadOnly {
 	return {
 		maxId: change.maxId,
-		changes: encodeFieldChangesForJson(fieldKinds, change.changes),
+		changes: encodeFieldChangesForJson(fieldKinds, change.fieldChanges),
 	};
 }
 
@@ -112,7 +112,7 @@ export function decodeJsonFormat0(
 ): ModularChangeset {
 	const encodedChange = change as unknown as EncodedModularChangeset;
 	const decoded: ModularChangeset = {
-		changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
+		fieldChanges: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
 	};
 	if (encodedChange.maxId !== undefined) {
 		decoded.maxId = encodedChange.maxId;

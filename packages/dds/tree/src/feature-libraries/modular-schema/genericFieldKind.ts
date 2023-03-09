@@ -120,10 +120,13 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				const a = change[iChange];
 				const b = over[iOver];
 				if (a.index === b.index) {
-					rebased.push({
-						index: a.index,
-						nodeChange: rebaseChild(a.nodeChange, b.nodeChange),
-					});
+					const nodeChange = rebaseChild(a.nodeChange, b.nodeChange);
+					if (nodeChange !== undefined) {
+						rebased.push({
+							index: a.index,
+							nodeChange,
+						});
+					}
 					iChange += 1;
 					iOver += 1;
 				} else if (a.index < b.index) {
@@ -181,6 +184,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return delta;
 	},
+	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
 /**
