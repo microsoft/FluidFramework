@@ -3495,7 +3495,10 @@ export const mixinSummaryHandler = (
 
 // Helper API to load extra blobs in snapshot
 // This API only works for blobs that are saved in storage, i.e. this API would only work for load from storage scenarios
-export async function loadRuntimeBlob(params: IContainerRuntimeParams, path: string[]): Promise<string | undefined> {
+export async function loadRuntimeBlob(
+	params: IContainerRuntimeParams,
+	path: string[],
+): Promise<string | undefined> {
 	const context = params.context;
 	const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
 	let baseSnapshot = context.baseSnapshot;
