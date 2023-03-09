@@ -18,7 +18,7 @@ import { validateRequestParams, handleResponse } from "@fluidframework/server-se
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
-import axios from "axios";
+import requestAPI from "request";
 import winston from "winston";
 import { Constants } from "../../../utils";
 import {
