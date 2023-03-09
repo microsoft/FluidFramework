@@ -6,7 +6,6 @@
 /* eslint-disable no-new-func */
 /* eslint-disable no-template-curly-in-string */
 /* eslint-disable jsdoc/require-hyphen-before-param-description */
-/* eslint-disable no-bitwise */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable unicorn/better-regex */
 /* eslint-disable no-func-assign */
@@ -157,23 +156,14 @@ const defaultOptions = {
 
 /* -------------------------------------------------------------------------- */
 
-/** Used for `Array` and `Object` method references. */
-const arrayRef = [];
-const objectProto = Object.prototype;
-
 /** Native method shortcuts. */
 const abs = Math.abs;
 const floor = Math.floor;
-const log = Math.log;
 const max = Math.max;
 const min = Math.min;
 const pow = Math.pow;
-const push = arrayRef.push;
-const shift = arrayRef.shift;
-const slice = arrayRef.slice;
+const shift = [].shift;
 const sqrt = Math.sqrt;
-const toString = objectProto.toString;
-const unshift = arrayRef.unshift;
 
 /** Used to access Node.js's high resolution timer. */
 const processObject = isHostType(globalThis, "process") && globalThis.process;
