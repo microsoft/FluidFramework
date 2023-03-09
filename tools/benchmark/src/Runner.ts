@@ -5,9 +5,7 @@
 
 import { assert } from "chai";
 import { Test } from "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { Options } from "./benchmark/benchmark";
-import Benchmark from "./benchmark"; // TODO
+import { Benchmark, Options } from "./benchmark";
 import {
 	BenchmarkType,
 	BenchmarkArguments,

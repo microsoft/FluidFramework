@@ -31,8 +31,7 @@ SOFTWARE.
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
-// eslint-disable-next-line import/no-internal-modules
-import { Stats, Times } from "./benchmark/benchmark";
+import { Stats, Times } from "./benchmark";
 import {
 	bold,
 	geometricMean,

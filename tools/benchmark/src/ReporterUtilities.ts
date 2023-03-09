@@ -5,8 +5,7 @@
 
 import { assert } from "chai";
 import { Suite } from "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { Stats } from "./benchmark/benchmark";
+import { Stats } from "./benchmark";
 import {
 	benchmarkTypes,
 	performanceTestSuiteTag,

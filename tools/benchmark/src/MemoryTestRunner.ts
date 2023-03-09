@@ -7,8 +7,7 @@ import * as v8 from "v8";
 import { performance } from "perf_hooks";
 import { assert } from "chai";
 import { Test } from "mocha";
-// eslint-disable-next-line import/no-internal-modules
-import { Stats } from "./benchmark/benchmark";
+import { Stats } from "./benchmark";
 import {
 	isParentProcess,
 	isInPerformanceTestingMode,
