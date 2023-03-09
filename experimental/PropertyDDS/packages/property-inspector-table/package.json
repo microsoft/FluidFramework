@@ -95,7 +95,7 @@
 		"jest-junit": "^10.0.0",
 		"jest-transform-file": "^1.1.1",
 		"jsdoc": "3.6.7",
-		"lighthouse": "^9.6.8",
+		"lighthouse": "^7.5.0",
 		"prettier": "~2.6.2",
 		"process": "^0.11.10",
 		"rimraf": "^2.6.2",
