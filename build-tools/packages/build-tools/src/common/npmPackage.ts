@@ -4,7 +4,9 @@
  */
 import { queue } from "async";
 import * as chalk from "chalk";
+import detectIndent from "detect-indent";
 import * as fs from "fs";
+import { writeJsonSync } from "fs-extra";
 import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
@@ -23,7 +25,6 @@ import {
 	readJsonSync,
 	rimrafWithErrorAsync,
 	unlinkAsync,
-	writeFileAsync,
 } from "./utils";
 
 const { info, verbose, errorLog: error } = defaultLogger;
@@ -206,10 +207,7 @@ export class Package {
 	}
 
 	public async savePackageJson() {
-		return writeFileAsync(
-			this.packageJsonFileName,
-			`${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`,
-		);
+		return updatePackageJsonFile(this.directory);
 	}
 
 	public reload() {
@@ -471,4 +469,30 @@ export class Packages {
 		const results = await this.queueExecOnAllPackageCore(exec, message);
 		return !results.some((result) => result.error);
 	}
+}
+
+/**
+ * Reads the contents of package.json, applies a transform function to it, then writes the results back to the source
+ * file.
+ *
+ * @param packageDir - The path to the directory containing package.json.
+ * @param packageTransformer - An optional function that will be executed on the package.json contents before writing it
+ * back to the file.
+ *
+ * @remarks
+ *
+ * The package.json is always sorted using sort-package-json.
+ */
+export function updatePackageJsonFile(
+	packageDir: string,
+	packageTransformer?: (json: PackageJson) => void,
+): void {
+	const packagePath = path.join(packageDir, "package.json");
+	const indentation = detectIndent(packagePath).indent || "\t";
+	const pkgJson: PackageJson = readJsonSync(packagePath);
+
+	// Transform the package.json if needed
+	packageTransformer?.(pkgJson);
+
+	writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indentation });
 }

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import * as child_process from "child_process";
-import detectIndent from "detect-indent";
 import fs from "fs";
 import { pathExistsSync } from "fs-extra";
 import merge from "lodash.merge";
@@ -16,7 +15,7 @@ import sortPackageJson from "sort-package-json";
 
 import { IFluidBuildConfig } from "../../common/fluidRepo";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
-import { PackageJson } from "../../common/npmPackage";
+import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
 
 const licenseId = "MIT";
@@ -277,7 +276,7 @@ export const handlers: Handler[] = [
 				json.homepage = homepage;
 			}
 
-			writeFile(file, JSON.stringify(sortPackageJson(json), undefined, "\t") + newline);
+			updatePackageJsonFile(path.dirname(file));
 
 			return { resolved: resolved };
 		},
@@ -555,7 +554,6 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file, root) => {
 			let json;
-			const indentation = detectIndent(file).indent || "\t";
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -582,7 +580,7 @@ export const handlers: Handler[] = [
 					}
 				}
 
-				writeFile(file, JSON.stringify(json, undefined, indentation) + newline);
+				updatePackageJsonFile(path.dirname(file));
 			}
 			return { resolved: resolved };
 		},
@@ -640,7 +638,6 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file) => {
 			let json;
-			const indentation = detectIndent(file).indent || "\t";
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -652,11 +649,7 @@ export const handlers: Handler[] = [
 			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 
 			if (hasScriptsField) {
-				addPrettier(json);
-				writeFile(
-					file,
-					JSON.stringify(sortPackageJson(json), undefined, indentation) + newline,
-				);
+				updatePackageJsonFile(path.dirname(file), (json) => addPrettier(json));
 			}
 
 			return { resolved: resolved };
