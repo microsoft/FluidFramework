@@ -96,7 +96,6 @@ export function mapMark<TIn, TOut>(
 						fields: mapFieldMarks(mark.fields, func),
 				  };
 		}
-		case Delta.MarkType.MoveInAndModify:
 		case Delta.MarkType.ModifyAndDelete: {
 			return {
 				...mark,

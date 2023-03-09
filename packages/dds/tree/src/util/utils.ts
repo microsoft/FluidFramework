@@ -6,6 +6,15 @@
 import structuredClone from "@ungap/structured-clone";
 
 /**
+ * Subset of Map interface.
+ * @alpha
+ */
+export interface MapGetSet<K, V> {
+	get(key: K): V | undefined;
+	set(key: K, value: V): this;
+}
+
+/**
  * Make all transitive properties in T readonly
  */
 export type RecursiveReadonly<T> = {
@@ -49,31 +58,6 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 		array.push(filler(i));
 	}
 	return array;
-}
-
-/**
- * Compare two arrays and return true if their elements are equivalent and in the same order.
- * @param arrayA - The first array to compare
- * @param arrayB - The second array to compare
- * @param elementComparator - The function used to check if two `T`s are equivalent.
- * Defaults to `Object.is()` equality (a shallow compare)
- */
-export function compareArrays<T>(
-	arrayA: readonly T[],
-	arrayB: readonly T[],
-	elementComparator: (a: T, b: T) => boolean = Object.is,
-): boolean {
-	if (arrayA.length !== arrayB.length) {
-		return false;
-	}
-
-	for (let i = 0; i < arrayA.length; i++) {
-		if (!elementComparator(arrayA[i], arrayB[i])) {
-			return false;
-		}
-	}
-
-	return true;
 }
 
 /**
@@ -128,7 +112,7 @@ export function compareSets<T>({
  * @param defaultValue - a function which returns a default value. This is called and used to set an initial value for the given key in the map if none exists
  * @returns either the existing value for the given key, or the newly-created value (the result of `defaultValue`)
  */
-export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K) => V): V {
+export function getOrCreate<K, V>(map: MapGetSet<K, V>, key: K, defaultValue: (key: K) => V): V {
 	let value = map.get(key);
 	if (value === undefined) {
 		value = defaultValue(key);
@@ -142,7 +126,7 @@ export function getOrCreate<K, V>(map: Map<K, V>, key: K, defaultValue: (key: K)
  * Gets the list associated with the provided key, if it exists.
  * Otherwise, creates an entry with an empty list, and returns that list.
  */
-export function getOrAddEmptyToMap<K, V>(map: Map<K, V[]>, key: K): V[] {
+export function getOrAddEmptyToMap<K, V>(map: MapGetSet<K, V[]>, key: K): V[] {
 	let collection = map.get(key);
 	if (collection === undefined) {
 		collection = [];

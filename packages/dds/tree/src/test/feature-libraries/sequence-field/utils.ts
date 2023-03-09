@@ -4,8 +4,13 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import {
+	ChangesetLocalId,
+	IdAllocator,
+	RevisionIndexer,
+	SequenceField as SF,
+} from "../../../feature-libraries";
+import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
@@ -34,13 +39,40 @@ export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.
 	});
 }
 
+/**
+ * Mints a `RevisionTag` based on the given number.
+ * This is safe in the context of 'FieldKind' testing because `RevisionTag`s are only expected to be value-equatable.
+ *
+ * This function is meant for testing purposes only.
+ * RevisionTags minted by this function are meant to be consumed by `integerRevisionIndexer`.
+ *
+ * @param integer - A number reflecting the relative order of the changeset with that revision compared to other changeset
+ * (where higher number means newer changeset/revision).
+ * @returns The same number masquerading as a `RevisionTag`.
+ */
+export function numberTag(integer: number): RevisionTag {
+	return integer as unknown as RevisionTag;
+}
+
+const integerRevisionIndexer = (tag: RevisionTag): number => {
+	// If the revision index query is expected for the given test, use a `RevisionTag` produced by `numberTag`.
+	assert(typeof tag === "number", "Unexpected revision index query");
+	return tag;
+};
+
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(changes, composer, idAllocator, moveEffects);
+	const composed = SF.compose(
+		changes,
+		composer,
+		idAllocator,
+		moveEffects,
+		integerRevisionIndexer,
+	);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
@@ -50,7 +82,11 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+export function rebase(
+	change: TestChangeset,
+	base: TaggedChange<TestChangeset>,
+	revisionIndexer?: RevisionIndexer,
+): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
@@ -59,7 +95,15 @@ export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>)
 	let rebasedChange = SF.rebase(change, base, TestChange.rebase, idAllocator, moveEffects);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, moveEffects);
+		rebasedChange = SF.amendRebase(
+			rebasedChange,
+			base,
+			// XXX
+			(a, b) => a,
+			idAllocator,
+			moveEffects,
+			revisionIndexer ?? integerRevisionIndexer,
+		);
 		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
@@ -88,6 +132,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
+		fakeRepair,
 		() => fail("Sequence fields should not generate IDs during invert"),
 		table,
 	);
@@ -99,6 +144,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
+			fakeRepair,
 			() => fail("Sequence fields should not generate IDs during invert"),
 			table,
 		);
@@ -113,7 +159,7 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 }
 
 export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {

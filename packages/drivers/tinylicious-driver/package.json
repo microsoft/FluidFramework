@@ -29,8 +29,11 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"test": "npm run test:mocha",
+		"test:mocha": "mocha --ignore 'dist/test/types/*' --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --generate --dir .",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
@@ -44,18 +47,20 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-134585",
+		"@fluid-tools/build-cli": "0.11.0-135362",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-134585",
+		"@fluidframework/build-tools": "0.11.0-135362",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/test-tools": "^0.2.3074",
-		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.3.1.0",
+		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.0.0-internal.3.2.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/jsrsasign": "^8.0.8",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.36",
 		"@types/uuid": "^8.3.0",
 		"concurrently": "^6.2.0",
+		"cross-env": "^7.0.2",
 		"eslint": "~8.6.0",
 		"mocha": "^10.0.0",
 		"prettier": "~2.6.2",
@@ -63,10 +68,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"version": "2.0.0-internal.3.2.0",
-		"previousVersionStyle": "~previousMinor",
-		"baselineRange": ">=2.0.0-internal.3.1.0 <2.0.0-internal.3.2.0",
-		"baselineVersion": "2.0.0-internal.3.1.0",
 		"broken": {}
 	}
 }

@@ -31,7 +31,13 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import {
+	assert,
+	LazyPromise,
+	Trace,
+	TypedEventEmitter,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -147,7 +153,6 @@ import {
 	GarbageCollector,
 	GCNodeType,
 	gcTombstoneGenerationOptionName,
-	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
@@ -169,6 +174,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
+import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -552,12 +558,7 @@ export function getDeviceSpec() {
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
-	implements
-		IContainerRuntime,
-		IGarbageCollectionRuntime,
-		IRuntime,
-		ISummarizerRuntime,
-		ISummarizerInternalsProvider
+	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	public get IContainerRuntime() {
 		return this;
@@ -605,13 +606,16 @@ export class ContainerRuntime
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
 	 * - context - Context of the container.
-	 * - registryEntries - Mapping to the stores.
-	 * - existing - When loading from an existing snapshot
-	 * - requestHandler - Request handlers for the container runtime
+	 * - registryEntries - Mapping from data store types to their corresponding factories.
+	 * - existing - Pass 'true' if loading from an existing snapshot.
+	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
 	 * - runtimeOptions - Additional options to be passed to the runtime
 	 * - containerScope - runtime services provided with context
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
+	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
 		context: IContainerContext;
@@ -621,6 +625,7 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
@@ -630,6 +635,7 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
+			initializeEntryPoint,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -754,6 +760,8 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			storage,
 			requestHandler,
+			undefined, // summaryConfiguration
+			initializeEntryPoint,
 		);
 
 		if (pendingRuntimeState) {
@@ -778,10 +786,6 @@ export class ContainerRuntime
 
 	public get clientDetails(): IClientDetails {
 		return this.context.clientDetails;
-	}
-
-	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.context.deltaManager;
 	}
 
 	public get storage(): IDocumentStorageService {
@@ -831,6 +835,19 @@ export class ContainerRuntime
 		return this.handleContext;
 	}
 	private readonly handleContext: ContainerFluidHandleContext;
+
+	/**
+	 * This is a proxy to the delta manager provided by the container context (innerDeltaManager). It restricts certain
+	 * accesses such as sets "read-only" mode for the summarizer client. This is the default delta manager that should
+	 * be used unless the innerDeltaManager is required.
+	 */
+	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	/**
+	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
+	 * should be sufficient. This should be used only if necessary. For example, for validating and propagating connected
+	 * events which requires access to the actual real only info, this is needed.
+	 */
+	private readonly innerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -930,7 +947,6 @@ export class ContainerRuntime
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly outbox: Outbox;
-
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly dataStores: DataStores;
@@ -1011,8 +1027,12 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super();
+
+		this.innerDeltaManager = context.deltaManager;
+		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1134,7 +1154,9 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			getContainerDiagnosticId: () => this.context.id,
-			activeConnection: () => this.deltaManager.active,
+			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
+			// delta manager would always return false for summarizer client.
+			activeConnection: () => this.innerDeltaManager.active,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1303,7 +1325,12 @@ export class ContainerRuntime
 					this.handleContext,
 					this.summaryCollection,
 					async (runtime: IConnectableRuntime) =>
-						RunWhileConnectedCoordinator.create(runtime),
+						RunWhileConnectedCoordinator.create(
+							runtime,
+							// Summarization runs in summarizer client and needs access to the real (non-proxy) active
+							// information. The proxy delta manager would always return false for summarizer client.
+							() => this.innerDeltaManager.active,
+						),
 				);
 			} else if (
 				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
@@ -1353,8 +1380,9 @@ export class ContainerRuntime
 		this.deltaManager.on("readonly", (readonly: boolean) => {
 			// we accumulate ops while being in read-only state.
 			// once user gets write permissions and we have active connection, flush all pending ops.
+			// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
 			assert(
-				readonly === this.deltaManager.readOnlyInfo.readonly,
+				readonly === this.innerDeltaManager.readOnlyInfo.readonly,
 				0x124 /* "inconsistent readonly property/event state" */,
 			);
 
@@ -1404,6 +1432,8 @@ export class ContainerRuntime
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
+
+		this.entryPoint = new LazyPromise(async () => initializeEntryPoint?.(this));
 	}
 
 	/**
@@ -1522,6 +1552,14 @@ export class ContainerRuntime
 			return exceptionToResponse(error);
 		}
 	}
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
+	 */
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+		return this.entryPoint;
+	}
+	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
 
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
@@ -1714,8 +1752,9 @@ export class ContainerRuntime
 		// If attachment blobs were added while disconnected, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
+		// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
 		const connecting =
-			connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
+			connected && !this._connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 		if (connecting && this.blobManager.hasPendingOfflineUploads) {
 			assert(
 				!this.delayConnectClientId,
@@ -2080,7 +2119,9 @@ export class ContainerRuntime
 	}
 
 	private canSendOps() {
-		return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
+		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
+		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 	}
 
 	/**
@@ -2312,10 +2353,10 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
 	 * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
 	 * the garbage collector of references detected since the last GC run. Most references are notified immediately
 	 * but there can be some for which async operation is required (such as detecting new root data stores).
+	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
 	 */
 	public async updateStateBeforeGC() {
 		return this.dataStores.updateStateBeforeGC();
@@ -2326,9 +2367,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::getGCData.
 	 * Generates and returns the GC data for this container.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
+	 * @see IGarbageCollectionRuntime.getGCData
 	 */
 	public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		const builder = new GCDataBuilder();
@@ -2341,9 +2382,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
 	 * After GC has run, called to notify this container's nodes of routes that are used in it.
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
+	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
 	public updateUsedRoutes(usedRoutes: string[]) {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before
@@ -2807,7 +2848,9 @@ export class ContainerRuntime
 
 		const serializedContent = JSON.stringify({ type, contents });
 
-		if (this.deltaManager.readOnlyInfo.readonly) {
+		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
+		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
+		if (this.innerDeltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,

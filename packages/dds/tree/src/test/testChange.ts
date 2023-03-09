@@ -110,7 +110,11 @@ function invert(change: TestChange): TestChange {
 	return emptyChange;
 }
 
-function rebase(change: TestChange, over: TestChange): TestChange {
+function rebase(change: TestChange | undefined, over: TestChange): TestChange | undefined {
+	if (change === undefined) {
+		return undefined;
+	}
+
 	if (isNonEmptyChange(change)) {
 		if (isNonEmptyChange(over)) {
 			// Rebasing should only occur between two changes with the same input context

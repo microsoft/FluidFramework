@@ -6,10 +6,10 @@
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 
-describe("snapshot perf", () => {
+describe("MergeTree snapshots", () => {
 	let summary;
 
-	for (const summarySize of [10, 100, 1000, 5000]) {
+	for (const summarySize of [10, 50, 100, 500, 1000, 5_000, 10_000]) {
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `load snapshot with ${summarySize} segments`,
@@ -19,9 +19,11 @@ describe("snapshot perf", () => {
 				for (let i = 0; i < summarySize; i++) {
 					str.append("a", false);
 				}
+
+				str.applyPendingOps();
 				summary = str.getSummary();
 			},
-			benchmarkFn: async () => {
+			benchmarkFnAsync: async () => {
 				await loadSnapshot(summary);
 			},
 			after: () => {

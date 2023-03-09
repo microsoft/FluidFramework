@@ -8,7 +8,7 @@ import { MergeTreeDeltaType } from "../ops";
 import { MergeTree } from "../mergeTree";
 import { insertText, markRangeRemoved } from "./testUtils";
 
-describe("partial lengths perf", () => {
+describe("MergeTree partial lengths", () => {
 	const originalIncrementalUpdate: boolean = MergeTree.options.incrementalUpdate;
 
 	for (const incremental of [true, false]) {
@@ -19,7 +19,7 @@ describe("partial lengths perf", () => {
 			before: () => {
 				MergeTree.options.incrementalUpdate = incremental;
 			},
-			benchmarkFn: async () => {
+			benchmarkFn: () => {
 				const mergeTree = new MergeTree();
 
 				let i = 1;
