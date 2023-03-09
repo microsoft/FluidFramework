@@ -10,10 +10,11 @@ This copy diverges from the original for a few reasons:
 4. The original supports more features than we need (like suites).
 5. The original focused on delivering minimal overhead micro-benchmarking across all runtimes via generating function source code.
    This version prefers simplicity even if it means slightly more overhead (and modern runtimes we care about likely have very little overhead when composing functions at runtime instead of via source generation.)
+   So far no increase in overhead has been measured (it actually lowered when moving to ESM).
 
 # Note
 
-Clearly great care with into the the version of benchmark.js this was based on to ensure it worked well in a variety environment and had nice API for end users of the library.
+Clearly great care with into the the version of benchmark.js this was based on to ensure it worked well in a variety of environments and had nice API for end users of the library.
 This version is not like that.
 As much as possibly functionality not required for the single benchmark driver library here has been removed.
 Careful configuration and tuning has been discarded, and most configurations are untested.

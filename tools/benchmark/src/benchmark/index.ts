@@ -19,6 +19,13 @@
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable prefer-rest-params */
 
+/**
+ * The below code is a heavily modified and simplified version of Benchmark.js ported to TypeScript.
+ * There is likely a lot more simplification possible, and string based function generation should probably be removed entirely,
+ * but it works well enough it its current state.
+ * See README.md in this this directory for more details.
+ */
+
 /*!
  * Benchmark.js
  * Copyright 2010-2016 Mathias Bynens
