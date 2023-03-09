@@ -27,27 +27,26 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 * {@inheritDoc IAppModel.sendCustomDebugSignal}
 	 */
 	public readonly sendCustomDebugSignal = (): void => {
-		this.runtime.submitSignal("debugSignal", { type: "ExternalDataChange" });
+		this.runtime.submitSignal("debugSignal", {
+			type: "ExternalDataChange",
+			taskListId: "task-list-1",
+		});
 	};
 
 	/**
 	 * {@inheritDoc IAppModel.registerWithCustomerService}
 	 */
-	public readonly registerWithCustomerService = (externalTaskListId: string): void => {
-		const taskList = this.taskListCollection
-			.getTaskList(externalTaskListId)
-			.catch(console.error);
-		if (taskList === undefined) {
-			throw new Error(
-				`The task list with id ${externalTaskListId} does not exist in this collection.`,
-			);
+	public readonly registerWithCustomerService = async (
+		externalTaskListId: string,
+	): Promise<void> => {
+		const taskList = this.taskListCollection.getTaskList(externalTaskListId);
+		if (taskList !== undefined) {
+			taskList
+				.registerWithCustomerService(
+					externalTaskListId,
+					this.container?.resolvedUrl as IFluidResolvedUrl,
+				)
+				.catch(console.error);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-		taskList
-			.registerWithCustomerService(
-				externalTaskListId,
-				this.container?.resolvedUrl as IFluidResolvedUrl,
-			)
-			.catch(console.error);
 	};
 }

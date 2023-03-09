@@ -64,7 +64,7 @@ export class TaskListCollectionContainerRuntimeFactory extends ModelContainerRun
 			if (message?.content?.type === SignalType.ExternalDataChanged) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				const taskListId = message?.content?.taskListId as string;
-				const taskList = taskListCollection.getTaskList(taskListId).catch(console.error);
+				const taskList = taskListCollection.getTaskList(taskListId);
 				if (taskList === undefined) {
 					throw new Error(`TaskList does not exist in collection`);
 				}

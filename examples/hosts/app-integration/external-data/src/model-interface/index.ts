@@ -200,7 +200,7 @@ export interface ITaskListCollection extends IEventProvider<ITaskListCollectionE
 	/**
 	 * Retrieve the task with the specified ID.
 	 */
-	readonly getTaskList: (id: string) => Promise<ITaskList>;
+	readonly getTaskList: (id: string) => ITaskList | undefined;
 }
 
 export { assertValidTaskData, TaskData, TaskListData } from "./TaskData";
