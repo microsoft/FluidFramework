@@ -8,7 +8,7 @@ import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { emptyField, FieldKinds, namedTreeSchema, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
-import { brand } from "../../util";
+import { brand, getOrAddEmptyToMap } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
 import {
 	FieldKey,
@@ -349,7 +349,7 @@ const getSuccessfulOpByteSize = (
 const BENCHMARK_NODE_COUNT = 100;
 
 describe("SharedTree Op Size Benchmarks", () => {
-	const opsByBenchmarkName: Record<string, ISequencedDocumentMessage[]> = {};
+	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
@@ -412,10 +412,9 @@ describe("SharedTree Op Size Benchmarks", () => {
 	};
 
 	const saveAndResetCurrentOps = () => {
-		if (!opsByBenchmarkName[currentBenchmarkName]) {
-			opsByBenchmarkName[currentBenchmarkName] = [];
-		}
-		currentTestOps.forEach((op) => opsByBenchmarkName[currentBenchmarkName].push(op));
+		currentTestOps.forEach((op) =>
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
+		);
 		currentTestOps.length = 0;
 	};
 
@@ -424,22 +423,20 @@ describe("SharedTree Op Size Benchmarks", () => {
 	};
 
 	afterEach(() => {
-		if (!opsByBenchmarkName[currentBenchmarkName]) {
-			opsByBenchmarkName[currentBenchmarkName] = [];
-		}
-		currentTestOps.forEach((op) => opsByBenchmarkName[currentBenchmarkName].push(op));
+		currentTestOps.forEach((op) =>
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
+		);
 		currentTestOps.length = 0;
 	});
 
 	after(() => {
 		const allBenchmarkOpStats: any[] = [];
-		Object.entries(opsByBenchmarkName).forEach((entry) => {
-			const [benchmarkName, ops] = entry;
+		for (const [benchmarkName, ops] of opsByBenchmarkName) {
 			allBenchmarkOpStats.push({
 				"Test name": benchmarkName,
 				...getOperationsStats(ops),
 			});
-		});
+		}
 		const table = new Table();
 		allBenchmarkOpStats.forEach((data) => {
 			Object.keys(data).forEach((key) => table.cell(key, data[key]));

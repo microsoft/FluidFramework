@@ -152,11 +152,12 @@ export {
 	verifyChangeRebaser,
 	tagInverse,
 	SessionId,
+	mintCommit,
 	mintRevisionTag,
 	Rebaser,
 } from "./rebase";
 
-export { SharedTreeBranch, SharedTreeBranchEvents, TransactionResult } from "./checkout";
+export { TransactionResult } from "./checkout";
 
 export { Checkout as TransactionCheckout } from "./transaction";
 

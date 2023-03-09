@@ -106,7 +106,7 @@ function composeMarkLists<TNodeChange>(
 	);
 	while (!queue.isEmpty()) {
 		const popped = queue.pop();
-		if (popped.areInverses) {
+		if (popped.areInverses === true) {
 			factory.pushOffset(getInputLength(popped.baseMark));
 			continue;
 		}

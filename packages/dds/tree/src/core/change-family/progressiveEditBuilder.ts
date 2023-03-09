@@ -24,7 +24,7 @@ export abstract class ProgressiveEditBuilderBase<TChange>
 {
 	private readonly changes: TChange[] = [];
 
-	constructor(
+	public constructor(
 		protected readonly changeFamily: ChangeFamily<unknown, TChange>,
 		private readonly changeReceiver: (change: TChange) => void,
 		private readonly anchorSet: AnchorSet,
