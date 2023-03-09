@@ -132,7 +132,7 @@ export class ProxyContext implements EditableTreeContext {
 	 * @param forest - the Forest
 	 * @param transactionCheckout - the Checkout applied to a transaction, not required in read-only usecases.
 	 */
-	constructor(
+	public constructor(
 		public readonly forest: IEditableForest,
 		private readonly transactionCheckout?: TransactionCheckout<
 			DefaultEditBuilder,
