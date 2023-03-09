@@ -172,6 +172,9 @@ export class StaticStorageDocumentService implements IDocumentService {
 }
 
 export class StaticStorageDocumentServiceFactory implements IDocumentServiceFactory {
+	/**
+	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
+	 */
 	public readonly protocolName = "fluid-static-storage:";
 	public constructor(protected readonly storage: IDocumentStorageService) {}
 

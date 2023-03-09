@@ -14,7 +14,7 @@ export {
 	gcTombstoneGenerationOptionName,
 	GCVersion,
 	gcVersionUpgradeToV2Key,
-	IGarbageCollectionRuntime,
+	IGarbageCollectionRuntime, // Deprecated
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,

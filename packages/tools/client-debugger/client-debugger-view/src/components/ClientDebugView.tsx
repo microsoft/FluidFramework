@@ -11,6 +11,7 @@ import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions"
 import { AudienceView } from "./AudienceView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
+import { TelemetryView } from "./TelemetryView";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -18,7 +19,7 @@ import { DataObjectsView } from "./DataObjectsView";
 // - Move Container action bar (connection / disposal buttons) to summary header, rather than in
 //   the Container data view.
 
-// Ensure FluentUI icons are initialized.
+// Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
 /**
@@ -71,9 +72,9 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 		};
 	}, [container, setIsContainerClosed]);
 
-	// UI state
-	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
-		RootView.ContainerData,
+	// Inner view selection
+	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
+		PanelView.ContainerData,
 	);
 
 	let view: React.ReactElement;
@@ -81,8 +82,8 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 		view = <div>The Container has been closed.</div>;
 	} else {
 		let innerView: React.ReactElement;
-		switch (rootViewSelection) {
-			case RootView.ContainerData:
+		switch (innerViewSelection) {
+			case PanelView.ContainerData:
 				innerView = (
 					<DataObjectsView
 						clientDebugger={clientDebugger}
@@ -90,7 +91,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 					/>
 				);
 				break;
-			case RootView.Audience:
+			case PanelView.Audience:
 				innerView = (
 					<AudienceView
 						clientDebugger={clientDebugger}
@@ -98,14 +99,18 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 					/>
 				);
 				break;
+			case PanelView.Telemetry:
+				innerView = <TelemetryView />;
+				break;
+			// TODO: add the Telemetry view here, without ReactContext
 			default:
-				throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
+				throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 		}
 		view = (
 			<Stack tokens={{ childrenGap: 10 }}>
-				<ViewSelectionMenu
-					currentSelection={rootViewSelection}
-					updateSelection={updateRootViewSelection}
+				<PanelViewSelectionMenu
+					currentSelection={innerViewSelection}
+					updateSelection={setInnerViewSelection}
 				/>
 				{innerView}
 			</Stack>
@@ -132,47 +137,58 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 }
 
 /**
- * Root view options for the container visualizer.
+ * View options for the container visualizer.
+ *
+ * @internal
  */
-enum RootView {
+export enum PanelView {
 	/**
-	 * Corresponds with {@link DataObjectsView}.
+	 * Display view of Container data.
 	 */
 	ContainerData = "Data",
 
 	/**
-	 * Corresponds with {@link AudienceView}.
+	 * Display view of Audience participants / history.
 	 */
 	Audience = "Audience",
 
+	/**
+	 * Display view of Telemetry events
+	 */
+	Telemetry = "Telemetry",
+
 	// TODOs:
+	// - Container state history
 	// - Network stats
-	// - Telemetry
 	// - Ops/message latency stats
 }
 
 /**
- * {@link ViewSelectionMenu} input props.
+ * {@link PanelViewSelectionMenu} input props.
+ *
+ * @internal
  */
-interface ViewSelectionMenuProps {
+export interface PanelViewSelectionMenuProps {
 	/**
 	 * The currently-selected inner app view.
 	 */
-	currentSelection: RootView;
+	currentSelection: PanelView;
 
 	/**
 	 * Updates the inner app view to the one specified.
 	 */
-	updateSelection(newSelection: RootView): void;
+	updateSelection(newSelection: PanelView): void;
 }
 
 /**
- * Menu for selecting the inner app view to be displayed.
+ * Menu for selecting the inner app view to be displayed in the debug panel.
+ *
+ * @internal
  */
-function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
+export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
 	const { currentSelection, updateSelection } = props;
 
-	const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([_, flag]) => ({
+	const options: IOverflowSetItemProps[] = Object.entries(PanelView).map(([_, flag]) => ({
 		key: flag,
 	}));
 
@@ -185,7 +201,7 @@ function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
 				aria-label={item.key}
 				styles={{ root: { marginRight: 10 } }}
 				disabled={item.key === currentSelection}
-				onClick={(): void => updateSelection(item.key as RootView)}
+				onClick={(): void => updateSelection(item.key as PanelView)}
 			>
 				{item.key}
 			</Link>

@@ -13,7 +13,17 @@ import {
     LambdaCloseType,
     IContextErrorData,
     IDocumentLambdaServerConfiguration,
+    IBoxcarMessage,
+    INackMessage,
+    ISequencedOperationMessage,
+    NackOperationType,
+    SequencedOperationType,
+    SignalOperationType,
+    ITicketedSignalMessage,
+    RawOperationType,
+    IRawOperationMessage,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 
@@ -80,6 +90,7 @@ export class DocumentLambda implements IPartitionLambda {
         // Create or update the DocumentPartition
         let document = this.documents.get(routingKey);
         if (!document) {
+            this.logMessageDetails(boxcar, message, boxcar.documentId, boxcar.tenantId);
             // Create a new context and begin tracking it
             const documentContext = this.contextManager.createContext(boxcar, message);
 
@@ -99,6 +110,69 @@ export class DocumentLambda implements IPartitionLambda {
 
         // Forward the message to the document queue and then resolve the promise to begin processing more messages
         document.process(message);
+    }
+
+    private logMessageDetails(boxcar: IBoxcarMessage, message: IQueuedMessage, documentId: string, tenantId: string) {
+        if (boxcar.contents?.length > 0) {
+            const msgOffset = message.offset;
+            const msgPartition = message.partition;
+            const msgTopic = message.topic;
+            const firstOp = boxcar.contents[0];
+            let operationType = firstOp.type;
+            let sequenceNumber = -1;
+            let firstDocMsgType;
+            let timestamp;
+            const boxcarSize = boxcar.contents.length;
+
+            switch (firstOp.type) {
+                case RawOperationType: {
+                    const rawOperationMessage = firstOp as IRawOperationMessage;
+                    operationType = rawOperationMessage.type;
+                    firstDocMsgType = rawOperationMessage.operation.type;
+                    timestamp = rawOperationMessage.timestamp;
+                    break;
+                }
+
+                case SequencedOperationType: {
+                    const sequencedOperationMessage = firstOp as ISequencedOperationMessage;
+                    operationType = sequencedOperationMessage.type;
+                    firstDocMsgType = sequencedOperationMessage.operation.type;
+                    sequenceNumber = sequencedOperationMessage.operation.sequenceNumber;
+                    timestamp = sequencedOperationMessage.operation.timestamp;
+                    break;
+                }
+
+                case NackOperationType: {
+                    const nackMessage = firstOp as INackMessage;
+                    operationType = nackMessage.type;
+                    sequenceNumber = nackMessage.operation.sequenceNumber;
+                    timestamp = nackMessage.timestamp;
+                    break;
+                }
+
+                case SignalOperationType: {
+                    const signalMessage = firstOp as ITicketedSignalMessage;
+                    operationType = signalMessage.type;
+                    timestamp = signalMessage.timestamp;
+                }
+
+                default:
+                    // ignore unknown types
+                    break;
+            }
+            const lumberjackProperties = {
+                ...getLumberBaseProperties(documentId, tenantId),
+                msgOffset,
+                msgPartition,
+                msgTopic,
+                boxcarSize,
+                operationType,
+                firstOpType: firstDocMsgType,
+                sequenceNumber,
+                timestamp
+            };
+            Lumberjack.info(`Creating new document partition`, lumberjackProperties);
+        }
     }
 
     /**

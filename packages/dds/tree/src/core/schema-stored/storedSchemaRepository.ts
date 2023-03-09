@@ -68,7 +68,6 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 	extends SimpleDependee
 	implements StoredSchemaRepository<TPolicy>
 {
-	readonly computationName: string = "StoredSchemaRepository";
 	protected readonly data: MutableSchemaData;
 	private readonly events = createEmitter<SchemaEvents>();
 
@@ -85,7 +84,7 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 	 * that might provide a decent alternative to extraFields (which is a bit odd).
 	 */
 	public constructor(public readonly policy: TPolicy, data?: SchemaData) {
-		super();
+		super("StoredSchemaRepository");
 		this.data = {
 			treeSchema: new Map(data?.treeSchema ?? []),
 			globalFieldSchema: new Map(data?.globalFieldSchema ?? []),

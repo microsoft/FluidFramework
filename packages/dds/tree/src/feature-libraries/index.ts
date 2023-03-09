@@ -106,13 +106,15 @@ export {
 	GenericChangeset,
 	genericFieldKind,
 	NodeReviver,
+	RevisionIndexer,
+	RevisionInfo,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
-export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	EditManagerIndex,

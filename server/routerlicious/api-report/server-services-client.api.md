@@ -33,6 +33,9 @@ export const buildTreePath: (...nodeNames: string[]) => string;
 export const canRead: (scopes: string[]) => boolean;
 
 // @public (undocumented)
+export const canRevokeToken: (scopes: string[]) => boolean;
+
+// @public (undocumented)
 export const canSummarize: (scopes: string[]) => boolean;
 
 // @public (undocumented)
