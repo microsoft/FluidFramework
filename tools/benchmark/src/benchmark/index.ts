@@ -95,16 +95,12 @@ export interface Options {
 	 * An event listener called when the benchmark is reset.
 	 */
 	onReset?: () => void;
-	/**
-	 * An event listener called when the benchmark starts running.
-	 */
-	onStart?: (event: Event) => void;
 
 	setup?: () => void;
 
 	teardown?: () => void;
 
-	fn?: (deferred: { resolve: Mocha.Done }) => void | Promise<unknown>;
+	fn: (deferred: { resolve: Mocha.Done }) => void | Promise<unknown>;
 
 	queued?: boolean;
 }
@@ -136,22 +132,6 @@ export interface Result {
 	stats: Stats;
 	times: Times;
 }
-
-// export function runBenchmark(fn: Function, optionsInput?: Options): Result {
-// 	const options = { ...defaultOptions, ...optionsInput };
-
-// 	bench.count = 0;
-// 	let timeStamp = +_.now();
-// 	options.onStart?.();
-
-// 	options = {
-// 		async:
-// 			((options = options && options.async) == null ? bench.async : options) &&
-// 			support.timeout,
-// 	};
-
-// 	compute(bench, options);
-// }
 
 /** Used to detect primitive types. */
 const rePrimitive = /^(?:boolean|number|string|undefined)$/;
@@ -350,7 +330,7 @@ export class Benchmark {
 	 * The compiled test function.
 	 * @type {Function|string}
 	 */
-	compiled!: Function | string;
+	compiled!: Function;
 
 	/**
 	 * The error object if the test failed.
@@ -360,9 +340,8 @@ export class Benchmark {
 
 	/**
 	 * The test to benchmark.
-	 * @type {Function|string}
 	 */
-	fn!: Function | string;
+	fn!: (deferred: { resolve: Mocha.Done }) => void | Promise<unknown>;
 
 	/**
 	 * A flag to indicate if the benchmark is aborted.
@@ -604,8 +583,8 @@ export class Benchmark {
 		bench.emit(event);
 
 		if (!event.cancelled) {
-			options = {
-				async: options?.async == null ? bench.async : options?.async,
+			const cycleOptions: CycleOptions = {
+				async: options?.async ?? bench.async,
 			};
 
 			// For clones created within `compute()`.
@@ -613,12 +592,12 @@ export class Benchmark {
 				if (bench.defer) {
 					new Deferred(bench);
 				} else {
-					cycle(bench, options);
+					cycle(bench, cycleOptions);
 				}
 			}
 			// For original benchmarks.
 			else {
-				compute(bench, options);
+				compute(bench, cycleOptions);
 			}
 		}
 		return bench;
@@ -952,14 +931,14 @@ export class Deferred {
 			// cycle() -> clone cycle/complete event -> compute()'s invoked bench.run() cycle/complete.
 			deferred.teardown();
 			clone.running = false;
-			(cycle as any)(deferred);
+			cycle(deferred);
 		} else if (++deferred.cycles < clone.count) {
-			(clone.compiled as Function).call(deferred, globalThis, timer);
+			clone.compiled.call(deferred, globalThis, timer);
 		} else {
 			timer.stop(deferred);
 			deferred.teardown();
 			delay(clone, () => {
-				(cycle as any)(deferred);
+				cycle(deferred);
 			});
 		}
 	}
@@ -1114,7 +1093,7 @@ interface InvokeOptions {
 	args: { async: boolean };
 	queued: true;
 	onCycle: (event: Event) => void;
-	onComplete: () => void;
+	onComplete: (event: Event) => void;
 }
 
 /**
@@ -1127,12 +1106,11 @@ interface InvokeOptions {
  * @param {...*} [args] - Arguments to invoke the method with.
  * @returns {Array} A new array of values returned from each method invoked.
  */
-function invoke(benches: Benchmark[], options2: InvokeOptions): any[] {
+function invoke(benches: Benchmark[], options: InvokeOptions): any[] {
 	let args;
 	let bench: Benchmark;
-	let index = -1;
+	let index: number | boolean = -1;
 	const eventProps: any = { currentTarget: benches };
-	let options: Options = { onStart: _.noop, onCycle: _.noop, onComplete: _.noop };
 	const result = _.toArray(benches);
 
 	/**
@@ -1149,7 +1127,7 @@ function invoke(benches: Benchmark[], options2: InvokeOptions): any[] {
 			listeners.splice(0, 0, listeners.pop());
 		}
 		// Execute method.
-		result[index] = bench.run.apply(bench, args);
+		result[index as number] = bench.run.apply(bench, args);
 		// If synchronous return `true` until finished.
 		return !async && getNext();
 	}
@@ -1173,7 +1151,7 @@ function invoke(benches: Benchmark[], options2: InvokeOptions): any[] {
 
 		// Choose next benchmark if not exiting early.
 		if (!cycleEvent.aborted && raiseIndex() !== false) {
-			bench = queued ? benches[0] : result[index];
+			bench = queued ? benches[0] : result[index as number];
 			if (isAsync(bench)) {
 				delay(bench, execute);
 			} else if (async) {
@@ -1209,18 +1187,19 @@ function invoke(benches: Benchmark[], options2: InvokeOptions): any[] {
 	 * Raises `index` to the next defined index or returns `false`.
 	 */
 	function raiseIndex() {
-		index++;
+		(index as number)++;
 
 		// If queued remove the previous bench.
-		if (queued && index > 0) {
+		if (queued && (index as number) > 0) {
 			shift.call(benches);
 		}
 		// If we reached the last index then return `false`.
-		return (queued ? benches.length : index < result.length) ? index : ((index as any) = false);
+		return (queued ? benches.length : (index as number) < result.length)
+			? index
+			: (index = false);
 	}
 
-	options = Object.assign(options, options2);
-	args = Array.isArray((args = "args" in options ? (options as any).args : [])) ? args : [args];
+	args = Array.isArray((args = "args" in options ? options.args : [])) ? args : [args];
 	const queued = options.queued;
 
 	// Start iterating over the array.
@@ -1229,7 +1208,6 @@ function invoke(benches: Benchmark[], options2: InvokeOptions): any[] {
 		bench = result[index];
 		eventProps.type = "start";
 		eventProps.target = bench;
-		options.onStart?.call(benches, new Event(eventProps));
 
 		// Start method execution.
 		if (isAsync(bench)) {
@@ -1348,9 +1326,7 @@ function clock(clone: Benchmark | Deferred) {
  * @param bench - The benchmark instance.
  * @param options - The options object.
  */
-function compute(bench: Benchmark, options: Options) {
-	options ??= {};
-
+function compute(bench: Benchmark, options: CycleOptions) {
 	const async = options.async;
 	let elapsed = 0;
 	const initCount = bench.initCount;
@@ -1498,15 +1474,18 @@ function compute(bench: Benchmark, options: Options) {
 	});
 }
 
+interface CycleOptions {
+	async?: boolean;
+}
+
 /**
  * Cycles a benchmark until a run `count` can be established.
  *
  * @param {Object} clone - The cloned benchmark instance.
  * @param {Object} options - The options object.
  */
-function cycle(clone: Benchmark | Deferred, options: Options) {
+function cycle(clone: Benchmark | Deferred, options?: CycleOptions) {
 	options ??= {};
-
 	let deferred;
 	if (clone instanceof Deferred) {
 		deferred = clone;
@@ -1585,7 +1564,7 @@ function cycle(clone: Benchmark | Deferred, options: Options) {
 				cycle(clone, options);
 			});
 		} else {
-			(cycle as any)(clone);
+			cycle(clone);
 		}
 	} else {
 		// We're done.
@@ -1650,7 +1629,7 @@ function interpolate(string) {
 /**
  * Creates a compiled function from the given function `body`.
  */
-function createCompiled(bench, deferred, body) {
+function createCompiled(bench: Benchmark, deferred: Deferred | undefined, body: string) {
 	const fn = bench.fn;
 	const fnArg = deferred ? getFirstArgument(fn) || "deferred" : "";
 
