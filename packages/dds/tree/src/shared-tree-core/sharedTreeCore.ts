@@ -322,7 +322,7 @@ export class SharedTreeCore<
 				);
 				assert(
 					ancestor === localBranchHead,
-					"Expected merging checkout branches to be related",
+					0x598 /* Expected merging checkout branches to be related */,
 				);
 				for (const { change } of changes) {
 					this.applyChange(change);
@@ -340,7 +340,7 @@ export class SharedTreeCore<
 
 	protected onDisconnect() {}
 
-	protected didAttach(): void {
+	protected override didAttach(): void {
 		if (this.detachedRevision !== undefined) {
 			this.detachedRevision = undefined;
 		}
@@ -350,7 +350,7 @@ export class SharedTreeCore<
 		throw new Error("Method not implemented.");
 	}
 
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
+	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
 		const gcNodes: IGarbageCollectionData["gcNodes"] = {};
 		for (const summaryElement of this.summaryElements) {
 			for (const [id, routes] of Object.entries(summaryElement.getGCData(fullGC).gcNodes)) {

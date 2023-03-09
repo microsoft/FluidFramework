@@ -321,7 +321,7 @@ class SharedTree
 	 * and its not clear how it would fit into such a system if implemented in shared-tree-core:
 	 * maybe op dispatch is part of the shared-tree level?
 	 */
-	protected processCore(
+	protected override processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
