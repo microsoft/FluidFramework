@@ -248,8 +248,9 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			trackState: false,
 			summaryLogger: new TelemetryNullLogger(),
 		});
-		const blob = result.summary.tree.loop as ISummaryBlob;
 
+		const blobTree = (result.summary.tree[".application"] as ISummaryTree).tree;
+		const blob = (blobTree.loop as ISummaryTree).tree.guestComponents as ISummaryBlob;
 		assert.strictEqual(blob.content, blobContents, "blob has the wrong content");
 		await flushPromises();
 	});

@@ -3480,6 +3480,8 @@ export const mixinSummaryHandler = (
 			const result = await super.summarize(options);
 			const content = await handler(this);
 			if (content !== undefined) {
+				// all user added blobs wil be in ".application" subtree
+				content.path.unshift(".application");
 				addBlobToSummaryViaPath(
 					result.summary,
 					result.stats,
@@ -3493,17 +3495,18 @@ export const mixinSummaryHandler = (
 
 // Helper API to load extra blobs in snapshot
 // This API only works for blobs that are saved in storage, i.e. this API would only work for load from storage scenarios
-export async function loadRuntimeBlob(params: IContainerRuntimeParams, path: string[]) {
+export async function loadRuntimeBlob(params: IContainerRuntimeParams, path: string[]): Promise<string | undefined> {
 	const context = params.context;
 	const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
 	let baseSnapshot = context.baseSnapshot;
-	const storage = context.storage;
 
 	// Load custom application blob
 	// This state is only available for real snapshots, we do not write that extra state when serializing local (uncommited) changes.
-	let extraBlob: string | undefined;
 	if (pendingRuntimeState === undefined) {
-		const blobName = path.pop();
+		const storage = context.storage;
+		const blobName = path[path.length - 1];
+		// path.unshift(".application");
+
 		for (const name of path) {
 			if (baseSnapshot) {
 				baseSnapshot = baseSnapshot?.trees[name];
@@ -3513,10 +3516,9 @@ export async function loadRuntimeBlob(params: IContainerRuntimeParams, path: str
 		if (baseSnapshot && blobName) {
 			// We got the blob!
 			assert(storage !== undefined, "attached state should have storage");
-			extraBlob = await readAndParse<string>(storage, baseSnapshot?.blobs[blobName]);
-			console.log(extraBlob?.length ?? 0);
+			return readAndParse<string>(storage, baseSnapshot?.blobs[blobName]);
 		}
 	}
 
-	return extraBlob;
+	return undefined;
 }
