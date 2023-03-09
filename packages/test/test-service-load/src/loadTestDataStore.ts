@@ -584,23 +584,24 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		// To avoid growing the file size unnecessarily, not all clients should be sending large ops
 		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
 		let opsSent = 0;
+		let largeOpsSent = 0;
 
-		const reportOpsWhenInterrupted = (error) => {
+		const reportOpCount = (reason: string, error?: Error) => {
 			config.logger.sendTelemetryEvent(
 				{
-					eventName: "OpSendInterrupted",
+					eventName: "OpCount",
+					reason,
 					runId: config.runId,
 					documentOpCount: dataModel.counter.value,
 					localOpCount: opsSent,
+					localLargeOpCount: largeOpsSent,
 				},
 				error,
 			);
 		};
 
-		this.runtime.once("dispose", () => reportOpsWhenInterrupted(new Error("Runtime disposed")));
-		this.runtime.once("disconnected", () =>
-			reportOpsWhenInterrupted(new Error("Runtime disconnected")),
-		);
+		this.runtime.once("dispose", () => reportOpCount("Disposed"));
+		this.runtime.once("disconnected", () => reportOpCount("Disconnected"));
 
 		const sendSingleOp = () => {
 			if (
@@ -626,6 +627,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					opsSent,
 					largeOpRate,
 				});
+
+				largeOpsSent++;
 			}
 
 			dataModel.counter.increment(1);
@@ -677,12 +680,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				await sendSingleOpAndThenWait();
 			}
 			return !this.runtime.disposed;
-		} catch (error) {
-			reportOpsWhenInterrupted(error);
+		} catch (error: any) {
+			reportOpCount("Exception", error);
 			throw error;
 		} finally {
 			dataModel.printStatus();
 		}
+
+		reportOpCount("Completed");
 	}
 
 	/**
