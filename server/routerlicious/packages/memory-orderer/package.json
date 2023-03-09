@@ -1,96 +1,96 @@
 {
-  "name": "@fluidframework/server-memory-orderer",
-  "version": "0.1038.4000",
-  "description": "Fluid server in memory orderer",
-  "homepage": "https://fluidframework.com",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/microsoft/FluidFramework.git",
-    "directory": "server/routerlicious/packages/memory-orderer"
-  },
-  "license": "MIT",
-  "author": "Microsoft and contributors",
-  "main": "dist/index.js",
-  "browser": {
-    "moniker": "@fluidframework/server-services-client/dist/generateNames.js"
-  },
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-    "build:compile": "npm run tsc && npm run build:test",
-    "build:full": "npm run build",
-    "build:full:compile": "npm run build:compile",
-    "build:genver": "gen-version",
-    "build:test": "tsc --project ./src/test/tsconfig.json",
-    "clean": "rimraf dist lib *.tsbuildinfo *.build.log",
-    "eslint": "eslint --format stylish src",
-    "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-    "format": "npm run prettier:fix",
-    "lint": "npm run eslint",
-    "lint:fix": "npm run eslint:fix",
-    "prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-    "prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-    "test": "mocha --recursive dist/test --unhandled-rejections=strict",
-    "test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-    "test:webpack": "webpack --config webpack.config.js",
-    "tsc": "tsc"
-  },
-  "nyc": {
-    "all": true,
-    "cache-dir": "nyc/.cache",
-    "exclude": [
-      "src/test/**/*.ts",
-      "dist/test/**/*.js"
-    ],
-    "exclude-after-remap": false,
-    "include": [
-      "src/**/*.ts",
-      "dist/**/*.js"
-    ],
-    "report-dir": "nyc/report",
-    "reporter": [
-      "cobertura",
-      "html",
-      "text"
-    ],
-    "temp-directory": "nyc/.nyc_output"
-  },
-  "dependencies": {
-    "@fluidframework/common-utils": "^1.1.1",
-    "@fluidframework/protocol-base": "^0.1038.4000",
-    "@fluidframework/protocol-definitions": "^1.1.0",
-    "@fluidframework/server-lambdas": "^0.1038.4000",
-    "@fluidframework/server-services-client": "^0.1038.4000",
-    "@fluidframework/server-services-core": "^0.1038.4000",
-    "@fluidframework/server-services-telemetry": "^0.1038.4000",
-    "@types/debug": "^4.1.5",
-    "@types/double-ended-queue": "^2.1.0",
-    "@types/lodash": "^4.14.118",
-    "@types/node": "^14.18.0",
-    "@types/ws": "^6.0.1",
-    "assert": "^2.0.0",
-    "debug": "^4.1.1",
-    "double-ended-queue": "^2.1.0-0",
-    "events": "^3.1.0",
-    "lodash": "^4.17.21",
-    "sillyname": "^0.1.0",
-    "uuid": "^8.3.1",
-    "ws": "^7.4.6"
-  },
-  "devDependencies": {
-    "@fluid-tools/build-cli": "0.11.0-134585",
-    "@fluidframework/build-common": "^1.1.0",
-    "@fluidframework/build-tools": "0.11.0-134585",
-    "@fluidframework/eslint-config-fluid": "^2.0.0",
-    "@rushstack/eslint-config": "^2.6.1",
-    "@types/mocha": "^10.0.0",
-    "@types/uuid": "^8.3.0",
-    "concurrently": "^7.5.0",
-    "eslint": "~8.27.0",
-    "mocha": "^10.1.0",
-    "nyc": "^15.1.0",
-    "prettier": "~2.6.2",
-    "rimraf": "^3.0.2",
-    "typescript": "~4.5.5"
-  }
+	"name": "@fluidframework/server-memory-orderer",
+	"version": "0.1038.4000",
+	"description": "Fluid server in memory orderer",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "server/routerlicious/packages/memory-orderer"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"main": "dist/index.js",
+	"browser": {
+		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
+	},
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
+		"build:compile": "npm run tsc && npm run build:test",
+		"build:full": "npm run build",
+		"build:full:compile": "npm run build:compile",
+		"build:genver": "gen-version",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"clean": "rimraf dist lib *.tsbuildinfo *.build.log",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
+		"lint": "npm run eslint",
+		"lint:fix": "npm run eslint:fix",
+		"prettier": "prettier --check . --ignore-path ../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
+		"test": "mocha --recursive dist/test --unhandled-rejections=strict",
+		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
+		"test:webpack": "webpack --config webpack.config.js",
+		"tsc": "tsc"
+	},
+	"nyc": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.ts",
+			"dist/test/**/*.js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.ts",
+			"dist/**/*.js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluidframework/common-utils": "^1.1.1",
+		"@fluidframework/protocol-base": "^0.1038.4000",
+		"@fluidframework/protocol-definitions": "^1.1.0",
+		"@fluidframework/server-lambdas": "^0.1038.4000",
+		"@fluidframework/server-services-client": "^0.1038.4000",
+		"@fluidframework/server-services-core": "^0.1038.4000",
+		"@fluidframework/server-services-telemetry": "^0.1038.4000",
+		"@types/debug": "^4.1.5",
+		"@types/double-ended-queue": "^2.1.0",
+		"@types/lodash": "^4.14.118",
+		"@types/node": "^14.18.0",
+		"@types/ws": "^6.0.1",
+		"assert": "^2.0.0",
+		"debug": "^4.1.1",
+		"double-ended-queue": "^2.1.0-0",
+		"events": "^3.1.0",
+		"lodash": "^4.17.21",
+		"sillyname": "^0.1.0",
+		"uuid": "^8.3.1",
+		"ws": "^7.4.6"
+	},
+	"devDependencies": {
+		"@fluid-tools/build-cli": "0.11.0-135362",
+		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@rushstack/eslint-config": "^2.6.1",
+		"@types/mocha": "^10.0.0",
+		"@types/uuid": "^8.3.0",
+		"concurrently": "^7.5.0",
+		"eslint": "~8.27.0",
+		"mocha": "^10.1.0",
+		"nyc": "^15.1.0",
+		"prettier": "~2.6.2",
+		"rimraf": "^3.0.2",
+		"typescript": "~4.5.5"
+	}
 }

@@ -59,6 +59,10 @@ describe("OpCompressor", () => {
 				if (compressedBatch.content.length > 1) {
 					assert.strictEqual(compressedBatch.content[1].contents, undefined);
 					assert.strictEqual(compressedBatch.content[1].compression, undefined);
+					assert.strictEqual(
+						compressedBatch.content[1].deserializedContent.contents,
+						undefined,
+					);
 				}
 			});
 		}));

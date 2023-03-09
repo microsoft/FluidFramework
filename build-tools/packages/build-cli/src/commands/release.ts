@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { VersionBumpType, detectVersionScheme } from "@fluid-tools/version-tools";
+import { Config } from "@oclif/core";
 
 import { BaseCommand } from "../base";
 import {
@@ -34,7 +35,12 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 	machine = FluidReleaseMachine;
 	handler: StateHandler | undefined;
-	data: FluidReleaseStateHandlerData = {};
+	data: FluidReleaseStateHandlerData | undefined;
+
+	constructor(argv: string[], config: Config) {
+		super(argv, config);
+		this.data = undefined;
+	}
 
 	static flags = {
 		releaseGroup: releaseGroupFlag({
@@ -60,7 +66,8 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		const flags = this.flags;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.data.releaseGroup = flags.releaseGroup ?? flags.package!;
+		const releaseGroup = flags.releaseGroup ?? flags.package!;
+		const releaseVersion = context.getVersion(releaseGroup);
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
 		// passed into the command. If neither are passed, then the default is determined by the branch config.
@@ -71,26 +78,29 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			: undefined;
 
 		const branchPolicyCheckDefault = getRunPolicyCheckDefault(
-			this.data.releaseGroup,
+			releaseGroup,
 			context.originalBranchName,
 		);
 
 		this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
-		this.data.context = context;
-		this.data.promptWriter = new PromptWriter(this.logger);
-		this.data.releaseVersion = context.getVersion(this.data.releaseGroup);
-		this.data.bumpType = flags.bumpType as VersionBumpType;
-		this.data.versionScheme = detectVersionScheme(this.data.releaseVersion);
 
-		this.data.shouldSkipChecks = flags.skipChecks;
-		this.data.shouldCheckPolicy =
-			userPolicyCheckChoice ?? (branchPolicyCheckDefault && !flags.skipChecks);
-		this.data.shouldCheckBranch = flags.branchCheck && !flags.skipChecks;
-		this.data.shouldCheckMainNextIntegrated = !flags.skipChecks;
-		this.data.shouldCommit = flags.commit && !flags.skipChecks;
-		this.data.shouldInstall = flags.install && !flags.skipChecks;
-		this.data.shouldCheckBranchUpdate = flags.updateCheck && !flags.skipChecks;
-		this.data.exitFunc = (code?: number): void => this.exit(code);
-		this.data.command = this;
+		this.data = {
+			releaseGroup,
+			releaseVersion,
+			context,
+			promptWriter: new PromptWriter(this.logger),
+			bumpType: flags.bumpType as VersionBumpType,
+			versionScheme: detectVersionScheme(releaseVersion),
+			shouldSkipChecks: flags.skipChecks,
+			shouldCheckPolicy:
+				userPolicyCheckChoice ?? (branchPolicyCheckDefault && !flags.skipChecks),
+			shouldCheckBranch: flags.branchCheck && !flags.skipChecks,
+			shouldCheckMainNextIntegrated: !flags.skipChecks,
+			shouldCommit: flags.commit && !flags.skipChecks,
+			shouldInstall: flags.install && !flags.skipChecks,
+			shouldCheckBranchUpdate: flags.updateCheck && !flags.skipChecks,
+			exitFunc: (code?: number): void => this.exit(code),
+			command: this,
+		};
 	}
 }

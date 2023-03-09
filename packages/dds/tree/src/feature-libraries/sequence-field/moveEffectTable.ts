@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { clone, fail } from "../../util";
+import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
 	InputSpanningMark,
@@ -18,7 +18,7 @@ import {
 	ReturnTo,
 	Skip,
 } from "./format";
-import { getInputLength, getOutputLength, isSkipMark } from "./utils";
+import { cloneMark, getInputLength, getOutputLength, isSkipMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -215,7 +215,7 @@ function applyMoveEffectsToDest<T>(
 
 	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
 
-	if (!effect.shouldRemove) {
+	if (effect.shouldRemove !== true) {
 		const newMark: MoveIn | ReturnTo = {
 			...mark,
 			count: effect.count ?? mark.count,
@@ -277,8 +277,8 @@ function applyMoveEffectsToSource<T>(
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (!effect.shouldRemove) {
-		const newMark = clone(mark);
+	if (effect.shouldRemove !== true) {
+		const newMark = cloneMark(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {
 			assert(
@@ -433,8 +433,13 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+				{ ...markObj, content: mark.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: mark.content.slice(length),
+					count: remainder,
+					detachIndex: mark.detachIndex + length,
+				},
 			] as [TMark, TMark];
 		case "Delete":
 			return [
@@ -553,8 +558,13 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: markObj.detachIndex + length },
+				{ ...markObj, content: markObj.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: markObj.content.slice(length),
+					count: remainder,
+					detachIndex: markObj.detachIndex + length,
+				},
 			];
 		default:
 			unreachableCase(type);
