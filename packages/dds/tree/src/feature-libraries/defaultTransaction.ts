@@ -44,7 +44,7 @@ export function runSynchronousTransaction<TEditor extends ProgressiveEditBuilder
 	const changes = editor.getChanges();
 	const inverses = changes
 		.map((change, index) =>
-			changeFamily.rebaser.invert(tagChange(change, revisions[index]), repairStore),
+			changeFamily.rebaser.invert(tagChange(change, revisions[index]), false, repairStore),
 		)
 		.reverse();
 
