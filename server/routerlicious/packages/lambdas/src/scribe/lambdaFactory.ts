@@ -99,18 +99,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		);
 
 		try {
-			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
-
-			summaryReader = new SummaryReader(
-				tenantId,
-				documentId,
-				gitManager,
-				this.enableWholeSummaryUpload,
-			);
-			[latestSummary, document] = await Promise.all([
-				summaryReader.readLastSummary(),
-				this.documentCollection.findOne({ documentId, tenantId }),
-			]);
+			document = await this.documentCollection.findOne({ documentId, tenantId });
 
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
@@ -134,6 +123,15 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 					return new NoOpLambda(context);
 				}
 			}
+
+			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+			summaryReader = new SummaryReader(
+				tenantId,
+				documentId,
+				gitManager,
+				this.enableWholeSummaryUpload,
+			);
+			latestSummary = await summaryReader.readLastSummary();
 		} catch (error) {
 			const errorMessage = "Scribe lambda creation failed.";
 			context.log?.error(`${errorMessage} Exception: ${inspect(error)}`, { messageMetaData });

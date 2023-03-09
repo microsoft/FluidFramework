@@ -235,7 +235,7 @@ export class Outbox {
 			// version that has support for batches (submitBatchFn)
 			assert(
 				batch.content[0].compression === undefined,
-				"Compression should not have happened if the loader does not support it",
+				0x5a6 /* Compression should not have happened if the loader does not support it */,
 			);
 
 			for (const message of batch.content) {

@@ -452,6 +452,10 @@ export class ScribeLambda implements IPartitionLambda {
 			...getLumberBaseProperties(this.documentId, this.tenantId),
 			checkpointReason: reason,
 			lastOffset: this.lastOffset,
+			scribeCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
+			scribeCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
+			kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
+			kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
 		};
 		Lumberjack.info(checkpointResult, lumberjackProperties);
 	}
@@ -465,6 +469,10 @@ export class ScribeLambda implements IPartitionLambda {
 
 	private logScribeSessionMetrics(closeType: LambdaCloseType) {
 		if (this.scribeSessionMetric?.isCompleted()) {
+			Lumberjack.info(
+				"Scribe session metric already completed. Creating a new one.",
+				getLumberBaseProperties(this.documentId, this.tenantId),
+			);
 			this.scribeSessionMetric = createSessionMetric(
 				this.tenantId,
 				this.documentId,
@@ -487,9 +495,9 @@ export class ScribeLambda implements IPartitionLambda {
 	// is crucial and the document is essentially corrupted at this point. We should start logging this and
 	// have a better understanding of all failure modes.
 	private processFromPending(target: number) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		while (
 			this.pendingMessages.length > 0 &&
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.pendingMessages.peekFront()!.sequenceNumber <= target
 		) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -759,6 +767,13 @@ export class ScribeLambda implements IPartitionLambda {
 						...getLumberBaseProperties(this.documentId, this.tenantId),
 						checkpointReason: "IdleTime",
 						lastOffset: initialScribeCheckpointMessage.offset,
+						deliCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
+						deliCheckpointPartition:
+							this.checkpointInfo.currentCheckpointMessage?.partition,
+						kafkaCheckpointOffset:
+							this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
+						kafkaCheckpointPartition:
+							this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
 					};
 					Lumberjack.info(checkpointResult, lumberjackProperties);
 				}

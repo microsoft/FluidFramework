@@ -18,11 +18,13 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
+	validateTokenRevocationClaims,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant, ISession } from "@fluidframework/server-services-client";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import { Constants, getSession } from "../../../utils";
@@ -196,6 +198,25 @@ export function create(
 				sessionStickinessDurationMs,
 			);
 			handleResponse(session, response, false);
+		},
+	);
+
+	/**
+	 * Revoke an access token
+	 */
+	router.post(
+		"/:tenantId/document/:id/revokeToken",
+		validateRequestParams("tenantId", "id"),
+		validateTokenRevocationClaims(),
+		verifyStorageToken(tenantManager, config),
+		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		async (request, response, next) => {
+			const documentId = getParam(request.params, "id");
+			const tenantId = getParam(request.params, "tenantId");
+			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+			Lumberjack.info(`Received token revocation request.`, lumberjackProperties);
+			// TODO: add implementation here.
+			response.status(501).json("Token revocation is not supported for now");
 		},
 	);
 	return router;

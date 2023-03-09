@@ -13,9 +13,10 @@ import {
 	NetworkError,
 	isNetworkError,
 	validateTokenClaimsExpiration,
+	canRevokeToken,
 } from "@fluidframework/server-services-client";
 import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
-import type { RequestHandler, Response } from "express";
+import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 
@@ -122,6 +123,19 @@ export function respondWithNetworkError(response: Response, error: NetworkError)
 	return response.status(error.code).json(error.details);
 }
 
+function getTokenFromRequest(request: Request): string {
+	const authorizationHeader = request.header("Authorization");
+	if (!authorizationHeader) {
+		throw new NetworkError(403, "Missing Authorization header.");
+	}
+	const tokenRegex = /Basic (.+)/;
+	const tokenMatch = tokenRegex.exec(authorizationHeader);
+	if (!tokenMatch || !tokenMatch[1]) {
+		throw new NetworkError(403, "Missing access token.");
+	}
+	return tokenMatch[1];
+}
+
 /**
  * Verifies the storage token claims and calls riddler to validate the token.
  */
@@ -137,19 +151,6 @@ export function verifyStorageToken(
 	return async (request, res, next) => {
 		const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 		const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
-		const authorizationHeader = request.header("Authorization");
-		if (!authorizationHeader) {
-			return respondWithNetworkError(
-				res,
-				new NetworkError(403, "Missing Authorization header."),
-			);
-		}
-		const tokenRegex = /Basic (.+)/;
-		const tokenMatch = tokenRegex.exec(authorizationHeader);
-		if (!tokenMatch || !tokenMatch[1]) {
-			return respondWithNetworkError(res, new NetworkError(403, "Missing access token."));
-		}
-		const token = tokenMatch[1];
 		const tenantId = getParam(request.params, "tenantId");
 		if (!tenantId) {
 			return respondWithNetworkError(
@@ -166,7 +167,9 @@ export function verifyStorageToken(
 		}
 		let claims: ITokenClaims | undefined;
 		let tokenLifetimeMs: number | undefined;
+		let token: string = "";
 		try {
+			token = getTokenFromRequest(request);
 			claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
 			if (isTokenExpiryEnabled) {
 				tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
@@ -220,6 +223,43 @@ export function verifyStorageToken(
 						error,
 					);
 				});
+		}
+		next();
+	};
+}
+
+export function validateTokenRevocationClaims(): RequestHandler {
+	return async (request, response, next) => {
+		let token: string = "";
+		try {
+			token = getTokenFromRequest(request);
+		} catch (error: unknown) {
+			if (error instanceof NetworkError) {
+				return respondWithNetworkError(response, error);
+			}
+			return respondWithNetworkError(
+				response,
+				new NetworkError(403, "Missing access token."),
+			);
+		}
+
+		const claims = decode(token) as ITokenClaims;
+		if (!claims) {
+			return respondWithNetworkError(
+				response,
+				new NetworkError(403, "Missing token claims."),
+			);
+		}
+
+		if (
+			claims.scopes === undefined ||
+			claims.scopes.length === 0 ||
+			!canRevokeToken(claims.scopes)
+		) {
+			return respondWithNetworkError(
+				response,
+				new NetworkError(403, "Missing scopes in token claims."),
+			);
 		}
 		next();
 	};
