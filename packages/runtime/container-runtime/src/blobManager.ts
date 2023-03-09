@@ -440,7 +440,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
-		if (!(entry?.status === PendingBlobStatus.OnlinePendingUpload || entry?.status === PendingBlobStatus.OfflinePendingUpload)) {
+		if (
+			!(
+				entry?.status === PendingBlobStatus.OnlinePendingUpload ||
+				entry?.status === PendingBlobStatus.OfflinePendingUpload
+			)
+		) {
 			console.log("no entry or incorrect entry:");
 			console.log(localId);
 			console.debug(entry);

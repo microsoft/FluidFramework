@@ -96,9 +96,9 @@ export interface ILoadTestConfig {
 	 * Stash ops using Container.closeAndGetPendingLocalState() and resubmit them in new Container
 	 */
 	stashedOps?: {
-		min: number,
-		max: number,
-	}
+		min: number;
+		max: number;
+	};
 }
 
 export interface OptionOverride {

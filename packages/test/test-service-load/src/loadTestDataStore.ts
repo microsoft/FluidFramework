@@ -37,11 +37,11 @@ export interface ILoadTest {
 	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
 	generateChanges(n: number);
-    /**
-     * Verify that the expected number of stashed ops have been applied to the counter
-     * @param expected - expected number of stashed ops
-     * @returns true if the counter matches the expected value
-     */
+	/**
+	 * Verify that the expected number of stashed ops have been applied to the counter
+	 * @param expected - expected number of stashed ops
+	 * @returns true if the counter matches the expected value
+	 */
 	verify(expected: number): boolean;
 }
 
@@ -177,7 +177,9 @@ export class LoadTestDataStoreModel {
 		const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
 		const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
 		const sharedmap = await runDir.get<IFluidHandle<ISharedMap>>(sharedMapKey)?.get();
-		const stashedOpCounter = await runDir.get<IFluidHandle<ISharedCounter>>(stashedOpCounterKey)?.get();
+		const stashedOpCounter = await runDir
+			.get<IFluidHandle<ISharedCounter>>(stashedOpCounterKey)
+			?.get();
 
 		if (counter === undefined) {
 			throw new Error("counter not available");
@@ -533,7 +535,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			this.context.containerRuntime,
 		);
 		this.dataModel = dataModel;
-        this.config = config;
+		this.config = config;
 
 		const leaderElection = new LeaderElection(this.runtime);
 		leaderElection.setupLeaderElection();
@@ -572,7 +574,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 
 	public generateChanges(n: number) {
 		assert(!!this.dataModel, "no data model");
-		for (let i = n; i--;) {
+		for (let i = n; i--; ) {
 			this.dataModel.stashedOpCounter.increment(1);
 		}
 	}
@@ -705,20 +707,20 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 
 	verify(expected: number): boolean {
-        assert(!!this.dataModel?.stashedOpCounter, "no stashed op counter");
-        const actual = this.dataModel.stashedOpCounter.value;
+		assert(!!this.dataModel?.stashedOpCounter, "no stashed op counter");
+		const actual = this.dataModel.stashedOpCounter.value;
 		if (actual !== expected) {
-            const eventName = expected > actual ? "MissingStashedOps" : "DuplicatedStashedOps";
-            this.config?.logger.sendErrorEvent(
-                {
-                    eventName,
-                    count: Math.abs(expected - actual),
-                },
-                new Error(eventName),
-            );
-            return false;
-        }
-        return true;
+			const eventName = expected > actual ? "MissingStashedOps" : "DuplicatedStashedOps";
+			this.config?.logger.sendErrorEvent(
+				{
+					eventName,
+					count: Math.abs(expected - actual),
+				},
+				new Error(eventName),
+			);
+			return false;
+		}
+		return true;
 	}
 }
 

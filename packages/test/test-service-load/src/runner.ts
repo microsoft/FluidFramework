@@ -154,8 +154,8 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
 				headers = { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" } };
 				break;
 			case 3:
-				// headers = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
-				// break;
+			// headers = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+			// break;
 			case 4:
 				// headers = { [LoaderHeader.loadMode]: { deltaConnection: undefined } };
 				break;
@@ -205,7 +205,7 @@ async function runnerProcess(
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
-	let stashedOpP: Promise<{ count: number, pendingState: string} | undefined> | undefined;
+	let stashedOpP: Promise<{ count: number; pendingState: string } | undefined> | undefined;
 	let stashedOpTotal = 0;
 	let verified = true;
 	while (!done) {
@@ -233,10 +233,10 @@ async function runnerProcess(
 				},
 			});
 
-            // const stashedOps = stashedOpP ? await Promise.race([stashedOpP, new Promise<never>((_, reject) => setTimeout(reject, 1000))]) : undefined;
-            const stashedOps = stashedOpP ? await stashedOpP : undefined;
+			// const stashedOps = stashedOpP ? await Promise.race([stashedOpP, new Promise<never>((_, reject) => setTimeout(reject, 1000))]) : undefined;
+			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
-            stashedOpTotal += stashedOps?.count ?? 0;
+			stashedOpTotal += stashedOps?.count ?? 0;
 			container = await loader.resolve({ url, headers }, stashedOps?.pendingState);
 
 			container.connect();
@@ -262,8 +262,8 @@ async function runnerProcess(
 					test,
 					faultInjection.min,
 					faultInjection.max,
-                    runConfig.testConfig.stashedOps?.min,
-                    runConfig.testConfig.stashedOps?.max,
+					runConfig.testConfig.stashedOps?.min,
+					runConfig.testConfig.stashedOps?.max,
 				);
 				scheduleFaultInjection(
 					documentServiceFactory,
@@ -292,7 +292,10 @@ async function runnerProcess(
 			printStatus(runConfig, done ? "finished" : "closed");
 			if (done && stashedOpTotal > 0) {
 				verified = test.verify(stashedOpTotal);
-				printStatus(runConfig, verified ? `verified (${stashedOpTotal} ops)` : "not verified");
+				printStatus(
+					runConfig,
+					verified ? `verified (${stashedOpTotal} ops)` : "not verified",
+				);
 			}
 		} catch (error) {
 			runConfig.logger.sendErrorEvent(
@@ -387,8 +390,8 @@ async function scheduleContainerClose(
 	faultInjectionMaxMs: number,
 	stashedOpsMin = 0,
 	stashedOpsMax = 0,
-): Promise<{ count: number, pendingState: string } | undefined> {
-	const def = new Deferred<{ count: number, pendingState: string } | undefined>();
+): Promise<{ count: number; pendingState: string } | undefined> {
+	const def = new Deferred<{ count: number; pendingState: string } | undefined>();
 	return new Promise<void>((resolve) => {
 		// wait for the container to connect write
 		container.once("closed", () => resolve());
@@ -398,7 +401,8 @@ async function scheduleContainerClose(
 				// container.off("closed", () => resolve);
 			});
 		}
-	}).then(() => {
+	})
+		.then(() => {
 			if (container.closed) {
 				def.resolve(undefined);
 				return;
@@ -427,17 +431,23 @@ async function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								const count = random.integer(stashedOpsMin, stashedOpsMax)(runConfig.randEng);
+								const count = random.integer(
+									stashedOpsMin,
+									stashedOpsMax,
+								)(runConfig.randEng);
 								if (count > 0) {
 									test.generateChanges(count);
-									def.resolve({ count, pendingState: container.closeAndGetPendingLocalState() });
+									def.resolve({
+										count,
+										pendingState: container.closeAndGetPendingLocalState(),
+									});
 								} else {
 									container.close();
 									def.resolve(undefined);
 								}
 							} else {
-							    def.resolve(undefined);
-                            }
+								def.resolve(undefined);
+							}
 						}, leaveTime);
 					}
 				}
@@ -448,7 +458,11 @@ async function scheduleContainerClose(
 			return Promise.race([
 				def.promise,
 				// make this promise resolve on container closure, but allow the deferred promise to resolve first
-				new Promise<undefined>((resolve) => container.on("closed", async () => Promise.resolve().then(() => resolve(undefined)))),
+				new Promise<undefined>((resolve) =>
+					container.on("closed", async () =>
+						Promise.resolve().then(() => resolve(undefined)),
+					),
+				),
 			]);
 		})
 		.catch(async (e) => {
@@ -458,10 +472,9 @@ async function scheduleContainerClose(
 					runId: runConfig.runId,
 				},
 				e,
-			)
+			);
 			return undefined;
-		}
-		);
+		});
 }
 
 function scheduleOffline(
