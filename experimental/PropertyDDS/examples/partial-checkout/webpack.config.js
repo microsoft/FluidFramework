@@ -34,6 +34,9 @@ module.exports = (env) => {
 			new webpack.DefinePlugin({
 				"process.env.NODE_DEBUG": undefined,
 			}),
+			new webpack.DefinePlugin({
+				"process?.env?.NODE_NAME": undefined,
+			}),
 			new HtmlWebpackPlugin({
 				template: htmlTemplate,
 			}),
