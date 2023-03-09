@@ -16,7 +16,7 @@ import {
 	DataObjectFactoryType,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
 import { GenericError } from "@fluidframework/container-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
@@ -73,8 +73,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
 		dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
 		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
-		await waitForContainerConnection(localContainer, true);
-		await waitForContainerConnection(remoteContainer, true);
+		await waitForContainerConnection(localContainer);
+		await waitForContainerConnection(remoteContainer);
 
 		await provider.ensureSynchronized();
 	};

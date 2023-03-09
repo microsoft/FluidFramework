@@ -6,10 +6,15 @@
 import crypto from "crypto";
 import fs from "fs";
 import random from "random-js";
+import {
+	createFluidTestDriver,
+	generateOdspHostStoragePolicy,
+	OdspTestDriver,
+} from "@fluid-internal/test-drivers";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -20,11 +25,6 @@ import {
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import {
-	createFluidTestDriver,
-	generateOdspHostStoragePolicy,
-	OdspTestDriver,
-} from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
@@ -205,11 +205,6 @@ export async function initialize(
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
-	(container as Container).on("error", (error) => {
-		console.log(error);
-		process.exit(-1);
-	});
-
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",
