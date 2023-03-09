@@ -102,7 +102,11 @@ export class TestTree {
 		this.schemaPolicy = options.schemaPolicy ?? defaultSchemaPolicy;
 		this.sessionId = options.sessionId ?? uuid();
 		this.forest = forest;
-		this.editManager = new EditManager(defaultChangeFamily, this.sessionId);
+		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
+			defaultChangeFamily,
+			this.sessionId,
+			forest.anchors,
+		);
 	}
 
 	public jsonRoots(): JsonCompatible[] {

@@ -149,7 +149,7 @@ export {
 	noFailure,
 	OutputType,
 	verifyChangeRebaser,
-	tagInverse,
+	tagRollbackInverse,
 	SessionId,
 	mintCommit,
 	mintRevisionTag,

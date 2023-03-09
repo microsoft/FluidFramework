@@ -4,13 +4,13 @@
  */
 
 export class FluidServiceError extends Error {
-    code: FluidServiceErrorCode;
-    constructor(message: string, errorCode: FluidServiceErrorCode) {
-        super(message);
-        this.code = errorCode;
-    }
+	code: FluidServiceErrorCode;
+	constructor(message: string, errorCode: FluidServiceErrorCode) {
+		super(message);
+		this.code = errorCode;
+	}
 }
 
 export enum FluidServiceErrorCode {
-    FeatureDisabled,
+	FeatureDisabled,
 }

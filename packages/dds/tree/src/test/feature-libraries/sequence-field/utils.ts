@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	ChangesetLocalId,
 	IdAllocator,
-	RevisionIndexer,
+	RevisionMetadataSource,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
@@ -60,6 +60,11 @@ const integerRevisionIndexer = (tag: RevisionTag): number => {
 	return tag;
 };
 
+const defaultRevisionMetadata: RevisionMetadataSource = {
+	getIndex: integerRevisionIndexer,
+	getInfo: (tag: RevisionTag) => ({ tag }),
+};
+
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
@@ -71,7 +76,7 @@ function composeI<T>(
 		composer,
 		idAllocator,
 		moveEffects,
-		integerRevisionIndexer,
+		defaultRevisionMetadata,
 	);
 
 	if (moveEffects.isInvalidated) {
@@ -85,7 +90,7 @@ function composeI<T>(
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionIndexer?: RevisionIndexer,
+	revisionMetadata?: RevisionMetadataSource,
 ): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
@@ -100,7 +105,7 @@ export function rebase(
 			base,
 			idAllocator,
 			moveEffects,
-			revisionIndexer ?? integerRevisionIndexer,
+			revisionMetadata ?? defaultRevisionMetadata,
 		);
 		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
