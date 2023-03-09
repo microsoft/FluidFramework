@@ -399,6 +399,10 @@ export class ScribeLambda implements IPartitionLambda {
             ...getLumberBaseProperties(this.documentId, this.tenantId),
             checkpointReason: reason,
             lastOffset: this.lastOffset,
+            scribeCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
+            scribeCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
+            kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
+            kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
         };
         Lumberjack.info(checkpointResult, lumberjackProperties);
     }
@@ -412,6 +416,7 @@ export class ScribeLambda implements IPartitionLambda {
 
     private logScribeSessionMetrics(closeType: LambdaCloseType) {
         if (this.scribeSessionMetric?.isCompleted()) {
+            Lumberjack.info("Scribe session metric already completed. Creating a new one.", getLumberBaseProperties(this.documentId, this.tenantId));
             this.scribeSessionMetric = createSessionMetric(this.tenantId,
                 this.documentId,
                 LumberEventName.ScribeSessionResult,
@@ -677,7 +682,11 @@ export class ScribeLambda implements IPartitionLambda {
                     const lumberjackProperties = {
                         ...getLumberBaseProperties(this.documentId, this.tenantId),
                         checkpointReason: "IdleTime",
-                        lastOffset: initialScribeCheckpointMessage.offset
+                        lastOffset: initialScribeCheckpointMessage.offset,
+                        deliCheckpointOffset: this.checkpointInfo.currentCheckpointMessage?.offset,
+                        deliCheckpointPartition: this.checkpointInfo.currentCheckpointMessage?.partition,
+                        kafkaCheckpointOffset: this.checkpointInfo.currentKafkaCheckpointMessage?.offset,
+                        kafkaCheckpointPartition: this.checkpointInfo.currentKafkaCheckpointMessage?.partition,
                     };
                     Lumberjack.info(checkpointResult, lumberjackProperties);
                 }
