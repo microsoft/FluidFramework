@@ -161,16 +161,16 @@ export interface Result {
 // }
 
 /** Used to assign each benchmark an incremented id. */
-let counter = 0;
+export let counter = 0;
 
 /** Used to detect primitive types. */
 const rePrimitive = /^(?:boolean|number|string|undefined)$/;
 
 /** Used to make every compiled test unique. */
-let uidCounter = 0;
+export let uidCounter = 0;
 
 /** Used to avoid hz of Infinity. */
-const divisors = {
+export const divisors = {
 	1: 4096,
 	2: 512,
 	3: 64,
@@ -182,7 +182,7 @@ const divisors = {
  * T-Distribution two-tailed critical values for 95% confidence.
  * For more info see http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm.
  */
-const tTable = {
+export const tTable = {
 	1: 12.706,
 	2: 4.303,
 	3: 3.182,
@@ -220,7 +220,7 @@ const tTable = {
  * Critical Mann-Whitney U-values for 95% confidence.
  * For more info see http://www.saburchill.com/IBbiology/stats/003.html.
  */
-const uTable = {
+export const uTable = {
 	5: [0, 1, 2],
 	6: [1, 2, 3, 5],
 	7: [1, 3, 5, 6, 8],
@@ -272,7 +272,7 @@ const uTable = {
 	],
 };
 
-const defaultOptions = {
+export const defaultOptions = {
 	async: false,
 	defer: false,
 	delay: 0.005,
@@ -297,13 +297,13 @@ const shift = arrayRef.shift;
 const sqrt = Math.sqrt;
 
 /** Used to access Node.js's high resolution timer. */
-const processObject = isHostType(globalThis, "process") && globalThis.process;
+export const processObject = isHostType(globalThis, "process") && globalThis.process;
 
 /** Used to integrity check compiled tests. */
-const uid = `uid${+_.now()}`;
+export const uid = `uid${+_.now()}`;
 
 /** Used to avoid infinite recursion when methods call each other. */
-const calledBy: any = {};
+export const calledBy: any = {};
 
 /**
  * Timer object used by `clock()` and `Deferred#resolve`.
@@ -311,7 +311,7 @@ const calledBy: any = {};
  * @private
  * @type Object
  */
-let timer: any = {
+export let timer: any = {
 	/**
 	 * The timer namespace object or constructor.
 	 *
@@ -1086,7 +1086,7 @@ export class Event {
  * @param {*} value - The value to clone.
  * @returns {*} The cloned value.
  */
-const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
+export const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
 	// Only clone primitives, arrays, and plain objects.
 	if (!Array.isArray(value) && !_.isPlainObject(value)) {
 		return value;
@@ -1102,7 +1102,7 @@ type AnyFunction = (...args: any[]) => any;
  * @param {Object} bench - The benchmark instance.
  * @param {Object} fn - The function to execute.
  */
-function delay(bench: Benchmark, fn: AnyFunction) {
+export function delay(bench: Benchmark, fn: AnyFunction) {
 	bench._timerId = _.delay(fn, bench.delay * 1e3);
 }
 
@@ -1113,7 +1113,7 @@ function delay(bench: Benchmark, fn: AnyFunction) {
  * @param {Function} fn - The function.
  * @returns {string} The argument name.
  */
-function getFirstArgument(fn: Function): string {
+export function getFirstArgument(fn: Function): string {
 	return (
 		(!_.has(fn, "toString") && (/^[\s(]*function[^(]*\(([^\s,)]+)/.exec(fn as any) || 0)[1]) ||
 		""
@@ -1127,7 +1127,7 @@ function getFirstArgument(fn: Function): string {
  * @param {Array} sample - The sample.
  * @returns {number} The mean.
  */
-function getMean(sample: any[]): number {
+export function getMean(sample: any[]): number {
 	const v = _.reduce(sample, (sum: number, x: number) => {
 		return sum + x;
 	}) as number;
@@ -1144,7 +1144,7 @@ function getMean(sample: any[]): number {
  * @param {string} property - The property to check.
  * @returns {boolean} Returns `true` if the property value is a non-primitive, else `false`.
  */
-function isHostType(object: any, property: string): boolean {
+export function isHostType(object: any, property: string): boolean {
 	if (object == null) {
 		return false;
 	}
@@ -1323,7 +1323,7 @@ function invoke(benches: Benchmark[], name: object | string): any[] {
  */
 function clock(): number {
 	const options = defaultOptions;
-	const templateData: any = {};
+
 	const timers = [{ ns: timer.ns, res: max(0.0015, getRes("ms")), unit: "ms" }];
 
 	// Lazy define for hi-res timers.
@@ -1397,125 +1397,6 @@ function clock(): number {
 
 	/* ---------------------------------------------------------------------- */
 
-	/**
-	 * Creates a compiled function from the given function `body`.
-	 */
-	function createCompiled(bench, deferred, body) {
-		const fn = bench.fn;
-		const fnArg = deferred ? getFirstArgument(fn) || "deferred" : "";
-
-		templateData.uid = uid + uidCounter++;
-
-		Object.assign(templateData, {
-			setup: interpolate("m#.setup()"),
-			fn: interpolate(`m#.fn(${fnArg})`),
-			fnArg,
-			teardown: interpolate("m#.teardown()"),
-		});
-
-		// Use API of chosen timer.
-		if (timer.unit === "ns") {
-			Object.assign(templateData, {
-				begin: interpolate("s#=n#()"),
-				end: interpolate("r#=n#(s#);r#=r#[0]+(r#[1]/1e9)"),
-			});
-		} else if (timer.unit === "us") {
-			if (timer.ns.stop) {
-				Object.assign(templateData, {
-					begin: interpolate("s#=n#.start()"),
-					end: interpolate("r#=n#.microseconds()/1e6"),
-				});
-			} else {
-				Object.assign(templateData, {
-					begin: interpolate("s#=n#()"),
-					end: interpolate("r#=(n#()-s#)/1e6"),
-				});
-			}
-		} else if (timer.ns.now) {
-			Object.assign(templateData, {
-				begin: interpolate("s#=(+n#.now())"),
-				end: interpolate("r#=((+n#.now())-s#)/1e3"),
-			});
-		} else {
-			Object.assign(templateData, {
-				begin: interpolate("s#=new n#().getTime()"),
-				end: interpolate("r#=(new n#().getTime()-s#)/1e3"),
-			});
-		}
-		// Define `timer` methods.
-		timer.start = Function(
-			interpolate("o#"),
-			interpolate("var n#=this.ns,${begin};o#.elapsed=0;o#.timeStamp=s#"),
-		);
-
-		timer.stop = Function(
-			interpolate("o#"),
-			interpolate("var n#=this.ns,s#=o#.timeStamp,${end};o#.elapsed=r#"),
-		);
-
-		// Create compiled test.
-		return Function(
-			interpolate("window,t#"),
-			`var global = window, clearTimeout = global.clearTimeout, setTimeout = global.setTimeout;\n${interpolate(
-				body,
-			)}`,
-		);
-	}
-
-	/**
-	 * Gets the current timer's minimum resolution (secs).
-	 */
-	function getRes(unit) {
-		let measured;
-		let begin;
-		let count = 30;
-		let divisor = 1e3;
-		const ns = timer.ns;
-		const sample: any[] = [];
-
-		// Get average smallest measurable time.
-		while (count--) {
-			if (unit === "us") {
-				divisor = 1e6;
-				if (ns.stop) {
-					ns.start();
-					while (!(measured = ns.microseconds())) {}
-				} else {
-					begin = ns();
-					while (!(measured = ns() - begin)) {}
-				}
-			} else if (unit === "ns") {
-				divisor = 1e9;
-				begin = (begin = ns())[0] + begin[1] / divisor;
-				while (!(measured = (measured = ns())[0] + measured[1] / divisor - begin)) {}
-				divisor = 1;
-			} else if (ns.now) {
-				begin = +ns.now();
-				while (!(measured = +ns.now() - begin)) {}
-			} else {
-				begin = new ns().getTime();
-				while (!(measured = new ns().getTime() - begin)) {}
-			}
-			// Check for broken timers.
-			if (measured > 0) {
-				sample.push(measured);
-			} else {
-				sample.push(Infinity);
-				break;
-			}
-		}
-		// Convert to seconds.
-		return getMean(sample) / divisor;
-	}
-
-	/**
-	 * Interpolates a given template string.
-	 */
-	function interpolate(string) {
-		// Replaces all occurrences of `#` with a unique number and template tokens with content.
-		return _.template(string.replace(/#/g, /\d+/.exec(templateData.uid)))(templateData);
-	}
-
 	/* ---------------------------------------------------------------------- */
 
 	// Detect Chrome's microsecond timer:
@@ -1556,7 +1437,7 @@ function clock(): number {
  * @param {Object} bench - The benchmark instance.
  * @param {Object} options - The options object.
  */
-function compute(bench: Benchmark, options: Options) {
+export function compute(bench: Benchmark, options: Options) {
 	options ??= {};
 
 	const async = options.async;
@@ -1716,7 +1597,7 @@ function compute(bench: Benchmark, options: Options) {
  * @param {Object} clone - The cloned benchmark instance.
  * @param {Object} options - The options object.
  */
-function cycle(clone: Benchmark, options: Options) {
+export function cycle(clone: Benchmark, options: Options) {
 	options ??= {};
 
 	let deferred;
@@ -1803,4 +1684,125 @@ function cycle(clone: Benchmark, options: Options) {
 		// We're done.
 		clone.emit("complete");
 	}
+}
+
+/**
+ * Gets the current timer's minimum resolution (secs).
+ */
+export function getRes(unit) {
+	let measured;
+	let begin;
+	let count = 30;
+	let divisor = 1e3;
+	const ns = timer.ns;
+	const sample: any[] = [];
+
+	// Get average smallest measurable time.
+	while (count--) {
+		if (unit === "us") {
+			divisor = 1e6;
+			if (ns.stop) {
+				ns.start();
+				while (!(measured = ns.microseconds())) {}
+			} else {
+				begin = ns();
+				while (!(measured = ns() - begin)) {}
+			}
+		} else if (unit === "ns") {
+			divisor = 1e9;
+			begin = (begin = ns())[0] + begin[1] / divisor;
+			while (!(measured = (measured = ns())[0] + measured[1] / divisor - begin)) {}
+			divisor = 1;
+		} else if (ns.now) {
+			begin = +ns.now();
+			while (!(measured = +ns.now() - begin)) {}
+		} else {
+			begin = new ns().getTime();
+			while (!(measured = new ns().getTime() - begin)) {}
+		}
+		// Check for broken timers.
+		if (measured > 0) {
+			sample.push(measured);
+		} else {
+			sample.push(Infinity);
+			break;
+		}
+	}
+	// Convert to seconds.
+	return getMean(sample) / divisor;
+}
+
+const templateData: any = {};
+
+/**
+ * Interpolates a given template string.
+ */
+function interpolate(string) {
+	// Replaces all occurrences of `#` with a unique number and template tokens with content.
+	return _.template(string.replace(/#/g, /\d+/.exec(templateData.uid)))(templateData);
+}
+
+/**
+ * Creates a compiled function from the given function `body`.
+ */
+export function createCompiled(bench, deferred, body) {
+	const fn = bench.fn;
+	const fnArg = deferred ? getFirstArgument(fn) || "deferred" : "";
+
+	templateData.uid = uid + uidCounter++;
+
+	Object.assign(templateData, {
+		setup: interpolate("m#.setup()"),
+		fn: interpolate(`m#.fn(${fnArg})`),
+		fnArg,
+		teardown: interpolate("m#.teardown()"),
+	});
+
+	// Use API of chosen timer.
+	if (timer.unit === "ns") {
+		Object.assign(templateData, {
+			begin: interpolate("s#=n#()"),
+			end: interpolate("r#=n#(s#);r#=r#[0]+(r#[1]/1e9)"),
+		});
+	} else if (timer.unit === "us") {
+		if (timer.ns.stop) {
+			Object.assign(templateData, {
+				begin: interpolate("s#=n#.start()"),
+				end: interpolate("r#=n#.microseconds()/1e6"),
+			});
+		} else {
+			Object.assign(templateData, {
+				begin: interpolate("s#=n#()"),
+				end: interpolate("r#=(n#()-s#)/1e6"),
+			});
+		}
+	} else if (timer.ns.now) {
+		Object.assign(templateData, {
+			begin: interpolate("s#=(+n#.now())"),
+			end: interpolate("r#=((+n#.now())-s#)/1e3"),
+		});
+	} else {
+		Object.assign(templateData, {
+			begin: interpolate("s#=new n#().getTime()"),
+			end: interpolate("r#=(new n#().getTime()-s#)/1e3"),
+		});
+	}
+	// Define `timer` methods.
+	timer.start = Function(
+		interpolate("o#"),
+		interpolate("var n#=this.ns,${begin};o#.elapsed=0;o#.timeStamp=s#"),
+	);
+
+	timer.stop = Function(
+		interpolate("o#"),
+		interpolate("var n#=this.ns,s#=o#.timeStamp,${end};o#.elapsed=r#"),
+	);
+
+	// Create compiled test.
+	return Function(
+		interpolate("window,t#"),
+		`var global = window, clearTimeout = global.clearTimeout, setTimeout = global.setTimeout;\n${interpolate(
+			body,
+		)}`,
+	);
 }

@@ -6,6 +6,8 @@
 import { expect } from "chai";
 import { benchmark } from "../Runner";
 import { BenchmarkType, isParentProcess } from "../Configuration";
+import { Options } from "../benchmark/benchmark";
+import Benchmark from "../benchmark";
 
 describe("`benchmark` function", () => {
 	describe("uses `before` and `after`", () => {
@@ -46,6 +48,48 @@ describe("`benchmark` function", () => {
 		});
 	});
 
+	it("do a benchmark", () => {
+		const benchmarkOptions: Options = {
+			maxTime: 0.01,
+			minSamples: 1,
+			minTime: 0,
+			defer: false,
+			name: "do a benchmark",
+			fn: () => {
+				// This is a benchmark.
+			},
+		};
+
+		const benchmarkInstance = new Benchmark(benchmarkOptions);
+		benchmarkInstance.run();
+	});
+
+	it("do a benchmark async", async () => {
+		const benchmarkOptions: Options = {
+			maxTime: 0.01,
+			minSamples: 1,
+			minTime: 0,
+			defer: true,
+			name: "do a benchmark async",
+			fn: async (deferred: { resolve: Mocha.Done }) => {
+				// We have to do a little translation because the Benchmark library expects callback-based
+				// asynchronicity.
+				await delay(0);
+				deferred.resolve();
+			},
+		};
+
+		await new Promise<void>((resolve) => {
+			const benchmarkInstance = new Benchmark(benchmarkOptions);
+			// benchmarkInstance.on("start end", () => global?.gc?.());
+			// benchmarkInstance.on("cycle", options.onCycle);
+			benchmarkInstance.on("complete", async () => {
+				resolve();
+			});
+			benchmarkInstance.run();
+		});
+	});
+
 	function doLoop(upperLimit: number): void {
 		let i = 0;
 		while (i < upperLimit) {
@@ -57,6 +101,12 @@ describe("`benchmark` function", () => {
 		benchmark({
 			title: `while loop with ${loopSize} iterations`,
 			benchmarkFn: () => doLoop(loopSize),
+			type: BenchmarkType.OwnCorrectness,
+		});
+
+		benchmark({
+			title: `minimal`,
+			benchmarkFn: () => 0,
 			type: BenchmarkType.OwnCorrectness,
 		});
 

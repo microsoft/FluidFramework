@@ -31,128 +31,23 @@
  */
 
 import _ from "lodash";
-
-/** Used to assign each benchmark an incremented id. */
-let counter = 0;
-
-/** Used to detect primitive types. */
-const rePrimitive = /^(?:boolean|number|string|undefined)$/;
-
-/** Used to make every compiled test unique. */
-let uidCounter = 0;
-
-/** Used to avoid hz of Infinity. */
-const divisors = {
-	1: 4096,
-	2: 512,
-	3: 64,
-	4: 8,
-	5: 0,
-};
-
-/**
- * T-Distribution two-tailed critical values for 95% confidence.
- * For more info see http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm.
- */
-const tTable = {
-	1: 12.706,
-	2: 4.303,
-	3: 3.182,
-	4: 2.776,
-	5: 2.571,
-	6: 2.447,
-	7: 2.365,
-	8: 2.306,
-	9: 2.262,
-	10: 2.228,
-	11: 2.201,
-	12: 2.179,
-	13: 2.16,
-	14: 2.145,
-	15: 2.131,
-	16: 2.12,
-	17: 2.11,
-	18: 2.101,
-	19: 2.093,
-	20: 2.086,
-	21: 2.08,
-	22: 2.074,
-	23: 2.069,
-	24: 2.064,
-	25: 2.06,
-	26: 2.056,
-	27: 2.052,
-	28: 2.048,
-	29: 2.045,
-	30: 2.042,
-	infinity: 1.96,
-};
-
-/**
- * Critical Mann-Whitney U-values for 95% confidence.
- * For more info see http://www.saburchill.com/IBbiology/stats/003.html.
- */
-const uTable = {
-	5: [0, 1, 2],
-	6: [1, 2, 3, 5],
-	7: [1, 3, 5, 6, 8],
-	8: [2, 4, 6, 8, 10, 13],
-	9: [2, 4, 7, 10, 12, 15, 17],
-	10: [3, 5, 8, 11, 14, 17, 20, 23],
-	11: [3, 6, 9, 13, 16, 19, 23, 26, 30],
-	12: [4, 7, 11, 14, 18, 22, 26, 29, 33, 37],
-	13: [4, 8, 12, 16, 20, 24, 28, 33, 37, 41, 45],
-	14: [5, 9, 13, 17, 22, 26, 31, 36, 40, 45, 50, 55],
-	15: [5, 10, 14, 19, 24, 29, 34, 39, 44, 49, 54, 59, 64],
-	16: [6, 11, 15, 21, 26, 31, 37, 42, 47, 53, 59, 64, 70, 75],
-	17: [6, 11, 17, 22, 28, 34, 39, 45, 51, 57, 63, 67, 75, 81, 87],
-	18: [7, 12, 18, 24, 30, 36, 42, 48, 55, 61, 67, 74, 80, 86, 93, 99],
-	19: [7, 13, 19, 25, 32, 38, 45, 52, 58, 65, 72, 78, 85, 92, 99, 106, 113],
-	20: [8, 14, 20, 27, 34, 41, 48, 55, 62, 69, 76, 83, 90, 98, 105, 112, 119, 127],
-	21: [8, 15, 22, 29, 36, 43, 50, 58, 65, 73, 80, 88, 96, 103, 111, 119, 126, 134, 142],
-	22: [9, 16, 23, 30, 38, 45, 53, 61, 69, 77, 85, 93, 101, 109, 117, 125, 133, 141, 150, 158],
-	23: [
-		9, 17, 24, 32, 40, 48, 56, 64, 73, 81, 89, 98, 106, 115, 123, 132, 140, 149, 157, 166, 175,
-	],
-	24: [
-		10, 17, 25, 33, 42, 50, 59, 67, 76, 85, 94, 102, 111, 120, 129, 138, 147, 156, 165, 174,
-		183, 192,
-	],
-	25: [
-		10, 18, 27, 35, 44, 53, 62, 71, 80, 89, 98, 107, 117, 126, 135, 145, 154, 163, 173, 182,
-		192, 201, 211,
-	],
-	26: [
-		11, 19, 28, 37, 46, 55, 64, 74, 83, 93, 102, 112, 122, 132, 141, 151, 161, 171, 181, 191,
-		200, 210, 220, 230,
-	],
-	27: [
-		11, 20, 29, 38, 48, 57, 67, 77, 87, 97, 107, 118, 125, 138, 147, 158, 168, 178, 188, 199,
-		209, 219, 230, 240, 250,
-	],
-	28: [
-		12, 21, 30, 40, 50, 60, 70, 80, 90, 101, 111, 122, 132, 143, 154, 164, 175, 186, 196, 207,
-		218, 228, 239, 250, 261, 272,
-	],
-	29: [
-		13, 22, 32, 42, 52, 62, 73, 83, 94, 105, 116, 127, 138, 149, 160, 171, 182, 193, 204, 215,
-		226, 238, 249, 260, 271, 282, 294,
-	],
-	30: [
-		13, 23, 33, 43, 54, 65, 76, 87, 98, 109, 120, 131, 143, 154, 166, 177, 189, 200, 212, 223,
-		235, 247, 258, 270, 282, 293, 305, 317,
-	],
-};
-
-const defaultOptions = {
-	async: false,
-	defer: false,
-	delay: 0.005,
-	initCount: 1,
-	maxTime: 5,
-	minSamples: 5,
-	minTime: 0,
-};
+import {
+	tTable,
+	Event,
+	Deferred,
+	cloneDeep,
+	delay,
+	getMean,
+	timer,
+	uTable,
+	processObject,
+	calledBy,
+	divisors,
+	counter,
+	defaultOptions,
+	getRes,
+	createCompiled,
+} from "./benchmark";
 
 /* -------------------------------------------------------------------------- */
 
@@ -164,50 +59,6 @@ const min = Math.min;
 const pow = Math.pow;
 const shift = [].shift;
 const sqrt = Math.sqrt;
-
-/** Used to access Node.js's high resolution timer. */
-const processObject = isHostType(globalThis, "process") && globalThis.process;
-
-/** Used to integrity check compiled tests. */
-const uid = `uid${+_.now()}`;
-
-/** Used to avoid infinite recursion when methods call each other. */
-const calledBy = {};
-
-/**
- * Timer object used by `clock()` and `Deferred#resolve`.
- *
- * @private
- * @type Object
- */
-let timer = {
-	/**
-	 * The timer namespace object or constructor.
-	 *
-	 * @private
-	 * @memberOf timer
-	 * @type {Function|Object}
-	 */
-	ns: Date,
-
-	/**
-	 * Starts the deferred timer.
-	 *
-	 * @private
-	 * @memberOf timer
-	 * @param {Object} deferred - The deferred instance.
-	 */
-	start: null, // Lazy defined in `clock()`.
-
-	/**
-	 * Stops the deferred timer.
-	 *
-	 * @private
-	 * @memberOf timer
-	 * @param {Object} deferred - The deferred instance.
-	 */
-	stop: null, // Lazy defined in `clock()`.
-};
 
 /* ------------------------------------------------------------------------ */
 class Benchmark {
@@ -880,134 +731,6 @@ class Deferred {
 	timeStamp = 0;
 }
 
-class Event {
-	/**
-	 * A flag to indicate if the emitters listener iteration is aborted.
-	 * @type boolean
-	 */
-	aborted = false;
-
-	/**
-	 * A flag to indicate if the default action is cancelled.
-	 * @type boolean
-	 */
-	cancelled = false;
-
-	/**
-	 * The object whose listeners are currently being processed.
-	 * @type Object
-	 */
-	currentTarget = undefined;
-
-	/**
-	 * The return value of the last executed listener.
-	 * @type Mixed
-	 */
-	result = undefined;
-
-	/**
-	 * The object to which the event was originally emitted.
-	 * @type Object
-	 */
-	target = undefined;
-
-	/**
-	 * A timestamp of when the event was created (ms).
-	 * @type number
-	 */
-	timeStamp = 0;
-
-	/**
-	 * The event type.
-	 * @type string
-	 */
-	type = "";
-
-	/**
-	 * The Event constructor.
-	 * @param {Object|string} type - The event type.
-	 */
-	constructor(type) {
-		if (type instanceof Event) {
-			return type;
-		}
-		this.timeStamp = +_.now();
-		Object.assign(this, typeof type == "string" ? { type } : type);
-	}
-}
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * A specialized version of `_.cloneDeep` which only clones arrays and plain
- * objects assigning all other values by reference.
- *
- * @private
- * @param {*} value - The value to clone.
- * @returns {*} The cloned value.
- */
-const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
-	// Only clone primitives, arrays, and plain objects.
-	if (!Array.isArray(value) && !_.isPlainObject(value)) {
-		return value;
-	}
-});
-
-/**
- * Delay the execution of a function based on the benchmark's `delay` property.
- *
- * @private
- * @param {Object} bench - The benchmark instance.
- * @param {Object} fn - The function to execute.
- */
-function delay(bench, fn) {
-	bench._timerId = _.delay(fn, bench.delay * 1e3);
-}
-
-/**
- * Gets the name of the first argument from a function's source.
- *
- * @private
- * @param {Function} fn - The function.
- * @returns {string} The argument name.
- */
-function getFirstArgument(fn) {
-	return (!_.has(fn, "toString") && (/^[\s(]*function[^(]*\(([^\s,)]+)/.exec(fn) ?? 0)[1]) || "";
-}
-
-/**
- * Computes the arithmetic mean of a sample.
- *
- * @private
- * @param {Array} sample - The sample.
- * @returns {number} The mean.
- */
-function getMean(sample) {
-	return (
-		_.reduce(sample, (sum, x) => {
-			return sum + x;
-		}) / sample.length || 0
-	);
-}
-
-/**
- * Host objects can return type values that are different from their actual
- * data type. The objects we are concerned with usually return non-primitive
- * types of "object", "function", or "unknown".
- *
- * @private
- * @param {*} object - The owner of the property.
- * @param {string} property - The property to check.
- * @returns {boolean} Returns `true` if the property value is a non-primitive, else `false`.
- */
-function isHostType(object, property) {
-	if (object == null) {
-		return false;
-	}
-	const type = typeof object[property];
-	return !rePrimitive.test(type) && (type !== "object" || !!object[property]);
-}
-
 /* ------------------------------------------------------------------------ */
 
 /**
@@ -1256,117 +979,6 @@ function clock() {
 	};
 
 	/* ---------------------------------------------------------------------- */
-
-	/**
-	 * Creates a compiled function from the given function `body`.
-	 */
-	function createCompiled(bench, deferred, body) {
-		const fn = bench.fn;
-		const fnArg = deferred ? getFirstArgument(fn) || "deferred" : "";
-
-		templateData.uid = uid + uidCounter++;
-
-		Object.assign(templateData, {
-			setup: interpolate("m#.setup()"),
-			fn: interpolate(`m#.fn(${fnArg})`),
-			fnArg,
-			teardown: interpolate("m#.teardown()"),
-		});
-
-		// Use API of chosen timer.
-		if (timer.unit === "ns") {
-			Object.assign(templateData, {
-				begin: interpolate("s#=n#()"),
-				end: interpolate("r#=n#(s#);r#=r#[0]+(r#[1]/1e9)"),
-			});
-		} else if (timer.unit === "us") {
-			if (timer.ns.stop) {
-				Object.assign(templateData, {
-					begin: interpolate("s#=n#.start()"),
-					end: interpolate("r#=n#.microseconds()/1e6"),
-				});
-			} else {
-				Object.assign(templateData, {
-					begin: interpolate("s#=n#()"),
-					end: interpolate("r#=(n#()-s#)/1e6"),
-				});
-			}
-		} else if (timer.ns.now) {
-			Object.assign(templateData, {
-				begin: interpolate("s#=(+n#.now())"),
-				end: interpolate("r#=((+n#.now())-s#)/1e3"),
-			});
-		} else {
-			Object.assign(templateData, {
-				begin: interpolate("s#=new n#().getTime()"),
-				end: interpolate("r#=(new n#().getTime()-s#)/1e3"),
-			});
-		}
-		// Define `timer` methods.
-		timer.start = Function(
-			interpolate("o#"),
-			interpolate("var n#=this.ns,${begin};o#.elapsed=0;o#.timeStamp=s#"),
-		);
-
-		timer.stop = Function(
-			interpolate("o#"),
-			interpolate("var n#=this.ns,s#=o#.timeStamp,${end};o#.elapsed=r#"),
-		);
-
-		// Create compiled test.
-		return Function(
-			interpolate("window,t#"),
-			`var global = window, clearTimeout = global.clearTimeout, setTimeout = global.setTimeout;\n${interpolate(
-				body,
-			)}`,
-		);
-	}
-
-	/**
-	 * Gets the current timer's minimum resolution (secs).
-	 */
-	function getRes(unit) {
-		let measured;
-		let begin;
-		let count = 30;
-		let divisor = 1e3;
-		const ns = timer.ns;
-		const sample = [];
-
-		// Get average smallest measurable time.
-		while (count--) {
-			if (unit === "us") {
-				divisor = 1e6;
-				if (ns.stop) {
-					ns.start();
-					while (!(measured = ns.microseconds())) {}
-				} else {
-					begin = ns();
-					while (!(measured = ns() - begin)) {}
-				}
-			} else if (unit === "ns") {
-				divisor = 1e9;
-				begin = (begin = ns())[0] + begin[1] / divisor;
-				while (!(measured = (measured = ns())[0] + measured[1] / divisor - begin)) {}
-				divisor = 1;
-			} else if (ns.now) {
-				begin = +ns.now();
-				while (!(measured = +ns.now() - begin)) {}
-			} else {
-				begin = new ns().getTime();
-				while (!(measured = new ns().getTime() - begin)) {}
-			}
-			// Check for broken timers.
-			if (measured > 0) {
-				sample.push(measured);
-			} else {
-				sample.push(Infinity);
-				break;
-			}
-		}
-		// Convert to seconds.
-		return getMean(sample) / divisor;
-	}
 
 	/**
 	 * Interpolates a given template string.
