@@ -628,9 +628,10 @@ export class ConnectionManager implements IConnectionManager {
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this._outbound.pause();
         this._outbound.clear();
-        this.props.disconnectHandler(reason);
 
         connection.dispose();
+
+        this.props.disconnectHandler(reason);
 
         this._connectionVerboseProps = {};
 
