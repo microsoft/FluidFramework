@@ -597,7 +597,10 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			);
 		};
 
-		this.runtime.once("dispose", () => reportOpsWhenInterrupted("Runtime disposed"));
+		this.runtime.once("dispose", () => reportOpsWhenInterrupted(new Error("Runtime disposed")));
+		this.runtime.once("disconnected", () =>
+			reportOpsWhenInterrupted(new Error("Runtime disconnected")),
+		);
 
 		const sendSingleOp = () => {
 			if (
