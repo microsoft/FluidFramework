@@ -97,9 +97,17 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.OBLITERATE;
 	pos1?: number;
-	relativePos1?: IRelativePosition;
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos1?: never;
 	pos2?: number;
-	relativePos2?: IRelativePosition;
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos2?: never;
 }
 
 export interface ICombiningOp {
