@@ -9,14 +9,14 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { assertValidTaskListExternalModel, TaskListExternalModel } from "../model-interface";
 import { ClientManager, ExternalTaskListId } from "../utilities";
 
 /**
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	taskData: TaskData,
+	taskData: TaskListExternalModel,
 	fluidServiceUrl: string,
 	containerUrl: string,
 	externalTaskListId: string,
@@ -110,7 +110,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * Client manager for managing clients session to resourse on external data service.
 	 */
-	const clientManager = new ClientManager<TaskData>();
+	const clientManager = new ClientManager<TaskListExternalModel>();
 
 	const expressApp = express();
 	expressApp.use(express.json());
@@ -145,16 +145,16 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const externalTaskListId = request.body?.externalTaskListId as ExternalTaskListId;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const messageData = request.body?.data as TaskData;
+		const messageData = request.body?.data as TaskListExternalModel;
 		if (messageData === undefined) {
 			const errorMessage =
 				'No data provided by external data service webhook. Expected under "data" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskData: TaskListExternalModel;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskData = assertValidTaskListExternalModel(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);

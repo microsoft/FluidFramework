@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { assertValidTaskListExternalModel, TaskListExternalModel } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -48,9 +48,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Mock webhook for notifying subscribers to changes in external data.
 	 */
-	const webhook = new MockWebhook<TaskData>();
+	const webhook = new MockWebhook<TaskListExternalModel>();
 
-	function notifyWebhookSubscribers(newData: TaskData): void {
+	function notifyWebhookSubscribers(newData: TaskListExternalModel): void {
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
 		webhook.notifySubscribers(newData);
 	}
@@ -146,10 +146,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					unknown
 				>;
 
-				let taskData: TaskData;
+				let taskData: TaskListExternalModel;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskData = assertValidTaskData((responseBody as any).taskList);
+					taskData = assertValidTaskListExternalModel((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
@@ -176,7 +176,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskData}.
+	 * Expected input data format: {@link TaskListExternalModel}.
 	 */
 	expressApp.post("/set-tasks/:externalTaskListId", (request, result) => {
 		const externalTaskListId = request.params?.externalTaskListId;
@@ -192,9 +192,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskData: TaskListExternalModel;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskData = assertValidTaskListExternalModel(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);

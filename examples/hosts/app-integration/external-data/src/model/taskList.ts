@@ -13,7 +13,7 @@ import { SharedMap } from "@fluidframework/map";
 import type {
 	ExternalSnapshotTask,
 	ITaskList,
-	TaskData,
+	TaskListExternalModel,
 	ITaskListInitialState,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
@@ -188,7 +188,7 @@ export class TaskList extends DataObject implements ITaskList {
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody?.taskList as TaskData;
+			const data = responseBody?.taskList as TaskListExternalModel;
 			incomingExternalData = Object.entries(data);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {
@@ -397,10 +397,10 @@ export class TaskList extends DataObject implements ITaskList {
 		});
 
 		for (const [id, task] of this.draftData) {
-			const typedTaskData = task as PersistedTask;
+			const typedTaskListExternalModel = task as PersistedTask;
 			const [nameSharedString, prioritySharedCell] = await Promise.all([
-				typedTaskData.name.get(),
-				typedTaskData.priority.get(),
+				typedTaskListExternalModel.name.get(),
+				typedTaskListExternalModel.priority.get(),
 			]);
 			this.tasks.set(id, new Task(id, nameSharedString, prioritySharedCell));
 		}

@@ -205,4 +205,8 @@ export interface ITaskListCollection extends IEventProvider<ITaskListCollectionE
 	readonly getTaskList: (id: string) => ITaskList | undefined;
 }
 
-export { assertValidTaskData, TaskData, TaskListData } from "./TaskData";
+export {
+	assertValidTaskListExternalModel,
+	TaskListExternalModel,
+	TaskListData,
+} from "./taskListExternalModel";

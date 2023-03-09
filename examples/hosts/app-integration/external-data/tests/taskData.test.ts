@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { assertValidTaskData, TaskData } from "../src/model-interface";
+import { assertValidTaskListExternalModel, TaskListExternalModel } from "../src/model-interface";
 
 /**
- * {@link TaskData} unit tests.
+ * {@link TaskListExternalModel} unit tests.
  */
-describe("TaskData", () => {
-	describe("assertValidTaskData", () => {
+describe("TaskListExternalModel", () => {
+	describe("assertValidTaskListExternalModel", () => {
 		it("Parses valid task data", () => {
-			const input: TaskData = {
+			const input: TaskListExternalModel = {
 				"42": {
 					name: "The meaning of life",
 					priority: 2,
 				},
 			};
-			expect(() => assertValidTaskData(input)).not.toThrow();
+			expect(() => assertValidTaskListExternalModel(input)).not.toThrow();
 		});
 
 		it("Throws on invalid task data", () => {
 			const input = "42:Determine meaning of life:37";
-			expect(() => assertValidTaskData(input)).toThrow();
+			expect(() => assertValidTaskListExternalModel(input)).toThrow();
 		});
 	});
 });

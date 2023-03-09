@@ -6,10 +6,10 @@
 import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
-import { TaskListData, TaskData } from "../model-interface";
+import { TaskListData, TaskListExternalModel } from "../model-interface";
 import { ExternalTaskListId } from "../utilities";
 
-const taskList1: TaskData = {
+const taskList1: TaskListExternalModel = {
 	12: {
 		name: "Alpha",
 		priority: 1,
@@ -28,7 +28,7 @@ const taskList1: TaskData = {
 	},
 };
 
-const taskList2: TaskData = {
+const taskList2: TaskListExternalModel = {
 	17: {
 		name: "Alpha",
 		priority: 1,
@@ -49,7 +49,7 @@ export interface IExternalDataSourceEvents extends IEvent {
 	 * @remarks Debug API for demo purposes - the real scenario will need to learn about the data changing via the
 	 * webhook path.
 	 */
-	(event: "debugDataWritten", listener: (data: TaskData) => void);
+	(event: "debugDataWritten", listener: (data: TaskListExternalModel) => void);
 }
 
 /**
@@ -97,7 +97,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @returns A promise that resolves when the write completes.
 	 */
 	public async writeData(
-		data: TaskData,
+		data: TaskListExternalModel,
 		externalTaskListId: ExternalTaskListId,
 	): Promise<Response> {
 		this.data[externalTaskListId] = data;
