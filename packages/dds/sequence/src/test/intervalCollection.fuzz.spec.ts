@@ -550,20 +550,7 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
 		it(`minimize test ${seed}`, function () {
 			this.timeout(10_000);
 			const filepath = getPath(seed);
-			let operations: Operation[];
-			try {
-				operations = JSON.parse(readFileSync(filepath).toString());
-			} catch (err: any) {
-				// Mocha executes skipped suite creation blocks, but whoever's running this suite only cares if
-				// the containing block isn't skipped. Report the original error to them from inside a test.
-				if (err.message.includes("ENOENT")) {
-					it(`with default config, seed ${seed}`, () => {
-						throw err;
-					});
-					return;
-				}
-				throw err;
-			}
+			const operations: Operation[] = JSON.parse(readFileSync(filepath).toString());
 
 			const pass_manager = new PassManager(operations, seed);
 
@@ -623,20 +610,18 @@ describeFuzz("IntervalCollection fuzz testing", ({ testCount }) => {
 	});
 });
 
-interface Pass {
-	apply: (op: Operation) => void;
+interface OpMinimizationPass {
+	applyTo: (op: Operation) => void;
 	undo: (op: Operation) => void;
 }
 
 class PassManager {
 	constructor(readonly original_operations: Operation[], readonly seed: number) {}
 
+	random = makeRandom();
+
 	static cloneArray<T>(arr: T[]): T[] {
 		return JSON.parse(JSON.stringify(arr)) as T[];
-	}
-
-	static randInt(max: number): number {
-		return Math.floor(Math.random() * max);
 	}
 
 	operations: Operation[] = PassManager.cloneArray(this.original_operations);
@@ -650,31 +635,39 @@ class PassManager {
 			this.swapOps.bind(this),
 		];
 
-		const pass = passes[PassManager.randInt(passes.length)];
+		const pass = this.random.pick(passes);
 
 		pass();
 	}
 
 	applyTwoRandomlySingle() {
-		const op1 = this.operations[PassManager.randInt(this.operations.length)];
-		const op2 = this.operations[PassManager.randInt(this.operations.length)];
-
-		if (op1 === op2) {
-			this.applyTwoRandomlySingle();
+		if (this.operations.length < 2) {
 			return;
 		}
 
-		const passes = [this._reduceString, this._shiftDown, this._shrinkRange];
+		// eslint-disable-next-line no-constant-condition
+		while (true) {
+			const op1 = this.random.pick(this.operations);
+			const op2 = this.random.pick(this.operations);
 
-		const pass1 = passes[PassManager.randInt(passes.length)];
-		const pass2 = passes[PassManager.randInt(passes.length)];
+			if (op1 === op2) {
+				continue;
+			}
 
-		pass1.apply(op1);
-		pass2.apply(op2);
+			const passes = [this._reduceString, this._shiftDown, this._shrinkRange];
 
-		if (!this.runTest()) {
-			pass1.undo(op1);
-			pass2.undo(op2);
+			const pass1 = this.random.pick(passes);
+			const pass2 = this.random.pick(passes);
+
+			pass1.applyTo(op1);
+			pass2.applyTo(op2);
+
+			if (!this.runTest()) {
+				pass1.undo(op1);
+				pass2.undo(op2);
+			}
+
+			break;
 		}
 	}
 
@@ -683,29 +676,33 @@ class PassManager {
 			return;
 		}
 
-		const op1 = this.operations[PassManager.randInt(this.operations.length)];
-		const op2 = this.operations[PassManager.randInt(this.operations.length)];
-		const op3 = this.operations[PassManager.randInt(this.operations.length)];
+		// eslint-disable-next-line no-constant-condition
+		while (true) {
+			const op1 = this.random.pick(this.operations);
+			const op2 = this.random.pick(this.operations);
+			const op3 = this.random.pick(this.operations);
 
-		if (op1 === op2 || op1 === op3 || op2 === op3) {
-			this.applyThreeRandomlySingle();
-			return;
-		}
+			if (op1 === op2 || op1 === op3 || op2 === op3) {
+				continue;
+			}
 
-		const passes = [this._reduceString, this._shiftDown, this._shrinkRange];
+			const passes = [this._reduceString, this._shiftDown, this._shrinkRange];
 
-		const pass1 = passes[PassManager.randInt(passes.length)];
-		const pass2 = passes[PassManager.randInt(passes.length)];
-		const pass3 = passes[PassManager.randInt(passes.length)];
+			const pass1 = this.random.pick(passes);
+			const pass2 = this.random.pick(passes);
+			const pass3 = this.random.pick(passes);
 
-		pass1.apply(op1);
-		pass2.apply(op2);
-		pass3.apply(op3);
+			pass1.applyTo(op1);
+			pass2.applyTo(op2);
+			pass3.applyTo(op3);
 
-		if (!this.runTest()) {
-			pass1.undo(op1);
-			pass2.undo(op2);
-			pass3.undo(op3);
+			if (!this.runTest()) {
+				pass1.undo(op1);
+				pass2.undo(op2);
+				pass3.undo(op3);
+			}
+
+			break;
 		}
 	}
 
@@ -732,8 +729,8 @@ class PassManager {
 		}
 	}
 
-	_reduceString: Pass = {
-		apply: (op: Operation) => {
+	_reduceString: OpMinimizationPass = {
+		applyTo: (op: Operation) => {
 			if (op.type !== "addText") {
 				return;
 			}
@@ -745,16 +742,12 @@ class PassManager {
 				return;
 			}
 
-			op.content += "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"[
-				PassManager.randInt(
-					"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".length,
-				)
-			];
+			op.content += this.random.string(1);
 		},
 	};
 
-	_shiftDown: Pass = {
-		apply(op) {
+	_shiftDown: OpMinimizationPass = {
+		applyTo(op) {
 			switch (op.type) {
 				case "addText":
 					op.index -= 1;
@@ -786,8 +779,8 @@ class PassManager {
 		},
 	};
 
-	_shrinkRange: Pass = {
-		apply(op) {
+	_shrinkRange: OpMinimizationPass = {
+		applyTo(op) {
 			if (
 				op.type !== "removeRange" &&
 				op.type !== "obliterateRange" &&
@@ -827,13 +820,13 @@ class PassManager {
 	}
 
 	swapOps() {
-		const op1 = PassManager.randInt(this.operations.length - 1);
-		const op2 = PassManager.randInt(this.operations.length - 1);
+		const op1Idx = this.random.integer(0, this.operations.length - 1);
+		const op2Idx = this.random.integer(0, this.operations.length - 1);
 
-		this.operations[op1] = this.operations.splice(op2, 1, this.operations[op1])[0];
+		this.operations[op1Idx] = this.operations.splice(op2Idx, 1, this.operations[op1Idx])[0];
 
 		if (!this.runTest()) {
-			this.operations[op1] = this.operations.splice(op2, 1, this.operations[op1])[0];
+			this.operations[op1Idx] = this.operations.splice(op2Idx, 1, this.operations[op1Idx])[0];
 		}
 	}
 
@@ -918,7 +911,6 @@ class PassManager {
 		}
 	}
 
-	random = makeRandom(this.seed);
 	numClients = 3;
 	path = getPath(this.seed);
 
@@ -948,7 +940,7 @@ class PassManager {
 		const initialState: FuzzTestState = {
 			clients,
 			containerRuntimeFactory,
-			random: this.random,
+			random: makeRandom(this.seed),
 		};
 
 		return { generator, initialState };
