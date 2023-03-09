@@ -706,7 +706,7 @@ class Benchmark {
  *   'onComplete': onComplete
  * });
  */
-function invoke(benches, name) {
+function invoke(benches, options2) {
 	let args;
 	let bench;
 	let index = -1;
@@ -728,9 +728,7 @@ function invoke(benches, name) {
 			listeners.splice(0, 0, listeners.pop());
 		}
 		// Execute method.
-		result[index] = _.isFunction(bench && bench[name])
-			? bench[name].apply(bench, args)
-			: undefined;
+		result[index] = _.isFunction(bench && bench.run) ? bench.run.apply(bench, args) : undefined;
 		// If synchronous return `true` until finished.
 		return !async && getNext();
 	}
@@ -783,13 +781,7 @@ function invoke(benches, name) {
 	 * Checks if invoking `Benchmark#run` with asynchronous cycles.
 	 */
 	function isAsync(object) {
-		// Avoid using `instanceof` here because of IE memory leak issues with host objects.
-		const async = args[0] && args[0].async;
-		return (
-			name === "run" &&
-			object instanceof Benchmark &&
-			((async == null ? object.options.async : async) || object.defer)
-		);
+		return object.defer;
 	}
 
 	/**
@@ -806,8 +798,7 @@ function invoke(benches, name) {
 		return (queued ? benches.length : index < result.length) ? index : (index = false);
 	}
 
-	options = Object.assign(options, name);
-	name = options.name;
+	options = Object.assign(options, options2);
 	args = Array.isArray((args = "args" in options ? options.args : [])) ? args : [args];
 	const queued = options.queued;
 

@@ -1196,7 +1196,7 @@ interface InvokeThing {
  *   'onComplete': onComplete
  * });
  */
-export function invoke(benches: Benchmark[], name: InvokeThing): any[] {
+export function invoke(benches: Benchmark[], options2: InvokeThing): any[] {
 	let args;
 	let bench: Benchmark;
 	let index = -1;
@@ -1218,9 +1218,7 @@ export function invoke(benches: Benchmark[], name: InvokeThing): any[] {
 			listeners.splice(0, 0, listeners.pop());
 		}
 		// Execute method.
-		result[index] = _.isFunction(bench && bench[name as any])
-			? bench[name as any].apply(bench, args)
-			: undefined;
+		result[index] = bench.run.apply(bench, args);
 		// If synchronous return `true` until finished.
 		return !async && getNext();
 	}
@@ -1273,13 +1271,7 @@ export function invoke(benches: Benchmark[], name: InvokeThing): any[] {
 	 * Checks if invoking `Benchmark#run` with asynchronous cycles.
 	 */
 	function isAsync(object: Benchmark) {
-		// Avoid using `instanceof` here because of IE memory leak issues with host objects.
-		const async = args[0] && args[0].async;
-		return (
-			(name as any) === "run" &&
-			// object instanceof Benchmark &&
-			((async == null ? object.options.async : async) || object.defer)
-		);
+		return object.defer;
 	}
 
 	/**
@@ -1296,7 +1288,7 @@ export function invoke(benches: Benchmark[], name: InvokeThing): any[] {
 		return (queued ? benches.length : index < result.length) ? index : ((index as any) = false);
 	}
 
-	options = Object.assign(options, name);
+	options = Object.assign(options, options2);
 	args = Array.isArray((args = "args" in options ? (options as any).args : [])) ? args : [args];
 	const queued = options.queued;
 
