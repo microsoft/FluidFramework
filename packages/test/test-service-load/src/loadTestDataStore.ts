@@ -679,6 +679,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				}
 				await sendSingleOpAndThenWait();
 			}
+
+			reportOpCount("Completed");
 			return !this.runtime.disposed;
 		} catch (error: any) {
 			reportOpCount("Exception", error);
@@ -686,8 +688,6 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		} finally {
 			dataModel.printStatus();
 		}
-
-		reportOpCount("Completed");
 	}
 
 	/**
