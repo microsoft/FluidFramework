@@ -23,6 +23,7 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
 	summarizeProtocolTree: [undefined],
+	enableOfflineLoad: [true],
 };
 
 export function applyOverrides<T>(

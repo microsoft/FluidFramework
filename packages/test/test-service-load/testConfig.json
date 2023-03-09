@@ -24,6 +24,10 @@
 					"max": 15000
 				}
 			},
+			"stashedOps": {
+				"min": 0,
+				"max": 30
+			},
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
@@ -121,8 +125,8 @@
 			"totalSendCount": 150,
 			"readWriteCycleMs": 10000,
 			"faultInjectionMs": {
-				"min": 0,
-				"max": 10000
+				"min": 5000,
+				"max": 30000
 			},
 			"offline": {
 				"delayMs": {
@@ -136,7 +140,10 @@
 			},
 			"totalBlobCount": 300,
 			"blobSize": 10240,
-			"detachedBlobCount": 0
+			"stashedOps": {
+				"min": 0,
+				"max": 100
+			}
 		},
 		"binarySnapshotFormat": {
 			"opRatePerMin": 60,

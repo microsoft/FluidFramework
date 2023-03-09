@@ -28,6 +28,7 @@ export interface ILoadTestConfig {
 		max: number;
 	};
 	opsSendType?: "allClientsConcurrentReadWrite" | "staggeredReadWrite";
+
 	/**
 	 * Simulate clients going offline
 	 */
@@ -90,6 +91,14 @@ export interface ILoadTestConfig {
 		 */
 		largeOpRate?: number;
 	};
+
+	/**
+	 * Stash ops using Container.closeAndGetPendingLocalState() and resubmit them in new Container
+	 */
+	stashedOps?: {
+		min: number,
+		max: number,
+	}
 }
 
 export interface OptionOverride {

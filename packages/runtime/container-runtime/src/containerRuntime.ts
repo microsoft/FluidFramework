@@ -3233,9 +3233,17 @@ export class ContainerRuntime
 		// to close current batch.
 		this.flush();
 
+		const pendingOps = this.pendingStateManager.getLocalState();
+		const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
+		this.mc.logger.sendTelemetryEvent({
+			eventName: "RuntimeGetPendingState",
+			opCount: pendingOps?.pendingStates.length ?? 0,
+			blobCount: Object.keys(pendingAttachmentBlobs).length,
+		});
+
 		return {
-			pending: this.pendingStateManager.getLocalState(),
-			pendingAttachmentBlobs: this.blobManager.getPendingBlobs(),
+			pending: pendingOps,
+			pendingAttachmentBlobs,
 		};
 	}
 

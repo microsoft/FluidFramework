@@ -579,11 +579,10 @@ export class Container
 	}
 
 	private get offlineLoadEnabled(): boolean {
+		const enabled = this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
+			this.options?.enableOfflineLoad === true;
 		// summarizer will not have any pending state we want to save
-		return (
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false) &&
-			this.clientDetails.capabilities.interactive
-		);
+		return enabled && this.clientDetails.capabilities.interactive;
 	}
 
 	/**
@@ -1503,18 +1502,25 @@ export class Container
 
 		// replay saved ops
 		if (pendingLocalState?.savedOps) {
-			for (const message of pendingLocalState.savedOps) {
-				// Process each saved op as if it were a remote message. runtime would not expect
-				// replayed ops to be local, since it did not actually submit them.
-				this.savedOps.push(message);
-				this.protocolHandler.processMessage(message, false);
-				this.context.process(message, false);
+            await PerformanceEvent.timedExecAsync(
+                this.mc.logger,
+                { eventName: "OpReplay", count: pendingLocalState.savedOps.length },
+                async () => {
+                    for (const message of pendingLocalState.savedOps) {
+                        // Process each saved op as if it were a remote message. runtime would not expect
+                        // replayed ops to be local, since it did not actually submit them.
+                        this.savedOps.push(message);
+                        this.protocolHandler.processMessage(message, false);
+                        this.context.process(message, false);
 
-				// allow runtime to apply stashed ops at this op's sequence number
-				await this.context.notifyOpReplay(message);
+                        // allow runtime to apply stashed ops at this op's sequence number
+                        await this.context.notifyOpReplay(message);
 
-				this.emit("op", message);
-			}
+                        this.emit("op", message);
+                    }
+                },
+                { start: true, end: true, cancel: "error" },
+            );
 			pendingLocalState.savedOps = [];
 		}
 

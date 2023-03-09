@@ -36,11 +36,19 @@ export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
 	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
+	generateChanges(n: number);
+    /**
+     * Verify that the expected number of stashed ops have been applied to the counter
+     * @param expected - expected number of stashed ops
+     * @returns true if the counter matches the expected value
+     */
+	verify(expected: number): boolean;
 }
 
 const taskManagerKey = "taskManager";
 const counterKey = "counter";
 const sharedMapKey = "sharedMap";
+const stashedOpCounterKey = "stashedOpCounter";
 const startTimeKey = "startTime";
 const taskTimeKey = "taskTime";
 const gcDataStoreKey = "dataStore";
@@ -162,10 +170,14 @@ export class LoadTestDataStoreModel {
 		if (!runDir.has(sharedMapKey)) {
 			runDir.set(sharedMapKey, SharedMap.create(runtime).handle);
 		}
+		if (!runDir.has(stashedOpCounterKey)) {
+			runDir.set(stashedOpCounterKey, SharedCounter.create(runtime).handle);
+		}
 
 		const counter = await runDir.get<IFluidHandle<ISharedCounter>>(counterKey)?.get();
 		const taskmanager = await root.get<IFluidHandle<ITaskManager>>(taskManagerKey)?.get();
 		const sharedmap = await runDir.get<IFluidHandle<ISharedMap>>(sharedMapKey)?.get();
+		const stashedOpCounter = await runDir.get<IFluidHandle<ISharedCounter>>(stashedOpCounterKey)?.get();
 
 		if (counter === undefined) {
 			throw new Error("counter not available");
@@ -175,6 +187,9 @@ export class LoadTestDataStoreModel {
 		}
 		if (sharedmap === undefined) {
 			throw new Error("sharedmap not available");
+		}
+		if (stashedOpCounter === undefined) {
+			throw new Error("stashed op counter not available");
 		}
 
 		const gcDataStore = await this.getGCDataStore(config, root, containerRuntime);
@@ -187,6 +202,7 @@ export class LoadTestDataStoreModel {
 			runDir,
 			counter,
 			sharedmap,
+			stashedOpCounter,
 			runDir,
 			gcDataStore.handle,
 		);
@@ -220,6 +236,7 @@ export class LoadTestDataStoreModel {
 		private readonly dir: IDirectory,
 		public readonly counter: ISharedCounter,
 		public readonly sharedmap: ISharedMap,
+		public readonly stashedOpCounter: ISharedCounter,
 		private readonly runDir: IDirectory,
 		private readonly gcDataStoreHandle: IFluidHandle,
 	) {
@@ -490,6 +507,8 @@ export class LoadTestDataStoreModel {
 
 class LoadTestDataStore extends DataObject implements ILoadTest {
 	public static DataStoreName = "StressTestDataStore";
+	private dataModel?: LoadTestDataStoreModel;
+	private config?: IRunConfig;
 
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
@@ -513,6 +532,8 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			this.runtime,
 			this.context.containerRuntime,
 		);
+		this.dataModel = dataModel;
+        this.config = config;
 
 		const leaderElection = new LeaderElection(this.runtime);
 		leaderElection.setupLeaderElection();
@@ -549,6 +570,13 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		return this.runtime;
 	}
 
+	public generateChanges(n: number) {
+		assert(!!this.dataModel, "no data model");
+		for (let i = n; i--;) {
+			this.dataModel.stashedOpCounter.increment(1);
+		}
+	}
+
 	async sendOps(dataModel: LoadTestDataStoreModel, config: IRunConfig) {
 		const cycleMs = config.testConfig.readWriteCycleMs;
 		const clientSendCount = config.testConfig.totalSendCount / config.testConfig.numClients;
@@ -575,6 +603,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				: opSizeinBytes;
 		const largeOpRate = config.testConfig.content?.largeOpRate ?? 1;
 		let opsSent = 0;
+		const updateOpsSent =
+			opSizeinBytes === 0
+				? () => {
+						opsSent = dataModel.counter.value;
+				  }
+				: () => {
+						opsSent++;
+				  };
 
 		const sendSingleOp = () => {
 			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
@@ -595,6 +631,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				? async () => {
 						if (dataModel.assigned()) {
 							sendSingleOp();
+							updateOpsSent();
 							if (opsSent % opsPerCycle === 0) {
 								dataModel.abandonTask();
 								await delay(cycleMs / 2);
@@ -609,6 +646,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  }
 				: async () => {
 						sendSingleOp();
+						updateOpsSent();
 						await delay(
 							opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
 						);
@@ -664,6 +702,23 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		} catch (e) {
 			console.error("Error during submitting signals: ", e);
 		}
+	}
+
+	verify(expected: number): boolean {
+        assert(!!this.dataModel?.stashedOpCounter, "no stashed op counter");
+        const actual = this.dataModel.stashedOpCounter.value;
+		if (actual !== expected) {
+            const eventName = expected > actual ? "MissingStashedOps" : "DuplicatedStashedOps";
+            this.config?.logger.sendErrorEvent(
+                {
+                    eventName,
+                    count: Math.abs(expected - actual),
+                },
+                new Error(eventName),
+            );
+            return false;
+        }
+        return true;
 	}
 }
 

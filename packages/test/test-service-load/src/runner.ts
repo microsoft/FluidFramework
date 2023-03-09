@@ -15,7 +15,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/common-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
@@ -154,10 +154,10 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
 				headers = { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" } };
 				break;
 			case 3:
-				headers = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
-				break;
+				// headers = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+				// break;
 			case 4:
-				headers = { [LoaderHeader.loadMode]: { deltaConnection: "delayed" } };
+				// headers = { [LoaderHeader.loadMode]: { deltaConnection: undefined } };
 				break;
 		}
 		yield { documentServiceFactory, headers };
@@ -205,6 +205,9 @@ async function runnerProcess(
 	let done = false;
 	// Reset the workload once, on the first iteration
 	let reset = true;
+	let stashedOpP: Promise<{ count: number, pendingState: string} | undefined> | undefined;
+	let stashedOpTotal = 0;
+	let verified = true;
 	while (!done) {
 		let container: IContainer | undefined;
 		try {
@@ -222,7 +225,7 @@ async function runnerProcess(
 					containerOptions[runConfig.runId % containerOptions.length],
 				),
 				logger: runConfig.logger,
-				options: loaderOptions[runConfig.runId % containerOptions.length],
+				options: loaderOptions[runConfig.runId % loaderOptions.length],
 				configProvider: {
 					getRawConfig(name) {
 						return configurations[runConfig.runId % configurations.length][name];
@@ -230,7 +233,12 @@ async function runnerProcess(
 				},
 			});
 
-			container = await loader.resolve({ url, headers });
+            // const stashedOps = stashedOpP ? await Promise.race([stashedOpP, new Promise<never>((_, reject) => setTimeout(reject, 1000))]) : undefined;
+            const stashedOps = stashedOpP ? await stashedOpP : undefined;
+			stashedOpP = undefined; // delete to avoid reuse
+            stashedOpTotal += stashedOps?.count ?? 0;
+			container = await loader.resolve({ url, headers }, stashedOps?.pendingState);
+
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
@@ -248,11 +256,14 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				scheduleContainerClose(
+				stashedOpP = scheduleContainerClose(
 					container,
 					runConfig,
+					test,
 					faultInjection.min,
 					faultInjection.max,
+                    runConfig.testConfig.stashedOps?.min,
+                    runConfig.testConfig.stashedOps?.max,
 				);
 				scheduleFaultInjection(
 					documentServiceFactory,
@@ -278,7 +289,11 @@ async function runnerProcess(
 			printStatus(runConfig, `running`);
 			done = await test.run(runConfig, reset);
 			reset = false;
-			printStatus(runConfig, done ? `finished` : "closed");
+			printStatus(runConfig, done ? "finished" : "closed");
+			if (done && stashedOpTotal > 0) {
+				verified = test.verify(stashedOpTotal);
+				printStatus(runConfig, verified ? `verified (${stashedOpTotal} ops)` : "not verified");
+			}
 		} catch (error) {
 			runConfig.logger.sendErrorEvent(
 				{
@@ -294,7 +309,7 @@ async function runnerProcess(
 			metricsCleanup();
 		}
 	}
-	return 0;
+	return verified ? 0 : 1;
 }
 
 function scheduleFaultInjection(
@@ -364,24 +379,28 @@ function scheduleFaultInjection(
 	schedule();
 }
 
-function scheduleContainerClose(
+async function scheduleContainerClose(
 	container: IContainer,
 	runConfig: IRunConfig,
+	test: ILoadTest,
 	faultInjectionMinMs: number,
 	faultInjectionMaxMs: number,
-) {
-	new Promise<void>((resolve) => {
+	stashedOpsMin = 0,
+	stashedOpsMax = 0,
+): Promise<{ count: number, pendingState: string } | undefined> {
+	const def = new Deferred<{ count: number, pendingState: string } | undefined>();
+	return new Promise<void>((resolve) => {
 		// wait for the container to connect write
-		container.once("closed", () => resolve);
+		container.once("closed", () => resolve());
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
 			container.once("connected", () => {
 				resolve();
-				container.off("closed", () => resolve);
+				// container.off("closed", () => resolve);
 			});
 		}
-	})
-		.then(() => {
+	}).then(() => {
 			if (container.closed) {
+				def.resolve(undefined);
 				return;
 			}
 			const quorum = container.getQuorum();
@@ -408,23 +427,40 @@ function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								container.close();
-							}
+								const count = random.integer(stashedOpsMin, stashedOpsMax)(runConfig.randEng);
+								if (count > 0) {
+									test.generateChanges(count);
+									def.resolve({ count, pendingState: container.closeAndGetPendingLocalState() });
+								} else {
+									container.close();
+									def.resolve(undefined);
+								}
+							} else {
+							    def.resolve(undefined);
+                            }
 						}, leaveTime);
 					}
 				}
 			};
 			quorum.on("removeMember", scheduleLeave);
 			scheduleLeave();
+
+			return Promise.race([
+				def.promise,
+				// make this promise resolve on container closure, but allow the deferred promise to resolve first
+				new Promise<undefined>((resolve) => container.on("closed", async () => Promise.resolve().then(() => resolve(undefined)))),
+			]);
 		})
-		.catch(async (e) =>
+		.catch(async (e) => {
 			runConfig.logger.sendErrorEvent(
 				{
 					eventName: "ScheduleLeaveFailed",
 					runId: runConfig.runId,
 				},
 				e,
-			),
+			)
+			return undefined;
+		}
 		);
 }
 
@@ -457,6 +493,9 @@ function scheduleOffline(
 				)(runConfig.randEng);
 				await new Promise<void>((resolve) => setTimeout(resolve, injectionTime));
 
+				if (container.closed) {
+					return;
+				}
 				assert(container.resolvedUrl !== undefined, "no url");
 				const ds = dsf.documentServices.get(container.resolvedUrl);
 				assert(!!ds, "no documentServices");
