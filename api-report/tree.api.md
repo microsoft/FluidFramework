@@ -622,9 +622,9 @@ export interface ISharedTreeCheckout extends AnchorLocator {
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
-        start: () => void;
-        commit: () => TransactionResult.Commit;
-        abort: () => TransactionResult.Abort;
+        start(): void;
+        commit(): TransactionResult.Commit;
+        abort(): TransactionResult.Abort;
         inProgress(): boolean;
     };
 }
@@ -1172,8 +1172,8 @@ export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
 // @alpha
 export enum TransactionResult {
-    Abort = 1,
-    Commit = 0
+    Abort = 0,
+    Commit = 1
 }
 
 // @alpha (undocumented)

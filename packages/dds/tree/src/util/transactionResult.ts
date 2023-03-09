@@ -4,16 +4,17 @@
  */
 
 /**
- * Describes the result of a transaction. Transactions may either succeed and commit, or fail and abort.
+ * Describes the result of a transaction.
+ * Transactions may either succeed and commit, or fail and abort.
  * @alpha
  */
 export enum TransactionResult {
 	/**
-	 * Indicates the transaction succeeded. This value is falsy.
+	 * Indicates the transaction failed.
 	 */
-	Commit = 0,
+	Abort,
 	/**
-	 * Indicates the transaction failed. This value is truthy.
+	 * Indicates the transaction succeeded.
 	 */
-	Abort = 1,
+	Commit,
 }

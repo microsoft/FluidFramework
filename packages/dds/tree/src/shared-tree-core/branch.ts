@@ -15,6 +15,7 @@ import {
 	RepairDataStore,
 } from "../core";
 import { EventEmitter } from "../events";
+import { TransactionResult } from "../util";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -94,7 +95,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 		this.transactions.push(this.head.revision, repairStore);
 	}
 
-	public commitTransaction(): void {
+	public commitTransaction(): TransactionResult.Commit {
 		const [startCommit, commits] = this.popTransaction();
 
 		// Anonymize the commits from this transaction by stripping their revision tags.
@@ -117,9 +118,10 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 				this.head.revision,
 			);
 		}
+		return TransactionResult.Commit;
 	}
 
-	public abortTransaction(): void {
+	public abortTransaction(): TransactionResult.Abort {
 		const [startCommit, commits, repairStore] = this.popTransaction();
 		this.head = startCommit;
 		for (let i = commits.length - 1; i >= 0; i--) {
@@ -127,6 +129,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, inverse);
 			this.emit("onChange", inverse);
 		}
+		return TransactionResult.Abort;
 	}
 
 	public isTransacting(): boolean {
