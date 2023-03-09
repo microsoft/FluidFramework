@@ -122,11 +122,9 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		// which also applies to the code that reads from the cache in epochTracker.ts
 		// This may result in files created for testing being unusable in production sessions,
 		// due to the GC code guarding against this policy changing over the lifetime of a file.
-		const maximumCacheDurationMsInEffect = (
-			config.getBoolean("Fluid.Driver.Odsp.TestOverride.DisableSnapshotCache")
-				? 0
-				: maximumCacheDurationMs
-		) as FiveDaysMs;
+		const maximumCacheDurationMsInEffect = (config.getNumber(
+			"Fluid.Driver.Odsp.TestOverride.SnapshotCacheExpiryTimeoutMs",
+		) ?? maximumCacheDurationMs) as FiveDaysMs;
 
 		this.policies = {
 			// By default, ODSP tells the container not to prefetch/cache.
