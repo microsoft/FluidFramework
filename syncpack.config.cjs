@@ -57,6 +57,14 @@ module.exports = {
 			isIgnored: true,
 		},
 
+    {
+			label: "Overridden server dependencies should always be exact versions",
+			dependencyTypes: ["pnpmOverrides"],
+			dependencies: ["@fluidframework/gitresources", "@fluidframework/protocol-base", "@fluidframework/server-*"],
+			packages: ["**"],
+			range: "",
+		},
+
 		{
 			label: "Deps in pnpm overrides should use caret dependency ranges",
 			dependencyTypes: ["pnpmOverrides"],
