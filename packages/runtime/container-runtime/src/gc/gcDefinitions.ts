@@ -12,9 +12,13 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IContainerRuntimeMetadata, ICreateContainerMetadata } from "../summary";
+import {
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
+	RefreshSummaryResult,
+} from "../summary";
 
 export type GCVersion = number;
 

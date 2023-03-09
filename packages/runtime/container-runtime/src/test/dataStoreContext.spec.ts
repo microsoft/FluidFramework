@@ -28,11 +28,7 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import {
-	createRootSummarizerNodeWithGC,
-	IRootSummarizerNodeWithGC,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
+import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	isFluidError,
 	MockLogger,
@@ -53,7 +49,9 @@ import {
 import { ContainerRuntime } from "../containerRuntime";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs";
 import {
+	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
+	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	summarizerClientType,

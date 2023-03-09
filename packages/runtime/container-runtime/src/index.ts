@@ -28,12 +28,6 @@ export {
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
 export { IGCRuntimeOptions, IGCStats } from "./gc";
 export {
-	IPendingFlush,
-	IPendingLocalState,
-	IPendingMessage,
-	IPendingState,
-} from "./pendingStateManager";
-export {
 	IAckedSummary,
 	ISummarizer,
 	ISummarizeResults,
