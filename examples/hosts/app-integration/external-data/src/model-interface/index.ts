@@ -38,7 +38,7 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 */
 	readonly sendCustomDebugSignal: () => void;
 
-		/**
+	/**
 	 * Register the container details and the external resource id with the customer service.
 	 * This will allow the Customer Service to pass on the container information to the Fluid
 	 * Service to send the signal that some new information has come through.
@@ -153,7 +153,9 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	readonly importExternalData: () => Promise<void>;
 
 	/**
-	 * Register the container url with the customer service in order to be notfied of changes later on.
+	 * Register the container details and the external resource id with the customer service.
+	 * This will allow the Customer Service to pass on the container information to the Fluid
+	 * Service to send the signal that some new information has come through.
 	 */
 	readonly registerWithCustomerService: (
 		externalTaskListId: string,
