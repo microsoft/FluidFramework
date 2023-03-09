@@ -945,7 +945,7 @@ export interface NodeChangeset {
     // (undocumented)
     valueChange?: ValueChange;
     // (undocumented)
-    valueConstraint?: Value;
+    valueConstraint?: ValueConstraint;
 }
 
 // @alpha
@@ -1271,6 +1271,14 @@ export type Value = undefined | TreeValue;
 export interface ValueChange {
     revision?: RevisionTag;
     value?: Value;
+}
+
+// @alpha (undocumented)
+export interface ValueConstraint {
+    // (undocumented)
+    value: Value;
+    // (undocumented)
+    violated: boolean;
 }
 
 // @alpha (undocumented)
