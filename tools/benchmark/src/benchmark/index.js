@@ -3,22 +3,16 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable no-new-func */
-/* eslint-disable no-template-curly-in-string */
 /* eslint-disable jsdoc/require-hyphen-before-param-description */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable unicorn/better-regex */
-/* eslint-disable no-func-assign */
 /* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-implied-eval */
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable no-param-reassign */
 /* eslint-disable @typescript-eslint/prefer-optional-chain */
 /* eslint-disable tsdoc/syntax */
-/* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -43,6 +37,7 @@ import {
 	counter,
 	defaultOptions,
 	cycle,
+	invoke,
 } from "./benchmark";
 
 /* -------------------------------------------------------------------------- */
@@ -668,156 +663,6 @@ class Benchmark {
 		}
 		return bench;
 	}
-}
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * Invokes a method on all items in an array.
- *
- * @static
- * @memberOf Benchmark
- * @param {Array} benches - Array of benchmarks to iterate over.
- * @param {Object|string} name - The name of the method to invoke OR options object.
- * @param {...*} [args] Arguments to invoke the method with.
- * @returns {Array} A new array of values returned from each method invoked.
- * @example
- *
- *
- * // invoke `run(true)`, treat benchmarks as a queue, and register invoke callbacks
- * Benchmark.invoke(benches, {
- *
- *   // invoke the `run` method
- *   'name': 'run',
- *
- *   // pass a single argument
- *   'args': true,
- *
- *   // treat as queue, removing benchmarks from front of `benches` until empty
- *   'queued': true,
- *
- *   // called before any benchmarks have been invoked.
- *   'onStart': onStart,
- *
- *   // called between invoking benchmarks
- *   'onCycle': onCycle,
- *
- *   // called after all benchmarks have been invoked.
- *   'onComplete': onComplete
- * });
- */
-function invoke(benches, options2) {
-	let args;
-	let bench;
-	let index = -1;
-	const eventProps = { currentTarget: benches };
-	let options = { onStart: _.noop, onCycle: _.noop, onComplete: _.noop };
-	const result = _.toArray(benches);
-
-	/**
-	 * Invokes the method of the current object and if synchronous, fetches the next.
-	 */
-	function execute() {
-		let listeners;
-		const async = isAsync(bench);
-
-		if (async) {
-			// Use `getNext` as the first listener.
-			bench.on("complete", getNext);
-			listeners = bench.events.complete;
-			listeners.splice(0, 0, listeners.pop());
-		}
-		// Execute method.
-		result[index] = _.isFunction(bench && bench.run) ? bench.run.apply(bench, args) : undefined;
-		// If synchronous return `true` until finished.
-		return !async && getNext();
-	}
-
-	/**
-	 * Fetches the next bench or executes `onComplete` callback.
-	 */
-	function getNext(event) {
-		const last = bench;
-		const async = isAsync(last);
-
-		if (async) {
-			last.off("complete", getNext);
-			last.emit("complete");
-		}
-		// Emit "cycle" event.
-		eventProps.type = "cycle";
-		eventProps.target = last;
-		const cycleEvent = new Event(eventProps);
-		options.onCycle.call(benches, cycleEvent);
-
-		// Choose next benchmark if not exiting early.
-		if (!cycleEvent.aborted && raiseIndex() !== false) {
-			bench = queued ? benches[0] : result[index];
-			if (isAsync(bench)) {
-				delay(bench, execute);
-			} else if (async) {
-				// Resume execution if previously asynchronous but now synchronous.
-				while (execute()) {}
-			} else {
-				// Continue synchronous execution.
-				return true;
-			}
-		} else {
-			// Emit "complete" event.
-			eventProps.type = "complete";
-			options.onComplete.call(benches, new Event(eventProps));
-		}
-		// When used as a listener `event.aborted = true` will cancel the rest of
-		// the "complete" listeners because they were already called above and when
-		// used as part of `getNext` the `return false` will exit the execution while-loop.
-		if (event) {
-			event.aborted = true;
-		} else {
-			return false;
-		}
-	}
-
-	/**
-	 * Checks if invoking `Benchmark#run` with asynchronous cycles.
-	 */
-	function isAsync(object) {
-		return object.defer;
-	}
-
-	/**
-	 * Raises `index` to the next defined index or returns `false`.
-	 */
-	function raiseIndex() {
-		index++;
-
-		// If queued remove the previous bench.
-		if (queued && index > 0) {
-			shift.call(benches);
-		}
-		// If we reached the last index then return `false`.
-		return (queued ? benches.length : index < result.length) ? index : (index = false);
-	}
-
-	options = Object.assign(options, options2);
-	args = Array.isArray((args = "args" in options ? options.args : [])) ? args : [args];
-	const queued = options.queued;
-
-	// Start iterating over the array.
-	if (raiseIndex() !== false) {
-		// Emit "start" event.
-		bench = result[index];
-		eventProps.type = "start";
-		eventProps.target = bench;
-		options.onStart.call(benches, new Event(eventProps));
-
-		// Start method execution.
-		if (isAsync(bench)) {
-			delay(bench, execute);
-		} else {
-			while (execute()) {}
-		}
-	}
-	return result;
 }
 
 /**
