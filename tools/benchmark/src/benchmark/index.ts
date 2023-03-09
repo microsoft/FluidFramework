@@ -42,71 +42,71 @@ export interface Options {
 	 * A flag to indicate that benchmark cycles will execute asynchronously
 	 * by default.
 	 */
-	async?: boolean | undefined;
+	async?: boolean;
 	/**
 	 * A flag to indicate that the benchmark clock is deferred.
 	 */
-	defer?: boolean | undefined;
+	defer?: boolean;
 	/**
 	 * The delay between test cycles (secs).
 	 */
-	delay?: number | undefined;
+	delay?: number;
 
 	/**
 	 * The default number of times to execute a test on a benchmark's first cycle.
 	 */
-	initCount?: number | undefined;
+	initCount?: number;
 
 	/**
 	 * The maximum time a benchmark is allowed to run before finishing (secs).
 	 *
 	 * Note: Cycle delays aren't counted toward the maximum time.
 	 */
-	maxTime?: number | undefined;
+	maxTime?: number;
 	/**
 	 * The minimum sample size required to perform statistical analysis.
 	 */
-	minSamples?: number | undefined;
+	minSamples?: number;
 
 	/**
 	 * The time needed to reduce the percent uncertainty of measurement to 1% (secs).
 	 */
-	minTime?: number | undefined;
+	minTime?: number;
 
 	/**
 	 * An event listener called when the benchmark is aborted.
 	 */
-	onAbort?: Function | undefined;
+	onAbort?: () => void;
 
 	/**
 	 * An event listener called when the benchmark completes running.
 	 */
-	onComplete?: Function | undefined;
+	onComplete?: (event: Event) => void;
 	/**
 	 * An event listener called after each run cycle.
 	 */
-	onCycle?: Function | undefined;
+	onCycle?: (event: Event) => void;
 
 	/**
 	 * An event listener called when a test errors.
 	 */
-	onError?: Function | undefined;
+	onError?: () => void;
 	/**
 	 * An event listener called when the benchmark is reset.
 	 */
-	onReset?: Function | undefined;
+	onReset?: () => void;
 	/**
 	 * An event listener called when the benchmark starts running.
 	 */
-	onStart?: Function | undefined;
+	onStart?: (event: Event) => void;
 
-	setup?: Function | string | undefined;
+	setup?: () => void;
 
-	teardown?: Function | string | undefined;
+	teardown?: () => void;
 
-	fn?: Function | string | undefined;
+	fn?: (deferred: { resolve: Mocha.Done }) => void | Promise<unknown>;
 
-	queued?: boolean | undefined;
+	queued?: boolean;
 }
 
 export interface Stats {
@@ -296,7 +296,6 @@ const calledBy: any = {};
 /**
  * Timer object used by `clock()` and `Deferred#resolve`.
  *
- * @private
  * @type Object
  */
 let timer: any = {
@@ -436,13 +435,12 @@ export class Benchmark {
 	 *   }())
 	 * }())
 	 */
-	setup: Function | string = _.noop;
+	setup: () => void = _.noop;
 
 	/**
 	 * Compiled into the test and executed immediately **after** the test loop.
-	 * @type {Function|string}
 	 */
-	teardown: Function | string = _.noop;
+	teardown: () => void = _.noop;
 
 	/**
 	 * An object of stats including mean, margin or error, and standard deviation.
@@ -939,7 +937,7 @@ export class Deferred {
 	 * @param benchmark - The cloned benchmark instance.
 	 */
 	constructor(public readonly benchmark: Benchmark) {
-		(clock as any)(this);
+		clock(this);
 	}
 
 	/**
@@ -1047,7 +1045,6 @@ export class Event {
  * A specialized version of `_.cloneDeep` which only clones arrays and plain
  * objects assigning all other values by reference.
  *
- * @private
  * @param {*} value - The value to clone.
  * @returns {*} The cloned value.
  */
@@ -1063,7 +1060,6 @@ type AnyFunction = (...args: any[]) => any;
 /**
  * Delay the execution of a function based on the benchmark's `delay` property.
  *
- * @private
  * @param {Object} bench - The benchmark instance.
  * @param {Object} fn - The function to execute.
  */
@@ -1074,7 +1070,6 @@ function delay(bench: Benchmark, fn: AnyFunction) {
 /**
  * Gets the name of the first argument from a function's source.
  *
- * @private
  * @param {Function} fn - The function.
  * @returns {string} The argument name.
  */
@@ -1088,7 +1083,6 @@ function getFirstArgument(fn: Function): string {
 /**
  * Computes the arithmetic mean of a sample.
  *
- * @private
  * @param {Array} sample - The sample.
  * @returns {number} The mean.
  */
@@ -1104,7 +1098,6 @@ function getMean(sample: any[]): number {
  * data type. The objects we are concerned with usually return non-primitive
  * types of "object", "function", or "unknown".
  *
- * @private
  * @param {*} object - The owner of the property.
  * @param {string} property - The property to check.
  * @returns {boolean} Returns `true` if the property value is a non-primitive, else `false`.
@@ -1281,12 +1274,11 @@ if (!defaultOptions.minTime) {
 /**
  * Clocks the time taken to execute a test per cycle (secs).
  *
- * @private
  * @param {Object} bench - The benchmark instance.
  * @returns {number} The time taken.
  */
-function clock(clone: Benchmark) {
-	let deferred;
+function clock(clone: Benchmark | Deferred) {
+	let deferred: Deferred | undefined;
 
 	if (clone instanceof Deferred) {
 		deferred = clone;
@@ -1353,9 +1345,8 @@ function clock(clone: Benchmark) {
 /**
  * Computes stats on benchmark results.
  *
- * @private
- * @param {Object} bench - The benchmark instance.
- * @param {Object} options - The options object.
+ * @param bench - The benchmark instance.
+ * @param options - The options object.
  */
 function compute(bench: Benchmark, options: Options) {
 	options ??= {};
@@ -1510,11 +1501,10 @@ function compute(bench: Benchmark, options: Options) {
 /**
  * Cycles a benchmark until a run `count` can be established.
  *
- * @private
  * @param {Object} clone - The cloned benchmark instance.
  * @param {Object} options - The options object.
  */
-function cycle(clone: Benchmark, options: Options) {
+function cycle(clone: Benchmark | Deferred, options: Options) {
 	options ??= {};
 
 	let deferred;
@@ -1606,7 +1596,7 @@ function cycle(clone: Benchmark, options: Options) {
 /**
  * Gets the current timer's minimum resolution (secs).
  */
-function getRes(unit) {
+function getRes(unit: string) {
 	let measured;
 	let begin;
 	let count = 30;
