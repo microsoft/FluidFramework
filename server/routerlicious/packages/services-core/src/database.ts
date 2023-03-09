@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocument } from "./document";
+import { ICheckpoint, IDocument } from "./document";
 import { ISequencedOperationMessage } from "./messages";
 import { INode } from "./orderer";
 
@@ -20,6 +20,12 @@ export interface IDatabaseManager {
      * Retrieves the document collection
      */
     getDocumentCollection(): Promise<ICollection<IDocument>>;
+
+    /**
+     * Retrieves the checkpoints collection
+     */
+
+    getCheckpointCollection(): Promise<ICollection<ICheckpoint>>;
 
     /**
      * Retrieves the delta collection

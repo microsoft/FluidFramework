@@ -6,7 +6,7 @@
 // import { IGitManager } from "@fluidframework/server-services-client";
 import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitresources";
 import { GitManager } from "@fluidframework/server-services-client";
-import { DefaultServiceConfiguration, ICollection, IDocument, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
+import { DefaultServiceConfiguration, ICheckpoint, ICollection, IDocument, IProducer, ITenantManager, MongoManager } from "@fluidframework/server-services-core";
 import { KafkaMessageFactory, MessageFactory, TestCollection, TestContext, TestDbFactory, TestDeltaManager, TestKafka, TestTenantManager } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
@@ -23,7 +23,7 @@ describe("Routerlicious", () => {
             let testMongoManager: MongoManager;
             let testLocalMongoManager: MongoManager;
             let testDocumentCollection: ICollection<IDocument>;
-            let testLocalDocumentCollection: ICollection<IDocument>;
+            let testCheckpointCollection: ICollection<ICheckpoint>;
             let testMessageCollection: TestCollection;
             let testProducer: IProducer;
             let testContext: TestContext;
@@ -63,7 +63,7 @@ describe("Routerlicious", () => {
                 const database = await testMongoManager.getDatabase();
                 const localDatabase = await testLocalMongoManager.getDatabase();
                 testDocumentCollection = database.collection("documents");
-                testLocalDocumentCollection = localDatabase.collection("documents");
+                testCheckpointCollection = localDatabase.collection("checkpoints");
                 testMessageCollection = new TestCollection([]);
                 testKafka = new TestKafka();
                 testProducer = testKafka.createProducer();
@@ -81,7 +81,7 @@ describe("Routerlicious", () => {
                 let factory = new ScribeLambdaFactory(
                     testMongoManager,
                     testDocumentCollection,
-                    testLocalDocumentCollection,
+                    testCheckpointCollection,
                     testMessageCollection,
                     testProducer,
                     testDeltaManager,

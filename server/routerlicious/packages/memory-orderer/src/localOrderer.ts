@@ -315,13 +315,13 @@ export class LocalOrderer implements IOrderer {
         // Scribe lambda
         const [
             documentCollection,
-            localDocumentCollection,
+            localCheckpointCollection,
             scribeMessagesCollection,
             protocolHead,
             scribeMessages,
         ] = await Promise.all([
             setup.documentCollectionP(),
-            setup.localDocumentCollectionP(),
+            setup.localCheckpointCollectionP(),
             setup.scribeDeltaCollectionP(),
             setup.protocolHeadP(),
             setup.scribeMessagesP(),
@@ -358,7 +358,7 @@ export class LocalOrderer implements IOrderer {
             this.tenantId,
             this.documentId,
             documentCollection,
-            localDocumentCollection,
+            localCheckpointCollection,
             scribeMessagesCollection,
             null /* deltaService */,
             false /* getDeltasViaAlfred */);

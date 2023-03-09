@@ -23,6 +23,7 @@ import { Constants } from "../../utils";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
+const checkpointsCollectionName = "testCheckpoints";
 const deltasCollectionName = "testDeltas";
 const rawDeltasCollectionName = "testRawDeltas";
 const defaultProvider = new nconf.Provider({}).defaults({
@@ -74,6 +75,7 @@ describe("Routerlicious", () => {
                 defaultMongoManager,
                 nodeCollectionName,
                 documentsCollectionName,
+                checkpointsCollectionName,
                 deltasCollectionName,
                 rawDeltasCollectionName);
             const defaultStorage = new TestDocumentStorage(defaultDbManager, defaultTenantManager);

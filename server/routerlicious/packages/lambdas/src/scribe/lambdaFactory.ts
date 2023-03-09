@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
     ControlMessageType,
+    ICheckpoint,
     ICollection,
     IContext,
     IControlMessage,
@@ -55,7 +56,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
     constructor(
         private readonly mongoManager: MongoManager,
         private readonly documentCollection: ICollection<IDocument>,
-        private readonly localDocumentCollection: ICollection<IDocument>,
+        private readonly localCheckpointCollection: ICollection<ICheckpoint>,
         private readonly messageCollection: ICollection<ISequencedOperationMessage>,
         private readonly producer: IProducer,
         private readonly deltaManager: IDeltaService,
@@ -93,15 +94,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             summaryReader = new SummaryReader(tenantId, documentId, gitManager, this.enableWholeSummaryUpload);
             [latestSummary, document] = await Promise.all([
                 summaryReader.readLastSummary(),
-                this.localDocumentCollection.findOne({ documentId, tenantId }),
+                this.documentCollection.findOne({ documentId, tenantId }),
             ]);
-
-            if (!document) {
-                Lumberjack.info(`Document not found in local collection. Querying the global collection.`, lumberProperties);
-                document = await this.documentCollection.findOne({ documentId, tenantId });
-            } else {
-                Lumberjack.info(`Document retrieved from local collection.`, lumberProperties);
-            }
 
             if (!isDocumentValid(document)) {
                 // Document sessions can be joined (via Alfred) after a document is functionally deleted.
@@ -137,9 +131,36 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             throw error;
         }
 
-        // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
+        // Search local database for checkpoint
+        const checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId });
+
+        // If we have local checkpoint information
+        if(checkpoint) {
+            Lumberjack.info(`Checkpoint retrieved from the local collection.`)
+            lastCheckpoint = JSON.parse(checkpoint.scribe);
+
+            const lumberjackProperties = {
+                ...getLumberBaseProperties(documentId, tenantId),
+                lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
+                logOffset: lastCheckpoint.logOffset,
+                LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber
+            }
+
+            Lumberjack.info(`Restoring checkpoint from the local collection.`, lumberjackProperties);
+
+            if (!this.getDeltasViaAlfred)
+            {
+                // Fetch pending ops from scribeDeltas collection
+                const dbMessages =
+                    await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
+                opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
+            } else if (lastCheckpoint.logOffset !== -1) {
+                opMessages = await this.deltaManager.getDeltas("", tenantId, documentId, lastCheckpoint.protocolState.sequenceNumber);
+            }
+
+        } else if (document.scribe === undefined || document.scribe === null) {
+            // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
-        if (document.scribe === undefined || document.scribe === null) {
             const message = "New document. Setting empty scribe checkpoint";
             context.log?.info(message, { messageMetaData });
             Lumberjack.info(message, lumberProperties);
@@ -228,7 +249,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             tenantId,
             documentId,
             this.documentCollection,
-            this.localDocumentCollection,
+            this.localCheckpointCollection,
             this.messageCollection,
             this.deltaManager,
             this.getDeltasViaAlfred);

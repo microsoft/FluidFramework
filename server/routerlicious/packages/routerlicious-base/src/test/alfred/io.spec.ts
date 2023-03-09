@@ -97,6 +97,7 @@ describe("Routerlicious", () => {
                         collectionNames,
                         collectionNames,
                         collectionNames,
+                        collectionNames,
                         collectionNames);
                     const testStorage = new services.DocumentStorage(
                         databaseManager,
@@ -450,6 +451,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                         collectionNames,
                         collectionNames,
                         collectionNames,
+                        collectionNames,
                         collectionNames);
                     const testStorage = new services.DocumentStorage(
                         databaseManager,
@@ -628,6 +630,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`);
                 globalDbEnabled,
                 mongoManager,
                 mongoManager,
+                collectionNames,
                 collectionNames,
                 collectionNames,
                 collectionNames,

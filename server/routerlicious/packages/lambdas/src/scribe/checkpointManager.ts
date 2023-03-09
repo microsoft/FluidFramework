@@ -8,6 +8,7 @@ import {
     ICollection,
     IContext,
     IDocument,
+    ICheckpoint,
     isRetryEnabled,
     IScribe,
     ISequencedOperationMessage,
@@ -27,7 +28,7 @@ export class CheckpointManager implements ICheckpointManager {
         private readonly tenantId: string,
         private readonly documentId: string,
         private readonly documentCollection: ICollection<IDocument>,
-        private readonly localDocumentCollection: ICollection<IDocument>,
+        private readonly localCheckpointCollection: ICollection<ICheckpoint>,
         private readonly opCollection: ICollection<ISequencedOperationMessage>,
         private readonly deltaService: IDeltaService,
         private readonly getDeltasViaAlfred: boolean
@@ -115,31 +116,31 @@ export class CheckpointManager implements ICheckpointManager {
     private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 
-        if (this.localDocumentCollection) {
+        if (this.localCheckpointCollection) {
             if(!noActiveClients) {
                 // If there are active clients, we write to the local collection
                 Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
                 // Use upsert in case document does not exist in the local database
-                await this.writeScribeCheckpointToCollection(this.localDocumentCollection, checkpoint);
+                await this.writeScribeCheckpointToCollection(checkpoint, true);
             } else {
                 // No active clients, delete from local collection, write to global collection
                 Lumberjack.info(`Removing checkpoint data from the local database. No active clients.`, lumberProperties);
-                await this.localDocumentCollection.deleteOne({
+                await this.localCheckpointCollection.deleteOne({
                     documentId: this.documentId,
                     tenantId: this.tenantId,
                 }).catch((error) => {
                     Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
                 });
                 Lumberjack.info(`Writing checkpoint to global database`, lumberProperties);
-                await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
+                await this.writeScribeCheckpointToCollection(checkpoint, false);
             }
         } else {
-            Lumberjack.info(`Checkpoint to defalt global database.`, lumberProperties);
-            await this.writeScribeCheckpointToCollection(this.documentCollection, checkpoint);
+            Lumberjack.info(`No local collection found. Writing checkpoint to global database.`, lumberProperties);
+            await this.writeScribeCheckpointToCollection(checkpoint, false);
         }
     }
 
-    private async writeScribeCheckpointToCollection(collection: ICollection<IDocument>, checkpoint: IScribe) {
+    private async writeScribeCheckpointToCollection(checkpoint: IScribe, isLocal: boolean = false) {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
         const checkpointFilter = {
             documentId: this.documentId,
@@ -150,7 +151,8 @@ export class CheckpointManager implements ICheckpointManager {
             // given some data is user generated.
             scribe: JSON.stringify(checkpoint),
         }
-        await (collection === this.localDocumentCollection ? this.localDocumentCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
+
+        await (isLocal ? this.localCheckpointCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
                 Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
             }) : this.documentCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
                 Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);

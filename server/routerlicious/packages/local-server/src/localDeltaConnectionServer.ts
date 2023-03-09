@@ -72,6 +72,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 
         const nodesCollectionName = "nodes";
         const documentsCollectionName = "documents";
+        const checkpointsCollectionName = "checkpoints";
         const deltasCollectionName = "deltas";
         const scribeDeltasCollectionName = "scribeDeltas";
 
@@ -86,6 +87,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             mongoManager,
             nodesCollectionName,
             documentsCollectionName,
+            checkpointsCollectionName,
             deltasCollectionName,
             scribeDeltasCollectionName);
 
@@ -95,6 +97,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
             mongoManager,
             nodesCollectionName,
             documentsCollectionName,
+            checkpointsCollectionName,
             deltasCollectionName,
             scribeDeltasCollectionName);
 

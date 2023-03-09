@@ -140,3 +140,15 @@ export interface IDocument {
     // The document is soft deleted if a scheduled deletion timestamp is present.
     scheduledDeletionTime?: string;
 }
+
+export interface ICheckpoint{
+    _id: string;
+
+    documentId: string;
+
+    tenantId: string;
+
+    scribe: string;
+
+    deli: string;
+}

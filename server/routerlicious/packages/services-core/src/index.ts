@@ -24,7 +24,7 @@ export {
 } from "./configuration";
 export { ICollection, IDatabaseManager, IDb, IDbEvents, IDbFactory, IRetryable, isRetryEnabled } from "./database";
 export { IDeltaService } from "./delta";
-export { IClientSequenceNumber, IDeliState, IDocument, IDocumentDetails, IDocumentStorage, IScribe } from "./document";
+export { IClientSequenceNumber, IDeliState, IDocument, ICheckpoint, IDocumentDetails, IDocumentStorage, IScribe } from "./document";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";
 export { IHttpServer, IWebServer, IWebServerFactory, IWebSocket, IWebSocketServer, RequestListener } from "./http";
 export {

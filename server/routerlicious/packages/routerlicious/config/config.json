@@ -23,6 +23,7 @@
             "deltas": "deltas",
             "rawdeltas": "rawdeltas",
             "documents": "documents",
+            "checkpoints": "checkpoints",
             "partitions": "partitions",
             "tenants": "tenants",
             "nodes": "nodes",
