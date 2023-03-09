@@ -110,10 +110,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_IConnectableRuntime": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

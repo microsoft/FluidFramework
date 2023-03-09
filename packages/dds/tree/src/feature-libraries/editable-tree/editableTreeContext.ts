@@ -128,7 +128,7 @@ export class ProxyContext implements EditableTreeContext {
 	 * @param forest - the Forest
 	 * @param editor - an editor that makes changes to the forest.
 	 */
-	constructor(
+	public constructor(
 		public readonly forest: IEditableForest,
 		private readonly editor: DefaultEditBuilder,
 	) {

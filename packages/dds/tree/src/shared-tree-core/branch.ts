@@ -146,7 +146,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 		const startCommit = findAncestor([this.head, commits], (c) => c.revision === startRevision);
 		assert(
 			startCommit !== undefined,
-			"Expected branch to be ahead of transaction start revision",
+			0x593 /* Expected branch to be ahead of transaction start revision */,
 		);
 		return [startCommit, commits, repairStore];
 	}
@@ -184,13 +184,16 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 				const changeToForked = forked.pull();
 				assert(
 					forked.getBaseBranch() === this.head,
-					"Expected merging checkout branches to be related",
+					0x594 /* Expected merging checkout branches to be related */,
 				);
 				const commits: GraphCommit<TChange>[] = [];
 				const ancestor = findAncestor([forked.head, commits], (c) => c === this.head);
-				assert(ancestor === this.head, "Expected merging checkout branches to be related");
+				assert(
+					ancestor === this.head,
+					0x595 /* Expected merging checkout branches to be related */,
+				);
 				this.head = forked.head;
-				assert(this.forks.delete(forked), "Invalid checkout merge");
+				assert(this.forks.delete(forked), 0x596 /* Invalid checkout merge */);
 				const change = this.rebaser.changeRebaser.compose(commits);
 				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				this.emit("onChange", change);
@@ -215,7 +218,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 		this.assertNotDisposed();
 		assert(
 			this.transactions.size === 0,
-			"Branch may not be merged while transaction is in progress",
+			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
 		const change = this.mergeIntoBase(this);
 		this.dispose();

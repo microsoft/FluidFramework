@@ -21,6 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [deltaManager property in IConnectableRuntime moved](#deltaManager-property-in-IConnectableRuntime-moved)
 -   [attachGraph and bind methods in IFluidHandle deprecated](#attachGraph-and-bind-methods-in-IFluidHandle-deprecated)
+-   [Some APIs meant only for internal usage are deprecated](#some-apis-meant-only-for-internal-usage-are-deprecated)
 
 ### deltaManager property in IConnectableRuntime moved
 
@@ -29,6 +30,13 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 ### attachGraph and bind methods in IFluidHandle deprecated
 
 `attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
+
+### Some APIs meant only for internal usage are deprecated
+
+`IGarbageCollectionRuntime` in the `@fluidframework/container-runtime` package should not be used outside the FF codebase.
+It has been deprecated and is expected to be removed in the next major release.
+
+`IConnectableRuntime.deltaManager` in the same package is no longer used and deprecated as well.
 
 # 2.0.0-internal.3.0.0
 
@@ -90,7 +98,7 @@ The Container and RelativeLoader classes in `@fluidframework/container-loader` h
 
 ### BlobAggregationStorage and SnapshotExtractor deprecated
 
-The Container and RelativeLoader classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
+The BlobAggregationStorage and SnapshotExtractor classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
 the next major release. These classes were experimental and never widely used. There are no replacements.
 
 ### Summarizer node and related items deprecated
@@ -136,6 +144,8 @@ The following members of the `@fluidframework/aqueduct` package have been deprec
 
 -   `waitForAttach()`
     -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
+-   `BaseContainerService`, `ContainerServiceRegistryEntries`, `generateContainerServicesRequestHandler()`, `serviceRoutePathRoot`, and `PureDataObject.getService()`
+    -   Aqueduct supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
 
 ### IDocumentServiceFactory.protocolName deprecated
 

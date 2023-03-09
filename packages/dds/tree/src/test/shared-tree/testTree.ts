@@ -59,11 +59,11 @@ export interface TestTreeOptions {
  * actual `SharedTree` would be appropriate instead.
  */
 export class TestTree {
-	static fromForest(forest: IEditableForest, options: TestTreeOptions = {}): TestTree {
+	public static fromForest(forest: IEditableForest, options: TestTreeOptions = {}): TestTree {
 		return new TestTree(forest, options);
 	}
 
-	static fromCursor(
+	public static fromCursor(
 		cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
 		options: TestTreeOptions = {},
 	): TestTree {
@@ -74,7 +74,7 @@ export class TestTree {
 		return TestTree.fromForest(forest, options);
 	}
 
-	static fromJson(
+	public static fromJson(
 		json: JsonCompatible[] | JsonCompatible,
 		options: TestTreeOptions = {},
 	): TestTree {
