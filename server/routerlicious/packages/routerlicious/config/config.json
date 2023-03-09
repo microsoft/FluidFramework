@@ -346,7 +346,7 @@
 			}
 		}
 	],
-    "tokenRevocation": {
-        "enable": true
-    }
+	"tokenRevocation": {
+		"enable": true
+	}
 }

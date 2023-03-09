@@ -210,38 +210,38 @@ function checkThrottleAndUsage(
 }
 
 export function configureWebSocketServices(
-    webSocketServer: core.IWebSocketServer,
-    orderManager: core.IOrdererManager,
-    tenantManager: core.ITenantManager,
-    storage: core.IDocumentStorage,
-    clientManager: core.IClientManager,
-    metricLogger: core.IMetricClient,
-    logger: core.ILogger,
-    maxNumberOfClientsPerDocument: number = 1000000,
-    numberOfMessagesPerTrace: number = 100,
-    maxTokenLifetimeSec: number = 60 * 60,
-    isTokenExpiryEnabled: boolean = false,
-    isClientConnectivityCountingEnabled: boolean = false,
-    isSignalUsageCountingEnabled: boolean = false,
-    cache?: core.ICache,
-    connectThrottlerPerTenant?: core.IThrottler,
-    connectThrottlerPerCluster?: core.IThrottler,
-    submitOpThrottler?: core.IThrottler,
-    submitSignalThrottler?: core.IThrottler,
-    throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
-    verifyMaxMessageSize?: boolean,
-    socketTracker?: IWebSocketTracker,
+	webSocketServer: core.IWebSocketServer,
+	orderManager: core.IOrdererManager,
+	tenantManager: core.ITenantManager,
+	storage: core.IDocumentStorage,
+	clientManager: core.IClientManager,
+	metricLogger: core.IMetricClient,
+	logger: core.ILogger,
+	maxNumberOfClientsPerDocument: number = 1000000,
+	numberOfMessagesPerTrace: number = 100,
+	maxTokenLifetimeSec: number = 60 * 60,
+	isTokenExpiryEnabled: boolean = false,
+	isClientConnectivityCountingEnabled: boolean = false,
+	isSignalUsageCountingEnabled: boolean = false,
+	cache?: core.ICache,
+	connectThrottlerPerTenant?: core.IThrottler,
+	connectThrottlerPerCluster?: core.IThrottler,
+	submitOpThrottler?: core.IThrottler,
+	submitSignalThrottler?: core.IThrottler,
+	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+	verifyMaxMessageSize?: boolean,
+	socketTracker?: IWebSocketTracker,
 ) {
-    webSocketServer.on("connection", (socket: core.IWebSocket) => {
-        console.log(`yunho: on socket connection, socketId=${socket.id}`);
-        // Map from client IDs on this connection to the object ID and user info.
-        const connectionsMap = new Map<string, core.IOrdererConnection>();
-        // Map from client IDs to room.
-        const roomMap = new Map<string, IRoom>();
-        // Map from client Ids to scope.
-        const scopeMap = new Map<string, string[]>();
-        // Map from client Ids to connection time.
-        const connectionTimeMap = new Map<string, number>();
+	webSocketServer.on("connection", (socket: core.IWebSocket) => {
+		console.log(`yunho: on socket connection, socketId=${socket.id}`);
+		// Map from client IDs on this connection to the object ID and user info.
+		const connectionsMap = new Map<string, core.IOrdererConnection>();
+		// Map from client IDs to room.
+		const roomMap = new Map<string, IRoom>();
+		// Map from client Ids to scope.
+		const scopeMap = new Map<string, string[]>();
+		// Map from client Ids to connection time.
+		const connectionTimeMap = new Map<string, number>();
 
 		// Timer to check token expiry for this socket connection
 		let expirationTimer: NodeJS.Timer | undefined;
@@ -261,35 +261,37 @@ export function configureWebSocketServices(
 			}
 		}
 
-        function setExpirationTimer(mSecUntilExpiration: number) {
-            clearExpirationTimer();
-            expirationTimer = setTimeout(() => {
-                console.log(`yunho: socket expire timer, socketId=${socket.id}`);
-                socket.disconnect(true);
-            }, mSecUntilExpiration);
-        }
+		function setExpirationTimer(mSecUntilExpiration: number) {
+			clearExpirationTimer();
+			expirationTimer = setTimeout(() => {
+				console.log(`yunho: socket expire timer, socketId=${socket.id}`);
+				socket.disconnect(true);
+			}, mSecUntilExpiration);
+		}
 
-        async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-            console.log(`yunho: on connectDocument, socketId=${socket.id}`);
-            const throttleErrorPerCluster = checkThrottleAndUsage(
-                connectThrottlerPerCluster,
-                getSocketConnectThrottleId("connectDoc"),
-                message.tenantId,
-                logger);
-            if (throttleErrorPerCluster) {
-                return Promise.reject(throttleErrorPerCluster);
-            }
-            const throttleErrorPerTenant = checkThrottleAndUsage(
-                connectThrottlerPerTenant,
-                getSocketConnectThrottleId(message.tenantId),
-                message.tenantId,
-                logger);
-            if (throttleErrorPerTenant) {
-                return Promise.reject(throttleErrorPerTenant);
-            }
-            if (!message.token) {
-                throw new NetworkError(403, "Must provide an authorization token");
-            }
+		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+			console.log(`yunho: on connectDocument, socketId=${socket.id}`);
+			const throttleErrorPerCluster = checkThrottleAndUsage(
+				connectThrottlerPerCluster,
+				getSocketConnectThrottleId("connectDoc"),
+				message.tenantId,
+				logger,
+			);
+			if (throttleErrorPerCluster) {
+				return Promise.reject(throttleErrorPerCluster);
+			}
+			const throttleErrorPerTenant = checkThrottleAndUsage(
+				connectThrottlerPerTenant,
+				getSocketConnectThrottleId(message.tenantId),
+				message.tenantId,
+				logger,
+			);
+			if (throttleErrorPerTenant) {
+				return Promise.reject(throttleErrorPerTenant);
+			}
+			if (!message.token) {
+				throw new NetworkError(403, "Must provide an authorization token");
+			}
 
 			// Validate token signature and claims
 			const token = message.token;
@@ -511,7 +513,7 @@ export function configureWebSocketServices(
 						error,
 					);
 					clearExpirationTimer();
-                    console.log(`yunho: on connectDocument error, socketId=${socket.id}`);
+					console.log(`yunho: on connectDocument error, socketId=${socket.id}`);
 					socket.disconnect(true);
 				});
 
@@ -572,20 +574,21 @@ export function configureWebSocketServices(
 			// back-compat: remove cast to any once new definition of IConnected comes through.
 			(connectedMessage as any).timestamp = connectedTimestamp;
 
-            // Token revocation
-            if (socketTracker && claims.jti) {
-                // TODO: need to call add socket function
-                socketTracker.addSocket(
-                    createCompositeTokenId(message.tenantId, message.id, claims.jti),
-                    socket);
-            }
+			// Token revocation
+			if (socketTracker && claims.jti) {
+				// TODO: need to call add socket function
+				socketTracker.addSocket(
+					createCompositeTokenId(message.tenantId, message.id, claims.jti),
+					socket,
+				);
+			}
 
-            return {
-                connection: connectedMessage,
-                connectVersions,
-                details: messageClient as IClient,
-            };
-        }
+			return {
+				connection: connectedMessage,
+				connectVersions,
+				details: messageClient as IClient,
+			};
+		}
 
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -826,7 +829,7 @@ export function configureWebSocketServices(
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
-            console.log(`yunho: on disconnect, socketId=${socket.id}`);
+			console.log(`yunho: on disconnect, socketId=${socket.id}`);
 			clearExpirationTimer();
 			const removeAndStoreP: Promise<void>[] = [];
 			// Send notification messages for all client IDs in the connection map
@@ -874,10 +877,10 @@ export function configureWebSocketServices(
 				);
 				socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
 			}
-            // Token revocation
-            if (socketTracker) {
-                socketTracker.removeSocket(socket.id);
-            }
+			// Token revocation
+			if (socketTracker) {
+				socketTracker.removeSocket(socket.id);
+			}
 			await Promise.all(removeAndStoreP);
 		});
 	});

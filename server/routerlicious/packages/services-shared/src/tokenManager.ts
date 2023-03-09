@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IWebSocket } from "@fluidframework/server-services-core"
+import { IWebSocket } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-// Track 
+// Track
 export interface IWebSocketTracker {
 	// Add a socket to internal map
 	addSocket(compositeTokenId: string, webSocket: IWebSocket);
@@ -22,7 +22,6 @@ export interface IWebSocketTracker {
 }
 
 export interface IJsonWebTokenManager {
-
 	initialize(): Promise<void>;
 
 	start();
@@ -50,14 +49,15 @@ export class WebSocketTracker implements IWebSocketTracker {
 		if (this.tokenIdToSocketMap.has(compositeTokenId)) {
 			console.log(`yunho: Same tokenId=${compositeTokenId} used for multiple sockets`);
 			this.tokenIdToSocketMap.get(compositeTokenId)?.push(webSocket);
-		}
-		else {
+		} else {
 			this.tokenIdToSocketMap.set(compositeTokenId, [webSocket]);
 		}
 
 		// TODO: remove this statement before merge
 		if (this.socketIdToTokenIdMap.has(webSocket.id)) {
-			console.log(`yunho: SocketId=${webSocket.id} is already mapped to this token=${compositeTokenId}`);
+			console.log(
+				`yunho: SocketId=${webSocket.id} is already mapped to this token=${compositeTokenId}`,
+			);
 		}
 		this.socketIdToTokenIdMap.set(webSocket.id, compositeTokenId);
 	}
@@ -104,12 +104,15 @@ export class WebSocketTracker implements IWebSocketTracker {
 	// }
 }
 
-export function createCompositeTokenId(tenantId: string, documentId: string, jwtId: string): string {
+export function createCompositeTokenId(
+	tenantId: string,
+	documentId: string,
+	jwtId: string,
+): string {
 	return `${tenantId}/${documentId}/${jwtId}`;
 }
 
 export class EmptyImplementationTokenManager implements IJsonWebTokenManager {
-
 	public start() {
 		Lumberjack.info(`start called`);
 	}
@@ -128,7 +131,11 @@ export class EmptyImplementationTokenManager implements IJsonWebTokenManager {
 	}
 
 	// Check if a given token id is revoked
-	public async isTokenRevoked(tenantId: string, documentId: string, jwtId: string): Promise<boolean> {
+	public async isTokenRevoked(
+		tenantId: string,
+		documentId: string,
+		jwtId: string,
+	): Promise<boolean> {
 		Lumberjack.info(`isTokenRevoked called`);
 		return false;
 	}
