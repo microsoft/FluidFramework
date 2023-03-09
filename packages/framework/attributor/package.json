@@ -1,5 +1,5 @@
 {
-	"name": "@fluidframework/attributor",
+	"name": "@fluid-experimental/attributor",
 	"version": "2.0.0-internal.4.0.0",
 	"description": "Operation attributor",
 	"homepage": "https://fluidframework.com",

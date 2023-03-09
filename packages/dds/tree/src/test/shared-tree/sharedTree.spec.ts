@@ -10,7 +10,6 @@ import {
 	getSchemaString,
 	jsonableTreeFromCursor,
 	namedTreeSchema,
-	IDefaultEditBuilder,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
@@ -31,7 +30,6 @@ import {
 	fieldSchema,
 	GlobalFieldKey,
 	SchemaData,
-	IForestSubscription,
 	EditManager,
 } from "../../core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
@@ -236,6 +234,21 @@ describe("SharedTree", () => {
 		assert(t2.editManager.getTrunk().length < 10);
 	});
 
+	it("can process changes while detached", async () => {
+		const onCreate = (t: ISharedTree) => {
+			pushTestValue(t, "B");
+			pushTestValue(t, "A");
+			validateRootField(t, ["A", "B"]);
+		};
+		const provider = await TestTreeProvider.create(
+			1,
+			undefined,
+			new SharedTreeTestFactory(onCreate),
+		);
+		const [tree] = provider.trees;
+		validateRootField(tree, ["A", "B"]);
+	});
+
 	describe("Editing", () => {
 		it("can insert and delete a node in a sequence field", async () => {
 			const value = "42";
@@ -381,10 +394,7 @@ describe("SharedTree", () => {
 			}
 		});
 
-		it("can abandon a transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const [tree1] = provider.trees;
-
+		function abortTransaction(checkout: ISharedTreeCheckout): void {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
@@ -395,8 +405,8 @@ describe("SharedTree", () => {
 					],
 				},
 			};
-			initializeTestTree(tree1, initialState);
-			tree1.runTransaction((forest, editor) => {
+			initializeTestTree(checkout, initialState);
+			checkout.runTransaction((forest, editor) => {
 				const rootField = editor.sequenceField(undefined, rootFieldKeySymbol);
 				const root0Path = {
 					parent: undefined,
@@ -444,7 +454,19 @@ describe("SharedTree", () => {
 				return TransactionResult.Abort;
 			});
 
-			validateTree(tree1, [initialState]);
+			validateTree(checkout, [initialState]);
+		}
+
+		it("can abandon a transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1] = provider.trees;
+			abortTransaction(tree1);
+		});
+
+		it("can abandon a transaction on a branch", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree] = provider.trees;
+			abortTransaction(tree.fork());
 		});
 
 		it("can insert multiple nodes", async () => {
@@ -891,7 +913,7 @@ describe("SharedTree", () => {
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
 			cursor.clear();
-			const checkout = tree.fork();
+			const checkout = baseCheckout.fork();
 			pushTestValue(checkout, "B");
 			checkout.merge();
 			cursor = baseCheckout.forest.allocateCursor();
@@ -946,6 +968,250 @@ describe("SharedTree", () => {
 				() => pushTestValue(checkout, "unused"),
 				(e) => validateAssertionError(e, expectedError),
 			);
+		});
+	});
+
+	describe("Transactions", () => {
+		/** like `pushTestValue`, but does not wrap the operation in a transaction */
+		function pushTestValueDirect(checkout: ISharedTreeCheckout, value: TreeValue): void {
+			const field = checkout.editor.sequenceField(undefined, rootFieldKeySymbol);
+			const nodes = singleTextCursor({ type: brand("Node"), value });
+			field.insert(0, nodes);
+		}
+
+		function describeBasicTransactionTests(
+			title: string,
+			checkoutFactory: () => Promise<ISharedTreeCheckout>,
+		) {
+			describe(title, () => {
+				it("update the tree while open", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, 42);
+					assert.equal(peekTestValue(checkout), 42);
+				});
+
+				it("update the tree after committing", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, 42);
+					checkout.transaction.commit();
+					assert.equal(peekTestValue(checkout), 42);
+				});
+
+				it("revert the tree after aborting", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, 42);
+					checkout.transaction.abort();
+					assert.equal(peekTestValue(checkout), undefined);
+				});
+
+				it("can nest", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "A");
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "B");
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B"]);
+					checkout.transaction.commit();
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B"]);
+					checkout.transaction.commit();
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B"]);
+				});
+
+				it("can span a checkout fork and merge", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					const fork = checkout.fork();
+					pushTestValueDirect(fork, 42);
+					fork.merge();
+					checkout.transaction.commit();
+					assert.equal(peekTestValue(checkout), 42);
+				});
+
+				it("fail if in progress when checkout merges", async () => {
+					const checkout = await checkoutFactory();
+					const fork = checkout.fork();
+					fork.transaction.start();
+					assert.throws(
+						() => fork.merge(),
+						(e) =>
+							validateAssertionError(
+								e,
+								"Branch may not be merged while transaction is in progress",
+							),
+					);
+				});
+
+				it("do not close across forks", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					const fork = checkout.fork();
+					assert.throws(
+						() => fork.transaction.commit(),
+						(e) => validateAssertionError(e, "No transaction is currently in progress"),
+					);
+				});
+
+				it("do not affect pre-existing forks", async () => {
+					const checkout = await checkoutFactory();
+					const fork = checkout.fork();
+					pushTestValueDirect(checkout, "A");
+					fork.transaction.start();
+					pushTestValueDirect(checkout, "B");
+					fork.transaction.abort();
+					pushTestValueDirect(checkout, "C");
+					fork.merge();
+					assert.deepEqual([...getTestValues(checkout)].reverse(), ["A", "B", "C"]);
+				});
+
+				it("can commit over a branch that pulls", async () => {
+					const checkout = await checkoutFactory();
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, 42);
+					const fork = checkout.fork();
+					checkout.transaction.commit();
+					fork.pull();
+					assert.equal(peekTestValue(fork), 42);
+				});
+
+				it("can handle a pull while in progress", async () => {
+					const checkout = await checkoutFactory();
+					const fork = checkout.fork();
+					fork.transaction.start();
+					pushTestValue(checkout, 42);
+					fork.pull();
+					assert.equal(peekTestValue(fork), 42);
+					fork.transaction.commit();
+					assert.equal(peekTestValue(fork), 42);
+				});
+
+				it("update anchors correctly", async () => {
+					const checkout = await checkoutFactory();
+					pushTestValue(checkout, "A");
+					let cursor = checkout.forest.allocateCursor();
+					moveToDetachedField(checkout.forest, cursor);
+					cursor.firstNode();
+					const anchor = cursor.buildAnchor();
+					cursor.clear();
+					pushTestValue(checkout, "B");
+					cursor = checkout.forest.allocateCursor();
+					checkout.forest.tryMoveCursorToNode(anchor, cursor);
+					assert.equal(cursor.value, "A");
+					cursor.clear();
+				});
+
+				it("can handle a complicated scenario", async () => {
+					const checkout = await checkoutFactory();
+					pushTestValueDirect(checkout, "A");
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "B");
+					pushTestValueDirect(checkout, "C");
+					checkout.transaction.start();
+					pushTestValueDirect(checkout, "D");
+					const fork = checkout.fork();
+					pushTestValueDirect(fork, "E");
+					fork.transaction.start();
+					pushTestValueDirect(fork, "F");
+					pushTestValueDirect(checkout, "G");
+					fork.transaction.commit();
+					pushTestValueDirect(fork, "H");
+					fork.transaction.start();
+					pushTestValueDirect(fork, "I");
+					fork.transaction.abort();
+					fork.merge();
+					pushTestValueDirect(checkout, "J");
+					checkout.transaction.start();
+					const fork2 = checkout.fork();
+					pushTestValueDirect(fork2, "K");
+					pushTestValue(fork2, "L");
+					fork2.merge();
+					checkout.transaction.abort();
+					pushTestValueDirect(checkout, "M");
+					checkout.transaction.commit();
+					pushTestValueDirect(checkout, "N");
+					checkout.transaction.commit();
+					pushTestValueDirect(checkout, "O");
+					assert.deepEqual([...getTestValues(checkout)].reverse(), [
+						"A",
+						"B",
+						"C",
+						"D",
+						"G",
+						"E",
+						"F",
+						"H",
+						"J",
+						"M",
+						"N",
+						"O",
+					]);
+				});
+			});
+		}
+
+		describeBasicTransactionTests("on the root checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			return provider.trees[0];
+		});
+
+		describeBasicTransactionTests("on a forked checkout", async () => {
+			const provider = await TestTreeProvider.create(1);
+			return provider.trees[0].fork();
+		});
+
+		it("don't send ops before committing", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			tree1.transaction.start();
+			pushTestValueDirect(tree1, 42);
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 0);
+			tree1.transaction.commit();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 1);
+			assert.deepEqual(peekTestValue(tree2), 42);
+		});
+
+		it("send only one op after committing", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			let opsReceived = 0;
+			tree2.on("op", () => (opsReceived += 1));
+			tree1.transaction.start();
+			pushTestValueDirect(tree1, 42);
+			pushTestValueDirect(tree1, 43);
+			tree1.transaction.commit();
+			await provider.ensureSynchronized();
+			assert.equal(opsReceived, 1);
+			assert.deepEqual([...getTestValues(tree2)].reverse(), [42, 43]);
+		});
+
+		it("process changes while detached", async () => {
+			const onCreate = (t: ISharedTree) => {
+				t.transaction.start();
+				pushTestValueDirect(t, "A");
+				t.transaction.commit();
+				t.transaction.start();
+				pushTestValue(t, "B");
+				t.transaction.commit();
+				const checkout = t.fork();
+				checkout.transaction.start();
+				pushTestValueDirect(checkout, "C");
+				checkout.transaction.commit();
+				checkout.merge();
+				validateRootField(t, ["A", "B", "C"].reverse());
+			};
+			const provider = await TestTreeProvider.create(
+				1,
+				undefined,
+				new SharedTreeTestFactory(onCreate),
+			);
+			const [tree] = provider.trees;
+			validateRootField(tree, ["A", "B", "C"].reverse());
 		});
 	});
 
@@ -1472,7 +1738,7 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: ISharedTree,
+	tree: ISharedTreeCheckout,
 	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
@@ -1501,13 +1767,8 @@ function initializeTestTree(
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
  */
-function pushTestValue(tree: ISharedTreeCheckout, value: TreeValue): void {
-	tree.runTransaction((_: IForestSubscription, editor: IDefaultEditBuilder) => {
-		const writeCursor = singleTextCursor({ type: brand("TestValue"), value });
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
-		return TransactionResult.Apply;
-	});
+function pushTestValue(checkout: ISharedTreeCheckout, value: TreeValue): void {
+	insert(checkout, 0, value);
 }
 
 /**
@@ -1545,12 +1806,12 @@ function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
  *
  * TODO: delete once the JSON editing API is ready for use.
  *
- * @param tree - The tree on which to perform the insert.
+ * @param checkout - The tree on which to perform the insert.
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTreeCheckout, index: number, ...values: string[]): void {
-	tree.runTransaction((forest, editor) => {
+function insert(tree: ISharedTreeCheckout, index: number, ...values: TreeValue[]): void {
+	tree.runTransaction((_, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
 		field.insert(index, nodes);
