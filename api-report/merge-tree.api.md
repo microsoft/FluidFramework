@@ -189,6 +189,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLogger;
     // (undocumented)
     longClientId: string | undefined;
+    // @alpha
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg | undefined;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;

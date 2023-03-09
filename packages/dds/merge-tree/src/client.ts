@@ -248,6 +248,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 *
 	 * @param start - The inclusive start of the range to obliterate
 	 * @param end - The exclusive end of the range to obliterate
+	 *
+	 * @alpha
 	 */
 	public obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg | undefined {
 		const obliterateOp = createObliterateRangeOp(start, end);

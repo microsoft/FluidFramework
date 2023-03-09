@@ -656,12 +656,8 @@ class PassManager {
 	}
 
 	applyTwoRandomlySingle() {
-		const op1 = this.operations[
-			PassManager.randInt(this.operations.length)
-		] as any as Operation;
-		const op2 = this.operations[
-			PassManager.randInt(this.operations.length)
-		] as any as Operation;
+		const op1 = this.operations[PassManager.randInt(this.operations.length)];
+		const op2 = this.operations[PassManager.randInt(this.operations.length)];
 
 		if (op1 === op2) {
 			this.applyTwoRandomlySingle();
@@ -687,15 +683,9 @@ class PassManager {
 			return;
 		}
 
-		const op1 = this.operations[
-			PassManager.randInt(this.operations.length)
-		] as any as Operation;
-		const op2 = this.operations[
-			PassManager.randInt(this.operations.length)
-		] as any as Operation;
-		const op3 = this.operations[
-			PassManager.randInt(this.operations.length)
-		] as any as Operation;
+		const op1 = this.operations[PassManager.randInt(this.operations.length)];
+		const op2 = this.operations[PassManager.randInt(this.operations.length)];
+		const op3 = this.operations[PassManager.randInt(this.operations.length)];
 
 		if (op1 === op2 || op1 === op3 || op2 === op3) {
 			this.applyThreeRandomlySingle();

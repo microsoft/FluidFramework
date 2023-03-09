@@ -136,22 +136,23 @@ export interface IMoveInfo {
 	 */
 	localMovedSeq?: number;
 	/**
-	 * Seq at which this segment was moved. Only set on the tombstone "source"
-	 * segment of the move.
+	 * The first seq at which this segment was moved. Only set on the tombstone
+	 * "source" segment of the move.
 	 */
 	movedSeq: number;
-
 	/**
-	 * All seqs at which this segment was moved. Contains multiple seqs in the
-	 * case of overlapping, concurrent moves
+	 * All seqs at which this segment was moved. In the case of overlapping,
+	 * concurrent moves this array will contain multiple seqs.
 	 *
-	 * movedSeqs[i] corresponds to movedClientIds[i]
+	 * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
 	 */
 	movedSeqs: number[];
 	/**
 	 * A reference to the inserted destination segment corresponding to this
 	 * segment's move.
 	 * If undefined, the move was an obliterate.
+	 *
+	 * Currently this field is unused, as we only support obliterate operations
 	 */
 	moveDst?: ReferencePosition;
 	/**
@@ -160,15 +161,14 @@ export interface IMoveInfo {
 	 * client in this list. Other clients in the list have all issued concurrent ops to move the segment.
 	 */
 	movedClientIds: number[];
-
 	/**
-	 * If this segment was inserted into a concurrently obliterated range and
-	 * the obliterate op was sequenced before the insertion op. In this case,
+	 * If this segment was inserted into a concurrently moved range and
+	 * the move op was sequenced before the insertion op. In this case,
 	 * the segment is visible only to the inserting client
 	 *
 	 * `wasMovedOnInsert` only applies for acked obliterates. That is, if
-	 * a segment inserted by a remote client is obliterated on insertion by a local
-	 * and unacked obliterate, we do not consider it as having been obliterated
+	 * a segment inserted by a remote client is moved on insertion by a local
+	 * and unacked obliterate, we do not consider it as having been moved
 	 * on insert
 	 */
 	wasMovedOnInsert: boolean;
