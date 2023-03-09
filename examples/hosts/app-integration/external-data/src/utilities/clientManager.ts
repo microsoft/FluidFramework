@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// import fetch from "node-fetch";
-
 /**
  * Represents a Fluid client URL.
  * This URL contains the client's Fluid session information necessary for broadcasting signals to.
@@ -26,33 +24,19 @@ export type ExternalTaskListId = string;
  */
 export class ClientManager<TData = unknown> {
 	/**
-	 * Map of active external query id to client session.
-	 * Values are the URLs that will be notified of changes.
+	 * Map of active external resource id to client sessions.
+	 * Values are the set of Fluid Container URLs that will be notified of changes.
 	 */
 	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientSessionUrl>>;
 	/**
-	 * Map of active clients to external query id.
-	 * Values are the URLs that will be notified of changes.
+	 * Map of active clients to external resource id.
+	 * Values are the set of external resource id's that the client has active and is registered to listen for.
 	 */
 	private readonly _clientMapping: Map<ClientSessionUrl, Set<ExternalTaskListId>>;
 
 	public constructor() {
 		this._clientMapping = new Map<ClientSessionUrl, Set<ExternalTaskListId>>();
 		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionUrl>>();
-	}
-
-	/**
-	 * Gets the current list of client session URLs.
-	 */
-	public get clients(): readonly ClientSessionUrl[] {
-		return [...this._clientMapping.keys()];
-	}
-
-	/**
-	 * Gets the current list external resource ids registered to client session URLs.
-	 */
-	public get taskLists(): readonly ExternalTaskListId[] {
-		return [...this._taskListMapping.keys()];
 	}
 
 	/**
