@@ -40,13 +40,11 @@ import {
 	getMean,
 	timer,
 	uTable,
-	processObject,
 	calledBy,
 	divisors,
 	counter,
 	defaultOptions,
-	getRes,
-	createCompiled,
+	clock,
 } from "./benchmark";
 
 /* -------------------------------------------------------------------------- */
@@ -674,63 +672,6 @@ class Benchmark {
 	}
 }
 
-class Deferred {
-	/**
-	 * @param {Object} clone - The cloned benchmark instance.
-	 */
-	constructor(clone) {
-		this.benchmark = clone;
-		clock(this);
-	}
-
-	/**
-	 * Handles cycling/completing the deferred benchmark.
-	 */
-	resolve() {
-		const deferred = this;
-		const clone = deferred.benchmark;
-		const bench = clone._original;
-
-		if (bench.aborted) {
-			// cycle() -> clone cycle/complete event -> compute()'s invoked bench.run() cycle/complete.
-			deferred.teardown();
-			clone.running = false;
-			cycle(deferred);
-		} else if (++deferred.cycles < clone.count) {
-			clone.compiled.call(deferred, globalThis, timer);
-		} else {
-			timer.stop(deferred);
-			deferred.teardown();
-			delay(clone, () => {
-				cycle(deferred);
-			});
-		}
-	}
-
-	/**
-	 * The deferred benchmark instance.
-	 * @type Object
-	 */
-	benchmark = null;
-
-	/**
-	 * The number of deferred cycles performed while benchmarking.
-	 * @type number
-	 */
-	cycles = 0;
-
-	/**
-	 * The time taken to complete the deferred benchmark (secs).
-	 * @type number
-	 */
-	elapsed = 0;
-
-	/**
-	 * @type number
-	 */
-	timeStamp = 0;
-}
-
 /* ------------------------------------------------------------------------ */
 
 /**
@@ -889,137 +830,6 @@ function invoke(benches, name) {
 	}
 	return result;
 }
-
-/* ------------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * Clocks the time taken to execute a test per cycle (secs).
- *
- * @private
- * @param {Object} bench - The benchmark instance.
- * @returns {number} The time taken.
- */
-function clock() {
-	const options = defaultOptions;
-	const templateData = {};
-	const timers = [{ ns: timer.ns, res: max(0.0015, getRes("ms")), unit: "ms" }];
-
-	// Lazy define for hi-res timers.
-	clock = function (clone) {
-		let deferred;
-
-		if (clone instanceof Deferred) {
-			deferred = clone;
-			clone = deferred.benchmark;
-		}
-		const bench = clone._original;
-		const count = (bench.count = clone.count);
-		const id = bench.id;
-		const name = bench.name || (typeof id == "number" ? `<Test #${id}>` : id);
-		let result = 0;
-
-		// Init `minTime` if needed.
-		clone.minTime = bench.minTime || (bench.minTime = bench.options.minTime = options.minTime);
-
-		// Compile in setup/teardown functions and the test loop.
-		// Create a new compiled test, instead of using the cached `bench.compiled`,
-		// to avoid potential engine optimizations enabled over the life of the test.
-		let funcBody = deferred
-			? "var d#=this,${fnArg}=d#,m#=d#.benchmark._original,f#=m#.fn,su#=m#.setup,td#=m#.teardown;" +
-			  // When `deferred.cycles` is `0` then...
-			  "if(!d#.cycles){" +
-			  // set `deferred.fn`,
-			  'd#.fn=function(){var ${fnArg}=d#;if(typeof f#=="function"){try{${fn}\n}catch(e#){f#(d#)}}else{${fn}\n}};' +
-			  // set `deferred.teardown`,
-			  'd#.teardown=function(){d#.cycles=0;if(typeof td#=="function"){try{${teardown}\n}catch(e#){td#()}}else{${teardown}\n}};' +
-			  // execute the benchmark's `setup`,
-			  'if(typeof su#=="function"){try{${setup}\n}catch(e#){su#()}}else{${setup}\n};' +
-			  // start timer,
-			  "t#.start(d#);" +
-			  // and then execute `deferred.fn` and return a dummy object.
-			  '}d#.fn();return{uid:"${uid}"}'
-			: "var r#,s#,m#=this,f#=m#.fn,i#=m#.count,n#=t#.ns;${setup}\n${begin};" +
-			  'while(i#--){${fn}\n}${end};${teardown}\nreturn{elapsed:r#,uid:"${uid}"}';
-
-		let compiled =
-			(bench.compiled =
-			clone.compiled =
-				createCompiled(bench, deferred, funcBody));
-		const isEmpty = !templateData.fn;
-
-		if (!deferred) {
-			funcBody =
-				`var r#,s#,m#=this,f#=m#.fn,i#=m#.count,n#=t#.ns;\${setup}\n\${begin};m#.f#=f#;while(i#--){m#.f#()}\${end};` +
-				`delete m#.f#;\${teardown}\nreturn{elapsed:r#}`;
-
-			compiled = createCompiled(bench, deferred, funcBody);
-
-			try {
-				// Pretest one more time to check for errors.
-				bench.count = 1;
-				compiled.call(bench, globalThis, timer);
-				bench.count = count;
-				delete clone.error;
-			} catch (e) {
-				bench.count = count;
-				if (!clone.error) {
-					clone.error = e || new Error(String(e));
-				}
-			}
-		}
-		// If no errors run the full test loop.
-		if (!clone.error) {
-			compiled = bench.compiled = clone.compiled = createCompiled(bench, deferred, funcBody);
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-			result = compiled.call(deferred || bench, globalThis, timer).elapsed;
-		}
-		return result;
-	};
-
-	/* ---------------------------------------------------------------------- */
-
-	/**
-	 * Interpolates a given template string.
-	 */
-	function interpolate(string) {
-		// Replaces all occurrences of `#` with a unique number and template tokens with content.
-		return _.template(string.replace(/#/g, /\d+/.exec(templateData.uid)))(templateData);
-	}
-
-	/* ---------------------------------------------------------------------- */
-
-	// Detect Chrome's microsecond timer:
-	// enable benchmarking via the --enable-benchmarking command
-	// line switch in at least Chrome 7 to use chrome.Interval
-	try {
-		// eslint-disable-next-line no-constant-condition
-		if ((timer.ns = new (globalThis.chrome ?? globalThis.chromium).Interval())) {
-			timers.push({ ns: timer.ns, res: getRes("us"), unit: "us" });
-		}
-	} catch (e) {}
-
-	// Detect Node.js's nanosecond resolution timer available in Node.js >= 0.8.
-	if (processObject && typeof (timer.ns = processObject.hrtime) == "function") {
-		timers.push({ ns: timer.ns, res: getRes("ns"), unit: "ns" });
-	}
-	// Pick timer with highest resolution.
-	timer = _.minBy(timers, "res");
-
-	// Error if there are no working timers.
-	if (timer.res === Infinity) {
-		throw new Error("Benchmark.js was unable to find a working timer.");
-	}
-	// Resolve time span required to achieve a percent uncertainty of at most 1%.
-	// For more information see http://spiff.rit.edu/classes/phys273/uncert/uncert.html.
-	if (!options.minTime) {
-		options.minTime = max(timer.res / 2 / 0.01, 0.05);
-	}
-	return clock.apply(null, arguments);
-}
-
-/* ------------------------------------------------------------------------ */
 
 /**
  * Computes stats on benchmark results.
