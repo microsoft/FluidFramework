@@ -9,7 +9,10 @@ import {
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
 
-import { initializeFluidClientDebugger as initializeFluidClientDebuggerBase } from "@fluid-tools/client-debugger";
+import {
+	FluidDebuggerLogger,
+	initializeFluidClientDebugger as initializeFluidClientDebuggerBase,
+} from "@fluid-tools/client-debugger";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -45,7 +48,9 @@ export interface ContainerInfo {
 
 function initializeTinyliciousClient(): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
-	return new TinyliciousClient();
+	return new TinyliciousClient({
+		logger: FluidDebuggerLogger.create(),
+	});
 }
 
 /**
