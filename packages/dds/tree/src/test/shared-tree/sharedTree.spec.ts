@@ -687,6 +687,42 @@ describe("SharedTree", () => {
 			};
 			assert(compareUpPaths(childPath, expected));
 		});
+
+		it("Anchors created in a branch are accessible and up to date once the branch is merged", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const tree = provider.trees[0];
+
+			const initialState: JsonableTree = { type: brand("Node"), value: "bar" };
+			initializeTestTree(tree, initialState);
+
+			// On a branch, insert node "baz" and get an anchor to it
+			const branch = tree.fork();
+			branch.editor
+				.sequenceField(undefined, rootFieldKeySymbol)
+				.insert(1, singleTextCursor({ type: brand("Node"), value: "baz" }));
+
+			const cursor = branch.forest.allocateCursor();
+			moveToDetachedField(branch.forest, cursor);
+			cursor.enterNode(1);
+			const baz = cursor.buildAnchor();
+			cursor.free();
+
+			// Concurrently add an extra node "foo" at the start of the sequence
+			tree.editor
+				.sequenceField(undefined, rootFieldKeySymbol)
+				.insert(0, singleTextCursor({ type: brand("Node"), value: "foo" }));
+
+			// This should pull the insertion of "foo" into the branch, updating the anchor for baz
+			branch.merge();
+
+			const childPath = branch.locate(baz);
+			const expected: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 2,
+			};
+			assert(compareUpPaths(childPath, expected));
+		});
 	});
 
 	describe("Checkouts", () => {
