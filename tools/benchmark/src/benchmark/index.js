@@ -38,13 +38,11 @@ import {
 	cloneDeep,
 	delay,
 	getMean,
-	timer,
 	uTable,
 	calledBy,
-	divisors,
 	counter,
 	defaultOptions,
-	clock,
+	cycle,
 } from "./benchmark";
 
 /* -------------------------------------------------------------------------- */
@@ -987,104 +985,6 @@ function compute(bench, options) {
 			bench.emit("complete");
 		},
 	});
-}
-
-/* ------------------------------------------------------------------------ */
-
-/**
- * Cycles a benchmark until a run `count` can be established.
- *
- * @private
- * @param {Object} clone - The cloned benchmark instance.
- * @param {Object} options - The options object.
- */
-function cycle(clone, options) {
-	options ??= {};
-
-	let deferred;
-	if (clone instanceof Deferred) {
-		deferred = clone;
-		clone = clone.benchmark;
-	}
-	let clocked;
-	let cycles;
-	let divisor;
-	let event;
-	let minTime;
-	let period;
-	const async = options.async;
-	const bench = clone._original;
-	let count = clone.count;
-	const times = clone.times;
-
-	// Continue, if not aborted between cycles.
-	if (clone.running) {
-		// `minTime` is set to `defaultOptions.minTime` in `clock()`.
-		cycles = ++clone.cycles;
-		clocked = deferred ? deferred.elapsed : clock(clone);
-		minTime = clone.minTime;
-
-		if (cycles > bench.cycles) {
-			bench.cycles = cycles;
-		}
-		if (clone.error) {
-			event = new Event("error");
-			event.message = clone.error;
-			clone.emit(event);
-			if (!event.cancelled) {
-				clone.abort();
-			}
-		}
-	}
-	// Continue, if not errored.
-	if (clone.running) {
-		// Compute the time taken to complete last test cycle.
-		bench.times.cycle = times.cycle = clocked;
-		// Compute the seconds per operation.
-		period = bench.times.period = times.period = clocked / count;
-		// Compute the ops per second.
-		bench.hz = clone.hz = 1 / period;
-		// Avoid working our way up to this next time.
-		bench.initCount = clone.initCount = count;
-		// Do we need to do another cycle?
-		clone.running = clocked < minTime;
-
-		if (clone.running) {
-			// Tests may clock at `0` when `initCount` is a small number,
-			// to avoid that we set its count to something a bit higher.
-			if (!clocked && (divisor = divisors[clone.cycles]) != null) {
-				count = floor(4e6 / divisor);
-			}
-			// Calculate how many more iterations it will take to achieve the `minTime`.
-			if (count <= clone.count) {
-				count += Math.ceil((minTime - clocked) / period);
-			}
-			clone.running = count !== Infinity;
-		}
-	}
-	// Should we exit early?
-	event = new Event("cycle");
-	clone.emit(event);
-	if (event.aborted) {
-		clone.abort();
-	}
-	// Figure out what to do next.
-	if (clone.running) {
-		// Start a new cycle.
-		clone.count = count;
-		if (deferred) {
-			clone.compiled.call(deferred, globalThis, timer);
-		} else if (async) {
-			delay(clone, () => {
-				cycle(clone, options);
-			});
-		} else {
-			cycle(clone);
-		}
-	} else {
-		// We're done.
-		clone.emit("complete");
-	}
 }
 
 // eslint-disable-next-line import/no-default-export

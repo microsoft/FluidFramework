@@ -1154,6 +1154,14 @@ export function isHostType(object: any, property: string): boolean {
 
 /* ------------------------------------------------------------------------ */
 
+interface InvokeThing {
+	name: "run";
+	args: { async: boolean };
+	queued: true;
+	onCycle: (event: Event) => void;
+	onComplete: () => void;
+}
+
 /**
  * Invokes a method on all items in an array.
  *
@@ -1188,7 +1196,7 @@ export function isHostType(object: any, property: string): boolean {
  *   'onComplete': onComplete
  * });
  */
-function invoke(benches: Benchmark[], name: object | string): any[] {
+export function invoke(benches: Benchmark[], name: InvokeThing): any[] {
 	let args;
 	let bench: Benchmark;
 	let index = -1;
@@ -1264,12 +1272,12 @@ function invoke(benches: Benchmark[], name: object | string): any[] {
 	/**
 	 * Checks if invoking `Benchmark#run` with asynchronous cycles.
 	 */
-	function isAsync(object) {
+	function isAsync(object: Benchmark) {
 		// Avoid using `instanceof` here because of IE memory leak issues with host objects.
 		const async = args[0] && args[0].async;
 		return (
-			name === "run" &&
-			object instanceof Benchmark &&
+			(name as any) === "run" &&
+			// object instanceof Benchmark &&
 			((async == null ? object.options.async : async) || object.defer)
 		);
 	}
@@ -1568,7 +1576,7 @@ export function compute(bench: Benchmark, options: Options) {
 	enqueue();
 	invoke(queue, {
 		name: "run",
-		args: { async },
+		args: { async: async === true },
 		queued: true,
 		onCycle: evaluate,
 		onComplete() {
