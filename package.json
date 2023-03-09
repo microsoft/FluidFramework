@@ -124,8 +124,8 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-135362",
-		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluid-tools/build-cli": "^0.12.0",
+		"@fluidframework/build-tools": "^0.12.0",
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.17.9",
 		"@microsoft/api-extractor": "^7.22.2",
@@ -149,6 +149,12 @@
 	"packageManager": "pnpm@7.27.0",
 	"pnpm": {
 		"overrides": {
+			"@fluidframework/gitresources": "0.1038.2000",
+			"@fluidframework/protocol-base": "0.1038.2000",
+			"@fluidframework/server-local-server": "0.1038.2000",
+			"@fluidframework/server-services-client": "0.1038.2000",
+			"@fluidframework/server-services-core": "0.1038.2000",
+			"@fluidframework/server-test-utils": "0.1038.2000",
 			"@types/node": "^14.18.36",
 			"node-fetch": "^2.6.9"
 		},

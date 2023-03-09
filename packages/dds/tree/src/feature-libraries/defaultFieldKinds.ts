@@ -82,7 +82,7 @@ export class UnitEncoder extends ChangeEncoder<0> {
 		return 0;
 	}
 
-	public encodeBinary(formatVersion: number, change: 0): IsoBuffer {
+	public override encodeBinary(formatVersion: number, change: 0): IsoBuffer {
 		return IsoBuffer.from("");
 	}
 
@@ -90,7 +90,7 @@ export class UnitEncoder extends ChangeEncoder<0> {
 		return 0;
 	}
 
-	public decodeBinary(formatVersion: number, change: IsoBuffer): 0 {
+	public override decodeBinary(formatVersion: number, change: IsoBuffer): 0 {
 		return 0;
 	}
 }
