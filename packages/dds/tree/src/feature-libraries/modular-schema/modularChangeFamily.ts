@@ -136,7 +136,7 @@ export class ModularChangeFamily
 				revInfos.push(...change.revisions);
 			} else if (taggedChange.revision !== undefined) {
 				const info: Mutable<RevisionInfo> = { tag: taggedChange.revision };
-				if (taggedChange.isRollback) {
+				if (taggedChange.isRollback === true) {
 					info.isRollback = true;
 				}
 				revInfos.push(info);
