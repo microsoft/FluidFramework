@@ -53,7 +53,6 @@ describe("`benchmark` function", () => {
 			minSamples: 1,
 			minTime: 0,
 			defer: false,
-			name: "do a benchmark",
 			fn: () => {
 				// This is a benchmark.
 			},
@@ -69,7 +68,6 @@ describe("`benchmark` function", () => {
 			minSamples: 1,
 			minTime: 0,
 			defer: true,
-			name: "do a benchmark async",
 			fn: async (deferred: { resolve: Mocha.Done }) => {
 				// We have to do a little translation because the Benchmark library expects callback-based
 				// asynchronicity.

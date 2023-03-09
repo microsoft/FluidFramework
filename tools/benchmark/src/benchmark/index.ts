@@ -51,11 +51,7 @@ export interface Options {
 	 * The delay between test cycles (secs).
 	 */
 	delay?: number | undefined;
-	/**
-	 * Displayed by `Benchmark#toString` when a `name` is not available
-	 * (auto-generated if absent).
-	 */
-	id?: string | undefined;
+
 	/**
 	 * The default number of times to execute a test on a benchmark's first cycle.
 	 */
@@ -76,11 +72,6 @@ export interface Options {
 	 * The time needed to reduce the percent uncertainty of measurement to 1% (secs).
 	 */
 	minTime?: number | undefined;
-
-	/**
-	 * The name of the benchmark.
-	 */
-	name?: string | undefined;
 
 	/**
 	 * An event listener called when the benchmark is aborted.
@@ -161,9 +152,6 @@ export interface Result {
 
 // 	compute(bench, options);
 // }
-
-/** Used to assign each benchmark an incremented id. */
-let counter = 0;
 
 /** Used to detect primitive types. */
 const rePrimitive = /^(?:boolean|number|string|undefined)$/;
@@ -557,7 +545,6 @@ export class Benchmark {
 	};
 
 	options: Options;
-	id: number;
 
 	_timerId: any;
 	delay: any;
@@ -570,19 +557,6 @@ export class Benchmark {
 	minSamples: any;
 	maxTime!: number;
 
-	/**
-	 * The Benchmark constructor.
-	 * @example
-	 *
-	 * var bench = new Benchmark({
-	 *
-	 *   // benchmark name
-	 *   'name': 'foo',
-	 *
-	 *   // benchmark test as a string
-	 *   'fn': '[1,2,3,4].sort()'
-	 * });
-	 */
 	constructor(options: Options) {
 		this.options = {
 			...defaultOptions,
@@ -602,7 +576,6 @@ export class Benchmark {
 			}
 		});
 
-		this.id ??= ++counter;
 		this.stats = cloneDeep(this.stats) as Stats;
 		this.times = { ...this.times };
 	}
@@ -803,13 +776,8 @@ export class Benchmark {
 	/**
 	 * Creates a new benchmark using the same test and options.
 	 *
-	 * @param {Object} options - Options object to overwrite cloned options.
-	 * @returns {Object} The new benchmark instance.
-	 * @example
-	 *
-	 * var bizarro = bench.clone({
-	 *   'name': 'doppelganger'
-	 * });
+	 * @param options - Options object to overwrite cloned options.
+	 * @returns The new benchmark instance.
 	 */
 	clone(options?: Options): Benchmark {
 		const result = new Benchmark({ ...this, ...options });
@@ -1150,7 +1118,6 @@ function isHostType(object: any, property: string): boolean {
 }
 
 interface InvokeOptions {
-	name: "run";
 	args: { async: boolean };
 	queued: true;
 	onCycle: (event: Event) => void;
@@ -1163,33 +1130,9 @@ interface InvokeOptions {
  * @static
  * @memberOf Benchmark
  * @param {Array} benches - Array of benchmarks to iterate over.
- * @param {Object|string} name - The name of the method to invoke OR options object.
+ * @param options2 - options object.
  * @param {...*} [args] - Arguments to invoke the method with.
  * @returns {Array} A new array of values returned from each method invoked.
- * @example
- *
- *
- * // invoke `run(true)`, treat benchmarks as a queue, and register invoke callbacks
- * Benchmark.invoke(benches, {
- *
- *   // invoke the `run` method
- *   'name': 'run',
- *
- *   // pass a single argument
- *   'args': true,
- *
- *   // treat as queue, removing benchmarks from front of `benches` until empty
- *   'queued': true,
- *
- *   // called before any benchmarks have been invoked.
- *   'onStart': onStart,
- *
- *   // called between invoking benchmarks
- *   'onCycle': onCycle,
- *
- *   // called after all benchmarks have been invoked.
- *   'onComplete': onComplete
- * });
  */
 function invoke(benches: Benchmark[], options2: InvokeOptions): any[] {
 	let args;
@@ -1555,7 +1498,6 @@ function compute(bench: Benchmark, options: Options) {
 	// Init queue and begin.
 	enqueue();
 	invoke(queue, {
-		name: "run",
 		args: { async: async === true },
 		queued: true,
 		onCycle: evaluate,

@@ -150,7 +150,6 @@ export function benchmark(args: BenchmarkArguments): Test {
 				minSamples: options.minSampleCount,
 				minTime: options.minSampleDurationSeconds,
 				defer: isAsync,
-				name: args.title,
 				fn: benchmarkFunction,
 			};
 
