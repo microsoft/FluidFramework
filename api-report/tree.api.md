@@ -373,13 +373,13 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @alpha (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
-    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionHelper: RevisionHelper): TChangeset;
+    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionHelper: RevisionHelper): TChangeset;
-    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionHelper: RevisionHelper): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionHelper: RevisionHelper): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -1026,14 +1026,6 @@ export interface RepairDataStore<TTree = Delta.ProtoNode, TRevisionTag = unknown
 // @alpha
 export const replaceField: unique symbol;
 
-// @alpha (undocumented)
-export interface RevisionHelper {
-    // (undocumented)
-    readonly getIndex: RevisionIndexer;
-    // (undocumented)
-    readonly getInfo: (tag: RevisionTag) => RevisionInfo;
-}
-
 // @alpha
 export type RevisionIndexer = (tag: RevisionTag) => number;
 
@@ -1042,6 +1034,14 @@ export interface RevisionInfo {
     readonly isRollback?: boolean;
     // (undocumented)
     readonly tag: RevisionTag;
+}
+
+// @alpha (undocumented)
+export interface RevisionMetadataSource {
+    // (undocumented)
+    readonly getIndex: RevisionIndexer;
+    // (undocumented)
+    readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
 // Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @alpha, but its signature references "StableId" which is marked as @internal
@@ -1158,7 +1158,6 @@ export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol;
 export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
-    readonly isInverse?: boolean;
     readonly isRollback?: boolean;
     // (undocumented)
     readonly revision: RevisionTag | undefined;

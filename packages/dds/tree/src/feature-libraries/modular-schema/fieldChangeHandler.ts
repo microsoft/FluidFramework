@@ -40,7 +40,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionHelper: RevisionHelper,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -51,7 +51,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionHelper: RevisionHelper,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -87,7 +87,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionHelper: RevisionHelper,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -98,7 +98,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		over: TaggedChange<TChangeset>,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionHelper: RevisionHelper,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 }
 
@@ -272,7 +272,7 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 /**
  * @alpha
  */
-export interface RevisionHelper {
+export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
 	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }

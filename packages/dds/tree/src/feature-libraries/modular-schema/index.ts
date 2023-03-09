@@ -37,7 +37,7 @@ export {
 	NodeChangeset,
 	NodeReviver,
 	referenceFreeFieldChangeRebaser,
-	RevisionHelper,
+	RevisionMetadataSource,
 	RevisionIndexer,
 	RevisionInfo,
 	ToDelta,

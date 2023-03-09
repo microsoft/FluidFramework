@@ -348,6 +348,7 @@ export class EditManager<
 			}
 			const inverse = this.changeFamily.rebaser.invert(
 				tagChange(change, revision),
+				false,
 				repairStore,
 			);
 			yield this.changeFamily.intoDelta(inverse);

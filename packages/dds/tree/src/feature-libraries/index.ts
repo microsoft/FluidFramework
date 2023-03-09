@@ -101,7 +101,7 @@ export {
 	genericFieldKind,
 	NodeReviver,
 	RevisionIndexer,
-	RevisionHelper,
+	RevisionMetadataSource,
 	RevisionInfo,
 } from "./modular-schema";
 

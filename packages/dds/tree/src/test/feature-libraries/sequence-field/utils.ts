@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	ChangesetLocalId,
 	IdAllocator,
-	RevisionHelper,
+	RevisionMetadataSource,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
@@ -60,7 +60,7 @@ const integerRevisionIndexer = (tag: RevisionTag): number => {
 	return tag;
 };
 
-const defaultRevisionHelper: RevisionHelper = {
+const defaultRevisionMetadata: RevisionMetadataSource = {
 	getIndex: integerRevisionIndexer,
 	getInfo: (tag: RevisionTag) => ({ tag }),
 };
@@ -71,7 +71,13 @@ function composeI<T>(
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(changes, composer, idAllocator, moveEffects, defaultRevisionHelper);
+	const composed = SF.compose(
+		changes,
+		composer,
+		idAllocator,
+		moveEffects,
+		defaultRevisionMetadata,
+	);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
@@ -84,7 +90,7 @@ function composeI<T>(
 export function rebase(
 	change: TestChangeset,
 	base: TaggedChange<TestChangeset>,
-	revisionHelper?: RevisionHelper,
+	revisionMetadata?: RevisionMetadataSource,
 ): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
@@ -99,7 +105,7 @@ export function rebase(
 			base,
 			idAllocator,
 			moveEffects,
-			revisionHelper ?? defaultRevisionHelper,
+			revisionMetadata ?? defaultRevisionMetadata,
 		);
 		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}

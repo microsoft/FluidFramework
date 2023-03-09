@@ -10,7 +10,7 @@ import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
-	RevisionHelper,
+	RevisionMetadataSource,
 } from "../modular-schema";
 import {
 	Changeset,
@@ -68,7 +68,7 @@ export function compose<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
-	revisionHelper: RevisionHelper,
+	revisionMetadata: RevisionMetadataSource,
 ): Changeset<TNodeChange> {
 	let composed: Changeset<TNodeChange> = [];
 	for (const change of changes) {
@@ -79,7 +79,7 @@ export function compose<TNodeChange>(
 			composeChild,
 			genId,
 			manager as MoveEffectTable<TNodeChange>,
-			revisionHelper,
+			revisionMetadata,
 		);
 	}
 	return composed;
@@ -92,7 +92,7 @@ function composeMarkLists<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
-	revisionHelper: RevisionHelper,
+	revisionMetadata: RevisionMetadataSource,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 	const queue = new ComposeQueue(
@@ -102,7 +102,7 @@ function composeMarkLists<TNodeChange>(
 		newMarkList,
 		genId,
 		moveEffects,
-		revisionHelper,
+		revisionMetadata,
 		(a, b) => composeChildChanges(a, b, newRev, composeChild),
 	);
 	while (!queue.isEmpty()) {
@@ -588,11 +588,11 @@ export class ComposeQueue<T> {
 		newMarks: Changeset<T>,
 		genId: IdAllocator,
 		private readonly moveEffects: MoveEffectTable<T>,
-		private readonly revisionHelper: RevisionHelper,
+		private readonly revisionMetadata: RevisionMetadataSource,
 		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
 	) {
-		this.baseIndex = new IndexTracker(revisionHelper.getIndex);
-		this.baseGap = new GapTracker(revisionHelper.getIndex);
+		this.baseIndex = new IndexTracker(revisionMetadata.getIndex);
+		this.baseGap = new GapTracker(revisionMetadata.getIndex);
 		this.baseMarks = new MarkQueue(
 			baseMarks,
 			baseRevision,
@@ -789,7 +789,7 @@ export class ComposeQueue<T> {
 			} else if (
 				isDeleteMark(baseMark) &&
 				baseMark.revision !== undefined &&
-				this.revisionHelper.getInfo(baseMark.revision).isRollback
+				this.revisionMetadata.getInfo(baseMark.revision).isRollback
 			) {
 				// The base mark represents an insert being rolled back.
 				// That insert was concurrent to and sequenced after the attach performed by newNark so

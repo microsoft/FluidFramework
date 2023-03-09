@@ -31,7 +31,7 @@ import {
 	FieldKey,
 	UpPath,
 	mintRevisionTag,
-	tagInverse,
+	tagRollbackInverse,
 } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { assertDeltaEqual, deepFreeze } from "../../utils";
@@ -900,7 +900,7 @@ describe("ModularChangeFamily", () => {
 		};
 		const composed = dummyFamily.compose([
 			makeAnonChange(changeA),
-			tagInverse(changeB, rev3, true),
+			tagRollbackInverse(changeB, rev3),
 			makeAnonChange(changeC),
 		]);
 		assert.deepEqual(composed.revisions, [

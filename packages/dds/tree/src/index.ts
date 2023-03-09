@@ -165,7 +165,7 @@ export {
 	CrossFieldManager,
 	CrossFieldTarget,
 	RevisionIndexer,
-	RevisionHelper,
+	RevisionMetadataSource,
 	RevisionInfo,
 	FieldKind,
 	Multiplicity,
