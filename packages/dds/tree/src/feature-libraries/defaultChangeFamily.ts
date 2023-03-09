@@ -46,19 +46,19 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		this.modularFamily = new ModularChangeFamily(defaultFieldKinds);
 	}
 
-	get rebaser(): ChangeRebaser<DefaultChangeset> {
+	public get rebaser(): ChangeRebaser<DefaultChangeset> {
 		return this.modularFamily.rebaser;
 	}
 
-	get encoder(): ChangeEncoder<DefaultChangeset> {
+	public get encoder(): ChangeEncoder<DefaultChangeset> {
 		return this.modularFamily.encoder;
 	}
 
-	intoDelta(change: DefaultChangeset): Delta.Root {
+	public intoDelta(change: DefaultChangeset): Delta.Root {
 		return this.modularFamily.intoDelta(change);
 	}
 
-	buildEditor(
+	public buildEditor(
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchorSet: AnchorSet,
 	): DefaultEditBuilder {
@@ -122,7 +122,7 @@ export class DefaultEditBuilder
 {
 	private readonly modularBuilder: ModularEditBuilder;
 
-	constructor(
+	public constructor(
 		family: ChangeFamily<unknown, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchors: AnchorSet,
