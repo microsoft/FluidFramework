@@ -6,18 +6,17 @@
 import generateStupidName from "sillyname";
 
 export function getRandomName(connector = "_", capitalize = false): string {
-    let [first, last] = (generateStupidName() as string).split(" ");
+	let [first, last] = (generateStupidName() as string).split(" ");
 
-    // sillyname output is capitalized by default
-    if (!capitalize) {
-       first = first.toLowerCase();
-       last = last.toLowerCase();
-    }
+	// sillyname output is capitalized by default
+	if (!capitalize) {
+		first = first.toLowerCase();
+		last = last.toLowerCase();
+	}
 
-    return `${first}${connector}${last}`;
+	return `${first}${connector}${last}`;
 }
 
 // Exposing a choose() function to align with moniker's API. Moniker is
 // server-only, and we can swap it out with this function for the browser.
-export const choose = (): string =>
-    getRandomName();
+export const choose = (): string => getRandomName();

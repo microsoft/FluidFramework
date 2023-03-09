@@ -162,7 +162,7 @@ export function* zipIterables<T, U>(
 	const iteratorB = iterableB[Symbol.iterator]();
 	for (
 		let nextA = iteratorA.next(), nextB = iteratorB.next();
-		!nextA.done && !nextB.done;
+		nextA.done !== true && nextB.done !== true;
 		nextA = iteratorA.next(), nextB = iteratorB.next()
 	) {
 		yield [nextA.value, nextB.value];
