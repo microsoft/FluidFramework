@@ -51,6 +51,8 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:t9s:gc:ci_fault
+        splitTestVariants:
+          - name: One
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
     - template: templates/include-test-real-service.yml
@@ -61,5 +63,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:t9s:gc:ci
+        splitTestVariants:
+          - name: Two
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
