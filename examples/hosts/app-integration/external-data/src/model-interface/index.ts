@@ -28,9 +28,9 @@ export interface IAppModelEvents extends IEvent {}
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	/**
-	 * A task tracker list.
+	 * A taskList tracker list.
 	 */
-	readonly taskList: ITaskList;
+	readonly taskListCollection: ITaskListCollection;
 
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
@@ -39,8 +39,9 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly sendCustomDebugSignal: () => void;
 
 	/**
-	 * Send custom signal to simulate being the RuntimeMessage signal
-	 * from alfred while that signal is in prototype state on the dev branch.
+	 * Register the container details and the external resource id with the customer service.
+	 * This will allow the Customer Service to pass on the container information to the Fluid
+	 * Service to send the signal that some new information has come through.
 	 */
 	readonly registerWithCustomerService: (externalTaskListId: string) => void;
 }
@@ -167,6 +168,39 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// TODO: For the signal we might prefer routing it in as an unknown message payload, delegating interpretation
 	// Alternate: inject an EventEmitter that raises the events from external.
 	// readonly handleExternalMessage: (message) => void;
+}
+
+export interface ITaskListInitialState {
+	externalTaskListId: string;
+}
+
+/**
+ * Events emitted by {@link ITaskListCollection}.
+ */
+export interface ITaskListCollectionEvents extends IEvent {
+	/**
+	 * Emitted when a task list is added.
+	 */
+	(event: "taskListAdded", listener: (task: ITask) => void);
+	/**
+	 * Emitted when a task list is removed.
+	 */
+	(event: "taskListDeleted", listener: (task: ITask) => void);
+}
+
+export interface ITaskListCollection extends IEventProvider<ITaskListCollectionEvents> {
+	/**
+	 * Add a task list with the specified ID.
+	 */
+	readonly addTaskList: (props?: ITaskListInitialState) => Promise<void>;
+	/**
+	 * Delete the task with the specified ID.
+	 */
+	readonly deleteTaskList: (id: string) => void;
+	/**
+	 * Retrieve the task with the specified ID.
+	 */
+	readonly getTaskList: (id: string) => Promise<ITaskList>;
 }
 
 export { assertValidTaskData, TaskData, TaskListData } from "./TaskData";

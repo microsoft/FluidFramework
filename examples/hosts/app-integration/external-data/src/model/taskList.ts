@@ -5,7 +5,6 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
@@ -13,71 +12,13 @@ import { SharedMap } from "@fluidframework/map";
 
 import type {
 	ExternalSnapshotTask,
-	ITask,
-	ITaskEvents,
 	ITaskList,
 	TaskData,
+	ITaskListInitialState,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import { customerServicePort } from "../mock-customer-service-interface";
-
-class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
-	public get id(): string {
-		return this._id;
-	}
-	// Probably would be nice to not hand out the SharedString, but the CollaborativeInput expects it.
-	public get draftName(): SharedString {
-		return this._draftName;
-	}
-	public get draftPriority(): number {
-		const cellValue = this._draftPriority.get();
-		if (cellValue === undefined) {
-			throw new Error("Expected a valid priority");
-		}
-		return cellValue;
-	}
-	public set draftPriority(newPriority: number) {
-		this._draftPriority.set(newPriority);
-	}
-	public get externalDataSnapshot(): ExternalSnapshotTask {
-		return this._externalDataSnapshot;
-	}
-	public set externalDataSnapshot(newValue: ExternalSnapshotTask) {
-		const changesAvailable = newValue.changeType !== undefined;
-		this._externalDataSnapshot = { ...newValue };
-		this.emit("changesAvailable", changesAvailable);
-	}
-	private _externalDataSnapshot: ExternalSnapshotTask = {
-		id: this._id,
-		name: undefined,
-		priority: undefined,
-		changeType: undefined,
-	};
-	public constructor(
-		private readonly _id: string,
-		private readonly _draftName: SharedString,
-		private readonly _draftPriority: ISharedCell<number>,
-	) {
-		super();
-		this._draftName.on("sequenceDelta", () => {
-			this.emit("draftNameChanged");
-		});
-		this._draftPriority.on("valueChanged", () => {
-			this.emit("draftPriorityChanged");
-		});
-	}
-	public overwriteWithExternalData = (): void => {
-		this.externalDataSnapshot.changeType = undefined;
-		if (this.externalDataSnapshot.priority !== undefined) {
-			this._draftPriority.set(this.externalDataSnapshot.priority);
-		}
-		if (this.externalDataSnapshot.name !== undefined) {
-			const oldString = this._draftName.getText();
-			this._draftName.replaceText(0, oldString.length, this.externalDataSnapshot.name);
-		}
-		this.emit("changesAvailable", false);
-	};
-}
+import { Task } from "./task";
 
 /**
  * Persisted form of task data stored in root {@link @fluidframework/map#SharedDirectory}.
@@ -100,6 +41,11 @@ export class TaskList extends DataObject implements ITaskList {
 	 * collection pattern -- see the contact-collection example for more details on this pattern.
 	 */
 	private readonly tasks = new Map<string, Task>();
+
+	public get externalTaskListId(): string {
+		return this._externalTaskListId;
+	}
+	private _externalTaskListId!: string;
 	/*
 	 * externalDataSnapshot stores data retrieved from the external service.
 	 */
@@ -305,10 +251,10 @@ export class TaskList extends DataObject implements ITaskList {
 		containerUrlData: IFluidResolvedUrl | undefined,
 	): Promise<void> {
 		try {
+			console.log(
+				`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`,
+			);
 			if (containerUrlData?.url === undefined) {
-				console.log(
-					`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`,
-				);
 				console.error(
 					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
 				);
@@ -326,8 +272,6 @@ export class TaskList extends DataObject implements ITaskList {
 			console.error(`Customer service registration failed:\n${error}`);
 
 			// TODO: Display error status to user? Attempt some number of retries on failure?
-
-			return;
 		}
 	}
 	/**
@@ -376,7 +320,14 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 	};
 
-	protected async initializingFirstTime(): Promise<void> {
+	protected async initializingFirstTime(initialState?: ITaskListInitialState): Promise<void> {
+		const externalTaskListId = initialState?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			throw new Error(
+				"TaskList cannot be instantiated as no external task list id has been provided",
+			);
+		}
+		this._externalTaskListId = externalTaskListId;
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);

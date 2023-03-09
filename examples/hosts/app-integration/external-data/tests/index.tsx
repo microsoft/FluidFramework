@@ -8,7 +8,7 @@ import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { TaskListContainerRuntimeFactory } from "../src/model";
+import { TaskListCollectionContainerRuntimeFactory } from "../src/model";
 import type { IAppModel } from "../src/model-interface";
 import { TaskListView } from "../src/view";
 
@@ -19,7 +19,7 @@ import { TaskListView } from "../src/view";
 export async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
 	const externalTaskListId = "task-list-1";
 	const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
-		new StaticCodeLoader(new TaskListContainerRuntimeFactory(externalTaskListId)),
+		new StaticCodeLoader(new TaskListCollectionContainerRuntimeFactory()),
 	);
 
 	let id: string;
@@ -33,25 +33,29 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		model = createResponse.model;
 
 		// Add a test task so we can see something.
-		model.taskList.addDraftTask("1", "testName", 3);
+		await model.taskListCollection.addTaskList({ externalTaskListId });
 
 		id = await createResponse.attach();
 	} else {
 		id = location.hash.slice(1);
 		model = await sessionStorageModelLoader.loadExisting(id);
 	}
+	const taskList = model.taskListCollection.getTaskList(externalTaskListId);
+	if (taskList !== undefined) {
+		taskList.addDraftTask("1", "testName", 3);
 
-	// update the browser URL and the window title with the actual container ID
-	// eslint-disable-next-line require-atomic-updates
-	location.hash = id;
-	document.title = id;
+		// update the browser URL and the window title with the actual container ID
+		// eslint-disable-next-line require-atomic-updates
+		location.hash = id;
+		document.title = id;
 
-	// Render it
-	ReactDOM.render(<TaskListView taskList={model.taskList} />, element);
+		// Render it
+		ReactDOM.render(<TaskListView taskList={taskList} />, element);
 
-	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["fluidStarted"] = true;
+		// Setting "fluidStarted" is just for our test automation
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		window["fluidStarted"] = true;
+	}
 }
 
 /**

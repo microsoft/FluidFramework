@@ -23,6 +23,10 @@ export interface IAppViewProps {
  */
 export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	const { model } = props;
-
-	return <TaskListView taskList={model.taskList} />;
+	const taskList = model.taskListCollection.getTaskList("task-list-1");
+	return taskList !== undefined ? (
+		<TaskListView taskList={taskList} />
+	) : (
+		<div>Task List is unavailable</div>
+	);
 };

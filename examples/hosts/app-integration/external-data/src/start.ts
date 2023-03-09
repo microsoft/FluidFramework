@@ -10,7 +10,7 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 
 import type { IAppModel } from "./model-interface";
 import { DebugView, AppView } from "./view";
-import { TaskListContainerRuntimeFactory } from "./model";
+import { TaskListCollectionContainerRuntimeFactory } from "./model";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -40,7 +40,7 @@ async function start(): Promise<void> {
 	const externalTaskListId = "task-list-1";
 
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IAppModel>(
-		new StaticCodeLoader(new TaskListContainerRuntimeFactory(externalTaskListId)),
+		new StaticCodeLoader(new TaskListCollectionContainerRuntimeFactory()),
 	);
 
 	let id: string;
@@ -55,12 +55,13 @@ async function start(): Promise<void> {
 		model = createResponse.model;
 
 		id = await createResponse.attach();
-		model.registerWithCustomerService(externalTaskListId);
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 		showExternalServerView = false;
 	}
+	await model.taskListCollection.addTaskList({ externalTaskListId });
+	model.registerWithCustomerService(externalTaskListId);
 
 	render(model, showExternalServerView);
 	updateTabForId(id);
