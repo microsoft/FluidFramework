@@ -1,8 +1,3 @@
-/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable prefer-spread */
-/* eslint-disable @typescript-eslint/restrict-plus-operands */
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
-/* eslint-disable prefer-rest-params */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -19,10 +14,10 @@
 /* eslint-disable @typescript-eslint/no-implied-eval */
 /* eslint-disable tsdoc/syntax */
 /* eslint-disable @typescript-eslint/ban-types */
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+/* eslint-disable prefer-spread */
+/* eslint-disable @typescript-eslint/restrict-plus-operands */
+/* eslint-disable prefer-rest-params */
 
 /*!
  * Benchmark.js
@@ -161,16 +156,16 @@ export interface Result {
 // }
 
 /** Used to assign each benchmark an incremented id. */
-export let counter = 0;
+let counter = 0;
 
 /** Used to detect primitive types. */
 const rePrimitive = /^(?:boolean|number|string|undefined)$/;
 
 /** Used to make every compiled test unique. */
-export let uidCounter = 0;
+let uidCounter = 0;
 
 /** Used to avoid hz of Infinity. */
-export const divisors = {
+const divisors = {
 	1: 4096,
 	2: 512,
 	3: 64,
@@ -182,7 +177,7 @@ export const divisors = {
  * T-Distribution two-tailed critical values for 95% confidence.
  * For more info see http://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm.
  */
-export const tTable = {
+const tTable = {
 	1: 12.706,
 	2: 4.303,
 	3: 3.182,
@@ -220,7 +215,7 @@ export const tTable = {
  * Critical Mann-Whitney U-values for 95% confidence.
  * For more info see http://www.saburchill.com/IBbiology/stats/003.html.
  */
-export const uTable = {
+const uTable = {
 	5: [0, 1, 2],
 	6: [1, 2, 3, 5],
 	7: [1, 3, 5, 6, 8],
@@ -272,7 +267,7 @@ export const uTable = {
 	],
 };
 
-export const defaultOptions = {
+const defaultOptions = {
 	async: false,
 	defer: false,
 	delay: 0.005,
@@ -281,8 +276,6 @@ export const defaultOptions = {
 	minSamples: 5,
 	minTime: 0,
 };
-
-/* -------------------------------------------------------------------------- */
 
 /** Used for `Array` and `Object` method references. */
 const arrayRef = [];
@@ -297,13 +290,13 @@ const shift = arrayRef.shift;
 const sqrt = Math.sqrt;
 
 /** Used to access Node.js's high resolution timer. */
-export const processObject = isHostType(globalThis, "process") && globalThis.process;
+const processObject = isHostType(globalThis, "process") && globalThis.process;
 
 /** Used to integrity check compiled tests. */
-export const uid = `uid${+_.now()}`;
+const uid = `uid${+_.now()}`;
 
 /** Used to avoid infinite recursion when methods call each other. */
-export const calledBy: any = {};
+const calledBy: any = {};
 
 /**
  * Timer object used by `clock()` and `Deferred#resolve`.
@@ -311,7 +304,7 @@ export const calledBy: any = {};
  * @private
  * @type Object
  */
-export let timer: any = {
+let timer: any = {
 	/**
 	 * The timer namespace object or constructor.
 	 *
@@ -340,7 +333,6 @@ export let timer: any = {
 	stop: null, // Lazy defined in `clock()`.
 };
 
-/* ------------------------------------------------------------------------ */
 export class Benchmark {
 	/**
 	 * The number of times a test was executed.
@@ -1076,8 +1068,6 @@ export class Event {
 	}
 }
 
-/* ------------------------------------------------------------------------ */
-
 /**
  * A specialized version of `_.cloneDeep` which only clones arrays and plain
  * objects assigning all other values by reference.
@@ -1086,7 +1076,7 @@ export class Event {
  * @param {*} value - The value to clone.
  * @returns {*} The cloned value.
  */
-export const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
+const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
 	// Only clone primitives, arrays, and plain objects.
 	if (!Array.isArray(value) && !_.isPlainObject(value)) {
 		return value;
@@ -1102,7 +1092,7 @@ type AnyFunction = (...args: any[]) => any;
  * @param {Object} bench - The benchmark instance.
  * @param {Object} fn - The function to execute.
  */
-export function delay(bench: Benchmark, fn: AnyFunction) {
+function delay(bench: Benchmark, fn: AnyFunction) {
 	bench._timerId = _.delay(fn, bench.delay * 1e3);
 }
 
@@ -1113,7 +1103,7 @@ export function delay(bench: Benchmark, fn: AnyFunction) {
  * @param {Function} fn - The function.
  * @returns {string} The argument name.
  */
-export function getFirstArgument(fn: Function): string {
+function getFirstArgument(fn: Function): string {
 	return (
 		(!_.has(fn, "toString") && (/^[\s(]*function[^(]*\(([^\s,)]+)/.exec(fn as any) || 0)[1]) ||
 		""
@@ -1127,7 +1117,7 @@ export function getFirstArgument(fn: Function): string {
  * @param {Array} sample - The sample.
  * @returns {number} The mean.
  */
-export function getMean(sample: any[]): number {
+function getMean(sample: any[]): number {
 	const v = _.reduce(sample, (sum: number, x: number) => {
 		return sum + x;
 	}) as number;
@@ -1144,7 +1134,7 @@ export function getMean(sample: any[]): number {
  * @param {string} property - The property to check.
  * @returns {boolean} Returns `true` if the property value is a non-primitive, else `false`.
  */
-export function isHostType(object: any, property: string): boolean {
+function isHostType(object: any, property: string): boolean {
 	if (object == null) {
 		return false;
 	}
@@ -1152,9 +1142,7 @@ export function isHostType(object: any, property: string): boolean {
 	return !rePrimitive.test(type) && (type !== "object" || !!object[property]);
 }
 
-/* ------------------------------------------------------------------------ */
-
-interface InvokeThing {
+interface InvokeOptions {
 	name: "run";
 	args: { async: boolean };
 	queued: true;
@@ -1196,7 +1184,7 @@ interface InvokeThing {
  *   'onComplete': onComplete
  * });
  */
-export function invoke(benches: Benchmark[], options2: InvokeThing): any[] {
+function invoke(benches: Benchmark[], options2: InvokeOptions): any[] {
 	let args;
 	let bench: Benchmark;
 	let index = -1;
@@ -1310,10 +1298,6 @@ export function invoke(benches: Benchmark[], options2: InvokeThing): any[] {
 	return result;
 }
 
-/* ------------------------------------------------------------------------ */
-
-/* ------------------------------------------------------------------------ */
-
 const templateData: any = {};
 const timers = [{ ns: timer.ns, res: max(0.0015, getRes("ms")), unit: "ms" }];
 
@@ -1351,7 +1335,7 @@ if (!defaultOptions.minTime) {
  * @param {Object} bench - The benchmark instance.
  * @returns {number} The time taken.
  */
-export function clock(clone: Benchmark) {
+function clock(clone: Benchmark) {
 	let deferred;
 
 	if (clone instanceof Deferred) {
@@ -1411,13 +1395,10 @@ export function clock(clone: Benchmark) {
 	// If no errors run the full test loop.
 	if (!clone.error) {
 		compiled = bench.compiled = clone.compiled = createCompiled(bench, deferred, funcBody);
-		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 		result = compiled.call(deferred || bench, globalThis, timer).elapsed;
 	}
 	return result;
 }
-
-/* ------------------------------------------------------------------------ */
 
 /**
  * Computes stats on benchmark results.
@@ -1426,7 +1407,7 @@ export function clock(clone: Benchmark) {
  * @param {Object} bench - The benchmark instance.
  * @param {Object} options - The options object.
  */
-export function compute(bench: Benchmark, options: Options) {
+function compute(bench: Benchmark, options: Options) {
 	options ??= {};
 
 	const async = options.async;
@@ -1577,8 +1558,6 @@ export function compute(bench: Benchmark, options: Options) {
 	});
 }
 
-/* ------------------------------------------------------------------------ */
-
 /**
  * Cycles a benchmark until a run `count` can be established.
  *
@@ -1586,7 +1565,7 @@ export function compute(bench: Benchmark, options: Options) {
  * @param {Object} clone - The cloned benchmark instance.
  * @param {Object} options - The options object.
  */
-export function cycle(clone: Benchmark, options: Options) {
+function cycle(clone: Benchmark, options: Options) {
 	options ??= {};
 
 	let deferred;
@@ -1678,7 +1657,7 @@ export function cycle(clone: Benchmark, options: Options) {
 /**
  * Gets the current timer's minimum resolution (secs).
  */
-export function getRes(unit) {
+function getRes(unit) {
 	let measured;
 	let begin;
 	let count = 30;
@@ -1732,7 +1711,7 @@ function interpolate(string) {
 /**
  * Creates a compiled function from the given function `body`.
  */
-export function createCompiled(bench, deferred, body) {
+function createCompiled(bench, deferred, body) {
 	const fn = bench.fn;
 	const fnArg = deferred ? getFirstArgument(fn) || "deferred" : "";
 
