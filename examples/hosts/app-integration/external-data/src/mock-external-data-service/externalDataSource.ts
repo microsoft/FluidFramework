@@ -30,8 +30,8 @@ const taskList1: TaskListExternalModel = {
 
 const taskList2: TaskListExternalModel = {
 	17: {
-		name: "Alpha",
-		priority: 1,
+		name: "CompletelyDifferentAlpha",
+		priority: 42,
 	},
 };
 
