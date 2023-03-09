@@ -7,7 +7,6 @@
 /* eslint-disable @typescript-eslint/strict-boolean-expressions */
 /* eslint-disable no-new-func */
 /* eslint-disable no-template-curly-in-string */
-/* eslint-disable @typescript-eslint/no-this-alias */
 /* eslint-disable @typescript-eslint/unbound-method */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable unicorn/better-regex */
@@ -15,7 +14,6 @@
 /* eslint-disable tsdoc/syntax */
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
-/* eslint-disable prefer-spread */
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 /* eslint-disable prefer-rest-params */
 
@@ -570,37 +568,36 @@ export class Benchmark {
 	 * bench.run({ 'async': true });
 	 */
 	run(options?: Options): Benchmark {
-		const bench = this;
 		const event = new Event("start");
 
 		// Set `running` to `false` so `reset()` won't call `abort()`.
-		bench.running = false;
-		bench.reset();
-		bench.running = true;
+		this.running = false;
+		this.reset();
+		this.running = true;
 
-		bench.count = bench.initCount;
-		bench.times.timeStamp = +_.now();
-		bench.emit(event);
+		this.count = this.initCount;
+		this.times.timeStamp = +_.now();
+		this.emit(event);
 
 		if (!event.cancelled) {
 			const cycleOptions: CycleOptions = {
-				async: options?.async ?? bench.async,
+				async: options?.async ?? this.async,
 			};
 
 			// For clones created within `compute()`.
-			if (bench._original) {
-				if (bench.defer) {
-					new Deferred(bench);
+			if (this._original) {
+				if (this.defer) {
+					new Deferred(this);
 				} else {
-					cycle(bench, cycleOptions);
+					cycle(this, cycleOptions);
 				}
 			}
 			// For original benchmarks.
 			else {
-				compute(bench, cycleOptions);
+				compute(this, cycleOptions);
 			}
 		}
-		return bench;
+		return this;
 	}
 
 	/**
@@ -612,18 +609,17 @@ export class Benchmark {
 	 */
 	emit(type: object | string): any {
 		let listeners;
-		const object = this;
 		const event = new Event(type);
-		const events = object.events;
+		const events = this.events;
 		const args = ((arguments[0] = event), arguments);
 
-		event.currentTarget ??= object;
-		event.target ??= object;
+		event.currentTarget ??= this;
+		event.target ??= this;
 		delete event.result;
 
 		if (events && (listeners = _.has(events, event.type) && events[event.type])) {
 			_.each(listeners.slice(), (listener) => {
-				if ((event.result = listener.apply(object, args)) === false) {
+				if ((event.result = listener.apply(this, args)) === false) {
 					event.cancelled = true;
 				}
 				return !event.aborted;
@@ -836,13 +832,12 @@ export class Benchmark {
 	 * @returns {Object} The benchmark instance.
 	 */
 	reset(): Benchmark {
-		const bench = this;
-		if (bench.running && !calledBy.abort) {
+		if (this.running && !calledBy.abort) {
 			// No worries, `reset()` is called within `abort()`.
 			calledBy.reset = true;
-			bench.abort();
+			this.abort();
 			delete calledBy.reset;
-			return bench;
+			return this;
 		}
 		let event;
 		let index = 0;
@@ -852,10 +847,10 @@ export class Benchmark {
 		// A non-recursive solution to check if properties have changed.
 		// For more information see http://www.jslab.dk/articles/non.recursive.preorder.traversal.part4.
 		let data = {
-			destination: bench,
+			destination: this,
 			source: {
-				...(cloneDeep(bench.constructor.prototype) as any),
-				...bench.options,
+				...(cloneDeep(this.constructor.prototype) as any),
+				...this.options,
 			},
 		};
 
@@ -902,16 +897,16 @@ export class Benchmark {
 		} while ((data = queue[index++]));
 
 		// If changed emit the `reset` event and if it isn't cancelled reset the benchmark.
-		if (changes.length && (bench.emit((event = new Event("reset"))), !event.cancelled)) {
+		if (changes.length && (this.emit((event = new Event("reset"))), !event.cancelled)) {
 			_.each(changes, (data) => {
 				data.destination[data.key] = data.value;
 			});
 		}
-		return bench;
+		return this;
 	}
 }
 
-export class Deferred {
+class Deferred {
 	/**
 	 * @param benchmark - The cloned benchmark instance.
 	 */
@@ -923,22 +918,21 @@ export class Deferred {
 	 * Handles cycling/completing the deferred benchmark.
 	 */
 	resolve() {
-		const deferred = this;
-		const clone = deferred.benchmark;
+		const clone = this.benchmark;
 		const bench = clone._original;
 
 		if (bench.aborted) {
 			// cycle() -> clone cycle/complete event -> compute()'s invoked bench.run() cycle/complete.
-			deferred.teardown();
+			this.teardown();
 			clone.running = false;
-			cycle(deferred);
-		} else if (++deferred.cycles < clone.count) {
-			clone.compiled.call(deferred, globalThis, timer);
+			cycle(this);
+		} else if (++this.cycles < clone.count) {
+			clone.compiled.call(this, globalThis, timer);
 		} else {
-			timer.stop(deferred);
-			deferred.teardown();
+			timer.stop(this);
+			this.teardown();
 			delay(clone, () => {
-				cycle(deferred);
+				cycle(this);
 			});
 		}
 	}
@@ -1127,7 +1121,7 @@ function invoke(benches: Benchmark[], options: InvokeOptions): any[] {
 			listeners.splice(0, 0, listeners.pop());
 		}
 		// Execute method.
-		result[index as number] = bench.run.apply(bench, args);
+		result[index as number] = bench.run(...args);
 		// If synchronous return `true` until finished.
 		return !async && getNext();
 	}
@@ -1354,17 +1348,16 @@ function compute(bench: Benchmark, options: CycleOptions) {
 	/**
 	 * Updates the clone/original benchmarks to keep their data in sync.
 	 */
-	function update(this: any, event) {
-		const clone: any = this;
+	function update(this: Benchmark, event) {
 		const type = event.type;
 
 		if (bench.running) {
 			if (type === "start") {
 				// Note: `clone.minTime` prop is inited in `clock()`.
-				clone.count = bench.initCount;
+				this.count = bench.initCount;
 			} else {
 				if (type === "error") {
-					bench.error = clone.error;
+					bench.error = this.error;
 				}
 				if (type === "abort") {
 					bench.abort();
@@ -1376,8 +1369,8 @@ function compute(bench: Benchmark, options: CycleOptions) {
 			}
 		} else if (bench.aborted) {
 			// Clear abort listeners to avoid triggering bench's abort/cycle again.
-			clone.events.abort.length = 0;
-			clone.abort();
+			this.events.abort.length = 0;
+			this.abort();
 		}
 	}
 
