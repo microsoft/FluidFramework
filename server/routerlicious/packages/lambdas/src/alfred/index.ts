@@ -33,7 +33,7 @@ import {
 	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { IWebSocketManager } from "@fluidframework/server-services-shared";
+import { createCompositeTokenId, IWebSocketTracker } from "@fluidframework/server-services-shared";
 import {
 	createRoomJoinMessage,
 	createNackMessage,
@@ -230,17 +230,18 @@ export function configureWebSocketServices(
     submitSignalThrottler?: core.IThrottler,
     throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
     verifyMaxMessageSize?: boolean,
-    socketManager?: IWebSocketManager,
+    socketTracker?: IWebSocketTracker,
 ) {
-	webSocketServer.on("connection", (socket: core.IWebSocket) => {
-		// Map from client IDs on this connection to the object ID and user info.
-		const connectionsMap = new Map<string, core.IOrdererConnection>();
-		// Map from client IDs to room.
-		const roomMap = new Map<string, IRoom>();
-		// Map from client Ids to scope.
-		const scopeMap = new Map<string, string[]>();
-		// Map from client Ids to connection time.
-		const connectionTimeMap = new Map<string, number>();
+    webSocketServer.on("connection", (socket: core.IWebSocket) => {
+        console.log(`yunho: on socket connection, socketId=${socket.id}`);
+        // Map from client IDs on this connection to the object ID and user info.
+        const connectionsMap = new Map<string, core.IOrdererConnection>();
+        // Map from client IDs to room.
+        const roomMap = new Map<string, IRoom>();
+        // Map from client Ids to scope.
+        const scopeMap = new Map<string, string[]>();
+        // Map from client Ids to connection time.
+        const connectionTimeMap = new Map<string, number>();
 
 		// Timer to check token expiry for this socket connection
 		let expirationTimer: NodeJS.Timer | undefined;
@@ -260,35 +261,35 @@ export function configureWebSocketServices(
 			}
 		}
 
-		function setExpirationTimer(mSecUntilExpiration: number) {
-			clearExpirationTimer();
-			expirationTimer = setTimeout(() => {
-				socket.disconnect(true);
-			}, mSecUntilExpiration);
-		}
+        function setExpirationTimer(mSecUntilExpiration: number) {
+            clearExpirationTimer();
+            expirationTimer = setTimeout(() => {
+                console.log(`yunho: socket expire timer, socketId=${socket.id}`);
+                socket.disconnect(true);
+            }, mSecUntilExpiration);
+        }
 
-		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-			const throttleErrorPerCluster = checkThrottleAndUsage(
-				connectThrottlerPerCluster,
-				getSocketConnectThrottleId("connectDoc"),
-				message.tenantId,
-				logger,
-			);
-			if (throttleErrorPerCluster) {
-				return Promise.reject(throttleErrorPerCluster);
-			}
-			const throttleErrorPerTenant = checkThrottleAndUsage(
-				connectThrottlerPerTenant,
-				getSocketConnectThrottleId(message.tenantId),
-				message.tenantId,
-				logger,
-			);
-			if (throttleErrorPerTenant) {
-				return Promise.reject(throttleErrorPerTenant);
-			}
-			if (!message.token) {
-				throw new NetworkError(403, "Must provide an authorization token");
-			}
+        async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            console.log(`yunho: on connectDocument, socketId=${socket.id}`);
+            const throttleErrorPerCluster = checkThrottleAndUsage(
+                connectThrottlerPerCluster,
+                getSocketConnectThrottleId("connectDoc"),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerCluster) {
+                return Promise.reject(throttleErrorPerCluster);
+            }
+            const throttleErrorPerTenant = checkThrottleAndUsage(
+                connectThrottlerPerTenant,
+                getSocketConnectThrottleId(message.tenantId),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerTenant) {
+                return Promise.reject(throttleErrorPerTenant);
+            }
+            if (!message.token) {
+                throw new NetworkError(403, "Must provide an authorization token");
+            }
 
 			// Validate token signature and claims
 			const token = message.token;
@@ -510,6 +511,7 @@ export function configureWebSocketServices(
 						error,
 					);
 					clearExpirationTimer();
+                    console.log(`yunho: on connectDocument error, socketId=${socket.id}`);
 					socket.disconnect(true);
 				});
 
@@ -571,9 +573,11 @@ export function configureWebSocketServices(
 			(connectedMessage as any).timestamp = connectedTimestamp;
 
             // Token revocation
-            if (socketManager) {
+            if (socketTracker && claims.jti) {
                 // TODO: need to call add socket function
-                socketManager.getSocket("123");
+                socketTracker.addSocket(
+                    createCompositeTokenId(message.tenantId, message.id, claims.jti),
+                    socket);
             }
 
             return {
@@ -822,6 +826,7 @@ export function configureWebSocketServices(
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
+            console.log(`yunho: on disconnect, socketId=${socket.id}`);
 			clearExpirationTimer();
 			const removeAndStoreP: Promise<void>[] = [];
 			// Send notification messages for all client IDs in the connection map
@@ -869,6 +874,10 @@ export function configureWebSocketServices(
 				);
 				socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
 			}
+            // Token revocation
+            if (socketTracker) {
+                socketTracker.removeSocket(socket.id);
+            }
 			await Promise.all(removeAndStoreP);
 		});
 	});

@@ -103,7 +103,7 @@ export class AlfredResources implements core.IResources {
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
         public verifyMaxMessageSize?: boolean,
         public redisCache?: core.ICache,
-        public socketManager?: services.IWebSocketManager,
+        public socketTracker?: services.IWebSocketTracker,
         public tokenManager?: services.IJsonWebTokenManager,
     ) {
         const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
@@ -394,9 +394,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
 
         // Token revocation feature
-        const socketManager = new services.WebSocketManager();
-        const tokenManager = new services.EmptyImplementationTokenManager();
-        await tokenManager.initialize();
+        const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+        let socketTracker: services.IWebSocketTracker | undefined;
+        let tokenManager: services.IJsonWebTokenManager | undefined;
+        if (tokenRevocationEnabled) {
+            socketTracker = new services.WebSocketTracker();
+            tokenManager = new services.EmptyImplementationTokenManager();
+            await tokenManager.initialize();
+        }
 
         return new AlfredResources(
             config,
@@ -424,7 +429,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             redisThrottleAndUsageStorageManager,
             verifyMaxMessageSize,
             redisCache,
-            socketManager,
+            socketTracker,
             tokenManager);
     }
 }
@@ -454,7 +459,8 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
             resources.throttleAndUsageStorageManager,
             resources.verifyMaxMessageSize,
             resources.redisCache,
-            resources.socketManager,
+            resources.socketTracker,
+            resources.tokenManager,
             );
     }
 }

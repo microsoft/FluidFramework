@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { createMetricClient, IWebSocketManager } from "@fluidframework/server-services";
+import { createMetricClient, IJsonWebTokenManager, IWebSocketTracker } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
@@ -55,7 +55,8 @@ export class AlfredRunner implements IRunner {
         private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
         private readonly verifyMaxMessageSize?: boolean,
         private readonly redisCache?: ICache,
-        private readonly socketManager?: IWebSocketManager,
+        private readonly socketTracker?: IWebSocketTracker,
+        private readonly tokenManager?: IJsonWebTokenManager,
     ) {
     }
 
@@ -115,7 +116,7 @@ export class AlfredRunner implements IRunner {
             this.socketSubmitSignalThrottler,
             this.throttleAndUsageStorageManager,
             this.verifyMaxMessageSize,
-            this.socketManager,
+            this.socketTracker,
         );
 
 		// Listen on provided port, on all network interfaces.
@@ -123,8 +124,13 @@ export class AlfredRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
-		return this.runningDeferred.promise;
-	}
+        // Start token manager
+        if (this.tokenManager) {
+            this.tokenManager.start();
+        }
+
+        return this.runningDeferred.promise;
+    }
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public stop(): Promise<void> {

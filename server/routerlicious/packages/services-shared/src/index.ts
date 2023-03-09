@@ -29,9 +29,9 @@ export {
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
 export {
-	IWebSocketManager,
+	IWebSocketTracker,
 	IJsonWebTokenManager,
-	WebSocketManager,
+	WebSocketTracker,
 	EmptyImplementationTokenManager,
-	createSocketId,
+	createCompositeTokenId,
 } from "./tokenManager";
