@@ -215,7 +215,7 @@ function applyMoveEffectsToDest<T>(
 
 	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
 
-	if (!effect.shouldRemove) {
+	if (effect.shouldRemove !== true) {
 		const newMark: MoveIn | ReturnTo = {
 			...mark,
 			count: effect.count ?? mark.count,
@@ -277,7 +277,7 @@ function applyMoveEffectsToSource<T>(
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (!effect.shouldRemove) {
+	if (effect.shouldRemove !== true) {
 		const newMark = cloneMark(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {

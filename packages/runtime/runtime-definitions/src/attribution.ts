@@ -51,10 +51,19 @@ export interface DetachedAttributionKey {
 }
 
 /**
+ * AttributionKey associated with content that has been made locally but not yet acked by the server.
+ *
+ * @alpha
+ */
+export interface LocalAttributionKey {
+	type: "local";
+}
+
+/**
  * Can be indexed into the ContainerRuntime in order to retrieve {@link AttributionInfo}.
  * @alpha
  */
-export type AttributionKey = OpAttributionKey | DetachedAttributionKey;
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 /**
  * Attribution information associated with a change.
