@@ -25,7 +25,7 @@
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
 		"ci:build": "npm run build:genver && lerna run build:compile --stream",
 		"ci:build:docs": "lerna run ci:build:docs --stream --parallel",
-    "ci:lint": "lerna run lint --no-sort --stream",
+		"ci:lint": "lerna run lint --no-sort --stream",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha:report",
@@ -126,6 +126,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.11.0-135362",
+		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "0.11.0-135362",
 		"@fluidframework/test-tools": "^0.2.3074",
 		"@microsoft/api-documenter": "^7.17.9",
