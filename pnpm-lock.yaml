@@ -1,6 +1,12 @@
 lockfileVersion: 5.4
 
 overrides:
+  '@fluidframework/gitresources': 0.1038.2000
+  '@fluidframework/protocol-base': 0.1038.2000
+  '@fluidframework/server-local-server': 0.1038.2000
+  '@fluidframework/server-services-client': 0.1038.2000
+  '@fluidframework/server-services-core': 0.1038.2000
+  '@fluidframework/server-test-utils': 0.1038.2000
   '@types/node': ^14.18.36
   node-fetch: ^2.6.9
 
@@ -2900,7 +2906,7 @@ importers:
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
       '@fluidframework/task-manager': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/tinylicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/view-adapters': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -3480,7 +3486,7 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
       '@fluidframework/shared-object-base': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-drivers': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -3865,7 +3871,7 @@ importers:
       '@fluidframework/local-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
       '@fluidframework/test-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       async: ^3.2.2
@@ -5273,7 +5279,7 @@ importers:
       '@fluidframework/matrix-previous': npm:@fluidframework/matrix@2.0.0-internal.3.2.0
       '@fluidframework/merge-tree': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -5308,7 +5314,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../merge-tree
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
@@ -5567,7 +5573,7 @@ importers:
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/register-collection-previous': npm:@fluidframework/register-collection@2.0.0-internal.3.2.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -5590,7 +5596,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -5632,14 +5638,14 @@ importers:
       '@fluidframework/core-interfaces': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.2000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/merge-tree': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence-previous': npm:@fluidframework/sequence@2.0.0-internal.3.2.0
-      '@fluidframework/server-services-client': ^0.1038.2000
+      '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/shared-object-base': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -5683,7 +5689,7 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.3.2.0
       '@fluidframework/server-services-client': 0.1038.2000
@@ -6302,13 +6308,13 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/local-driver-previous': npm:@fluidframework/local-driver@2.0.0-internal.3.2.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
-      '@fluidframework/server-services-client': ^0.1038.2000
-      '@fluidframework/server-services-core': ^0.1038.2000
-      '@fluidframework/server-test-utils': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
+      '@fluidframework/server-services-client': 0.1038.2000
+      '@fluidframework/server-services-core': 0.1038.2000
+      '@fluidframework/server-test-utils': 0.1038.2000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
@@ -6335,7 +6341,7 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
       '@fluidframework/server-local-server': 0.1038.2000
@@ -6381,12 +6387,12 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.2000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/odsp-doclib-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/odsp-driver-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/odsp-driver-previous': npm:@fluidframework/odsp-driver@2.0.0-internal.3.2.0
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.22.2
@@ -6417,10 +6423,10 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       abort-controller: 3.0.0
@@ -6598,12 +6604,12 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.2000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver-previous': npm:@fluidframework/routerlicious-driver@2.0.0-internal.3.2.0
-      '@fluidframework/server-services-client': ^0.1038.2000
+      '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@rushstack/eslint-config': ^2.5.1
@@ -6637,8 +6643,8 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -6741,7 +6747,7 @@ importers:
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-services-client': ^0.1038.2000
+      '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/test-tools': ^0.2.3074
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.3.2.0
       '@rushstack/eslint-config': ^2.5.1
@@ -7685,7 +7691,7 @@ importers:
       '@fluidframework/driver-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-loader-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -7721,7 +7727,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../driver-utils
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       abort-controller: 3.0.0
@@ -7823,9 +7829,9 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/driver-utils-previous': npm:@fluidframework/driver-utils@2.0.0-internal.3.2.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.2000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -7852,8 +7858,8 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 0.26.1
@@ -8036,7 +8042,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/garbage-collector': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -8074,7 +8080,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -8169,7 +8175,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/garbage-collector': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -8201,7 +8207,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -8384,7 +8390,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/garbage-collector': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils-previous': npm:@fluidframework/runtime-utils@2.0.0-internal.3.2.0
@@ -8412,7 +8418,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -8613,7 +8619,7 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
       '@fluidframework/shared-object-base': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-loader-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -8766,7 +8772,7 @@ importers:
       '@fluidframework/register-collection': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/replay-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
       '@fluidframework/test-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
@@ -8971,7 +8977,7 @@ importers:
       '@fluidframework/odsp-urlresolver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-drivers-previous': npm:@fluidframework/test-drivers@2.0.0-internal.3.2.0
       '@fluidframework/test-pairwise-generator': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -10132,8 +10138,8 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/server-local-server': ^0.1038.2000
-      '@fluidframework/server-services-client': ^0.1038.2000
+      '@fluidframework/server-local-server': 0.1038.2000
+      '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/tool-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
@@ -10345,7 +10351,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
       '@fluidframework/odsp-doclib-utils': '>=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/protocol-base': ^0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/tool-utils-previous': npm:@fluidframework/tool-utils@2.0.0-internal.3.2.0
       '@microsoft/api-extractor': ^7.22.2
@@ -10370,7 +10376,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-doclib-utils': link:../odsp-doclib-utils
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       async-mutex: 0.3.2
       debug: 4.3.4
@@ -13050,7 +13056,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
       abort-controller: 3.0.0
@@ -13074,7 +13080,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2_debug@4.3.4
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
       abort-controller: 3.0.0
@@ -13134,7 +13140,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/driver-utils': 2.0.0-internal.2.4.0
       '@fluidframework/garbage-collector': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/runtime-utils': 2.0.0-internal.2.4.0
@@ -13161,7 +13167,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
@@ -13188,7 +13194,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
@@ -13215,7 +13221,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2_debug@4.3.4
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
@@ -13356,7 +13362,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/driver-utils': 2.0.0-internal.2.4.0
       '@fluidframework/garbage-collector': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/runtime-utils': 2.0.0-internal.2.4.0
@@ -13380,7 +13386,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
@@ -13404,7 +13410,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
@@ -13428,7 +13434,7 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2_debug@4.3.4
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
@@ -13526,8 +13532,8 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.2.4.0
       axios: 0.26.1
@@ -13545,8 +13551,8 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
       axios: 0.26.1
@@ -13564,8 +13570,8 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
       axios: 0.26.1
@@ -13583,8 +13589,8 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
       axios: 0.26.1_debug@4.3.4
@@ -13716,8 +13722,8 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
     dev: true
 
-  /@fluidframework/gitresources/0.1038.3000:
-    resolution: {integrity: sha512-w4vuRUnb6t5hPVq5/4vYDC41NRhS3SXBwcaRIPJ1jT8/H792BjVT0tKnR5x/sqR6maKOLdll3Z4itzq+pdeisQ==}
+  /@fluidframework/gitresources/0.1038.2000:
+    resolution: {integrity: sha512-cbxiG5ygZtGHHXqvkaeGzPbE6fKZcuCo5ZgOPstpH7hvZsUdikohx9h2z0q0KwiW8oV/54S++UOaRAmKTPoh8w==}
 
   /@fluidframework/ink/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-ylql+kDaPtPp1GvxC2ysIcveFQrOVhhslLLHD0zwzlnIBDDjPrkZQ3++lSxRyMWKywL+ITn794/GPImC4bg1oA==}
@@ -13744,7 +13750,7 @@ packages:
       '@fluidframework/driver-base': 2.0.0-internal.3.2.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': 2.0.0-internal.3.2.0
       '@fluidframework/server-local-server': 0.1038.2000
@@ -13773,7 +13779,7 @@ packages:
       '@fluidframework/driver-base': 2.0.0-internal.3.2.0_debug@4.3.4
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2_debug@4.3.4
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': 2.0.0-internal.3.2.0_debug@4.3.4
       '@fluidframework/server-local-server': 0.1038.2000
@@ -13850,7 +13856,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/merge-tree': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/runtime-utils': 2.0.0-internal.3.2.2
@@ -13957,10 +13963,10 @@ packages:
       '@fluidframework/driver-base': 2.0.0-internal.3.2.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/odsp-doclib-utils': 2.0.0-internal.3.2.0
       '@fluidframework/odsp-driver-definitions': 2.0.0-internal.3.2.0
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
       abort-controller: 3.0.0
@@ -14006,13 +14012,12 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/protocol-base/0.1038.3000:
-    resolution: {integrity: sha512-e0G1JSlcpWiZTgIJqpU28EnmqNyfmwoiTZOL8DVrxOWArawqhEsBFBZUhL3zP2Y4vobrcjS9lMhQDsSXptwYSg==}
+  /@fluidframework/protocol-base/0.1038.2000:
+    resolution: {integrity: sha512-2yqIvtt3NBKWfZgQk/nxthf+evIZ0cOW4Klz/zgdIzSFSHLNjo1eItkQc+7wLG3F7v1tD5tn9AVOQsFrDWdvYg==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
-      events: 3.3.0
       lodash: 4.17.21
 
   /@fluidframework/protocol-definitions/1.1.0:
@@ -14026,7 +14031,7 @@ packages:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/shared-object-base': 2.0.0-internal.3.2.2
@@ -14069,8 +14074,8 @@ packages:
       '@fluidframework/driver-base': 2.0.0-internal.3.2.0
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
@@ -14096,8 +14101,8 @@ packages:
       '@fluidframework/driver-base': 2.0.0-internal.3.2.0_debug@4.3.4
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/driver-utils': 2.0.0-internal.3.2.2_debug@4.3.4
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
@@ -14169,7 +14174,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
       '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/garbage-collector': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.2.4.0
@@ -14187,7 +14192,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
@@ -14205,7 +14210,7 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/datastore-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/garbage-collector': 2.0.0-internal.3.2.2
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.2.2
@@ -14272,8 +14277,8 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-lambdas-driver': 0.1038.2000
       '@fluidframework/server-services-client': 0.1038.2000
@@ -14299,8 +14304,8 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-lambdas-driver': 0.1038.2000
       '@fluidframework/server-services-client': 0.1038.2000
@@ -14344,7 +14349,7 @@ packages:
     resolution: {integrity: sha512-A+oIAJ5evNzEwEit5NBQSvOTQrzf6Zx+1yBES0v89ypjcIXYoT8oqJWvzuaFbxu4RH6w8JMFMkVZ1gnF1WGpog==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-lambdas': 0.1038.2000_debug@4.3.4
       '@fluidframework/server-services-client': 0.1038.2000
@@ -14370,8 +14375,8 @@ packages:
     resolution: {integrity: sha512-A8oB7jKUDCqlU1qFSc72o7zMcGAeo52WDWWhoSYgZzMV3ZHgaPjq+FYTTpGiJPACnYUhV644UPiFvGWriLIzDA==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       axios: 0.26.1_debug@4.3.4
       crc-32: 1.2.0
@@ -14389,7 +14394,7 @@ packages:
     resolution: {integrity: sha512-kAYxPg1AAqRJxXzN7lXPlShSI31vr3MpDvBLeEQG4fcAWlZHcS5a0DtiA+kV8qKrhJCHfC+KyoS/UruJ4L2yxQ==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/server-services-telemetry': 0.1038.2000
@@ -14404,8 +14409,8 @@ packages:
     resolution: {integrity: sha512-Qh/ZN8E/LTLXsWkmU2zBhiTzrVy9+sL/Jf1+qyN2incu6R4lbB5zCQ9shDBuImboWFhD39yBBm/j5iDspOoOhQ==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/server-services-core': 0.1038.2000
@@ -14463,8 +14468,8 @@ packages:
     resolution: {integrity: sha512-w08VsOC+x0hzXZs5YIrmjFyG2gV+6bMXzMsxSeDuLPkwz1xQXNJxpVG1FM9hAJUke41kzxbRvielSdMfzp3N6A==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.2000
       '@fluidframework/server-services-core': 0.1038.2000
@@ -14960,7 +14965,7 @@ packages:
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-doclib-utils': 2.0.0-internal.3.2.0_debug@4.3.4
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       async-mutex: 0.3.2
       debug: 4.3.4
@@ -39257,8 +39262,8 @@ packages:
     hasBin: true
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
+      '@fluidframework/gitresources': 0.1038.2000
+      '@fluidframework/protocol-base': 0.1038.2000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-lambdas': 0.1038.2000
       '@fluidframework/server-local-server': 0.1038.2000

@@ -149,6 +149,12 @@
 	"packageManager": "pnpm@7.27.0",
 	"pnpm": {
 		"overrides": {
+			"@fluidframework/gitresources": "0.1038.2000",
+			"@fluidframework/protocol-base": "0.1038.2000",
+			"@fluidframework/server-local-server": "0.1038.2000",
+			"@fluidframework/server-services-client": "0.1038.2000",
+			"@fluidframework/server-services-core": "0.1038.2000",
+			"@fluidframework/server-test-utils": "0.1038.2000",
 			"@types/node": "^14.18.36",
 			"node-fetch": "^2.6.9"
 		},
