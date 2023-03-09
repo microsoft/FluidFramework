@@ -6,7 +6,7 @@
 import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
-import { TaskListData, TaskListExternalModel } from "../model-interface";
+import { TaskListsExternalModel, TaskListExternalModel } from "../model-interface";
 import { ExternalTaskListId } from "../utilities";
 
 const taskList1: TaskListExternalModel = {
@@ -35,7 +35,7 @@ const taskList2: TaskListExternalModel = {
 	},
 };
 
-const startingExternalData: TaskListData = {
+const startingExternalData: TaskListsExternalModel = {
 	"task-list-1": taskList1,
 	"task-list-2": taskList2,
 };
@@ -67,7 +67,7 @@ export interface IExternalDataSourceEvents extends IEvent {
  * TODO: Consider adding a fake delay to the async calls to give us a better approximation of expected experience.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
-	private data: TaskListData;
+	private data: TaskListsExternalModel;
 
 	public constructor() {
 		super();

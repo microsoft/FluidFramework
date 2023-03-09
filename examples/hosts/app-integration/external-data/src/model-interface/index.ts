@@ -208,5 +208,5 @@ export interface ITaskListCollection extends IEventProvider<ITaskListCollectionE
 export {
 	assertValidTaskListExternalModel,
 	TaskListExternalModel,
-	TaskListData,
+	TaskListsExternalModel,
 } from "./taskListExternalModel";
