@@ -41,4 +41,8 @@ export {
 	WebServer,
 	WholeSummaryReadGitManager,
 	WholeSummaryWriteGitManager,
+	IWebSocketManager,
+	IJsonWebTokenManager,
+	WebSocketManager,
+	EmptyImplementationTokenManager,
 } from "@fluidframework/server-services-shared";

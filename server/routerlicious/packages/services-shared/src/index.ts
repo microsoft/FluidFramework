@@ -28,3 +28,10 @@ export {
 } from "./webServer";
 export { WholeSummaryReadGitManager } from "./wholeSummaryReadGitManager";
 export { WholeSummaryWriteGitManager } from "./wholeSummaryWriteGitManager";
+export {
+	IWebSocketManager,
+	IJsonWebTokenManager,
+	WebSocketManager,
+	EmptyImplementationTokenManager,
+	createSocketId,
+} from "./tokenManager";

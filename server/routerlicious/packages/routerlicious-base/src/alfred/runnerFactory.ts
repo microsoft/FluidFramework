@@ -77,43 +77,44 @@ export class OrdererManager implements core.IOrdererManager {
 export class AlfredResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
 
-	constructor(
-		public config: Provider,
-		public producer: core.IProducer,
-		public redisConfig: any,
-		public clientManager: core.IClientManager,
-		public webSocketLibrary: string,
-		public orderManager: core.IOrdererManager,
-		public tenantManager: core.ITenantManager,
-		public restTenantThrottler: core.IThrottler,
-		public restClusterThrottlers: Map<string, core.IThrottler>,
-		public socketConnectTenantThrottler: core.IThrottler,
-		public socketConnectClusterThrottler: core.IThrottler,
-		public socketSubmitOpThrottler: core.IThrottler,
-		public socketSubmitSignalThrottler: core.IThrottler,
-		public singleUseTokenCache: core.ICache,
-		public storage: core.IDocumentStorage,
-		public appTenants: IAlfredTenant[],
-		public mongoManager: core.MongoManager,
-		public deltaService: core.IDeltaService,
-		public port: any,
-		public documentsCollectionName: string,
-		public metricClientConfig: any,
-		public documentsCollection: core.ICollection<core.IDocument>,
-		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
-		public verifyMaxMessageSize?: boolean,
-		public redisCache?: core.ICache,
-	) {
-		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
-		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
-		const socketIoConfig = config.get("alfred:socketIo");
-		this.webServerFactory = new services.SocketIoWebServerFactory(
-			this.redisConfig,
-			socketIoAdapterConfig,
-			httpServerConfig,
-			socketIoConfig,
-		);
-	}
+    constructor(
+        public config: Provider,
+        public producer: core.IProducer,
+        public redisConfig: any,
+        public clientManager: core.IClientManager,
+        public webSocketLibrary: string,
+        public orderManager: core.IOrdererManager,
+        public tenantManager: core.ITenantManager,
+        public restTenantThrottler: core.IThrottler,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
+        public socketConnectTenantThrottler: core.IThrottler,
+        public socketConnectClusterThrottler: core.IThrottler,
+        public socketSubmitOpThrottler: core.IThrottler,
+        public socketSubmitSignalThrottler: core.IThrottler,
+        public singleUseTokenCache: core.ICache,
+        public storage: core.IDocumentStorage,
+        public appTenants: IAlfredTenant[],
+        public mongoManager: core.MongoManager,
+        public deltaService: core.IDeltaService,
+        public port: any,
+        public documentsCollectionName: string,
+        public metricClientConfig: any,
+        public documentsCollection: core.ICollection<core.IDocument>,
+        public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
+        public verifyMaxMessageSize?: boolean,
+        public redisCache?: core.ICache,
+        public socketManager?: services.IWebSocketManager,
+        public tokenManager?: services.IJsonWebTokenManager,
+    ) {
+        const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
+        const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
+        const socketIoConfig = config.get("alfred:socketIo");
+        this.webServerFactory = new services.SocketIoWebServerFactory(
+            this.redisConfig,
+            socketIoAdapterConfig,
+            httpServerConfig,
+            socketIoConfig);
+    }
 
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
@@ -392,61 +393,68 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
 
-		return new AlfredResources(
-			config,
-			producer,
-			redisConfig,
-			clientManager,
-			webSocketLibrary,
-			orderManager,
-			tenantManager,
-			restTenantThrottler,
-			restClusterThrottlers,
-			socketConnectTenantThrottler,
-			socketConnectClusterThrottler,
-			socketSubmitOpThrottler,
-			socketSubmitSignalThrottler,
-			redisJwtCache,
-			storage,
-			appTenants,
-			operationsDbMongoManager,
-			deltaService,
-			port,
-			documentsCollectionName,
-			metricClientConfig,
-			documentsCollection,
-			redisThrottleAndUsageStorageManager,
-			verifyMaxMessageSize,
-			redisCache,
-		);
-	}
+        // Token revocation feature
+        const socketManager = new services.WebSocketManager();
+        const tokenManager = new services.EmptyImplementationTokenManager();
+        await tokenManager.initialize();
+
+        return new AlfredResources(
+            config,
+            producer,
+            redisConfig,
+            clientManager,
+            webSocketLibrary,
+            orderManager,
+            tenantManager,
+            restTenantThrottler,
+            restClusterThrottlers,
+            socketConnectTenantThrottler,
+            socketConnectClusterThrottler,
+            socketSubmitOpThrottler,
+            socketSubmitSignalThrottler,
+            redisJwtCache,
+            storage,
+            appTenants,
+            operationsDbMongoManager,
+            deltaService,
+            port,
+            documentsCollectionName,
+            metricClientConfig,
+            documentsCollection,
+            redisThrottleAndUsageStorageManager,
+            verifyMaxMessageSize,
+            redisCache,
+            socketManager,
+            tokenManager);
+    }
 }
 
 export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources> {
-	public async create(resources: AlfredResources): Promise<core.IRunner> {
-		return new AlfredRunner(
-			resources.webServerFactory,
-			resources.config,
-			resources.port,
-			resources.orderManager,
-			resources.tenantManager,
-			resources.restTenantThrottler,
-			resources.restClusterThrottlers,
-			resources.socketConnectTenantThrottler,
-			resources.socketConnectClusterThrottler,
-			resources.socketSubmitOpThrottler,
-			resources.socketSubmitSignalThrottler,
-			resources.singleUseTokenCache,
-			resources.storage,
-			resources.clientManager,
-			resources.appTenants,
-			resources.deltaService,
-			resources.producer,
-			resources.metricClientConfig,
-			resources.documentsCollection,
-			resources.throttleAndUsageStorageManager,
-			resources.verifyMaxMessageSize,
-			resources.redisCache,
-		);
-	}
+    public async create(resources: AlfredResources): Promise<core.IRunner> {
+        return new AlfredRunner(
+            resources.webServerFactory,
+            resources.config,
+            resources.port,
+            resources.orderManager,
+            resources.tenantManager,
+            resources.restTenantThrottler,
+            resources.restClusterThrottlers,
+            resources.socketConnectTenantThrottler,
+            resources.socketConnectClusterThrottler,
+            resources.socketSubmitOpThrottler,
+            resources.socketSubmitSignalThrottler,
+            resources.singleUseTokenCache,
+            resources.storage,
+            resources.clientManager,
+            resources.appTenants,
+            resources.deltaService,
+            resources.producer,
+            resources.metricClientConfig,
+            resources.documentsCollection,
+            resources.throttleAndUsageStorageManager,
+            resources.verifyMaxMessageSize,
+            resources.redisCache,
+            resources.socketManager,
+            );
+    }
 }

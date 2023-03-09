@@ -100,6 +100,7 @@ importers:
       '@fluidframework/server-lambdas-driver': ^0.1038.4000
       '@fluidframework/server-services-client': ^0.1038.4000
       '@fluidframework/server-services-core': ^0.1038.4000
+      '@fluidframework/server-services-shared': ^0.1038.4000
       '@fluidframework/server-services-telemetry': ^0.1038.4000
       '@fluidframework/server-test-utils': ^0.1038.4000
       '@rushstack/eslint-config': ^2.6.1
@@ -142,6 +143,7 @@ importers:
       '@fluidframework/server-lambdas-driver': link:../lambdas-driver
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
+      '@fluidframework/server-services-shared': link:../services-shared
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@types/semver': 6.2.3
       assert: 2.0.0

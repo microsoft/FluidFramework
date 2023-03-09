@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { createMetricClient } from "@fluidframework/server-services";
+import { createMetricClient, IWebSocketManager } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
@@ -32,30 +32,32 @@ export class AlfredRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
 
-	constructor(
-		private readonly serverFactory: IWebServerFactory,
-		private readonly config: Provider,
-		private readonly port: string | number,
-		private readonly orderManager: IOrdererManager,
-		private readonly tenantManager: ITenantManager,
-		private readonly restTenantThrottler: IThrottler,
-		private readonly restClusterThrottlers: Map<string, IThrottler>,
-		private readonly socketConnectTenantThrottler: IThrottler,
-		private readonly socketConnectClusterThrottler: IThrottler,
-		private readonly socketSubmitOpThrottler: IThrottler,
-		private readonly socketSubmitSignalThrottler: IThrottler,
-		private readonly singleUseTokenCache: ICache,
-		private readonly storage: IDocumentStorage,
-		private readonly clientManager: IClientManager,
-		private readonly appTenants: IAlfredTenant[],
-		private readonly deltaService: IDeltaService,
-		private readonly producer: IProducer,
-		private readonly metricClientConfig: any,
-		private readonly documentsCollection: ICollection<IDocument>,
-		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
-		private readonly verifyMaxMessageSize?: boolean,
-		private readonly redisCache?: ICache,
-	) {}
+    constructor(
+        private readonly serverFactory: IWebServerFactory,
+        private readonly config: Provider,
+        private readonly port: string | number,
+        private readonly orderManager: IOrdererManager,
+        private readonly tenantManager: ITenantManager,
+        private readonly restTenantThrottler: IThrottler,
+        private readonly restClusterThrottlers: Map<string, IThrottler>,
+        private readonly socketConnectTenantThrottler: IThrottler,
+        private readonly socketConnectClusterThrottler: IThrottler,
+        private readonly socketSubmitOpThrottler: IThrottler,
+        private readonly socketSubmitSignalThrottler: IThrottler,
+        private readonly singleUseTokenCache: ICache,
+        private readonly storage: IDocumentStorage,
+        private readonly clientManager: IClientManager,
+        private readonly appTenants: IAlfredTenant[],
+        private readonly deltaService: IDeltaService,
+        private readonly producer: IProducer,
+        private readonly metricClientConfig: any,
+        private readonly documentsCollection: ICollection<IDocument>,
+        private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
+        private readonly verifyMaxMessageSize?: boolean,
+        private readonly redisCache?: ICache,
+        private readonly socketManager?: IWebSocketManager,
+    ) {
+    }
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public start(): Promise<void> {
@@ -91,29 +93,30 @@ export class AlfredRunner implements IRunner {
 		);
 		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
 
-		// Register all the socket.io stuff
-		configureWebSocketServices(
-			this.server.webSocketServer,
-			this.orderManager,
-			this.tenantManager,
-			this.storage,
-			this.clientManager,
-			createMetricClient(this.metricClientConfig),
-			winston,
-			maxNumberOfClientsPerDocument,
-			numberOfMessagesPerTrace,
-			maxTokenLifetimeSec,
-			isTokenExpiryEnabled,
-			isClientConnectivityCountingEnabled,
-			isSignalUsageCountingEnabled,
-			this.redisCache,
-			this.socketConnectTenantThrottler,
-			this.socketConnectClusterThrottler,
-			this.socketSubmitOpThrottler,
-			this.socketSubmitSignalThrottler,
-			this.throttleAndUsageStorageManager,
-			this.verifyMaxMessageSize,
-		);
+        // Register all the socket.io stuff
+        configureWebSocketServices(
+            this.server.webSocketServer,
+            this.orderManager,
+            this.tenantManager,
+            this.storage,
+            this.clientManager,
+            createMetricClient(this.metricClientConfig),
+            winston,
+            maxNumberOfClientsPerDocument,
+            numberOfMessagesPerTrace,
+            maxTokenLifetimeSec,
+            isTokenExpiryEnabled,
+            isClientConnectivityCountingEnabled,
+            isSignalUsageCountingEnabled,
+            this.redisCache,
+            this.socketConnectTenantThrottler,
+            this.socketConnectClusterThrottler,
+            this.socketSubmitOpThrottler,
+            this.socketSubmitSignalThrottler,
+            this.throttleAndUsageStorageManager,
+            this.verifyMaxMessageSize,
+            this.socketManager,
+        );
 
 		// Listen on provided port, on all network interfaces.
 		httpServer.listen(this.port);
