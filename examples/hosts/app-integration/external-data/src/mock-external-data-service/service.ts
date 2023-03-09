@@ -146,10 +146,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					unknown
 				>;
 
-				let taskData: TaskListExternalModel;
+				let tasklist: TaskListExternalModel;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskData = assertValidTaskListExternalModel((responseBody as any).taskList);
+					tasklist = assertValidTaskListExternalModel((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
@@ -157,9 +157,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					return;
 				}
 
-				console.log(formatLogMessage("Returning current task list:"), taskData);
+				console.log(formatLogMessage("Returning current task list:"), tasklist);
 
-				result.send({ taskList: taskData });
+				result.send({ tasklist });
 			},
 			(error) => {
 				console.error(
@@ -192,16 +192,16 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskListExternalModel;
+			let taskList: TaskListExternalModel;
 			try {
-				taskData = assertValidTaskListExternalModel(messageData);
+				taskList = assertValidTaskListExternalModel(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskData, externalTaskListId).then(
+			externalDataSource.writeData(taskList, externalTaskListId).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();
