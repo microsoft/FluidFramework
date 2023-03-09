@@ -6,7 +6,7 @@
 	const _ = require("lodash");
 	const async = require("async");
 	const HTTPError = require("@fluid-experimental/property-common").HTTPErrorNoStack;
-	const axios = require("axios");
+	const request = require("request");
 	const generateGUID = require("@fluid-experimental/property-common").GuidUtils.generateGUID;
 	const secretsRedactor = require("./secrets_redactor");
 	const { ModuleLogger } = require("@fluid-experimental/property-query");
@@ -345,17 +345,10 @@
 				lastStartTime = Date.now();
 				startTime = startTime || lastStartTime;
 				attempt++;
-				axios(in_params.requestParams, {
-					headers: {
-						"Content-Type": "application/json",
-					},
-				})
-					.then((response) => {
-						in_params.requestCallbackHandler(callback, response.data);
-					})
-					.catch((error) => {
-						console.error(error);
-					});
+				request(
+					in_params.requestParams,
+					in_params.requestCallbackHandler.bind(null, callback),
+				);
 			},
 			// Callback called after success or final retry
 			// Might receive 1 or 2 results depending on the type of request handler callback that was provided
