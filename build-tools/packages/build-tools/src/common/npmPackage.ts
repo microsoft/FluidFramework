@@ -48,7 +48,7 @@ export interface PackageJson {
 	homepage: string;
 	bugs: { url: string; email: string };
 	license: string;
-	author: IPerson;
+	author: IPerson | string;
 	contributors: IPerson[];
 	files: string[];
 	main: string;
@@ -56,7 +56,7 @@ export interface PackageJson {
 	browser: string;
 	bin: { [key: string]: string };
 	man: string | string[];
-	repository: string | { type: string; url: string };
+	repository: string | { type: string; url: string; directory?: string };
 	scripts: { [key: string]: string | undefined };
 	config: { [key: string]: string };
 	dependencies: { [key: string]: string };
@@ -207,7 +207,9 @@ export class Package {
 	}
 
 	public async savePackageJson() {
-		return updatePackageJsonFile(this.directory);
+		return updatePackageJsonFile(this.directory, () => {
+			return;
+		});
 	}
 
 	public reload() {
@@ -476,7 +478,7 @@ export class Packages {
  * file.
  *
  * @param packageDir - The path to the directory containing package.json.
- * @param packageTransformer - An optional function that will be executed on the package.json contents before writing it
+ * @param packageTransformer - A function that will be executed on the package.json contents before writing it
  * back to the file.
  *
  * @remarks
@@ -485,7 +487,7 @@ export class Packages {
  */
 export function updatePackageJsonFile(
 	packageDir: string,
-	packageTransformer?: (json: PackageJson) => void,
+	packageTransformer: (json: PackageJson) => void,
 ): void {
 	const packagePath = path.join(packageDir, "package.json");
 	const indentation = detectIndent(packagePath).indent || "\t";

@@ -244,41 +244,32 @@ export const handlers: Handler[] = [
 			return undefined;
 		},
 		resolver: (file) => {
-			let json;
-			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
-			}
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				if (json.author === undefined || json.author !== author) {
+					json.author = author;
+				}
 
-			const resolved = true;
+				if (json.license === undefined || json.license !== licenseId) {
+					json.license = licenseId;
+				}
 
-			if (json.author === undefined || json.author !== author) {
-				json.author = author;
-			}
+				if (json.repository === undefined || typeof json.repository === "string") {
+					json.repository = {
+						type: "git",
+						url: repository,
+					};
+				}
 
-			if (json.license === undefined || json.license !== licenseId) {
-				json.license = licenseId;
-			}
+				if (json.repository.url !== repository) {
+					json.repository.url = repository;
+				}
 
-			if (json.repository === undefined || typeof json.repository === "string") {
-				json.repository = {
-					type: "git",
-					url: repository,
-				};
-			}
+				if (json.homepage === undefined || json.homepage !== homepage) {
+					json.homepage = homepage;
+				}
+			});
 
-			if (json.repository.url !== repository) {
-				json.repository.url = repository;
-			}
-
-			if (json.homepage === undefined || json.homepage !== homepage) {
-				json.homepage = homepage;
-			}
-
-			updatePackageJsonFile(path.dirname(file));
-
-			return { resolved: resolved };
+			return { resolved: true };
 		},
 	},
 	{
@@ -553,36 +544,30 @@ export const handlers: Handler[] = [
 			return undefined;
 		},
 		resolver: (file, root) => {
-			let json;
-			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
-			}
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const { valid, validationResults } = runNpmJsonLint(json, file);
 
-			const resolved = true;
-
-			const { valid, validationResults } = runNpmJsonLint(json, file);
-
-			if (!valid) {
-				for (const result of validationResults.results) {
-					for (const issue of result.issues) {
-						switch (issue.lintId) {
-							case "require-repository-directory":
-								json.repository.directory = path.posix.relative(
-									root,
-									path.dirname(file),
-								);
-								break;
-							default:
-								break;
+				if (!valid) {
+					for (const result of validationResults.results) {
+						for (const issue of result.issues) {
+							switch (issue.lintId) {
+								case "require-repository-directory":
+									if (typeof json.repository !== "string") {
+										json.repository.directory = path.posix.relative(
+											root,
+											path.dirname(file),
+										);
+									}
+									break;
+								default:
+									break;
+							}
 						}
 					}
 				}
+			});
 
-				updatePackageJsonFile(path.dirname(file));
-			}
-			return { resolved: resolved };
+			return { resolved: true };
 		},
 	},
 	{
@@ -637,59 +622,57 @@ export const handlers: Handler[] = [
 				: undefined;
 		},
 		resolver: (file) => {
-			let json;
-			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
-			}
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 
-			const resolved = true;
+				if (hasScriptsField) {
+					const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(
+						json.scripts,
+						"format",
+					);
 
-			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+					const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
+						json.scripts,
+						"prettier",
+					);
 
-			if (hasScriptsField) {
-				updatePackageJsonFile(path.dirname(file), (json) => addPrettier(json));
-			}
+					const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
+						json.scripts,
+						"prettier:fix",
+					);
 
-			return { resolved: resolved };
+					if (
+						hasFormatScriptResolver ||
+						hasPrettierScriptResolver ||
+						hasPrettierFixScriptResolver
+					) {
+						const formatScript = json["scripts"]["format"]?.includes("lerna");
+						const prettierScript =
+							json["scripts"]["prettier"]?.includes("--ignore-path");
+						const prettierFixScript =
+							json["scripts"]["prettier:fix"]?.includes("--ignore-path");
+
+						if (!formatScript) {
+							json["scripts"]["format"] = "npm run prettier:fix";
+
+							if (!prettierScript) {
+								json["scripts"]["prettier"] = "prettier --check .";
+							}
+
+							if (!prettierFixScript) {
+								json["scripts"]["prettier:fix"] = "prettier --write .";
+							}
+						}
+					}
+				}
+			});
+
+			return { resolved: true };
 		},
 	},
 ];
 
-function addPrettier(json: Record<string, any>) {
-	const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
-
-	const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
-		json.scripts,
-		"prettier",
-	);
-
-	const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
-		json.scripts,
-		"prettier:fix",
-	);
-
-	if (hasFormatScriptResolver || hasPrettierScriptResolver || hasPrettierFixScriptResolver) {
-		const formatScript = json["scripts"]["format"]?.includes("lerna");
-		const prettierScript = json["scripts"]["prettier"]?.includes("--ignore-path");
-		const prettierFixScript = json["scripts"]["prettier:fix"]?.includes("--ignore-path");
-
-		if (!formatScript) {
-			json["scripts"]["format"] = "npm run prettier:fix";
-
-			if (!prettierScript) {
-				json["scripts"]["prettier"] = "prettier --check .";
-			}
-
-			if (!prettierFixScript) {
-				json["scripts"]["prettier:fix"] = "prettier --write .";
-			}
-		}
-	}
-}
-
-function runNpmJsonLint(json: any, file: string) {
+function runNpmJsonLint(json: PackageJson, file: string) {
 	const lintConfig = getLintConfig(file);
 	const options = {
 		packageJsonObject: json,
