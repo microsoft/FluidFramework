@@ -585,6 +585,20 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
 		let opsSent = 0;
 
+		const reportOpsWhenInterrupted = (error) => {
+			config.logger.sendTelemetryEvent(
+				{
+					eventName: "OpSendInterrupted",
+					runId: config.runId,
+					documentOpCount: dataModel.counter.value,
+					localOpCount: opsSent,
+				},
+				error,
+			);
+		};
+
+		this.runtime.once("dispose", () => reportOpsWhenInterrupted("Runtime disposed"));
+
 		const sendSingleOp = () => {
 			if (
 				this.shouldSendLargeOp(
@@ -661,15 +675,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			}
 			return !this.runtime.disposed;
 		} catch (error) {
-			config.logger.sendTelemetryEvent(
-				{
-					eventName: "OpSendInterrupted",
-					runId: config.runId,
-					documentOpCount: dataModel.counter.value,
-					localOpCount: opsSent,
-				},
-				error,
-			);
+			reportOpsWhenInterrupted(error);
 			throw error;
 		} finally {
 			dataModel.printStatus();
