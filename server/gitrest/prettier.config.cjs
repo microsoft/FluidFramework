@@ -3,4 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { Checkout } from "./transaction";
+module.exports = {
+	...require("@fluidframework/build-common/prettier.config.cjs"),
+};

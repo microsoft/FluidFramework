@@ -114,7 +114,7 @@ export interface ChangeFamily<TEditor, TChange> {
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TaggedChange<TChangeset>[]): TChangeset;
     // (undocumented)
-    invert(changes: TaggedChange<TChangeset>, repairStore?: ReadonlyRepairDataStore): TChangeset;
+    invert(changes: TaggedChange<TChangeset>, isRollback: boolean, repairStore?: ReadonlyRepairDataStore): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
@@ -373,13 +373,13 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @alpha (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
-    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
+    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
-    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -619,12 +619,11 @@ export interface ISharedTreeCheckout extends AnchorLocator {
     fork(): ISharedTreeCheckoutFork;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
-    runTransaction(transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult): TransactionResult;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
-        start: () => void;
-        commit: () => void;
-        abort: () => void;
+        start(): void;
+        commit(): TransactionResult.Commit;
+        abort(): TransactionResult.Abort;
         inProgress(): boolean;
     };
 }
@@ -828,7 +827,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
     // (undocumented)
     intoDelta(change: ModularChangeset): Delta.Root;
     // (undocumented)
-    invert(change: TaggedChange<ModularChangeset>, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
+    invert(change: TaggedChange<ModularChangeset>, isRollback: boolean, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
     // (undocumented)
     rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset;
     // (undocumented)
@@ -1031,8 +1030,17 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 
 // @alpha (undocumented)
 export interface RevisionInfo {
+    readonly isRollback?: boolean;
     // (undocumented)
     readonly tag: RevisionTag;
+}
+
+// @alpha (undocumented)
+export interface RevisionMetadataSource {
+    // (undocumented)
+    readonly getIndex: RevisionIndexer;
+    // (undocumented)
+    readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
 // Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @alpha, but its signature references "StableId" which is marked as @internal
@@ -1057,6 +1065,9 @@ export const rootFieldKey: GlobalFieldKey;
 
 // @alpha (undocumented)
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
+export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void): TransactionResult;
 
 // @alpha
 export interface SchemaData {
@@ -1149,7 +1160,7 @@ export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol;
 export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
-    readonly isInverse?: boolean;
+    readonly isRollback?: boolean;
     // (undocumented)
     readonly revision: RevisionTag | undefined;
 }
@@ -1157,12 +1168,10 @@ export interface TaggedChange<TChangeset> {
 // @alpha
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
-// @alpha (undocumented)
+// @alpha
 export enum TransactionResult {
-    // (undocumented)
     Abort = 0,
-    // (undocumented)
-    Apply = 1
+    Commit = 1
 }
 
 // @alpha (undocumented)

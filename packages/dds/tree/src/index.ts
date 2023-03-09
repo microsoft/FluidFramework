@@ -72,7 +72,6 @@ export {
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
-	TransactionResult,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -112,6 +111,7 @@ export {
 	JsonCompatibleObject,
 	NestedMap,
 	fail,
+	TransactionResult,
 } from "./util";
 
 export {
@@ -165,6 +165,7 @@ export {
 	CrossFieldManager,
 	CrossFieldTarget,
 	RevisionIndexer,
+	RevisionMetadataSource,
 	RevisionInfo,
 	FieldKind,
 	Multiplicity,
@@ -234,6 +235,7 @@ export {
 	ISharedTree,
 	ISharedTreeCheckout,
 	ISharedTreeCheckoutFork,
+	runSynchronous,
 	SharedTreeFactory,
 } from "./shared-tree";
 
