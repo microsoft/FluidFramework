@@ -225,6 +225,7 @@ export interface NodeChangeset {
 
 export interface ValueConstraint {
 	value: Value;
+	violated: boolean;
 }
 
 /**

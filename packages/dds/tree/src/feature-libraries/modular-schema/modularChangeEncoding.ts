@@ -114,7 +114,7 @@ function encodeNodeChangesForJson(
 	}
 
 	if (change.valueConstraint !== undefined) {
-		encodedChange.valueConstraint = change.valueConstraint;
+		encodedChange.valueConstraint = change.valueConstraint.value;
 	}
 
 	return encodedChange;
@@ -180,7 +180,7 @@ function decodeNodeChangesetFromJson(
 	}
 
 	if (encodedChange.valueConstraint !== undefined) {
-		decodedChange.valueConstraint = encodedChange.valueConstraint;
+		decodedChange.valueConstraint = { value: encodedChange.valueConstraint, violated: false };
 	}
 
 	return decodedChange;
