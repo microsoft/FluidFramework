@@ -22,6 +22,7 @@ import {
 	SeqNumber,
 	SessionId,
 	RevisionTag,
+	makeAnonChange,
 } from "../../core";
 import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
 import {
@@ -32,8 +33,7 @@ import {
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
 } from "../../feature-libraries";
-import { brand, JsonCompatible, TransactionResult } from "../../util";
-import { runTransactionOnForest } from "../utils";
+import { brand, JsonCompatible } from "../../util";
 
 export interface TestTreeEdit {
 	sessionId: SessionId;
@@ -74,7 +74,7 @@ export class TestTree {
 		return TestTree.fromForest(forest, options);
 	}
 
-	static fromJson<T>(
+	static fromJson(
 		json: JsonCompatible[] | JsonCompatible,
 		options: TestTreeOptions = {},
 	): TestTree {
@@ -133,19 +133,22 @@ export class TestTree {
 	public runTransaction(
 		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => void,
 	): TestTreeEdit {
-		let changeset: DefaultChangeset | undefined;
-		const result = runTransactionOnForest(
-			this.forest,
-			defaultChangeFamily,
-			(change: DefaultChangeset) => (changeset = change),
-			(forest, editor) => transaction(forest, editor),
-		);
-		assert(
-			result === TransactionResult.Commit && changeset !== undefined,
-			"The transaction should result in an edit being submitted",
-		);
+		const editor = defaultChangeFamily.buildEditor((edit) => {
+			const delta = defaultChangeFamily.intoDelta(edit);
+			this.forest.applyDelta(delta);
+		}, this.forest.anchors);
+		transaction(this.forest, editor);
+		const changes = editor.getChanges();
+
+		// Using anonymous changes makes it impossible to chronologically order them during composition.
+		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
+		// not expected to happen in transactions but that could change in the future.
+		const anonChanges = changes.map((c) => makeAnonChange(c));
+
+		const changeset = defaultChangeFamily.rebaser.compose(anonChanges);
 		const revision = mintRevisionTag();
-		const delta = this.editManager.addLocalChange(revision, changeset);
+		// Forest and anchors already reflect the results of this change since they were updated during transaction.
+		this.editManager.addLocalChange(revision, changeset);
 		const resultingEdit: TestTreeEdit = {
 			sessionId: this.sessionId,
 			change: changeset,
@@ -153,7 +156,6 @@ export class TestTree {
 			refNumber: brand(this.refNumber),
 			revision,
 		};
-		this.forest.applyDelta(delta);
 		this._localEditsApplied += 1;
 		return resultingEdit;
 	}
