@@ -181,18 +181,21 @@ export async function initialize(
 	const randEng = random.engines.mt19937();
 	randEng.seed(seed);
 	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
-	const loaderOptions = generateLoaderOptions(
-		seed,
-		testConfig.optionOverrides?.[optionsOverride]?.loader,
-	)[0];
-	const containerOptions = generateRuntimeOptions(
-		seed,
-		testConfig.optionOverrides?.[optionsOverride]?.container,
-	)[0];
-	const configurations = generateConfigurations(
-		seed,
-		testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-	)[0];
+	const loaderOptions = random.pick(
+		randEng,
+		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
+	);
+	const containerOptions = random.pick(
+		randEng,
+		generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container),
+	);
+	const configurations = random.pick(
+		randEng,
+		generateConfigurations(
+			seed,
+			testConfig?.optionOverrides?.[optionsOverride]?.configurations,
+		),
+	);
 
 	const logger = await createLogger({
 		driverType: testDriver.type,
