@@ -167,15 +167,18 @@ describe("Cell", () => {
 		});
 
 		describe("Summarization of the Attribution", () => {
-			it("should not retrive attribution in local state", async () => {
+			it("should retrive proper attribution in local state", async () => {
 				// overwrite the cell with attribution tracking enabled
 				const options: ICellOptions = { attribution: { track: true } };
 				cell = createLocalCell("cell", options);
 				cell.set("value");
+
+				let key = cell.getAttribution();
+
 				assert.equal(
-					cell.getAttribution(),
-					undefined,
-					"the first cell should not have valid attribution",
+					key?.type,
+					"local",
+					"the first cell does not have valid local attribution",
 				);
 
 				// load a cell from the snapshot
@@ -189,10 +192,12 @@ describe("Cell", () => {
 				);
 				await cell2.load(services);
 
+				key = cell2.getAttribution();
+
 				assert.equal(
-					cell2.getAttribution(),
-					undefined,
-					"the second cell should not have valid attribution",
+					key?.type,
+					"local",
+					"the second cell does not have valid local attribution",
 				);
 			});
 		});
@@ -316,9 +321,9 @@ describe("Cell", () => {
 				);
 
 				assert.equal(
-					key2,
-					undefined,
-					"the second cell has attribution with a pending local edit",
+					key2?.type,
+					"local",
+					"the second cell does not have valid local attribution while the local edit is pending",
 				);
 
 				containerRuntimeFactory.processSomeMessages(1);
