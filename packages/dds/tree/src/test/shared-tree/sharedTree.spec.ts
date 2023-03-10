@@ -869,6 +869,33 @@ describe("SharedTree", () => {
 			validateRootField(tree1, ["b"]);
 			validateRootField(tree2, ["b"]);
 		});
+
+		it("ignores constraint on node after a node is changed in the same transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.setValue(rootPath, "b");
+				// This constraint will always be true and should be ignored
+				tree1.editor.addValueConstraint(rootPath, "b");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["b"]);
+			validateRootField(tree2, ["b"]);
+		});
 	});
 
 	describe("Anchors", () => {

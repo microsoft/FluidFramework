@@ -259,16 +259,20 @@ export class ModularChangeFamily
 		let valueChange: ValueChange | undefined;
 		let valueConstraint: Value | undefined;
 		for (const change of changes) {
+			// Use the first defined constraint, throw away any constraint after a node change
+			if (
+				change.change.valueConstraint !== undefined &&
+				valueConstraint === undefined &&
+				valueChange === undefined
+			) {
+				valueConstraint = { ...change.change.valueConstraint };
+			}
 			if (change.change.valueChange !== undefined) {
 				valueChange = { ...change.change.valueChange };
 				valueChange.revision ??= change.revision;
 			}
 			if (change.change.fieldChanges !== undefined) {
 				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
-			}
-			// Use the first defined constraint
-			if (change.change.valueConstraint !== undefined && valueConstraint === undefined) {
-				valueConstraint = { ...change.change.valueConstraint };
 			}
 		}
 
@@ -576,37 +580,42 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
 	): NodeChangeset {
+		const fieldChanges =
+			change.fieldChanges === undefined || over.change.fieldChanges === undefined
+				? change.fieldChanges
+				: this.rebaseFieldMap(
+						change.fieldChanges,
+						{
+							...over,
+							change: over.change.fieldChanges,
+						},
+						genId,
+						crossFieldTable,
+						revisionMetadata,
+						constraintState,
+				  );
+
+		const changeSet: NodeChangeset = {
+			...change,
+			fieldChanges,
+		};
+
 		// We only care if a violated constraint is fixed or if a non-violated
 		// constraint becomes violated
-		if (change.valueConstraint !== undefined && over.change.valueChange !== undefined) {
-			const violatedByOver = over.change.valueChange.value !== change.valueConstraint.value;
-			if (!change.valueConstraint.violated && violatedByOver) {
-				change.valueConstraint.violated = true;
-				constraintState.violationCount++;
-			} else if (change.valueConstraint.violated && !violatedByOver) {
-				change.valueConstraint.violated = false;
-				constraintState.violationCount--;
+		if (changeSet.valueConstraint !== undefined && over.change.valueChange !== undefined) {
+			const violatedByOver =
+				over.change.valueChange.value !== changeSet.valueConstraint.value;
+
+			if (changeSet.valueConstraint.violated !== violatedByOver) {
+				changeSet.valueConstraint = {
+					...changeSet.valueConstraint,
+					violated: violatedByOver,
+				};
+				constraintState.violationCount += violatedByOver ? 1 : -1;
 			}
 		}
 
-		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
-			return change;
-		}
-
-		return {
-			...change,
-			fieldChanges: this.rebaseFieldMap(
-				change.fieldChanges,
-				{
-					...over,
-					change: over.change.fieldChanges,
-				},
-				genId,
-				crossFieldTable,
-				revisionMetadata,
-				constraintState,
-			),
-		};
+		return changeSet;
 	}
 
 	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
