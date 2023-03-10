@@ -16,7 +16,7 @@ export interface TaskListExternalModel {
 /**
  * Mock model for external taskList data
  */
-export interface TaskListsExternalModel {
+export interface TaskListData {
 	[externalTaskListId: string]: TaskListExternalModel;
 }
 
