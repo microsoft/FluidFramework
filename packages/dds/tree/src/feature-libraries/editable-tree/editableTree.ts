@@ -719,7 +719,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return { parent: proxifiedField, index };
 	}
 
-	on<K extends keyof EditableTreeEvents>(
+	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {

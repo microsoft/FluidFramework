@@ -574,17 +574,11 @@ describe("SharedTree", () => {
 			log.push("editStart");
 			root[valueSymbol] = 7;
 
-			// TODO: once branches/transactions are properly integrated, duplicate events should no longer occur.
-			// TODO: after events are not produced in all cases yet.
 			assert.deepEqual(log, [
 				"editStart",
 				"change",
-				"change",
-				"change",
 				"after",
 				"editStart",
-				"change",
-				"change",
 				"change",
 				"after",
 				"unsubscribe",
