@@ -168,6 +168,7 @@ export interface IDocumentServiceFactory {
 // @public (undocumented)
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
+    readonly summarizeProtocolTree?: boolean;
 }
 
 // @public

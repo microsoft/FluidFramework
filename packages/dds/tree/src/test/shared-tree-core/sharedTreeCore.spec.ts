@@ -19,19 +19,91 @@ import {
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
 	Index,
+	IndexEvents,
 	SharedTreeCore,
 	SummaryElement,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
-import { AnchorSet } from "../../core";
+import { AnchorSet, rootFieldKeySymbol } from "../../core";
 import {
-	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultChangeset,
+	DefaultEditBuilder,
+	singleTextCursor,
 } from "../../feature-libraries";
+import { brand } from "../../util";
+import { ISubscribable } from "../../events";
 
 describe("SharedTreeCore", () => {
+	describe("emits", () => {
+		function countTreeEvent(event: keyof IndexEvents<DefaultChangeset>): {
+			tree: ReturnType<typeof createTree>;
+			counter: { count: number };
+		} {
+			const counter = {
+				count: 0,
+			};
+			const tree = createTree((events) => {
+				events.on(event, () => (counter.count += 1));
+				return [new MockIndex()];
+			});
+			return { tree, counter };
+		}
+
+		it("local change event after a change", async () => {
+			const { tree, counter } = countTreeEvent("newLocalChange");
+			changeTree(tree);
+			assert.equal(counter.count, 1);
+			changeTree(tree);
+			assert.equal(counter.count, 2);
+		});
+
+		it("local change event after a change in a transaction", async () => {
+			const { tree, counter } = countTreeEvent("newLocalChange");
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(counter.count, 1);
+			changeTree(tree);
+			assert.equal(counter.count, 2);
+		});
+
+		it("no local change event when committing a transaction", async () => {
+			const { tree, counter } = countTreeEvent("newLocalChange");
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(counter.count, 1);
+			tree.commitTransaction();
+			assert.equal(counter.count, 1);
+		});
+
+		it("local state event after a change", async () => {
+			const { tree, counter } = countTreeEvent("newLocalState");
+			changeTree(tree);
+			assert.equal(counter.count, 1);
+			changeTree(tree);
+			assert.equal(counter.count, 2);
+		});
+
+		it("local state event after a change in a transaction", async () => {
+			const { tree, counter } = countTreeEvent("newLocalState");
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(counter.count, 1);
+			changeTree(tree);
+			assert.equal(counter.count, 2);
+		});
+
+		it("no local state event when committing a transaction", async () => {
+			const { tree, counter } = countTreeEvent("newLocalState");
+			tree.startTransaction();
+			changeTree(tree);
+			assert.equal(counter.count, 1);
+			tree.commitTransaction();
+			assert.equal(counter.count, 1);
+		});
+	});
+
 	it("summarizes without indexes", async () => {
 		const tree = createTree([]);
 		const { summary, stats } = await tree.summarize();
@@ -145,8 +217,8 @@ describe("SharedTreeCore", () => {
 	}
 
 	function createTree<TIndexes extends readonly Index[]>(
-		indexes: TIndexes,
-	): SharedTreeCore<DefaultChangeset, DefaultChangeFamily, TIndexes> {
+		indexes: TIndexes | ((events: ISubscribable<IndexEvents<DefaultChangeset>>) => TIndexes),
+	): SharedTreeCore<DefaultEditBuilder, DefaultChangeset, TIndexes> {
 		const runtime = new MockFluidDataStoreRuntime();
 		const attributes: IChannelAttributes = {
 			type: "TestSharedTree",
@@ -223,3 +295,11 @@ describe("SharedTreeCore", () => {
 		}
 	}
 });
+
+/** Makes an arbitrary change to the given tree */
+function changeTree<TChange, TEditor extends DefaultEditBuilder, TIndexes extends readonly Index[]>(
+	tree: SharedTreeCore<TEditor, TChange, TIndexes>,
+): void {
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
+}

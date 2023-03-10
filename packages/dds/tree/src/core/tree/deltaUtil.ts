@@ -28,7 +28,6 @@ export function inputLength(mark: Mark<unknown>): number {
 		case MarkType.Insert:
 		case MarkType.InsertAndModify:
 		case MarkType.MoveIn:
-		case MarkType.MoveInAndModify:
 			return 0;
 		default:
 			unreachableCase(type);
