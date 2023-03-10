@@ -860,6 +860,34 @@ describe("SharedTree", () => {
 			validateRootField(provider.trees[1], ["b", "y"]);
 			validateRootField(provider.trees[0], ["b", "y"]);
 		});
+
+		it("uses first defined constraint for node in transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			insert(provider.trees[0], 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			provider.trees[1].runTransaction((forest, editor) => {
+				editor.setValue(rootPath, "a");
+				return TransactionResult.Apply;
+			});
+
+			provider.trees[0].runTransaction((forest, editor) => {
+				editor.addValueConstraint(rootPath, "a");
+				editor.addValueConstraint(rootPath, "ignored");
+				editor.setValue(rootPath, "b");
+				return TransactionResult.Apply;
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(provider.trees[0], ["b"]);
+			validateRootField(provider.trees[1], ["b"]);
+		});
 	});
 
 	describe("Anchors", () => {

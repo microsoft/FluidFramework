@@ -147,10 +147,7 @@ export class ModularChangeFamily
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
 		const changesWithoutConstraintViolations = changes.filter(
-			(change) =>
-				(change.change.constraintViolationCount !== undefined &&
-					change.change.constraintViolationCount < 1) ||
-				change.change.constraintViolationCount === undefined,
+			(change) => change.change.constraintViolationCount ?? 0 === 0,
 		);
 
 		const composedFields = this.composeFieldMaps(
@@ -269,7 +266,8 @@ export class ModularChangeFamily
 			if (change.change.fieldChanges !== undefined) {
 				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
 			}
-			if (change.change.valueConstraint !== undefined) {
+			// Use the first defined constraint
+			if (change.change.valueConstraint !== undefined && valueConstraint === undefined) {
 				valueConstraint = { ...change.change.valueConstraint };
 			}
 		}
@@ -580,22 +578,15 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		// We only care if a violated constraint is fixed or if a non-violated
 		// constraint becomes violated
-		if (
-			change.valueConstraint !== undefined &&
-			over.change.valueChange !== undefined &&
-			over.change.valueChange.value !== change.valueConstraint.value &&
-			change.valueConstraint.violated !== true
-		) {
-			change.valueConstraint.violated = true;
-			constraintState.violationCount++;
-		} else if (
-			change.valueConstraint !== undefined &&
-			over.change.valueChange !== undefined &&
-			over.change.valueChange.value === change.valueConstraint.value &&
-			change.valueConstraint.violated === true
-		) {
-			change.valueConstraint.violated = false;
-			constraintState.violationCount--;
+		if (change.valueConstraint !== undefined && over.change.valueChange !== undefined) {
+			const violatedByOver = over.change.valueChange.value !== change.valueConstraint.value;
+			if (!change.valueConstraint.violated && violatedByOver) {
+				change.valueConstraint.violated = true;
+				constraintState.violationCount++;
+			} else if (change.valueConstraint.violated && !violatedByOver) {
+				change.valueConstraint.violated = false;
+				constraintState.violationCount--;
+			}
 		}
 
 		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
@@ -656,10 +647,6 @@ export class ModularChangeFamily
 
 		if (change.fieldChanges !== undefined) {
 			modify.fields = this.intoDeltaImpl(change.fieldChanges);
-		}
-
-		if (change.valueConstraint !== undefined) {
-			modify.valueConstraint = change.valueConstraint;
 		}
 
 		return modify;

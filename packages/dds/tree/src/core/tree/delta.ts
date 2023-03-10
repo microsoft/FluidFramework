@@ -176,7 +176,6 @@ export interface Modify<TTree = ProtoNode> {
 	readonly type: typeof MarkType.Modify;
 	readonly setValue?: Value;
 	readonly fields?: FieldMarks<TTree>;
-	readonly valueConstraint?: Value;
 }
 
 /**

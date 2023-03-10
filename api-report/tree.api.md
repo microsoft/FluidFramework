@@ -795,8 +795,6 @@ interface Modify<TTree = ProtoNode> {
     readonly setValue?: Value;
     // (undocumented)
     readonly type: typeof MarkType.Modify;
-    // (undocumented)
-    readonly valueConstraint?: Value;
 }
 
 // @alpha
