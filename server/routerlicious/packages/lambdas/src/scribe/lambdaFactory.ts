@@ -132,7 +132,10 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         }
 
         // Search local database for checkpoint
-        const checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId });
+        Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
+        const checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
+            Lumberjack.error(`Error retrieving checkpoint from local DB.`, lumberProperties);
+        });
 
         // If we have local checkpoint information
         if(checkpoint) {
@@ -148,15 +151,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
             Lumberjack.info(`Restoring checkpoint from the local collection.`, lumberjackProperties);
 
-            if (!this.getDeltasViaAlfred)
-            {
-                // Fetch pending ops from scribeDeltas collection
-                const dbMessages =
-                    await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
-                opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
-            } else if (lastCheckpoint.logOffset !== -1) {
-                opMessages = await this.deltaManager.getDeltas("", tenantId, documentId, lastCheckpoint.protocolState.sequenceNumber);
-            }
+            opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
 
         } else if (document.scribe === undefined || document.scribe === null) {
             // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
@@ -196,15 +191,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 
             Lumberjack.info("Restoring checkpoint from db", lumberjackProperties);
 
-            if (!this.getDeltasViaAlfred)
-            {
-                // Fetch pending ops from scribeDeltas collection
-                const dbMessages =
-                    await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
-                opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
-            } else if (lastCheckpoint.logOffset !== -1) {
-                opMessages = await this.deltaManager.getDeltas("", tenantId, documentId, lastCheckpoint.protocolState.sequenceNumber);
-            }
+            opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
         }
 
         // Filter and keep ops after protocol state
@@ -291,6 +278,19 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             },
         );
         return scribeLambda;
+    }
+
+    private async getOpMessages(documentId: string, tenantId: string, lastCheckpoint: IScribe): Promise<ISequencedDocumentMessage[]>{
+        let opMessages: ISequencedDocumentMessage[] = [];
+        if (!this.getDeltasViaAlfred) {
+            // Fetch pending ops from scribeDeltas collection
+            const dbMessages =
+                await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
+            opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
+        } else if (lastCheckpoint.logOffset !== -1) {
+            opMessages = await this.deltaManager.getDeltas("", tenantId, documentId, lastCheckpoint.protocolState.sequenceNumber);
+        }
+        return opMessages;
     }
 
     public async dispose(): Promise<void> {
