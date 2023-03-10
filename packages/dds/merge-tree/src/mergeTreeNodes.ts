@@ -548,11 +548,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 				const moveInfo: IMoveInfo | undefined = toMoveInfo(this);
 				assert(moveInfo !== undefined, "On obliterate ack, missing move info!");
 				this.localMovedSeq = undefined;
-				const seqIdx = moveInfo.movedSeqs.indexOf(-1);
-				assert(
-					seqIdx !== UnassignedSequenceNumber,
-					"expected movedSeqs to contain unacked seq",
-				);
+				const seqIdx = moveInfo.movedSeqs.indexOf(UnassignedSequenceNumber);
+				assert(seqIdx !== -1, "expected movedSeqs to contain unacked seq");
 				moveInfo.movedSeqs[seqIdx] = opArgs.sequencedMessage!.sequenceNumber;
 
 				if (moveInfo.movedSeq === UnassignedSequenceNumber) {

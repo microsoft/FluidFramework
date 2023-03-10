@@ -119,11 +119,17 @@ describe("snapshot", () => {
 	describe("with attribution", () => {
 		makeSnapshotSuite({
 			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+			mergeTreeEnableObliterate: true,
+			mergeTreeUseNewLengthCalculations: true,
 		});
 	});
 
 	describe("without attribution", () => {
-		makeSnapshotSuite({ attribution: { track: false } });
+		makeSnapshotSuite({
+			attribution: { track: false },
+			mergeTreeEnableObliterate: true,
+			mergeTreeUseNewLengthCalculations: true,
+		});
 	});
 
 	it("presence of attribution overrides merge-tree initialization value", async () => {

@@ -189,6 +189,10 @@ function isMovedAndAcked(segment: ISegment): boolean {
 	return moveInfo !== undefined && moveInfo.movedSeq !== UnassignedSequenceNumber;
 }
 
+function isRemovedAndAckedOrMovedAndAcked(segment: ISegment): boolean {
+	return isRemovedAndAcked(segment) || isMovedAndAcked(segment);
+}
+
 function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode) {
 	if (!node.isLeaf()) {
 		return node.cachedLength;
@@ -640,9 +644,12 @@ export class MergeTree {
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
+	private readonly moveSeqs: number[] = [];
+	private readonly localMoveSeqs: Set<number> = new Set();
+
 	public constructor(public options?: IMergeTreeOptions) {
 		if (options?.mergeTreeEnableObliterate && !options.mergeTreeUseNewLengthCalculations) {
-			throw new Error(
+			throw new UsageError(
 				"`mergeTreeUseNewLengthCalculations` must be enabled to make use of obliterate",
 			);
 		}
@@ -934,14 +941,14 @@ export class MergeTree {
 	 * @internal
 	 */
 	public _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined {
-		if (!segment || !(isRemovedAndAcked(segment) || isMovedAndAcked(segment))) {
+		if (!segment || !isRemovedAndAckedOrMovedAndAcked(segment)) {
 			return segment;
 		}
 		let slideToSegment: ISegment | undefined;
 		const goFurtherToFindSlideToSegment = (seg) => {
 			if (
 				seg.seq !== UnassignedSequenceNumber &&
-				!(isRemovedAndAcked(seg) || isMovedAndAcked(seg))
+				!isRemovedAndAckedOrMovedAndAcked(segment)
 			) {
 				slideToSegment = seg;
 				return false;
@@ -966,7 +973,7 @@ export class MergeTree {
 	 */
 	private slideAckedRemovedSegmentReferences(segment: ISegment) {
 		assert(
-			isRemovedAndAcked(segment) || isMovedAndAcked(segment),
+			isRemovedAndAckedOrMovedAndAcked(segment),
 			0x2f1 /* slideReferences from a segment which has not been removed and acked */,
 		);
 		if (segment.localRefs?.empty !== false) {
@@ -2085,9 +2092,6 @@ export class MergeTree {
 		}
 	}
 
-	private readonly moveSeqs: number[] = [];
-	private readonly localMoveSeqs: Set<number> = new Set();
-
 	private getSmallestSeqMoveOp(): number {
 		if (this.localMoveSeqs.size > 0) {
 			return -1;
@@ -2339,7 +2343,7 @@ export class MergeTree {
 		opArgs: IMergeTreeDeltaOpArgs,
 	): void {
 		if (!this.options?.mergeTreeEnableObliterate) {
-			throw new Error("Attempted to send obliterate op without enabling feature flag.");
+			throw new UsageError("Attempted to send obliterate op without enabling feature flag.");
 		}
 
 		this.ensureIntervalBoundary(start, refSeq, clientId);
@@ -2362,8 +2366,8 @@ export class MergeTree {
 			if (
 				clientId !== segment.clientId &&
 				segment.seq !== undefined &&
-				seq !== -1 &&
-				((refSeq < segment.seq && segment.seq !== -1) || segment.seq === -1)
+				seq !== UnassignedSequenceNumber &&
+				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber)
 			) {
 				segment.wasMovedOnInsert = true;
 			}
@@ -2716,7 +2720,7 @@ export class MergeTree {
 		properties: PropertySet | undefined,
 	): LocalReferencePosition {
 		if (
-			(isRemovedAndAcked(segment) || isMovedAndAcked(segment)) &&
+			isRemovedAndAckedOrMovedAndAcked(segment) &&
 			!refTypeIncludesFlag(refType, ReferenceType.SlideOnRemove | ReferenceType.Transient)
 		) {
 			throw new UsageError(
@@ -3076,21 +3080,20 @@ export class MergeTree {
 
 				const len = this.nodeLength(node, lenSeq, clientId, localSeq);
 				const lenAtRefSeq =
-					lenSeq === refSeq
-						? len
-						: this.nodeLength(node, refSeq, clientId, localSeq) ?? 0;
+					(lenSeq === refSeq ? len : this.nodeLength(node, refSeq, clientId, localSeq)) ??
+					0;
 
 				const isUnackedAndInObliterate =
-					(!node.isLeaf() || node.seq === UnassignedSequenceNumber) && lenSeq !== refSeq;
+					lenSeq !== refSeq && (!node.isLeaf() || node.seq === UnassignedSequenceNumber);
 
 				if (
-					(len === undefined && !lenAtRefSeq) ||
-					(len === 0 && !isUnackedAndInObliterate && !lenAtRefSeq)
+					(len === undefined && lenAtRefSeq === 0) ||
+					(len === 0 && !isUnackedAndInObliterate && lenAtRefSeq === 0)
 				) {
 					return NodeAction.Skip;
 				}
 
-				const nextPos = pos + (lenAtRefSeq ?? 0);
+				const nextPos = pos + lenAtRefSeq;
 				// start is beyond the current node, so we can skip it
 				if (start >= nextPos) {
 					pos = nextPos;

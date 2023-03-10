@@ -162,7 +162,10 @@ export interface PartialSequenceLength {
 	 *     whose length totalled 10
 	 */
 	overlapRemoveClients?: RedBlackTree<number, IOverlapClient>;
-
+	/**
+	 * This field is the same as `overlapRemoveClients`, except that it tracks
+	 * overlapping obliterates rather than removes.
+	 */
 	overlapObliterateClients?: RedBlackTree<number, IOverlapClient>;
 }
 
@@ -483,23 +486,30 @@ export class PartialSequenceLengths {
 		}
 	}
 
+	/**
+	 * Coalesce overlapping move lengths for a partial length entry that already
+	 * exists
+	 *
+	 * @param segmentLen - Length of segment with overlapping moves
+	 * @param segment - Segment with overlapping moves
+	 * @param firstGte - Existing partial length entry
+	 * @param clientIds - Ids of clients that concurrently obliterated this segment
+	 */
 	static accumulateMoveOverlapForExisting(
 		segmentLen: number,
 		segment: ISegment,
 		firstGte: PartialSequenceLength,
-		moveClientOverlap: number[],
+		clientIds: number[],
 	) {
-		const moveClientOverlapWithoutLocal = moveClientOverlap.filter(
-			(id) => id !== segment.clientId,
-		);
+		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
 
 		PartialSequenceLengths.accumulateMoveClientOverlap(
 			firstGte,
-			moveClientOverlapWithoutLocal,
+			nonInsertingClientIds,
 			segmentLen,
 		);
 
-		if (moveClientOverlap.length !== moveClientOverlapWithoutLocal.length) {
+		if (clientIds.length !== nonInsertingClientIds.length) {
 			PartialSequenceLengths.accumulateMoveClientOverlap(
 				firstGte,
 				[segment.clientId],
@@ -508,13 +518,11 @@ export class PartialSequenceLengths {
 		}
 	}
 
-	// todo: maybe pass object for args here? would cause overhead
-	// using primitive types here makes it easy to mess up args
-	private static calculateAfterInsertion(
+	private static updatePartialsAfterInsertion(
 		segment: ISegment,
 		segmentLen: number,
 		remoteObliteratedLen: number | undefined,
-		obliterateOverlapLen: number | undefined,
+		obliterateOverlapLen: number = segmentLen,
 		partials: PartialSequenceLengthsSet,
 		seq: number,
 		clientId: number,
@@ -536,13 +544,13 @@ export class PartialSequenceLengths {
 				PartialSequenceLengths.accumulateRemoveClientOverlap(
 					firstGte,
 					removeClientOverlap,
-					obliterateOverlapLen ?? segmentLen,
+					obliterateOverlapLen,
 				);
 			}
 
 			if (moveClientOverlap) {
 				PartialSequenceLengths.accumulateMoveOverlapForExisting(
-					obliterateOverlapLen ?? segmentLen,
+					obliterateOverlapLen,
 					segment,
 					firstGte,
 					moveClientOverlap,
@@ -557,7 +565,7 @@ export class PartialSequenceLengths {
 				);
 				overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
 					moveClientOverlapWithoutLocal,
-					obliterateOverlapLen ?? segmentLen,
+					obliterateOverlapLen,
 				);
 
 				if (moveClientOverlap.length !== moveClientOverlapWithoutLocal.length) {
@@ -565,7 +573,7 @@ export class PartialSequenceLengths {
 						clientId: segment.clientId,
 						seglen: segment.wasMovedOnInsert
 							? -segment.cachedLength
-							: obliterateOverlapLen ?? segmentLen,
+							: obliterateOverlapLen,
 					});
 				}
 			}
@@ -579,7 +587,7 @@ export class PartialSequenceLengths {
 				overlapRemoveClients: removeClientOverlap
 					? PartialSequenceLengths.getOverlapClients(
 							removeClientOverlap,
-							obliterateOverlapLen ?? segmentLen,
+							obliterateOverlapLen,
 					  )
 					: undefined,
 				overlapObliterateClients,
@@ -607,10 +615,9 @@ export class PartialSequenceLengths {
 		const removalIsLocal = !!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 		const isLocal =
-			(!removalInfo && !moveInfo && segment.seq === UnassignedSequenceNumber) ||
+			segment.seq === UnassignedSequenceNumber ||
 			(removalInfo && removalIsLocal && (!moveInfo || moveIsLocal)) ||
-			(moveInfo && moveIsLocal && (!removalInfo || removalIsLocal)) ||
-			segment.seq === UnassignedSequenceNumber;
+			(moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
 		let segmentLen = segment.cachedLength;
@@ -684,7 +691,7 @@ export class PartialSequenceLengths {
 			const moveClientId = moveInfo.movedClientIds[0];
 			const hasOverlap = moveInfo.movedClientIds.length > 1;
 
-			PartialSequenceLengths.calculateAfterInsertion(
+			PartialSequenceLengths.updatePartialsAfterInsertion(
 				segment,
 				0,
 				-segment.cachedLength,
@@ -707,7 +714,7 @@ export class PartialSequenceLengths {
 			const removeClientId = removalInfo.removedClientIds[0];
 			const hasOverlap = removalInfo.removedClientIds.length > 1;
 
-			PartialSequenceLengths.calculateAfterInsertion(
+			PartialSequenceLengths.updatePartialsAfterInsertion(
 				segment,
 				0,
 				-segment.cachedLength,
@@ -720,7 +727,7 @@ export class PartialSequenceLengths {
 			);
 		}
 
-		PartialSequenceLengths.calculateAfterInsertion(
+		PartialSequenceLengths.updatePartialsAfterInsertion(
 			segment,
 			segmentLen,
 			remoteObliteratedLen,
@@ -907,6 +914,8 @@ export class PartialSequenceLengths {
 
 				// eslint-disable-next-line unicorn/prefer-switch
 				if (seq === segment.seq) {
+					// if this segment was moved on insert, its length should
+					// only be visible to the inserting client
 					if (
 						segment.wasMovedOnInsert &&
 						segment.seq !== undefined &&
@@ -928,13 +937,13 @@ export class PartialSequenceLengths {
 						remoteObliteratedLen -= segment.cachedLength;
 					} else if (
 						segment.wasMovedOnInsert &&
-						segment.seq !== -1 &&
+						segment.seq !== UnassignedSequenceNumber &&
 						segment.seq !== undefined &&
 						moveInfo.movedSeq > segment.seq
 					) {
 						remoteObliteratedLen += segment.cachedLength;
 						seqSeglen -= segment.cachedLength;
-					} else if (segment.seq !== -1) {
+					} else if (segment.seq !== UnassignedSequenceNumber) {
 						seqSeglen -= segment.cachedLength;
 					}
 				}

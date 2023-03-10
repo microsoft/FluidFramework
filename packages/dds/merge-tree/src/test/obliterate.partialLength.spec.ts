@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { MergeTreeDeltaType } from "../ops";
-import { PartialSequenceLengths, verify } from "../partialLengths";
+import { PartialSequenceLengths, verify, verifyExpected } from "../partialLengths";
 import { TestClient } from "./testClient";
 import { insertText, validatePartialLengths } from "./testUtils";
 
@@ -17,6 +17,7 @@ describe("obliterate partial lengths", () => {
 
 	beforeEach(() => {
 		PartialSequenceLengths.options.verifier = verify;
+		PartialSequenceLengths.options.verifyExpected = verifyExpected;
 		client = new TestClient({
 			mergeTreeUseNewLengthCalculations: true,
 			mergeTreeEnableObliterate: true,
