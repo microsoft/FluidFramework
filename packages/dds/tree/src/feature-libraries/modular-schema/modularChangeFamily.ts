@@ -185,7 +185,7 @@ export class ModularChangeFamily
 			crossFieldTable.fieldsToUpdate.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		return makeModularChangeset(composedFields, maxId, revInfos, 0);
+		return makeModularChangeset(composedFields, maxId, revInfos);
 	}
 
 	private composeFieldMaps(
@@ -838,12 +838,15 @@ function makeModularChangeset(
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
 ): ModularChangeset {
-	const changeset: Mutable<ModularChangeset> = { changes, constraintViolationCount };
+	const changeset: Mutable<ModularChangeset> = { changes };
 	if (revisions !== undefined && revisions.length > 0) {
 		changeset.revisions = revisions;
 	}
 	if (maxId >= 0) {
 		changeset.maxId = brand(maxId);
+	}
+	if (constraintViolationCount !== undefined && constraintViolationCount > 0) {
+		changeset.constraintViolationCount = constraintViolationCount;
 	}
 	return changeset;
 }
