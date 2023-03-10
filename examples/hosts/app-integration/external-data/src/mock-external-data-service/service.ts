@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskListExternalModel, TaskListExternalModel } from "../model-interface";
+import { assertValidTaskData, TaskData } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -48,9 +48,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Mock webhook for notifying subscribers to changes in external data.
 	 */
-	const webhook = new MockWebhook<TaskListExternalModel>();
+	const webhook = new MockWebhook<TaskData>();
 
-	function notifyWebhookSubscribers(newData: TaskListExternalModel): void {
+	function notifyWebhookSubscribers(newData: TaskData): void {
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
 		webhook.notifySubscribers(newData);
 	}
@@ -146,10 +146,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					unknown
 				>;
 
-				let tasklist: TaskListExternalModel;
+				let taskData: TaskData;
 				try {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					tasklist = assertValidTaskListExternalModel((responseBody as any).taskList);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
@@ -157,9 +157,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					return;
 				}
 
-				console.log(formatLogMessage("Returning current task list:"), tasklist);
+				console.log(formatLogMessage("Returning current task list:"), taskData);
 
-				result.send({ tasklist });
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				result.send({ taskList: taskData });
 			},
 			(error) => {
 				console.error(
@@ -176,7 +177,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskListExternalModel}.
+	 * Expected input data format: {@link TaskData}.
 	 */
 	expressApp.post("/set-tasks/:externalTaskListId", (request, result) => {
 		const externalTaskListId = request.params?.externalTaskListId;
@@ -192,16 +193,16 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskList: TaskListExternalModel;
+			let taskData: TaskData;
 			try {
-				taskList = assertValidTaskListExternalModel(messageData);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskList, externalTaskListId).then(
+			externalDataSource.writeData(taskData, externalTaskListId).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();
