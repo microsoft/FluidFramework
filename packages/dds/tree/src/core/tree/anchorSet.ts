@@ -104,12 +104,16 @@ export interface AnchorEvents {
 
 	/**
 	 * A change to what children the node has.
+	 *
+	 * @remarks
+	 * Does not include edits of child subtrees: instead only includes changes to which nodes are in this node's fields.
 	 */
 	childrenChange(anchor: AnchorNode): void;
 
 	/**
 	 * Something in this tree changed.
 	 * Called on every parent (transitively) that changed.
+	 * Includes changes to this node itself.
 	 */
 	subtreeChange(anchor: AnchorNode): void;
 
@@ -204,6 +208,10 @@ let slotCounter = 0;
  * Collection of Anchors at a specific revision.
  *
  * See `Rebaser` for how to update across revisions.
+ *
+ * TODO: this should either not be package exported.
+ * If its needed outside the package an Interface should be used instead which can reduce its
+ * API surface to a small subset.
  *
  * @sealed
  * @alpha
@@ -321,46 +329,56 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 	/**
 	 * Returns an equivalent path making as much of it with PathNodes as possible.
 	 * This allows future operations (like fine, track, locate) on this path (and derived ones) to be faster.
+	 * Note that the returned path may use AnchorNodes from this AnchorSet,
+	 * but does not have a tracked reference to them, so this should not be held onto across anything that might free an AnchorNode.
 	 *
 	 * @remarks
 	 * Also ensures that any PathNode in the path is from this AnchorSet.
 	 */
-	public internalizePath(path: UpPath): UpPath {
-		if (path instanceof PathNode) {
-			if (path.anchorSet === this) {
-				return path;
+	public internalizePath(originalPath: UpPath): UpPath {
+		let path: UpPath | undefined = originalPath;
+		const stack: UpPath[] = [];
+		while (path !== undefined) {
+			if (path instanceof PathNode) {
+				if (path.anchorSet === this) {
+					break;
+				}
+			}
+			stack.push(path);
+			path = path.parent;
+		}
+
+		// Now `path` contains an internalized path.
+		// It just needs the paths from stackOut to wrap it.
+
+		let wrapWith: UpPath | undefined;
+		while ((wrapWith = stack.pop()) !== undefined) {
+			if (path === undefined || path instanceof PathNode) {
+				// If path already has an anchor, get an anchor for it's child if there is one:
+				const child = (path ?? this.root).tryGetChild(
+					wrapWith.parentField,
+					wrapWith.parentIndex,
+				);
+				if (child !== undefined) {
+					path = child;
+					continue;
+				}
+			}
+			// Replacing this if with a ternary makes the documentation harder to include and hurts readability.
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (path === wrapWith.parent && !(wrapWith instanceof PathNode)) {
+				// path is safe to reuse from input path, so use it to avoid allocating another object.
+				path = wrapWith;
+			} else {
+				path = {
+					parent: path,
+					parentField: wrapWith.parentField,
+					parentIndex: wrapWith.parentIndex,
+				};
 			}
 		}
 
-		if (path.parent === undefined) {
-			const child = this.root.tryGetChild(path.parentField, path.parentIndex);
-			if (child !== undefined) {
-				return child;
-			}
-			// if input is	PathNode but from wrong anchorSet, replace with new UpPath.
-			return path instanceof PathNode
-				? {
-						parent: undefined,
-						parentField: path.parentField,
-						parentIndex: path.parentIndex,
-				  }
-				: path;
-		}
-		const parent = path.parent;
-		const parentPath = this.internalizePath(parent);
-		if (parentPath instanceof PathNode) {
-			const child = parentPath.tryGetChild(path.parentField, path.parentIndex);
-			if (child !== undefined) {
-				return child;
-			}
-		} else if (parentPath === parent && !(path instanceof PathNode)) {
-			return path;
-		}
-		return {
-			parent: parentPath,
-			parentField: path.parentField,
-			parentIndex: path.parentIndex,
-		};
+		return path ?? fail("internalize path must be a path");
 	}
 
 	/**

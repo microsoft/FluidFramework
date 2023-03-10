@@ -16,6 +16,7 @@ import {
 	rootFieldKeySymbol,
 } from "../../core";
 import { brand } from "../../util";
+import { expectEqualPaths } from "../utils";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -156,6 +157,67 @@ describe("AnchorSet", () => {
 			makePath([fieldFoo, 4], [fieldBar, 3], [fieldBaz, 2]),
 		);
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
+	});
+
+	describe("internalize path", () => {
+		it("identity case", () => {
+			const anchors = new AnchorSet();
+			const path = makePath([fieldFoo, 1]);
+			const pathLonger = makePath([fieldFoo, 1], [fieldBar, 5]);
+			assert.equal(anchors.internalizePath(path), path);
+			assert.equal(anchors.internalizePath(pathLonger), pathLonger);
+
+			// Check that anchor nodes are not used if they are not relevant.
+			const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
+			assert.equal(anchors.internalizePath(path), path);
+			assert.equal(anchors.internalizePath(pathLonger), pathLonger);
+		});
+
+		it("does not reuse external PathNodes", () => {
+			const anchors = new AnchorSet();
+			const anchors2 = new AnchorSet();
+			const anchor0 = anchors2.track(makePath([rootFieldKeySymbol, 0]));
+			const path = anchors2.locate(anchor0) ?? assert.fail();
+			const pathLonger: UpPath = {
+				parent: path,
+				parentField: fieldBar,
+				parentIndex: 0,
+			};
+
+			const internalPath = anchors.internalizePath(path);
+			const internalPathLonger = anchors.internalizePath(pathLonger);
+			assert.notEqual(internalPath, path);
+			assert.notEqual(internalPathLonger, pathLonger);
+			assert.notEqual(internalPathLonger.parent, pathLonger.parent);
+			expectEqualPaths(internalPath, path);
+			expectEqualPaths(internalPathLonger, pathLonger);
+		});
+
+		it("use PathNodes", () => {
+			const anchors = new AnchorSet();
+			const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
+			const path = anchors.locate(anchor0) ?? assert.fail();
+			const pathLonger: UpPath = {
+				parent: path,
+				parentField: fieldBar,
+				parentIndex: 0,
+			};
+
+			const internalPath = anchors.internalizePath(path);
+			const internalPathLonger = anchors.internalizePath(pathLonger);
+			assert.equal(internalPath, path);
+			assert.equal(internalPathLonger, pathLonger);
+
+			const clonedPath = clonePath(path);
+			const clonedPathLonger = clonePath(pathLonger);
+
+			const internalClonedPath = anchors.internalizePath(clonedPath);
+			const internalClonedPathLonger = anchors.internalizePath(clonedPathLonger);
+			expectEqualPaths(internalClonedPath, path);
+			expectEqualPaths(internalClonedPathLonger, pathLonger);
+			assert.equal(internalClonedPath, internalPath);
+			assert.equal(internalClonedPathLonger.parent, internalClonedPath);
+		});
 	});
 
 	it("triggers events", () => {
