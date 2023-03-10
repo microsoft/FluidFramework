@@ -1,6 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 
-  // API reporting is disabled for this package.
+	// API reporting is disabled for this package.
 	"extends": "@fluidframework/build-common/api-extractor-common.json"
 }
