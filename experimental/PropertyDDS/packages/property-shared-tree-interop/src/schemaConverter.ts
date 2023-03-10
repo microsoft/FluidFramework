@@ -248,7 +248,9 @@ export function convertPropertyToSharedTreeStorageSchema(
 									property.properties &&
 									!isIgnoreNestedProperties(property.typeid)
 								) {
-									// TODO: Handle nested properties
+									fail(
+										`Nested properties are not supported yet ${property.typeid}`,
+									);
 								} else {
 									let currentTypeid = property.typeid;
 									const types = new Set<TreeSchemaIdentifier>();
