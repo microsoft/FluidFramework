@@ -15,88 +15,90 @@ import { LocalKafkaSubscription } from "./localKafkaSubscription";
  * Queue is cleaned up once all subscriptions processed past the min.
  */
 export class LocalKafka implements IProducer {
-    private readonly subscriptions: LocalKafkaSubscription[] = [];
+	private readonly subscriptions: LocalKafkaSubscription[] = [];
 
-    private readonly qeueue = new Deque<IQueuedMessage>();
+	private readonly qeueue = new Deque<IQueuedMessage>();
 
-    private minimumQueueOffset = 0;
+	private minimumQueueOffset = 0;
 
-    constructor(private messageOffset = 0) {
-    }
+	constructor(private messageOffset = 0) {}
 
-    public get length() {
-        return this.qeueue.length;
-    }
+	public get length() {
+		return this.qeueue.length;
+	}
 
-    public isConnected() {
-        return true;
-    }
+	public isConnected() {
+		return true;
+	}
 
-    public subscribe(kafakaSubscriber: IKafkaSubscriber) {
-        const kafkaSubscription = new LocalKafkaSubscription(kafakaSubscriber, this.qeueue);
-        kafkaSubscription.on("processed", (queueOffset) => {
-            if (this.minimumQueueOffset >= queueOffset) {
-                return;
-            }
+	public subscribe(kafakaSubscriber: IKafkaSubscriber) {
+		const kafkaSubscription = new LocalKafkaSubscription(kafakaSubscriber, this.qeueue);
+		kafkaSubscription.on("processed", (queueOffset) => {
+			if (this.minimumQueueOffset >= queueOffset) {
+				return;
+			}
 
-            // Check if this queueOffset is the min
-            for (const subscription of this.subscriptions) {
-                if (subscription.queueOffset < queueOffset) {
-                    return;
-                }
-            }
+			// Check if this queueOffset is the min
+			for (const subscription of this.subscriptions) {
+				if (subscription.queueOffset < queueOffset) {
+					return;
+				}
+			}
 
-            const diff = queueOffset - this.minimumQueueOffset;
-            this.minimumQueueOffset = queueOffset - 1;
+			const diff = queueOffset - this.minimumQueueOffset;
+			this.minimumQueueOffset = queueOffset - 1;
 
-            // Remove items before min queue offset
-            for (let i = 0; i < diff; i++) {
-                this.qeueue.shift();
-            }
+			// Remove items before min queue offset
+			for (let i = 0; i < diff; i++) {
+				this.qeueue.shift();
+			}
 
-            // Update offsets in each subscription to account for the queue index changing
-            for (const subscription of this.subscriptions) {
-                subscription.queueOffset -= diff;
-            }
-        });
+			// Update offsets in each subscription to account for the queue index changing
+			for (const subscription of this.subscriptions) {
+				subscription.queueOffset -= diff;
+			}
+		});
 
-        this.subscriptions.push(kafkaSubscription);
-    }
+		this.subscriptions.push(kafkaSubscription);
+	}
 
-    public async send(messages: object[], topic: string): Promise<any> {
-        for (const message of messages) {
-            const queuedMessage: IQueuedMessage = {
-                offset: this.messageOffset,
-                partition: 0,
-                topic,
-                value: JSON.stringify(message),
-            };
+	public async send(messages: object[], topic: string): Promise<any> {
+		for (const message of messages) {
+			const queuedMessage: IQueuedMessage = {
+				offset: this.messageOffset,
+				partition: 0,
+				topic,
+				value: JSON.stringify(message),
+			};
 
-            this.messageOffset++;
+			this.messageOffset++;
 
-            this.qeueue.push(queuedMessage);
-        }
+			this.qeueue.push(queuedMessage);
+		}
 
-        for (const subscription of this.subscriptions) {
-            void subscription.process();
-        }
-    }
+		for (const subscription of this.subscriptions) {
+			void subscription.process();
+		}
+	}
 
-    public async close(): Promise<void> {
-        this.qeueue.clear();
+	public async close(): Promise<void> {
+		this.qeueue.clear();
 
-        for (const subscription of this.subscriptions) {
-            subscription.close();
-        }
+		for (const subscription of this.subscriptions) {
+			subscription.close();
+		}
 
-        this.subscriptions.length = 0;
-    }
+		this.subscriptions.length = 0;
+	}
 
-    public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
-        return this;
-    }
+	public on(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
+		return this;
+	}
 
-    public once(event: "connected" | "produced" | "error", listener: (...args: any[]) => void): this {
-        return this;
-    }
+	public once(
+		event: "connected" | "produced" | "error",
+		listener: (...args: any[]) => void,
+	): this {
+		return this;
+	}
 }

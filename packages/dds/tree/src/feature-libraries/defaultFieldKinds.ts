@@ -82,7 +82,7 @@ export class UnitEncoder extends ChangeEncoder<0> {
 		return 0;
 	}
 
-	public encodeBinary(formatVersion: number, change: 0): IsoBuffer {
+	public override encodeBinary(formatVersion: number, change: 0): IsoBuffer {
 		return IsoBuffer.from("");
 	}
 
@@ -90,7 +90,7 @@ export class UnitEncoder extends ChangeEncoder<0> {
 		return 0;
 	}
 
-	public decodeBinary(formatVersion: number, change: IsoBuffer): 0 {
+	public override decodeBinary(formatVersion: number, change: IsoBuffer): 0 {
 		return 0;
 	}
 }
@@ -253,6 +253,15 @@ export type NodeUpdate =
 			revert: ITreeCursorSynchronous;
 	  };
 
+type EncodedNodeUpdate =
+	| { set: JsonableTree }
+	| {
+			/**
+			 * The node being restored.
+			 */
+			revert: JsonableTree;
+	  };
+
 export interface ValueChangeset {
 	value?: NodeUpdate;
 	changes?: NodeChangeset;
@@ -304,7 +313,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 			inverse.changes = invertChild(change.changes, 0);
 		}
 		if (change.value !== undefined) {
-			assert(revision !== undefined, "Unable to revert to undefined revision");
+			assert(revision !== undefined, 0x591 /* Unable to revert to undefined revision */);
 			inverse.value = { revert: reviver(revision, 0, 1)[0] };
 		}
 		return inverse;
@@ -323,7 +332,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 });
 
 interface EncodedValueChangeset {
-	value?: NodeUpdate;
+	value?: EncodedNodeUpdate;
 	changes?: JsonCompatibleReadOnly;
 }
 
@@ -335,7 +344,12 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 	) => {
 		const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
 		if (change.value !== undefined) {
-			encoded.value = change.value;
+			encoded.value =
+				"revert" in change.value
+					? {
+							revert: jsonableTreeFromCursor(change.value.revert),
+					  }
+					: change.value;
 		}
 
 		if (change.changes !== undefined) {
@@ -353,7 +367,12 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 		const encoded = change as EncodedValueChangeset;
 		const decoded: ValueChangeset = {};
 		if (encoded.value !== undefined) {
-			decoded.value = encoded.value;
+			decoded.value =
+				"revert" in encoded.value
+					? {
+							revert: singleTextCursor(encoded.value.revert),
+					  }
+					: encoded.value;
 		}
 
 		if (encoded.changes !== undefined) {
@@ -504,7 +523,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		if (fieldChange !== undefined) {
 			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
 			if (!fieldChange.wasEmpty) {
-				assert(revision !== undefined, "Unable to revert to undefined revision");
+				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0] };
 			}
 		}
@@ -580,8 +599,20 @@ const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
+interface EncodedOptionalFieldChange {
+	/**
+	 * The new content for the trait. If undefined, the trait will be cleared.
+	 */
+	newContent?: EncodedNodeUpdate;
+
+	/**
+	 * Whether the field was empty in the state this change is based on.
+	 */
+	wasEmpty: boolean;
+}
+
 interface EncodedOptionalChangeset {
-	fieldChange?: OptionalFieldChange;
+	fieldChange?: EncodedOptionalFieldChange;
 	childChange?: JsonCompatibleReadOnly;
 }
 
@@ -593,7 +624,18 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 	) => {
 		const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
 		if (change.fieldChange !== undefined) {
-			encoded.fieldChange = change.fieldChange;
+			encoded.fieldChange =
+				change.fieldChange.newContent !== undefined &&
+				"revert" in change.fieldChange.newContent
+					? {
+							...change.fieldChange,
+							newContent: {
+								revert: jsonableTreeFromCursor(
+									change.fieldChange.newContent.revert,
+								),
+							},
+					  }
+					: change.fieldChange;
 		}
 
 		if (change.childChange !== undefined) {
@@ -611,7 +653,18 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 		const encoded = change as EncodedOptionalChangeset;
 		const decoded: OptionalChangeset = {};
 		if (encoded.fieldChange !== undefined) {
-			decoded.fieldChange = encoded.fieldChange;
+			decoded.fieldChange = {
+				wasEmpty: encoded.fieldChange.wasEmpty,
+			};
+
+			if (encoded.fieldChange.newContent !== undefined) {
+				decoded.fieldChange.newContent =
+					"revert" in encoded.fieldChange.newContent
+						? {
+								revert: singleTextCursor(encoded.fieldChange.newContent.revert),
+						  }
+						: encoded.fieldChange.newContent;
+			}
 		}
 
 		if (encoded.childChange !== undefined) {
