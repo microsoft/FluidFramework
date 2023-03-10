@@ -24,7 +24,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
-		});
+		}) as DocumentMap;
 		await documentMap.initializeDocument();
 	});
 
@@ -43,9 +43,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		},
 		obj,
 		beforeIteration: () => {
-			if (obj.container !== undefined) {
-				obj.container = undefined;
-			}
+			obj.container = undefined;
 		},
 	});
 });

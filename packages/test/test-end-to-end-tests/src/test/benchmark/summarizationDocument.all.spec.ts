@@ -17,6 +17,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
 	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
+
 	async function waitForSummary(summarizer: ISummarizer): Promise<string> {
 		// Wait for all pending ops to be processed by all clients.
 		await provider.ensureSynchronized();
@@ -32,7 +33,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
-		});
+		}) as DocumentMap;
 		await documentMap.initializeDocument();
 		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
 		const { summarizer: summarizerClient } = await createSummarizer(
