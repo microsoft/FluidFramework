@@ -208,17 +208,17 @@ async function runnerProcess(
 	const loaderOptions = generateLoaderOptions(
 		seed,
 		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.loader,
-	)[0];
+	);
 
 	const containerOptions = generateRuntimeOptions(
 		seed,
 		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.container,
-	)[0];
+	);
 
 	const configurations = generateConfigurations(
 		seed,
 		runConfig.testConfig?.optionOverrides?.[optionsOverride]?.configurations,
-	)[0];
+	);
 	const testDriver: ITestDriver = await createTestDriver(driver, endpoint, seed, runConfig.runId);
 
 	// Cycle between creating new factory vs. reusing factory.
@@ -244,12 +244,14 @@ async function runnerProcess(
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
-				codeLoader: createCodeLoader(containerOptions),
+				codeLoader: createCodeLoader(
+					containerOptions[runConfig.runId % containerOptions.length],
+				),
 				logger: runConfig.logger,
-				options: loaderOptions,
+				options: loaderOptions[runConfig.runId % containerOptions.length],
 				configProvider: {
 					getRawConfig(name) {
-						return configurations[name];
+						return configurations[runConfig.runId % configurations.length][name];
 					},
 				},
 			});

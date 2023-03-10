@@ -58,9 +58,9 @@ export const generateLoaderOptions = (
 };
 
 const gcOptionsMatrix: OptionsMatrix<IGCRuntimeOptions> = {
-	disableGC: [false],
-	gcAllowed: [true],
-	runFullGC: [false],
+	disableGC: booleanCases,
+	gcAllowed: booleanCases,
+	runFullGC: booleanCases,
 	sweepAllowed: [false],
 	sessionExpiryTimeoutMs: [undefined], // Don't want coverage here
 };
