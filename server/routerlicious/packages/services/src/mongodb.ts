@@ -7,7 +7,6 @@ import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { requestWithRetry } from "@fluidframework/server-services-core";
 import fastRedact from "fast-redact";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -263,15 +262,16 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		queryOrFilter?: any,
 	): Promise<TOut> {
 		const telemetryProperties = this.getTelemetryPropertiesFromQuery(queryOrFilter);
-		return requestWithRetry<TOut>(
+		return core.runWithRetry<TOut>(
 			request,
 			callerName,
-			telemetryProperties,
-			(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
 			MaxRetryAttempts, // maxRetries
 			InitialRetryIntervalInMs, // retryAfterMs
+			telemetryProperties,
+			(e) => e.code === 11000, // shouldIgnoreError
+			(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
 			(error: any, numRetries: number, retryAfterInterval: number) =>
-				numRetries * retryAfterInterval, // retryAfterIntervalCalculator
+				numRetries * retryAfterInterval, // calculateIntervalMs
 			(error) => this.sanitizeError(error) /* onErrorFn */,
 			this.telemetryEnabled, // telemetryEnabled
 		);
