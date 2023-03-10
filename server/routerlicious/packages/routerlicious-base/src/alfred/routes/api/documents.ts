@@ -19,8 +19,9 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	validateTokenRevocationClaims,
+	IJsonWebTokenManager,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse, IJsonWebTokenManager } from "@fluidframework/server-services";
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
 import { IAlfredTenant, ISession, NetworkError } from "@fluidframework/server-services-client";

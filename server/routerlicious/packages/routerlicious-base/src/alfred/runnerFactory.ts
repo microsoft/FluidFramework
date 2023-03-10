@@ -103,8 +103,8 @@ export class AlfredResources implements core.IResources {
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
-		public socketTracker?: services.IWebSocketTracker,
-		public tokenManager?: services.IJsonWebTokenManager,
+		public socketTracker?: utils.IWebSocketTracker,
+		public tokenManager?: utils.IJsonWebTokenManager,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -397,11 +397,11 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Token revocation feature
 		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
-		let socketTracker: services.IWebSocketTracker | undefined;
-		let tokenManager: services.IJsonWebTokenManager | undefined;
+		let socketTracker: utils.IWebSocketTracker | undefined;
+		let tokenManager: utils.IJsonWebTokenManager | undefined;
 		if (tokenRevocationEnabled) {
-			socketTracker = new services.WebSocketTracker();
-			tokenManager = new services.DummyTokenManager();
+			socketTracker = new utils.WebSocketTracker();
+			tokenManager = new utils.DummyTokenManager();
 			await tokenManager.initialize();
 		}
 

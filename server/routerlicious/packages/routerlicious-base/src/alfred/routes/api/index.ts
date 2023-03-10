@@ -17,7 +17,7 @@ import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { IJsonWebTokenManager } from "@fluidframework/server-services";
+import { IJsonWebTokenManager } from "@fluidframework/server-services-utils";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";

@@ -24,9 +24,11 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import {
 	createMetricClient,
+} from "@fluidframework/server-services";
+import {
 	IJsonWebTokenManager,
 	IWebSocketTracker,
-} from "@fluidframework/server-services";
+} from "@fluidframework/server-services-utils"
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";

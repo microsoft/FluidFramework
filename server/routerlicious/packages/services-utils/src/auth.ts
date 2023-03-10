@@ -19,6 +19,7 @@ import type { ICache, ITenantManager } from "@fluidframework/server-services-cor
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { IJsonWebTokenManager } from "./tokenManager";
 
 /**
  * Validates a JWT token to authorize routerlicious.
@@ -147,6 +148,7 @@ export function verifyStorageToken(
 		ensureSingleUseToken: false,
 		singleUseTokenCache: undefined,
 	},
+	tokenManager?: IJsonWebTokenManager,
 ): RequestHandler {
 	return async (request, res, next) => {
 		const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
@@ -173,6 +175,15 @@ export function verifyStorageToken(
 			claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
 			if (isTokenExpiryEnabled) {
 				tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+			}
+			if (tokenManager && claims.jti) {
+				const tokenRevoked = await tokenManager.isTokenRevoked(tenantId, documentId, claims.jti);
+				if (tokenRevoked) {
+					return respondWithNetworkError(
+						res,
+						new NetworkError(403, "Permission denied. Token has been revoked."),
+					);
+				}
 			}
 			await tenantManager.verifyToken(claims.tenantId, token);
 		} catch (error) {

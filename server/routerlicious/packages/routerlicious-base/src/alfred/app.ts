@@ -23,8 +23,9 @@ import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
 	jsonMorganLoggerMiddleware,
+	IJsonWebTokenManager,
 } from "@fluidframework/server-services-utils";
-import { IJsonWebTokenManager, RestLessServer } from "@fluidframework/server-services";
+import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";

@@ -33,7 +33,7 @@ import {
 	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { createCompositeTokenId, IWebSocketTracker } from "@fluidframework/server-services-shared";
+import { createCompositeTokenId, IWebSocketTracker } from "@fluidframework/server-services-utils";
 import {
 	createRoomJoinMessage,
 	createNackMessage,
