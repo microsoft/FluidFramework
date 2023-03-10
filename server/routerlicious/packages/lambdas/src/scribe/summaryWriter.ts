@@ -130,7 +130,9 @@ export class SummaryWriter implements ISummaryWriter {
 									content.head
 								}" does not match actual parent summary "${
 									existingRef ? existingRef.object.sha : "n/a"
-								}".`,
+								}" nor other valid parent summaries "[${
+									checkpoint.validParentSummaries?.join(",") ?? ""
+								}]".`,
 								summaryProposal: {
 									summarySequenceNumber: op.sequenceNumber,
 								},
