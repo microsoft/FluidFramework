@@ -182,7 +182,8 @@ The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
 
 Sending concrete undo edits alleviates the need to establish and maintain distributed consensus on an undo window.It also means summaries do not need to include repair data.
-It does however require sending rebased changes over the wire.
+It does however require sending rebased changes over the wire
+(although that is also needed for resubmitting ops, so concrete undo does not make this a new requirement).
 Rebased changes may contain lineage entries, which we haven't sent over the wire before.
 We do not currently know of a reason why this would be problematic,
 or of any other issue or special requirement associated with sending rebased changes over the wire.
