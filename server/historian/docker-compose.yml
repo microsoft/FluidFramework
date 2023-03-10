@@ -1,9 +1,9 @@
-version: '3.4'
+version: "3.4"
 services:
     historian:
         build:
-          context: .
-          target: runner
+            context: .
+            target: runner
         ports:
             - 3001:3000
         environment:

@@ -674,61 +674,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert.equal(reader.value, 2);
 				assert.equal(reader.nextNode(), true);
 			});
-
-			// TODO: Unskip once MoveInAndModify is properly supported.
-			// MoveInAndModify should support inner deltas e.g. Insert, MoveOut, etc.
-			it.skip("move in and modify", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-				initializeForest(forest, nestedContent.map(singleTextCursor));
-
-				const moveId = brandOpaque<Delta.MoveId>(0);
-				const newField: FieldKey = brand("newField");
-				const mark: Delta.Modify = {
-					type: Delta.MarkType.Modify,
-					fields: new Map([
-						[xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
-						[
-							yField,
-							[
-								{
-									type: Delta.MarkType.MoveInAndModify,
-									moveId,
-									fields: new Map([
-										[
-											newField,
-											[
-												{
-													type: Delta.MarkType.Insert,
-													content: [
-														{ type: jsonNumber.name, value: 2 },
-													].map(singleTextCursor),
-												},
-											],
-										],
-									]),
-								},
-							],
-						],
-					]),
-				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-				forest.applyDelta(delta);
-
-				const reader = forest.allocateCursor();
-				moveToDetachedField(forest, reader);
-				assert(reader.firstNode());
-				reader.enterField(xField);
-				assert.equal(reader.getFieldLength(), 0);
-				reader.exitField();
-				reader.enterField(yField);
-				assert.equal(reader.getFieldLength(), 2);
-				assert(reader.firstNode());
-				assert.equal(reader.value, 0);
-				reader.enterField(newField);
-				assert.equal(reader.getFieldLength(), 1);
-				assert(reader.firstNode());
-				assert.equal(reader.value, 2);
-			});
 		});
 
 		describe("top level invalidation", () => {
