@@ -12,7 +12,7 @@ export interface IWebSocketTracker {
 	addSocket(compositeTokenId: string, webSocket: IWebSocket);
 
 	// Get socket objects from internal map
-	getSockets(compositeTokenId: string): IWebSocket[] | undefined;
+	getSockets(compositeTokenId: string): IWebSocket[];
 
 	// Remove docket from tracking
 	// Return true if socket is removed, false if socket is not found
@@ -34,62 +34,85 @@ export interface IJsonWebTokenManager {
 }
 
 export class WebSocketTracker implements IWebSocketTracker {
-	// Map of composite token id to socket objects
-	private readonly tokenIdToSocketMap: Map<string, IWebSocket[]>;
-	// It assumes one socket object only has connection with one token
-	private readonly socketIdToTokenIdMap: Map<string, string>;
+	// Map of socket id to socket object
+	private readonly socketIdToSocketMap: Map<string, IWebSocket>;
+	// Map of composite token id to socket ids. It assumes one token could be used by multiple sockets
+	private readonly tokenIdToSocketIdMap: Map<string, Set<string> >;
+	// Map of socketId to token ids. It assumes one socket could be used for connections with multiple tokens
+	private readonly socketIdToTokenIdMap: Map<string, Set<string> >;
 
 	constructor() {
-		this.tokenIdToSocketMap = new Map();
+		this.socketIdToSocketMap = new Map();
+		this.tokenIdToSocketIdMap = new Map();
 		this.socketIdToTokenIdMap = new Map();
 	}
 
 	public addSocket(compositeTokenId: string, webSocket: IWebSocket) {
 		console.log(`yunho: adding token=${compositeTokenId} mapping to socket=${webSocket.id}`);
-		console.log(`yunho: Before call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
-		if (this.tokenIdToSocketMap.has(compositeTokenId)) {
+		console.log(`yunho: Before call map size: tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
+		if (this.tokenIdToSocketIdMap.has(compositeTokenId)) {
 			console.log(`yunho: Same tokenId=${compositeTokenId} used for multiple sockets`);
-			this.tokenIdToSocketMap.get(compositeTokenId)?.push(webSocket);
-		} else {
-			this.tokenIdToSocketMap.set(compositeTokenId, [webSocket]);
+			this.tokenIdToSocketIdMap.get(compositeTokenId)?.add(webSocket.id);
+		}
+		else {
+			this.tokenIdToSocketIdMap.set(compositeTokenId, new Set(webSocket.id));
 		}
 
-		// TODO: remove this statement before merge
 		if (this.socketIdToTokenIdMap.has(webSocket.id)) {
-			console.log(
-				`yunho: SocketId=${webSocket.id} is already mapped to this token=${compositeTokenId}`,
-			);
+			console.log(`yunho: Same socketId=${webSocket.id} used for multiple tokens`);
+			this.socketIdToTokenIdMap.get(webSocket.id)?.add(compositeTokenId);
 		}
-		this.socketIdToTokenIdMap.set(webSocket.id, compositeTokenId);
-		console.log(`After call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
+		else {
+			this.socketIdToTokenIdMap.set(webSocket.id, new Set(compositeTokenId));
+		}
+
+		if (!this.socketIdToSocketMap.has(webSocket.id)) {
+			this.socketIdToSocketMap.set(webSocket.id, webSocket);
+		}
+		else {
+			console.log(`yunho: trying to add same socket id=${webSocket.id} again`);
+		}
+
+		console.log(`yunho: After call map size: tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 	}
 
-	public getSockets(compositeTokenId: string): IWebSocket[] | undefined {
-		return this.tokenIdToSocketMap.get(compositeTokenId);
+	public getSockets(compositeTokenId: string): IWebSocket[] {
+		const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
+
+		if (!socketIds) {
+			return [];
+		}
+
+		const socketResult: IWebSocket[] = []
+		for (const socketId of socketIds) {
+			const socketObj = this.socketIdToSocketMap.get(socketId);
+			if (socketObj) {
+				socketResult.push(socketObj);
+			}
+		}
+		return socketResult;
 	}
 
 	public removeSocket(socketId: string) {
 		console.log(`yunho: Remove socket id: ${socketId}`);
-		console.log(`yunho: Before call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
-		const compositeTokenId = this.socketIdToTokenIdMap.get(socketId);
-		if (!compositeTokenId) {
+		console.log(`yunho: Before call map size: socketMapSize=${this.socketIdToSocketMap.size}, tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
+		const tokenIds = this.socketIdToTokenIdMap.get(socketId);
+
+		if (tokenIds) {
+			tokenIds.forEach((tokenId: string) => {
+				if (!this.tokenIdToSocketIdMap.has(tokenId)) {
+					console.log(`yunho: Error, cannot find tokenId=${tokenId} in removeSocket`);
+				}
+				this.tokenIdToSocketIdMap.get(tokenId)?.delete(socketId);
+			});
+		}
+		else {
 			return false;
 		}
-		const sockets = this.tokenIdToSocketMap.get(compositeTokenId);
-		if (sockets) {
-			const filteredSocketList = sockets.filter((socket: IWebSocket) => {
-				return socket.id !== socketId;
-			});
-			if (filteredSocketList.length <= 0) {
-				this.tokenIdToSocketMap.delete(compositeTokenId);
-			}
-			else {
-				this.tokenIdToSocketMap.set(compositeTokenId, filteredSocketList);
-			}
-		}
 		this.socketIdToTokenIdMap.delete(socketId);
-		console.log(`yunho: After call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
-		return true;
+		const deleted = this.socketIdToSocketMap.delete(socketId);
+		console.log(`yunho: After call map size: tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
+		return deleted;
 	}
 }
 
