@@ -431,7 +431,7 @@ export class ModularChangeFamily
 		change: ModularChangeset,
 		over: TaggedChange<ModularChangeset>,
 	): ModularChangeset {
-		let maxId = change.maxId ?? -1;
+		let maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
@@ -457,22 +457,29 @@ export class ModularChangeFamily
 			revisionIndexer,
 		);
 
+		const rebasedChangeset = makeModularChangeset(rebasedFields, maxId, change.revisions);
+
+		crossFieldTable.baseChangeToNew.set(over.change.fieldChanges, rebasedChangeset);
+
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
 			const invalidatedFields = crossFieldTable.fieldsToUpdate;
 			crossFieldTable.fieldsToUpdate = new Set();
 			const fieldsToUpdate = new Set<FieldChange>();
 			const invalidatedEmptyFields = new Set<FieldChange>();
 			for (let baseField of invalidatedFields) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				let baseFieldParent = crossFieldTable.baseChangeToContext.get(baseField)!;
+				let baseFieldContext = crossFieldTable.baseChangeToContext.get(baseField);
+				assert(baseFieldContext !== undefined, "Should have context for field");
 
-				while (!crossFieldTable.baseChangeToNew.has(baseFieldParent.map)) {
+				while (!crossFieldTable.baseChangeToNew.has(baseFieldContext.map)) {
 					invalidatedEmptyFields.add(baseField);
-
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					baseField = crossFieldTable.baseContextToParent.get(baseFieldParent.map)!;
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					baseFieldParent = crossFieldTable.baseChangeToContext.get(baseField)!;
+					const baseFieldTemp = crossFieldTable.baseContextToParent.get(
+						baseFieldContext.map,
+					);
+					assert(baseFieldTemp !== undefined, "Should have parent for field");
+					baseField = baseFieldTemp;
+					const contextTemp = crossFieldTable.baseChangeToContext.get(baseField);
+					assert(contextTemp !== undefined, "Should have context for field");
+					baseFieldContext = contextTemp;
 				}
 
 				fieldsToUpdate.add(baseField);
@@ -538,7 +545,10 @@ export class ModularChangeFamily
 			0x59f /* Should not need more than one amend pass. */,
 		);
 
-		return makeModularChangeset(rebasedFields, maxId, change.revisions);
+		if (maxId >= 0) {
+			rebasedChangeset.maxId = brand(maxId);
+		}
+		return rebasedChangeset;
 	}
 
 	private rebaseFieldMap(
@@ -602,6 +612,12 @@ export class ModularChangeFamily
 				field,
 				revision,
 			});
+		}
+
+		for (const [field, fieldChange] of change) {
+			if (!over.change?.has(field)) {
+				rebasedFields.set(field, fieldChange);
+			}
 		}
 
 		return rebasedFields;

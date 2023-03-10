@@ -844,6 +844,7 @@ describe("ModularChangeFamily", () => {
 				compose,
 				rebase,
 			},
+			isEmpty: (change: RevisionTag[]) => change.length === 0,
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
 		const field = new FieldKind(
 			brand("ChecksRevIndexing"),

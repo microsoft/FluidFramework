@@ -577,7 +577,7 @@ function rebaseMark<TNodeChange>(
 				const baseMarkRevision = baseMark.revision ?? baseRevision;
 				const newCurrMark = cloneMark(currMark);
 				if (newCurrMark.type === "ReturnFrom") {
-					// The nodes that newCurrMark aims to detach are being detached by baseMark
+					// The nodes that currMark aims to detach are being detached by baseMark
 					newCurrMark.conflictsWith = baseMarkRevision;
 					newCurrMark.detachIndex = baseInputOffset;
 					getOrAddEffect(
@@ -640,7 +640,7 @@ function rebaseMark<TNodeChange>(
 					CrossFieldTarget.Destination,
 					baseMark.revision ?? baseRevision,
 					baseMark.id,
-				).movedMark = currMark;
+				).movedMark = cloneMark(currMark);
 			}
 			return 0;
 		}

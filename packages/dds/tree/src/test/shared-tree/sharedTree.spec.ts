@@ -592,7 +592,7 @@ describe("SharedTree", () => {
 			validateRootField(tree2, expected);
 		});
 
-		it.skip("can rebase delete over cross-field move", async () => {
+		it("can rebase delete over cross-field move", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 
