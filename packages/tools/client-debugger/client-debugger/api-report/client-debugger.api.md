@@ -26,6 +26,21 @@ export interface AudienceChangeLogEntry extends LogEntry {
     clientId: string;
 }
 
+// @public
+export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMessageData> {
+    // (undocumented)
+    type: "AUDIENCE_EVENT";
+}
+
+// @public
+export interface AudienceEventMessageData {
+    // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
+    //
+    // (undocumented)
+    audienceHistory: readonly AudienceChangeLogEntry[];
+    audienceState: Map<string, IClient>;
+}
+
 // @internal
 export function clearDebuggerRegistry(): void;
 

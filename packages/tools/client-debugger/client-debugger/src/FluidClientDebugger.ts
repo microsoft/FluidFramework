@@ -12,6 +12,7 @@ import { ContainerStateMetadata } from "./ContainerMetadata";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
+	AudienceEventMessage,
 	ContainerStateChangeMessage,
 	debuggerMessageSource,
 	GetContainerStateMessage,
@@ -144,6 +145,7 @@ export class FluidClientDebugger
 	// #region Audience-related event handlers
 
 	private readonly audienceMemberAddedHandler = (clientId: string, client: IClient): void => {
+		this.postAudienceStateChange();
 		this._audienceChangeLog.push({
 			clientId,
 			client,
@@ -153,6 +155,7 @@ export class FluidClientDebugger
 	};
 
 	private readonly audienceMemberRemovedHandler = (clientId: string, client: IClient): void => {
+		this.postAudienceStateChange();
 		this._audienceChangeLog.push({
 			clientId,
 			client,
@@ -172,7 +175,21 @@ export class FluidClientDebugger
 		["GET_CONTAINER_STATE"]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerStateMessage;
 			if (message.data.containerId === this.containerId) {
+				console.log("Passed 1");
 				this.postContainerStateChange();
+				return true;
+			}
+			return false;
+		},
+		["AUDIENCE_EVENT"]: (untypedMessage) => {
+			const message = untypedMessage as AudienceEventMessage;
+
+			if (
+				message.data.audienceState === this.container.audience.getMembers() &&
+				message.data.audienceHistory === this.getAudienceHistory()
+			) {
+				console.log("Passed 2");
+				this.postAudienceStateChange();
 				return true;
 			}
 			return false;
@@ -199,6 +216,30 @@ export class FluidClientDebugger
 				data: {
 					containerId: this.containerId,
 					containerState: this.getContainerState(),
+				},
+			},
+			this.messageLoggingOptions,
+		);
+	};
+
+	/**
+	 * Posts a {@link AudienceEventMessage} to the window (globalThis)
+	 *
+	 */
+	private readonly postAudienceStateChange = (): void => {
+		console.log("---------------------------------------");
+		console.log("this.container.audience.getMembers():", this.container.audience.getMembers());
+		console.log("---------------------------------------");
+		console.log("this.getAudienceHistory():", this.getAudienceHistory());
+		console.log("---------------------------------------");
+
+		postMessageToWindow<AudienceEventMessage>(
+			{
+				source: debuggerMessageSource,
+				type: "AUDIENCE_EVENT",
+				data: {
+					audienceState: this.container.audience.getMembers(),
+					audienceHistory: this.getAudienceHistory(),
 				},
 			},
 			this.messageLoggingOptions,
