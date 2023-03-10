@@ -131,6 +131,7 @@ describeNoCompat("Attributor", (getTestObjectProvider) => {
 
 		const text = "client 1";
 		sharedString1.insertText(0, text);
+		assertAttributionMatches(sharedString1, 3, attributor, "local");
 		await provider.ensureSynchronized();
 		sharedString2.insertText(0, "client 2, ");
 		await provider.ensureSynchronized();
