@@ -181,7 +181,9 @@ describe("Outbox", () => {
 		new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
-			containerContext: params.context,
+			submitFn: params.context.submitFn,
+			submitBatchFn: params.context.submitBatchFn,
+			flush: params.context.deltaManager.flush,
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,

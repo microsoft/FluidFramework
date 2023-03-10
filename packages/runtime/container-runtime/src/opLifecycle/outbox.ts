@@ -5,7 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { IContainerContext } from "@fluidframework/container-definitions";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import {
@@ -30,7 +30,9 @@ export interface IOutboxConfig {
 export interface IOutboxParameters {
 	readonly shouldSend: () => boolean;
 	readonly pendingStateManager: PendingStateManager;
-	readonly containerContext: IContainerContext;
+	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
+	readonly submitBatchFn?: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
+	readonly flush: () => void;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
@@ -177,7 +179,7 @@ export class Outbox {
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
-			this.params.containerContext.submitBatchFn === undefined
+			this.params.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
 			return batch;
@@ -230,7 +232,7 @@ export class Outbox {
 			});
 		}
 
-		if (this.params.containerContext.submitBatchFn === undefined) {
+		if (this.params.submitBatchFn === undefined) {
 			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
 			// version that has support for batches (submitBatchFn)
 			assert(
@@ -239,7 +241,7 @@ export class Outbox {
 			);
 
 			for (const message of batch.content) {
-				this.params.containerContext.submitFn(
+				this.params.submitFn(
 					MessageType.Operation,
 					message.deserializedContent,
 					true, // batch
@@ -247,13 +249,13 @@ export class Outbox {
 				);
 			}
 
-			this.params.containerContext.deltaManager.flush();
+			this.params.flush();
 		} else {
 			assert(
 				batch.referenceSequenceNumber !== undefined,
 				0x58e /* Batch must not be empty */,
 			);
-			this.params.containerContext.submitBatchFn(
+			this.params.submitBatchFn(
 				batch.content.map((message) => ({
 					contents: message.contents,
 					metadata: message.metadata,

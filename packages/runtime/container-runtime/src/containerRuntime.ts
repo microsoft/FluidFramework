@@ -26,6 +26,7 @@ import {
 	ILoaderOptions,
 	LoaderHeader,
 	ISnapshotTreeWithBlobContents,
+	IBatchMessage,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -1001,6 +1002,8 @@ export class ContainerRuntime
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
+	private readonly opGroupingManager: OpGroupingManager = new OpGroupingManager();
+
 	/**
 	 * @internal
 	 */
@@ -1031,8 +1034,8 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.innerDeltaManager = context.deltaManager;
-		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
+		this.innerDeltaManager = this.context.deltaManager;
+		this.deltaManager = new DeltaManagerSummarizerProxy(this.context.deltaManager);
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1082,7 +1085,10 @@ export class ContainerRuntime
 		);
 		const opSplitter = new OpSplitter(
 			chunks,
-			this.context.submitBatchFn,
+			this.context.submitBatchFn === undefined
+				? undefined
+				: (batch: IBatchMessage[], refSqn?: number) =>
+						this.opGroupingManager.submitBatch(this.context, batch, refSqn),
 			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
@@ -1117,7 +1123,7 @@ export class ContainerRuntime
 
 		if (
 			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
-			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+			this.context.supportedFeatures?.get("referenceSequenceNumbers") !== true
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
@@ -1126,9 +1132,11 @@ export class ContainerRuntime
 			this._flushMode = runtimeOptions.flushMode;
 		}
 
-		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
+		const pendingRuntimeState = this.context.pendingLocalState as
+			| IPendingRuntimeState
+			| undefined;
 		const baseSnapshot: ISnapshotTree | undefined =
-			pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
+			pendingRuntimeState?.baseSnapshot ?? this.context.baseSnapshot;
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -1235,7 +1243,7 @@ export class ContainerRuntime
 		);
 
 		this.scheduleManager = new ScheduleManager(
-			context.deltaManager,
+			this.context.deltaManager,
 			this,
 			() => this.clientId,
 			ChildLogger.create(this.logger, "ScheduleManager"),
@@ -1271,7 +1279,13 @@ export class ContainerRuntime
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
-			containerContext: this.context,
+			submitFn: this.context.submitFn,
+			submitBatchFn:
+				this.context.submitBatchFn === undefined
+					? undefined
+					: (batch: IBatchMessage[], refSqn?: number) =>
+							this.opGroupingManager.submitBatch(this.context, batch, refSqn),
+			flush: () => this.deltaManager.flush(),
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
 			config: {
@@ -1834,6 +1848,14 @@ export class ContainerRuntime
 
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
+
+		const ungroupingResult = this.opGroupingManager.processOp(messageArg);
+		if (ungroupingResult !== undefined) {
+			for (const subMessage of ungroupingResult) {
+				this.process(subMessage, local);
+			}
+			return;
+		}
 
 		if (
 			this.mc.config.getBoolean("enableOfflineLoad") ??
@@ -3452,3 +3474,49 @@ const waitForSeq = async (
 			deltaManager.on("op", handleOp);
 		}
 	});
+
+class OpGroupingManager {
+	static groupedBatchOp = "groupedBatch";
+
+	public submitBatch(
+		context: IContainerContext,
+		batch: IBatchMessage[],
+		referenceSequenceNumber?: number | undefined,
+	): number {
+		if (batch.length < 2) {
+			return context.submitBatchFn(batch, referenceSequenceNumber);
+		}
+		const groupedOp: IBatchMessage = {
+			metadata: undefined,
+			compression: batch[0].compression,
+			referenceSequenceNumber,
+			contents: JSON.stringify({
+				type: OpGroupingManager.groupedBatchOp,
+				contents: batch,
+			}),
+		};
+		return context.submitBatchFn([groupedOp], referenceSequenceNumber);
+	}
+
+	public processOp(message: ISequencedDocumentMessage): ISequencedDocumentMessage[] | undefined {
+		if (
+			!message.contents ||
+			typeof message.contents !== "object" ||
+			message.contents.type !== OpGroupingManager.groupedBatchOp
+		) {
+			return undefined;
+		}
+
+		const messages = message.contents.contents as IBatchMessage[];
+		let fakeCsn = 1;
+		return messages.map((subMessage) => ({
+			...message,
+			clientSequenceNumber: fakeCsn++,
+			referenceSequenceNumber:
+				subMessage.referenceSequenceNumber ?? message.referenceSequenceNumber,
+			contents: subMessage.contents,
+			metadata: subMessage.metadata,
+			compression: subMessage.compression,
+		}));
+	}
+}
