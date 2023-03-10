@@ -1218,6 +1218,9 @@ export const rootFieldKey: GlobalFieldKey;
 // @alpha (undocumented)
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
+// @alpha
+export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void): TransactionResult;
+
 declare namespace SchemaAware {
     export {
         ApiMode,
@@ -1228,9 +1231,6 @@ declare namespace SchemaAware {
     }
 }
 export { SchemaAware }
-
-// @alpha
-export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void): TransactionResult;
 
 // @alpha
 export interface SchemaData {
