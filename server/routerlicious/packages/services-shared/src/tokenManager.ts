@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { NetworkError } from "@fluidframework/server-services-client";
 import { IWebSocket } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
@@ -13,12 +14,9 @@ export interface IWebSocketTracker {
 	// Get socket objects from internal map
 	getSockets(compositeTokenId: string): IWebSocket[] | undefined;
 
-	// Remove docket from internal map
-	// Return true if socket is removed from map, false if socket is not found
+	// Remove docket from tracking
+	// Return true if socket is removed, false if socket is not found
 	removeSocket(socketId: string): boolean;
-
-	// Disconnect socket with id and remove from internal map
-	// disconnectSocket(id: string, actionBeforeDisconnect?: (socket: IWebSocket) => Promise<void>): Promise<void>;
 }
 
 export interface IJsonWebTokenManager {
@@ -36,8 +34,9 @@ export interface IJsonWebTokenManager {
 }
 
 export class WebSocketTracker implements IWebSocketTracker {
-	// Map of composite token id to socket object
+	// Map of composite token id to socket objects
 	private readonly tokenIdToSocketMap: Map<string, IWebSocket[]>;
+	// It assumes one socket object only has connection with one token
 	private readonly socketIdToTokenIdMap: Map<string, string>;
 
 	constructor() {
@@ -46,6 +45,8 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public addSocket(compositeTokenId: string, webSocket: IWebSocket) {
+		console.log(`yunho: adding token=${compositeTokenId} mapping to socket=${webSocket.id}`);
+		console.log(`yunho: Before call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 		if (this.tokenIdToSocketMap.has(compositeTokenId)) {
 			console.log(`yunho: Same tokenId=${compositeTokenId} used for multiple sockets`);
 			this.tokenIdToSocketMap.get(compositeTokenId)?.push(webSocket);
@@ -60,6 +61,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 			);
 		}
 		this.socketIdToTokenIdMap.set(webSocket.id, compositeTokenId);
+		console.log(`After call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 	}
 
 	public getSockets(compositeTokenId: string): IWebSocket[] | undefined {
@@ -67,41 +69,28 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public removeSocket(socketId: string) {
+		console.log(`yunho: Remove socket id: ${socketId}`);
+		console.log(`yunho: Before call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 		const compositeTokenId = this.socketIdToTokenIdMap.get(socketId);
 		if (!compositeTokenId) {
 			return false;
 		}
+		const sockets = this.tokenIdToSocketMap.get(compositeTokenId);
+		if (sockets) {
+			const filteredSocketList = sockets.filter((socket: IWebSocket) => {
+				return socket.id !== socketId;
+			});
+			if (filteredSocketList.length <= 0) {
+				this.tokenIdToSocketMap.delete(compositeTokenId);
+			}
+			else {
+				this.tokenIdToSocketMap.set(compositeTokenId, filteredSocketList);
+			}
+		}
 		this.socketIdToTokenIdMap.delete(socketId);
-		return this.tokenIdToSocketMap.delete(compositeTokenId);
+		console.log(`yunho: After call map size: tokenIdMapSize=${this.tokenIdToSocketMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
+		return true;
 	}
-
-	// private cleanup() {
-	// 	this.tokenIssuedTimeMap.forEach((timeInMilliseconds, compositeId) => {
-	// 		const lifeTimeMilliseconds =
-	// 			timeInMilliseconds + this.tokenMaxLifetimeInMilliseconds - (new Date()).getTime();
-	// 		if (lifeTimeMilliseconds < 0) {
-	// 			this.socketMap.delete(compositeId);
-	// 			this.tokenIssuedTimeMap.delete(compositeId);
-	// 		}
-	// 	});
-	// }
-
-	// public async disconnectSocket(
-	// 	compositeId: string,
-	// 	actionBeforeDisconnect?: (socket: IWebSocket) => Promise<void>): Promise<void> {
-	// 	const sockets = this.socketMap.get(compositeId);
-	// 	if (!sockets) {
-	// 		return;
-	// 	}
-
-	// 	for (const socket of sockets) {
-	// 		if (actionBeforeDisconnect) {
-	// 			await actionBeforeDisconnect(socket);
-	// 		}
-	// 		socket.disconnect(true);
-	// 	}
-	// 	this.socketMap.delete(compositeId);
-	// }
 }
 
 export function createCompositeTokenId(
@@ -112,22 +101,23 @@ export function createCompositeTokenId(
 	return `${tenantId}/${documentId}/${jwtId}`;
 }
 
-export class EmptyImplementationTokenManager implements IJsonWebTokenManager {
+export class DummyTokenManager implements IJsonWebTokenManager {
 	public start() {
-		Lumberjack.info(`start called`);
+		Lumberjack.info(`DummyTokenManager started`);
 	}
 
 	public async initialize(): Promise<void> {
-		Lumberjack.info(`EmptyImplementationTokenManager: initialize called`);
+		Lumberjack.info(`DummyTokenManager initialize called`);
 	}
 
 	public async stop(): Promise<void> {
-		Lumberjack.info(`EmptyImplementationTokenManager: stop called`);
+		Lumberjack.info(`DummyTokenManager stopped`);
 	}
 
 	// Revoke the access of a token given its jwtId
 	public async revokeToken(tenantId: string, documentId: string, jwtId: string): Promise<void> {
-		Lumberjack.info(`EmptyImplementationTokenManager: revokeToken called`);
+		Lumberjack.info(`DummyTokenManager revokeToken called`);
+		throw new NetworkError(501, "Token revocation is not supported for now", false, true);
 	}
 
 	// Check if a given token id is revoked
@@ -136,7 +126,7 @@ export class EmptyImplementationTokenManager implements IJsonWebTokenManager {
 		documentId: string,
 		jwtId: string,
 	): Promise<boolean> {
-		Lumberjack.info(`isTokenRevoked called`);
+		Lumberjack.info(`DummyTokenManager isTokenRevoked called`);
 		return false;
 	}
 }

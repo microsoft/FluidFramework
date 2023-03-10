@@ -24,7 +24,7 @@ import {
 	bindCorrelationId,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import { RestLessServer } from "@fluidframework/server-services";
+import { IJsonWebTokenManager, RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import * as alfredRoutes from "./routes";
@@ -40,6 +40,7 @@ export function create(
 	deltaService: IDeltaService,
 	producer: IProducer,
 	documentsCollection: ICollection<IDocument>,
+	tokenManager?: IJsonWebTokenManager,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -96,6 +97,7 @@ export function create(
 		producer,
 		appTenants,
 		documentsCollection,
+		tokenManager,
 	);
 
 	app.use(routes.api);

@@ -44,5 +44,5 @@ export {
 	IWebSocketTracker,
 	IJsonWebTokenManager,
 	WebSocketTracker,
-	EmptyImplementationTokenManager,
+	DummyTokenManager,
 } from "@fluidframework/server-services-shared";

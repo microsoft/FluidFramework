@@ -16,6 +16,7 @@ import {
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IJsonWebTokenManager } from "@fluidframework/server-services";
 import * as api from "./api";
 
 export interface IRoutes {
@@ -34,6 +35,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentsCollection: ICollection<IDocument>,
+	tokenManager?: IJsonWebTokenManager,
 ) {
 	return {
 		api: api.create(
@@ -47,6 +49,7 @@ export function create(
 			producer,
 			appTenants,
 			documentsCollection,
+			tokenManager,
 		),
 	};
 }

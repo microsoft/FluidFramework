@@ -32,6 +32,6 @@ export {
 	IWebSocketTracker,
 	IJsonWebTokenManager,
 	WebSocketTracker,
-	EmptyImplementationTokenManager,
+	DummyTokenManager,
 	createCompositeTokenId,
 } from "./tokenManager";

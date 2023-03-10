@@ -531,6 +531,10 @@ export function configureWebSocketServices(
 				});
 
 				connectionsMap.set(clientId, connection);
+				if (connectionsMap.size > 1) {
+					Lumberjack.info(
+						`Same socket is having multiple connections, connection number=${connectionsMap.size}`);
+				}
 
 				connectDocumentOrdererConnectionMetric.success(
 					"Successfully established orderer connection",
@@ -576,7 +580,6 @@ export function configureWebSocketServices(
 
 			// Token revocation
 			if (socketTracker && claims.jti) {
-				// TODO: need to call add socket function
 				socketTracker.addSocket(
 					createCompositeTokenId(message.tenantId, message.id, claims.jti),
 					socket,

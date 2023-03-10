@@ -79,6 +79,7 @@ export class AlfredRunner implements IRunner {
 			this.deltaService,
 			this.producer,
 			this.documentsCollection,
+			this.tokenManager,
 		);
 		alfred.set("port", this.port);
 

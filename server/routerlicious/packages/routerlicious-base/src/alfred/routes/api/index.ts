@@ -17,6 +17,7 @@ import cors from "cors";
 import { Router } from "express";
 import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
+import { IJsonWebTokenManager } from "@fluidframework/server-services";
 import * as api from "./api";
 import * as deltas from "./deltas";
 import * as documents from "./documents";
@@ -32,6 +33,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentsCollection: ICollection<IDocument>,
+	tokenManager: IJsonWebTokenManager,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -51,6 +53,7 @@ export function create(
 		config,
 		tenantManager,
 		documentsCollection,
+		tokenManager,
 	);
 	const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottler);
 

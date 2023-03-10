@@ -120,7 +120,8 @@ export class AlfredResources implements core.IResources {
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
-		await Promise.all([producerClosedP, mongoClosedP]);
+		const tokenManagerP = this.tokenManager ? this.tokenManager.stop() : Promise.resolve();
+		await Promise.all([producerClosedP, mongoClosedP, tokenManagerP]);
 	}
 }
 
@@ -400,7 +401,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		let tokenManager: services.IJsonWebTokenManager | undefined;
 		if (tokenRevocationEnabled) {
 			socketTracker = new services.WebSocketTracker();
-			tokenManager = new services.EmptyImplementationTokenManager();
+			tokenManager = new services.DummyTokenManager();
 			await tokenManager.initialize();
 		}
 

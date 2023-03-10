@@ -20,10 +20,10 @@ import {
 	getParam,
 	validateTokenRevocationClaims,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import { validateRequestParams, handleResponse, IJsonWebTokenManager } from "@fluidframework/server-services";
 import { Router } from "express";
 import winston from "winston";
-import { IAlfredTenant, ISession } from "@fluidframework/server-services-client";
+import { IAlfredTenant, ISession, NetworkError } from "@fluidframework/server-services-client";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
@@ -38,6 +38,7 @@ export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
 	documentsCollection: ICollection<IDocument>,
+	tokenManager: IJsonWebTokenManager,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -216,7 +217,27 @@ export function create(
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received token revocation request.`, lumberjackProperties);
 			// TODO: add implementation here.
-			response.status(501).json("Token revocation is not supported for now");
+			const tokenId = request.body.jti;
+			if (!tokenId || typeof tokenId !== "string") {
+				return handleResponse(
+					Promise.reject(new NetworkError(400, `Missing or invalid jti in request body: ${tokenId}`)),
+					response,
+				);
+			}
+			if (tokenManager) {
+				const resultP = tokenManager.revokeToken(tenantId, documentId, tokenId);
+				return handleResponse(
+					resultP,
+					response,
+				);
+			}
+			else {
+				return handleResponse(
+					Promise.reject(new NetworkError(501, "Token revocation is not supported for now", false, true)),
+					response,
+				);
+			}
+
 		},
 	);
 	return router;
