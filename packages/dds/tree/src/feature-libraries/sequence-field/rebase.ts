@@ -145,7 +145,7 @@ function rebaseMarkList<TNodeChange>(
 				factory.push(cloneMark(currMark));
 			}
 		} else if (currMark === undefined) {
-			// XXX: Do we need to handle rebasing over baseMark's changes in this case?
+			// TODO: Do we need to handle rebasing over baseMark's changes in this case?
 			if (isDetachMark(baseMark)) {
 				const detachLength = getInputLength(baseMark);
 				baseDetachOffset += detachLength;

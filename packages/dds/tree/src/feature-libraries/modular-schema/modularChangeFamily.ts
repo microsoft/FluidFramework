@@ -756,9 +756,6 @@ interface CrossFieldTable<TFieldData> {
 	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
 	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
 	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
-
-	// XXX: Set doesn't deduplicate objects by value
-	// Maybe instead assign
 	fieldsToUpdate: Set<TFieldData>;
 }
 

@@ -117,7 +117,6 @@ const childRebaser = (
 	nodeChangeA: NodeChangeset | undefined,
 	nodeChangeB: NodeChangeset,
 ): NodeChangeset | undefined => {
-	// XXX
 	if (nodeChangeA === undefined) {
 		return undefined;
 	}
