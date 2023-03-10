@@ -19,7 +19,11 @@ const newConfig = {
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.timeTestsOutput/"],
 	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
-	"spec": ["dist/test/benchmark/**/*.time.spec.js", "--perfMode"],
-	"timeout": "60000",
+	"spec": [
+		"dist/test/benchmark/**/*.time.spec.js",
+		"dist/test/benchmark/**/*.all.spec.js",
+		"--perfMode",
+	],
+	"timeout": "120000",
 };
 module.exports = newConfig;

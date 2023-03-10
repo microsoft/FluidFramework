@@ -13,6 +13,10 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
+import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @internal
@@ -96,6 +100,13 @@ export interface FluidClientDebuggerProps {
     containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
+}
+
+// @internal @sealed
+export class FluidDebuggerLogger extends TelemetryLogger {
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public
@@ -201,6 +212,17 @@ export interface RegistryChangeMessageData {
 // @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
+}
+
+// @public
+export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
+    // (undocumented)
+    type: "TELEMETRY_EVENT";
+}
+
+// @public
+export interface TelemetryEventMessageData {
+    contents: ITelemetryBaseEvent;
 }
 
 ```
