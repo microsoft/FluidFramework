@@ -70,8 +70,8 @@ stages:
     displayName: Stress tests - tinylicious
     dependsOn: []
     jobs:
-    - template: templates/include-test-real-service.yml
     - job:
+    - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
         testPackage: ${{ variables.testPackage }}
