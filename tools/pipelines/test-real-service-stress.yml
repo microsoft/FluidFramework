@@ -81,4 +81,15 @@ stages:
         testCommand: start:t9s:gc
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+    - job:
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 200
+        testCommand: start:t9s:debug
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
