@@ -15,13 +15,13 @@ Here are some remarks about the method
 
 ## Parameters {#testclassmethod-parameters}
 
-|  Parameter | Type | Description |
-|  --- | --- | --- |
-|  input | TTypeParameterA | 📝 |
+| Parameter | Type | Description |
+| --- | --- | --- |
+| input | TTypeParameterA |  |
 
 ## Returns {#testclassmethod-returns}
 
-<b>Return type:</b> TTypeParameterA
+**Return type:** TTypeParameterA
 
 ## Throws {#testclassmethod-throws}
 

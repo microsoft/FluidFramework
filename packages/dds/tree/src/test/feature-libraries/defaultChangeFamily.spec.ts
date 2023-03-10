@@ -8,6 +8,7 @@ import {
 	AnchorSet,
 	Delta,
 	FieldKey,
+	mintRevisionTag,
 	IForestSubscription,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
@@ -15,6 +16,7 @@ import {
 	JsonableTree,
 	mapCursorField,
 	moveToDetachedField,
+	ReadonlyRepairDataStore,
 	RevisionTag,
 	rootFieldKeySymbol,
 	TaggedChange,
@@ -72,6 +74,7 @@ function assertDeltasEqual(actual: Delta.Root[], expected: Delta.Root[]): void {
 function initializeEditableForest(data?: JsonableTree): {
 	forest: IForestSubscription;
 	builder: DefaultEditBuilder;
+	repairStore: ReadonlyRepairDataStore;
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: Delta.Root[];
 } {
@@ -80,7 +83,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	if (data !== undefined) {
 		initializeForest(forest, [singleTextCursor(data)]);
 	}
-	let currentRevision = 0;
+	let currentRevision = mintRevisionTag();
 	const repairStore = new ForestRepairDataStore((revision: RevisionTag) => {
 		assert(
 			revision === currentRevision,
@@ -93,19 +96,19 @@ function initializeEditableForest(data?: JsonableTree): {
 	const builder = new DefaultEditBuilder(
 		family,
 		(change) => {
-			const revision: RevisionTag = brand(currentRevision);
-			changes.push({ revision, change });
-			const delta = defaultChangeFamily.intoDelta(change, repairStore);
-			repairStore.capture(delta, revision);
+			changes.push({ revision: currentRevision, change });
+			const delta = defaultChangeFamily.intoDelta(change);
+			repairStore.capture(delta, currentRevision);
 			deltas.push(delta);
 			forest.applyDelta(delta);
-			currentRevision += 1;
+			currentRevision = mintRevisionTag();
 		},
 		new AnchorSet(),
 	);
 	return {
 		forest,
 		builder,
+		repairStore,
 		changes,
 		deltas,
 	};
@@ -147,7 +150,7 @@ describe("DefaultEditBuilder", () => {
 	});
 
 	it("Allows repair data to flow in and out of the repair store", () => {
-		const { builder, deltas, changes, forest } = initializeEditableForest({
+		const { builder, repairStore, changes, forest } = initializeEditableForest({
 			type: jsonNumber.name,
 			value: 41,
 		});
@@ -156,7 +159,7 @@ describe("DefaultEditBuilder", () => {
 		expectForest(forest, { type: jsonNumber.name, value: 42 });
 
 		const change = changes[0];
-		const inverse = family.rebaser.invert(change);
+		const inverse = family.rebaser.invert(change, false, repairStore);
 		builder.apply(inverse);
 		expectForest(forest, { type: jsonNumber.name, value: 41 });
 	});

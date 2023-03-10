@@ -170,7 +170,7 @@ export interface TreeViewSchema extends TreeSchema {}
 export class FieldTypeView<Kind extends FieldKind = FieldKind> implements FieldSchema {
 	public readonly types?: ReadonlySet<TreeSchemaIdentifier>;
 
-	get kind(): FieldKindIdentifier {
+	public get kind(): FieldKindIdentifier {
 		return this.fieldKind.identifier;
 	}
 

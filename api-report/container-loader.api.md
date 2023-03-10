@@ -88,6 +88,8 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    // (undocumented)
+    getEntryPoint?(): Promise<FluidObject | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
@@ -127,25 +129,21 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 
 // @public (undocumented)
 export interface IContainerConfig {
-    baseLogger?: ITelemetryBaseLogger;
     // (undocumented)
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
     // (undocumented)
     resolvedUrl?: IFluidResolvedUrl;
-    scopeOverride?: FluidObject;
     serializedContainerState?: IPendingContainerState;
 }
 
 // @public (undocumented)
 export interface IContainerLoadOptions {
-    baseLogger?: ITelemetryBaseLogger;
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
     loadMode?: IContainerLoadMode;
     // (undocumented)
     resolvedUrl: IFluidResolvedUrl;
-    scopeOverride?: FluidObject;
     version: string | undefined;
 }
 

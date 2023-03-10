@@ -37,6 +37,9 @@ export {
 	NodeChangeset,
 	NodeReviver,
 	referenceFreeFieldChangeRebaser,
+	RevisionMetadataSource,
+	RevisionIndexer,
+	RevisionInfo,
 	ToDelta,
 	ValueChange,
 } from "./fieldChangeHandler";

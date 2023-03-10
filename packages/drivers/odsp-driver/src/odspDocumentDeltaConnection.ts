@@ -296,7 +296,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		try {
 			await deltaConnection.initialize(connectMessage, timeoutMs);
-			await epochTracker.validateEpochFromPush(deltaConnection.details);
+			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
 		} catch (errorObject: any) {
 			if (errorObject !== null && typeof errorObject === "object") {
 				// We have to special-case error types here in terms of what is re-triable.
@@ -387,7 +387,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		logger: ITelemetryLogger,
 		private readonly enableMultiplexing?: boolean,
 	) {
-		super(socket, documentId, logger);
+		super(socket, documentId, logger, false, uuid());
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
@@ -493,6 +493,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				{
 					eventName: "ServerDisconnect",
 					clientId: this.hasDetails ? this.clientId : undefined,
+					details: JSON.stringify({
+						connection: this.connectionId,
+					}),
 				},
 				error,
 			);
