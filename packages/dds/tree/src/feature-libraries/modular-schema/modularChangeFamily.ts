@@ -147,7 +147,7 @@ export class ModularChangeFamily
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
 		const changesWithoutConstraintViolations = changes.filter(
-			(change) => change.change.constraintViolationCount ?? 0 === 0,
+			(change) => (change.change.constraintViolationCount ?? 0) === 0,
 		);
 
 		const composedFields = this.composeFieldMaps(

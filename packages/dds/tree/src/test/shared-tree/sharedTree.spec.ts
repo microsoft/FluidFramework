@@ -647,7 +647,8 @@ describe("SharedTree", () => {
 	describe("Constraints", () => {
 		it("transaction dropped when constraint violated", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a");
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
 			await provider.ensureSynchronized();
 
 			const rootPath = {
@@ -656,25 +657,24 @@ describe("SharedTree", () => {
 				parentIndex: 0,
 			};
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "c");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "c");
 			});
 
-			provider.trees[0].runTransaction((forest, editor) => {
-				editor.addValueConstraint(rootPath, "a");
-				editor.setValue(rootPath, "b");
-				return TransactionResult.Apply;
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "b");
 			});
 
 			await provider.ensureSynchronized();
-			validateRootField(provider.trees[0], ["c"]);
-			validateRootField(provider.trees[1], ["c"]);
+			validateRootField(tree1, ["c"]);
+			validateRootField(tree2, ["c"]);
 		});
 
 		it("transaction successful when constraint not violated", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a");
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
 			await provider.ensureSynchronized();
 
 			const rootPath = {
@@ -683,25 +683,24 @@ describe("SharedTree", () => {
 				parentIndex: 0,
 			};
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "a");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
 			});
 
-			provider.trees[0].runTransaction((forest, editor) => {
-				editor.addValueConstraint(rootPath, "a");
-				editor.setValue(rootPath, "b");
-				return TransactionResult.Apply;
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "b");
 			});
 
 			await provider.ensureSynchronized();
-			validateRootField(provider.trees[0], ["b"]);
-			validateRootField(provider.trees[1], ["b"]);
+			validateRootField(tree1, ["b"]);
+			validateRootField(tree2, ["b"]);
 		});
 
 		it("transaction successful when constraint eventually fixed", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a");
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
 			await provider.ensureSynchronized();
 
 			const rootPath = {
@@ -710,25 +709,21 @@ describe("SharedTree", () => {
 				parentIndex: 0,
 			};
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "c");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "c");
 			});
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "d");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "d");
 			});
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "a");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
 			});
 
-			provider.trees[0].runTransaction((forest, editor) => {
-				editor.addValueConstraint(rootPath, "a");
-				editor.setValue(rootPath, "b");
-				return TransactionResult.Apply;
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "b");
 			});
 
 			await provider.ensureSynchronized();
@@ -738,7 +733,8 @@ describe("SharedTree", () => {
 
 		it("transaction dropped with violated constraints on different fields", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a", "x");
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "x");
 			await provider.ensureSynchronized();
 
 			const rootPath = {
@@ -752,31 +748,29 @@ describe("SharedTree", () => {
 				parentIndex: 1,
 			};
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "b");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "b");
 			});
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath2, "y");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath2, "y");
 			});
 
-			provider.trees[0].runTransaction((forest, editor) => {
-				editor.addValueConstraint(rootPath, "a");
-				editor.addValueConstraint(rootPath2, "x");
-				editor.setValue(rootPath, "c");
-				return TransactionResult.Apply;
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.addValueConstraint(rootPath2, "x");
+				tree1.editor.setValue(rootPath, "c");
 			});
 
 			await provider.ensureSynchronized();
-			validateRootField(provider.trees[1], ["b", "y"]);
-			validateRootField(provider.trees[0], ["b", "y"]);
+			validateRootField(tree1, ["b", "y"]);
+			validateRootField(tree2, ["b", "y"]);
 		});
 
 		it("transaction successful with constraints eventually fixed on different fields", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a", "x");
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "x");
 			await provider.ensureSynchronized();
 
 			const rootPath = {
@@ -790,27 +784,23 @@ describe("SharedTree", () => {
 				parentIndex: 1,
 			};
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "b");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "b");
 			});
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath2, "y");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath2, "y");
 			});
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "a");
-				editor.setValue(rootPath2, "x");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
+				tree2.editor.setValue(rootPath2, "x");
 			});
 
-			provider.trees[0].runTransaction((forest, editor) => {
-				editor.addValueConstraint(rootPath, "a");
-				editor.addValueConstraint(rootPath2, "x");
-				editor.setValue(rootPath, "c");
-				return TransactionResult.Apply;
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.addValueConstraint(rootPath2, "x");
+				tree1.editor.setValue(rootPath, "c");
 			});
 
 			await provider.ensureSynchronized();
@@ -820,7 +810,8 @@ describe("SharedTree", () => {
 
 		it("constraints violated delta is propagated", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a", "x");
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "x");
 			await provider.ensureSynchronized();
 
 			const rootPath = {
@@ -834,30 +825,28 @@ describe("SharedTree", () => {
 				parentIndex: 1,
 			};
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "b");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "b");
 			});
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath2, "y");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath2, "y");
 			});
 
-			provider.trees[0].runTransaction((forest, editor) => {
-				editor.addValueConstraint(rootPath, "a");
-				editor.setValue(rootPath, "c");
-				return TransactionResult.Apply;
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "c");
 			});
 
 			await provider.ensureSynchronized();
-			validateRootField(provider.trees[1], ["b", "y"]);
-			validateRootField(provider.trees[0], ["b", "y"]);
+			validateRootField(tree1, ["b", "y"]);
+			validateRootField(tree2, ["b", "y"]);
 		});
 
 		it("uses first defined constraint for node in transaction", async () => {
 			const provider = await TestTreeProvider.create(2);
-			insert(provider.trees[0], 0, "a");
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
 			await provider.ensureSynchronized();
 
 			const rootPath = {
@@ -866,21 +855,19 @@ describe("SharedTree", () => {
 				parentIndex: 0,
 			};
 
-			provider.trees[1].runTransaction((forest, editor) => {
-				editor.setValue(rootPath, "a");
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
 			});
 
-			provider.trees[0].runTransaction((forest, editor) => {
-				editor.addValueConstraint(rootPath, "a");
-				editor.addValueConstraint(rootPath, "ignored");
-				editor.setValue(rootPath, "b");
-				return TransactionResult.Apply;
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.addValueConstraint(rootPath, "ignored");
+				tree1.editor.setValue(rootPath, "b");
 			});
 
 			await provider.ensureSynchronized();
-			validateRootField(provider.trees[0], ["b"]);
-			validateRootField(provider.trees[1], ["b"]);
+			validateRootField(tree1, ["b"]);
+			validateRootField(tree2, ["b"]);
 		});
 	});
 
