@@ -157,7 +157,83 @@ describe("AnchorSet", () => {
 		);
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
 	});
+
+	it("triggers events", () => {
+		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
+		const log = new UnorderedTestLogger();
+		const anchors = new AnchorSet();
+		anchors.on("childrenChange", log.logger("root childrenChange"));
+		anchors.on("treeChange", log.logger("root treeChange"));
+
+		const deleteMark: Delta.Delete = {
+			type: Delta.MarkType.Delete,
+			count: 1,
+		};
+
+		log.expect([]);
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, deleteMark]]]));
+
+		log.expect([
+			["root childrenChange", 1],
+			["root treeChange", 1],
+		]);
+		log.clear();
+
+		const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
+		const node0 = anchors.locate(anchor0) ?? assert.fail();
+
+		node0.on("childrenChange", log.logger("childrenChange"));
+		node0.on("subtreeChange", log.logger("subtreeChange"));
+		node0.on("valueChange", log.logger("valueChange"));
+		node0.on("afterDelete", log.logger("afterDelete"));
+
+		log.expect([]);
+
+		const valueMark: Delta.Modify = {
+			type: Delta.MarkType.Modify,
+			setValue: "x",
+		};
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, valueMark]]]));
+
+		log.expect([
+			["root treeChange", 1],
+			["valueChange", 1],
+			["subtreeChange", 1],
+		]);
+		log.clear();
+
+		anchors.applyDelta(makeDelta(valueMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 5])));
+
+		log.expect([
+			["root treeChange", 1],
+			["subtreeChange", 1],
+		]);
+		log.clear();
+
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, deleteMark]]]));
+		log.expect([
+			["root childrenChange", 1],
+			["root treeChange", 1],
+			["afterDelete", 1],
+		]);
+	});
 });
+
+class UnorderedTestLogger {
+	public readonly logEntries: Map<string, number> = new Map();
+	public logger(name: string): () => void {
+		return () => {
+			this.logEntries.set(name, (this.logEntries.get(name) ?? 0) + 1);
+		};
+	}
+	public expect(expected: [string, number][]) {
+		const expectedMap = new Map(expected);
+		assert.deepEqual(this.logEntries, expectedMap);
+	}
+	public clear(): void {
+		this.logEntries.clear();
+	}
+}
 
 function setup(): [AnchorSet, Anchor, Anchor, Anchor, Anchor] {
 	const anchors = new AnchorSet();
