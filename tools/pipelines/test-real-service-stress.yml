@@ -71,6 +71,7 @@ stages:
     dependsOn: []
     jobs:
     - job:
+      displayName: "Tombstone"
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
@@ -82,6 +83,7 @@ stages:
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
     - job:
+      displayName: "Sweep"
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
