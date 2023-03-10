@@ -53,7 +53,12 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
-        testCommand: start:odsp:gc:ci_fault
+        testCommand: start:odsp
+        splitTestVariants:
+          - name: Tombstone Mode
+            flags: --profile gc_ci_tombstone
+          - name: Sweep Mode
+            flags: --profile gc_ci_sweep
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
@@ -65,6 +70,8 @@ stages:
     displayName: Stress tests - tinylicious
     dependsOn: []
     jobs:
+    - job:
+      displayName: Tombstone Mode
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
@@ -72,6 +79,18 @@ stages:
         testWorkspace: ${{ variables.testWorkspace }}
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
-        testCommand: start:t9s:gc:ci_fault
+        testCommand: start:t9s:gc:ci:tombstone
+        env:
+          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+    - job:
+      displayName: Sweep Mode
+    - template: templates/include-test-real-service.yml
+      parameters:
+        poolBuild: Large
+        testPackage: ${{ variables.testPackage }}
+        testWorkspace: ${{ variables.testWorkspace }}
+        artifactBuildId: $(resources.pipeline.client.runID)
+        timeoutInMinutes: 200
+        testCommand: start:t9s:gc:ci:sweep
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject

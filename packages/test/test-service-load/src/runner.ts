@@ -121,7 +121,8 @@ async function main() {
 		if (
 			logEvent.eventName.includes("InactiveObject") ||
 			logEvent.eventName.includes("SweepReadyObject") ||
-			logEvent.eventName.startsWith("GC_Tombstone")
+			logEvent.eventName.startsWith("GC_Tombstone") ||
+			logEvent.eventName.startsWith("GC_Deleted")
 		) {
 			testFailed = true;
 			console.error(`xxxxxxxxx ${JSON.stringify(logEvent)}`);
