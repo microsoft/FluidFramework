@@ -423,7 +423,21 @@ export interface IRootSummaryTreeWithStats extends ISummaryTreeWithStats {
 	gcStats?: IGCStats;
 }
 
-export interface IContainerRuntimeParams {
+/**
+ * An object housing the runtime properties, with all the functionality that the Container is expected to provide to the loader layer.
+ * - context - Context of the container.
+ * - registryEntries - Mapping from data store types to their corresponding factories.
+ * - existing - Pass 'true' if loading from an existing snapshot.
+ * - requestHandler - (optional) Request handler for the request() method of the container runtime.
+ * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
+ * - runtimeOptions - Additional options to be passed to the runtime
+ * - containerScope - runtime services provided with context
+ * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
+ * This allows mixin classes to leverage this method to define their own async initializer.
+ * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+ * This object should provide all the functionality that the Container is expected to provide to the loader layer.
+ */
+export interface ICreateContainerRuntimeParams {
 	context: IContainerContext;
 	registryEntries: NamedFluidDataStoreRegistryEntries;
 	existing: boolean;
@@ -622,20 +636,12 @@ export class ContainerRuntime
 
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
-	 * @param params - An object housing the runtime properties:
-	 * - context - Context of the container.
-	 * - registryEntries - Mapping from data store types to their corresponding factories.
-	 * - existing - Pass 'true' if loading from an existing snapshot.
-	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
-	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
-	 * - runtimeOptions - Additional options to be passed to the runtime
-	 * - containerScope - runtime services provided with context
-	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
-	 * This allows mixin classes to leverage this method to define their own async initializer.
-	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * @param params - An object housing the runtime properties
 	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
-	public static async loadRuntime(params: IContainerRuntimeParams): Promise<ContainerRuntime> {
+	public static async loadRuntime(
+		params: ICreateContainerRuntimeParams,
+	): Promise<ContainerRuntime> {
 		const {
 			context,
 			registryEntries,
@@ -3464,10 +3470,10 @@ const waitForSeq = async (
 	});
 
 /**
- * Mixin class that adds await for DataObject to finish initialization before we proceed to summary.
+ * Mixin class that adds a blob to summary
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
- * @param Base - base class, inherits from FluidDataStoreRuntime
+ * @param Base - base class, inherits from ContainerRuntime
  */
 export const mixinSummaryHandler = (
 	handler: (
@@ -3496,7 +3502,7 @@ export const mixinSummaryHandler = (
 // Helper API to load extra blobs in snapshot
 // This API only works for blobs that are saved in storage, i.e. this API would only work for load from storage scenarios
 export async function loadRuntimeBlob(
-	params: IContainerRuntimeParams,
+	params: ICreateContainerRuntimeParams,
 	path: string[],
 ): Promise<string | undefined> {
 	const context = params.context;

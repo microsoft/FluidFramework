@@ -163,7 +163,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get isDirty(): boolean;
     // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
-    static loadRuntime(params: IContainerRuntimeParams): Promise<ContainerRuntime>;
+    static loadRuntime(params: ICreateContainerRuntimeParams): Promise<ContainerRuntime>;
     // (undocumented)
     readonly logger: ITelemetryLogger;
     // (undocumented)
@@ -350,8 +350,8 @@ export interface IContainerRuntimeOptions {
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
 
-// @public (undocumented)
-export interface IContainerRuntimeParams {
+// @public
+export interface ICreateContainerRuntimeParams {
     // (undocumented)
     containerRuntimeCtor?: typeof ContainerRuntime;
     // (undocumented)
@@ -657,7 +657,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 }
 
 // @public (undocumented)
-export function loadRuntimeBlob(params: IContainerRuntimeParams, path: string[]): Promise<string | undefined>;
+export function loadRuntimeBlob(params: ICreateContainerRuntimeParams, path: string[]): Promise<string | undefined>;
 
 // @public
 export const mixinSummaryHandler: (handler: (runtime: ContainerRuntime) => Promise<{

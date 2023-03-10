@@ -6,12 +6,9 @@
 import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
-import { AttachState, IContainer, IContainerContext } from "@fluidframework/container-definitions";
+import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
-	IContainerRuntimeParams,
-	loadRuntimeBlob,
-	mixinSummaryHandler,
 	Summarizer,
 	ISummarizer,
 	ISummarizeResults,
@@ -38,7 +35,6 @@ import {
 	itExpects,
 	TestDataObjectType,
 } from "@fluidframework/test-version-utils";
-import { MockDeltaManager, MockQuorumClients } from "@fluidframework/test-runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -194,65 +190,6 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 
 		ackNackResult = await result.receivedSummaryAckOrNack;
 		assert(ackNackResult.success, "summary op should be acked");
-	});
-
-	it("sample use for customized containerRuntimeWithBlob", async () => {
-		const blobContents = "sample payload";
-
-		// sample API to load a containerRuntime which has extra blob in the summary
-		async function containerRuntimeWithBlob(params: IContainerRuntimeParams) {
-			// Blob path in container snapshots
-			const path = ["loop", "guestComponents"];
-
-			const extraBlob = await loadRuntimeBlob(params, path);
-
-			// Loop specific code to create blob content during summary
-			const handler = async (_runtime) => {
-				return { path, content: blobContents };
-			};
-
-			// Add ability to generate that blob during summaries
-			// Please note that handler will be called (and thus blobs will be created) only for summaries that are submiteed to storage
-			// It will not be involved when saving stashed ops (aka local state with uncommited changes)
-			return ContainerRuntime.loadRuntime({
-				...params,
-				containerRuntimeCtor: mixinSummaryHandler(handler, params.containerRuntimeCtor),
-			});
-		}
-
-		const getMockContext = (): Partial<IContainerContext> => {
-			return {
-				attachState: AttachState.Attached,
-				deltaManager: new MockDeltaManager(),
-				quorum: new MockQuorumClients(),
-				taggedLogger: new MockLogger(),
-				clientDetails: { capabilities: { interactive: true } },
-				closeFn: (_error?): void => {},
-				updateDirtyContainerState: (_dirty: boolean) => {},
-			};
-		};
-
-		const runtimeWithBlob = await containerRuntimeWithBlob({
-			context: getMockContext() as IContainerContext,
-			registryEntries: [],
-			existing: false,
-			runtimeOptions: undefined,
-			containerScope: {},
-		});
-
-		await provider.ensureSynchronized();
-
-		const result = await runtimeWithBlob.summarize({
-			runGC: false,
-			fullTree: false,
-			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
-		});
-
-		const blobTree = (result.summary.tree[".application"] as ISummaryTree).tree;
-		const blob = (blobTree.loop as ISummaryTree).tree.guestComponents as ISummaryBlob;
-		assert.strictEqual(blob.content, blobContents, "blob has the wrong content");
-		await flushPromises();
 	});
 
 	it("should fail on demand summary on stopped summarizer", async () => {

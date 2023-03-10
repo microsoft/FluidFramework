@@ -12,7 +12,7 @@ import {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { GenericError, DataProcessingError } from "@fluidframework/container-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage, MessageType, ISummaryBlob, ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
 	FlushMode,
 	FlushModeExperimental,
@@ -33,6 +33,8 @@ import {
 	ContainerMessageType,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
+	ICreateContainerRuntimeParams,
+	mixinSummaryHandler,
 } from "../containerRuntime";
 import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
@@ -84,6 +86,51 @@ describe("Runtime", () => {
 				});
 
 				assert.strictEqual(containerRuntime.flushMode, FlushMode.Immediate);
+			});
+		});
+
+		describe("sample use", () => {
+			it.only("sample use for customized containerRuntimeWithBlob", async () => {
+				const blobContents = "sample payload";
+
+				// sample API to load a containerRuntime which has extra blob in the summary
+				async function containerRuntimeWithBlob(params: ICreateContainerRuntimeParams) {
+					// Blob path in container snapshots
+					const path = ["loop", "guestComponents"];
+
+					// const extraBlob = await loadRuntimeBlob(params, path);
+					// Loop specific code to create blob content during summary
+					const handler = async (_runtime) => {
+						return { path, content: blobContents };
+					};
+
+					// Add ability to generate that blob during summaries
+					// Please note that handler will be called (and thus blobs will be created) only for summaries that are submiteed to storage
+					// It will not be involved when saving stashed ops (aka local state with uncommited changes)
+					return ContainerRuntime.loadRuntime({
+						...params,
+						containerRuntimeCtor: mixinSummaryHandler(handler, params.containerRuntimeCtor),
+					});
+				}
+
+				const runtimeWithBlob = await containerRuntimeWithBlob({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: undefined,
+					containerScope: {},
+				});
+
+				const result = await runtimeWithBlob.summarize({
+					runGC: false,
+					fullTree: false,
+					trackState: false,
+					summaryLogger: new MockLogger(),
+				});
+		
+				const blobTree = (result.summary.tree[".application"] as ISummaryTree).tree;
+				const blob = (blobTree.loop as ISummaryTree).tree.guestComponents as ISummaryBlob;
+				assert.strictEqual(blob.content, blobContents, "blob has the wrong content");
 			});
 		});
 
