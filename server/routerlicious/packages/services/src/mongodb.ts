@@ -8,40 +8,23 @@ import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { requestWithRetry } from "@fluidframework/server-services-core";
+import fastRedact from "fast-redact";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
-const errorSanitizationMessage = "REDACTED";
-const errorResponseKeysAllowList = new Set([
-    "_id",
-    "code",
-    "codeName",
-    "documentId",
-    "driver",
-    "err",
-    "errmsg",
-    "errorDetails",
-    "errorLabels",
-    "index",
-    "insertedIds",
-    "message",
-    "mongoTimestamp",
-    "name",
-    "nInserted",
-    "nMatched",
-    "nModified",
-    "nRemoved",
-    "nUpserted",
-    "ok",
-    "result",
-    "stack",
-    "tenantId",
-    "type",
-    "upserted",
-    "writeErrors",
-    "writeConcernErrors"]);
+const redactJsonKeys = fastRedact({
+    // we want to redact the 'op' key at the following paths within error JSON object.
+    paths: [
+        "op",
+        "err.op",
+        "result.writeErrors[*].op",
+    ],
+    // this instructs fast-redact to mutate the original object,
+    // instead of returning the serialization of the modified object.
+    serialize: false,
+});
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
     constructor(
@@ -315,13 +298,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
     private sanitizeError(error: any) {
         if (error) {
-            Object.keys(error).forEach((key) => {
-                if (typeof error[key] === "object") {
-                    this.sanitizeError(error[key]);
-                } else if (!errorResponseKeysAllowList.has(key)) {
-                    error[key] = errorSanitizationMessage;
-                }  
-            });
+            try {
+                redactJsonKeys(error);
+            }
+            catch (err)
+            {
+                Lumberjack.error(`Error sanitization failed.`, undefined, err);
+                throw err;
+            }
         }
     }
 }
