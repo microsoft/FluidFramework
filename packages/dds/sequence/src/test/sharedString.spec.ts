@@ -236,6 +236,29 @@ describe("SharedString", () => {
 			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
 		});
 
+		it("fails when the marker is updated", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker.
+			const props = { color: "blue" };
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			sharedString.annotateMarker(simpleMarker, props);
+			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
+			// Annotate the marker's ID.
+			const newIdProps = { [reservedMarkerIdKey]: "newIdValue" };
+			try {
+				sharedString.annotateMarker(simpleMarker, newIdProps);
+			} catch (error) {
+				assert(
+					error !== undefined,
+					"Error from attempting to update marker was not thrown",
+				);
+			}
+		});
+
 		it("replace zero range", async () => {
 			sharedString.insertText(0, "123");
 			sharedString.replaceText(1, 1, "\u00e4\u00c4");
@@ -503,7 +526,6 @@ describe("SharedString", () => {
 			const label = "tileLabel";
 			const id = "tileMarkerId";
 			const simpleKey = "tileMarkerKey";
-
 			const verifyMarker = (marker) => {
 				assert.equal(marker.type, "Marker", "Could not get simple marker");
 				assert.equal(marker.properties.markerId, id, "markerId is incorrect");

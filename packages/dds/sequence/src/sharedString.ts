@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	ICombiningOp,
 	IMergeTreeInsertMsg,
@@ -223,6 +224,7 @@ export class SharedString
 	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 */
 	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
+		assert(props.markerId === undefined, "Cannot change the markerId of an existing marker");
 		const annotateOp = this.client.annotateMarker(marker, props, combiningOp);
 		if (annotateOp) {
 			this.submitSequenceMessage(annotateOp);
