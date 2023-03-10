@@ -650,7 +650,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe.only("Constraints", () => {
+	describe("Constraints", () => {
 		it("transaction dropped when constraint violated", async () => {
 			const provider = await TestTreeProvider.create(2);
 			insert(provider.trees[0], 0, "a");

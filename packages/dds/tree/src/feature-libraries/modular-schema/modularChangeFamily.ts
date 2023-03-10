@@ -463,7 +463,7 @@ export class ModularChangeFamily
 		let maxId = change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
-		const constraintState = new ConstraintHelper(change.constraintViolationCount);
+		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 		const revInfos: RevisionInfo[] = [];
 		if (over.change.revisions !== undefined) {
 			revInfos.push(...over.change.revisions);
@@ -518,7 +518,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
 		revisionMetadata: RevisionMetadataSource,
-		constraintState: any,
+		constraintState: ConstraintState,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -576,32 +576,26 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
 		revisionMetadata: RevisionMetadataSource,
-		constraintState: any,
+		constraintState: ConstraintState,
 	): NodeChangeset {
-		// also check if the constraint was already violated before this
+		// We only care if a violated constraint is fixed or if a non-violated
+		// constraint becomes violated
 		if (
 			change.valueConstraint !== undefined &&
 			over.change.valueChange !== undefined &&
-			over.change.valueChange.value !== change.valueConstraint.value
+			over.change.valueChange.value !== change.valueConstraint.value &&
+			change.valueConstraint.violated !== true
 		) {
-			if (change.valueConstraint.violated !== true) {
-				change.valueConstraint.violated = true;
-				constraintState.increment();
-				console.log(
-					"Constraint violated! Violation count: ",
-					constraintState.violationCount,
-				);
-			}
+			change.valueConstraint.violated = true;
+			constraintState.violationCount++;
 		} else if (
 			change.valueConstraint !== undefined &&
 			over.change.valueChange !== undefined &&
-			over.change.valueChange.value === change.valueConstraint.value
+			over.change.valueChange.value === change.valueConstraint.value &&
+			change.valueConstraint.violated === true
 		) {
-			if (change.valueConstraint.violated === true) {
-				change.valueConstraint.violated = false;
-				constraintState.decrement();
-				console.log("Constraint fixed! Violation count: ", constraintState.violationCount);
-			}
+			change.valueConstraint.violated = false;
+			constraintState.violationCount--;
 		}
 
 		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
@@ -728,16 +722,14 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	};
 }
 
-class ConstraintHelper {
-	public constructor(public violationCount = 0) {}
+interface ConstraintState {
+	violationCount: number;
+}
 
-	public increment() {
-		this.violationCount++;
-	}
-
-	public decrement() {
-		this.violationCount--;
-	}
+function newConstraintState(violationCount: number): ConstraintState {
+	return {
+		violationCount,
+	};
 }
 
 interface InvertData {
