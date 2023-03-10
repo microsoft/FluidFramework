@@ -137,9 +137,13 @@ export function convertPropertyToSharedTreeStorageSchema(
 			if (properties !== undefined) {
 				for (const property of properties || []) {
 					if (property.properties) {
+						if (isIgnoreNestedProperties(property.typeid)) {
+							continue;
+						}
 						// We have a nested set of properties
 						// TODO: We have to create a corresponding nested type
-						extractContexts(property.properties);
+						fail(`Nested properties are not supported yet ${property.typeid}`);
+						// extractContexts(property.properties);
 					}
 					if (property.context && property.context !== "single") {
 						referencedTypeIDs.add(
