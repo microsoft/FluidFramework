@@ -207,7 +207,7 @@ export class Package {
 	}
 
 	public async savePackageJson() {
-		return updatePackageJsonFile(this.directory, () => {
+		updatePackageJsonFile(this.directory, () => {
 			return;
 		});
 	}
