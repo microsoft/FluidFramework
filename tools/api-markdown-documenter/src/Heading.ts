@@ -8,19 +8,26 @@
  */
 export interface Heading {
 	/**
-	 * Heading text content.
+	 * Heading text content. Note: this must not contain newline characters.
 	 */
-	title: string;
+	readonly title: string;
 
 	/**
-	 * Heading ID.
-	 * If not specified, no explicit ID will be associated with the heading.
+	 * Identifier to associate with the heading.
+	 *
+	 * @remarks Must be unique in a given document.
+	 *
+	 * @defaultValue No explicit identifier is associated with the heading.
+	 * Links will have to refer to the heading by its title contents.
 	 */
-	id?: string;
+	readonly id?: string;
 
 	/**
-	 * Level of the heading.
-	 * If not specified, it will be automatically generated based on context.
+	 * Heading level.
+	 *
+	 * @remarks Must be on [0, ∞).
+	 *
+	 * @defaultValue Automatic based on contextual hierarchy.
 	 */
-	level?: number;
+	readonly level?: number;
 }

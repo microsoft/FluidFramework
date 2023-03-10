@@ -12,7 +12,7 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, performance, unreachableCase } from "@fluidframework/common-utils";
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
 	IConnectionDetails,
@@ -599,6 +599,41 @@ export class Container
 		return this.loader.services.codeLoader;
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
+	 */
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
+		// allow it since they mean a kind of read-only state for the Container.
+		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
+		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
+			throw new UsageError("The container is disposing or disposed");
+		}
+		while (this._context === undefined) {
+			await new Promise<void>((resolve, reject) => {
+				const contextChangedHandler = () => {
+					resolve();
+					this.off("disposed", disposedHandler);
+				};
+				const disposedHandler = (error) => {
+					reject(error ?? "The Container is disposed");
+					this.off("contextChanged", contextChangedHandler);
+				};
+				this.once("contextChanged", contextChangedHandler);
+				this.once("disposed", disposedHandler);
+			});
+			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
+			// should have set this._context; making sure.
+			assert(
+				this._context !== undefined,
+				0x5a2 /* Context still not defined after contextChanged event */,
+			);
+		}
+		// Disable lint rule for the sake of more complete stack traces
+		// eslint-disable-next-line no-return-await
+		return await this._context.getEntryPoint?.();
+	}
+
 	constructor(
 		private readonly loader: Loader,
 		config: IContainerConfig,
@@ -739,9 +774,8 @@ export class Container
 		this.storageService = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
-			this.options.summarizeProtocolTree === true
-				? () => this.captureProtocolSummary()
-				: undefined,
+			() => this.captureProtocolSummary(),
+			this.options,
 		);
 
 		const isDomAvailable =
@@ -1927,7 +1961,7 @@ export class Container
 	}
 
 	/** @returns clientSequenceNumber of last message in a batch */
-	private submitBatch(batch: IBatchMessage[]): number {
+	private submitBatch(batch: IBatchMessage[], referenceSequenceNumber?: number): number {
 		let clientSequenceNumber = -1;
 		for (const message of batch) {
 			clientSequenceNumber = this.submitMessage(
@@ -1936,13 +1970,14 @@ export class Container
 				true, // batch
 				message.metadata,
 				message.compression,
+				referenceSequenceNumber,
 			);
 		}
 		this._deltaManager.flush();
 		return clientSequenceNumber;
 	}
 
-	private submitSummaryMessage(summary: ISummaryContent) {
+	private submitSummaryMessage(summary: ISummaryContent, referenceSequenceNumber?: number) {
 		// github #6451: this is only needed for staging so the server
 		// know when the protocol tree is included
 		// this can be removed once all clients send
@@ -1955,6 +1990,9 @@ export class Container
 			MessageType.Summarize,
 			JSON.stringify(summary),
 			false /* batch */,
+			undefined /* metadata */,
+			undefined /* compression */,
+			referenceSequenceNumber,
 		);
 	}
 
@@ -1964,6 +2002,7 @@ export class Container
 		batch?: boolean,
 		metadata?: any,
 		compression?: string,
+		referenceSequenceNumber?: number,
 	): number {
 		if (this.connectionState !== ConnectionState.Connected) {
 			this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
@@ -1972,7 +2011,14 @@ export class Container
 
 		this.messageCountAfterDisconnection += 1;
 		this.collabWindowTracker?.stopSequenceNumberUpdate();
-		return this._deltaManager.submit(type, contents, batch, metadata, compression);
+		return this._deltaManager.submit(
+			type,
+			contents,
+			batch,
+			metadata,
+			compression,
+			referenceSequenceNumber,
+		);
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
@@ -2087,8 +2133,10 @@ export class Container
 			loader,
 			(type, contents, batch, metadata) =>
 				this.submitContainerMessage(type, contents, batch, metadata),
-			(summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
-			(batch: IBatchMessage[]) => this.submitBatch(batch),
+			(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
+			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+				this.submitBatch(batch, referenceSequenceNumber),
 			(message) => this.submitSignal(message),
 			(error?: ICriticalContainerError) => this.dispose?.(error),
 			(error?: ICriticalContainerError) => this.close(error),

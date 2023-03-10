@@ -16,8 +16,6 @@
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
 		"build:fast": "fluid-build --root .. --buildTools",
-		"build:full": "npm run build:genver && npm run build:full:compile",
-		"build:full:compile": "lerna run build:full:compile --stream",
 		"build:genver": "lerna run build:genver --stream --parallel",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats",
@@ -32,7 +30,6 @@
 		"commit": "git-cz",
 		"format": "npm run prettier:fix",
 		"preinstall": "node ../scripts/only-pnpm.cjs",
-		"postinstall": "npm run build:compile",
 		"install:commitlint": "npm install --global @commitlint/config-conventional",
 		"lint": "lerna run lint --no-sort --stream",
 		"lint:fix": "lerna run lint:fix --no-sort --stream",
@@ -56,7 +53,6 @@
 		"test:report": "npm run test:mocha:report && npm run test:jest:report && npm run test:realsvc:report",
 		"tsc": "lerna run tsc --stream",
 		"tsc:fast": "fluid-build --root .. -s tsc --buildTools",
-		"typetests:gen": "flub generate typetests --generate --releaseGroup build-tools",
 		"typetests:prepare": "flub generate typetests --prepare --releaseGroup build-tools --verbose",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\" \"npm run watch:webpack\"",
 		"watch:esnext": "lerna run --parallel build:esnext -- -- --watch",
@@ -94,11 +90,14 @@
 		"cz-conventional-changelog": "^3.3.0",
 		"cz-customizable": "^7.0.0",
 		"inquirer": "^8.0.0",
-		"lerna": "^5.1.8",
+		"lerna": "^5.6.2",
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",
 		"run-script-os": "^1.1.6",
 		"typescript": "~4.5.5"
+	},
+	"engines": {
+		"node": ">=14.17.0"
 	},
 	"packageManager": "pnpm@7.14.2",
 	"pnpm": {
@@ -106,6 +105,10 @@
 			"allowedVersions": {
 				"eslint": "8.6.0"
 			}
+		},
+		"overrides": {
+			"json5@<1.0.2": ">=1.0.2",
+			"json5@>=2.0.0 <2.2.2": ">=2.2.2"
 		}
 	}
 }

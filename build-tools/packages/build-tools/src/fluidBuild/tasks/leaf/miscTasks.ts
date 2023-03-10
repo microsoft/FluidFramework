@@ -195,12 +195,10 @@ export class GenVerTask extends LeafTask {
 	}
 }
 
-export abstract class PackageJsonChangedTask extends LeafWithDoneFileTask {
+export class TypeValidationTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		return JSON.stringify(this.package.packageJson);
 	}
-}
 
-export class TypeValidationTask extends PackageJsonChangedTask {
 	protected addDependentTasks(dependentTasks: LeafTask[]): void {}
 }

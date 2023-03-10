@@ -8,7 +8,7 @@ import path from "path";
 
 import { BaseCommand } from "../../base";
 
-export default class RunBundlestats extends BaseCommand<typeof RunBundlestats.flags> {
+export default class RunBundlestats extends BaseCommand<typeof RunBundlestats> {
 	static description = `Generate a report from input bundle stats collected through the collect bundleStats command.`;
 
 	static flags = {
@@ -20,9 +20,8 @@ export default class RunBundlestats extends BaseCommand<typeof RunBundlestats.fl
 	};
 
 	public async run(): Promise<void> {
-		const flags = this.processedFlags;
 		// eslint-disable-next-line unicorn/prefer-module
-		const dangerfile = flags.dangerfile ?? path.join(__dirname, "../../lib/dangerfile.js");
+		const dangerfile = this.flags.dangerfile ?? path.join(__dirname, "../../lib/dangerfile.js");
 
 		execSync(`npx danger ci -d ${dangerfile}`, { stdio: "inherit" });
 	}

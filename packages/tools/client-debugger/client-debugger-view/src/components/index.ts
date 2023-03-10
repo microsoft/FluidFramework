@@ -12,6 +12,7 @@ export * from "./data-object-views";
 export * from "./AudienceView";
 export * from "./ClientDebugView";
 export * from "./ContainerSelectionDropdown";
-export * from "./ContainerStateView";
+export * from "./ContainerSummaryView";
+export * from "./TelemetryView";
 
 /* eslint-enable no-restricted-syntax */

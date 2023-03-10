@@ -100,18 +100,20 @@ export {
 	GenericChangeset,
 	genericFieldKind,
 	NodeReviver,
+	RevisionIndexer,
+	RevisionMetadataSource,
+	RevisionInfo,
 } from "./modular-schema";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as FieldKinds from "./defaultFieldKinds";
 export { FieldKinds };
 
-export { mapFieldMarks, mapFieldChanges, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	EditManagerIndex,
 	CommitEncoder,
-	commitEncoderFromChangeEncoder,
 	parseSummary as loadSummary,
 	stringifySummary as encodeSummary,
 } from "./editManagerIndex";
@@ -119,7 +121,6 @@ export {
 export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
-export { runSynchronousTransaction } from "./defaultTransaction";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
-export { TreeChunk, chunkTree, buildChunkedForest } from "./chunked-forest";
+export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
