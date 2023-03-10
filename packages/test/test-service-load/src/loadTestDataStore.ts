@@ -573,16 +573,65 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 			config.testConfig.content?.useVariableOpSize === true
 				? Math.floor(Math.random() * opSizeinBytes)
 				: opSizeinBytes;
-		const largeOpRate = config.testConfig.content?.largeOpRate ?? 1;
+		const largeOpRate = Math.max(
+			Math.floor(
+				(config.testConfig.content?.largeOpRate ?? 1) / config.testConfig.numClients,
+			),
+			1,
+		);
+		// To avoid having all clients send their large payloads at roughly the same time
+		const largeOpJitter = Math.min(config.runId, largeOpRate);
+		// To avoid growing the file size unnecessarily, not all clients should be sending large ops
+		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
 		let opsSent = 0;
+		let largeOpsSent = 0;
+
+		const reportOpCount = (reason: string, error?: Error) => {
+			config.logger.sendTelemetryEvent(
+				{
+					eventName: "OpCount",
+					reason,
+					runId: config.runId,
+					documentOpCount: dataModel.counter.value,
+					localOpCount: opsSent,
+					localLargeOpCount: largeOpsSent,
+				},
+				error,
+			);
+		};
+
+		this.runtime.once("dispose", () => reportOpCount("Disposed"));
+		this.runtime.once("disconnected", () => reportOpCount("Disconnected"));
 
 		const sendSingleOp = () => {
-			if (opSizeinBytes > 0 && largeOpRate > 0 && opsSent % largeOpRate === 1) {
-				dataModel.sharedmap.set(`key${opsSent}`, generateContentOfSize(getOpSizeInBytes()));
-			} else {
-				dataModel.counter.increment(1);
+			if (
+				this.shouldSendLargeOp(
+					opSizeinBytes,
+					largeOpRate,
+					opsSent,
+					largeOpJitter,
+					maxClientsSendingLargeOps,
+					config.runId,
+				)
+			) {
+				const opSize = getOpSizeInBytes();
+				// The key name matters, as it can directly affect the size of the snapshot.
+				// For now, we want to key to be constantly overwritten so that the snapshot size
+				// does not grow relative to the number of clients or the frequency of the large ops.
+				dataModel.sharedmap.set("largeOpKey", generateContentOfSize(opSize));
+				config.logger.sendTelemetryEvent({
+					eventName: "LargeTestPayload",
+					runId: config.runId,
+					largeOpJitter,
+					opSize,
+					opsSent,
+					largeOpRate,
+				});
+
+				largeOpsSent++;
 			}
 
+			dataModel.counter.increment(1);
 			opsSent++;
 		};
 
@@ -611,7 +660,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  };
 
 		try {
-			while (opsSent < clientSendCount && !this.disposed) {
+			while (dataModel.counter.value < clientSendCount && !this.disposed) {
 				// this enables a quick ramp down. due to restart, some clients can lag
 				// leading to a slow ramp down. so if there are less than half the clients
 				// and it's partner is done, return true to complete the runner.
@@ -626,10 +675,42 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				}
 				await sendSingleOpAndThenWait();
 			}
+
+			reportOpCount("Completed");
 			return !this.runtime.disposed;
+		} catch (error: any) {
+			reportOpCount("Exception", error);
+			throw error;
 		} finally {
 			dataModel.printStatus();
 		}
+	}
+
+	/**
+	 * To avoid creating huge files on the server, the test should self-throttle
+	 *
+	 * @param opSizeinBytes - configured max size of op contents
+	 * @param largeOpRate - how often should a regular op be large op
+	 * @param opsSent - how many ops (of any type) already sent
+	 * @param largeOpJitter - to avoid clients sending large ops at the same time
+	 * @param maxClients - how many clients should be sending large ops
+	 * @param runId - run id of the current test
+	 * @returns true if a large op should be sent, false otherwise
+	 */
+	private shouldSendLargeOp(
+		opSizeinBytes: number,
+		largeOpRate: number,
+		opsSent: number,
+		largeOpJitter: number,
+		maxClients: number,
+		runId: number,
+	) {
+		return (
+			runId < maxClients &&
+			opSizeinBytes > 0 &&
+			largeOpRate > 0 &&
+			opsSent % largeOpRate === largeOpJitter
+		);
 	}
 
 	async sendSignals(config: IRunConfig) {
