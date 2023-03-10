@@ -4,6 +4,7 @@
  */
 
 import * as crypto from "crypto";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -14,7 +15,6 @@ import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
@@ -28,7 +28,7 @@ export interface IRunConfig {
 	profileName: string;
 	testConfig: ILoadTestConfig;
 	verbose: boolean;
-	randEng: random.Engine;
+	random: IRandom;
 	logger: ITelemetryLogger;
 }
 
@@ -599,9 +599,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 								dataModel.abandonTask();
 								await delay(cycleMs / 2);
 							} else {
-								await delay(
-									opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
-								);
+								await delay(opsGapMs * config.random.real(1, 1.5));
 							}
 						} else {
 							await dataModel.volunteerForTask();
@@ -609,9 +607,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  }
 				: async () => {
 						sendSingleOp();
-						await delay(
-							opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
-						);
+						await delay(opsGapMs * config.random.real(1, 1.5));
 				  };
 
 		try {
@@ -657,9 +653,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					submittedSignals++;
 				}
 				// Random jitter of +- 50% of signalGapMs
-				await delay(
-					signalsGapMs + signalsGapMs * random.real(0, 0.5, true)(config.randEng),
-				);
+				await delay(signalsGapMs * config.random.real(1, 1.5));
 			}
 		} catch (e) {
 			console.error("Error during submitting signals: ", e);
