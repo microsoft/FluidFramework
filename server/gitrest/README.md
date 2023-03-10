@@ -1,6 +1,5 @@
 # gitrest
 
-
 Provides a REST API to a GitHub repository. It's API is based off of GitHub's REST APIs.
 
 ## Building and running
@@ -71,11 +70,13 @@ There is a PR out to nodegit. Once they merge it in and publish a new version we
 ## Example REST API usage
 
 Create the repo
+
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"name": "test"}' --verbose localhost:3000/prague/repos
 ```
 
 Create a first commit and update main ref
+
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"content": "Hello, World!", "encoding": "utf-8"}' --verbose localhost:3000/repos/prague/test/git/blobs
 curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"}]}' --verbose localhost:3000/repos/prague/test/git/trees
@@ -87,6 +88,7 @@ curl --verbose http://localhost:3000/repos/prague/test/git/refs
 ```
 
 Submodule example
+
 ```
 curl -H "Content-Type: application/json" -X POST -d '{"content": "[submodule \"module\"]\n\tpath = module\n\turl = ssh://git@localhost:3022/home/git/prague/test", "encoding": "utf-8"}' --verbose localhost:3000/repos/prague/test/git/blobs
 curl -H "Content-Type: application/json" -X POST -d '{"tree": [{"path": ".gitmodules", "mode": "100644", "type": "blob", "sha": "54a2d1738d0c62529ada54d32c5d05e1d1ea0fae"},{"path": "file.txt", "mode": "100644", "type": "blob", "sha": "b45ef6fec89518d314f546fd6c3025367b721684"},{"path": "module", "mode": "160000", "type": "commit", "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}]}' --verbose localhost:3000/repos/prague/test/git/trees
@@ -95,6 +97,7 @@ curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/modules
 ```
 
 Reference deletion and tags
+
 ```
 curl -X DELETE --verbose http://localhost:3000/repos/prague/test/git/refs/heads/main
 curl -H "Content-Type: application/json" -X POST -d '{"ref": "refs/heads/main", "sha": "38421e18f9cf4ec024ae98f687e79c0bdf8f3f18"}' --verbose localhost:3000/repos/prague/test/git/refs
