@@ -19,7 +19,6 @@ export {
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
 	typeSymbol,
-	indexSymbol,
 	isEditableField,
 	isPrimitive,
 	isUnwrappedNode,

@@ -325,7 +325,6 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
-    readonly [indexSymbol]: number;
     readonly [parentField]: {
         readonly parent: EditableField;
         readonly index: number;
@@ -635,9 +634,6 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
-
-// @alpha
-export const indexSymbol: unique symbol;
 
 // @alpha
 interface Insert<TTree = ProtoNode> {

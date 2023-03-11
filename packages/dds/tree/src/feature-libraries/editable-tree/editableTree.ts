@@ -71,13 +71,6 @@ export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarge
 export const typeSymbol: unique symbol = Symbol("editable-tree:type");
 
 /**
- * A symbol to get the index of {@link EditableTree} within its parent field
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const indexSymbol: unique symbol = Symbol("editable-tree:index");
-
-/**
  * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
  * in contexts where string keys are already in use for fields.
  * @alpha
@@ -139,20 +132,10 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	/**
 	 * Value stored on this node.
 	 *
-	 * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
+	 * Set the value using the simple assignment operator (`=`).
 	 * Concurrently setting the value will follow the "last-write-wins" semantics.
 	 */
 	[valueSymbol]: Value;
-
-	/**
-	 * Index of this node within its parent field.
-	 */
-	// TODO: this is a temporary solution.
-	// It should be replaced with a more general location symbol like
-	// `readonly [location]: EditableTreeUpPath`
-	// to cover all the cases, where the code may be lacking information about an origin of the node.
-	// See proposed API: https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
-	readonly [indexSymbol]: number;
 
 	/**
 	 * Stores the target for the proxy which implements reading and writing for this node.
@@ -180,6 +163,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 *
 	 * See `EditableTreeContext.unwrappedRoot` for how to use the simple assignment operator in other cases,
 	 * as it works the same way for all children of the tree starting from its root.
+	 *
+	 * Use with the `delete` operator to delete `optional` or `sequence` fields of this node.
 	 */
 	// TODO: update docs for concurrently deleting the field.
 	[key: FieldKey]: UnwrappedEditableField;
@@ -702,8 +687,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.typeName;
 			case valueSymbol:
 				return target.value;
-			case indexSymbol:
-				return target.currentIndex;
 			case proxyTargetSymbol:
 				return target;
 			case Symbol.iterator:
@@ -787,7 +770,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case proxyTargetSymbol:
 			case typeSymbol:
 			case typeNameSymbol:
-			case indexSymbol:
 			case Symbol.iterator:
 			case getField:
 			case createField:
@@ -846,13 +828,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					configurable: true,
 					enumerable: false,
 					value: target.value,
-					writable: false,
-				};
-			case indexSymbol:
-				return {
-					configurable: true,
-					enumerable: false,
-					value: target.currentIndex,
 					writable: false,
 				};
 			case Symbol.iterator:

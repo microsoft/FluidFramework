@@ -43,7 +43,6 @@ import {
 	isEditableField,
 	UnwrappedEditableTree,
 	getField,
-	indexSymbol,
 	getPrimaryField,
 	namedTreeSchema,
 	ContextuallyTypedNodeData,
@@ -232,16 +231,6 @@ describe("editable-tree: read-only", () => {
 		}
 
 		{
-			const descriptor = Object.getOwnPropertyDescriptor(nameNode, indexSymbol);
-			assert.deepEqual(descriptor, {
-				configurable: true,
-				enumerable: false,
-				value: 0,
-				writable: false,
-			});
-		}
-
-		{
 			const descriptor = Object.getOwnPropertyDescriptor(nameNode, Symbol.iterator);
 			assert(typeof descriptor?.value === "function");
 			delete descriptor.value;
@@ -338,7 +327,6 @@ describe("editable-tree: read-only", () => {
 		assert(proxyTargetSymbol in personProxy);
 		assert(typeSymbol in personProxy);
 		assert(typeNameSymbol in personProxy);
-		assert(indexSymbol in personProxy);
 		assert(getField in personProxy);
 		// Check fields show up:
 		assert("age" in personProxy);

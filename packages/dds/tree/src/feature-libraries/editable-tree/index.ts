@@ -13,7 +13,6 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
-	indexSymbol,
 	getField,
 	createField,
 	replaceField,

@@ -328,7 +328,7 @@ function shallowCompatibilityTest(
 /**
  * Construct a MapTree from ContextuallyTypedNodeData.
  *
- * TODO: this should probably be refactors into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ * TODO: this should probably be refactored into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
  */
 export function applyTypesFromContext(
 	schemaData: SchemaDataAndPolicy,
