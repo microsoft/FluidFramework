@@ -647,6 +647,22 @@ describe("SharedTree", () => {
 	});
 
 	describe("Anchors", () => {
+		function getAnchorFromIndex(tree: ISharedTreeCheckout, index: number): Anchor {
+			const cursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, cursor);
+			cursor.enterNode(1);
+			const anchor = cursor.buildAnchor();
+			cursor.free();
+			return anchor;
+		}
+
+		function cursorFromAnchor(tree: ISharedTreeCheckout, anchor: Anchor) {
+			const cursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, cursor);
+			tree.forest.tryMoveCursorToNode(anchor, cursor);
+			return cursor;
+		}
+
 		it("Anchors can be created and dereferenced", async () => {
 			const provider = await TestTreeProvider.create(1);
 			const tree = provider.trees[0];
@@ -697,11 +713,7 @@ describe("SharedTree", () => {
 				.sequenceField(undefined, rootFieldKeySymbol)
 				.insert(1, singleTextCursor({ type: brand("Node"), value: "baz" }));
 
-			const branchCursor = branch.forest.allocateCursor();
-			moveToDetachedField(branch.forest, branchCursor);
-			branchCursor.enterNode(1);
-			const baz = branchCursor.buildAnchor();
-			branchCursor.free();
+			const bazFromBranch = getAnchorFromIndex(branch, 1);
 
 			// Concurrently add an extra node "foo" at the start of the sequence
 			tree.editor
@@ -711,20 +723,50 @@ describe("SharedTree", () => {
 			// This should pull the insertion of "foo" into the branch, updating the anchor for baz
 			branch.merge();
 
-			const childPath = branch.locate(baz);
-			const expected: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 2,
-			};
-			assert(compareUpPaths(childPath, expected));
+			// Check that the anchor to baz is updated and valid after the merge
+			const bazCursor = cursorFromAnchor(branch, bazFromBranch);
+			assert.equal(bazCursor.value, "baz");
+		});
 
-			const bazInMain = tree.importAnchor(branch, baz);
-			assert(compareUpPaths(tree.locate(bazInMain), expected));
-			const treeCursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, treeCursor);
-			tree.forest.tryMoveCursorToNode(bazInMain, treeCursor);
-			assert.equal(treeCursor.value, "baz");
+		it("Can be imported between branches", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const main = provider.trees[0];
+
+			const initialState: JsonableTree = { type: brand("Node"), value: "bar" };
+			initializeTestTree(main, initialState);
+
+			// On a branch, insert node "baz" and get an anchor to it
+			const branch = main.fork();
+			branch.editor
+				.sequenceField(undefined, rootFieldKeySymbol)
+				.insert(1, singleTextCursor({ type: brand("Node"), value: "baz" }));
+
+			const bazFromBranch = getAnchorFromIndex(branch, 1);
+
+			// Concurrently add an extra node "foo" at the start of the sequence
+			main.editor
+				.sequenceField(undefined, rootFieldKeySymbol)
+				.insert(0, singleTextCursor({ type: brand("Node"), value: "foo" }));
+
+			// Check import from main to branch
+			{
+				const barFromMain = getAnchorFromIndex(main, 1);
+				const barFromMainToBranch = branch.importAnchor(main, barFromMain);
+				const branchCursor = cursorFromAnchor(branch, barFromMainToBranch);
+				assert.equal(branchCursor.value, "bar");
+				branchCursor.free();
+			}
+
+			// This should pull the insertion of "foo" into the branch, updating the anchor for baz
+			branch.merge();
+
+			// Check import from branch to main
+			{
+				const bazFromBranchToMain = main.importAnchor(branch, bazFromBranch);
+				const mainCursor = cursorFromAnchor(main, bazFromBranchToMain);
+				assert.equal(mainCursor.value, "baz");
+				mainCursor.free();
+			}
 		});
 	});
 

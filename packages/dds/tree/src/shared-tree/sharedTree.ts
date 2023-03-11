@@ -22,6 +22,8 @@ import {
 	AnchorNode,
 	IEditableForest,
 	GraphCommit,
+	EditManager,
+	ChangeFamily,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -253,6 +255,7 @@ class SharedTree
 	public fork(): ISharedTreeCheckoutFork {
 		const anchors = new AnchorSet();
 		return new SharedTreeCheckout(
+			this.editManager,
 			this.createBranch(anchors),
 			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
@@ -342,6 +345,10 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	public readonly context: EditableTreeContext;
 
 	public constructor(
+		private readonly editManager: EditManager<
+			DefaultChangeset,
+			ChangeFamily<unknown, DefaultChangeset>
+		>,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
@@ -381,6 +388,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		const storedSchema = this.storedSchema.clone();
 		const anchors = new AnchorSet();
 		return new SharedTreeCheckout(
+			this.editManager,
 			this.branch.fork(anchors),
 			this.changeFamily,
 			storedSchema,
@@ -405,12 +413,30 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 	}
 
 	public importAnchor(sourceBranch: ISharedTreeCheckout, anchor: Anchor): Anchor {
-		const newSet = new AnchorSet();
 		const srcPath = sourceBranch.locate(anchor);
 		// TODO: Support anchor import for dangling anchors.
-		assert(srcPath !== undefined, "Anchor does not work for dangling or unknown anchors");
-		const dstAnchor = newSet.track(srcPath);
-		return dstAnchor;
+		// The problem here is that our only format for exporting anchors between AnchorSet instances
+		// is UpPath. This doesn't work for representing anchors that are unreachable.
+		assert(
+			srcPath !== undefined,
+			"Anchor importing does not work for dangling or unknown anchors",
+		);
+
+		const srcCommit = sourceBranch.headCommit;
+		const dstCommit = this.headCommit;
+		if (srcCommit === dstCommit) {
+			return this.forest.anchors.track(srcPath);
+		}
+		const newSet = new AnchorSet();
+		const tempAnchor = newSet.track(srcPath);
+		this.editManager.rebaseAnchors(newSet, srcCommit, dstCommit);
+		const dstPath = newSet.locate(tempAnchor);
+		// TODO: address at the same time as the assert above.
+		assert(
+			dstPath !== undefined,
+			"Cannot import an anchor that does not refer to a valid node in the destination branch",
+		);
+		return this.forest.anchors.track(dstPath);
 	}
 }
 

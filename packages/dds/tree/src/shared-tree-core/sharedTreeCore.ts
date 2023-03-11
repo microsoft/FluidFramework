@@ -91,7 +91,7 @@ export class SharedTreeCore<
 	TChange,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
-	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+	protected readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
 
 	/**
 	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
