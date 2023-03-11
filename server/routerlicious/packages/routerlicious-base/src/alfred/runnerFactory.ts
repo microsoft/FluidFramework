@@ -395,7 +395,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
 
-		// Token revocation feature
+		// Set up token revocation if enabled
 		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
 		let socketTracker: utils.IWebSocketTracker | undefined;
 		let tokenManager: utils.IJsonWebTokenManager | undefined;

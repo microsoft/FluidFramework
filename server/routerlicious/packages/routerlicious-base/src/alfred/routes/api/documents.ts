@@ -217,7 +217,7 @@ export function create(
 			const tenantId = getParam(request.params, "tenantId");
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received token revocation request.`, lumberjackProperties);
-			// TODO: add implementation here.
+
 			const tokenId = request.body.jti;
 			if (!tokenId || typeof tokenId !== "string") {
 				return handleResponse(

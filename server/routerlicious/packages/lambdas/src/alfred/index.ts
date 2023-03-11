@@ -530,6 +530,7 @@ export function configureWebSocketServices(
 				if (connectionsMap.size > 1) {
 					Lumberjack.info(
 						`Same socket is having multiple connections, connection number=${connectionsMap.size}`,
+						getLumberBaseProperties(connection.documentId, connection.tenantId),
 					);
 				}
 
@@ -575,7 +576,7 @@ export function configureWebSocketServices(
 			// back-compat: remove cast to any once new definition of IConnected comes through.
 			(connectedMessage as any).timestamp = connectedTimestamp;
 
-			// Token revocation
+			// Track socket and tokens for this connection
 			if (socketTracker && claims.jti) {
 				socketTracker.addSocket(
 					createCompositeTokenId(message.tenantId, message.id, claims.jti),
@@ -876,7 +877,7 @@ export function configureWebSocketServices(
 				);
 				socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
 			}
-			// Token revocation
+			// Clear socket tracker upon disconnection
 			if (socketTracker) {
 				socketTracker.removeSocket(socket.id);
 			}
