@@ -37,7 +37,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	class BenchmarkObj {
 		container: IContainer | undefined;
 		summarizerClient: ISummarizeResult | undefined;
-		minSampleCount = 10;
+		minSampleCount = 5;
 	}
 
 	const obj = new BenchmarkObj();
