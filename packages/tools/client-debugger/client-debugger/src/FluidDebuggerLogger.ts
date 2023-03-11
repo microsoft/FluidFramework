@@ -10,12 +10,7 @@ import {
 	ChildLogger,
 	ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils";
-import {
-	debuggerMessageSource,
-	MessageLoggingOptions,
-	postMessageToWindow,
-	TelemetryEventMessage,
-} from "./messaging";
+import { debuggerMessageSource, postMessageToWindow, TelemetryEventMessage } from "./messaging";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).
@@ -87,22 +82,12 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 
 		const newEvent: ITelemetryBaseEvent = this.prepareEvent(event);
 
-		postMessageToWindow<TelemetryEventMessage>(
-			{
-				source: debuggerMessageSource,
-				type: "TELEMETRY_EVENT",
-				data: {
-					contents: newEvent,
-				},
+		postMessageToWindow<TelemetryEventMessage>({
+			source: debuggerMessageSource,
+			type: "TELEMETRY_EVENT",
+			data: {
+				contents: newEvent,
 			},
-			FluidDebuggerLogger.RegistryMessageLoggingOptions,
-		);
+		});
 	}
-
-	/**
-	 * Message logging options used by the logger for messages posted to the console.
-	 */
-	private static readonly RegistryMessageLoggingOptions: MessageLoggingOptions = {
-		context: "DEBUGGER TELEMETRY",
-	};
 }
