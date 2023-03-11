@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { strict as assert } from "assert";
 import {
 	ContainerRuntime,
@@ -204,6 +208,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 				this.props.provider,
 				this._mainContainer,
 				this.dataObjectFactory,
+				summaryVersion,
+				undefined,
+				undefined,
+				this.logger,
 			);
 
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);
