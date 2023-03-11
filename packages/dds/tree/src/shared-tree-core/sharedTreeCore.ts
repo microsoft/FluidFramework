@@ -41,7 +41,7 @@ import {
 	GraphCommit,
 	RepairDataStore,
 } from "../core";
-import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
+import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
@@ -288,17 +288,19 @@ export class SharedTreeCore<
 		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
 	}
 
-	public commitTransaction(): void {
+	public commitTransaction(): TransactionResult.Commit {
 		const { startRevision } = this.transactions.pop();
 		const squashCommit = this.editManager.squashLocalChanges(startRevision);
 		this.submitCommit(squashCommit);
+		return TransactionResult.Commit;
 	}
 
-	public abortTransaction(): void {
+	public abortTransaction(): TransactionResult.Abort {
 		const { startRevision, repairStore } = this.transactions.pop();
 		for (const delta of this.editManager.rollbackLocalChanges(startRevision, repairStore)) {
 			this.indexEventEmitter.emit("newLocalState", delta);
 		}
+		return TransactionResult.Abort;
 	}
 
 	public isTransacting(): boolean {

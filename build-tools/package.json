@@ -16,8 +16,6 @@
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
 		"build:fast": "fluid-build --root .. --buildTools",
-		"build:full": "npm run build:genver && npm run build:full:compile",
-		"build:full:compile": "lerna run build:full:compile --stream",
 		"build:genver": "lerna run build:genver --stream --parallel",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats",
