@@ -29,7 +29,7 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
 		const typeData: TypeData[] = [];
 		for (const s of node.getStatements()) {
 			// only get type data for nodes that are exported from the namespace
-			if (Node.isExportableNode(s) && s.isExported()) {
+			if (Node.isExportable(s) && s.isExported()) {
 				typeData.push(...getNodeTypeData(s, node.getName()));
 			}
 		}
