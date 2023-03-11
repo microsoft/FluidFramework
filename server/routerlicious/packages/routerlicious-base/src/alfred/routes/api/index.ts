@@ -33,7 +33,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentsCollection: ICollection<IDocument>,
-	tokenManager: IJsonWebTokenManager,
+	tokenManager?: IJsonWebTokenManager,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -43,6 +43,7 @@ export function create(
 		appTenants,
 		tenantThrottler,
 		clusterThrottlers,
+		tokenManager,
 	);
 	const documentsRoute = documents.create(
 		storage,
@@ -55,7 +56,14 @@ export function create(
 		documentsCollection,
 		tokenManager,
 	);
-	const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottler);
+	const apiRoute = api.create(
+		config,
+		producer,
+		tenantManager,
+		storage,
+		tenantThrottler,
+		tokenManager
+	);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);

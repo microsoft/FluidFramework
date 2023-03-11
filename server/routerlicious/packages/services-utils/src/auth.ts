@@ -143,12 +143,12 @@ function getTokenFromRequest(request: Request): string {
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
 	config: Provider,
+	tokenManager: IJsonWebTokenManager | undefined,
 	options: IVerifyTokenOptions = {
 		requireDocumentId: true,
 		ensureSingleUseToken: false,
 		singleUseTokenCache: undefined,
 	},
-	tokenManager?: IJsonWebTokenManager,
 ): RequestHandler {
 	return async (request, res, next) => {
 		const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;

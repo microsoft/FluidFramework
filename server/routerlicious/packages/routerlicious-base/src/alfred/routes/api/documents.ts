@@ -39,7 +39,7 @@ export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
 	documentsCollection: ICollection<IDocument>,
-	tokenManager: IJsonWebTokenManager,
+	tokenManager?: IJsonWebTokenManager,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -67,7 +67,7 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		verifyStorageToken(tenantManager, config),
+		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(tenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
@@ -94,7 +94,10 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		verifyStorageToken(tenantManager, config, {
+		verifyStorageToken(tenantManager,
+			config,
+			tokenManager,
+			{
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
@@ -185,7 +188,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		verifyStorageToken(tenantManager, config),
+		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(tenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
@@ -210,7 +213,7 @@ export function create(
 		"/:tenantId/document/:id/revokeToken",
 		validateRequestParams("tenantId", "id"),
 		validateTokenRevocationClaims(),
-		verifyStorageToken(tenantManager, config),
+		verifyStorageToken(tenantManager, config, tokenManager),
 		throttle(tenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");

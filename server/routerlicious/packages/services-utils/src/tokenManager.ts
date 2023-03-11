@@ -55,7 +55,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 			this.tokenIdToSocketIdMap.get(compositeTokenId)?.add(webSocket.id);
 		}
 		else {
-			this.tokenIdToSocketIdMap.set(compositeTokenId, new Set(webSocket.id));
+			this.tokenIdToSocketIdMap.set(compositeTokenId, new Set([webSocket.id]));
 		}
 
 		if (this.socketIdToTokenIdMap.has(webSocket.id)) {
@@ -63,15 +63,13 @@ export class WebSocketTracker implements IWebSocketTracker {
 			this.socketIdToTokenIdMap.get(webSocket.id)?.add(compositeTokenId);
 		}
 		else {
-			this.socketIdToTokenIdMap.set(webSocket.id, new Set(compositeTokenId));
+			this.socketIdToTokenIdMap.set(webSocket.id, new Set([compositeTokenId]));
 		}
 
-		if (!this.socketIdToSocketMap.has(webSocket.id)) {
-			this.socketIdToSocketMap.set(webSocket.id, webSocket);
-		}
-		else {
+		if (this.socketIdToSocketMap.has(webSocket.id)) {
 			console.log(`yunho: trying to add same socket id=${webSocket.id} again`);
 		}
+		this.socketIdToSocketMap.set(webSocket.id, webSocket);
 
 		console.log(`yunho: After call map size: tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 	}
@@ -103,7 +101,13 @@ export class WebSocketTracker implements IWebSocketTracker {
 				if (!this.tokenIdToSocketIdMap.has(tokenId)) {
 					console.log(`yunho: Error, cannot find tokenId=${tokenId} in removeSocket`);
 				}
-				this.tokenIdToSocketIdMap.get(tokenId)?.delete(socketId);
+				const socketIds = this.tokenIdToSocketIdMap.get(tokenId);
+				if (socketIds) {
+					socketIds.delete(socketId);
+					if (socketIds.size <= 0) {
+						this.tokenIdToSocketIdMap.delete(tokenId);
+					}
+				}
 			});
 		}
 		else {
