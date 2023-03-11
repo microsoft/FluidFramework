@@ -60,24 +60,13 @@ export class DocumentMultipleDds implements IDocumentLoader {
 	private _mainContainer: IContainer | undefined;
 	private containerRuntime: ContainerRuntime | undefined;
 	private mainDataStore: TestDataObject | undefined;
-	private readonly dsCounts: number = 1500;
-	private readonly dsCountPerIteration: number = 500;
-	private readonly _dataObjectFactory = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[SharedMap.getFactory(), SharedString.getFactory()],
-		[],
-	);
+	private readonly dsCounts: number;
+	private readonly dsCountPerIteration: number;
+	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
 	}
-	private readonly runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		this.dataObjectFactory,
-		[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
-		undefined,
-		undefined,
-		runtimeOptions,
-	);
+	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
 
 	public get mainContainer() {
 		return this._mainContainer;
@@ -138,6 +127,20 @@ export class DocumentMultipleDds implements IDocumentLoader {
 	 * @param numberOfKeysInMap - Size of the document to be created 1=5Mb, 2=10Mb, etc.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
+		this._dataObjectFactory = new DataObjectFactory(
+			"TestDataObject",
+			TestDataObject,
+			[SharedMap.getFactory(), SharedString.getFactory()],
+			[],
+		);
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+			this.dataObjectFactory,
+			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
+			undefined,
+			undefined,
+			runtimeOptions,
+		);
+
 		switch (this.props.documentType) {
 			case "MediumDocumentMultipleDDSs":
 				this.dsCounts = 1500;
