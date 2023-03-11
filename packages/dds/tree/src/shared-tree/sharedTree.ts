@@ -263,6 +263,8 @@ class SharedTree
 	public importAnchor(sourceBranch: ISharedTreeCheckout, anchor: Anchor): Anchor {
 		const srcPath = sourceBranch.locate(anchor);
 		// TODO: Support anchor import for dangling anchors.
+		// The problem here is that our only format for exporting anchors between AnchorSet instances
+		// is UpPath. This doesn't work for representing anchors that are unreachable.
 		assert(
 			srcPath !== undefined,
 			"Anchor importing does not work for dangling or unknown anchors",
@@ -277,6 +279,7 @@ class SharedTree
 		const tempAnchor = newSet.track(srcPath);
 		this.rebaseAnchors(newSet, srcCommit, dstCommit);
 		const dstPath = newSet.locate(tempAnchor);
+		// TODO: address at the same time as the assert above.
 		assert(
 			dstPath !== undefined,
 			"Cannot import an anchor that does not refer to a valid node in the destination branch",
