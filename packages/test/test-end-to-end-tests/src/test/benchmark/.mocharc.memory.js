@@ -24,6 +24,6 @@ const newConfig = {
 		"dist/test/benchmark/**/*.all.spec.js",
 		"--perfMode",
 	],
-	"timeout": "120000",
+	"timeout": "240000",
 };
 module.exports = newConfig;

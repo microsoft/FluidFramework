@@ -15,6 +15,7 @@ import {
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
 import { DocumentMap } from "./DocumentMap";
+import { DocumentMultipleDds } from "./DocumentMultipleDds";
 
 export interface IDocumentCreatorProps {
 	testName: string;
@@ -36,7 +37,7 @@ export interface IDocumentLoader {
  * Creates a new {@link DocumentMap} using configuration parameters.
  * @param props - Properties for initializing the Document Creator.
  */
-export function createDocument(props: IDocumentCreatorProps) {
+export function createDocument(props: IDocumentCreatorProps): IDocumentLoader {
 	const logger = ChildLogger.create(getTestLogger?.(), undefined, {
 		all: {
 			driverType: props.provider.driver.type,
@@ -52,6 +53,9 @@ export function createDocument(props: IDocumentCreatorProps) {
 		case "MediumDocumentMap":
 		case "LargeDocumentMap":
 			return new DocumentMap(documentProps);
+		case "MediumDocumentMultipleDDSs":
+		case "LargeDocumentMultipleDDSs":
+			return new DocumentMultipleDds(documentProps);
 		default:
 			throw new Error("Invalid document type");
 	}

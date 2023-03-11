@@ -24,7 +24,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
-		});
+		}) as DocumentMap;
 		await documentMap.initializeDocument();
 	});
 

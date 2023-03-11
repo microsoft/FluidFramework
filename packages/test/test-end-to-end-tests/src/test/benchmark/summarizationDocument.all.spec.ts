@@ -33,7 +33,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
-		});
+		}) as DocumentMap;
 		await documentMap.initializeDocument();
 		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
 		const { summarizer: summarizerClient } = await createSummarizer(
