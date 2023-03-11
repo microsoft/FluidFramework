@@ -177,7 +177,11 @@ export function verifyStorageToken(
 				tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 			}
 			if (tokenManager && claims.jti) {
-				const tokenRevoked = await tokenManager.isTokenRevoked(tenantId, documentId, claims.jti);
+				const tokenRevoked = await tokenManager.isTokenRevoked(
+					tenantId,
+					documentId,
+					claims.jti,
+				);
 				if (tokenRevoked) {
 					return respondWithNetworkError(
 						res,

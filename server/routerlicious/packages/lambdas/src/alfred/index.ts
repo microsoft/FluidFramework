@@ -529,7 +529,8 @@ export function configureWebSocketServices(
 				connectionsMap.set(clientId, connection);
 				if (connectionsMap.size > 1) {
 					Lumberjack.info(
-						`Same socket is having multiple connections, connection number=${connectionsMap.size}`);
+						`Same socket is having multiple connections, connection number=${connectionsMap.size}`,
+					);
 				}
 
 				connectDocumentOrdererConnectionMetric.success(

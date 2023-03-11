@@ -199,7 +199,13 @@ const verifyRequest = async (
 	tokenManager?: IJsonWebTokenManager,
 ) =>
 	Promise.all([
-		verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled, tokenManager),
+		verifyToken(
+			request,
+			tenantManager,
+			maxTokenLifetimeSec,
+			isTokenExpiryEnabled,
+			tokenManager,
+		),
 		checkDocumentExistence(request, storage),
 	]);
 

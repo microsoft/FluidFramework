@@ -44,9 +44,9 @@ export class WebSocketTracker implements IWebSocketTracker {
 	// Map of socket id to socket object
 	private readonly socketIdToSocketMap: Map<string, IWebSocket>;
 	// Map of composite token id to socket ids. It assumes one token could be used for multiple sockets
-	private readonly tokenIdToSocketIdMap: Map<string, Set<string> >;
+	private readonly tokenIdToSocketIdMap: Map<string, Set<string>>;
 	// Map of socketId to token ids. It assumes one socket could be used for connections with multiple tokens
-	private readonly socketIdToTokenIdMap: Map<string, Set<string> >;
+	private readonly socketIdToTokenIdMap: Map<string, Set<string>>;
 
 	constructor() {
 		this.socketIdToSocketMap = new Map();
@@ -57,15 +57,13 @@ export class WebSocketTracker implements IWebSocketTracker {
 	public addSocket(compositeTokenId: string, webSocket: IWebSocket) {
 		if (this.tokenIdToSocketIdMap.has(compositeTokenId)) {
 			this.tokenIdToSocketIdMap.get(compositeTokenId)?.add(webSocket.id);
-		}
-		else {
+		} else {
 			this.tokenIdToSocketIdMap.set(compositeTokenId, new Set([webSocket.id]));
 		}
 
 		if (this.socketIdToTokenIdMap.has(webSocket.id)) {
 			this.socketIdToTokenIdMap.get(webSocket.id)?.add(compositeTokenId);
-		}
-		else {
+		} else {
 			this.socketIdToTokenIdMap.set(webSocket.id, new Set([compositeTokenId]));
 		}
 
@@ -79,7 +77,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 			return [];
 		}
 
-		const socketResult: IWebSocket[] = []
+		const socketResult: IWebSocket[] = [];
 		for (const socketId of socketIds) {
 			const socketObj = this.socketIdToSocketMap.get(socketId);
 			if (socketObj) {
@@ -102,8 +100,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 					}
 				}
 			});
-		}
-		else {
+		} else {
 			return false;
 		}
 		this.socketIdToTokenIdMap.delete(socketId);

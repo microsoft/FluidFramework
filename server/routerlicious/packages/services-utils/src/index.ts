@@ -43,4 +43,4 @@ export {
 	WebSocketTracker,
 	createCompositeTokenId,
 	DummyTokenManager,
-} from "./tokenManager"
+} from "./tokenManager";

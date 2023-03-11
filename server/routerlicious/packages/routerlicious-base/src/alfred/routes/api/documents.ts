@@ -94,10 +94,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		verifyStorageToken(tenantManager,
-			config,
-			tokenManager,
-			{
+		verifyStorageToken(tenantManager, config, tokenManager, {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
@@ -224,24 +221,28 @@ export function create(
 			const tokenId = request.body.jti;
 			if (!tokenId || typeof tokenId !== "string") {
 				return handleResponse(
-					Promise.reject(new NetworkError(400, `Missing or invalid jti in request body: ${tokenId}`)),
+					Promise.reject(
+						new NetworkError(400, `Missing or invalid jti in request body.`),
+					),
 					response,
 				);
 			}
 			if (tokenManager) {
 				const resultP = tokenManager.revokeToken(tenantId, documentId, tokenId);
+				return handleResponse(resultP, response);
+			} else {
 				return handleResponse(
-					resultP,
+					Promise.reject(
+						new NetworkError(
+							501,
+							"Token revocation is not supported for now",
+							false,
+							true,
+						),
+					),
 					response,
 				);
 			}
-			else {
-				return handleResponse(
-					Promise.reject(new NetworkError(501, "Token revocation is not supported for now", false, true)),
-					response,
-				);
-			}
-
 		},
 	);
 	return router;

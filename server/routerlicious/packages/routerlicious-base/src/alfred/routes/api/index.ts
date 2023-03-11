@@ -62,7 +62,7 @@ export function create(
 		tenantManager,
 		storage,
 		tenantThrottler,
-		tokenManager
+		tokenManager,
 	);
 
 	router.use(cors());
