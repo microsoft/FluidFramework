@@ -25,7 +25,7 @@ export function getNodeTypeData(node: Node, namespacePrefix?: string): TypeData[
         this will prefix foo and generate two type data:
         foo.first and foo.second
     */
-	if (Node.isNamespaceDeclaration(node)) {
+	if (Node.isModuleDeclaration(node)) {
 		const typeData: TypeData[] = [];
 		for (const s of node.getStatements()) {
 			// only get type data for nodes that are exported from the namespace
