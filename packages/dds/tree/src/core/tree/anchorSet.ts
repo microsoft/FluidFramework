@@ -328,7 +328,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 
 	/**
 	 * Returns an equivalent path making as much of it with PathNodes as possible.
-	 * This allows future operations (like fine, track, locate) on this path (and derived ones) to be faster.
+	 * This allows future operations (like find, track, locate) on this path (and derived ones) to be faster.
 	 * Note that the returned path may use AnchorNodes from this AnchorSet,
 	 * but does not have a tracked reference to them, so this should not be held onto across anything that might free an AnchorNode.
 	 *
