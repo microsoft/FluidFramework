@@ -177,12 +177,12 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 		minSampleCount: 10,
 	},
 	{
-		testTitle: "1500 DDSs",
+		testTitle: "1000 DDSs",
 		documentType: "MediumDocumentMultipleDDSs",
 		minSampleCount: 1,
 	},
 	{
-		testTitle: "2000 DDSs",
+		testTitle: "1500 DDSs",
 		documentType: "LargeDocumentMultipleDDSs",
 		minSampleCount: 1,
 	},
