@@ -1,5 +1,9 @@
 import { strict as assert } from "assert";
-import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -11,7 +15,9 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { IDocumentLoader, IDocumentProps } from "./DocumentCreator";
+import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 class TestDataObject extends DataObject {
 	public get _root() {
@@ -56,33 +62,23 @@ const runtimeOptions: IContainerRuntimeOptions = {
 };
 
 // implement IDocumentLoader methods
-export class DocumentMultipleDds implements IDocumentLoader {
+export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	private _mainContainer: IContainer | undefined;
 	private containerRuntime: ContainerRuntime | undefined;
 	private mainDataStore: TestDataObject | undefined;
-	private readonly dsCounts: number = 1500;
-	private readonly dsCountPerIteration: number = 500;
-	private readonly _dataObjectFactory = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[SharedMap.getFactory(), SharedString.getFactory()],
-		[],
-	);
+	private readonly dsCounts: number;
+	private readonly dsCountPerIteration: number;
+	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
 	}
-	private readonly runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		this.dataObjectFactory,
-		[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
-		undefined,
-		undefined,
-		runtimeOptions,
-	);
+	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
 
-	public get mainContainer() {
+	public get mainContainer(): IContainer | undefined {
 		return this._mainContainer;
 	}
-	public get logger() {
+
+	public get logger(): ITelemetryLogger | undefined {
 		return this.props.logger;
 	}
 
@@ -138,6 +134,20 @@ export class DocumentMultipleDds implements IDocumentLoader {
 	 * @param numberOfKeysInMap - Size of the document to be created 1=5Mb, 2=10Mb, etc.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
+		this._dataObjectFactory = new DataObjectFactory(
+			"TestDataObject",
+			TestDataObject,
+			[SharedMap.getFactory(), SharedString.getFactory()],
+			[],
+		);
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+			this.dataObjectFactory,
+			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
+			undefined,
+			undefined,
+			runtimeOptions,
+		);
+
 		switch (this.props.documentType) {
 			case "MediumDocumentMultipleDDSs":
 				this.dsCounts = 1500;
@@ -161,11 +171,50 @@ export class DocumentMultipleDds implements IDocumentLoader {
 		await this.createDataStores();
 	}
 
+	/**
+	 * The loadDocument in this particular scenario does not need to do anything
+	 * as the goal is to simply measure the summarization data.
+	 * @returns the main container.
+	 */
 	public async loadDocument(): Promise<IContainer> {
 		assert(
 			this._mainContainer !== undefined,
 			"Container should be initialized before loadDocument",
 		);
 		return this._mainContainer;
+	}
+
+	private async waitForSummary(summarizer: ISummarizer): Promise<string> {
+		// Wait for all pending ops to be processed by all clients.
+		await this.props.provider.ensureSynchronized();
+		const summaryResult = await summarizeNow(summarizer);
+		return summaryResult.summaryVersion;
+	}
+
+	public async summarize(
+		summaryVersion?: string,
+		closeContainer: boolean = true,
+	): Promise<ISummarizeResult> {
+		assert(
+			this._mainContainer !== undefined,
+			"Container should be initialized before summarize",
+		);
+		const { container: containerClient, summarizer: summarizerClient } =
+			await createSummarizerFromFactory(
+				this.props.provider,
+				this._mainContainer,
+				this.dataObjectFactory,
+			);
+
+		const newSummaryVersion = await this.waitForSummary(summarizerClient);
+		assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
+		if (closeContainer) {
+			summarizerClient.close();
+		}
+		return {
+			container: containerClient,
+			summarizer: summarizerClient,
+			summaryVersion: newSummaryVersion,
+		};
 	}
 }
