@@ -159,11 +159,11 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 
 		switch (this.props.documentType) {
 			case "MediumDocumentMultipleDDSs":
-				this.dsCounts = 1000;
+				this.dsCounts = 500;
 				this.dsCountPerIteration = 500;
 				break;
 			case "LargeDocumentMultipleDDSs":
-				this.dsCounts = 1500;
+				this.dsCounts = 1000;
 				this.dsCountPerIteration = 500;
 				break;
 			default:
