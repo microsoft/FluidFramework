@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -20,6 +21,7 @@ import {
 	AnchorSet,
 	AnchorNode,
 	IEditableForest,
+	GraphCommit,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -49,6 +51,8 @@ import { TransactionResult } from "../util";
  * @alpha
  */
 export interface ISharedTreeCheckout extends AnchorLocator {
+	get headCommit(): GraphCommit<ModularChangeset>;
+
 	/**
 	 * Gets or sets the root field of the tree.
 	 *
@@ -140,6 +144,8 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 * Any mutations of the new checkout will not apply to this checkout until the new checkout is merged back in.
 	 */
 	fork(): ISharedTreeCheckoutFork;
+
+	importAnchor(sourceBranch: ISharedTreeCheckout, anchor: Anchor): Anchor;
 }
 
 /**
@@ -254,6 +260,30 @@ class SharedTree
 		);
 	}
 
+	public importAnchor(sourceBranch: ISharedTreeCheckout, anchor: Anchor): Anchor {
+		const srcPath = sourceBranch.locate(anchor);
+		// TODO: Support anchor import for dangling anchors.
+		assert(
+			srcPath !== undefined,
+			"Anchor importing does not work for dangling or unknown anchors",
+		);
+
+		const srcCommit = sourceBranch.headCommit;
+		const dstCommit = this.headCommit;
+		if (srcCommit === dstCommit) {
+			return this.forest.anchors.track(srcPath);
+		}
+		const newSet = new AnchorSet();
+		const tempAnchor = newSet.track(srcPath);
+		this.rebaseAnchors(newSet, srcCommit, dstCommit);
+		const dstPath = newSet.locate(tempAnchor);
+		assert(
+			dstPath !== undefined,
+			"Cannot import an anchor that does not refer to a valid node in the destination branch",
+		);
+		return this.forest.anchors.track(dstPath);
+	}
+
 	/**
 	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
 	 * Whatever pattern is adopted should probably also handle multiple versions of changeset operations.
@@ -325,6 +355,10 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		return this.branch.editor;
 	}
 
+	public get headCommit(): GraphCommit<ModularChangeset> {
+		return this.branch.getHead();
+	}
+
 	public readonly transaction: ISharedTreeCheckout["transaction"] = {
 		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
 		commit: () => this.branch.commitTransaction(),
@@ -365,6 +399,15 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 
 	public set root(data: ContextuallyTypedNodeData | undefined) {
 		this.context.unwrappedRoot = data;
+	}
+
+	public importAnchor(sourceBranch: ISharedTreeCheckout, anchor: Anchor): Anchor {
+		const newSet = new AnchorSet();
+		const srcPath = sourceBranch.locate(anchor);
+		// TODO: Support anchor import for dangling anchors.
+		assert(srcPath !== undefined, "Anchor does not work for dangling or unknown anchors");
+		const dstAnchor = newSet.track(srcPath);
+		return dstAnchor;
 	}
 }
 

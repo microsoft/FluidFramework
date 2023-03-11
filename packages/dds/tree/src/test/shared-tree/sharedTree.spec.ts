@@ -30,6 +30,8 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 	EditManager,
+	Anchor,
+	AnchorNode,
 } from "../../core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
 
@@ -695,11 +697,11 @@ describe("SharedTree", () => {
 				.sequenceField(undefined, rootFieldKeySymbol)
 				.insert(1, singleTextCursor({ type: brand("Node"), value: "baz" }));
 
-			const cursor = branch.forest.allocateCursor();
-			moveToDetachedField(branch.forest, cursor);
-			cursor.enterNode(1);
-			const baz = cursor.buildAnchor();
-			cursor.free();
+			const branchCursor = branch.forest.allocateCursor();
+			moveToDetachedField(branch.forest, branchCursor);
+			branchCursor.enterNode(1);
+			const baz = branchCursor.buildAnchor();
+			branchCursor.free();
 
 			// Concurrently add an extra node "foo" at the start of the sequence
 			tree.editor
@@ -716,6 +718,13 @@ describe("SharedTree", () => {
 				parentIndex: 2,
 			};
 			assert(compareUpPaths(childPath, expected));
+
+			const bazInMain = tree.importAnchor(branch, baz);
+			assert(compareUpPaths(tree.locate(bazInMain), expected));
+			const treeCursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, treeCursor);
+			tree.forest.tryMoveCursorToNode(bazInMain, treeCursor);
+			assert.equal(treeCursor.value, "baz");
 		});
 	});
 

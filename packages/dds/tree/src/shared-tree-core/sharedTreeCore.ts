@@ -172,6 +172,10 @@ export class SharedTreeCore<
 		this.editor = this.changeFamily.buildEditor((change) => this.applyChange(change), anchors);
 	}
 
+	public get headCommit(): GraphCommit<TChange> {
+		return this.editManager.getLocalBranchHead();
+	}
+
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
 	// We might want to not subclass it, or override/reimplement most of its functionality.
 	protected summarizeCore(
@@ -243,14 +247,13 @@ export class SharedTreeCore<
 	 * Update the state of the tree (including all indexes) according to the given change.
 	 * If there is not currently a transaction open, the change will be submitted to Fluid.
 	 */
-	protected applyChange(change: TChange): void {
-		const revision = mintRevisionTag();
+	protected applyChange(change: TChange, revision?: RevisionTag): void {
 		const commit = {
 			change,
-			revision,
+			revision: revision ?? mintRevisionTag(),
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(revision, change, false);
+		const delta = this.editManager.addLocalChange(commit.revision, change, false);
 		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
@@ -326,8 +329,8 @@ export class SharedTreeCore<
 					ancestor === localBranchHead,
 					0x598 /* Expected merging checkout branches to be related */,
 				);
-				for (const { change } of changes) {
-					this.applyChange(change);
+				for (const { change, revision } of changes) {
+					this.applyChange(change, revision); // Why not pass in the revision tag here so that the parent branch has the same tag?
 					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				}
 				return changeToForked;
@@ -338,6 +341,14 @@ export class SharedTreeCore<
 			anchors,
 		);
 		return branch;
+	}
+
+	protected rebaseAnchors(
+		anchors: AnchorSet,
+		from: GraphCommit<TChange>,
+		to: GraphCommit<TChange>,
+	) {
+		this.editManager.rebaseAnchors(anchors, from, to);
 	}
 
 	protected onDisconnect() {}

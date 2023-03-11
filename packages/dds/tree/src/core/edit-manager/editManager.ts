@@ -29,6 +29,7 @@ import {
 	assertIsRevisionTag,
 	mintRevisionTag,
 	tagChange,
+	makeAnonChange,
 } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 
@@ -351,6 +352,29 @@ export class EditManager<
 			);
 			yield this.changeFamily.intoDelta(inverse);
 		}
+	}
+
+	public rebaseAnchors(
+		anchors: AnchorSet,
+		from: GraphCommit<TChangeset>,
+		to: GraphCommit<TChangeset>,
+	) {
+		// Get both source and target as path arrays
+		const sourcePath: GraphCommit<TChangeset>[] = [];
+		const targetPath: GraphCommit<TChangeset>[] = [];
+		const ancestor = findCommonAncestor([from, sourcePath], [to, targetPath]);
+		assert(ancestor !== undefined, "branch A and branch B must be related");
+		const srcChanges = this.changeFamily.rebaser.compose(sourcePath);
+		const inverseSrcChanges = this.changeFamily.rebaser.invert(
+			makeAnonChange(srcChanges),
+			false,
+		);
+		const netChanges = this.changeFamily.rebaser.compose([
+			makeAnonChange(inverseSrcChanges),
+			...targetPath,
+		]);
+		const delta = this.changeFamily.intoDelta(netChanges);
+		anchors.applyDelta(delta);
 	}
 
 	private findLocalCommit(
