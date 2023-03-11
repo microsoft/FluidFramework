@@ -14,6 +14,7 @@ import {
 	benchmarkMemory,
 	IMemoryTestObject,
 } from "@fluid-tools/benchmark";
+import { ISummarizer } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap";
 import { DocumentMultipleDds } from "./DocumentMultipleDds";
 
@@ -28,16 +29,27 @@ export interface IDocumentProps extends IDocumentCreatorProps {
 	logger: ITelemetryLogger | undefined;
 }
 
+export interface ISummarizeResult {
+	container: IContainer;
+	summarizer: ISummarizer;
+	summaryVersion: string;
+}
+
 export interface IDocumentLoader {
+	mainContainer: IContainer | undefined;
+	logger: ITelemetryLogger | undefined;
 	initializeDocument(): Promise<void>;
 	loadDocument(): Promise<IContainer>;
+}
+export interface IDocumentLoaderAndSummarizer extends IDocumentLoader {
+	summarize(summaryVersion?: string): Promise<ISummarizeResult>;
 }
 
 /**
  * Creates a new {@link DocumentMap} using configuration parameters.
  * @param props - Properties for initializing the Document Creator.
  */
-export function createDocument(props: IDocumentCreatorProps): IDocumentLoader {
+export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAndSummarizer {
 	const logger = ChildLogger.create(getTestLogger?.(), undefined, {
 		all: {
 			driverType: props.provider.driver.type,

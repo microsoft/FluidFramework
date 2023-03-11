@@ -172,6 +172,14 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 		testTitle: "5Mb Map",
 		documentType: "MediumDocumentMap",
 	},
+	{
+		testTitle: "1500 DDSs",
+		documentType: "MediumDocumentMultipleDDSs",
+	},
+	{
+		testTitle: "2000 DDSs",
+		documentType: "LargeDocumentMultipleDDSs",
+	},
 ];
 
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe(E2EDefaultDocumentTypes);
