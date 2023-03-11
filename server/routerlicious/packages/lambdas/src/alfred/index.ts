@@ -233,7 +233,6 @@ export function configureWebSocketServices(
 	socketTracker?: IWebSocketTracker,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
-		console.log(`yunho: on socket connection, socketId=${socket.id}`);
 		// Map from client IDs on this connection to the object ID and user info.
 		const connectionsMap = new Map<string, core.IOrdererConnection>();
 		// Map from client IDs to room.
@@ -264,13 +263,11 @@ export function configureWebSocketServices(
 		function setExpirationTimer(mSecUntilExpiration: number) {
 			clearExpirationTimer();
 			expirationTimer = setTimeout(() => {
-				console.log(`yunho: socket expire timer, socketId=${socket.id}`);
 				socket.disconnect(true);
 			}, mSecUntilExpiration);
 		}
 
 		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-			console.log(`yunho: on connectDocument, socketId=${socket.id}`);
 			const throttleErrorPerCluster = checkThrottleAndUsage(
 				connectThrottlerPerCluster,
 				getSocketConnectThrottleId("connectDoc"),
@@ -513,7 +510,6 @@ export function configureWebSocketServices(
 						error,
 					);
 					clearExpirationTimer();
-					console.log(`yunho: on connectDocument error, socketId=${socket.id}`);
 					socket.disconnect(true);
 				});
 
@@ -832,7 +828,6 @@ export function configureWebSocketServices(
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("disconnect", async () => {
-			console.log(`yunho: on disconnect, socketId=${socket.id}`);
 			clearExpirationTimer();
 			const removeAndStoreP: Promise<void>[] = [];
 			// Send notification messages for all client IDs in the connection map

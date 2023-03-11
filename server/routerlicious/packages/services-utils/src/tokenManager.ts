@@ -6,7 +6,10 @@ import { NetworkError } from "@fluidframework/server-services-client";
 import { IWebSocket } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-// Track
+/**
+ * Interface of web socket tracker
+ * it tracks the mapping of web socket and token used to establish the socket connection
+ */
 export interface IWebSocketTracker {
 	// Add a socket to internal map
 	addSocket(compositeTokenId: string, webSocket: IWebSocket);
@@ -14,11 +17,15 @@ export interface IWebSocketTracker {
 	// Get socket objects from internal map
 	getSockets(compositeTokenId: string): IWebSocket[];
 
-	// Remove docket from tracking
+	// Remove socket from tracking
 	// Return true if socket is removed, false if socket is not found
 	removeSocket(socketId: string): boolean;
 }
 
+/**
+ * Interface of Json Web Token(JWT) manager
+ * It is mainly used to manage token revocation
+ */
 export interface IJsonWebTokenManager {
 	initialize(): Promise<void>;
 
@@ -36,7 +43,7 @@ export interface IJsonWebTokenManager {
 export class WebSocketTracker implements IWebSocketTracker {
 	// Map of socket id to socket object
 	private readonly socketIdToSocketMap: Map<string, IWebSocket>;
-	// Map of composite token id to socket ids. It assumes one token could be used by multiple sockets
+	// Map of composite token id to socket ids. It assumes one token could be used for multiple sockets
 	private readonly tokenIdToSocketIdMap: Map<string, Set<string> >;
 	// Map of socketId to token ids. It assumes one socket could be used for connections with multiple tokens
 	private readonly socketIdToTokenIdMap: Map<string, Set<string> >;
@@ -48,10 +55,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public addSocket(compositeTokenId: string, webSocket: IWebSocket) {
-		console.log(`yunho: adding token=${compositeTokenId} mapping to socket=${webSocket.id}`);
-		console.log(`yunho: Before call map size: tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 		if (this.tokenIdToSocketIdMap.has(compositeTokenId)) {
-			console.log(`yunho: Same tokenId=${compositeTokenId} used for multiple sockets`);
 			this.tokenIdToSocketIdMap.get(compositeTokenId)?.add(webSocket.id);
 		}
 		else {
@@ -59,19 +63,13 @@ export class WebSocketTracker implements IWebSocketTracker {
 		}
 
 		if (this.socketIdToTokenIdMap.has(webSocket.id)) {
-			console.log(`yunho: Same socketId=${webSocket.id} used for multiple tokens`);
 			this.socketIdToTokenIdMap.get(webSocket.id)?.add(compositeTokenId);
 		}
 		else {
 			this.socketIdToTokenIdMap.set(webSocket.id, new Set([compositeTokenId]));
 		}
 
-		if (this.socketIdToSocketMap.has(webSocket.id)) {
-			console.log(`yunho: trying to add same socket id=${webSocket.id} again`);
-		}
 		this.socketIdToSocketMap.set(webSocket.id, webSocket);
-
-		console.log(`yunho: After call map size: tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 	}
 
 	public getSockets(compositeTokenId: string): IWebSocket[] {
@@ -92,15 +90,10 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public removeSocket(socketId: string) {
-		console.log(`yunho: Remove socket id: ${socketId}`);
-		console.log(`yunho: Before call map size: socketMapSize=${this.socketIdToSocketMap.size}, tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
 		const tokenIds = this.socketIdToTokenIdMap.get(socketId);
 
 		if (tokenIds) {
 			tokenIds.forEach((tokenId: string) => {
-				if (!this.tokenIdToSocketIdMap.has(tokenId)) {
-					console.log(`yunho: Error, cannot find tokenId=${tokenId} in removeSocket`);
-				}
 				const socketIds = this.tokenIdToSocketIdMap.get(tokenId);
 				if (socketIds) {
 					socketIds.delete(socketId);
@@ -114,9 +107,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 			return false;
 		}
 		this.socketIdToTokenIdMap.delete(socketId);
-		const deleted = this.socketIdToSocketMap.delete(socketId);
-		console.log(`yunho: After call map size: tokenIdMapSize=${this.tokenIdToSocketIdMap.size}, socketIdMapSize=${this.socketIdToTokenIdMap.size}`);
-		return deleted;
+		return this.socketIdToSocketMap.delete(socketId);
 	}
 }
 
