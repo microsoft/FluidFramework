@@ -105,6 +105,8 @@ export function areEqualAttributionKeys(a: AttributionKey, b: AttributionKey): b
 			return a.seq === (b as OpAttributionKey).seq;
 		case "detached":
 			return a.id === (b as DetachedAttributionKey).id;
+		case "local":
+			return true;
 		default:
 			unreachableCase(a, "Unhandled AttributionKey type");
 	}

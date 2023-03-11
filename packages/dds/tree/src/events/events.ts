@@ -226,7 +226,7 @@ class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implem
 		super(noListeners);
 	}
 
-	public emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
+	public override emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
 		return super.emit(eventName, ...args);
 	}
 }

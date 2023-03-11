@@ -378,7 +378,7 @@ export class AnchorSet {
 			const offset = dst.parentIndex - srcStart!.parentIndex;
 			for (const moved of toMove) {
 				moved.parentIndex += offset;
-				moved.parentPath = dstPath;
+				moved.parentPath = dstPath ?? this.root;
 				moved.parentField = dst.parentField;
 			}
 		} else {
@@ -583,14 +583,14 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 		return this.events.on(eventName, listener);
 	}
 
-	child(key: FieldKey, index: number): UpPath<AnchorNode> {
+	public child(key: FieldKey, index: number): UpPath<AnchorNode> {
 		// Fast path: if child exists, return it.
 		return (
 			this.tryGetChild(key, index) ?? { parent: this, parentField: key, parentIndex: index }
 		);
 	}
 
-	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
+	public getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
 		const anchor = this.anchorSet.track(this.child(key, index));
 		const node =
 			this.anchorSet.locate(anchor) ?? fail("cannot reference child that does not exist");

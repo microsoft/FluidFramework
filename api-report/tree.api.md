@@ -114,7 +114,7 @@ export interface ChangeFamily<TEditor, TChange> {
 export interface ChangeRebaser<TChangeset> {
     compose(changes: TaggedChange<TChangeset>[]): TChangeset;
     // (undocumented)
-    invert(changes: TaggedChange<TChangeset>, repairStore?: ReadonlyRepairDataStore): TChangeset;
+    invert(changes: TaggedChange<TChangeset>, isRollback: boolean, repairStore?: ReadonlyRepairDataStore): TChangeset;
     rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
     // (undocumented)
     rebaseAnchors(anchors: AnchorSet, over: TChangeset): void;
@@ -230,7 +230,6 @@ declare namespace Delta {
         MoveOut,
         ModifyAndMoveOut,
         MoveIn,
-        MoveInAndModify,
         Insert,
         InsertAndModify,
         MoveId,
@@ -374,13 +373,13 @@ export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
 // @alpha (undocumented)
 export interface FieldChangeRebaser<TChangeset> {
-    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
+    amendCompose(composedChange: TChangeset, composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     amendInvert(invertedChange: TChangeset, originalRevision: RevisionTag | undefined, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
-    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
+    amendRebase(rebasedChange: TChangeset, over: TaggedChange<TChangeset>, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
+    compose(changes: TaggedChange<TChangeset>[], composeChild: NodeChangeComposer, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
     // (undocumented)
     invert(change: TaggedChange<TChangeset>, invertChild: NodeChangeInverter, reviver: NodeReviver, genId: IdAllocator, crossFieldManager: CrossFieldManager): TChangeset;
-    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionIndexer: RevisionIndexer): TChangeset;
+    rebase(change: TChangeset, over: TaggedChange<TChangeset>, rebaseChild: NodeChangeRebaser, genId: IdAllocator, crossFieldManager: CrossFieldManager, revisionMetadata: RevisionMetadataSource): TChangeset;
 }
 
 // @alpha (undocumented)
@@ -615,12 +614,18 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {
 // @alpha
 export interface ISharedTreeCheckout extends AnchorLocator {
     readonly context: EditableTreeContext;
+    readonly editor: IDefaultEditBuilder;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeCheckoutFork;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
-    runTransaction(transaction: (forest: IForestSubscription, editor: IDefaultEditBuilder) => TransactionResult): TransactionResult;
     readonly storedSchema: StoredSchemaRepository;
+    readonly transaction: {
+        start(): void;
+        commit(): TransactionResult.Commit;
+        abort(): TransactionResult.Abort;
+        inProgress(): boolean;
+    };
 }
 
 // @alpha
@@ -753,7 +758,7 @@ export interface MakeNominal {
 }
 
 // @alpha
-type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | MoveInAndModify<TTree> | InsertAndModify<TTree>;
+type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | InsertAndModify<TTree>;
 
 // @alpha
 export interface MarkedArrayLike<T> extends ArrayLike<T> {
@@ -773,11 +778,10 @@ const MarkType: {
     readonly Insert: 1;
     readonly InsertAndModify: 2;
     readonly MoveIn: 3;
-    readonly MoveInAndModify: 4;
-    readonly Delete: 5;
-    readonly ModifyAndDelete: 6;
-    readonly MoveOut: 7;
-    readonly ModifyAndMoveOut: 8;
+    readonly Delete: 4;
+    readonly ModifyAndDelete: 5;
+    readonly MoveOut: 6;
+    readonly ModifyAndMoveOut: 7;
 };
 
 // @alpha
@@ -823,7 +827,7 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
     // (undocumented)
     intoDelta(change: ModularChangeset): Delta.Root;
     // (undocumented)
-    invert(change: TaggedChange<ModularChangeset>, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
+    invert(change: TaggedChange<ModularChangeset>, isRollback: boolean, repairStore?: ReadonlyRepairDataStore): ModularChangeset;
     // (undocumented)
     rebase(change: ModularChangeset, over: TaggedChange<ModularChangeset>): ModularChangeset;
     // (undocumented)
@@ -863,15 +867,6 @@ interface MoveIn {
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveIn;
-}
-
-// @alpha
-interface MoveInAndModify<TTree = ProtoNode> {
-    // (undocumented)
-    readonly fields: FieldMarks<TTree>;
-    readonly moveId: MoveId;
-    // (undocumented)
-    readonly type: typeof MarkType.MoveInAndModify;
 }
 
 // @alpha
@@ -1035,8 +1030,17 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 
 // @alpha (undocumented)
 export interface RevisionInfo {
+    readonly isRollback?: boolean;
     // (undocumented)
     readonly tag: RevisionTag;
+}
+
+// @alpha (undocumented)
+export interface RevisionMetadataSource {
+    // (undocumented)
+    readonly getIndex: RevisionIndexer;
+    // (undocumented)
+    readonly getInfo: (tag: RevisionTag) => RevisionInfo;
 }
 
 // Warning: (ae-incompatible-release-tags) The symbol "RevisionTag" is marked as @alpha, but its signature references "StableId" which is marked as @internal
@@ -1061,6 +1065,9 @@ export const rootFieldKey: GlobalFieldKey;
 
 // @alpha (undocumented)
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
+export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void): TransactionResult;
 
 // @alpha
 export interface SchemaData {
@@ -1153,7 +1160,7 @@ export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol;
 export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
-    readonly isInverse?: boolean;
+    readonly isRollback?: boolean;
     // (undocumented)
     readonly revision: RevisionTag | undefined;
 }
@@ -1161,12 +1168,10 @@ export interface TaggedChange<TChangeset> {
 // @alpha
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
 
-// @alpha (undocumented)
+// @alpha
 export enum TransactionResult {
-    // (undocumented)
     Abort = 0,
-    // (undocumented)
-    Apply = 1
+    Commit = 1
 }
 
 // @alpha (undocumented)
