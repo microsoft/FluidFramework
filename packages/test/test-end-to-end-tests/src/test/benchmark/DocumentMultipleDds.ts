@@ -208,6 +208,10 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 				this.props.provider,
 				this._mainContainer,
 				this.dataObjectFactory,
+				summaryVersion,
+				undefined,
+				undefined,
+				this.logger,
 			);
 
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);
