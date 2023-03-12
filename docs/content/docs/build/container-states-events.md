@@ -79,7 +79,7 @@ A container can never transition back to an unpublished state, but it can transi
 
 #### Deleted from the service
 
-A container transitions to **deleted** state when it is deleted. See [Deleting a container from the service](#deleting-a-container-from-the-service) for more information.
+A container transitions to **deleted** state when it is deleted. 
 Any connected clients become disconnected (although they may have been already disconnected before the deletion; see [Deleting a container from the service](#deleting-a-container-from-the-service)), but the container is not disposed on the clients. 
 Clients could continue to edit the container's data, but the data isn't shared anymore. Each client's changes are known only to it. 
 
@@ -101,13 +101,13 @@ This can be useful if your application will publish the container in some code p
 For example, in complex cases, you may need to determine whether the container has already been published before you call `container.attach`. The following is a simple example.
 
 ```typescript
-if (!container.attachState !== AttachState.Attached) {
+if (container.attachState !== AttachState.Attached) {
     container.attach();
 }
 ```
 
 How you handle the **publishing** (`AttachState.Attaching`) state depends on the situation. If you want to prevent `container.attach` from being called when it has already been called, then treat publishing (`Attaching`) the same as published (`Attached`). 
-On the other hand, if you want to block editing when until the container is fully attached, treat publishing (`Attaching`) the same as unpublished (`Detached`).
+On the other hand, if you want to block editing when until the container is fully published, treat publishing (`Attaching`) the same as unpublished (`Detached`).
 
 ### Synchronization status states
 
@@ -115,6 +115,12 @@ Synchronization status refers to whether the container's data on the client is s
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
 ![A state diagram of the two possible Synchronization states](./images/SynchronizationStates.png)
+
+{{< callout note >}}
+
+The dotted arrow represents a boolean guard condition. It means that the container cannot transition out of the **dirty** state unless the container is published and connected.
+
+{{< /callout >}}
 
 - **dirty**: A container is in **dirty** state on a client in two situations:
 
@@ -179,13 +185,23 @@ Connection status refers to whether the container is connected to the Fluid serv
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
 ![A state diagram of the four possible Connection states](./images/ConnectionStates.png)
 
-#### Connected
+#### Disconnected
 
-A container is **connected** when there is an open web socket connection between the client and the Fluid service. 
-In the **connected** state, changes to the container's data on the client are sent to the service which relays them to all other connected clients. 
+A container is **disconnected** if it is not in any of the other three Connection states. A container is, or becomes, disconnected in any of the following circumstances:
 
-The container transitions to this state automatically when it is not receiving relayed data from the Fluid service. 
-When new data is sent, the container automatically transitions to the **catching up** state and then transitions back to **connected** when the catching up is complete.
+- On the creating client, it has been created but not yet published.
+- A network problem breaks the web socket connection between the client and the Fluid service. When this happens, the Fluid runtime on the client automatically tries to reconnect, but eventually it will give up. After that, connection can only be reestablished by calling `container.connect`.
+- Your code calls the `container.disconnect` method.
+
+{{< callout important >}}
+
+Disconnection does not automatically block users from editing the shared data objects. 
+Changes they make are stored locally and will be sent to the Fluid service when connection is reestablished. 
+But these changes are *not* being synchronized with other clients while the current client is disconnected, and your application's user may not be aware of that. 
+So, you usually want to block editing if a disconnection continues for some time. 
+For more information, see [Managing connection and disconnection](#managing-connection-and-disconnection).
+
+{{< /callout >}}
 
 #### Establishing connection
 
@@ -194,7 +210,7 @@ A container moves into the **establishing connection** state in any of the follo
 
 - On the creating client, your code calls the `container.attach` method. For more information, see [Publishing a container](./containers.md#publishing-a-container). This method publishes the container *and* connects the client to the service.
 - Your code calls the client's `getContainer` method on a client that has not previously been connected. For more information, see [Connecting to a container](./containers.md#connecting-to-a-container).
-- The Fluid client runtime is able to reconnect following a disconnection caused by a network problem.
+- The Fluid client runtime tries to reconnect following a disconnection caused by a network problem.
 - Your code calls the `container.connect` method on a client that had become disconnected. 
 
 This process is normally very brief. When it completes, the container automatically transitions to the **catching up** state while changes made on other clients are relayed to the current client. 
@@ -208,23 +224,13 @@ Changes made locally are not uploaded to the service until catching up is comple
 This state is normally very brief and the Fluid client then automatically moves to the **connected** state. 
 When the Fluid service resumes relaying data, the container automatically transitions back to the **catching up** state.
 
-#### Disconnected
+#### Connected
 
-A container is **disconnected** if it is not in any of the other three Connection states. A container is, or becomes, disconnected in any of the following circumstances:
+A container is **connected** when there is an open, two-way web socket connection between the client and the Fluid service. 
+In the **connected** state, changes to the container's data on the client are sent to the service which relays them to all other connected clients. 
 
-- On the creating client, it has been created but not yet published.
-- A network problem breaks the web socket connection. When this happens, thee Fluid runtime on the client automatically tries to reconnect, but eventually it will give up. After that, connection can only be reestablished by calling `container.connect`.
-- Your code calls the `container.disconnect` method.
-
-{{< callout important >}}
-
-Disconnection does not automatically block users from editing the shared data objects. 
-Changes they make are stored locally and will be sent to the Fluid service when connection is reestablished. 
-But these changes are *not* being synchronized with other clients while the current client is disconnected, and your application's user may not be aware of that. 
-So, you usually want to block editing if a disconnection continues for some time. 
-For more information, see [Managing connection and disconnection](#managing-connection-and-disconnection).
-
-{{< /callout >}}
+The container transitions to this state automatically when it is not receiving relayed data from the Fluid service. 
+When new data is sent from the service, the container automatically transitions to the **catching up** state and then transitions back to **connected** when the catching up is complete.
 
 #### Managing connection and disconnection
 
@@ -238,11 +244,11 @@ There are scenarios in which you need to control the connection status of the co
     - `Connected` 
     
 - A *disconnected* event, that fires if a network problem causes a disconnection or if the `container.disconnect` method is called.
-- A *connected* event, that fires if the Fluid client runtime is able to reconnect or if the `container.connect` method is called.
+- A *connected* event, that fires if the Fluid client runtime is able to reconnect (and any needed catching up is complete) or if the `container.connect` method is called.
 
 ##### Examples
 
-Disable the editing UI in your application when the container is disconnected, and then reenable it when a connection is restored, as shown in the following code:
+Your code can disable the editing UI in your application when the container is disconnected, and then reenable it when a connection is restored, as shown in the following example:
 
 ```typescript
 container.on("disconnected", () => {
@@ -254,7 +260,7 @@ container.on("connected", () => {
 });
 ```
 
-Reduce unnecessary network traffic by disconnecting when a user is idle. The following code assumes that there is a `user` object that emits *idle* and *active* events. 
+Your code can reduce unnecessary network traffic by disconnecting when a user is idle. The following example assumes that there is a `user` object that emits *idle* and *active* events. 
 
 ```typescript
 user.on("idle", () => {
@@ -277,10 +283,10 @@ Local Readiness is a *client-relative state*: the container may have a different
 
 #### Ready
 
-In this state, changes to the shared data objects can be made locally. They are shared with the Fluid service when, and only when, the client is in **published** and **connected** status. 
+In this state, changes to the shared data objects can be made locally. They are shared with the Fluid service when, and only when, the container is in **published** and **connected** status. 
 
 A container is automatically in **ready** state as soon as it is created and it remains in this state unless it is disposed. 
-A disposed container transitions back to **ready** if it's ID is passed to a call of `client.getContainer`.
+A disposed container transitions back to **ready** if its ID is passed to a call of `client.getContainer`.
 
 #### Disposed
 
@@ -295,6 +301,17 @@ container.on("disposed", () => {
 ```
 
 It is a good practice to make sure all pending changes are saved prior to calling `dispose`.
+The following shows how to ensure that the disposal doesn't happen until the container is **saved**.
+
+```typescript
+function disposeWhenSafe {
+    if (container.isDirty) {
+        container.once("saved", () => {
+            container.dispose();
+        });
+    }
+}
+```
 
 After it is disposed, some properties of the `container` object can be read, but the data objects in the container can no longer be changed either locally of from data relayed by the Fluid service.
 

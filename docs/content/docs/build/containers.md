@@ -10,7 +10,7 @@ It enables a group of clients to access the same set of shared objects and co-au
 It is also a permission boundary ensuring visibility and access only to permitted clients.
 A container is represented by the [FluidContainer]({{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}) type and consists of a collection of shared objects and APIs to manage the life cycle of those objects.
 
-This article will explain:
+This article explains:
 
 - Creation, publication, and connection to containers.
 - Patterns for handling container lifecycle.
