@@ -50,7 +50,7 @@ Publication status refers to whether or not the container has been *initially* s
 Think of it as a mainly *service-relative* state because it is primarily about the container's state in the Fluid service and secondarily about its state on the creating client. The following diagram shows the possible publication states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the four possible publication states](/images/PublicationStates.png)
+![A state diagram of the four possible publication states](./images/PublicationStates.png)
 
 #### Unpublished
 
@@ -115,7 +115,7 @@ On the other hand, if you want to block editing when until the container is full
 Synchronization status refers to whether the container's data on the client is saved to the Fluid service. It is a *client-relative state*: the container may have a different synchronization state on different clients. The following diagram shows the possible Synchronization states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the two possible Synchronization states](/images/SynchronizationStates.png)
+![A state diagram of the two possible Synchronization states](./images/SynchronizationStates.png)
 
 - **dirty**: A container is in **dirty** state on a client in two situations:
 
@@ -178,7 +178,7 @@ See [Dispose](#dispose) for more about disposing the container object.
 Connection status refers to whether the container is connected to the Fluid service. It is a *client-relative state*: the container may have a different connection state on different clients. The following diagram shows the possible Connection states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the four possible Connection states](/images/ConnectionStates.png)
+![A state diagram of the four possible Connection states](./images/ConnectionStates.png)
 
 #### Connected
 
@@ -274,7 +274,7 @@ user.on("active", () => {
 Local Readiness is a *client-relative state*: the container may have a different Local Readiness state on different clients. The following diagram shows the possible Local Readiness states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the two possible Local Readiness states](/images/LocalReadinessStates.png)
+![A state diagram of the two possible Local Readiness states](./images/LocalReadinessStates.png)
 
 #### Ready
 
