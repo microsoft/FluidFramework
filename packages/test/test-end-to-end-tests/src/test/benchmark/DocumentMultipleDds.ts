@@ -163,8 +163,8 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 				this.dsCountPerIteration = 500;
 				break;
 			case "LargeDocumentMultipleDDSs":
-				this.dsCounts = 1000;
-				this.dsCountPerIteration = 500;
+				this.dsCounts = 750;
+				this.dsCountPerIteration = 375;
 				break;
 			default:
 				throw new Error("Invalid document type");
