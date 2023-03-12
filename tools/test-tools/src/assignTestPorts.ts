@@ -3,39 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import * as child_process from "child_process";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
+import child_process from "child_process";
+import fs from "fs";
+import os from "os";
+import path from "path";
 
-function main() {
-    // Get the lerna output
-    let lernaOutput;
-    try {
-        lernaOutput = JSON.parse(child_process.execSync("npx lerna list --all --json").toString());
-        if (!Array.isArray(lernaOutput)) {
-            // eslint-disable-next-line unicorn/prefer-type-error
-            throw new Error("stdin input was not package array");
-        }
-    } catch (e) {
-        console.error(e);
-        process.exit(-1);
-    }
+export interface LernaOutput {
+	name: string;
+	version: string;
+	private: string;
+	location: string;
+}
 
-    // Assign a unique port to each package
-    const portMap: { [pkgName: string]: number; } = {};
-    let port = 8081;
-    lernaOutput.forEach((pkg: { name: string; }) => {
-        if (pkg.name === undefined) {
-            console.error("missing name in lerna package entry");
-            process.exit(-1);
-        }
-        portMap[pkg.name] = port++;
-    });
+/**
+ * Gets and parses a LernaOutput from child process
+ * @param input - child prcess buffer
+ */
+export function getLernaOutput(): LernaOutput[] {
+	try {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const lernaOutput: LernaOutput[] = JSON.parse(
+			child_process.execSync("npx lerna list --all --json").toString(),
+		);
+		if (!Array.isArray(lernaOutput)) {
+			// eslint-disable-next-line unicorn/prefer-type-error
+			throw new Error("stdin input was not package array");
+		}
+		return lernaOutput;
+	} catch (error) {
+		console.error(error);
+		process.exit(-1);
+	}
+}
 
-    // Write the mappings to a temporary file as kv pairs
-    const portMapPath = path.join(os.tmpdir(), "testportmap.json");
-    fs.writeFileSync(portMapPath, JSON.stringify(portMap));
+function main(): void {
+	// Get the lerna output
+	const lernaOutput: LernaOutput[] = getLernaOutput();
+
+	// Assign a unique port to each package
+	const portMap: { [pkgName: string]: number } = {};
+	let port = 8081;
+	for (const pkg of lernaOutput) {
+		if (pkg.name === undefined) {
+			console.error("missing name in lerna package entry");
+			process.exit(-1);
+		}
+		portMap[pkg.name] = port++;
+	}
+
+	// Write the mappings to a temporary file as kv pairs
+	const portMapPath = path.join(os.tmpdir(), "testportmap.json");
+	fs.writeFileSync(portMapPath, JSON.stringify(portMap));
 }
 
 main();

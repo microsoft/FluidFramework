@@ -46,8 +46,8 @@ export interface ITelemetryBaseLogger {
 }
 ```
 
-- `send()`
-  - The `send()` method is called by the container's telemetry system whenever a telemetry event occurs. This method
+-   `send()`
+    -   The `send()` method is called by the container's telemetry system whenever a telemetry event occurs. This method
     takes in an ITelemetryBaseEvent type parameter, which is also within the `@fluidframework/common-definitions`
     package. Given this method is part of an interface, users can implement a custom telemetry logic for the container's
     telemetry system to execute.
@@ -142,10 +142,10 @@ is safe to log from a data privacy standpoint.
 
 The Fluid Framework sends events in the following categories:
 
-- error -- used to identify and report error conditions, e.g. duplicate data store IDs.
-- performance -- used to track performance-critical code paths within the framework. For example, the summarizer tracks
+-   error -- used to identify and report error conditions, e.g. duplicate data store IDs.
+-   performance -- used to track performance-critical code paths within the framework. For example, the summarizer tracks
   how long it takes to create or load a summary and reports this information in an event.
-- generic -- used as a catchall for events that are informational and don't represent an activity with a duration like a
+-   generic -- used as a catchall for events that are informational and don't represent an activity with a duration like a
   performance event.
 
 ### EventName
@@ -295,18 +295,23 @@ It's not recommended to set `localStorage.debug` in code; your users will see a 
 
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 
@@ -319,5 +324,7 @@ It's not recommended to set `localStorage.debug` in code; your users will see a 
 
 [FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

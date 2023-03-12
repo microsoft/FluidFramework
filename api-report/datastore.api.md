@@ -41,7 +41,7 @@ export enum DataStoreMessageType {
 
 // @public
 export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRuntimeEvents> implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
-    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean);
+    constructor(dataStoreContext: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean, initializeEntryPoint?: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>);
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
@@ -70,6 +70,9 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     // (undocumented)
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     // (undocumented)
@@ -87,9 +90,10 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     get IFluidRouter(): this;
     // (undocumented)
     get isAttached(): boolean;
+    // @deprecated (undocumented)
     static load(context: IFluidDataStoreContext, sharedObjectRegistry: ISharedObjectRegistry, existing: boolean): FluidDataStoreRuntime;
     // (undocumented)
-    readonly logger: ITelemetryLogger;
+    get logger(): ITelemetryLogger;
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
     get objectsRoutingContext(): this;
@@ -124,7 +128,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     waitAttached(): Promise<void>;
 }
 
-// @public (undocumented)
+// @public
 export class FluidObjectHandle<T extends FluidObject = FluidObject> implements IFluidHandle {
     constructor(value: T | Promise<T>, path: string, routeContext: IFluidHandleContext);
     // (undocumented)

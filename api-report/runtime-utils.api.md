@@ -30,6 +30,7 @@ import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
+import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
@@ -69,12 +70,14 @@ export const create404Response: (request: IRequest) => IResponse;
 export function createDataStoreFactory(type: string, factory: Factory | Promise<Factory>): IFluidDataStoreFactory & IFluidDataStoreRegistry;
 
 // @public (undocumented)
-export function createResponseError(status: number, value: string, request: IRequest): IResponse;
+export function createResponseError(status: number, value: string, request: IRequest, headers?: {
+    [key: string]: any;
+}): IResponse;
 
-// @public
+// @public @deprecated
 export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
 
-// @public
+// @public @deprecated
 export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionDetailsBase>) | undefined) => IRootSummarizerNodeWithGC;
 
 // @public (undocumented)
@@ -92,22 +95,30 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 // @public (undocumented)
 export function getNormalizedObjectStoragePathParts(path: string): string[];
 
-// @public (undocumented)
+// @public @deprecated
+export interface IFetchSnapshotResult {
+    // (undocumented)
+    snapshotRefSeq: number;
+    // (undocumented)
+    snapshotTree: ISnapshotTree;
+}
+
+// @public @deprecated (undocumented)
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface ISummarizerNodeRootContract {
     // (undocumented)
     clearSummary(): void;
     // (undocumented)
     completeSummary(proposalHandle: string): void;
     // (undocumented)
-    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, getSnapshot: () => Promise<ISnapshotTree>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
+    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
     // (undocumented)
     startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
 }
@@ -130,18 +141,23 @@ export class ObjectStoragePartition implements IChannelStorageService {
 }
 
 // @public
-export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
+export function packagePathToTelemetryProperty(packagePath: readonly string[] | undefined): ITaggedTelemetryPropertyType | undefined;
 
 // @public
+export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
+
+// @public @deprecated
 export type RefreshSummaryResult = {
     latestSummaryUpdated: false;
 } | {
     latestSummaryUpdated: true;
     wasSummaryTracked: true;
+    summaryRefSeq: number;
 } | {
     latestSummaryUpdated: true;
     wasSummaryTracked: false;
-    snapshot: ISnapshotTree;
+    snapshotTree: ISnapshotTree;
+    summaryRefSeq: number;
 };
 
 // @public (undocumented)
@@ -176,7 +192,7 @@ export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRu
     // (undocumented)
     instantiateFromExisting(_runtime: T): Promise<void>;
     // (undocumented)
-    instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime>;
+    instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
     // (undocumented)
     get IRuntimeFactory(): this;
     // (undocumented)
@@ -213,6 +229,8 @@ export class TelemetryContext implements ITelemetryContext {
     serialize(): string;
     // (undocumented)
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
+    // (undocumented)
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public (undocumented)

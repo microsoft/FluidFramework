@@ -1,6 +1,6 @@
 # @fluidframework/web-code-loader
 
-``` TypeScript
+```TypeScript
 import { IPackageConfig } from "@fluidframework/container-definitions";
 import { IResolvedPackage } from "@fluidframework/web-code-loader";
 import { IFluidPackage } from "@fluidframework/core-interfaces";

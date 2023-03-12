@@ -8,7 +8,6 @@ export { BroadcasterLambda, BroadcasterLambdaFactory } from "./broadcaster";
 export { CopierLambda, CopierLambdaFactory } from "./copier";
 export {
 	createDeliCheckpointManagerFromCollection,
-	DeliCheckpointReason,
 	DeliLambda,
 	DeliLambdaFactory,
 	ICheckpointParams,

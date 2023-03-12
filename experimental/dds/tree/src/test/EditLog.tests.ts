@@ -4,71 +4,13 @@
  */
 
 import { expect } from 'chai';
-import { IsoBuffer } from '@fluidframework/common-utils';
 import { EditLog, separateEditAndId } from '../EditLog';
 import { EditId } from '../Identifiers';
 import { assertNotUndefined } from '../Common';
-import { Edit, EditChunkContents, EditWithoutId, FluidEditHandle } from '../persisted-types';
+import { Edit } from '../persisted-types';
 import { newEdit } from '../EditUtilities';
 
 type DummyChange = never;
-
-/**
- * Creates an edit log with the specified number of chunks, stored as handles instead of edits.
- * @param numberOfChunks - The number of chunks to add to the edit log.
- * @param editsPerChunk - The number of edits per chunk that gets added to the edit log.
- * @param editsPerChunkOnEditLog - The number of edits per chunk that gets set for future edits to the edit log.
- * @returns The edit log created with handles.
- */
-function createEditLogWithHandles(numberOfChunks = 2, editsPerChunk = 5): EditLog<DummyChange> {
-	const editIds: EditId[] = [];
-	const editChunks: EditWithoutId<DummyChange>[][] = [];
-
-	let inProgessChunk: EditWithoutId<DummyChange>[] = [];
-	for (let i = 0; i < numberOfChunks * editsPerChunk; i++) {
-		const { id, editWithoutId } = separateEditAndId(newEdit([]));
-		editIds.push(id);
-
-		inProgessChunk.push(editWithoutId);
-
-		if (inProgessChunk.length === editsPerChunk) {
-			editChunks.push(inProgessChunk.slice());
-			inProgessChunk = [];
-		}
-	}
-
-	const handles: FluidEditHandle[] = editChunks.map((chunk) => {
-		return {
-			absolutePath: 'test blob',
-			get: async () => {
-				return IsoBuffer.from(JSON.stringify({ edits: chunk }));
-			},
-		};
-	});
-
-	let startRevision = 0;
-	const handlesWithKeys = handles.map((baseHandle) => {
-		const handle = {
-			startRevision,
-			chunk: {
-				get: async () =>
-					(
-						JSON.parse(IsoBuffer.from(await baseHandle.get()).toString()) as Omit<
-							EditChunkContents,
-							'edits'
-						> & { edits: EditWithoutId<DummyChange>[] }
-					).edits,
-				baseHandle,
-			},
-		};
-		startRevision = startRevision + 5;
-		return handle;
-	});
-
-	const editLog = new EditLog({ editChunks: handlesWithKeys, editIds });
-
-	return editLog;
-}
 
 describe('EditLog', () => {
 	const edit0 = newEdit([]);
@@ -138,8 +80,8 @@ describe('EditLog', () => {
 
 		const log = new EditLog({ editChunks, editIds });
 
-		expect((await log.getEditAtIndex(0)).id).to.equal(id0);
-		expect((await log.getEditAtIndex(1)).id).to.equal(id1);
+		expect(log.tryGetEditAtIndex(0)?.id).to.equal(id0);
+		expect(log.tryGetEditAtIndex(1)?.id).to.equal(id1);
 	});
 
 	it('can get an edit from an edit id', async () => {
@@ -148,8 +90,8 @@ describe('EditLog', () => {
 
 		const log = new EditLog({ editChunks, editIds });
 
-		const editFromId0 = await log.tryGetEdit(id0);
-		const editFromId1 = await log.tryGetEdit(id1);
+		const editFromId0 = log.tryGetEditFromId(id0);
+		const editFromId1 = log.tryGetEditFromId(id1);
 
 		expect(editFromId0).to.not.be.undefined;
 		expect(editFromId1).to.not.be.undefined;
@@ -199,7 +141,7 @@ describe('EditLog', () => {
 		expect(log.length).to.equal(2);
 	});
 
-	it('tracks the min sequence number of sequenced edits', () => {
+	it('tracks the min sequence index of sequenced edits', () => {
 		const log = new EditLog();
 
 		expect(log.minSequenceNumber).equals(0);
@@ -228,7 +170,7 @@ describe('EditLog', () => {
 
 		log.addLocalEdit(edit0);
 		expect(log.numberOfLocalEdits).to.equal(1);
-		let editFromId0 = await log.tryGetEdit(id0);
+		let editFromId0 = log.tryGetEditFromId(id0);
 		expect(editFromId0).to.not.be.undefined;
 		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain local edit.');
 
@@ -236,7 +178,7 @@ describe('EditLog', () => {
 		expect(log.length).to.equal(1);
 		expect(log.numberOfSequencedEdits).to.equal(1);
 		expect(log.numberOfLocalEdits).to.equal(0, 'Log should have only sequenced edits.');
-		editFromId0 = await log.tryGetEdit(id0);
+		editFromId0 = log.tryGetEditFromId(id0);
 		expect(editFromId0).to.not.be.undefined;
 		expect(assertNotUndefined(editFromId0).id).equals(edit0.id, 'Log should contain sequenced edit.');
 	});
@@ -303,47 +245,226 @@ describe('EditLog', () => {
 		expect(log0.equals(differentLog)).to.be.false;
 	});
 
-	it('creates a new edit chunk once the previous one has been filled', () => {
-		const log = new EditLog();
+	it('can configure a maximum size and evict edits once it grows larger than that size', () => {
+		const targetEditLogSize = 10;
+		const log = new EditLog(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
+		const ids: EditId[] = [];
 
-		for (let i = 0; i < log.editsPerChunk; i++) {
+		let editsEvicted = 0;
+
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
+		});
+
+		for (let i = 0; i < targetEditLogSize; i++) {
 			const edit = newEdit([]);
-			log.addSequencedEdit(edit, { sequenceNumber: i + 1, referenceSequenceNumber: i });
-			expect(log.getEditLogSummary().editChunks.length).to.be.equal(1);
+			log.addSequencedEdit(edit, {
+				sequenceNumber: i,
+				referenceSequenceNumber: i - 1,
+			});
+			ids.push(edit.id);
+			expect(log.getIndexOfId(edit.id)).equals(i);
+		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(targetEditLogSize, 'Only sequenced edits should be present.');
+
+		const newIds: EditId[] = [];
+		for (let i = 0; i < targetEditLogSize; i++) {
+			const edit = newEdit([]);
+			const sequenceNumber = targetEditLogSize + i;
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+				minimumSequenceNumber: sequenceNumber - 1,
+			});
+			newIds.push(edit.id);
 		}
 
-		const edit = newEdit([]);
-		log.addSequencedEdit(edit, {
-			sequenceNumber: log.editsPerChunk,
-			referenceSequenceNumber: log.editsPerChunk - 1,
-		});
-		expect(log.getEditLogSummary().editChunks.length).to.be.equal(2);
+		expect(log.editIds).to.deep.equal(newIds, 'Edit IDs should have been evicted.');
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(targetEditLogSize, 'Edits should have been evicted');
+		expect(editsEvicted).to.equal(targetEditLogSize);
+
+		// Check that indices are the same after eviction
+		expect(log.tryGetEditAtIndex(15)?.id).to.equal(ids.concat(newIds)[15]);
 	});
 
-	it('can load edits from a handle', async () => {
-		const log = createEditLogWithHandles();
+	it('can handle sparse sequence numbers', () => {
+		const targetEditLogSize = 10;
+		const log = new EditLog(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
+		const sequenceNumberInterval = 3;
 
-		// Check that each edit can be retrieved correctly
-		for (let i = 0; i < 10; i++) {
-			expect((await log.getEditAtIndex(i)).id).to.equal(log.editIds[i]);
+		let editsEvicted = 0;
+
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
+		});
+
+		let sequenceNumber = 0;
+
+		for (let i = 0; i < targetEditLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+			});
+			sequenceNumber += sequenceNumberInterval;
+			expect(log.getIndexOfId(edit.id)).equals(i);
 		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(targetEditLogSize, 'Only sequenced edits should be present.');
+
+		const extraEditsToKeep = 3;
+		const collaborationWindowSize = targetEditLogSize + extraEditsToKeep;
+		const minimumSequenceNumber = sequenceNumber - extraEditsToKeep * sequenceNumberInterval;
+		for (let i = 0; i < targetEditLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+				minimumSequenceNumber,
+			});
+			sequenceNumber += sequenceNumberInterval;
+		}
+
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(collaborationWindowSize, 'Edits should have been evicted');
+		expect(editsEvicted).to.equal(targetEditLogSize * 2 - collaborationWindowSize);
 	});
 
-	it('can add edits to logs with varying edit chunk sizes', async () => {
-		const numberOfChunks = 2;
-		const editsPerChunk = 5;
-		const log = createEditLogWithHandles(numberOfChunks, editsPerChunk);
+	it("can handle sparse sequence numbers with a minimum sequence number that's not in memory", () => {
+		const targetEditLogSize = 10;
+		const log = new EditLog(undefined, undefined, undefined, targetEditLogSize, targetEditLogSize * 2);
+		const sequenceNumberInterval = 3;
 
-		// Load the edits for the last edit chunk
-		await log.getEditAtIndex(numberOfChunks * editsPerChunk - 1);
+		let editsEvicted = 0;
 
-		// Add a sequenced edit and check it's been added
-		const edit = newEdit([]);
-		log.addSequencedEdit(edit, {
-			sequenceNumber: log.editsPerChunk,
-			referenceSequenceNumber: log.editsPerChunk - 1,
+		log.registerEditEvictionHandler((editsToEvict) => {
+			editsEvicted += editsToEvict;
 		});
 
-		expect(log.getIdAtIndex(numberOfChunks * editsPerChunk)).to.equal(edit.id);
+		let sequenceNumber = 0;
+
+		for (let i = 0; i < targetEditLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+			});
+			sequenceNumber += sequenceNumberInterval;
+			expect(log.getIndexOfId(edit.id)).equals(i);
+		}
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(targetEditLogSize, 'Only sequenced edits should be present.');
+
+		const extraEditsToKeep = 3;
+		const collaborationWindowSize = targetEditLogSize + extraEditsToKeep;
+		// Adjusts the minimum sequence number to one that's not associated with any of the edits added
+		const minimumSequenceNumber = sequenceNumber - 1 - extraEditsToKeep * sequenceNumberInterval;
+		for (let i = 0; i < targetEditLogSize; i++) {
+			const edit = newEdit([]);
+			log.addSequencedEdit(edit, {
+				sequenceNumber,
+				referenceSequenceNumber: sequenceNumber - 1,
+				minimumSequenceNumber,
+			});
+			sequenceNumber += sequenceNumberInterval;
+		}
+
+		expect(log.length)
+			.equals(log.numberOfSequencedEdits)
+			.and.equals(collaborationWindowSize, 'Edits should have been evicted');
+		expect(editsEvicted).to.equal(targetEditLogSize * 2 - collaborationWindowSize);
+	});
+
+	describe('does not evict edits in the collaboration window', () => {
+		[0, 2, 8, 23, 50, 68, 255].forEach((startSequenceNumber) => {
+			[1, 7, 10, 13, 52].forEach((targetEditLogSize) => {
+				[2, 15, 21, Math.floor(targetEditLogSize * 1.5), targetEditLogSize * 2].forEach(
+					(collaborationWindowSize) => {
+						it(`when accepting edits starting from sequence number ${startSequenceNumber} and targeting an edit log size of ${targetEditLogSize} and a collaboration window size of ${collaborationWindowSize}`, () => {
+							const log = new EditLog(
+								undefined,
+								undefined,
+								undefined,
+								targetEditLogSize,
+								targetEditLogSize * 2
+							);
+
+							let editsEvicted = 0;
+
+							log.registerEditEvictionHandler((editsToEvict) => {
+								editsEvicted += editsToEvict;
+							});
+
+							let sequenceNumber = startSequenceNumber;
+
+							const addEditsTillEviction = (minimumSequenceNumber?: number) => {
+								for (let i = 0; i < targetEditLogSize; i++) {
+									const edit = newEdit([]);
+									log.addSequencedEdit(edit, {
+										sequenceNumber,
+										referenceSequenceNumber: sequenceNumber - 1,
+										minimumSequenceNumber,
+									});
+									sequenceNumber += 1;
+								}
+							};
+
+							// Add enough edits to hit the target size
+							addEditsTillEviction();
+							expect(log.length)
+								.equals(log.numberOfSequencedEdits)
+								.and.equals(targetEditLogSize, 'Only sequenced edits should be present.');
+
+							// Add another set of edits to trigger eviction while setting the collaboration window size
+							const minimumSequenceNumber = Math.max(
+								0,
+								startSequenceNumber + targetEditLogSize * 2 - collaborationWindowSize
+							);
+							addEditsTillEviction(minimumSequenceNumber);
+
+							const expectedEditLogSize =
+								// If the target edit log size is larger than the collaboration window size, we can evict everything we want to
+								targetEditLogSize > collaborationWindowSize
+									? targetEditLogSize
+									: Math.min(targetEditLogSize * 2, collaborationWindowSize);
+							expect(log.length)
+								.equals(log.numberOfSequencedEdits)
+								.and.equals(
+									expectedEditLogSize,
+									'Only edits outside the collab window should have been evicted'
+								);
+							expect(editsEvicted).to.equal(targetEditLogSize * 2 - expectedEditLogSize);
+
+							// Trigger a second eviction to ensure that eviction works after an eviction has already occurred
+							const secondMinimumSequenceNumber = Math.max(
+								0,
+								startSequenceNumber + targetEditLogSize * 3 - collaborationWindowSize
+							);
+							addEditsTillEviction(secondMinimumSequenceNumber);
+
+							const secondExpectedEditLogSize =
+								// If the target edit log size is larger than the collaboration window size, we can evict everything we want to
+								targetEditLogSize > collaborationWindowSize
+									? targetEditLogSize
+									: Math.min(targetEditLogSize * 3, collaborationWindowSize);
+							expect(log.length)
+								.equals(log.numberOfSequencedEdits)
+								.and.equals(
+									secondExpectedEditLogSize,
+									'Only edits outside the collab window should have been evicted'
+								);
+							expect(editsEvicted).to.equal(targetEditLogSize * 3 - secondExpectedEditLogSize);
+						});
+					}
+				);
+			});
+		});
 	});
 });

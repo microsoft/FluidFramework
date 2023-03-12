@@ -167,9 +167,9 @@ The below diagram highlights the differences between the JSON data model and the
 
 ```json
 {
-    "visible": true,
-    "text": "cat", // String uses an implicit sequence
-    "dashStyle": [0.5, 3] // Array uses an explicit tree node
+	"visible": true,
+	"text": "cat", // String uses an implicit sequence
+	"dashStyle": [0.5, 3] // Array uses an explicit tree node
 }
 ```
 

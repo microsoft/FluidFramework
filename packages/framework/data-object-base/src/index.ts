@@ -4,11 +4,11 @@
  */
 
 /**
-* The view interfaces provide a generic way for objects to expose their
-* rendering capabilities to consumers.
-*
-* @packageDocumentation
-*/
+ * The view interfaces provide a generic way for objects to expose their
+ * rendering capabilities to consumers.
+ *
+ * @packageDocumentation
+ */
 
 export { LazyLoadedDataObject } from "./lazyLoadedDataObject";
 export { LazyLoadedDataObjectFactory } from "./lazyLoadedDataObjectFactory";

@@ -53,7 +53,7 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class Container extends EventEmitterWithErrorHandling<IContainerEvents> implements IContainer {
     constructor(loader: Loader, config: IContainerConfig, protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined);
     // (undocumented)
@@ -83,9 +83,13 @@ export class Container extends EventEmitterWithErrorHandling<IContainerEvents> i
     get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     disconnect(): void;
+    // (undocumented)
+    dispose?(error?: ICriticalContainerError): void;
     forceReadonly(readonly: boolean): void;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    // (undocumented)
+    getEntryPoint?(): Promise<FluidObject | undefined>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
@@ -227,7 +231,7 @@ export class Loader implements IHostLoader {
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class RelativeLoader implements ILoader {
     constructor(container: Container, loader: ILoader | undefined);
     // (undocumented)

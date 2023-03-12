@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { revert } from '../HistoryEditFactory';
+import { HistoryEditFactoryEvents, revert } from '../HistoryEditFactory';
 import { DetachedSequenceId, TraitLabel } from '../Identifiers';
 import { ChangeInternal, DetachInternal, StablePlaceInternal, StableRangeInternal } from '../persisted-types';
 import { expectDefined } from './utilities/TestCommon';
@@ -125,16 +125,28 @@ describe('revert', () => {
 	describe('returns undefined for reverts that require more context than the view directly before the edit', () => {
 		describe('because the edit conflicted', () => {
 			it('when reverting a detach of a node that is not in the tree', () => {
+				let missingNodeEvents = 0;
 				const nodeNotInTree = testTree.buildLeafInternal();
 				const change = ChangeInternal.detach(StableRangeInternal.only(nodeNotInTree));
-				const result = revert([change], testTree.view);
+				const result = revert([change], testTree.view, undefined, (event) => {
+					if (event === HistoryEditFactoryEvents.MissingNodes) {
+						missingNodeEvents++;
+					}
+				});
+				expect(missingNodeEvents).to.equal(1);
 				expect(result).to.be.undefined;
 			});
 
 			it('when reverting a set value of a node that is not in the tree', () => {
+				let missingNodeEvents = 0;
 				const nodeNotInTree = testTree.buildLeafInternal();
 				const change = ChangeInternal.setPayload(nodeNotInTree, '42');
-				const result = revert([change], testTree.view);
+				const result = revert([change], testTree.view, undefined, (event) => {
+					if (event === HistoryEditFactoryEvents.MissingNodes) {
+						missingNodeEvents++;
+					}
+				});
+				expect(missingNodeEvents).to.equal(1);
 				expect(result).to.be.undefined;
 			});
 		});
@@ -142,13 +154,21 @@ describe('revert', () => {
 		describe('because the edit was malformed', () => {
 			it('when reverting an insert whose source is not insertable', () => {
 				const detachedId = 0 as DetachedSequenceId;
+				let missingNodeEvents = 0;
 				// Revert an insert where the source is not a valid detached sequence ID (nothing has been built/detached with that ID)
 				expect(
 					revert(
 						[ChangeInternal.insert(detachedId, StablePlaceInternal.atStartOf(testTree.left.traitLocation))],
-						testTree.view
+						testTree.view,
+						undefined,
+						(event) => {
+							if (event === HistoryEditFactoryEvents.MissingNodes) {
+								missingNodeEvents++;
+							}
+						}
 					)
 				).to.be.undefined;
+				expect(missingNodeEvents).to.equal(1);
 				// Revert a duplicate insert (the source has already been inserted by a previous insert in the same edit)
 				expect(
 					revert(
@@ -163,13 +183,22 @@ describe('revert', () => {
 								StablePlaceInternal.atStartOf(testTree.left.traitLocation)
 							),
 						],
-						testTree.view
+						testTree.view,
+						undefined,
+						(event) => {
+							if (event === HistoryEditFactoryEvents.MissingNodes) {
+								missingNodeEvents++;
+							}
+						}
 					)
 				).to.be.undefined;
+				expect(missingNodeEvents).to.equal(2);
 			});
 
 			it('when reverting a detach whose destination is already occupied', () => {
 				const detachedId = 0 as DetachedSequenceId;
+				let malformedEditEvents = 0;
+				let missingNodeEvents = 0;
 				// Revert a detach where the destination is already occupied due to a prior detach
 				expect(
 					revert(
@@ -177,9 +206,20 @@ describe('revert', () => {
 							ChangeInternal.detach(StableRangeInternal.only(testTree.left), detachedId),
 							ChangeInternal.detach(StableRangeInternal.only(testTree.left), detachedId),
 						],
-						testTree.view
+						testTree.view,
+						undefined,
+						(event) => {
+							if (event === HistoryEditFactoryEvents.MalformedEdit) {
+								malformedEditEvents++;
+							}
+
+							if (event === HistoryEditFactoryEvents.MissingNodes) {
+								missingNodeEvents++;
+							}
+						}
 					)
 				).to.be.undefined;
+				expect(missingNodeEvents).to.equal(1);
 				// Revert a detach where the destination is already occupied due to a prior build
 				expect(
 					revert(
@@ -187,9 +227,20 @@ describe('revert', () => {
 							ChangeInternal.build([testTree.buildLeafInternal()], detachedId),
 							ChangeInternal.detach(StableRangeInternal.only(testTree.left), detachedId),
 						],
-						testTree.view
+						testTree.view,
+						undefined,
+						(event) => {
+							if (event === HistoryEditFactoryEvents.MalformedEdit) {
+								malformedEditEvents++;
+							}
+
+							if (event === HistoryEditFactoryEvents.MissingNodes) {
+								missingNodeEvents++;
+							}
+						}
 					)
 				).to.be.undefined;
+				expect(malformedEditEvents).to.equal(1);
 			});
 		});
 	});

@@ -13,30 +13,30 @@ import { UndoRedoStackManager } from "../undoRedoStackManager";
 //       undo/redo implementation, see 'matrix.undo.spec.ts' in the '@fluidframework/matrix' package.
 
 describe("Matrix", () => {
-    let dataStoreRuntime: MockFluidDataStoreRuntime;
-    let matrix: SharedMatrix<number>;
-    let undo: UndoRedoStackManager;
+	let dataStoreRuntime: MockFluidDataStoreRuntime;
+	let matrix: SharedMatrix<number>;
+	let undo: UndoRedoStackManager;
 
-    beforeEach(async () => {
-        dataStoreRuntime = new MockFluidDataStoreRuntime();
-        matrix = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
+	beforeEach(async () => {
+		dataStoreRuntime = new MockFluidDataStoreRuntime();
+		matrix = new SharedMatrix(dataStoreRuntime, "matrix1", SharedMatrixFactory.Attributes);
 
-        undo = new UndoRedoStackManager();
-        matrix.openUndo(undo);
-    });
+		undo = new UndoRedoStackManager();
+		matrix.openUndo(undo);
+	});
 
-    it("is compatible with UndoRedoStackManager", () => {
-        matrix.insertRows(/* start: */ 0, /* count: */ 1);
-        matrix.insertCols(/* start: */ 0, /* count: */ 1);
-        undo.closeCurrentOperation();
+	it("is compatible with UndoRedoStackManager", () => {
+		matrix.insertRows(/* start: */ 0, /* count: */ 1);
+		matrix.insertCols(/* start: */ 0, /* count: */ 1);
+		undo.closeCurrentOperation();
 
-        matrix.setCell(/* row: */ 0, /* col: */ 0, 1);
-        assert.equal(matrix.getCell(0, 0), 1);
+		matrix.setCell(/* row: */ 0, /* col: */ 0, 1);
+		assert.equal(matrix.getCell(0, 0), 1);
 
-        undo.undoOperation();
-        assert.equal(matrix.getCell(0, 0), undefined);
+		undo.undoOperation();
+		assert.equal(matrix.getCell(0, 0), undefined);
 
-        undo.redoOperation();
-        assert.equal(matrix.getCell(0, 0), 1);
-    });
+		undo.redoOperation();
+		assert.equal(matrix.getCell(0, 0), 1);
+	});
 });

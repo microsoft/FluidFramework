@@ -27,7 +27,7 @@ describe('RevisionValueCache', () => {
 	});
 
 	it('can find closest entry to a queried revision', () => {
-		const cache = new RevisionValueCache<DummyValue>(1, 0, [[0, dummyValue]]);
+		const cache = new RevisionValueCache<DummyValue>(1, 0, [0, dummyValue]);
 		cache.cacheValue(2, dummyValue);
 		expect(closestEntry(cache, 1)).to.equal(0);
 		expect(closestEntry(cache, 2)).to.equal(2);
@@ -39,7 +39,7 @@ describe('RevisionValueCache', () => {
 		const cache = new RevisionValueCache<DummyValue>(
 			size,
 			size * 3 /* ensure all entries are outside of window */,
-			[[0, dummyValue]]
+			[0, dummyValue]
 		);
 
 		// Fill the cache
@@ -60,7 +60,7 @@ describe('RevisionValueCache', () => {
 	it('retains entries within the retention window', () => {
 		const windowStart = 3;
 		const windowEnd = windowStart + 3;
-		const cache = new RevisionValueCache<DummyValue>(1, windowStart, [[0, dummyValue]]);
+		const cache = new RevisionValueCache<DummyValue>(1, windowStart, [0, dummyValue]);
 
 		// Add entries within retention window
 		for (let i = windowStart; i <= windowEnd; i++) {
@@ -88,20 +88,20 @@ describe('RevisionValueCache', () => {
 		expect(closestEntry(cache, 5)).to.equal(2);
 	});
 
-	it('never evicts explicitly retained values', () => {
-		const cache = new RevisionValueCache<DummyValue>(1, 3, [[0, dummyValue]]);
+	it('only keeps one explicitly retained value', () => {
+		const cache = new RevisionValueCache<DummyValue>(1, 3, [0, dummyValue]);
 		cache.cacheValue(1, dummyValue);
 		// Add a retained entry outside of the retention window
-		cache.cacheRetainedValue(5, dummyValue); // Should not evict 1
+		cache.cacheRetainedValue(5, dummyValue); // This evicts the previously retained value, 0
 		expect(closestEntry(cache, 1)).to.equal(1);
 		expect(closestEntry(cache, 5)).to.equal(5);
 		cache.cacheValue(2, dummyValue); // Evict 1
 		cache.updateRetentionWindow(10); // Should not add 5, so 2 will still be in cache
-		expect(closestEntry(cache, 1)).to.equal(0);
+		expect(() => closestEntry(cache, 1)).to.throw; // 0 will no longer be retained so 1 should be inaccessible
 		expect(closestEntry(cache, 2)).to.equal(2);
 		expect(closestEntry(cache, 5)).to.equal(5);
 		cache.cacheValue(3, dummyValue); // Evict 2
-		expect(closestEntry(cache, 2)).to.equal(0);
+		expect(() => closestEntry(cache, 2)).to.throw;
 		expect(closestEntry(cache, 5)).to.equal(5);
 	});
 

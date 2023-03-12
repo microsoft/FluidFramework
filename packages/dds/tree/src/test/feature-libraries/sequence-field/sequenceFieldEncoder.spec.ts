@@ -4,38 +4,46 @@
  */
 
 import { strict as assert } from "assert";
-import { jsonString } from "../../../domains";
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { mintRevisionTag } from "../../../core";
+import { SequenceField as SF } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { Changeset } from "../../../feature-libraries/sequence-field";
 import { TestChange, TestChangeEncoder } from "../../testChange";
-import { deepFreeze } from "../../utils";
-import { TestChangeset } from "./utils";
+import { deepFreeze, fakeRepair } from "../../utils";
+import { ChangeMaker as Change } from "./testEdits";
 
-const nodeX = { type: jsonString.name, value: "X" };
-const nodeY = { type: jsonString.name, value: "Y" };
-const content = [singleTextCursor(nodeX), singleTextCursor(nodeY)];
-deepFreeze(content);
+const encodingTestData: [string, Changeset<TestChange>][] = [
+	["with child change", Change.modify(1, TestChange.mint([], 1))],
+	["without child change", Change.delete(2, 2)],
+	["with repair data", Change.revive(0, 1, mintRevisionTag(), undefined, fakeRepair)],
+];
 
-describe("SequenceField - Encoder", () => {
-    it("with child change", () => {
-        const change: TestChangeset = [1, { type: "Modify", changes: TestChange.mint([], 1) }];
-        deepFreeze(change);
-        const childEncoder = new TestChangeEncoder();
-        const encoded = JSON.stringify(
-            SF.encodeForJson(0, change, (c) => childEncoder.encodeForJson(0, c)),
-        );
-        const decoded = SF.decodeJson(0, JSON.parse(encoded), (c) => childEncoder.decodeJson(0, c));
-        assert.deepEqual(decoded, change);
-    });
+describe("SequenceField encoding", () => {
+	const version = 0;
+	const childEncoder = new TestChangeEncoder();
 
-    it("without child change", () => {
-        const change: TestChangeset = [2, { type: "Delete", id: 0, count: 2 }];
-        deepFreeze(change);
-        const encoded = JSON.stringify(
-            SF.encodeForJson(0, change, () => assert.fail("Child encoder should not be called")),
-        );
-        const decoded = SF.decodeJson(0, JSON.parse(encoded), () =>
-            assert.fail("Child decoder should not be called"),
-        );
-        assert.deepEqual(decoded, change);
-    });
+	for (const [name, data] of encodingTestData) {
+		describe(name, () => {
+			it("roundtrip", () => {
+				deepFreeze(data);
+				const encoded = SF.encodeForJson<TestChange>(version, data, (c) =>
+					childEncoder.encodeForJson(0, c),
+				);
+				const decoded = SF.decodeJson(version, encoded, (c) =>
+					childEncoder.decodeJson(0, c),
+				);
+				assert.deepEqual(decoded, data);
+			});
+
+			it("json roundtrip", () => {
+				const encoded = JSON.stringify(
+					SF.encodeForJson(version, data, (c) => childEncoder.encodeForJson(0, c)),
+				);
+				const decoded = SF.decodeJson(version, JSON.parse(encoded), (c) =>
+					childEncoder.decodeJson(0, c),
+				);
+				assert.deepEqual(decoded, data);
+			});
+		});
+	}
 });

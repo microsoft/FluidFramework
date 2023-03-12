@@ -13,22 +13,22 @@ import { getLocatorFromOdspUrl } from "./odspFluidFileLink";
  * before the entire Fluid loading process needs to be kicked off.
  */
 export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined {
-  const locator = getLocatorFromOdspUrl(documentUrl);
+	const locator = getLocatorFromOdspUrl(documentUrl);
 
-  if (!locator) {
-    return undefined;
-  }
+	if (!locator) {
+		return undefined;
+	}
 
-  let siteOrigin: string | undefined;
-  try {
-    if (locator?.siteUrl) {
-      siteOrigin = new URL(locator?.siteUrl).origin;
-    }
-  } catch {}
+	let siteOrigin: string | undefined;
+	try {
+		if (locator?.siteUrl) {
+			siteOrigin = new URL(locator?.siteUrl).origin;
+		}
+	} catch {}
 
-  return {
-    codeDetailsHint: locator?.containerPackageName,
-    // Add the snapshot endpoint, which has the same domain as the site URL
-    criticalBootDomains: siteOrigin ? [siteOrigin] : undefined,
-  };
+	return {
+		codeDetailsHint: locator?.containerPackageName,
+		// Add the snapshot endpoint, which has the same domain as the site URL
+		criticalBootDomains: siteOrigin ? [siteOrigin] : undefined,
+	};
 }

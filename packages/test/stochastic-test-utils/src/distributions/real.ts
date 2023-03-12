@@ -11,10 +11,11 @@
  * @param max - Smallest number greater than min that is excluded in this distribution.
  * @returns A number 'n' where 'min &lt;= n &lt; max'.
  */
-export const real = (float64Source: () => number) =>
-    (min = 0, max = 1) => {
-        const alpha = float64Source();
+export const real =
+	(float64Source: () => number) =>
+	(min = 0, max = 1) => {
+		const alpha = float64Source();
 
-        // Use affine combination rather than 'max - min' to avoid cancellation.
-        return (1 - alpha) * min + alpha * max;
-    };
+		// Use affine combination rather than 'max - min' to avoid cancellation.
+		return (1 - alpha) * min + alpha * max;
+	};

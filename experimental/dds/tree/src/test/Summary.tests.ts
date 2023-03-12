@@ -4,25 +4,17 @@
  */
 import * as fs from 'fs';
 import { join } from 'path';
-import { IsoBuffer } from '@fluidframework/common-utils';
 import { expect } from 'chai';
 import { v5 } from 'uuid';
 import { Change, StablePlace, StableRange } from '../ChangeTypes';
-import { assert, RecursiveMutable } from '../Common';
+import { assert, fail, RecursiveMutable } from '../Common';
 import { areRevisionViewsSemanticallyEqual } from '../EditUtilities';
 import { EditId, NodeId, SessionId, StableId, TraitLabel } from '../Identifiers';
 import { initialTree } from '../InitialTree';
-import {
-	editsPerChunk,
-	reservedIdCount,
-	SharedTreeSummary,
-	SharedTreeSummary_0_0_2,
-	WriteFormat,
-} from '../persisted-types';
+import { reservedIdCount, SharedTreeSummary, SharedTreeSummary_0_0_2, WriteFormat } from '../persisted-types';
 import { getChangeNodeFromView } from '../SerializationUtilities';
 import { SharedTree } from '../SharedTree';
 import { deserialize, getSummaryStatistics, SummaryStatistics } from '../SummaryBackCompatibility';
-import { getUploadedEditChunkContents, UploadedEditChunkContents } from '../SummaryTestUtilities';
 import { IdCompressor } from '../id-compressor';
 import { convertEditIds } from '../IdConversion';
 import { MutableStringInterner } from '../StringInterner';
@@ -177,16 +169,7 @@ export function runSummaryTests(title: string): void {
 			summaryFileWithHistory_0_1_1,
 			summaryFileNoHistory_0_1_1,
 			summaryFileUpgrade_0_1_1,
-			blobsFile,
 		} = loadSummaryTestFiles();
-
-		// Note: Fluid setup gives stable `absolutePath`s for these blobs across sessions. If that were not the case,
-		// this test suite would need to build some kind of map from the blob info saved on disk to the `IFluidHandle`
-		// list returned by uploading these blobs.
-		const blobsParsed: UploadedEditChunkContents[] = JSON.parse(blobsFile);
-		const blobs: ArrayBufferLike[] = blobsParsed.map((blob) =>
-			IsoBuffer.from(JSON.stringify(blob.chunkContents), 'utf8')
-		);
 
 		// Re-enable this test for an easy way to write the test summary files to disk
 		it.skip('save files to disk', async () => {
@@ -289,7 +272,6 @@ export function runSummaryTests(title: string): void {
 				// The edit ID of the single "no history edit" is generated randomly. Replace it with the baseline edit for the sake of this test.
 				expectDefined(summary.editHistory).editIds[0] = expectDefined(expectedSummary.editHistory?.editIds[0]);
 				expect(summary).to.deep.equal(expectedSummary);
-				expect(await getUploadedEditChunkContents(tree)).to.deep.equal([]);
 			});
 
 			it('writes 0.1.1 files with history', async () => {
@@ -297,12 +279,11 @@ export function runSummaryTests(title: string): void {
 				expect(JSON.parse(tree.saveSerializedSummary())).to.deep.equal(
 					JSON.parse(summaryFileWithHistory_0_1_1)
 				);
-				expect(await getUploadedEditChunkContents(tree)).to.deep.equal(blobsParsed);
 			});
 
 			describe('reading the same version', () => {
 				it('reads 0.1.1 files without history', async () => {
-					const { tree } = await setUp011Tree({ blobs });
+					const { tree } = await setUp011Tree({});
 					tree.loadSerializedSummary(summaryFileNoHistory_0_1_1);
 					// Tree should have exactly one edit, as all "no history" summaries do.
 					expect(tree.edits.length).to.equal(1);
@@ -314,7 +295,7 @@ export function runSummaryTests(title: string): void {
 				});
 
 				it('reads 0.1.1 files with history', async () => {
-					const { tree } = await setUp011Tree({ blobs });
+					const { tree } = await setUp011Tree({});
 					tree.loadSerializedSummary(summaryFileWithHistory_0_1_1);
 					const expectedTree = await setUp011SummaryTestTree(false);
 					await expectSharedTreesEqual(tree, expectedTree);
@@ -381,17 +362,12 @@ export function runSummaryTests(title: string): void {
 				const editCount = tree.edits.length;
 				const summary = deserialize(summaryFileWithHistory_0_1_1, testSerializer);
 				const telemetryInfo = getSummaryStatistics(summary);
-				const totalChunks = Math.ceil(editCount / editsPerChunk);
+				const totalChunks = 1;
 				const expectedTelemetryInfo: SummaryStatistics = {
 					formatVersion: WriteFormat.v0_1_1,
 					historySize: editCount,
 					totalNumberOfChunks: totalChunks,
-					uploadedChunks:
-						// If the last chunk is bigger than the number of edits per chunk, it has also been uploaded
-						editCount - Math.floor(editCount / editsPerChunk) * editsPerChunk < editsPerChunk &&
-						totalChunks !== 0
-							? totalChunks - 1
-							: totalChunks,
+					uploadedChunks: 0,
 				};
 				expect(telemetryInfo).to.deep.equals(expectedTelemetryInfo);
 			});
@@ -418,12 +394,12 @@ async function expectSharedTreesEqual(
 		const roundTrip = <T>(obj: T): T => JSON.parse(JSON.stringify(obj)) as T;
 
 		const editA = roundTrip(
-			convertEditIds(await getEditLogInternal(sharedTreeA).getEditAtIndex(i), (id) =>
+			convertEditIds(getEditLogInternal(sharedTreeA).tryGetEditAtIndex(i) ?? fail('edit not found'), (id) =>
 				sharedTreeA.convertToStableNodeId(id)
 			)
 		);
 		const editB = roundTrip(
-			convertEditIds(await getEditLogInternal(sharedTreeB).getEditAtIndex(i), (id) =>
+			convertEditIds(getEditLogInternal(sharedTreeB).tryGetEditAtIndex(i) ?? fail('edit not found'), (id) =>
 				sharedTreeB.convertToStableNodeId(id)
 			)
 		);
@@ -442,7 +418,6 @@ function loadSummaryTestFiles(): {
 	summaryFileWithHistory_0_1_1: string;
 	summaryFileNoHistory_0_1_1: string;
 	summaryFileUpgrade_0_1_1: string;
-	blobsFile: string;
 } {
 	const summaryFileWithHistory_0_0_2 = fs.readFileSync(join(directory, 'summary-0-0-2.json'), 'utf8');
 	const summaryFileNoHistory_0_0_2 = fs.readFileSync(join(directory, 'summary-no-history-0-0-2.json'), 'utf8');
@@ -450,7 +425,6 @@ function loadSummaryTestFiles(): {
 	const summaryFileWithHistory_0_1_1 = fs.readFileSync(join(directory, 'summary-0-1-1.json'), 'utf8');
 	const summaryFileNoHistory_0_1_1 = fs.readFileSync(join(directory, 'summary-no-history-0-1-1.json'), 'utf8');
 	const summaryFileUpgrade_0_1_1 = fs.readFileSync(join(directory, 'summary-upgrade-0-1-1.json'), 'utf8');
-	const blobsFile = fs.readFileSync(join(directory, 'blobs-0-1-1.json'), 'utf8');
 
 	return {
 		summaryFileWithHistory_0_0_2,
@@ -459,7 +433,6 @@ function loadSummaryTestFiles(): {
 		summaryFileWithHistory_0_1_1,
 		summaryFileNoHistory_0_1_1,
 		summaryFileUpgrade_0_1_1,
-		blobsFile,
 	};
 }
 
@@ -479,10 +452,6 @@ async function makeSummaryTestFiles(): Promise<void> {
 	fs.writeFileSync(join(directory, `summary-no-history-0-0-2.json`), treeNoHistory_0_0_2.saveSerializedSummary());
 	fs.writeFileSync(join(directory, `summary-0-1-1.json`), treeWithHistory_0_1_1.saveSerializedSummary());
 	fs.writeFileSync(join(directory, `summary-no-history-0-1-1.json`), treeNoHistory_0_1_1.saveSerializedSummary());
-
-	const blobs = await getUploadedEditChunkContents(treeWithHistory_0_1_1);
-	assert(blobs.length > 0);
-	fs.writeFileSync(join(directory, `blobs-0-1-1.json`), JSON.stringify(blobs));
 
 	const { tree: upgradedTree, testObjectProvider } = await setUpLocalServerTestSharedTree({
 		writeFormat: WriteFormat.v0_1_1,

@@ -9,6 +9,6 @@
  * @internal
  */
 export interface IIntegerRange {
-    start: number;
-    end: number;
+	start: number;
+	end: number;
 }

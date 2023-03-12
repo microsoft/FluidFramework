@@ -236,6 +236,13 @@ export class GenericTransaction {
 		return this.state.steps;
 	}
 
+	/**
+	 * Information about why the transaction failed. Defined if and only if `status` is invalid or malformed.
+	 */
+	public get failure(): TransactionInternal.Failure | undefined {
+		return (this.state as FailingTransactionState).failure;
+	}
+
 	/** @returns the final `EditStatus` and `TreeView` after all changes are applied. */
 	public close(): EditingResult {
 		assert(this.open, 'transaction has already been closed');

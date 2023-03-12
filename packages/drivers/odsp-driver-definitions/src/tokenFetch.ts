@@ -7,49 +7,49 @@
  * Represents token response
  */
 export interface TokenResponse {
-    /** Token value */
-    token: string;
+	/** Token value */
+	token: string;
 
-    /** Flag indicating whether token was obtained from local cache */
-    fromCache?: boolean;
+	/** Flag indicating whether token was obtained from local cache */
+	fromCache?: boolean;
 }
 
 /**
  * Represents access token fetch options
  */
 export interface TokenFetchOptions {
-    /**
-     * Value indicating whether fresh token has to be returned.
-     * If false then it is okay to return cached unexpired token if available.
-     */
-    refresh: boolean;
+	/**
+	 * Value indicating whether fresh token has to be returned.
+	 * If false then it is okay to return cached unexpired token if available.
+	 */
+	refresh: boolean;
 
-    /**
-     * Claims that have to be passed with token fetch request.
-     * These can be used to specify additional information that must be passed to token authority.
-     */
-    claims?: string;
+	/**
+	 * Claims that have to be passed with token fetch request.
+	 * These can be used to specify additional information that must be passed to token authority.
+	 */
+	claims?: string;
 
-    /**
-     * Tenant id of authority that must be handling token fetch.
-     * If it is not specified then it is up to token fetching logic to determine which tenant authority
-     * to use to issue access token.
-     */
-    tenantId?: string;
+	/**
+	 * Tenant id of authority that must be handling token fetch.
+	 * If it is not specified then it is up to token fetching logic to determine which tenant authority
+	 * to use to issue access token.
+	 */
+	tenantId?: string;
 }
 
 /**
  * Represents access token fetch options for ODSP resource
  */
 export interface OdspResourceTokenFetchOptions extends TokenFetchOptions {
-    /** Site url representing ODSP resource location */
-    siteUrl: string;
+	/** Site url representing ODSP resource location */
+	siteUrl: string;
 
-    /** ODSP drive id where resource resides. Optional, used only when fetching token to access ODSP file */
-    driveId?: string;
+	/** ODSP drive id where resource resides. Optional, used only when fetching token to access ODSP file */
+	driveId?: string;
 
-    /** ODSP item id representing resource. Optional, used only when fetching token to access ODSP file */
-    itemId?: string;
+	/** ODSP item id representing resource. Optional, used only when fetching token to access ODSP file */
+	itemId?: string;
 }
 
 /**
@@ -66,10 +66,14 @@ export type TokenFetcher<T> = (options: T) => Promise<string | TokenResponse | n
  * @param tokenResponse - return value for TokenFetcher method
  * @returns Token value
  */
-export const tokenFromResponse = (tokenResponse: string | TokenResponse | null | undefined): string | null =>
-    tokenResponse === null || typeof tokenResponse === "string"
-        ? tokenResponse
-        : tokenResponse === undefined ? null : tokenResponse.token;
+export const tokenFromResponse = (
+	tokenResponse: string | TokenResponse | null | undefined,
+): string | null =>
+	tokenResponse === null || typeof tokenResponse === "string"
+		? tokenResponse
+		: tokenResponse === undefined
+		? null
+		: tokenResponse.token;
 
 /**
  * Helper method which returns flag indicating whether token response comes from local cache
@@ -77,10 +81,12 @@ export const tokenFromResponse = (tokenResponse: string | TokenResponse | null |
  * @returns Value indicating whether response came from cache.
  * Undefined is returned when we could not determine the source of token.
  */
-export const isTokenFromCache = (tokenResponse: string | TokenResponse | null): boolean | undefined =>
-    tokenResponse === null || typeof tokenResponse === "string"
-        ? undefined
-        : tokenResponse.fromCache;
+export const isTokenFromCache = (
+	tokenResponse: string | TokenResponse | null,
+): boolean | undefined =>
+	tokenResponse === null || typeof tokenResponse === "string"
+		? undefined
+		: tokenResponse.fromCache;
 
 /**
  * Identity types supported by ODSP driver.
@@ -90,6 +96,7 @@ export const isTokenFromCache = (tokenResponse: string | TokenResponse | null): 
 export type IdentityType = "Consumer" | "Enterprise";
 
 export type InstrumentedStorageTokenFetcher = (
-    options: TokenFetchOptions,
-    name: string,
-    alwaysRecordTokenFetchTelemetry?: boolean) => Promise<string | null>;
+	options: TokenFetchOptions,
+	name: string,
+	alwaysRecordTokenFetchTelemetry?: boolean,
+) => Promise<string | null>;

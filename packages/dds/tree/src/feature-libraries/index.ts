@@ -3,83 +3,64 @@
  * Licensed under the MIT License.
  */
 export {
-    DefaultChangeset,
-    DefaultChangeFamily,
-    defaultChangeFamily,
-    DefaultEditBuilder,
-    ValueFieldEditBuilder,
-    OptionalFieldEditBuilder,
-    SequenceFieldEditBuilder,
+	DefaultChangeset,
+	DefaultChangeFamily,
+	defaultChangeFamily,
+	DefaultEditBuilder,
+	IDefaultEditBuilder,
+	ValueFieldEditBuilder,
+	OptionalFieldEditBuilder,
+	SequenceFieldEditBuilder,
 } from "./defaultChangeFamily";
 export {
-    anchorSymbol,
-    EditableField,
-    EditableTree,
-    EditableTreeContext,
-    EditableTreeOrPrimitive,
-    getEditableTreeContext,
-    getTypeSymbol,
-    isArrayField,
-    isPrimitive,
-    isPrimitiveValue,
-    isUnwrappedNode,
-    PrimitiveValue,
-    proxyTargetSymbol,
-    UnwrappedEditableField,
-    UnwrappedEditableTree,
-    valueSymbol,
+	EditableField,
+	EditableTree,
+	EditableTreeContext,
+	EditableTreeOrPrimitive,
+	getEditableTreeContext,
+	typeSymbol,
+	indexSymbol,
+	isEditableField,
+	isPrimitive,
+	isUnwrappedNode,
+	proxyTargetSymbol,
+	UnwrappedEditableField,
+	UnwrappedEditableTree,
+	getField,
+	createField,
+	replaceField,
+	parentField,
 } from "./editable-tree";
+
+export {
+	typeNameSymbol,
+	valueSymbol,
+	isPrimitiveValue,
+	getPrimaryField,
+	PrimitiveValue,
+	ContextuallyTypedNodeDataObject,
+	ContextuallyTypedNodeData,
+	MarkedArrayLike,
+	isWritableArrayLike,
+	isContextuallyTypedNodeDataObject,
+	getFieldKind,
+	getFieldSchema,
+	ArrayLikeMut,
+} from "./contextuallyTyped";
+
 export { ForestIndex } from "./forestIndex";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
-export { buildForest, ObjectForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor, getSchemaString } from "./schemaIndex";
+export { buildForest } from "./object-forest";
+export { SchemaIndex, SchemaEditor } from "./schemaIndex";
+// This is exported because its useful for doing comparisons of schema in tests.
+export { getSchemaString } from "./schemaIndexFormat";
 export {
-    ChangesetTag,
-    ClientId,
-    DUMMY_INVERSE_VALUE,
-    DUMMY_INVERT_TAG,
-    Effects,
-    GapCount,
-    getAttachLength,
-    getInputLength,
-    getOutputLength,
-    HasLength,
-    HasOpId,
-    isAttach,
-    isDetachMark,
-    isEqualGapEffect,
-    isEqualGaps,
-    isEqualPlace,
-    isGapEffectMark,
-    isObjMark,
-    isReattach,
-    isSkipMark,
-    isTomb,
-    MarkListFactory,
-    NodeCount,
-    NodePath,
-    OpId,
-    PlacePath,
-    ProtoNode,
-    RangeType,
-    sequenceChangeEncoder,
-    SequenceChangeFamily,
-    sequenceChangeFamily,
-    SequenceChangeRebaser,
-    sequenceChangeRebaser,
-    SequenceChangeset,
-    SequenceEditBuilder,
-    Skip,
-    splitMarkOnInput,
-    splitMarkOnOutput,
-    Tiebreak,
-    toDelta,
-    Transposed,
-    TreeForestPath,
-    TreeRootPath,
-    tryExtendMark,
-} from "./sequence-change-family";
-export { singleStackTreeCursor, CursorAdapter } from "./treeCursorUtils";
+	singleStackTreeCursor,
+	CursorAdapter,
+	prefixPath,
+	prefixFieldPath,
+	CursorWithNode,
+} from "./treeCursorUtils";
 export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -89,42 +70,60 @@ export { SequenceField };
 export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaultSchema";
 
 export {
-    isNeverField,
-    ModularChangeFamily,
-    ModularEditBuilder,
-    FieldChangeHandler,
-    FieldChangeRebaser,
-    FieldChangeEncoder,
-    FieldEditor,
-    NodeChangeset,
-    ValueChange,
-    FieldChangeMap,
-    FieldChange,
-    FieldChangeset,
-    ToDelta,
-    NodeChangeComposer,
-    NodeChangeInverter,
-    NodeChangeRebaser,
-    NodeChangeEncoder,
-    NodeChangeDecoder,
-    FieldKind,
-    Multiplicity,
-    FullSchemaPolicy,
-    allowsRepoSuperset,
-    GenericChangeset,
-    genericFieldKind,
+	ChangesetLocalId,
+	isNeverField,
+	ModularChangeFamily,
+	ModularEditBuilder,
+	EditDescription,
+	FieldChangeHandler,
+	FieldChangeRebaser,
+	FieldChangeEncoder,
+	FieldEditor,
+	NodeChangeset,
+	ValueChange,
+	FieldChangeMap,
+	FieldChange,
+	FieldChangeset,
+	ToDelta,
+	ModularChangeset,
+	IdAllocator,
+	NodeChangeComposer,
+	NodeChangeInverter,
+	NodeChangeRebaser,
+	NodeChangeEncoder,
+	NodeChangeDecoder,
+	CrossFieldManager,
+	CrossFieldTarget,
+	FieldKind,
+	Multiplicity,
+	FullSchemaPolicy,
+	allowsRepoSuperset,
+	GenericChangeset,
+	genericFieldKind,
+	NodeReviver,
+	RevisionIndexer,
+	RevisionMetadataSource,
+	RevisionInfo,
+	TypedSchema,
 } from "./modular-schema";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
-import * as FieldKinds from "./defaultFieldKinds";
-export { FieldKinds };
-
-export { applyModifyToTree, mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
-    EditManagerIndex,
-    CommitEncoder,
-    commitEncoderFromChangeEncoder,
-    parseSummary as loadSummary,
-    stringifySummary as encodeSummary,
+	EditManagerIndex,
+	CommitEncoder,
+	parseSummary as loadSummary,
+	stringifySummary as encodeSummary,
 } from "./editManagerIndex";
+
+export { ForestRepairDataStore } from "./forestRepairDataStore";
+export { dummyRepairDataStore } from "./fakeRepairDataStore";
+
+export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
+
+export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
+
+// Split into separate import and export for compatibility with API-Extractor.
+import * as SchemaAware from "./schema-aware";
+import * as FieldKinds from "./defaultFieldKinds";
+export { SchemaAware, FieldKinds };

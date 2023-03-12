@@ -4,10 +4,10 @@
  */
 
 import {
-    ICodeDetailsLoader,
-    IFluidCodeDetails,
-    IFluidModuleWithDetails,
-    IRuntimeFactory,
+	ICodeDetailsLoader,
+	IFluidCodeDetails,
+	IFluidModuleWithDetails,
+	IRuntimeFactory,
 } from "@fluidframework/container-definitions";
 
 /**
@@ -15,12 +15,12 @@ import {
  * advanced code loading it simplifies the instantiation of the model loader.
  */
 export class StaticCodeLoader implements ICodeDetailsLoader {
-    public constructor(private readonly runtimeFactory: IRuntimeFactory) { }
+	public constructor(private readonly runtimeFactory: IRuntimeFactory) {}
 
-    public async load(details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
-        return {
-            module: { fluidExport: this.runtimeFactory },
-            details,
-        };
-    }
+	public async load(details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> {
+		return {
+			module: { fluidExport: this.runtimeFactory },
+			details,
+		};
+	}
 }

@@ -19,41 +19,43 @@ export type ICatchUpMonitor = IDisposable;
  * that were known at the time the monitor was created.
  */
 export class CatchUpMonitor implements ICatchUpMonitor {
-    private readonly targetSeqNumber: number;
-    private caughtUp: boolean = false;
+	private readonly targetSeqNumber: number;
+	private caughtUp: boolean = false;
 
-    private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
-        if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
-            this.caughtUp = true;
-            this.listener();
-        }
-    };
+	private readonly opHandler = (message: Pick<ISequencedDocumentMessage, "sequenceNumber">) => {
+		if (!this.caughtUp && message.sequenceNumber >= this.targetSeqNumber) {
+			this.caughtUp = true;
+			this.listener();
+		}
+	};
 
-    /**
-     * Create the CatchUpMonitor, setting the target sequence number to wait for based on DeltaManager's current state.
-     */
-    constructor(
-        private readonly deltaManager: IDeltaManager<any, any>,
-        private readonly listener: CaughtUpListener,
-    ) {
-        this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
+	/**
+	 * Create the CatchUpMonitor, setting the target sequence number to wait for based on DeltaManager's current state.
+	 */
+	constructor(
+		private readonly deltaManager: IDeltaManager<any, any>,
+		private readonly listener: CaughtUpListener,
+	) {
+		this.targetSeqNumber = this.deltaManager.lastKnownSeqNumber;
 
-        assert(this.targetSeqNumber >= this.deltaManager.lastSequenceNumber,
-            0x37c /* Cannot wait for seqNumber below last processed sequence number */);
+		assert(
+			this.targetSeqNumber >= this.deltaManager.lastSequenceNumber,
+			0x37c /* Cannot wait for seqNumber below last processed sequence number */,
+		);
 
-        this.deltaManager.on("op", this.opHandler);
+		this.deltaManager.on("op", this.opHandler);
 
-        // Simulate the last processed op to set caughtUp in case we already are
-        this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
-    }
+		// Simulate the last processed op to set caughtUp in case we already are
+		this.opHandler({ sequenceNumber: this.deltaManager.lastSequenceNumber });
+	}
 
-    public disposed: boolean = false;
-    public dispose() {
-        if (this.disposed) {
-            return;
-        }
-        this.disposed = true;
+	public disposed: boolean = false;
+	public dispose() {
+		if (this.disposed) {
+			return;
+		}
+		this.disposed = true;
 
-        this.deltaManager.off("op", this.opHandler);
-    }
+		this.deltaManager.off("op", this.opHandler);
+	}
 }

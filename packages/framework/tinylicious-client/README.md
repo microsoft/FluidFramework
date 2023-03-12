@@ -37,11 +37,13 @@ See [`ContainerSchema`](./src/types.ts) in [`./src/types/ts`](./src/types.ts) fo
 
 ```javascript
 const schema = {
-    initialObjects: {
-        /* ... */
-    },
-    dynamicObjectTypes: [ /*...*/ ],
-}
+	initialObjects: {
+		/* ... */
+	},
+	dynamicObjectTypes: [
+		/*...*/
+	],
+};
 const tinyliciousClient = new TinyliciousClient();
 const { container, services } = await tinyliciousClient.createContainer(schema);
 
@@ -49,6 +51,7 @@ const { container, services } = await tinyliciousClient.createContainer(schema);
 // Returned ID can be used to fetch the container via `getContainer` below
 const id = await container.attach();
 ```
+
 ## Using Fluid Containers
 
 Using the default `TinyliciousClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server containers need to be created and retrieved asynchronously.
@@ -70,11 +73,11 @@ The most common way to use Fluid is through initial collaborative objects that a
 
 ```javascript
 const schema = {
-    initialObjects: {
-        map1: SharedMap,
-        text1: SharedString,
-    }
-}
+	initialObjects: {
+		map1: SharedMap,
+		text1: SharedString,
+	},
+};
 const tinyliciousClient = new TinyliciousClient();
 const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
 
@@ -93,11 +96,11 @@ Dynamic objects are loaded on-demand to optimize for data virtualization. To get
 
 ```javascript
 const schema = {
-    initialObjects: {
-        map1: SharedMap,
-    },
-    dynamicObjectTypes: [ SharedString ],
-}
+	initialObjects: {
+		map1: SharedMap,
+	},
+	dynamicObjectTypes: [SharedString],
+};
 const tinyliciousClient = new TinyliciousClient();
 const { container, services } = await tinyliciousClient.getContainer("_unique-id_", schema);
 const map1 = container.initialObjects.map1;

@@ -1,0 +1,20 @@
+# This is a GitHub action that will automatically delete any branches
+# that aren't protected and haven't been committed to in over 6 months.
+
+name: Delete Stale Branches
+on: workflow_dispatch
+
+jobs:
+  stale_branches:
+    name: Cleanup old branches
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # v2
+      - name: Run delete-old-branches-action
+        uses: beatlabs/delete-old-branches-action@db61ade054731e37b5740e23336445fbc75ccd7b # v0.0.9
+        with:
+          repo_token: ${{ github.token }}
+          date: '6 months ago'
+          dry_run: true
+          exclude_open_pr_branches: true

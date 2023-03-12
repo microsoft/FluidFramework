@@ -9,15 +9,17 @@ import { handler as dockerfilePackageHandler } from "./dockerfilePackages";
 import { handler as fluidCaseHandler } from "./fluidCase";
 import { handlers as lockfilesHandlers } from "./lockfiles";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages";
+import { handlers as pnpmHandlers } from "./pnpm";
 
 /**
  * declared file handlers
  */
 export const policyHandlers: Handler[] = [
-    ...copyrightFileHeaderHandlers,
-    ...npmPackageContentsHandlers,
-    dockerfilePackageHandler,
-    fluidCaseHandler,
-    ...lockfilesHandlers,
-    assertShortCodeHandler,
+	...copyrightFileHeaderHandlers,
+	...npmPackageContentsHandlers,
+	dockerfilePackageHandler,
+	fluidCaseHandler,
+	...lockfilesHandlers,
+	assertShortCodeHandler,
+	...pnpmHandlers,
 ];

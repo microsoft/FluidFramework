@@ -12,7 +12,7 @@ Sync branches depending on the batch size passed
 
 ```
 USAGE
-  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-p <value>] [-v]
+  $ flub merge branches -a <value> -s <value> -t <value> -b <value> [-v] [-p <value>]
 
 FLAGS
   -a, --auth=<value>                (required) GitHub authentication token
@@ -32,7 +32,7 @@ Get info about the merge status of branches in the repo. Uses "main" and "next" 
 
 ```
 USAGE
-  $ flub merge info [--json] [-b <value>] [-v]
+  $ flub merge info [-v] [--json] [-b <value>]
 
 FLAGS
   -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.

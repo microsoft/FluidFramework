@@ -50,9 +50,9 @@ Then both clients apply **op 1** by setting **Foo** to **1**.
 But this isn't right.
 Two different users voted for option **Foo**, but the counter now displays **1**.
 
-`SharedCounter` solves this problem by expressing its operations in terms of *increments* and *decrements* rather than as direct value updates.
+`SharedCounter` solves this problem by expressing its operations in terms of _increments_ and _decrements_ rather than as direct value updates.
 
-So for the scenario above, if the system was using `SharedCounter`s to represent the vote counts, **User A** would submit an op *incrementing* **Foo** by **+1**, rather than updating the value of **Foo** from **0** to **1**.
+So for the scenario above, if the system was using `SharedCounter`s to represent the vote counts, **User A** would submit an op _incrementing_ **Foo** by **+1**, rather than updating the value of **Foo** from **0** to **1**.
 At around the same time, **User B** would submit their own **+1** op for **Foo**.
 
 Assuming the same sequencing, both users first apply **op 0** and increment their counter for **Foo** by **+1** (from **0** to **1**).
@@ -85,8 +85,7 @@ For an example of how to create one, please see our workflow examples for [Share
 ### Incrementing / decrementing the value
 
 Once you have created your `SharedCounter`, you can change its value using the [increment][] method.
-This method accepts a positive or negative *integer* to be applied to the shared value.
-
+This method accepts a positive or negative _integer_ to be applied to the shared value.
 
 ```javascript
 sharedCounter.increment(3); // Adds 3 to the current value
@@ -110,24 +109,24 @@ Consider the following code example for configuring a Counter widget:
 const sharedCounter = container.initialObjects.sharedCounter;
 let counterValue = sharedCounter.value;
 
-const incrementButton = document.createElement('button');
+const incrementButton = document.createElement("button");
 button.textContent = "Increment";
-const decrementButton = document.createElement('button');
+const decrementButton = document.createElement("button");
 button.textContent = "Decrement";
 
 // Increment / decrement shared counter value when the corresponding button is clicked
-incrementButton.addEventListener('click', () => sharedCounter.increment(1));
-decrementButton.addEventListener('click', () => sharedCounter.increment(-1));
+incrementButton.addEventListener("click", () => sharedCounter.increment(1));
+decrementButton.addEventListener("click", () => sharedCounter.increment(-1));
 
-const counterValueLabel = document.createElement('label');
+const counterValueLabel = document.createElement("label");
 counterValueLabel.textContent = `${counterValue}`;
 
 // This function will be called each time the shared counter value is incremented
 // (including increments from this client).
 // Update the local counter value and the corresponding label being displayed in the widget.
 const updateCounterValueLabel = (delta) => {
-    counterValue += delta;
-    counterValueLabel.textContent = `${counterValue}`;
+	counterValue += delta;
+	counterValueLabel.textContent = `${counterValue}`;
 };
 
 // Register to be notified when the counter is incremented
@@ -140,22 +139,39 @@ This causes the `incremented` event to be sent to all of the clients who have th
 Since `updateCounterValueLabel` is listening for all `incremented` events, the view will always refresh with the appropriate updated value any time a collaborator increments or decrements the counter value.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
 ## API Documentation
 
 API documentation for **@fluidframework/counter** is available at <https://fluidframework.com/docs/apis/counter>.
+
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+
+<!-- prettier-ignore-end -->
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
+
 [increment]: https://fluidframework.com/docs/apis/counter/isharedcounter-interface#increment-methodsignature
 [incremented]: https://fluidframework.com/docs/apis/counter/isharedcounterevents-interface#_call_-callsignature
-[Optimistic DDS]: https://fluidframework.com/docs/build/dds/#optimistic-data-structures
-[SharedMap]: https://fluidframework.com/docs/data-structures/map
-[SharedMap creation]: https://fluidframework.com/docs/data-structures/map/#creation
+[optimistic dds]: https://fluidframework.com/docs/build/dds/#optimistic-data-structures
+[sharedmap]: https://fluidframework.com/docs/data-structures/map
+[sharedmap creation]: https://fluidframework.com/docs/data-structures/map/#creation

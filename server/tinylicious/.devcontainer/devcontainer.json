@@ -7,10 +7,10 @@
 
 	// "workspaceFolder": "/workspace",
 
-	"settings": { 
+	"settings": {
 		"terminal.integrated.shell.linux": "/usr/bin/zsh"
 	},
-	
+
 	// Uncomment the next line if you want to publish any ports.
 	"appPort": [3000],
 
@@ -20,19 +20,11 @@
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "yarn install",
 
-	"runArgs": [
-		"-v",
-		"/var/run/docker.sock:/var/run/docker.sock",
-		"-u",
-		"node"
-	],
+	"runArgs": ["-v", "/var/run/docker.sock:/var/run/docker.sock", "-u", "node"],
 
-	"extensions": [
-		"dbaeumer.vscode-eslint",
-		"ms-vscode.vscode-typescript-tslint-plugin"
-	],
+	"extensions": ["dbaeumer.vscode-eslint", "ms-vscode.vscode-typescript-tslint-plugin"],
 
 	"remote.extensionKind": {
-        "ms-azuretools.vscode-docker": "workspace"
-    }
+		"ms-azuretools.vscode-docker": "workspace"
+	}
 }

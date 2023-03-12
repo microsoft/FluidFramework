@@ -33,10 +33,10 @@ three data structures that cover a broad range of scenarios:
 
 Fluid Framework packages are published under one of the following npm scopes:
 
-- @fluidframework
-- @fluid-experimental
-- @fluid-internal
-- @fluid-tools
+-   @fluidframework
+-   @fluid-experimental
+-   @fluid-internal
+-   @fluid-tools
 
 In addition to the scoped packages, two unscoped packages are published: the [fluid-framework[] package, described earlier, and the `tinylicious` package, which contains a minimal Fluid server. For more information, see [Tinylicious]({{< relref "tinylicious.md" >}}).
 
@@ -46,18 +46,23 @@ You can [read more about the scopes and their intent][scopes] in the Fluid Frame
 [scopes]: https://github.com/microsoft/FluidFramework/wiki/npm-package-scopes
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+
+<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
 <!-- Links -->
 
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 
@@ -70,5 +75,7 @@ You can [read more about the scopes and their intent][scopes] in the Fluid Frame
 
 [FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

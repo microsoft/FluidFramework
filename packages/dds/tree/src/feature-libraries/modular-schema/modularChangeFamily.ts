@@ -5,427 +5,902 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-    ChangeEncoder,
-    ChangeFamily,
-    ProgressiveEditBuilder,
-    ProgressiveEditBuilderBase,
-    ChangeRebaser,
-    FieldKindIdentifier,
-    AnchorSet,
-    Delta,
-    FieldKey,
-    UpPath,
-    Value,
+	ChangeEncoder,
+	ChangeFamily,
+	ProgressiveEditBuilder,
+	ProgressiveEditBuilderBase,
+	ChangeRebaser,
+	FieldKindIdentifier,
+	AnchorSet,
+	Delta,
+	FieldKey,
+	UpPath,
+	Value,
+	TaggedChange,
+	ReadonlyRepairDataStore,
+	RevisionTag,
+	tagChange,
+	makeAnonChange,
 } from "../../core";
-import { brand, getOrAddEmptyToMap, JsonCompatibleReadOnly } from "../../util";
 import {
-    FieldChangeHandler,
-    FieldChangeMap,
-    FieldChange,
-    FieldChangeset,
-    NodeChangeset,
-    ValueChange,
+	addToNestedSet,
+	brand,
+	getOrAddEmptyToMap,
+	getOrAddInNestedMap,
+	JsonCompatibleReadOnly,
+	Mutable,
+	NestedMap,
+	nestedSetContains,
+	setInNestedMap,
+	tryGetFromNestedMap,
+} from "../../util";
+import { dummyRepairDataStore } from "../fakeRepairDataStore";
+import {
+	ChangesetLocalId,
+	CrossFieldManager,
+	CrossFieldQuerySet,
+	CrossFieldTarget,
+} from "./crossFieldQueries";
+import {
+	FieldChangeHandler,
+	FieldChangeMap,
+	FieldChange,
+	FieldChangeset,
+	NodeChangeset,
+	ValueChange,
+	ModularChangeset,
+	IdAllocator,
+	RevisionInfo,
+	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
+import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
  * as determined by the schema.
  *
  * @sealed
+ * @alpha
  */
 export class ModularChangeFamily
-    implements ChangeFamily<ModularEditBuilder, FieldChangeMap>, ChangeRebaser<FieldChangeMap>
+	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-    readonly encoder: ChangeEncoder<FieldChangeMap>;
-    private readonly childComposer = (childChanges: NodeChangeset[]) =>
-        this.composeNodeChanges(childChanges);
+	public readonly encoder: ChangeEncoder<ModularChangeset>;
 
-    constructor(readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-        this.encoder = new ModularChangeEncoder(this.fieldKinds);
-    }
+	public constructor(public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
+		this.encoder = new ModularChangeEncoder(this.fieldKinds);
+	}
 
-    get rebaser(): ChangeRebaser<FieldChangeMap> {
-        return this;
-    }
+	public get rebaser(): ChangeRebaser<ModularChangeset> {
+		return this;
+	}
 
-    /**
-     * Produces an equivalent list of `FieldChangeset`s that all target the same {@link FieldKind}.
-     * @param changes - The list of `FieldChange`s whose `FieldChangeset`s needs to be normalized.
-     * @returns An object that contains both the equivalent list of `FieldChangeset`s that all
-     * target the same {@link FieldKind}, and the `FieldKind` that they target.
-     * The returned `FieldChangeset`s may be a shallow copy of the input `FieldChange`s.
-     */
-    private normalizeFieldChanges(changes: readonly FieldChange[]): {
-        fieldKind: FieldKind;
-        changesets: FieldChangeset[];
-    } {
-        // TODO: Handle the case where changes have conflicting field kinds
-        const nonGenericChange = changes.find(
-            (change) => change.fieldKind !== genericFieldKind.identifier,
-        );
-        if (nonGenericChange === undefined) {
-            // All the changes are generic
-            return { fieldKind: genericFieldKind, changesets: changes.map((c) => c.change) };
-        }
-        const kind = nonGenericChange.fieldKind;
-        const fieldKind = getFieldKind(this.fieldKinds, kind);
-        const handler = fieldKind.changeHandler;
-        const normalizedChanges = changes.map((change) => {
-            if (change.fieldKind === genericFieldKind.identifier) {
-                // The cast is based on the `fieldKind` check above
-                const genericChange = change.change as unknown as GenericChangeset;
-                return convertGenericChange(
-                    genericChange,
-                    handler,
-                    this.childComposer,
-                ) as FieldChangeset;
-            }
-            return change.change;
-        });
-        return { fieldKind, changesets: normalizedChanges };
-    }
+	/**
+	 * Produces an equivalent list of `FieldChangeset`s that all target the same {@link FieldKind}.
+	 * @param changes - The list of `FieldChange`s whose `FieldChangeset`s needs to be normalized.
+	 * @returns An object that contains both the equivalent list of `FieldChangeset`s that all
+	 * target the same {@link FieldKind}, and the `FieldKind` that they target.
+	 * The returned `FieldChangeset`s may be a shallow copy of the input `FieldChange`s.
+	 */
+	private normalizeFieldChanges(
+		changes: readonly FieldChange[],
+		genId: IdAllocator,
+		revisionMetadata: RevisionMetadataSource,
+	): {
+		fieldKind: FieldKind;
+		changesets: FieldChangeset[];
+	} {
+		// TODO: Handle the case where changes have conflicting field kinds
+		const nonGenericChange = changes.find(
+			(change) => change.fieldKind !== genericFieldKind.identifier,
+		);
+		if (nonGenericChange === undefined) {
+			// All the changes are generic
+			return { fieldKind: genericFieldKind, changesets: changes.map((c) => c.change) };
+		}
+		const kind = nonGenericChange.fieldKind;
+		const fieldKind = getFieldKind(this.fieldKinds, kind);
+		const handler = fieldKind.changeHandler;
+		const normalizedChanges = changes.map((change) => {
+			if (change.fieldKind === genericFieldKind.identifier) {
+				// The cast is based on the `fieldKind` check above
+				const genericChange = change.change as unknown as GenericChangeset;
+				return convertGenericChange(
+					genericChange,
+					handler,
+					(children) =>
+						this.composeNodeChanges(
+							children,
+							genId,
+							newCrossFieldTable(),
+							revisionMetadata,
+						),
+					genId,
+					revisionMetadata,
+				) as FieldChangeset;
+			}
+			return change.change;
+		});
+		return { fieldKind, changesets: normalizedChanges };
+	}
 
-    compose(changes: FieldChangeMap[]): FieldChangeMap {
-        if (changes.length === 1) {
-            return changes[0];
-        }
+	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
+		let maxId = -1;
+		const revInfos: RevisionInfo[] = [];
+		for (const taggedChange of changes) {
+			const change = taggedChange.change;
+			maxId = Math.max(change.maxId ?? -1, maxId);
+			if (change.revisions !== undefined) {
+				revInfos.push(...change.revisions);
+			} else if (taggedChange.revision !== undefined) {
+				const info: Mutable<RevisionInfo> = { tag: taggedChange.revision };
+				if (taggedChange.isRollback === true) {
+					info.isRollback = true;
+				}
+				revInfos.push(info);
+			}
+		}
+		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
+		const genId: IdAllocator = () => brand(++maxId);
+		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
-        const fieldChanges = new Map<FieldKey, FieldChange[]>();
-        for (const change of changes) {
-            for (const [key, fieldChange] of change.entries()) {
-                getOrAddEmptyToMap(fieldChanges, key).push(fieldChange);
-            }
-        }
+		const composedFields = this.composeFieldMaps(
+			changes.map((change) => tagChange(change.change.changes, change.revision)),
+			genId,
+			crossFieldTable,
+			revisionMetadata,
+		);
 
-        const composedFields: FieldChangeMap = new Map();
-        for (const field of fieldChanges.keys()) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const changesForField = fieldChanges.get(field)!;
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
+			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
+			crossFieldTable.fieldsToUpdate = new Set();
+			for (const field of fieldsToUpdate) {
+				const amendedChange = getChangeHandler(
+					this.fieldKinds,
+					field.fieldKind,
+				).rebaser.amendCompose(
+					field.change,
+					(children) =>
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
+					genId,
+					newCrossFieldManager(crossFieldTable),
+					revisionMetadata,
+				);
+				field.change = brand(amendedChange);
+			}
+		}
 
-            const { fieldKind, changesets } = this.normalizeFieldChanges(changesForField);
-            const composedField = fieldKind.changeHandler.rebaser.compose(
-                changesets,
-                this.childComposer,
-            );
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			0x59b /* Should not need more than one amend pass. */,
+		);
+		return makeModularChangeset(composedFields, maxId, revInfos);
+	}
 
-            // TODO: Could optimize by checking that composedField is non-empty
-            composedFields.set(field, {
-                fieldKind: fieldKind.identifier,
-                change: brand(composedField),
-            });
-        }
-        return composedFields;
-    }
+	private composeFieldMaps(
+		changes: TaggedChange<FieldChangeMap>[],
+		genId: IdAllocator,
+		crossFieldTable: CrossFieldTable<ComposeData>,
+		revisionMetadata: RevisionMetadataSource,
+	): FieldChangeMap {
+		const fieldChanges = new Map<FieldKey, FieldChange[]>();
+		for (const change of changes) {
+			for (const [key, fieldChange] of change.change) {
+				const fieldChangeToCompose =
+					fieldChange.revision !== undefined || change.revision === undefined
+						? fieldChange
+						: {
+								...fieldChange,
+								revision: change.revision,
+						  };
 
-    private composeNodeChanges(changes: NodeChangeset[]): NodeChangeset {
-        const fieldChanges = [];
-        let valueChange: ValueChange | undefined;
-        for (const change of changes) {
-            if (change.valueChange !== undefined) {
-                valueChange = change.valueChange;
-            }
-            if (change.fieldChanges !== undefined) {
-                fieldChanges.push(change.fieldChanges);
-            }
-        }
+				getOrAddEmptyToMap(fieldChanges, key).push(fieldChangeToCompose);
+			}
+		}
 
-        const composedFieldChanges = this.compose(fieldChanges);
-        const composedNodeChange: NodeChangeset = {};
-        if (valueChange !== undefined) {
-            composedNodeChange.valueChange = valueChange;
-        }
+		const composedFields: FieldChangeMap = new Map();
+		for (const [field, changesForField] of fieldChanges) {
+			let composedField: FieldChange;
+			if (changesForField.length === 1) {
+				composedField = changesForField[0];
+			} else {
+				const { fieldKind, changesets } = this.normalizeFieldChanges(
+					changesForField,
+					genId,
+					revisionMetadata,
+				);
+				assert(
+					changesets.length === changesForField.length,
+					0x4a8 /* Number of changes should be constant when normalizing */,
+				);
 
-        if (composedFieldChanges.size > 0) {
-            composedNodeChange.fieldChanges = composedFieldChanges;
-        }
+				const manager = newCrossFieldManager(crossFieldTable);
+				const taggedChangesets = changesets.map((change, i) =>
+					tagChange(change, changesForField[i].revision),
+				);
+				const composedChange = fieldKind.changeHandler.rebaser.compose(
+					taggedChangesets,
+					(children) =>
+						this.composeNodeChanges(children, genId, crossFieldTable, revisionMetadata),
+					genId,
+					manager,
+					revisionMetadata,
+				);
 
-        return composedNodeChange;
-    }
+				composedField = {
+					fieldKind: fieldKind.identifier,
+					change: brand(composedChange),
+				};
 
-    invert(changes: FieldChangeMap): FieldChangeMap {
-        const invertedFields: FieldChangeMap = new Map();
+				addFieldData(manager, composedField);
+			}
 
-        for (const [field, fieldChange] of changes.entries()) {
-            const invertedChange = getChangeHandler(
-                this.fieldKinds,
-                fieldChange.fieldKind,
-            ).rebaser.invert(fieldChange.change, (childChanges) =>
-                this.invertNodeChange(childChanges),
-            );
+			// TODO: Could optimize by checking that composedField is non-empty
+			composedFields.set(field, composedField);
+		}
+		return composedFields;
+	}
 
-            invertedFields.set(field, {
-                fieldKind: fieldChange.fieldKind,
-                change: brand(invertedChange),
-            });
-        }
+	private composeNodeChanges(
+		changes: TaggedChange<NodeChangeset>[],
+		genId: IdAllocator,
+		crossFieldTable: CrossFieldTable<ComposeData>,
+		revisionMetadata: RevisionMetadataSource,
+	): NodeChangeset {
+		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
+		let valueChange: ValueChange | undefined;
+		for (const change of changes) {
+			if (change.change.valueChange !== undefined) {
+				valueChange = { ...change.change.valueChange };
+				valueChange.revision ??= change.revision;
+			}
+			if (change.change.fieldChanges !== undefined) {
+				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
+			}
+		}
 
-        return invertedFields;
-    }
+		const composedFieldChanges = this.composeFieldMaps(
+			fieldChanges,
+			genId,
+			crossFieldTable,
+			revisionMetadata,
+		);
+		const composedNodeChange: NodeChangeset = {};
+		if (valueChange !== undefined) {
+			composedNodeChange.valueChange = valueChange;
+		}
 
-    private invertNodeChange(change: NodeChangeset): NodeChangeset {
-        // TODO: Correctly invert `change.valueChange`
-        if (change.fieldChanges === undefined) {
-            return {};
-        }
+		if (composedFieldChanges.size > 0) {
+			composedNodeChange.fieldChanges = composedFieldChanges;
+		}
 
-        return { fieldChanges: this.invert(change.fieldChanges) };
-    }
+		return composedNodeChange;
+	}
 
-    rebase(change: FieldChangeMap, over: FieldChangeMap): FieldChangeMap {
-        const rebasedFields: FieldChangeMap = new Map();
+	/**
+	 * @param change - The change to invert.
+	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
+	 * performing a sandwich rebase.
+	 * @param repairStore - The store to query for repair data.
+	 */
+	public invert(
+		change: TaggedChange<ModularChangeset>,
+		isRollback: boolean,
+		repairStore?: ReadonlyRepairDataStore,
+	): ModularChangeset {
+		let maxId = change.change.maxId ?? -1;
+		const genId: IdAllocator = () => brand(++maxId);
+		const crossFieldTable = newCrossFieldTable<InvertData>();
+		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
 
-        for (const [field, fieldChange] of change.entries()) {
-            const baseChanges = over.get(field);
-            if (baseChanges === undefined) {
-                rebasedFields.set(field, fieldChange);
-            } else {
-                const {
-                    fieldKind,
-                    changesets: [fieldChangeset, baseChangeset],
-                } = this.normalizeFieldChanges([fieldChange, baseChanges]);
-                const rebasedField = fieldKind.changeHandler.rebaser.rebase(
-                    fieldChangeset,
-                    baseChangeset,
-                    (child, baseChild) => this.rebaseNodeChange(child, baseChild),
-                );
+		const invertedFields = this.invertFieldMap(
+			tagChange(change.change.changes, change.revision),
+			genId,
+			resolvedRepairStore,
+			undefined,
+			crossFieldTable,
+		);
 
-                // TODO: Could optimize by skipping this assignment if `rebasedField` is empty
-                rebasedFields.set(field, {
-                    fieldKind: fieldKind.identifier,
-                    change: brand(rebasedField),
-                });
-            }
-        }
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
+			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
+			crossFieldTable.fieldsToUpdate = new Set();
+			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
+				const amendedChange = getChangeHandler(
+					this.fieldKinds,
+					fieldChange.fieldKind,
+				).rebaser.amendInvert(
+					fieldChange.change,
+					originalRevision,
+					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
+						resolvedRepairStore.getNodes(revision, path, fieldKey, index, count),
+					genId,
+					newCrossFieldManager(crossFieldTable),
+				);
+				fieldChange.change = brand(amendedChange);
+			}
+		}
 
-        return rebasedFields;
-    }
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			0x59c /* Should not need more than one amend pass. */,
+		);
 
-    private rebaseNodeChange(change: NodeChangeset, over: NodeChangeset): NodeChangeset {
-        if (change.fieldChanges === undefined || over.fieldChanges === undefined) {
-            return change;
-        }
+		const revInfo = change.change.revisions;
+		return makeModularChangeset(
+			invertedFields,
+			maxId,
+			revInfo === undefined
+				? undefined
+				: (isRollback
+						? revInfo.map(({ tag }) => ({ tag, isRollback: true }))
+						: Array.from(revInfo)
+				  ).reverse(),
+		);
+	}
 
-        return {
-            ...change,
-            fieldChanges: this.rebase(change.fieldChanges, over.fieldChanges),
-        };
-    }
+	private invertFieldMap(
+		changes: TaggedChange<FieldChangeMap>,
+		genId: IdAllocator,
+		repairStore: ReadonlyRepairDataStore,
+		path: UpPath | undefined,
+		crossFieldTable: CrossFieldTable<InvertData>,
+	): FieldChangeMap {
+		const invertedFields: FieldChangeMap = new Map();
 
-    rebaseAnchors(anchors: AnchorSet, over: FieldChangeMap): void {
-        anchors.applyDelta(this.intoDelta(over));
-    }
+		for (const [field, fieldChange] of changes.change) {
+			const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
 
-    intoDelta(change: FieldChangeMap): Delta.Root {
-        const delta: Delta.Root = new Map();
-        for (const [field, fieldChange] of change.entries()) {
-            const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
-                fieldChange.change,
-                (childChange) => this.deltaFromNodeChange(childChange),
-            );
-            delta.set(field, deltaField);
-        }
-        return delta;
-    }
+			const reviver = (
+				revisionTag: RevisionTag,
+				index: number,
+				count: number,
+			): Delta.ProtoNode[] => repairStore.getNodes(revisionTag, path, field, index, count);
 
-    private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
-        const modify: Delta.Modify = {
-            type: Delta.MarkType.Modify,
-        };
+			const manager = newCrossFieldManager(crossFieldTable);
+			const invertedChange = getChangeHandler(
+				this.fieldKinds,
+				fieldChange.fieldKind,
+			).rebaser.invert(
+				{ revision, change: fieldChange.change },
+				(childChanges, index) =>
+					this.invertNodeChange(
+						{ revision, change: childChanges },
+						genId,
+						crossFieldTable,
+						repairStore,
+						index === undefined
+							? undefined
+							: {
+									parent: path,
+									parentField: field,
+									parentIndex: index,
+							  },
+					),
+				reviver,
+				genId,
+				manager,
+			);
 
-        if (change.valueChange !== undefined) {
-            modify.setValue = change.valueChange.value;
-        }
+			const invertedFieldChange: FieldChange = {
+				...fieldChange,
+				change: brand(invertedChange),
+			};
+			invertedFields.set(field, invertedFieldChange);
 
-        if (change.fieldChanges !== undefined) {
-            modify.fields = this.intoDelta(change.fieldChanges);
-        }
+			const invertData: InvertData = {
+				fieldKey: field,
+				fieldChange: invertedFieldChange,
+				path,
+				originalRevision: changes.revision,
+			};
 
-        return modify;
-    }
+			addFieldData(manager, invertData);
+		}
 
-    buildEditor(
-        deltaReceiver: (delta: Delta.Root) => void,
-        anchors: AnchorSet,
-    ): ModularEditBuilder {
-        return new ModularEditBuilder(this, deltaReceiver, anchors);
-    }
+		return invertedFields;
+	}
+
+	private invertNodeChange(
+		change: TaggedChange<NodeChangeset>,
+		genId: IdAllocator,
+		crossFieldTable: CrossFieldTable<InvertData>,
+		repairStore: ReadonlyRepairDataStore,
+		path?: UpPath,
+	): NodeChangeset {
+		const inverse: NodeChangeset = {};
+
+		if (change.change.valueChange !== undefined) {
+			assert(
+				!("revert" in change.change.valueChange),
+				0x4a9 /* Inverting inverse changes is currently not supported */,
+			);
+			assert(
+				path !== undefined,
+				0x59d /* Only existing nodes can have their value restored */,
+			);
+			const revision = change.change.valueChange.revision ?? change.revision;
+			assert(revision !== undefined, 0x59e /* Unable to revert to undefined revision */);
+			inverse.valueChange = { value: repairStore.getValue(revision, path) };
+		}
+
+		if (change.change.fieldChanges !== undefined) {
+			inverse.fieldChanges = this.invertFieldMap(
+				{ ...change, change: change.change.fieldChanges },
+				genId,
+				repairStore,
+				path,
+				crossFieldTable,
+			);
+		}
+
+		return inverse;
+	}
+
+	public rebase(
+		change: ModularChangeset,
+		over: TaggedChange<ModularChangeset>,
+	): ModularChangeset {
+		let maxId = change.maxId ?? -1;
+		const genId: IdAllocator = () => brand(++maxId);
+		const crossFieldTable = newCrossFieldTable<RebaseData>();
+		const revInfos: RevisionInfo[] = [];
+		if (over.change.revisions !== undefined) {
+			revInfos.push(...over.change.revisions);
+		}
+		if (change.revisions !== undefined) {
+			revInfos.push(...change.revisions);
+		}
+		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
+		const rebasedFields = this.rebaseFieldMap(
+			change.changes,
+			tagChange(over.change.changes, over.revision),
+			genId,
+			crossFieldTable,
+			revisionMetadata,
+		);
+
+		if (crossFieldTable.fieldsToUpdate.size > 0) {
+			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
+			crossFieldTable.fieldsToUpdate = new Set();
+			for (const { fieldChange, baseChange } of fieldsToUpdate) {
+				const amendedChange = getChangeHandler(
+					this.fieldKinds,
+					fieldChange.fieldKind,
+				).rebaser.amendRebase(
+					fieldChange.change,
+					baseChange,
+					genId,
+					newCrossFieldManager(crossFieldTable),
+					revisionMetadata,
+				);
+				fieldChange.change = brand(amendedChange);
+			}
+		}
+
+		assert(
+			crossFieldTable.fieldsToUpdate.size === 0,
+			0x59f /* Should not need more than one amend pass. */,
+		);
+
+		return makeModularChangeset(rebasedFields, maxId, change.revisions);
+	}
+
+	private rebaseFieldMap(
+		change: FieldChangeMap,
+		over: TaggedChange<FieldChangeMap>,
+		genId: IdAllocator,
+		crossFieldTable: CrossFieldTable<RebaseData>,
+		revisionMetadata: RevisionMetadataSource,
+	): FieldChangeMap {
+		const rebasedFields: FieldChangeMap = new Map();
+
+		for (const [field, fieldChange] of change) {
+			const baseChanges = over.change.get(field);
+			if (baseChanges === undefined) {
+				rebasedFields.set(field, fieldChange);
+			} else {
+				const {
+					fieldKind,
+					changesets: [fieldChangeset, baseChangeset],
+				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
+
+				const { revision } = fieldChange.revision !== undefined ? fieldChange : over;
+				const taggedBaseChange = { revision, change: baseChangeset };
+				const manager = newCrossFieldManager(crossFieldTable);
+				const rebasedField = fieldKind.changeHandler.rebaser.rebase(
+					fieldChangeset,
+					taggedBaseChange,
+					(child, baseChild) =>
+						this.rebaseNodeChange(
+							child,
+							{ revision, change: baseChild },
+							genId,
+							crossFieldTable,
+							revisionMetadata,
+						),
+					genId,
+					manager,
+					revisionMetadata,
+				);
+
+				const rebasedFieldChange: FieldChange = {
+					fieldKind: fieldKind.identifier,
+					change: brand(rebasedField),
+				};
+
+				const rebaseData: RebaseData = {
+					fieldChange: rebasedFieldChange,
+					baseChange: taggedBaseChange,
+				};
+
+				addFieldData(manager, rebaseData);
+				rebasedFields.set(field, rebasedFieldChange);
+			}
+		}
+
+		return rebasedFields;
+	}
+
+	private rebaseNodeChange(
+		change: NodeChangeset,
+		over: TaggedChange<NodeChangeset>,
+		genId: IdAllocator,
+		crossFieldTable: CrossFieldTable<RebaseData>,
+		revisionMetadata: RevisionMetadataSource,
+	): NodeChangeset {
+		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
+			return change;
+		}
+
+		return {
+			...change,
+			fieldChanges: this.rebaseFieldMap(
+				change.fieldChanges,
+				{
+					...over,
+					change: over.change.fieldChanges,
+				},
+				genId,
+				crossFieldTable,
+				revisionMetadata,
+			),
+		};
+	}
+
+	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
+		anchors.applyDelta(this.intoDelta(over));
+	}
+
+	public intoDelta(change: ModularChangeset): Delta.Root {
+		return this.intoDeltaImpl(change.changes);
+	}
+
+	/**
+	 * @param change - The change to convert into a delta.
+	 * @param repairStore - The store to query for repair data.
+	 * @param path - The path of the node being altered by the change as defined by the input context.
+	 * Undefined for the root and for nodes that do not exist in the input context.
+	 */
+	private intoDeltaImpl(change: FieldChangeMap): Delta.Root {
+		const delta: Map<FieldKey, Delta.MarkList> = new Map();
+		for (const [field, fieldChange] of change) {
+			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
+				fieldChange.change,
+				(childChange): Delta.Modify => this.deltaFromNodeChange(childChange),
+			);
+			delta.set(field, deltaField);
+		}
+		return delta;
+	}
+
+	private deltaFromNodeChange(change: NodeChangeset): Delta.Modify {
+		const modify: Mutable<Delta.Modify> = {
+			type: Delta.MarkType.Modify,
+		};
+
+		const valueChange = change.valueChange;
+		if (valueChange !== undefined) {
+			modify.setValue = valueChange.value;
+		}
+
+		if (change.fieldChanges !== undefined) {
+			modify.fields = this.intoDeltaImpl(change.fieldChanges);
+		}
+
+		return modify;
+	}
+
+	public buildEditor(
+		changeReceiver: (change: ModularChangeset) => void,
+		anchors: AnchorSet,
+	): ModularEditBuilder {
+		return new ModularEditBuilder(this, changeReceiver, anchors);
+	}
 }
 
-function getFieldKind(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    kind: FieldKindIdentifier,
+function revisionMetadataSourceFromInfo(revInfos: readonly RevisionInfo[]): RevisionMetadataSource {
+	const getIndex = (tag: RevisionTag): number => {
+		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
+		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
+		return index;
+	};
+	const getInfo = (tag: RevisionTag): RevisionInfo => {
+		return revInfos[getIndex(tag)];
+	};
+	return { getIndex, getInfo };
+}
+
+export function getFieldKind(
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	kind: FieldKindIdentifier,
 ): FieldKind {
-    if (kind === genericFieldKind.identifier) {
-        return genericFieldKind;
-    }
-    const fieldKind = fieldKinds.get(kind);
-    assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
-    return fieldKind;
+	if (kind === genericFieldKind.identifier) {
+		return genericFieldKind;
+	}
+	const fieldKind = fieldKinds.get(kind);
+	assert(fieldKind !== undefined, 0x3ad /* Unknown field kind */);
+	return fieldKind;
 }
 
-function getChangeHandler(
-    fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-    kind: FieldKindIdentifier,
+export function getChangeHandler(
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	kind: FieldKindIdentifier,
 ): FieldChangeHandler<unknown> {
-    return getFieldKind(fieldKinds, kind).changeHandler;
+	return getFieldKind(fieldKinds, kind).changeHandler;
 }
 
-class ModularChangeEncoder extends ChangeEncoder<FieldChangeMap> {
-    constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-        super();
-    }
-
-    encodeForJson(formatVersion: number, change: FieldChangeMap): JsonCompatibleReadOnly {
-        const encodedFields: EncodedFieldChangeMap = {};
-        for (const [field, fieldChange] of change.entries()) {
-            const encodedChange = getChangeHandler(
-                this.fieldKinds,
-                fieldChange.fieldKind,
-            ).encoder.encodeForJson(formatVersion, fieldChange.change, (childChange) =>
-                this.encodeNodeChangesForJson(formatVersion, childChange),
-            );
-
-            const encodedField: EncodedFieldChange & JsonCompatibleReadOnly = {
-                fieldKind: fieldChange.fieldKind,
-                change: encodedChange,
-            };
-
-            encodedFields[field as string] = encodedField;
-        }
-
-        return encodedFields;
-    }
-
-    private encodeNodeChangesForJson(
-        formatVersion: number,
-        change: NodeChangeset,
-    ): JsonCompatibleReadOnly {
-        const encodedChange: EncodedNodeChangeset = {};
-        if (change.valueChange !== undefined) {
-            encodedChange.valueChange = change.valueChange;
-        }
-
-        if (change.fieldChanges !== undefined) {
-            const encodedFieldChanges = this.encodeForJson(formatVersion, change.fieldChanges);
-            encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
-        }
-
-        return encodedChange as JsonCompatibleReadOnly;
-    }
-
-    decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): FieldChangeMap {
-        const encodedChange = change as unknown as EncodedFieldChangeMap;
-        const decodedFields: FieldChangeMap = new Map();
-        for (const field of Object.keys(encodedChange)) {
-            const fieldChange = encodedChange[field];
-            const fieldChangeset = getChangeHandler(
-                this.fieldKinds,
-                fieldChange.fieldKind,
-            ).encoder.decodeJson(formatVersion, fieldChange.change, (encodedChild) =>
-                this.decodeNodeChangesetFromJson(formatVersion, encodedChild),
-            );
-
-            decodedFields.set(brand(field), {
-                fieldKind: fieldChange.fieldKind,
-                change: brand(fieldChangeset),
-            });
-        }
-
-        return decodedFields;
-    }
-
-    private decodeNodeChangesetFromJson(
-        formatVersion: number,
-        change: JsonCompatibleReadOnly,
-    ): NodeChangeset {
-        const encodedChange = change as EncodedNodeChangeset;
-        const decodedChange: NodeChangeset = {};
-        if (encodedChange.valueChange !== undefined) {
-            decodedChange.valueChange = encodedChange.valueChange;
-        }
-
-        if (encodedChange.fieldChanges !== undefined) {
-            decodedChange.fieldChanges = this.decodeJson(formatVersion, encodedChange.fieldChanges);
-        }
-
-        return decodedChange;
-    }
-}
-interface EncodedNodeChangeset {
-    valueChange?: ValueChange;
-    fieldChanges?: EncodedFieldChangeMap;
+interface CrossFieldTable<TFieldData> {
+	srcTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
+	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
+	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
+	fieldsToUpdate: Set<TFieldData>;
 }
 
-type EncodedFieldChangeMap = Record<string, EncodedFieldChange> & JsonCompatibleReadOnly;
+function newCrossFieldTable<T>(): CrossFieldTable<T> {
+	return {
+		srcTable: new Map(),
+		dstTable: new Map(),
+		srcDependents: new Map(),
+		dstDependents: new Map(),
+		fieldsToUpdate: new Set(),
+	};
+}
 
-interface EncodedFieldChange {
-    fieldKind: FieldKindIdentifier;
-    change: JsonCompatibleReadOnly;
+interface InvertData {
+	originalRevision: RevisionTag | undefined;
+	fieldKey: FieldKey;
+	fieldChange: FieldChange;
+	path: UpPath | undefined;
+}
+
+type ComposeData = FieldChange;
+
+interface RebaseData {
+	fieldChange: FieldChange;
+	baseChange: TaggedChange<FieldChangeset>;
+}
+
+interface CrossFieldManagerI<T> extends CrossFieldManager {
+	table: CrossFieldTable<T>;
+	srcQueries: CrossFieldQuerySet;
+	dstQueries: CrossFieldQuerySet;
+	fieldInvalidated: boolean;
+}
+
+function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFieldManagerI<T> {
+	const srcQueries = new Map();
+	const dstQueries = new Map();
+	const getMap = (target: CrossFieldTarget) =>
+		target === CrossFieldTarget.Source ? crossFieldTable.srcTable : crossFieldTable.dstTable;
+
+	const getQueries = (target: CrossFieldTarget) =>
+		target === CrossFieldTarget.Source ? srcQueries : dstQueries;
+
+	const manager = {
+		table: crossFieldTable,
+		srcQueries,
+		dstQueries,
+		fieldInvalidated: false,
+		getOrCreate: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: ChangesetLocalId,
+			newValue: unknown,
+			invalidateDependents: boolean,
+		) => {
+			if (invalidateDependents) {
+				const dependents =
+					target === CrossFieldTarget.Source
+						? crossFieldTable.srcDependents
+						: crossFieldTable.dstDependents;
+				const dependent = tryGetFromNestedMap(dependents, revision, id);
+				if (dependent !== undefined) {
+					crossFieldTable.fieldsToUpdate.add(dependent);
+				}
+
+				if (nestedSetContains(getQueries(target), revision, id)) {
+					manager.fieldInvalidated = true;
+				}
+			}
+			return getOrAddInNestedMap(getMap(target), revision, id, newValue);
+		},
+		get: (
+			target: CrossFieldTarget,
+			revision: RevisionTag | undefined,
+			id: ChangesetLocalId,
+			addDependency: boolean,
+		) => {
+			if (addDependency) {
+				addToNestedSet(getQueries(target), revision, id);
+			}
+			return tryGetFromNestedMap(getMap(target), revision, id);
+		},
+	};
+
+	return manager;
+}
+
+function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
+	for (const [revision, ids] of manager.srcQueries) {
+		for (const id of ids.keys()) {
+			assert(
+				tryGetFromNestedMap(manager.table.srcDependents, revision, id) === undefined,
+				0x564 /* TODO: Support multiple dependents per key */,
+			);
+			setInNestedMap(manager.table.srcDependents, revision, id, fieldData);
+		}
+	}
+
+	for (const [revision, ids] of manager.dstQueries) {
+		for (const id of ids.keys()) {
+			assert(
+				tryGetFromNestedMap(manager.table.dstDependents, revision, id) === undefined,
+				0x565 /* TODO: Support multiple dependents per key */,
+			);
+			setInNestedMap(manager.table.dstDependents, revision, id, fieldData);
+		}
+	}
+
+	if (manager.fieldInvalidated) {
+		manager.table.fieldsToUpdate.add(fieldData);
+	}
+}
+
+function makeModularChangeset(
+	changes: FieldChangeMap,
+	maxId: number = -1,
+	revisions: readonly RevisionInfo[] | undefined = undefined,
+): ModularChangeset {
+	const changeset: Mutable<ModularChangeset> = { changes };
+	if (revisions !== undefined && revisions.length > 0) {
+		changeset.revisions = revisions;
+	}
+	if (maxId >= 0) {
+		changeset.maxId = brand(maxId);
+	}
+	return changeset;
+}
+
+class ModularChangeEncoder extends ChangeEncoder<ModularChangeset> {
+	public constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
+		super();
+	}
+
+	public encodeForJson(formatVersion: number, change: ModularChangeset): JsonCompatibleReadOnly {
+		return encodeForJsonFormat0(this.fieldKinds, change);
+	}
+
+	public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): ModularChangeset {
+		return decodeJsonFormat0(this.fieldKinds, change);
+	}
 }
 
 /**
  * @sealed
+ * @alpha
  */
 export class ModularEditBuilder
-    extends ProgressiveEditBuilderBase<FieldChangeMap>
-    implements ProgressiveEditBuilder<FieldChangeMap>
+	extends ProgressiveEditBuilderBase<ModularChangeset>
+	implements ProgressiveEditBuilder<ModularChangeset>
 {
-    constructor(
-        family: ChangeFamily<unknown, FieldChangeMap>,
-        deltaReceiver: (delta: Delta.Root) => void,
-        anchors: AnchorSet,
-    ) {
-        super(family, deltaReceiver, anchors);
-    }
+	public constructor(
+		family: ChangeFamily<unknown, ModularChangeset>,
+		changeReceiver: (change: ModularChangeset) => void,
+		anchors: AnchorSet,
+	) {
+		super(family, changeReceiver, anchors);
+	}
 
-    /**
-     * Adds a change to the edit builder
-     * @param path - path to the parent node of the field being edited
-     * @param field - the field which is being edited
-     * @param fieldKind - the kind of the field
-     * @param change - the change to the field
-     */
-    submitChange(
-        path: UpPath | undefined,
-        field: FieldKey,
-        fieldKind: FieldKindIdentifier,
-        change: FieldChangeset,
-    ): void {
-        let fieldChangeMap: FieldChangeMap = new Map([[field, { fieldKind, change }]]);
+	public apply(change: ModularChangeset): void {
+		this.applyChange(change);
+	}
 
-        let remainingPath = path;
-        while (remainingPath !== undefined) {
-            const nodeChange: NodeChangeset = { fieldChanges: fieldChangeMap };
-            const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
-                remainingPath.parentIndex,
-                nodeChange,
-            );
-            fieldChangeMap = new Map([
-                [
-                    remainingPath.parentField,
-                    { fieldKind: genericFieldKind.identifier, change: brand(fieldChange) },
-                ],
-            ]);
-            remainingPath = remainingPath.parent;
-        }
+	/**
+	 * Adds a change to the edit builder
+	 * @param path - path to the parent node of the field being edited
+	 * @param field - the field which is being edited
+	 * @param fieldKind - the kind of the field
+	 * @param change - the change to the field
+	 * @param maxId - the highest `ChangesetLocalId` used in this change
+	 */
+	public submitChange(
+		path: UpPath | undefined,
+		field: FieldKey,
+		fieldKind: FieldKindIdentifier,
+		change: FieldChangeset,
+		maxId: ChangesetLocalId = brand(-1),
+	): void {
+		const changeMap = this.buildChangeMap(path, field, fieldKind, change);
+		this.applyChange(makeModularChangeset(changeMap, maxId));
+	}
 
-        this.applyChange(fieldChangeMap);
-    }
+	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
+		const changeMaps = changes.map((change) =>
+			makeAnonChange(
+				makeModularChangeset(
+					this.buildChangeMap(change.path, change.field, change.fieldKind, change.change),
+				),
+			),
+		);
+		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
+		if (maxId >= 0) {
+			composedChange.maxId = maxId;
+		}
+		this.applyChange(composedChange);
+	}
 
-    setValue(path: UpPath, value: Value): void {
-        const valueChange: ValueChange = value === undefined ? {} : { value };
-        const nodeChange: NodeChangeset = { valueChange };
-        const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
-            path.parentIndex,
-            nodeChange,
-        );
-        this.submitChange(
-            path.parent,
-            path.parentField,
-            genericFieldKind.identifier,
-            brand(fieldChange),
-        );
-    }
+	private buildChangeMap(
+		path: UpPath | undefined,
+		field: FieldKey,
+		fieldKind: FieldKindIdentifier,
+		change: FieldChangeset,
+	): FieldChangeMap {
+		let fieldChangeMap: FieldChangeMap = new Map([[field, { fieldKind, change }]]);
+
+		let remainingPath = path;
+		while (remainingPath !== undefined) {
+			const nodeChange: NodeChangeset = { fieldChanges: fieldChangeMap };
+			const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+				remainingPath.parentIndex,
+				nodeChange,
+			);
+			fieldChangeMap = new Map([
+				[
+					remainingPath.parentField,
+					{ fieldKind: genericFieldKind.identifier, change: brand(fieldChange) },
+				],
+			]);
+			remainingPath = remainingPath.parent;
+		}
+
+		return fieldChangeMap;
+	}
+
+	public setValue(path: UpPath, value: Value): void {
+		const valueChange: ValueChange = value === undefined ? {} : { value };
+		const nodeChange: NodeChangeset = { valueChange };
+		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+			path.parentIndex,
+			nodeChange,
+		);
+		this.submitChange(
+			path.parent,
+			path.parentField,
+			genericFieldKind.identifier,
+			brand(fieldChange),
+		);
+	}
+}
+
+/**
+ * @alpha
+ */
+export interface EditDescription {
+	path: UpPath | undefined;
+	field: FieldKey;
+	fieldKind: FieldKindIdentifier;
+	change: FieldChangeset;
 }
