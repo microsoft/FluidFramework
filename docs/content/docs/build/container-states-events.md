@@ -2,7 +2,6 @@
 title: Container states and events
 menuPosition: 2
 author: rick-kirkham
-editor: tylerbutler
 ---
 
 This article provides a detailed description of the lifecycle states of the containers and container events. It assumes that you are familiar with [Containers](./containers.md).
