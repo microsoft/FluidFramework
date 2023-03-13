@@ -35,6 +35,7 @@ import {
 	TransactionResult,
 	TreeSchemaIdentifier,
 	UpPath,
+	Value,
 	ValueSchema,
 } from "../../core";
 
@@ -133,8 +134,8 @@ const testSchema: SchemaData = {
 };
 
 const testSubtrees: Map<string, JsonableTree> = new Map<string, JsonableTree>([
-	["Number", { value: 0, type: dataSchema.name }],
-	["Float", { value: 0.0, type: dataSchema.name }],
+	["Number", { value: 1, type: dataSchema.name }],
+	["Float", { value: 1.0, type: dataSchema.name }],
 	["String", { value: "testString", type: dataSchema.name }],
 	["Boolean", { value: true, type: dataSchema.name }],
 	[
@@ -163,7 +164,7 @@ describe("SharedTree benchmarks", () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep, dataType);
 					},
 					benchmarkFn: () => {
-						readTreeAsJSObject(tree);
+						readTreeAsJSObject(tree, 0, dataType);
 					},
 				});
 			}
@@ -176,7 +177,7 @@ describe("SharedTree benchmarks", () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide, dataType);
 					},
 					benchmarkFn: () => {
-						readTreeAsJSObject(tree);
+						readTreeAsJSObject(tree, 0, dataType);
 					},
 				});
 			}
@@ -253,7 +254,7 @@ describe("SharedTree benchmarks", () => {
 						);
 					},
 					benchmarkFn: () => {
-						readCursorTree(tree.forest, numberOfNodes, TreeShape.Deep);
+						readCursorTree(tree.forest, numberOfNodes, TreeShape.Deep, dataType);
 					},
 				});
 			}
@@ -276,7 +277,7 @@ describe("SharedTree benchmarks", () => {
 						);
 					},
 					benchmarkFn: () => {
-						readCursorTree(tree.forest, numberOfNodes, TreeShape.Wide);
+						readCursorTree(tree.forest, numberOfNodes, TreeShape.Wide, dataType);
 					},
 				});
 			}
@@ -710,13 +711,19 @@ function getJSTestTreeDeep(numberOfNodes: number, dataType: string): Jsonable {
 	return tree;
 }
 
-function readTreeAsJSObject(tree: Jsonable) {
+function readTreeAsJSObject(tree: Jsonable, initialTotal: Jsonable, dataType: string): Jsonable {
+	let currentTotal = initialTotal as number | string | boolean | JsonableTree;
 	for (const key of Object.keys(tree)) {
-		if (typeof tree[key] === "object" && tree[key] !== null) readTreeAsJSObject(tree[key]);
+		if (typeof tree[key] === "object" && tree[key] !== null) {
+			currentTotal = readTreeAsJSObject(tree[key], currentTotal, dataType);
+		}
 		if (key === "value") {
 			assert(tree[key] !== undefined);
+			const currentDataType = typeof tree[key] === "object" ? "Map" : "string";
+			currentTotal = applyOperationDuringRead(currentTotal, tree[key], currentDataType);
 		}
 	}
+	return currentTotal;
 }
 
 /**
@@ -754,29 +761,62 @@ function getLeafNodeFromJSObject(tree: Jsonable): Jsonable {
 	}
 }
 
-function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shape: TreeShape) {
+function readCursorTree(
+	forest: IForestSubscription,
+	numberOfNodes: number,
+	shape: TreeShape,
+	dataType: string,
+) {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	assert(readCursor.firstNode());
 	let nodesRead = 0;
+	let currentTotal = 0 as number | string | boolean | JsonableTree;
 	switch (shape) {
 		case TreeShape.Deep:
 			for (let i = 0; i < numberOfNodes; i++) {
 				assert(readCursor.firstField());
 				assert(readCursor.firstNode());
+				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value, dataType);
 			}
 			break;
 		case TreeShape.Wide:
 			assert(readCursor.firstField());
 			for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
 				nodesRead += 1;
+				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value, dataType);
 			}
 			assert(nodesRead === numberOfNodes);
 			break;
 		default:
-			unreachableCase(shape);
+			throw new Error("unreachable case");
 	}
 	readCursor.free();
+}
+
+function applyOperationDuringRead(
+	current: number | string | boolean | JsonableTree,
+	value: Value,
+	dataType: string,
+) {
+	assert(value !== undefined);
+	switch (dataType) {
+		case "Number": {
+			return (current as number) + (value as number);
+		}
+		case "Float":
+			return (current as number) + (value as number);
+		case "String":
+			return (current as string) + (value[0] as string);
+		case "Boolean":
+			return (current as boolean) !== (current as boolean);
+		case "Map": {
+			const addValue = value.mapField2.mapField3[0].value;
+			return (current as string) + (addValue[0] as string);
+		}
+		default:
+			return current;
+	}
 }
 
 /**
