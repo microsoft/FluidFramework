@@ -41,6 +41,7 @@ import {
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
+	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -807,12 +808,31 @@ export class ModularEditBuilder
 	extends ProgressiveEditBuilderBase<ModularChangeset>
 	implements ProgressiveEditBuilder<ModularChangeset>
 {
+	private transactionDepth: number = 0;
+	private idAllocator: IdAllocator;
+
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		changeReceiver: (change: ModularChangeset) => void,
 		anchors: AnchorSet,
 	) {
 		super(family, changeReceiver, anchors);
+		this.idAllocator = () => brand(0);
+	}
+
+	public override enterTransaction(): void {
+		this.transactionDepth += 1;
+		if (this.transactionDepth === 1) {
+			this.idAllocator = idAllocatorFromMaxId();
+		}
+	}
+
+	public override exitTransaction(): void {
+		assert(this.transactionDepth > 0, "Cannot exist inexistent transaction");
+		this.transactionDepth -= 1;
+		if (this.transactionDepth === 0) {
+			this.idAllocator = () => brand(0);
+		}
 	}
 
 	public apply(change: ModularChangeset): void {
@@ -851,6 +871,10 @@ export class ModularEditBuilder
 			composedChange.maxId = maxId;
 		}
 		this.applyChange(composedChange);
+	}
+
+	public generateId(): ChangesetLocalId {
+		return this.idAllocator();
 	}
 
 	private buildChangeMap(

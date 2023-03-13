@@ -26,11 +26,8 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeReviver,
-	IdAllocator,
-	idAllocatorFromMaxId,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
-import { assert } from "@fluidframework/common-utils";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -125,30 +122,20 @@ export class DefaultEditBuilder
 	implements ProgressiveEditBuilder<DefaultChangeset>, IDefaultEditBuilder
 {
 	private readonly modularBuilder: ModularEditBuilder;
-	private transactionDepth: number = 0;
-	private genId: IdAllocator;
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchors: AnchorSet,
 	) {
-		this.genId = () => brand(0);
 		this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
 	}
 
 	public enterTransaction(): void {
-		this.transactionDepth += 1;
-		if (this.transactionDepth === 1) {
-			this.genId = idAllocatorFromMaxId();
-		}
+		this.modularBuilder.enterTransaction();
 	}
 	public exitTransaction(): void {
-		assert(this.transactionDepth > 0, "Cannot exist inexistent transaction");
-		this.transactionDepth -= 1;
-		if (this.transactionDepth === 0) {
-			this.genId = () => brand(0);
-		}
+		this.modularBuilder.exitTransaction();
 	}
 
 	public apply(change: DefaultChangeset): void {
@@ -194,7 +181,7 @@ export class DefaultEditBuilder
 			sourceIndex,
 			count,
 			destIndex,
-			this.genId(),
+			this.modularBuilder.generateId(),
 		);
 		this.modularBuilder.submitChanges(
 			[
@@ -231,7 +218,12 @@ export class DefaultEditBuilder
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.move(sourceIndex, count, destIndex, this.genId()),
+					sequence.changeHandler.editor.move(
+						sourceIndex,
+						count,
+						destIndex,
+						this.modularBuilder.generateId(),
+					),
 				);
 				this.modularBuilder.submitChange(
 					parent,
