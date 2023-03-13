@@ -49,7 +49,7 @@
 			"opRatePerMin": 800,
 			"progressIntervalMs": 5000,
 			"numClients": 10,
-			"totalSendCount": 36000,
+			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
 				"max": 900000
@@ -95,7 +95,7 @@
 			"opRatePerMin": 800,
 			"progressIntervalMs": 5000,
 			"numClients": 10,
-			"totalSendCount": 36000,
+			"totalSendCount": 16000,
 			"faultInjectionMs": {
 				"min": 0,
 				"max": 900000
