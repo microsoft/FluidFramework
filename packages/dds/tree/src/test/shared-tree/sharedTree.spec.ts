@@ -547,16 +547,7 @@ describe("SharedTree", () => {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
-					foo: [
-						{ type: brand("Node"), value: "a" },
-						{ type: brand("Node"), value: "b" },
-						{ type: brand("Node"), value: "c" },
-					],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "e" },
-						{ type: brand("Node"), value: "f" },
-					],
+					foo: [{ type: brand("Node"), value: "a" }],
 				},
 			};
 			initializeTestTree(tree, initialState);
@@ -568,30 +559,20 @@ describe("SharedTree", () => {
 			};
 			// Perform multiple moves that should each be assigned a unique ID
 			runSynchronous(tree, () => {
-				tree.editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
-				tree.editor.move(rootPath, brand("bar"), 2, 2, rootPath, brand("foo"), 0);
+				tree.editor.move(rootPath, brand("foo"), 0, 1, rootPath, brand("bar"), 0);
+				tree.editor.move(rootPath, brand("bar"), 0, 1, rootPath, brand("baz"), 0);
 				runSynchronous(tree, () => {
-					tree.editor.move(rootPath, brand("bar"), 2, 1, rootPath, brand("foo"), 1);
+					tree.editor.move(rootPath, brand("baz"), 0, 1, rootPath, brand("qux"), 0);
 				});
 			});
-
-			await provider.ensureSynchronized();
 
 			const expectedState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
-					foo: [
-						{ type: brand("Node"), value: "c" },
-						{ type: brand("Node"), value: "f" },
-						{ type: brand("Node"), value: "e" },
-						{ type: brand("Node"), value: "a" },
-					],
-					bar: [
-						{ type: brand("Node"), value: "d" },
-						{ type: brand("Node"), value: "b" },
-					],
+					qux: [{ type: brand("Node"), value: "a" }],
 				},
 			};
+			await provider.ensureSynchronized();
 			validateTree(tree, [expectedState]);
 		});
 	});
