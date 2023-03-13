@@ -19,6 +19,8 @@ import {
 	Lumberjack,
 	LumberEventName,
 	Lumber,
+	QueuedMessageProperties,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
 
@@ -78,21 +80,24 @@ export class ScriptoriumLambda implements IPartitionLambda {
 					LumberEventName.ScriptoriumProcessBatch,
 					{
 						timestampReadyToProcess: new Date().toISOString(),
-						kafkaPartition: this.pendingOffset?.partition,
-						batchOffsetStart: this.pendingOffset?.offset,
-						batchOffsetEnd: this.pendingOffset?.offset,
-						totalBatchSize: boxcar.contents.length,
+						[QueuedMessageProperties.partition]: this.pendingOffset?.partition,
+						[QueuedMessageProperties.offsetStart]: this.pendingOffset?.offset,
+						[QueuedMessageProperties.offsetEnd]: this.pendingOffset?.offset,
+						[CommonProperties.totalBatchSize]: boxcar.contents.length,
 					},
 				);
 			} else {
 				// previous batch is still waiting to be processed, update properties in the existing metric
-				this.pendingMetric.setProperty("batchOffsetEnd", this.pendingOffset?.offset);
+				this.pendingMetric.setProperty(
+					QueuedMessageProperties.offsetEnd,
+					this.pendingOffset?.offset,
+				);
 				const currentBatchSize = boxcar.contents.length;
 				const previousBatchSize = Number(
-					this.pendingMetric.properties.get("totalBatchSize"),
+					this.pendingMetric.properties.get(CommonProperties.totalBatchSize),
 				);
 				this.pendingMetric.setProperty(
-					"totalBatchSize",
+					CommonProperties.totalBatchSize,
 					previousBatchSize + currentBatchSize,
 				);
 			}
