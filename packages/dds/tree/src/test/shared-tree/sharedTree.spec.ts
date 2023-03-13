@@ -671,16 +671,14 @@ describe("SharedTree", () => {
 			};
 
 			// Delete c
-			tree1.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(rootPath, brand("foo"));
+			runSynchronous(tree1, () => {
+				const field = tree1.editor.sequenceField(rootPath, brand("foo"));
 				field.delete(2, 1);
-				return TransactionResult.Apply;
 			});
 
 			// Move bc between d and e.
-			tree2.runTransaction((forest, editor) => {
-				editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
-				return TransactionResult.Apply;
+			runSynchronous(tree2, () => {
+				tree2.editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
 			});
 
 			await provider.ensureSynchronized();
