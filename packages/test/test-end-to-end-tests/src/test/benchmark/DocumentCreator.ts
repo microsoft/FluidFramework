@@ -20,8 +20,8 @@ import { DocumentMap } from "./DocumentMap";
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
-	documentType: DocumentType;
 	benchmarkType: BenchmarkType;
+	documentType: DocumentType | string | undefined;
 }
 
 export interface IDocumentProps extends IDocumentCreatorProps {
