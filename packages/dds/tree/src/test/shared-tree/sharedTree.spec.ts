@@ -562,7 +562,7 @@ describe("SharedTree", () => {
 			const root = tree1.context.root.getNode(0);
 
 			const log: string[] = [];
-			const unsubscribe = root[on]("changed", () => log.push("change"));
+			const unsubscribe = root[on]("changing", () => log.push("change"));
 			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root[valueSymbol] = 5;

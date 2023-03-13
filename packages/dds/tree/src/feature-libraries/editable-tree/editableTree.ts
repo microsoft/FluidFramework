@@ -121,14 +121,17 @@ export const on: unique symbol = Symbol("editable-tree:on");
  * - Design how events should be ordered.
  * - Include sub-deltas in events.
  * - Add more events.
+ * - Have some events (or a way to defer events) until the tree can be read.
  *
  * @alpha
  */
 export interface EditableTreeEvents {
 	/**
-	 * A change to a specific EditableTree node.
+	 * A specific EditableTree node is changing.
+	 * This includes its values and fields.
+	 * Note that this is shallow: it does not include changes to the values of nodes it its fields for example.
 	 */
-	changed(): void;
+	changing(): void;
 }
 
 /**
@@ -723,9 +726,9 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
-		assert(eventName === "changed", "unexpected eventName");
-		const unsubscribeFromValueChange = this.anchorNode.on("valueChange", () => listener());
-		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChange", () =>
+		assert(eventName === "changing", "unexpected eventName");
+		const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () => listener());
+		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
 			listener(),
 		);
 		return () => {

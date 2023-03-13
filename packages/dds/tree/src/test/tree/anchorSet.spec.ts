@@ -224,8 +224,8 @@ describe("AnchorSet", () => {
 		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
-		anchors.on("childrenChange", log.logger("root childrenChange"));
-		anchors.on("treeChange", log.logger("root treeChange"));
+		anchors.on("childrenChanging", log.logger("root childrenChange"));
+		anchors.on("treeChanging", log.logger("root treeChange"));
 
 		const deleteMark: Delta.Delete = {
 			type: Delta.MarkType.Delete,
@@ -244,9 +244,9 @@ describe("AnchorSet", () => {
 		const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
 		const node0 = anchors.locate(anchor0) ?? assert.fail();
 
-		node0.on("childrenChange", log.logger("childrenChange"));
-		node0.on("subtreeChange", log.logger("subtreeChange"));
-		node0.on("valueChange", log.logger("valueChange"));
+		node0.on("childrenChanging", log.logger("childrenChange"));
+		node0.on("subtreeChanging", log.logger("subtreeChange"));
+		node0.on("valueChanging", log.logger("valueChange"));
 		node0.on("afterDelete", log.logger("afterDelete"));
 
 		log.expect([]);

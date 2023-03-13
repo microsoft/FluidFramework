@@ -84,10 +84,8 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
  * Thus these events must not trigger reading of the anchorSet or forest.
  *
  * TODO:
- * - Design how events should be ordered.
  * - Include sub-deltas in events.
  * - Add more events.
- * - Work out how slots should interact with event related lifetime extension.
  *
  * @alpha
  */
@@ -103,24 +101,24 @@ export interface AnchorEvents {
 	afterDelete(anchor: AnchorNode): void;
 
 	/**
-	 * A change to what children the node has.
+	 * What children the node has is changing.
 	 *
 	 * @remarks
 	 * Does not include edits of child subtrees: instead only includes changes to which nodes are in this node's fields.
 	 */
-	childrenChange(anchor: AnchorNode): void;
+	childrenChanging(anchor: AnchorNode): void;
 
 	/**
-	 * Something in this tree changed.
-	 * Called on every parent (transitively) that changed.
+	 * Something in this tree is changing.
+	 * Called on every parent (transitively) when a change is occurring.
 	 * Includes changes to this node itself.
 	 */
-	subtreeChange(anchor: AnchorNode): void;
+	subtreeChanging(anchor: AnchorNode): void;
 
 	/**
-	 * Value on this node changed.
+	 * Value on this node is changing.
 	 */
-	valueChange(anchor: AnchorNode, value: Value): void;
+	valueChanging(anchor: AnchorNode, value: Value): void;
 }
 
 /**
@@ -137,14 +135,14 @@ export interface AnchorEvents {
  */
 export interface AnchorSetRootEvents {
 	/**
-	 * A change to what children are at the root.
+	 * What children are at the root is changing.
 	 */
-	childrenChange(anchors: AnchorSet): void;
+	childrenChanging(anchors: AnchorSet): void;
 
 	/**
-	 * Something in the tree changed.
+	 * Something in the tree is changing.
 	 */
-	treeChange(anchors: AnchorSet): void;
+	treeChanging(anchors: AnchorSet): void;
 }
 
 /**
@@ -567,16 +565,16 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			onDelete: (start: number, count: number): void => {
 				assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
 				maybeWithNode(
-					(p) => p.events.emit("childrenChange", p),
-					() => this.events.emit("childrenChange", this),
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
 				);
 				this.moveChildren(count, { parent, parentField, parentIndex: start }, undefined);
 			},
 			onInsert: (start: number, content: Delta.ProtoNode[]): void => {
 				assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
 				maybeWithNode(
-					(p) => p.events.emit("childrenChange", p),
-					() => this.events.emit("childrenChange", this),
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
 				);
 				this.moveChildren(content.length, undefined, {
 					parent,
@@ -587,29 +585,29 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
 				maybeWithNode(
-					(p) => p.events.emit("childrenChange", p),
-					() => this.events.emit("childrenChange", this),
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
 				);
 				moveTable.set(id, { parent, parentField, parentIndex: start });
 			},
 			onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
 				maybeWithNode(
-					(p) => p.events.emit("childrenChange", p),
-					() => this.events.emit("childrenChange", this),
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
 				);
 				const srcPath =
 					moveTable.get(id) ?? fail("Must visit a move in after its move out");
 				this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
 			},
 			onSetValue: (value: Value): void => {
-				maybeWithNode((p) => p.events.emit("valueChange", p, value));
+				maybeWithNode((p) => p.events.emit("valueChanging", p, value));
 			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 				parent = { parent, parentField, parentIndex: index };
 				parentField = undefined;
-				maybeWithNode((p) => p.events.emit("subtreeChange", p));
+				maybeWithNode((p) => p.events.emit("subtreeChanging", p));
 			},
 			exitNode: (index: number): void => {
 				assert(parent !== undefined, 0x3ac /* Must have parent node */);
@@ -623,7 +621,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 				parentField = undefined;
 			},
 		};
-		this.events.emit("treeChange", this);
+		this.events.emit("treeChanging", this);
 		visitDelta(delta, visitor);
 	}
 }
