@@ -946,10 +946,7 @@ export class MergeTree {
 		}
 		let slideToSegment: ISegment | undefined;
 		const goFurtherToFindSlideToSegment = (seg) => {
-			if (
-				seg.seq !== UnassignedSequenceNumber &&
-				!isRemovedAndAckedOrMovedAndAcked(segment)
-			) {
+			if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAckedOrMovedAndAcked(seg)) {
 				slideToSegment = seg;
 				return false;
 			}
