@@ -110,13 +110,13 @@
 		"wait-on": "7.0.1",
 		"yargs": "13.2.2"
 	},
+	"overrides": {
+		"request@2.88.2": {
+			"qs": "^6.11.0"
+		}
+	},
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	},
-	"overrides": {
-		"request": {
-			"qs": "^6.11.0"
-		}
 	}
 }
