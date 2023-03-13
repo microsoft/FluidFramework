@@ -2,27 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+// import { IAudience } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { AudienceChangeLogEntry } from "../Logs";
-import { HasContainerId } from "./DebuggerMessages";
-
 import { IDebuggerMessage } from "./Messages";
-
-/**
- * Inbound event requesting {@link AudienceChangeLogEntry} of the Container with the specific ID.
- * Will result in the {@link AudienceEventMessage} message being posted.
- *
- * @public
- */
-export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
-	type: "GET_AUDIENCE_EVENT";
-}
 
 /**
  * Message data format used by {@link AudienceEventMessage}.
  * @public
  */
-export interface AudienceEventMessageData extends HasContainerId {
+export interface AudienceEventMessageData {
 	/**
 	 * Contents of the Audience event
 	 */
