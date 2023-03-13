@@ -6,6 +6,7 @@ import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
+	AudienceChangeLogEntry, 
 	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
@@ -13,7 +14,6 @@ import {
 	HasContainerId,
 } from "@fluid-tools/client-debugger";
 import { extensionMessageSource } from "../messaging";
-import { AudienceChangeLogEntry } from "../../../../client-debugger/client-debugger/src/";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(AudienceView)";
@@ -60,10 +60,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const message: AudienceEventMessage = untypedMessage as AudienceEventMessage;
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				setAudienceHistory(message.data.audienceHistory);
 				return true;
 			},
