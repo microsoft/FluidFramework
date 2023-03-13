@@ -110,6 +110,10 @@
 		"uuid": "^8.3.1"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_SharedMatrix": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

@@ -104,6 +104,13 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_SharedDirectory": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SharedMap": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
