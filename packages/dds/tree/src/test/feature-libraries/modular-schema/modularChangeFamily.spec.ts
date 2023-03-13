@@ -180,6 +180,16 @@ const nodeChanges2: NodeChangeset = {
 	]),
 };
 
+const nodeChange3: NodeChangeset = {
+	fieldChanges: new Map([
+		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+	]),
+	valueConstraint: {
+		value: "a",
+		violated: false,
+	},
+};
+
 const rootChange1a: ModularChangeset = {
 	changes: new Map([
 		[
@@ -267,6 +277,18 @@ const rootChange2Generic: ModularChangeset = {
 				change: brand(
 					genericFieldKind.changeHandler.editor.buildChildChange(0, nodeChanges2),
 				),
+			},
+		],
+	]),
+};
+
+const rootChange3: ModularChangeset = {
+	changes: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChange3),
 			},
 		],
 	]),
@@ -758,6 +780,13 @@ describe("ModularChangeFamily", () => {
 		const encoded = JSON.stringify(family.encoder.encodeForJson(version, rootChange1a));
 		const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
 		assert.deepEqual(decoded, rootChange1a);
+	});
+
+	it("Json encoding with constraint", () => {
+		const version = 0;
+		const encoded = JSON.stringify(family.encoder.encodeForJson(version, rootChange3));
+		const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
+		assert.deepEqual(decoded, rootChange3);
 	});
 
 	it("build child change", () => {
