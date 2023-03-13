@@ -6,7 +6,7 @@ import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
-	AudienceChangeLogEntry, 
+	AudienceChangeLogEntry,
 	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
