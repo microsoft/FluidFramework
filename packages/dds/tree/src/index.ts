@@ -211,6 +211,7 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	ValueConstraint,
 	TypedSchema,
 	SchemaAware,
 	ArrayLikeMut,

@@ -604,6 +604,8 @@ export type IdAllocator = () => ChangesetLocalId;
 // @alpha
 export interface IDefaultEditBuilder {
     // (undocumented)
+    addValueConstraint(path: UpPath, value: Value): void;
+    // (undocumented)
     move(sourcePath: UpPath | undefined, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath | undefined, destField: FieldKey, destIndex: number): void;
     // (undocumented)
     optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
@@ -952,6 +954,8 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
 export interface ModularChangeset {
     // (undocumented)
     changes: FieldChangeMap;
+    // (undocumented)
+    constraintViolationCount?: number;
     maxId?: ChangesetLocalId;
     readonly revisions?: readonly RevisionInfo[];
 }
@@ -959,6 +963,8 @@ export interface ModularChangeset {
 // @alpha @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChangeset> implements ProgressiveEditBuilder<ModularChangeset> {
     constructor(family: ChangeFamily<unknown, ModularChangeset>, changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet);
+    // (undocumented)
+    addValueConstraint(path: UpPath, currentValue: Value): void;
     // (undocumented)
     apply(change: ModularChangeset): void;
     // (undocumented)
@@ -1062,6 +1068,8 @@ export interface NodeChangeset {
     fieldChanges?: FieldChangeMap;
     // (undocumented)
     valueChange?: ValueChange;
+    // (undocumented)
+    valueConstraint?: ValueConstraint;
 }
 
 // @alpha
@@ -1567,6 +1575,14 @@ export type Value = undefined | TreeValue;
 export interface ValueChange {
     revision?: RevisionTag;
     value?: Value;
+}
+
+// @alpha (undocumented)
+export interface ValueConstraint {
+    // (undocumented)
+    value: Value;
+    // (undocumented)
+    violated: boolean;
 }
 
 // @alpha (undocumented)
