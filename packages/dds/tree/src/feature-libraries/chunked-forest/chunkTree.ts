@@ -223,7 +223,7 @@ function tryShapeForFieldSchema(
 	key: FieldKey,
 	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
-	const kind = schema.policy.fieldKinds.get(type.kind) ?? fail("missing FieldKind");
+	const kind = schema.policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
 	if (kind.multiplicity !== Multiplicity.Value) {
 		return undefined;
 	}

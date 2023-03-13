@@ -4184,7 +4184,6 @@ importers:
       '@types/chai': ^4.0.0
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^9.1.1
-      '@types/random-js': ^1.0.31
       '@types/uuid': ^8.3.0
       buffer: ^6.0.3
       chai: ^4.2.0
@@ -4200,7 +4199,6 @@ importers:
       mocha: ^10.0.0
       nyc: ^15.0.0
       prettier: ~2.6.2
-      random-js: ^1.0.8
       rimraf: ^2.6.2
       sorted-btree: ^1.8.0
       typescript: ~4.5.5
@@ -4240,7 +4238,6 @@ importers:
       '@types/chai': 4.3.4
       '@types/lru-cache': 5.1.1
       '@types/mocha': 9.1.1
-      '@types/random-js': 1.0.31
       '@types/uuid': 8.3.4
       chai: 4.3.7
       concurrently: 6.3.0
@@ -4253,7 +4250,6 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      random-js: 1.0.8
       rimraf: 2.7.1
       typescript: 4.5.5
 
@@ -9256,6 +9252,7 @@ importers:
 
   packages/test/test-service-load:
     specifiers:
+      '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/build-cli': ^0.12.0
       '@fluidframework/aqueduct': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -9285,7 +9282,6 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.36
-      '@types/random-js': ^1.0.31
       commander: ^5.1.0
       concurrently: ^6.2.0
       cross-env: ^7.0.2
@@ -9294,12 +9290,12 @@ importers:
       nyc: ^15.0.0
       prettier: ~2.6.2
       ps-node: ^0.1.6
-      random-js: ^1.0.8
       rimraf: ^2.6.2
       start-server-and-test: ^1.11.7
       tinylicious: 0.6.0
       typescript: ~4.5.5
     dependencies:
+      '@fluid-internal/stochastic-test-utils': link:../stochastic-test-utils
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -9323,7 +9319,6 @@ importers:
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       commander: 5.1.0
       ps-node: 0.1.6
-      random-js: 1.0.8
       start-server-and-test: 1.14.0
       tinylicious: 0.6.0
     devDependencies:
@@ -9335,7 +9330,6 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/node': 14.18.36
-      '@types/random-js': 1.0.31
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -22144,7 +22138,7 @@ packages:
   /axios/0.21.4_debug@4.3.2:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.2_debug@4.3.2
+      follow-redirects: 1.15.2
     transitivePeerDependencies:
       - debug
 
@@ -27478,17 +27472,6 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
-
-  /follow-redirects/1.15.2_debug@4.3.2:
-    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
-    dependencies:
-      debug: 4.3.2
 
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
