@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag, TaggedChange } from "../../core";
 import {
 	addToNestedSet,
+	brand,
 	fail,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
@@ -16,6 +17,7 @@ import {
 	tryGetFromNestedMap,
 } from "../../util";
 import {
+	ChangesetLocalId,
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,

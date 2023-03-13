@@ -16,6 +16,7 @@ import {
 	Value,
 	ITreeCursor,
 	RevisionTag,
+	ChangeFamilyEditor,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -25,8 +26,11 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 	NodeReviver,
+	IdAllocator,
+	idAllocatorFromMaxId,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+import { assert } from "@fluidframework/common-utils";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -121,13 +125,30 @@ export class DefaultEditBuilder
 	implements ProgressiveEditBuilder<DefaultChangeset>, IDefaultEditBuilder
 {
 	private readonly modularBuilder: ModularEditBuilder;
+	private transactionDepth: number = 0;
+	private genId: IdAllocator;
 
 	public constructor(
-		family: ChangeFamily<unknown, DefaultChangeset>,
+		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchors: AnchorSet,
 	) {
+		this.genId = () => brand(0);
 		this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+	}
+
+	public enterTransaction(): void {
+		this.transactionDepth += 1;
+		if (this.transactionDepth === 1) {
+			this.genId = idAllocatorFromMaxId();
+		}
+	}
+	public exitTransaction(): void {
+		assert(this.transactionDepth > 0, "Cannot exist inexistent transaction");
+		this.transactionDepth -= 1;
+		if (this.transactionDepth === 0) {
+			this.genId = () => brand(0);
+		}
 	}
 
 	public apply(change: DefaultChangeset): void {
@@ -169,7 +190,12 @@ export class DefaultEditBuilder
 		destField: FieldKey,
 		destIndex: number,
 	): void {
-		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex);
+		const changes = sequence.changeHandler.editor.move(
+			sourceIndex,
+			count,
+			destIndex,
+			this.genId(),
+		);
 		this.modularBuilder.submitChanges(
 			[
 				{
@@ -205,7 +231,7 @@ export class DefaultEditBuilder
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.move(sourceIndex, count, destIndex),
+					sequence.changeHandler.editor.move(sourceIndex, count, destIndex, this.genId()),
 				);
 				this.modularBuilder.submitChange(
 					parent,

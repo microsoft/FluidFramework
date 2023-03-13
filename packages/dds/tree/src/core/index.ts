@@ -134,6 +134,7 @@ export {
 export {
 	ChangeEncoder,
 	ChangeFamily,
+	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 } from "./change-family";

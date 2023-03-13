@@ -21,6 +21,7 @@ import {
 	RevisionTag,
 	tagChange,
 	makeAnonChange,
+	ChangeFamilyEditor,
 } from "../../core";
 import {
 	addToNestedSet,
@@ -807,7 +808,7 @@ export class ModularEditBuilder
 	implements ProgressiveEditBuilder<ModularChangeset>
 {
 	public constructor(
-		family: ChangeFamily<unknown, ModularChangeset>,
+		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		changeReceiver: (change: ModularChangeset) => void,
 		anchors: AnchorSet,
 	) {
