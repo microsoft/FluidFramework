@@ -9300,6 +9300,7 @@ importers:
 
   packages/test/test-service-load:
     specifiers:
+      '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluid-tools/build-cli': ^0.12.0
       '@fluidframework/aqueduct': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -9329,7 +9330,6 @@ importers:
       '@rushstack/eslint-config': ^2.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.36
-      '@types/random-js': ^1.0.31
       commander: ^5.1.0
       concurrently: ^6.2.0
       cross-env: ^7.0.2
@@ -9338,12 +9338,12 @@ importers:
       nyc: ^15.0.0
       prettier: ~2.6.2
       ps-node: ^0.1.6
-      random-js: ^1.0.8
       rimraf: ^2.6.2
       start-server-and-test: ^1.11.7
       tinylicious: 0.6.0
       typescript: ~4.5.5
     dependencies:
+      '@fluid-internal/stochastic-test-utils': link:../stochastic-test-utils
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -9367,7 +9367,6 @@ importers:
       '@fluidframework/tool-utils': link:../../utils/tool-utils
       commander: 5.1.0
       ps-node: 0.1.6
-      random-js: 1.0.8
       start-server-and-test: 1.14.0
       tinylicious: 0.6.0
     devDependencies:
@@ -9379,7 +9378,6 @@ importers:
       '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/node': 14.18.36
-      '@types/random-js': 1.0.31
       concurrently: 6.3.0
       cross-env: 7.0.3
       eslint: 8.6.0
