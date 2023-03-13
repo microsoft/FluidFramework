@@ -4,6 +4,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
+		"lib": ["ES2017", "ES2018.Promise", "ES2018.AsyncIterable", "DOM", "DOM.Iterable"],
 	},
 	"include": ["src/**/*"],
 }

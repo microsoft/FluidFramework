@@ -4,3 +4,4 @@
  */
 
 export { DocumentDeltaConnection } from "./documentDeltaConnection";
+export { fetchMessagesInParallel } from "./fetchMessagesInParallel";

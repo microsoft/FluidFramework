@@ -10,6 +10,7 @@ import { IAnyDriverError } from '@fluidframework/driver-definitions';
 import { IClientConfiguration } from '@fluidframework/protocol-definitions';
 import { IConnect } from '@fluidframework/protocol-definitions';
 import { IConnected } from '@fluidframework/protocol-definitions';
+import { IDeltasFetchResult } from '@fluidframework/driver-definitions';
 import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentDeltaConnection } from '@fluidframework/driver-definitions';
 import { IDocumentDeltaConnectionEvents } from '@fluidframework/driver-definitions';
@@ -80,6 +81,9 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     submitSignal(message: IDocumentMessage): void;
     get version(): string;
 }
+
+// @public
+export const fetchMessagesInParallel: (getMessages: (from: number, to: number) => Promise<IDeltasFetchResult>, from: number, to: number | undefined, maxConcurrentRequests: number, messagesPerRequest: number, abortSignal?: AbortSignal | undefined) => AsyncIterableIterator<ISequencedDocumentMessage[]>;
 
 // (No @packageDocumentation comment for this package)
 
