@@ -84,7 +84,7 @@ export class SchemaIndex implements Index, SummaryElement {
 		});
 	}
 
-	newLocalState(changeDelta: Delta.Root): void {
+	public newLocalState(changeDelta: Delta.Root): void {
 		// TODO: apply schema changes.
 		// Extend delta to include them, or maybe have some higher level edit type that includes them and deltas?
 	}
@@ -184,7 +184,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	 * TODO: Shared tree needs a pattern for handling non-changeset operations.
 	 * See TODO on `SharedTree.processCore`.
 	 */
-	tryHandleOp(message: ISequencedDocumentMessage): boolean {
+	public tryHandleOp(message: ISequencedDocumentMessage): boolean {
 		const op: JsonCompatibleReadOnly = message.contents;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
 			const data = parseSchemaString(op.data as string);
@@ -195,37 +195,37 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return false;
 	}
 
-	update(newSchema: SchemaData): void {
+	public update(newSchema: SchemaData): void {
 		const op: SchemaOp = { type: "SchemaOp", data: getSchemaString(newSchema) };
 		this.submit(op);
 		this.inner.update(newSchema);
 	}
 
-	registerDependent(dependent: Dependent): boolean {
+	public registerDependent(dependent: Dependent): boolean {
 		return this.inner.registerDependent(dependent);
 	}
 
-	removeDependent(dependent: Dependent): void {
+	public removeDependent(dependent: Dependent): void {
 		return this.inner.removeDependent(dependent);
 	}
 
-	get computationName(): string {
+	public get computationName(): string {
 		return this.inner.computationName;
 	}
 
-	get listDependees(): undefined | (() => Iterable<Dependee>) {
+	public get listDependees(): undefined | (() => Iterable<Dependee>) {
 		return this.inner.listDependees?.bind(this.inner);
 	}
 
-	get policy(): SchemaPolicy {
+	public get policy(): SchemaPolicy {
 		return this.inner.policy;
 	}
 
-	get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
+	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldSchema> {
 		return this.inner.globalFieldSchema;
 	}
 
-	get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
+	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeSchema> {
 		return this.inner.treeSchema;
 	}
 }

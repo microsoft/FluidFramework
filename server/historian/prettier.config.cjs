@@ -3,5 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { SharedTreeBranch, SharedTreeBranchEvents } from "./branch";
-export { TransactionResult } from "./checkout";
+module.exports = {
+	...require("@fluidframework/build-common/prettier.config.cjs"),
+};

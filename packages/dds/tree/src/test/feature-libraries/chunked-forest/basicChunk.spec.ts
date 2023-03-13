@@ -235,11 +235,11 @@ class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 		this.chunk.referenceRemoved();
 	}
 
-	get topLevelLength(): number {
+	public get topLevelLength(): number {
 		return this.chunk.topLevelLength;
 	}
 
-	cursor(): ChunkedCursor {
+	public cursor(): ChunkedCursor {
 		return this.chunk.cursor();
 	}
 }
