@@ -259,7 +259,8 @@ export class ModularChangeFamily
 		let valueChange: ValueChange | undefined;
 		let valueConstraint: Value | undefined;
 		for (const change of changes) {
-			// Use the first defined constraint, throw away any constraint after a node change
+			// Use the first defined value constraint before any value changes.
+			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
 			if (
 				change.change.valueConstraint !== undefined &&
 				valueConstraint === undefined &&
