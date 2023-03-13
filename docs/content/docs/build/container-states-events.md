@@ -176,7 +176,7 @@ In the example above, using `container.once` ensures that the handler is removed
 
 See [Connection status states](#connection-status-states) for more about connection and disconnection.
 
-See [Dispose](#dispose) for more about disposing the container object. 
+See [Disposed](#disposed) for more about disposing the container object. 
 
 ### Connection status states
 
