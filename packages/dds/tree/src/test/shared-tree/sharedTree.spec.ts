@@ -539,6 +539,42 @@ describe("SharedTree", () => {
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
 		});
+
+		it("can make multiple moves in a transaction", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+				},
+			};
+			initializeTestTree(tree, initialState);
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			// Perform multiple moves that should each be assigned a unique ID
+			runSynchronous(tree, () => {
+				tree.editor.move(rootPath, brand("foo"), 0, 1, rootPath, brand("bar"), 0);
+				tree.editor.move(rootPath, brand("bar"), 0, 1, rootPath, brand("baz"), 0);
+				runSynchronous(tree, () => {
+					tree.editor.move(rootPath, brand("baz"), 0, 1, rootPath, brand("qux"), 0);
+				});
+			});
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					qux: [{ type: brand("Node"), value: "a" }],
+				},
+			};
+			await provider.ensureSynchronized();
+			validateTree(tree, [expectedState]);
+		});
 	});
 
 	describe("Rebasing", () => {
