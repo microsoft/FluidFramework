@@ -89,10 +89,8 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
-// Warning: (ae-forgotten-export) The symbol "IGarbageCollectionRuntime" needs to be exported by the entry point index.d.ts
-//
 // @public
-export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     // Warning: (ae-forgotten-export) The symbol "IContainerRuntimeMetadata" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "ISerializedElection" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
@@ -352,6 +350,8 @@ export interface IConnectableRuntime {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
+    // @deprecated (undocumented)
+    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)

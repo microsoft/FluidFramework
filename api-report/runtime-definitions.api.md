@@ -41,7 +41,7 @@ export interface AttributionInfo {
 }
 
 // @alpha
-export type AttributionKey = OpAttributionKey | DetachedAttributionKey;
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
@@ -504,6 +504,12 @@ export interface ITelemetryContext {
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+}
+
+// @alpha
+export interface LocalAttributionKey {
+    // (undocumented)
+    type: "local";
 }
 
 // @alpha

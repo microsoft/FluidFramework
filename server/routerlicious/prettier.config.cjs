@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/**
- * @alpha
- */
-export enum TransactionResult {
-	Abort,
-	Apply,
-}
+module.exports = {
+	...require("@fluidframework/build-common/prettier.config.cjs"),
+};

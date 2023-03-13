@@ -183,7 +183,11 @@ describe("editable-tree: editing", () => {
 		// can still use the EditableTree API at children
 		{
 			const phones: EditableField = maybePerson.address.phones as EditableField;
-			assert.deepEqual(phones.fieldSchema, getPrimaryField(phonesSchema)?.schema);
+			assert.equal(
+				phones.fieldSchema.kind.identifier,
+				getPrimaryField(phonesSchema)?.schema.kind.identifier,
+			);
+			assert.deepEqual(phones.fieldSchema.types, getPrimaryField(phonesSchema)?.schema.types);
 			// can use the contextually typed API again
 			phones[1] = {
 				[typeNameSymbol]: complexPhoneSchema.name,
