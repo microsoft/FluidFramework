@@ -1,11 +1,11 @@
-## V1 Undo
+# V1 Undo
 
 Here we detail the vision for the first implementation of undo/redo.
 This implementation is meant to satisfy our needs for parity with experimental (AKA legacy) SharedTree.
 
 This first version aims to achieve some basic undo functionality with a minimum amount of code changes and complexity.
 To that end, we mostly reuse the existing code paths for changesets by always sending
-[concrete undos](#abstract-vs-concrete-undo-messages) over the wire.
+[concrete undos](./README.md#abstract-vs-concrete-undo-messages) over the wire.
 The undo edit is created by inverting the edit that needs to be undone,
 and rebasing that inverse over all the changes that have been applied since.
 
@@ -22,7 +22,7 @@ because we cannot know in advance the exact impact of the change to undo.
 For this V1, we simply produce a "best attempt" undo based on the most up to date version of the change to be undone.
 This could lead to some data loss in scenarios where the change to be undone deletes a subtree under which content is concurrently inserted.
 
-#### Creating Concrete Redo Edits
+### Creating Concrete Redo Edits
 
 Redo changesets should be created by inverting the corresponding undo changeset and rebasing that inverse over all the edits that were applied since the undo.This is preferable to rebasing the original edit over all the edits that were applied since before the original edit:
 
@@ -31,7 +31,7 @@ Redo changesets should be created by inverting the corresponding undo changeset 
     Applying the inverse of the undo will restore that content while re-applying the original insert will not.
 -   It is more efficient as it doesn't require rebasing over as many edits.
 
-### The Undo Commit Tree
+## The Undo Commit Tree
 
 In order to perform an undo operation, it is necessary that we are able to determine which prior edit is to be undone.
 To that end, we need to maintain a tree of undoable commits where each node may look like this:
@@ -61,12 +61,12 @@ The tree is sparse because it does **_not_** contain the following kinds of edit
 Note that some of these edits in the tree may be part of the trunk while others may be on a branch.
 Each branch need only maintain a "head" pointer to the child-most commit on the branch.
 
-### The Redo Commit Tree
+## The Redo Commit Tree
 
 The tree of redoable commits is maintained across branches in a similar fashion to the undoable commits tree.
 Redoable commits are effectively undoable commits and can therefore use the same `UndoableCommit` structure described above.
 
-### Reacting to Local Edits
+## Reacting to Local Edits
 
 The redo and undo commit lists for a branch are updated as follows in the face of new local edits:
 
@@ -86,12 +86,12 @@ The redo and undo commit lists for a branch are updated as follows in the face o
     -   The concrete redo commit is pushed onto the undoable commit list.
         The parent field of the new commit node should point to the previous head undoable commit.
 
-### Forking
+## Forking
 
 When a branch is forked, the new branch can simply obtain the head undoable and redoable commit pointers from the parent branch.
 This helps keep forking cheap.
 
-### Pulling
+## Pulling
 
 When a branch is pulled, it must re-attach whatever undoable and redoable commits it has to the head of the undo list maintained by the parent branch.
 This can be done by finding the lowest common ancestor in between the two branches,
@@ -108,7 +108,7 @@ One simple way to characterize what needs to happen
 is to replay (the rebased version of) the local branch edits onto a new fork of the parent branch.
 This would however require knowing which of those local edits were undo, redos, or normal edits.
 
-### Dropping Old Commits
+## Dropping Old Commits
 
 As sequenced edits fall out of the collab window,
 we have the option to either drop or retain the corresponding commit nodes in the undo tree.
@@ -117,22 +117,22 @@ We can let the application pick a maximum length for the undo queue of the user.
 Retaining commits that fall out of the collab window muddies the statement that this commit tree is a sparse version of the normal commit tree.
 It can be still be thought of as sparse if we ignore the fact that sequenced commits get dropped from it as the collab window advances.
 
-### Repair Data
+## Repair Data
 
 Creating a concrete undo (or redo) edit requires access to the repair data associated with the edit to be undone/redone.
 
-#### Deriving Repair Data
+### Deriving Repair Data
 
 Repair data needs to be created when an edit is made on a local branch.
 
-##### For New Local Edits
+#### For New Local Edits
 
 This can be done by creating a repair store with access to the forest that drives the application UI for this branch
 and passing the `Delta` for the edit to the repair data store _before_ that same delta is applied to the forest.
 This is the same data-flow as what is currently being used to rollback transactions (whether they are aborted or not).
 In the future this may change to a model where the repair data is queried from the forest as part of applying the `Delta` to it.
 
-##### For Rebased Local Edits
+#### For Rebased Local Edits
 
 Repair data also needs to be (re)created when a local edit is rebased in the face of changes on the parent branch (possibly the trunk).
 In that case, we need to reapply the rebased version of the original edits to a separate forest solely for the purpose of generating the repair data.
@@ -157,7 +157,7 @@ There are two ways we can get a forest into that state:
 Option #2 is bound to be more efficient but may require a more complex contract between parent and child branches.
 These options should be explored during implementation.
 
-#### Managing Repair Data
+### Managing Repair Data
 
 This data can be stored in a repair data store that is co-located with the edit on the relevant commit tree.
 This approach has the following pros and cons:
