@@ -1239,7 +1239,7 @@ export function TestPack(verbose = true) {
 				for (let j = 0; j < removeCount; j++) {
 					const dlen = randTextLength();
 					const preLen = cliA.getLength();
-					const pos = random.integer(0, preLen);
+					const pos = random.integer(0, preLen - dlen);
 					const msg = cliA.makeOpMessage(
 						cliA.removeRangeLocal(pos, pos + dlen)!,
 						sequenceNumber++,
