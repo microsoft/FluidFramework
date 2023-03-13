@@ -37,7 +37,6 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 	let mainContainer: IContainer;
 	before(async () => {
 		provider = getTestObjectProvider();
-		// runId will be populated on the logger.
 		const loader = provider.makeTestLoader(testContainerConfig);
 		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		await mainContainer.attach(provider.driver.createCreateNewRequest());

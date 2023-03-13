@@ -38,7 +38,6 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 
 	before(async () => {
 		provider = getTestObjectProvider();
-
 		const loader = provider.makeTestLoader(testContainerConfig);
 		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		await mainContainer.attach(provider.driver.createCreateNewRequest());
