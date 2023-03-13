@@ -6,6 +6,7 @@ services:
             - 3001:3000
         volumes:
             - .:/home/node/server
+            - /home/node/server/node_modules
         restart: always
 networks:
   default:

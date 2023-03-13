@@ -14,7 +14,7 @@ For that reason, all of the examples in this README use `SharedString`. However,
 
 For the remainder of this document, the term _sequence_ will refer to this base class.
 
-*Item*s are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
+_Items_ are the individual units that are stored within the sequence (e.g. in a SharedString, the items are characters),
 but regardless of the type of data stored in the sequence, every item in a sequence is at a specific _position_ starting
 at 0, similar to an array. However, sequences differ from arrays in that the positions can move as local and remote
 editors make modifications to the sequence.
@@ -430,10 +430,10 @@ Next, enable the `"Fluid.Attribution.EnableOnNewFile"` config flag to start trac
 const { segment, offset } = sharedString.getContainingSegment(5);
 const key = segment.attribution.getAtOffset(offset);
 // `key` can be used with an IAttributor to recover user/timestamp info about the insertion of the character at offset 5.
-// See the @fluidframework/attributor package for more details.
+// See the @fluid-experimental/attributor package for more details.
 ```
 
-For further reading on attribution, see the [@fluidframework/attributor README](../../framework/attributor/README.md).
+For further reading on attribution, see the [@fluid-experimental/attributor README](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/attributor/README.md).
 
 There are plans to make attribution policies more flexible, for example tracking attribution of property changes separately from segment insertion.
 

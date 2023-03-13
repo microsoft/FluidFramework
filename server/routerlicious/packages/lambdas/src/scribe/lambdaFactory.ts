@@ -84,8 +84,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             LumberEventName.ScribeSessionResult, this.serviceConfiguration);
 
         try {
-            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-            gitManager = tenant.gitManager;
+            gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 
             summaryReader = new SummaryReader(tenantId, documentId, gitManager, this.enableWholeSummaryUpload);
             [latestSummary, document] = await Promise.all([

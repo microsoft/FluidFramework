@@ -54,6 +54,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 		only: args.only ?? false,
 		before: args.before ?? (() => {}),
 		after: args.after ?? (() => {}),
+		onCycle: args.onCycle ?? (() => {}),
 		category: args.category ?? "",
 	};
 	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
@@ -161,6 +162,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 				// This helps noise from allocations before the test (ex: from previous tests or startup) from
 				// impacting the test.
 				benchmarkInstance.on("start end", () => global?.gc?.());
+				benchmarkInstance.on("cycle", options.onCycle);
 				benchmarkInstance.on("complete", async () => {
 					const stats: BenchmarkData = {
 						aborted: benchmarkInstance.aborted,
@@ -184,6 +186,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 
 		await options.before();
 		await argsBenchmarkFn();
+		await options.onCycle();
 		await options.after();
 		await Promise.resolve();
 	});
