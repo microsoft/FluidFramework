@@ -104,6 +104,7 @@ export {
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
+	ValueConstraint,
 	TypedSchema,
 } from "./modular-schema";
 
