@@ -214,6 +214,7 @@ export {
 	parentField,
 	EditableTreeEvents,
 	on,
+	ValueConstraint,
 	TypedSchema,
 	SchemaAware,
 	ArrayLikeMut,

@@ -42,6 +42,7 @@ export {
 	RevisionInfo,
 	ToDelta,
 	ValueChange,
+	ValueConstraint,
 } from "./fieldChangeHandler";
 export {
 	convertGenericChange,
