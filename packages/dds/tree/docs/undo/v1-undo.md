@@ -3,6 +3,10 @@
 Here we detail the vision for the first implementation of undo/redo.
 This implementation is meant to satisfy our needs for parity with experimental (AKA legacy) SharedTree.
 
+Related:
+
+-   [V1 Undo Example Flow](./v1-undo-example-flow.md)
+
 This first version aims to achieve some basic undo functionality with a minimum amount of code changes and complexity.
 To that end, we mostly reuse the existing code paths for changesets by always sending
 [concrete undos](./README.md#abstract-vs-concrete-undo-messages) over the wire.
