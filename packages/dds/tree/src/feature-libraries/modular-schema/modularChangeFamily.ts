@@ -828,7 +828,7 @@ export class ModularEditBuilder
 	}
 
 	public override exitTransaction(): void {
-		assert(this.transactionDepth > 0, "Cannot exist inexistent transaction");
+		assert(this.transactionDepth > 0, "Cannot exit inexistent transaction");
 		this.transactionDepth -= 1;
 		if (this.transactionDepth === 0) {
 			this.idAllocator = () => brand(0);
