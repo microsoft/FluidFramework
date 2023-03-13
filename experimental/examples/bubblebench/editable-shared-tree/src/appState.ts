@@ -2,25 +2,25 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IAppState, IClient, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
-import { brand, EditableField, FieldKey } from "@fluid-internal/tree";
-import { Client } from "./client";
-import { ClientTreeProxy } from "./schema";
+import { IAppState, makeBubble, randomColor } from "@fluid-example/bubblebench-common";
+import { brand, FieldKey } from "@fluid-internal/tree";
+import { ClientWrapper } from "./client";
+import { ClientsField, Client, FlexClient, FlexBubble } from "./schema";
 
 export class AppState implements IAppState {
 	static clientsFieldKey: FieldKey = brand("clients");
-	readonly localClient: Client;
+	readonly localClient: ClientWrapper;
 
 	constructor(
-		private readonly clientsSequence: ClientTreeProxy[] & EditableField,
+		private readonly clientsSequence: ClientsField,
 		public width: number,
 		public height: number,
 		numBubbles: number,
 	) {
 		clientsSequence[clientsSequence.length] = this.createInitialClientNode(
 			numBubbles,
-		) as ClientTreeProxy;
-		this.localClient = new Client(clientsSequence[clientsSequence.length - 1]);
+		) as Client;
+		this.localClient = new ClientWrapper(clientsSequence[clientsSequence.length - 1]);
 
 		console.log(
 			`created client with id ${this.localClient.clientId} and color ${this.localClient.color}`,
@@ -29,24 +29,28 @@ export class AppState implements IAppState {
 
 	public applyEdits() {}
 
-	createInitialClientNode(numBubbles: number): IClient {
-		const client: IClient = {
-			clientId: `${Math.random()}`,
-			color: randomColor(),
-			bubbles: [],
-		};
-
+	createInitialClientNode(numBubbles: number): FlexClient {
+		const bubbles: FlexBubble[] = [];
 		// create and add initial bubbles to initial client json tree
 		for (let i = 0; i < numBubbles; i++) {
 			const bubble = makeBubble(this.width, this.height);
-			client.bubbles.push(bubble);
+			bubbles.push(bubble);
 		}
+
+		const client: FlexClient = {
+			clientId: `${Math.random()}`,
+			color: randomColor(),
+			bubbles,
+		};
 
 		return client;
 	}
 
 	public get clients() {
-		return [...this.clientsSequence].map((clientTreeProxy) => new Client(clientTreeProxy));
+		return Array.from(
+			this.clientsSequence,
+			(clientTreeProxy) => new ClientWrapper(clientTreeProxy),
+		);
 	}
 
 	public setSize(width?: number, height?: number) {

@@ -81,8 +81,13 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	// The base GC details of this node used to initialize the GC state.
 	private readonly baseGCDetailsP: LazyPromise<IGarbageCollectionDetailsBase>;
 
-	// Keeps track of whether we have loaded the base details to ensure that we on;y do it once.
+	// Keeps track of whether we have loaded the base details to ensure that we only do it once.
 	private baseGCDetailsLoaded: boolean = false;
+
+	// The base GC details for the child nodes. This is passed to child nodes when creating them.
+	private readonly childNodesBaseGCDetailsP: LazyPromise<
+		Map<string, IGarbageCollectionDetailsBase>
+	>;
 
 	private gcData: IGarbageCollectionData | undefined;
 
@@ -132,6 +137,11 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 
 		this.baseGCDetailsP = new LazyPromise(async () => {
 			return (await getBaseGCDetailsFn?.()) ?? { usedRoutes: [] };
+		});
+
+		this.childNodesBaseGCDetailsP = new LazyPromise(async () => {
+			const baseGCDetails = await this.baseGCDetailsP;
+			return unpackChildNodesGCDetails(baseGCDetails);
 		});
 	}
 
@@ -441,16 +451,10 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		 * snapshot and the child node wasn't created then. If a child is created after that, its GC details should be
 		 * the one from the downloaded snapshot and not the base GC details.
 		 */
-		const getChildBaseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-			// Ensure that the base GC details is loaded because a child can be created before GC runs which is when
-			// base GC details is usually loaded.
-			await this.loadBaseGCDetails();
-			const childBaseGCDetails = unpackChildNodesGCDetails({
-				gcData: this.gcData,
-				usedRoutes: this.usedRoutes,
-			});
-			return childBaseGCDetails.get(id) ?? {};
-		});
+		const getChildBaseGCDetailsFn = async () => {
+			const childNodesBaseGCDetails = await this.childNodesBaseGCDetailsP;
+			return childNodesBaseGCDetails.get(id) ?? {};
+		};
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNodeWithGC(
@@ -466,7 +470,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			createDetails.initialSummary,
 			this.wipSummaryLogger,
 			getGCDataFn,
-			async () => getChildBaseGCDetailsP,
+			getChildBaseGCDetailsFn,
 			createDetails.telemetryNodeId,
 		);
 

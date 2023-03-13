@@ -114,6 +114,7 @@ export {
 	TreeSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
 	SchemaPolicy,
