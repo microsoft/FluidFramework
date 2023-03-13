@@ -12,7 +12,7 @@ import { TaskList, TaskListInstantiationFactory } from "./taskList";
 
 export class TaskListCollection extends DataObject implements ITaskListCollection {
 	/**
-	 * The taskLists map holds local facades on the data.
+	 * The taskLists map holds local facades on the data in order to render to the screen.
 	 */
 	private readonly taskLists = new Map<string, TaskList>();
 
@@ -27,13 +27,12 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 
 	public readonly deleteTaskList = (id: string): void => {
 		if (!this.taskListCollection.has(id)) {
-			throw new Error(`The task list with id ${id} does not exist in this collection.`);
+			return;
 		}
 		this.taskListCollection.delete(id);
 	};
 
 	public readonly getTaskList = (id: string): TaskList | undefined => {
-		console.log(this.taskLists);
 		return this.taskLists.get(id);
 	};
 
@@ -47,7 +46,6 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 			props,
 		);
 
-		this.taskListCollection.set(externalTaskListId, taskList.handle);
 		this.taskLists.set(externalTaskListId, taskList);
 
 		this.emit("taskListAdded");
