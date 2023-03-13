@@ -39,7 +39,7 @@ export function fieldSchema(
 	types?: Iterable<TreeSchemaIdentifier>,
 ): FieldSchema {
 	return {
-		kind: kind.identifier,
+		kind,
 		types: types === undefined ? undefined : new Set(types),
 	};
 }

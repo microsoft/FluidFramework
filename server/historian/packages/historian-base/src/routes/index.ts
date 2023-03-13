@@ -21,40 +21,47 @@ import * as summaries from "./summaries";
 /* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {
-    git: {
-        blobs: Router;
-        commits: Router;
-        refs: Router;
-        tags: Router;
-        trees: Router;
-    };
-    repository: {
-        commits: Router;
-        contents: Router;
-        headers: Router;
-    };
-    summaries: Router;
+	git: {
+		blobs: Router;
+		commits: Router;
+		refs: Router;
+		tags: Router;
+		trees: Router;
+	};
+	repository: {
+		commits: Router;
+		contents: Router;
+		headers: Router;
+	};
+	summaries: Router;
 }
 
 export function create(
-    config: nconf.Provider,
-    tenantService: ITenantService,
-    throttler: IThrottler,
-    cache?: ICache,
-    asyncLocalStorage?: AsyncLocalStorage<string>): IRoutes {
-    return {
-        git: {
-            blobs: blobs.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            commits: commits.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            refs: refs.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            tags: tags.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            trees: trees.create(config, tenantService, throttler, cache, asyncLocalStorage),
-        },
-        repository: {
-            commits: repositoryCommits.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            contents: contents.create(config, tenantService, throttler, cache, asyncLocalStorage),
-            headers: headers.create(config, tenantService, throttler, cache, asyncLocalStorage),
-        },
-        summaries: summaries.create(config, tenantService, throttler, cache, asyncLocalStorage),
-    };
+	config: nconf.Provider,
+	tenantService: ITenantService,
+	throttler: IThrottler,
+	cache?: ICache,
+	asyncLocalStorage?: AsyncLocalStorage<string>,
+): IRoutes {
+	return {
+		git: {
+			blobs: blobs.create(config, tenantService, throttler, cache, asyncLocalStorage),
+			commits: commits.create(config, tenantService, throttler, cache, asyncLocalStorage),
+			refs: refs.create(config, tenantService, throttler, cache, asyncLocalStorage),
+			tags: tags.create(config, tenantService, throttler, cache, asyncLocalStorage),
+			trees: trees.create(config, tenantService, throttler, cache, asyncLocalStorage),
+		},
+		repository: {
+			commits: repositoryCommits.create(
+				config,
+				tenantService,
+				throttler,
+				cache,
+				asyncLocalStorage,
+			),
+			contents: contents.create(config, tenantService, throttler, cache, asyncLocalStorage),
+			headers: headers.create(config, tenantService, throttler, cache, asyncLocalStorage),
+		},
+		summaries: summaries.create(config, tenantService, throttler, cache, asyncLocalStorage),
+	};
 }

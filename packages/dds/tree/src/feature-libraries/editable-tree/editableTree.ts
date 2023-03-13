@@ -23,6 +23,8 @@ import {
 	CursorLocationType,
 	FieldAnchor,
 	ITreeCursor,
+	anchorSlot,
+	AnchorNode,
 	inCursorField,
 	inCursorNode,
 } from "../../core";
@@ -338,9 +340,29 @@ export interface EditableField
 	replaceNodes(index: number, newContent: ITreeCursor | ITreeCursor[], count?: number): void;
 }
 
+const editableTreeSlot = anchorSlot<EditableTree>();
+
 function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor): EditableTree {
-	const newTarget = new NodeProxyTarget(context, cursor);
-	return adaptWithProxy(newTarget, nodeProxyHandler);
+	const anchor = cursor.buildAnchor();
+	const anchorNode =
+		context.forest.anchors.locate(anchor) ??
+		fail("cursor should point to a node that is not the root of the AnchorSet");
+	const cached = anchorNode.slots.get(editableTreeSlot);
+	if (cached !== undefined) {
+		context.forest.anchors.forget(anchor);
+		return cached;
+	}
+	const newTarget = new NodeProxyTarget(context, cursor, anchorNode, anchor);
+	const output = adaptWithProxy(newTarget, nodeProxyHandler);
+	anchorNode.slots.set(editableTreeSlot, output);
+	anchorNode.on("afterDelete", cleanupTree);
+	return output;
+}
+
+function cleanupTree(anchor: AnchorNode): void {
+	const cached =
+		anchor.slots.get(editableTreeSlot) ?? fail("tree should only be cleaned up once");
+	(cached[proxyTargetSymbol] as NodeProxyTarget).free();
 }
 
 export function makeField(
@@ -357,11 +379,17 @@ export function makeField(
  */
 export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 	private readonly lazyCursor: ITreeSubscriptionCursor;
-	private anchor?: T;
 
-	constructor(public readonly context: ProxyContext, cursor: ITreeSubscriptionCursor) {
+	public constructor(
+		public readonly context: ProxyContext,
+		cursor: ITreeSubscriptionCursor,
+		private anchor?: T,
+	) {
 		this.lazyCursor = cursor.fork();
 		context.withCursors.add(this);
+		if (anchor !== undefined) {
+			this.context.withAnchors.add(this);
+		}
 	}
 
 	public free(): void {
@@ -376,7 +404,7 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 
 	public getAnchor(): T {
 		if (this.anchor === undefined) {
-			this.anchor = this.buildAnchorFromCursor(this.lazyCursor);
+			this.anchor = this.buildAnchor();
 			this.context.withAnchors.add(this);
 		}
 		return this.anchor;
@@ -404,14 +432,17 @@ export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 		return this.lazyCursor;
 	}
 
-	abstract buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): T;
+	protected abstract buildAnchor(): T;
 
-	abstract tryMoveCursorToAnchor(
+	protected abstract tryMoveCursorToAnchor(
 		anchor: T,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
 
-	abstract forgetAnchor(anchor: T): void;
+	/**
+	 * Called when disposing of this target, iff it has an anchor.
+	 */
+	protected abstract forgetAnchor(anchor: T): void;
 }
 
 function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target is FieldProxyTarget {
@@ -446,36 +477,55 @@ function getPrimaryArrayKey(
  * the fields of {@link EditableTree} by means of the cursors.
  */
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
-	constructor(context: ProxyContext, cursor: ITreeSubscriptionCursor) {
+	public readonly proxy: EditableTree;
+	private readonly removeDeleteCallback: () => void;
+	public constructor(
+		context: ProxyContext,
+		cursor: ITreeSubscriptionCursor,
+		public readonly anchorNode: AnchorNode,
+		anchor: Anchor,
+	) {
+		super(context, cursor, anchor);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x44c /* must be in nodes mode */);
-		super(context, cursor);
+
+		this.proxy = adaptWithProxy(this, nodeProxyHandler);
+		anchorNode.slots.set(editableTreeSlot, this.proxy);
+		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
 	}
 
-	buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): Anchor {
-		return cursor.buildAnchor();
+	protected buildAnchor(): Anchor {
+		return this.context.forest.anchors.track(this.anchorNode);
 	}
 
-	tryMoveCursorToAnchor(anchor: Anchor, cursor: ITreeSubscriptionCursor): TreeNavigationResult {
+	protected tryMoveCursorToAnchor(
+		anchor: Anchor,
+		cursor: ITreeSubscriptionCursor,
+	): TreeNavigationResult {
 		return this.context.forest.tryMoveCursorToNode(anchor, cursor);
 	}
 
-	forgetAnchor(anchor: Anchor): void {
+	protected forgetAnchor(anchor: Anchor): void {
+		// This type unconditionally has an anchor, so `forgetAnchor` is always called and cleanup can be done here:
+		// After this point this node will not be usable,
+		// so remove it from the anchor incase a different context (or the same context later) uses this AnchorSet.
+		this.anchorNode.slots.delete(editableTreeSlot);
+		this.removeDeleteCallback();
 		this.context.forest.anchors.forget(anchor);
 	}
 
-	get typeName(): TreeSchemaIdentifier {
+	public get typeName(): TreeSchemaIdentifier {
 		return this.cursor.type;
 	}
 
-	get type(): TreeSchema {
+	public get type(): TreeSchema {
 		return lookupTreeSchema(this.context.schema, this.typeName);
 	}
 
-	get value(): Value {
+	public get value(): Value {
 		return this.cursor.value;
 	}
 
-	set value(value: Value) {
+	public set value(value: Value) {
 		assert(isPrimitive(this.type), 0x44d /* Cannot set a value of a non-primitive field */);
 		assertPrimitiveValueType(value, this.type);
 		const path = this.cursor.getPath();
@@ -483,7 +533,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.setNodeValue(path, value);
 	}
 
-	get currentIndex(): number {
+	public get currentIndex(): number {
 		return this.cursor.fieldIndex;
 	}
 
@@ -518,7 +568,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
-	[Symbol.iterator](): IterableIterator<EditableField> {
+	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
 			makeField(
@@ -855,7 +905,11 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public readonly fieldSchema: FieldSchema;
 	public readonly [arrayLikeMarkerSymbol]: true;
 
-	constructor(context: ProxyContext, fieldSchema: FieldSchema, cursor: ITreeSubscriptionCursor) {
+	public constructor(
+		context: ProxyContext,
+		fieldSchema: FieldSchema,
+		cursor: ITreeSubscriptionCursor,
+	) {
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		super(context, cursor);
 		this.fieldKey = cursor.getFieldKey();
@@ -863,11 +917,11 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		this[arrayLikeMarkerSymbol] = true;
 	}
 
-	get [proxyTargetSymbol](): FieldProxyTarget {
+	public get [proxyTargetSymbol](): FieldProxyTarget {
 		return this;
 	}
 
-	get parent(): EditableTree | undefined {
+	public get parent(): EditableTree | undefined {
 		if (this.getAnchor().parent === undefined) {
 			return undefined;
 		}
@@ -879,18 +933,18 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return output;
 	}
 
-	buildAnchorFromCursor(cursor: ITreeSubscriptionCursor): FieldAnchor {
-		return cursor.buildFieldAnchor();
+	protected buildAnchor(): FieldAnchor {
+		return this.cursor.buildFieldAnchor();
 	}
 
-	tryMoveCursorToAnchor(
+	protected tryMoveCursorToAnchor(
 		anchor: FieldAnchor,
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
 		return this.context.forest.tryMoveCursorToField(anchor, cursor);
 	}
 
-	forgetAnchor(anchor: FieldAnchor): void {
+	protected forgetAnchor(anchor: FieldAnchor): void {
 		if (anchor.parent === undefined) return;
 		this.context.forest.anchors.forget(anchor.parent);
 	}
@@ -926,7 +980,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return mapCursorField(this.cursor, (cursor) => unwrappedTree(this.context, cursor));
 	}
 
-	[Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
+	public [Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
 		return this.asArray().values();
 	}
 
@@ -1187,7 +1241,7 @@ export function unwrappedField(
 	assert(
 		fieldKind.multiplicity === Multiplicity.Optional ||
 			fieldKind.multiplicity === Multiplicity.Forbidden,
-		"invalid empty field",
+		0x59a /* invalid empty field */,
 	);
 	return undefined;
 }

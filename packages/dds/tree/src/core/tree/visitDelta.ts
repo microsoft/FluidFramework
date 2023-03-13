@@ -42,19 +42,20 @@ import * as Delta from "./delta";
  *
  * Current implementation:
  *
- * - Performs inserts in the first pass
+ * - First pass: performs inserts top-down and move-outs bottom-up (it also performs value updates)
  *
- * - Does not perform move-ins in the first pass
+ * - Second pass: performs move-ins top-down and deletes bottom-up
  *
- * - Skips the second pass if no move-outs were encountered in the first pass
- *
- * - Does not leverage the move table
+ * - Skips the second pass if no moves or deletes were encountered in the first pass
  *
  * Future work:
  *
  * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
  *
- * - Leverage move table when it gets added to Delta
+ * - Avoid moving the visitor through parts of the document that do not need changing in the current pass.
+ * This could be done by assigning IDs to nodes of interest and asking the visitor to jump to these nodes in order to edit them.
+ *
+ * - Leverage the move table if one ever gets added to Delta
  */
 
 /**
@@ -66,9 +67,18 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
-	const containsMoves = visitFieldMarks(delta, visitor, firstPass);
-	if (containsMoves) {
-		visitFieldMarks(delta, visitor, secondPass);
+	const modsToMovedTrees = new Map<Delta.MoveId, Delta.ModifyAndMoveOut>();
+	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
+		func: firstPass,
+		applyValueChanges: true,
+		modsToMovedTrees,
+	});
+	if (containsMovesOrDeletes) {
+		visitFieldMarks(delta, visitor, {
+			func: secondPass,
+			applyValueChanges: false,
+			modsToMovedTrees,
+		});
 	}
 }
 
@@ -88,47 +98,57 @@ export interface DeltaVisitor {
 	exitField(key: FieldKey): void;
 }
 
-type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor) => boolean;
+interface PassConfig {
+	readonly func: Pass;
+	readonly applyValueChanges: boolean;
+	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.ModifyAndMoveOut>;
+}
+
+type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => boolean;
 
 interface ModifyLike {
 	setValue?: Value;
 	fields?: Delta.FieldMarks;
 }
 
-function visitFieldMarks(fields: Delta.FieldMarks, visitor: DeltaVisitor, func: Pass): boolean {
-	let containsMoves = false;
+function visitFieldMarks(
+	fields: Delta.FieldMarks,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): boolean {
+	let containsMovesOrDeletes = false;
 	for (const [key, field] of fields) {
 		visitor.enterField(key);
-		const result = func(field, visitor);
-		containsMoves ||= result;
+		const result = config.func(field, visitor, config);
+		containsMovesOrDeletes ||= result;
 		visitor.exitField(key);
 	}
-	return containsMoves;
+	return containsMovesOrDeletes;
 }
 
 function visitModify(
 	index: number,
 	modify: ModifyLike,
 	visitor: DeltaVisitor,
-	func: Pass,
+	config: PassConfig,
 ): boolean {
-	let containsMoves = false;
+	let containsMovesOrDeletes = false;
 	visitor.enterNode(index);
 	// Note that the `in` operator return true for properties that are present on the object even if they
 	// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
 	// `undefined` as opposed to leaving the value untouched.
-	if ("setValue" in modify) {
+	if (config.applyValueChanges && "setValue" in modify) {
 		visitor.onSetValue(modify.setValue);
 	}
 	if (modify.fields !== undefined) {
-		const result = visitFieldMarks(modify.fields, visitor, func);
-		containsMoves ||= result;
+		const result = visitFieldMarks(modify.fields, visitor, config);
+		containsMovesOrDeletes ||= result;
 	}
 	visitor.exitNode(index);
-	return containsMoves;
+	return containsMovesOrDeletes;
 }
 
-function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
+function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
 	let containsMoves = false;
 	let index = 0;
 	for (const mark of delta) {
@@ -141,14 +161,21 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
 			const type = mark.type;
 			switch (type) {
 				case Delta.MarkType.ModifyAndDelete:
-					result = visitModify(index, mark, visitor, firstPass);
-					visitor.onDelete(index, 1);
+					// Handled in the second pass
+					visitModify(index, mark, visitor, config);
+					result = true;
+					index += 1;
 					break;
 				case Delta.MarkType.Delete:
-					visitor.onDelete(index, mark.count);
+					// Handled in the second pass
+					index += mark.count;
+					result = true;
 					break;
 				case Delta.MarkType.ModifyAndMoveOut: {
-					result = visitModify(index, mark, visitor, firstPass);
+					result = visitModify(index, mark, visitor, config);
+					if (result) {
+						config.modsToMovedTrees.set(mark.moveId, mark);
+					}
 					visitor.onMoveOut(index, 1, mark.moveId);
 					break;
 				}
@@ -156,7 +183,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
 					visitor.onMoveOut(index, mark.count, mark.moveId);
 					break;
 				case Delta.MarkType.Modify:
-					result = visitModify(index, mark, visitor, firstPass);
+					result = visitModify(index, mark, visitor, config);
 					index += 1;
 					break;
 				case Delta.MarkType.Insert:
@@ -165,11 +192,10 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
 					break;
 				case Delta.MarkType.InsertAndModify:
 					visitor.onInsert(index, [mark.content]);
-					result = visitModify(index, mark, visitor, firstPass);
+					result = visitModify(index, mark, visitor, config);
 					index += 1;
 					break;
 				case Delta.MarkType.MoveIn:
-				case Delta.MarkType.MoveInAndModify:
 					// Handled in the second pass
 					result = true;
 					break;
@@ -182,7 +208,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
 	return containsMoves;
 }
 
-function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
+function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
 	let index = 0;
 	for (const mark of delta) {
 		if (typeof mark === "number") {
@@ -193,13 +219,18 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
 			const type = mark.type;
 			switch (type) {
 				case Delta.MarkType.ModifyAndDelete:
-				case Delta.MarkType.ModifyAndMoveOut:
+					visitModify(index, mark, visitor, config);
+					visitor.onDelete(index, 1);
+					break;
 				case Delta.MarkType.Delete:
+					visitor.onDelete(index, mark.count);
+					break;
+				case Delta.MarkType.ModifyAndMoveOut:
 				case Delta.MarkType.MoveOut:
 					// Handled in the first pass
 					break;
 				case Delta.MarkType.Modify:
-					visitModify(index, mark, visitor, secondPass);
+					visitModify(index, mark, visitor, config);
 					index += 1;
 					break;
 				case Delta.MarkType.Insert:
@@ -212,14 +243,15 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor): boolean {
 					break;
 				case Delta.MarkType.MoveIn: {
 					visitor.onMoveIn(index, mark.count, mark.moveId);
+					if (mark.count === 1) {
+						const modify = config.modsToMovedTrees.get(mark.moveId);
+						if (modify !== undefined) {
+							visitModify(index, modify, visitor, config);
+						}
+					}
 					index += mark.count;
 					break;
 				}
-				case Delta.MarkType.MoveInAndModify:
-					visitor.onMoveIn(index, 1, mark.moveId);
-					visitModify(index, mark, visitor, secondPass);
-					index += 1;
-					break;
 				default:
 					unreachableCase(type);
 			}

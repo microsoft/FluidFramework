@@ -11,6 +11,7 @@ import {
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidDependencySynthesizer } from "@fluidframework/synthesize";
 import { RuntimeRequestHandler } from "@fluidframework/request-handler";
+import { FluidObject } from "@fluidframework/core-interfaces";
 import { defaultRouteRequestHandler } from "../request-handlers";
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory";
 
@@ -31,12 +32,14 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		dependencyContainer?: IFluidDependencySynthesizer,
 		requestHandlers: RuntimeRequestHandler[] = [],
 		runtimeOptions?: IContainerRuntimeOptions,
+		initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super(
 			registryEntries,
 			dependencyContainer,
 			[defaultRouteRequestHandler(defaultDataStoreId), ...requestHandlers],
 			runtimeOptions,
+			initializeEntryPoint,
 		);
 	}
 

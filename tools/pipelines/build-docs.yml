@@ -139,6 +139,7 @@ stages:
             echo repoToTrigger ${{ variables.repoToTrigger }}
             echo shouldDeploy ${{ variables.shouldDeploy }}
             echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
+            echo publishGuardianBaselines ${{ variables.publishGuardianBaselines }}
           displayName: Show Variables
 
     - job: component_detection
@@ -193,14 +194,13 @@ stages:
         - task: Cache@2
           displayName: Cache pnpm store
           inputs:
-            key: '"pnpm-store" | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+            key: '"pnpm-store" | "$(Agent.OS)" | $(Build.SourcesDirectory)/docs/pnpm-lock.yaml'
             path: ${{ variables.pnpmStorePath }}
 
         - task: Bash@3
           displayName: Install and configure pnpm
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
             script: |
               npm i -g pnpm
               pnpm config set store-dir $(pnpmStorePath)
@@ -209,7 +209,7 @@ stages:
           displayName: Install dependencies
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
+            workingDirectory: $(Build.SourcesDirectory)/docs
             script: |
               pnpm i --frozen-lockfile
 
@@ -217,13 +217,13 @@ stages:
           displayName: npm run build
           inputs:
             command: 'custom'
-            workingDir: '$(Build.SourcesDirectory)/docs'
+            workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: '$(Build.SourcesDirectory)/docs/public'
+            BuildDropPath: $(Build.SourcesDirectory)/docs/public
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
@@ -290,13 +290,13 @@ stages:
             GdnBreakGdnToolESLint: true
             GdnBreakGdnToolESLintSeverity: Warning
             GdnBreakPolicy: M365
-            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
+            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Baselines'
           condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
           inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
+            targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
             artifactName: .gdn
 # END Secure development tasks
 

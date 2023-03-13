@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKey } from "../../core";
+import { FieldKey, UpPath } from "../../core";
 import { brand } from "../../util";
 import { generateRandomUpPath, generateRandomChange } from "./randomSequenceGenerator";
 
@@ -37,7 +37,7 @@ describe("generateRandomUpPath", () => {
 	});
 });
 
-const pathGen = (seed: number) => generateRandomUpPath(keySet, seed, 2, 10);
+const pathGen = (seed: number): UpPath => generateRandomUpPath(keySet, seed, 2, 10);
 describe("generateRandomChange", () => {
 	it("consistent given the same seed.", () => {
 		const change1 = generateRandomChange(testSeed, pathGen);

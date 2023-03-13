@@ -72,7 +72,6 @@ export {
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
-	TransactionResult,
 	FieldAnchor,
 	RevisionTag,
 	TaggedChange,
@@ -81,6 +80,16 @@ export {
 	SchemaEvents,
 	ForestEvents,
 	PathRootPrefix,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
+	AnchorEvents,
+	FieldKindSpecifier,
 } from "./core";
 
 export {
@@ -103,9 +112,18 @@ export {
 	JsonCompatibleObject,
 	NestedMap,
 	fail,
+	TransactionResult,
 } from "./util";
 
-export { Events, IsEvent, ISubscribable, createEmitter, IEmitter } from "./events";
+export {
+	Events,
+	IsEvent,
+	ISubscribable,
+	createEmitter,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
+} from "./events";
 
 export {
 	cursorToJsonObject,
@@ -147,6 +165,9 @@ export {
 	NodeChangeDecoder,
 	CrossFieldManager,
 	CrossFieldTarget,
+	RevisionIndexer,
+	RevisionMetadataSource,
+	RevisionInfo,
 	FieldKind,
 	Multiplicity,
 	isNeverField,
@@ -190,31 +211,34 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	ValueConstraint,
+	TypedSchema,
+	SchemaAware,
+	ArrayLikeMut,
 } from "./feature-libraries";
 
 // Export subset of FieldKinds in an API-Extractor compatible way:
-import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
+import {
+	FieldEditor,
+	FieldKind,
+	FieldKinds as FieldKindsOriginal,
+	Multiplicity,
+} from "./feature-libraries";
+
 /**
  * @alpha
  */
-interface FieldKinds {
-	value: FieldKind;
-	optional: FieldKind;
-	sequence: FieldKind;
-}
-/**
- * @alpha
- */
-const FieldKinds: FieldKinds = FieldKindsOriginal;
-/**
- * @alpha
- */
-export { FieldKinds };
+export const FieldKinds = {
+	value: FieldKindsOriginal.value as FieldKind<FieldEditor<any>, Multiplicity.Value>,
+	optional: FieldKindsOriginal.optional as FieldKind<FieldEditor<any>, Multiplicity.Optional>,
+	sequence: FieldKindsOriginal.sequence as FieldKind<FieldEditor<any>, Multiplicity.Sequence>,
+} as const;
 
 export {
 	ISharedTree,
 	ISharedTreeCheckout,
 	ISharedTreeCheckoutFork,
+	runSynchronous,
 	SharedTreeFactory,
 } from "./shared-tree";
 
