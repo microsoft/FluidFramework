@@ -57,6 +57,7 @@ export {
 export {
 	AudienceEventMessageData,
 	AudienceEventMessage,
+	GetAudienceMessage,
 	debuggerMessageSource,
 	HasContainerId,
 	ContainerStateChangeMessage,

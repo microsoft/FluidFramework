@@ -5,7 +5,6 @@
 import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 import { IClient } from "@fluidframework/protocol-definitions";
-
 import {
 	handleIncomingMessage,
 	IDebuggerMessage,
@@ -13,9 +12,19 @@ import {
 	AudienceEventMessage,
 	HasContainerId,
 } from "@fluid-tools/client-debugger";
+import { extensionMessageSource } from "../messaging";
+import { AudienceChangeLogEntry } from "../../../../client-debugger/client-debugger/src/";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(AudienceView)";
+
+// POST Request for Audience Data
+const getAudienceMessage: IDebuggerMessage = {
+	type: "GET_AUDIENCE_EVENT",
+	source: extensionMessageSource,
+	data: undefined,
+};
+
 // TODOs:
 // - Special annotation for the member elected as the summarizer
 // - History of audience changes
@@ -35,31 +44,27 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { containerId } = props;
 
 	const messageRelay = React.useContext(MessageRelayContext);
-
 	if (messageRelay === undefined) {
 		throw new Error(
 			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
 		);
 	}
 
-	const [allAudienceMembers, setAllAudienceMembers] = React.useState<
-		Map<string, IClient> | undefined
-	>();
-	const [audienceHistory, setAudienceHistory] = React.useState<readonly unknown[]>();
+	const [audienceState, setAudienceState] = React.useState<Map<string, IClient> | undefined>();
+	const [_audienceHistory, setAudienceHistory] =
+		React.useState<readonly AudienceChangeLogEntry[]>();
 
 	React.useEffect(() => {
 		/**
 		 * Handlers for inbound messages related to Audience
 		 */
-
 		const inboundMessageHandlers: InboundHandlers = {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const message: AudienceEventMessage = untypedMessage as AudienceEventMessage;
-				console.log("Passed 3");
-				console.log(message);
 
-				// setAllAudienceMembers([message.data.audienceState]);
-				setAudienceHistory([message.data.audienceHistory]);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				setAudienceHistory(message.data.audienceHistory);
 				return true;
 			},
 		};
@@ -74,18 +79,14 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			});
 		}
 
+		// Request state info for the newly specified containerId
 		messageRelay.on("message", messageHandler);
+		messageRelay.postMessage(getAudienceMessage);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [
-		containerId,
-		allAudienceMembers,
-		setAllAudienceMembers,
-		audienceHistory,
-		setAudienceHistory,
-	]);
+	}, [containerId, setAudienceState, setAudienceHistory]);
 
 	return (
 		<Stack>
@@ -94,6 +95,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			</StackItem>
 			<StackItem>
 				<div>TODO</div>
+				<div> {audienceState} </div>
+				<div> {setAudienceHistory} </div>
 			</StackItem>
 		</Stack>
 	);

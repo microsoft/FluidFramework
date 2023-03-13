@@ -64,7 +64,7 @@ export interface AudienceChangeLogEntry extends LogEntry {
 	clientId: string;
 
 	/**
-	 * Metadata abou the client that was added or removed.
+	 * Metadata about the client that was added or removed.
 	 */
 	client: IClient;
 
