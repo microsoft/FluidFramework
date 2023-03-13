@@ -19,7 +19,12 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Container } from "@fluidframework/container-loader";
-import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
+import {
+	createAndAttachContainer,
+	createLoader,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
@@ -154,12 +159,12 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 
 		switch (this.props.documentType) {
 			case "MediumDocumentMultipleDDSs":
-				this.dsCounts = 1500;
-				this.dsCountPerIteration = 500;
+				this.dsCounts = 250;
+				this.dsCountPerIteration = 125;
 				break;
 			case "LargeDocumentMultipleDDSs":
-				this.dsCounts = 2000;
-				this.dsCountPerIteration = 500;
+				this.dsCounts = 500;
+				this.dsCountPerIteration = 250;
 				break;
 			default:
 				throw new Error("Invalid document type");
@@ -168,6 +173,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 
 	public async initializeDocument(): Promise<void> {
 		this._mainContainer = await this.props.provider.createContainer(this.runtimeFactory);
+		this.props.provider.updateDocumentId(this._mainContainer.resolvedUrl);
 		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
@@ -181,11 +187,17 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	 * @returns the main container.
 	 */
 	public async loadDocument(): Promise<IContainer> {
-		assert(
-			this._mainContainer !== undefined,
-			"Container should be initialized before loadDocument",
+		const loader = createLoader(
+			[[this.props.provider.defaultCodeDetails, this.runtimeFactory]],
+			this.props.provider.documentServiceFactory,
+			this.props.provider.urlResolver,
+			this.props.logger,
 		);
-		return this._mainContainer;
+		return createAndAttachContainer(
+			this.props.provider.defaultCodeDetails,
+			loader,
+			this.props.provider.driver.createCreateNewRequest(this.props.provider.documentId),
+		);
 	}
 
 	private async waitForSummary(summarizer: ISummarizer): Promise<string> {

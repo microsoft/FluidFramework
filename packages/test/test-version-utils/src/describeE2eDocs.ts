@@ -33,6 +33,8 @@ export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType;
+	// Minimum number of iterations when running performance tests against the document
+	minSampleCount: number;
 }
 export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
 	benchmarkType: BenchmarkType;
@@ -167,18 +169,22 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	{
 		testTitle: "10Mb Map",
 		documentType: "LargeDocumentMap",
+		minSampleCount: 10,
 	},
 	{
 		testTitle: "5Mb Map",
 		documentType: "MediumDocumentMap",
+		minSampleCount: 10,
 	},
 	{
-		testTitle: "1500 DDSs",
+		testTitle: "250 DDSs",
 		documentType: "MediumDocumentMultipleDDSs",
+		minSampleCount: 1,
 	},
 	{
-		testTitle: "2000 DDSs",
+		testTitle: "500 DDSs",
 		documentType: "LargeDocumentMultipleDDSs",
+		minSampleCount: 1,
 	},
 ];
 
@@ -196,7 +202,6 @@ function IsMemoryTest(): boolean {
 	for (const flag of ["--grep", "--fgrep"]) {
 		const flagIndex = childArgs.indexOf(flag);
 		if (flagIndex > 0) {
-			console.log("childArgs", childArgs[flagIndex + 1]);
 			isMemoryUsageTest = childArgs[flagIndex + 1] === "@MemoryUsage" ? true : false;
 			break;
 		}

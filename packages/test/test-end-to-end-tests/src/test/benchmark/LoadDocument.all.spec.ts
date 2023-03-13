@@ -29,7 +29,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	class BenchmarkObj {
 		container: IContainer | undefined;
-		minSampleCount = 5;
+		minSampleCount = getDocumentInfo().minSampleCount;
 	}
 
 	const obj = new BenchmarkObj();
