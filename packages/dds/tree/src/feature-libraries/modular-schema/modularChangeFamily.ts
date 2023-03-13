@@ -817,7 +817,7 @@ export class ModularEditBuilder
 		anchors: AnchorSet,
 	) {
 		super(family, changeReceiver, anchors);
-		this.idAllocator = () => brand(0);
+		this.idAllocator = idAllocatorFromMaxId();
 	}
 
 	public override enterTransaction(): void {
@@ -831,7 +831,7 @@ export class ModularEditBuilder
 		assert(this.transactionDepth > 0, "Cannot exit inexistent transaction");
 		this.transactionDepth -= 1;
 		if (this.transactionDepth === 0) {
-			this.idAllocator = () => brand(0);
+			this.idAllocator = idAllocatorFromMaxId();
 		}
 	}
 
