@@ -114,9 +114,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IConnectableRuntime": {
-				"backCompat": false
-			},
 			"EnumDeclaration_ContainerMessageType": {
 				"backCompat": false
 			},
