@@ -251,10 +251,17 @@ describe("SharedString", () => {
 			const newIdProps = { [reservedMarkerIdKey]: "newIdValue" };
 			try {
 				sharedString.annotateMarker(simpleMarker, newIdProps);
+				assert.fail();
 			} catch (error) {
-				assert(
-					error !== undefined,
+				assert.notEqual(
+					error,
+					undefined,
 					"Error from attempting to update marker was not thrown",
+				);
+				assert.equal(
+					(error as Error).message,
+					"Cannot change the markerId of an existing marker",
+					`Incorrect error received - got ${(error as Error).message}`,
 				);
 			}
 		});
