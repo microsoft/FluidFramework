@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Parsing script which finds all test reports ending with "junit-report.json" 
+ * in a given directory and prints failed tests into the console
+ */
+
 import * as fs from "fs";
 import * as util from "util";
 import * as path from "path";
