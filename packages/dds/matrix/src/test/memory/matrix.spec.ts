@@ -37,7 +37,7 @@ describe("Matrix memory usage", () => {
 	describe("Detached Matrix", () => {
 		benchmarkMemory(
 			new (class implements IMemoryTestObject {
-				title = "Create empty Matrix";
+				readonly title = "Create empty Matrix";
 				minSampleCount = 500;
 
 				private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
@@ -53,7 +53,7 @@ describe("Matrix memory usage", () => {
 		numbersOfEntriesForTests.forEach((x) => {
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
-					title = `Insert and remove a column ${x} times`;
+					readonly title = `Insert and remove a column ${x} times`;
 					private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
@@ -71,7 +71,7 @@ describe("Matrix memory usage", () => {
 
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
-					title = `Insert and remove one row ${x} times`;
+					readonly title = `Insert and remove one row ${x} times`;
 					private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
@@ -89,7 +89,7 @@ describe("Matrix memory usage", () => {
 
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
-					title = `Insert and remove a row and column ${x} times`;
+					readonly title = `Insert and remove a row and column ${x} times`;
 					private localMatrix: SharedMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
@@ -109,7 +109,7 @@ describe("Matrix memory usage", () => {
 
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
-					title = `Set a 3-character string in ${x} cells`;
+					readonly title = `Set a 3-character string in ${x} cells`;
 					private localMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
@@ -128,7 +128,7 @@ describe("Matrix memory usage", () => {
 
 			benchmarkMemory(
 				new (class implements IMemoryTestObject {
-					title = `Set a number in ${x} cells`;
+					readonly title = `Set a number in ${x} cells`;
 					private localMatrix = createLocalMatrix("testLocalMatrix");
 
 					async run() {
