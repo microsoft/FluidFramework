@@ -62,7 +62,7 @@ describe("schema converter", () => {
 			expectedRootFieldSchema,
 		);
 
-		// 12 basic types + NodeProperty + inheritances
+		// 32 types including inheritance
 		expect(schemaRepository.treeSchema.size).toEqual(32);
 		const nodePropertySchema = lookupTreeSchema(schemaRepository, brand("NodeProperty"));
 		expect(nodePropertySchema).toEqual({
