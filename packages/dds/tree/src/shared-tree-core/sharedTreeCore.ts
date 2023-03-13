@@ -205,7 +205,7 @@ export class SharedTreeCore<
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		const loadIndexes = this.summaryElements.map(async (summaryElement) =>
 			summaryElement.load(
-				scopeStorageService(services, "indexes", summaryElement.key),
+				scopeStorageService(services, indexesTreeKey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
 			),
 		);
