@@ -625,7 +625,7 @@ export class Container
 			// should have set this._context; making sure.
 			assert(
 				this._context !== undefined,
-				"Context still not defined after contextChanged event",
+				0x5a2 /* Context still not defined after contextChanged event */,
 			);
 		}
 		// Disable lint rule for the sake of more complete stack traces

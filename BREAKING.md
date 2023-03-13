@@ -128,6 +128,7 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 
 -   [deltaManager property in IConnectableRuntime moved](#deltaManager-property-in-IConnectableRuntime-moved)
 -   [attachGraph and bind methods in IFluidHandle deprecated](#attachGraph-and-bind-methods-in-IFluidHandle-deprecated)
+-   [Some APIs meant only for internal usage are deprecated](#some-apis-meant-only-for-internal-usage-are-deprecated)
 
 ### deltaManager property in IConnectableRuntime moved
 
@@ -136,6 +137,13 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 ### attachGraph and bind methods in IFluidHandle deprecated
 
 `attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
+
+### Some APIs meant only for internal usage are deprecated
+
+`IGarbageCollectionRuntime` in the `@fluidframework/container-runtime` package should not be used outside the FF codebase.
+It has been deprecated and is expected to be removed in the next major release.
+
+`IConnectableRuntime.deltaManager` in the same package is no longer used and deprecated as well.
 
 # 2.0.0-internal.3.0.0
 
