@@ -1,0 +1,87 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import { strict as assert } from "assert";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ISummarizer } from "@fluidframework/container-runtime";
+import { ITestObjectProvider, summarizeNow } from "@fluidframework/test-utils";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
+import { benchmarkAll, createDocument, ISummarizeResult } from "./DocumentCreator";
+import { DocumentMultipleDds } from "./DocumentMultipleDds";
+
+const scenarioTitle = "Summarize Multiple DDSs Document";
+describeE2EDocRun(
+	scenarioTitle,
+	(getTestObjectProvider, getDocumentInfo) => {
+		let document: DocumentMultipleDds;
+		let provider: ITestObjectProvider;
+		let summaryVersion: string;
+		const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
+
+		async function waitForSummary(summarizer: ISummarizer): Promise<string> {
+			// Wait for all pending ops to be processed by all clients.
+			await provider.ensureSynchronized();
+			const summaryResult = await summarizeNow(summarizer);
+			return summaryResult.summaryVersion;
+		}
+
+		before(async () => {
+			provider = getTestObjectProvider();
+			const docData = getDocumentInfo(); // returns the type of document to be processed.
+			document = createDocument({
+				testName: `${scenarioTitle} - ${docData.testTitle}`,
+				provider,
+				documentType: docData.documentType,
+				benchmarkType,
+			}) as DocumentMultipleDds;
+			await document.initializeDocument();
+			assert(document.mainContainer !== undefined, "mainContainer needs to be defined.");
+			assert(
+				document.dataObjectFactory !== undefined,
+				"dataObjectFactory needs to be defined.",
+			);
+
+			await provider.ensureSynchronized();
+			// Summarize the first time.
+			await document.summarize();
+		});
+
+		class BenchmarkObj {
+			container: IContainer | undefined;
+			summarizerClient: ISummarizeResult | undefined;
+			minSampleCount = 1;
+		}
+		const obj = new BenchmarkObj();
+
+		benchmarkAll<BenchmarkObj>(scenarioTitle, benchmarkType, {
+			run: async () => {
+				obj.container = await document.loadDocument();
+				assert(obj.container !== undefined, "container needs to be defined.");
+				console.log("Before summarizer");
+
+				obj.summarizerClient = await document.summarize(summaryVersion);
+				assert(
+					obj.summarizerClient.summaryVersion !== undefined,
+					"summaryVersion needs to be defined.",
+				);
+				summaryVersion = obj.summarizerClient.summaryVersion;
+			},
+			obj,
+			beforeIteration: () => {
+				obj.container = undefined;
+				obj.summarizerClient = undefined;
+			},
+		});
+	},
+	[
+		{
+			testTitle: "1500 DDSs",
+			documentType: "MediumDocumentMultipleDDSs",
+		},
+		{
+			testTitle: "2000 DDSs",
+			documentType: "LargeDocumentMultipleDDSs",
+		},
+	],
+);

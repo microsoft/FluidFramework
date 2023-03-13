@@ -21,11 +21,7 @@ export type DocumentType =
 	/** Document with a SharedMap with a 5Mb entry */
 	| "MediumDocumentMap"
 	/** Document with a SharedMap with 2 x 5Mb entries */
-	| "LargeDocumentMap"
-	/** Medium document with Multiple DDSs */
-	| "MediumDocumentMultipleDDSs"
-	/** Large document with Multiple DDSs */
-	| "LargeDocumentMultipleDDSs";
+	| "LargeDocumentMap";
 
 export type BenchmarkType = "E2ETime" | "E2EMemory";
 export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
@@ -175,16 +171,6 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 		testTitle: "5Mb Map",
 		documentType: "MediumDocumentMap",
 		minSampleCount: 10,
-	},
-	{
-		testTitle: "250 DDSs",
-		documentType: "MediumDocumentMultipleDDSs",
-		minSampleCount: 1,
-	},
-	{
-		testTitle: "500 DDSs",
-		documentType: "LargeDocumentMultipleDDSs",
-		minSampleCount: 1,
 	},
 ];
 
