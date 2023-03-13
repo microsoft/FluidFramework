@@ -9,17 +9,13 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
@@ -57,6 +53,8 @@ export interface ISharedTreeCoreEvents {
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
+// TODO: Organize this to be adjacent to persisted types.
+const indexesTreeKey = "indexes";
 
 export interface IndexEvents<TChangeset> {
 	/**
@@ -178,37 +176,30 @@ export class SharedTreeCore<
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		let stats = mergeStats();
-		const summary: ISummaryTree = {
-			type: SummaryType.Tree,
-			tree: {},
-		};
-		stats.treeNodeCount += 1;
+		const builder = new SummaryTreeBuilder();
+		builder.addWithStats(indexesTreeKey, this.summarizeIndexes(serializer, telemetryContext));
+		return builder.getSummaryTree();
+	}
 
+	private summarizeIndexes(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
+		const builder = new SummaryTreeBuilder();
 		// Merge the summaries of all indexes together under a single ISummaryTree
-		const indexSummaryTree: ISummaryTree["tree"] = {};
 		for (const summaryElement of this.summaryElements) {
-			const { stats: elementStats, summary: elementSummary } =
+			builder.addWithStats(
+				summaryElement.key,
 				summaryElement.getAttachSummary(
 					(contents) => serializer.stringify(contents, this.handle),
 					undefined,
 					undefined,
 					telemetryContext,
-				);
-			indexSummaryTree[summaryElement.key] = elementSummary;
-			stats = mergeStats(stats, elementStats);
+				),
+			);
 		}
 
-		summary.tree.indexes = {
-			type: SummaryType.Tree,
-			tree: indexSummaryTree,
-		};
-		stats.treeNodeCount += 1;
-
-		return {
-			stats,
-			summary,
-		};
+		return builder.getSummaryTree();
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
