@@ -1238,8 +1238,8 @@ export function TestPack(verbose = true) {
 				const cliAMsgs: ISequencedDocumentMessage[] = [];
 				for (let j = 0; j < removeCount; j++) {
 					const dlen = randTextLength();
-					const preLen = cliA.getLength();
-					const pos = random.integer(0, preLen - dlen);
+					const maxStartPos = cliA.getLength() - dlen;
+					const pos = random.integer(0, maxStartPos);
 					const msg = cliA.makeOpMessage(
 						cliA.removeRangeLocal(pos, pos + dlen)!,
 						sequenceNumber++,
@@ -1263,8 +1263,8 @@ export function TestPack(verbose = true) {
 				const cliBMsgs: ISequencedDocumentMessage[] = [];
 				for (let j = 0; j < removeCount; j++) {
 					const dlen = randTextLength();
-					const preLen = cliB.getLength() - 1;
-					const pos = random.integer(0, preLen);
+					const maxStartPos = cliB.getLength() - dlen;
+					const pos = random.integer(0, maxStartPos);
 					const msg = cliB.makeOpMessage(
 						cliB.removeRangeLocal(pos, pos + dlen)!,
 						sequenceNumber++,
