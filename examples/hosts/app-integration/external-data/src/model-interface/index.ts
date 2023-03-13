@@ -194,7 +194,7 @@ export interface ITaskListCollection extends IEventProvider<ITaskListCollectionE
 	/**
 	 * Add a task list with the specified ID.
 	 */
-	readonly addTaskList: (props?: ITaskListInitialState) => Promise<void>;
+	readonly addTaskList: (props: ITaskListInitialState) => Promise<void>;
 	/**
 	 * Delete the task with the specified ID.
 	 */

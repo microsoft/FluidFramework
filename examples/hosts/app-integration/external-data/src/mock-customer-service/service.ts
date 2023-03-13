@@ -47,6 +47,7 @@ function echoExternalDataWebhookToFluid(
 async function registerForWebhook(
 	port: string,
 	externalDataServiceWebhookRegistrationUrl: string,
+	externalTaskListId: ExternalTaskListId,
 ): Promise<void> {
 	// Register with external data service for webhook notifications.
 	await fetch(externalDataServiceWebhookRegistrationUrl, {
@@ -57,7 +58,7 @@ async function registerForWebhook(
 		},
 		body: JSON.stringify({
 			// External data service will call our webhook echoer to notify our subscribers of the data changes.
-			url: `http://localhost:${port}/external-data-webhook`,
+			url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
 		}),
 	});
 }
@@ -142,8 +143,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * This data will be forwarded to our own subscribers.
 	 */
 	expressApp.post("/external-data-webhook", (request, result) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const externalTaskListId = request.body?.externalTaskListId as ExternalTaskListId;
+		const externalTaskListId = request.query.externalTaskListId as ExternalTaskListId;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const messageData = request.body?.data as TaskData;
 		if (messageData === undefined) {
@@ -216,17 +216,19 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
 				),
 			);
-			registerForWebhook(port.toString(), externalDataServiceWebhookRegistrationUrl).catch(
-				(error) => {
-					console.error(
-						formatLogMessage(
-							`Registering for data update notifications webhook with the external data service failed due to an error.`,
-						),
-						error,
-					);
-					throw error;
-				},
-			);
+			registerForWebhook(
+				port.toString(),
+				externalDataServiceWebhookRegistrationUrl,
+				externalTaskListId,
+			).catch((error) => {
+				console.error(
+					formatLogMessage(
+						`Registering for data update notifications webhook with the external data service failed due to an error.`,
+					),
+					error,
+				);
+				throw error;
+			});
 			result.send();
 		}
 	});

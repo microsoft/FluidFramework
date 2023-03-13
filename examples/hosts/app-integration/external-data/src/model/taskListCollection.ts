@@ -37,17 +37,19 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 		return this.taskLists.get(id);
 	};
 
-	public addTaskList = async (props?: ITaskListInitialState): Promise<void> => {
+	public addTaskList = async (props: ITaskListInitialState): Promise<void> => {
+		const externalTaskListId = props.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			throw new Error("externalTaskListId is required to initialize task list");
+		}
 		const taskList = await TaskListInstantiationFactory.createChildInstance(
 			this.context,
 			props,
 		);
 
-		const externalTaskListId = props?.externalTaskListId as string;
-		if (externalTaskListId !== undefined) {
-			this.taskListCollection.set(externalTaskListId, taskList.handle);
-			this.taskLists.set(externalTaskListId, taskList);
-		}
+		this.taskListCollection.set(externalTaskListId, taskList.handle);
+		this.taskLists.set(externalTaskListId, taskList);
+
 		this.emit("taskListAdded");
 	};
 

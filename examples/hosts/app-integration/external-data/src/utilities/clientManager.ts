@@ -43,7 +43,7 @@ export class ClientManager<TData = unknown> {
 	 * Gets the current list of client session URLs for the specified task list id.
 	 */
 	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionUrl> {
-		const clientSessionUrls = this._taskListMapping.get(externalTaskListId);
+		const clientSessionUrls = this._clientMapping.get(externalTaskListId);
 		if (clientSessionUrls === undefined) {
 			console.error(
 				`CUSTOMER SERVICE: "${externalTaskListId}" is not registered to a client session.`,
@@ -57,11 +57,11 @@ export class ClientManager<TData = unknown> {
 	 */
 	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
 		if (this._taskListMapping.get(client) === undefined) {
-			this._taskListMapping.set(client, new Set<ExternalTaskListId>(externalTaskListId));
+			this._taskListMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
 		}
 
 		if (this._clientMapping.get(externalTaskListId) === undefined) {
-			this._clientMapping.set(client, new Set<ClientSessionUrl>(client));
+			this._clientMapping.set(externalTaskListId, new Set<ClientSessionUrl>([client]));
 		}
 		console.log(
 			`CUSTOMER SERVICE: "${client}" has been registered with ${externalTaskListId}.`,

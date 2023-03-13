@@ -122,12 +122,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * ```json
 	 * {
 	 *		taskList: {
-	 * 			[ externalTaskListId: string]: {
-	 *      		[id: string]: {
-	 *      	    	name: string,
-	 *      	    	priority: number
-	 *      		}
-	 * 			}
+	 *      	[id: string]: {
+	 *      	   	name: string,
+	 *      	   	priority: number
+	 *      	}
 	 *  	}
 	 * }
 	 * ```
@@ -148,7 +146,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 
 				let taskData: TaskData;
 				try {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
@@ -156,10 +154,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					result.status(400).json({ message: errorMessage });
 					return;
 				}
-
 				console.log(formatLogMessage("Returning current task list:"), taskData);
-
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				result.send({ taskList: taskData });
 			},
 			(error) => {
