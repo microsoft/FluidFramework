@@ -44,9 +44,8 @@ type BrandedFieldKind<
 	TName extends string,
 	TMultiplicity extends Multiplicity,
 	TEditor extends FieldEditor<any>,
-> = FieldKind<TEditor> & {
+> = FieldKind<TEditor, TMultiplicity> & {
 	identifier: TName & FieldKindIdentifier;
-	multiplicity: TMultiplicity;
 };
 
 function brandedFieldKind<
@@ -63,13 +62,13 @@ function brandedFieldKind<
 	) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
-	return new FieldKind<TEditor>(
+	return new FieldKind<TEditor, TMultiplicity>(
 		brand(identifier),
 		multiplicity,
 		changeHandler,
 		allowsTreeSupersetOf,
 		handlesEditsFrom,
-	) as unknown as BrandedFieldKind<TName, TMultiplicity, TEditor>;
+	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
 }
 
 /**
@@ -242,7 +241,7 @@ export const counter: BrandedFieldKind<
 	"Counter",
 	Multiplicity.Value,
 	counterHandle,
-	(types, other) => other.kind === counter.identifier,
+	(types, other) => other.kind.identifier === counter.identifier,
 	new Set(),
 );
 
@@ -445,9 +444,9 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 		Multiplicity.Value,
 		valueChangeHandler,
 		(types, other) =>
-			(other.kind === sequence.identifier ||
-				other.kind === value.identifier ||
-				other.kind === optional.identifier) &&
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === value.identifier ||
+				other.kind.identifier === optional.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
 		new Set(),
 	);
@@ -715,7 +714,7 @@ function deltaFromInsertAndChange(
 /**
  * 0 or 1 items.
  */
-export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
+export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = new FieldKind(
 	brand("Optional"),
 	Multiplicity.Optional,
 	{
@@ -750,7 +749,8 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 			change.childChange === undefined && change.fieldChange === undefined,
 	},
 	(types, other) =>
-		(other.kind === sequence.identifier || other.kind === optional.identifier) &&
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === optional.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set([value.identifier]),
 );
@@ -758,12 +758,12 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
+export const sequence: FieldKind<SequenceFieldEditor, Multiplicity.Sequence> = new FieldKind(
 	brand("Sequence"),
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind === sequence.identifier &&
+		other.kind.identifier === sequence.identifier &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
@@ -802,7 +802,7 @@ export const forbidden = brandedFieldKind(
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Value,
+	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Value,
 	new Set(),
 );
 

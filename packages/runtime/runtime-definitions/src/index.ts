@@ -7,6 +7,7 @@ export {
 	AttributionInfo,
 	AttributionKey,
 	DetachedAttributionKey,
+	LocalAttributionKey,
 	OpAttributionKey,
 } from "./attribution";
 export {

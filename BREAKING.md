@@ -98,7 +98,7 @@ The Container and RelativeLoader classes in `@fluidframework/container-loader` h
 
 ### BlobAggregationStorage and SnapshotExtractor deprecated
 
-The Container and RelativeLoader classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
+The BlobAggregationStorage and SnapshotExtractor classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
 the next major release. These classes were experimental and never widely used. There are no replacements.
 
 ### Summarizer node and related items deprecated

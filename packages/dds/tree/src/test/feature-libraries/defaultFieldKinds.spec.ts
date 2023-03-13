@@ -11,6 +11,7 @@ import {
 	IdAllocator,
 	NodeChangeset,
 	NodeReviver,
+	RevisionMetadataSource,
 	singleTextCursor,
 } from "../../feature-libraries";
 import {
@@ -48,6 +49,11 @@ const crossFieldManager = {
 
 const revisionIndexer = (tag: RevisionTag) => {
 	assert.fail("Unexpected revision index query");
+};
+
+const revisionMetadata: RevisionMetadataSource = {
+	getIndex: revisionIndexer,
+	getInfo: (tag: RevisionTag) => ({ tag }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
@@ -116,7 +122,7 @@ describe("Value field changesets", () => {
 			simpleChildComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionIndexer,
+			revisionMetadata,
 		);
 
 		assert.deepEqual(composed, change2);
@@ -129,7 +135,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change1WithChildChange,
 		);
@@ -146,7 +152,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change1,
 		);
@@ -157,7 +163,7 @@ describe("Value field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			childChange3,
 		);
@@ -191,7 +197,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change2,
 		);
@@ -214,7 +220,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			childChange3,
 		);
@@ -288,7 +294,7 @@ describe("Optional field changesets", () => {
 			childComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionIndexer,
+			revisionMetadata,
 		);
 		assert.deepEqual(composed, change3);
 	});
@@ -305,7 +311,7 @@ describe("Optional field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			expected,
 		);
@@ -351,7 +357,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change2,
 		);
@@ -379,7 +385,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			expected,
 		);

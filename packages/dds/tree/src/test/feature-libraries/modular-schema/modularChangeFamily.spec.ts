@@ -18,6 +18,7 @@ import {
 	FieldChange,
 	ModularChangeset,
 	ChangesetLocalId,
+	RevisionInfo,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -30,6 +31,7 @@ import {
 	FieldKey,
 	UpPath,
 	mintRevisionTag,
+	tagRollbackInverse,
 } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { assertDeltaEqual, deepFreeze } from "../../utils";
@@ -598,7 +600,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			assert.deepEqual(family.invert(makeAnonChange(rootChange1a)), expectedInverse);
+			assert.deepEqual(family.invert(makeAnonChange(rootChange1a), false), expectedInverse);
 		});
 
 		it("generic", () => {
@@ -616,7 +618,10 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			assert.deepEqual(family.invert(makeAnonChange(rootChange1aGeneric)), expectedInverse);
+			assert.deepEqual(
+				family.invert(makeAnonChange(rootChange1aGeneric), false),
+				expectedInverse,
+			);
 		});
 
 		it("generate IDs", () => {
@@ -640,7 +645,7 @@ describe("ModularChangeFamily", () => {
 				]),
 			};
 
-			assert.deepEqual(family.invert(makeAnonChange(change)), expected);
+			assert.deepEqual(family.invert(makeAnonChange(change), false), expected);
 		});
 	});
 
@@ -813,29 +818,45 @@ describe("ModularChangeFamily", () => {
 		const rev4 = mintRevisionTag();
 
 		let composeWasTested = false;
-		let rebaseWasTested = false;
 		const compose: FieldChangeRebaser<RevisionTag[]>["compose"] = (
 			changes: TaggedChange<RevisionTag[]>[],
 			composeChild,
 			genId,
 			crossFieldManager,
-			revisionIndexer,
+			{ getIndex, getInfo },
 		): RevisionTag[] => {
-			const revsIndices: number[] = [rev1, rev2, rev3, rev4].map((c) => revisionIndexer(c));
+			const relevantRevisions = [rev1, rev2, rev3, rev4];
+			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
+			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
 			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
+			assert.deepEqual(revsInfos, [
+				{ tag: rev1 },
+				{ tag: rev2 },
+				{ tag: rev3, isRollback: true },
+				{ tag: rev4, isRollback: true },
+			]);
 			composeWasTested = true;
 			return [];
 		};
+
+		let rebaseWasTested = false;
 		const rebase: FieldChangeRebaser<RevisionTag[]>["rebase"] = (
 			change: RevisionTag[],
 			over: TaggedChange<RevisionTag[]>,
 			rebaseChild,
 			genId,
 			crossFieldManager,
-			revisionIndexer,
+			{ getIndex, getInfo },
 		): RevisionTag[] => {
-			const revsIndices: number[] = [rev1, rev2, rev4].map((c) => revisionIndexer(c));
+			const relevantRevisions = [rev1, rev2, rev4];
+			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
+			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
 			assert.deepEqual(revsIndices, [0, 1, 2]);
+			assert.deepEqual(revsInfos, [
+				{ tag: rev1 },
+				{ tag: rev2 },
+				{ tag: rev4, isRollback: true },
+			]);
 			rebaseWasTested = true;
 			return change;
 		};
@@ -888,22 +909,22 @@ describe("ModularChangeFamily", () => {
 					},
 				],
 			]),
-			revisions: [{ tag: rev4 }],
+			revisions: [{ tag: rev4, isRollback: true }],
 		};
 		const composed = dummyFamily.compose([
 			makeAnonChange(changeA),
-			tagChange(changeB, rev3),
+			tagRollbackInverse(changeB, rev3),
 			makeAnonChange(changeC),
 		]);
 		assert.deepEqual(composed.revisions, [
 			{ tag: rev1 },
 			{ tag: rev2 },
-			{ tag: rev3 },
-			{ tag: rev4 },
+			{ tag: rev3, isRollback: true },
+			{ tag: rev4, isRollback: true },
 		]);
 		assert(composeWasTested);
 		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
-		assert.deepEqual(rebased.revisions, [{ tag: rev4 }]);
+		assert.deepEqual(rebased.revisions, [{ tag: rev4, isRollback: true }]);
 		assert(rebaseWasTested);
 	});
 });

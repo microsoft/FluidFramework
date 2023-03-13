@@ -54,13 +54,19 @@ function getAttributionInfo(
 	attributor: IRuntimeAttributor,
 	sharedString: SharedString,
 	pos: number,
-): AttributionInfo {
+): AttributionInfo | undefined {
 	const { segment, offset } = sharedString.getContainingSegment(pos);
 	if (!segment || !offset) {
 		throw new UsageError("Invalid pos");
 	}
 	const attributionKey: AttributionKey = segment.attribution.getAtOffset(offset);
-	return attributor.getAttributionInfo(attributionKey);
+	// BEWARE: DDSes may track attribution key with type "detached" and "local", which aren't yet
+	// supported out-of-the-box in IRuntimeAttributor. The application can recover AttributionInfo
+	// from these keys if it wants using user information about the creator of the document and the
+	// current active user, respectively.
+	if (attributor.has(attributionKey)) {
+		return attributor.get(attributionKey);
+	}
 }
 
 // Get the user who inserted the text at position 0 in `sharedString` and the timestamp for when they did so.

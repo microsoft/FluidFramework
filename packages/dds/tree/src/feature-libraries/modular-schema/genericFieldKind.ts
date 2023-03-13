@@ -17,7 +17,7 @@ import {
 	NodeChangeRebaser,
 	IdAllocator,
 	isolatedFieldChangeRebaser,
-	RevisionIndexer,
+	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -211,7 +211,7 @@ export function convertGenericChange<TChange>(
 	target: FieldChangeHandler<TChange>,
 	composeChild: NodeChangeComposer,
 	genId: IdAllocator,
-	revisionIndexer: RevisionIndexer,
+	revisionMetadata: RevisionMetadataSource,
 ): TChange {
 	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
@@ -222,7 +222,7 @@ export function convertGenericChange<TChange>(
 		composeChild,
 		genId,
 		invalidCrossFieldManager,
-		revisionIndexer,
+		revisionMetadata,
 	);
 }
 
