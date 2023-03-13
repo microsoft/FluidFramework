@@ -77,7 +77,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				this.pendingMetric = Lumberjack.newLumberMetric(
 					LumberEventName.ScriptoriumProcessBatch,
 					{
-						timestampReadyToProcess: Date.now(),
+						timestampReadyToProcess: new Date().toISOString(),
 						kafkaPartition: this.pendingOffset?.partition,
 						batchOffsetStart: this.pendingOffset?.offset,
 						batchOffsetEnd: this.pendingOffset?.offset,
@@ -121,7 +121,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			metric = this.pendingMetric;
 			this.pendingMetric = undefined;
 
-			metric.setProperty("timestampProcessingStart", Date.now());
+			metric.setProperty("timestampProcessingStart", new Date().toISOString());
 		}
 
 		let status = ScriptoriumStatus.Processing;
@@ -144,17 +144,17 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			() => {
 				this.current.clear();
 				status = ScriptoriumStatus.ProcessingComplete;
-				metric?.setProperty("timestampProcessingComplete", Date.now());
+				metric?.setProperty("timestampProcessingComplete", new Date().toISOString());
 
 				// checkpoint batch offset
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					this.context.checkpoint(batchOffset!);
 					status = ScriptoriumStatus.CheckpointComplete;
-					metric?.setProperty("timestampCheckpointComplete", Date.now());
+					metric?.setProperty("timestampCheckpointComplete", new Date().toISOString());
 				} catch (error) {
 					status = ScriptoriumStatus.CheckpointFailed;
-					metric?.setProperty("timestampCheckpointFailed", Date.now());
+					metric?.setProperty("timestampCheckpointFailed", new Date().toISOString());
 					const errorMessage = "Scriptorium failed to checkpoint batch";
 					this.logErrorTelemetry(
 						errorMessage,
@@ -175,7 +175,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			(error) => {
 				// catches error if any of the promises failed in Promise.all, i.e. any of the ops failed to write to db
 				status = ScriptoriumStatus.ProcessingFailed;
-				metric?.setProperty("timestampProcessingFailed", Date.now());
+				metric?.setProperty("timestampProcessingFailed", new Date().toISOString());
 				const errorMessage = "Scriptorium failed to process batch, going to restart";
 				this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
 
