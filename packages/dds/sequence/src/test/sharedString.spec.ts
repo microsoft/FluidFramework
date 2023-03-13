@@ -24,6 +24,7 @@ import {
 	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { getTextAndMarkers, SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
@@ -249,21 +250,14 @@ describe("SharedString", () => {
 			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
 			// Annotate the marker's ID.
 			const newIdProps = { [reservedMarkerIdKey]: "newIdValue" };
-			try {
-				sharedString.annotateMarker(simpleMarker, newIdProps);
-				assert.fail();
-			} catch (error) {
-				assert.notEqual(
-					error,
-					undefined,
-					"Error from attempting to update marker was not thrown",
-				);
-				assert.equal(
-					(error as Error).message,
-					"Cannot change the markerId of an existing marker",
-					`Incorrect error received - got ${(error as Error).message}`,
-				);
-			}
+			assert.throws(
+				() => {
+					sharedString.annotateMarker(simpleMarker, newIdProps);
+					assert.fail("Error from attempting to update marker was not thrown");
+				},
+				(e) =>
+					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+			);
 		});
 
 		it("replace zero range", async () => {
