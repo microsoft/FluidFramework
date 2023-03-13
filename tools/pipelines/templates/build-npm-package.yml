@@ -360,31 +360,11 @@ stages:
               mergeTestResults: false
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
-          # Check Published Tests
-          - task: Bash@3
-            displayName: 'Check for nyc directory'
-            inputs:
-              targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
-              script: |
-                test -d nyc && echo '##vso[task.setvariable variable=TestReportsExists;]true' || echo 'No nyc directory'
-            condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-
-          # Console Log Failed Tests
-          - task: Bash@3
-            displayName: Log Failed Tests
-            inputs:
-              targetType: inline
-              script: |
-                failedTests=$(node report-parser.js '$(Build.SourcesDirectory)/nyc')
-                if [ $failedTests == [] ]
-                then
-                  echo "No failed tests."
-                else
-                  echo "##[error] $failedTests"
-                fi
-              workingDirectory: tools/report-parser
-            condition: and(succeededOrFailed(), eq(variables['TestReportsExists'], 'true'))
+          # Log Test Failures
+          - ${{ if and(succeededOrFailed(), eq(variables['startTest'], 'true')) }}:
+            - template: include-log-test-failures.yml
+              parameters:
+                buildDirectory: ${{ parameters.buildDirectory }}
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
