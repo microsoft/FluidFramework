@@ -114,6 +114,7 @@ export {
 	TreeSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
 	SchemaPolicy,
@@ -133,6 +134,7 @@ export {
 export {
 	ChangeEncoder,
 	ChangeFamily,
+	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 } from "./change-family";
@@ -149,16 +151,12 @@ export {
 	noFailure,
 	OutputType,
 	verifyChangeRebaser,
-	tagInverse,
+	tagRollbackInverse,
 	SessionId,
 	mintCommit,
 	mintRevisionTag,
 	Rebaser,
 } from "./rebase";
-
-export { TransactionResult } from "./checkout";
-
-export { Checkout as TransactionCheckout } from "./transaction";
 
 export {
 	Adapters,

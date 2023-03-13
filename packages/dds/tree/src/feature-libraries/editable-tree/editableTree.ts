@@ -380,7 +380,7 @@ export function makeField(
 export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 	private readonly lazyCursor: ITreeSubscriptionCursor;
 
-	constructor(
+	public constructor(
 		public readonly context: ProxyContext,
 		cursor: ITreeSubscriptionCursor,
 		private anchor?: T,
@@ -479,7 +479,7 @@ function getPrimaryArrayKey(
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public readonly proxy: EditableTree;
 	private readonly removeDeleteCallback: () => void;
-	constructor(
+	public constructor(
 		context: ProxyContext,
 		cursor: ITreeSubscriptionCursor,
 		public readonly anchorNode: AnchorNode,
@@ -513,19 +513,19 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.forest.anchors.forget(anchor);
 	}
 
-	get typeName(): TreeSchemaIdentifier {
+	public get typeName(): TreeSchemaIdentifier {
 		return this.cursor.type;
 	}
 
-	get type(): TreeSchema {
+	public get type(): TreeSchema {
 		return lookupTreeSchema(this.context.schema, this.typeName);
 	}
 
-	get value(): Value {
+	public get value(): Value {
 		return this.cursor.value;
 	}
 
-	set value(value: Value) {
+	public set value(value: Value) {
 		assert(isPrimitive(this.type), 0x44d /* Cannot set a value of a non-primitive field */);
 		assertPrimitiveValueType(value, this.type);
 		const path = this.cursor.getPath();
@@ -533,7 +533,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.setNodeValue(path, value);
 	}
 
-	get currentIndex(): number {
+	public get currentIndex(): number {
 		return this.cursor.fieldIndex;
 	}
 
@@ -568,7 +568,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
-	[Symbol.iterator](): IterableIterator<EditableField> {
+	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
 			makeField(
@@ -905,7 +905,11 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public readonly fieldSchema: FieldSchema;
 	public readonly [arrayLikeMarkerSymbol]: true;
 
-	constructor(context: ProxyContext, fieldSchema: FieldSchema, cursor: ITreeSubscriptionCursor) {
+	public constructor(
+		context: ProxyContext,
+		fieldSchema: FieldSchema,
+		cursor: ITreeSubscriptionCursor,
+	) {
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		super(context, cursor);
 		this.fieldKey = cursor.getFieldKey();
@@ -913,11 +917,11 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		this[arrayLikeMarkerSymbol] = true;
 	}
 
-	get [proxyTargetSymbol](): FieldProxyTarget {
+	public get [proxyTargetSymbol](): FieldProxyTarget {
 		return this;
 	}
 
-	get parent(): EditableTree | undefined {
+	public get parent(): EditableTree | undefined {
 		if (this.getAnchor().parent === undefined) {
 			return undefined;
 		}
@@ -976,7 +980,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return mapCursorField(this.cursor, (cursor) => unwrappedTree(this.context, cursor));
 	}
 
-	[Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
+	public [Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
 		return this.asArray().values();
 	}
 

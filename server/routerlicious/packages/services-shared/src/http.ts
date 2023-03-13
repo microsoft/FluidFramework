@@ -12,29 +12,29 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
  * Check a given path string for path traversal (e.g. "../" or "/").
  */
 export function containsPathTraversal(path: string): boolean {
-    const parsedPath = parse(path);
-    return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
+	const parsedPath = parse(path);
+	return parsedPath.dir.includes("..") || parsedPath.dir.startsWith("/");
 }
 
 /**
  * Validate specific request parameters to prevent directory traversal.
  */
 export function validateRequestParams(...paramNames: (string | number)[]): RequestHandler {
-    return (req, res, next) => {
-        for (const paramName of paramNames) {
-            const param = req.params[paramName];
-            if (!param) {
-                continue;
-            }
-            if (containsPathTraversal(param)) {
-                return handleResponse(
-                    Promise.reject(new NetworkError(400, `Invalid ${paramName}: ${param}`)),
-                    res,
-                );
-            }
-        }
-        next();
-    };
+	return (req, res, next) => {
+		for (const paramName of paramNames) {
+			const param = req.params[paramName];
+			if (!param) {
+				continue;
+			}
+			if (containsPathTraversal(param)) {
+				return handleResponse(
+					Promise.reject(new NetworkError(400, `Invalid ${paramName}: ${param}`)),
+					res,
+				);
+			}
+		}
+		next();
+	};
 }
 
 /**
@@ -52,36 +52,37 @@ export const defaultErrorMessage = "Internal Server Error";
  * @param onSuccess - Additional callback fired when response is successful before sending response.
  */
 export function handleResponse<T>(
-    resultP: Promise<T>,
-    response: Response,
-    allowClientCache?: boolean,
-    errorStatus?: number,
-    successStatus: number = 200,
-    onSuccess: (value: T) => void = () => { },
+	resultP: Promise<T>,
+	response: Response,
+	allowClientCache?: boolean,
+	errorStatus?: number,
+	successStatus: number = 200,
+	onSuccess: (value: T) => void = () => {},
 ) {
-    resultP.then(
-        (result) => {
-            if (allowClientCache === true) {
-                response.setHeader("Cache-Control", "public, max-age=31536000");
-            } else if (allowClientCache === false) {
-                response.setHeader("Cache-Control", "no-store, max-age=0");
-            }
+	resultP.then(
+		(result) => {
+			if (allowClientCache === true) {
+				response.setHeader("Cache-Control", "public, max-age=31536000");
+			} else if (allowClientCache === false) {
+				response.setHeader("Cache-Control", "no-store, max-age=0");
+			}
 
-            onSuccess(result);
-            response.status(successStatus).json(result);
-        },
-        (error) => {
-            // Only log unexpected errors on the assumption that explicitly thrown
-            // NetworkErrors have additional logging in place at the source.
-            if (error instanceof Error && error?.name === "NetworkError") {
-                const networkError = error as NetworkError;
-                response
-                    .status(errorStatus ?? networkError.code ?? 400)
-                    .json(networkError.details ?? error);
-            } else {
-                // Mask unexpected internal errors in outgoing response.
-                Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
-                response.status(errorStatus ?? 400).json(defaultErrorMessage);
-            }
-        });
+			onSuccess(result);
+			response.status(successStatus).json(result);
+		},
+		(error) => {
+			// Only log unexpected errors on the assumption that explicitly thrown
+			// NetworkErrors have additional logging in place at the source.
+			if (error instanceof Error && error?.name === "NetworkError") {
+				const networkError = error as NetworkError;
+				response
+					.status(errorStatus ?? networkError.code ?? 400)
+					.json(networkError.details ?? error);
+			} else {
+				// Mask unexpected internal errors in outgoing response.
+				Lumberjack.error("Unexpected error when processing HTTP Request", undefined, error);
+				response.status(errorStatus ?? 400).json(defaultErrorMessage);
+			}
+		},
+	);
 }

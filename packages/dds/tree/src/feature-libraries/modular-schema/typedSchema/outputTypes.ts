@@ -3,14 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant } from "../../../util";
+import { Invariant, requireAssignableTo } from "../../../util";
 import {
-	TreeSchemaBuilder,
 	FieldSchema,
 	LocalFieldKey,
 	ValueSchema,
 	TreeSchemaIdentifier,
 	NamedTreeSchema,
+	GlobalFieldKeySymbol,
+	Named,
+	TreeSchemaBuilder,
 } from "../../../core";
 import { FieldKind } from "../fieldKind";
 import { ObjectToMap } from "./typeUtils";
@@ -22,48 +24,54 @@ import { ObjectToMap } from "./typeUtils";
 
 /**
  * Object for capturing information about a TreeSchema for use at both compile time and runtime.
+ * @alpha
  */
-export interface TreeSchemaTypeInfo extends TreeSchemaBuilder {
-	readonly name: TreeSchemaIdentifier;
-	readonly local: { readonly [key: string]: LabeledFieldSchema<any> };
-	readonly global: { readonly [key: string]: MapToken };
-	readonly extraLocalFields: LabeledFieldSchema<any>;
+export interface TreeSchemaTypeInfo {
+	readonly name: string;
+	readonly local: { readonly [key: string]: FieldSchemaTypeInfo };
+	readonly global: readonly GlobalFieldKeySymbol[];
+	readonly extraLocalFields: FieldSchemaTypeInfo;
 	readonly extraGlobalFields: boolean;
 	readonly value: ValueSchema;
 }
 
+{
+	type _check = requireAssignableTo<TreeSchemaTypeInfo, TreeSchemaBuilder & Named<string>>;
+}
+
 /**
  * Object for capturing information about a FieldSchema for use at both compile time and runtime.
+ * @alpha
  */
-export interface FieldSchemaTypeInfo {
+export interface FieldSchemaTypeInfo extends FieldSchema {
 	readonly kind: FieldKind;
-	readonly types?: { readonly [key: string]: MapToken };
+	readonly types?: NameSet;
+}
+
+/**
+ * Set of `TreeSchemaIdentifiers` that has an easy way to get the list names as regular strings out with the type system.
+ * @alpha
+ */
+export interface NameSet<Names extends string[] = any> extends ReadonlySet<TreeSchemaIdentifier> {
+	readonly typeCheck?: Invariant<Names>;
 }
 
 /**
  * TreeSchema extended with extra type information for use at compile time.
+ * @alpha
  */
-export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo> extends NamedTreeSchema {
-	readonly typeCheck?: Invariant<T>;
+export interface LabeledTreeSchema<T extends TreeSchemaTypeInfo = TreeSchemaTypeInfo>
+	extends NamedTreeSchema {
+	/**
+	 * Extra type information.
+	 *
+	 * This information is accessible through the other fields as well, but those fields are optimized for runtime use.
+	 * This field's contents are in a format optimized for strongly typed declarations and use by the type system.
+	 */
+	readonly typeInfo: T;
 
 	// Allow reading localFields through the normal map, but without losing type information.
 	readonly localFields: ObjectToMap<T["local"], LocalFieldKey, FieldSchema>;
-}
 
-/**
- * FieldSchema extended with extra type information for use at compile time.
- */
-export interface LabeledFieldSchema<T extends FieldSchemaTypeInfo> extends FieldSchema {
-	readonly typeCheck?: Invariant<T>;
+	readonly name: T["name"] & TreeSchemaIdentifier;
 }
-
-/**
- * Placeholder used as value when storing a set in the keys of an object.
- *
- * These map objects should only be used as ways to capture sets of strings in the type system.
- */
-export const MapToken = "MapToken";
-/**
- * Placeholder type used as value when storing a set in the keys of an object.
- */
-export type MapToken = typeof MapToken;

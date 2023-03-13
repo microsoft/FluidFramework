@@ -11,6 +11,7 @@ import {
 	TaggedChange,
 	AnchorSet,
 	Delta,
+	ChangeFamilyEditor,
 } from "../core";
 import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
@@ -252,4 +253,4 @@ export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
 	public intentions: number[] = [];
 }
 
-export type TestChangeFamily = ChangeFamily<unknown, TestChange>;
+export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;

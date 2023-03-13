@@ -97,7 +97,7 @@ function invertMark<TNodeChange>(
 				return [
 					{
 						type: "Delete",
-						count: mark.type === "Insert" ? mark.content.length : 1,
+						count: mark.content.length,
 					},
 				];
 			}

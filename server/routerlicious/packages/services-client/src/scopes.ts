@@ -6,8 +6,8 @@
 import { ScopeType } from "@fluidframework/protocol-definitions";
 
 /**
-* C1 can revoke an access token of a client
-*/
+ * C1 can revoke an access token of a client
+ */
 const TokenRevokeScopeType = "token:revoke";
 
 export const canRead = (scopes: string[]) => scopes.includes(ScopeType.DocRead);
