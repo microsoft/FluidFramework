@@ -153,7 +153,6 @@ import {
 	GarbageCollector,
 	GCNodeType,
 	gcTombstoneGenerationOptionName,
-	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
@@ -559,12 +558,7 @@ export function getDeviceSpec() {
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
-	implements
-		IContainerRuntime,
-		IGarbageCollectionRuntime,
-		IRuntime,
-		ISummarizerRuntime,
-		ISummarizerInternalsProvider
+	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	public get IContainerRuntime() {
 		return this;
@@ -2359,10 +2353,10 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
 	 * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
 	 * the garbage collector of references detected since the last GC run. Most references are notified immediately
 	 * but there can be some for which async operation is required (such as detecting new root data stores).
+	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
 	 */
 	public async updateStateBeforeGC() {
 		return this.dataStores.updateStateBeforeGC();
@@ -2373,9 +2367,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::getGCData.
 	 * Generates and returns the GC data for this container.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
+	 * @see IGarbageCollectionRuntime.getGCData
 	 */
 	public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		const builder = new GCDataBuilder();
@@ -2388,9 +2382,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
 	 * After GC has run, called to notify this container's nodes of routes that are used in it.
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
+	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
 	public updateUsedRoutes(usedRoutes: string[]) {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before

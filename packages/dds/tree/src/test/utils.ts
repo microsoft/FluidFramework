@@ -48,8 +48,10 @@ import {
 	GlobalFieldKey,
 	rootFieldKey,
 	rootFieldKeySymbol,
-	TransactionResult,
 	Value,
+	compareUpPaths,
+	UpPath,
+	clonePath,
 } from "../core";
 import { brand, makeArray } from "../util";
 
@@ -423,13 +425,17 @@ export function initializeTestTree(
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
-
 	// Apply an edit to the tree which inserts a node with a value
-	tree.runTransaction((forest, editor) => {
-		const writeCursor = singleTextCursor(state);
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
+	const writeCursor = singleTextCursor(state);
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, writeCursor);
+}
 
-		return TransactionResult.Apply;
-	});
+export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
+	if (!compareUpPaths(path, expectedPath)) {
+		// This is slower than above compare, so only do it in the error case.
+		// Make a nice error message:
+		assert.deepEqual(clonePath(path), clonePath(expectedPath));
+		assert.fail("unequal paths, but clones compared equal");
+	}
 }

@@ -7,5 +7,7 @@ export {
 	ISharedTree,
 	ISharedTreeCheckout,
 	ISharedTreeCheckoutFork,
+	runSynchronous,
 	SharedTreeFactory,
+	CheckoutEvents,
 } from "./sharedTree";

@@ -19,7 +19,11 @@ const newConfig = {
 	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
 	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
-	"spec": ["dist/test/benchmark/**/*.memory.spec.js", "--perfMode"],
-	"timeout": "60000",
+	"spec": [
+		"dist/test/benchmark/**/*.memory.spec.js",
+		"dist/test/benchmark/**/*.all.spec.js",
+		"--perfMode",
+	],
+	"timeout": "120000",
 };
 module.exports = newConfig;

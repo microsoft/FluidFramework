@@ -16,6 +16,7 @@ export {
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
+	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
@@ -37,10 +38,12 @@ export {
 	NodeChangeset,
 	NodeReviver,
 	referenceFreeFieldChangeRebaser,
+	RevisionMetadataSource,
 	RevisionIndexer,
 	RevisionInfo,
 	ToDelta,
 	ValueChange,
+	ValueConstraint,
 } from "./fieldChangeHandler";
 export {
 	convertGenericChange,
@@ -52,5 +55,8 @@ export {
 	genericFieldKind,
 } from "./genericFieldKind";
 export { ModularChangeFamily, ModularEditBuilder, EditDescription } from "./modularChangeFamily";
-export { typedTreeSchema, typedFieldSchema } from "./typedSchema";
 export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";
+
+// Split this up into separate import and export for compatibility with API-Extractor.
+import * as TypedSchema from "./typedSchema";
+export { TypedSchema };
