@@ -61,7 +61,7 @@
 		"express": "^4.17.3",
 		"ioredis": "^4.24.2",
 		"nconf": "^0.12.0",
-    "request": "^2.88.0",
+		"request": "^2.88.0",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
@@ -81,10 +81,5 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^3.0.2",
 		"typescript": "~4.5.5"
-	},
-	"overrides": {
-		"request@2.88.2": {
-			"qs": "^6.11.0"
-		}
 	}
 }
