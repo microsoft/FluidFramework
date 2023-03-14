@@ -131,29 +131,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             throw error;
         }
 
-        // Search local database for checkpoint
-        Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
-        const checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
-            Lumberjack.error(`Error retrieving checkpoint from local DB.`, lumberProperties);
-        });
 
-        // If we have local checkpoint information
-        if(checkpoint) {
-            Lumberjack.info(`Checkpoint retrieved from the local collection.`)
-            lastCheckpoint = JSON.parse(checkpoint.scribe);
 
-            const lumberjackProperties = {
-                ...getLumberBaseProperties(documentId, tenantId),
-                lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
-                logOffset: lastCheckpoint.logOffset,
-                LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber
-            }
-
-            Lumberjack.info(`Restoring checkpoint from the local collection.`, lumberjackProperties);
-
-            opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
-
-        } else if (document.scribe === undefined || document.scribe === null) {
+        if (document.scribe === undefined || document.scribe === null) {
             // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
         // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
             const message = "New document. Setting empty scribe checkpoint";
@@ -181,12 +161,26 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 Lumberjack.info(checkpointMessage, lumberProperties);
             }
         } else {
-            lastCheckpoint = JSON.parse(document.scribe);
+            // Search local database for checkpoint
+            Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
+            const checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
+            Lumberjack.error(`Error retrieving checkpoint from local DB.`, lumberProperties);
+            });
+
+            let isLocalCheckpoint = false;
+            if (checkpoint) {
+                lastCheckpoint = JSON.parse(checkpoint.scribe);
+                isLocalCheckpoint = true;
+            } else {
+                lastCheckpoint = JSON.parse(document.scribe);
+            }
+
             const lumberjackProperties = {
                 ...getLumberBaseProperties(documentId, tenantId),
                 lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
                 logOffset: lastCheckpoint.logOffset,
-                LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber
+                LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
+                retrievedFromLocalDB: isLocalCheckpoint
             }
 
             Lumberjack.info("Restoring checkpoint from db", lumberjackProperties);
