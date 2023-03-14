@@ -260,6 +260,23 @@ describe("SharedString", () => {
 			);
 		});
 
+		it("can update marker with the existing id", () => {
+			sharedString.insertText(0, "hello world");
+			// Insert a simple marker.
+			sharedString.insertMarker(6, ReferenceType.Simple, {
+				[reservedMarkerIdKey]: "markerId",
+			});
+			// Annotate the marker's ID.
+			const simpleMarker = sharedString.getMarkerFromId("markerId") as Marker;
+			const newIdProps = { [reservedMarkerIdKey]: "markerId" };
+			sharedString.annotateMarker(simpleMarker, newIdProps);
+			assert.equal(
+				sharedString.getMarkerFromId("markerId"),
+				simpleMarker,
+				"Could not update marker with the existing id value",
+			);
+		});
+
 		it("replace zero range", async () => {
 			sharedString.insertText(0, "123");
 			sharedString.replaceText(1, 1, "\u00e4\u00c4");
