@@ -50,6 +50,7 @@ Previously, `DataObject` would perform undocumented special handling for request
 
 -   [Ability to enable grouped batching](#Ability-to-enable-grouped-batching)
 -   [Testing support for LTS is moved from 0.45 to 1.3.4](#Testing-support-for-LTS-is-moved-from-0.45-to-1.3.4)
+-   [MockLogger is now internal](#mocklogger-is-now-internal)
 
 ### Ability to enable grouped batching
 
@@ -70,6 +71,13 @@ and verifying that the following expectation changes won't have any effects:
 ### Testing support for LTS is moved from 0.45.0 to 1.3.4
 
 Internal end-to-end full-compatibility testing for the loader-runtime boundary has been bumped from the oldest loader LTS version in 0.45.0 to the new oldest loader LTS version 1.3.4. For customers using azure packages, the loader-runtime are bundled together.
+
+### MockLogger is now internal
+
+The `MockLogger` class in `@fluidframework/telemetry-utils` is now internal.
+This means its API surface could change at any time and no guarantees are made on backwards or forwards compatibility.
+It was never intended for public use so no replacement is being provided for outside consumers.
+If you rely on its functionality, we recommend that you copy it into your own repository and use that version going forward.
 
 ## 2.0.0-internal.4.1.0 Upcoming changes
 

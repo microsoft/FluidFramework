@@ -8,46 +8,85 @@ import { assert } from "@fluidframework/common-utils";
 import { TelemetryLogger } from "./logger";
 
 /**
- * The MockLogger records events sent to it, and then can walk back over those events
+ * Logger that records events sent to it, and then can walk back over those events
  * searching for a set of expected events to match against the logged events.
+ *
+ * @internal
  */
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
+	/**
+	 * Internal buffer of logged events.
+	 * It's recommended to use the methods on this class to validate events stored here, over
+	 * using this array directly.
+	 *
+	 * @remarks
+	 * Gets cleared when any of the validation functions on this class gets called.
+	 *
+	 * @internal
+	 */
 	events: ITelemetryBaseEvent[] = [];
 
+	/**
+	 * @internal
+	 */
 	constructor() {
 		super();
 	}
 
+	/**
+	 * Clears {@link MockLogger.events}.
+	 * @internal
+	 */
 	clear() {
 		this.events = [];
 	}
 
+	/**
+	 * {@inheritdoc TelemetryLogger.send}
+	 *
+	 * @internal
+	 */
 	send(event: ITelemetryBaseEvent): void {
 		this.events.push(event);
 	}
 
 	/**
-	 * Search events logged since the last time matchEvents was called, looking for the given expected
-	 * events in order.
+	 * Search for the specified expected events, in order, among the events that have been logged since the last call
+	 * to the "clear", or any of "match___" or "assert___" methods.
+	 * This doesn't necessarily mean that the expected events are the only ones present;
+	 * it means that they are present and in the specified order, but other events might be interleaved.
+	 * To look for *only* the specified events, use {@link MockLogger.matchEventStrict}.
+	 *
 	 * @param expectedEvents - events in order that are expected to appear in the recorded log.
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 *
+	 * @internal
 	 */
 	matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
-		const matchedExpectedEventCount = this.getMatchedEventsCount(
-			expectedEvents,
-			inlineDetailsProp,
+		if (expectedEvents.length === 0) {
+			throw new Error("Must specify at least 1 event");
+		}
+		return (
+			this.getMatchedEventsCount(expectedEvents, inlineDetailsProp) === expectedEvents.length
 		);
-		// How many expected events were left over? Hopefully none.
-		const unmatchedExpectedEventCount = expectedEvents.length - matchedExpectedEventCount;
-		return unmatchedExpectedEventCount === 0;
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchEvents} is true, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 *
+	 * @internal
+	 */
 	assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
@@ -65,26 +104,40 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	/**
-	 * Search events logged since the last time matchEvents was called, looking for any of the given
-	 * expected events.
+	 * Search for any of the specified expected events among the events that have been logged since the last call to the
+	 * "clear", or any of "match___" or "assert___" methods.
+	 *
 	 * @param expectedEvents - events that are expected to appear in the recorded log.
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 *
 	 * @returns if any of the expected events is found.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 *
+	 * @internal
 	 */
 	matchAnyEvent(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
-		const matchedExpectedEventCount = this.getMatchedEventsCount(
-			expectedEvents,
-			inlineDetailsProp,
-		);
-		return matchedExpectedEventCount > 0;
+		if (expectedEvents.length === 0) {
+			throw new Error("Must specify at least 1 event");
+		}
+
+		return this.getMatchedEventsCount(expectedEvents, inlineDetailsProp) > 0;
 	}
 
-	/** Asserts that matchAnyEvent is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchAnyEvent} is true, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 *
+	 * @internal
+	 */
 	assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
@@ -102,24 +155,42 @@ ${JSON.stringify(actualEvents)}`);
 	}
 
 	/**
-	 * Search events logged since the last time matchEvents was called, looking only for the given expected
-	 * events in order.
+	 * Search for *exactly* the specified expected events (and no others), in order, among the events that have been
+	 * logged since the last call to the "clear", or any of "match___" or "assert___" methods.
+	 *
 	 * @param expectedEvents - events in order that are expected to be the only events in the recorded log.
 	 * @param inlineDetailsProp - true if the "details" property in the actual event should be extracted and inlined.
 	 * These event objects may be subsets of the logged events.
 	 * Note: category is omitted from the type because it's usually uninteresting and tedious to type.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 *
+	 * @internal
 	 */
 	matchEventStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		inlineDetailsProp: boolean = false,
 	): boolean {
+		// Note: order matters here; we need to save the value of this.events.length before calling this.getMatchedEventCount,
+		// because that function will clear this.events.
+		// But we *have* to call it to ensure that the events buffer is cleared.
+		const existingEventCount = this.events.length;
 		return (
-			expectedEvents.length === this.events.length &&
-			this.matchEvents(expectedEvents, inlineDetailsProp)
+			expectedEvents.length ===
+				this.getMatchedEventsCount(expectedEvents, inlineDetailsProp) &&
+			expectedEvents.length === existingEventCount
 		);
 	}
 
-	/** Asserts that matchEvents is true, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchEventStrict} is true for the given events, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 *
+	 * @internal
+	 */
 	assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,
@@ -136,7 +207,14 @@ ${JSON.stringify(actualEvents)}`);
 		}
 	}
 
-	/** Asserts that matchAnyEvent is false for the given events, and prints the actual/expected output if not */
+	/**
+	 * Asserts that {@link MockLogger.matchAnyEvent} is false for the given events, and prints the actual/expected output if not.
+	 *
+	 * @remarks
+	 * Calling this method will clear the internal buffer of saved events.
+	 *
+	 * @internal
+	 */
 	assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
 		message?: string,

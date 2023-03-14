@@ -228,21 +228,18 @@ export function logIfFalse(condition: any, logger: ITelemetryBaseLogger, event: 
 // @public (undocumented)
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLogger>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
-// @public
+// @internal
 export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
     constructor();
     assertMatch(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchAny(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchNone(disallowedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
     assertMatchStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], message?: string, inlineDetailsProp?: boolean): void;
-    // (undocumented)
     clear(): void;
-    // (undocumented)
     events: ITelemetryBaseEvent[];
     matchAnyEvent(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEvents(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
     matchEventStrict(expectedEvents: Omit<ITelemetryBaseEvent, "category">[], inlineDetailsProp?: boolean): boolean;
-    // (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
 
