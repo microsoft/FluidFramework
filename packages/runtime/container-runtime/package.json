@@ -129,6 +129,9 @@
 			"RemovedTypeAliasDeclaration_IPendingState": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IConnectableRuntime": {
+				"backCompat": false
 			}
 		}
 	}
