@@ -21,7 +21,7 @@ $ npm install -g @fluid-tools/build-cli
 $ flub COMMAND
 running command...
 $ flub (--version|-V)
-@fluid-tools/build-cli/0.10.0
+@fluid-tools/build-cli/0.13.0
 $ flub --help [COMMAND]
 USAGE
   $ flub COMMAND
@@ -44,6 +44,7 @@ USAGE
 * [`flub merge`](docs/merge.md) - Sync branches depending on the batch size passed
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
 * [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
+* [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
@@ -53,6 +54,11 @@ USAGE
 This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
 oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
 PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
+
+---
+
+Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
+removed once we have upgraded to Node 16 in the repo.
 
 ### Testing
 

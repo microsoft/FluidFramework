@@ -20,6 +20,9 @@ import { FileDocumentService } from "./fileDocumentService";
  * use the local file storage as underlying storage.
  */
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
+	/**
+	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
+	 */
 	public readonly protocolName = "fluid-file:";
 	constructor(
 		private readonly storage: IDocumentStorageService,

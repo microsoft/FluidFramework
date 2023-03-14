@@ -4,7 +4,7 @@
  */
 
 export const Constants = Object.freeze({
-    alfredRestThrottleIdSuffix: "AlfredRest",
-    createDocThrottleIdPrefix: "createDoc",
-    getDeltasThrottleIdPrefix: "getDeltas",
+	alfredRestThrottleIdSuffix: "AlfredRest",
+	createDocThrottleIdPrefix: "createDoc",
+	getDeltasThrottleIdPrefix: "getDeltas",
 });

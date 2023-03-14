@@ -75,6 +75,18 @@ export {
 	PathRootPrefix,
 	isSkipMark,
 	emptyDelta,
+	AnchorKeyBrand,
+	AnchorSlot,
+	BrandedKey,
+	BrandedKeyContent,
+	BrandedMapSubset,
+	AnchorNode,
+	anchorSlot,
+	UpPathDefault,
+	inCursorField,
+	inCursorNode,
+	AnchorEvents,
+	AnchorSetRootEvents,
 } from "./tree";
 
 export {
@@ -103,6 +115,7 @@ export {
 	TreeSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
 	SchemaPolicy,
@@ -122,12 +135,16 @@ export {
 export {
 	ChangeEncoder,
 	ChangeFamily,
+	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 } from "./change-family";
 
 export {
 	ChangeRebaser,
+	findAncestor,
+	findCommonAncestor,
+	GraphCommit,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -135,14 +152,12 @@ export {
 	noFailure,
 	OutputType,
 	verifyChangeRebaser,
-	tagInverse,
+	tagRollbackInverse,
 	SessionId,
+	mintCommit,
 	mintRevisionTag,
+	Rebaser,
 } from "./rebase";
-
-export { ICheckout, TransactionResult } from "./checkout";
-
-export { Checkout } from "./transaction";
 
 export {
 	Adapters,

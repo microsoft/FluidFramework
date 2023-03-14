@@ -303,6 +303,11 @@ export interface IDocumentServicePolicies {
 	 * Do not connect to delta stream
 	 */
 	readonly storageOnly?: boolean;
+
+	/**
+	 * Summarizer uploads the protocol tree too when summarizing.
+	 */
+	readonly summarizeProtocolTree?: boolean;
 }
 
 export interface IDocumentService {
@@ -346,6 +351,8 @@ export interface IDocumentService {
 export interface IDocumentServiceFactory {
 	/**
 	 * Name of the protocol used by factory
+	 *
+	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
 	 */
 	protocolName: string;
 

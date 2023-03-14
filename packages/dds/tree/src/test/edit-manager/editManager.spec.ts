@@ -17,6 +17,7 @@ import {
 	emptyDelta,
 	mintRevisionTag,
 	SeqNumber,
+	ChangeFamilyEditor,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -41,12 +42,12 @@ type TestEditManager = EditManager<TestChange, TestChangeFamily>;
  * `ChangeFamily.intoDelta` with the expected change.
  */
 function asDelta(intentions: number[]): Delta.Root {
-	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, { shallow: intentions }]]);
+	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
 }
 
 function changeFamilyFactory(
 	rebaser?: ChangeRebaser<TestChange>,
-): ChangeFamily<unknown, TestChange> {
+): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		encoder: new TestChangeEncoder(),
@@ -65,8 +66,11 @@ function editManagerFactory(options: {
 } {
 	const family = changeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(family, anchors);
-	manager.initSessionId(options.sessionId ?? localSessionId);
+	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
+		family,
+		options.sessionId ?? localSessionId,
+		anchors,
+	);
 	return { manager, anchors };
 }
 
@@ -304,7 +308,7 @@ describe("EditManager", () => {
 				brand(1),
 			);
 			// TODO: This is probably not the best way to assert that the change was rebased properly
-			assert.equal(delta.get("root" as FieldKey)?.shallow?.length, 1);
+			assert.equal(delta.get("root" as FieldKey)?.length, 1);
 		});
 	});
 

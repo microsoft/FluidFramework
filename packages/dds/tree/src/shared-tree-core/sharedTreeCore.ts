@@ -36,9 +36,16 @@ import {
 	RevisionTag,
 	mintRevisionTag,
 	minimumPossibleSequenceNumber,
+	Rebaser,
+	findAncestor,
+	GraphCommit,
+	RepairDataStore,
+	ChangeFamilyEditor,
 } from "../core";
-import { brand, isReadonlyArray, JsonCompatibleReadOnly } from "../util";
+import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
+import { TransactionStack } from "./transactionStack";
+import { SharedTreeBranch } from "./branch";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -81,17 +88,11 @@ export interface IndexEvents<TChangeset> {
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
 export class SharedTreeCore<
+	TEditor extends ChangeFamilyEditor,
 	TChange,
-	TChangeFamily extends ChangeFamily<any, TChange>,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
-	/**
-	 * A random ID that uniquely identifies this client in the collab session.
-	 * This is sent alongside every op to identify which client the op originated from.
-	 *
-	 * This is needed because the client ID given by the Fluid protocol is not stable across reconnections.
-	 */
-	private readonly stableId: string;
+	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
 
 	/**
 	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
@@ -117,6 +118,13 @@ export class SharedTreeCore<
 	public readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
 
 	/**
+	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
+	 */
+	public readonly editor: TEditor;
+	private readonly transactions = new TransactionStack();
+
+	/**
 	 * @param indexes - A list of indexes, either as an array or as a factory function
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
@@ -127,10 +135,14 @@ export class SharedTreeCore<
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		indexes: TIndexes | ((events: ISubscribable<IndexEvents<TChange>>) => TIndexes),
-		public readonly changeFamily: TChangeFamily,
-		public readonly editManager: EditManager<TChange, TChangeFamily>,
-		anchors: AnchorSet,
+		indexes:
+			| TIndexes
+			| ((
+					events: ISubscribable<IndexEvents<TChange>>,
+					editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>,
+			  ) => TIndexes),
+		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		private readonly anchors: AnchorSet,
 
 		// Base class arguments
 		id: string,
@@ -140,9 +152,16 @@ export class SharedTreeCore<
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
-		this.stableId = uuid();
-		editManager.initSessionId(this.stableId);
-		this.indexes = isReadonlyArray(indexes) ? indexes : indexes(this.indexEventEmitter);
+		/**
+		 * A random ID that uniquely identifies this client in the collab session.
+		 * This is sent alongside every op to identify which client the op originated from.
+		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
+		 */
+		const localSessionId = uuid();
+		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
+		this.indexes = isReadonlyArray(indexes)
+			? indexes
+			: indexes(this.indexEventEmitter, this.editManager);
 		this.summaryElements = this.indexes
 			.map((i) => i.summaryElement)
 			.filter((e): e is SummaryElement => e !== undefined);
@@ -150,6 +169,8 @@ export class SharedTreeCore<
 			new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
 			0x350 /* Index summary element keys must be unique */,
 		);
+
+		this.editor = this.changeFamily.buildEditor((change) => this.applyChange(change), anchors);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -202,30 +223,42 @@ export class SharedTreeCore<
 		await Promise.all(loadIndexes);
 	}
 
-	public submitEdit(edit: TChange): void {
-		const revision = mintRevisionTag();
-		const delta = this.editManager.addLocalChange(revision, edit);
-		// Edits performed before the first attach are treated as sequenced because they will be included
+	private submitCommit(commit: Commit<TChange>): void {
+		// Edits submitted before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
 		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
-			const commit: Commit<TChange> = {
-				revision,
-				sessionId: this.stableId,
-				change: edit,
-			};
 			this.detachedRevision = newRevision;
 			this.editManager.addSequencedChange(commit, newRevision, this.detachedRevision);
 		}
-		this.indexEventEmitter.emit("newLocalChange", edit);
-		this.indexEventEmitter.emit("newLocalState", delta);
 		const message: Message = {
-			revision,
-			originatorId: this.stableId,
-			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, edit),
+			revision: commit.revision,
+			originatorId: this.editManager.localSessionId,
+			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, commit.change),
 		};
 		this.submitLocalMessage(message);
+	}
+
+	/**
+	 * Update the state of the tree (including all indexes) according to the given change.
+	 * If there is not currently a transaction open, the change will be submitted to Fluid.
+	 */
+	protected applyChange(change: TChange): void {
+		const revision = mintRevisionTag();
+		const commit = {
+			change,
+			revision,
+			sessionId: this.editManager.localSessionId,
+		};
+		const delta = this.editManager.addLocalChange(revision, change, false);
+		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		if (this.transactions.size === 0) {
+			this.submitCommit(commit);
+		}
+
+		this.indexEventEmitter.emit("newLocalChange", change);
+		this.indexEventEmitter.emit("newLocalState", delta);
 	}
 
 	protected processCore(
@@ -252,9 +285,68 @@ export class SharedTreeCore<
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
+	public startTransaction(repairStore?: RepairDataStore): void {
+		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
+		this.editor.enterTransaction();
+	}
+
+	public commitTransaction(): TransactionResult.Commit {
+		const { startRevision } = this.transactions.pop();
+		this.editor.exitTransaction();
+		const squashCommit = this.editManager.squashLocalChanges(startRevision);
+		this.submitCommit(squashCommit);
+		return TransactionResult.Commit;
+	}
+
+	public abortTransaction(): TransactionResult.Abort {
+		const { startRevision, repairStore } = this.transactions.pop();
+		this.editor.exitTransaction();
+		for (const delta of this.editManager.rollbackLocalChanges(startRevision, repairStore)) {
+			this.indexEventEmitter.emit("newLocalState", delta);
+		}
+		return TransactionResult.Abort;
+	}
+
+	public isTransacting(): boolean {
+		return this.transactions.size !== 0;
+	}
+
+	/**
+	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
+	 * This can be used to support asynchronous checkouts of the tree.
+	 */
+	protected createBranch(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
+		const branch = new SharedTreeBranch(
+			() => this.editManager.getLocalBranchHead(),
+			(forked) => {
+				const changeToForked = forked.pull();
+				const changes: GraphCommit<TChange>[] = [];
+				const localBranchHead = this.editManager.getLocalBranchHead();
+				const ancestor = findAncestor(
+					[forked.getHead(), changes],
+					(c) => c === localBranchHead,
+				);
+				assert(
+					ancestor === localBranchHead,
+					0x598 /* Expected merging checkout branches to be related */,
+				);
+				for (const { change } of changes) {
+					this.applyChange(change);
+					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
+				}
+				return changeToForked;
+			},
+			this.editManager.localSessionId,
+			new Rebaser(this.changeFamily.rebaser),
+			this.changeFamily,
+			anchors,
+		);
+		return branch;
+	}
+
 	protected onDisconnect() {}
 
-	protected didAttach(): void {
+	protected override didAttach(): void {
 		if (this.detachedRevision !== undefined) {
 			this.detachedRevision = undefined;
 		}
@@ -264,7 +356,7 @@ export class SharedTreeCore<
 		throw new Error("Method not implemented.");
 	}
 
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
+	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
 		const gcNodes: IGarbageCollectionData["gcNodes"] = {};
 		for (const summaryElement of this.summaryElements) {
 			for (const [id, routes] of Object.entries(summaryElement.getGCData(fullGC).gcNodes)) {

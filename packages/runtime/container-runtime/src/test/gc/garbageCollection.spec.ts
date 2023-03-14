@@ -37,7 +37,6 @@ import {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	defaultSessionExpiryDurationMs,
-	runSessionExpiryKey,
 	oneDayMs,
 	disableSweepLogKey,
 	GCVersion,
@@ -167,8 +166,6 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	it("Session expiry closes container", () => {
-		injectedSettings[runSessionExpiryKey] = "true";
-
 		let closeCalled = false;
 		function closeCalledAfterExactTicks(ticks: number) {
 			clock.tick(ticks - 1);
@@ -677,11 +674,6 @@ describe("Garbage Collection Tests", () => {
 		describe("SweepReady events (summarizer container)", () => {
 			const sweepTimeoutMs =
 				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
-
-			beforeEach(() => {
-				injectedSettings[runSessionExpiryKey] = true;
-			});
-
 			summarizerContainerTests(
 				sweepTimeoutMs,
 				"GarbageCollector:SweepReadyObject_Revived",
@@ -696,7 +688,6 @@ describe("Garbage Collection Tests", () => {
 				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 
 			beforeEach(() => {
-				injectedSettings[runSessionExpiryKey] = true;
 				injectedSettings[disableSweepLogKey] = true;
 			});
 
@@ -796,10 +787,6 @@ describe("Garbage Collection Tests", () => {
 				);
 			}
 
-			beforeEach(() => {
-				injectedSettings[runSessionExpiryKey] = true;
-			});
-
 			it("Inactive object used - generates events but does not close container (SweepReadyUsageDetection enabled)", async () => {
 				const inactiveTimeoutMs = 400;
 				injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
@@ -842,7 +829,6 @@ describe("Garbage Collection Tests", () => {
 			const inactiveTimeoutMs = 500;
 			const sweepTimeoutMs =
 				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
-			injectedSettings[runSessionExpiryKey] = "true";
 			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 				inactiveTimeoutMs;
 
@@ -913,10 +899,6 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	describe("Deleted blobs in GC summary tree", () => {
-		beforeEach(() => {
-			injectedSettings["Fluid.GarbageCollection.TrackGCState"] = true;
-		});
-
 		it("correctly reads and write deleted blobs in summary", async () => {
 			// Set up the GC reference graph to have something to work with.
 			defaultGCData.gcNodes["/"] = [nodes[0]];
@@ -1579,7 +1561,6 @@ describe("Garbage Collection Tests", () => {
 		let garbageCollector: IGarbageCollector;
 
 		beforeEach(() => {
-			injectedSettings["Fluid.GarbageCollection.TrackGCState"] = true;
 			// Initialize nodes A & D.
 			defaultGCData.gcNodes = {};
 			defaultGCData.gcNodes["/"] = nodes;
