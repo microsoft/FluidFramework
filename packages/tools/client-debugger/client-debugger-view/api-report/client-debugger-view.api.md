@@ -9,6 +9,7 @@ import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { default as React_2 } from 'react';
 
@@ -125,6 +126,14 @@ export interface SharedObjectRenderOptions {
 
 // @public
 export type SharedObjectType = string;
+
+// @public
+export function SummaryTreeView(props: SummaryTreeViewProps): React_2.ReactElement;
+
+// @public
+export interface SummaryTreeViewProps {
+    summary: ISummaryTree;
+}
 
 // @internal
 export function _TelemetryView(props: _TelemetryViewProps): React_2.ReactElement;

@@ -11,6 +11,7 @@ import {
 	ISequencedDocumentMessage,
 	ISequencedProposal,
 	ISnapshotTree,
+	ISummaryTree,
 } from "@fluidframework/protocol-definitions";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
@@ -474,6 +475,13 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * the entryPoint for the container.
 	 */
 	getEntryPoint?(): Promise<FluidObject | undefined>;
+
+	/**
+	 * TODO
+	 *
+	 * @internal
+	 */
+	_createSummary?(): ISummaryTree;
 }
 
 /**

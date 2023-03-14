@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ContainerStateMetadata } from "../ContainerMetadata";
 import { IDebuggerMessage } from "./Messages";
 
@@ -34,8 +35,25 @@ export type GetContainerStateMessageData = HasContainerId;
  *
  * @public
  */
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+export interface GetContainerStateMessage extends IDebuggerMessage<GetContainerStateMessageData> {
 	type: "GET_CONTAINER_STATE";
+}
+
+/**
+ * Message data format used by {@link GetContainerStateMessage}.
+ *
+ * @public
+ */
+export type GetContainerDataMessageData = HasContainerId;
+
+/**
+ * Inbound event requesting a complete summary of the specified Container's data.
+ * Will result in the {@link ContainerDataSummaryMessage} message being posted.
+ *
+ * @public
+ */
+export interface GetContainerDataMessage extends IDebuggerMessage<GetContainerDataMessageData> {
+	type: "GET_CONTAINER_DATA";
 }
 
 // #endregion
@@ -64,6 +82,28 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 export interface ContainerStateChangeMessage
 	extends IDebuggerMessage<ContainerStateChangeMessageData> {
 	type: "CONTAINER_STATE_CHANGE";
+}
+
+/**
+ * Message data format used by {@link ContainerDataSummaryMessage}.
+ *
+ * @public
+ */
+export interface ContainerDataSummaryMessageData extends HasContainerId {
+	/**
+	 * Complete summary of the Container's data.
+	 */
+	summary: ISummaryTree;
+}
+
+/**
+ * Outbound event containing a complete summary of the Container's data.
+ *
+ * @public
+ */
+export interface ContainerDataSummaryMessage
+	extends IDebuggerMessage<ContainerDataSummaryMessageData> {
+	type: "CONTAINER_DATA_SUMMARY";
 }
 
 // #endregion

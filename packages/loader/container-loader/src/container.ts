@@ -600,7 +600,7 @@ export class Container
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.getEntryPoint}
 	 */
 	public async getEntryPoint?(): Promise<FluidObject | undefined> {
 		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
@@ -632,6 +632,15 @@ export class Container
 		// Disable lint rule for the sake of more complete stack traces
 		// eslint-disable-next-line no-return-await
 		return await this._context.getEntryPoint?.();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer._createSummary}
+	 *
+	 * @internal
+	 */
+	public _createSummary?(): ISummaryTree {
+		return this.context.createSummary();
 	}
 
 	constructor(

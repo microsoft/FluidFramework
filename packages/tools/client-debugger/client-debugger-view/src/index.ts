@@ -37,6 +37,8 @@ export {
 	PanelView,
 	PanelViewSelectionMenu,
 	PanelViewSelectionMenuProps,
+	SummaryTreeView,
+	SummaryTreeViewProps,
 } from "./components";
 
 export { AudienceMember } from "./Audience";

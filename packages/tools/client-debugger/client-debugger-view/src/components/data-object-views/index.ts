@@ -12,5 +12,6 @@ export * from "./SharedStringView";
 export * from "./DynamicDataView";
 export * from "./RecordView";
 export * from "./FluidObjectView";
+export { SummaryTreeView, SummaryTreeViewProps } from "./SummaryTreeView";
 
 /* eslint-enable no-restricted-syntax */

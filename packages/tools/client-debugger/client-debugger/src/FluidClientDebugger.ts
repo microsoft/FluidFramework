@@ -5,15 +5,17 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
-import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
+	ContainerDataSummaryMessage,
 	ContainerStateChangeMessage,
 	debuggerMessageSource,
+	GetContainerDataMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
@@ -35,12 +37,16 @@ import { FluidClientDebuggerProps } from "./Registry";
  *
  * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast {@link ContainerStateChangeMessage}.
  *
+ * - {@link GetContainerDataMessage}: When received (if the container ID matches), the debugger will broadcast {@link ContainerDataSummaryMessage}.
+ *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
  * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
  * or when requested (via {@link GetContainerStateMessage}).
+ *
+ * - {@link ContainerDataSummaryMessage}: Only posted when requested (via {@link GetContainerStateMessage}).
  *
  * TODO: Document others as they are added.
  *
@@ -177,6 +183,14 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
+		["GET_CONTAINER_DATA"]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerDataMessage;
+			if (message.data.containerId === this.containerId) {
+				this.postContainerDataSummary();
+				return true;
+			}
+			return false;
+		},
 	};
 
 	/**
@@ -186,6 +200,29 @@ export class FluidClientDebugger
 		event: MessageEvent<Partial<IDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
+	};
+
+	/**
+	 * Posts a {@link ContainerDataSummaryMessage} to the window (globalThis).
+	 */
+	private readonly postContainerDataSummary = (): void => {
+		if (this.container._createSummary !== undefined) {
+			const summary: ISummaryTree = this.container._createSummary();
+
+			postMessageToWindow<ContainerDataSummaryMessage>(
+				{
+					source: debuggerMessageSource,
+					type: "CONTAINER_DATA_SUMMARY",
+					data: {
+						containerId: this.containerId,
+						summary,
+					},
+				},
+				this.messageLoggingOptions,
+			);
+		} else {
+			console.warn("Container does not expose `_createSummary`.");
+		}
 	};
 
 	/**

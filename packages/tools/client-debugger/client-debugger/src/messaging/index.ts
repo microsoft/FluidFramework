@@ -16,8 +16,12 @@
 export { debuggerMessageSource } from "./Constants";
 export {
 	HasContainerId,
+	ContainerDataSummaryMessage,
+	ContainerDataSummaryMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	GetContainerDataMessage,
+	GetContainerDataMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import React from "react";
 
 import {
@@ -16,7 +17,7 @@ import { _ContainerSummaryView } from "@fluid-tools/client-debugger-view";
 
 import { extensionMessageSource } from "../messaging";
 import { Waiting } from "./Waiting";
-import { MessageRelayContext } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(ContainerSummaryView)";
 
@@ -33,16 +34,11 @@ interface ContainerStateViewProps extends HasContainerId {}
 export function ContainerSummaryView(props: ContainerStateViewProps): React.ReactElement {
 	const { containerId } = props;
 
+	const messageRelay = useMessageRelay();
+
 	const [containerState, setContainerState] = React.useState<
 		ContainerStateMetadata | undefined
 	>();
-
-	const messageRelay = React.useContext(MessageRelayContext);
-	if (messageRelay === undefined) {
-		throw new Error(
-			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
-		);
-	}
 
 	React.useEffect(() => {
 		/**

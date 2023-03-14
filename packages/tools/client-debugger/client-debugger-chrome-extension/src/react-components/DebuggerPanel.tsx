@@ -9,6 +9,7 @@ import React from "react";
 
 import {
 	ContainerMetadata,
+	GetContainerListMessage,
 	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
@@ -19,14 +20,14 @@ import { ContainerSelectionDropdown } from "@fluid-tools/client-debugger-view";
 import { extensionMessageSource } from "../messaging";
 import { ContainerView } from "./ContainerView";
 import { Waiting } from "./Waiting";
-import { MessageRelayContext } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel)";
 
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: IDebuggerMessage = {
+const getContainerListMessage: GetContainerListMessage = {
 	type: "GET_CONTAINER_LIST",
 	source: extensionMessageSource,
 	data: undefined,
@@ -40,14 +41,7 @@ const getContainerListMessage: IDebuggerMessage = {
 export function DebuggerPanel(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 
-	const messageRelay = React.useContext(MessageRelayContext);
-	if (messageRelay === undefined) {
-		throw new Error(
-			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
-		);
-	}
-
-	const refreshButtonTooltipId = useId("refresh-button-tooltip");
+	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
 		/**
@@ -79,13 +73,15 @@ export function DebuggerPanel(): React.ReactElement {
 		};
 	}, [setContainers, messageRelay]);
 
+	const refreshButtonTooltipId = useId("refresh-button-tooltip");
+
 	return containers === undefined ? (
 		<Stack>
 			<StackItem>
 				<Waiting label="Waiting for Container list." />
 			</StackItem>
 			<StackItem align="center">
-				<TooltipHost content="Connect Container" id={refreshButtonTooltipId}>
+				<TooltipHost content="Search again" id={refreshButtonTooltipId}>
 					<IconButton
 						onClick={(): void => messageRelay.postMessage(getContainerListMessage)}
 					>

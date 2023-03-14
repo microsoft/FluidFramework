@@ -13,6 +13,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
@@ -35,6 +36,17 @@ export function closeFluidClientDebugger(containerId: string): void;
 // @internal
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
+}
+
+// @public
+export interface ContainerDataSummaryMessage extends IDebuggerMessage<ContainerDataSummaryMessageData> {
+    // (undocumented)
+    type: "CONTAINER_DATA_SUMMARY";
+}
+
+// @public
+export interface ContainerDataSummaryMessageData extends HasContainerId {
+    summary: ISummaryTree;
 }
 
 // @public
@@ -110,13 +122,22 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 }
 
 // @public
+export interface GetContainerDataMessage extends IDebuggerMessage<GetContainerDataMessageData> {
+    // (undocumented)
+    type: "GET_CONTAINER_DATA";
+}
+
+// @public
+export type GetContainerDataMessageData = HasContainerId;
+
+// @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
     // (undocumented)
     type: "GET_CONTAINER_LIST";
 }
 
 // @public
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+export interface GetContainerStateMessage extends IDebuggerMessage<GetContainerStateMessageData> {
     // (undocumented)
     type: "GET_CONTAINER_STATE";
 }
