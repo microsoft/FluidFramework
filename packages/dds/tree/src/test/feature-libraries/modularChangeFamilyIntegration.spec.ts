@@ -4,12 +4,19 @@
  */
 
 import { strict as assert } from "assert";
-import { AnchorSet, FieldKey, FieldKindIdentifier, makeAnonChange } from "../../core";
+import {
+	AnchorSet,
+	Delta,
+	FieldKey,
+	FieldKindIdentifier,
+	isSkipMark,
+	makeAnonChange,
+} from "../../core";
 import { DefaultEditBuilder, FieldKind, ModularChangeFamily } from "../../feature-libraries";
 
 // eslint-disable-next-line import/no-internal-modules
 import { sequence } from "../../feature-libraries/defaultFieldKinds";
-import { brand } from "../../util";
+import { brand, Mutable } from "../../util";
 
 const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
 	[sequence].map((f) => [f.identifier, f]),
@@ -28,7 +35,9 @@ describe("rebase", () => {
 		editor.sequenceField(undefined, fieldB).delete(2, 1);
 		const [move, remove, expected] = editor.getChanges();
 		const rebased = family.rebase(remove, makeAnonChange(move));
-		assert.deepEqual(family.intoDelta(rebased), family.intoDelta(expected));
+		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
+		const expectedDelta = normalizeDelta(family.intoDelta(expected));
+		assert.deepEqual(rebasedDelta, expectedDelta);
 	});
 
 	it("cross-field move over delete", () => {
@@ -38,6 +47,79 @@ describe("rebase", () => {
 		editor.move(undefined, fieldA, 1, 1, undefined, fieldB, 2);
 		const [remove, move, expected] = editor.getChanges();
 		const rebased = family.rebase(move, makeAnonChange(remove));
-		assert.deepEqual(family.intoDelta(rebased), family.intoDelta(expected));
+		const rebasedDelta = normalizeDelta(family.intoDelta(rebased));
+		const expectedDelta = normalizeDelta(family.intoDelta(expected));
+		assert.deepEqual(rebasedDelta, expectedDelta);
 	});
 });
+
+function normalizeDelta(
+	delta: Delta.Root,
+	idAllocator?: () => Delta.MoveId,
+	idMap?: Map<Delta.MoveId, Delta.MoveId>,
+): Delta.Root {
+	const genId = idAllocator ?? newIdAllocator();
+	const map = idMap ?? new Map();
+
+	const normalized = new Map();
+	for (const [field, marks] of delta) {
+		normalized.set(field, normalizeDeltaField(marks, genId, map));
+	}
+
+	return normalized;
+}
+
+function normalizeDeltaField(
+	delta: Delta.MarkList,
+	genId: () => Delta.MoveId,
+	idMap: Map<Delta.MoveId, Delta.MoveId>,
+): Delta.MarkList {
+	const normalized = [];
+	for (const origMark of delta) {
+		if (isSkipMark(origMark)) {
+			normalized.push(origMark);
+			continue;
+		}
+
+		const mark: Mutable<Delta.Mark> = { ...origMark };
+		switch (mark.type) {
+			case Delta.MarkType.MoveIn:
+			case Delta.MarkType.MoveOut:
+			case Delta.MarkType.ModifyAndMoveOut: {
+				let newId = idMap.get(mark.moveId);
+				if (newId === undefined) {
+					newId = genId();
+					idMap.set(mark.moveId, newId);
+				}
+
+				mark.moveId = newId;
+				break;
+			}
+			default:
+				break;
+		}
+
+		switch (mark.type) {
+			case Delta.MarkType.Modify:
+			case Delta.MarkType.ModifyAndDelete:
+			case Delta.MarkType.ModifyAndMoveOut:
+			case Delta.MarkType.InsertAndModify: {
+				if (mark.fields !== undefined) {
+					mark.fields = normalizeDelta(mark.fields, genId, idMap);
+				}
+				break;
+			}
+			default:
+				break;
+		}
+
+		normalized.push(mark);
+	}
+
+	return normalized;
+}
+
+function newIdAllocator(): () => Delta.MoveId {
+	let maxId = 0;
+	return () => brand(maxId++);
+}
