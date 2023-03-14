@@ -34,7 +34,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {

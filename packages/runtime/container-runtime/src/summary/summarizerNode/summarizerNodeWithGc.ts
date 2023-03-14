@@ -24,7 +24,7 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "../utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
 	EscapedPath,
@@ -35,10 +35,6 @@ import {
 	SummaryNode,
 } from "./summarizerNodeUtils";
 
-/**
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
- */
 export interface IRootSummarizerNodeWithGC
 	extends ISummarizerNodeWithGC,
 		ISummarizerNodeRootContract {}
@@ -550,9 +546,6 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
  * @param config - Configure behavior of summarizer node
  * @param getGCDataFn - Function to get the GC data of this node
  * @param baseGCDetailsP - Function to get the initial GC details of this node
- *
- * @deprecated Internal implementation detail and will no longer be exported in an
- * upcoming release.
  */
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryLogger,
