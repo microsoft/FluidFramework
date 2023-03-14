@@ -115,7 +115,16 @@ export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDo
 export const canRetryOnError: (error: any) => boolean;
 
 // @public
-export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): ISummaryTree;
+export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): CombinedAppAndProtocolSummary;
+
+// @public (undocumented)
+export interface CombinedAppAndProtocolSummary extends ISummaryTree {
+    // (undocumented)
+    tree: {
+        [".app"]: ISummaryTree;
+        [".protocol"]: ISummaryTree;
+    };
+}
 
 // @public @deprecated
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
@@ -239,6 +248,9 @@ export interface IProgress {
     cancel?: AbortSignal;
     onRetry?(delayInMs: number, error: any): void;
 }
+
+// @public (undocumented)
+export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
 
 // @public (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;

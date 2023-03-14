@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	ISummaryTree,
 	SummaryType,
@@ -10,6 +11,30 @@ import {
 	ICommittedProposal,
 	IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
+
+export interface CombinedAppAndProtocolSummary extends ISummaryTree {
+	tree: {
+		[".app"]: ISummaryTree;
+		[".protocol"]: ISummaryTree;
+	};
+}
+
+export function isCombinedAppAndProtocolSummary(
+	summary: ISummaryTree | undefined,
+): summary is CombinedAppAndProtocolSummary {
+	if (
+		summary?.tree === undefined ||
+		summary.tree?.[".app"]?.type !== SummaryType.Tree ||
+		summary.tree?.[".protocol"]?.type !== SummaryType.Tree
+	) {
+		return false;
+	}
+	const treeKeys = Object.keys(summary.tree);
+	if (treeKeys.length !== 2) {
+		return false;
+	}
+	return true;
+}
 
 /**
  * Combine the app summary and protocol summary in 1 tree.
@@ -19,8 +44,13 @@ import {
 export function combineAppAndProtocolSummary(
 	appSummary: ISummaryTree,
 	protocolSummary: ISummaryTree,
-): ISummaryTree {
-	const createNewSummary: ISummaryTree = {
+): CombinedAppAndProtocolSummary {
+	assert(!isCombinedAppAndProtocolSummary(appSummary), "app summary is already a combined tree!");
+	assert(
+		!isCombinedAppAndProtocolSummary(protocolSummary),
+		"protocol summary is already a combined tree!",
+	);
+	const createNewSummary: CombinedAppAndProtocolSummary = {
 		type: SummaryType.Tree,
 		tree: {
 			".protocol": protocolSummary,
