@@ -27,9 +27,9 @@ export interface IAppModelEvents extends IEvent {}
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	/**
-	 * A task tracker list.
+	 * A collect of task tracker lists.
 	 */
-	readonly taskList: ITaskList;
+	readonly baseDocument: IBaseDocument;
 
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
@@ -154,4 +154,27 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// readonly handleExternalMessage: (message) => void;
 }
 
+/**
+ * Events emitted by {@link IBaseDocumentEvents}.
+ */
+export interface IBaseDocumentEvents extends IEvent {
+	/**
+	 * Emitted when task list collection has changed.
+	 */
+	(event: "taskListCollectionChanged", listener: () => void);
+}
+export interface IBaseDocumentInitialState {
+	externalTaskListId: string;
+}
+
+export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
+	/**
+	 * Add a board with a specific id.
+	 */
+	readonly addTaskList: (props: IBaseDocumentInitialState) => void;
+	/**
+	 * Get the task with the specified ID.
+	 */
+	readonly getTaskList: (id: string) => ITaskList | undefined;
+}
 export { assertValidTaskData, TaskData } from "./TaskData";

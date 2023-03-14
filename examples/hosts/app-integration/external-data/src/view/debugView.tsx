@@ -61,7 +61,6 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 		<div>
 			<ControlsView model={props.model} />
 			<ExternalDataDebugView />
-			<SyncStatusView />
 		</div>
 	);
 };
@@ -111,27 +110,6 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 					</thead>
 					<tbody>{taskRows}</tbody>
 				</table>
-			</div>
-		</div>
-	);
-};
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface ISyncStatusViewProps {}
-
-// TODO: Implement the statuses below
-const SyncStatusView: React.FC<ISyncStatusViewProps> = (props: ISyncStatusViewProps) => {
-	return (
-		<div>
-			<h3>Sync status</h3>
-			<div style={{ margin: "10px 0" }}>
-				Fluid has [no] unsync&apos;d changes (not implemented)
-				<br />
-				External data source has [no] unsync&apos;d changes (not implemented)
-				<br />
-				Current sync activity: [idle | fetching | writing | resolving conflicts?] (not
-				implemented)
-				<br />
 			</div>
 		</div>
 	);
