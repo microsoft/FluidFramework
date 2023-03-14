@@ -43,11 +43,6 @@ export class TaskListCollectionContainerRuntimeFactory extends ModelContainerRun
 	}
 
 	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerHasInitialized}
-	 */
-	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {}
-
-	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(
@@ -66,7 +61,7 @@ export class TaskListCollectionContainerRuntimeFactory extends ModelContainerRun
 				const taskListId = message?.content?.taskListId as string;
 				const taskList = taskListCollection.getTaskList(taskListId);
 				if (taskList === undefined) {
-					throw new Error(`TaskList does not exist in collection`);
+					throw new Error(`TaskList with id '${taskListId}' does not exist in collection`);
 				}
 				taskList.importExternalData().catch(console.error);
 			}

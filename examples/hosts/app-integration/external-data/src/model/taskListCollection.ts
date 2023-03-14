@@ -4,9 +4,6 @@
  */
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { SharedCell } from "@fluidframework/cell";
-import { SharedMap } from "@fluidframework/map";
-import { SharedString } from "@fluidframework/sequence";
 
 import type { ITaskListCollection, ITaskListInitialState } from "../model-interface";
 import { TaskList, TaskListInstantiationFactory } from "./taskList";
@@ -40,12 +37,7 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 export const TaskListCollectionInstantiationFactory = new DataObjectFactory<TaskListCollection>(
 	"task-list-collection",
 	TaskListCollection,
-	[
-		SharedMap.getFactory(),
-		SharedCell.getFactory(),
-		SharedString.getFactory(),
-		SharedMap.getFactory(),
-	],
+	[],
 	{},
 	new Map([TaskListInstantiationFactory.registryEntry]),
 );

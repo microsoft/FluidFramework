@@ -320,8 +320,8 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 	};
 
-	protected async initializingFirstTime(initialState?: ITaskListInitialState): Promise<void> {
-		const externalTaskListId = initialState?.externalTaskListId;
+	protected async initializingFirstTime(initialState: ITaskListInitialState): Promise<void> {
+		const externalTaskListId = initialState.externalTaskListId;
 		if (externalTaskListId === undefined) {
 			throw new Error(
 				"TaskList cannot be instantiated as no external task list id has been provided",
