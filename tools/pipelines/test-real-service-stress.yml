@@ -70,8 +70,6 @@ stages:
     displayName: Stress tests - tinylicious
     dependsOn: []
     jobs:
-    - job:
-      displayName: Tombstone Mode
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
@@ -80,10 +78,10 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:t9s:gc:ci:tombstone
+        splitTestVariants: 
+          - name: Tombstone Mode
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-    - job:
-      displayName: Sweep Mode
     - template: templates/include-test-real-service.yml
       parameters:
         poolBuild: Large
@@ -92,5 +90,7 @@ stages:
         artifactBuildId: $(resources.pipeline.client.runID)
         timeoutInMinutes: 200
         testCommand: start:t9s:gc:ci:sweep
+        splitTestVariants: 
+          - name: Sweep Mode
         env:
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
