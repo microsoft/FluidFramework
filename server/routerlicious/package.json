@@ -93,7 +93,7 @@
 	"pnpm": {
 		"overrides": {
 			"socket.io-parser": "^4.2.1",
-      "qs": "^6.11.0"
+		  "qs": "^6.11.0"
 		}
 	}
 }
