@@ -38,7 +38,6 @@ import {
 	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
-import { chunkTree, defaultChunkPolicy } from "./chunked-forest";
 import { populateChildModifications } from "./deltaUtils";
 
 type BrandedFieldKind<
@@ -665,11 +664,9 @@ function deltaFromInsertAndChange(
 	deltaFromNode: ToDelta,
 ): Delta.Mark[] {
 	if (insertedContent !== undefined) {
-		const content = chunkTree(insertedContent, defaultChunkPolicy).cursor();
-		content.firstNode();
 		const insert: Mutable<Delta.Insert> = {
 			type: Delta.MarkType.Insert,
-			content: [content],
+			content: [insertedContent],
 		};
 		if (nodeChange !== undefined) {
 			const nodeDelta = deltaFromNode(nodeChange);
