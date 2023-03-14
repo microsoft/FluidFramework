@@ -419,8 +419,8 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 				cursor.firstNode();
 				mark = {
 					...modify,
-					type: Delta.MarkType.InsertAndModify,
-					content: cursor,
+					type: Delta.MarkType.Insert,
+					content: [cursor],
 				};
 			}
 
@@ -687,8 +687,8 @@ function deltaFromInsertAndChange(
 			return [
 				{
 					...nodeDelta,
-					type: Delta.MarkType.InsertAndModify,
-					content,
+					type: Delta.MarkType.Insert,
+					content: [content],
 				},
 			];
 		}

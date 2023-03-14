@@ -6,7 +6,15 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
 import { TreeSchemaIdentifier, FieldKey, Value, Delta } from "../../../core";
-import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
+import {
+	brand,
+	brandOpaque,
+	clone,
+	fail,
+	makeArray,
+	Mutable,
+	OffsetListFactory,
+} from "../../../util";
 import { Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
 
@@ -41,11 +49,12 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 					break;
 				}
 				case "MInsert": {
-					const insertMark: Delta.InsertAndModify = {
+					const insertMark: Delta.Insert = {
 						...convertModify(mark),
-						type: Delta.MarkType.InsertAndModify,
-						content: singleTextCursor(mark.content),
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor(mark.content)],
 					};
+					populateChildModifications(mark, insertMark);
 					out.pushContent(insertMark);
 					break;
 				}
@@ -82,20 +91,12 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 					break;
 				}
 				case "MDelete": {
-					const fields = convertModify(mark).fields;
-					if (fields !== undefined) {
-						const deleteMark: Delta.ModifyAndDelete = {
-							type: Delta.MarkType.ModifyAndDelete,
-							fields,
-						};
-						out.pushContent(deleteMark);
-					} else {
-						const deleteMark: Delta.Delete = {
-							type: Delta.MarkType.Delete,
-							count: 1,
-						};
-						out.pushContent(deleteMark);
-					}
+					const deleteMark: Delta.Delete = {
+						type: Delta.MarkType.Delete,
+						count: 1,
+					};
+					populateChildModifications(mark, deleteMark);
+					out.pushContent(deleteMark);
 					break;
 				}
 				case "MoveOut": {
@@ -186,4 +187,17 @@ function convertFieldMarks(fields: T.FieldMarks): Delta.FieldMarks {
 		outFields.set(brandedKey, marks);
 	}
 	return outFields;
+}
+
+function populateChildModifications(
+	changes: ChangesetMods,
+	deltaMark: Mutable<Delta.HasModifications>,
+): void {
+	const modify = convertModify(changes);
+	if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
+		deltaMark.setValue = modify.setValue;
+	}
+	if (modify.fields !== undefined) {
+		deltaMark.fields = modify.fields;
+	}
 }
