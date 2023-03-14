@@ -16,7 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run typetests:gen && concurrently npm:tsc npm:build:esnext",
+		"build:compile": "concurrently npm:typetests:gen npm:tsc npm:build:esnext",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
