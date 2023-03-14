@@ -140,7 +140,7 @@ and undoing an edit that lies outside it,
 would be that the latter includes additional historical data.
 
 This is the approach we currently intend to implement long term.
-(See [V1 Undo](#v1-undo) for short-term horizon)
+(See [V1 Undo](./v1-undo.md) for short-term horizon)
 
 One challenge with this approach is that it could result in attempting to send prohibitively large amounts of historical data.
 That's because applying the undo _may_ require historical data not only from the edit to be undone,
