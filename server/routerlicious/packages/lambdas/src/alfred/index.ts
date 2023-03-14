@@ -509,6 +509,7 @@ export function configureWebSocketServices(
 					clearExpirationTimer();
 					socket.disconnect(true);
 				});
+
                 let clientJoinMessageServerMetadata: any;
                 if (core.DefaultServiceConfiguration.enableTraces &&
                     sampleMessages(numberOfMessagesPerTrace)) {
