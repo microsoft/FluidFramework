@@ -42,6 +42,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
 -   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
 -   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
+-   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
 
 ### Container and RelativeLoader no longer exported
 
@@ -121,6 +122,10 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 -   `IPendingFlush`
 -   `IPendingState`
 -   `IPendingLocalState`
+
+### Remove IConnectableRuntime.deltaManager
+
+Note: `IConnectableRuntime` is only to be implemented internally, so removing this should not be impactful.
 
 # 2.0.0-internal.3.3.0
 
