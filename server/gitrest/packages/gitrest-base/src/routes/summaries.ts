@@ -164,7 +164,7 @@ async function createSummary(
 			  });
 		if (latestFullSummary) {
 			if (persistLatestFullSummary) {
-				// Send latest full summary to storage for faster read access
+				// Send latest full summary to storage for faster read access.
 				const persistP = persistLatestFullSummaryInStorage(
 					fileSystemManager,
 					getFullSummaryDirectory(
@@ -187,6 +187,7 @@ async function createSummary(
 					await persistP;
 				}
 			}
+			// Return latest full summary to Historian for caching.
 			return latestFullSummary;
 		}
 	}

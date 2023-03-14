@@ -419,7 +419,7 @@ export class GitWholeSummaryManager {
 		const fullGitTree = await buildFullGitTreeFromGitTree(
 			rawTree,
 			repoManager,
-			{},
+			{} /* blobCache */,
 			true /* parseInnerFullGitTrees */,
 			true /* retrieveBlobs */,
 		);
@@ -791,7 +791,7 @@ export class GitWholeSummaryManager {
 		const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
 			parentTree,
 			this.repoManager,
-			{},
+			{} /* blobCache */,
 			// Parse inner git tree blobs so that we can properly reference blob shas in new summary.
 			true /* parseInnerFullGitTrees */,
 			// We only need shas here, so don't waste resources retrieving blobs that are not included in fullGitTrees.
