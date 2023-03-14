@@ -60,7 +60,7 @@ export type AccordionProps = React.PropsWithChildren<{
 	 *
 	 * @remarks Will always be displayed, even when collapsed.
 	 */
-	header: React.ReactElement;
+	header: React.ReactElement | string;
 
 	/**
 	 * Whether or not the accordion should start in the collapsed state.
