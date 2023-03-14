@@ -640,7 +640,10 @@ describe("Runtime", () => {
 					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
 					assert.ok(error instanceof DataProcessingError);
-					assert.strictEqual(error.message, "Runtime detected too many reconnects with no progress syncing local ops.");
+					assert.strictEqual(
+						error.message,
+						"Runtime detected too many reconnects with no progress syncing local ops.",
+					);
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -653,7 +656,6 @@ describe("Runtime", () => {
 							pendingMessages: 3,
 						},
 					]);
-
 				},
 			);
 
@@ -784,7 +786,10 @@ describe("Runtime", () => {
 					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
 					assert.ok(error instanceof DataProcessingError);
-					assert.strictEqual(error.message, "Runtime detected too many reconnects with no progress syncing local ops.");
+					assert.strictEqual(
+						error.message,
+						"Runtime detected too many reconnects with no progress syncing local ops.",
+					);
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
