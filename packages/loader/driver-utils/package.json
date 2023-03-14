@@ -99,6 +99,63 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_MapWithExpiration": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_MultiUrlResolver": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_configurableUrlResolver": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_MultiDocumentServiceFactory": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_BlobCacheStorageService": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SummaryTreeAssembler": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_waitForConnectedState": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_BlobAggregationStorage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedClassDeclaration_SnapshotExtractor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IAnyDriverError": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }
