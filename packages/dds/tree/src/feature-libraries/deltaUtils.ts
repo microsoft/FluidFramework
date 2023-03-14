@@ -116,3 +116,15 @@ function mapModifications<TIn, TOut>(
 	}
 	return out;
 }
+
+export function populateChildModifications(
+	modifications: Delta.HasModifications,
+	deltaMark: Mutable<Delta.HasModifications>,
+): void {
+	if (Object.prototype.hasOwnProperty.call(modifications, "setValue")) {
+		deltaMark.setValue = modifications.setValue;
+	}
+	if (modifications.fields !== undefined) {
+		deltaMark.fields = modifications.fields;
+	}
+}

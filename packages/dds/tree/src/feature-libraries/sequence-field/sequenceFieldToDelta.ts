@@ -6,6 +6,7 @@
 import { unreachableCase } from "@fluidframework/common-utils";
 import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
+import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
 import { MarkList } from "./format";
 import { isSkipMark } from "./utils";
@@ -30,7 +31,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Insert,
 						content: cursors,
 					};
-					populateChildModifications(mark.changes, insertMark, deltaFromChild);
+					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 					out.pushContent(insertMark);
 					break;
 				}
@@ -61,7 +62,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						type: Delta.MarkType.Delete,
 						count: mark.count,
 					};
-					populateChildModifications(mark.changes, deleteMark, deltaFromChild);
+					populateChildModificationsIfAny(mark.changes, deleteMark, deltaFromChild);
 					out.pushContent(deleteMark);
 					break;
 				}
@@ -72,7 +73,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 						count: mark.count,
 					};
-					populateChildModifications(mark.changes, moveMark, deltaFromChild);
+					populateChildModificationsIfAny(mark.changes, moveMark, deltaFromChild);
 					out.pushContent(moveMark);
 					break;
 				}
@@ -82,7 +83,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 							type: Delta.MarkType.Insert,
 							content: mark.content,
 						};
-						populateChildModifications(mark.changes, insertMark, deltaFromChild);
+						populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
 						out.pushContent(insertMark);
 					} else if (mark.lastDetachedBy === undefined) {
 						out.pushOffset(mark.count);
@@ -97,18 +98,13 @@ export function sequenceFieldToDelta<TNodeChange>(
 	return out.list;
 }
 
-function populateChildModifications<TNodeChange>(
+function populateChildModificationsIfAny<TNodeChange>(
 	changes: TNodeChange | undefined,
 	deltaMark: Mutable<Delta.HasModifications>,
 	deltaFromChild: ToDelta<TNodeChange>,
 ): void {
 	if (changes !== undefined) {
 		const modify = deltaFromChild(changes);
-		if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-			deltaMark.setValue = modify.setValue;
-		}
-		if (modify.fields !== undefined) {
-			deltaMark.fields = modify.fields;
-		}
+		populateChildModifications(modify, deltaMark);
 	}
 }

@@ -16,7 +16,7 @@ import {
 	TreeSchemaIdentifier,
 	FieldSchema,
 } from "../core";
-import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -39,6 +39,7 @@ import {
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { chunkTree, defaultChunkPolicy } from "./chunked-forest";
+import { populateChildModifications } from "./deltaUtils";
 
 type BrandedFieldKind<
 	TName extends string,
@@ -405,26 +406,10 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 
 	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
 		if (change.value !== undefined) {
-			let mark: Delta.Mark;
 			const newValue: ITreeCursorSynchronous =
 				"revert" in change.value ? change.value.revert : singleTextCursor(change.value.set);
-			if (change.changes === undefined) {
-				mark = {
-					type: Delta.MarkType.Insert,
-					content: [newValue],
-				};
-			} else {
-				const modify = deltaFromChild(change.changes);
-				const cursor = chunkTree(newValue, defaultChunkPolicy).cursor();
-				cursor.firstNode();
-				mark = {
-					...modify,
-					type: Delta.MarkType.Insert,
-					content: [cursor],
-				};
-			}
-
-			return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
+			const insertDelta = deltaFromInsertAndChange(newValue, change.changes, deltaFromChild);
+			return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
 		}
 
 		return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
@@ -682,22 +667,15 @@ function deltaFromInsertAndChange(
 	if (insertedContent !== undefined) {
 		const content = chunkTree(insertedContent, defaultChunkPolicy).cursor();
 		content.firstNode();
+		const insert: Mutable<Delta.Insert> = {
+			type: Delta.MarkType.Insert,
+			content: [content],
+		};
 		if (nodeChange !== undefined) {
 			const nodeDelta = deltaFromNode(nodeChange);
-			return [
-				{
-					...nodeDelta,
-					type: Delta.MarkType.Insert,
-					content: [content],
-				},
-			];
+			populateChildModifications(nodeDelta, insert);
 		}
-		return [
-			{
-				type: Delta.MarkType.Insert,
-				content: [content],
-			},
-		];
+		return [insert];
 	}
 
 	if (nodeChange !== undefined) {

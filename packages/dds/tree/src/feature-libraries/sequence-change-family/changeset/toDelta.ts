@@ -5,7 +5,8 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
-import { TreeSchemaIdentifier, FieldKey, Value, Delta } from "../../../core";
+import { TreeSchemaIdentifier, FieldKey, Delta } from "../../../core";
+import { populateChildModifications } from "../../deltaUtils";
 import {
 	brand,
 	brandOpaque,
@@ -50,11 +51,10 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 				}
 				case "MInsert": {
 					const insertMark: Delta.Insert = {
-						...convertModify(mark),
 						type: Delta.MarkType.Insert,
 						content: [singleTextCursor(mark.content)],
 					};
-					populateChildModifications(mark, insertMark);
+					populateChildModifications(convertModify(mark), insertMark);
 					out.pushContent(insertMark);
 					break;
 				}
@@ -95,7 +95,7 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 						type: Delta.MarkType.Delete,
 						count: 1,
 					};
-					populateChildModifications(mark, deleteMark);
+					populateChildModifications(convertModify(mark), deleteMark);
 					out.pushContent(deleteMark);
 					break;
 				}
@@ -157,18 +157,10 @@ interface ChangesetMods {
 }
 
 /**
- * Modifications to a subtree as described by a Delta.
- */
-interface DeltaMods {
-	fields?: Delta.FieldMarks;
-	setValue?: Value;
-}
-
-/**
  * Converts tree modifications from the Changeset to the Delta format.
  */
-function convertModify(modify: ChangesetMods): DeltaMods {
-	const out: DeltaMods = {};
+function convertModify(modify: ChangesetMods): Delta.HasModifications {
+	const out: Mutable<Delta.HasModifications> = {};
 	if (modify.value !== undefined) {
 		out.setValue = modify.value.value;
 	}
@@ -187,17 +179,4 @@ function convertFieldMarks(fields: T.FieldMarks): Delta.FieldMarks {
 		outFields.set(brandedKey, marks);
 	}
 	return outFields;
-}
-
-function populateChildModifications(
-	changes: ChangesetMods,
-	deltaMark: Mutable<Delta.HasModifications>,
-): void {
-	const modify = convertModify(changes);
-	if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
-		deltaMark.setValue = modify.setValue;
-	}
-	if (modify.fields !== undefined) {
-		deltaMark.fields = modify.fields;
-	}
 }
