@@ -154,16 +154,20 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// readonly handleExternalMessage: (message) => void;
 }
 
+/**
+ * Events emitted by {@link ITaskListCollectionEvents}.
+ */
+export interface ITaskListCollectionEvents extends IEvent {
+	/**
+	 * Emitted when task list collection has changed.
+	 */
+	(event: "taskListCollectionChanged", listener: () => void);
+}
 export interface ITaskListCollectionInitialState {
 	externalTaskListId: string;
 }
-/**
- * ITaskList represents a "drafting surface" for changes to a task list stored in some external source.  Changes to
- * the ITaskList and its constituent ITasks are persisted in Fluid and shared amongst collaborators, but none of the
- * changes are persisted back to the external source until the user explicitly chooses to do so.
- * TODO: We'll want to eventually show variations of this behavior (e.g. more automatic or less automatic sync'ing).
- */
-export interface ITaskListCollection extends IEventProvider<ITaskListEvents> {
+
+export interface ITaskListCollection extends IEventProvider<ITaskListCollectionEvents> {
 	/**
 	 * Add a board with a specific id.
 	 */

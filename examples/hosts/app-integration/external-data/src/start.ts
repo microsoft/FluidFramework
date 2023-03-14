@@ -8,7 +8,7 @@ import ReactDOM from "react-dom";
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import type { IAppModel } from "./model-interface";
+import type { IAppModel, ITaskList } from "./model-interface";
 import { DebugView, AppView } from "./view";
 import { TaskListCollectionContainerRuntimeFactory } from "./model";
 
@@ -57,17 +57,22 @@ async function start(): Promise<void> {
 		showExternalServerView = false;
 	}
 	model.taskListCollection.addTaskList({ externalTaskListId: "task-list-1" });
-	const taskList = model.taskListCollection.getTaskList("task-list-1");
-	console.log(model.taskListCollection);
-	console.log(taskList);
 
-	// Use a timeout in order to let task list instantiate. In the full flow,
-	// we will wait on a response from the external server to return from registering
-	// so this timeout won't be necessary
-	setTimeout(() => {
-		render(model, showExternalServerView);
-		updateTabForId(id);
-	}, 1000);
+	let taskList: ITaskList | undefined;
+	while (taskList === undefined) {
+		const taskListsChangedP = new Promise<void>((resolve) => {
+			model.taskListCollection.once("taskListCollectionChanged", () => {
+				resolve();
+			});
+		});
+		taskList = model.taskListCollection.getTaskList("task-list-1");
+		if (taskList === undefined) {
+			await taskListsChangedP;
+		}
+	}
+
+	render(model, showExternalServerView);
+	updateTabForId(id);
 }
 
 start().catch((error) => {

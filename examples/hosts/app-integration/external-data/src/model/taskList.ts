@@ -461,7 +461,6 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 	};
 
 	public readonly getTaskList = (id: string): TaskList | undefined => {
-		console.log(this.taskLists.get(id));
 		return this.taskLists.get(id);
 	};
 }
