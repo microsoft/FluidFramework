@@ -28,7 +28,7 @@ There are four types of states that a container can be in. Every container is in
 
 - **Synchronization status**: 
 
-    - dirty (on the a given client)
+    - dirty (on a given client)
     - saved
 
 - **Connection status**: 
@@ -49,7 +49,7 @@ Publication status refers to whether or not the container has been *initially* s
 Think of it as a mainly *service-relative* state because it is primarily about the container's state in the Fluid service and secondarily about its state on the creating client. The following diagram shows the possible publication states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the four possible publication states](./images/PublicationStates.png)
+![A state diagram of the four possible publication states](./images/PublicationStates.svg)
 
 #### Unpublished
 
@@ -97,17 +97,37 @@ But the new container has a different ID from the deleted one and subsequent cli
 #### Handling publication status
 
 Your code can test for the publication status with the [container.AttachState]({{< relref "/docs/apis/fluid-static/fluidcontainer-class.md#attachstate-property" >}}) property which has an [AttachState]({{< relref "/docs/apis/container-definitions.md#attachstate-enum" >}}) value. 
-This can be useful if your application will publish the container in some code paths, but not others. 
-For example, in complex cases, you may need to determine whether the container has already been published before you call `container.attach`. The following is a simple example.
+This can be useful if your application will publish the container in some code paths on the creating client, but not others. 
+For example, on the creating computer, you don't want to call `container.attach` if it has already been called. In simple cases, you can know at coding time if that has happened, but when the creating client in complex code flows and calls of `container.attach` appear in more than one branch, you may need to test for this possibility. The following is a simple example.
 
 ```typescript
+// Code that runs only on a creating client.
 if (container.attachState !== AttachState.Attached) {
-    container.attach();
+    await container.attach();
 }
 ```
 
-How you handle the **publishing** (`AttachState.Attaching`) state depends on the situation. If you want to prevent `container.attach` from being called when it has already been called, then treat publishing (`Attaching`) the same as published (`Attached`). 
-On the other hand, if you want to block editing when until the container is fully published, treat publishing (`Attaching`) the same as unpublished (`Detached`).
+How you handle the **publishing** (`AttachState.Attaching`) state depends on the situation. This state implies that `container.attach` has already been called, so to prevent a recall treat publishing (`Attaching`) the same as published (`Attached`). The following is an example.
+
+```typescript
+// Code that runs only on a creating client.
+if ((container.attachState !== AttachState.Attached) 
+    || 
+    (container.attachState !== AttachState.Attaching)) {
+    await container.attach();
+}
+```
+
+On the other hand, in scenarios where you want to block users from editing shared data when the container is unpublished, you also want to block them when the container is in **publishing** (`AttachState.Attaching`) state, since at that point the container is not fully published. So in those scenario, treat publishing (`Attaching`) the same as unpublished (`Detached`). The following is an example.
+
+```typescript
+// Code that runs only on a creating client.
+if ((container.attachState === AttachState.Detached) 
+    || 
+    (container.attachState === AttachState.Attaching)) {
+    // Disable editing.
+}
+```
 
 ### Synchronization status states
 
@@ -129,7 +149,7 @@ The dotted arrow represents a boolean guard condition. It means that the contain
 
 - **saved**: A container is in **saved** state on a client when the container has been published and the service has acknowledged all data changes made on the client. 
 
-When a new change is made to the data, the container moves to **dirty** state. When all pending changes are acknowledged, it transitions to the **saved** state. 
+When a new change is made to the data in a given client, the container moves to **dirty** state *in that client*. When all pending changes are acknowledged, it transitions to the **saved** state. 
 
 Note that a container in the **saved** state is not necessarily perfectly synchronized with the service. 
 There may be changes made on other clients that have been saved to the service but have not yet been relayed to this client. 
@@ -137,7 +157,7 @@ Situations like this would normally last only fractions of a second.
 But if the client is disconnected while in **saved** state, it remains **saved**, but unsynchronized, until it reconnects. See [Connection status states](#connection-status-states) for more about connection.
 
 Users can work with the container's data regardless of whether it is in **dirty** or **saved** state. 
-But there are scenarios in which your code must be aware of the container's state. For this reason, the `container` object has a boolean `isDirty` property to specify its state. 
+But there are scenarios in which your code must be aware of the container's state. For this reason, the `FluidContainer` object has a boolean `isDirty` property to specify its state. 
 The `container` object also supports *dirty* and *saved* events, so you can handle the transitions between states.
 The container emits the *saved* event to notify the caller that all the local changes have been acknowledged by the service.
 
@@ -156,7 +176,7 @@ container.on("dirty", () => {
 ```
 
 You should always check the `isDirty` flag before [disposing](#disposed) the container or [disconnecting](#disconnected) from the service.
-If you dispose or disconnect the container while `isDirty === true`, you may lose operations that have not yet been acknowledged by the service.
+If you dispose or disconnect the container while `isDirty === true`, you may lose operations that have not yet been sent to (or sent, but not acknowledged by) the service.
 For example, suppose you have a function to disconnect a container in response to a period of user inactivity. 
 The following shows how to ensure that the disconnection doesn't happen until the container is **saved**.
 
@@ -190,7 +210,7 @@ Connection status refers to whether the container is connected to the Fluid serv
 A container is **disconnected** if it is not in any of the other three Connection states. A container is, or becomes, disconnected in any of the following circumstances:
 
 - On the creating client, it has been created but not yet published.
-- A network problem breaks the web socket connection between the client and the Fluid service. When this happens, the Fluid runtime on the client automatically tries to reconnect, but eventually it will give up. After that, connection can only be reestablished by calling `container.connect`.
+- A network problem breaks the web socket connection between the client and the Fluid service. When this happens, the Fluid runtime on the client automatically tries to reconnect. If it cannot, connection can only be reestablished by calling `container.connect`.
 - Your code calls the `container.disconnect` method.
 
 {{< callout important >}}
@@ -222,15 +242,13 @@ In this state, a partial connection has been established and the client is recei
 Changes made locally are not uploaded to the service until catching up is complete, so the container is not considered fully connected.
 
 This state is normally very brief and the Fluid client then automatically moves to the **connected** state. 
-When the Fluid service resumes relaying data, the container automatically transitions back to the **catching up** state.
 
 #### Connected
 
 A container is **connected** when there is an open, two-way web socket connection between the client and the Fluid service. 
 In the **connected** state, changes to the container's data on the client are sent to the service which relays them to all other connected clients. 
 
-The container transitions to this state automatically when it is not receiving relayed data from the Fluid service. 
-When new data is sent from the service, the container automatically transitions to the **catching up** state and then transitions back to **connected** when the catching up is complete.
+The container transitions to this state automatically when it is fully caught up with data from the Fluid service. 
 
 #### Managing connection and disconnection
 
@@ -286,7 +304,7 @@ Local Readiness is a *client-relative state*: the container may have a different
 In this state, changes to the shared data objects can be made locally. They are shared with the Fluid service when, and only when, the container is in **published** and **connected** status. 
 
 A container is automatically in **ready** state as soon as it is created and it remains in this state unless it is disposed. 
-A disposed container transitions back to **ready** if its ID is passed to a call of `client.getContainer`.
+A disposed `FluidContainer` remains disposed forever, but a new **ready** `FluidContainer` can be created by passing its ID to a call of `client.getContainer`.
 
 #### Disposed
 
@@ -314,9 +332,7 @@ function disposeWhenSafe {
 ```
 
 After it is disposed, some properties of the `container` object can be read, but the data objects in the container can no longer be changed either locally of from data relayed by the Fluid service.
-
-Once a container is disposed, your code must call `client.getContainer` again if it needs to be reconnected.
-This also moves it back to the **ready** state.
+But it would be possible for your code to create a new local container object for the same container by calling `client.getContainer` passing the same container ID. This new object would be in the **ready** state.
 
 <!-- 
      HOW TO MODIFY THE DIAGRAMS IN THIS ARTICLE

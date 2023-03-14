@@ -13,7 +13,7 @@ A container is represented by the [FluidContainer]({{< relref "/docs/apis/fluid-
 This article explains:
 
 - Creation, publication, and connection to containers.
-- Patterns for handling container lifecycle.
+- Patterns for handling container life cycle.
 - Container services.
 
 {{< callout note >}}
@@ -32,7 +32,7 @@ The device is a subsequent client in all future sessions.
 Your code creates containers using APIs provided by a service-specific client library.
 Each service-specific client library implements a common API for manipulating containers.
 For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides [these APIs]({{< relref "docs/apis/tinylicious-client.md" >}}) for the Tinylicious Fluid service.
-These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and to connect to the `FluidContainer` once it is created.
+These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and to connect to the container once it is created.
 
 ### Container schema
 
@@ -145,7 +145,7 @@ There are four types of states that a container can be in. Every container is in
 
 - **Synchronization status**: 
 
-    - dirty (on the a given client)
+    - dirty (on a given client)
     - saved
 
 - **Connection status**: 
