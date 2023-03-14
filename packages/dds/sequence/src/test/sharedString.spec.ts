@@ -544,6 +544,7 @@ describe("SharedString", () => {
 			const label = "tileLabel";
 			const id = "tileMarkerId";
 			const simpleKey = "tileMarkerKey";
+
 			const verifyMarker = (marker) => {
 				assert.equal(marker.type, "Marker", "Could not get simple marker");
 				assert.equal(marker.properties.markerId, id, "markerId is incorrect");
