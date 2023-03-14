@@ -1131,5 +1131,7 @@ export const shortCodeMap = {
 	"0x5a4": "Batch should not be empty",
 	"0x5a5": "Expected number of chunks",
 	"0x5a6": "Compression should not have happened if the loader does not support it",
-	"0x5a7": "ContainerRuntime entryPoint was not initialized"
+	"0x5a7": "ContainerRuntime entryPoint was not initialized",
+	"0x5a8": "app summary is already a combined tree!",
+	"0x5a9": "protocol summary is already a combined tree!"
 };
