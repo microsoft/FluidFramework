@@ -333,8 +333,6 @@ export interface IConnectableRuntime {
     readonly clientId: string | undefined;
     // (undocumented)
     readonly connected: boolean;
-    // @deprecated (undocumented)
-    readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
