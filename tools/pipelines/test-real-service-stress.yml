@@ -55,10 +55,10 @@ stages:
         timeoutInMinutes: 200
         testCommand: start:odsp
         splitTestVariants:
-          - name: GC
+          - name: Tombstone Mode
             flags: --profile gc
-          - name: GC CI
-            flags: --profile gc_ci_fault
+          - name: Sweep Mode
+            flags: --profile debug
         env:
           login__microsoft__clientId: $(login-microsoft-clientId)
           login__microsoft__secret: $(login-microsoft-secret)
