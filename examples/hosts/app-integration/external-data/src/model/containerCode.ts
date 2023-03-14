@@ -37,7 +37,9 @@ export class TaskListCollectionContainerRuntimeFactory extends ModelContainerRun
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
-		const taskListCollection = await runtime.createDataStore(TaskListCollectionInstantiationFactory.type);
+		const taskListCollection = await runtime.createDataStore(
+			TaskListCollectionInstantiationFactory.type,
+		);
 		await taskListCollection.trySetAlias(taskListCollectionId);
 	}
 

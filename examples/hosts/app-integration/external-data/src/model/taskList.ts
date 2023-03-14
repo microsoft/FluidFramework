@@ -146,7 +146,7 @@ export class TaskList extends DataObject<{ InitialState: ITaskListCollectionInit
 
 		draftPriorityCell.set(priority);
 
-		// To add a task, we update the root SharedDirectory. This way the change is propagated to all collaborators
+		// To add a task, we update the SharedMap draftData on TaskList. This way the change is propagated to all collaborators
 		// and persisted.  In turn, this will trigger the "valueChanged" event and handleDraftTaskAdded which will update
 		// the this.tasks collection.
 		const draftDataPT: PersistedTask = {
@@ -448,12 +448,20 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 	private readonly taskLists = new Map<string, TaskList>();
 
 	public readonly addTaskList = async (props: ITaskListCollectionInitialState): Promise<void> => {
+		if (this.taskLists.has(props.externalTaskListId)) {
+			throw new Error(
+				`task list ${props.externalTaskListId} already exists on this collection`,
+			);
+		}
 		const taskList = await TaskListInstantiationFactory.createChildInstance(
 			this.context,
 			props,
 		);
 		console.log(taskList);
 		this.taskLists.set(props.externalTaskListId, taskList);
+
+		// Storing the handles here are necessary for non leader
+		// clients to rehydrate local this.taskLists in hasInitialized().
 		this.root.set(props.externalTaskListId, taskList.handle);
 
 		console.log(this.taskLists.get(props.externalTaskListId));
@@ -463,6 +471,18 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 	public readonly getTaskList = (id: string): TaskList | undefined => {
 		return this.taskLists.get(id);
 	};
+
+	protected async hasInitialized(): Promise<void> {
+		for (const [id, taskListHandle] of this.root) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const [taskListResolved] = await Promise.all([
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				taskListHandle.get(),
+			]);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			this.taskLists.set(id, taskListResolved);
+		}
+	}
 }
 
 export const TaskListCollectionInstantiationFactory = new DataObjectFactory<TaskListCollection>(

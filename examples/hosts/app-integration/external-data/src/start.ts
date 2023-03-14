@@ -51,12 +51,16 @@ async function start(): Promise<void> {
 		model = createResponse.model;
 
 		id = await createResponse.attach();
+
+		// Hardcoding a taskListId here. A follow up will be to introduce a form
+		// that a the user can enter an external taskListId into that they want
+		// to import from the external server.
+		model.taskListCollection.addTaskList({ externalTaskListId: "task-list-1" });
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 		showExternalServerView = false;
 	}
-	model.taskListCollection.addTaskList({ externalTaskListId: "task-list-1" });
 
 	let taskList: ITaskList | undefined;
 	while (taskList === undefined) {
