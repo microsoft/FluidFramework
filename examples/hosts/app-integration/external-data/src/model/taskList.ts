@@ -14,8 +14,8 @@ import type {
 	ExternalSnapshotTask,
 	ITask,
 	ITaskEvents,
-	ITaskListCollection,
-	ITaskListCollectionInitialState,
+	IBaseDocument,
+	IBaseDocumentInitialState,
 	TaskData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
@@ -90,7 +90,7 @@ interface PersistedTask {
 /**
  * The TaskList is our data object that implements the ITaskList interface.
  */
-export class TaskList extends DataObject<{ InitialState: ITaskListCollectionInitialState }> {
+export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialState }> {
 	/**
 	 * The tasks collection holds local facades on the data.  These facades encapsulate the data for a single task
 	 * so we don't have to hand out references to the whole SharedDirectory.  Additionally, we only create them
@@ -345,7 +345,7 @@ export class TaskList extends DataObject<{ InitialState: ITaskListCollectionInit
 		}
 	};
 
-	protected async initializingFirstTime(props: ITaskListCollectionInitialState): Promise<void> {
+	protected async initializingFirstTime(props: IBaseDocumentInitialState): Promise<void> {
 		const externalTaskListId = props?.externalTaskListId;
 		if (externalTaskListId === undefined) {
 			throw new Error(
@@ -444,11 +444,11 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	{},
 );
 
-export class TaskListCollection extends DataObject implements ITaskListCollection {
-	private readonly taskLists = new Map<string, TaskList>();
+export class BaseDocument extends DataObject implements IBaseDocument {
+	private readonly taskListCollection = new Map<string, TaskList>();
 
-	public readonly addTaskList = async (props: ITaskListCollectionInitialState): Promise<void> => {
-		if (this.taskLists.has(props.externalTaskListId)) {
+	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
+		if (this.taskListCollection.has(props.externalTaskListId)) {
 			throw new Error(
 				`task list ${props.externalTaskListId} already exists on this collection`,
 			);
@@ -458,18 +458,18 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 			props,
 		);
 		console.log(taskList);
-		this.taskLists.set(props.externalTaskListId, taskList);
+		this.taskListCollection.set(props.externalTaskListId, taskList);
 
 		// Storing the handles here are necessary for non leader
-		// clients to rehydrate local this.taskLists in hasInitialized().
+		// clients to rehydrate local this.taskListCollection in hasInitialized().
 		this.root.set(props.externalTaskListId, taskList.handle);
 
-		console.log(this.taskLists.get(props.externalTaskListId));
+		console.log(this.taskListCollection.get(props.externalTaskListId));
 		this.emit("taskListCollectionChanged");
 	};
 
 	public readonly getTaskList = (id: string): TaskList | undefined => {
-		return this.taskLists.get(id);
+		return this.taskListCollection.get(id);
 	};
 
 	protected async hasInitialized(): Promise<void> {
@@ -480,14 +480,14 @@ export class TaskListCollection extends DataObject implements ITaskListCollectio
 				taskListHandle.get(),
 			]);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			this.taskLists.set(id, taskListResolved);
+			this.taskListCollection.set(id, taskListResolved);
 		}
 	}
 }
 
-export const TaskListCollectionInstantiationFactory = new DataObjectFactory<TaskListCollection>(
-	"task-list-collection",
-	TaskListCollection,
+export const BaseDocumentInstantiationFactory = new DataObjectFactory<BaseDocument>(
+	"base-document",
+	BaseDocument,
 	[],
 	{},
 	new Map([TaskListInstantiationFactory.registryEntry]),

@@ -8,7 +8,7 @@ import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { TaskListCollectionContainerRuntimeFactory } from "../src/model";
+import { BaseDocumentContainerRuntimeFactory } from "../src/model";
 import type { IAppModel } from "../src/model-interface";
 import { TaskListView } from "../src/view";
 
@@ -18,7 +18,7 @@ import { TaskListView } from "../src/view";
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
-		new StaticCodeLoader(new TaskListCollectionContainerRuntimeFactory()),
+		new StaticCodeLoader(new BaseDocumentContainerRuntimeFactory()),
 	);
 
 	let id: string;
@@ -37,9 +37,9 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		model = await sessionStorageModelLoader.loadExisting(id);
 	}
 
-	model.taskListCollection.addTaskList({ externalTaskListId: "task-list-test" });
+	model.baseDocument.addTaskList({ externalTaskListId: "task-list-test" });
 
-	const taskList = model.taskListCollection.getTaskList("task-list-test");
+	const taskList = model.baseDocument.getTaskList("task-list-test");
 	// Add a test task so we can see something.
 	if (taskList !== undefined) {
 		taskList.addDraftTask("1", "testName", 3);

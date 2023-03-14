@@ -29,7 +29,7 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	/**
 	 * A collect of task tracker lists.
 	 */
-	readonly taskListCollection: ITaskListCollection;
+	readonly baseDocument: IBaseDocument;
 
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
@@ -155,23 +155,23 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 }
 
 /**
- * Events emitted by {@link ITaskListCollectionEvents}.
+ * Events emitted by {@link IBaseDocumentEvents}.
  */
-export interface ITaskListCollectionEvents extends IEvent {
+export interface IBaseDocumentEvents extends IEvent {
 	/**
 	 * Emitted when task list collection has changed.
 	 */
 	(event: "taskListCollectionChanged", listener: () => void);
 }
-export interface ITaskListCollectionInitialState {
+export interface IBaseDocumentInitialState {
 	externalTaskListId: string;
 }
 
-export interface ITaskListCollection extends IEventProvider<ITaskListCollectionEvents> {
+export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	/**
 	 * Add a board with a specific id.
 	 */
-	readonly addTaskList: (props: ITaskListCollectionInitialState) => void;
+	readonly addTaskList: (props: IBaseDocumentInitialState) => void;
 	/**
 	 * Get the task with the specified ID.
 	 */

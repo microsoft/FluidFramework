@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { TaskListCollectionContainerRuntimeFactory } from "./containerCode";
+export { BaseDocumentContainerRuntimeFactory } from "./containerCode";

@@ -8,11 +8,11 @@ import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { IAppModel, ITaskListCollection } from "../model-interface";
+import type { IAppModel, IBaseDocument } from "../model-interface";
 import { AppModel } from "./appModel";
-import { TaskListCollectionInstantiationFactory } from "./taskList";
+import { BaseDocumentInstantiationFactory } from "./taskList";
 
-const taskListCollectionId = "task-list-collection";
+const taskListCollectionId = "base-document";
 
 /*
  * This is a server origin signal that lets the client know that the external source of truth
@@ -26,10 +26,10 @@ const SignalType = {
 /**
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
-export class TaskListCollectionContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
+export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 	public constructor() {
 		super(
-			new Map([TaskListCollectionInstantiationFactory.registryEntry]), // registryEntries
+			new Map([BaseDocumentInstantiationFactory.registryEntry]), // registryEntries
 		);
 	}
 
@@ -38,7 +38,7 @@ export class TaskListCollectionContainerRuntimeFactory extends ModelContainerRun
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		const taskListCollection = await runtime.createDataStore(
-			TaskListCollectionInstantiationFactory.type,
+			BaseDocumentInstantiationFactory.type,
 		);
 		await taskListCollection.trySetAlias(taskListCollectionId);
 	}
@@ -61,7 +61,7 @@ export class TaskListCollectionContainerRuntimeFactory extends ModelContainerRun
 		runtime: IContainerRuntime,
 		container: IContainer,
 	): Promise<AppModel> {
-		const taskListCollection = await requestFluidObject<ITaskListCollection>(
+		const taskListCollection = await requestFluidObject<IBaseDocument>(
 			await runtime.getRootDataStore(taskListCollectionId),
 			"",
 		);
