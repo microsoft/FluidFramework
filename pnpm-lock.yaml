@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 overrides:
   '@types/node': ^14.18.36
   node-fetch: ^2.6.9
+  qs: ^6.11.0
 
 importers:
 
@@ -3903,7 +3904,7 @@ importers:
       nyc: ^15.0.0
       prettier: ~2.6.2
       promisify: 0.0.3
-      qs: 6.11.0
+      qs: ^6.11.0
       request: ^2.88.0
       request-promise-native: 1.0.7
       rimraf: ^2.6.2
@@ -3914,7 +3915,7 @@ importers:
       sleep-promise: 8.0.1
       stats-percentile: 3.1.0
       typescript: ~4.5.5
-      wait-on: 7.0.1
+      wait-on: 6.0.1
       yargs: 13.2.2
     dependencies:
       '@fluid-experimental/property-changeset': link:../../packages/property-changeset
@@ -3976,7 +3977,7 @@ importers:
       sinon-chai: 3.3.0_chai@4.3.7+sinon@7.5.0
       stats-percentile: 3.1.0
       typescript: 4.5.5
-      wait-on: 7.0.1
+      wait-on: 6.0.1
       yargs: 13.2.2
 
   experimental/dds/ot/ot:
@@ -23071,15 +23072,6 @@ packages:
     transitivePeerDependencies:
       - debug
 
-  /axios/0.27.2:
-    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
-    dependencies:
-      follow-redirects: 1.15.2
-      form-data: 4.0.0
-    transitivePeerDependencies:
-      - debug
-    dev: true
-
   /axios/1.3.4:
     resolution: {integrity: sha512-toYm+Bsyl6VC5wSkfkbbNB6ROv7KY93PEBBL6xyDczaIHasAiv4wPqQ/c4RjoQzipxRD2W5g21cOqQulZ7rHwQ==}
     dependencies:
@@ -34422,7 +34414,7 @@ packages:
       lodash: 4.17.21
       mkdirp: 0.5.6
       propagate: 1.0.0
-      qs: 6.7.0
+      qs: 6.11.0
       semver: 5.7.1
     transitivePeerDependencies:
       - supports-color
@@ -36984,16 +36976,6 @@ packages:
     dependencies:
       side-channel: 1.0.4
 
-  /qs/6.5.3:
-    resolution: {integrity: sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==}
-    engines: {node: '>=0.6'}
-    dev: true
-
-  /qs/6.7.0:
-    resolution: {integrity: sha512-VCdBRNFTX1fyE7Nb6FYoURo/SPe62QCaAyzJvUjwRaIsc+NePBEniHlvxFmmX56+HZphIGtV0XeCirBtpDrTyQ==}
-    engines: {node: '>=0.6'}
-    dev: true
-
   /query-string/4.3.4:
     resolution: {integrity: sha512-O2XLNDBIg1DnTOa+2XrIwSiXEV8h2KImXUnjhhn2+UsvZ+Es2uyd5CCRTNQlDGbzUQOW3aYCBx9rVA6dzsiY7Q==}
     engines: {node: '>=0.10.0'}
@@ -38034,7 +38016,7 @@ packages:
       mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
-      qs: 6.5.3
+      qs: 6.11.0
       safe-buffer: 5.2.1
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
@@ -41602,20 +41584,6 @@ packages:
     hasBin: true
     dependencies:
       axios: 0.25.0_debug@4.3.4
-      joi: 17.7.0
-      lodash: 4.17.21
-      minimist: 1.2.8
-      rxjs: 7.8.0
-    transitivePeerDependencies:
-      - debug
-    dev: true
-
-  /wait-on/7.0.1:
-    resolution: {integrity: sha512-9AnJE9qTjRQOlTZIldAaf/da2eW0eSRSgcqq85mXQja/DW3MriHxkpODDSUEg+Gri/rKEcXUZHe+cevvYItaog==}
-    engines: {node: '>=12.0.0'}
-    hasBin: true
-    dependencies:
-      axios: 0.27.2
       joi: 17.7.0
       lodash: 4.17.21
       minimist: 1.2.8
