@@ -15,6 +15,7 @@ import {
 	CloseContainerMessage,
 	ConnectContainerMessage,
 	ContainerStateChangeMessage,
+	ContainerStateHistoryMessage,
 	debuggerMessageSource,
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
@@ -227,6 +228,18 @@ export class FluidClientDebugger
 				data: {
 					containerId: this.containerId,
 					containerState: this.getContainerState(),
+				},
+			},
+			this.messageLoggingOptions,
+		);
+
+		postMessageToWindow<ContainerStateHistoryMessage>(
+			{
+				source: debuggerMessageSource,
+				type: "CONTAINER_STATE_HISTORY",
+				data: {
+					containerId: this.containerId,
+					history: [...this._connectionStateLog],
 				},
 			},
 			this.messageLoggingOptions,
