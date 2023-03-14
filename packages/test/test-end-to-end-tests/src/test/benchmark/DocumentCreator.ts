@@ -21,8 +21,8 @@ import { DocumentMultipleDds } from "./DocumentMultipleDds";
 export interface IDocumentCreatorProps {
 	testName: string;
 	provider: ITestObjectProvider;
-	documentType: DocumentType;
 	benchmarkType: BenchmarkType;
+	documentType: DocumentType | string | undefined;
 }
 
 export interface IDocumentProps extends IDocumentCreatorProps {
@@ -96,33 +96,25 @@ export interface IBenchmarkParameters {
  * @param after - function to be called after the test.
  * @param onCycle - function to be called after each cycle of the test (only for time tests)
  */
-export function benchmarkAll<T>(
-	this: any,
-	title: string,
-	benchmarkType: BenchmarkType,
-	params: IBenchmarkParameters,
-) {
-	console.log(`Running ${title} benchmarkType ${benchmarkType}...`);
-	if (benchmarkType === "E2EMemory") {
-		const t: IMemoryTestObject = {
-			title,
-			...params.obj,
-			run: params.run.bind(this),
-			beforeIteration: params.beforeIteration?.bind(this),
-			afterIteration: params.afterIteration?.bind(this),
-			before: params.before?.bind(this),
-			after: params.after?.bind(this),
-		};
-		benchmarkMemory(t);
-	} else {
-		const t: BenchmarkArguments = {
-			title,
-			...params.obj,
-			benchmarkFnAsync: params.run.bind(this),
-			before: params.before?.bind(this),
-			after: params.after?.bind(this),
-			onCycle: params.onCycle?.bind(this),
-		};
-		benchmark(t);
-	}
+export function benchmarkAll<T>(this: any, title: string, params: IBenchmarkParameters) {
+	const t: IMemoryTestObject = {
+		title,
+		...params.obj,
+		run: params.run.bind(this),
+		beforeIteration: params.beforeIteration?.bind(this),
+		afterIteration: params.afterIteration?.bind(this),
+		before: params.before?.bind(this),
+		after: params.after?.bind(this),
+	};
+	benchmarkMemory(t);
+
+	const t1: BenchmarkArguments = {
+		title,
+		...params.obj,
+		benchmarkFnAsync: params.run.bind(this),
+		before: params.before?.bind(this),
+		after: params.after?.bind(this),
+		onCycle: params.onCycle?.bind(this),
+	};
+	benchmark(t1);
 }

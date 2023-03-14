@@ -32,9 +32,9 @@ export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks
 
 export interface DescribeE2EDocInfo {
 	testTitle: string;
-	documentType: DocumentType;
+	documentType: DocumentType | string | undefined;
 	// Minimum number of iterations when running performance tests against the document
-	minSampleCount: number;
+	minSampleCount?: number;
 }
 export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
 	benchmarkType: BenchmarkType;
@@ -202,7 +202,6 @@ function IsMemoryTest(): boolean {
 	for (const flag of ["--grep", "--fgrep"]) {
 		const flagIndex = childArgs.indexOf(flag);
 		if (flagIndex > 0) {
-			console.log("childArgs", childArgs[flagIndex + 1]);
 			isMemoryUsageTest = childArgs[flagIndex + 1] === "@MemoryUsage" ? true : false;
 			break;
 		}
