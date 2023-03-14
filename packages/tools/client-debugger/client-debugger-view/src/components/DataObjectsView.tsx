@@ -36,7 +36,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	const { clientDebugger } = props;
 	const { container } = clientDebugger;
 
-	const [summary, setSummary] = React.useState<ISummaryTree | undefined>(undefined);
+	const [summary, setSummary] = React.useState<ISummaryTree | undefined>();
 
 	React.useEffect(() => {
 		if (container._createSummary !== undefined) {
