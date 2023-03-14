@@ -89,7 +89,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 
 // @public (undocumented)
 export class LocalDocumentStorageService implements IDocumentStorageService {
-    constructor(id: string, manager: GitManager, policies: IDocumentStorageServicePolicies);
+    constructor(id: string, manager: GitManager, policies: IDocumentStorageServicePolicies, localDeltaConnectionServer: any, resolvedUrl: any);
     // (undocumented)
     protected readonly blobsShaCache: Map<string, string>;
     // (undocumented)
