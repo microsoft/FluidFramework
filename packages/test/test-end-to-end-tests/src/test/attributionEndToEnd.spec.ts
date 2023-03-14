@@ -9,7 +9,7 @@ import {
 	createRuntimeAttributor,
 	enableOnNewFileKey,
 	IRuntimeAttributor,
-} from "@fluidframework/attributor";
+} from "@fluid-experimental/attributor";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import {
@@ -35,7 +35,7 @@ function assertAttributionMatches(
 	sharedString: SharedString,
 	position: number,
 	attributor: IRuntimeAttributor,
-	expected: Partial<AttributionInfo> | "detached",
+	expected: Partial<AttributionInfo> | "detached" | "local" | undefined,
 ): void {
 	const { segment, offset } = sharedString.getContainingSegment(position);
 	assert(
@@ -48,24 +48,42 @@ function assertAttributionMatches(
 	);
 	const key = segment.attribution.getAtOffset(offset);
 
-	if (expected === "detached") {
-		assert.deepEqual(
-			key,
-			{ type: "detached", id: 0 },
-			"expected attribution key to be detached",
-		);
-		assert.equal(
-			attributor.has(key),
-			false,
-			"Expected RuntimeAttributor to not attribute detached key.",
-		);
-	} else {
-		const { timestamp, user } = attributor.get(key) ?? {};
-		if (expected.timestamp !== undefined) {
-			assert.equal(timestamp, expected.timestamp);
-		}
-		if (expected.user !== undefined) {
-			assert.deepEqual(user, expected.user);
+	switch (expected) {
+		case "detached":
+			assert.deepEqual(
+				key,
+				{ type: "detached", id: 0 },
+				"expected attribution key to be detached",
+			);
+			assert.equal(
+				attributor.has(key),
+				false,
+				"Expected RuntimeAttributor to not attribute detached key.",
+			);
+			break;
+		case "local":
+			assert.deepEqual(key, { type: "local" });
+			assert.equal(
+				attributor.has(key),
+				false,
+				"Expected RuntimeAttributor to not attribute local key.",
+			);
+			break;
+		case undefined:
+			assert.deepEqual(key, expected);
+			break;
+		default: {
+			if (key === undefined) {
+				assert.fail("Expected a defined key, but got an undefined one");
+			}
+			const { timestamp, user } = attributor.get(key) ?? {};
+			if (expected.timestamp !== undefined) {
+				assert.equal(timestamp, expected.timestamp);
+			}
+			if (expected.user !== undefined) {
+				assert.deepEqual(user, expected.user);
+			}
+			break;
 		}
 	}
 }

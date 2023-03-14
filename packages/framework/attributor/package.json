@@ -1,5 +1,5 @@
 {
-	"name": "@fluidframework/attributor",
+	"name": "@fluid-experimental/attributor",
 	"version": "2.0.0-internal.4.0.0",
 	"description": "Operation attributor",
 	"homepage": "https://fluidframework.com",
@@ -76,9 +76,9 @@
 	},
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluid-tools/build-cli": "0.11.0-135362",
+		"@fluid-tools/build-cli": "^0.12.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluidframework/build-tools": "^0.12.0",
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/merge-tree": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",

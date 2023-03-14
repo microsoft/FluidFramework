@@ -21,7 +21,7 @@ import {
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { mixinAttributor } from "@fluidframework/attributor";
+import { mixinAttributor } from "@fluid-experimental/attributor";
 import { pkgVersion } from "./packageVersion";
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
 

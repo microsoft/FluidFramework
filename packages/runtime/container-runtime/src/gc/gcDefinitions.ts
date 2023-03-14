@@ -147,7 +147,11 @@ export const GCNodeType = {
 };
 export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
-/** Defines the APIs for the runtime object to be passed to the garbage collector. */
+// NOTE: Once this is removed from the package exports in the next major, the deprecation tag can be removed as well
+/**
+ * @deprecated - Was only to be used internally anyway, no replacement provided.
+ * Defines the APIs for the runtime object to be passed to the garbage collector.
+ */
 export interface IGarbageCollectionRuntime {
 	/** Before GC runs, called to notify the runtime to update any pending GC state. */
 	updateStateBeforeGC(): Promise<void>;

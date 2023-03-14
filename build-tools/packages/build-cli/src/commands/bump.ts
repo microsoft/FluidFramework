@@ -54,7 +54,6 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		exactDepType: Flags.string({
 			description:
 				"When using the exact flag, controls the type of dependency that is used between packages within the release group.",
-			dependsOn: ["exact"],
 			options: ["^", "~", ""],
 			default: "^",
 		}),

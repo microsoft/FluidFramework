@@ -93,7 +93,6 @@ export class ForestRepairDataStore implements RepairDataStore {
 						case Delta.MarkType.Insert:
 						case Delta.MarkType.InsertAndModify:
 						case Delta.MarkType.MoveIn:
-						case Delta.MarkType.MoveInAndModify:
 							break;
 						default:
 							unreachableCase(type);
