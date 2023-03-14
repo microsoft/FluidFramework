@@ -4,5 +4,5 @@
  */
 
 export { ChangeEncoder } from "./changeEncoder";
-export { ChangeFamily } from "./changeFamily";
+export { ChangeFamily, ChangeFamilyEditor } from "./changeFamily";
 export { ProgressiveEditBuilder, ProgressiveEditBuilderBase } from "./progressiveEditBuilder";

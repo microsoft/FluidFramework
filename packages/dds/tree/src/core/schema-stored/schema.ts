@@ -30,7 +30,7 @@ export type SchemaIdentifier = GlobalFieldKey | TreeSchemaIdentifier;
  * Also known as "Definition"
  * @alpha
  */
-export type TreeSchemaIdentifier = Brand<string, "tree.TreeSchemaIdentifier">;
+export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 
 /**
  * Key (aka Name or Label) for a field which is scoped to a specific TreeSchema.
@@ -123,10 +123,22 @@ export enum ValueSchema {
 export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 
 /**
+ * Specifies which field kind to use.
+ *
+ * @remarks
+ * This is used instead of just the FieldKindIdentifier so that it can be subtyped into a more expressive type with additional information.
+ *
+ * @alpha
+ */
+export interface FieldKindSpecifier {
+	identifier: FieldKindIdentifier;
+}
+
+/**
  * @alpha
  */
 export interface FieldSchema {
-	readonly kind: FieldKindIdentifier;
+	readonly kind: FieldKindSpecifier;
 	/**
 	 * The set of allowed child types.
 	 * If not specified, types are unconstrained.
