@@ -446,7 +446,7 @@ export class SummaryWriter implements ISummaryWriter {
 				JSON.stringify(checkpoint),
 			);
 
-			let uploadedSummaryHandle: string | undefined;
+			let uploadedSummaryHandle: string;
 			if (this.enableWholeSummaryUpload) {
 				uploadedSummaryHandle = await requestWithRetry(
 					async () =>
@@ -555,7 +555,9 @@ export class SummaryWriter implements ISummaryWriter {
 				uploadedSummaryHandle = commit.sha;
 			}
 			serviceSummaryMetric.success(`Service summary success`);
-			return uploadedSummaryHandle ?? false;
+			// Return the summary handle (commit sha) for the new service summary so that
+			// it can be added to validParentSummaries.
+			return uploadedSummaryHandle;
 		} catch (error) {
 			serviceSummaryMetric.error(`Service summary failed`, error);
 			if (
