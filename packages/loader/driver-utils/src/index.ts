@@ -20,7 +20,6 @@ export {
 	GenericNetworkError,
 	getRetryDelayFromError,
 	getRetryDelaySecondsFromError,
-	IAnyDriverError,
 	isOnline,
 	LocationRedirectionError,
 	NetworkErrorBasic,

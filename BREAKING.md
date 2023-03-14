@@ -140,6 +140,7 @@ The following members of the `@fluidframework/driver-utils` package were depreca
 -   `BlobAggregationStorage`
 -   `SnapshotExtractor`
 -   `isUnpackedRuntimeMessage`
+-   `IAnyDriverError`
 
 # 2.0.0-internal.3.3.0
 

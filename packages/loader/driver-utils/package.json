@@ -151,6 +151,10 @@
 			"RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IAnyDriverError": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}

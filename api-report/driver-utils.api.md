@@ -151,12 +151,6 @@ export const getRetryDelayFromError: (error: any) => number | undefined;
 // @public
 export const getRetryDelaySecondsFromError: (error: any) => number | undefined;
 
-// @public @deprecated
-export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
-    // (undocumented)
-    readonly errorType: string;
-}
-
 // @public
 export class InsecureUrlResolver implements IUrlResolver {
     constructor(hostUrl: string, ordererUrl: string, storageUrl: string, tenantId: string, bearer: string, isForNodeTest?: boolean);

@@ -196,26 +196,14 @@ use_old_ClassDeclaration_GenericNetworkError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAnyDriverError": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IAnyDriverError": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IAnyDriverError():
-    TypeOnly<old.IAnyDriverError>;
-declare function use_current_InterfaceDeclaration_IAnyDriverError(
-    use: TypeOnly<current.IAnyDriverError>);
-use_current_InterfaceDeclaration_IAnyDriverError(
-    get_old_InterfaceDeclaration_IAnyDriverError());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAnyDriverError": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IAnyDriverError": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IAnyDriverError():
-    TypeOnly<current.IAnyDriverError>;
-declare function use_old_InterfaceDeclaration_IAnyDriverError(
-    use: TypeOnly<old.IAnyDriverError>);
-use_old_InterfaceDeclaration_IAnyDriverError(
-    get_current_InterfaceDeclaration_IAnyDriverError());
 
 /*
 * Validate forward compat by using old type in place of current type
