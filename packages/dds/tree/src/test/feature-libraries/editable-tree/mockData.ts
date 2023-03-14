@@ -96,7 +96,6 @@ export const addressSchema = TypedSchema.tree("Test:Address-1.0.0", {
 
 export const mapStringSchema = TypedSchema.tree("Map<String>", {
 	extraLocalFields: TypedSchema.field(FieldKinds.optional, stringSchema),
-	// currently it has no effect since EditableTree does not support (de-)serialization of `object`s
 	value: ValueSchema.Serializable,
 });
 

@@ -30,6 +30,8 @@ export {
 	createField,
 	replaceField,
 	parentField,
+	EditableTreeEvents,
+	on,
 } from "./editable-tree";
 
 export {
@@ -73,6 +75,7 @@ export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaul
 
 export {
 	ChangesetLocalId,
+	idAllocatorFromMaxId,
 	isNeverField,
 	ModularChangeFamily,
 	ModularEditBuilder,
