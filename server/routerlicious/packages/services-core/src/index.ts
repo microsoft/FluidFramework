@@ -142,8 +142,4 @@ export {
 export { TokenGenerator } from "./token";
 export { clientConnectivityStorageId, IUsageData, signalUsageStorageId } from "./usageData";
 export { IZookeeperClient, ZookeeperClientConstructor } from "./zookeeper";
-export {
-	IWebSocketTracker,
-	IJsonWebTokenManager,
-	createCompositeTokenId,
-} from "./tokenManager"
+export { IWebSocketTracker, IJsonWebTokenManager, createCompositeTokenId } from "./tokenManager";

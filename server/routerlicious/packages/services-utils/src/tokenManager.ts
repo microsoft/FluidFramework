@@ -6,7 +6,7 @@ import {
 	IWebSocket,
 	IWebSocketTracker,
 	IJsonWebTokenManager,
-} from "@fluidframework/server-services-core"
+} from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 

@@ -15,7 +15,11 @@ import {
 	validateTokenClaimsExpiration,
 	canRevokeToken,
 } from "@fluidframework/server-services-client";
-import type { ICache, ITenantManager, IJsonWebTokenManager } from "@fluidframework/server-services-core";
+import type {
+	ICache,
+	ITenantManager,
+	IJsonWebTokenManager,
+} from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
