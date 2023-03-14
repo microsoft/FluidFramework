@@ -43,7 +43,7 @@ import {
  */
 export interface IRootSummarizerNodeWithGC
 	extends ISummarizerNodeWithGC,
-	ISummarizerNodeRootContract { }
+		ISummarizerNodeRootContract {}
 
 // Extend SummaryNode to add used routes tracking to it.
 class SummaryNodeWithGC extends SummaryNode {
@@ -513,7 +513,6 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		// In case we have pending summaries on the parent, let's initialize it on the child.
 		if (child.latestSummary !== undefined) {
 			for (const [key, value] of this.pendingSummaries.entries()) {
-
 				const summaryNodeWithGC = value as SummaryNodeWithGC;
 				if (summaryNodeWithGC.serializedUsedRoutes !== undefined) {
 					const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
