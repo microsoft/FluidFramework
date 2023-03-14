@@ -38,7 +38,6 @@ import {
 	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
-import { chunkTree, defaultChunkPolicy } from "./chunked-forest";
 
 type BrandedFieldKind<
 	TName extends string,
@@ -415,12 +414,10 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 				};
 			} else {
 				const modify = deltaFromChild(change.changes);
-				const cursor = chunkTree(newValue, defaultChunkPolicy).cursor();
-				cursor.firstNode();
 				mark = {
 					...modify,
 					type: Delta.MarkType.InsertAndModify,
-					content: cursor,
+					content: newValue,
 				};
 			}
 
@@ -680,22 +677,20 @@ function deltaFromInsertAndChange(
 	deltaFromNode: ToDelta,
 ): Delta.Mark[] {
 	if (insertedContent !== undefined) {
-		const content = chunkTree(insertedContent, defaultChunkPolicy).cursor();
-		content.firstNode();
 		if (nodeChange !== undefined) {
 			const nodeDelta = deltaFromNode(nodeChange);
 			return [
 				{
 					...nodeDelta,
 					type: Delta.MarkType.InsertAndModify,
-					content,
+					content: insertedContent,
 				},
 			];
 		}
 		return [
 			{
 				type: Delta.MarkType.Insert,
-				content: [content],
+				content: [insertedContent],
 			},
 		];
 	}
