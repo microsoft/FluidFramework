@@ -94,7 +94,7 @@ export function typedTreeSchema<T extends TypedTreeSchemaBuilder, TName extends 
  * typescript type to allow for deriving schema aware APIs.
  *
  * @remarks
- * The typing here explicitly forbids passing no types: no types would make a field that didn't alloy anything.
+ * The typing here explicitly forbids passing no types: no types would make a field that didn't allow anything.
  * While the underlying system does support such fields (which can be useful if planning to modify their schema later),
  * usually what is instead desired is a field which allows any child type.
  * For that see {@link TypedSchema#fieldUnrestricted}.
