@@ -776,34 +776,26 @@ describe("ModularChangeFamily", () => {
 	});
 
 	const encodingTestData: [string, ModularChangeset][] = [
-        [
-			"without constrain",
-			rootChange1a
-		],
-		[
-			"with constrain",
-			rootChange3
-		]
-    ];
+		["without constrain", rootChange1a],
+		["with constrain", rootChange3],
+	];
 
 	describe("Encoding", () => {
 		const version = 0;
 		for (const [name, data] of encodingTestData) {
-            describe(name, () => {
-                it("roundtrip", () => {
-                    const encoded = family.encoder.encodeForJson(version, data);
-                    const decoded = family.encoder.decodeJson(version, encoded);
-                    assert.deepEqual(decoded, data);
-                });
-                it("json roundtrip", () => {
-                    const encoded = JSON.stringify(
-                        family.encoder.encodeForJson(version, data),
-                    );
-                    const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
-                    assert.deepEqual(decoded, data);
-                });
-            });
-        }
+			describe(name, () => {
+				it("roundtrip", () => {
+					const encoded = family.encoder.encodeForJson(version, data);
+					const decoded = family.encoder.decodeJson(version, encoded);
+					assert.deepEqual(decoded, data);
+				});
+				it("json roundtrip", () => {
+					const encoded = JSON.stringify(family.encoder.encodeForJson(version, data));
+					const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
+					assert.deepEqual(decoded, data);
+				});
+			});
+		}
 	});
 
 	it("build child change", () => {
