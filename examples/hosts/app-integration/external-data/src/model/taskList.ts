@@ -305,7 +305,7 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		try {
-			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
+			await fetch(`http://localhost:${externalDataServicePort}/set-tasks/${this.externalTaskListId}`, {
 				method: "POST",
 				headers: {
 					"Access-Control-Allow-Origin": "*",
