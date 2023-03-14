@@ -14,7 +14,8 @@ import type {
 	ExternalSnapshotTask,
 	ITask,
 	ITaskEvents,
-	ITaskList,
+	ITaskListCollection,
+	ITaskListCollectionInitialState,
 	TaskData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
@@ -89,7 +90,7 @@ interface PersistedTask {
 /**
  * The TaskList is our data object that implements the ITaskList interface.
  */
-export class TaskList extends DataObject implements ITaskList {
+export class TaskList extends DataObject<{ InitialState: ITaskListCollectionInitialState }> {
 	/**
 	 * The tasks collection holds local facades on the data.  These facades encapsulate the data for a single task
 	 * so we don't have to hand out references to the whole SharedDirectory.  Additionally, we only create them
@@ -110,6 +111,12 @@ export class TaskList extends DataObject implements ITaskList {
 	private _draftData: SharedMap | undefined;
 
 	private _errorFlagCount: number = 0;
+
+	private _externalTaskListId: string | undefined;
+
+	private get externalTaskListId(): string | undefined {
+		return this._externalTaskListId;
+	}
 
 	private get externalDataSnapshot(): SharedMap {
 		if (this._externalDataSnapshot === undefined) {
@@ -338,7 +345,14 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 	};
 
-	protected async initializingFirstTime(): Promise<void> {
+	protected async initializingFirstTime(props: ITaskListCollectionInitialState): Promise<void> {
+		const externalTaskListId = props?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			throw new Error(
+				"externalTaskListId not present in instantiation. Cannot instantiate task list",
+			);
+		}
+		this._externalTaskListId = externalTaskListId;
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
@@ -428,4 +442,34 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},
+);
+
+export class TaskListCollection extends DataObject implements ITaskListCollection {
+	private readonly taskLists = new Map<string, TaskList>();
+
+	public readonly addTaskList = async (props: ITaskListCollectionInitialState): Promise<void> => {
+		const taskList = await TaskListInstantiationFactory.createChildInstance(
+			this.context,
+			props,
+		);
+		console.log(taskList);
+		this.taskLists.set(props.externalTaskListId, taskList);
+		this.root.set(props.externalTaskListId, taskList.handle);
+
+		console.log(this.taskLists.get(props.externalTaskListId));
+		this.emit("taskListCollectionChanged");
+	};
+
+	public readonly getTaskList = (id: string): TaskList | undefined => {
+		console.log(this.taskLists.get(id));
+		return this.taskLists.get(id);
+	};
+}
+
+export const TaskListCollectionInstantiationFactory = new DataObjectFactory<TaskListCollection>(
+	"task-list-collection",
+	TaskListCollection,
+	[],
+	{},
+	new Map([TaskListInstantiationFactory.registryEntry]),
 );

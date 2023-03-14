@@ -27,9 +27,9 @@ export interface IAppModelEvents extends IEvent {}
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	/**
-	 * A task tracker list.
+	 * A collect of task tracker lists.
 	 */
-	readonly taskList: ITaskList;
+	readonly taskListCollection: ITaskListCollection;
 
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
@@ -154,4 +154,23 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// readonly handleExternalMessage: (message) => void;
 }
 
+export interface ITaskListCollectionInitialState {
+	externalTaskListId: string;
+}
+/**
+ * ITaskList represents a "drafting surface" for changes to a task list stored in some external source.  Changes to
+ * the ITaskList and its constituent ITasks are persisted in Fluid and shared amongst collaborators, but none of the
+ * changes are persisted back to the external source until the user explicitly chooses to do so.
+ * TODO: We'll want to eventually show variations of this behavior (e.g. more automatic or less automatic sync'ing).
+ */
+export interface ITaskListCollection extends IEventProvider<ITaskListEvents> {
+	/**
+	 * Add a board with a specific id.
+	 */
+	readonly addTaskList: (props: ITaskListCollectionInitialState) => void;
+	/**
+	 * Get the task with the specified ID.
+	 */
+	readonly getTaskList: (id: string) => ITaskList | undefined;
+}
 export { assertValidTaskData, TaskData } from "./TaskData";

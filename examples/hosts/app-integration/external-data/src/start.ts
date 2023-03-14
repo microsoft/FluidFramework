@@ -10,7 +10,7 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 
 import type { IAppModel } from "./model-interface";
 import { DebugView, AppView } from "./view";
-import { TaskListContainerRuntimeFactory } from "./model";
+import { TaskListCollectionContainerRuntimeFactory } from "./model";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -36,7 +36,7 @@ const render = (model: IAppModel, showExternalServerView: boolean): void => {
 
 async function start(): Promise<void> {
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IAppModel>(
-		new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
+		new StaticCodeLoader(new TaskListCollectionContainerRuntimeFactory()),
 	);
 
 	let id: string;
@@ -56,9 +56,18 @@ async function start(): Promise<void> {
 		model = await tinyliciousModelLoader.loadExisting(id);
 		showExternalServerView = false;
 	}
+	model.taskListCollection.addTaskList({ externalTaskListId: "task-list-1" });
+	const taskList = model.taskListCollection.getTaskList("task-list-1");
+	console.log(model.taskListCollection);
+	console.log(taskList);
 
-	render(model, showExternalServerView);
-	updateTabForId(id);
+	// Use a timeout in order to let task list instantiate. In the full flow,
+	// we will wait on a response from the external server to return from registering
+	// so this timeout won't be necessary
+	setTimeout(() => {
+		render(model, showExternalServerView);
+		updateTabForId(id);
+	}, 1000);
 }
 
 start().catch((error) => {

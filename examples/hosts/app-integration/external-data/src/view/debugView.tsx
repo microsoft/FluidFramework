@@ -61,7 +61,6 @@ export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => 
 		<div>
 			<ControlsView model={props.model} />
 			<ExternalDataDebugView />
-			<SyncStatusView />
 		</div>
 	);
 };
