@@ -52,7 +52,6 @@ const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerDispose", error: usageErrorMessage },
 ];
 const ContainerCloseUsageError: ExpectedEvents = {
-	local: containerCloseAndDisposeUsageErrors,
 	routerlicious: containerCloseAndDisposeUsageErrors,
 	tinylicious: containerCloseAndDisposeUsageErrors,
 };
