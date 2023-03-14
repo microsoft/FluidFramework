@@ -1061,7 +1061,7 @@ export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnl
 export type NodeChangeInverter = (change: NodeChangeset, index: number | undefined) => NodeChangeset;
 
 // @alpha (undocumented)
-export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset) => NodeChangeset | undefined;
+export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: NodeChangeset | undefined) => NodeChangeset | undefined;
 
 // @alpha
 export interface NodeChangeset extends HasFieldChanges {

@@ -449,7 +449,7 @@ export class ModularChangeFamily
 			...newCrossFieldTable<FieldChange>(),
 			baseChangeToNew: new Map(),
 			baseChangeToContext: new Map(),
-			baseContextToParent: new Map(),
+			baseMapToParentField: new Map(),
 		};
 
 		const revInfos: RevisionInfo[] = [];
@@ -480,11 +480,13 @@ export class ModularChangeFamily
 			const invalidatedEmptyFields = new Set<FieldChange>();
 			for (let baseField of invalidatedFields) {
 				let baseFieldContext = crossFieldTable.baseChangeToContext.get(baseField);
-				assert(baseFieldContext !== undefined, "Should have context for field");
 
-				while (!crossFieldTable.baseChangeToNew.has(baseFieldContext.map)) {
+				while (
+					baseFieldContext !== undefined &&
+					!crossFieldTable.baseChangeToNew.has(baseFieldContext.map)
+				) {
 					invalidatedEmptyFields.add(baseField);
-					const baseFieldTemp = crossFieldTable.baseContextToParent.get(
+					const baseFieldTemp = crossFieldTable.baseMapToParentField.get(
 						baseFieldContext.map,
 					);
 					assert(baseFieldTemp !== undefined, "Should have parent for field");
@@ -497,26 +499,41 @@ export class ModularChangeFamily
 				fieldsToUpdate.add(baseField);
 			}
 
-			for (const baseField of fieldsToUpdate) {
-				const { map: baseChange, field, revision } =
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					crossFieldTable.baseChangeToContext.get(baseField)!;
+			for (const fieldToUpdate of fieldsToUpdate) {
+				const fieldContext = crossFieldTable.baseChangeToContext.get(fieldToUpdate);
+				let fieldChange: FieldChange;
+				let baseChanges: FieldChange;
+				let baseRevision: RevisionTag | undefined;
+				let newNode: HasFieldChanges | undefined;
+				let field: FieldKey | undefined;
 
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const newNode = crossFieldTable.baseChangeToNew.get(baseChange)!;
-				const fieldChange = newNode.fieldChanges?.get(field) ?? {
-					fieldKind: genericFieldKind.identifier,
-					change: brand(newGenericChangeset()),
-				};
+				if (fieldContext !== undefined) {
+					newNode = crossFieldTable.baseChangeToNew.get(fieldContext.map);
+					assert(
+						newNode !== undefined,
+						"Should be a new HasFieldChanges associated with this base change",
+					);
 
-				const baseChanges = baseChange.get(field);
-				assert(baseChanges !== undefined, "Should not have entry with undefined field");
+					baseChanges = fieldToUpdate;
+					field = fieldContext.field;
+					fieldChange = newNode.fieldChanges?.get(field) ?? {
+						fieldKind: genericFieldKind.identifier,
+						change: brand(newGenericChangeset()),
+					};
+
+					baseRevision = baseChanges.revision ?? fieldContext.revision;
+				} else {
+					fieldChange = fieldToUpdate;
+					baseChanges = {
+						fieldKind: genericFieldKind.identifier,
+						change: brand(newGenericChangeset()),
+					};
+				}
+
 				const {
 					fieldKind,
 					changesets: [fieldChangeset, baseChangeset],
 				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
-
-				const baseRevision = baseChanges.revision ?? revision;
 
 				const amendedChange = fieldKind.changeHandler.rebaser.amendRebase(
 					fieldChangeset,
@@ -524,7 +541,9 @@ export class ModularChangeFamily
 					(child, baseChild) =>
 						this.rebaseNodeChange(
 							child,
-							tagChange(baseChild, baseRevision),
+							baseChild !== undefined
+								? tagChange(baseChild, baseRevision)
+								: undefined,
 							genId,
 							crossFieldTable,
 							undefined,
@@ -537,17 +556,21 @@ export class ModularChangeFamily
 					revisionMetadata,
 				);
 
-				if (fieldKind.changeHandler.isEmpty(amendedChange)) {
-					newNode.fieldChanges?.delete(field);
-				} else {
-					if (newNode.fieldChanges === undefined) {
-						newNode.fieldChanges = new Map();
-					}
+				if (newNode !== undefined && field !== undefined) {
+					if (fieldKind.changeHandler.isEmpty(amendedChange)) {
+						newNode.fieldChanges?.delete(field);
+					} else {
+						if (newNode.fieldChanges === undefined) {
+							newNode.fieldChanges = new Map();
+						}
 
-					newNode.fieldChanges.set(field, {
-						fieldKind: fieldKind.identifier,
-						change: brand(amendedChange),
-					});
+						newNode.fieldChanges.set(field, {
+							fieldKind: fieldKind.identifier,
+							change: brand(amendedChange),
+						});
+					}
+				} else {
+					fieldChange.change = brand(amendedChange);
 				}
 			}
 		}
@@ -597,7 +620,7 @@ export class ModularChangeFamily
 				(child, baseChild) =>
 					this.rebaseNodeChange(
 						child,
-						{ revision, change: baseChild },
+						baseChild !== undefined ? { revision, change: baseChild } : undefined,
 						genId,
 						crossFieldTable,
 						baseChanges,
@@ -628,7 +651,45 @@ export class ModularChangeFamily
 
 		for (const [field, fieldChange] of change) {
 			if (!over.change?.has(field)) {
-				rebasedFields.set(field, fieldChange);
+				const baseChanges: FieldChange = {
+					fieldKind: genericFieldKind.identifier,
+					change: brand(newGenericChangeset()),
+				};
+
+				const {
+					fieldKind,
+					changesets: [fieldChangeset, baseChangeset],
+				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
+
+				const manager = newCrossFieldManager(crossFieldTable);
+				const rebasedChangeset = fieldKind.changeHandler.rebaser.rebase(
+					fieldChangeset,
+					makeAnonChange(baseChangeset),
+					(child, baseChild) => {
+						assert(
+							baseChild === undefined,
+							"This field should not have any base changes",
+						);
+						return this.rebaseNodeChange(
+							child,
+							undefined,
+							genId,
+							crossFieldTable,
+							baseChanges,
+							fieldFilter,
+							revisionMetadata,
+						);
+					},
+					genId,
+					manager,
+					revisionMetadata,
+				);
+				const rebasedFieldChange: FieldChange = {
+					fieldKind: fieldKind.identifier,
+					change: brand(rebasedChangeset),
+				};
+				rebasedFields.set(field, rebasedFieldChange);
+				addFieldData(manager, rebasedChangeset);
 			}
 		}
 
@@ -637,23 +698,32 @@ export class ModularChangeFamily
 
 	private rebaseNodeChange(
 		change: NodeChangeset | undefined,
-		over: TaggedChange<NodeChangeset>,
+		over: TaggedChange<NodeChangeset> | undefined,
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		parentField: FieldChange | undefined,
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset | undefined {
-		if (over.change.fieldChanges === undefined) {
-			return change;
+		if (change === undefined && over?.change?.fieldChanges === undefined) {
+			return undefined;
 		}
+
+		if (over?.change?.fieldChanges !== undefined && parentField !== undefined) {
+			crossFieldTable.baseMapToParentField.set(over.change.fieldChanges, parentField);
+		}
+
+		const baseMap: TaggedChange<FieldChangeMap> =
+			over?.change?.fieldChanges !== undefined
+				? {
+						...over,
+						change: over.change.fieldChanges,
+				  }
+				: makeAnonChange(new Map());
 
 		const fieldChanges = this.rebaseFieldMap(
 			change?.fieldChanges ?? new Map(),
-			{
-				...over,
-				change: over.change.fieldChanges,
-			},
+			baseMap,
 			genId,
 			crossFieldTable,
 			fieldFilter,
@@ -673,11 +743,10 @@ export class ModularChangeFamily
 			rebasedChange.fieldChanges = fieldChanges;
 		}
 
-		crossFieldTable.baseChangeToNew.set(over.change.fieldChanges, rebasedChange);
-
-		if (parentField !== undefined) {
-			crossFieldTable.baseContextToParent.set(over.change.fieldChanges, parentField);
+		if (over?.change?.fieldChanges !== undefined) {
+			crossFieldTable.baseChangeToNew.set(over.change.fieldChanges, rebasedChange);
 		}
+
 		return rebasedChange;
 	}
 
@@ -778,7 +847,7 @@ interface CrossFieldTable<TFieldData> {
 interface RebaseTable extends CrossFieldTable<FieldChange> {
 	baseChangeToNew: Map<FieldChangeMap, HasFieldChanges>;
 	baseChangeToContext: Map<FieldChange, FieldChangeContext>;
-	baseContextToParent: Map<FieldChangeMap, FieldChange>;
+	baseMapToParentField: Map<FieldChangeMap, FieldChange>;
 }
 
 interface FieldChangeContext {

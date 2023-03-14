@@ -92,7 +92,7 @@ export function rebase<TNodeChange>(
 
 export type NodeChangeRebaser<TNodeChange> = (
 	change: TNodeChange | undefined,
-	baseChange: TNodeChange,
+	baseChange: TNodeChange | undefined,
 ) => TNodeChange | undefined;
 
 function rebaseMarkList<TNodeChange>(
@@ -412,6 +412,10 @@ function rebaseMark<TNodeChange>(
 ): CellSpanningMark<TNodeChange> {
 	if (isSkipMark(baseMark) || isSkipLikeReattach(baseMark) || isSkipLikeDetach(baseMark)) {
 		// TODO: Rebase currMark's changes over baseMark's changes.
+		if (isObjMark(currMark) && currMark.type === "Modify") {
+			const childChange = rebaseChild(currMark.changes, undefined);
+			return childChange !== undefined ? { ...currMark, changes: childChange } : 1;
+		}
 		return cloneMark(currMark);
 	}
 	const baseType = baseMark.type;

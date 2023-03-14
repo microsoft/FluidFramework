@@ -110,11 +110,16 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 
 const childRebaser = (
 	nodeChangeA: NodeChangeset | undefined,
-	nodeChangeB: NodeChangeset,
+	nodeChangeB: NodeChangeset | undefined,
 ): NodeChangeset | undefined => {
 	if (nodeChangeA === undefined) {
 		return undefined;
 	}
+
+	if (nodeChangeB === undefined) {
+		return nodeChangeA;
+	}
+
 	const valueChangeA = valueChangeFromNodeChange(nodeChangeA);
 	const valueChangeB = valueChangeFromNodeChange(nodeChangeB);
 	const rebased = valueHandler.rebaser.rebase(
