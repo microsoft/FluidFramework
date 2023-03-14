@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
     ISummaryTree,
     SummaryType,
@@ -12,22 +13,62 @@ import {
 } from "@fluidframework/protocol-definitions";
 
 /**
+ * Defines the current layout of an .app + .protocol summary tree
+ * this is used internally for create new, and single commit summary
+ * @internal
+ */
+export interface CombinedAppAndProtocolSummary extends ISummaryTree {
+	tree: {
+		[".app"]: ISummaryTree;
+		[".protocol"]: ISummaryTree;
+	};
+}
+
+/**
+ * Validates the current layout of an .app + .protocol summary tree
+ * this is used internally for create new, and single commit summary
+ * @internal
+ */
+export function isCombinedAppAndProtocolSummary(
+	summary: ISummaryTree | undefined,
+): summary is CombinedAppAndProtocolSummary {
+	if (
+		summary?.tree === undefined ||
+		summary.tree?.[".app"]?.type !== SummaryType.Tree ||
+		summary.tree?.[".protocol"]?.type !== SummaryType.Tree
+	) {
+		return false;
+	}
+	const treeKeys = Object.keys(summary.tree);
+	if (treeKeys.length !== 2) {
+		return false;
+	}
+	return true;
+}
+
+/**
  * Combine the app summary and protocol summary in 1 tree.
  * @param appSummary - Summary of the app.
  * @param protocolSummary - Summary of the protocol.
+ * @internal
  */
 export function combineAppAndProtocolSummary(
-    appSummary: ISummaryTree,
-    protocolSummary: ISummaryTree,
-): ISummaryTree {
-    const createNewSummary: ISummaryTree = {
-        type: SummaryType.Tree,
-        tree: {
-            ".protocol": protocolSummary,
-            ".app": appSummary,
-        },
-    };
-    return createNewSummary;
+	appSummary: ISummaryTree,
+	protocolSummary: ISummaryTree,
+): CombinedAppAndProtocolSummary {
+	assert(!isCombinedAppAndProtocolSummary(appSummary), "app summary is already a combined tree!");
+	assert(
+		!isCombinedAppAndProtocolSummary(protocolSummary),
+		"protocol summary is already a combined tree!",
+	);
+	const createNewSummary: CombinedAppAndProtocolSummary = {
+		type: SummaryType.Tree,
+		tree: {
+			".protocol": protocolSummary,
+			".app": appSummary,
+		},
+	};
+	return createNewSummary;
 }
 
 /**
