@@ -114,10 +114,10 @@ export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDo
 // @public
 export const canRetryOnError: (error: any) => boolean;
 
-// @public
+// @internal
 export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): CombinedAppAndProtocolSummary;
 
-// @public (undocumented)
+// @internal
 export interface CombinedAppAndProtocolSummary extends ISummaryTree {
     // (undocumented)
     tree: {
@@ -249,7 +249,7 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
-// @public (undocumented)
+// @internal
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
 
 // @public (undocumented)

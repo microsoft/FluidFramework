@@ -12,6 +12,11 @@ import {
 	IDocumentAttributes,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * Defines the current layout of an .app + .protocol summary tree
+ * this is used internally for create new, and single commit summary
+ * @internal
+ */
 export interface CombinedAppAndProtocolSummary extends ISummaryTree {
 	tree: {
 		[".app"]: ISummaryTree;
@@ -19,6 +24,11 @@ export interface CombinedAppAndProtocolSummary extends ISummaryTree {
 	};
 }
 
+/**
+ * Validates the current layout of an .app + .protocol summary tree
+ * this is used internally for create new, and single commit summary
+ * @internal
+ */
 export function isCombinedAppAndProtocolSummary(
 	summary: ISummaryTree | undefined,
 ): summary is CombinedAppAndProtocolSummary {
@@ -40,6 +50,7 @@ export function isCombinedAppAndProtocolSummary(
  * Combine the app summary and protocol summary in 1 tree.
  * @param appSummary - Summary of the app.
  * @param protocolSummary - Summary of the protocol.
+ * @internal
  */
 export function combineAppAndProtocolSummary(
 	appSummary: ISummaryTree,
