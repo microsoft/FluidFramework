@@ -698,6 +698,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const gcData: IGarbageCollectionData = { gcNodes: {} };
 		for (const [localId, storageId] of this.redirectTable) {
 			assert(!!storageId, 0x390 /* Must be attached to get GC data */);
+			// Only return local ids as GC nodes because a blob can only be referenced via its local id. The storage
+			// id entries have the same key and value, ignore them.
+			// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
+			// by adding its handle to a referenced DDS.
 			if (localId !== storageId) {
 				gcData.gcNodes[getGCNodePathFromBlobId(localId)] = [];
 			}
