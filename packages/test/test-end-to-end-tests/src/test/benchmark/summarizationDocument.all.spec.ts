@@ -42,7 +42,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	const obj = new BenchmarkObj();
 
-	benchmarkAll<BenchmarkObj>(scenarioTitle, benchmarkType, {
+	benchmarkAll(scenarioTitle, obj, {
 		run: async () => {
 			obj.container = await document.loadDocument();
 			assert(obj.container !== undefined, "container needs to be defined.");
@@ -55,7 +55,6 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 			);
 			summaryVersion = obj.summarizerClient.summaryVersion;
 		},
-		obj,
 		beforeIteration: () => {
 			obj.container = undefined;
 			obj.summarizerClient = undefined;

@@ -34,13 +34,12 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	const obj = new BenchmarkObj();
 
-	benchmarkAll<BenchmarkObj>(scenarioTitle, benchmarkType, {
+	benchmarkAll(scenarioTitle, obj, {
 		run: async () => {
 			obj.container = await document.loadDocument();
 			assert(obj.container !== undefined, "container needs to be defined.");
 			obj.container.close();
 		},
-		obj,
 		beforeIteration: () => {
 			obj.container = undefined;
 		},

@@ -174,6 +174,14 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	},
 ];
 
+export const E2ENoDocument: DescribeE2EDocInfo[] = [
+	{
+		testTitle: "",
+		documentType: "",
+		minSampleCount: undefined,
+	},
+];
+
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe(E2EDefaultDocumentTypes);
 
 export const describeE2EDocsRuntime: DescribeE2EDocSuite =
