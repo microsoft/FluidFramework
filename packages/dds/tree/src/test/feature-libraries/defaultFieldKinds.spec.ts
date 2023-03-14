@@ -5,34 +5,55 @@
 
 import { strict as assert } from "assert";
 import {
+	ContextuallyTypedNodeDataObject,
 	FieldChangeEncoder,
 	FieldChangeHandler,
-	FieldKinds,
 	IdAllocator,
 	NodeChangeset,
 	NodeReviver,
 	RevisionMetadataSource,
+	SchemaAware,
+	TypedSchema,
+	jsonableTreeFromCursor,
 	singleTextCursor,
+	valueSymbol,
+	cursorFromContextualData,
 } from "../../feature-libraries";
+// Allow import from file being tested.
+// eslint-disable-next-line import/no-internal-modules
+import * as FieldKinds from "../../feature-libraries/defaultFieldKinds";
 import {
 	makeAnonChange,
 	RevisionTag,
 	TaggedChange,
-	TreeSchemaIdentifier,
 	Delta,
 	mintRevisionTag,
+	ValueSchema,
 } from "../../core";
-import { brand, JsonCompatibleReadOnly } from "../../util";
+import { JsonCompatibleReadOnly } from "../../util";
 import { assertMarkListEqual, fakeRepair } from "../utils";
 
-const nodeType: TreeSchemaIdentifier = brand("Node");
-const tree1 = {
-	type: nodeType,
-	value: "value1",
-	fields: { foo: [{ type: nodeType, value: "value3" }] },
+const nodeSchema = TypedSchema.tree("Node", {
+	value: ValueSchema.String,
+	local: { foo: TypedSchema.field(FieldKinds.value, "Node") },
+});
+
+const schemaData = SchemaAware.typedSchemaData(new Map(), nodeSchema);
+
+const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
+	[valueSymbol]: "value1",
+	foo: "value3",
 };
-const tree2 = { type: nodeType, value: "value2" };
-const tree3 = { type: nodeType, value: "value3" };
+
+// TODO: This file is mainly working with in memory representations.
+// Therefor it should not be using JsonableTrees.
+// The usages of this (and other JsonableTrees) such as ValueChangeset should be changed to use
+// a tree format intended for in memory use, such as Cursor or MapTree.
+const tree1 = jsonableTreeFromCursor(
+	cursorFromContextualData(schemaData, new Set([nodeSchema.name]), tree1ContextuallyTyped),
+);
+
+const tree2 = { type: nodeSchema.name, value: "value2" };
 const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
 const nodeChange2: NodeChangeset = { valueChange: { value: "value4" } };
 const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };

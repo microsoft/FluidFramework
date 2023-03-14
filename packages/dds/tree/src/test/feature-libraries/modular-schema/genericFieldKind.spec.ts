@@ -8,7 +8,6 @@ import {
 	FieldChangeHandler,
 	FieldKind,
 	Multiplicity,
-	FieldKinds,
 	NodeChangeset,
 	GenericChangeset,
 	genericFieldKind,
@@ -16,6 +15,9 @@ import {
 	CrossFieldManager,
 	RevisionMetadataSource,
 } from "../../../feature-libraries";
+// TODO: this is not the file being tests, importing it should not be required here.
+// eslint-disable-next-line import/no-internal-modules
+import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { fakeRepair } from "../../utils";

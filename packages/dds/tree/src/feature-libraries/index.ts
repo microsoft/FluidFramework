@@ -46,6 +46,8 @@ export {
 	getFieldKind,
 	getFieldSchema,
 	ArrayLikeMut,
+	cursorFromContextualData,
+	cursorsFromContextualData,
 } from "./contextuallyTyped";
 
 export { ForestIndex } from "./forestIndex";
@@ -126,5 +128,17 @@ export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
-import * as FieldKinds from "./defaultFieldKinds";
-export { SchemaAware, FieldKinds };
+import * as FieldKindsOriginal from "./defaultFieldKinds";
+export { SchemaAware };
+
+// Export subset of FieldKinds in an API-Extractor compatible way:
+import { FieldEditor, FieldKind, Multiplicity } from "./modular-schema";
+
+/**
+ * @alpha
+ */
+export const FieldKinds = {
+	value: FieldKindsOriginal.value as FieldKind<FieldEditor<any>, Multiplicity.Value>,
+	optional: FieldKindsOriginal.optional as FieldKind<FieldEditor<any>, Multiplicity.Optional>,
+	sequence: FieldKindsOriginal.sequence as FieldKind<FieldEditor<any>, Multiplicity.Sequence>,
+} as const;

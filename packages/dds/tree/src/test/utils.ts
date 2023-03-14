@@ -131,7 +131,7 @@ export enum SummarizeType {
 
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
- * class are created via {@link create} and satisfy the {@link ITestObjectProvider} interface.
+ * class are created via {@link TestTreeProvider.create} and satisfy the {@link ITestObjectProvider} interface.
  */
 export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";

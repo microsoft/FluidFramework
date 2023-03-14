@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKey,
-	FieldKindIdentifier,
 	fieldSchema,
 	GlobalFieldKey,
 	JsonableTree,
@@ -30,18 +29,18 @@ import {
 	valueSymbol,
 	replaceField,
 	typeNameSymbol,
-	namedTreeSchema,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	EditableField,
 	getPrimaryField,
+	SchemaAware,
+	TypedSchema,
+	FieldKind,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
 	fullSchemaData,
-	personData,
 	Person,
-	schemaMap,
 	stringSchema,
 	Int32,
 	getPerson,
@@ -54,6 +53,7 @@ import {
 	Phones,
 	phonesSchema,
 	decimalSchema,
+	personJsonableTree,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -62,23 +62,22 @@ const globalFieldSymbol = symbolFromKey(globalFieldKey);
 const localFieldKey: LocalFieldKey = brand("foo");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
-function getTestSchema(fieldKind: { identifier: FieldKindIdentifier }): SchemaData {
-	const rootNodeSchema = namedTreeSchema({
-		name: rootSchemaName,
-		localFields: {
-			[localFieldKey]: fieldSchema(fieldKind, [stringSchema.name]),
+function getTestSchema(fieldKind: FieldKind): SchemaData {
+	const rootNodeSchema = TypedSchema.tree("Test", {
+		local: {
+			[localFieldKey]: TypedSchema.field(fieldKind, stringSchema),
 		},
 		globalFields: [globalFieldKey],
 		value: ValueSchema.Serializable,
 	});
-	schemaMap.set(rootSchemaName, rootNodeSchema);
-	return {
-		treeSchema: schemaMap,
-		globalFieldSchema: new Map([
+	return SchemaAware.typedSchemaData(
+		new Map([
 			[rootFieldKey, fieldSchema(FieldKinds.optional, [rootSchemaName])],
 			[globalFieldKey, fieldSchema(fieldKind, [stringSchema.name])],
 		]),
-	};
+		stringSchema,
+		rootNodeSchema,
+	);
 }
 
 async function createSharedTrees(
@@ -105,7 +104,7 @@ const testCases: (readonly [string, FieldKey])[] = [
 
 describe("editable-tree: editing", () => {
 	it("edit using contextually typed API", async () => {
-		const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
+		const [, trees] = await createSharedTrees(fullSchemaData, [personJsonableTree()]);
 		assert.equal((trees[0].root as Person).name, "Adam");
 		// delete optional root
 		trees[0].root = undefined;
@@ -362,7 +361,7 @@ describe("editable-tree: editing", () => {
 	});
 
 	it("assert set primitive value using assignment", async () => {
-		const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
+		const [, trees] = await createSharedTrees(fullSchemaData, [personJsonableTree()]);
 		const person = trees[0].root as Person;
 		const nameNode = person[getField](brand("name")).getNode(0);
 		const ageNode = person[getField](brand("age")).getNode(0);
