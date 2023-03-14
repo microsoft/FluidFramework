@@ -253,10 +253,10 @@ describe("SharedString", () => {
 			assert.throws(
 				() => {
 					sharedString.annotateMarker(simpleMarker, newIdProps);
-					assert.fail("Error from attempting to update marker was not thrown");
 				},
 				(e) =>
 					validateAssertionError(e, "Cannot change the markerId of an existing marker"),
+				"Error from attempting to update marker was not thrown or was not the expected error",
 			);
 		});
 

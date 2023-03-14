@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { ISegment, Marker } from "./mergeTreeNodes";
 import {
 	ICombiningOp,
@@ -31,7 +32,10 @@ export function createAnnotateMarkerOp(
 	if (!id) {
 		return undefined;
 	}
-
+	assert(
+		!props.markerId || props.markerId === id,
+		"Cannot change the markerId of an existing marker",
+	);
 	return {
 		combiningOp,
 		props,
