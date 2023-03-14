@@ -40,6 +40,7 @@ import {
 	findAncestor,
 	GraphCommit,
 	RepairDataStore,
+	ChangeFamilyEditor,
 } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
@@ -87,7 +88,7 @@ export interface IndexEvents<TChangeset> {
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
 export class SharedTreeCore<
-	TEditor,
+	TEditor extends ChangeFamilyEditor,
 	TChange,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
@@ -286,10 +287,12 @@ export class SharedTreeCore<
 
 	public startTransaction(repairStore?: RepairDataStore): void {
 		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
+		this.editor.enterTransaction();
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
 		const { startRevision } = this.transactions.pop();
+		this.editor.exitTransaction();
 		const squashCommit = this.editManager.squashLocalChanges(startRevision);
 		this.submitCommit(squashCommit);
 		return TransactionResult.Commit;
@@ -297,6 +300,7 @@ export class SharedTreeCore<
 
 	public abortTransaction(): TransactionResult.Abort {
 		const { startRevision, repairStore } = this.transactions.pop();
+		this.editor.exitTransaction();
 		for (const delta of this.editManager.rollbackLocalChanges(startRevision, repairStore)) {
 			this.indexEventEmitter.emit("newLocalState", delta);
 		}

@@ -17,6 +17,8 @@ export {
 	createField,
 	replaceField,
 	parentField,
+	EditableTreeEvents,
+	on,
 } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
