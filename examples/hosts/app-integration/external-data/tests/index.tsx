@@ -37,7 +37,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		model = await sessionStorageModelLoader.loadExisting(id);
 	}
 
-	model.baseDocument.addTaskList({ externalTaskListId: "task-list-test" });
+	model.baseDocument.addTaskList({
+		externalTaskListId: "task-list-test",
+		containerUrl: model.containerResolvedUrl(),
+	});
 
 	const taskList = model.baseDocument.getTaskList("task-list-test");
 	// Add a test task so we can see something.

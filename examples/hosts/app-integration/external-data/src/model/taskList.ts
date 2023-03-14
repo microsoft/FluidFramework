@@ -7,6 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
@@ -19,6 +20,7 @@ import type {
 	TaskData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
+import { customerServicePort } from "../mock-customer-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {
@@ -353,10 +355,8 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 			);
 		}
 		this._externalTaskListId = externalTaskListId;
-		// TODO: remove console.log of externalTaskListId once it is used in upcoming PRs.
-		// Linter complains about it not being used and then tried to remove
-		// _externalTaskListId as well. This log is simpy to allow building for now.
-		console.log(this.externalTaskListId);
+
+		await this.registerWithCustomerService(externalTaskListId, props?.containerUrl);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
@@ -366,6 +366,39 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		await this.importExternalData();
 	}
 
+	/**
+	 * Register container session data with the customer service.
+	 * @returns A promise that resolves when the registration call returns successfully.
+	 */
+	public async registerWithCustomerService(
+		externalTaskListId: string,
+		containerUrlData: IFluidResolvedUrl | undefined,
+	): Promise<void> {
+		try {
+			console.log(
+				`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`,
+			);
+			if (containerUrlData?.url === undefined) {
+				console.error(
+					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
+				);
+				return;
+			}
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					containerUrl: containerUrlData.url,
+					externalTaskListId: this.externalTaskListId,
+				}),
+			});
+		} catch (error) {
+			console.error(`Customer service registration failed:\n${error}`);
+		}
+	}
 	/**
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for changes to the task list.

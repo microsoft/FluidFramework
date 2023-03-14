@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface";
 
@@ -16,7 +17,7 @@ import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interfa
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
 	public constructor(
 		public readonly baseDocument: IBaseDocument,
-		container: IContainer,
+		private readonly container: IContainer,
 		private readonly runtime: IContainerRuntime,
 	) {
 		super();
@@ -27,5 +28,12 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 */
 	public readonly sendCustomDebugSignal = (): void => {
 		this.runtime.submitSignal("debugSignal", { type: "ExternalDataChange" });
+	};
+
+	/**
+	 * {@inheritDoc IAppModel.containerResolvedUrl}
+	 */
+	public readonly containerResolvedUrl = (): IFluidResolvedUrl => {
+		return this.container?.resolvedUrl as IFluidResolvedUrl;
 	};
 }

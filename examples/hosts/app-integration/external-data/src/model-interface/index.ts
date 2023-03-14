@@ -4,6 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 /**
@@ -36,6 +37,11 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 * from alfred while that signal is in prototype state on the dev branch.
 	 */
 	readonly sendCustomDebugSignal: () => void;
+
+	/**
+	 * The resolved URL for the container.
+	 */
+	readonly containerResolvedUrl: () => IFluidResolvedUrl;
 }
 
 /**
@@ -144,6 +150,16 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 */
 	readonly importExternalData: () => Promise<void>;
 
+	/**
+	 * Register the container details and the external resource id with the customer service.
+	 * This will allow the Customer Service to pass on the container information to the Fluid
+	 * Service to send the signal that some new information has come through.
+	 */
+	readonly registerWithCustomerService: (
+		externalTaskListId: string,
+		url: IFluidResolvedUrl | undefined,
+	) => Promise<void>;
+
 	// TODO: Should there be an imperative API to trigger importing changes from the external source?
 	// Even if we don't want this to be how the signal gets routed, we might want a "fetch latest changes" button
 	// in the UI.
@@ -165,6 +181,7 @@ export interface IBaseDocumentEvents extends IEvent {
 }
 export interface IBaseDocumentInitialState {
 	externalTaskListId: string;
+	containerUrl: IFluidResolvedUrl;
 }
 
 export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {

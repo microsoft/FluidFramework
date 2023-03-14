@@ -55,7 +55,10 @@ async function start(): Promise<void> {
 		// Hardcoding a taskListId here. A follow up will be to introduce a form
 		// that a the user can enter an external taskListId into that they want
 		// to import from the external server.
-		model.baseDocument.addTaskList({ externalTaskListId: "task-list-1" });
+		model.baseDocument.addTaskList({
+			externalTaskListId: "task-list-1",
+			containerUrl: model.containerResolvedUrl(),
+		});
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
