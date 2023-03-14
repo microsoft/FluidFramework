@@ -15,7 +15,7 @@ import {
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree, ISharedTreeCheckout, runSynchronous } from "../../shared-tree";
+import { ISharedTree, ISharedTreeBranch, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -389,7 +389,7 @@ describe("SharedTree", () => {
 			}
 		});
 
-		function abortTransaction(checkout: ISharedTreeCheckout): void {
+		function abortTransaction(branch: ISharedTreeBranch): void {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
@@ -400,9 +400,9 @@ describe("SharedTree", () => {
 					],
 				},
 			};
-			initializeTestTree(checkout, initialState);
-			runSynchronous(checkout, () => {
-				const rootField = checkout.editor.sequenceField(undefined, rootFieldKeySymbol);
+			initializeTestTree(branch, initialState);
+			runSynchronous(branch, () => {
+				const rootField = branch.editor.sequenceField(undefined, rootFieldKeySymbol);
 				const root0Path = {
 					parent: undefined,
 					parentField: rootFieldKeySymbol,
@@ -413,9 +413,9 @@ describe("SharedTree", () => {
 					parentField: rootFieldKeySymbol,
 					parentIndex: 1,
 				};
-				const foo0 = checkout.editor.sequenceField(root0Path, fooKey);
-				const foo1 = checkout.editor.sequenceField(root1Path, fooKey);
-				checkout.editor.setValue(
+				const foo0 = branch.editor.sequenceField(root0Path, fooKey);
+				const foo1 = branch.editor.sequenceField(root1Path, fooKey);
+				branch.editor.setValue(
 					{
 						parent: root0Path,
 						parentField: fooKey,
@@ -423,7 +423,7 @@ describe("SharedTree", () => {
 					},
 					41,
 				);
-				checkout.editor.setValue(
+				branch.editor.setValue(
 					{
 						parent: root0Path,
 						parentField: fooKey,
@@ -431,13 +431,13 @@ describe("SharedTree", () => {
 					},
 					42,
 				);
-				checkout.editor.setValue(root0Path, "RootValue1");
+				branch.editor.setValue(root0Path, "RootValue1");
 				foo0.delete(0, 1);
 				rootField.insert(0, singleTextCursor({ type: brand("Test") }));
 				foo1.delete(0, 1);
-				checkout.editor.setValue(root1Path, "RootValue2");
+				branch.editor.setValue(root1Path, "RootValue2");
 				foo1.insert(0, singleTextCursor({ type: brand("Test") }));
-				checkout.editor.setValue(
+				branch.editor.setValue(
 					{
 						parent: root1Path,
 						parentField: fooKey,
@@ -449,7 +449,7 @@ describe("SharedTree", () => {
 				return TransactionResult.Abort;
 			});
 
-			validateTree(checkout, [initialState]);
+			validateTree(branch, [initialState]);
 		}
 
 		it("can abandon a transaction", async () => {
@@ -1303,7 +1303,7 @@ describe("SharedTree", () => {
 
 	describe("Transactions", () => {
 		/** like `pushTestValue`, but does not wrap the operation in a transaction */
-		function pushTestValueDirect(checkout: ISharedTreeCheckout, value: TreeValue): void {
+		function pushTestValueDirect(checkout: ISharedTreeBranch, value: TreeValue): void {
 			const field = checkout.editor.sequenceField(undefined, rootFieldKeySymbol);
 			const nodes = singleTextCursor({ type: brand("Node"), value });
 			field.insert(0, nodes);
@@ -1311,7 +1311,7 @@ describe("SharedTree", () => {
 
 		function describeBasicTransactionTests(
 			title: string,
-			checkoutFactory: () => Promise<ISharedTreeCheckout>,
+			checkoutFactory: () => Promise<ISharedTreeBranch>,
 		) {
 			describe(title, () => {
 				it("update the tree while open", async () => {
@@ -2051,7 +2051,7 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: ISharedTreeCheckout,
+	tree: ISharedTreeBranch,
 	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
@@ -2083,14 +2083,14 @@ const testValueSchema = namedTreeSchema({
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
  */
-function pushTestValue(checkout: ISharedTreeCheckout, value: TreeValue): void {
+function pushTestValue(checkout: ISharedTreeBranch, value: TreeValue): void {
 	insert(checkout, 0, value);
 }
 
 /**
  * Reads a value in a tree set by {@link pushTestValue} if it exists.
  */
-function peekTestValue({ forest }: ISharedTreeCheckout): TreeValue | undefined {
+function peekTestValue({ forest }: ISharedTreeBranch): TreeValue | undefined {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (!readCursor.firstNode()) {
@@ -2105,7 +2105,7 @@ function peekTestValue({ forest }: ISharedTreeCheckout): TreeValue | undefined {
 /**
  * Reads a value in a tree set by {@link pushTestValue} if it exists.
  */
-function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
+function* getTestValues({ forest }: ISharedTreeBranch): Iterable<TreeValue> {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (readCursor.firstNode()) {
@@ -2126,7 +2126,7 @@ function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTreeCheckout, index: number, ...values: TreeValue[]): void {
+function insert(tree: ISharedTreeBranch, index: number, ...values: TreeValue[]): void {
 	runSynchronous(tree, () => {
 		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) =>
@@ -2154,7 +2154,7 @@ function remove(tree: ISharedTree, index: number, count: number): void {
  * @param tree - The tree to verify.
  * @param expected - The expected values for the nodes in the root field of the tree.
  */
-function validateRootField(tree: ISharedTreeCheckout, expected: Value[]): void {
+function validateRootField(tree: ISharedTreeBranch, expected: Value[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	let hasNode = readCursor.firstNode();
@@ -2167,7 +2167,7 @@ function validateRootField(tree: ISharedTreeCheckout, expected: Value[]): void {
 	readCursor.free();
 }
 
-function validateTree(tree: ISharedTreeCheckout, expected: JsonableTree[]): void {
+function validateTree(tree: ISharedTreeBranch, expected: JsonableTree[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
