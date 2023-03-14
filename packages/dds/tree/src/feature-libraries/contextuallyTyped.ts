@@ -330,7 +330,7 @@ function shallowCompatibilityTest(
 /**
  * Construct a tree from ContextuallyTypedNodeData.
  *
- * TODO: this should probably be refactors into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
  */
 export function cursorFromContextualData(
 	schemaData: SchemaDataAndPolicy,
@@ -344,7 +344,7 @@ export function cursorFromContextualData(
 /**
  * Construct a tree from ContextuallyTypedNodeData.
  *
- * TODO: this should probably be refactors into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
  * TODO: migrate APIs which take arrays of cursors to take cursors in fields mode.
  */
 export function cursorsFromContextualData(
@@ -359,7 +359,7 @@ export function cursorsFromContextualData(
 /**
  * Construct a MapTree from ContextuallyTypedNodeData.
  *
- * TODO: this should probably be refactors into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ * TODO: this should probably be refactored into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
  * TODO: test suite.
  *
  * @remarks
@@ -421,7 +421,7 @@ export function applyTypesFromContext(
 /**
  * Construct a MapTree from ContextuallyTypedNodeData.
  *
- * TODO: this should probably be refactors into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ * TODO: this should probably be refactored into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
  * TODO: test suite.
  *
  * @remarks
