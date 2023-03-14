@@ -178,6 +178,7 @@ data:
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
             },
             "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }}
+            "localCheckpointEnabled": {{ .Values.scribe.localCheckpointEnabled }}
         },
         "system": {
             "httpServer": {

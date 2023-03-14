@@ -64,6 +64,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
         private readonly serviceConfiguration: IServiceConfiguration,
         private readonly enableWholeSummaryUpload: boolean,
         private readonly getDeltasViaAlfred: boolean,
+        private readonly localCheckpointEnabled: boolean,
     ) {
         super();
     }
@@ -161,16 +162,22 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                 Lumberjack.info(checkpointMessage, lumberProperties);
             }
         } else {
-            // Search local database for checkpoint
-            Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
-            const checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
-            Lumberjack.error(`Error retrieving checkpoint from local DB.`, lumberProperties);
-            });
-
+            let checkpoint;
             let isLocalCheckpoint = false;
-            if (checkpoint) {
-                lastCheckpoint = JSON.parse(checkpoint.scribe);
-                isLocalCheckpoint = true;
+
+            if(this.localCheckpointEnabled) {
+                // Search local database for checkpoint
+                Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
+                checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
+                    Lumberjack.error(`Error retrieving checkpoint from local DB.`, lumberProperties);
+                });
+
+                if(checkpoint) {
+                    lastCheckpoint = JSON.parse(checkpoint.scribe);
+                    isLocalCheckpoint = true;
+                } else {
+                    lastCheckpoint = JSON.parse(document.scribe);
+                }
             } else {
                 lastCheckpoint = JSON.parse(document.scribe);
             }
@@ -233,7 +240,8 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             this.localCheckpointCollection,
             this.messageCollection,
             this.deltaManager,
-            this.getDeltasViaAlfred);
+            this.getDeltasViaAlfred,
+            this.localCheckpointEnabled);
 
         const pendingMessageReader = new PendingMessageReader(tenantId, documentId, this.deltaManager);
 

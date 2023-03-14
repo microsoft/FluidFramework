@@ -88,6 +88,7 @@ describe("Routerlicious", () => {
                     testTenantManager,
                     DefaultServiceConfiguration,
                     false,
+                    false,
                     false);
 
                 testContext = new TestContext();

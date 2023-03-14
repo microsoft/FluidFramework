@@ -361,7 +361,8 @@ export class LocalOrderer implements IOrderer {
             localCheckpointCollection,
             scribeMessagesCollection,
             null /* deltaService */,
-            false /* getDeltasViaAlfred */);
+            false /* getDeltasViaAlfred */,
+            false /* localCheckpointEnabled */);
         return new ScribeLambda(
             context,
             this.tenantId,

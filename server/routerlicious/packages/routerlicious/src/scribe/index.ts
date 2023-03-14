@@ -42,6 +42,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
     const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
     const internalAlfredUrl = config.get("worker:alfredUrl");
     const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
+    const localCheckpointEnabled = config.get("scribe:localCheckpointEnabled") as boolean;
 
     // Generate tenant manager which abstracts access to the underlying storage provider
     const authEndpoint = config.get("auth:endpoint");
@@ -123,7 +124,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         tenantManager,
         serviceConfiguration,
         enableWholeSummaryUpload,
-        getDeltasViaAlfred);
+        getDeltasViaAlfred,
+        localCheckpointEnabled);
 }
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
