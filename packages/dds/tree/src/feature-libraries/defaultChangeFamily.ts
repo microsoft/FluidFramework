@@ -114,6 +114,8 @@ export interface IDefaultEditBuilder {
 	): void;
 
 	addValueConstraint(path: UpPath, value: Value): void;
+
+	addNodeExistsConstraint(path: UpPath): void;
 }
 
 /**
@@ -150,6 +152,10 @@ export class DefaultEditBuilder
 
 	public addValueConstraint(path: UpPath, value: Value): void {
 		this.modularBuilder.addValueConstraint(path, value);
+	}
+
+	public addNodeExistsConstraint(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraint(path);
 	}
 
 	public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {

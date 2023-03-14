@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
+import {
+	FieldKindIdentifier,
+	Delta,
+	FieldKey,
+	Value,
+	TaggedChange,
+	RevisionTag,
+	UpPath,
+} from "../../core";
 import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
 
@@ -221,6 +229,7 @@ export interface NodeChangeset {
 	fieldChanges?: FieldChangeMap;
 	valueChange?: ValueChange;
 	valueConstraint?: ValueConstraint;
+	nodeExistsConstraint?: NodeExistsConstraint;
 }
 
 /**
@@ -229,6 +238,10 @@ export interface NodeChangeset {
 export interface ValueConstraint {
 	value: Value;
 	violated: boolean;
+}
+
+export interface NodeExistsConstraint {
+	value: UpPath;
 }
 
 /**
