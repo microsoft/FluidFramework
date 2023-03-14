@@ -300,6 +300,9 @@ export class FluidClientDebugger
 		return this._disposed;
 	}
 
+	/**
+	 * Generates {@link ContainerStateMetadata} describing the current state of the associated Container.
+	 */
 	private getContainerState(): ContainerStateMetadata {
 		const clientId = this.container.clientId;
 		return {
