@@ -353,6 +353,10 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 			);
 		}
 		this._externalTaskListId = externalTaskListId;
+		// TODO: remove console.log of externalTaskListId once it is used in upcoming PRs.
+		// Linter complains about it not being used and then tried to remove
+		// _externalTaskListId as well. This log is simpy to allow building for now.
+		console.log(this.externalTaskListId);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
@@ -457,7 +461,6 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 			this.context,
 			props,
 		);
-		console.log(taskList);
 		this.taskListCollection.set(props.externalTaskListId, taskList);
 
 		// Storing the handles here are necessary for non leader
