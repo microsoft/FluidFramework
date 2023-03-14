@@ -166,7 +166,7 @@ export type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 export type Skip = number;
 
 /**
- * Describes  modifications made to a subtree.
+ * Describes modifications made to a subtree.
  * @alpha
  */
 export interface HasModifications<TTree = ProtoNode> {
