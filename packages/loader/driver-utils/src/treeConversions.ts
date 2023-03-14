@@ -6,6 +6,7 @@
 import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "@fluidframework/protocol-base";
 import { ISummaryTree, ITree, ITreeEntry, SummaryType } from "@fluidframework/protocol-definitions";
+import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew";
 
 /**
  * Converts ISummaryTree to ITree format.
@@ -13,17 +14,15 @@ import { ISummaryTree, ITree, ITreeEntry, SummaryType } from "@fluidframework/pr
  */
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
-	const protocolSummary = summaryTree.tree[".protocol"] as ISummaryTree;
-	const appSummary = summaryTree.tree[".app"] as ISummaryTree;
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-	const adaptSumaryTree = protocolSummary && appSummary;
-	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+	const adaptSumaryTree = isCombinedAppAndProtocolSummary(summaryTree);
 	const allSummaryEntries = adaptSumaryTree
-		? [...Object.entries(protocolSummary.tree), ...Object.entries(appSummary.tree)]
+		? [
+				...Object.entries(summaryTree.tree[".protocol"].tree),
+				...Object.entries(summaryTree.tree[".app"].tree),
+		  ]
 		: Object.entries(summaryTree.tree);
 
 	for (const [key, value] of allSummaryEntries) {
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		const k = adaptSumaryTree && ["attributes"].includes(key) ? `.${key}` : key;
 		switch (value.type) {
 			case SummaryType.Blob: {

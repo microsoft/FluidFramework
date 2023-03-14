@@ -9,6 +9,7 @@ import { HasClientDebugger } from "../CommonProps";
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
+import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 import { TelemetryView } from "./TelemetryView";
@@ -103,6 +104,10 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 				innerView = <TelemetryView />;
 				break;
 			// TODO: add the Telemetry view here, without ReactContext
+
+			case PanelView.ContainerStateHistory:
+				innerView = <ContainerHistoryView clientDebugger={clientDebugger} />;
+				break;
 			default:
 				throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 		}
@@ -153,12 +158,16 @@ export enum PanelView {
 	Audience = "Audience",
 
 	/**
-	 * Display view of Telemetry events
+	 * Display view of Telemetry events.
 	 */
 	Telemetry = "Telemetry",
 
+	/**
+	 * Display view of Container state history.
+	 */
+	ContainerStateHistory = "States",
+
 	// TODOs:
-	// - Container state history
 	// - Network stats
 	// - Ops/message latency stats
 }
