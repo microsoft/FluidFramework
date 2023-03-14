@@ -47,8 +47,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const pathName = new URL(resolvedUrl.url).pathname;
 		const pathArr = pathName.split("/");
 		this.tenantId = pathArr[pathArr.length - 2];
-		console.log(this.tenantId);
-		// const id = pathArr[pathArr.length - 1];
+
 		this.summaryTreeUploadManager = new SummaryTreeUploadManager(
 			manager,
 			this.blobsShaCache,
@@ -93,10 +92,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
-		// const createDocument = CreateDocumentInStorage.getInstance();
-		// if (createDocument) {
-		// 	await createDocument.createDocument(summary);
-		// }
 		if (context.referenceSequenceNumber === 0) {
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
 		}

@@ -227,9 +227,9 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	// this test relies on an internal function that has been renamed (snapshot -> summarize)
-	/* it("loads from snapshot", async function () {
+	it("loads from snapshot", async function () {
 		// GitHub Issue: #9534
-		if (provider.driver.type === "odsp") {
+		if (provider.driver.type === "odsp" || provider.driver.type === "local") {
 			this.skip();
 		}
 		const container1 = await provider.makeTestContainer(testContainerConfig);
@@ -284,7 +284,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const snapshot2 = (container2 as any).context.runtime.blobManager.summarize();
 		assert.strictEqual(snapshot2.stats.treeNodeCount, 1);
 		assert.strictEqual(snapshot1.summary.tree[0].id, snapshot2.summary.tree[0].id);
-	}); */
+	});
 
 	itExpects("works in detached container", ContainerCloseUsageError, async function () {
 		const detachedBlobStorage = new MockDetachedBlobStorage();
