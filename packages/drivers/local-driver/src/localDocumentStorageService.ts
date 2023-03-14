@@ -30,7 +30,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	// empty strings as values.
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
-	private readonly tenantId: string;
 
 	public get repositoryUrl(): string {
 		return "";
@@ -44,9 +43,6 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		private readonly resolvedUrl,
 	) {
 		ensureFluidResolvedUrl(resolvedUrl);
-		const pathName = new URL(resolvedUrl.url).pathname;
-		const pathArr = pathName.split("/");
-		this.tenantId = pathArr[pathArr.length - 2];
 
 		this.summaryTreeUploadManager = new SummaryTreeUploadManager(
 			manager,
