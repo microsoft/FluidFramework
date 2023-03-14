@@ -1,5 +1,8 @@
 lockfileVersion: 5.4
 
+overrides:
+  qs: ^6.11.0
+
 importers:
 
   .:
