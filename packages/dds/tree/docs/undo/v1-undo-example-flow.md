@@ -8,7 +8,11 @@ flowchart
     local[Denotes commits by the local session]
 ```
 
-This example starts with a trunk and single local branch with a few normal commits and a single undo commit. The [undo commit tree](./v1-undo.md#the-undo-commit-tree) contains `A1` and `B2`. The head undo commit for the trunk branch is `A1` because it is the latest local edit on the trunk while `B2` is the head undo commit for the local branch. There is nothing in the [redo commit tree](./v1-undo.md#the-redo-commit-tree) because a normal edit, `B2`, clears the redo-able edits.
+This example starts with a trunk and single local branch with a few normal commits and a single undo commit.
+The [undo commit tree](./v1-undo.md#the-undo-commit-tree) contains `A1` and `B2`.
+The head undo commit for the trunk branch is `A1` because it is the latest edit from the local session (and has not been undone).
+`B2` is the head undo commit for the local branch.
+There is nothing in the [redo commit tree](./v1-undo.md#the-redo-commit-tree) because a normal edit, `B2`, clears the redo-able edits.
 
 ```mermaid
 flowchart TB
