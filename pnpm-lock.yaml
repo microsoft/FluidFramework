@@ -14100,7 +14100,7 @@ packages:
     resolution: {integrity: sha512-LZMcnGk1ccVak3NOsLaM1emUNIS6+Un3Ivdweo0uz8GF5WJSgeDTLxthjwX3GO6OQ7xiUpMk0OLXyAeguBjmCg==}
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.3.0
       mocha: 10.2.0
     dev: true
 
@@ -15293,7 +15293,7 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': 2.0.0-internal.3.3.0
       '@fluidframework/server-local-server': 0.1038.3000
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.3.0
       '@fluidframework/test-pairwise-generator': 2.0.0-internal.3.3.0
       '@fluidframework/test-runtime-utils': 2.0.0-internal.3.3.0
       '@fluidframework/tinylicious-driver': 2.0.0-internal.3.3.0
@@ -15379,7 +15379,7 @@ packages:
       '@fluidframework/sequence': 2.0.0-internal.3.3.0
       '@fluidframework/shared-object-base': 2.0.0-internal.3.3.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.3.0
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.3.0
       '@fluidframework/test-loader-utils': 2.0.0-internal.3.3.0
       '@fluidframework/test-pairwise-generator': 2.0.0-internal.3.3.0
       '@fluidframework/test-runtime-utils': 2.0.0-internal.3.3.0
@@ -15545,7 +15545,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.3.0
       '@fluidframework/runtime-utils': 2.0.0-internal.3.3.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.3.0
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.3.0
       '@fluidframework/test-runtime-utils': 2.0.0-internal.3.3.0_debug@4.3.4
       best-random: 1.0.3
       debug: 4.3.4
@@ -15619,7 +15619,7 @@ packages:
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.3.0
       '@fluidframework/sequence': 2.0.0-internal.3.3.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.3.3.0
-      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.2.0
+      '@fluidframework/test-driver-definitions': 2.0.0-internal.3.3.0
       '@fluidframework/test-drivers': 2.0.0-internal.3.3.0
       '@fluidframework/test-utils': 2.0.0-internal.3.3.0
       nconf: 0.12.0
@@ -40171,9 +40171,9 @@ packages:
       '@fluidframework/server-memory-orderer': 0.1038.3000
       '@fluidframework/server-services-client': 0.1038.3000
       '@fluidframework/server-services-core': 0.1038.3000
-      '@fluidframework/server-services-shared': 0.1038.2000
+      '@fluidframework/server-services-shared': 0.1038.3000
       '@fluidframework/server-services-telemetry': 0.1038.3000
-      '@fluidframework/server-services-utils': 0.1038.2000
+      '@fluidframework/server-services-utils': 0.1038.3000
       '@fluidframework/server-test-utils': 0.1038.3000
       agentkeepalive: 4.2.1
       axios: 0.26.1
