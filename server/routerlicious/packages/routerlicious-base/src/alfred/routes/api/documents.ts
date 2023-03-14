@@ -11,6 +11,7 @@ import {
 	ITenantManager,
 	ICache,
 	ICollection,
+	IJsonWebTokenManager,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -19,7 +20,6 @@ import {
 	IThrottleMiddlewareOptions,
 	getParam,
 	validateTokenRevocationClaims,
-	IJsonWebTokenManager,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";

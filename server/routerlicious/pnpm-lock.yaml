@@ -101,7 +101,6 @@ importers:
       '@fluidframework/server-services-client': ^0.1038.4000
       '@fluidframework/server-services-core': ^0.1038.4000
       '@fluidframework/server-services-telemetry': ^0.1038.4000
-      '@fluidframework/server-services-utils': ^0.1038.4000
       '@fluidframework/server-test-utils': ^0.1038.4000
       '@rushstack/eslint-config': ^2.6.1
       '@types/async': ^3.2.9
@@ -144,7 +143,6 @@ importers:
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-core': link:../services-core
       '@fluidframework/server-services-telemetry': link:../services-telemetry
-      '@fluidframework/server-services-utils': link:../services-utils
       '@types/semver': 6.2.3
       assert: 2.0.0
       async: 3.2.4

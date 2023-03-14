@@ -3,13 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IDeltaService, ITenantManager, IThrottler } from "@fluidframework/server-services-core";
+import {
+	IDeltaService,
+	ITenantManager,
+	IThrottler,
+	IJsonWebTokenManager,
+} from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	IJsonWebTokenManager,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";

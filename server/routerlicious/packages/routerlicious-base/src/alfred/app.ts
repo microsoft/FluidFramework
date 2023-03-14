@@ -12,6 +12,7 @@ import {
 	ICache,
 	ICollection,
 	IDocument,
+	IJsonWebTokenManager,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -23,7 +24,6 @@ import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
 	jsonMorganLoggerMiddleware,
-	IJsonWebTokenManager,
 } from "@fluidframework/server-services-utils";
 import { RestLessServer } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";

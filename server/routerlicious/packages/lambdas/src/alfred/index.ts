@@ -33,7 +33,6 @@ import {
 	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
-import { createCompositeTokenId, IWebSocketTracker } from "@fluidframework/server-services-utils";
 import {
 	createRoomJoinMessage,
 	createNackMessage,
@@ -230,7 +229,7 @@ export function configureWebSocketServices(
 	submitSignalThrottler?: core.IThrottler,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
-	socketTracker?: IWebSocketTracker,
+	socketTracker?: core.IWebSocketTracker,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -579,7 +578,7 @@ export function configureWebSocketServices(
 			// Track socket and tokens for this connection
 			if (socketTracker && claims.jti) {
 				socketTracker.addSocket(
-					createCompositeTokenId(message.tenantId, message.id, claims.jti),
+					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
 					socket,
 				);
 			}

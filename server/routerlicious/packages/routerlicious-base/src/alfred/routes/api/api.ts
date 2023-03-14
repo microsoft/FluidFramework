@@ -13,7 +13,6 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	IJsonWebTokenManager,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Request, Router } from "express";
@@ -37,7 +36,7 @@ export function create(
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
 	throttler: core.IThrottler,
-	tokenManager?: IJsonWebTokenManager,
+	tokenManager?: core.IJsonWebTokenManager,
 ): Router {
 	const router: Router = Router();
 
@@ -196,7 +195,7 @@ const verifyRequest = async (
 	storage: core.IDocumentStorage,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
-	tokenManager?: IJsonWebTokenManager,
+	tokenManager?: core.IJsonWebTokenManager,
 ) =>
 	Promise.all([
 		verifyToken(
@@ -214,7 +213,7 @@ async function verifyToken(
 	tenantManager: core.ITenantManager,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
-	tokenManager?: IJsonWebTokenManager,
+	tokenManager?: core.IJsonWebTokenManager,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
