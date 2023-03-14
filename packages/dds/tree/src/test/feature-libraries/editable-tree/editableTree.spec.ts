@@ -456,7 +456,10 @@ describe("editable-tree: read-only", () => {
 		});
 		const rootSchema = fieldSchema(FieldKinds.optional, [childWithGlobalFieldSchema.name]);
 		const schemaData: SchemaData = {
-			treeSchema: schemaMap,
+			treeSchema: new Map([
+				[childWithGlobalFieldSchema.name, childWithGlobalFieldSchema],
+				[stringSchema.name, stringSchema],
+			]),
 			globalFieldSchema: new Map([
 				[rootFieldKey, rootSchema],
 				[globalFieldKey, globalFieldSchema],

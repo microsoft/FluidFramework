@@ -86,6 +86,7 @@ export {
 	inCursorField,
 	inCursorNode,
 	AnchorEvents,
+	AnchorSetRootEvents,
 } from "./tree";
 
 export {

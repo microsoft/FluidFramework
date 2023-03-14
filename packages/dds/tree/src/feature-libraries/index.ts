@@ -30,6 +30,8 @@ export {
 	createField,
 	replaceField,
 	parentField,
+	EditableTreeEvents,
+	on,
 } from "./editable-tree";
 
 export {

@@ -90,6 +90,7 @@ export {
 	anchorSlot,
 	UpPathDefault,
 	AnchorEvents,
+	AnchorSetRootEvents,
 	FieldKindSpecifier,
 } from "./core";
 
@@ -212,6 +213,8 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	EditableTreeEvents,
+	on,
 	ValueConstraint,
 	TypedSchema,
 	SchemaAware,
@@ -241,6 +244,7 @@ export {
 	ISharedTreeCheckoutFork,
 	runSynchronous,
 	SharedTreeFactory,
+	CheckoutEvents,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";

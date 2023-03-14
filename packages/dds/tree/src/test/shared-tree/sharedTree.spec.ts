@@ -10,6 +10,8 @@ import {
 	getSchemaString,
 	jsonableTreeFromCursor,
 	namedTreeSchema,
+	on,
+	valueSymbol,
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
@@ -30,6 +32,7 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 	EditManager,
+	ValueSchema,
 } from "../../core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
 
@@ -574,6 +577,49 @@ describe("SharedTree", () => {
 			};
 			await provider.ensureSynchronized();
 			validateTree(tree, [expectedState]);
+		});
+	});
+
+	describe("Events", () => {
+		it("triggers events for changes", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(1);
+			const [tree1] = provider.trees;
+			tree1.storedSchema.update({
+				globalFieldSchema: new Map([
+					[globalFieldKey, fieldSchema(FieldKinds.value, [testValueSchema.name])],
+				]),
+				treeSchema: new Map([[testValueSchema.name, testValueSchema]]),
+			});
+
+			// Insert node
+			pushTestValue(tree1, value);
+
+			const root = tree1.context.root.getNode(0);
+
+			const log: string[] = [];
+			const unsubscribe = root[on]("changing", () => log.push("change"));
+			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
+			log.push("editStart");
+			root[valueSymbol] = 5;
+			log.push("editStart");
+			root[valueSymbol] = 6;
+			log.push("unsubscribe");
+			unsubscribe();
+			unsubscribeAfter();
+			log.push("editStart");
+			root[valueSymbol] = 7;
+
+			assert.deepEqual(log, [
+				"editStart",
+				"change",
+				"after",
+				"editStart",
+				"change",
+				"after",
+				"unsubscribe",
+				"editStart",
+			]);
 		});
 	});
 
@@ -1991,6 +2037,7 @@ const rootNodeSchema = namedTreeSchema({
 	},
 	extraLocalFields: fieldSchema(FieldKinds.sequence),
 	globalFields: [globalFieldKey],
+	value: ValueSchema.Serializable,
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
@@ -2026,6 +2073,11 @@ function initializeTestTree(
 		});
 	}
 }
+
+const testValueSchema = namedTreeSchema({
+	name: brand("TestValue"),
+	value: ValueSchema.Serializable,
+});
 
 /**
  * Inserts a single node under the root of the tree with the given value.
@@ -2077,7 +2129,9 @@ function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
 function insert(tree: ISharedTreeCheckout, index: number, ...values: TreeValue[]): void {
 	runSynchronous(tree, () => {
 		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
-		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
+		const nodes = values.map((value) =>
+			singleTextCursor({ type: testValueSchema.name, value }),
+		);
 		field.insert(index, nodes);
 	});
 }
