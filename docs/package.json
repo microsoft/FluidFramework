@@ -69,5 +69,10 @@
     "serve": "^14.2.0",
     "shelljs": "^0.8.5",
     "start-server-and-test": "^1.15.4"
-  }
+  },
+  "pnpm": {
+		"overrides": {
+      "qs": "^6.11.0"
+		}
+	}
 }
