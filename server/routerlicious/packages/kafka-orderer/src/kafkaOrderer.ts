@@ -58,16 +58,16 @@ export class KafkaOrdererConnection implements core.IOrdererConnection {
             contents: null,
             data: JSON.stringify(clientDetail),
             referenceSequenceNumber: -1,
-            traces: this.serviceConfiguration.enableTraces
+            traces: this.serviceConfiguration.enableTraces && clientJoinMessageServerMetadata?.connectDocumentStartTime
             ? [ {
-                action: "ConnectStart",
-                service: "alfred",
-                timestamp: clientJoinMessageServerMetadata,
+                    action: "ConnectDocumentStart",
+                    service: "alfred",
+                    timestamp: clientJoinMessageServerMetadata.connectDocumentStartTime,
                 },
                 {
-                action: "JoinRawSent",
-                service: "alfred",
-                timestamp: Date.now(),
+                    action: "JoinRawOpStart",
+                    service: "alfred",
+                    timestamp: Date.now(),
                 }
             ]
             : undefined,
