@@ -76,6 +76,9 @@ export interface IChannel extends IFluidLoadable {
 	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
 	 * send an `ISummaryHandle`, since you are not expected to track state.
 	 * 
+	 * Note: The goal is to remove the trackState and automatically decided whether the
+	 * handles will be used or not: {@link https://github.com/microsoft/FluidFramework/issues/10455}
+	 * 
 	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
 	 * 
 	 * @returns A summary capturing the current state of the channel.
