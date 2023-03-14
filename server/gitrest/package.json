@@ -74,9 +74,9 @@
 		"supertest": "^3.4.2",
 		"typescript": "~4.5.5"
 	},
-  "pnpm": {
+	"pnpm": {
 		"overrides": {
-      "qs": "^6.11.0"
+			"qs": "^6.11.0"
 		}
 	}
 }

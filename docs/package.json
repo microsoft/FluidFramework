@@ -71,8 +71,8 @@
     "start-server-and-test": "^1.15.4"
   },
   "pnpm": {
-		"overrides": {
+    "overrides": {
       "qs": "^6.11.0"
-		}
-	}
+    }
+  }
 }
