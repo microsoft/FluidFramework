@@ -23,7 +23,11 @@ import {
 	itExpects,
 } from "@fluidframework/test-version-utils";
 import { v4 as uuid } from "uuid";
-import { getUrlFromDetachedBlobStorage, MockDetachedBlobStorage } from "./mockDetachedBlobStorage";
+import {
+	driverSupportsBlobs,
+	getUrlFromDetachedBlobStorage,
+	MockDetachedBlobStorage,
+} from "./mockDetachedBlobStorage";
 
 const testContainerConfig: ITestContainerConfig = {
 	runtimeOptions: {
@@ -316,7 +320,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				const attachP = container.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
+				if (!driverSupportsBlobs(provider.driver)) {
 					// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 				}
@@ -403,7 +407,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
+		if (!driverSupportsBlobs(provider.driver)) {
 			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 		}
@@ -450,7 +454,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
+		if (!driverSupportsBlobs(provider.driver)) {
 			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 		}
@@ -499,7 +503,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			const attachP = container.attach(
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
-			if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
+			if (!driverSupportsBlobs(provider.driver)) {
 				// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 			}

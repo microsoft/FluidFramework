@@ -8,7 +8,6 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
-	IFluidResolvedUrl,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
@@ -51,12 +50,9 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		if (!this.localDeltaConnectionServer) {
 			throw new Error("Provide the localDeltaConnectionServer!!");
 		}
+		ensureFluidResolvedUrl(resolvedUrl);
 		if (createNewSummary !== undefined) {
-			await createDocument(
-				this.localDeltaConnectionServer,
-				resolvedUrl as IFluidResolvedUrl,
-				createNewSummary,
-			);
+			await createDocument(this.localDeltaConnectionServer, resolvedUrl, createNewSummary);
 		}
 		return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
 	}

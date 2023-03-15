@@ -13,7 +13,6 @@ import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
-	public readonly driversThatSupportBlobs: string[] = ["local", "odsp"];
 
 	public get size() {
 		return this.blobs.size;
@@ -34,10 +33,11 @@ export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 		assert(blob);
 		return blob;
 	}
+}
 
-	public supportsBlobs(driver: ITestDriver) {
-		return this.driversThatSupportBlobs.includes(driver.type);
-	}
+export function driverSupportsBlobs(driver: ITestDriver): boolean {
+	const driversThatSupportBlobs: string[] = ["local", "odsp"];
+	return driversThatSupportBlobs.includes(driver.type);
 }
 
 // TODO: #7684

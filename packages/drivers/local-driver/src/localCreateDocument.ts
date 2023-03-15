@@ -5,7 +5,6 @@
 
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import {
-	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -19,7 +18,6 @@ export async function createDocument(
 	resolvedUrl: IFluidResolvedUrl,
 	summary: ISummaryTree,
 ) {
-	ensureFluidResolvedUrl(resolvedUrl);
 	const pathName = new URL(resolvedUrl.url).pathname;
 	const pathArr = pathName.split("/");
 	const tenantId = pathArr[pathArr.length - 2];
