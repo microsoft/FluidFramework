@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskList, TaskList } from "../model-interface";
+import { assertValidTaskData, ITaskData } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -48,9 +48,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Mock webhook for notifying subscribers to changes in external data.
 	 */
-	const webhook = new MockWebhook<TaskList>();
+	const webhook = new MockWebhook<ITaskData>();
 
-	function notifyWebhookSubscribers(newData: TaskList): void {
+	function notifyWebhookSubscribers(newData: ITaskData): void {
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
 		webhook.notifySubscribers(newData);
 	}
@@ -144,10 +144,10 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 					unknown
 				>;
 
-				let taskData: TaskList;
+				let taskData: ITaskData;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskData = assertValidTaskList((responseBody as any).taskList);
+					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
@@ -172,7 +172,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskList}.
+	 * Expected input data format: {@link ITaskData}.
 	 */
 	expressApp.post("/set-tasks/:externalTaskListId", (request, result) => {
 		const externalTaskListId = request.params?.externalTaskListId;
@@ -188,9 +188,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskList;
+			let taskData: ITaskData;
 			try {
-				taskData = assertValidTaskList(messageData);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);

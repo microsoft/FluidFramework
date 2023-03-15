@@ -7,7 +7,7 @@ import isEqual from "lodash.isequal";
 import React, { useEffect, useState } from "react";
 
 import { externalDataServicePort } from "../mock-external-data-service-interface";
-import type { IAppModel, TaskList as ExternalTaskList } from "../model-interface";
+import type { IAppModel, ITaskData } from "../model-interface";
 
 // Hardcoding a taskListId here for now
 const externalTaskListId = "task-list-1";
@@ -31,7 +31,7 @@ async function pollForServiceUpdates(
 		);
 
 		const responseBody = (await response.json()) as Record<string, unknown>;
-		const newData = responseBody.taskList as ExternalTaskList;
+		const newData = responseBody.taskList as ITaskData;
 		if (newData !== undefined && !isEqual(newData, externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
 			setExternalData(newData);
@@ -92,7 +92,7 @@ const ExternalDataDebugView: React.FC<IExternalDataDebugViewProps> = (
 	}, [externalData, setExternalData]);
 	const parsedExternalData = isEqual(externalData, {})
 		? []
-		: Object.entries(externalData as ExternalTaskList);
+		: Object.entries(externalData as ITaskData);
 	const taskRows = parsedExternalData.map(([key, { name, priority }]) => (
 		<tr key={key}>
 			<td>{key}</td>
@@ -233,7 +233,7 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 
 		return (): void => {};
 	}, [externalData, setExternalData]);
-	const parsedExternalData = Object.entries(externalData as ExternalTaskList);
+	const parsedExternalData = Object.entries(externalData as ITaskData);
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
 	const writeToExternalServer = async (): Promise<void> => {

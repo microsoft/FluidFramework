@@ -9,13 +9,13 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { assertValidTaskList, TaskList } from "../model-interface";
+import { assertValidTaskData, ITaskData } from "../model-interface";
 import { ExternalTaskListId } from "../utilities";
 /**
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	data: TaskList,
+	data: ITaskData,
 	fluidServiceUrl: string,
 	externalTaskListId: ExternalTaskListId,
 ): void {
@@ -141,16 +141,16 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	expressApp.post("/external-data-webhook", (request, result) => {
 		const externalTaskListId = request.query.externalTaskListId as ExternalTaskListId;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const messageData = request.body?.data as TaskList;
+		const messageData = request.body?.data as ITaskData;
 		if (messageData === undefined) {
 			const errorMessage =
 				'No data provided by external data service webhook. Expected under "data" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskList;
+			let taskData: ITaskData;
 			try {
-				taskData = assertValidTaskList(messageData);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);

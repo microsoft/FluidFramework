@@ -6,7 +6,7 @@
 /**
  * Mock model for external task data
  */
-export interface TaskList {
+export interface ITaskData {
 	[key: string]: {
 		name: string;
 		priority: number;
@@ -16,14 +16,14 @@ export interface TaskList {
 /**
  * Mock model for external taskList data
  */
-export interface TaskLists {
-	[externalTaskListId: string]: TaskList;
+export interface ITaskListData {
+	[externalTaskListId: string]: ITaskData;
 }
 
 /**
- * Asserts that the input data is a valid {@link TaskList}.
+ * Asserts that the input data is a valid {@link ITaskData}.
  */
-export function assertValidTaskList(input: unknown): TaskList {
+export function assertValidTaskData(input: unknown): ITaskData {
 	if (input === null || input === undefined) {
 		throw new Error("Task data was not defined.");
 	}
@@ -40,7 +40,7 @@ export function assertValidTaskList(input: unknown): TaskList {
 			);
 		}
 		if (typeof jsonValue.name !== "string") {
-			throw new TypeError(`Invalid TaskList "name" value received: "${jsonValue.name}".`);
+			throw new TypeError(`Invalid ITaskData "name" value received: "${jsonValue.name}".`);
 		}
 		if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
 			throw new Error(
@@ -49,9 +49,9 @@ export function assertValidTaskList(input: unknown): TaskList {
 		}
 		if (typeof jsonValue.priority !== "number") {
 			throw new TypeError(
-				`Invalid TaskList "priority" value received: "${jsonValue.priority}".`,
+				`Invalid ITaskData "priority" value received: "${jsonValue.priority}".`,
 			);
 		}
 	}
-	return input as TaskList;
+	return input as ITaskData;
 }

@@ -15,7 +15,7 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskList,
-	TaskList as ExternalTaskList,
+	ITaskData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 
@@ -246,7 +246,7 @@ export class TaskList extends DataObject implements ITaskList {
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody.taskList as ExternalTaskList;
+			const data = responseBody.taskList as ITaskData;
 			incomingExternalData = Object.entries(data);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {

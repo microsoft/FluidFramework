@@ -6,10 +6,10 @@
 import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
-import { TaskLists, TaskList } from "../model-interface";
+import { ITaskListData, ITaskData } from "../model-interface";
 import { ExternalTaskListId } from "../utilities";
 
-const taskList1: TaskList = {
+const taskList1: ITaskData = {
 	12: {
 		name: "Alpha",
 		priority: 1,
@@ -28,14 +28,14 @@ const taskList1: TaskList = {
 	},
 };
 
-const taskList2: TaskList = {
+const taskList2: ITaskData = {
 	17: {
 		name: "CompletelyDifferentAlpha",
 		priority: 42,
 	},
 };
 
-const startingExternalData: TaskLists = {
+const startingExternalData: ITaskListData = {
 	"task-list-1": taskList1,
 	"task-list-2": taskList2,
 };
@@ -49,7 +49,7 @@ export interface IExternalDataSourceEvents extends IEvent {
 	 * @remarks Debug API for demo purposes - the real scenario will need to learn about the data changing via the
 	 * webhook path.
 	 */
-	(event: "debugDataWritten", listener: (data: TaskList) => void);
+	(event: "debugDataWritten", listener: (data: ITaskData) => void);
 }
 
 /**
@@ -67,7 +67,7 @@ export interface IExternalDataSourceEvents extends IEvent {
  * TODO: Consider adding a fake delay to the async calls to give us a better approximation of expected experience.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
-	private data: TaskLists;
+	private data: ITaskListData;
 
 	public constructor() {
 		super();
@@ -97,7 +97,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @returns A promise that resolves when the write completes.
 	 */
 	public async writeData(
-		data: TaskList,
+		data: ITaskData,
 		externalTaskListId: ExternalTaskListId,
 	): Promise<Response> {
 		this.data[externalTaskListId] = data;
