@@ -117,8 +117,6 @@ export class CheckpointManager implements ICheckpointManager {
     private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 
-        console.log(`CHECK ENABLED: ${this.localCheckpointEnabled}`);
-
         if(this.localCheckpointEnabled) {
             if (this.localCheckpointCollection) {
                 if(!noActiveClients) {
