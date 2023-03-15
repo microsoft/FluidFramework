@@ -20,6 +20,7 @@ import {
 	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { defaultHash } from "@fluidframework/server-services-client";
@@ -68,11 +69,11 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		const documentStorage = (this.localDeltaConnectionServer as LocalDeltaConnectionServer)
 			.documentStorage;
 
-		const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-		const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-		if (!(protocolSummary && appSummary)) {
+		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 			throw new Error("Protocol and App Summary required in the full summary");
 		}
+		const protocolSummary = createNewSummary.tree[".protocol"];
+		const appSummary = createNewSummary.tree[".app"];
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 		const sequenceNumber = documentAttributes.sequenceNumber;
