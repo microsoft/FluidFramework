@@ -1083,16 +1083,34 @@ export class ContainerRuntime
 		const disableChunking = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisableCompressionChunking",
 		);
-		const opSplitter = new OpSplitter(
-			chunks,
-			this.context.submitBatchFn === undefined
-				? undefined
-				: (batch: IBatchMessage[], refSqn?: number) =>
-						this.opGroupingManager.submitBatch(this.context, batch, refSqn),
-			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
-			runtimeOptions.maxBatchSizeInBytes,
-			this.mc.logger,
-		);
+
+		let opSplitter: OpSplitter;
+		// eslint-disable-next-line unicorn/prefer-ternary
+		if (this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
+			opSplitter = new OpSplitter(
+				chunks,
+				this.context.submitBatchFn === undefined
+					? undefined
+					: (batch: IBatchMessage[], refSqn?: number) =>
+							this.opGroupingManager.submitBatch(this.context, batch, refSqn),
+				disableChunking === true
+					? Number.POSITIVE_INFINITY
+					: runtimeOptions.chunkSizeInBytes,
+				runtimeOptions.maxBatchSizeInBytes,
+				this.mc.logger,
+			);
+		} else {
+			opSplitter = new OpSplitter(
+				chunks,
+				this.context.submitBatchFn,
+				disableChunking === true
+					? Number.POSITIVE_INFINITY
+					: runtimeOptions.chunkSizeInBytes,
+				runtimeOptions.maxBatchSizeInBytes,
+				this.mc.logger,
+			);
+		}
+
 		this.remoteMessageProcessor = new RemoteMessageProcessor(
 			opSplitter,
 			new OpDecompressor(this.mc.logger),
@@ -1274,25 +1292,44 @@ export class ContainerRuntime
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
-		this.outbox = new Outbox({
-			shouldSend: () => this.canSendOps(),
-			pendingStateManager: this.pendingStateManager,
-			submitFn: this.context.submitFn,
-			submitBatchFn:
-				this.context.submitBatchFn === undefined
-					? undefined
-					: (batch: IBatchMessage[], refSqn?: number) =>
-							this.opGroupingManager.submitBatch(this.context, batch, refSqn),
-			flush: () => this.deltaManager.flush(),
-			compressor: new OpCompressor(this.mc.logger),
-			splitter: opSplitter,
-			config: {
-				compressionOptions,
-				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-				disablePartialFlush: disablePartialFlush === true,
-			},
-			logger: this.mc.logger,
-		});
+		// eslint-disable-next-line unicorn/prefer-ternary
+		if (this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
+			this.outbox = new Outbox({
+				shouldSend: () => this.canSendOps(),
+				pendingStateManager: this.pendingStateManager,
+				submitFn: this.context.submitFn,
+				submitBatchFn:
+					this.context.submitBatchFn === undefined
+						? undefined
+						: (batch: IBatchMessage[], refSqn?: number) =>
+								this.opGroupingManager.submitBatch(this.context, batch, refSqn),
+				flush: () => this.deltaManager.flush(),
+				compressor: new OpCompressor(this.mc.logger),
+				splitter: opSplitter,
+				config: {
+					compressionOptions,
+					maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
+					disablePartialFlush: disablePartialFlush === true,
+				},
+				logger: this.mc.logger,
+			});
+		} else {
+			this.outbox = new Outbox({
+				shouldSend: () => this.canSendOps(),
+				pendingStateManager: this.pendingStateManager,
+				submitFn: this.context.submitFn,
+				submitBatchFn: this.context.submitBatchFn,
+				flush: () => this.deltaManager.flush(),
+				compressor: new OpCompressor(this.mc.logger),
+				splitter: opSplitter,
+				config: {
+					compressionOptions,
+					maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
+					disablePartialFlush: disablePartialFlush === true,
+				},
+				logger: this.mc.logger,
+			});
+		}
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
@@ -1847,15 +1884,25 @@ export class ContainerRuntime
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
-		const ungroupingResult = this.opGroupingManager.processOp(messageArg);
-		if (ungroupingResult !== undefined) {
-			for (const subMessage of ungroupingResult) {
-				this.process(subMessage, local);
+		let processedGroupedBatch = false;
+
+		if (this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
+			const ungroupingResult = this.opGroupingManager.processOp(messageArg);
+			if (ungroupingResult !== undefined) {
+				processedGroupedBatch = true;
+				for (const subMessage of ungroupingResult) {
+					this.processCore(subMessage, local);
+				}
 			}
-			return;
 		}
 
-		if (this._summarizer !== undefined) {
+		if (!processedGroupedBatch) {
+			this.processCore(messageArg, local);
+		}
+	}
+
+	private processCore(messageArg: ISequencedDocumentMessage, local: boolean) {
+		if (this.mc.config.getBoolean(groupedBatchFeatureFlag) && this._summarizer !== undefined) {
 			this._summarizer.processOp?.(messageArg);
 		}
 
@@ -3476,6 +3523,8 @@ const waitForSeq = async (
 			deltaManager.on("op", handleOp);
 		}
 	});
+
+export const groupedBatchFeatureFlag = "Fluid.ContainerRuntime.GroupedBatches";
 
 class OpGroupingManager {
 	static groupedBatchOp = "groupedBatch";
