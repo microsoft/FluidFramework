@@ -54,6 +54,7 @@ jobs:
           cache-dependency-path: docs/pnpm-lock.yaml
       - name: pnpm lint
         run: |
+          pnpm i --frozen-lockfile
           pnpm lint
 
   broken_link_check:
