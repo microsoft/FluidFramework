@@ -12,27 +12,6 @@ on:
       - release/*
 
 jobs:
-  # This job determines what paths have changed in the PR and outputs a boolean. Using the paths filter in the
-  # pull_request event doesn't work. Per the GitHub docs, "If a workflow is skipped due to path filtering, branch
-  # filtering or a commit message, then checks associated with that workflow will remain in a 'Pending' state. A pull
-  # request that requires those checks to be successful will be blocked from merging." This means we can't make such
-  # jobs required for PRs to be merged, because the jobs just stay in the pending state.
-  changed-paths:
-    name: Determine changed paths
-    runs-on: ubuntu-latest
-    steps:
-      # For pull requests it's not necessary to checkout the code
-      - uses: dorny/paths-filter@4512585405083f25c027a35db413c2b3b9006d50 # ratchet:dorny/paths-filter@v2.11.1
-        id: filter
-        with:
-          filters: |
-            build-tools:
-              - 'build-tools/**'
-              - '.github/workflows/pr-validation.yml'
-    # Set job outputs to values from filter step
-    outputs:
-      build-tools: ${{ steps.filter.outputs.build-tools }}
-
   validate-codeowners:
     name: Validate CODEOWNERS
     runs-on: ubuntu-latest
