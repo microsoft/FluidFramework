@@ -70,8 +70,20 @@ export class MockWebhook<TData = unknown> {
 			`EXTERNAL DATA SERVICE WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
 		);
 
-		const messageBody = JSON.stringify({ data });
 		for (const subscriberUrl of this._subscribers) {
+			console.log(`EXTERNAL DATA SERVICE WEBHOOK: Notifying ${subscriberUrl}`);
+			// TODO: use a query string parser here instead of this hacky lookup of '=externalTaskListId'
+			// Tried using node:querystring and node:url but that is not allowed by
+			// the rules and haven't found another one that works in a simple search so far.
+			const externalTaskListId = subscriberUrl.slice(
+				subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
+			);
+
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const taskList = data[externalTaskListId];
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const messageBody = JSON.stringify({ data: taskList });
+
 			fetch(subscriberUrl, {
 				method: "POST",
 				headers: {

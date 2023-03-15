@@ -36,8 +36,9 @@ async function registerForWebhook(
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	data: ITaskData,
+	taskData: ITaskData,
 	fluidServiceUrl: string,
+	containerUrl: string,
 	externalTaskListId: ExternalTaskListId,
 ): void {
 	console.log(
@@ -46,7 +47,7 @@ function echoExternalDataWebhookToFluid(
 
 	// TODO: we will need to add details (like ContainerId) to the message body or the url,
 	// so this message body format will evolve
-	const messageBody = JSON.stringify({ data, externalTaskListId });
+	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -137,7 +138,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * Client manager for managing clients session to resourse on external data service.
 	 */
-	const clientManager = new ClientManager<TaskData>();
+	const clientManager = new ClientManager<ITaskData>();
 
 	/**
 	 * Default route. Can be used to verify connectivity to the service.
@@ -165,7 +166,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * This data will be forwarded to our own subscribers.
 	 */
 	expressApp.post("/external-data-webhook", (request, result) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const externalTaskListId = request.query.externalTaskListId as ExternalTaskListId;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const messageData = request.body?.data as ITaskData;
@@ -185,12 +185,20 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
+			const containerUrls = clientManager.getClientSessions(externalTaskListId);
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl, externalTaskListId);
+			for (const containerUrl of containerUrls) {
+				echoExternalDataWebhookToFluid(
+					taskData,
+					fluidServiceUrl,
+					containerUrl,
+					externalTaskListId,
+				);
+			}
 			result.send();
 		}
 	});
