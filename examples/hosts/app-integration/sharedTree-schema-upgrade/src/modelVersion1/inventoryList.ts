@@ -3,95 +3,57 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
-import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
+import {
+	BuildNode,
+	Change,
+	NodeId,
+	SharedTree,
+	StablePlace,
+	TraitLabel,
+} from "@fluid-experimental/tree";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IInventoryList } from "../modelInterfaces";
+import { transformTreeToJsonableString } from "./appModel";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
-
-class InventoryItem extends EventEmitter implements IInventoryItem {
-	public get id() {
-		return this._id;
-	}
-	// Probably would be nice to not hand out the SharedString, but the CollaborativeInput expects it.
-	public get name() {
-		return this._name;
-	}
-	public get quantity() {
-		const cellValue = this._quantity.get();
-		if (cellValue === undefined) {
-			throw new Error("Expected a valid quantity");
-		}
-		return cellValue;
-	}
-	public set quantity(newValue: number) {
-		this._quantity.set(newValue);
-	}
-	public constructor(
-		private readonly _id: string,
-		private readonly _name: SharedString,
-		private readonly _quantity: SharedCell<number>,
-	) {
-		super();
-		// this._name.on("sequenceDelta", () =>{
-		//     this.emit("nameChanged");
-		// });
-		this._quantity.on("valueChanged", () => {
-			this.emit("quantityChanged");
-		});
-	}
-}
-
-// type InventoryItemData = { name: IFluidHandle<SharedString>, quantity: IFluidHandle<SharedCell> };
+const treeKey = "sharedTree-key";
 
 /**
  * The InventoryList is our data object that implements the IInventoryList interface.
  */
 export class InventoryList extends DataObject implements IInventoryList {
-	private readonly inventoryItems = new Map<string, InventoryItem>();
-
+	// private readonly inventoryItems = new Map<string, InventoryItem>();
+	public tree: SharedTree | undefined;
+	public nodeIds: NodeId[] = [];
+	public readonly getTreeView = () => {
+		const jsonableTreeString = transformTreeToJsonableString(this.tree as SharedTree);
+		return jsonableTreeString;
+	};
 	public readonly addItem = (name: string, quantity: number) => {
-		const nameString = SharedString.create(this.runtime);
-		nameString.insertText(0, name);
-		const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
-		quantityCell.set(quantity);
-		const id = uuid();
-		this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
+		// inserts using experimental sharedTree
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const nodeId = this.tree!.generateNodeId();
+		const node: BuildNode = {
+			definition: "Node",
+			identifier: nodeId,
+		};
+		const randomParentId = this.nodeIds[Math.floor(Math.random() * this.nodeIds.length)];
+		this.tree?.applyEdit(
+			Change.insertTree(
+				node,
+				StablePlace.atStartOf({
+					parent: randomParentId,
+					label: "foo" as TraitLabel,
+				}),
+			),
+		);
+		this.nodeIds.push(nodeId);
 	};
 
 	public readonly deleteItem = (id: string) => {
 		this.root.delete(id);
-	};
-
-	public readonly getItems = () => {
-		return [...this.inventoryItems.values()];
-	};
-
-	public readonly getItem = (id: string) => {
-		return this.inventoryItems.get(id);
-	};
-
-	private readonly handleItemAdded = async (id: string) => {
-		const itemData = this.root.get(id);
-		const [nameSharedString, quantitySharedCell] = await Promise.all([
-			itemData.name.get(),
-			itemData.quantity.get(),
-		]);
-		// It's possible the item was deleted while getting the name/quantity, in which case quietly exit.
-		if (this.root.get(id) === undefined) {
-			return;
-		}
-		const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedCell);
-		this.inventoryItems.set(id, newInventoryItem);
-		this.emit("itemAdded", newInventoryItem);
-	};
-
-	private readonly handleItemDeleted = (id: string) => {
-		const deletedItem = this.inventoryItems.get(id);
-		this.inventoryItems.delete(id);
-		this.emit("itemDeleted", deletedItem);
 	};
 
 	/**
@@ -99,32 +61,17 @@ export class InventoryList extends DataObject implements IInventoryList {
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
 	protected async hasInitialized() {
-		this.root.on("valueChanged", (changed) => {
-			if (changed.previousValue === undefined) {
-				// Must be from adding a new item
-				this.handleItemAdded(changed.key).catch((error) => {
-					console.error(error);
-				});
-			} else if (this.root.get(changed.key) === undefined) {
-				// Must be from a deletion
-				this.handleItemDeleted(changed.key);
-			} else {
-				// Since all data modifications happen within the SharedString or SharedCell, the root directory
-				// should never see anything except adds and deletes.
-				console.error("Unexpected modification to inventory list");
-			}
-		});
-
-		for (const [id, itemData] of this.root) {
-			const [nameSharedString, quantitySharedCell] = await Promise.all([
-				itemData.name.get(),
-				itemData.quantity.get(),
-			]);
-			this.inventoryItems.set(
-				id,
-				new InventoryItem(id, nameSharedString, quantitySharedCell),
-			);
+		const treeHandle = this.root.get<IFluidHandle<SharedTree>>(treeKey);
+		if (treeHandle === undefined) {
+			throw new Error("SharedTree missing");
 		}
+		this.tree = await treeHandle.get();
+		this.nodeIds.push(this.tree.currentView.root);
+	}
+
+	protected async initializingFirstTime() {
+		const tree = SharedTree.create(this.runtime);
+		this.root.set(treeKey, tree.handle);
 	}
 }
 
@@ -136,6 +83,6 @@ export class InventoryList extends DataObject implements IInventoryList {
 export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
 	"inventory-list",
 	InventoryList,
-	[SharedCell.getFactory(), SharedString.getFactory()],
+	[SharedCell.getFactory(), SharedString.getFactory(), SharedTree.getFactory()],
 	{},
 );

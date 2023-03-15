@@ -4,11 +4,21 @@
  */
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
+import {
+	BuildNode,
+	Change,
+	NodeId,
+	SharedTree,
+	StablePlace,
+	TraitLabel,
+	TreeViewNode,
+} from "@fluid-experimental/tree";
+import { brand, JsonableTree } from "@fluid-internal/tree";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-import { parseStringDataVersionOne, readVersion } from "../dataTransform";
+import { readVersion } from "../dataTransform";
 import type {
 	IInventoryListAppModel,
 	IInventoryListAppModelEvents,
@@ -49,7 +59,6 @@ export class InventoryListAppModel
 	};
 
 	// Ideally, prevent this from being called after the container has been modified at all -- i.e. only support
-	// importing data into a completely untouched InventoryListAppModel.
 	public readonly importData = async (initialData: unknown): Promise<void> => {
 		if (this.container.attachState !== AttachState.Detached) {
 			throw new Error("Cannot set initial data after attach");
@@ -58,20 +67,27 @@ export class InventoryListAppModel
 			throw new Error("Data format not supported");
 		}
 
-		// Applies string data in version:one format.
-		const parsedInventoryItemData = parseStringDataVersionOne(initialData);
-		for (const { name, quantity } of parsedInventoryItemData) {
-			this.inventoryList.addItem(name, quantity);
+		const version = readVersion(initialData);
+		if (version !== "one") {
+			throw new Error(`Expected to parse version one, got version ${version}`);
 		}
+		const dataWithRemovedVersion = initialData.split("\n");
+		dataWithRemovedVersion.shift();
+		const treeData = dataWithRemovedVersion[0];
+		const jsonableTree: JsonableTree = JSON.parse(treeData);
+		constructTreeFromTreeData(
+			this.inventoryList.tree as SharedTree,
+			jsonableTree,
+			undefined,
+			true,
+		);
+		console.log(this.inventoryList.getTreeView());
 	};
 
 	public readonly exportData = async (): Promise<InventoryListAppModelExportFormat1> => {
-		// Exports in version:one format (using ':' delimiter between name/quantity)
-		const inventoryItems = this.inventoryList.getItems();
-		const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-			return `${inventoryItem.name.getText()}:${inventoryItem.quantity.toString()}`;
-		});
-		return `version:one\n${inventoryItemStrings.join("\n")}`;
+		const tree = this.inventoryList.tree as SharedTree;
+		const stringifiedTree = transformTreeToJsonableString(tree);
+		return `version:one\n${stringifiedTree}`;
 	};
 
 	public connected() {
@@ -81,4 +97,113 @@ export class InventoryListAppModel
 	public close() {
 		this.container.close();
 	}
+}
+
+/**
+ * constructs the experimental sharedTree based on the treeData provided.
+ * @param tree - tree that you want to apply edits to
+ * @param treeData - the data that is referenced to reconstruct the tree
+ * @param parentId - parent NodeId that you want to insert the node in
+ */
+function constructTreeFromTreeData(
+	tree: SharedTree,
+	treeData,
+	parentId: NodeId | undefined,
+	rootNode: boolean,
+) {
+	const currentParentId = parentId === undefined ? tree.currentView.root : parentId;
+	for (const node of treeData) {
+		const currentNodeId = node.value as NodeId;
+		if (!rootNode) {
+			const currentNode: BuildNode = {
+				definition: "Node",
+				identifier: tree.generateNodeId(),
+			};
+			// apply the edit to the tree
+			tree.applyEdit(
+				Change.insertTree(
+					currentNode,
+					StablePlace.atEndOf({
+						parent: currentParentId,
+						label: "foo" as TraitLabel,
+					}),
+				),
+			);
+		}
+		if (node.fields?.foo !== undefined) {
+			constructTreeFromTreeData(tree, node.fields.foo, currentNodeId, false);
+		}
+	}
+}
+
+interface experimentalTreeNode {
+	identifier: NodeId;
+	parent: NodeId | undefined;
+	parentLabel: TraitLabel | undefined;
+	traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
+}
+interface JsonableTreeNode {
+	identifier: NodeId;
+	parent: NodeId | undefined;
+	parentLabel: TraitLabel | undefined;
+	fields: any;
+}
+/**
+ * converts the experimental sharedTree to JsonableTree
+ * @param tree - experimental sharedTree that needs to be converted to a JsonableTree
+ */
+export function transformTreeToJsonableString(tree: SharedTree): string {
+	const flat: experimentalTreeNode[] = [];
+	const testNodes: TreeViewNode[] = [];
+	// const nodes: TreeViewNode[] = []
+	for (const node of tree.currentView) {
+		const currentNode: experimentalTreeNode = {
+			identifier: node.identifier,
+			parent: node.parentage?.parent,
+			parentLabel: node.parentage?.label,
+			traits: node.traits,
+		};
+		flat.push(currentNode);
+		testNodes.push(node);
+	}
+	const nodes: JsonableTreeNode[] = [];
+	const topLevelNodes: JsonableTreeNode[] = [];
+	const nodeLookup = {};
+
+	for (const node of flat) {
+		const currentNode: JsonableTreeNode = {
+			identifier: node.identifier,
+			parent: node.parent,
+			parentLabel: node.parentLabel,
+			fields: {}, // replaces traits to comply with JsonableTree
+		};
+		nodeLookup[node.identifier] = currentNode;
+		nodes.push(currentNode);
+		if (node.parent === undefined) {
+			topLevelNodes.push(currentNode);
+		}
+	}
+
+	for (const node of nodes) {
+		if (!(node.parent === undefined)) {
+			if (nodeLookup[node.parent].fields[node.parentLabel] === undefined) {
+				nodeLookup[node.parent].fields[node.parentLabel] = [];
+			}
+			const currentNode: JsonableTree = {
+				type: brand("Node"),
+				value: node.identifier,
+				fields: node.fields,
+			};
+			nodeLookup[node.parent].fields[node.parentLabel] = nodeLookup[node.parent].fields[
+				node.parentLabel
+			].concat([currentNode]);
+		}
+	}
+
+	const jsonableTree: JsonableTree = {
+		type: brand("Node"),
+		value: topLevelNodes[0].identifier,
+		fields: topLevelNodes[0].fields,
+	};
+	return JSON.stringify(jsonableTree);
 }

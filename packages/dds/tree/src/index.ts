@@ -89,6 +89,8 @@ export {
 	anchorSlot,
 	UpPathDefault,
 	AnchorEvents,
+	moveToDetachedField,
+	mapCursorField,
 } from "./core";
 
 export {

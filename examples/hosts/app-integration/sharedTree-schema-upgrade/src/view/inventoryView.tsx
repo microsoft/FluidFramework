@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CollaborativeInput } from "@fluid-experimental/react-inputs";
-
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 
@@ -15,101 +13,19 @@ export interface IInventoryItemViewProps {
 	disabled?: boolean;
 }
 
-export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
-	props: IInventoryItemViewProps,
-) => {
-	const { inventoryItem, deleteItem, disabled } = props;
-	const quantityRef = useRef<HTMLInputElement>(null);
-	useEffect(() => {
-		const updateFromRemoteQuantity = () => {
-			if (quantityRef.current !== null) {
-				quantityRef.current.value = inventoryItem.quantity.toString();
-			}
-		};
-		inventoryItem.on("quantityChanged", updateFromRemoteQuantity);
-		updateFromRemoteQuantity();
-		return () => {
-			inventoryItem.off("quantityChanged", updateFromRemoteQuantity);
-		};
-	}, [inventoryItem]);
-
-	const inputHandler = (e) => {
-		const newValue = parseInt(e.target.value, 10);
-		inventoryItem.quantity = newValue;
-	};
-
-	return (
-		<tr>
-			<td>
-				<CollaborativeInput
-					sharedString={inventoryItem.name}
-					style={{ width: "200px" }}
-					disabled={disabled}
-				></CollaborativeInput>
-			</td>
-			<td>
-				<input
-					ref={quantityRef}
-					onInput={inputHandler}
-					type="number"
-					style={{ width: "60px" }}
-					disabled={disabled}
-				></input>
-			</td>
-			<td>
-				<button onClick={deleteItem} style={{ border: "none", background: "none" }}>
-					❌
-				</button>
-			</td>
-		</tr>
-	);
-};
-
 interface IAddItemViewProps {
 	readonly addItem: (name: string, quantity: number) => void;
 }
 
 const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
 	const { addItem } = props;
-	const nameRef = useRef<HTMLInputElement>(null);
-	const quantityRef = useRef<HTMLInputElement>(null);
 
 	const onAddItemButtonClick = () => {
-		if (nameRef.current === null || quantityRef.current === null) {
-			throw new Error("Couldn't get the new item info");
-		}
-
-		// Extract the values from the inputs and add the new item
-		const name = nameRef.current.value;
-		const quantityString = quantityRef.current.value;
-		const quantity = quantityString !== "" ? parseInt(quantityString, 10) : 0;
-		addItem(name, quantity);
-
-		// Clear the input form
-		nameRef.current.value = "";
-		quantityRef.current.value = "";
+		addItem("name", 0);
 	};
 
 	return (
 		<>
-			<tr style={{ borderTop: "3px solid black" }}>
-				<td>
-					<input
-						ref={nameRef}
-						type="text"
-						placeholder="New item"
-						style={{ width: "200px" }}
-					/>
-				</td>
-				<td>
-					<input
-						ref={quantityRef}
-						type="number"
-						placeholder="0"
-						style={{ width: "60px" }}
-					/>
-				</td>
-			</tr>
 			<tr>
 				<td colSpan={2}>
 					<button style={{ width: "100%" }} onClick={onAddItemButtonClick}>
@@ -129,54 +45,51 @@ export interface IInventoryListViewProps {
 export const InventoryListView: React.FC<IInventoryListViewProps> = (
 	props: IInventoryListViewProps,
 ) => {
-	const { inventoryList, disabled } = props;
-
-	const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>(
-		inventoryList.getItems(),
-	);
-	useEffect(() => {
-		const updateItems = () => {
-			setInventoryItems(inventoryList.getItems());
-		};
-		inventoryList.on("itemAdded", updateItems);
-		inventoryList.on("itemDeleted", updateItems);
-
-		return () => {
-			inventoryList.off("itemAdded", updateItems);
-			inventoryList.off("itemDeleted", updateItems);
-		};
-	}, [inventoryList]);
-
-	const inventoryItemViews = inventoryItems.map((inventoryItem) => {
-		const deleteItem = () => inventoryList.deleteItem(inventoryItem.id);
-		return (
-			<InventoryItemView
-				key={inventoryItem.id}
-				inventoryItem={inventoryItem}
-				deleteItem={deleteItem}
-				disabled={disabled}
-			/>
-		);
-	});
-
+	const { inventoryList } = props;
+	const treeView = inventoryList.getTreeView();
+	const treeViewList = treeViewToHtmlList(treeView);
+	console.log(treeViewList);
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<thead>
 				<tr>
-					<th>Inventory item</th>
-					<th>Quantity</th>
+					<th>{JSON.stringify(treeView)}</th>
 				</tr>
 			</thead>
 			<tbody>
-				{inventoryItemViews.length > 0 ? (
-					inventoryItemViews
-				) : (
-					<tr>
-						<td colSpan={2}>No items in inventory</td>
-					</tr>
-				)}
 				<AddItemView addItem={inventoryList.addItem} />
 			</tbody>
 		</table>
 	);
 };
+
+function treeViewToHtmlList(json) {
+	return treeViewObjectToHtmlList(JSON.parse(json));
+}
+
+function treeViewObjectToHtmlList(obj) {
+	if (obj instanceof Array) {
+		const ol = document.createElement("ol");
+		// eslint-disable-next-line @typescript-eslint/no-for-in-array, guard-for-in, no-restricted-syntax, no-var
+		for (var child in obj) {
+			// eslint-disable-next-line no-var
+			var li = document.createElement("li");
+			li.appendChild(treeViewObjectToHtmlList(obj[child]));
+			ol.appendChild(li);
+		}
+		return ol;
+	} else if (obj instanceof Object && !(obj instanceof String)) {
+		const ul = document.createElement("ul");
+		// eslint-disable-next-line guard-for-in, no-restricted-syntax, no-var
+		for (var child in obj) {
+			// eslint-disable-next-line no-var
+			var li = document.createElement("li");
+			li.appendChild(document.createTextNode(`${child}: `));
+			li.appendChild(treeViewObjectToHtmlList(obj[child]));
+			ul.appendChild(li);
+		}
+		return ul;
+	} else {
+		return document.createTextNode(obj);
+	}
+}

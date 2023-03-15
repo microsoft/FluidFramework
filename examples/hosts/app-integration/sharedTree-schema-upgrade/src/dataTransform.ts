@@ -21,81 +21,16 @@ export function readVersion(stringData: string) {
 	return version;
 }
 
-/**
- * Parse string data in version:one format into an array of simple objects that are easily imported into an
- * inventory list.
- * @param stringData - version:one formatted string data
- * @returns An array of objects, each representing a single inventory item
- */
-export function parseStringDataVersionOne(stringData: string) {
-	const version = readVersion(stringData);
-	if (version !== "one") {
-		throw new Error(`Expected to parse version one, got version ${version}`);
-	}
-	const itemStrings = stringData.split("\n");
-	itemStrings.shift(); // remove version line
-
-	// Account for empty inventory list
-	if (itemStrings.length === 1 && itemStrings[0] === "") {
-		return [];
-	}
-
-	return itemStrings.map((itemString) => {
-		const [itemNameString, itemQuantityString] = itemString.split(":");
-		return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
-	});
-}
-
-/**
- * Parse string data in version:two format into an array of simple objects that are easily imported into an
- * inventory list.
- * @param stringData - version:two formatted string data
- * @returns An array of objects, each representing a single inventory item
- */
-export function parseStringDataVersionTwo(stringData: string) {
-	const version = readVersion(stringData);
-	if (version !== "two") {
-		throw new Error(`Expected to parse version two, got version ${version}`);
-	}
-	const itemStrings = stringData.split("\n");
-	itemStrings.shift(); // remove version line
-
-	// Account for empty inventory list
-	if (itemStrings.length === 1 && itemStrings[0] === "") {
-		return [];
-	}
-
-	return itemStrings.map((itemString) => {
-		const [itemNameString, itemQuantityString] = itemString.split("\t");
-		return { name: itemNameString, quantity: parseInt(itemQuantityString, 10) };
-	});
-}
-
-function parseStringData(stringData: string) {
-	const version = readVersion(stringData);
-	if (version === "one") {
-		return parseStringDataVersionOne(stringData);
-	} else if (version === "two") {
-		return parseStringDataVersionTwo(stringData);
-	} else {
-		throw new Error(`Don't know how to parse version ${version}`);
-	}
-}
-
 function transformToOne(stringData: string) {
-	const inventoryItems = parseStringData(stringData);
-	const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-		return `${inventoryItem.name}:${inventoryItem.quantity.toString()}`;
-	});
-	return `version:one\n${inventoryItemStrings.join("\n")}`;
+	const treeData = stringData.split("\n");
+	treeData.shift(); // remove version line
+	return `version:one\n${treeData}`;
 }
 
 function transformToTwo(stringData: string) {
-	const inventoryItems = parseStringData(stringData);
-	const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-		return `${inventoryItem.name}\t${inventoryItem.quantity.toString()}`;
-	});
-	return `version:two\n${inventoryItemStrings.join("\n")}`;
+	const treeData = stringData.split("\n");
+	treeData.shift(); // remove version line
+	return `version:two\n${treeData}`;
 }
 
 /**

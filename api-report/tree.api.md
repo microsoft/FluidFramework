@@ -757,6 +757,9 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 export interface MakeNominal {
 }
 
+// @alpha (undocumented)
+export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => T): T[];
+
 // @alpha
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | InsertAndModify<TTree>;
 
@@ -877,6 +880,9 @@ interface MoveOut {
     // (undocumented)
     readonly type: typeof MarkType.MoveOut;
 }
+
+// @alpha (undocumented)
+export function moveToDetachedField(forest: IForestSubscription, cursorToMove: ITreeSubscriptionCursor, field?: DetachedField): void;
 
 // @alpha
 export enum Multiplicity {

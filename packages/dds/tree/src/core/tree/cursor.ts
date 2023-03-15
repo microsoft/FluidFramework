@@ -336,6 +336,7 @@ export function forEachField<TCursor extends ITreeCursor = ITreeCursor>(
  * If `f` moves cursor, it must put it back to where it was at the beginning of `f` before returning.
  * @returns array resulting from applying `f` to each item of the current field on `cursor`.
  * Returns an empty array if the field is empty or not present (which are considered the same).
+ * @alpha
  */
 export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(
 	cursor: TCursor,
