@@ -16,6 +16,7 @@ import {
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap";
+import { DocumentMultipleDds } from "./DocumentMultipleDds";
 
 export interface IDocumentCreatorProps {
 	testName: string;
@@ -64,6 +65,9 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 		case "MediumDocumentMap":
 		case "LargeDocumentMap":
 			return new DocumentMap(documentProps);
+		case "MediumDocumentMultipleDDSs":
+		case "LargeDocumentMultipleDDSs":
+			return new DocumentMultipleDds(documentProps);
 		default:
 			throw new Error("Invalid document type");
 	}

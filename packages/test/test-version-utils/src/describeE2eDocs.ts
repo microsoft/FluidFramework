@@ -21,7 +21,35 @@ export type DocumentType =
 	/** Document with a SharedMap with a 5Mb entry */
 	| "MediumDocumentMap"
 	/** Document with a SharedMap with 2 x 5Mb entries */
-	| "LargeDocumentMap";
+	| "LargeDocumentMap"
+	/** Medium document with Multiple DDSs */
+	| "MediumDocumentMultipleDDSs"
+	/** Large document with Multiple DDSs */
+	| "LargeDocumentMultipleDDSs";
+
+// Default document types to be used during the performance E2E runs.
+const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
+	{
+		testTitle: "10Mb Map",
+		documentType: "LargeDocumentMap",
+		minSampleCount: 10,
+	},
+	{
+		testTitle: "5Mb Map",
+		documentType: "MediumDocumentMap",
+		minSampleCount: 10,
+	},
+	{
+		testTitle: "250 DDSs",
+		documentType: "MediumDocumentMultipleDDSs",
+		minSampleCount: 1,
+	},
+	{
+		testTitle: "500 DDSs",
+		documentType: "LargeDocumentMultipleDDSs",
+		minSampleCount: 1,
+	},
+];
 
 export type BenchmarkType = "E2ETime" | "E2EMemory";
 export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks";
@@ -157,20 +185,6 @@ function createE2EDocCompatSuite(
 		}
 	};
 }
-
-// Default document types to be used during the performance runs.
-const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
-	{
-		testTitle: "10Mb Map",
-		documentType: "LargeDocumentMap",
-		minSampleCount: 10,
-	},
-	{
-		testTitle: "5Mb Map",
-		documentType: "MediumDocumentMap",
-		minSampleCount: 10,
-	},
-];
 
 export const describeE2EDocs: DescribeE2EDocSuite = createE2EDocsDescribe(E2EDefaultDocumentTypes);
 
