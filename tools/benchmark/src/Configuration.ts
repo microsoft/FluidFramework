@@ -92,18 +92,30 @@ for (const type of Object.values(TestType)) {
  * Arguments to `benchmark`
  * @public
  */
-export type BenchmarkArguments = BenchmarkSyncArguments | BenchmarkAsyncArguments;
+export type BenchmarkArguments = Titled & (BenchmarkSyncArguments | BenchmarkAsyncArguments);
+
+export type BenchmarkRunningOptions = (BenchmarkSyncArguments | BenchmarkAsyncArguments) &
+	BenchmarkTimingOptions &
+	HookArguments;
+
+export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions;
+
+/**
+ * Object with a "title".
+ * @public
+ */
+export interface Titled {
+	/**
+	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
+	 */
+	title: string;
+}
 
 /**
  * Arguments to benchmark a synchronous function
  * @public
  */
 export interface BenchmarkSyncArguments extends BenchmarkOptions {
-	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-	 */
-	title: string;
-
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
@@ -115,11 +127,6 @@ export interface BenchmarkSyncArguments extends BenchmarkOptions {
  * @public
  */
 export interface BenchmarkAsyncArguments extends BenchmarkOptions {
-	/**
-	 * The title of the benchmark. This will show up in the output file, well as the mocha reporter.
-	 */
-	title: string;
-
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
 	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -134,7 +141,7 @@ export interface BenchmarkAsyncArguments extends BenchmarkOptions {
  * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
  * @public
  */
-export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
+export interface BenchmarkTimingOptions {
 	/**
 	 * The max time in seconds to run the benchmark.
 	 */
@@ -142,7 +149,7 @@ export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
 
 	/**
 	 * The min sample count to reach.
-	 * @remarks This takes precedence over {@link BenchmarkOptions.maxBenchmarkDurationSeconds}.
+	 * @remarks This takes precedence over {@link BenchmarkTimingOptions.maxBenchmarkDurationSeconds}.
 	 */
 	minSampleCount?: number;
 
@@ -150,7 +157,17 @@ export interface BenchmarkOptions extends MochaExclusiveOptions, HookArguments {
 	 * The minimum time in seconds to run an individual sample.
 	 */
 	minSampleDurationSeconds?: number;
+}
 
+/**
+ * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
+ * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * @public
+ */
+export interface BenchmarkOptions
+	extends MochaExclusiveOptions,
+		HookArguments,
+		BenchmarkTimingOptions {
 	/**
 	 * The kind of benchmark.
 	 */
@@ -291,6 +308,7 @@ export interface HookArguments {
 	 * @remarks This does *not* execute on each iteration or cycle.
 	 */
 	after?: HookFunction;
+
 	/**
 	 * Executes before the start of each cycle. This has the same semantics as benchmarkjs's `onCycle`:
 	 * https://benchmarkjs.com/docs/#options_onCycle
@@ -298,8 +316,12 @@ export interface HookArguments {
 	 * @remarks
 	 * Beware that cycles run `benchmarkFn` more than once: a typical microbenchmark might involve 10k
 	 * iterations per cycle.
+	 *
+	 * This is passed an argument but it should be ignored.
+	 * The argument is listed in the signature here to help reduce the change
+	 * of a function which has an optional argument being used here and being passed unexpected data.
 	 */
-	onCycle?: HookFunction;
+	onCycle?: (event: unknown) => void;
 }
 
 /**
@@ -307,7 +329,7 @@ export interface HookArguments {
  * @public
  */
 export function validateBenchmarkArguments(
-	args: BenchmarkArguments,
+	args: BenchmarkRunningOptions,
 ):
 	| { isAsync: true; benchmarkFn: () => Promise<unknown> }
 	| { isAsync: false; benchmarkFn: () => void } {

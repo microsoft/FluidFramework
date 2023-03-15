@@ -103,16 +103,22 @@ export interface Options {
 	queued?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface Stats {
 	moe: number;
 	rme: number;
 	sem: number;
 	deviation: number;
 	mean: number;
-	sample: any[];
+	sample: number[];
 	variance: number;
 }
 
+/**
+ * @public
+ */
 export interface Times {
 	cycle: number;
 	elapsed: number;
@@ -1059,7 +1065,7 @@ function getFirstArgument(fn: Function): string {
  * @param {Array} sample - The sample.
  * @returns {number} The mean.
  */
-function getMean(sample: any[]): number {
+function getMean(sample: number[]): number {
 	const v = _.reduce(sample, (sum: number, x: number) => {
 		return sum + x;
 	}) as number;
@@ -1377,7 +1383,7 @@ function compute(bench: Benchmark, options: CycleOptions) {
 	/**
 	 * Determines if more clones should be queued or if cycling should stop.
 	 */
-	function evaluate(event) {
+	function evaluate(event: Event) {
 		let critical;
 		let df;
 		let mean;
@@ -1386,7 +1392,7 @@ function compute(bench: Benchmark, options: CycleOptions) {
 		let sd;
 		let sem;
 		let variance;
-		const clone = event.target;
+		const clone = event.target as Benchmark;
 		let done = bench.aborted;
 		const now = +_.now();
 		let size = sample.push(clone.times.period);
@@ -1574,7 +1580,7 @@ function getRes(unit: string) {
 	let count = 30;
 	let divisor = 1e3;
 	const ns = timer.ns;
-	const sample: any[] = [];
+	const sample: number[] = [];
 
 	// Get average smallest measurable time.
 	while (count--) {

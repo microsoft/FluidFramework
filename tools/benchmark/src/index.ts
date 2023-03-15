@@ -26,8 +26,12 @@ export {
 	HookArguments,
 	isInPerformanceTestingMode,
 	validateBenchmarkArguments,
+	Titled,
+	BenchmarkTimingOptions,
+	BenchmarkRunningOptions,
 } from "./Configuration";
 export { benchmark } from "./Runner";
 export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./MemoryTestRunner";
 export { prettyNumber, geometricMean } from "./ReporterUtilities";
 export { BenchmarkReporter, BenchmarkData } from "./Reporter";
+export { Stats, Times } from "./benchmark";
