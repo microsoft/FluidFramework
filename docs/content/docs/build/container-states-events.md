@@ -134,7 +134,7 @@ if ((container.attachState === AttachState.Detached)
 Synchronization status refers to whether the container's data on the client is saved to the Fluid service. It is a *client-relative state*: the container may have a different synchronization state on different clients. The following diagram shows the possible Synchronization states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the two possible Synchronization states](./images/SynchronizationStates.png)
+![A state diagram of the two possible Synchronization states](./images/SynchronizationStates.svg)
 
 {{< callout note >}}
 
@@ -203,7 +203,7 @@ See [Disposed](#disposed) for more about disposing the container object.
 Connection status refers to whether the container is connected to the Fluid service. It is a *client-relative state*: the container may have a different connection state on different clients. The following diagram shows the possible Connection states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the four possible Connection states](./images/ConnectionStates.png)
+![A state diagram of the four possible Connection states](./images/ConnectionStates.svg)
 
 #### Disconnected
 
@@ -297,7 +297,7 @@ user.on("active", () => {
 Local Readiness is a *client-relative state*: the container may have a different Local Readiness state on different clients. The following diagram shows the possible Local Readiness states and the events that cause a state transition. Details are below the diagram.
 
 <!-- TO MODIFY THIS DIAGRAM, SEE INSTRUCTIONS AT THE BOTTOM OF THIS FILE. -->
-![A state diagram of the two possible Local Readiness states](./images/LocalReadinessStates.png)
+![A state diagram of the two possible Local Readiness states](./images/LocalReadinessStates.svg)
 
 #### Ready
 
@@ -339,14 +339,8 @@ But it would be possible for your code to create a new local container object fo
 
      These instructions help you produce diagrams that are the right size at a good resolution.
 
-     1. The source Visio *.vsdx files and the output *.png file are in the ./image subfolder.
+     1. The source Visio *.vsdx files and the output *.svg files are in the ./image subfolder.
      2. Open the Visio file and change it as needed.
-     3. "Save as" the Visio file but select PNG as the file type.
-     4. A PNG Output Options dialog opens. In the dialog ensure that Resolution is set to "Printer", not "Screen" or "Source".
-     5. Ensure that the destination folder is the ./images subfolder and complete the "Save As" process.
-     6. The PNG at this point is too large. Open it in Microsoft Paint.
-     7. Open the Resize and Skew dialog.
-     8. Set the Resize unit of measure to Percentage.
-     9. Set the Horizontal and Vertical to 25 (percent).
-     10. Save the file.
+     3. "Save as" the Visio file but select SVG as the file type.
+     4. Ensure that the destination folder is the ./images subfolder and complete the "Save As" process.
 -->
