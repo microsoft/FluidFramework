@@ -536,7 +536,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		});
 	});
 
-	describe.only("Payload size on the wire", () => {
+	describe("Payload size on the wire", () => {
 		let totalPayloadSizeInBytes = 0;
 
 		const assertPayloadSize = (totalMessageSizeInBytes: number): void => {
