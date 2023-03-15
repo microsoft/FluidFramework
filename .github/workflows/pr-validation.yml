@@ -5,7 +5,6 @@ on:
       - opened # PR is created
       - synchronize # commits added to PR
       - reopened # closed PR re-opened
-      - edited # title or body edited, or base branch changed
     branches:
       - main
       - next
@@ -62,32 +61,3 @@ jobs:
             Your PR description contains placeholder content from the PR template. Remove or replace the placeholder
             content. More information at:
             https://github.com/microsoft/FluidFramework/wiki/Commit-message-style#pr-template-content
-
-  # We've adopted conventional commits in the build-tools release group. The CI jobs below require the PR title and body
-  # to match our standards. More information can be found in the wiki:
-  # https://github.com/microsoft/FluidFramework/wiki/Commit-message-style
-  conventional-pr-title:
-    name: PR title matches conventional commit format
-    runs-on: ubuntu-latest
-    # Only runs if build-tools is changed
-    needs: changed-paths
-    if: |
-      needs.changed-paths.outputs.build-tools == 'true'
-    steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
-        with:
-          persist-credentials: false
-      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2.2.4
-        with:
-          version: 7
-      - name: Install dependencies
-        working-directory: build-tools
-        run: |
-          # Only install the root dependencies since we don't need the whole workspace
-          pnpm config set recursive-install false
-          pnpm install --ignore-scripts
-      # Lints the PR title according to the settings file in the repo
-      - uses: JulienKode/pull-request-name-linter-action@8c05fb989d9f156ce61e33754f9802c9d3cffa58 # ratchet:JulienKode/pull-request-name-linter-action@v0.5.0
-        name: Lint PR title
-        with:
-          configuration-path: build-tools/commitlint.config.cjs
