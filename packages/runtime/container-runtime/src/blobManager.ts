@@ -711,28 +711,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	/**
 	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
-	 * @param unusedRoutes - The routes of the blob nodes that are unused.
+	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
 	 */
 	public updateUnusedRoutes(unusedRoutes: string[]): void {
-		// This holds the storage ids for each deleted local id entry in the redirect table.
-		const maybeUnusedStorageIds: string[] = [];
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of unusedRoutes) {
-			const blobId = getBlobIdFromGCNodePath(route);
-			const storageId = this.redirectTable.get(blobId);
-			if (storageId === undefined) {
-				continue;
-			}
-			maybeUnusedStorageIds.push(storageId);
-			this.redirectTable.delete(blobId);
-		}
-		this.deleteUnusedStorageBlobs(maybeUnusedStorageIds);
+		this.deleteBlobs(unusedRoutes);
 	}
 
 	/**
 	 * Delete attachment blobs that are sweep ready.
-	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted.
+	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
+	 * be based off of local ids.
 	 * @returns - The routes of blobs that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
@@ -741,25 +729,54 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return [];
 		}
 
-		// This holds the storage ids for each deleted local id entry in the redirect table.
-		const maybeUnusedStorageIds: string[] = [];
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of sweepReadyBlobRoutes) {
+		this.deleteBlobs(sweepReadyBlobRoutes);
+		return Array.from(sweepReadyBlobRoutes);
+	}
+
+	/**
+	 * Delete blobs with the given routes. The routes are GC nodes paths of format `/<BlobManager.basePath>/<blobId>`.
+	 * The blob ids are all local ids. Deleting the blobs involves 2 steps:
+	 * 1. The redirect table entry for the local ids are deleted.
+	 * 2. If the storage ids corresponding to the deleted local ids are not in-use anymore, the redirect table entries
+	 * for the storage ids are deleted as well.
+	 */
+	private deleteBlobs(blobRoutes: string[]) {
+		if (blobRoutes.length === 0) {
+			return;
+		}
+
+		// This tracks the storage ids of local ids that are deleted. After the local ids have been deleted, if any of
+		// these storage ids are unused, they will be deleted as well.
+		const maybeUnusedStorageIds: Set<string> = new Set();
+		for (const route of blobRoutes) {
 			const blobId = getBlobIdFromGCNodePath(route);
-			const storageId = this.redirectTable.get(blobId);
-			if (storageId === undefined) {
+			if (!this.redirectTable.has(blobId)) {
 				this.mc.logger.sendErrorEvent({
 					eventName: "DeletedAttachmentBlobNotFound",
 					blobId,
 				});
 				continue;
 			}
-			maybeUnusedStorageIds.push(storageId);
+			const storageId = this.redirectTable.get(blobId);
+			assert(!!storageId, "Must be attached to run GC");
+			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(blobId);
 		}
-		this.deleteUnusedStorageBlobs(maybeUnusedStorageIds);
-		return Array.from(sweepReadyBlobRoutes);
+
+		// Find out storage ids that are in-use and remove them from maybeUnusedStorageIds. A storage id is in-use if
+		// the redirect table has a local id -> storage id entry for it.
+		for (const [localId, storageId] of this.redirectTable.entries()) {
+			assert(!!storageId, "Must be attached to run GC");
+			// For every storage id, the redirect table has a id -> id entry. These do not make the storage id in-use.
+			if (maybeUnusedStorageIds.has(storageId) && localId !== storageId) {
+				maybeUnusedStorageIds.delete(storageId);
+			}
+		}
+
+		// For unused storage ids, delete their entries from the redirect table.
+		for (const storageId of maybeUnusedStorageIds) {
+			this.redirectTable.delete(storageId);
+		}
 	}
 
 	/**
@@ -786,38 +803,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Mark blobs that are now tombstoned by adding them to the tombstone list.
 		for (const blobId of tombstonedBlobsSet) {
 			this.tombstonedBlobs.add(blobId);
-		}
-	}
-
-	/**
-	 * Delete unused storage blobs, if any. After GC runs and notifies blob manager of local blob ids that are sweep
-	 * ready, blob manager deletes them from the redirect table. This function is then called to delete the storage
-	 * ids of these blobs if they are not used anymore. A blob is unused if there is no entry from the local id to
-	 * storage id in the redirect table, i.e., all local id entries have been deleted.
-	 * @param maybeUnusedBlobIds - List of storage ids for blobs whose local id entries were just deleted and are
-	 * now candidates for deletion.
-	 */
-	private deleteUnusedStorageBlobs(maybeUnusedBlobIds: string[]) {
-		if (maybeUnusedBlobIds.length === 0) {
-			return;
-		}
-
-		const storageBlobsToDelete: Set<string> = new Set(maybeUnusedBlobIds);
-		for (const [localId, storageId] of this.redirectTable.entries()) {
-			// For a storage id that is a candidate for deletion, ignore storageId -> storageId entries. But if the
-			// redirect table contains an entry from a local id to it, it is still in use and should not be deleted.
-			if (
-				storageId !== undefined &&
-				storageBlobsToDelete.has(storageId) &&
-				localId !== storageId
-			) {
-				storageBlobsToDelete.delete(storageId);
-			}
-		}
-
-		// Delete the entries for storage ids that are still in storageBlobsToDelete.
-		for (const storageId of storageBlobsToDelete) {
-			this.redirectTable.delete(storageId);
 		}
 	}
 
