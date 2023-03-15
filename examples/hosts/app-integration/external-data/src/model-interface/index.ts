@@ -27,9 +27,9 @@ export interface IAppModelEvents extends IEvent {}
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	/**
-	 * A task tracker list.
+	 * Represents the document where one or more task tracker lists will be rendered
 	 */
-	readonly taskList: ITaskList;
+	readonly baseDocument: IBaseDocument;
 
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
@@ -152,6 +152,30 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// TODO: For the signal we might prefer routing it in as an unknown message payload, delegating interpretation
 	// Alternate: inject an EventEmitter that raises the events from external.
 	// readonly handleExternalMessage: (message) => void;
+}
+
+/**
+ * Events emitted by {@link IBaseDocumentEvents}.
+ */
+export interface IBaseDocumentEvents extends IEvent {
+	/**
+	 * Emitted when task list collection has changed.
+	 */
+	(event: "taskListCollectionChanged", listener: () => void);
+}
+export interface IBaseDocumentInitialState {
+	externalTaskListId: string;
+}
+
+export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
+	/**
+	 * Add a task list with a specific id.
+	 */
+	readonly addTaskList: (props: IBaseDocumentInitialState) => void;
+	/**
+	 * Get the task list with the specified ID.
+	 */
+	readonly getTaskList: (id: string) => ITaskList | undefined;
 }
 
 export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData";
