@@ -9,19 +9,23 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
-
+import { assertValidTaskList, TaskList } from "../model-interface";
+import { ExternalTaskListId } from "../utilities";
 /**
  * Submits notifications of changes to Fluid Service.
  */
-function echoExternalDataWebhookToFluid(data: TaskData, fluidServiceUrl: string): void {
+function echoExternalDataWebhookToFluid(
+	data: TaskList,
+	fluidServiceUrl: string,
+	externalTaskListId: ExternalTaskListId,
+): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
 	// TODO: we will need to add details (like ContainerId) to the message body or the url,
 	// so this message body format will evolve
-	const messageBody = JSON.stringify({ data });
+	const messageBody = JSON.stringify({ data, externalTaskListId });
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -135,17 +139,18 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * This data will be forwarded to our own subscribers.
 	 */
 	expressApp.post("/external-data-webhook", (request, result) => {
+		const externalTaskListId = request.query.externalTaskListId as ExternalTaskListId;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const messageData = request.body?.data as unknown;
+		const messageData = request.body?.data as TaskList;
 		if (messageData === undefined) {
 			const errorMessage =
 				'No data provided by external data service webhook. Expected under "data" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskData: TaskList;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskData = assertValidTaskList(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);
@@ -158,7 +163,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl);
+			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl, externalTaskListId);
 			result.send();
 		}
 	});

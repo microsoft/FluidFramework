@@ -17,7 +17,7 @@ import {
 	ExternalDataSource,
 	initializeExternalDataService,
 } from "../src/mock-external-data-service";
-import { assertValidTaskData, TaskData } from "../src/model-interface";
+import { assertValidTaskList, TaskList } from "../src/model-interface";
 import { closeServer } from "./utilities";
 
 describe("mock-external-data-service", () => {
@@ -55,14 +55,14 @@ describe("mock-external-data-service", () => {
 		await closeServer(_externalDataService);
 	});
 
-	async function getCurrentExternalData(): Promise<TaskData> {
-		const fetchResponse = await externalDataSource!.fetchData();
+	async function getCurrentExternalData(): Promise<TaskList> {
+		const fetchResponse = await externalDataSource!.fetchData("task-list-id");
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown
 		>;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		return assertValidTaskData((responseBody as any).taskList);
+		return assertValidTaskList((responseBody as any).taskList);
 	}
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
@@ -77,7 +77,7 @@ describe("mock-external-data-service", () => {
 	});
 
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
-		const newData: TaskData = {
+		const newData: TaskList = {
 			42: {
 				name: "Determine meaning of life",
 				priority: 37,

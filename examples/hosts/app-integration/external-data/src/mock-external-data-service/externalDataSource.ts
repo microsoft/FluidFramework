@@ -6,9 +6,10 @@
 import type { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { Response } from "node-fetch";
-import { TaskData } from "../model-interface";
+import { TaskLists, TaskList } from "../model-interface";
+import { ExternalTaskListId } from "../utilities";
 
-const startingExternalData: TaskData = {
+const taskList1: TaskList = {
 	12: {
 		name: "Alpha",
 		priority: 1,
@@ -27,6 +28,18 @@ const startingExternalData: TaskData = {
 	},
 };
 
+const taskList2: TaskList = {
+	17: {
+		name: "CompletelyDifferentAlpha",
+		priority: 42,
+	},
+};
+
+const startingExternalData: TaskLists = {
+	"task-list-1": taskList1,
+	"task-list-2": taskList2,
+};
+
 /**
  * Events emitted by {@link ExternalDataSource}.
  */
@@ -36,7 +49,7 @@ export interface IExternalDataSourceEvents extends IEvent {
 	 * @remarks Debug API for demo purposes - the real scenario will need to learn about the data changing via the
 	 * webhook path.
 	 */
-	(event: "debugDataWritten", listener: (data: TaskData) => void);
+	(event: "debugDataWritten", listener: (data: TaskList) => void);
 }
 
 /**
@@ -54,7 +67,7 @@ export interface IExternalDataSourceEvents extends IEvent {
  * TODO: Consider adding a fake delay to the async calls to give us a better approximation of expected experience.
  */
 export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEvents> {
-	private data: TaskData;
+	private data: TaskLists;
 
 	public constructor() {
 		super();
@@ -69,8 +82,8 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 *
 	 * @remarks This is async to simulate the more-realistic scenario of a network request.
 	 */
-	public async fetchData(): Promise<Response> {
-		const jsonData = { taskList: this.data };
+	public async fetchData(externalTaskListId: string): Promise<Response> {
+		const jsonData = { taskList: this.data[externalTaskListId] };
 		return new Response(JSON.stringify(jsonData), {
 			status: 200,
 			statusText: "OK",
@@ -83,8 +96,11 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 	 * @param data - The string data to write.
 	 * @returns A promise that resolves when the write completes.
 	 */
-	public async writeData(data: TaskData): Promise<Response> {
-		this.data = data;
+	public async writeData(
+		data: TaskList,
+		externalTaskListId: ExternalTaskListId,
+	): Promise<Response> {
+		this.data[externalTaskListId] = data;
 
 		// Emit for debug views to update
 		this.emit("debugDataWritten", this.data);

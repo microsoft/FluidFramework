@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskData, TaskData } from "../model-interface";
+import { assertValidTaskList, TaskList } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -48,9 +48,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Mock webhook for notifying subscribers to changes in external data.
 	 */
-	const webhook = new MockWebhook<TaskData>();
+	const webhook = new MockWebhook<TaskList>();
 
-	function notifyWebhookSubscribers(newData: TaskData): void {
+	function notifyWebhookSubscribers(newData: TaskList): void {
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
 		webhook.notifySubscribers(newData);
 	}
@@ -130,28 +130,32 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * }
 	 * ```
 	 */
-	expressApp.get("/fetch-tasks", (_, result) => {
-		externalDataSource.fetchData().then(
+	expressApp.get("/fetch-tasks/:externalTaskListId", (request, result) => {
+		const externalTaskListId = request.params?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			result
+				.status(400)
+				.json({ message: "Missing parameter externalTaskListId in request url" });
+		}
+		externalDataSource.fetchData(externalTaskListId).then(
 			(response) => {
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
 					unknown
 				>;
 
-				let taskList: TaskData;
+				let taskData: TaskList;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskList = assertValidTaskData((responseBody as any).taskList);
+					taskData = assertValidTaskList((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
 					result.status(400).json({ message: errorMessage });
 					return;
 				}
-
-				console.log(formatLogMessage("Returning current task list:"), taskList);
-
-				result.send({ taskList });
+				console.log(formatLogMessage("Returning current task list:"), taskData);
+				result.send({ taskList: taskData });
 			},
 			(error) => {
 				console.error(
@@ -168,9 +172,15 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskData}.
+	 * Expected input data format: {@link TaskList}.
 	 */
-	expressApp.post("/set-tasks", (request, result) => {
+	expressApp.post("/set-tasks/:externalTaskListId", (request, result) => {
+		const externalTaskListId = request.params?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			result
+				.status(400)
+				.json({ message: "Missing parameter externalTaskListId in request url" });
+		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
 		if (messageData === undefined) {
@@ -178,16 +188,16 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskData: TaskData;
+			let taskData: TaskList;
 			try {
-				taskData = assertValidTaskData(messageData);
+				taskData = assertValidTaskList(messageData);
 			} catch (error) {
 				const errorMessage = "Input task list data was malformed.";
 				console.error(errorMessage, error);
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskData).then(
+			externalDataSource.writeData(taskData, externalTaskListId).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();

@@ -15,7 +15,7 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskList,
-	TaskData,
+	TaskList as ExternalTaskList,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 
@@ -108,6 +108,13 @@ export class TaskList extends DataObject implements ITaskList {
 	 * TODO: Update^ when the sync mechanism is appropriately defined.
 	 */
 	private _draftData: SharedMap | undefined;
+
+	public get externalTaskListId(): string {
+		return this._externalTaskListId;
+	}
+	// Hardcoding this here. Other PRs will define this properly in in the initialization
+	// lifecycle functions
+	private readonly _externalTaskListId: string = "task-list-1";
 
 	private _errorFlagCount: number = 0;
 
@@ -225,7 +232,7 @@ export class TaskList extends DataObject implements ITaskList {
 		][];
 		try {
 			const response = await fetch(
-				`http://localhost:${externalDataServicePort}/fetch-tasks`,
+				`http://localhost:${externalDataServicePort}/fetch-tasks/${this.externalTaskListId}`,
 				{
 					method: "GET",
 					headers: {
@@ -239,7 +246,7 @@ export class TaskList extends DataObject implements ITaskList {
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody.taskList as TaskData;
+			const data = responseBody.taskList as ExternalTaskList;
 			incomingExternalData = Object.entries(data);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {
@@ -323,14 +330,17 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		try {
-			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
+			await fetch(
+				`http://localhost:${externalDataServicePort}/set-tasks/${this.externalTaskListId}`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ taskList: formattedTasks }),
 				},
-				body: JSON.stringify({ taskList: formattedTasks }),
-			});
+			);
 		} catch (error) {
 			console.error(`Task list submition failed due to an error:\n${error}`);
 
