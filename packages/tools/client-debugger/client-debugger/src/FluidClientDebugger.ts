@@ -175,6 +175,7 @@ export class FluidClientDebugger
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		["GET_CONTAINER_STATE"]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerStateMessage;
+			console.log("GET_CONTAINER_STATE_MESSAGE:", message);
 			if (message.data.containerId === this.containerId) {
 				this.postContainerStateChange();
 				return true;
@@ -183,6 +184,7 @@ export class FluidClientDebugger
 		},
 		["GET_AUDIENCE_EVENT"]: (untypedMessage) => {
 			const message = untypedMessage as GetAudienceMessage;
+			console.log("GET_AUDIENCE_EVENT_MESSAGE:", message);
 			if (message.data.containerId === this.containerId) {
 				this.postAudienceStateChange();
 				return true;
@@ -222,26 +224,25 @@ export class FluidClientDebugger
 	 *
 	 */
 	private readonly postAudienceStateChange = (): void => {
-		console.log("---------------------------------------");
-		console.log("this.container.audience.getMembers():", this.container.audience.getMembers());
-		console.log("---------------------------------------");
-		console.log("this.getAudienceHistory():", this.getAudienceHistory());
-		console.log("---------------------------------------");
+		const audienceMembersMap = this.container.audience.getMembers();
+		const audienceMembersArray: IClient[] = [...audienceMembersMap.values()];
 
+		console.log("members:", audienceMembersMap);
+		console.log("-----------------------");
+		console.log("audienceMembers:", audienceMembersArray);
+		console.log("-----------------------");
 		postMessageToWindow<AudienceEventMessage>(
 			{
 				source: debuggerMessageSource,
 				type: "AUDIENCE_EVENT",
 				data: {
 					containerId: this.containerId,
-					audienceState: this.container.audience.getMembers(),
+					audienceState: audienceMembersArray,
 					audienceHistory: this.getAudienceHistory(),
 				},
 			},
 			this.messageLoggingOptions,
 		);
-
-		console.log("Passed Post");
 	};
 
 	// #endregion

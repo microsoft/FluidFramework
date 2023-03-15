@@ -33,12 +33,12 @@ export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMess
 }
 
 // @public
-export interface AudienceEventMessageData {
+export interface AudienceEventMessageData extends HasContainerId {
     // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
     //
     // (undocumented)
     audienceHistory: readonly AudienceChangeLogEntry[];
-    audienceState: Map<string, IClient>;
+    audienceState: IClient[];
 }
 
 // @internal
@@ -122,6 +122,12 @@ export class FluidDebuggerLogger extends TelemetryLogger {
     static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_AUDIENCE_EVENT";
 }
 
 // @public

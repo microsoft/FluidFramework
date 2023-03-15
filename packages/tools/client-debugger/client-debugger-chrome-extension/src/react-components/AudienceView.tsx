@@ -13,17 +13,11 @@ import {
 	AudienceEventMessage,
 	HasContainerId,
 } from "@fluid-tools/client-debugger";
+// import { _AudienceView, _AudienceViewProps } from "@fluid-tools/client-debugger-view";
 import { extensionMessageSource } from "../messaging";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(AudienceView)";
-
-// POST Request for Audience Data
-const getAudienceMessage: IDebuggerMessage = {
-	type: "GET_AUDIENCE_EVENT",
-	source: extensionMessageSource,
-	data: undefined,
-};
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -43,6 +37,15 @@ export interface AudienceViewProps extends HasContainerId {
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { containerId } = props;
 
+	// POST Request for Audience Data
+	const getAudienceMessage: IDebuggerMessage = {
+		type: "GET_AUDIENCE_EVENT",
+		source: extensionMessageSource,
+		data: {
+			containerId,
+		},
+	};
+
 	const messageRelay = React.useContext(MessageRelayContext);
 	if (messageRelay === undefined) {
 		throw new Error(
@@ -50,8 +53,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		);
 	}
 
-	const [audienceState, setAudienceState] = React.useState<Map<string, IClient> | undefined>();
-	const [_audienceHistory, setAudienceHistory] =
+	const [audienceState, setAudienceState] = React.useState<IClient[] | undefined>();
+	const [audienceHistory, setAudienceHistory] =
 		React.useState<readonly AudienceChangeLogEntry[]>();
 
 	React.useEffect(() => {
@@ -62,7 +65,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
 				const message: AudienceEventMessage = untypedMessage as AudienceEventMessage;
 
+				setAudienceState(message.data.audienceState);
 				setAudienceHistory(message.data.audienceHistory);
+
 				return true;
 			},
 		};
@@ -86,15 +91,30 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		};
 	}, [containerId, setAudienceState, setAudienceHistory]);
 
+	console.log("audienceState:", audienceState);
+	console.log("--------------------------");
+	console.log("audienceHistory:", audienceHistory);
+
 	return (
 		<Stack>
 			<StackItem>
 				<h3>Audience Data</h3>
 			</StackItem>
 			<StackItem>
-				<div>TODO</div>
-				<div> {audienceState} </div>
-				<div> {setAudienceHistory} </div>
+				<div>
+					{" "}
+					{audienceState === undefined ? <h1> Hello </h1> : JSON.stringify(audienceState)}
+				</div>
+				<h1> ------------------------------------------------ </h1>
+				<div>
+					{" "}
+					{audienceHistory === undefined ? (
+						<h1> Hello </h1>
+					) : (
+						JSON.stringify(audienceHistory)
+					)}{" "}
+				</div>
+				<div> {audienceState === undefined ? <h1> Hello </h1> : audienceState.length} </div>
 			</StackItem>
 		</Stack>
 	);

@@ -63,6 +63,45 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
 
 	return (
+		<_AudienceView
+			clientId={myClientId}
+			allAudienceMembers={allAudienceMembers}
+			myClientConnection={myClientConnection}
+			onRenderAudienceMember={onRenderAudienceMember}
+			audienceHistory={audienceHistory}
+		/>
+	);
+}
+
+/**
+ * {@link _AudienceView} input props.
+ */
+export interface _AudienceViewProps {
+	clientId: string | undefined;
+	allAudienceMembers: Map<string, IClient>;
+	myClientConnection: IClient | undefined;
+	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
+	audienceHistory: readonly AudienceChangeLogEntry[];
+}
+
+/**
+ * Audience View displaying current audience members and audience history
+ *
+ * @remarks Operates strictly on raw data, so it can be potentially re-used in contexts that don't have
+ * direct access to the Client Debugger.
+ *
+ * @internal
+ */
+export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
+	const {
+		clientId,
+		allAudienceMembers,
+		myClientConnection,
+		onRenderAudienceMember,
+		audienceHistory,
+	} = props;
+
+	return (
 		<Stack
 			styles={{
 				root: {
@@ -76,7 +115,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 				</div>
 				<MembersView
 					audience={allAudienceMembers}
-					myClientId={myClientId}
+					myClientId={clientId}
 					myClientConnection={myClientConnection}
 					onRenderAudienceMember={onRenderAudienceMember}
 				/>
