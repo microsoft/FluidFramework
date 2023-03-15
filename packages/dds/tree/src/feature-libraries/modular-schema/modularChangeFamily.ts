@@ -154,9 +154,9 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
-		if (crossFieldTable.fieldsToUpdate.size > 0) {
-			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
-			crossFieldTable.fieldsToUpdate = new Set();
+		if (crossFieldTable.invalidatedFields.size > 0) {
+			const fieldsToUpdate = crossFieldTable.invalidatedFields;
+			crossFieldTable.invalidatedFields = new Set();
 			for (const field of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
@@ -174,7 +174,7 @@ export class ModularChangeFamily
 		}
 
 		assert(
-			crossFieldTable.fieldsToUpdate.size === 0,
+			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
 		return makeModularChangeset(composedFields, maxId, revInfos);
@@ -304,9 +304,9 @@ export class ModularChangeFamily
 			crossFieldTable,
 		);
 
-		if (crossFieldTable.fieldsToUpdate.size > 0) {
-			const fieldsToUpdate = crossFieldTable.fieldsToUpdate;
-			crossFieldTable.fieldsToUpdate = new Set();
+		if (crossFieldTable.invalidatedFields.size > 0) {
+			const fieldsToUpdate = crossFieldTable.invalidatedFields;
+			crossFieldTable.invalidatedFields = new Set();
 			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
@@ -324,7 +324,7 @@ export class ModularChangeFamily
 		}
 
 		assert(
-			crossFieldTable.fieldsToUpdate.size === 0,
+			crossFieldTable.invalidatedFields.size === 0,
 			0x59c /* Should not need more than one amend pass. */,
 		);
 
@@ -447,7 +447,7 @@ export class ModularChangeFamily
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
-			baseChangeToNew: new Map(),
+			baseMapToRebased: new Map(),
 			baseChangeToContext: new Map(),
 			baseMapToParentField: new Map(),
 		};
@@ -470,113 +470,24 @@ export class ModularChangeFamily
 		);
 
 		const rebasedChangeset = makeModularChangeset(rebasedFields, maxId, change.revisions);
+		crossFieldTable.baseMapToRebased.set(over.change.fieldChanges, rebasedChangeset);
 
-		crossFieldTable.baseChangeToNew.set(over.change.fieldChanges, rebasedChangeset);
+		const [fieldsToAmend, invalidatedEmptyFields] = getFieldsToAmend(
+			crossFieldTable.invalidatedFields,
+			crossFieldTable.baseMapToRebased,
+			crossFieldTable.baseChangeToContext,
+			crossFieldTable.baseMapToParentField,
+		);
 
-		if (crossFieldTable.fieldsToUpdate.size > 0) {
-			const invalidatedFields = crossFieldTable.fieldsToUpdate;
-			crossFieldTable.fieldsToUpdate = new Set();
-			const fieldsToUpdate = new Set<FieldChange>();
-			const invalidatedEmptyFields = new Set<FieldChange>();
-			for (let baseField of invalidatedFields) {
-				let baseFieldContext = crossFieldTable.baseChangeToContext.get(baseField);
-
-				while (
-					baseFieldContext !== undefined &&
-					!crossFieldTable.baseChangeToNew.has(baseFieldContext.map)
-				) {
-					invalidatedEmptyFields.add(baseField);
-					const baseFieldTemp = crossFieldTable.baseMapToParentField.get(
-						baseFieldContext.map,
-					);
-					assert(baseFieldTemp !== undefined, "Should have parent for field");
-					baseField = baseFieldTemp;
-					const contextTemp = crossFieldTable.baseChangeToContext.get(baseField);
-					assert(contextTemp !== undefined, "Should have context for field");
-					baseFieldContext = contextTemp;
-				}
-
-				fieldsToUpdate.add(baseField);
-			}
-
-			for (const fieldToUpdate of fieldsToUpdate) {
-				const fieldContext = crossFieldTable.baseChangeToContext.get(fieldToUpdate);
-				let fieldChange: FieldChange;
-				let baseChanges: FieldChange;
-				let baseRevision: RevisionTag | undefined;
-				let newNode: HasFieldChanges | undefined;
-				let field: FieldKey | undefined;
-
-				if (fieldContext !== undefined) {
-					newNode = crossFieldTable.baseChangeToNew.get(fieldContext.map);
-					assert(
-						newNode !== undefined,
-						"Should be a new HasFieldChanges associated with this base change",
-					);
-
-					baseChanges = fieldToUpdate;
-					field = fieldContext.field;
-					fieldChange = newNode.fieldChanges?.get(field) ?? {
-						fieldKind: genericFieldKind.identifier,
-						change: brand(newGenericChangeset()),
-					};
-
-					baseRevision = baseChanges.revision ?? fieldContext.revision;
-				} else {
-					fieldChange = fieldToUpdate;
-					baseChanges = {
-						fieldKind: genericFieldKind.identifier,
-						change: brand(newGenericChangeset()),
-					};
-				}
-
-				const {
-					fieldKind,
-					changesets: [fieldChangeset, baseChangeset],
-				} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
-
-				const amendedChange = fieldKind.changeHandler.rebaser.amendRebase(
-					fieldChangeset,
-					tagChange(baseChangeset, baseRevision),
-					(child, baseChild) =>
-						this.rebaseNodeChange(
-							child,
-							baseChild !== undefined
-								? tagChange(baseChild, baseRevision)
-								: undefined,
-							genId,
-							crossFieldTable,
-							undefined,
-							(base, newChange) =>
-								newChange === undefined && invalidatedEmptyFields.has(base),
-							revisionMetadata,
-						),
-					genId,
-					newCrossFieldManager(crossFieldTable),
-					revisionMetadata,
-				);
-
-				if (newNode !== undefined && field !== undefined) {
-					if (fieldKind.changeHandler.isEmpty(amendedChange)) {
-						newNode.fieldChanges?.delete(field);
-					} else {
-						if (newNode.fieldChanges === undefined) {
-							newNode.fieldChanges = new Map();
-						}
-
-						newNode.fieldChanges.set(field, {
-							fieldKind: fieldKind.identifier,
-							change: brand(amendedChange),
-						});
-					}
-				} else {
-					fieldChange.change = brand(amendedChange);
-				}
-			}
-		}
-
+		this.amendRebase(
+			crossFieldTable,
+			fieldsToAmend,
+			invalidatedEmptyFields,
+			genId,
+			revisionMetadata,
+		);
 		assert(
-			crossFieldTable.fieldsToUpdate.size === 0,
+			crossFieldTable.invalidatedFields.size === 0,
 			0x59f /* Should not need more than one amend pass. */,
 		);
 
@@ -584,6 +495,90 @@ export class ModularChangeFamily
 			rebasedChangeset.maxId = brand(maxId);
 		}
 		return rebasedChangeset;
+	}
+
+	private amendRebase(
+		crossFieldTable: RebaseTable,
+		fieldsToAmend: Set<FieldChange>,
+		invalidatedEmptyFields: Set<FieldChange>,
+		genId: IdAllocator,
+		revisionMetadata: RevisionMetadataSource,
+	) {
+		crossFieldTable.invalidatedFields = new Set();
+		for (const fieldToAmend of fieldsToAmend) {
+			const fieldContext = crossFieldTable.baseChangeToContext.get(fieldToAmend);
+			let fieldChange: FieldChange;
+			let baseChanges: FieldChange;
+			let baseRevision: RevisionTag | undefined;
+			let newNode: HasFieldChanges | undefined;
+			let field: FieldKey | undefined;
+
+			if (fieldContext !== undefined) {
+				// fieldToAmend is part of the base changeset.
+				newNode = crossFieldTable.baseMapToRebased.get(fieldContext.map);
+				assert(
+					newNode !== undefined,
+					"Should be a new HasFieldChanges associated with this base change",
+				);
+
+				baseChanges = fieldToAmend;
+				field = fieldContext.field;
+				fieldChange = newNode.fieldChanges?.get(field) ?? {
+					fieldKind: genericFieldKind.identifier,
+					change: brand(newGenericChangeset()),
+				};
+
+				baseRevision = baseChanges.revision ?? fieldContext.revision;
+			} else {
+				// fieldToAmend is part of the rebased changeset.
+				fieldChange = fieldToAmend;
+				baseChanges = {
+					fieldKind: genericFieldKind.identifier,
+					change: brand(newGenericChangeset()),
+				};
+			}
+
+			const {
+				fieldKind,
+				changesets: [fieldChangeset, baseChangeset],
+			} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
+
+			const amendedChange = fieldKind.changeHandler.rebaser.amendRebase(
+				fieldChangeset,
+				tagChange(baseChangeset, baseRevision),
+				(child, baseChild) =>
+					this.rebaseNodeChange(
+						child,
+						baseChild !== undefined ? tagChange(baseChild, baseRevision) : undefined,
+						genId,
+						crossFieldTable,
+						undefined,
+						(base, newChange) =>
+							newChange === undefined && invalidatedEmptyFields.has(base),
+						revisionMetadata,
+					),
+				genId,
+				newCrossFieldManager(crossFieldTable),
+				revisionMetadata,
+			);
+
+			if (newNode !== undefined && field !== undefined) {
+				if (fieldKind.changeHandler.isEmpty(amendedChange)) {
+					newNode.fieldChanges?.delete(field);
+				} else {
+					if (newNode.fieldChanges === undefined) {
+						newNode.fieldChanges = new Map();
+					}
+
+					newNode.fieldChanges.set(field, {
+						fieldKind: fieldKind.identifier,
+						change: brand(amendedChange),
+					});
+				}
+			} else {
+				fieldChange.change = brand(amendedChange);
+			}
+		}
 	}
 
 	private rebaseFieldMap(
@@ -744,7 +739,7 @@ export class ModularChangeFamily
 		}
 
 		if (over?.change?.fieldChanges !== undefined) {
-			crossFieldTable.baseChangeToNew.set(over.change.fieldChanges, rebasedChange);
+			crossFieldTable.baseMapToRebased.set(over.change.fieldChanges, rebasedChange);
 		}
 
 		return rebasedChange;
@@ -801,6 +796,40 @@ export class ModularChangeFamily
 	}
 }
 
+function getFieldsToAmend(
+	invalidatedFields: Set<FieldChange>,
+	baseMapToRebased: Map<FieldChangeMap, HasFieldChanges>,
+	baseChangeToContext: Map<FieldChange, FieldChangeContext>,
+	baseMapToParentField: Map<FieldChangeMap, FieldChange>,
+): [fieldsToAmend: Set<FieldChange>, invalidatedEmptyFields: Set<FieldChange>] {
+	const fieldsToAmend = new Set<FieldChange>();
+	const invalidatedEmptyFields = new Set<FieldChange>();
+	for (let fieldChange of invalidatedFields) {
+		// fieldChange may be either part of the base changeset or the rebased changeset.
+		// If `baseChangeToContext` has an entry for it, it is part of the base changeset.
+		// Otherwise it is part of the rebased changeset, and there is no corresponding base FieldChange.
+		// If part of the rebased changeset we can add it to `fieldsToAmend`.
+		// If part of the base changeset we may have to walk up to find an ancestor with a corresponding HasFieldChanges
+		// and add that ancestor to `fieldsToAmend`.
+
+		let baseFieldContext = baseChangeToContext.get(fieldChange);
+
+		while (baseFieldContext !== undefined && !baseMapToRebased.has(baseFieldContext.map)) {
+			invalidatedEmptyFields.add(fieldChange);
+			const baseFieldTemp = baseMapToParentField.get(baseFieldContext.map);
+			assert(baseFieldTemp !== undefined, "Should have parent for field");
+			fieldChange = baseFieldTemp;
+			const contextTemp = baseChangeToContext.get(fieldChange);
+			assert(contextTemp !== undefined, "Should have context for field");
+			baseFieldContext = contextTemp;
+		}
+
+		fieldsToAmend.add(fieldChange);
+	}
+
+	return [fieldsToAmend, invalidatedEmptyFields];
+}
+
 function newGenericChangeset(): GenericChangeset {
 	return [];
 }
@@ -841,11 +870,11 @@ interface CrossFieldTable<TFieldData> {
 	dstTable: NestedMap<RevisionTag | undefined, ChangesetLocalId, unknown>;
 	srcDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
 	dstDependents: NestedMap<RevisionTag | undefined, ChangesetLocalId, TFieldData>;
-	fieldsToUpdate: Set<TFieldData>;
+	invalidatedFields: Set<TFieldData>;
 }
 
 interface RebaseTable extends CrossFieldTable<FieldChange> {
-	baseChangeToNew: Map<FieldChangeMap, HasFieldChanges>;
+	baseMapToRebased: Map<FieldChangeMap, HasFieldChanges>;
 	baseChangeToContext: Map<FieldChange, FieldChangeContext>;
 	baseMapToParentField: Map<FieldChangeMap, FieldChange>;
 }
@@ -862,7 +891,7 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 		dstTable: new Map(),
 		srcDependents: new Map(),
 		dstDependents: new Map(),
-		fieldsToUpdate: new Set(),
+		invalidatedFields: new Set(),
 	};
 }
 
@@ -911,7 +940,7 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 						: crossFieldTable.dstDependents;
 				const dependent = tryGetFromNestedMap(dependents, revision, id);
 				if (dependent !== undefined) {
-					crossFieldTable.fieldsToUpdate.add(dependent);
+					crossFieldTable.invalidatedFields.add(dependent);
 				}
 
 				if (nestedSetContains(getQueries(target), revision, id)) {
@@ -958,7 +987,7 @@ function addFieldData<T>(manager: CrossFieldManagerI<T>, fieldData: T) {
 	}
 
 	if (manager.fieldInvalidated) {
-		manager.table.fieldsToUpdate.add(fieldData);
+		manager.table.invalidatedFields.add(fieldData);
 	}
 }
 
