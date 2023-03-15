@@ -69,15 +69,17 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		runtime.on("signal", (message) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (message?.content?.type === SignalType.ExternalDataChanged) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-				const taskListId = message?.content?.externalTaskListId;
-				if (taskListId !== undefined && taskListCollection !== undefined) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-					const taskList = taskListCollection.getTaskList(taskListId);
-					if (taskList !== undefined) {
-						taskList.importExternalData().catch(console.error);
-					}
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				const taskListId = message?.content?.taskListId as string;
+				console.log(taskListId);
+				const taskList = taskListCollection.getTaskList(taskListId);
+				console.log(taskList);
+				if (taskList === undefined) {
+					throw new Error(
+						`TaskList with id '${taskListId}' does not exist in collection`,
+					);
 				}
+				taskList.importExternalData().catch(console.error);
 			}
 		});
 		return new AppModel(taskListCollection, container, runtime);
