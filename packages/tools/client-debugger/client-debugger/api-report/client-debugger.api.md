@@ -30,7 +30,25 @@ export interface AudienceChangeLogEntry extends LogEntry {
 export function clearDebuggerRegistry(): void;
 
 // @public
+export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+    // (undocumented)
+    type: "CLOSE_CONTAINER";
+}
+
+// @public
+export type CloseContainerMessageData = HasContainerId;
+
+// @public
 export function closeFluidClientDebugger(containerId: string): void;
+
+// @public
+export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+    // (undocumented)
+    type: "CONNECT_CONTAINER";
+}
+
+// @public
+export type ConnectContainerMessageData = HasContainerId;
 
 // @internal
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
@@ -93,6 +111,15 @@ export interface DebuggerRegistryEvents extends IEvent {
     // @eventProperty
     (event: "debuggerClosed", listener: (containerId: string) => void): void;
 }
+
+// @public
+export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
+    // (undocumented)
+    type: "DISCONNECT_CONTAINER";
+}
+
+// @public
+export type DisconnectContainerMessageData = HasContainerId;
 
 // @public
 export interface FluidClientDebuggerProps {

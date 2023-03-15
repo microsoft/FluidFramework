@@ -105,7 +105,6 @@ export const addressSchema = namedTreeSchema({
 export const mapStringSchema = namedTreeSchema({
 	name: brand("Map<String>"),
 	extraLocalFields: fieldSchema(FieldKinds.optional, [stringSchema.name]),
-	// currently it has no effect since EditableTree does not support (de-)serialization of `object`s
 	value: ValueSchema.Serializable,
 });
 

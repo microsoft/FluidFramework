@@ -608,7 +608,7 @@ export function configureWebSocketServices(
 				},
 				(error) => {
 					socket.emit("connect_document_error", error);
-					if (isNetworkError(error)) {
+					if (error?.code !== undefined) {
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
 					connectMetric.error(`Connect document failed`, error);

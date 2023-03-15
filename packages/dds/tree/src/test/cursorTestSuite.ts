@@ -23,13 +23,12 @@ import {
 	setGenericTreeField,
 	isLocalKey,
 	UpPath,
-	compareUpPaths,
 	compareFieldUpPaths,
-	clonePath,
 	FieldUpPath,
 	PathRootPrefix,
 } from "../core";
 import { brand } from "../util";
+import { expectEqualPaths } from "./utils";
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: brand("Foo") }],
@@ -634,15 +633,6 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			});
 		}
 	});
-}
-
-function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
-	if (!compareUpPaths(path, expectedPath)) {
-		// This is slower than above compare, so only do it in the error case.
-		// Make a nice error message:
-		assert.deepEqual(clonePath(path), clonePath(expectedPath));
-		assert.fail("unequal paths, but clones compared equal");
-	}
 }
 
 /**

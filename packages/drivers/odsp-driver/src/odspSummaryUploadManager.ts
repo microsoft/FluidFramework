@@ -14,6 +14,7 @@ import {
 	MonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
+import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 import {
 	IOdspSummaryPayload,
 	IWriteSummaryResponse,
@@ -78,7 +79,7 @@ export class OdspSummaryUploadManager {
 		referenceSequenceNumber: number,
 		tree: api.ISummaryTree,
 	): Promise<IWriteSummaryResponse> {
-		const containsProtocolTree = Object.keys(tree.tree).includes(".protocol");
+		const containsProtocolTree = isCombinedAppAndProtocolSummary(tree);
 		const { snapshotTree, blobs } = await this.convertSummaryToSnapshotTree(
 			parentHandle,
 			tree,

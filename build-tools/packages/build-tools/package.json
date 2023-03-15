@@ -78,7 +78,7 @@
 		"semver": "^7.3.7",
 		"shelljs": "^0.8.4",
 		"sort-package-json": "1.57.0",
-		"ts-morph": "^7.1.2",
+		"ts-morph": "^17.0.1",
 		"yaml": "^2.1.2"
 	},
 	"devDependencies": {

@@ -89,6 +89,7 @@ export interface IContainerActions {
 export enum PanelView {
     Audience = "Audience",
     ContainerData = "Data",
+    ContainerStateHistory = "States",
     Telemetry = "Telemetry"
 }
 

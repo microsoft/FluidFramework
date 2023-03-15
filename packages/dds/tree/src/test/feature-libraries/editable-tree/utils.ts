@@ -27,10 +27,10 @@ import {
 	isPrimitive,
 	getField,
 	isUnwrappedNode,
-	indexSymbol,
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
+	parentField,
 } from "../../../feature-libraries";
 import { schemaMap } from "./mockData";
 
@@ -137,7 +137,10 @@ export function expectFieldEquals(
 	}
 	for (let index = 0; index < field.length; index++) {
 		const node = field.getNode(index);
-		assert.equal(node[indexSymbol], index);
+		assert.equal(node[parentField].index, index);
+		// EditableFields currently don't have stable object identity, so we can't just compare the fields here,
+		// and calling `expectFieldEquals` could recurse infinitely, but we can sanity check something from it.
+		assert.equal(node[parentField].parent.fieldKey, field.fieldKey);
 		expectNodeEquals(schemaData, node, expected[index]);
 	}
 }

@@ -12,8 +12,11 @@ import { ContainerStateMetadata } from "./ContainerMetadata";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
+	CloseContainerMessage,
+	ConnectContainerMessage,
 	ContainerStateChangeMessage,
 	debuggerMessageSource,
+	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
@@ -34,14 +37,15 @@ import { FluidClientDebuggerProps } from "./Registry";
  * **Messages it listens for:**
  *
  * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast {@link ContainerStateChangeMessage}.
- *
+ * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to the container.
+ * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect from the container.
+ * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
  * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
  * or when requested (via {@link GetContainerStateMessage}).
- *
  * TODO: Document others as they are added.
  *
  * @sealed
@@ -173,6 +177,30 @@ export class FluidClientDebugger
 			const message = untypedMessage as GetContainerStateMessage;
 			if (message.data.containerId === this.containerId) {
 				this.postContainerStateChange();
+				return true;
+			}
+			return false;
+		},
+		["CONNECT_CONTAINER"]: (untypedMessage) => {
+			const message = untypedMessage as ConnectContainerMessage;
+			if (message.data.containerId === this.containerId) {
+				this.container.connect();
+				return true;
+			}
+			return false;
+		},
+		["DISCONNECT_CONTAINER"]: (untypedMessage) => {
+			const message = untypedMessage as DisconnectContainerMessage;
+			if (message.data.containerId === this.containerId) {
+				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
+				return true;
+			}
+			return false;
+		},
+		["CLOSE_CONTAINER"]: (untypedMessage) => {
+			const message = untypedMessage as CloseContainerMessage;
+			if (message.data.containerId === this.containerId) {
+				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
 				return true;
 			}
 			return false;

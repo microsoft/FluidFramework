@@ -17,6 +17,7 @@ import {
 	emptyDelta,
 	mintRevisionTag,
 	SeqNumber,
+	ChangeFamilyEditor,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -46,7 +47,7 @@ function asDelta(intentions: number[]): Delta.Root {
 
 function changeFamilyFactory(
 	rebaser?: ChangeRebaser<TestChange>,
-): ChangeFamily<unknown, TestChange> {
+): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		encoder: new TestChangeEncoder(),
@@ -65,7 +66,7 @@ function editManagerFactory(options: {
 } {
 	const family = changeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
+	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
 		anchors,
