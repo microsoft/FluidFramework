@@ -28,10 +28,6 @@ jobs:
   placeholder-content:
     name: PR template placeholder content
     runs-on: ubuntu-latest
-    if: |
-      github.event.action == 'edited' ||
-      github.event.action == 'opened' ||
-      github.event.action == 'reopened'
     steps:
       - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1.0.1
         with:
