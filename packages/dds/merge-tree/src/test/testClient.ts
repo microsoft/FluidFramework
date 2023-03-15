@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { DebugLogger } from "@fluidframework/telemetry-utils";
 import {
 	ISequencedDocumentMessage,
@@ -13,7 +14,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
-import random from "random-js";
 import { Trace } from "@fluidframework/common-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
@@ -49,8 +49,7 @@ export function specToSegment(spec: IJSONSegment): ISegment {
 	throw new Error(`Unrecognized IJSONSegment type: '${JSON.stringify(spec)}'`);
 }
 
-const mt = random.engines.mt19937();
-mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+const random = makeRandom(0xdeadbeef, 0xfeedbed);
 
 export class TestClient extends Client {
 	public static searchChunkSize = 256;
@@ -329,7 +328,7 @@ export class TestClient extends Client {
 
 	public findRandomWord() {
 		const len = this.getLength();
-		const pos = random.integer(0, len)(mt);
+		const pos = random.integer(0, len);
 		const nextWord = this.searchFromPos(pos, /\s\w+\b/);
 		return nextWord;
 	}

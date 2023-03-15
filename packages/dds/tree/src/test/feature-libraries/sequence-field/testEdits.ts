@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import {
+	ChangesetLocalId,
+	SequenceField as SF,
+	singleTextCursor,
+} from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { fakeRepair } from "../../utils";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
@@ -115,8 +119,11 @@ function createMoveChangeset(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
+	id: ChangesetLocalId = brand(0),
 ): SF.Changeset<never> {
-	return composeAnonChangesShallow(SF.sequenceFieldEditor.move(sourceIndex, count, destIndex));
+	return composeAnonChangesShallow(
+		SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id),
+	);
 }
 
 function createReturnChangeset(

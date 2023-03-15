@@ -21,6 +21,7 @@ import {
 	RevisionTag,
 	tagChange,
 	makeAnonChange,
+	ChangeFamilyEditor,
 } from "../../core";
 import {
 	addToNestedSet,
@@ -40,6 +41,7 @@ import {
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
+	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -146,8 +148,14 @@ export class ModularChangeFamily
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
+		const changesWithoutConstraintViolations = changes.filter(
+			(change) => (change.change.constraintViolationCount ?? 0) === 0,
+		);
+
 		const composedFields = this.composeFieldMaps(
-			changes.map((change) => tagChange(change.change.changes, change.revision)),
+			changesWithoutConstraintViolations.map((change) =>
+				tagChange(change.change.changes, change.revision),
+			),
 			genId,
 			crossFieldTable,
 			revisionMetadata,
@@ -251,7 +259,17 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
+		let valueConstraint: Value | undefined;
 		for (const change of changes) {
+			// Use the first defined value constraint before any value changes.
+			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
+			if (
+				change.change.valueConstraint !== undefined &&
+				valueConstraint === undefined &&
+				valueChange === undefined
+			) {
+				valueConstraint = { ...change.change.valueConstraint };
+			}
 			if (change.change.valueChange !== undefined) {
 				valueChange = { ...change.change.valueChange };
 				valueChange.revision ??= change.revision;
@@ -274,6 +292,10 @@ export class ModularChangeFamily
 
 		if (composedFieldChanges.size > 0) {
 			composedNodeChange.fieldChanges = composedFieldChanges;
+		}
+
+		if (valueConstraint !== undefined) {
+			composedNodeChange.valueConstraint = valueConstraint;
 		}
 
 		return composedNodeChange;
@@ -337,6 +359,7 @@ export class ModularChangeFamily
 						? revInfo.map(({ tag }) => ({ tag, isRollback: true }))
 						: Array.from(revInfo)
 				  ).reverse(),
+			change.change.constraintViolationCount,
 		);
 	}
 
@@ -445,6 +468,7 @@ export class ModularChangeFamily
 		let maxId = change.maxId ?? -1;
 		const genId: IdAllocator = () => brand(++maxId);
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
+		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 		const revInfos: RevisionInfo[] = [];
 		if (over.change.revisions !== undefined) {
 			revInfos.push(...over.change.revisions);
@@ -459,6 +483,7 @@ export class ModularChangeFamily
 			genId,
 			crossFieldTable,
 			revisionMetadata,
+			constraintState,
 		);
 
 		if (crossFieldTable.fieldsToUpdate.size > 0) {
@@ -484,7 +509,12 @@ export class ModularChangeFamily
 			0x59f /* Should not need more than one amend pass. */,
 		);
 
-		return makeModularChangeset(rebasedFields, maxId, change.revisions);
+		return makeModularChangeset(
+			rebasedFields,
+			maxId,
+			change.revisions,
+			constraintState.violationCount,
+		);
 	}
 
 	private rebaseFieldMap(
@@ -493,6 +523,7 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
 		revisionMetadata: RevisionMetadataSource,
+		constraintState: ConstraintState,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
@@ -519,6 +550,7 @@ export class ModularChangeFamily
 							genId,
 							crossFieldTable,
 							revisionMetadata,
+							constraintState,
 						),
 					genId,
 					manager,
@@ -549,24 +581,44 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<RebaseData>,
 		revisionMetadata: RevisionMetadataSource,
+		constraintState: ConstraintState,
 	): NodeChangeset {
-		if (change.fieldChanges === undefined || over.change.fieldChanges === undefined) {
-			return change;
+		const fieldChanges =
+			change.fieldChanges === undefined || over.change.fieldChanges === undefined
+				? change.fieldChanges
+				: this.rebaseFieldMap(
+						change.fieldChanges,
+						{
+							...over,
+							change: over.change.fieldChanges,
+						},
+						genId,
+						crossFieldTable,
+						revisionMetadata,
+						constraintState,
+				  );
+
+		const changeSet: NodeChangeset = {
+			...change,
+			fieldChanges,
+		};
+
+		// We only care if a violated constraint is fixed or if a non-violated
+		// constraint becomes violated
+		if (changeSet.valueConstraint !== undefined && over.change.valueChange !== undefined) {
+			const violatedByOver =
+				over.change.valueChange.value !== changeSet.valueConstraint.value;
+
+			if (changeSet.valueConstraint.violated !== violatedByOver) {
+				changeSet.valueConstraint = {
+					...changeSet.valueConstraint,
+					violated: violatedByOver,
+				};
+				constraintState.violationCount += violatedByOver ? 1 : -1;
+			}
 		}
 
-		return {
-			...change,
-			fieldChanges: this.rebaseFieldMap(
-				change.fieldChanges,
-				{
-					...over,
-					change: over.change.fieldChanges,
-				},
-				genId,
-				crossFieldTable,
-				revisionMetadata,
-			),
-		};
+		return changeSet;
 	}
 
 	public rebaseAnchors(anchors: AnchorSet, over: ModularChangeset): void {
@@ -666,6 +718,16 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 		srcDependents: new Map(),
 		dstDependents: new Map(),
 		fieldsToUpdate: new Set(),
+	};
+}
+
+interface ConstraintState {
+	violationCount: number;
+}
+
+function newConstraintState(violationCount: number): ConstraintState {
+	return {
+		violationCount,
 	};
 }
 
@@ -773,6 +835,7 @@ function makeModularChangeset(
 	changes: FieldChangeMap,
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
+	constraintViolationCount: number | undefined = undefined,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { changes };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -780,6 +843,9 @@ function makeModularChangeset(
 	}
 	if (maxId >= 0) {
 		changeset.maxId = brand(maxId);
+	}
+	if (constraintViolationCount !== undefined && constraintViolationCount > 0) {
+		changeset.constraintViolationCount = constraintViolationCount;
 	}
 	return changeset;
 }
@@ -806,12 +872,31 @@ export class ModularEditBuilder
 	extends ProgressiveEditBuilderBase<ModularChangeset>
 	implements ProgressiveEditBuilder<ModularChangeset>
 {
+	private transactionDepth: number = 0;
+	private idAllocator: IdAllocator;
+
 	public constructor(
-		family: ChangeFamily<unknown, ModularChangeset>,
+		family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>,
 		changeReceiver: (change: ModularChangeset) => void,
 		anchors: AnchorSet,
 	) {
 		super(family, changeReceiver, anchors);
+		this.idAllocator = idAllocatorFromMaxId();
+	}
+
+	public override enterTransaction(): void {
+		this.transactionDepth += 1;
+		if (this.transactionDepth === 1) {
+			this.idAllocator = idAllocatorFromMaxId();
+		}
+	}
+
+	public override exitTransaction(): void {
+		assert(this.transactionDepth > 0, "Cannot exit inexistent transaction");
+		this.transactionDepth -= 1;
+		if (this.transactionDepth === 0) {
+			this.idAllocator = idAllocatorFromMaxId();
+		}
 	}
 
 	public apply(change: ModularChangeset): void {
@@ -852,6 +937,10 @@ export class ModularEditBuilder
 		this.applyChange(composedChange);
 	}
 
+	public generateId(): ChangesetLocalId {
+		return this.idAllocator();
+	}
+
 	private buildChangeMap(
 		path: UpPath | undefined,
 		field: FieldKey,
@@ -882,6 +971,22 @@ export class ModularEditBuilder
 	public setValue(path: UpPath, value: Value): void {
 		const valueChange: ValueChange = value === undefined ? {} : { value };
 		const nodeChange: NodeChangeset = { valueChange };
+		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+			path.parentIndex,
+			nodeChange,
+		);
+		this.submitChange(
+			path.parent,
+			path.parentField,
+			genericFieldKind.identifier,
+			brand(fieldChange),
+		);
+	}
+
+	public addValueConstraint(path: UpPath, currentValue: Value): void {
+		const nodeChange: NodeChangeset = {
+			valueConstraint: { value: currentValue, violated: false },
+		};
 		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
 			path.parentIndex,
 			nodeChange,

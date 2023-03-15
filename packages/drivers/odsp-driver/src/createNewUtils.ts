@@ -10,7 +10,10 @@ import {
 	SummaryType,
 	ISnapshotTree,
 } from "@fluidframework/protocol-definitions";
-import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
+import {
+	getDocAttributesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils";
 import { stringToBuffer, Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
@@ -96,11 +99,11 @@ function convertCreateNewSummaryTreeToTreeAndBlobsCore(
 }
 
 export function convertSummaryIntoContainerSnapshot(createNewSummary: ISummaryTree) {
-	const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-	const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-	if (!(appSummary && protocolSummary)) {
+	if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 		throw new Error("App and protocol summary required for create new path!!");
 	}
+	const appSummary = createNewSummary.tree[".app"];
+	const protocolSummary = createNewSummary.tree[".protocol"];
 	const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 	const attributesSummaryBlob: ISummaryBlob = {
 		type: SummaryType.Blob,
