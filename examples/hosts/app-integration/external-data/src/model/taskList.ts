@@ -354,9 +354,8 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 				"externalTaskListId not present in instantiation. Cannot instantiate task list",
 			);
 		}
-		this._externalTaskListId = externalTaskListId;
-
-		await this.registerWithCustomerService(externalTaskListId, props?.containerUrl);
+		this.externalTaskListId = externalTaskListId;
+		await this.registerWithCustomerService(this.externalTaskListId, props?.containerUrl);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
