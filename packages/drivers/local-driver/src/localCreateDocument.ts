@@ -7,6 +7,7 @@ import {
 	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
@@ -24,11 +25,11 @@ export async function createDocument(
 	const id = pathArr[pathArr.length - 1];
 	const documentStorage = (localDeltaConnectionServer as LocalDeltaConnectionServer)
 		.documentStorage;
-	const protocolSummary = summary.tree[".protocol"] as ISummaryTree;
-	const appSummary = summary.tree[".app"] as ISummaryTree;
-	if (!(protocolSummary && appSummary)) {
+	if (!isCombinedAppAndProtocolSummary(summary)) {
 		throw new Error("Protocol and App Summary required in the full summary");
 	}
+	const protocolSummary = summary.tree[".protocol"];
+	const appSummary = summary.tree[".app"];
 	const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 	const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 	const sequenceNumber = documentAttributes.sequenceNumber;

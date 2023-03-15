@@ -316,7 +316,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				const attachP = container.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				if (provider.driver.type !== "odsp") {
+				if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
 					// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 				}
