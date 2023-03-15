@@ -307,7 +307,10 @@ export class OdspDelayLoadedDeltaStream {
 				refreshAfterDeltaMs: response.refreshAfterDeltaMs,
 			};
 			if (response.refreshAfterDeltaMs > 0) {
-				this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs, requestSocketToken).catch((error) => {
+				this.scheduleJoinSessionRefresh(
+					response.refreshAfterDeltaMs,
+					requestSocketToken,
+				).catch((error) => {
 					const canRetry = canRetryOnError(error);
 					// Only record error event in case it is non retriable.
 					if (!canRetry) {
