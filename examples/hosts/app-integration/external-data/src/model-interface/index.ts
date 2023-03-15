@@ -28,7 +28,7 @@ export interface IAppModelEvents extends IEvent {}
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	/**
-	 * A collect of task tracker lists.
+	 * Represents the document where one or more task tracker lists will be rendered
 	 */
 	readonly baseDocument: IBaseDocument;
 

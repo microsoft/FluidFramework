@@ -499,8 +499,6 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 		// Storing the handles here are necessary for non leader
 		// clients to rehydrate local this.taskListCollection in hasInitialized().
 		this.root.set(props.externalTaskListId, taskList.handle);
-
-		console.log(this.taskListCollection.get(props.externalTaskListId));
 		this.emit("taskListCollectionChanged");
 	};
 
@@ -510,11 +508,8 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 
 	protected async hasInitialized(): Promise<void> {
 		for (const [id, taskListHandle] of this.root) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const [taskListResolved] = await Promise.all([
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-				taskListHandle.get(),
-			]);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const taskListResolved = await taskListHandle.get();
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			this.taskListCollection.set(id, taskListResolved);
 		}

@@ -53,7 +53,7 @@ async function start(): Promise<void> {
 		id = await createResponse.attach();
 
 		// Hardcoding a taskListId here. A follow up will be to introduce a form
-		// that a the user can enter an external taskListId into that they want
+		// where the user can enter an external taskListId that they want
 		// to import from the external server.
 		model.baseDocument.addTaskList({
 			externalTaskListId: "task-list-1",
