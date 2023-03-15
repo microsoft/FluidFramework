@@ -103,7 +103,6 @@ export function rebase(
 		rebasedChange = SF.amendRebase(
 			rebasedChange,
 			base,
-			// XXX
 			(a, b) => a,
 			idAllocator,
 			moveEffects,
