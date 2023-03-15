@@ -234,11 +234,6 @@ export class RunningSummarizer implements IDisposable {
 			this.summaryWatcher,
 			this.mc.logger,
 		);
-
-		// Listen for ops
-		this.runtime.deltaManager.on("op", (op) => {
-			this.handleOp(op);
-		});
 	}
 
 	private async handleSummaryAck(): Promise<number> {
@@ -345,9 +340,6 @@ export class RunningSummarizer implements IDisposable {
 	}
 
 	public dispose(): void {
-		this.runtime.deltaManager.off("op", (op) => {
-			this.handleOp(op);
-		});
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;

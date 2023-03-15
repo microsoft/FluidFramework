@@ -22,6 +22,7 @@ import {
 	IFluidHandle,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
@@ -383,4 +384,8 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		}
 		return this.runningSummarizer.enqueueSummarize(...args);
 	};
+
+	public processOp?(message: ISequencedDocumentMessage) {
+		this.runningSummarizer?.handleOp(message);
+	}
 }

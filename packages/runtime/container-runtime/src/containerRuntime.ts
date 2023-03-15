@@ -1857,6 +1857,10 @@ export class ContainerRuntime
 			return;
 		}
 
+		if (this._summarizer !== undefined) {
+			this._summarizer.processOp?.(messageArg);
+		}
+
 		if (
 			this.mc.config.getBoolean("enableOfflineLoad") ??
 			this.runtimeOptions.enableOfflineLoad

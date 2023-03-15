@@ -185,7 +185,13 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 		assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
 
 		{
-			const batch = sentMessages[0];
+			let batch = sentMessages[0];
+			if (batch.length === 1) {
+				const contents = JSON.parse(batch[0].contents);
+				assert.strictEqual(contents.type, "groupedBatch");
+				batch = contents.contents;
+			}
+
 			assert.strictEqual(batch.length, 11, "expected 11 messages");
 			assert.strictEqual(
 				batch[0].metadata?.batch,
@@ -356,7 +362,8 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 		);
 	});
 	describe("server sends invalid batch", () => {
-		itExpects(
+		// Batches are now all 1 message
+		itExpects.skip(
 			"interleave system message",
 			[
 				{

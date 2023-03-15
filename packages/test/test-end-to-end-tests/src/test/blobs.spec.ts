@@ -16,6 +16,7 @@ import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
 	describeFullCompat,
 	describeNoCompat,
@@ -239,6 +240,20 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 
 		const attachOpP = new Promise<void>((resolve, reject) =>
 			container1.on("op", (op) => {
+				if (op.contents?.type === "groupedBatch") {
+					const messages = op.contents.contents as IBatchMessage[];
+					for (const message of messages) {
+						if (
+							message.contents &&
+							JSON.parse(message.contents).type === ContainerMessageType.BlobAttach
+						) {
+							// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+							message.metadata?.blobId
+								? resolve()
+								: reject(new Error("no op metadata"));
+						}
+					}
+				}
 				if (op.contents?.type === ContainerMessageType.BlobAttach) {
 					// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 					op.metadata?.blobId ? resolve() : reject(new Error("no op metadata"));

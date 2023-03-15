@@ -26,6 +26,10 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		return this._lastSuccessfulSummary;
 	}
 
+	public get opsSinceLastSummary(): number {
+		return this.numSystemOpsBefore + this.numNonSystemOpsBefore;
+	}
+
 	public numNonRuntimeOps: number = 0;
 	public totalOpsSize: number = 0;
 	public hasMissingOpData: boolean = false;
