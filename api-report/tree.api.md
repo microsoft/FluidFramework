@@ -746,6 +746,7 @@ export interface ISharedTreeBranch extends AnchorLocator {
     fork(): ISharedTreeFork;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
+    readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start(): void;

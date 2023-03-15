@@ -74,9 +74,9 @@ jobs:
 
     # Install
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 16.x
       inputs:
-        version: 14.x
+        version: 16.x
 
     - task: Cache@2
       displayName: Cache pnpm store
