@@ -316,7 +316,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				const attachP = container.attach(
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
-				if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+				if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
 					// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 				}
@@ -403,7 +403,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+		if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
 			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 		}
@@ -427,9 +427,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	itExpects("serialize/rehydrate then attach", ContainerCloseUsageError, async function () {
+		const detachedBlobStorage = new MockDetachedBlobStorage();
 		const loader = provider.makeTestLoader({
 			...testContainerConfig,
-			loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() },
+			loaderProps: { detachedBlobStorage },
 		});
 		const serializeContainer = await loader.createDetachedContainer(
 			provider.defaultCodeDetails,
@@ -449,7 +450,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		const attachP = rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+		if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
 			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 		}
@@ -474,9 +475,10 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		"serialize/rehydrate multiple times then attach",
 		ContainerCloseUsageError,
 		async function () {
+			const detachedBlobStorage = new MockDetachedBlobStorage();
 			const loader = provider.makeTestLoader({
 				...testContainerConfig,
-				loaderProps: { detachedBlobStorage: new MockDetachedBlobStorage() },
+				loaderProps: { detachedBlobStorage },
 			});
 			let container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
@@ -497,7 +499,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			const attachP = container.attach(
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
-			if (provider.driver.type !== "odsp" && provider.driver.type !== "local") {
+			if (!detachedBlobStorage.supportsBlobs(provider.driver)) {
 				// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 			}

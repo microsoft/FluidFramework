@@ -9,9 +9,11 @@ import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
+import { ITestDriver } from "@fluidframework/test-driver-definitions";
 
 export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
+	public readonly driversThatSupportBlobs: string[] = ["local", "odsp"];
 
 	public get size() {
 		return this.blobs.size;
@@ -31,6 +33,10 @@ export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 		const blob = this.blobs.get(blobId);
 		assert(blob);
 		return blob;
+	}
+
+	public supportsBlobs(driver: ITestDriver) {
+		return this.driversThatSupportBlobs.includes(driver.type);
 	}
 }
 

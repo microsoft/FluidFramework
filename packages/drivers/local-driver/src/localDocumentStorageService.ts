@@ -7,6 +7,7 @@ import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IFluidResolvedUrl,
 	IResolvedUrl,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
@@ -23,7 +24,6 @@ import {
 	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createDocument } from "./localCreateDocument";
 
@@ -41,10 +41,14 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		private readonly id: string,
 		private readonly manager: GitManager,
 		public readonly policies: IDocumentStorageServicePolicies,
-		private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
-		private readonly resolvedUrl: IResolvedUrl,
+		private readonly localDeltaConnectionServer?: ILocalDeltaConnectionServer,
+		private readonly resolvedUrl?: IResolvedUrl,
 	) {
-		ensureFluidResolvedUrl(resolvedUrl);
+		if (localDeltaConnectionServer === undefined || resolvedUrl === undefined) {
+			throw new Error(
+				"Insufficient constructor parameters. An ILocalDeltaConnectionServer and IResolvedUrl required",
+			);
+		}
 
 		this.summaryTreeUploadManager = new SummaryTreeUploadManager(
 			manager,
@@ -91,7 +95,11 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		context: ISummaryContext,
 	): Promise<string> {
 		if (context.referenceSequenceNumber === 0) {
-			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
+			await createDocument(
+				this.localDeltaConnectionServer,
+				this.resolvedUrl as IFluidResolvedUrl,
+				summary,
+			);
 		}
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,

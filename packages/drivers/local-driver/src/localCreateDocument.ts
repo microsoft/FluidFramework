@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import {
 	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
@@ -15,7 +16,7 @@ import { defaultHash } from "@fluidframework/server-services-client";
 
 export async function createDocument(
 	localDeltaConnectionServer,
-	resolvedUrl,
+	resolvedUrl: IFluidResolvedUrl,
 	summary: ISummaryTree,
 ) {
 	ensureFluidResolvedUrl(resolvedUrl);
