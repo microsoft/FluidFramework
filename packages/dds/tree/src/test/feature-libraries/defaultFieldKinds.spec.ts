@@ -46,7 +46,7 @@ const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 };
 
 // TODO: This file is mainly working with in memory representations.
-// Therefor it should not be using JsonableTrees.
+// Therefore it should not be using JsonableTrees.
 // The usages of this (and other JsonableTrees) such as ValueChangeset should be changed to use
 // a tree format intended for in memory use, such as Cursor or MapTree.
 const tree1 = jsonableTreeFromCursor(
