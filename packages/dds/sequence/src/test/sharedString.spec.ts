@@ -237,7 +237,7 @@ describe("SharedString", () => {
 			assert.equal(simpleMarker.properties?.color, "blue", "Could not annotate marker");
 		});
 
-		it("fails when the marker is updated", () => {
+		it("fails when the marker id is updated", () => {
 			sharedString.insertText(0, "hello world");
 			// Insert a simple marker.
 			sharedString.insertMarker(6, ReferenceType.Simple, {
