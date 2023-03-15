@@ -9566,6 +9566,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/shared-object-base': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.22.2
       '@types/chai': ^4.0.0
@@ -9590,6 +9591,7 @@ importers:
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
     devDependencies:
       '@fluidframework/build-common': 1.1.0
