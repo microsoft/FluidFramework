@@ -1884,25 +1884,18 @@ export class ContainerRuntime
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
-		let processedGroupedBatch = false;
-
-		if (this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
-			const ungroupingResult = this.opGroupingManager.processOp(messageArg);
-			if (ungroupingResult !== undefined) {
-				processedGroupedBatch = true;
-				for (const subMessage of ungroupingResult) {
-					this.processCore(subMessage, local);
-				}
+		const ungroupingResult = this.opGroupingManager.processOp(messageArg);
+		if (ungroupingResult !== undefined) {
+			for (const subMessage of ungroupingResult) {
+				this.processCore(subMessage, local);
 			}
-		}
-
-		if (!processedGroupedBatch) {
+		} else {
 			this.processCore(messageArg, local);
 		}
 	}
 
 	private processCore(messageArg: ISequencedDocumentMessage, local: boolean) {
-		if (this.mc.config.getBoolean(groupedBatchFeatureFlag) && this._summarizer !== undefined) {
+		if (this._summarizer !== undefined && this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
 			this._summarizer.processOp?.(messageArg);
 		}
 
