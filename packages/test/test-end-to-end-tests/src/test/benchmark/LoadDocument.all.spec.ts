@@ -11,20 +11,20 @@ import { benchmarkAll, createDocument, IDocumentLoader } from "./DocumentCreator
 const scenarioTitle = "Load Document";
 
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
-	let document: IDocumentLoader;
+	let documentWrapper: IDocumentLoader;
 	let provider: ITestObjectProvider;
 	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
 
 	before(async () => {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
-		document = createDocument({
+		documentWrapper = createDocument({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
 		});
-		await document.initializeDocument();
+		await documentWrapper.initializeDocument();
 	});
 
 	class BenchmarkObj {
@@ -36,7 +36,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 
 	benchmarkAll(scenarioTitle, obj, {
 		run: async () => {
-			obj.container = await document.loadDocument();
+			obj.container = await documentWrapper.loadDocument();
 			assert(obj.container !== undefined, "container needs to be defined.");
 			obj.container.close();
 		},

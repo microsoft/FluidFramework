@@ -29,7 +29,9 @@ export type BenchmarkTypeDescription = "Runtime benchmarks" | "Memory benchmarks
 export interface DescribeE2EDocInfo {
 	testTitle: string;
 	documentType: DocumentType | string | undefined;
-	// Minimum number of iterations when running performance tests against the document
+	/**
+	 * Minimum number of iterations when running performance tests against the document.
+	 */
 	minSampleCount?: number;
 }
 export interface DescribeE2EDocInfoWithBenchmarkType extends DescribeE2EDocInfo {
@@ -54,7 +56,7 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 			createE2EDocCompatSuite(
 				title,
 				tests,
-				docTypes === undefined ? E2EDefaultDocumentTypes : docTypes,
+				docTypes ?? E2EDefaultDocumentTypes,
 			),
 		);
 	};
@@ -182,7 +184,7 @@ export const describeE2EDocsRuntime: DescribeE2EDocSuite =
 export const describeE2EDocsMemory: DescribeE2EDocSuite =
 	createE2EDocsDescribeWithType("Memory benchmarks");
 
-function IsMemoryTest(): boolean {
+function isMemoryTest(): boolean {
 	let isMemoryUsageTest: boolean = false;
 	const childArgs = [...process.execArgv, ...process.argv.slice(1)];
 	for (const flag of ["--grep", "--fgrep"]) {
@@ -192,10 +194,10 @@ function IsMemoryTest(): boolean {
 			break;
 		}
 	}
-	const isMemoryTest: boolean =
+	const isMemTest: boolean =
 		process.env.FLUID_E2E_MEMORY !== undefined ? true : isMemoryUsageTest ?? false;
-	console.log(`IsMemoryTest: ${isMemoryTest}`);
-	return isMemoryTest;
+	console.log(`isMemTest: ${isMemTest}`);
+	return isMemTest;
 }
 
 export const describeE2EDocRun: DescribeE2EDocSuite = createE2EDocsDescribeRun();
@@ -204,5 +206,5 @@ export const getCurrentBenchmarkType = (currentType: DescribeE2EDocSuite): Bench
 };
 
 function createE2EDocsDescribeRun(): DescribeE2EDocSuite {
-	return IsMemoryTest() === true ? describeE2EDocsMemory : describeE2EDocsRuntime;
+	return isMemoryTest() === true ? describeE2EDocsMemory : describeE2EDocsRuntime;
 }

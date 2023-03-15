@@ -24,6 +24,6 @@ const newConfig = {
 		"dist/test/benchmark/**/*.all.spec.js",
 		"--perfMode",
 	],
-	"timeout": "360000",
+	"timeout": "120000", // depending on the test and the size of the document, the timeout might not be enough. To address it, let's first try to decrease the number of iterations.
 };
 module.exports = newConfig;
