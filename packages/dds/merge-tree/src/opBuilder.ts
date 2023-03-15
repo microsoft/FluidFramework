@@ -31,6 +31,7 @@ export function createAnnotateMarkerOp(
 	if (!id) {
 		return undefined;
 	}
+
 	return {
 		combiningOp,
 		props,
