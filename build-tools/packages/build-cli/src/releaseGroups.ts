@@ -29,7 +29,7 @@ export type ReleaseGroup = MonoRepoKind;
  * @internal
  */
 export function isReleaseGroup(str: string | undefined): str is ReleaseGroup {
-    return isMonoRepoKind(str);
+	return isMonoRepoKind(str);
 }
 
 /**

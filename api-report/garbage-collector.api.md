@@ -6,7 +6,9 @@
 
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
+import { IGarbageCollectionSnapshotData } from '@fluidframework/runtime-definitions';
 import { IGarbageCollectionState } from '@fluidframework/runtime-definitions';
+import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 
 // @public
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData;
@@ -36,6 +38,9 @@ export class GCDataBuilder implements IGarbageCollectionData {
         [id: string]: string[];
     }): void;
 }
+
+// @public
+export function getGCDataFromSnapshot(gcSnapshotTree: ISnapshotTree, readAndParseBlob: <T>(id: string) => Promise<T>): Promise<IGarbageCollectionSnapshotData>;
 
 // @public
 export interface IGCResult {

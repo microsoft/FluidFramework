@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: ['@fluidframework/eslint-config-fluid'],
+	extends: ['@fluidframework/eslint-config-fluid/minimal', 'prettier'],
 	root: true,
 	rules: {
 		// TODO: Recover "noUnusedLocals" behavior as part of linting.  (This rule seems to be broken in the Fluid repo.)
@@ -18,16 +18,6 @@ module.exports = {
 				avoidEscape: true,
 			},
 		],
-		// Intentionally not unifying signatures can enable more scoped API documentation and a better developer experience, which accounts
-		// for all violations of this rule in this package at the time of writing.
-		'@typescript-eslint/unified-signatures': 'off',
-
-		// Prettier
-		'comma-dangle': 'off',
-		'@typescript-eslint/comma-dangle': 'off',
-		'@typescript-eslint/member-delimiter-style': 'off',
-		'max-len': 'off',
-		'no-mixed-spaces-and-tabs': 'off',
 
 		// Rules which could be re-enabled (by dropping these overrides, as they are enabled in base config) with some minor fixes:
 		'@typescript-eslint/no-shadow': 'off',

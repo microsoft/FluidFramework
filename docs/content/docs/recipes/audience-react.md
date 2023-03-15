@@ -362,23 +362,15 @@ npm run start
 
 Navigate to `localhost:3000` on a browser tab to view the running application. To create a new container, select a user ID button while leaving the container ID input blank. To simulate a new user joining the container session, open a new browser tab and navigate to `localhost:3000`. This time, input the container ID value which can be found from first browser tab's url proceeding `http://localhost:3000/#`.
 
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" or "url" package, please run `npm install -D buffer url` and try again. This will be resolved in a future release of Fluid Framework.
-
-{{< /callout >}}
-
 
 ## Next steps
 
-- Try extending the demo with more key/value pairs in the `additionalDetails` field in `userConfig`.
-- Consider integrating audience into a collaborative application which utilizes distributed data structures such as SharedMap or SharedString.
-- Learn more about [Audience]({{< relref "audience.md" >}}).
+-   Try extending the demo with more key/value pairs in the `additionalDetails` field in `userConfig`.
+-   Consider integrating audience into a collaborative application which utilizes distributed data structures such as SharedMap or SharedString.
+-   Learn more about [Audience]({{< relref "audience.md" >}}).
 
 {{< callout tip >}}
 
 When you make changes to the code the project will automatically rebuild and the application server will reload. However, if you make changes to the container schema, they will only take effect if you close and restart the application server. To do this, give focus to the Command Prompt and press Ctrl-C twice. Then run `npm run start` again.
 
 {{< /callout >}}
-
-

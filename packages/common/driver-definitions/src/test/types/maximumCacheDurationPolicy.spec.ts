@@ -27,7 +27,7 @@ declare const maximumCacheDurationMs: IDocumentStorageServicePolicies["maximumCa
 switch (maximumCacheDurationMs) {
     // These are the only two valid values
     case undefined:
-    case 432000000:
+    case 432_000_000:
         break;
     default:
         assertNever(maximumCacheDurationMs);

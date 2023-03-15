@@ -14,8 +14,9 @@ const configPath = path.join(__dirname, "../config.json");
 configureLogging(configPath);
 
 runService(
-    new GitrestResourcesFactory(),
-    new GitrestRunnerFactory(),
-    winston,
-    "gitrest",
-    configPath);
+	new GitrestResourcesFactory(),
+	new GitrestRunnerFactory(),
+	winston,
+	"gitrest",
+	configPath,
+);

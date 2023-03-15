@@ -10,120 +10,130 @@ import { ensureFluidResolvedUrl } from "../fluidResolvedUrl";
 import { InsecureUrlResolver } from "../insecureUrlResolver";
 
 describe("Insecure Url Resolver Test", () => {
-    const hostUrl = "https://localhost";
-    const ordererUrl = "https://localhost.orderer";
-    const storageUrl = "https://localhost.storage";
-    const tenantId = "tenantId";
-    const bearer = "bearer";
-    const fileName = "fileName";
-    let resolver: InsecureUrlResolver;
-    let request: IRequest;
+	const hostUrl = "https://localhost";
+	const ordererUrl = "https://localhost.orderer";
+	const storageUrl = "https://localhost.storage";
+	const tenantId = "tenantId";
+	const bearer = "bearer";
+	const fileName = "fileName";
+	let resolver: InsecureUrlResolver;
+	let request: IRequest;
 
-    beforeEach(() => {
-        resolver = new InsecureUrlResolver(hostUrl, ordererUrl, storageUrl, tenantId, bearer);
-        request = resolver.createCreateNewRequest(fileName);
+	beforeEach(() => {
+		resolver = new InsecureUrlResolver(hostUrl, ordererUrl, storageUrl, tenantId, bearer);
+		request = resolver.createCreateNewRequest(fileName);
 
-        // Mocking window since the resolver depends on window.location.host
-        if (typeof window === "undefined" && typeof global === "object") {
-            // eslint-disable-next-line @typescript-eslint/dot-notation
-            global["window"] = {
-                location: { host: "localhost" } as unknown as Location,
-            } as unknown as (Window & typeof globalThis);
-        }
-    });
+		// Mocking window since the resolver depends on window.location.host
+		if (typeof window === "undefined" && typeof global === "object") {
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			global["window"] = {
+				location: { host: "localhost" } as unknown as Location,
+			} as unknown as Window & typeof globalThis;
+		}
+	});
 
-    it("Create New Request", async () => {
-        // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-        assert(!!request.headers?.[DriverHeader.createNew],
-            "Request should contain create new header");
-        const url = `${hostUrl}?fileName=${fileName}`;
-        assert.strictEqual(request.url, url, "Request url should match");
-    });
+	it("Create New Request", async () => {
+		assert(
+			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+			!!request.headers?.[DriverHeader.createNew],
+			"Request should contain create new header",
+		);
+		const url = `${hostUrl}?fileName=${fileName}`;
+		assert.strictEqual(request.url, url, "Request url should match");
+	});
 
-    it("Resolved CreateNew Request", async () => {
-        const resolvedUrl = await resolver.resolve(request) as IFluidResolvedUrl;
-        const documentUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
-        assert.strictEqual(resolvedUrl.endpoints.ordererUrl, ordererUrl, "Orderer url should match");
-        assert.strictEqual(resolvedUrl.url, documentUrl, "Document url should match");
-    });
+	it("Resolved CreateNew Request", async () => {
+		const resolvedUrl = (await resolver.resolve(request)) as IFluidResolvedUrl;
+		const documentUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
+		assert.strictEqual(
+			resolvedUrl.endpoints.ordererUrl,
+			ordererUrl,
+			"Orderer url should match",
+		);
+		assert.strictEqual(resolvedUrl.url, documentUrl, "Document url should match");
+	});
 
-    it("Test RequestUrl for a data store", async () => {
-        const resolvedUrl = await resolver.resolve(request);
-        ensureFluidResolvedUrl(resolvedUrl);
+	it("Test RequestUrl for a data store", async () => {
+		const resolvedUrl = await resolver.resolve(request);
+		ensureFluidResolvedUrl(resolvedUrl);
 
-        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
-        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
+		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 
-        const dataStoreId = "dataStore";
-        const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
+		const dataStoreId = "dataStore";
+		const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
 
-        const expectedUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
-        assert.strictEqual(absoluteUrl, expectedUrl, "Url should match");
-    });
+		const expectedUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
+		assert.strictEqual(absoluteUrl, expectedUrl, "Url should match");
+	});
 
-    it("Test RequestUrl for url with only document id", async () => {
-        const testRequest: IRequest = {
-            url: `https://localhost/${fileName}`,
-            headers: {},
-        };
-        const resolvedUrl = await resolver.resolve(testRequest);
-        ensureFluidResolvedUrl(resolvedUrl);
+	it("Test RequestUrl for url with only document id", async () => {
+		const testRequest: IRequest = {
+			url: `https://localhost/${fileName}`,
+			headers: {},
+		};
+		const resolvedUrl = await resolver.resolve(testRequest);
+		ensureFluidResolvedUrl(resolvedUrl);
 
-        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
-        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
-    });
+		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}`;
+		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+	});
 
-    it("Test RequestUrl for url with data store ids", async () => {
-        const testRequest: IRequest = {
-            url: `https://localhost/${fileName}/dataStore1/dataStore2`,
-            headers: {},
-        };
-        const resolvedUrl = await resolver.resolve(testRequest);
-        ensureFluidResolvedUrl(resolvedUrl);
+	it("Test RequestUrl for url with data store ids", async () => {
+		const testRequest: IRequest = {
+			url: `https://localhost/${fileName}/dataStore1/dataStore2`,
+			headers: {},
+		};
+		const resolvedUrl = await resolver.resolve(testRequest);
+		ensureFluidResolvedUrl(resolvedUrl);
 
-        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/dataStore1/dataStore2`;
-        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+		const expectedResolvedUrl = `fluid://${
+			new URL(ordererUrl).host
+		}/${tenantId}/${fileName}/dataStore1/dataStore2`;
+		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 
-        const dataStoreId = "dataStore";
-        const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
+		const dataStoreId = "dataStore";
+		const absoluteUrl = await resolver.getAbsoluteUrl(resolvedUrl, dataStoreId);
 
-        const expectedResponseUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
-        assert.strictEqual(absoluteUrl, expectedResponseUrl, "response url is wrong");
-    });
+		const expectedResponseUrl = `${hostUrl}/${tenantId}/${fileName}/${dataStoreId}`;
+		assert.strictEqual(absoluteUrl, expectedResponseUrl, "response url is wrong");
+	});
 
-    it("Test RequestUrl for url with a slash at the end", async () => {
-        const testRequest: IRequest = {
-            url: `https://localhost/${fileName}/`,
-            headers: {},
-        };
-        const resolvedUrl = await resolver.resolve(testRequest);
-        ensureFluidResolvedUrl(resolvedUrl);
+	it("Test RequestUrl for url with a slash at the end", async () => {
+		const testRequest: IRequest = {
+			url: `https://localhost/${fileName}/`,
+			headers: {},
+		};
+		const resolvedUrl = await resolver.resolve(testRequest);
+		ensureFluidResolvedUrl(resolvedUrl);
 
-        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/`;
-        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
-    });
+		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/`;
+		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+	});
 
-    it("Test RequestUrl for url with 2 slashes at the end", async () => {
-        const testRequest: IRequest = {
-            url: `https://localhost/${fileName}//`,
-            headers: {},
-        };
-        const resolvedUrl = await resolver.resolve(testRequest);
-        ensureFluidResolvedUrl(resolvedUrl);
+	it("Test RequestUrl for url with 2 slashes at the end", async () => {
+		const testRequest: IRequest = {
+			url: `https://localhost/${fileName}//`,
+			headers: {},
+		};
+		const resolvedUrl = await resolver.resolve(testRequest);
+		ensureFluidResolvedUrl(resolvedUrl);
 
-        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}//`;
-        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
-    });
+		const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}//`;
+		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+	});
 
-    it("Test RequestUrl for url with special characters", async () => {
-        const testRequest: IRequest = {
-            url: `https://localhost/${fileName}/!@$123/dataStore!@$`,
-            headers: {},
-        };
-        const resolvedUrl = await resolver.resolve(testRequest);
-        ensureFluidResolvedUrl(resolvedUrl);
+	it("Test RequestUrl for url with special characters", async () => {
+		const testRequest: IRequest = {
+			url: `https://localhost/${fileName}/!@$123/dataStore!@$`,
+			headers: {},
+		};
+		const resolvedUrl = await resolver.resolve(testRequest);
+		ensureFluidResolvedUrl(resolvedUrl);
 
-        const expectedResolvedUrl = `fluid://${new URL(ordererUrl).host}/${tenantId}/${fileName}/!@$123/dataStore!@$`;
-        assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
-    });
+		const expectedResolvedUrl = `fluid://${
+			new URL(ordererUrl).host
+		}/${tenantId}/${fileName}/!@$123/dataStore!@$`;
+		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
+	});
 });

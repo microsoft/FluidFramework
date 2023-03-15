@@ -5,6 +5,7 @@ Fluid server package containing telemetry utilities used across Fluid service co
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
 ## Overview
+
 The `services-telemetry` package is built around 3 main components:
 
 1. A `Lumberjack` class: the main telemetry manager. `Lumberjack` is the telemetry interface to be used when instrumenting the code. It is a singleton responsible for managing a list of “engines” that implement the app-specific telemetry logic. It can be used to initialize a metric/data instance (which we call `Lumber`). It also supports the logging functionality.
@@ -16,9 +17,11 @@ The idea behind `Lumberjack` is convenience, available through a globally access
 At the start of each Node.js process, `Lumberjack` should be initialized so that it can be used in singleton style throughout the code. However, it is also possible to create individual instances of `Lumberjack` at any time. `Lumberjack` must be initialized with a mandatory `ILumberjackEngine[]` parameter (it uses each `ILumberjackEngine` in the list to emit the telemetry data according to the `ILumberjackEngine` logic). `Lumberjack` can also take an optional `ILumberjackSchemaValidator`, which defines the requirements for mandatory parameters and values associated with each `Lumber` instance.
 
 ## How to use
+
 In these examples, we will be using [`WinstonLumberjackEngine`](https://github.com/microsoft/FluidFramework/blob/da99118135fc383fd69a401a48d6b99caaa18378/server/routerlicious/packages/services-utils/src/winstonLumberjackEngine.ts#L11) as our `ILumberjackEngine` sample implementation.
 
 ### Initializing Lumberjack
+
 ```typescript
 // Singleton style, at the start of each process
 const lumberjackEngine = new WinstonLumberjackEngine();
@@ -32,7 +35,9 @@ const customInstance = Lumberjack.createInstance([lumberjackEngine]);
 In [FluidFramework Server code](https://github.com/microsoft/FluidFramework/tree/main/server), `Lumberjack` initialization is taken care of automatically thanks to [`configureLogging()`](https://github.com/microsoft/FluidFramework/blob/da99118135fc383fd69a401a48d6b99caaa18378/server/routerlicious/packages/services-utils/src/logger.ts#L24) in the `server-services-utils` package.
 
 ### Metrics
+
 Metrics are associated with types of events, and each event type should have a unique name. The list of Events is kept in the [`LumberEventName` enum](https://github.com/microsoft/FluidFramework/blob/main/server/routerlicious/packages/services-telemetry/src/lumberEventNames.ts). `Lumberjack` also supports simple `string` event names. Example:
+
 ```typescript
 const lumberJackMetric = Lumberjack.newLumberMetric(LumberEventName.DeliHandler);
 
@@ -51,11 +56,13 @@ catch (error) {
 ```
 
 ### Logs
+
 `Lumberjack` provides a static method for logging. Example:
+
 ```typescript
 const props = {
-    property1: "prop1",
-    property2: "prop2",
+	property1: "prop1",
+	property2: "prop2",
 };
 
 Lumberjack.log("Sample message", LogLevel.Info, properties);

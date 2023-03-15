@@ -6,27 +6,27 @@ import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
 export type RunnnerStatus = "notStarted" | "running" | "success" | "error";
 export interface IRunnerStatus {
-    status: RunnnerStatus;
-    description?: string;
-    details: unknown;
+	status: RunnnerStatus;
+	description?: string;
+	details: unknown;
 }
 
 export interface IRunnerEvents extends IEvent {
-    (event: "status", listener: (s: IRunnerStatus) => void): void;
+	(event: "status", listener: (s: IRunnerStatus) => void): void;
 }
 
 export interface IRunConfig {
-    runId: string;
-    scenarioName: string;
+	runId: string;
+	scenarioName: string;
 }
 
 export interface IRunner extends IEventProvider<IRunnerEvents> {
-    run(config: IRunConfig): Promise<unknown>;
-    getStatus(): IRunnerStatus;
-    stop(): void;
+	run(config: IRunConfig): Promise<unknown>;
+	getStatus(): IRunnerStatus;
+	stop(): void;
 }
 
 export interface ContainerFactorySchema {
-    initialObjects: { [key: string]: string };
-    dynamicObjects?: { [key: string]: string };
+	initialObjects: { [key: string]: string };
+	dynamicObjects?: { [key: string]: string };
 }

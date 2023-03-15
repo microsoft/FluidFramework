@@ -5,7 +5,11 @@
 
 import nconf, { Provider } from "nconf";
 import { WinstonLumberjackEngine } from "@fluidframework/server-services-utils";
-import { ILumberjackEngine, ILumberjackSchemaValidator, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	ILumberjackEngine,
+	ILumberjackSchemaValidator,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 
 /**
  * Helps to avoid package version mismatch issues with usage of global Lumberjack instance.
@@ -15,26 +19,29 @@ import { ILumberjackEngine, ILumberjackSchemaValidator, Lumberjack } from "@flui
  * setup twice, which will throw an error. `configureLogging` does not do a safety check when setting up Lumberjack.
  */
 export function configureHistorianLogging(configOrPath: Provider | string) {
-    // if package versions are not mismatched, this check will ensure this function does nothing.
-    if (!Lumberjack.isSetupCompleted()) {
-        // TODO: this is duplicate code from `@fluidframework/server-services-utils` configureLogging()
-        // to avoid adding duplicate transports to the global `winston` instance. This should just call
-        // configureLogging() once global winston usage is removed in favor of Lumberjack.
-        const config = typeof configOrPath === "string"
-        ? nconf.argv().env({ separator: "__", parseValues: true }).file(configOrPath).use("memory")
-        : configOrPath;
+	// if package versions are not mismatched, this check will ensure this function does nothing.
+	if (!Lumberjack.isSetupCompleted()) {
+		// TODO: this is duplicate code from `@fluidframework/server-services-utils` configureLogging()
+		// to avoid adding duplicate transports to the global `winston` instance. This should just call
+		// configureLogging() once global winston usage is removed in favor of Lumberjack.
+		const config =
+			typeof configOrPath === "string"
+				? nconf
+						.argv()
+						.env({ separator: "__", parseValues: true })
+						.file(configOrPath)
+						.use("memory")
+				: configOrPath;
 
-        const lumberjackConfig = config.get("lumberjack");
-        const engineList =
-            lumberjackConfig && lumberjackConfig.engineList ?
-            lumberjackConfig.engineList as ILumberjackEngine[] :
-            [new WinstonLumberjackEngine()];
+		const lumberjackConfig = config.get("lumberjack");
+		const engineList = (lumberjackConfig?.engineList as ILumberjackEngine[] | undefined) ?? [
+			new WinstonLumberjackEngine(),
+		];
 
-        const schemaValidatorList =
-            lumberjackConfig && lumberjackConfig.schemaValidator ?
-            lumberjackConfig.schemaValidator as ILumberjackSchemaValidator[] :
-            undefined;
+		const schemaValidatorList = lumberjackConfig?.schemaValidator as
+			| ILumberjackSchemaValidator[]
+			| undefined;
 
-        Lumberjack.setup(engineList, schemaValidatorList);
-    }
+		Lumberjack.setup(engineList, schemaValidatorList);
+	}
 }

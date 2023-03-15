@@ -4,8 +4,8 @@
  */
 
 export function removeAllChildren(element: HTMLElement) {
-    // Remove any existing children and attach ourselves
-    while (element.lastChild !== null) {
-        element.removeChild(element.lastChild);
-    }
+	// Remove any existing children and attach ourselves
+	while (element.lastChild !== null) {
+		element.removeChild(element.lastChild);
+	}
 }

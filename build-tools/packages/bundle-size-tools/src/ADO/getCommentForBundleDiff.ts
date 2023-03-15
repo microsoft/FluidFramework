@@ -16,16 +16,16 @@ const bundleDetailsTableHeader = `<table><tr><th>Metric Name</th><th>Baseline Si
  * @param baselineCommit - Commit hash for the baseline
  */
 export function getCommentForBundleDiff(
-    bundleComparison: BundleComparison[],
-    baselineCommit: string,
+	bundleComparison: BundleComparison[],
+	baselineCommit: string,
 ) {
-    const diffDetails = bundleComparison.map(getBundleDetails).reduce((prev, current) => {
-        return prev + current;
-    });
+	const diffDetails = bundleComparison.map(getBundleDetails).reduce((prev, current) => {
+		return prev + current;
+	});
 
-    const baselineFooter = getCommentFooter(baselineCommit);
+	const baselineFooter = getCommentFooter(baselineCommit);
 
-    return diffDetails + baselineFooter;
+	return diffDetails + baselineFooter;
 }
 
 /**
@@ -35,9 +35,9 @@ export function getCommentForBundleDiff(
  * @param baselineCommit - Commit hash for the baseline
  */
 export function getSimpleComment(message: string, baselineCommit: string) {
-    const baselineFooter = getCommentFooter(baselineCommit);
+	const baselineFooter = getCommentFooter(baselineCommit);
 
-    return `<p>${message}</p>` + baselineFooter;
+	return `<p>${message}</p>` + baselineFooter;
 }
 
 /**
@@ -46,7 +46,7 @@ export function getSimpleComment(message: string, baselineCommit: string) {
  * @param baselineCommit
  */
 function getCommentFooter(baselineCommit: string) {
-    return `<hr><p>Baseline commit: ${baselineCommit}</p>`;
+	return `<hr><p>Baseline commit: ${baselineCommit}</p>`;
 }
 
 /**
@@ -55,29 +55,29 @@ function getCommentFooter(baselineCommit: string) {
  * @param bundleDiff
  */
 function getBundleDetails(bundleDiff: BundleComparison) {
-    const { bundleName, commonBundleMetrics } = bundleDiff;
+	const { bundleName, commonBundleMetrics } = bundleDiff;
 
-    const metrics = Object.entries(commonBundleMetrics)
-        .map(([metricName, { baseline, compare }]) => {
-            return getMetricRow(metricName, baseline, compare);
-        })
-        .reduce((prev, current) => {
-            return prev + current;
-        }, bundleDetailsTableHeader);
+	const metrics = Object.entries(commonBundleMetrics)
+		.map(([metricName, { baseline, compare }]) => {
+			return getMetricRow(metricName, baseline, compare);
+		})
+		.reduce((prev, current) => {
+			return prev + current;
+		}, bundleDetailsTableHeader);
 
-    const totalMetric = commonBundleMetrics[totalSizeMetricName];
+	const totalMetric = commonBundleMetrics[totalSizeMetricName];
 
-    assert(
-        totalMetric,
-        `Could not compute the total size for a bundle, missing metric with name ${totalSizeMetricName}`,
-    );
+	assert(
+		totalMetric,
+		`Could not compute the total size for a bundle, missing metric with name ${totalSizeMetricName}`,
+	);
 
-    const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
+	const totalParsedSizeDiff = totalMetric.compare.parsedSize - totalMetric.baseline.parsedSize;
 
-    const formattedTotalDiff = formatDiff(totalParsedSizeDiff);
-    const glyph = getColorGlyph(totalParsedSizeDiff);
+	const formattedTotalDiff = formatDiff(totalParsedSizeDiff);
+	const glyph = getColorGlyph(totalParsedSizeDiff);
 
-    return `<details><summary><b>${glyph} ${bundleName}:</b> ${formattedTotalDiff}</summary>${metrics}</table></details>`;
+	return `<details><summary><b>${glyph} ${bundleName}:</b> ${formattedTotalDiff}</summary>${metrics}</table></details>`;
 }
 
 /**
@@ -86,14 +86,14 @@ function getBundleDetails(bundleDiff: BundleComparison) {
  * @param bundleDiff
  */
 function getMetricRow(
-    metricName: string,
-    baselineMetric: BundleMetric,
-    compareMetric: BundleMetric,
+	metricName: string,
+	baselineMetric: BundleMetric,
+	compareMetric: BundleMetric,
 ) {
-    const parsedSizeDiff = compareMetric.parsedSize - baselineMetric.parsedSize;
-    const glyph = getColorGlyph(parsedSizeDiff);
+	const parsedSizeDiff = compareMetric.parsedSize - baselineMetric.parsedSize;
+	const glyph = getColorGlyph(parsedSizeDiff);
 
-    return `<tr>
+	return `<tr>
     <td>${metricName}</td>
     <td>${formatBytes(baselineMetric.parsedSize)}</td>
     <td>${formatBytes(compareMetric.parsedSize)}</td>
@@ -107,26 +107,26 @@ function getMetricRow(
  * @param bytes positive or negative number of bytes
  */
 function formatBytes(bytes: number) {
-    const base = 1024;
-    const decimals = 2;
-    const sizes = ["Bytes", "KB", "MB", "GB"];
+	const base = 1024;
+	const decimals = 2;
+	const sizes = ["Bytes", "KB", "MB", "GB"];
 
-    const exponent = Math.floor(Math.log(Math.abs(bytes)) / Math.log(base));
+	const exponent = Math.floor(Math.log(Math.abs(bytes)) / Math.log(base));
 
-    return parseFloat((bytes / Math.pow(base, exponent)).toFixed(decimals)) + " " + sizes[exponent];
+	return parseFloat((bytes / Math.pow(base, exponent)).toFixed(decimals)) + " " + sizes[exponent];
 }
 
 /**
  * Returns the number of bytes in a human readable format
  */
 function formatDiff(bytes: number) {
-    if (bytes === 0) {
-        return "No change";
-    }
+	if (bytes === 0) {
+		return "No change";
+	}
 
-    const sign = bytes < 0 ? "" : "+";
+	const sign = bytes < 0 ? "" : "+";
 
-    return `${sign}${formatBytes(bytes)}`;
+	return `${sign}${formatBytes(bytes)}`;
 }
 
 /**
@@ -135,17 +135,17 @@ function formatDiff(bytes: number) {
  * @param bytesDiff diff of bytes
  */
 function getColorGlyph(bytesDiff: number) {
-    if (bytesDiff === 0) {
-        return '<span style="color: green">■</span>';
-    }
+	if (bytesDiff === 0) {
+		return '<span style="color: green">■</span>';
+	}
 
-    if (bytesDiff < 0) {
-        return '<span style="color: green">⯆</span>';
-    }
+	if (bytesDiff < 0) {
+		return '<span style="color: green">⯆</span>';
+	}
 
-    if (bytesDiff < 50000 /* 50 KB */) {
-        return '<span style="color: coral">⯅</span>';
-    }
+	if (bytesDiff < 50000 /* 50 KB */) {
+		return '<span style="color: coral">⯅</span>';
+	}
 
-    return '<span style="color: red">⯅</span>';
+	return '<span style="color: red">⯅</span>';
 }

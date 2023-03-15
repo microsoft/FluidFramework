@@ -27,11 +27,11 @@ when the key becomes available.
 
 ### Eventing
 
-`SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications.  You should register for these events and respond appropriately as the data is modified.  `valueChanged` will be emitted in response to a `set` or `delete`, and provide the key and previous value that was stored at that key.  `clear` will be emitted in response to a `clear`.
+`SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications. You should register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted in response to a `set` or `delete`, and provide the key and previous value that was stored at that key. `clear` will be emitted in response to a `clear`.
 
 ## SharedDirectory and IDirectory
 
-A `SharedDirectory` is a map-like DDS that additionally supports storing key/value pairs within a tree of subdirectories.  This subdirectory tree can be used to give hierarchical structure to stored key/value pairs rather than storing them on a flat map.  Both the `SharedDirectory` and any subdirectories are `IDirectories`.
+A `SharedDirectory` is a map-like DDS that additionally supports storing key/value pairs within a tree of subdirectories. This subdirectory tree can be used to give hierarchical structure to stored key/value pairs rather than storing them on a flat map. Both the `SharedDirectory` and any subdirectories are `IDirectories`.
 
 ### Creation
 
@@ -43,7 +43,7 @@ const myDirectory = SharedDirectory.create(this.runtime, id);
 
 ### Usage
 
-The map operations on an `IDirectory` refer to the key/value pairs stored in that `IDirectory`, and function just like `SharedMap` including the same extra functionality and restrictions on keys and values.  To operate on the subdirectory structure, use the corresponding subdirectory methods.
+The map operations on an `IDirectory` refer to the key/value pairs stored in that `IDirectory`, and function just like `SharedMap` including the same extra functionality and restrictions on keys and values. To operate on the subdirectory structure, use the corresponding subdirectory methods.
 
 #### `getWorkingDirectory()`
 

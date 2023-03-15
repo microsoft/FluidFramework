@@ -2,12 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Logger } from "@fluidframework/build-tools";
 import {
-    ADOSizeComparator,
-    BundleComparisonResult,
-    bundlesContainNoChanges,
-    getAzureDevopsApi,
+	ADOSizeComparator,
+	BundleComparisonResult,
+	bundlesContainNoChanges,
+	getAzureDevopsApi,
 } from "@fluidframework/bundle-size-tools";
 
 // Handle weirdness with Danger import.  The current module setup prevents us
@@ -17,45 +16,41 @@ import {
 declare function markdown(message: string, file?: string, line?: number): void;
 
 const adoConstants = {
-    orgUrl: "https://dev.azure.com/fluidframework",
-    projectName: "public",
-    ciBuildDefinitionId: 48,
-    bundleAnalysisArtifactName: "bundleAnalysis",
+	orgUrl: "https://dev.azure.com/fluidframework",
+	projectName: "public",
+	ciBuildDefinitionId: 48,
+	bundleAnalysisArtifactName: "bundleAnalysis",
 };
 
 const localReportPath = "./artifacts/bundleAnalysis";
-let logger: Logger;
 
 export async function dangerfile() {
-    if (process.env.ADO_API_TOKEN === undefined) {
-        logger.errorLog("no env ado api token provided");
-    }
+	if (process.env.ADO_API_TOKEN === undefined) {
+		throw new Error("no env ado api token provided");
+	}
 
-    if (process.env.DANGER_GITHUB_API_TOKEN === undefined) {
-        logger.errorLog("no env github api token provided");
-    }
+	if (process.env.DANGER_GITHUB_API_TOKEN === undefined) {
+		throw new Error("no env github api token provided");
+	}
 
-    const adoConnection = getAzureDevopsApi(
-        process.env.ADO_API_TOKEN as string,
-        adoConstants.orgUrl,
-    );
-    const sizeComparator = new ADOSizeComparator(
-        adoConstants,
-        adoConnection,
-        localReportPath,
-        undefined,
-        ADOSizeComparator.naiveFallbackCommitGenerator,
-    );
-    const result: BundleComparisonResult = await sizeComparator.createSizeComparisonMessage(false);
+	const adoConnection = getAzureDevopsApi(process.env.ADO_API_TOKEN, adoConstants.orgUrl);
+	const sizeComparator = new ADOSizeComparator(
+		adoConstants,
+		adoConnection,
+		localReportPath,
+		undefined,
+		ADOSizeComparator.naiveFallbackCommitGenerator,
+	);
+	const result: BundleComparisonResult = await sizeComparator.createSizeComparisonMessage(false);
 
-    // Post a message only if there was an error (result.comparison is undefined) or if
-    // there were actual changes to the bundle sizes.  In other cases, we don't post a
-    // message and danger will delete its previous message
-    if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
-        markdown(result.message);
-    } else {
-        logger.info("No size changes detected, skipping posting PR comment");
-    }
+	// Post a message only if there was an error (result.comparison is undefined) or if
+	// there were actual changes to the bundle sizes.  In other cases, we don't post a
+	// message and danger will delete its previous message
+	if (result.comparison === undefined || !bundlesContainNoChanges(result.comparison)) {
+		markdown(result.message);
+	} else {
+		console.log("No size changes detected, skipping posting PR comment");
+	}
 }
 
-dangerfile().catch((error: string) => logger.errorLog(error));
+dangerfile().catch((error: string) => console.error(error));

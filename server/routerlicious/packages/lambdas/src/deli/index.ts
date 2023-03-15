@@ -5,7 +5,6 @@
 
 export {
 	createDeliCheckpointManagerFromCollection,
-	DeliCheckpointReason,
 	ICheckpointParams,
 	IDeliCheckpointManager,
 } from "./checkpointManager";

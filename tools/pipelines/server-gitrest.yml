@@ -80,8 +80,11 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
+    packageManager: pnpm
     buildDirectory: server/gitrest
     containerName: fluidframework/routerlicious/gitrest
     test: test
     tagName: gitrest
     pack: true
+    usesPrettier: false

@@ -11,6 +11,7 @@ export { EmptyDocumentDeltaStorageService } from "./emptyDocumentDeltaStorageSer
 export { UsageError } from "./error";
 export { ensureFluidResolvedUrl, isFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
+export { MapWithExpiration } from "./mapWithExpiration";
 export {
 	canBeCoalescedByService,
 	isRuntimeMessage,
@@ -58,4 +59,8 @@ export {
 	getQuorumValuesFromProtocolSummary,
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
-export { convertSnapshotAndBlobsToSummaryTree, ISummaryTreeAssemblerProps, SummaryTreeAssembler } from "./treeUtils";
+export {
+	convertSnapshotAndBlobsToSummaryTree,
+	ISummaryTreeAssemblerProps,
+	SummaryTreeAssembler,
+} from "./treeUtils";

@@ -1,5 +1,12 @@
 > **Note:** These breaking changes are only relevant to the server packages and images released from `./routerlicious`.
 
+## 0.1038 Breaking Changes
+- [aggregate function from `MongoCollection` became async](#aggregate-function-from-MongoCollection-became-async)
+#### `aggregate` function from `MongoCollection` became async
+Before: `const cursor = collection.aggregate([ ... ]);`
+
+Now: `const cursor = await collection.aggregate([ ... ]);`
+
 ## 0.1037 Breaking Changes
 - [IDeltaService added to alfred runnerFactory and resource](#IDeltaService-added-to-alfred-runnerFactory-and-resource)
 #### `IDeltaService` added to alfred `runnerFactory` and `resource`
@@ -14,8 +21,10 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restThrottler: core.IThrottler,
-        public socketConnectThrottler: core.IThrottler,
+        public restTenantThrottler: core.IThrottler,
+        public restClusterThrottlers: Map<string, core.IThrottler>,
+        public socketConnectTenantThrottler: core.IThrottler,
+        public socketConnectClusterThrottler: core.IThrottler,
         public socketSubmitOpThrottler: core.IThrottler,
         public socketSubmitSignalThrottler: core.IThrottler,
         public singleUseTokenCache: core.ICache,
@@ -28,7 +37,7 @@ export class AlfredResources implements core.IResources {
         public metricClientConfig: any,
         public documentsCollection: core.ICollection<core.IDocument>,
         public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
-    ) 
+    )
     ....
 
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
@@ -42,8 +51,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restThrottler,
-            socketConnectThrottler,
+            restTenantThrottler,
+            restClusterThrottler,
+            socketConnectTenantThrottler,
+            socketConnectClusterThrottler
             socketSubmitOpThrottler,
             socketSubmitSignalThrottler,
             redisJwtCache,

@@ -1,29 +1,31 @@
 # Changes across versions for the Fluid-Static
 
-- [Changes across versions for the Fluid-Static](#changes-across-versions-for-the-fluid-static)
-  - [0.39.0](#0390)
-    - [[BREAKING] `'FluidStatic' instances have been moved to service specific packages`]
-    (#fluidstatic-instances-have-been-moved-to-service-specific-packages)
-      - [Example](#example-4)
-    - [[BREAKING] `'ContainerConfig' has been renamed to 'ContainerSchema'`](#containerconfig-has-been-renamed-to-containerschema)
-  - [0.38.0](#0380)
-    - [DDS object types are now supported](#dds-object-types-are-now-supported)
-      - [Example](#example)
-    - [`initialObjects` are avaiable as an object on the FluidContainer](#initialobjects-are-avaiable-as-an-object-on-the-fluidcontainer)
-      - [Example](#example-1)
-    - [[BREAKING] `ContainerConfig` has renames](#breaking-containerconfig-has-renames)
-      - [Example](#example-2)
-    - [[BREAKING] `CreateContainerConfig` has been removed](#breaking-createcontainerconfig-has-been-removed)
-    - [[BREAKING] `getDataObject` is no longer avaiable](#breaking-getdataobject-is-no-longer-avaiable)
-    - [[BREAKING] `createDataObject` is replaced by `create`](#breaking-createdataobject-is-replaced-by-create)
-      - [Example](#example-3)
+-   [Changes across versions for the Fluid-Static](#changes-across-versions-for-the-fluid-static)
+    -   [0.39.0](#0390)
+        -   [[BREAKING] `'FluidStatic' instances have been moved to service specific packages`]
+            (#fluidstatic-instances-have-been-moved-to-service-specific-packages)
+            -   [Example](#example-4)
+        -   [[BREAKING] `'ContainerConfig' has been renamed to 'ContainerSchema'`](#containerconfig-has-been-renamed-to-containerschema)
+    -   [0.38.0](#0380)
+        -   [DDS object types are now supported](#dds-object-types-are-now-supported)
+            -   [Example](#example)
+        -   [`initialObjects` are avaiable as an object on the FluidContainer](#initialobjects-are-avaiable-as-an-object-on-the-fluidcontainer)
+            -   [Example](#example-1)
+        -   [[BREAKING] `ContainerConfig` has renames](#breaking-containerconfig-has-renames)
+            -   [Example](#example-2)
+        -   [[BREAKING] `CreateContainerConfig` has been removed](#breaking-createcontainerconfig-has-been-removed)
+        -   [[BREAKING] `getDataObject` is no longer avaiable](#breaking-getdataobject-is-no-longer-avaiable)
+        -   [[BREAKING] `createDataObject` is replaced by `create`](#breaking-createdataobject-is-replaced-by-create)
+            -   [Example](#example-3)
 
 ## 0.39.0
 
 ### [BREAKING] 'FluidStatic' has been moved to have separate client packages unique to each service
+
 There is no longer a general `FluidStatic` class. It has instead been replaced by implementations that define a unique paradigm for each service that the client is trying to communicate with. For example, when using Tinylicious, please see the details on using the `TinyliciousClient` from the [documentation](../tinylicious-client/README.MD) `@fluidframework/tinylicious-client`.
 
 ### [BREAKING] 'ContainerConfig' has been renamed to 'ContainerSchema'
+
 The interface for defining the container's initial object and supported dynamic object types has been renamed to `ContainerSchema` to differentiate it from the config interfaces that will be supplied for each service, i.e. `TinyliciousConnectionConfig` and `TinyliciousContainerConfig` from `@fluidframework/tinylicious-client`.
 
 `ContainerSchema` is used uniformly across all different services that are using the container supplied by the `FluidStatic` package, whereas the service configs are unique.
@@ -45,13 +47,12 @@ import { SharedMap } from "@fluidframework/map";
 // ...
 
 const containerConfig = {
-    name: "my-container",
-    initialObjects: {
-        "pair1": KeyValueDataObject,
-        "map1": SharedMap,
-    }
-}
-
+	name: "my-container",
+	initialObjects: {
+		pair1: KeyValueDataObject,
+		map1: SharedMap,
+	},
+};
 ```
 
 ### `initialObjects` are available as an object on the FluidContainer
@@ -64,12 +65,12 @@ This change also introduces all `initialObjects` as statically loaded when the `
 
 ```javascript
 const config = {
-    name: "my-container",
-    initialObjects: {
-        "map1": SharedMap,
-        "map2": SharedMap,
-    }
-}
+	name: "my-container",
+	initialObjects: {
+		map1: SharedMap,
+		map2: SharedMap,
+	},
+};
 
 // ...
 
@@ -85,9 +86,9 @@ const map2 = initialObjects["map2"];
 
 ```typescript
 interface ContainerConfig {
-    name: string;
-    initialObjects: LoadableObjectClassRecord;
-    dynamicObjectTypes?: LoadableObjectClass<any>[];
+	name: string;
+	initialObjects: LoadableObjectClassRecord;
+	dynamicObjectTypes?: LoadableObjectClass<any>[];
 }
 ```
 
@@ -97,23 +98,20 @@ For details of each property above see `ContainerConfig` in [./src/types](./src/
 
 ```javascript
 const config = {
-    name: "my-container",
-    initialObjects: {
-        "pair1": KeyValueDataObject,
-        "map1": SharedMap,
-    },
-    dynamicObjectTypes: [
-        SharedDirectory,
-        SharedString,
-    ],
-}
+	name: "my-container",
+	initialObjects: {
+		pair1: KeyValueDataObject,
+		map1: SharedMap,
+	},
+	dynamicObjectTypes: [SharedDirectory, SharedString],
+};
 ```
 
 ### [BREAKING] `CreateContainerConfig` has been removed
 
 `CreateContainerConfig` has been merged into `ContainerConfig`.
 
-See  **[[BREAKING] `ContainerConfig` has renames](#[BREAKING]-`ContainerConfig`-has-renames)** for more details.
+See **[[BREAKING] `ContainerConfig` has renames](#[BREAKING]-`ContainerConfig`-has-renames)** for more details.
 
 ### [BREAKING] `getDataObject` is no longer avaiable
 
@@ -137,12 +135,12 @@ Because the `FluidContainer` will no longer be maintaining object lifecycle the 
 
 ```javascript
 const config = {
-    name: "my-container",
-    initialObjects: {
-        "map1": SharedMap,
-    },
-    dynamicObjectTypes: [KeyValueDataObject],
-}
+	name: "my-container",
+	initialObjects: {
+		map1: SharedMap,
+	},
+	dynamicObjectTypes: [KeyValueDataObject],
+};
 
 const container = Fluid.getContainer("some-id", config);
 const map1 = container.initialObjects.map1;
@@ -159,5 +157,4 @@ const map2 = await map2Handle.get();
 
 // Alternate syntax
 const map2 = await map1.get("map2").get();
-
 ```

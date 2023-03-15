@@ -73,7 +73,6 @@ api-report/experimental-tree.api.md                                       @micro
 api-report/file-driver.api.md                                             @microsoft/fluid-cr-drivers
 api-report/fluid-static.api.md                                            @microsoft/fluid-cr-framework
 api-report/garbage-collector.api.md                                       @microsoft/fluid-cr-runtime
-api-report/iframe-driver.api.md                                           @microsoft/fluid-cr-drivers
 api-report/ink.api.md                                                     @microsoft/fluid-cr-dds
 api-report/location-redirection-utils.api.md                              @microsoft/fluid-cr-loader
 api-report/map.api.md                                                     @microsoft/fluid-cr-dds
@@ -83,7 +82,7 @@ api-report/mocha-test-setup.api.md                                        @micro
 api-report/odsp-driver-definitions.api.md                                 @microsoft/fluid-cr-odsp
 api-report/odsp-driver.api.md                                             @microsoft/fluid-cr-odsp
 api-report/ordered-collection.api.md                                      @microsoft/fluid-cr-dds
-api-report/quorum.api.md                                                  @microsoft/fluid-cr-dds
+api-report/pact-map.api.md                                                @microsoft/fluid-cr-dds
 api-report/register-collection.api.md                                     @microsoft/fluid-cr-dds
 api-report/replay-driver.api.md                                           @microsoft/fluid-cr-drivers
 api-report/request-handler.api.md                                         @microsoft/fluid-cr-runtime

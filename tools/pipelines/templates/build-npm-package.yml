@@ -85,7 +85,24 @@ parameters:
   type: string
   default: repo
 
-trigger: none
+- name: packageManager
+  type: string
+  default: npm
+
+- name: packageManagerInstallCommand
+  type: string
+  default: 'npm ci --unsafe-perm'
+
+# If true, then this pipeline will check and format package.json files according to prettier settings.
+- name: usesPrettier
+  type: boolean
+  default: true
+
+# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
+# a pipeline stage separate from the build stage.
+- name: checks
+  type: object
+  default: []
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -99,11 +116,21 @@ variables:
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
       nonScopedPackages: ${{ parameters.nonScopedPackages }}
+  - name: toolAbsolutePath
+    value:  $(Build.SourcesDirectory)/tools/telemetry-generator
+    readonly: true
 
 stages:
+  - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+    - template: include-policy-check.yml
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        checks: ${{ parameters.checks }}
+
   # Install / Build / Test Stage
   - stage: build
     displayName: Build Stage
+    dependsOn: [] # this stage doesn't depend on preceding stage
     jobs:
       # Job - Build
       - job: build
@@ -112,6 +139,8 @@ stages:
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
           releaseBuildVar: $[variables.releaseBuild]
+          ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+            targetBranchName: $(System.PullRequest.TargetBranch)
         steps:
         # Setup
         - checkout: self
@@ -143,6 +172,10 @@ stages:
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
 
+              Variables:
+                toolAbsolutePath=$(toolAbsolutePath)
+                BuildReason=$(variables['Build.Reason'])
+
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
 
@@ -152,9 +185,14 @@ stages:
                 publish=${{ variables.publish }}
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
-                targetBranchName = $(System.PullRequest.TargetBranch)
+                pnpmStorePath=${{ variables.pnpmStorePath }}
 
                 release=$(release)"
+
+              # Target Branch variable (PR policy related)
+              if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
+                echo "TargetBranchName=$(targetBranchName)"
+              fi
 
               # Error checking
               if [[ "$(release)" == "release" ]]; then
@@ -194,13 +232,34 @@ stages:
           displayName: Use Node 14.x
           inputs:
             version: 14.x
-        - task: Npm@1
-          displayName: npm ci
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          - task: Cache@2
+            displayName: Cache pnpm store
+            inputs:
+              # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+              # in the cache key
+              key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+              path: ${{ variables.pnpmStorePath }}
+              restoreKeys: |
+                pnpm-store | "$(Agent.OS)"
+
+          - task: Bash@3
+            displayName: Install and configure pnpm
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                npm i -g pnpm
+                pnpm config set store-dir $(pnpmStorePath)
+
+        - task: Bash@3
+          displayName: Install dependencies
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
-            customCommand: 'ci --unsafe-perm'
-            customRegistry: 'useNpmrc'
+            targetType: 'inline'
+            workingDirectory: ${{ parameters.buildDirectory }}
+            script: |
+              ${{ parameters.packageManagerInstallCommand }}
 
         # Set version
         - template: include-set-package-version.yml
@@ -209,6 +268,7 @@ stages:
             buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
             buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
             tagName: ${{ parameters.tagName }}
+            usesPrettier: ${{ parameters.usesPrettier }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -312,7 +372,7 @@ stages:
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm && \
+                  npx lerna exec --no-private --no-sort -- ${{ parameters.packageManager }} pack && \
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
                   npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
 
@@ -320,7 +380,7 @@ stages:
                   # Each package name is modified to match the packed tar files.
                   npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
                 else
-                  npm pack --unsafe-perm && \
+                  ${{ parameters.packageManager }} pack && \
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
 
@@ -334,26 +394,26 @@ stages:
                   script: |
                     mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - pack
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/pack'
-              ArtifactName: 'pack'
-              publishLocation: 'Container'
+              targetPath: '$(Build.ArtifactStagingDirectory)/pack'
+              artifactName: 'pack'
+              publishLocation: 'pipeline'
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Test Files
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/test-files'
-              ArtifactName: 'test-files'
-              publishLocation: 'Container'
+              targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
+              artifactName: 'test-files'
+              publishLocation: 'pipeline'
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)/logs'
-              ArtifactName: 'tinyliciousLog'
-              publishLocation: 'Container'
+              targetPath: '$(Build.ArtifactStagingDirectory)/logs'
+              artifactName: 'tinyliciousLog'
+              publishLocation: 'pipeline'
 
         # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
@@ -364,6 +424,9 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
 
+          # NOTE: this task is deliberately not updated to the newer PublishPipelineArtifact because some of our tooling
+          # does not support the newer task.
+          # See the getZipObjectFromArtifact function in @fluidframework/bundle-size-tools for details about the issue.
           - task: PublishBuildArtifacts@1
             displayName: Publish Artifacts - bundle-analysis
             condition:
@@ -383,13 +446,84 @@ stages:
             env:
               ADO_API_TOKEN: $(System.AccessToken)
               DANGER_GITHUB_API_TOKEN: $(githubPublicRepoSecret)
-              TARGET_BRANCH_NAME: $(System.PullRequest.TargetBranch)
+              TARGET_BRANCH_NAME: ${{ variables.targetBranchName }}
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
-              script: |
-                echo $(System.PullRequest.TargetBranch)
+
+          - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
+            # Auth to internal feed
+            - task: Bash@3
+              name: Initialize
+              displayName: Initialize .npmrc for telemetry logger
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ variables.toolAbsolutePath }}
+                script: |
+                  echo Initialize package
+                  npm init --yes
+
+                  echo Generating .npmrc
+                  echo "registry=https://registry.npmjs.org" >> ./.npmrc
+                  echo "always-auth=false" >> ./.npmrc
+
+                  echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
+                  echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+                  echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+                  echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
+                  echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
+                  echo "always-auth=true" >> ./.npmrc
+                  cat .npmrc
+
+            - task: npmAuthenticate@0
+              displayName: 'npm authenticate (internal feed)'
+              inputs:
+                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
+
+            - task: npmAuthenticate@0
+              displayName: 'npm authenticate (office feed)'
+              inputs:
+                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
+                customEndpoint: 'Office Packages - Readonly'
+
+            - task: Bash@3
+              displayName: 'List report.json and .npmrc'
+              inputs:
+                targetType: 'inline'
+                workingDirectory:  ${{ parameters.buildDirectory }}
+                script: |
+                  echo "Build Directory is ${{ parameters.buildDirectory }}"
+                  ls -la '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                  cat '${{ variables.toolAbsolutePath }}/.npmrc';
+
+            - task: Bash@3
+              displayName: 'Prepare telemetry-generator for bundle size'
+              inputs:
+                targetType: 'inline'
+                workingDirectory:  ${{ variables.toolAbsolutePath }}
+                script: |
+                  ls -la '${{ variables.toolAbsolutePath }}';
+                  ls -la '${{ parameters.buildDirectory }}';
+                  npm install @ff-internal/aria-logger;
+                  npm i;
+                  npm run build:compile;
+
+            - task: Bash@3
+              displayName: Write bundle sizes measurements to Aria/Kusto
+              condition: succeededOrFailed()
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ variables.toolAbsolutePath }}
+                script: |
+                  echo "Writing the following performance tests results to Aria/Kusto"
+                  echo "Report Size:"
+                  ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                  echo "Tools Path:"
+                  ls -la '../../tools/telemetry-generator/dist/handlers';
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                  echo "Removing .npmrc"
+                  rm ../../tools/telemetry-generator/.npmrc;
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -400,19 +534,42 @@ stages:
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
 
-          - task: PublishBuildArtifacts@1
+          - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - _api-extractor-temp
             inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-              ArtifactName: '_api-extractor-temp'
-              publishLocation: 'Container'
+              targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+              artifactName: '_api-extractor-temp'
+              publishLocation: 'pipeline'
+
+        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+          # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
+          # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
+          # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
+          # at the beginning of the CI job.
+          - task: Bash@3
+            displayName: Reset lockfile
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                git checkout HEAD -- pnpm-lock.yaml
+
+          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+          - task: Bash@3
+            displayName: Prune pnpm store
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                pnpm store prune
+
 
         - task: Bash@3
           displayName: Check for extraneous modified files
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|build-cli/README.md|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-cli/README.md|build-tools/.npmrc|version-tools/README.md|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"

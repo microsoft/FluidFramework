@@ -10,16 +10,16 @@ import { IClient } from "@fluidframework/protocol-definitions";
  * Manages the state and the members for {@link IAudience}
  */
 export interface IAudienceOwner extends IAudience {
-    /**
-     * Adds a new client to the audience
-     */
-     addMember(clientId: string, details: IClient): void;
+	/**
+	 * Adds a new client to the audience
+	 */
+	addMember(clientId: string, details: IClient): void;
 
-     /**
-     * Removes a client from the audience. Only emits an event if a client is actually removed
-     * @returns if a client was removed from the audience
-     */
-     removeMember(clientId: string): boolean;
+	/**
+	 * Removes a client from the audience. Only emits an event if a client is actually removed
+	 * @returns if a client was removed from the audience
+	 */
+	removeMember(clientId: string): boolean;
 }
 
 /**
@@ -29,19 +29,22 @@ export interface IAudienceOwner extends IAudience {
  * class.
  */
 export interface IAudience extends EventEmitter {
-    /**
-     * See {@link https://nodejs.dev/learn/the-nodejs-event-emitter | here} for an overview of `EventEmitter.on`.
-     */
-    on(event: "addMember" | "removeMember", listener: (clientId: string, client: IClient) => void): this;
+	/**
+	 * See {@link https://nodejs.dev/learn/the-nodejs-event-emitter | here} for an overview of `EventEmitter.on`.
+	 */
+	on(
+		event: "addMember" | "removeMember",
+		listener: (clientId: string, client: IClient) => void,
+	): this;
 
-    /**
-     * List all clients connected to the op stream, keyed off their clientId
-     */
-    getMembers(): Map<string, IClient>;
+	/**
+	 * List all clients connected to the op stream, keyed off their clientId
+	 */
+	getMembers(): Map<string, IClient>;
 
-    /**
-     * Get details about the connected client with the specified clientId,
-     * or undefined if the specified client isn't connected
-     */
-    getMember(clientId: string): IClient | undefined;
+	/**
+	 * Get details about the connected client with the specified clientId,
+	 * or undefined if the specified client isn't connected
+	 */
+	getMember(clientId: string): IClient | undefined;
 }

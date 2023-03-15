@@ -4,16 +4,16 @@
  */
 
 import {
-    IFluidDataStoreRuntime,
-    IChannelServices,
-    IChannelAttributes,
-    IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+	IChannelAttributes,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 export enum ConsensusResult {
-    Release,
-    Complete,
+	Release,
+	Complete,
 }
 
 /**
@@ -29,45 +29,45 @@ export type ConsensusCallback<T> = (value: T) => Promise<ConsensusResult>;
  * Use for the runtime to create and load distributed data structure by type name of each channel
  */
 export interface IConsensusOrderedCollectionFactory extends IChannelFactory {
-    load(
-        document: IFluidDataStoreRuntime,
-        id: string,
-        services: IChannelServices,
-        attributes: IChannelAttributes): Promise<IConsensusOrderedCollection>;
+	load(
+		document: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<IConsensusOrderedCollection>;
 
-    create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
+	create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection;
 }
 
 /**
  * Events notifying about addition, acquisition, release and completion of items
  */
 export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvents {
+	/**
+	 * Event fires when new item is added to the queue or
+	 * an item previously acquired is returned back to a queue (including client loosing connection)
+	 * @param newlyAdded - indicates if it's newly added item of previously acquired item
+	 */
+	(event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
+	/**
+	 * Event fires when a client acquired an item
+	 * Fires both for locally acquired items, as well as items acquired by remote clients
+	 */
+	(event: "acquire", listener: (value: T, clientId?: string) => void): this;
 
-    /**
-     * Event fires when new item is added to the queue or
-     * an item previously acquired is returned back to a queue (including client loosing connection)
-     * @param newlyAdded - indicates if it's newly added item of previously acquired item
-     */
-    (event: "add", listener: (value: T, newlyAdded: boolean) => void): this;
-    /**
-     * Event fires when a client acquired an item
-     * Fires both for locally acquired items, as well as items acquired by remote clients
-     */
-    (event: "acquire", listener: (value: T, clientId?: string) => void): this;
+	/**
+	 * "Complete event fires when a client completes an item.
+	 */
+	(event: "complete", listener: (value: T) => void): this;
 
-    /**
-     * "Complete event fires when a client completes an item.
-     */
-    (event: "complete", listener: (value: T) => void): this;
-
-    /**
-     * Event fires when locally acquired item is being released back to the queue.
-     * Please note that release process is asynchronous, so it takes a while for it to happen
-     * ("add" event will be fired as result of it)
-     * @param intentional - indicates whether release was intentional (result of returning
-     * ConsensusResult.Release from callback) or it happened as result of lost connection.
-     */
-    (event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
+	/**
+	 * Event fires when locally acquired item is being released back to the queue.
+	 * Please note that release process is asynchronous, so it takes a while for it to happen
+	 * ("add" event will be fired as result of it)
+	 * @param intentional - indicates whether release was intentional (result of returning
+	 * ConsensusResult.Release from callback) or it happened as result of lost connection.
+	 */
+	(event: "localRelease", listener: (value: T, intentional: boolean) => void): this;
 }
 
 /**
@@ -94,25 +94,25 @@ export interface IConsensusOrderedCollectionEvents<T> extends ISharedObjectEvent
  * They will not be references to the original input object.  Thus changed to
  * the input object will not reflect the object in the collection.
  */
-export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
+export interface IConsensusOrderedCollection<T = any>
+	extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
+	/**
+	 * Adds a value to the collection
+	 */
+	add(value: T): Promise<void>;
 
-    /**
-     * Adds a value to the collection
-     */
-    add(value: T): Promise<void>;
+	/**
+	 * Retrieves a value from the collection.
+	 * @returns Returns true (and calls callback with acquired value) if collection was not empty.
+	 * Otherwise returns false.
+	 */
+	acquire(callback: ConsensusCallback<T>): Promise<boolean>;
 
-    /**
-     * Retrieves a value from the collection.
-     * @returns Returns true (and calls callback with acquired value) if collection was not empty.
-     * Otherwise returns false.
-     */
-    acquire(callback: ConsensusCallback<T>): Promise<boolean>;
-
-    /**
-     * Wait for a value to be available and remove it from the consensus collection
-     * Calls callback with retrieved value.
-     */
-    waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
+	/**
+	 * Wait for a value to be available and remove it from the consensus collection
+	 * Calls callback with retrieved value.
+	 */
+	waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
 /**
@@ -122,9 +122,9 @@ export interface IConsensusOrderedCollection<T = any> extends ISharedObject<ICon
  * TODO: currently input and output is not symmetrical, can they become symmetrical?
  */
 export interface ISnapshotable<T> {
-    asArray(): T[];
+	asArray(): T[];
 
-    loadFrom(values: T[]): void;
+	loadFrom(values: T[]): void;
 }
 
 /**
@@ -135,18 +135,18 @@ export interface ISnapshotable<T> {
  * for the ConsensusOrderedCollection
  */
 export interface IOrderedCollection<T = any> extends ISnapshotable<T> {
-    /**
-     * Adds a value to the collection
-     */
-    add(value: T);
+	/**
+	 * Adds a value to the collection
+	 */
+	add(value: T);
 
-    /**
-     * Retrieves a value from the collection.
-     */
-    remove(): T;
+	/**
+	 * Retrieves a value from the collection.
+	 */
+	remove(): T;
 
-    /**
-     * Return the size of the collection
-     */
-    size(): number;
+	/**
+	 * Return the size of the collection
+	 */
+	size(): number;
 }

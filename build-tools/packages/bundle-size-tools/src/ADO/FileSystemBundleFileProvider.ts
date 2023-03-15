@@ -14,11 +14,11 @@ import { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePat
  * @param bundleReportPath - The path to the folder containing the bundle report
  */
 export async function getBundlePathsFromFileSystem(
-    bundleReportPath: string,
+	bundleReportPath: string,
 ): Promise<BundleFileData[]> {
-    const filePaths = await getAllFilesInDirectory(bundleReportPath);
+	const filePaths = await getAllFilesInDirectory(bundleReportPath);
 
-    return getBundleFilePathsFromFolder(filePaths);
+	return getBundleFilePathsFromFolder(filePaths);
 }
 
 /**
@@ -26,9 +26,9 @@ export async function getBundlePathsFromFileSystem(
  * @param path - the full path to the file in the filesystem
  */
 export async function getBundleBuddyConfigFromFileSystem(path: string): Promise<BundleBuddyConfig> {
-    const file = await fsPromises.readFile(path);
+	const file = await fsPromises.readFile(path);
 
-    return JSON.parse(file.toString());
+	return JSON.parse(file.toString());
 }
 
 /**
@@ -36,7 +36,7 @@ export async function getBundleBuddyConfigFromFileSystem(path: string): Promise<
  * @param path - the full path to the file in the filesystem
  */
 export async function getStatsFileFromFileSystem(path: string): Promise<StatsCompilation> {
-    const file = await fsPromises.readFile(path);
+	const file = await fsPromises.readFile(path);
 
-    return decompressStatsFile(file);
+	return decompressStatsFile(file);
 }

@@ -52,7 +52,14 @@ import { ITreeEntry } from '@fluidframework/protocol-definitions';
 import { IUser } from '@fluidframework/protocol-definitions';
 import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
+import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
+
+// @public
+export interface IInsecureUser extends IUser {
+    name: string;
+}
 
 // @public (undocumented)
 export interface IMockContainerRuntimePendingMessage {
@@ -68,7 +75,8 @@ export interface IMockContainerRuntimePendingMessage {
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
     tenantKey: string,
-    user: IUser);
+    user: IInsecureUser,
+    scopes?: ScopeType[] | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
     // (undocumented)
@@ -291,6 +299,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -342,6 +352,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
+        entryPoint?: IFluidHandle<FluidObject>;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -375,6 +386,10 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     get disposed(): boolean;
     // (undocumented)
     readonly documentId: string;
+    // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
+    readonly entryPoint?: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
     // (undocumented)
@@ -450,6 +465,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    get visibilityState(): VisibilityState_2;
     // (undocumented)
     waitAttached(): Promise<void>;
 }

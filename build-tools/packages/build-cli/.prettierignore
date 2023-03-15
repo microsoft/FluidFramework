@@ -8,3 +8,5 @@ README.md
 /api-report
 _api-extractor-temp/
 /docs/*.md
+# Generated type-tests
+**/*.generated.ts

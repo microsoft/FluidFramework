@@ -1,35 +1,37 @@
-html, body {
+html,
+body {
 	height: 100%;
-    width: 100%;
-    padding: 0px;
-    margin: 0px;
+	width: 100%;
+	padding: 0px;
+	margin: 0px;
 }
 
-.host, .viewport {
-    position: absolute;
-    left: 0;
-    top: 0;
-    right: 0;
+.host,
+.viewport {
+	position: absolute;
+	left: 0;
+	top: 0;
+	right: 0;
 }
 
 .host {
-    margin: 0.75in;   
+	margin: 0.75in;
 }
 
 .viewport {
-    outline: 1px dotted #eee;
-    padding: 0.1in;
+	outline: 1px dotted #eee;
+	padding: 0.1in;
 }
 
 .viewport:focus-within {
-    background: white;
-    outline: 1px dotted #ccc;
+	background: white;
+	outline: 1px dotted #ccc;
 }
 
 .slot:focus-within {
-    outline: none;
+	outline: none;
 }
 
 .bold {
-    font-weight: bold;
+	font-weight: bold;
 }

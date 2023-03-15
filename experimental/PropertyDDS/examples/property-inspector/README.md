@@ -1,4 +1,5 @@
-# @fluid-experimental/property-inspector
+# @fluid-example/property-inspector
+
 An app for inspecting documents created by PropertyDDS using an efficient table-tree.
 
 ## Getting Started
@@ -6,11 +7,12 @@ An app for inspecting documents created by PropertyDDS using an efficient table-
 After cloning the repository, install dependencies with:
 
 Go back to the root folder and run:
+
 ```bash
-npm install
+pnpm install
 alias fb='clear && node "$(git rev-parse --show-toplevel)/node_modules/.bin/fluid-build"'
 fb --install --symlink:full
-fb --all @fluid-experimental/property-inspector tinylicious
+fb --all @fluid-example/property-inspector tinylicious
 ```
 
 You can then run the example with:
@@ -19,7 +21,7 @@ You can then run the example with:
 npm start
 ```
 
-This will open a browser window to the example.  You can navigate to the same URL in a second window to see changes propagating between clients.
+This will open a browser window to the example. You can navigate to the same URL in a second window to see changes propagating between clients.
 
 To webpack the bundle and output the result in `./dist`, you can run:
 

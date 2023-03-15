@@ -4,8 +4,21 @@
  */
 
 export { IOdspError, IOdspErrorAugmentations, OdspError, OdspErrorType } from "./errors";
-export { HostStoragePolicy, ICollabSessionOptions, IOpsCachingPolicy, ISnapshotOptions } from "./factory";
-export { CacheContentType, ICacheEntry, IEntry, IFileEntry, IPersistedCache, snapshotKey } from "./odspCache";
+export {
+	HostStoragePolicy,
+	ICollabSessionOptions,
+	IOpsCachingPolicy,
+	ISnapshotOptions,
+} from "./factory";
+export {
+	CacheContentType,
+	getKeyForCacheEntry,
+	ICacheEntry,
+	IEntry,
+	IFileEntry,
+	IPersistedCache,
+	snapshotKey,
+} from "./odspCache";
 export {
 	IOdspResolvedUrl,
 	IOdspUrlParts,

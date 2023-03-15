@@ -175,11 +175,6 @@ export interface EditChunkContents_0_1_1 {
 }
 
 /**
- * Edits per edit chunk. This value is in persisted types because it requires consensus to change.
- */
-export const editsPerChunk = 100;
-
-/**
  * Compressed change format type.
  * Encodes the same information as a {@link ChangeInternal}, but uses a more compact object format for `build` changes.
  */

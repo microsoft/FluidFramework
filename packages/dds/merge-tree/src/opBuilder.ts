@@ -5,13 +5,13 @@
 
 import { ISegment, Marker } from "./mergeTreeNodes";
 import {
-    ICombiningOp,
-    IMergeTreeAnnotateMsg,
-    IMergeTreeGroupMsg,
-    IMergeTreeInsertMsg,
-    IMergeTreeRemoveMsg,
-    MergeTreeDeltaType,
-    IMergeTreeDeltaOp,
+	ICombiningOp,
+	IMergeTreeAnnotateMsg,
+	IMergeTreeGroupMsg,
+	IMergeTreeInsertMsg,
+	IMergeTreeRemoveMsg,
+	MergeTreeDeltaType,
+	IMergeTreeDeltaOp,
 } from "./ops";
 import { PropertySet } from "./properties";
 
@@ -23,19 +23,22 @@ import { PropertySet } from "./properties";
  * @returns The annotate op
  */
 export function createAnnotateMarkerOp(
-    marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined {
-    const id = marker.getId();
-    if (!id) {
-        return undefined;
-    }
+	marker: Marker,
+	props: PropertySet,
+	combiningOp?: ICombiningOp,
+): IMergeTreeAnnotateMsg | undefined {
+	const id = marker.getId();
+	if (!id) {
+		return undefined;
+	}
 
-    return {
-        combiningOp,
-        props,
-        relativePos1: { id, before: true },
-        relativePos2: { id },
-        type: MergeTreeDeltaType.ANNOTATE,
-    };
+	return {
+		combiningOp,
+		props,
+		relativePos1: { id, before: true },
+		relativePos2: { id },
+		type: MergeTreeDeltaType.ANNOTATE,
+	};
 }
 
 /**
@@ -47,14 +50,18 @@ export function createAnnotateMarkerOp(
  * @returns The annotate op
  */
 export function createAnnotateRangeOp(
-    start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg {
-    return {
-        combiningOp,
-        pos1: start,
-        pos2: end,
-        props,
-        type: MergeTreeDeltaType.ANNOTATE,
-    };
+	start: number,
+	end: number,
+	props: PropertySet,
+	combiningOp: ICombiningOp | undefined,
+): IMergeTreeAnnotateMsg {
+	return {
+		combiningOp,
+		pos1: start,
+		pos2: end,
+		props,
+		type: MergeTreeDeltaType.ANNOTATE,
+	};
 }
 
 /**
@@ -64,11 +71,11 @@ export function createAnnotateRangeOp(
  * @param end - The exclusive end of the range to remove
  */
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg {
-    return {
-        pos1: start,
-        pos2: end,
-        type: MergeTreeDeltaType.REMOVE,
-    };
+	return {
+		pos1: start,
+		pos2: end,
+		type: MergeTreeDeltaType.REMOVE,
+	};
 }
 
 /**
@@ -77,27 +84,24 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  * @param segment - The segment to insert
  */
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
-    return createInsertOp(
-        pos,
-        segment.toJSONObject());
+	return createInsertOp(pos, segment.toJSONObject());
 }
 
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
-    return {
-        pos1: pos,
-        seg: segSpec,
-        type: MergeTreeDeltaType.INSERT,
-    };
+	return {
+		pos1: pos,
+		seg: segSpec,
+		type: MergeTreeDeltaType.INSERT,
+	};
 }
 
 /**
  *
  * @param ops - The ops to group
  */
-export function createGroupOp(
-    ...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
-    return {
-        ops,
-        type: MergeTreeDeltaType.GROUP,
-    };
+export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
+	return {
+		ops,
+		type: MergeTreeDeltaType.GROUP,
+	};
 }

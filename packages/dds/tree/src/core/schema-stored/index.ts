@@ -1,0 +1,31 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export {
+	FieldSchema,
+	ValueSchema,
+	GlobalFieldKey,
+	TreeSchema,
+	TreeSchemaIdentifier,
+	LocalFieldKey,
+	NamedTreeSchema,
+	Named,
+	TreeTypeSet,
+	SchemaPolicy,
+	FieldKindIdentifier,
+	FieldKindSpecifier,
+	SchemaData,
+	NamedFieldSchema,
+} from "./schema";
+export {
+	StoredSchemaRepository,
+	lookupGlobalFieldSchema,
+	lookupTreeSchema,
+	InMemoryStoredSchemaRepository,
+	schemaDataIsEmpty,
+	SchemaDataAndPolicy,
+	SchemaEvents,
+} from "./storedSchemaRepository";
+export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";

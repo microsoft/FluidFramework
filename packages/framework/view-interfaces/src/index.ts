@@ -3,4 +3,8 @@
  * Licensed under the MIT License.
  */
 export { IFluidHTMLOptions, IFluidHTMLView, IProvideFluidHTMLView } from "./htmlView";
-export { IFluidMountableView, IFluidMountableViewClass, IProvideFluidMountableView } from "./mountableView";
+export {
+	IFluidMountableView,
+	IFluidMountableViewClass,
+	IProvideFluidMountableView,
+} from "./mountableView";

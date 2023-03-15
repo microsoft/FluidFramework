@@ -323,7 +323,7 @@ export interface EditCommittedEventArguments {
 // @public
 export type EditCommittedHandler = (args: EditCommittedEventArguments) => void;
 
-// @public
+// @public @deprecated
 export interface EditHandle<TChange> {
     // (undocumented)
     readonly baseHandle: FluidEditHandle;
@@ -447,6 +447,7 @@ export class GenericTransaction {
     get changes(): readonly ChangeInternal[];
     // (undocumented)
     close(): EditingResult;
+    get failure(): TransactionInternal.Failure | undefined;
     get isOpen(): boolean;
     get status(): EditStatus;
     get steps(): readonly ReconciliationChange[];
@@ -460,7 +461,7 @@ export interface GenericTransactionPolicy {
     validateOnClose(state: SucceedingTransactionState): ChangeResult;
 }
 
-// @public
+// @public @deprecated
 function getSerializedUploadedEditChunkContents(sharedTree: SharedTree): Promise<string>;
 export { getSerializedUploadedEditChunkContents }
 export { getSerializedUploadedEditChunkContents as getUploadedEditChunkContents }
@@ -528,8 +529,6 @@ export type InternedStringId = number & {
     readonly InternedStringId: 'e221abc9-9d17-4493-8db0-70c871a1c27c';
 };
 
-// Warning: (ae-internal-missing-underscore) The name "isDetachedSequenceId" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal
 export function isDetachedSequenceId(node: DetachedSequenceId | object): node is DetachedSequenceId;
 
@@ -564,7 +563,10 @@ export type LocalCompressedId = number & {
 
 // @public
 export interface LogViewer {
+    // @deprecated
     getRevisionView(revision: Revision): Promise<RevisionView>;
+    getRevisionViewInMemory(revision: Revision): RevisionView;
+    // @deprecated
     getRevisionViewInSession(revision: Revision): RevisionView;
 }
 
@@ -638,17 +640,21 @@ export interface NodeInTrait {
 // @public @sealed
 export interface OrderedEditSet<TChange = unknown> {
     readonly editIds: readonly EditId[];
-    // (undocumented)
+    // @deprecated (undocumented)
     getEditAtIndex(index: number): Promise<Edit<TChange>>;
-    // (undocumented)
+    // @deprecated (undocumented)
     getEditInSessionAtIndex(index: number): Edit<TChange>;
     // (undocumented)
     getIdAtIndex(index: number): EditId;
     // (undocumented)
     getIndexOfId(editId: EditId): number;
     readonly length: number;
-    // (undocumented)
+    // @deprecated (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
+    // (undocumented)
+    tryGetEditAtIndex(index: number): Edit<TChange> | undefined;
+    // (undocumented)
+    tryGetEditFromId(editId: EditId): Edit<TChange> | undefined;
     // (undocumented)
     tryGetIndexOfId(editId: EditId): number | undefined;
 }
@@ -891,6 +897,12 @@ export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat:
 export const sharedTreeAssertionErrorType = "SharedTreeAssertion";
 
 // @public
+export interface SharedTreeBaseOptions {
+    editEvictionFrequency?: number;
+    inMemoryHistorySize?: number;
+}
+
+// @public
 export enum SharedTreeDiagnosticEvent {
     AppliedEdit = "appliedEdit",
     CatchUpBlobUploaded = "uploadedCatchUpBlob",
@@ -937,7 +949,7 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 }
 
 // @public
-export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
+export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = SharedTreeBaseOptions & Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
 
 // @public
 export interface SharedTreeOptions_0_0_2 {

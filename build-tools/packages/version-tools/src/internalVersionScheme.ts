@@ -23,7 +23,7 @@ const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
  * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions, the
  * value must always match this constant.
  */
-const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
+export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
 
 /**
  * Translates a version using the Fluid internal version scheme into two parts: the public version, and the internal
@@ -48,34 +48,44 @@ const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
  *
  * @param internalVersion - A version in the Fluid internal version scheme.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
- * @returns A tuple of [publicVersion, internalVersion]
+ * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
+ * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * @returns A tuple of [publicVersion, internalVersion, prereleaseIdentifier]
  */
 export function fromInternalScheme(
-    internalVersion: semver.SemVer | string,
-    allowPrereleases = false,
-): [publicVersion: semver.SemVer, internalVersion: semver.SemVer] {
-    const parsedVersion = semver.parse(internalVersion);
-    validateVersionScheme(parsedVersion, allowPrereleases);
+	internalVersion: semver.SemVer | string,
+	allowPrereleases = false,
+	allowAnyPrereleaseId = false,
+): [publicVersion: semver.SemVer, internalVersion: semver.SemVer, prereleaseIndentifier: string] {
+	const parsedVersion = semver.parse(internalVersion);
+	validateVersionScheme(
+		parsedVersion,
+		allowPrereleases,
+		allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER,
+	);
 
-    assert(parsedVersion !== null);
-    const prereleaseSections = parsedVersion.prerelease;
+	assert(parsedVersion !== null);
+	const prereleaseSections = parsedVersion.prerelease;
 
-    const newSemVerString =
-        prereleaseSections.length > 4
-            ? `${prereleaseSections.slice(1, 4).join(".")}-${prereleaseSections.slice(4).join(".")}`
-            : prereleaseSections.slice(1).join(".");
-    const newSemVer = semver.parse(newSemVerString);
-    if (newSemVer === null) {
-        throw new Error(`Couldn't convert ${internalVersion} to a standard semver.`);
-    }
+	const prereleaseIdentifier = prereleaseSections[0];
+	assert(typeof prereleaseIdentifier === "string");
 
-    const publicVersionString = parsedVersion.format().split("-")[0];
-    const publicVersion = semver.parse(publicVersionString);
-    if (publicVersion === null) {
-        throw new Error(`Couldn't convert ${publicVersionString} to a standard semver.`);
-    }
+	const newSemVerString =
+		prereleaseSections.length > 4
+			? `${prereleaseSections.slice(1, 4).join(".")}-${prereleaseSections.slice(4).join(".")}`
+			: prereleaseSections.slice(1).join(".");
+	const newSemVer = semver.parse(newSemVerString);
+	if (newSemVer === null) {
+		throw new Error(`Couldn't convert ${internalVersion} to a standard semver.`);
+	}
 
-    return [publicVersion, newSemVer];
+	const publicVersionString = parsedVersion.format().split("-")[0];
+	const publicVersion = semver.parse(publicVersionString);
+	if (publicVersion === null) {
+		throw new Error(`Couldn't convert ${publicVersionString} to a standard semver.`);
+	}
+
+	return [publicVersion, newSemVer, prereleaseIdentifier];
 }
 
 /**
@@ -101,39 +111,42 @@ export function fromInternalScheme(
  * @param publicVersion - The public version.
  * @param version - The internal version.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
+ * @param prereleaseIdentifier - The prerelease indentifier to use in the Fluid internal version. Defaults to
+ * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
  * @returns A version in the Fluid internal version scheme.
  */
 export function toInternalScheme(
-    publicVersion: semver.SemVer | string,
-    version: semver.SemVer | string,
-    allowPrereleases = false,
+	publicVersion: semver.SemVer | string,
+	version: semver.SemVer | string,
+	allowPrereleases = false,
+	prereleaseIdentifier = REQUIRED_PRERELEASE_IDENTIFIER,
 ): semver.SemVer {
-    const parsedVersion = semver.parse(version);
-    if (parsedVersion === null) {
-        throw new Error(`Couldn't parse ${version} as a semver.`);
-    }
+	const parsedVersion = semver.parse(version);
+	if (parsedVersion === null) {
+		throw new Error(`Couldn't parse ${version} as a semver.`);
+	}
 
-    if (!allowPrereleases && parsedVersion.prerelease.length !== 0) {
-        throw new Error(
-            `Input version already has a pre-release component (${parsedVersion.prerelease}), which is not expected.`,
-        );
-    }
+	if (!allowPrereleases && parsedVersion.prerelease.length !== 0) {
+		throw new Error(
+			`Input version already has a pre-release component (${parsedVersion.prerelease}), which is not expected.`,
+		);
+	}
 
-    const prereleaseSections = parsedVersion.prerelease;
-    const newPrerelease = prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
-    const newSemVerString = `${publicVersion}-internal.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}${newPrerelease}`;
-    const newSemVer = semver.parse(newSemVerString);
-    if (newSemVer === null) {
-        throw new Error(
-            `Couldn't convert ${version} to the internal version scheme. Tried parsing: '${newSemVerString}'`,
-        );
-    }
+	const prereleaseSections = parsedVersion.prerelease;
+	const newPrerelease = prereleaseSections.length > 0 ? `.${prereleaseSections.join(".")}` : "";
+	const newSemVerString = `${publicVersion}-${prereleaseIdentifier}.${parsedVersion.major}.${parsedVersion.minor}.${parsedVersion.patch}${newPrerelease}`;
+	const newSemVer = semver.parse(newSemVerString);
+	if (newSemVer === null) {
+		throw new Error(
+			`Couldn't convert ${version} to the internal version scheme. Tried parsing: '${newSemVerString}'`,
+		);
+	}
 
-    if (!isInternalVersionScheme(newSemVer, allowPrereleases)) {
-        throw new Error(`Converted version is not a valid Fluid internal version: ${newSemVer}`);
-    }
+	if (!isInternalVersionScheme(newSemVer, allowPrereleases, true)) {
+		throw new Error(`Converted version is not a valid Fluid internal version: ${newSemVer}`);
+	}
 
-    return newSemVer;
+	return newSemVer;
 }
 
 /**
@@ -141,43 +154,63 @@ export function toInternalScheme(
  *
  * @param version - The version to check.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
+ * @param prereleaseIdentifier - If provided, the version must use this prereleaseIdentifier to be considered a valid
+ * internal version. When set to undefined any prerelease identifier will be considered valid.
  * @returns True if the version matches the Fluid internal version scheme. Throws if not.
  *
  * @remarks
  *
  * This function is not typically used. {@link isInternalVersionScheme} is more useful since it does not throw.
  */
-// eslint-disable-next-line @rushstack/no-new-null
-function validateVersionScheme(version: semver.SemVer | string | null, allowPrereleases = false) {
-    const parsedVersion = semver.parse(version);
-    if (parsedVersion === null) {
-        throw new Error(`Couldn't parse ${version} as a semver.`);
-    }
+export function validateVersionScheme(
+	// eslint-disable-next-line @rushstack/no-new-null
+	version: semver.SemVer | string | null,
+	allowPrereleases = false,
+	prereleaseIdentifier?: string,
+) {
+	const parsedVersion = semver.parse(version);
+	if (parsedVersion === null) {
+		throw new Error(`Couldn't parse ${version} as a semver.`);
+	}
 
-    // extract what semver calls the "prerelease identifier," which is the first section of the prerelease field.
-    const prereleaseId = parsedVersion.prerelease[0];
-    if (prereleaseId !== REQUIRED_PRERELEASE_IDENTIFIER) {
-        throw new Error(
-            `First prerelease component should be '${REQUIRED_PRERELEASE_IDENTIFIER}'; found ${prereleaseId}`,
-        );
-    }
+	if (parsedVersion.prerelease.length === 0) {
+		throw new Error(`No prerelease section in ${version}`);
+	}
 
-    if (parsedVersion.major < MINIMUM_PUBLIC_MAJOR) {
-        throw new Error(
-            `The public major version must be >= ${MINIMUM_PUBLIC_MAJOR}; found ${parsedVersion.major}`,
-        );
-    }
+	if (typeof parsedVersion.prerelease[0] !== "string") {
+		throw new TypeError(
+			`Expected a string; found a ${typeof parsedVersion.prerelease[0]} instead: ${
+				parsedVersion.prerelease[0]
+			}`,
+		);
+	}
 
-    if (parsedVersion.prerelease.length > MINIMUM_SEMVER_PRERELEASE_SECTIONS) {
-        if (allowPrereleases) {
-            return true;
-        }
-        throw new Error(
-            `Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${MINIMUM_SEMVER_PRERELEASE_SECTIONS}.`,
-        );
-    }
+	if (prereleaseIdentifier !== undefined) {
+		// the "prerelease identifier" is the first section of the prerelease field
+		const prereleaseId = parsedVersion.prerelease[0];
+		if (prereleaseId !== prereleaseIdentifier) {
+			throw new Error(
+				`First prerelease component should be '${prereleaseIdentifier}'; found ${prereleaseId}`,
+			);
+		}
+	}
 
-    return true;
+	if (parsedVersion.major < MINIMUM_PUBLIC_MAJOR) {
+		throw new Error(
+			`The public major version must be >= ${MINIMUM_PUBLIC_MAJOR}; found ${parsedVersion.major}`,
+		);
+	}
+
+	if (parsedVersion.prerelease.length > MINIMUM_SEMVER_PRERELEASE_SECTIONS) {
+		if (allowPrereleases) {
+			return true;
+		}
+		throw new Error(
+			`Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${MINIMUM_SEMVER_PRERELEASE_SECTIONS}.`,
+		);
+	}
+
+	return true;
 }
 
 /**
@@ -186,43 +219,55 @@ function validateVersionScheme(version: semver.SemVer | string | null, allowPrer
  *
  * @param version - The version to check. If it is `undefined`, returns false.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
+ * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
+ * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
  * @returns True if the version matches the Fluid internal version scheme.
  */
 export function isInternalVersionScheme(
-    version: semver.SemVer | string | undefined,
-    allowPrereleases = false,
+	version: semver.SemVer | string | undefined,
+	allowPrereleases = false,
+	allowAnyPrereleaseId = false,
 ): boolean {
-    const parsedVersion = semver.parse(version);
-    try {
-        validateVersionScheme(parsedVersion, allowPrereleases);
-    } catch (error) {
-        return false;
-    }
+	const parsedVersion = semver.parse(version);
+	const prereleaseId = allowAnyPrereleaseId ? undefined : REQUIRED_PRERELEASE_IDENTIFIER;
 
-    return true;
+	try {
+		validateVersionScheme(parsedVersion, allowPrereleases, prereleaseId);
+	} catch (error) {
+		return false;
+	}
+
+	return true;
 }
 
 /**
  * Checks if a version matches the Fluid internal version scheme.
  *
  * @param range - The range string to check.
+ * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
+ * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
  * @returns True if the range string matches the Fluid internal version scheme.
  */
-export function isInternalVersionRange(range: string): boolean {
-    if (semver.validRange(range) === null) {
-        return false;
-    }
+export function isInternalVersionRange(range: string, allowAnyPrereleaseId = false): boolean {
+	if (semver.validRange(range) === null) {
+		return false;
+	}
 
-    if (!range.startsWith(">=")) {
-        return false;
-    }
+	if (!range.startsWith(">=")) {
+		return false;
+	}
 
-    const minVer = semver.minVersion(range);
-    if (minVer === null) {
-        return false;
-    }
+	const minVer = semver.minVersion(range);
+	if (minVer === null) {
+		return false;
+	}
 
-    return isInternalVersionScheme(minVer);
+	// if allowAnyPrereleaseId === true, then allowPrereleases is implied to be true
+	return isInternalVersionScheme(
+		minVer,
+		/* allowPrereleases */ allowAnyPrereleaseId,
+		allowAnyPrereleaseId,
+	);
 }
 
 /**
@@ -234,13 +279,20 @@ export function isInternalVersionRange(range: string): boolean {
  * @returns The bumped version.
  */
 export function bumpInternalVersion(
-    version: semver.SemVer | string,
-    bumpType: VersionBumpTypeExtended,
+	version: semver.SemVer | string,
+	bumpType: VersionBumpTypeExtended,
 ): semver.SemVer {
-    validateVersionScheme(version);
-    const [pubVer, intVer] = fromInternalScheme(version);
-    const newIntVer = bumpType === "current" ? intVer : intVer.inc(bumpType);
-    return toInternalScheme(pubVer, newIntVer);
+	validateVersionScheme(version, true, undefined);
+	const [pubVer, intVer, prereleaseId] = fromInternalScheme(version, true, true);
+
+	const newIntVer =
+		bumpType === "current"
+			? intVer
+			: semver.inc(`${intVer.major}.${intVer.minor}.${intVer.patch}`, bumpType);
+
+	assert(newIntVer !== null, `newIntVer should not be null: ${version}`);
+
+	return toInternalScheme(pubVer, newIntVer, true, prereleaseId);
 }
 
 /**
@@ -259,68 +311,75 @@ export function bumpInternalVersion(
  * @returns A dependency range string. If the generated range is invalid an Error will be thrown.
  */
 export function getVersionRange(
-    version: semver.SemVer | string,
-    maxAutomaticBump: "minor" | "patch" | "~" | "^",
+	version: semver.SemVer | string,
+	maxAutomaticBump: "minor" | "patch" | "~" | "^",
 ): string {
-    validateVersionScheme(version);
+	validateVersionScheme(version, true, undefined);
 
-    const lowVersion = version;
-    let highVersion: semver.SemVer;
-    switch (maxAutomaticBump) {
-        case "patch":
-        case "~": {
-            highVersion = bumpInternalVersion(version, "minor");
-            break;
-        }
+	const lowVersion = version;
+	let highVersion: semver.SemVer;
+	switch (maxAutomaticBump) {
+		case "patch":
+		case "~": {
+			highVersion = bumpInternalVersion(version, "minor");
+			break;
+		}
 
-        case "minor":
-        case "^": {
-            highVersion = bumpInternalVersion(version, "major");
-            break;
-        }
+		case "minor":
+		case "^": {
+			highVersion = bumpInternalVersion(version, "major");
+			break;
+		}
 
-        default: {
-            throw new Error("Can't generate a version range.");
-        }
-    }
-    const rangeString = `>=${lowVersion} <${highVersion}`;
-    const range = semver.validRange(rangeString);
-    if (range === null) {
-        throw new Error(`The generated range string was invalid: "${rangeString}"`);
-    }
-    return range;
+		default: {
+			throw new Error("Can't generate a version range.");
+		}
+	}
+	const rangeString = `>=${lowVersion} <${highVersion}`;
+	const range = semver.validRange(rangeString);
+	if (range === null) {
+		throw new Error(`The generated range string was invalid: "${rangeString}"`);
+	}
+	return range;
 }
 
+/**
+ * Given a version with a string prerelease indentifier, updates the version to use a new prerelease identifier.
+ *
+ * @param version - The version to update.
+ * @param newIdentifier - The new prerelease identifier to set.
+ * @returns The updated version string.
+ */
 export function changePreReleaseIdentifier(
-    version: semver.SemVer | string,
-    newIdentifier: string,
+	version: semver.SemVer | string,
+	newIdentifier: string,
 ): string {
-    const ver = semver.parse(version);
+	const ver = semver.parse(version);
 
-    if (ver === null) {
-        throw new Error(`Can't parse version: ${version}`);
-    }
+	if (ver === null) {
+		throw new Error(`Can't parse version: ${version}`);
+	}
 
-    const pr = ver.prerelease;
-    if (pr.length < 1) {
-        throw new Error(`Version has no prerelease section: ${version}`);
-    }
+	const pr = ver.prerelease;
+	if (pr.length < 1) {
+		throw new Error(`Version has no prerelease section: ${version}`);
+	}
 
-    const identifier = pr[0];
+	const identifier = pr[0];
 
-    if (typeof identifier === "number") {
-        // eslint-disable-next-line unicorn/prefer-type-error
-        throw new Error(`Prerelease identifier is numeric; it should be a string: ${version}`);
-    }
+	if (typeof identifier === "number") {
+		// eslint-disable-next-line unicorn/prefer-type-error
+		throw new Error(`Prerelease identifier is numeric; it should be a string: ${version}`);
+	}
 
-    const newPrereleaseSection = [newIdentifier, ...pr.slice(1)].join(".");
-    const newVersionString = `${ver.major}.${ver.minor}.${ver.patch}-${newPrereleaseSection}`;
+	const newPrereleaseSection = [newIdentifier, ...pr.slice(1)].join(".");
+	const newVersionString = `${ver.major}.${ver.minor}.${ver.patch}-${newPrereleaseSection}`;
 
-    const newVer = semver.parse(newVersionString)?.version;
+	const newVer = semver.parse(newVersionString)?.version;
 
-    if (newVer === null || newVer === undefined) {
-        throw new Error(`Can't parse new version string: ${version}`);
-    }
+	if (newVer === null || newVer === undefined) {
+		throw new Error(`Can't parse new version string: ${version}`);
+	}
 
-    return newVer;
+	return newVer;
 }
