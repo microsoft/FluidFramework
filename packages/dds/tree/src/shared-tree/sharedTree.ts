@@ -20,6 +20,7 @@ import {
 	AnchorSet,
 	AnchorNode,
 	IEditableForest,
+	AnchorSetRootEvents,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -161,6 +162,11 @@ export interface ISharedTreeBranch extends AnchorLocator {
 	 * Events about this branch.
 	 */
 	readonly events: ISubscribable<BranchEvents>;
+
+	/**
+	 * Events about the root of the tree on this branch.
+	 */
+	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 }
 
 /**
@@ -218,6 +224,9 @@ class SharedTree
 	public readonly transaction: ISharedTreeBranch["transaction"];
 
 	public readonly events: ISubscribable<BranchEvents> & IEmitter<BranchEvents>;
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		return this.forest.anchors;
+	}
 
 	public constructor(
 		id: string,
@@ -349,6 +358,10 @@ class SharedTreeFork implements ISharedTreeFork {
 			this.forest.applyDelta(delta);
 			this.events.emit("afterBatch");
 		});
+	}
+
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		return this.forest.anchors;
 	}
 
 	public get editor() {
