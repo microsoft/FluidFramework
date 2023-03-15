@@ -53,11 +53,7 @@ function createE2EDocsDescribe(docTypes?: DescribeE2EDocInfo[]): DescribeE2EDocS
 	const d: DescribeE2EDocSuite = (title, tests, testType) => {
 		describe(
 			`${testType} -`,
-			createE2EDocCompatSuite(
-				title,
-				tests,
-				docTypes ?? E2EDefaultDocumentTypes,
-			),
+			createE2EDocCompatSuite(title, tests, docTypes ?? E2EDefaultDocumentTypes),
 		);
 	};
 	return d;

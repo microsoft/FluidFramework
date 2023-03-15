@@ -34,13 +34,20 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 		await documentWrapper.summarize();
 	});
 
-	class BenchmarkObj {
+	/**
+	 * The PerformanceTestWrapper class includes 2 functionalities:
+	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
+	 * 2) Stores the configuration properties that should be consumed by benchmarkAll to define its behavior:
+	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
+	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
+	 */
+	class PerformanceTestWrapper {
 		container: IContainer | undefined;
 		summarizerClient: ISummarizeResult | undefined;
 		minSampleCount = getDocumentInfo().minSampleCount;
 	}
 
-	const obj = new BenchmarkObj();
+	const obj = new PerformanceTestWrapper();
 
 	benchmarkAll(scenarioTitle, obj, {
 		run: async () => {
