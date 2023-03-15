@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "chai";
 import { Benchmark, Options } from "./benchmark";
 import {
 	validateBenchmarkArguments,
@@ -121,23 +120,12 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
 		...args,
 	};
 
-	let stats: BenchmarkData | undefined;
 	const benchmarkOptions: Options = {
 		maxTime: options.maxBenchmarkDurationSeconds,
 		minSamples: options.minSampleCount,
 		minTime: options.minSampleDurationSeconds,
 		onCycle: options.onCycle,
-		onComplete: async () => {
-			stats = {
-				aborted: benchmarkInstance.aborted,
-				count: benchmarkInstance.count,
-				cycles: benchmarkInstance.cycles,
-				error: benchmarkInstance.error,
-				hz: benchmarkInstance.hz,
-				stats: benchmarkInstance.stats,
-				times: benchmarkInstance.times,
-			};
-		},
+		onComplete: async () => {},
 		fn: args.benchmarkFn,
 	};
 
@@ -147,6 +135,14 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
 	// impacting the test.
 	global?.gc?.();
 	benchmarkInstance.run();
-	assert(stats !== undefined);
+	const stats: BenchmarkData = {
+		aborted: benchmarkInstance.aborted,
+		count: benchmarkInstance.count,
+		cycles: benchmarkInstance.cycles,
+		error: benchmarkInstance.error,
+		hz: benchmarkInstance.hz,
+		stats: benchmarkInstance.stats,
+		times: benchmarkInstance.times,
+	};
 	return stats;
 }

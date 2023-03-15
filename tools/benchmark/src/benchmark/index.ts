@@ -1259,14 +1259,6 @@ function compute(bench: Benchmark, options: CycleOptions) {
 	 * Determines if more clones should be queued or if cycling should stop.
 	 */
 	function evaluate(event: Event) {
-		let critical;
-		let df;
-		let mean;
-		let moe;
-		let rme;
-		let sd;
-		let sem;
-		let variance;
 		const clone = event.target as Benchmark;
 		let done = bench.aborted;
 		const now = +_.now();
@@ -1274,9 +1266,6 @@ function compute(bench: Benchmark, options: CycleOptions) {
 		let maxedOut =
 			size >= minSamples && (elapsed += now - clone.times.timeStamp) / 1e3 > bench.maxTime;
 		const times = bench.times;
-		const varOf = function (sum, x) {
-			return sum + pow(x - mean, 2);
-		};
 
 		// Exit early for aborted or unclockable tests.
 		if (done || clone.hz === Infinity) {
@@ -1284,31 +1273,7 @@ function compute(bench: Benchmark, options: CycleOptions) {
 		}
 
 		if (!done) {
-			// Compute the sample mean (estimate of the population mean).
-			mean = getMean(sample);
-			// Compute the sample variance (estimate of the population variance).
-			variance = _.reduce(sample, varOf, 0) / (size - 1) || 0;
-			// Compute the sample standard deviation (estimate of the population standard deviation).
-			sd = sqrt(variance);
-			// Compute the standard error of the mean (a.k.a. the standard deviation of the sampling distribution of the sample mean).
-			sem = sd / sqrt(size);
-			// Compute the degrees of freedom.
-			df = size - 1;
-			// Compute the critical value.
-			critical = tTable[Math.round(df) || 1] || tTable.infinity;
-			// Compute the margin of error.
-			moe = sem * critical;
-			// Compute the relative margin of error.
-			rme = (moe / mean) * 100 || 0;
-
-			Object.assign(bench.stats, {
-				deviation: sd,
-				mean,
-				moe,
-				rme,
-				sem,
-				variance,
-			});
+			bench.stats = computeStats(sample);
 
 			// Abort the cycle loop when the minimum sample size has been collected
 			// and the elapsed time exceeds the maximum time allowed per benchmark.
@@ -1323,9 +1288,9 @@ function compute(bench: Benchmark, options: CycleOptions) {
 				times.elapsed = (now - times.timeStamp) / 1e3;
 			}
 			if (bench.hz !== Infinity) {
-				bench.hz = 1 / mean;
-				times.cycle = mean * bench.count;
-				times.period = mean;
+				bench.hz = 1 / bench.stats.mean;
+				times.cycle = bench.stats.mean * bench.count;
+				times.period = bench.stats.mean;
 			}
 		}
 		// If time permits, increase sample size to reduce the margin of error.
@@ -1346,6 +1311,40 @@ function compute(bench: Benchmark, options: CycleOptions) {
 			bench.emit("complete");
 		},
 	});
+}
+
+function computeStats(sample: number[]): Stats {
+	const size = sample.length;
+	// Compute the sample mean (estimate of the population mean).
+	const mean = getMean(sample);
+	// Compute the sample variance (estimate of the population variance).
+	const varOf = function (sum, x) {
+		return sum + pow(x - mean, 2);
+	};
+	const variance = _.reduce(sample, varOf, 0) / (size - 1) || 0;
+	// Compute the sample standard deviation (estimate of the population standard deviation).
+	const sd = sqrt(variance);
+	// Compute the standard error of the mean (a.k.a. the standard deviation of the sampling distribution of the sample mean).
+	const sem = sd / sqrt(size);
+	// Compute the degrees of freedom.
+	const df = size - 1;
+	// Compute the critical value.
+	const critical = tTable[Math.round(df) || 1] || tTable.infinity;
+	// Compute the margin of error.
+	const moe = sem * critical;
+	// Compute the relative margin of error.
+	const rme = (moe / mean) * 100 || 0;
+
+	const stats: Stats = {
+		deviation: sd,
+		mean,
+		moe,
+		rme,
+		sem,
+		variance,
+		sample,
+	};
+	return stats;
 }
 
 interface CycleOptions {
