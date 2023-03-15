@@ -35,7 +35,7 @@
 		"@fluidframework/server-services-client": "^0.1038.4000",
 		"@fluidframework/server-services-telemetry": "^0.1038.4000",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^14.18.0",
+		"@types/node": "^16.11.7",
 		"debug": "^4.1.1",
 		"events": "^3.1.0",
 		"nconf": "^0.12.0"

@@ -64,7 +64,7 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/server-services-core': ^0.1038.4000
       '@rushstack/eslint-config': ^2.6.1
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       concurrently: ^7.5.0
       eslint: ~8.27.0
       prettier: ~2.6.2
@@ -79,7 +79,7 @@ importers:
       '@fluidframework/build-tools': 0.11.0-135362
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       concurrently: 7.5.0
       eslint: 8.27.0
       prettier: 2.6.2
@@ -108,7 +108,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.0
       '@types/nconf': ^0.10.2
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/semver': ^6.0.1
       '@types/uuid': ^8.3.0
       assert: ^2.0.0
@@ -168,7 +168,7 @@ importers:
       '@types/lodash': 4.14.184
       '@types/mocha': 10.0.1
       '@types/nconf': 0.10.3
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/uuid': 8.3.4
       concurrently: 7.5.0
       eslint: 8.27.0
@@ -196,7 +196,7 @@ importers:
       '@types/async': ^3.2.9
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       assert: ^2.0.0
       async: ^3.2.2
       concurrently: ^7.5.0
@@ -227,7 +227,7 @@ importers:
       '@types/async': 3.2.16
       '@types/lodash': 4.14.184
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       concurrently: 7.5.0
       eslint: 8.27.0
       mocha: 10.1.0
@@ -254,7 +254,7 @@ importers:
       '@types/jsrsasign': ^8.0.8
       '@types/mocha': ^10.0.0
       '@types/nock': ^9.3.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       concurrently: ^7.5.0
       copyfiles: ^2.4.1
       debug: ^4.1.1
@@ -293,7 +293,7 @@ importers:
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 10.0.1
       '@types/nock': 9.3.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       concurrently: 7.5.0
       copyfiles: 2.4.1
       eslint: 8.27.0
@@ -325,7 +325,7 @@ importers:
       '@types/double-ended-queue': ^2.1.0
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/uuid': ^8.3.0
       '@types/ws': ^6.0.1
       assert: ^2.0.0
@@ -354,7 +354,7 @@ importers:
       '@types/debug': 4.1.7
       '@types/double-ended-queue': 2.1.1
       '@types/lodash': 4.14.184
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/ws': 6.0.4
       assert: 2.0.0
       debug: 4.3.4
@@ -393,7 +393,7 @@ importers:
       '@rushstack/eslint-config': ^2.6.1
       '@types/assert': ^1.5.1
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       concurrently: ^7.5.0
       copyfiles: ^2.4.1
       eslint: ~8.27.0
@@ -419,7 +419,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/assert': 1.5.6
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       concurrently: 7.5.0
       copyfiles: 2.4.1
       eslint: 8.27.0
@@ -454,7 +454,7 @@ importers:
       '@rushstack/eslint-config': ^2.6.1
       '@types/ioredis': ^4.22.0
       '@types/nconf': ^0.10.2
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/request': ^2.47.1
       commander: ^2.17.1
       concurrently: ^7.5.0
@@ -498,7 +498,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/ioredis': 4.28.10
       '@types/nconf': 0.10.3
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/request': 2.48.8
       concurrently: 7.5.0
       eslint: 8.27.0
@@ -543,7 +543,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.0
       '@types/nconf': ^0.10.2
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/request': ^2.47.1
       '@types/sinon': ^9.0.9
       '@types/split': ^0.3.28
@@ -628,7 +628,7 @@ importers:
       '@types/lodash': 4.14.184
       '@types/mocha': 10.0.1
       '@types/nconf': 0.10.3
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/request': 2.48.8
       '@types/sinon': 9.0.11
       '@types/split': 0.3.28
@@ -670,7 +670,7 @@ importers:
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.0
       '@types/mongodb': 3.1.17
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/sinon': ^9.0.9
       '@types/uuid': ^8.3.0
       amqplib: ^0.10.2
@@ -734,7 +734,7 @@ importers:
       '@types/lru-cache': 5.1.1
       '@types/mocha': 10.0.1
       '@types/mongodb': 3.1.17
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/sinon': 9.0.11
       '@types/uuid': 8.3.4
       concurrently: 7.5.0
@@ -764,7 +764,7 @@ importers:
       '@types/jsrsasign': ^8.0.8
       '@types/jwt-decode': ^2.2.1
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       axios: ^0.26.0
       axios-mock-adapter: ^1.19.0
       concurrently: ^7.5.0
@@ -808,7 +808,7 @@ importers:
       '@types/jsrsasign': 8.0.13
       '@types/jwt-decode': 2.2.1
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       axios-mock-adapter: 1.21.2_axios@0.26.1
       concurrently: 7.5.0
       copyfiles: 2.4.1
@@ -832,7 +832,7 @@ importers:
       '@fluidframework/server-services-telemetry': ^0.1038.4000
       '@rushstack/eslint-config': ^2.6.1
       '@types/nconf': ^0.10.2
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       concurrently: ^7.5.0
       debug: ^4.1.1
       eslint: ~8.27.0
@@ -848,7 +848,7 @@ importers:
       '@fluidframework/server-services-client': link:../services-client
       '@fluidframework/server-services-telemetry': link:../services-telemetry
       '@types/nconf': 0.10.3
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       debug: 4.3.4
       events: 3.3.0
       nconf: 0.12.0
@@ -878,7 +878,7 @@ importers:
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/sinon': ^9.0.9
       concurrently: ^7.5.0
       eslint: ~8.27.0
@@ -910,7 +910,7 @@ importers:
       '@types/debug': 4.1.7
       '@types/lru-cache': 5.1.1
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/sinon': 9.0.11
       concurrently: 7.5.0
       eslint: 8.27.0
@@ -936,7 +936,7 @@ importers:
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/sinon': ^9.0.9
       concurrently: ^7.5.0
       eslint: ~8.27.0
@@ -969,7 +969,7 @@ importers:
       '@types/debug': 4.1.7
       '@types/lru-cache': 5.1.1
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/sinon': 9.0.11
       concurrently: 7.5.0
       eslint: 8.27.0
@@ -992,7 +992,7 @@ importers:
       '@types/debug': ^4.1.5
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/sinon': ^9.0.9
       concurrently: ^7.5.0
       eslint: ~8.27.0
@@ -1016,7 +1016,7 @@ importers:
       '@types/debug': 4.1.7
       '@types/lru-cache': 5.1.1
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/sinon': 9.0.11
       concurrently: 7.5.0
       eslint: 8.27.0
@@ -1048,7 +1048,7 @@ importers:
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.0
       '@types/nconf': ^0.10.2
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/supertest': ^2.0.5
       axios: ^0.26.0
       body-parser: ^1.17.1
@@ -1107,7 +1107,7 @@ importers:
       '@types/lodash': 4.14.184
       '@types/mocha': 10.0.1
       '@types/nconf': 0.10.3
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/supertest': 2.0.12
       axios: 0.26.1_debug@4.3.4
       concurrently: 7.5.0
@@ -1129,7 +1129,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@rushstack/eslint-config': ^2.6.1
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/supertest': ^2.0.5
       '@types/uuid': ^8.3.0
       concurrently: ^7.5.0
@@ -1157,7 +1157,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/supertest': 2.0.12
       '@types/uuid': 8.3.4
       concurrently: 7.5.0
@@ -1190,7 +1190,7 @@ importers:
       '@types/mocha': ^10.0.0
       '@types/morgan': ^1.7.35
       '@types/nconf': ^0.10.2
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/supertest': ^2.0.5
       '@types/uuid': ^8.3.0
       concurrently: ^7.5.0
@@ -1248,7 +1248,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/morgan': 1.9.3
       '@types/nconf': 0.10.3
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/supertest': 2.0.12
       '@types/uuid': 8.3.4
       concurrently: 7.5.0
@@ -1276,7 +1276,7 @@ importers:
       '@rushstack/eslint-config': ^2.6.1
       '@types/lodash': ^4.14.118
       '@types/mocha': ^10.0.0
-      '@types/node': ^14.18.0
+      '@types/node': ^16.11.7
       '@types/sinon': ^9.0.9
       '@types/string-hash': ^1.1.1
       assert: ^2.0.0
@@ -1315,7 +1315,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/lodash': 4.14.184
       '@types/mocha': 10.0.1
-      '@types/node': 14.18.34
+      '@types/node': 16.18.16
       '@types/sinon': 9.0.11
       '@types/string-hash': 1.1.1
       concurrently: 7.5.0
@@ -4106,12 +4106,12 @@ packages:
     resolution: {integrity: sha512-yxDeaQIAJlMav7fH5AQqPH1u8YIuhYJXYBzxaQ4PifsU0GDO38MSdmEDeRlIxrKbC6NbEaaEHDanWb+y30U8SQ==}
     dev: true
 
-  /@types/node/14.18.34:
-    resolution: {integrity: sha512-hcU9AIQVHmPnmjRK+XUUYlILlr9pQrsqSrwov/JK1pnf3GTQowVBhx54FbvM0AU/VXGH4i3+vgXS5EguR7fysA==}
-
   /@types/node/15.14.9:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
     dev: true
+
+  /@types/node/16.18.16:
+    resolution: {integrity: sha512-ZOzvDRWp8dCVBmgnkIqYCArgdFOO9YzocZp8Ra25N/RStKiWvMOXHMz+GjSeVNe5TstaTmTWPucGJkDw0XXJWA==}
 
   /@types/node/18.0.0:
     resolution: {integrity: sha512-cHlGmko4gWLVI27cGJntjs/Sj8th9aYwplmZFwmmgYQQvL5NUsgVJG7OddLvNfLqYS31KFN0s3qlaD9qCaxACA==}
