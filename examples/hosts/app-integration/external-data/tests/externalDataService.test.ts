@@ -57,7 +57,7 @@ describe("mock-external-data-service", () => {
 	});
 
 	async function getCurrentExternalData(): Promise<ITaskData> {
-		const fetchResponse = await externalDataSource!.fetchData("task-list-1");
+		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown
