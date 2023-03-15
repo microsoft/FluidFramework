@@ -120,34 +120,31 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			while (iChange < change.length && iOver < over.length) {
 				const a = change[iChange];
 				const b = over[iOver];
+				let nodeChangeA: NodeChangeset | undefined;
+				let nodeChangeB: NodeChangeset | undefined;
+				let index: number;
 				if (a.index === b.index) {
-					const nodeChange = rebaseChild(a.nodeChange, b.nodeChange);
-					if (nodeChange !== undefined) {
-						rebased.push({
-							index: a.index,
-							nodeChange,
-						});
-					}
+					index = a.index;
+					nodeChangeA = a.nodeChange;
+					nodeChangeB = b.nodeChange;
 					iChange += 1;
 					iOver += 1;
 				} else if (a.index < b.index) {
-					const nodeChange = rebaseChild(a.nodeChange, undefined);
-					if (nodeChange !== undefined) {
-						rebased.push({
-							...a,
-							nodeChange,
-						});
-					}
+					index = a.index;
+					nodeChangeA = a.nodeChange;
 					iChange += 1;
 				} else {
-					const nodeChange = rebaseChild(undefined, b.nodeChange);
-					if (nodeChange !== undefined) {
-						rebased.push({
-							index: b.index,
-							nodeChange,
-						});
-					}
+					index = b.index;
+					nodeChangeB = b.nodeChange;
 					iOver += 1;
+				}
+
+				const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
+				if (nodeChange !== undefined) {
+					rebased.push({
+						index,
+						nodeChange,
+					});
 				}
 			}
 			rebased.push(...change.slice(iChange));

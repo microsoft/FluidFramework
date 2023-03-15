@@ -17,7 +17,6 @@ import {
 	genericFieldKind,
 	FieldChange,
 	ModularChangeset,
-	ChangesetLocalId,
 	RevisionInfo,
 } from "../../../feature-libraries";
 import {
