@@ -1034,8 +1034,8 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.innerDeltaManager = this.context.deltaManager;
-		this.deltaManager = new DeltaManagerSummarizerProxy(this.context.deltaManager);
+		this.innerDeltaManager = context.deltaManager;
+		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1123,7 +1123,7 @@ export class ContainerRuntime
 
 		if (
 			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
-			this.context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
@@ -1132,11 +1132,9 @@ export class ContainerRuntime
 			this._flushMode = runtimeOptions.flushMode;
 		}
 
-		const pendingRuntimeState = this.context.pendingLocalState as
-			| IPendingRuntimeState
-			| undefined;
+		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
 		const baseSnapshot: ISnapshotTree | undefined =
-			pendingRuntimeState?.baseSnapshot ?? this.context.baseSnapshot;
+			pendingRuntimeState?.baseSnapshot ?? context.baseSnapshot;
 
 		const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 		if (
@@ -1243,7 +1241,7 @@ export class ContainerRuntime
 		);
 
 		this.scheduleManager = new ScheduleManager(
-			this.context.deltaManager,
+			context.deltaManager,
 			this,
 			() => this.clientId,
 			ChildLogger.create(this.logger, "ScheduleManager"),
