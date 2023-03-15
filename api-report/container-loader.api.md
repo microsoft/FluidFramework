@@ -223,6 +223,8 @@ export class Loader implements IHostLoader {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
+    requestResolvedObjectFromContainer(container: IContainer): Promise<IResponse>;
+    // (undocumented)
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
     // (undocumented)
     readonly services: ILoaderServices;

@@ -350,6 +350,29 @@ export class Loader implements IHostLoader {
 		);
 	}
 
+	/**
+	 * With an already-resolved container, we can request a component directly, without loading the container again
+	 * @param container - a resolved container
+	 * @returns component on the container
+	 */
+	public async requestResolvedObjectFromContainer(container: IContainer): Promise<IResponse> {
+		ensureFluidResolvedUrl(container.resolvedUrl);
+		const parsedUrl = parseUrl(container.resolvedUrl.url);
+
+		if (parsedUrl === undefined) {
+			throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
+		}
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{ eventName: "Request" },
+			async () => {
+				return container.request({
+					url: `${parsedUrl.path}${parsedUrl.query}`,
+				});
+			},
+		);
+	}
+
 	private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
 		const key =
 			request.headers?.[LoaderHeader.version] !== undefined
