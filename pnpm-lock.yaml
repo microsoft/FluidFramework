@@ -14920,35 +14920,6 @@ packages:
       '@socket.io/redis-adapter': 7.2.0
       body-parser: 1.20.1
       debug: 4.3.4
-      ioredis: 4.28.5
-      lodash: 4.17.21
-      nconf: 0.12.0
-      notepack.io: 2.3.0
-      querystring: 0.2.1
-      socket.io: 4.5.3
-      socket.io-adapter: 2.4.0
-      socket.io-parser: 4.2.1
-      uuid: 8.3.2
-      winston: 3.8.2
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-    dev: true
-
-  /@fluidframework/server-services-shared/0.1038.3000:
-    resolution: {integrity: sha512-kz/kkBzU/hwHCKmySleG/MVsTRiIRQqteTAF8SGCnkSMSpD5J68qRcR+++A7X4Ct/JfS1oA09KpL2w8BJWXGrg==}
-    dependencies:
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000
-      '@fluidframework/protocol-base': 0.1038.3000
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-services-client': 0.1038.3000
-      '@fluidframework/server-services-core': 0.1038.3000
-      '@fluidframework/server-services-telemetry': 0.1038.3000
-      '@socket.io/redis-adapter': 7.2.0
-      body-parser: 1.20.1
-      debug: 4.3.4
       events: 3.3.0
       ioredis: 4.28.5
       lodash: 4.17.21
@@ -14982,29 +14953,6 @@ packages:
       path-browserify: 1.0.1
       serialize-error: 8.1.0
       uuid: 8.3.2
-
-  /@fluidframework/server-services-utils/0.1038.3000:
-    resolution: {integrity: sha512-BrRotnGAjJZEAe0piD8/TS+OPq+GU6iqTuqd7h5A6zy7zM73GUqOXMk4Tfioa9X4WC7tjv0rArRW9W9nekCl1w==}
-    dependencies:
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-services-client': 0.1038.3000
-      '@fluidframework/server-services-core': 0.1038.3000
-      '@fluidframework/server-services-telemetry': 0.1038.3000
-      debug: 4.3.4
-      express: 4.18.2
-      ioredis: 4.28.5
-      json-stringify-safe: 5.0.1
-      jsonwebtoken: 8.5.1
-      morgan: 1.10.0
-      nconf: 0.12.0
-      serialize-error: 8.1.0
-      sillyname: 0.1.0
-      split: 1.0.1
-      uuid: 8.3.2
-      winston: 3.8.2
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
 
   /@fluidframework/server-services-utils/0.1038.3000:
     resolution: {integrity: sha512-BrRotnGAjJZEAe0piD8/TS+OPq+GU6iqTuqd7h5A6zy7zM73GUqOXMk4Tfioa9X4WC7tjv0rArRW9W9nekCl1w==}
@@ -23510,7 +23458,6 @@ packages:
 
   /base64-js/1.3.0:
     resolution: {integrity: sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==}
-    dev: false
 
   /base64-js/1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -23892,7 +23839,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -23900,7 +23847,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
