@@ -540,7 +540,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		let totalPayloadSizeInBytes = 0;
 
 		const assertPayloadSize = (totalMessageSizeInBytes: number): void => {
-			// Expecting the message size on the wire should have 
+			// Expecting the message size on the wire should have
 			// at most 35% extra from stringification and envelope overhead.
 			const overheadRatio = 1.35;
 			assert.ok(
