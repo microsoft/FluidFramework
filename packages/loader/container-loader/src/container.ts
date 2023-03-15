@@ -43,7 +43,6 @@ import {
 	ensureFluidResolvedUrl,
 	combineAppAndProtocolSummary,
 	runWithRetry,
-	isFluidResolvedUrl,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -1059,9 +1058,7 @@ export class Container
 							}, // progress
 						);
 					}
-					const resolvedUrl = this.service.resolvedUrl;
-					ensureFluidResolvedUrl(resolvedUrl);
-					this._resolvedUrl = resolvedUrl;
+					this._resolvedUrl = this.service.resolvedUrl;
 					await this.storageService.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
@@ -1116,10 +1113,7 @@ export class Container
 				} catch (error) {
 					// add resolved URL on error object so that host has the ability to find this document and delete it
 					const newError = normalizeError(error);
-					const resolvedUrl = this.resolvedUrl;
-					if (isFluidResolvedUrl(resolvedUrl)) {
-						newError.addTelemetryProperties({ resolvedUrl: resolvedUrl.url });
-					}
+					newError.addTelemetryProperties({ resolvedUrl: this.resolvedUrl?.url });
 					this.close(newError);
 					this.dispose?.(newError);
 					throw newError;

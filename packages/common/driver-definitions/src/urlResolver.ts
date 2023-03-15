@@ -4,18 +4,9 @@
  */
 import { IRequest } from "@fluidframework/core-interfaces";
 
-export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
+export type IResolvedUrl = IFluidResolvedUrl;
 
-export interface IResolvedUrlBase {
-	type: string;
-}
-
-export interface IWebResolvedUrl extends IResolvedUrlBase {
-	type: "web";
-	data: string;
-}
-
-export interface IFluidResolvedUrl extends IResolvedUrlBase {
+export interface IFluidResolvedUrl {
 	type: "fluid";
 	/**
 	 * The id of the container this resolved url is for.

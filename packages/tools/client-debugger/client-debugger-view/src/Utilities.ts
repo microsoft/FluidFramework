@@ -16,14 +16,7 @@ import { IResolvedUrl } from "@fluidframework/driver-definitions";
  * @internal
  */
 export function resolvedUrlToString(resolvedUrl: IResolvedUrl): string {
-	switch (resolvedUrl.type) {
-		case "fluid":
-			return resolvedUrl.url;
-		case "web":
-			return resolvedUrl.data;
-		default:
-			throw new Error("Unrecognized IResolvedUrl type.");
-	}
+	return resolvedUrl.url;
 }
 
 /**

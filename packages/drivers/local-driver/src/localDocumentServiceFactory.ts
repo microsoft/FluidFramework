@@ -17,7 +17,6 @@ import {
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 } from "@fluidframework/driver-utils";
@@ -54,7 +53,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(resolvedUrl);
 		if (createNewSummary === undefined) {
 			throw new Error("Empty file summary creation isn't supported in this driver.");
 		}
@@ -102,8 +100,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(resolvedUrl);
-
 		const parsedUrl = parse(resolvedUrl.url);
 		const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
 		if (!documentId || !tenantId) {

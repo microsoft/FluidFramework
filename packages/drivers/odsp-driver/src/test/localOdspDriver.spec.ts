@@ -93,9 +93,6 @@ describe("Local Odsp driver", () => {
 				await assert.doesNotReject(async () =>
 					factory.createDocumentService(fakeOdspResolvedUrl),
 				);
-				await assert.rejects(async () =>
-					factory.createDocumentService({ type: "web", data: "" }),
-				);
 			});
 		});
 	});

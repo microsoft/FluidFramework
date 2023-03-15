@@ -79,6 +79,9 @@
 			"RemovedInterfaceDeclaration_IProvideFluidTokenProvider": {
 				"backCompat": false,
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContainer": {
+				"forwardCompat": false
 			}
 		}
 	}

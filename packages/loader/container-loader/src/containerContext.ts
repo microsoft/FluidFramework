@@ -26,7 +26,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { IRequest, IResponse, FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { isFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
 	IClientConfiguration,
 	IClientDetails,
@@ -113,11 +112,7 @@ export class ContainerContext implements IContainerContext {
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		const resolvedUrl = this.container.resolvedUrl;
-		if (isFluidResolvedUrl(resolvedUrl)) {
-			return resolvedUrl.id;
-		}
-		return "";
+		return this.container.resolvedUrl?.id ?? "";
 	}
 
 	public get clientDetails(): IClientDetails {

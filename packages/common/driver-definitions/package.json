@@ -59,6 +59,27 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IResolvedUrlBase": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_DriverError": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IDocumentService": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ILocationRedirectionError": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_IResolvedUrl": {
+				"forwardCompat": false
+			},
+			"RemovedInterfaceDeclaration_IWebResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

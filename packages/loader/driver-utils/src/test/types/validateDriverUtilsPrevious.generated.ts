@@ -275,6 +275,7 @@ declare function get_old_ClassDeclaration_LocationRedirectionError():
 declare function use_current_ClassDeclaration_LocationRedirectionError(
     use: TypeOnly<current.LocationRedirectionError>);
 use_current_ClassDeclaration_LocationRedirectionError(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_LocationRedirectionError());
 
 /*
@@ -952,26 +953,14 @@ use_old_VariableDeclaration_getRetryDelaySecondsFromError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidResolvedUrl": {"forwardCompat": false}
+* "RemovedVariableDeclaration_isFluidResolvedUrl": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_isFluidResolvedUrl():
-    TypeOnly<typeof old.isFluidResolvedUrl>;
-declare function use_current_VariableDeclaration_isFluidResolvedUrl(
-    use: TypeOnly<typeof current.isFluidResolvedUrl>);
-use_current_VariableDeclaration_isFluidResolvedUrl(
-    get_old_VariableDeclaration_isFluidResolvedUrl());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_isFluidResolvedUrl": {"backCompat": false}
+* "RemovedVariableDeclaration_isFluidResolvedUrl": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_isFluidResolvedUrl():
-    TypeOnly<typeof current.isFluidResolvedUrl>;
-declare function use_old_VariableDeclaration_isFluidResolvedUrl(
-    use: TypeOnly<typeof old.isFluidResolvedUrl>);
-use_old_VariableDeclaration_isFluidResolvedUrl(
-    get_current_VariableDeclaration_isFluidResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type
