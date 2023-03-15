@@ -258,6 +258,31 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 };
 
 /**
+ * With an already-resolved container, we can request a component directly, without loading the container again
+ * @param container - a resolved container
+ * @returns component on the container
+ */
+export async function requestResolvedObjectFromContainer(
+	container: IContainer,
+): Promise<IResponse> {
+	ensureFluidResolvedUrl(container.resolvedUrl);
+	const parsedUrl = parseUrl(container.resolvedUrl.url);
+
+	if (parsedUrl === undefined) {
+		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
+	}
+	return PerformanceEvent.timedExecAsync(
+		ChildLogger.create(),
+		{ eventName: "Request" },
+		async () => {
+			return container.request({
+				url: `${parsedUrl.path}${parsedUrl.query}`,
+			});
+		},
+	);
+}
+
+/**
  * Manages Fluid resource loading
  */
 export class Loader implements IHostLoader {
@@ -345,29 +370,6 @@ export class Loader implements IHostLoader {
 				return resolved.container.request({
 					...request,
 					url: `${resolved.parsed.path}${resolved.parsed.query}`,
-				});
-			},
-		);
-	}
-
-	/**
-	 * With an already-resolved container, we can request a component directly, without loading the container again
-	 * @param container - a resolved container
-	 * @returns component on the container
-	 */
-	public async requestResolvedObjectFromContainer(container: IContainer): Promise<IResponse> {
-		ensureFluidResolvedUrl(container.resolvedUrl);
-		const parsedUrl = parseUrl(container.resolvedUrl.url);
-
-		if (parsedUrl === undefined) {
-			throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
-		}
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "Request" },
-			async () => {
-				return container.request({
-					url: `${parsedUrl.path}${parsedUrl.query}`,
 				});
 			},
 		);

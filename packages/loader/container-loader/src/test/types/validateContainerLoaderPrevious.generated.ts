@@ -311,7 +311,6 @@ declare function get_old_ClassDeclaration_Loader():
 declare function use_current_ClassDeclaration_Loader(
     use: TypeOnly<current.Loader>);
 use_current_ClassDeclaration_Loader(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_Loader());
 
 /*
