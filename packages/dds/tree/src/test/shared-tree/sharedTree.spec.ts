@@ -2083,8 +2083,8 @@ const testValueSchema = namedTreeSchema({
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
  */
-function pushTestValue(checkout: ISharedTreeBranch, value: TreeValue): void {
-	insert(checkout, 0, value);
+function pushTestValue(branch: ISharedTreeBranch, value: TreeValue): void {
+	insert(branch, 0, value);
 }
 
 /**
