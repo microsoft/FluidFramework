@@ -7,5 +7,6 @@
 /* eslint-disable no-restricted-syntax */
 
 export * from "./Accordion";
+export * from "./Menu";
 
 /* eslint-enable no-restricted-syntax */

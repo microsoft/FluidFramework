@@ -8,14 +8,15 @@ import {
 	IStackStyles,
 	IStackTokens,
 	Stack,
-	StackItem,
 } from "@fluentui/react";
-import { ContainerMetadata } from "@fluid-tools/client-debugger";
+import { DebuggerRegistry, getDebuggerRegistry, getFluidClientDebuggers, IFluidClientDebugger } from "@fluid-tools/client-debugger";
 import React from "react";
 
 import { initializeFluentUiIcons } from "../InitializeIcons";
+// import { NewTelemetryView } from "./NewTelemetryView";
 // import { AudienceView } from "./AudienceView";
 import { TelemetryView } from "./TelemetryView";
+import { MenuItem, MenuSection } from "./utility-components";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -39,30 +40,53 @@ export const clientDebugViewClassName = `fluid-client-debugger-view`;
  * @internal
  */
 export function MainView(): React.ReactElement {
-	const [clickedOption, setClickedOption] = React.useState<string>("");
-	const [rightView, setRightView] = React.useState<React.ReactElement>();
+	const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
 
-	const onTelemetryClicked = (): void => {
-		setClickedOption("telemetry");
-	};
-
-	const onAudienceClicked = (): void => {
-		setClickedOption("audience");
-	};
-
-	const onContainerClicked = (containerId: string): void => {
-		setClickedOption(containerId);
-	};
+	const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(
+		getFluidClientDebuggers(),
+	);
 
 	React.useEffect(() => {
-		if (clickedOption === "telemetry") {
-			setRightView(<TelemetryView />);
-		} else if (clickedOption === "audience") {
-			setRightView(<div>Audience view goes here</div>);
-		} else if (clickedOption.startsWith("container:")) {
-			setRightView(<div>View for container {clickedOption}</div>);
+		function onDebuggerChanged(): void {
+			const newDebuggerList = getFluidClientDebuggers();
+			setClientDebuggers(newDebuggerList);
 		}
-	}, [clickedOption, setClickedOption]);
+
+		debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
+		debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
+
+		return (): void => {
+			debuggerRegistry.off("debuggerRegistered", onDebuggerChanged);
+			debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
+		};
+	}, [debuggerRegistry, setClientDebuggers]);
+
+	const [menuSelection, setMenuSelection] = React.useState<string>("");
+	const [containerId, setContainerId] = React.useState<string>("");
+
+	let innerView: React.ReactElement;
+	switch (menuSelection) {
+		case "telemetry":
+			innerView = <TelemetryView />;
+			break;
+		case "audience":
+			// innerView = (
+			// 	<AudienceView
+			// 		clientDebugger={clientDebugger}
+			// 		onRenderAudienceMember={renderOptions.onRenderAudienceMember}
+			// 	/>
+			// );
+			innerView = <div>Audience view goes here</div>;
+			break;
+		case "container":
+			innerView = <div>View for container {containerId}</div>;
+			break;
+		// TODO: add the Telemetry view here, without ReactContext
+		default:
+			innerView = <div>Select an option from the menu</div>;
+			break;
+	}
+
 	// Styles definition
 	const stackStyles: IStackStyles = {
 		root: {
@@ -90,106 +114,43 @@ export function MainView(): React.ReactElement {
 		padding: 10,
 	};
 
-	const menuSectionStyles: IStackStyles = {
-		root: {
-			background: DefaultPalette.themeLight,
-			border: `1px 1px 0px 1px solid ${DefaultPalette.themePrimary}`,
-			padding: "3px",
-		},
-	};
-	const menuSectionHeaderStyles: IStackStyles = {
-		root: {
-			border: `1px solid ${DefaultPalette.themePrimary}`,
-			background: DefaultPalette.themeLighterAlt,
-			fontWeight: "bold",
-			paddingLeft: "2px",
-		},
-	};
-	const menuSectionItemStyles: IStackStyles = {
-		root: {
-			paddingLeft: "20px",
-			cursor: "pointer",
-		},
-	};
+	function onContainerClicked(id: string): void {
+		setMenuSelection("container");
+		setContainerId(id);
+	}
+
+	function onAudienceClicked(): void {
+		setMenuSelection("audience");
+	}
+
+	function onTelemetryClicked(): void {
+		setMenuSelection("telemetry");
+	}
 
 	return (
 		<Stack enableScopedSelectors horizontal styles={stackStyles} tokens={stackTokens}>
 			<Stack.Item grow={1} styles={menuStyles}>
-				<Stack styles={menuSectionStyles}>
-					<Stack.Item styles={menuSectionHeaderStyles}>Containers</Stack.Item>
-					<ContainersList
-						options={[
-							{ id: "1", nickname: "Container 1" },
-							{ id: "2", nickname: "Container 2" },
-						]}
-						onClickHandler={onContainerClicked}
-						styles={menuSectionItemStyles}
-					/>
-				</Stack>
-				<Stack styles={menuSectionStyles}>
-					<Stack.Item styles={menuSectionHeaderStyles}>Audience</Stack.Item>
-					<Stack.Item styles={menuSectionItemStyles} onClick={onAudienceClicked}>
-						See Audience
-					</Stack.Item>
-				</Stack>
-				<Stack styles={menuSectionStyles}>
-					<Stack.Item styles={menuSectionHeaderStyles}>Telemetry</Stack.Item>
-					<Stack.Item styles={menuSectionItemStyles} onClick={onTelemetryClicked}>
-						See Telemetry
-					</Stack.Item>
-				</Stack>
+				<MenuSection header="Containers">
+					{
+					clientDebuggers.map((clientDebugger) => (
+						<MenuItem
+							key={clientDebugger.containerId}
+							text={clientDebugger.containerNickname ?? clientDebugger.containerId}
+							onClick={(event): void => { onContainerClicked(`container:${clientDebugger.containerId}`); }}/>
+					))}
+				</MenuSection>
+				<MenuSection header="Telemetry">
+					<MenuItem text="See Telemetry" onClick={onTelemetryClicked} />
+				</MenuSection>
+				<MenuSection header="Audience">
+					<MenuItem text="See Audience" onClick={onAudienceClicked} />
+				</MenuSection>
 			</Stack.Item>
 			<Stack.Item grow={5} styles={contentViewStyles}>
-				<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{rightView}</div>
+				<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>
+					{innerView}
+				</div>
 			</Stack.Item>
 		</Stack>
-	);
-}
-
-/**
- * {@link ContainersList} input props.
- *
- * @internal
- */
-interface ContainersListProps {
-	/**
-	 * Full list of drop-down options.
-	 */
-	options: ContainerMetadata[];
-
-	/**
-	 * Called when the an option is clicked.
-	 * @param containerId - The Container ID of the container that was clicked.
-	 */
-	onClickHandler(containerId: string): void;
-
-	/**
-	 * Styles for each item
-	 */
-	styles: IStackItemStyles;
-}
-
-/**
- * A list of Fluid Containers to display in the menu.
- *
- * @internal
- */
-function ContainersList(props: ContainersListProps): React.ReactElement {
-	const { options, onClickHandler, styles } = props;
-
-	return (
-		<>
-			{options.map((o) => (
-				<StackItem
-					key={o.id}
-					onClick={(event): void => {
-						onClickHandler(`container:${o.id}`);
-					}}
-					styles={styles}
-				>
-					{o.nickname ?? o.id}
-				</StackItem>
-			))}
-		</>
 	);
 }
