@@ -69,49 +69,49 @@ const baseSummarizer = {
 };
 
 function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
-    return {
-        type: SummaryType.Tree,
-        tree: {
-            ".metadata": {
-                type: 2,
-                content: "{}",
-            },
-            ".electedSummarizer": {
-                type: 2,
-                content: JSON.stringify(summarizer),
-            },
-            ".protocol": {
-                type: 1,
-                tree: {
-                    quorumMembers: {
-                        type: SummaryType.Blob,
-                        content: "[]",
-                    },
-                    quorumProposals: {
-                        type: SummaryType.Blob,
-                        content: "[]",
-                    },
-                    quorumValues: {
-                        type: SummaryType.Blob,
-                        content: JSON.stringify(quorumVal),
-                    },
-                    attributes: {
-                        type: SummaryType.Blob,
-                        content: JSON.stringify(attr),
-                    },
-                },
-            },
-            ".app": {
-                type: 1,
-                tree: {
-                    [".channels"]: {
-                        type: SummaryType.Tree,
-                        tree: {},
-                    },
-                },
-            },
-        },
-    };
+	return {
+		type: SummaryType.Tree,
+		tree: {
+			".protocol": {
+				type: 1,
+				tree: {
+					quorumMembers: {
+						type: SummaryType.Blob,
+						content: "[]",
+					},
+					quorumProposals: {
+						type: SummaryType.Blob,
+						content: "[]",
+					},
+					quorumValues: {
+						type: SummaryType.Blob,
+						content: JSON.stringify(quorumVal),
+					},
+					attributes: {
+						type: SummaryType.Blob,
+						content: JSON.stringify(attr),
+					},
+				},
+			},
+			".app": {
+				type: 1,
+				tree: {
+					[".channels"]: {
+						type: SummaryType.Tree,
+						tree: {},
+					},
+					".metadata": {
+						type: 2,
+						content: "{}",
+					},
+					".electedSummarizer": {
+						type: 2,
+						content: JSON.stringify(summarizer),
+					},
+				},
+			},
+		},
+	};
 }
 
 describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider) => {

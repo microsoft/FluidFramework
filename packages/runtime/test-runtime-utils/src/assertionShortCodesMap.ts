@@ -1080,5 +1080,7 @@ export const shortCodeMap = {
     "0x549": "Child effects should have size",
     "0x54a": "Should define count when splitting a mark",
     "0x54b": "Inconsistent merge info",
-    "0x54c": "Container already disposed"
+    "0x54c": "Container already disposed",
+		"0x5a8": "app summary is already a combined tree!",
+		"0x5a9": "protocol summary is already a combined tree!"
 };
