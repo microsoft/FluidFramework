@@ -21,21 +21,14 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 	 *
 	 * @remarks
 	 * Gets cleared when any of the validation functions on this class gets called.
-	 *
-	 * @internal
 	 */
 	events: ITelemetryBaseEvent[] = [];
-
-	/**
-	 * @internal
-	 */
 	constructor() {
 		super();
 	}
 
 	/**
 	 * Clears {@link MockLogger.events}.
-	 * @internal
 	 */
 	clear() {
 		this.events = [];
@@ -43,8 +36,6 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 
 	/**
 	 * {@inheritdoc TelemetryLogger.send}
-	 *
-	 * @internal
 	 */
 	send(event: ITelemetryBaseEvent): void {
 		this.events.push(event);
@@ -64,8 +55,6 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 	 *
 	 * @remarks
 	 * Calling this method will clear the internal buffer of saved events.
-	 *
-	 * @internal
 	 */
 	matchEvents(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -84,8 +73,6 @@ export class MockLogger extends TelemetryLogger implements ITelemetryLogger {
 	 *
 	 * @remarks
 	 * Calling this method will clear the internal buffer of saved events.
-	 *
-	 * @internal
 	 */
 	assertMatch(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -116,8 +103,6 @@ ${JSON.stringify(actualEvents)}`);
 	 *
 	 * @remarks
 	 * Calling this method will clear the internal buffer of saved events.
-	 *
-	 * @internal
 	 */
 	matchAnyEvent(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -135,8 +120,6 @@ ${JSON.stringify(actualEvents)}`);
 	 *
 	 * @remarks
 	 * Calling this method will clear the internal buffer of saved events.
-	 *
-	 * @internal
 	 */
 	assertMatchAny(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -165,8 +148,6 @@ ${JSON.stringify(actualEvents)}`);
 	 *
 	 * @remarks
 	 * Calling this method will clear the internal buffer of saved events.
-	 *
-	 * @internal
 	 */
 	matchEventStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -188,8 +169,6 @@ ${JSON.stringify(actualEvents)}`);
 	 *
 	 * @remarks
 	 * Calling this method will clear the internal buffer of saved events.
-	 *
-	 * @internal
 	 */
 	assertMatchStrict(
 		expectedEvents: Omit<ITelemetryBaseEvent, "category">[],
@@ -212,8 +191,6 @@ ${JSON.stringify(actualEvents)}`);
 	 *
 	 * @remarks
 	 * Calling this method will clear the internal buffer of saved events.
-	 *
-	 * @internal
 	 */
 	assertMatchNone(
 		disallowedEvents: Omit<ITelemetryBaseEvent, "category">[],
