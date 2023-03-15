@@ -7,6 +7,7 @@ import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IResolvedUrl,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -23,6 +24,7 @@ import {
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { createDocument } from "./localCreateDocument";
 
 export class LocalDocumentStorageService implements IDocumentStorageService {
@@ -39,8 +41,8 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		private readonly id: string,
 		private readonly manager: GitManager,
 		public readonly policies: IDocumentStorageServicePolicies,
-		private readonly localDeltaConnectionServer,
-		private readonly resolvedUrl,
+		private readonly localDeltaConnectionServer: ILocalDeltaConnectionServer,
+		private readonly resolvedUrl: IResolvedUrl,
 	) {
 		ensureFluidResolvedUrl(resolvedUrl);
 
