@@ -14,7 +14,8 @@ import type {
 	ExternalSnapshotTask,
 	ITask,
 	ITaskEvents,
-	ITaskList,
+	IBaseDocument,
+	IBaseDocumentInitialState,
 	TaskData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
@@ -89,7 +90,7 @@ interface PersistedTask {
 /**
  * The TaskList is our data object that implements the ITaskList interface.
  */
-export class TaskList extends DataObject implements ITaskList {
+export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialState }> {
 	/**
 	 * The tasks collection holds local facades on the data.  These facades encapsulate the data for a single task
 	 * so we don't have to hand out references to the whole SharedDirectory.  Additionally, we only create them
@@ -110,6 +111,12 @@ export class TaskList extends DataObject implements ITaskList {
 	private _draftData: SharedMap | undefined;
 
 	private _errorFlagCount: number = 0;
+
+	private _externalTaskListId: string | undefined;
+
+	private get externalTaskListId(): string | undefined {
+		return this._externalTaskListId;
+	}
 
 	private get externalDataSnapshot(): SharedMap {
 		if (this._externalDataSnapshot === undefined) {
@@ -139,7 +146,7 @@ export class TaskList extends DataObject implements ITaskList {
 
 		draftPriorityCell.set(priority);
 
-		// To add a task, we update the root SharedDirectory. This way the change is propagated to all collaborators
+		// To add a task, we update the SharedMap draftData on TaskList. This way the change is propagated to all collaborators
 		// and persisted.  In turn, this will trigger the "valueChanged" event and handleDraftTaskAdded which will update
 		// the this.tasks collection.
 		const draftDataPT: PersistedTask = {
@@ -338,7 +345,18 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 	};
 
-	protected async initializingFirstTime(): Promise<void> {
+	protected async initializingFirstTime(props: IBaseDocumentInitialState): Promise<void> {
+		const externalTaskListId = props?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			throw new Error(
+				"externalTaskListId not present in instantiation. Cannot instantiate task list",
+			);
+		}
+		this._externalTaskListId = externalTaskListId;
+		// TODO: remove console.log of externalTaskListId once it is used in upcoming PRs.
+		// Linter complains about it not being used and then tried to remove
+		// _externalTaskListId as well. This log is simpy to allow building for now.
+		console.log(this.externalTaskListId);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
@@ -428,4 +446,47 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},
+);
+
+export class BaseDocument extends DataObject implements IBaseDocument {
+	private readonly taskListCollection = new Map<string, TaskList>();
+
+	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
+		if (this.taskListCollection.has(props.externalTaskListId)) {
+			throw new Error(
+				`task list ${props.externalTaskListId} already exists on this collection`,
+			);
+		}
+		const taskList = await TaskListInstantiationFactory.createChildInstance(
+			this.context,
+			props,
+		);
+		this.taskListCollection.set(props.externalTaskListId, taskList);
+
+		// Storing the handles here are necessary for non leader
+		// clients to rehydrate local this.taskListCollection in hasInitialized().
+		this.root.set(props.externalTaskListId, taskList.handle);
+		this.emit("taskListCollectionChanged");
+	};
+
+	public readonly getTaskList = (id: string): TaskList | undefined => {
+		return this.taskListCollection.get(id);
+	};
+
+	protected async hasInitialized(): Promise<void> {
+		for (const [id, taskListHandle] of this.root) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const taskListResolved = await taskListHandle.get();
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			this.taskListCollection.set(id, taskListResolved);
+		}
+	}
+}
+
+export const BaseDocumentInstantiationFactory = new DataObjectFactory<BaseDocument>(
+	"base-document",
+	BaseDocument,
+	[],
+	{},
+	new Map([TaskListInstantiationFactory.registryEntry]),
 );
