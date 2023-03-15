@@ -739,7 +739,8 @@ export class PartialSequenceLengths {
 			moveClientOverlap,
 		);
 
-		// todo: obliterate doesn't have great support for reconnect at the moment
+		// todo: the below block needs to be changed to handle obliterate, which
+		// doesn't have great support for reconnect at the moment. see ADO #3714
 		const { unsequencedRecords } = combinedPartialLengths;
 		if (unsequencedRecords && removeClientOverlap && segment.localRemovedSeq !== undefined) {
 			const localSeq = segment.localRemovedSeq;
@@ -927,6 +928,9 @@ export class PartialSequenceLengths {
 						seqSeglen += segment.cachedLength;
 					}
 				} else if (seq === removalInfo?.removedSeq) {
+					// if the remove op happened before an overlapping obliterate,
+					// all clients can see the remove at this seq. otherwise, only
+					// the removing client is aware of the remove
 					if (removeHappenedFirst) {
 						seqSeglen -= segment.cachedLength;
 					} else {

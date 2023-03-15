@@ -2094,7 +2094,7 @@ export class MergeTree {
 			return -1;
 		}
 		return (
-			this.moveSeqs.find((seq) => seq > this.collabWindow.minSeq) ?? Number.MIN_SAFE_INTEGER
+			this.moveSeqs.find((seq) => seq > this.collabWindow.minSeq) ?? Number.MAX_SAFE_INTEGER
 		);
 	}
 
@@ -2962,10 +2962,11 @@ export class MergeTree {
 	}
 
 	/**
+	 * Map over all visible segments in a given range
 	 *
-	 * @param lenSeq - The sequence number at which to determine the length of
-	 * a segment for traversal. This is the same as refSeq, except in the case
-	 * of obliterate.
+	 * A segment is visible if its length is greater than 0
+	 *
+	 * See `this.nodeMap` for additional documentation
 	 */
 	public mapRange<TClientData>(
 		handler: ISegmentAction<TClientData>,
@@ -2975,7 +2976,7 @@ export class MergeTree {
 		start?: number,
 		end?: number,
 		splitRange: boolean = false,
-		lenSeq: number = refSeq,
+		visibilitySeq: number = refSeq,
 	) {
 		if (splitRange) {
 			if (start) {
@@ -2985,7 +2986,17 @@ export class MergeTree {
 				this.ensureIntervalBoundary(end, refSeq, clientId);
 			}
 		}
-		this.nodeMap(refSeq, clientId, handler, accum, undefined, start, end, undefined, lenSeq);
+		this.nodeMap(
+			refSeq,
+			clientId,
+			handler,
+			accum,
+			undefined,
+			start,
+			end,
+			undefined,
+			visibilitySeq,
+		);
 	}
 
 	public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
@@ -3044,10 +3055,27 @@ export class MergeTree {
 	}
 
 	/**
+	 * Map over all visible segments in a given range
 	 *
-	 * @param lenSeq - The sequence number at which to determine the length of
-	 * a segment for traversal. This is the same as refSeq, except in the case
-	 * of obliterate.
+	 * A segment is visible if its length is greater than 0
+	 *
+	 * @param refSeq - The sequence number used to determine the range of segments
+	 * to iterate over.
+	 *
+	 * @param visibilitySeq - An additional sequence number to further configure
+	 * segment visibility during traversal. This is the same as refSeq, except
+	 * in the case of obliterate.
+	 *
+	 * In the case where `refSeq == visibilitySeq`, mapping is done on all
+	 * visible segments from `start` to `end`.
+	 *
+	 * If a segment is invisible at both `visibilitySeq` and `refSeq`, then it
+	 * will not be traversed and mapped. Otherwise, if the segment is visible at
+	 * either seq, it will be mapped.
+	 *
+	 * If a segment is only visible at `visibilitySeq`, it will still be mapped,
+	 * but it will not count as a segment within the range. That is, it will be
+	 * ignored for the purposes of tracking when traversal should end.
 	 */
 	private nodeMap<TClientData>(
 		refSeq: number,
@@ -3058,7 +3086,7 @@ export class MergeTree {
 		start: number = 0,
 		end?: number,
 		localSeq?: number,
-		lenSeq: number = refSeq,
+		visibilitySeq: number = refSeq,
 	): void {
 		const endPos = end ?? this.nodeLength(this.root, refSeq, clientId, localSeq) ?? 0;
 		if (endPos === start) {
@@ -3075,13 +3103,15 @@ export class MergeTree {
 					return NodeAction.Exit;
 				}
 
-				const len = this.nodeLength(node, lenSeq, clientId, localSeq);
+				const len = this.nodeLength(node, visibilitySeq, clientId, localSeq);
 				const lenAtRefSeq =
-					(lenSeq === refSeq ? len : this.nodeLength(node, refSeq, clientId, localSeq)) ??
-					0;
+					(visibilitySeq === refSeq
+						? len
+						: this.nodeLength(node, refSeq, clientId, localSeq)) ?? 0;
 
 				const isUnackedAndInObliterate =
-					lenSeq !== refSeq && (!node.isLeaf() || node.seq === UnassignedSequenceNumber);
+					visibilitySeq !== refSeq &&
+					(!node.isLeaf() || node.seq === UnassignedSequenceNumber);
 
 				if (
 					(len === undefined && lenAtRefSeq === 0) ||
