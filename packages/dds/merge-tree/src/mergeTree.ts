@@ -81,7 +81,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
-import { Client } from ".";
+import { Client, reservedMarkerIdKey } from ".";
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
@@ -1911,6 +1911,10 @@ export class MergeTree {
 		let segmentGroup: SegmentGroup | undefined;
 
 		const annotateSegment = (segment: ISegment) => {
+			assert(
+				!(reservedMarkerIdKey in props) || props.markerId === segment.properties?.markerId,
+				"Cannot change the markerId of an existing marker",
+			);
 			const propertyDeltas = segment.addProperties(
 				props,
 				combiningOp,
