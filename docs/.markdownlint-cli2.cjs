@@ -99,6 +99,7 @@ module.exports = {
             "style": "atx",
         },
         "line-length": false, // MD013
+        "link-image-reference-definitions": false, // MD053
         "list-marker-space": { // MD030
           "ul_multi": 3,
           "ul_single": 3
