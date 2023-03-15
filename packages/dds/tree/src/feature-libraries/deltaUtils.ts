@@ -65,36 +65,32 @@ export function mapMark<TIn, TOut>(
 	const type = mark.type;
 	switch (type) {
 		case Delta.MarkType.Insert: {
-			const out: Mutable<Delta.Insert<TOut>> = {
+			return {
 				type: Delta.MarkType.Insert,
 				...mapModifications(mark, func),
 				content: mark.content.map(func),
 			};
-			return out;
 		}
 		case Delta.MarkType.Modify: {
-			const out = {
+			return {
 				type: Delta.MarkType.Modify,
 				...mapModifications(mark, func),
 			};
-			return out;
 		}
 		case Delta.MarkType.MoveOut: {
-			const out = {
+			return {
 				type: Delta.MarkType.MoveOut,
 				count: mark.count,
 				moveId: mark.moveId,
 				...mapModifications(mark, func),
 			};
-			return out;
 		}
 		case Delta.MarkType.Delete: {
-			const out = {
+			return {
 				type: Delta.MarkType.Delete,
 				count: mark.count,
 				...mapModifications(mark, func),
 			};
-			return out;
 		}
 		case Delta.MarkType.MoveIn:
 			return mark;

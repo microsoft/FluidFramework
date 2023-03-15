@@ -128,18 +128,21 @@ function visitModify(
 	config: PassConfig,
 ): boolean {
 	let containsMovesOrDeletes = false;
-	// Note that the `in` operator return true for properties that are present on the object even if they
+	// Note that `hasOwnProperty` returns true for properties that are present on the object even if they
 	// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
 	// `undefined` as opposed to leaving the value untouched.
-	if (config.applyValueChanges && Object.prototype.hasOwnProperty.call(modify, "setValue")) {
+	const hasValueChange =
+		config.applyValueChanges && Object.prototype.hasOwnProperty.call(modify, "setValue");
+
+	if (hasValueChange || modify.fields !== undefined) {
 		visitor.enterNode(index);
-		visitor.onSetValue(modify.setValue);
-		visitor.exitNode(index);
-	}
-	if (modify.fields !== undefined) {
-		visitor.enterNode(index);
-		const result = visitFieldMarks(modify.fields, visitor, config);
-		containsMovesOrDeletes ||= result;
+		if (hasValueChange) {
+			visitor.onSetValue(modify.setValue);
+		}
+		if (modify.fields !== undefined) {
+			const result = visitFieldMarks(modify.fields, visitor, config);
+			containsMovesOrDeletes ||= result;
+		}
 		visitor.exitNode(index);
 	}
 	return containsMovesOrDeletes;
