@@ -7,14 +7,14 @@ import { IRequest } from "@fluidframework/core-interfaces";
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
 /**
- * @deprecated This interface is unused and will be remove.
+ * @deprecated This interface is unused and will be removed in the next major release.
  */
 export interface IResolvedUrlBase {
 	type: string;
 }
 
 /**
- * @deprecated This interface is unused and will be remove.
+ * @deprecated This interface is unused and will be removed in the next major release.
  */
 export interface IWebResolvedUrl extends IResolvedUrlBase {
 	type: "web";
