@@ -169,11 +169,11 @@ export interface IBaseDocumentInitialState {
 
 export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	/**
-	 * Add a board with a specific id.
+	 * Add a task list with a specific id.
 	 */
 	readonly addTaskList: (props: IBaseDocumentInitialState) => void;
 	/**
-	 * Get the task with the specified ID.
+	 * Get the task list with the specified ID.
 	 */
 	readonly getTaskList: (id: string) => ITaskList | undefined;
 }
