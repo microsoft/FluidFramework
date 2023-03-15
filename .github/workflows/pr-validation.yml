@@ -5,6 +5,7 @@ on:
       - opened # PR is created
       - synchronize # commits added to PR
       - reopened # closed PR re-opened
+      - edited # title or body edited, or base branch changed
     branches:
       - main
       - next
