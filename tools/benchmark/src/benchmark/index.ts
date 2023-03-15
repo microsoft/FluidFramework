@@ -45,10 +45,6 @@ export interface Options {
 	 * A flag to indicate that the benchmark clock is deferred.
 	 */
 	defer?: boolean;
-	/**
-	 * The delay between test cycles (secs).
-	 */
-	delay?: number;
 
 	/**
 	 * The default number of times to execute a test on a benchmark's first cycle.
@@ -193,7 +189,6 @@ const tTable = {
 const defaultOptions = {
 	async: false,
 	defer: false,
-	delay: 0.005,
 	initCount: 1,
 	maxTime: 5,
 	minSamples: 5,
@@ -467,7 +462,6 @@ export class Benchmark {
 	options: Options;
 
 	_timerId: any;
-	delay: any;
 	initCount!: number;
 	async: boolean | undefined;
 	_original: any;
@@ -818,7 +812,8 @@ class Deferred {
 		} else {
 			timer.stop(this);
 			this.teardown();
-			delay(clone, () => {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			nextTick(() => {
 				cycle(this);
 			});
 		}
@@ -915,17 +910,14 @@ const cloneDeep = _.partial(_.cloneDeepWith, _, (value) => {
 	}
 });
 
-type AnyFunction = (...args: any[]) => any;
+const dummyPromise = Promise.resolve();
 
 /**
- * Delay the execution of a function based on the benchmark's `delay` property.
- *
- * @param {Object} bench - The benchmark instance.
- * @param {Object} fn - The function to execute.
+ * Execute a call back on the next possible cycle
+ * @param callback - a callback that will get execute in the promise next cycle
+ * @returns A promise for completion of the callback
  */
-function delay(bench: Benchmark, fn: AnyFunction) {
-	bench._timerId = _.delay(fn, bench.delay * 1e3);
-}
+const nextTick = async (callback: () => void): Promise<void> => dummyPromise.then(callback);
 
 /**
  * Gets the name of the first argument from a function's source.
@@ -1034,7 +1026,8 @@ function invoke(benches: Benchmark[], options: InvokeOptions): any[] {
 		if (!cycleEvent.aborted && raiseIndex() !== false) {
 			bench = queued ? benches[0] : result[index as number];
 			if (isAsync(bench)) {
-				delay(bench, execute);
+				// eslint-disable-next-line @typescript-eslint/no-floating-promises
+				nextTick(execute);
 			} else if (async) {
 				// Resume execution if previously asynchronous but now synchronous.
 				while (execute()) {}
@@ -1092,7 +1085,8 @@ function invoke(benches: Benchmark[], options: InvokeOptions): any[] {
 
 		// Start method execution.
 		if (isAsync(bench)) {
-			delay(bench, execute);
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			nextTick(execute);
 		} else {
 			while (execute()) {}
 		}
@@ -1440,7 +1434,8 @@ function cycle(clone: Benchmark | Deferred, options?: CycleOptions) {
 		if (deferred) {
 			(clone.compiled as any).call(deferred, globalThis, timer);
 		} else if (async) {
-			delay(clone, () => {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			nextTick(() => {
 				cycle(clone, options);
 			});
 		} else {
