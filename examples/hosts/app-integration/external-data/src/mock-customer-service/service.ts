@@ -175,22 +175,23 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	});
 
 	/**
-	 * "Echoes" the external data services data update notifications to our own webhook subscribers.
+	 * Creates an entry in the Customer Service of the mapping between the container and the external resource id
+	 * (externalTaskListId in this example). Also, it signs up the container with the external service
+	 * so that when there is a change upstream and it uses a webhook notification to inform the customer service,
+	 * the customer service can in turn notify the container of the change.
 	 *
 	 * Expected input data format:
 	 *
 	 * ```json
 	 *	{
-	 *		taskList: {
-	 *			[id: string]: {
-	 *				name: string,
-	 *				priority: number
-	 *			}
-	 *		}
+	 *		containerUrl: string,
+	 *		externalTaskListId: string
 	 *	}
 	 * ```
-	 *
-	 * This data will be forwarded to our own subscribers.
+	 * 
+	 * Note: Implementers choice --can choose to break up containerUrl into multiple pieces
+	 * containing tenantId, documentId and socketStreamURL separately and send them as a json
+	 * object. The URL also contains all this information so for simplicity I use the url here.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -200,9 +201,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		if (containerUrl === undefined) {
 			const errorMessage =
 				'No session data provided by client. Expected under "sessionUrl" property.';
-			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
-		} else {
+		} else if (externalTaskListId === undefined) {
+			const errorMessage =
+				'No external task list id provided by client. Expected under "externalTaskListId" property.';
+			result.status(400).json({ message: errorMessage });
+		}  else {
 			clientManager.registerClient(containerUrl, externalTaskListId);
 			console.log(
 				formatLogMessage(
