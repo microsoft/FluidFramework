@@ -145,6 +145,8 @@ export interface IMoveInfo {
 	 * concurrent moves this array will contain multiple seqs.
 	 *
 	 * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
+	 *
+	 * The first element corresponds to the seq of the first move
 	 */
 	movedSeqs: number[];
 	/**

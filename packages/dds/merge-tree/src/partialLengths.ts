@@ -518,6 +518,32 @@ export class PartialSequenceLengths {
 		}
 	}
 
+	/**
+	 * @param obliterateOverlapLen - Length of segment with overlap
+	 * @param clientIds - Ids of clients that have concurrently obliterated this
+	 * segment
+	 */
+	private static getMoveOverlapForExisting(
+		segment: ISegment,
+		obliterateOverlapLen: number,
+		clientIds: number[],
+	): RedBlackTree<number, IOverlapClient> {
+		const nonInsertingClientIds = clientIds.filter((id) => id !== segment.clientId);
+		const overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
+			nonInsertingClientIds,
+			obliterateOverlapLen,
+		);
+
+		if (clientIds.length !== nonInsertingClientIds.length) {
+			overlapObliterateClients.put(segment.clientId, {
+				clientId: segment.clientId,
+				seglen: segment.wasMovedOnInsert ? -segment.cachedLength : obliterateOverlapLen,
+			});
+		}
+
+		return overlapObliterateClients;
+	}
+
 	private static updatePartialsAfterInsertion(
 		segment: ISegment,
 		segmentLen: number,
@@ -534,7 +560,8 @@ export class PartialSequenceLengths {
 		let partialLengthEntry: PartialSequenceLength;
 		if (firstGte?.seq === seq) {
 			partialLengthEntry = firstGte;
-			// Existing entry at this seq--this occurs for ops that insert/delete more than one segment.
+			// Existing entry at this seq--this occurs for ops that insert/delete
+			// more than one segment.
 			partialLengthEntry.seglen += segmentLen;
 			if (remoteObliteratedLen) {
 				partialLengthEntry.remoteObliteratedLen ??= 0;
@@ -557,26 +584,13 @@ export class PartialSequenceLengths {
 				);
 			}
 		} else {
-			let overlapObliterateClients: RedBlackTree<number, IOverlapClient> | undefined;
-
-			if (moveClientOverlap) {
-				const moveClientOverlapWithoutLocal = moveClientOverlap.filter(
-					(id) => id !== segment.clientId,
-				);
-				overlapObliterateClients = PartialSequenceLengths.getOverlapClients(
-					moveClientOverlapWithoutLocal,
-					obliterateOverlapLen,
-				);
-
-				if (moveClientOverlap.length !== moveClientOverlapWithoutLocal.length) {
-					overlapObliterateClients.put(segment.clientId, {
-						clientId: segment.clientId,
-						seglen: segment.wasMovedOnInsert
-							? -segment.cachedLength
-							: obliterateOverlapLen,
-					});
-				}
-			}
+			const overlapObliterateClients = moveClientOverlap
+				? PartialSequenceLengths.getMoveOverlapForExisting(
+						segment,
+						obliterateOverlapLen,
+						moveClientOverlap,
+				  )
+				: undefined;
 
 			partialLengthEntry = {
 				seq,

@@ -644,7 +644,25 @@ export class MergeTree {
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
+	/**
+	 * Array containing the sequence number of all move operations within the
+	 * collab window
+	 *
+	 * When a segment is inserted, we must traverse to the left and right of it
+	 * to determine whether the segment was inserted into an obliterated range.
+	 * By keeping track of all move seqs, we can significantly reduce the search
+	 * space we must traverse.
+	 *
+	 * See https://github.com/microsoft/FluidFramework/blob/main/packages/dds/merge-tree/docs/Obliterate.md#remote-perspective
+	 * for additional context
+	 */
 	private readonly moveSeqs: number[] = [];
+
+	/**
+	 * Similar to moveSeqs, but tracks local moves. These are not the move
+	 * operations within the collab window, but rather local moves that have
+	 * not been acked.
+	 */
 	private readonly localMoveSeqs: Set<number> = new Set();
 
 	public constructor(public options?: IMergeTreeOptions) {
@@ -1933,6 +1951,10 @@ export class MergeTree {
 				let moveUpperBound = Number.POSITIVE_INFINITY;
 				const smallestSeqMoveOp = this.getSmallestSeqMoveOp();
 
+				if (smallestSeqMoveOp === undefined) {
+					continue;
+				}
+
 				let leftMovedSegment: ISegment | undefined = undefined as any;
 				let rightMovedSegment: ISegment | undefined = undefined as any;
 
@@ -2089,12 +2111,10 @@ export class MergeTree {
 		}
 	}
 
-	private getSmallestSeqMoveOp(): number {
-		if (this.localMoveSeqs.size > 0) {
-			return -1;
-		}
+	private getSmallestSeqMoveOp(): number | undefined {
 		return (
-			this.moveSeqs.find((seq) => seq > this.collabWindow.minSeq) ?? Number.MAX_SAFE_INTEGER
+			this.moveSeqs.find((seq) => seq > this.collabWindow.minSeq) ??
+			(this.localMoveSeqs.size > 0 ? -1 : undefined)
 		);
 	}
 
