@@ -202,9 +202,6 @@ const pow = Math.pow;
 const shift = [].shift;
 const sqrt = Math.sqrt;
 
-/** Used to access Node.js's high resolution timer. */
-const processObject = isHostType(globalThis, "process") && globalThis.process;
-
 /** Used to integrity check compiled tests. */
 const uid = `uid${+_.now()}`;
 
@@ -1124,6 +1121,9 @@ try {
 		timers.push({ ns: timer.ns, res: getRes("us"), unit: "us" });
 	}
 } catch (e) {}
+
+/** Used to access Node.js's high resolution timer. */
+const processObject = isHostType(globalThis, "process") && globalThis.process;
 
 // Detect Node.js's nanosecond resolution timer available in Node.js >= 0.8.
 if (processObject && typeof (timer.ns = processObject.hrtime) == "function") {

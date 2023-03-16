@@ -4,7 +4,7 @@
  */
 
 import _ from "lodash";
-import { Benchmark, BenchmarkData, Options, defaultOptions, Stats, timer } from "./benchmark";
+import { Benchmark, BenchmarkData, Options, Stats } from "./benchmark";
 import {
 	validateBenchmarkArguments,
 	BenchmarkRunningOptions,
@@ -12,12 +12,6 @@ import {
 	BenchmarkRunningOptionsAsync,
 } from "./Configuration";
 import { getArrayStatistics } from "./ReporterUtilities";
-
-export const defaults = {
-	maxBenchmarkDurationSeconds: defaultOptions.maxTime,
-	minSampleCount: defaultOptions.minSamples,
-	minSampleDurationSeconds: defaultOptions.minTime,
-} as const;
 
 /**
  * Run a performance benchmark and return its results.
@@ -186,14 +180,13 @@ function doBatch(
 	onCycle: undefined | ((event: unknown) => void),
 ): number {
 	let i = count;
-	const n = timer.ns;
-	const before: [number, number] = n();
+	const before = timer.now();
 	while (i--) {
 		f();
 	}
-	const elapsed: [number, number] = n(before);
+	const after = timer.now();
 	onCycle?.(0);
-	return elapsed[0] + elapsed[1] / 1e9;
+	return timer.toSeconds(before, after);
 }
 
 /**
@@ -271,14 +264,13 @@ async function doBatchAsync(
 	onCycle: undefined | ((event: unknown) => void),
 ): Promise<number> {
 	let i = count;
-	const n = timer.ns;
-	const before: [number, number] = n();
+	const before = timer.now();
 	while (i--) {
 		await f();
 	}
-	const elapsed: [number, number] = n(before);
+	const after = timer.now();
 	onCycle?.(0);
-	return elapsed[0] + elapsed[1] / 1e9;
+	return timer.toSeconds(before, after);
 }
 
 function computeData(samples: number[], count: number, timeStamp: number): BenchmarkData {
@@ -298,4 +290,79 @@ function computeData(samples: number[], count: number, timeStamp: number): Bench
 		count,
 	};
 	return data;
+}
+
+interface Timer<T = unknown> {
+	now(): T;
+	toSeconds(before: T, after: T): number;
+}
+
+const timers: Timer[] = [];
+
+{
+	const nodeTimer = globalThis.process?.hrtime;
+	if (nodeTimer !== undefined) {
+		const timer: Timer<bigint> = {
+			now: () => nodeTimer.bigint(),
+			toSeconds: (before: bigint, after: bigint) => Number(after - before) / 1e9,
+		};
+		timers.push(timer);
+	}
+
+	const performance = globalThis.performance;
+	if (performance !== undefined) {
+		const timer: Timer<DOMHighResTimeStamp> = {
+			now: () => performance.now(),
+			toSeconds: (before, after) => (after - before) / 1e3,
+		};
+		timers.push(timer);
+	}
+}
+
+const timers2 = timers.map((t) => ({ timer: t, res: getResolution(t) }));
+
+if (timers2.length === 0) {
+	throw new Error("Unable to find a working timer.");
+}
+
+// Pick timer with highest resolution.
+timers2.sort((a, b) => a.res - b.res);
+const timer = timers2[0].timer;
+
+// Resolve time span required to achieve a percent uncertainty of at most 1%.
+// For more information see http://spiff.rit.edu/classes/phys273/uncert/uncert.html.
+const defaultMinTime = Math.max(timers2[0].res / 2 / 0.01, 0.05);
+
+export const defaults = {
+	maxBenchmarkDurationSeconds: 5,
+	minSampleCount: 5,
+	minSampleDurationSeconds: defaultMinTime,
+} as const;
+
+/**
+ * Gets the current timer's minimum resolution in seconds.
+ *
+ * This may be higher than the actual minimum resolution for high resolution timers,
+ * and instead amounts the overhead of how long measuring takes.
+ * Either way, this is a conservative estimate of timer resolution.
+ */
+function getResolution(t: Timer): number {
+	let after;
+	let count = 30;
+	const sample: number[] = [];
+
+	// Get average smallest measurable time.
+	while (count--) {
+		const before = t.now();
+		do {
+			after = t.now();
+		} while (before === after);
+		const delta = t.toSeconds(before, after);
+		if (delta <= 0) {
+			throw new Error("invalid timer");
+		}
+		sample.push(delta);
+	}
+
+	return getArrayStatistics(sample, 0.8).mean;
 }
