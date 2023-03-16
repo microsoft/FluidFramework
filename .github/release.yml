@@ -1,0 +1,17 @@
+changelog:
+  exclude:
+    labels:
+      - main-next-integrate
+    authors:
+      - dependabot
+      - msfluid-bot
+  categories:
+    - title: 💥 Breaking changes
+      labels:
+        - breaking change
+    - title: Deprecations
+      labels:
+        - deprecation
+    - title: Other changes
+      labels:
+        - "*"

@@ -5,7 +5,10 @@
 
 import { IDisposable } from "@fluidframework/common-definitions";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
-import { combineAppAndProtocolSummary } from "@fluidframework/driver-utils";
+import {
+	combineAppAndProtocolSummary,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 
 export class ProtocolTreeStorageService implements IDocumentStorageService, IDisposable {
@@ -35,7 +38,9 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		context: ISummaryContext,
 	): Promise<string> {
 		return this.internalStorageService.uploadSummaryWithContext(
-			combineAppAndProtocolSummary(summary, this.generateProtocolTree()),
+			isCombinedAppAndProtocolSummary(summary) === true
+				? summary
+				: combineAppAndProtocolSummary(summary, this.generateProtocolTree()),
 			context,
 		);
 	}

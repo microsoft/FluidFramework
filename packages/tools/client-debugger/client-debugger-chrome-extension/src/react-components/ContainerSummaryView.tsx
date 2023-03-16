@@ -16,7 +16,7 @@ import { _ContainerSummaryView } from "@fluid-tools/client-debugger-view";
 
 import { extensionMessageSource } from "../messaging";
 import { Waiting } from "./Waiting";
-import { MessageRelayContext } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(ContainerSummaryView)";
 
@@ -33,16 +33,11 @@ interface ContainerStateViewProps extends HasContainerId {}
 export function ContainerSummaryView(props: ContainerStateViewProps): React.ReactElement {
 	const { containerId } = props;
 
+	const messageRelay = useMessageRelay();
+
 	const [containerState, setContainerState] = React.useState<
 		ContainerStateMetadata | undefined
 	>();
-
-	const messageRelay = React.useContext(MessageRelayContext);
-	if (messageRelay === undefined) {
-		throw new Error(
-			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
-		);
-	}
 
 	React.useEffect(() => {
 		/**
@@ -93,13 +88,42 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
-	// TODO: connect/disconnect, close handlers
+	function tryConnect(): void {
+		messageRelay?.postMessage({
+			source: extensionMessageSource,
+			type: "CONNECT_CONTAINER",
+			data: {
+				containerId,
+			},
+		});
+	}
+
+	function forceDisconnect(): void {
+		messageRelay?.postMessage({
+			source: extensionMessageSource,
+			type: "DISCONNECT_CONTAINER",
+			data: {
+				containerId,
+			},
+		});
+	}
+
+	function closeContainer(): void {
+		messageRelay?.postMessage({
+			source: extensionMessageSource,
+			type: "CLOSE_CONTAINER",
+			data: {
+				containerId,
+			},
+		});
+	}
+
 	return (
 		<_ContainerSummaryView
 			{...containerState}
-			tryConnect={undefined}
-			forceDisconnect={undefined}
-			closeContainer={undefined}
+			tryConnect={tryConnect}
+			forceDisconnect={forceDisconnect}
+			closeContainer={closeContainer}
 		/>
 	);
 }

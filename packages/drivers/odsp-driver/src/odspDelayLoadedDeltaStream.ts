@@ -212,11 +212,11 @@ export class OdspDelayLoadedDeltaStream {
 		}
 	}
 
-	private async scheduleJoinSessionRefresh(delta: number) {
+	private async scheduleJoinSessionRefresh(delta: number, requestSocketToken: boolean) {
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				getWithRetryForTokenRefresh(async (options) => {
-					await this.joinSession(false, options);
+					await this.joinSession(requestSocketToken, options);
 					resolve();
 				}).catch((error) => {
 					reject(error);
@@ -307,7 +307,10 @@ export class OdspDelayLoadedDeltaStream {
 				refreshAfterDeltaMs: response.refreshAfterDeltaMs,
 			};
 			if (response.refreshAfterDeltaMs > 0) {
-				this.scheduleJoinSessionRefresh(response.refreshAfterDeltaMs).catch((error) => {
+				this.scheduleJoinSessionRefresh(
+					response.refreshAfterDeltaMs,
+					requestSocketToken,
+				).catch((error) => {
 					const canRetry = canRetryOnError(error);
 					// Only record error event in case it is non retriable.
 					if (!canRetry) {

@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EditableField, fail, ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
+import { fail, ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";
-import { appSchemaData, ClientTreeProxy } from "./schema";
+import { appSchemaData, ClientsField } from "./schema";
 
 // Key used to store/retrieve the SharedTree instance within the root SharedMap.
 const treeKey = "treeKey";
@@ -37,7 +37,7 @@ export class Bubblebench extends DataObject {
 
 	protected async hasInitialized() {
 		this._appState = new AppState(
-			this.tree.root as ClientTreeProxy[] & EditableField,
+			this.tree.root as ClientsField,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,

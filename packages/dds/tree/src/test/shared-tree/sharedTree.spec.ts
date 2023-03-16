@@ -10,10 +10,12 @@ import {
 	getSchemaString,
 	jsonableTreeFromCursor,
 	namedTreeSchema,
+	on,
+	valueSymbol,
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree, ISharedTreeCheckout, runSynchronous } from "../../shared-tree";
+import { ISharedTree, ISharedTreeBranch, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -30,6 +32,7 @@ import {
 	GlobalFieldKey,
 	SchemaData,
 	EditManager,
+	ValueSchema,
 } from "../../core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
 
@@ -386,7 +389,7 @@ describe("SharedTree", () => {
 			}
 		});
 
-		function abortTransaction(checkout: ISharedTreeCheckout): void {
+		function abortTransaction(branch: ISharedTreeBranch): void {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
@@ -397,9 +400,9 @@ describe("SharedTree", () => {
 					],
 				},
 			};
-			initializeTestTree(checkout, initialState);
-			runSynchronous(checkout, () => {
-				const rootField = checkout.editor.sequenceField(undefined, rootFieldKeySymbol);
+			initializeTestTree(branch, initialState);
+			runSynchronous(branch, () => {
+				const rootField = branch.editor.sequenceField(undefined, rootFieldKeySymbol);
 				const root0Path = {
 					parent: undefined,
 					parentField: rootFieldKeySymbol,
@@ -410,9 +413,9 @@ describe("SharedTree", () => {
 					parentField: rootFieldKeySymbol,
 					parentIndex: 1,
 				};
-				const foo0 = checkout.editor.sequenceField(root0Path, fooKey);
-				const foo1 = checkout.editor.sequenceField(root1Path, fooKey);
-				checkout.editor.setValue(
+				const foo0 = branch.editor.sequenceField(root0Path, fooKey);
+				const foo1 = branch.editor.sequenceField(root1Path, fooKey);
+				branch.editor.setValue(
 					{
 						parent: root0Path,
 						parentField: fooKey,
@@ -420,7 +423,7 @@ describe("SharedTree", () => {
 					},
 					41,
 				);
-				checkout.editor.setValue(
+				branch.editor.setValue(
 					{
 						parent: root0Path,
 						parentField: fooKey,
@@ -428,13 +431,13 @@ describe("SharedTree", () => {
 					},
 					42,
 				);
-				checkout.editor.setValue(root0Path, "RootValue1");
+				branch.editor.setValue(root0Path, "RootValue1");
 				foo0.delete(0, 1);
 				rootField.insert(0, singleTextCursor({ type: brand("Test") }));
 				foo1.delete(0, 1);
-				checkout.editor.setValue(root1Path, "RootValue2");
+				branch.editor.setValue(root1Path, "RootValue2");
 				foo1.insert(0, singleTextCursor({ type: brand("Test") }));
-				checkout.editor.setValue(
+				branch.editor.setValue(
 					{
 						parent: root1Path,
 						parentField: fooKey,
@@ -446,7 +449,7 @@ describe("SharedTree", () => {
 				return TransactionResult.Abort;
 			});
 
-			validateTree(checkout, [initialState]);
+			validateTree(branch, [initialState]);
 		}
 
 		it("can abandon a transaction", async () => {
@@ -538,6 +541,85 @@ describe("SharedTree", () => {
 			};
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
+		});
+
+		it("can make multiple moves in a transaction", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+				},
+			};
+			initializeTestTree(tree, initialState);
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			// Perform multiple moves that should each be assigned a unique ID
+			runSynchronous(tree, () => {
+				tree.editor.move(rootPath, brand("foo"), 0, 1, rootPath, brand("bar"), 0);
+				tree.editor.move(rootPath, brand("bar"), 0, 1, rootPath, brand("baz"), 0);
+				runSynchronous(tree, () => {
+					tree.editor.move(rootPath, brand("baz"), 0, 1, rootPath, brand("qux"), 0);
+				});
+			});
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					qux: [{ type: brand("Node"), value: "a" }],
+				},
+			};
+			await provider.ensureSynchronized();
+			validateTree(tree, [expectedState]);
+		});
+	});
+
+	describe("Events", () => {
+		it("triggers events for changes", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(1);
+			const [tree1] = provider.trees;
+			tree1.storedSchema.update({
+				globalFieldSchema: new Map([
+					[globalFieldKey, fieldSchema(FieldKinds.value, [testValueSchema.name])],
+				]),
+				treeSchema: new Map([[testValueSchema.name, testValueSchema]]),
+			});
+
+			// Insert node
+			pushTestValue(tree1, value);
+
+			const root = tree1.context.root.getNode(0);
+
+			const log: string[] = [];
+			const unsubscribe = root[on]("changing", () => log.push("change"));
+			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
+			log.push("editStart");
+			root[valueSymbol] = 5;
+			log.push("editStart");
+			root[valueSymbol] = 6;
+			log.push("unsubscribe");
+			unsubscribe();
+			unsubscribeAfter();
+			log.push("editStart");
+			root[valueSymbol] = 7;
+
+			assert.deepEqual(log, [
+				"editStart",
+				"change",
+				"after",
+				"editStart",
+				"change",
+				"after",
+				"unsubscribe",
+				"editStart",
+			]);
 		});
 	});
 
@@ -641,6 +723,260 @@ describe("SharedTree", () => {
 			};
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
+		});
+	});
+
+	describe("Constraints", () => {
+		it("transaction dropped when constraint violated", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "c");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "b");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["c"]);
+			validateRootField(tree2, ["c"]);
+		});
+
+		it("transaction successful when constraint not violated", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "b");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["b"]);
+			validateRootField(tree2, ["b"]);
+		});
+
+		it("transaction successful when constraint eventually fixed", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "c");
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "d");
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "b");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(provider.trees[0], ["b"]);
+			validateRootField(provider.trees[1], ["b"]);
+		});
+
+		it("transaction dropped with violated constraints on different fields", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "x");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			const rootPath2 = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 1,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "b");
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath2, "y");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.addValueConstraint(rootPath2, "x");
+				tree1.editor.setValue(rootPath, "c");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["b", "y"]);
+			validateRootField(tree2, ["b", "y"]);
+		});
+
+		it("transaction successful with constraints eventually fixed on different fields", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "x");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			const rootPath2 = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 1,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "b");
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath2, "y");
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
+				tree2.editor.setValue(rootPath2, "x");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.addValueConstraint(rootPath2, "x");
+				tree1.editor.setValue(rootPath, "c");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(provider.trees[1], ["c", "x"]);
+			validateRootField(provider.trees[0], ["c", "x"]);
+		});
+
+		it("constraints violated delta is propagated", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a", "x");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			const rootPath2 = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 1,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "b");
+			});
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath2, "y");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.setValue(rootPath, "c");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["b", "y"]);
+			validateRootField(tree2, ["b", "y"]);
+		});
+
+		it("uses first defined constraint for node in transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.addValueConstraint(rootPath, "a");
+				tree1.editor.addValueConstraint(rootPath, "ignored");
+				tree1.editor.setValue(rootPath, "b");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["b"]);
+			validateRootField(tree2, ["b"]);
+		});
+
+		it("ignores constraint on node after a node is changed in the same transaction", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+			insert(tree1, 0, "a");
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			runSynchronous(tree2, () => {
+				tree2.editor.setValue(rootPath, "a");
+			});
+
+			runSynchronous(tree1, () => {
+				tree1.editor.setValue(rootPath, "b");
+				// This constraint will always be true and should be ignored
+				tree1.editor.addValueConstraint(rootPath, "b");
+			});
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["b"]);
+			validateRootField(tree2, ["b"]);
 		});
 	});
 
@@ -967,7 +1303,7 @@ describe("SharedTree", () => {
 
 	describe("Transactions", () => {
 		/** like `pushTestValue`, but does not wrap the operation in a transaction */
-		function pushTestValueDirect(checkout: ISharedTreeCheckout, value: TreeValue): void {
+		function pushTestValueDirect(checkout: ISharedTreeBranch, value: TreeValue): void {
 			const field = checkout.editor.sequenceField(undefined, rootFieldKeySymbol);
 			const nodes = singleTextCursor({ type: brand("Node"), value });
 			field.insert(0, nodes);
@@ -975,7 +1311,7 @@ describe("SharedTree", () => {
 
 		function describeBasicTransactionTests(
 			title: string,
-			checkoutFactory: () => Promise<ISharedTreeCheckout>,
+			checkoutFactory: () => Promise<ISharedTreeBranch>,
 		) {
 			describe(title, () => {
 				it("update the tree while open", async () => {
@@ -1701,6 +2037,7 @@ const rootNodeSchema = namedTreeSchema({
 	},
 	extraLocalFields: fieldSchema(FieldKinds.sequence),
 	globalFields: [globalFieldKey],
+	value: ValueSchema.Serializable,
 });
 const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
@@ -1714,7 +2051,7 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: ISharedTreeCheckout,
+	tree: ISharedTreeBranch,
 	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
@@ -1737,18 +2074,23 @@ function initializeTestTree(
 	}
 }
 
+const testValueSchema = namedTreeSchema({
+	name: brand("TestValue"),
+	value: ValueSchema.Serializable,
+});
+
 /**
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
  */
-function pushTestValue(checkout: ISharedTreeCheckout, value: TreeValue): void {
-	insert(checkout, 0, value);
+function pushTestValue(branch: ISharedTreeBranch, value: TreeValue): void {
+	insert(branch, 0, value);
 }
 
 /**
  * Reads a value in a tree set by {@link pushTestValue} if it exists.
  */
-function peekTestValue({ forest }: ISharedTreeCheckout): TreeValue | undefined {
+function peekTestValue({ forest }: ISharedTreeBranch): TreeValue | undefined {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (!readCursor.firstNode()) {
@@ -1763,7 +2105,7 @@ function peekTestValue({ forest }: ISharedTreeCheckout): TreeValue | undefined {
 /**
  * Reads a value in a tree set by {@link pushTestValue} if it exists.
  */
-function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
+function* getTestValues({ forest }: ISharedTreeBranch): Iterable<TreeValue> {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (readCursor.firstNode()) {
@@ -1784,10 +2126,12 @@ function* getTestValues({ forest }: ISharedTreeCheckout): Iterable<TreeValue> {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTreeCheckout, index: number, ...values: TreeValue[]): void {
+function insert(tree: ISharedTreeBranch, index: number, ...values: TreeValue[]): void {
 	runSynchronous(tree, () => {
 		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
-		const nodes = values.map((value) => singleTextCursor({ type: brand("Node"), value }));
+		const nodes = values.map((value) =>
+			singleTextCursor({ type: testValueSchema.name, value }),
+		);
 		field.insert(index, nodes);
 	});
 }
@@ -1810,7 +2154,7 @@ function remove(tree: ISharedTree, index: number, count: number): void {
  * @param tree - The tree to verify.
  * @param expected - The expected values for the nodes in the root field of the tree.
  */
-function validateRootField(tree: ISharedTreeCheckout, expected: Value[]): void {
+function validateRootField(tree: ISharedTreeBranch, expected: Value[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	let hasNode = readCursor.firstNode();
@@ -1823,7 +2167,7 @@ function validateRootField(tree: ISharedTreeCheckout, expected: Value[]): void {
 	readCursor.free();
 }
 
-function validateTree(tree: ISharedTreeCheckout, expected: JsonableTree[]): void {
+function validateTree(tree: ISharedTreeBranch, expected: JsonableTree[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
