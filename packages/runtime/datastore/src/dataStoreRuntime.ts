@@ -102,8 +102,7 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
-	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
-{
+	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 	/**
 	 * @deprecated - Instantiate the class using its constructor instead.
 	 *
@@ -377,7 +376,7 @@ export class FluidDataStoreRuntime
 
 		// By default, we abort the summarizer when it makes local changes.
 		this.abortSummarizerIfLocalChanges =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.AbortSummarizerIfLocalChanges") ??
+			this.mc.config.getBoolean("Fluid.DataStore.AbortSummarizerIfLocalChanges") ??
 			true;
 	}
 

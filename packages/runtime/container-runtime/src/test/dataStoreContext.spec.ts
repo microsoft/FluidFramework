@@ -38,6 +38,8 @@ import {
 	MockLogger,
 	TelemetryDataTag,
 	TelemetryNullLogger,
+	sessionStorageConfigProvider,
+	ConfigTypes,
 } from "@fluidframework/telemetry-utils";
 import {
 	MockFluidDataStoreRuntime,
@@ -368,9 +370,11 @@ describe("Data Store Context Tests", () => {
 			});
 		});
 
-		describe("Local data stores in summarizer client", () => {
+		describe("Local data stores in summarizer client with DataProcessing error enabled", () => {
 			let mockLogger: MockLogger;
 			const packageName = ["TestDataStore1"];
+			// used to inject settings into MonitoringContext, and also to mock localStorage for the handler
+			let mockLocalStorage: Record<string, ConfigTypes> = {};
 			beforeEach(async () => {
 				// Change the container runtime's logger to MockLogger and its type to be a summarizer client.
 				mockLogger = new MockLogger();
@@ -381,6 +385,116 @@ describe("Data Store Context Tests", () => {
 					type: summarizerClientType,
 				};
 				containerRuntime = createContainerRuntime(mockLogger, clientDetails);
+				mockLogger = new MockLogger();
+			});
+			const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+			before(() => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+			});
+			after(() => {
+				sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+			});
+			afterEach(() => {
+				mockLocalStorage = {};
+			});
+
+			async function generateProblem(): Promise<
+				{
+					eventName: string;
+					packageName: ITaggedTelemetryPropertyType | undefined;
+					fluidDataStoreId: {
+						value: string;
+						tag: TelemetryDataTag;
+					};
+					type: DataStoreMessageType;
+				}[]
+			> {
+				localDataStoreContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: packageName,
+					runtime: containerRuntime,
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+					isRootDataStore: false,
+				});
+				await localDataStoreContext.realize();
+
+				localDataStoreContext.submitMessage(
+					DataStoreMessageType.ChannelOp,
+					"summarizer message",
+					{},
+				);
+
+				const expectedEvents = [
+					{
+						eventName: "FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer",
+						packageName: packagePathToTelemetryProperty(packageName),
+						fluidDataStoreId: {
+							value: dataStoreId,
+							tag: TelemetryDataTag.CodeArtifact,
+						},
+						type: DataStoreMessageType.ChannelOp,
+					},
+				];
+				return expectedEvents;
+			}
+
+			it("data processing error when local data store sends op in summarizer", async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = true;
+				const expectedEvents = await generateProblem();
+				mockLogger.assertMatchNone(
+					expectedEvents,
+					"data store message submitted event generated when it should not",
+				);
+			});
+			it("data processing error, by default, when local data store sends op in summarizer", async () => {
+				const expectedEvents = await generateProblem();
+				mockLogger.assertMatchNone(
+					expectedEvents,
+					"data store message submitted event generated when it should not",
+				);
+			});
+			it("logs when local data store sends op in summarizer", async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
+				const expectedEvents = await generateProblem();
+				mockLogger.assertMatch(
+					expectedEvents,
+					"data store message submitted event generated when it should not",
+				);
+			});
+		});
+
+		describe("Local data stores in summarizer client without DataProcessing error", () => {
+			let mockLogger: MockLogger;
+			const packageName = ["TestDataStore1"];
+			let mockLocalStorage: Record<string, ConfigTypes> = {};
+			beforeEach(async () => {
+				// Change the container runtime's logger to MockLogger and its type to be a summarizer client.
+				mockLogger = new MockLogger();
+				const clientDetails = {
+					capabilities: {
+						interactive: false,
+					},
+					type: summarizerClientType,
+				};
+				containerRuntime = createContainerRuntime(mockLogger, clientDetails);
+			});
+			const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+			before(() => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+				sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+				// Turn off the data processing error for these tests.
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
+			});
+			after(() => {
+				sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+			});
+			afterEach(() => {
+				mockLocalStorage = {};
 			});
 
 			it("logs when local data store is created in summarizer", async () => {

@@ -332,8 +332,7 @@ export abstract class FluidDataStoreContext
 
 		// By default, we abort the summarizer when it makes local changes.
 		this.abortSummarizerIfLocalChanges =
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.AbortSummarizerIfLocalChanges") ??
-			true;
+			this.mc.config.getBoolean("Fluid.DataStore.AbortSummarizerIfLocalChanges") ?? true;
 	}
 
 	public dispose(): void {
