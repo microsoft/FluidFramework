@@ -1912,7 +1912,9 @@ export class MergeTree {
 
 		const annotateSegment = (segment: ISegment) => {
 			assert(
-				!(reservedMarkerIdKey in props) || props.markerId === segment.properties?.markerId,
+				!(segment.type === "Marker") ||
+					!(reservedMarkerIdKey in props) ||
+					props.markerId === segment.properties?.markerId,
 				"Cannot change the markerId of an existing marker",
 			);
 			const propertyDeltas = segment.addProperties(
