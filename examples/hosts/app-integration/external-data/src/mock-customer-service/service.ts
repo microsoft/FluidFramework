@@ -10,14 +10,13 @@ import express from "express";
 import fetch from "node-fetch";
 
 import { assertValidTaskData, ITaskData } from "../model-interface";
-import { ExternalTaskListId } from "../utilities";
 /**
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
 	data: ITaskData,
 	fluidServiceUrl: string,
-	externalTaskListId: ExternalTaskListId,
+	externalTaskListId: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
@@ -139,7 +138,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * This data will be forwarded to our own subscribers.
 	 */
 	expressApp.post("/external-data-webhook", (request, result) => {
-		const externalTaskListId = request.query.externalTaskListId as ExternalTaskListId;
+		const externalTaskListId = request.query.externalTaskListId as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const messageData = request.body?.data as ITaskData;
 		if (messageData === undefined) {
