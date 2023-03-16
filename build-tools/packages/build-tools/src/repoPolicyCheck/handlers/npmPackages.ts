@@ -249,12 +249,12 @@ export const handlers: Handler[] = [
 				json.license = licenseId;
 
 				if (json.repository === undefined || typeof json.repository === "string") {
-          json.repository = {
-            type: "git",
-            url: repository,
-            directory: path.posix.relative(root, path.dirname(file)),
-          };
-        }
+					json.repository = {
+						type: "git",
+						url: repository,
+						directory: path.posix.relative(root, path.dirname(file)),
+					};
+				}
 
 				json.homepage = homepage;
 			});
@@ -532,7 +532,7 @@ export const handlers: Handler[] = [
 			}
 
 			return undefined;
-		}
+		},
 	},
 	{
 		name: "npm-package-json-prettier",
