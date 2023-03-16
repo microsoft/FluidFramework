@@ -1909,10 +1909,9 @@ export class MergeTree {
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
 		let segmentGroup: SegmentGroup | undefined;
-
 		const annotateSegment = (segment: ISegment) => {
 			assert(
-				!(segment.type === "Marker") ||
+				!Marker.is(segment) ||
 					!(reservedMarkerIdKey in props) ||
 					props.markerId === segment.properties?.markerId,
 				"Cannot change the markerId of an existing marker",
