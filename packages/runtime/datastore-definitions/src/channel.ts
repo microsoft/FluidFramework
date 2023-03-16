@@ -70,11 +70,15 @@ export interface IChannel extends IFluidLoadable {
 	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
 	 * a summary from the entire container.
 	 *
+	 * Default: `false`
+	 *
 	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
 	 * of an object did not change since last successful summary, an
 	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
 	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
 	 * send an `ISummaryHandle`, since you are not expected to track state.
+	 *
+	 * Default: `false`
 	 *
 	 * Note: The goal is to remove the trackState and automatically decided whether the
 	 * handles will be used or not: {@link https://github.com/microsoft/FluidFramework/issues/10455}
