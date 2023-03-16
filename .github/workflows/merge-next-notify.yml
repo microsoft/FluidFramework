@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [ labeled ]
     branches:
-      - next
+      - main
 
 jobs:
   build:
