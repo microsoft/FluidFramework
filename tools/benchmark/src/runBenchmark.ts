@@ -77,26 +77,18 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 }
 
 /**
+ * Run a garbage collection, if possible.
+ *
+ * @remarks
+ * Used before the test to help reduce noise from previous allocations
+ * (ex: from previous tests or startup).
+ */
+function tryRunGarbageCollection(): void {
+	global?.gc?.();
+}
+
+/**
  * Run a performance benchmark and return its results.
- *
- * Here is how benchmarking works:
- *
- * ```
- *  For each benchmark
- *      For each sampled run
- *          // Run fn once to check for errors
- *          fn()
- *          // Run fn multiple times and measure results.
- *          for each Benchmark.count
- *              fn()
- * ```
- *
- * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
- * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing
- * the iterations until it hits a low uncertainty point.
- *
- * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
- *
  * @public
  */
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
@@ -107,12 +99,12 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
 		...args,
 	};
 
-	// Run a garbage collection, if possible, before the test.
-	// This helps noise from allocations before the test (ex: from previous tests or startup) from
-	// impacting the test.
-	global?.gc?.();
+	tryRunGarbageCollection();
 
-	let count = 1;
+	if (options.minSampleCount < 1) {
+		throw new Error("Invalid minSampleCount");
+	}
+	let count = options.minSampleCount;
 
 	while (
 		doBatch(count, options.benchmarkFn, options.onCycle) < options.minSampleDurationSeconds
@@ -158,25 +150,6 @@ function doBatch(
 
 /**
  * Run a performance benchmark and return its results.
- *
- * Here is how benchmarking works:
- *
- * ```
- *  For each benchmark
- *      For each sampled run
- *          // Run fn once to check for errors
- *          fn()
- *          // Run fn multiple times and measure results.
- *          for each Benchmark.count
- *              fn()
- * ```
- *
- * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
- * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing
- * the iterations until it hits a low uncertainty point.
- *
- * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
- *
  * @public
  */
 export async function runBenchmarkAsync(
@@ -189,14 +162,14 @@ export async function runBenchmarkAsync(
 		...args,
 	};
 
-	// Run a garbage collection, if possible, before the test.
-	// This helps noise from allocations before the test (ex: from previous tests or startup) from
-	// impacting the test.
-	global?.gc?.();
+	tryRunGarbageCollection();
 
-	let count = 1;
+	if (options.minSampleCount < 1) {
+		throw new Error("Invalid minSampleCount");
+	}
+	let count = options.minSampleCount;
 
-	// TODO: use consider using benchmark's algorithm for this.
+	// TODO: use consider using Benchmark.js's algorithm for this.
 	while (
 		(await doBatchAsync(count, options.benchmarkFnAsync, options.onCycle)) <
 		options.minSampleDurationSeconds
