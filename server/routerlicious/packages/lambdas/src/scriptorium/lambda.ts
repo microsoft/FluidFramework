@@ -19,6 +19,8 @@ import {
 	Lumberjack,
 	LumberEventName,
 	Lumber,
+	QueuedMessageProperties,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
 
@@ -36,6 +38,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private current = new Map<string, ISequencedOperationMessage[]>();
 	private readonly clientFacadeRetryEnabled: boolean;
 	private readonly telemetryEnabled: boolean;
+	private pendingMetric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
 
 	constructor(
 		private readonly opCollection: ICollection<any>,
@@ -69,6 +72,38 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		}
 
 		this.pendingOffset = message;
+
+		if (this.telemetryEnabled) {
+			if (this.pendingMetric === undefined) {
+				// create a new metric for processing the current kafka batch
+				this.pendingMetric = Lumberjack.newLumberMetric(
+					LumberEventName.ScriptoriumProcessBatch,
+					{
+						timestampQueuedMessage: message.timestamp ? new Date(message.timestamp).toISOString() : null,
+						timestampReadyToProcess: new Date().toISOString(),
+						[QueuedMessageProperties.partition]: this.pendingOffset?.partition,
+						[QueuedMessageProperties.offsetStart]: this.pendingOffset?.offset,
+						[QueuedMessageProperties.offsetEnd]: this.pendingOffset?.offset,
+						[CommonProperties.totalBatchSize]: boxcar.contents.length,
+					},
+				);
+			} else {
+				// previous batch is still waiting to be processed, update properties in the existing metric
+				this.pendingMetric.setProperty(
+					QueuedMessageProperties.offsetEnd,
+					this.pendingOffset?.offset,
+				);
+				const currentBatchSize = boxcar.contents.length;
+				const previousBatchSize = Number(
+					this.pendingMetric.properties.get(CommonProperties.totalBatchSize),
+				);
+				this.pendingMetric.setProperty(
+					CommonProperties.totalBatchSize,
+					previousBatchSize + currentBatchSize,
+				);
+			}
+		}
+
 		this.sendPending();
 
 		return undefined;
@@ -88,10 +123,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		}
 
 		let metric: Lumber<LumberEventName.ScriptoriumProcessBatch>;
-		if (this.telemetryEnabled) {
-			metric = Lumberjack.newLumberMetric(LumberEventName.ScriptoriumProcessBatch, {
-				batchOffset: this.pendingOffset?.offset,
-			});
+		if (this.telemetryEnabled && this.pendingMetric) {
+			metric = this.pendingMetric;
+			this.pendingMetric = undefined;
+
+			metric.setProperty("timestampProcessingStart", new Date().toISOString());
 		}
 
 		let status = ScriptoriumStatus.Processing;
@@ -114,15 +150,18 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			() => {
 				this.current.clear();
 				status = ScriptoriumStatus.ProcessingComplete;
+				metric?.setProperty("timestampProcessingComplete", new Date().toISOString());
 
 				// checkpoint batch offset
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					this.context.checkpoint(batchOffset!);
 					status = ScriptoriumStatus.CheckpointComplete;
+					metric?.setProperty("timestampCheckpointComplete", new Date().toISOString());
 				} catch (error) {
 					status = ScriptoriumStatus.CheckpointFailed;
-					const errorMessage = `Scriptorium failed to checkpoint batch with offset ${batchOffset?.offset}`;
+					metric?.setProperty("timestampCheckpointFailed", new Date().toISOString());
+					const errorMessage = "Scriptorium failed to checkpoint batch";
 					this.logErrorTelemetry(
 						errorMessage,
 						error,
@@ -134,9 +173,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				}
 
 				metric?.setProperty("status", status);
-				metric?.success(
-					`Scriptorium completed processing and checkpointing of batch with offset ${batchOffset?.offset}`,
-				);
+				metric?.success("Scriptorium completed processing and checkpointing of batch");
 
 				// continue with next batch
 				this.sendPending();
@@ -144,7 +181,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			(error) => {
 				// catches error if any of the promises failed in Promise.all, i.e. any of the ops failed to write to db
 				status = ScriptoriumStatus.ProcessingFailed;
-				const errorMessage = `Scriptorium failed to process batch with offset ${batchOffset?.offset}, going to restart`;
+				metric?.setProperty("timestampProcessingFailed", new Date().toISOString());
+				const errorMessage = "Scriptorium failed to process batch, going to restart";
 				this.logErrorTelemetry(errorMessage, error, status, batchOffset?.offset, metric);
 
 				// Restart scriptorium

@@ -66,13 +66,11 @@
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/datastore-definitions": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/driver-utils": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/routerlicious-driver": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/runtime-definitions": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
-		"axios": "^0.26.0",
 		"events": "^3.1.0",
 		"jsrsasign": "^10.5.25",
 		"uuid": "^8.3.1"

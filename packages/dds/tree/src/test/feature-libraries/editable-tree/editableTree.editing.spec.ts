@@ -361,42 +361,21 @@ describe("editable-tree: editing", () => {
 		}
 	});
 
-	it("assert set primitive value using assignment", async () => {
-		const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
-		const person = trees[0].root as Person;
-		const nameNode = person[getField](brand("name")).getNode(0);
-		const ageNode = person[getField](brand("age")).getNode(0);
+	it("validates schema of values", async () => {
+		const schemaData: SchemaData = {
+			treeSchema: schemaMap,
+			globalFieldSchema: new Map([[rootFieldKey, fieldSchema(FieldKinds.value)]]),
+		};
 
-		assert.throws(
-			() => {
-				assert(person.friends !== undefined);
-				person.friends[valueSymbol] = { kate: "kate" };
-			},
-			(e) => validateAssertionError(e, "unsupported schema for provided primitive"),
-			"Expected exception was not thrown",
-		);
-		assert.throws(
-			() => {
-				assert(person.address !== undefined);
-				person.address[valueSymbol] = 123;
-			},
-			(e) => validateAssertionError(e, "Cannot set a value of a non-primitive field"),
-			"Expected exception was not thrown",
-		);
-		assert.throws(
-			() => {
-				nameNode[valueSymbol] = 1;
-			},
-			(e) => validateAssertionError(e, "unsupported schema for provided primitive"),
-			"Expected exception was not thrown",
-		);
-		assert.throws(
-			() => {
-				ageNode[valueSymbol] = "some";
-			},
-			(e) => validateAssertionError(e, "unsupported schema for provided primitive"),
-			"Expected exception was not thrown",
-		);
+		const [, trees] = await createSharedTrees(schemaData, [
+			{ type: stringSchema.name, value: "x" },
+		]);
+
+		const root = trees[0].context.root.getNode(0);
+		root[valueSymbol] = "hi";
+		assert.throws(() => (root[valueSymbol] = { kate: "kate" }));
+		assert.throws(() => (root[valueSymbol] = 5));
+		assert.throws(() => (root[valueSymbol] = true));
 		trees[0].context.free();
 	});
 
