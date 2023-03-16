@@ -233,7 +233,7 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 	// this test relies on an internal function that has been renamed (snapshot -> summarize)
 	it("loads from snapshot", async function () {
 		// GitHub Issue: #9534
-		if (provider.driver.type === "odsp" || provider.driver.type === "local") {
+		if (!driverSupportsBlobs(provider.driver)) {
 			this.skip();
 		}
 		const container1 = await provider.makeTestContainer(testContainerConfig);
@@ -321,7 +321,6 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 					provider.driver.createCreateNewRequest(provider.documentId),
 				);
 				if (!driverSupportsBlobs(provider.driver)) {
-					// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 					return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 				}
 				await attachP;
@@ -408,7 +407,6 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
 		if (!driverSupportsBlobs(provider.driver)) {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 		}
 		await attachP;
@@ -455,7 +453,6 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
 		if (!driverSupportsBlobs(provider.driver)) {
-			// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 			return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 		}
 		await attachP;
@@ -504,7 +501,6 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 				provider.driver.createCreateNewRequest(provider.documentId),
 			);
 			if (!driverSupportsBlobs(provider.driver)) {
-				// this flow is currently only supported on ODSP, the others should explicitly reject on attach
 				return assert.rejects(attachP, (err) => err.message === usageErrorMessage);
 			}
 			await attachP;

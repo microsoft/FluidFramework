@@ -35,8 +35,8 @@ export class MockDetachedBlobStorage implements IDetachedBlobStorage {
 	}
 }
 
+const driversThatSupportBlobs: string[] = ["local", "odsp"];
 export function driverSupportsBlobs(driver: ITestDriver): boolean {
-	const driversThatSupportBlobs: string[] = ["local", "odsp"];
 	return driversThatSupportBlobs.includes(driver.type);
 }
 
@@ -45,7 +45,6 @@ export const getUrlFromDetachedBlobStorage = async (
 	container: IContainer,
 	provider: ITestObjectProvider,
 ): Promise<string> => {
-	// assert(provider.driver.type === "odsp");
 	switch (provider.driver.type) {
 		case "odsp": {
 			const itemId = (container.resolvedUrl as IOdspResolvedUrl).itemId;

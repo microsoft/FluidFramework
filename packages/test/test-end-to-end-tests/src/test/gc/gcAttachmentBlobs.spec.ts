@@ -18,7 +18,11 @@ import {
 import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager";
-import { getUrlFromDetachedBlobStorage, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
+import {
+	driverSupportsBlobs,
+	getUrlFromDetachedBlobStorage,
+	MockDetachedBlobStorage,
+} from "../mockDetachedBlobStorage";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 const waitForContainerConnectionWriteMode = async (container: Container) => {
@@ -133,7 +137,7 @@ describeNoCompat("Garbage collection of blobs", (getTestObjectProvider) => {
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider();
-			if (provider.driver.type !== "local" && provider.driver.type !== "odsp") {
+			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
 			const detachedBlobStorage = new MockDetachedBlobStorage();

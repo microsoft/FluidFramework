@@ -50,8 +50,8 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		if (!this.localDeltaConnectionServer) {
 			throw new Error("Provide the localDeltaConnectionServer!!");
 		}
-		ensureFluidResolvedUrl(resolvedUrl);
 		if (createNewSummary !== undefined) {
+			ensureFluidResolvedUrl(resolvedUrl);
 			await createDocument(this.localDeltaConnectionServer, resolvedUrl, createNewSummary);
 		}
 		return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);

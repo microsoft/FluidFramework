@@ -96,6 +96,8 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 			}
 			ensureFluidResolvedUrl(this.resolvedUrl);
 			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
+			const version = await this.getVersions(this.id, 1);
+			return version[0].id;
 		}
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,
