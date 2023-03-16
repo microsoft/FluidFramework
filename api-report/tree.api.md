@@ -283,8 +283,7 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
 export const defaultSchemaPolicy: FullSchemaPolicy;
 
 // @alpha
-interface Delete {
-    // (undocumented)
+interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly count: number;
     // (undocumented)
     readonly type: typeof MarkType.Delete;
@@ -297,14 +296,12 @@ declare namespace Delta {
         Mark,
         MarkList,
         Skip,
+        HasModifications,
         Modify,
         Delete,
-        ModifyAndDelete,
         MoveOut,
-        ModifyAndMoveOut,
         MoveIn,
         Insert,
-        InsertAndModify,
         MoveId,
         FieldMap,
         FieldMarks,
@@ -625,6 +622,13 @@ export interface HasListeners<E extends Events<E>> {
     hasListeners(eventName?: keyof Events<E>): boolean;
 }
 
+// @alpha
+interface HasModifications<TTree = ProtoNode> {
+    // (undocumented)
+    readonly fields?: FieldMarks<TTree>;
+    readonly setValue?: Value;
+}
+
 // @alpha (undocumented)
 export type IdAllocator = () => ChangesetLocalId;
 
@@ -666,23 +670,10 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 }
 
 // @alpha
-interface Insert<TTree = ProtoNode> {
-    // (undocumented)
+interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly content: readonly TTree[];
     // (undocumented)
     readonly type: typeof MarkType.Insert;
-}
-
-// @alpha
-interface InsertAndModify<TTree = ProtoNode> {
-    // (undocumented)
-    readonly content: TTree;
-    // (undocumented)
-    readonly fields?: FieldMarks<TTree>;
-    // (undocumented)
-    readonly setValue?: Value;
-    // (undocumented)
-    readonly type: typeof MarkType.InsertAndModify;
 }
 
 declare namespace InternalTypes {
@@ -917,7 +908,7 @@ export interface MakeNominal {
 }
 
 // @alpha
-type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete | MoveOut | MoveIn | Insert<TTree> | ModifyAndDelete<TTree> | ModifyAndMoveOut<TTree> | InsertAndModify<TTree>;
+type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
 
 // @alpha
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
@@ -934,41 +925,15 @@ type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 const MarkType: {
     readonly Modify: 0;
     readonly Insert: 1;
-    readonly InsertAndModify: 2;
-    readonly MoveIn: 3;
-    readonly Delete: 4;
-    readonly ModifyAndDelete: 5;
-    readonly MoveOut: 6;
-    readonly ModifyAndMoveOut: 7;
+    readonly MoveIn: 2;
+    readonly Delete: 3;
+    readonly MoveOut: 4;
 };
 
 // @alpha
-interface Modify<TTree = ProtoNode> {
-    // (undocumented)
-    readonly fields?: FieldMarks<TTree>;
-    // (undocumented)
-    readonly setValue?: Value;
+interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
     // (undocumented)
     readonly type: typeof MarkType.Modify;
-}
-
-// @alpha
-interface ModifyAndDelete<TTree = ProtoNode> {
-    // (undocumented)
-    readonly fields: FieldMarks<TTree>;
-    // (undocumented)
-    readonly type: typeof MarkType.ModifyAndDelete;
-}
-
-// @alpha
-interface ModifyAndMoveOut<TTree = ProtoNode> {
-    // (undocumented)
-    readonly fields?: FieldMarks<TTree>;
-    readonly moveId: MoveId;
-    // (undocumented)
-    readonly setValue?: Value;
-    // (undocumented)
-    readonly type: typeof MarkType.ModifyAndMoveOut;
 }
 
 // @alpha @sealed
@@ -1038,8 +1003,7 @@ interface MoveIn {
 }
 
 // @alpha
-interface MoveOut {
-    // (undocumented)
+interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
     readonly count: number;
     readonly moveId: MoveId;
     // (undocumented)
