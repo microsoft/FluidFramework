@@ -444,6 +444,7 @@ declare function get_current_InterfaceDeclaration_IConnectableRuntime():
 declare function use_old_InterfaceDeclaration_IConnectableRuntime(
     use: TypeOnly<old.IConnectableRuntime>);
 use_old_InterfaceDeclaration_IConnectableRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConnectableRuntime());
 
 /*

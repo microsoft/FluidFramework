@@ -28,7 +28,7 @@ describeInstallVersions(
 	{
 		requestAbsoluteVersions: [versionWithChunking],
 	},
-	/* timeoutMs */ 50000,
+	/* timeoutMs: 3 minutes */ 180000,
 )("Legacy chunking", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let oldMap: SharedMap;

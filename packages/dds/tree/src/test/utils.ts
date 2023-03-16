@@ -48,7 +48,6 @@ import {
 	GlobalFieldKey,
 	rootFieldKey,
 	rootFieldKeySymbol,
-	TransactionResult,
 	Value,
 } from "../core";
 import { brand, makeArray } from "../util";
@@ -423,13 +422,8 @@ export function initializeTestTree(
 	schema: SchemaData = testSchema,
 ): void {
 	tree.storedSchema.update(schema);
-
 	// Apply an edit to the tree which inserts a node with a value
-	tree.runTransaction((forest, editor) => {
-		const writeCursor = singleTextCursor(state);
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
-
-		return TransactionResult.Apply;
-	});
+	const writeCursor = singleTextCursor(state);
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, writeCursor);
 }

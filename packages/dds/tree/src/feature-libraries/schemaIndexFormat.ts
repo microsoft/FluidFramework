@@ -94,7 +94,7 @@ function encodeTree(name: TreeSchemaIdentifier, schema: TreeSchema): TreeSchemaF
 
 function encodeField(schema: FieldSchema): FieldSchemaFormat {
 	const out: FieldSchemaFormat = {
-		kind: schema.kind,
+		kind: schema.kind.identifier,
 	};
 	if (schema.types !== undefined) {
 		out.types = [...schema.types];
@@ -126,7 +126,8 @@ function decode(f: Format): SchemaData {
 
 function decodeField(schema: FieldSchemaFormat): FieldSchema {
 	const out: FieldSchema = {
-		kind: schema.kind,
+		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
+		kind: { identifier: schema.kind },
 		types: schema.types === undefined ? undefined : new Set(schema.types),
 	};
 	return out;

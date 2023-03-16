@@ -4,6 +4,7 @@
  */
 
 import * as crypto from "crypto";
+import { IRandom } from "@fluid-internal/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -14,7 +15,6 @@ import { ISharedCounter, SharedCounter } from "@fluidframework/counter";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager";
 import { IDirectory, ISharedDirectory, ISharedMap, SharedMap } from "@fluidframework/map";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import random from "random-js";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { delay, assert } from "@fluidframework/common-utils";
@@ -28,7 +28,7 @@ export interface IRunConfig {
 	profileName: string;
 	testConfig: ILoadTestConfig;
 	verbose: boolean;
-	randEng: random.Engine;
+	random: IRandom;
 	logger: ITelemetryLogger;
 }
 
@@ -584,6 +584,24 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 		// To avoid growing the file size unnecessarily, not all clients should be sending large ops
 		const maxClientsSendingLargeOps = config.testConfig.content?.numClients ?? 1;
 		let opsSent = 0;
+		let largeOpsSent = 0;
+
+		const reportOpCount = (reason: string, error?: Error) => {
+			config.logger.sendTelemetryEvent(
+				{
+					eventName: "OpCount",
+					reason,
+					runId: config.runId,
+					documentOpCount: dataModel.counter.value,
+					localOpCount: opsSent,
+					localLargeOpCount: largeOpsSent,
+				},
+				error,
+			);
+		};
+
+		this.runtime.once("dispose", () => reportOpCount("Disposed"));
+		this.runtime.once("disconnected", () => reportOpCount("Disconnected"));
 
 		const sendSingleOp = () => {
 			if (
@@ -609,10 +627,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					opsSent,
 					largeOpRate,
 				});
-			} else {
-				dataModel.counter.increment(1);
+
+				largeOpsSent++;
 			}
 
+			dataModel.counter.increment(1);
 			opsSent++;
 		};
 
@@ -629,9 +648,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 								dataModel.abandonTask();
 								await delay(cycleMs / 2);
 							} else {
-								await delay(
-									opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
-								);
+								await delay(opsGapMs * config.random.real(1, 1.5));
 							}
 						} else {
 							await dataModel.volunteerForTask();
@@ -639,13 +656,11 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				  }
 				: async () => {
 						sendSingleOp();
-						await delay(
-							opsGapMs + opsGapMs * random.real(0, 0.5, true)(config.randEng),
-						);
+						await delay(opsGapMs * config.random.real(1, 1.5));
 				  };
 
 		try {
-			while (opsSent < clientSendCount && !this.disposed) {
+			while (dataModel.counter.value < clientSendCount && !this.disposed) {
 				// this enables a quick ramp down. due to restart, some clients can lag
 				// leading to a slow ramp down. so if there are less than half the clients
 				// and it's partner is done, return true to complete the runner.
@@ -660,7 +675,12 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 				}
 				await sendSingleOpAndThenWait();
 			}
+
+			reportOpCount("Completed");
 			return !this.runtime.disposed;
+		} catch (error: any) {
+			reportOpCount("Exception", error);
+			throw error;
 		} finally {
 			dataModel.printStatus();
 		}
@@ -714,9 +734,7 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 					submittedSignals++;
 				}
 				// Random jitter of +- 50% of signalGapMs
-				await delay(
-					signalsGapMs + signalsGapMs * random.real(0, 0.5, true)(config.randEng),
-				);
+				await delay(signalsGapMs * config.random.real(1, 1.5));
 			}
 		} catch (e) {
 			console.error("Error during submitting signals: ", e);

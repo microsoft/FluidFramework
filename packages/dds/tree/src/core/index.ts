@@ -114,6 +114,7 @@ export {
 	TreeSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
+	FieldKindSpecifier,
 	TreeTypeSet,
 	SchemaData,
 	SchemaPolicy,
@@ -155,10 +156,6 @@ export {
 	mintRevisionTag,
 	Rebaser,
 } from "./rebase";
-
-export { TransactionResult } from "./checkout";
-
-export { Checkout as TransactionCheckout } from "./transaction";
 
 export {
 	Adapters,

@@ -44,6 +44,8 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
 -   [Remove deprecated ContainerServices in @fluidframework/aqueduct](#Remove-deprecated-ContainerServices-in-@fluidframework/aqueduct)
 -   [Remove deprecated waitForAttach](#Remove-deprecated-waitForAttach)
+-   [driver-utils members removed](#driver-utils-members-removed)
+-   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
 
 ### Container and RelativeLoader no longer exported
 
@@ -124,11 +126,36 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 -   `IPendingState`
 -   `IPendingLocalState`
 
+
 ### Remove deprecated ContainerServices in @fluidframework/aqueduct
 `ContainerServices` in `@fluidframework/aqueduct` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
 
 ### Remove deprecated waitForAttach
 `waitForAttach()` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### driver-utils members removed
+
+The following members of the `@fluidframework/driver-utils` package were deprecated in 2.0.0-internal.3.0.0 or earlier, and are now removed:
+
+-   `waitForConnectedState`
+-   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
+-   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
+-   `BlobAggregationStorage`
+-   `SnapshotExtractor`
+-   `isUnpackedRuntimeMessage`
+-   `IAnyDriverError`
+
+### Remove IConnectableRuntime.deltaManager
+
+Note: `IConnectableRuntime` is only to be implemented internally, so removing this should not be impactful.
+
 
 # 2.0.0-internal.3.3.0
 
