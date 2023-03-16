@@ -27,33 +27,33 @@ export interface IChannel extends IFluidLoadable {
 	 * Generates summary of the channel synchronously. It is called when an `attach message`
 	 * for a local channel is generated. In other words, when the channel is being attached
 	 * to make it visible to other clients.
-	 * 
+	 *
 	 * @remarks
-	 * 
+	 *
 	 * Note: Since the Attach Summary is generated for local channels when making them visible to
 	 * remote clients, they don't have any previous summaries to compare against. For this reason,
 	 * the attach summary cannot contain summary handles (paths to sub-trees or blobs).
 	 * It can, however, contain {@link @fluidframework/protocol-definitions#ISummaryAttachment}
 	 * (handles to blobs uploaded async via the blob manager).
-	 * 
+	 *
 	 * @param fullTree - A flag indicating whether the attempt should generate a full
 	 * summary tree without any handles for unchanged subtrees.
-	 * 
+	 *
 	 * Default: `false`
-	 * 
+	 *
 	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
 	 * of an object did not change since last successful summary, an
 	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
 	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
 	 * send an `ISummaryHandle`, since you are not expected to track state.
-	 * 
+	 *
 	 * Note: The goal is to remove the trackState and automatically decided whether the
 	 * handles will be used or not: {@link https://github.com/microsoft/FluidFramework/issues/10455}
-	 * 
+	 *
 	 * Default: `false`
-	 * 
+	 *
 	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
-	 * 
+	 *
 	 * @returns A summary capturing the current state of the channel.
 	 */
 	getAttachSummary(
@@ -65,22 +65,22 @@ export interface IChannel extends IFluidLoadable {
 	/**
 	 * Generates summary of the channel asynchronously.
 	 * This should not be called where the channel can be modified while summarization is in progress.
-	 * 
+	 *
 	 * @param fullTree - flag indicating whether the attempt should generate a full
 	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
 	 * a summary from the entire container.
-	 * 
+	 *
 	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
 	 * of an object did not change since last successful summary, an
 	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
 	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
 	 * send an `ISummaryHandle`, since you are not expected to track state.
-	 * 
+	 *
 	 * Note: The goal is to remove the trackState and automatically decided whether the
 	 * handles will be used or not: {@link https://github.com/microsoft/FluidFramework/issues/10455}
-	 * 
+	 *
 	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
-	 * 
+	 *
 	 * @returns A summary capturing the current state of the channel.
 	 */
 	summarize(
