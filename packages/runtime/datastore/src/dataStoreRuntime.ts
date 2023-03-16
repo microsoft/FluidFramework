@@ -212,6 +212,11 @@ export class FluidDataStoreRuntime
 	private localChangesTelemetryCount: number;
 
 	/**
+	 * Defines whether we should abort the summarizer in case it tries to make local changes.
+	 */
+	private readonly abortSummarizerIfLocalChanges: boolean;
+
+	/**
 	 * Invokes the given callback and expects that no ops are submitted
 	 * until execution finishes. If an op is submitted, an error will be raised.
 	 *
@@ -369,6 +374,11 @@ export class FluidDataStoreRuntime
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		// By default, we abort the summarizer when it makes local changes.
+		this.abortSummarizerIfLocalChanges =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.AbortSummarizerIfLocalChanges") ??
+			true;
 	}
 
 	public dispose(): void {
@@ -1092,7 +1102,35 @@ export class FluidDataStoreRuntime
 		channelId: string,
 		channelType: string,
 	) {
-		if (this.clientDetails.type !== "summarizer" || this.localChangesTelemetryCount <= 0) {
+		if (this.clientDetails.type !== "summarizer") {
+			return;
+		}
+
+		if (this.abortSummarizerIfLocalChanges) {
+			const error = DataProcessingError.create(
+				"Summarizer with local changes - DataStoreRuntime",
+				"unexpectedActionReceived",
+				undefined,
+				{
+					eventName,
+					channelType,
+					channelId: {
+						value: channelId,
+						tag: TelemetryDataTag.CodeArtifact,
+					},
+					fluidDataStoreId: {
+						value: this.id,
+						tag: TelemetryDataTag.CodeArtifact,
+					},
+					fluidDataStorePackagePath: packagePathToTelemetryProperty(
+						this.dataStoreContext.packagePath,
+					),
+				},
+			);
+			throw error;
+		}
+
+		if (this.localChangesTelemetryCount <= 0) {
 			return;
 		}
 

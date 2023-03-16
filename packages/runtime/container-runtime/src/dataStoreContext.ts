@@ -263,6 +263,11 @@ export abstract class FluidDataStoreContext
 	 */
 	private localChangesTelemetryCount: number;
 
+	/**
+	 * Defines whether we should abort the summarizer in case it tries to make local changes.
+	 */
+	private readonly abortSummarizerIfLocalChanges: boolean;
+
 	// The used routes of this node as per the last GC run. This is used to update the used routes of the channel
 	// if it realizes after GC is run.
 	private lastUsedRoutes: string[] | undefined;
@@ -324,6 +329,11 @@ export abstract class FluidDataStoreContext
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		// By default, we abort the summarizer when it makes local changes.
+		this.abortSummarizerIfLocalChanges =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.AbortSummarizerIfLocalChanges") ??
+			true;
 	}
 
 	public dispose(): void {
@@ -895,10 +905,30 @@ export abstract class FluidDataStoreContext
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
 	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
-		if (
-			this.clientDetails.type !== summarizerClientType ||
-			this.localChangesTelemetryCount <= 0
-		) {
+		if (this.clientDetails.type !== summarizerClientType) {
+			return;
+		}
+
+		if (this.abortSummarizerIfLocalChanges) {
+			const error = DataProcessingError.create(
+				"Summarizer with local changes - DataStoreContext",
+				"unexpectedActionReceived",
+				undefined,
+				{
+					eventName,
+					type,
+					fluidDataStoreId: {
+						value: this.id,
+						tag: TelemetryDataTag.CodeArtifact,
+					},
+					packageName: packagePathToTelemetryProperty(this.pkg),
+					isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
+				},
+			);
+			throw error;
+		}
+
+		if (this.localChangesTelemetryCount <= 0) {
 			return;
 		}
 
