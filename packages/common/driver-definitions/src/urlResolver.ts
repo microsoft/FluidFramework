@@ -4,26 +4,68 @@
  */
 import { IRequest } from "@fluidframework/core-interfaces";
 
+/**
+ * TODO
+ */
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
+/**
+ * Shared base implementation for {@link IResolvedUrl}s.
+ */
 export interface IResolvedUrlBase {
+	/**
+	 * TODO
+	 */
 	type: string;
 }
 
 export interface IWebResolvedUrl extends IResolvedUrlBase {
+	/**
+	 * {@inheritDoc IResolvedUrlBase.type}
+	 */
 	type: "web";
+	
+	/**
+	 * TODO
+	 */
 	data: string;
 }
 
 export interface IFluidResolvedUrl extends IResolvedUrlBase {
-	type: "fluid";
 	/**
-	 * The id of the container this resolved url is for.
+	 * {@inheritDoc IResolvedUrlBase.type}
+	 */
+	type: "fluid";
+	
+	/**
+	 * The ID of the Container this resolved URL is associated with.
 	 */
 	id: string;
+	
+	/**
+	 * TODO
+	 */
 	url: string;
-	tokens: { [name: string]: string };
-	endpoints: { [name: string]: string };
+	
+	/**
+	 * TODO
+	 */
+	tokens: { 
+		/**
+		 * TODO
+		 */
+		[name: string]: string
+	};
+	
+	/**
+	 * TODO
+	 */
+	endpoints: {
+		/**
+		 * TODO
+		 */
+		[name: string]: string
+	};
 }
 
 /**
@@ -37,17 +79,23 @@ export interface IContainerPackageInfo {
 }
 
 export interface IUrlResolver {
-	// Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
-	// the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
-	// or do we split the token access from this?
+	/**
+	 * TODO
+	 * 
+	 * @privateRemarks
+	 * 
+	 * Like DNS should be able to cache resolution requests. Then possibly just have a token provider go and do stuff?
+	 * the expiration of it could be relative to the lifetime of the token? Requests after need to refresh?
+	 * or do we split the token access from this?
+	 */
 	resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 
 	/**
-	 * Creates a url for the created container with any data store path given in the relative url.
-	 * @param resolvedUrl - resolved url for the container.
-	 * @param relativeUrl - relative url containing data store path; '/' represents root path.
-	 * @param packageInfoSource - optional, represents container package information to be included in url.
-	 * @returns absolute url combining container url with dta store path and optional additional information.
+	 * Creates a URL for the created Container with any datastore path given in the relative URL.
+	 * @param resolvedUrl - Resolved URL for the Container.
+	 * @param relativeUrl - Relative URL containing data store path. `/` represents root path.
+	 * @param packageInfoSource - (optional) Represents Container package information to be included in URL.
+	 * @returns An absolute URL combining Container URL with the data store path and optional additional information.
 	 */
 	getAbsoluteUrl(
 		resolvedUrl: IResolvedUrl,
@@ -62,7 +110,7 @@ export interface IUrlResolver {
  */
 export interface DriverPreCheckInfo {
 	/**
-	 * A code details hint that can potentially be used to prefetch container code prior to having a snapshot.
+	 * A code details hint that can potentially be used to prefetch Container code prior to having a snapshot.
 	 */
 	codeDetailsHint?: string;
 
@@ -77,20 +125,37 @@ export interface DriverPreCheckInfo {
  * Additional key in the loader request header
  */
 export enum DriverHeader {
-	// Key to indicate whether the request for summarizer
+	/**
+	 * Key to indicate whether the request for summarizer
+	 */
 	summarizingClient = "fluid-client-summarizer",
-	// createNew information, specific to each driver
+	
+	/**
+	 * createNew information, specific to each driver
+	 */
 	createNew = "createNew",
 }
 
+/**
+ * TODO
+ */
 export interface IDriverHeader {
+	/**
+	 * TODO
+	 */
 	[DriverHeader.summarizingClient]: boolean;
+	/**
+	 * TODO
+	 */
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[DriverHeader.createNew]: any;
 }
 
 declare module "@fluidframework/core-interfaces" {
+	/**
+	 * TODO
+	 */
 	// eslint-disable-next-line @typescript-eslint/no-empty-interface
 	export interface IRequestHeader extends Partial<IDriverHeader> {}
 }
