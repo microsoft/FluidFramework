@@ -97,7 +97,7 @@ export class SnapshotLegacy {
 		const attributionSerializer = this.mergeTree.attributionPolicy?.serializer;
 		assert(
 			segsWithAttribution === 0 || attributionSerializer !== undefined,
-			"attribution serializer must be provided when there are segments with attribution.",
+			0x559 /* attribution serializer must be provided when there are segments with attribution. */,
 		);
 		return {
 			version: undefined,
@@ -234,6 +234,10 @@ export class SnapshotLegacy {
 		let totalLength: number = 0;
 		segs.map((segment) => {
 			totalLength += segment.cachedLength;
+			if (segment.properties !== undefined && Object.keys(segment.properties).length === 0) {
+				segment.properties = undefined;
+				segment.propertyManager = undefined;
+			}
 			this.segments!.push(segment);
 		});
 

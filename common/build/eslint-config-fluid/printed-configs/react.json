@@ -1274,7 +1274,7 @@
             "error"
         ],
         "unicorn/consistent-function-scoping": [
-            "error"
+            "off"
         ],
         "unicorn/custom-error-definition": [
             "off"
@@ -1361,7 +1361,7 @@
             "error"
         ],
         "unicorn/no-nested-ternary": [
-            "error"
+            "off"
         ],
         "unicorn/no-new-array": [
             "error"
@@ -1409,7 +1409,7 @@
             "error"
         ],
         "unicorn/no-useless-undefined": [
-            "error"
+            "off"
         ],
         "unicorn/no-zero-fractions": [
             "error"

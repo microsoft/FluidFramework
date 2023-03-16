@@ -20,6 +20,7 @@ import {
 	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { defaultHash } from "@fluidframework/server-services-client";
@@ -30,6 +31,9 @@ import { createLocalDocumentService } from "./localDocumentService";
  * Implementation of document service factory for local use.
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
+	/**
+	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
+	 */
 	public readonly protocolName = "fluid-test:";
 
 	// A map of clientId to LocalDocumentService.
@@ -65,11 +69,11 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		const documentStorage = (this.localDeltaConnectionServer as LocalDeltaConnectionServer)
 			.documentStorage;
 
-		const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-		const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-		if (!(protocolSummary && appSummary)) {
+		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 			throw new Error("Protocol and App Summary required in the full summary");
 		}
+		const protocolSummary = createNewSummary.tree[".protocol"];
+		const appSummary = createNewSummary.tree[".app"];
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 		const sequenceNumber = documentAttributes.sequenceNumber;

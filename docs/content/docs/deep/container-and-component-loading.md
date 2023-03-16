@@ -35,9 +35,9 @@ specific code.
 
 The `Loader` object has a method `resolve(...)` **(1)** that can load a `Container` when provided the following:
 
-- `url` to Operation Stream (op stream)
-- `Driver` **(1.1)** - used for talking to the Fluid Server
-- `CodeLoader` **(1.2)** - used for resolving the `ContainerRuntime` code
+-   `url` to Operation Stream (op stream)
+-   `Driver` **(1.1)** - used for talking to the Fluid Server
+-   `CodeLoader` **(1.2)** - used for resolving the `ContainerRuntime` code
 
 ![Image 1](/images/container-and-component-loading-1.jpg)
 
@@ -58,9 +58,9 @@ the current state. I don't go into further details about it here.
 
 Connecting and processing the op stream includes:
 
-- Getting the Summary
-- Establishing the Websocket connection
-- Retrieving any missing ops from the REST endpoint
+-   Getting the Summary
+-   Establishing the Websocket connection
+-   Retrieving any missing ops from the REST endpoint
 
 The `Driver` is responsible for taking the requests above **(3)** and transforming them to requests that the Fluid Server
 understands **(3.1)**.
@@ -118,11 +118,11 @@ The `instantiateRuntime` function can perform any number of functions but has be
 
 1. Creating the `ContainerRuntime` object
 2. Setting the `request` handler on the `ContainerRuntime`
-    - The `request` handlers are used to route requests through the `Container` (more on this later)
-    - The primary use is to get Components
+    -   The `request` handlers are used to route requests through the `Container` (more on this later)
+    -   The primary use is to get Components
 3. Providing a `ComponentRegistry` of Component Factories to the `ContainerRuntime`
-    - The `ComponentRegistry` is a `Map<string, () => Promise(IComponentFactory)>`
-    - Defines what Components can be created in the `Container`
+    -   The `ComponentRegistry` is a `Map<string, () => Promise(IComponentFactory)>`
+    -   Defines what Components can be created in the `Container`
 4. Creating the default `Component`
 
 ![Image 6](/images/container-and-component-loading-6.jpg)
@@ -150,10 +150,10 @@ In the `instantiateComponent` call **(8.1)** the following is performed:
 
 1. `ComponentRuntime` object is created **(8.2)**
 2. Sets the `request` handler on the `ComponentRuntime` **(8.2)**
-    - Requests that are sent to the `ComponentRuntime` are proxied to the `Component` object (more on this later)
+    -   Requests that are sent to the `ComponentRuntime` are proxied to the `Component` object (more on this later)
 3. Provides a registry of Distributed Data Structures (DDS) / Sub-Component factories to the `ComponentRuntime` **(8.2)**
-    - This can be used to create new DDSs
-    - This can be used to create new Components that are not defined in the `ContainerRegistry`
+    -   This can be used to create new DDSs
+    -   This can be used to create new Components that are not defined in the `ContainerRegistry`
 4. Create the `Component` object **(8.3)**
 
 ![Image 8](/images/container-and-component-loading-8.jpg)

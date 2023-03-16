@@ -5,8 +5,10 @@
 import React from "react";
 
 import { SharedMap } from "@fluidframework/map";
+import { IconButton } from "@fluentui/react";
 
 import { RenderChild } from "../../RendererOptions";
+import { MapEntryView } from "./MapEntryView";
 
 /**
  * {@link SharedMapView} input props.
@@ -30,10 +32,37 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 	const { sharedMap, renderChild } = props;
 
 	const [entries, setEntries] = React.useState<[string, unknown][]>([...sharedMap.entries()]);
+	const [collapsed, setCollapsed] = React.useState<{ [key: string]: boolean }>(() => {
+		const collapsedState: { [key: string]: boolean } = {};
+
+		for (const [key] of entries) {
+			collapsedState[key] = true;
+		}
+
+		return collapsedState;
+	});
 
 	React.useEffect(() => {
 		function updateEntries(): void {
-			setEntries([...sharedMap.entries()]);
+			const newEntries = [...sharedMap.entries()];
+			setEntries(newEntries);
+
+			const newCollapsed = { ...collapsed };
+
+			for (const [key] of newEntries) {
+				if (collapsed[key] === undefined) {
+					newCollapsed[key] = true;
+				}
+			}
+
+			for (const key of Object.keys(collapsed)) {
+				if (!newEntries.some(([k]) => k === key)) {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete newCollapsed[key];
+				}
+			}
+
+			setCollapsed(newCollapsed);
 		}
 
 		setEntries([...sharedMap.entries()]);
@@ -42,45 +71,45 @@ export function SharedMapView(props: SharedMapViewProps): React.ReactElement {
 		return (): void => {
 			sharedMap.off("valueChanged", updateEntries);
 		};
-	}, [sharedMap, setEntries]);
+	}, [sharedMap, setEntries, collapsed]);
+
+	const toggleCollapse = (key: string): void => {
+		setCollapsed({
+			...collapsed,
+			[key]: !collapsed[key],
+		});
+	};
+
+	const iconStyle = {
+		display: "flex",
+		alignItems: "center",
+		backgroundColor: "rgb(237, 235, 233)",
+	};
+
+	const mapEntryViewStyle = {
+		marginLeft: "50px",
+	};
 
 	return (
-		<table style={{ borderCollapse: "collapse", width: "100%" }}>
-			<thead>
-				<tr>
-					<th>Key</th>
-					<th>Value</th>
-				</tr>
-			</thead>
-			<tbody style={{ borderCollapse: "collapse" }}>
-				{entries.map(([key, value]) => (
-					<tr key={key} style={{ borderCollapse: "collapse", border: "thin solid" }}>
-						<td
-							data-label="Key"
-							style={{ borderCollapse: "collapse", border: "thin solid" }}
-						>
-							{key}
-						</td>
-						<td data-label="Value">{getTableValue(value, renderChild)}</td>
-					</tr>
-				))}
-			</tbody>
-		</table>
+		<div>
+			{entries.map(([key, value]) => (
+				<div key={key}>
+					<div style={iconStyle}>
+						<IconButton
+							iconProps={{
+								iconName: collapsed[key] ? "ChevronRight" : "ChevronDown",
+							}}
+							onClick={(): void => toggleCollapse(key)}
+						/>
+						<span> {key} </span>
+					</div>
+					{!collapsed[key] && (
+						<div style={mapEntryViewStyle}>
+							<MapEntryView data={value} renderChild={renderChild} />
+						</div>
+					)}
+				</div>
+			))}
+		</div>
 	);
-}
-
-function getTableValue(data: unknown, _renderChild: RenderChild): React.ReactNode {
-	if (data === undefined) {
-		return "undefined";
-	}
-
-	if (data === null) {
-		return "null";
-	}
-
-	if (typeof data === ("string" || "number")) {
-		return <>{data}</>;
-	}
-
-	return <>{_renderChild(data)}</>;
 }

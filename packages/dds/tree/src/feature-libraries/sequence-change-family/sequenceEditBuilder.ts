@@ -20,7 +20,7 @@ import { SequenceChangeset } from "./sequenceChangeset";
 export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChangeset> {
 	private opId: number = 0;
 
-	constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
+	public constructor(changeReceiver: (change: SequenceChangeset) => void, anchorSet: AnchorSet) {
 		super(sequenceChangeFamily, changeReceiver, anchorSet);
 	}
 
@@ -151,7 +151,9 @@ export class SequenceEditBuilder extends ProgressiveEditBuilderBase<SequenceChan
 					let indexA = aPath.parentIndex;
 					let indexB = bPath.parentIndex;
 					if (indexA === indexB) {
-						fail(ERR_UP_PATH_NOT_VALID);
+						fail(
+							"If the two paths have the same key and the same index then they should have shared an UpPath earlier",
+						);
 					}
 					let aMarkList = aFieldMarks[keyA];
 					let bMarkList = bFieldMarks[keyB];
@@ -235,6 +237,3 @@ export interface NodePath extends UpPath {}
  * Only valid for a specific revision of that tree.
  */
 export interface PlacePath extends UpPath {}
-
-const ERR_UP_PATH_NOT_VALID =
-	"If the two paths have the same key and the same index then they should have shared an UpPath earlier";

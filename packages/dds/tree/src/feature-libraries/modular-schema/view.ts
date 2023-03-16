@@ -10,7 +10,6 @@ import {
 	TreeSchema,
 	TreeSchemaIdentifier,
 	SchemaData,
-	FieldKindIdentifier,
 	GlobalFieldKey,
 	Adapters,
 	ViewSchemaData,
@@ -108,7 +107,7 @@ export class ViewSchema extends ViewSchemaData<FullSchemaPolicy> {
 					this.schema.treeSchema.get(adapter.output) ?? this.policy.defaultTreeSchema,
 				)
 			) {
-				fail(`tree adapter for stored ${adapter.output} should not be never`);
+				fail("tree adapter for stored adapter.output should not be never");
 			}
 		}
 		const adapted = {
@@ -170,11 +169,7 @@ export interface TreeViewSchema extends TreeSchema {}
 export class FieldTypeView<Kind extends FieldKind = FieldKind> implements FieldSchema {
 	public readonly types?: ReadonlySet<TreeSchemaIdentifier>;
 
-	get kind(): FieldKindIdentifier {
-		return this.fieldKind.identifier;
-	}
-
-	public constructor(public readonly fieldKind: Kind, types?: Iterable<TreeSchemaIdentifier>) {
+	public constructor(public readonly kind: Kind, types?: Iterable<TreeSchemaIdentifier>) {
 		this.types = types === undefined ? undefined : new Set(types);
 	}
 }

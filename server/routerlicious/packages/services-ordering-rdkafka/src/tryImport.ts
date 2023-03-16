@@ -23,13 +23,12 @@ let nodeRdkafkaModule: typeof kafkaTypes | undefined;
 //
 // So we will also lazy import node-rdkafka only if we intend to use it.
 export function tryImportNodeRdkafka() {
-    if (!tryImport) {
-        tryImport = true;
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            nodeRdkafkaModule = require("node-rdkafka");
-        } catch (e) {
-        }
-    }
-    return nodeRdkafkaModule;
+	if (!tryImport) {
+		tryImport = true;
+		try {
+			// eslint-disable-next-line @typescript-eslint/no-require-imports
+			nodeRdkafkaModule = require("node-rdkafka");
+		} catch (e) {}
+	}
+	return nodeRdkafkaModule;
 }

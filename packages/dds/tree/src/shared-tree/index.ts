@@ -3,4 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { ISharedTree, SharedTreeFactory } from "./sharedTree";
+export {
+	ISharedTree,
+	ISharedTreeCheckout,
+	ISharedTreeCheckoutFork,
+	runSynchronous,
+	SharedTreeFactory,
+	CheckoutEvents,
+} from "./sharedTree";

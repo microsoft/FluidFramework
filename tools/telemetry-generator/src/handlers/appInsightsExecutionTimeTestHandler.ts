@@ -29,6 +29,7 @@ module.exports = function handler(fileData, telemetryClient: TelemetryClient) {
 					benchmarkType: "ExecutionTime",
 					suiteName: fileData.suiteName,
 					benchmarkName: testData.benchmarkName,
+					driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
 				},
 			});
 		} catch (error) {

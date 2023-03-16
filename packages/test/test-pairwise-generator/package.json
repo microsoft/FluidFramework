@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-pairwise-generator",
-	"version": "2.0.0-internal.3.1.0",
+	"version": "2.0.0-internal.3.4.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -16,7 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "concurrently npm:tsc npm:build:esnext",
+		"build:compile": "npm run typetests:gen && concurrently npm:tsc npm:build:esnext",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
@@ -30,6 +30,8 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub generate typetests --prepare --dir . --pin",
 		"usePrereleaseDeps": "node ./scripts/usePrereleaseDeps.js"
 	},
 	"nyc": {
@@ -53,15 +55,15 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluidframework/common-utils": "^1.0.0",
+		"@fluidframework/common-utils": "^1.1.1",
 		"random-js": "^1.0.8"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.9.0-127618",
+		"@fluid-tools/build-cli": "^0.12.0",
 		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-tools": "^0.12.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/test-pairwise-generator-previous": "npm:@fluidframework/test-pairwise-generator@2.0.0-internal.3.0.0",
+		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.36",
@@ -75,10 +77,7 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"version": "2.0.0-internal.3.1.0",
-		"previousVersionStyle": "~previousMinor",
-		"baselineRange": ">=2.0.0-internal.3.0.0 <2.0.0-internal.3.1.0",
-		"baselineVersion": "2.0.0-internal.3.0.0",
-		"broken": {}
+		"broken": {},
+		"disabled": true
 	}
 }

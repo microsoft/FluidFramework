@@ -296,7 +296,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		try {
 			await deltaConnection.initialize(connectMessage, timeoutMs);
-			await epochTracker.validateEpochFromPush(deltaConnection.details);
+			await epochTracker.validateEpoch(deltaConnection.details.epoch, "push");
 		} catch (errorObject: any) {
 			if (errorObject !== null && typeof errorObject === "object") {
 				// We have to special-case error types here in terms of what is re-triable.
@@ -387,7 +387,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		logger: ITelemetryLogger,
 		private readonly enableMultiplexing?: boolean,
 	) {
-		super(socket, documentId, logger);
+		super(socket, documentId, logger, false, uuid());
 		this.socketReference = socketReference;
 		this.requestOpsNoncePrefix = `${uuid()}-`;
 	}
@@ -493,6 +493,9 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				{
 					eventName: "ServerDisconnect",
 					clientId: this.hasDetails ? this.clientId : undefined,
+					details: JSON.stringify({
+						connection: this.connectionId,
+					}),
 				},
 				error,
 			);
@@ -652,7 +655,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Critical path where we need to also close the socket for an error.
 	 * @param error - Error causing the socket to close.
 	 */
-	protected closeSocket(error: IAnyDriverError) {
+	protected closeSocketCore(error: IAnyDriverError) {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x416 /* reentrancy not supported in close socket */);
 		socket.closeSocket(error);

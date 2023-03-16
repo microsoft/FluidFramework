@@ -37,12 +37,10 @@ export const doBumpReleasedDependencies: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context, releaseGroup } = data;
-	assert(context !== undefined, "Context is undefined.");
 
 	const { releaseGroups, packages, isEmpty } = await getPreReleaseDependencies(
 		context,
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		releaseGroup!,
+		releaseGroup,
 	);
 
 	assert(!isEmpty, `No prereleases found in DoBumpReleasedDependencies state.`);
@@ -145,17 +143,14 @@ export const doReleaseGroupBump: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { bumpType, context, releaseGroup, releaseVersion, shouldInstall } = data;
-	assert(context !== undefined, "Context is undefined.");
-	assert(bumpType !== undefined, `bumpType is undefined.`);
 
 	const rgRepo = isReleaseGroup(releaseGroup)
 		? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		  context.repo.releaseGroups.get(releaseGroup)!
 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		  context.fullPackageMap.get(releaseGroup!)!;
+		  context.fullPackageMap.get(releaseGroup)!;
 
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const scheme = detectVersionScheme(releaseVersion!);
+	const scheme = detectVersionScheme(releaseVersion);
 	const newVersion = bumpVersionScheme(releaseVersion, bumpType, scheme);
 	const packages = rgRepo instanceof MonoRepo ? rgRepo.packages : [rgRepo];
 

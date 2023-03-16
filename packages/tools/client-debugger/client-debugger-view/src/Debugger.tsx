@@ -16,6 +16,10 @@ import {
 
 import { RenderOptions } from "./RendererOptions";
 import { ClientDebugView, ContainerSelectionDropdown } from "./components";
+import { initializeFluentUiIcons } from "./InitializeIcons";
+
+// Ensure FluentUI icons are initialized.
+initializeFluentUiIcons();
 
 /**
  * {@link FluidClientDebuggers} input props.
@@ -99,11 +103,14 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			/>
 		);
 
-	const slectionView: React.ReactElement =
+	const selectionView: React.ReactElement =
 		clientDebuggers.length > 1 ? (
 			<ContainerSelectionDropdown
-				containerId={String(selectedContainerId)}
-				clientDebuggers={clientDebuggers}
+				initialSelection={selectedContainerId}
+				options={clientDebuggers.map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				}))}
 				onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
 			/>
 		) : (
@@ -123,7 +130,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			defaultSize={{ width: 400, height: "100%" }}
 			className={"debugger-panel"}
 		>
-			{slectionView}
+			{selectionView}
 			{view}
 		</Resizable>
 	);
