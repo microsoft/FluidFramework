@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require('../markdown-magic/index.js');
+require('../src/index.js');
