@@ -16,7 +16,6 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskData,
-	IBaseDocument,
 	IBaseDocumentInitialState,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
@@ -351,14 +350,21 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	};
 
 	protected async initializingFirstTime(props: IBaseDocumentInitialState): Promise<void> {
-		const externalTaskListId = props?.externalTaskListId;
+		const externalTaskListId = props.externalTaskListId;
 		if (externalTaskListId === undefined) {
 			throw new Error(
 				"externalTaskListId not present in instantiation. Cannot instantiate task list",
 			);
 		}
-		await this.registerWithCustomerService(externalTaskListId, props?.containerUrl);
 		this._externalTaskListId = externalTaskListId;
+		// TODO: The check below is a hack for ensuring that the container is attached
+		// before creating and registering the task list, and importing the task list data
+		// form the external server. This is pretty anti-fluid, so we need a better way to
+		// do this check.
+		if (props.containerUrl === undefined) {
+			throw new Error("container url is not resolved (container is not attached). Cannot add taskList.")
+		}
+		await this.registerWithCustomerService(props.containerUrl);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
@@ -373,19 +379,15 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * @returns A promise that resolves when the registration call returns successfully.
 	 */
 	public async registerWithCustomerService(
-		externalTaskListId: string,
-		containerUrlData: IFluidResolvedUrl | undefined,
+		containerUrlData: IFluidResolvedUrl,
 	): Promise<void> {
+		if (this.externalTaskListId === undefined) {
+			throw new Error("externalTaskListId is undefined");
+		}
 		try {
 			console.log(
 				`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`,
 			);
-			if (containerUrlData?.url === undefined) {
-				console.error(
-					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
-				);
-				return;
-			}
 			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
 				method: "POST",
 				headers: {
@@ -481,47 +483,4 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},
-);
-
-export class BaseDocument extends DataObject implements IBaseDocument {
-	private readonly taskListCollection = new Map<string, TaskList>();
-
-	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
-		if (this.taskListCollection.has(props.externalTaskListId)) {
-			throw new Error(
-				`task list ${props.externalTaskListId} already exists on this collection`,
-			);
-		}
-		const taskList = await TaskListInstantiationFactory.createChildInstance(
-			this.context,
-			props,
-		);
-		this.taskListCollection.set(props.externalTaskListId, taskList);
-
-		// Storing the handles here are necessary for non leader
-		// clients to rehydrate local this.taskListCollection in hasInitialized().
-		this.root.set(props.externalTaskListId, taskList.handle);
-		this.emit("taskListCollectionChanged");
-	};
-
-	public readonly getTaskList = (id: string): TaskList | undefined => {
-		return this.taskListCollection.get(id);
-	};
-
-	protected async hasInitialized(): Promise<void> {
-		for (const [id, taskListHandle] of this.root) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-			const taskListResolved = await taskListHandle.get();
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			this.taskListCollection.set(id, taskListResolved);
-		}
-	}
-}
-
-export const BaseDocumentInstantiationFactory = new DataObjectFactory<BaseDocument>(
-	"base-document",
-	BaseDocument,
-	[],
-	{},
-	new Map([TaskListInstantiationFactory.registryEntry]),
 );

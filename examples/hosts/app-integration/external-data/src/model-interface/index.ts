@@ -4,7 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 /**
@@ -39,9 +39,10 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly sendCustomDebugSignal: () => void;
 
 	/**
-	 * The resolved URL for the container.
+	 * Returns the resolved URL for the attached container. If container is not
+	 * attached then returns undefined.
 	 */
-	readonly containerResolvedUrl: () => IFluidResolvedUrl;
+	readonly containerResolvedUrl: () => IResolvedUrl | undefined;
 }
 
 /**
