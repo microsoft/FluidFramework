@@ -20,6 +20,5 @@ jobs:
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           recreate: true
-          number: ${{ steps.load_pr.outputs.pr }}
           message: |
             Hi @scottn12 check this out :)
