@@ -15,7 +15,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { groupedBatchFeatureFlag, ISummaryConfiguration } from "../containerRuntime";
+import { ISummaryConfiguration } from "../containerRuntime";
 import { opSize } from "../opProperties";
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics";
 import {
@@ -66,6 +66,7 @@ export class RunningSummarizer implements IDisposable {
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		runtime: ISummarizerRuntime,
+		listenToDeltaManagerOps: boolean,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
 			logger,
@@ -79,6 +80,7 @@ export class RunningSummarizer implements IDisposable {
 			cancellationToken,
 			stopSummarizerCallback,
 			runtime,
+			listenToDeltaManagerOps,
 		);
 
 		// Before doing any heuristics or proceeding with its refreshing, if there is a summary ack received while
@@ -162,6 +164,7 @@ export class RunningSummarizer implements IDisposable {
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		private readonly runtime: ISummarizerRuntime,
+		listenToDeltaManagerOps: boolean,
 	) {
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
@@ -235,7 +238,7 @@ export class RunningSummarizer implements IDisposable {
 			this.mc.logger,
 		);
 
-		if (!this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
+		if (listenToDeltaManagerOps) {
 			// Listen for ops
 			this.runtime.deltaManager.on("op", (op) => {
 				this.handleOp(op);

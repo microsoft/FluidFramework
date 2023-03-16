@@ -1058,6 +1058,7 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 950 * 1024,
 				chunkSizeInBytes: Number.POSITIVE_INFINITY,
 				enableOpReentryCheck: false,
+				enableGroupedBatching: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 

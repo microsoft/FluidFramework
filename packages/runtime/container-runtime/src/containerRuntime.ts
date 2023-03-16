@@ -412,6 +412,15 @@ export interface IContainerRuntimeOptions {
 	 * can be used to disable it at runtime.
 	 */
 	readonly enableOpReentryCheck?: boolean;
+	/**
+	 * If enabled, the runtime will group messages within a batch into a single
+	 * message to be sent to the service.
+	 * The grouping an ungrouping of such messages is handled by the {@link OpGroupingManager}.
+	 * 
+	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
+	 * flag can be used to disable it at runtime.
+	 */
+	readonly enableGroupedBatching?: boolean;
 }
 
 /**
@@ -664,6 +673,7 @@ export class ContainerRuntime
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			chunkSizeInBytes = Number.POSITIVE_INFINITY,
 			enableOpReentryCheck = false,
+			enableGroupedBatching = false,
 		} = runtimeOptions;
 
 		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
@@ -754,6 +764,7 @@ export class ContainerRuntime
 				maxBatchSizeInBytes,
 				chunkSizeInBytes,
 				enableOpReentryCheck,
+				enableGroupedBatching,
 			},
 			containerScope,
 			logger,
@@ -1084,9 +1095,7 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.DisableCompressionChunking",
 		);
 
-		this.opGroupingManager = new OpGroupingManager(
-			this.mc.config.getBoolean(groupedBatchFeatureFlag) ?? false,
-		);
+		this.opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
 
 		const opSplitter = new OpSplitter(
 			chunks,
@@ -1345,6 +1354,7 @@ export class ContainerRuntime
 							// information. The proxy delta manager would always return false for summarizer client.
 							() => this.innerDeltaManager.active,
 						),
+					!this.groupedBatchingEnabled,
 				);
 			} else if (
 				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
@@ -1860,7 +1870,7 @@ export class ContainerRuntime
 	}
 
 	private processCore(messageArg: ISequencedDocumentMessage, local: boolean) {
-		if (this._summarizer !== undefined && this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
+		if (this._summarizer !== undefined && this.groupedBatchingEnabled) {
 			this._summarizer.processOp?.(messageArg);
 		}
 
@@ -3453,6 +3463,13 @@ export class ContainerRuntime
 			);
 		}
 	}
+
+	private get groupedBatchingEnabled(): boolean {
+		const killSwitch = this.mc.config.getBoolean(
+			"Fluid.ContainerRuntime.DisableGroupedBatching",
+		);
+		return killSwitch !== true && this.runtimeOptions.enableGroupedBatching;
+	}
 }
 
 /**
@@ -3481,8 +3498,6 @@ const waitForSeq = async (
 			deltaManager.on("op", handleOp);
 		}
 	});
-
-export const groupedBatchFeatureFlag = "Fluid.ContainerRuntime.GroupedBatches";
 
 export class OpGroupingManager {
 	static groupedBatchOp = "groupedBatch";
