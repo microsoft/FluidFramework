@@ -283,19 +283,23 @@ const timers: Timer[] = [];
 	}
 }
 
-const timers2 = timers.map((t) => ({ timer: t, res: getResolution(t) }));
-
-if (timers2.length === 0) {
+if (timers.length === 0) {
 	throw new Error("Unable to find a working timer.");
 }
 
-// Pick timer with highest resolution.
-timers2.sort((a, b) => a.res - b.res);
-const timer = timers2[0].timer;
+const timersWithResolution = timers.map((timer) => ({
+	timer,
+	resolution: getResolution(timer),
+}));
 
+// Pick timer with highest resolution.
+timersWithResolution.sort((a, b) => a.resolution - b.resolution);
+const timer = timersWithResolution[0].timer;
+
+// Approach based on Benchmark.js:
 // Resolve time span required to achieve a percent uncertainty of at most 1%.
 // For more information see http://spiff.rit.edu/classes/phys273/uncert/uncert.html.
-const defaultMinTime = Math.max(timers2[0].res / 2 / 0.01, 0.05);
+const defaultMinTime = Math.max(timersWithResolution[0].resolution / 2 / 0.01, 0.05);
 
 export const defaults = {
 	maxBenchmarkDurationSeconds: 5,
@@ -306,7 +310,7 @@ export const defaults = {
 /**
  * Gets the current timer's minimum resolution in seconds.
  *
- * This may be higher than the actual minimum resolution for high resolution timers,
+ * This may be longer than the actual minimum resolution for high resolution timers,
  * and instead amounts the overhead of how long measuring takes.
  * Either way, this is a conservative estimate of timer resolution.
  */
