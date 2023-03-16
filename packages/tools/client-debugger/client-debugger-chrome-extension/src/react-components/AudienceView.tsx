@@ -45,7 +45,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		},
 	};
 
-	const messageRelay = useMessageRelay();
+	const messageRelay = React.useContext(MessageRelayContext);
 
 	if (messageRelay === undefined) {
 		throw new Error(
@@ -76,7 +76,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-
 		function messageHandler(message: Partial<IDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
@@ -94,7 +93,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	return (
 		<_AudienceView
-			clientId={"12"}
+			clientId={"foo"}
 			allAudienceMembers={audienceState}
 			myClientConnection={undefined}
 			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
