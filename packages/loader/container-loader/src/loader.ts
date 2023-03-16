@@ -261,7 +261,6 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  * Manages Fluid resource loading
  */
 export class Loader implements IHostLoader {
-	private readonly containers = new Map<string, Promise<Container>>();
 	public readonly services: ILoaderServices;
 	private readonly mc: MonitoringContext;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder | undefined;
@@ -302,23 +301,11 @@ export class Loader implements IHostLoader {
 	}
 
 	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		const container = await Container.createDetached(
+		return Container.createDetached(
 			this,
 			codeDetails,
 			this.protocolHandlerBuilder,
 		);
-
-		if (this.cachingEnabled) {
-			container.once("attached", () => {
-				ensureFluidResolvedUrl(container.resolvedUrl);
-				const parsedUrl = parseUrl(container.resolvedUrl.url);
-				if (parsedUrl !== undefined) {
-					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
-				}
-			});
-		}
-
-		return container;
 	}
 
 	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
@@ -350,30 +337,6 @@ export class Loader implements IHostLoader {
 		);
 	}
 
-	private getKeyForContainerCache(request: IRequest, parsedUrl: IParsedUrl): string {
-		const key =
-			request.headers?.[LoaderHeader.version] !== undefined
-				? `${parsedUrl.id}@${request.headers[LoaderHeader.version]}`
-				: parsedUrl.id;
-		return key;
-	}
-
-	private addToContainerCache(key: string, containerP: Promise<Container>) {
-		this.containers.set(key, containerP);
-		containerP
-			.then((container) => {
-				// If the container is closed or becomes closed after we resolve it, remove it from the cache.
-				if (container.closed) {
-					this.containers.delete(key);
-				} else {
-					container.once("closed", () => {
-						this.containers.delete(key);
-					});
-				}
-			})
-			.catch((error) => {});
-	}
-
 	private async resolveCore(
 		request: IRequest,
 		pendingLocalState?: IPendingContainerState,
@@ -398,23 +361,9 @@ export class Loader implements IHostLoader {
 			}
 		}
 
-		const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-		const shouldCache = pendingLocalState !== undefined ? false : canCache;
-
-		let container: Container;
-		if (shouldCache) {
-			const key = this.getKeyForContainerCache(request, parsed);
-			const maybeContainer = await this.containers.get(key);
-			if (maybeContainer !== undefined) {
-				container = maybeContainer;
-			} else {
-				const containerP = this.loadContainer(request, resolvedAsFluid);
-				this.addToContainerCache(key, containerP);
-				container = await containerP;
-			}
-		} else {
-			container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
-		}
+		const { fromSequenceNumber } = this.parseHeader(parsed, request);
+	
+		const container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 
 		if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
 			await new Promise<void>((resolve, reject) => {
@@ -432,14 +381,6 @@ export class Loader implements IHostLoader {
 		return { container, parsed };
 	}
 
-	private get cachingEnabled() {
-		return this.services.options.cache !== false;
-	}
-
-	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
-	}
-
 	private parseHeader(parsed: IParsedUrl, request: IRequest) {
 		let fromSequenceNumber = -1;
 
@@ -454,10 +395,7 @@ export class Loader implements IHostLoader {
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
 
-		const canCache = this.canCacheForRequest(request.headers);
-
 		return {
-			canCache,
 			fromSequenceNumber,
 		};
 	}
