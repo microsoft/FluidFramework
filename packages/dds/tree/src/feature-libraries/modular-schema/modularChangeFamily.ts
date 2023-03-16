@@ -134,15 +134,7 @@ export class ModularChangeFamily
 		for (const taggedChange of changes) {
 			const change = taggedChange.change;
 			maxId = Math.max(change.maxId ?? -1, maxId);
-			if (change.revisions !== undefined) {
-				revInfos.push(...change.revisions);
-			} else if (taggedChange.revision !== undefined) {
-				const info: Mutable<RevisionInfo> = { tag: taggedChange.revision };
-				if (taggedChange.isRollback === true) {
-					info.isRollback = true;
-				}
-				revInfos.push(info);
-			}
+			revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
 		}
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 		const genId: IdAllocator = () => brand(++maxId);
@@ -470,9 +462,7 @@ export class ModularChangeFamily
 		const crossFieldTable = newCrossFieldTable<RebaseData>();
 		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 		const revInfos: RevisionInfo[] = [];
-		if (over.change.revisions !== undefined) {
-			revInfos.push(...over.change.revisions);
-		}
+		revInfos.push(...revisionInfoFromTaggedChange(over));
 		if (change.revisions !== undefined) {
 			revInfos.push(...change.revisions);
 		}
@@ -672,7 +662,12 @@ export class ModularChangeFamily
 	}
 }
 
-function revisionMetadataSourceFromInfo(revInfos: readonly RevisionInfo[]): RevisionMetadataSource {
+/**
+ * @alpha
+ */
+export function revisionMetadataSourceFromInfo(
+	revInfos: readonly RevisionInfo[],
+): RevisionMetadataSource {
 	const getIndex = (tag: RevisionTag): number => {
 		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
 		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
@@ -1008,4 +1003,23 @@ export interface EditDescription {
 	field: FieldKey;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
+}
+
+function revisionInfoFromTaggedChange(
+	taggedChange: TaggedChange<ModularChangeset>,
+): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	if (taggedChange.change.revisions !== undefined) {
+		revInfos.push(...taggedChange.change.revisions);
+	} else if (taggedChange.revision !== undefined) {
+		const info: Mutable<RevisionInfo> = { tag: taggedChange.revision };
+		if (taggedChange.isRollback === true) {
+			info.isRollback = true;
+		}
+		if (taggedChange.inverseOf !== undefined) {
+			info.inverseOf = taggedChange.inverseOf;
+		}
+		revInfos.push(info);
+	}
+	return revInfos;
 }

@@ -103,6 +103,10 @@ export interface TaggedChange<TChangeset> {
 	 * Considered false if undefined.
 	 */
 	readonly isRollback?: boolean;
+	/**
+	 * When populated, indicates that the changeset is the inverse of the given revision.
+	 */
+	readonly inverseOf?: RevisionTag;
 	readonly change: TChangeset;
 }
 
@@ -112,12 +116,14 @@ export function tagChange<T>(change: T, tag: RevisionTag | undefined): TaggedCha
 
 export function tagRollbackInverse<T>(
 	inverseChange: T,
-	invertedRevision: RevisionTag | undefined,
+	revision: RevisionTag | undefined,
+	inverseOf: RevisionTag | undefined,
 ): TaggedChange<T> {
 	return {
-		revision: invertedRevision,
+		revision,
 		change: inverseChange,
 		isRollback: true,
+		inverseOf,
 	};
 }
 

@@ -108,6 +108,7 @@ export {
 	RevisionInfo,
 	ValueConstraint,
 	TypedSchema,
+	revisionMetadataSourceFromInfo,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";

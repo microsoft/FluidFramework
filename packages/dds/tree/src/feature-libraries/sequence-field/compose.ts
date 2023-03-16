@@ -44,6 +44,7 @@ import {
 	isObjMark,
 	cloneMark,
 	isDeleteMark,
+	isModify,
 } from "./utils";
 
 /**
@@ -135,6 +136,7 @@ function composeMarkLists<TNodeChange>(
 				composeChild,
 				genId,
 				moveEffects,
+				revisionMetadata,
 			);
 			factory.push(composedMark);
 		}
@@ -159,6 +161,7 @@ function composeMarks<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
+	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
 	if (isSkipMark(baseMark)) {
 		return composeMark(newMark, newRev, composeChild);
@@ -177,6 +180,10 @@ function composeMarks<TNodeChange>(
 		// In the long run we want to preserve them.
 		fail("TODO: support modifications to deleted subtree");
 	}
+
+	const newMarkRevision = isModify(newMark) ? newRev : newMark.revision ?? newRev;
+	const newMarkInverseOf = getInverseOf(newMarkRevision, revisionMetadata);
+
 	switch (baseType) {
 		case "Insert":
 		case "Revive":
@@ -330,7 +337,7 @@ function composeMarks<TNodeChange>(
 					return 0;
 				}
 				case "MoveOut": {
-					if (baseMark.detachedBy === (newMark.revision ?? newRev)) {
+					if (baseMark.detachedBy === newMarkInverseOf) {
 						getOrAddEffect(
 							moveEffects,
 							CrossFieldTarget.Source,
@@ -366,7 +373,7 @@ function composeMarks<TNodeChange>(
 				}
 				case "ReturnFrom": {
 					if (
-						baseMark.detachedBy === (newMark.revision ?? newRev) ||
+						baseMark.detachedBy === newMarkInverseOf ||
 						newMark.detachedBy === baseMark.revision
 					) {
 						getOrAddEffect(
@@ -620,8 +627,10 @@ export class ComposeQueue<T> {
 		for (const mark of newMarks) {
 			if (isObjMark(mark) && mark.type === "Insert") {
 				const newRev = mark.revision ?? this.newRevision;
-				if (newRev !== undefined && deletes.has(newRev)) {
-					this.cancelledInserts.add(newRev);
+				const newInverseOf = getInverseOf(newRev, revisionMetadata);
+				if (newInverseOf !== undefined && deletes.has(newInverseOf)) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					this.cancelledInserts.add(newRev!);
 				}
 			}
 		}
@@ -654,11 +663,13 @@ export class ComposeQueue<T> {
 			return this.dequeueBase(length);
 		} else if (isAttach(newMark)) {
 			const newRev = newMark.revision ?? this.newRevision;
-			// The same RevisionTag implies the two changesets are inverses in a rebase sandwich
 			if (
 				isDetachMark(baseMark) &&
-				newRev !== undefined &&
-				newRev === (baseMark.revision ?? this.baseMarks.revision)
+				areInverseRevisions(
+					newRev,
+					baseMark.revision ?? this.baseMarks.revision,
+					this.revisionMetadata,
+				)
 			) {
 				const baseMarkLength = getInputLength(baseMark);
 				const newMarkLength = getOutputLength(newMark);
@@ -693,8 +704,8 @@ export class ComposeQueue<T> {
 					0x4df /* Compose base mark should carry revision info */,
 				);
 				const areInverses =
-					// The same RevisionTag implies the two changesets are inverses in a rebase sandwich
-					(newRev !== undefined && baseRev === newRev) ||
+					// The two changesets are inverses in a rebase sandwich
+					areInverseRevisions(newRev, baseRev, this.revisionMetadata) ||
 					// The new mark is an undo of the base one
 					newMark.detachedBy === baseRev;
 				if (areInverses) {
@@ -913,4 +924,24 @@ type ComposeMarks<T> =
  */
 function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
 	return newMark.detachedBy === baseMark.detachedBy;
+}
+
+function getInverseOf(
+	rev: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RevisionTag | undefined {
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).inverseOf;
+}
+
+function areInverseRevisions(
+	rev1: RevisionTag | undefined,
+	rev2: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): boolean {
+	if (rev1 === undefined || rev2 === undefined) {
+		return false;
+	}
+	const inverseOfRev1 = revisionMetadata.getInfo(rev1).inverseOf;
+	const inverseOfRev2 = revisionMetadata.getInfo(rev2).inverseOf;
+	return rev1 === inverseOfRev2 || rev2 === inverseOfRev1;
 }

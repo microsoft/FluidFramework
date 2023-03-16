@@ -297,6 +297,10 @@ export interface RevisionInfo {
 	 * Considered false if undefined.
 	 */
 	readonly isRollback?: boolean;
+	/**
+	 * When populated, indicates that the changeset is the inverse of the given revision.
+	 */
+	readonly inverseOf?: RevisionTag;
 }
 
 /**

@@ -8,7 +8,9 @@ import {
 	ChangesetLocalId,
 	IdAllocator,
 	idAllocatorFromMaxId,
+	RevisionInfo,
 	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
@@ -61,10 +63,21 @@ const integerRevisionIndexer = (tag: RevisionTag): number => {
 	return tag;
 };
 
-const defaultRevisionMetadata: RevisionMetadataSource = {
-	getIndex: integerRevisionIndexer,
-	getInfo: (tag: RevisionTag) => ({ tag }),
-};
+function defaultRevisionMetadataFromChanges(
+	changes: readonly TaggedChange<SF.Changeset<unknown>>[],
+): RevisionMetadataSource {
+	const revInfos: RevisionInfo[] = [];
+	for (const change of changes) {
+		if (change.revision !== undefined) {
+			revInfos.push({
+				tag: change.revision,
+				inverseOf: change.inverseOf,
+				isRollback: change.isRollback,
+			});
+		}
+	}
+	return revisionMetadataSourceFromInfo(revInfos);
+}
 
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
@@ -77,7 +90,7 @@ function composeI<T>(
 		composer,
 		idAllocator,
 		moveEffects,
-		defaultRevisionMetadata,
+		defaultRevisionMetadataFromChanges(changes),
 	);
 
 	if (moveEffects.isInvalidated) {
@@ -88,26 +101,24 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(
-	change: TestChangeset,
-	base: TaggedChange<TestChangeset>,
-	revisionMetadata?: RevisionMetadataSource,
-): TestChangeset {
+export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
+	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
-	let rebasedChange = SF.rebase(change, base, TestChange.rebase, idAllocator, moveEffects);
+	let rebasedChange = SF.rebase(
+		change,
+		base,
+		TestChange.rebase,
+		idAllocator,
+		moveEffects,
+		metadata,
+	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(
-			rebasedChange,
-			base,
-			idAllocator,
-			moveEffects,
-			revisionMetadata ?? defaultRevisionMetadata,
-		);
+		rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, moveEffects, metadata);
 		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;

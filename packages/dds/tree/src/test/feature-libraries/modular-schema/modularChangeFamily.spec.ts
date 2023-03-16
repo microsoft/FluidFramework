@@ -837,7 +837,8 @@ describe("ModularChangeFamily", () => {
 		assert.deepEqual(changes, [nodeValueOverwrite]);
 	});
 
-	it("concatenates and indexes revisions", () => {
+	it("Revision metadata", () => {
+		const rev0 = mintRevisionTag();
 		const rev1 = mintRevisionTag();
 		const rev2 = mintRevisionTag();
 		const rev3 = mintRevisionTag();
@@ -858,7 +859,7 @@ describe("ModularChangeFamily", () => {
 			assert.deepEqual(revsInfos, [
 				{ tag: rev1 },
 				{ tag: rev2 },
-				{ tag: rev3, isRollback: true },
+				{ tag: rev3, isRollback: true, inverseOf: rev0 },
 				{ tag: rev4, isRollback: true },
 			]);
 			composeWasTested = true;
@@ -938,13 +939,13 @@ describe("ModularChangeFamily", () => {
 		};
 		const composed = dummyFamily.compose([
 			makeAnonChange(changeA),
-			tagRollbackInverse(changeB, rev3),
+			tagRollbackInverse(changeB, rev3, rev0),
 			makeAnonChange(changeC),
 		]);
 		assert.deepEqual(composed.revisions, [
 			{ tag: rev1 },
 			{ tag: rev2 },
-			{ tag: rev3, isRollback: true },
+			{ tag: rev3, isRollback: true, inverseOf: rev0 },
 			{ tag: rev4, isRollback: true },
 		]);
 		assert(composeWasTested);

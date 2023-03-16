@@ -79,11 +79,15 @@ export function rebase<TNodeChange>(
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
+	revisionMetadata: RevisionMetadataSource,
 ): Changeset<TNodeChange> {
+	const baseIsInverseOf =
+		base.revision === undefined ? undefined : revisionMetadata.getInfo(base.revision).inverseOf;
 	return rebaseMarkList(
 		change,
 		base.change,
 		base.revision,
+		baseIsInverseOf,
 		rebaseChild,
 		genId,
 		manager as MoveEffectTable<TNodeChange>,
@@ -99,12 +103,20 @@ function rebaseMarkList<TNodeChange>(
 	currMarkList: MarkList<TNodeChange>,
 	baseMarkList: MarkList<TNodeChange>,
 	baseRevision: RevisionTag | undefined,
+	baseIsInverseOf: RevisionTag | undefined,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects, true);
-	const queue = new RebaseQueue(baseRevision, baseMarkList, currMarkList, genId, moveEffects);
+	const queue = new RebaseQueue(
+		baseRevision,
+		baseIsInverseOf,
+		baseMarkList,
+		currMarkList,
+		genId,
+		moveEffects,
+	);
 
 	// Each attach mark in `currMarkList` should have a lineage event added for `baseRevision` if a node adjacent to
 	// the attach position was detached by `baseMarkList`.
@@ -135,7 +147,7 @@ function rebaseMarkList<TNodeChange>(
 					factory,
 					lineageRequests,
 					baseDetachOffset,
-					baseRevision,
+					baseIsInverseOf,
 				);
 			} else {
 				if (baseDetachOffset > 0 && baseRevision !== undefined) {
@@ -216,6 +228,7 @@ class RebaseQueue<T> {
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,
+		private readonly baseIsInverseOf: RevisionTag | undefined,
 		baseMarks: Changeset<T>,
 		newMarks: Changeset<T>,
 		genId: IdAllocator,
@@ -292,8 +305,7 @@ class RebaseQueue<T> {
 					}
 				}
 			}
-			const revision = baseMark.revision ?? this.baseMarks.revision;
-			const reattachOffset = getOffsetAtRevision(newMark.lineage, revision);
+			const reattachOffset = getOffsetAtRevision(newMark.lineage, this.baseIsInverseOf);
 			if (reattachOffset !== undefined) {
 				const offset = reattachOffset - this.reattachOffset;
 				if (offset === 0) {
@@ -681,17 +693,17 @@ function handleCurrAttach<T>(
 	factory: MarkListFactory<T>,
 	lineageRequests: LineageRequest<T>[],
 	offset: number,
-	baseRevision: RevisionTag | undefined,
+	baseIsInverseOf: RevisionTag | undefined,
 ) {
 	const rebasedMark = cloneMark(currMark);
 
-	// If the changeset we are rebasing over has the same revision as an event in rebasedMark's lineage,
-	// we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.
+	// If the changeset we are rebasing over is the inverse of an event in rebasedMark's lineage,
+	// we remove the lineage event.
 	// TODO: Handle cases where the base changeset is a composition of multiple revisions.
 	// TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset,
 	// e.g., if the inverse of the lineage event is muted after rebasing.
-	if (baseRevision !== undefined) {
-		tryRemoveLineageEvent(rebasedMark, baseRevision);
+	if (baseIsInverseOf !== undefined) {
+		tryRemoveLineageEvent(rebasedMark, baseIsInverseOf);
 	}
 	factory.pushContent(rebasedMark);
 	lineageRequests.push({ mark: rebasedMark, offset });
