@@ -25,13 +25,16 @@ export function relayMessageToWindow<TMessage extends IDebuggerMessage>(
 	messageSource: string,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	console.log(
-		formatMessageForLogging(
-			`Relaying message from "${messageSource}" to the window:`,
-			loggingOptions,
-		),
-		message,
-	); // TODO: console.debug
+	// TODO: remove loggingOptions once things settle.
+	if (loggingOptions !== undefined) {
+		console.debug(
+			formatMessageForLogging(
+				`Relaying message from "${messageSource}" to the window:`,
+				loggingOptions,
+			),
+			message,
+		);
+	}
 	window.postMessage(message, "*"); // TODO: verify target is okay
 }
 
@@ -48,13 +51,18 @@ export function relayMessageToPort<TMessage extends IDebuggerMessage>(
 	targetPort: TypedPortConnection<TMessage>,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	console.log(
-		formatMessageForLogging(
-			`Relaying message from "${messageSource}" to port "${targetPort.name ?? "(unnamed)"}":`,
-			loggingOptions,
-		),
-		message,
-	); // TODO: console.debug
+	// TODO: remove loggingOptions once things settle.
+	if (loggingOptions !== undefined) {
+		console.debug(
+			formatMessageForLogging(
+				`Relaying message from "${messageSource}" to port "${
+					targetPort.name ?? "(unnamed)"
+				}":`,
+				loggingOptions,
+			),
+			message,
+		);
+	}
 	targetPort.postMessage(message);
 }
 
@@ -70,12 +78,15 @@ export function postMessageToPort<TMessage extends IDebuggerMessage>(
 	targetPort: TypedPortConnection<TMessage>,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	console.log(
-		formatMessageForLogging(
-			`Posting message to port "${targetPort.name ?? "(unnamed)"}":`,
-			loggingOptions,
-		),
-		message,
-	); // TODO: console.debug
+	// TODO: remove loggingOptions once things settle.
+	if (loggingOptions !== undefined) {
+		console.debug(
+			formatMessageForLogging(
+				`Posting message to port "${targetPort.name ?? "(unnamed)"}":`,
+				loggingOptions,
+			),
+			message,
+		);
+	}
 	targetPort.postMessage(message);
 }

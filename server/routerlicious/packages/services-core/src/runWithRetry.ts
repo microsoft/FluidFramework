@@ -54,15 +54,15 @@ export async function runWithRetry<T>(
 					);
 				}
 			} catch (error) {
+				if (onErrorFn !== undefined) {
+					onErrorFn(error);
+				}
 				metricError = error;
 				Lumberjack.error(
 					`Error running ${callName}: retryCount ${retryCount}`,
 					telemetryProperties,
 					error,
 				);
-				if (onErrorFn !== undefined) {
-					onErrorFn(error);
-				}
 				if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
 					Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
 					break;
@@ -163,14 +163,14 @@ export async function requestWithRetry<T>(
 					);
 				}
 			} catch (error) {
+				if (onErrorFn !== undefined) {
+					onErrorFn(error);
+				}
 				Lumberjack.error(
 					`Error running ${callName}: retryCount ${retryCount}`,
 					telemetryProperties,
 					error,
 				);
-				if (onErrorFn !== undefined) {
-					onErrorFn(error);
-				}
 				if (shouldRetry !== undefined && shouldRetry(error) === false) {
 					Lumberjack.error(
 						`Should not retry ${callName} for the current error, rejecting`,

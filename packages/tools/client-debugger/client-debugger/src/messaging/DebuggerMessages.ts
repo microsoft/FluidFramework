@@ -29,6 +29,27 @@ export interface HasContainerId {
 export type GetContainerStateMessageData = HasContainerId;
 
 /**
+ * Message data format used by {@link ConnectContainerMessage}.
+ *
+ * @public
+ */
+export type ConnectContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link DisconnectContainerMessage}.
+ *
+ * @public
+ */
+export type DisconnectContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link CloseContainerMessage}.
+ *
+ * @public
+ */
+export type CloseContainerMessageData = HasContainerId;
+
+/**
  * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
  * Will result in the {@link ContainerStateChangeMessage} message being posted.
  *
@@ -64,6 +85,34 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 export interface ContainerStateChangeMessage
 	extends IDebuggerMessage<ContainerStateChangeMessageData> {
 	type: "CONTAINER_STATE_CHANGE";
+}
+
+/**
+ * Inbound event indicating Container connected.
+ *
+ * @public
+ */
+export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+	type: "CONNECT_CONTAINER";
+}
+
+/**
+ * Inbound event indicating Container disconnected.
+ *
+ * @public
+ */
+export interface DisconnectContainerMessage
+	extends IDebuggerMessage<DisconnectContainerMessageData> {
+	type: "DISCONNECT_CONTAINER";
+}
+
+/**
+ * Inbound event indicating Container closed.
+ *
+ * @public
+ */
+export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+	type: "CLOSE_CONTAINER";
 }
 
 // #endregion
