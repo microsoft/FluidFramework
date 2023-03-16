@@ -12,15 +12,18 @@ import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
+	createSummarizer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
+	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { CompressionAlgorithms } from "@fluidframework/container-runtime";
-import { IDocumentLoader, IDocumentProps } from "./DocumentCreator";
+import { ITelemetryLogger } from "@fluidframework/common-definitions";
+import { CompressionAlgorithms, ISummarizer } from "@fluidframework/container-runtime";
+import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
 enum numberOfKeysInMap {
 	NotDefined = 0,
@@ -49,7 +52,7 @@ function validateMapKeys(map: SharedMap, count: number, expectedSize: number): v
 	}
 }
 
-export class DocumentMap implements IDocumentLoader {
+export class DocumentMap implements IDocumentLoaderAndSummarizer {
 	private testContainerConfig: ITestContainerConfig | undefined;
 	private loader: IHostLoader | undefined;
 	private readonly numberOfKeysInMap: numberOfKeysInMap = numberOfKeysInMap.NotDefined;
@@ -58,10 +61,10 @@ export class DocumentMap implements IDocumentLoader {
 	private dataObject1map: SharedMap | undefined;
 	private fileName: string = "";
 	private containerUrl: IResolvedUrl | undefined;
-	public get logger() {
+	public get logger(): ITelemetryLogger | undefined {
 		return this.props.logger;
 	}
-	public get mainContainer() {
+	public get mainContainer(): IContainer | undefined {
 		return this._mainContainer;
 	}
 
@@ -148,5 +151,40 @@ export class DocumentMap implements IDocumentLoader {
 		validateMapKeys(dataObject2map, this.numberOfKeysInMap, maxMessageSizeInBytes);
 
 		return container2;
+	}
+
+	private async waitForSummary(summarizer: ISummarizer): Promise<string> {
+		// Wait for all pending ops to be processed by all clients.
+		await this.props.provider.ensureSynchronized();
+		const summaryResult = await summarizeNow(summarizer);
+		return summaryResult.summaryVersion;
+	}
+
+	public async summarize(
+		summaryVersion?: string,
+		closeContainer: boolean = true,
+	): Promise<ISummarizeResult> {
+		assert(
+			this._mainContainer !== undefined,
+			"mainContainer needs to be initialized before summarization",
+		);
+		const { container: containerClient, summarizer: summarizerClient } = await createSummarizer(
+			this.props.provider,
+			this._mainContainer,
+			summaryVersion,
+			undefined,
+			undefined,
+			this.logger,
+		);
+		const newSummaryVersion = await this.waitForSummary(summarizerClient);
+		assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
+		if (closeContainer) {
+			summarizerClient.close();
+		}
+		return {
+			container: containerClient,
+			summarizer: summarizerClient,
+			summaryVersion: newSummaryVersion,
+		};
 	}
 }

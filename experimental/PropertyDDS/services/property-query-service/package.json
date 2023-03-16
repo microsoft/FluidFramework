@@ -67,7 +67,7 @@
 		"long": "^4.0.0",
 		"lru-cache": "^6.0.0",
 		"nconf": "^0.12.0",
-		"qs": "6.11.0",
+		"qs": "^6.11.0",
 		"rmfr": "2.0.0",
 		"sanitize": "2.1.0",
 		"sleep-promise": "8.0.1"
@@ -78,7 +78,7 @@
 		"@fluidframework/local-driver": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/server-local-server": "^0.1038.3000",
+		"@fluidframework/server-local-server": "^0.1038.4000-138073",
 		"@fluidframework/test-utils": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@rushstack/eslint-config": "^2.5.1",
 		"aws-sdk": "2.547.0",

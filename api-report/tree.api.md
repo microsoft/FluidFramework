@@ -24,6 +24,9 @@ export type Anchor = Brand<number, "rebaser.Anchor">;
 // @alpha
 export interface AnchorEvents {
     afterDelete(anchor: AnchorNode): void;
+    childrenChanging(anchor: AnchorNode): void;
+    subtreeChanging(anchor: AnchorNode): void;
+    valueChanging(anchor: AnchorNode, value: Value): void;
 }
 
 // @alpha (undocumented)
@@ -42,15 +45,23 @@ export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEven
 }
 
 // @alpha @sealed
-export class AnchorSet {
+export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
     applyDelta(delta: Delta.Root): void;
     // (undocumented)
     forget(anchor: Anchor): void;
+    internalizePath(originalPath: UpPath): UpPath;
     isEmpty(): boolean;
     // (undocumented)
     locate(anchor: Anchor): AnchorNode | undefined;
-    moveChildren(count: number, srcStart: UpPath | undefined, dst: UpPath | undefined): void;
+    // (undocumented)
+    on<K extends keyof AnchorSetRootEvents>(eventName: K, listener: AnchorSetRootEvents[K]): () => void;
     track(path: UpPath | null): Anchor;
+}
+
+// @alpha
+export interface AnchorSetRootEvents {
+    childrenChanging(anchors: AnchorSet): void;
+    treeChanging(anchors: AnchorSet): void;
 }
 
 // @alpha (undocumented)
@@ -88,6 +99,11 @@ type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<T ex
 
 // @alpha
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+
+// @alpha
+export interface BranchEvents {
+    afterBatch(): void;
+}
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -135,7 +151,7 @@ export abstract class ChangeEncoder<TChange> {
 }
 
 // @alpha (undocumented)
-export interface ChangeFamily<TEditor, TChange> {
+export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
     // (undocumented)
     buildEditor(changeReceiver: (change: TChange) => void, anchorSet: AnchorSet): TEditor;
     // (undocumented)
@@ -144,6 +160,12 @@ export interface ChangeFamily<TEditor, TChange> {
     intoDelta(change: TChange): Delta.Root;
     // (undocumented)
     readonly rebaser: ChangeRebaser<TChange>;
+}
+
+// @alpha (undocumented)
+export interface ChangeFamilyEditor {
+    enterTransaction(): void;
+    exitTransaction(): void;
 }
 
 // @alpha
@@ -325,7 +347,8 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
-    readonly [indexSymbol]: number;
+    // (undocumented)
+    [on]<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
     readonly [parentField]: {
         readonly parent: EditableField;
         readonly index: number;
@@ -349,6 +372,11 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
     readonly schema: SchemaDataAndPolicy;
     get unwrappedRoot(): UnwrappedEditableField;
     set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
+}
+
+// @alpha
+export interface EditableTreeEvents {
+    changing(): void;
 }
 
 // @alpha
@@ -611,6 +639,8 @@ export type IdAllocator = () => ChangesetLocalId;
 // @alpha
 export interface IDefaultEditBuilder {
     // (undocumented)
+    addValueConstraint(path: UpPath, value: Value): void;
+    // (undocumented)
     move(sourcePath: UpPath | undefined, sourceField: FieldKey, sourceIndex: number, count: number, destPath: UpPath | undefined, destField: FieldKey, destIndex: number): void;
     // (undocumented)
     optionalField(parent: UpPath | undefined, field: FieldKey): OptionalFieldEditBuilder;
@@ -642,9 +672,6 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
-
-// @alpha
-export const indexSymbol: unique symbol;
 
 // @alpha
 interface Insert<TTree = ProtoNode> {
@@ -714,17 +741,19 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {
+export interface ISharedTree extends ISharedObject, ISharedTreeBranch {
 }
 
 // @alpha
-export interface ISharedTreeCheckout extends AnchorLocator {
+export interface ISharedTreeBranch extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
+    readonly events: ISubscribable<BranchEvents>;
     readonly forest: IForestSubscription;
-    fork(): ISharedTreeCheckoutFork;
+    fork(): ISharedTreeFork;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
+    readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start(): void;
@@ -735,7 +764,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 }
 
 // @alpha
-export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
+export interface ISharedTreeFork extends ISharedTreeBranch {
     isMerged(): boolean;
     merge(): void;
     pull(): void;
@@ -958,6 +987,8 @@ export class ModularChangeFamily implements ChangeFamily<ModularEditBuilder, Mod
 // @alpha (undocumented)
 export interface ModularChangeset extends HasFieldChanges {
     // (undocumented)
+    constraintViolationCount?: number;
+    // (undocumented)
     fieldChanges: FieldChangeMap;
     maxId?: ChangesetLocalId;
     readonly revisions?: readonly RevisionInfo[];
@@ -965,9 +996,17 @@ export interface ModularChangeset extends HasFieldChanges {
 
 // @alpha @sealed (undocumented)
 export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChangeset> implements ProgressiveEditBuilder<ModularChangeset> {
-    constructor(family: ChangeFamily<unknown, ModularChangeset>, changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet);
+    constructor(family: ChangeFamily<ChangeFamilyEditor, ModularChangeset>, changeReceiver: (change: ModularChangeset) => void, anchors: AnchorSet);
+    // (undocumented)
+    addValueConstraint(path: UpPath, currentValue: Value): void;
     // (undocumented)
     apply(change: ModularChangeset): void;
+    // (undocumented)
+    enterTransaction(): void;
+    // (undocumented)
+    exitTransaction(): void;
+    // (undocumented)
+    generateId(): ChangesetLocalId;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
@@ -1067,6 +1106,8 @@ export type NodeChangeRebaser = (change: NodeChangeset | undefined, baseChange: 
 export interface NodeChangeset extends HasFieldChanges {
     // (undocumented)
     valueChange?: ValueChange;
+    // (undocumented)
+    valueConstraint?: ValueConstraint;
 }
 
 // @alpha
@@ -1095,6 +1136,9 @@ export interface ObservingDependent extends Dependent {
     listDependees(): Iterable<Dependee>;
     registerDependee(dependee: Dependee): void;
 }
+
+// @alpha
+export const on: unique symbol;
 
 // @alpha
 export type Opaque<T extends Brand<any, string>> = T extends Brand<infer ValueType, infer Name> ? BrandedType<ValueType, Name> : never;
@@ -1140,12 +1184,16 @@ export interface ProgressiveEditBuilder<TChange> {
 }
 
 // @alpha (undocumented)
-export abstract class ProgressiveEditBuilderBase<TChange> implements ProgressiveEditBuilder<TChange> {
-    constructor(changeFamily: ChangeFamily<unknown, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
+export abstract class ProgressiveEditBuilderBase<TChange> implements ProgressiveEditBuilder<TChange>, ChangeFamilyEditor {
+    constructor(changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>, changeReceiver: (change: TChange) => void, anchorSet: AnchorSet);
     // @sealed
     protected applyChange(change: TChange): void;
     // (undocumented)
-    protected readonly changeFamily: ChangeFamily<unknown, TChange>;
+    protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>;
+    // (undocumented)
+    enterTransaction(): void;
+    // (undocumented)
+    exitTransaction(): void;
     // @sealed (undocumented)
     getChanges(): TChange[];
 }
@@ -1224,7 +1272,7 @@ export const rootFieldKey: GlobalFieldKey;
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
-export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void): TransactionResult;
+export function runSynchronous(branch: ISharedTreeBranch, transaction: (branch: ISharedTreeBranch) => TransactionResult | void): TransactionResult;
 
 declare namespace SchemaAware {
     export {
@@ -1572,6 +1620,14 @@ export type Value = undefined | TreeValue;
 export interface ValueChange {
     revision?: RevisionTag;
     value?: Value;
+}
+
+// @alpha (undocumented)
+export interface ValueConstraint {
+    // (undocumented)
+    value: Value;
+    // (undocumented)
+    violated: boolean;
 }
 
 // @alpha (undocumented)

@@ -229,6 +229,15 @@ export type IdAllocator = () => ChangesetLocalId;
  */
 export interface NodeChangeset extends HasFieldChanges {
 	valueChange?: ValueChange;
+	valueConstraint?: ValueConstraint;
+}
+
+/**
+ * @alpha
+ */
+export interface ValueConstraint {
+	value: Value;
+	violated: boolean;
 }
 
 /**
@@ -270,6 +279,7 @@ export interface ModularChangeset extends HasFieldChanges {
 	 */
 	readonly revisions?: readonly RevisionInfo[];
 	fieldChanges: FieldChangeMap;
+	constraintViolationCount?: number;
 }
 
 /**

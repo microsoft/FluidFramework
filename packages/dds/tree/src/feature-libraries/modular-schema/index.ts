@@ -16,6 +16,7 @@ export {
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
+	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
@@ -43,6 +44,7 @@ export {
 	RevisionInfo,
 	ToDelta,
 	ValueChange,
+	ValueConstraint,
 } from "./fieldChangeHandler";
 export {
 	convertGenericChange,

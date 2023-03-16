@@ -20,6 +20,7 @@ import {
 	NodeChangeset,
 	RevisionInfo,
 	ValueChange,
+	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { getChangeHandler } from "./modularChangeFamily";
@@ -30,6 +31,7 @@ import { getChangeHandler } from "./modularChangeFamily";
 interface EncodedNodeChangeset {
 	valueChange?: ValueChange;
 	fieldChanges?: EncodedFieldChangeMap;
+	valueConstraint?: ValueConstraint;
 }
 
 interface EncodedModularChangeset {
@@ -111,6 +113,10 @@ function encodeNodeChangesForJson(
 		encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
 	}
 
+	if (change.valueConstraint !== undefined) {
+		encodedChange.valueConstraint = change.valueConstraint;
+	}
+
 	return encodedChange;
 }
 
@@ -171,6 +177,10 @@ function decodeNodeChangesetFromJson(
 			fieldKinds,
 			encodedChange.fieldChanges,
 		);
+	}
+
+	if (encodedChange.valueConstraint !== undefined) {
+		decodedChange.valueConstraint = encodedChange.valueConstraint;
 	}
 
 	return decodedChange;

@@ -28,6 +28,7 @@ import {
 	SummaryBranch,
 	SequencedCommit,
 	ChangeEncoder,
+	ChangeFamilyEditor,
 } from "../core";
 import {
 	Index,
@@ -57,7 +58,10 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly editManager: EditManager<TChangeset, ChangeFamily<unknown, TChangeset>>,
+		private readonly editManager: EditManager<
+			TChangeset,
+			ChangeFamily<ChangeFamilyEditor, TChangeset>
+		>,
 	) {
 		this.editDataBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.editManager);

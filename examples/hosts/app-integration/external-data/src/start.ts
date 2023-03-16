@@ -8,9 +8,9 @@ import ReactDOM from "react-dom";
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import type { IAppModel } from "./model-interface";
+import type { IAppModel, ITaskList } from "./model-interface";
 import { DebugView, AppView } from "./view";
-import { TaskListContainerRuntimeFactory } from "./model";
+import { BaseDocumentContainerRuntimeFactory } from "./model";
 
 const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
@@ -36,7 +36,7 @@ const render = (model: IAppModel, showExternalServerView: boolean): void => {
 
 async function start(): Promise<void> {
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IAppModel>(
-		new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
+		new StaticCodeLoader(new BaseDocumentContainerRuntimeFactory()),
 	);
 
 	let id: string;
@@ -51,10 +51,31 @@ async function start(): Promise<void> {
 		model = createResponse.model;
 
 		id = await createResponse.attach();
+
+		// Hardcoding a taskListId here. A follow up will be to introduce a form
+		// where the user can enter an external taskListId that they want
+		// to import from the external server.
+		model.baseDocument.addTaskList({ externalTaskListId: "task-list-1" });
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);
 		showExternalServerView = false;
+	}
+
+	// This block is necessary so that we render after the task list
+	// has instantiated. In a future PR this will go away, replaced
+	// by the registration api call.
+	let taskList: ITaskList | undefined;
+	while (taskList === undefined) {
+		const taskListsChangedP = new Promise<void>((resolve) => {
+			model.baseDocument.once("taskListCollectionChanged", () => {
+				resolve();
+			});
+		});
+		taskList = model.baseDocument.getTaskList("task-list-1");
+		if (taskList === undefined) {
+			await taskListsChangedP;
+		}
 	}
 
 	render(model, showExternalServerView);

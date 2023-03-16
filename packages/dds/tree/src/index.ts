@@ -69,6 +69,7 @@ export {
 	SchemaDataAndPolicy,
 	ChangeEncoder,
 	ChangeFamily,
+	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
@@ -89,6 +90,7 @@ export {
 	anchorSlot,
 	UpPathDefault,
 	AnchorEvents,
+	AnchorSetRootEvents,
 	FieldKindSpecifier,
 } from "./core";
 
@@ -186,7 +188,6 @@ export {
 	typeSymbol,
 	typeNameSymbol,
 	valueSymbol,
-	indexSymbol,
 	proxyTargetSymbol,
 	getField,
 	createField,
@@ -212,6 +213,9 @@ export {
 	CursorWithNode,
 	parentField,
 	HasFieldChanges,
+	EditableTreeEvents,
+	on,
+	ValueConstraint,
 	TypedSchema,
 	SchemaAware,
 	ArrayLikeMut,
@@ -236,10 +240,11 @@ export const FieldKinds = {
 
 export {
 	ISharedTree,
-	ISharedTreeCheckout,
-	ISharedTreeCheckoutFork,
+	ISharedTreeBranch,
+	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
+	BranchEvents,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";

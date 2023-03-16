@@ -57,6 +57,12 @@ export {
 export {
 	debuggerMessageSource,
 	HasContainerId,
+	ConnectContainerMessage,
+	ConnectContainerMessageData,
+	DisconnectContainerMessage,
+	DisconnectContainerMessageData,
+	CloseContainerMessage,
+	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
 	IDebuggerMessage,
