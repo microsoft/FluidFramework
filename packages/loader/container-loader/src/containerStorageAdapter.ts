@@ -33,13 +33,31 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 	private readonly blobContents: { [id: string]: ArrayBufferLike } = {};
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
-	constructor(
+	private _summarizeProtocolTree: boolean | undefined;
+	/**
+	 * Whether the adapter will enforce sending combined summary trees.
+	 */
+	public get summarizeProtocolTree() {
+		return this._summarizeProtocolTree === true;
+	}
+
+	/**
+	 * An adapter that ensures we're using detachedBlobStorage up until we connect to a real service, and then
+	 * after connecting to a real service augments it with retry and combined summary tree enforcement.
+	 * @param detachedBlobStorage - The detached blob storage to use up until we connect to a real service
+	 * @param logger - Telemetry logger
+	 * @param addProtocolSummaryIfMissing - a callback to permit the container to inspect the summary we're about to
+	 * upload, and fix it up with a protocol tree if needed
+	 * @param forceEnableSummarizeProtocolTree - Enforce uploading a protocol summary regardless of the service's policy
+	 */
+	public constructor(
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLogger,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		private readonly forceEnableSummarizeProtocolTree: boolean,
+		forceEnableSummarizeProtocolTree: boolean | undefined,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
+		this._summarizeProtocolTree = forceEnableSummarizeProtocolTree;
 	}
 
 	disposed: boolean = false;
@@ -59,10 +77,9 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 			this.logger,
 		));
 
-		const enableSummarizeProtocolTree =
-			this.forceEnableSummarizeProtocolTree ||
-			service.policies?.summarizeProtocolTree === true;
-		if (enableSummarizeProtocolTree) {
+		this._summarizeProtocolTree =
+			this._summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
+		if (this.summarizeProtocolTree) {
 			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
 			this._storageService = new ProtocolTreeStorageService(
 				retriableStorage,
