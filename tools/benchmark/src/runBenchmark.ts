@@ -4,21 +4,14 @@
  */
 
 import _ from "lodash";
-import {
-	Benchmark,
-	BenchmarkData,
-	Options,
-	defaultOptions,
-	computeStats,
-	Stats,
-	timer,
-} from "./benchmark";
+import { Benchmark, BenchmarkData, Options, defaultOptions, Stats, timer } from "./benchmark";
 import {
 	validateBenchmarkArguments,
 	BenchmarkRunningOptions,
 	BenchmarkRunningOptionsSync,
 	BenchmarkRunningOptionsAsync,
 } from "./Configuration";
+import { getArrayStatistics } from "./ReporterUtilities";
 
 export const defaults = {
 	maxBenchmarkDurationSeconds: defaultOptions.maxTime,
@@ -290,7 +283,7 @@ async function doBatchAsync(
 
 function computeData(samples: number[], count: number, timeStamp: number): BenchmarkData {
 	const now = +_.now();
-	const stats: Stats = computeStats(samples.map((v) => v / count));
+	const stats: Stats = getArrayStatistics(samples.map((v) => v / count));
 	const data: BenchmarkData = {
 		hz: 1 / stats.mean,
 		times: {
