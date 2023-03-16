@@ -19,8 +19,17 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"markdown-magic": "node ./markdown-magic/index.js --files README.md",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
-		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore"
+		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"test": "node ./markdown-magic/index.js --files markdown-magic/test/**/*.md"
+	},
+	"dependencies": {
+		"@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
+		"chalk": "^2.4.2",
+		"markdown-magic-package-scripts": "^1.2.1",
+		"markdown-magic-template": "^1.0.0",
+		"yargs": "^17.6.2"
 	},
 	"devDependencies": {
 		"prettier": "~2.6.2"
