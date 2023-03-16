@@ -488,7 +488,6 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	{},
 );
 
-
 /**
  * The BaseDocument is our data object that implements the IBaseDocument interface.
  */
