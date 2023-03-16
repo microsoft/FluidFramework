@@ -11,9 +11,9 @@ const fs = require("fs");
 const pkgFileName = "./package.json";
 const pkg = JSON.parse(fs.readFileSync(pkgFileName, "utf-8"));
 function replacer(key, value) {
-  if (key.startsWith("@fluid") && value === `^${pkg.version}`) {
-    return `${value}-0`;
-  }
-  return value;
+	if (key.startsWith("@fluid") && value === `^${pkg.version}`) {
+		return `${value}-0`;
+	}
+	return value;
 }
 fs.writeFileSync(pkgFileName, `${JSON.stringify(pkg, replacer, 2)}\n`);

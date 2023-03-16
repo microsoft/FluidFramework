@@ -1,9 +1,14 @@
 name: "Fluid PR Validation"
 on:
   pull_request:
-    types: [ opened, synchronize, reopened ]
+    types:
+      - opened # PR is created
+      - synchronize # commits added to PR
+      - reopened # closed PR re-opened
+      - edited # title or body edited, or base branch changed
     branches:
       - main
+      - next
       - release/*
 
 jobs:
@@ -11,8 +16,24 @@ jobs:
     name: Validate CODEOWNERS
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e # pin@v2
-      - uses: mszostok/codeowners-validator@2f6e3bb39aa6837d7dcf8eff2de5d6c046d0c9a9 # pin@v0.6.0
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          persist-credentials: false
+      - uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f # ratchet:mszostok/codeowners-validator@v0.7.4
         with:
           github_access_token: "${{ secrets.GITHUB_TOKEN }}"
           checks: "files,duppatterns,syntax"
+
+  # This job checks that PR template placeholder content has been removed from the PR body.
+  placeholder-content:
+    name: PR template placeholder content
+    runs-on: ubuntu-latest
+    steps:
+      - uses: sitezen/pr-comment-checker@f1e956fac00c6d1163d15841886ae80b7ae58ecb # ratchet:sitezen/pr-comment-checker@v1.0.1
+        with:
+          pr_description_should_not_contain: |
+            Feel free to remove or alter parts of this template that do not offer value for your specific change
+          wrong_pr_description_message: |
+            Your PR description contains placeholder content from the PR template. Remove or replace the placeholder
+            content. More information at:
+            https://github.com/microsoft/FluidFramework/wiki/Commit-message-style#pr-template-content

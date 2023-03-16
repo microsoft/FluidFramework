@@ -1,7 +1,7 @@
 # @fluidframework/merge-tree
 
 MergeTree is not a complete DDS by itself, but provides a reusable data structure for DDSes that must maintain a
-sequence of collaboratively edited items.  MergeTree is used in both SharedSequence and SharedMatrix.
+sequence of collaboratively edited items. MergeTree is used in both SharedSequence and SharedMatrix.
 
 See [GitHub](https://github.com/microsoft/FluidFramework) for more details on the Fluid Framework and packages within.
 
@@ -9,14 +9,14 @@ See [GitHub](https://github.com/microsoft/FluidFramework) for more details on th
 
 The three basic operations provided by MergeTree are:
 
-* `insert(start, segment)`
-* `remove(start, end)`
-* `annotate(start, end, propertySet)`
+-   `insert(start, segment)`
+-   `remove(start, end)`
+-   `annotate(start, end, propertySet)`
 
 ## Implementation
 
 MergeTrees represent a sequence as an ordered list of segments.  Each segment contains one or more consecutive values in
-the sequence.  For example, a SharedString contains segments of characters:
+the sequence. For example, a SharedString contains segments of characters:
 
 ```
 ["The cat"], [" sat on the mat."]
@@ -64,9 +64,9 @@ remote client performed the operation on its MergeTree.
 
 Conceptually, this is done by adjusting our naive linear search for the (segment, offset) in the following way:
 
-* Segments inserted "after" the remote client's operation are skipped (i.e., have length 0)
-* Segments tombstoned "after" the remote client's operation, but were inserted "prior" are included
-  (i.e., have their original length prior to tombstoning.)
+-   Segments inserted "after" the remote client's operation are skipped (i.e., have length 0)
+-   Segments tombstoned "after" the remote client's operation, but were inserted "prior" are included
+    (i.e., have their original length prior to tombstoning.)
 
 ...where "after" means the remote client's MergeTree had not yet applied the operation that inserted and/or
 tombstoned the segment.
@@ -76,7 +76,7 @@ MergeTree we do two things:
 
 1. The MergeTree tracks which client inserted/removed each segment and the sequence number (abbreviated "seq") assigned by the Fluid service to the
    insertion/removal operation.
-2. When sending a MergeTree op, the client includes the last seq# it has processed from the Fluid service.  This number
+2. When sending a MergeTree op, the client includes the last seq# it has processed from the Fluid service. This number
    is known as an op's "reference sequence number" or "refSeq#"
 
 The 'client' and 'refSeq' become new arguments to our search function:
@@ -87,10 +87,10 @@ The 'client' and 'refSeq' become new arguments to our search function:
 
 A segment was inserted and/or removed on the remote client at the time client sent the operation if either:
 
-* The referenced sequence number is greater than or equal the server-assigned sequence number of the operation
-  that inserted/removed the segment.
-* The client sent the operation that resulted in insertion/removal. (In which case, the client hadn't yet received
-  their sequenced op from the server but was aware of the insertion/removal because the client produced it locally.)
+-   The referenced sequence number is greater than or equal the server-assigned sequence number of the operation
+    that inserted/removed the segment.
+-   The client sent the operation that resulted in insertion/removal. (In which case, the client hadn't yet received
+    their sequenced op from the server but was aware of the insertion/removal because the client produced it locally.)
 
 If both above conditions are false, then the insertion/removal happened "after" the remote operation, and
 consequently should be ignored during the search.

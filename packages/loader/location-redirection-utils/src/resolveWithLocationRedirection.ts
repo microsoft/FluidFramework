@@ -5,7 +5,11 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { DriverErrorType, ILocationRedirectionError, IUrlResolver } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorType,
+	ILocationRedirectionError,
+	IUrlResolver,
+} from "@fluidframework/driver-definitions";
 
 /**
  * Checks if the error is location redirection error.
@@ -13,8 +17,11 @@ import { DriverErrorType, ILocationRedirectionError, IUrlResolver } from "@fluid
  * @returns - True is the error is location redirection error.
  */
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError {
-    return typeof error === "object" && error !== null
-        && error.errorType === DriverErrorType.locationRedirection;
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		error.errorType === DriverErrorType.locationRedirection
+	);
 }
 
 /**
@@ -25,28 +32,26 @@ export function isLocationRedirectionError(error: any): error is ILocationRedire
  * @returns - Response from the api call.
  */
 export async function resolveWithLocationRedirectionHandling<T>(
-    api: (request: IRequest) => Promise<T>,
-    request: IRequest,
-    urlResolver: IUrlResolver,
-    logger?: ITelemetryLogger,
+	api: (request: IRequest) => Promise<T>,
+	request: IRequest,
+	urlResolver: IUrlResolver,
+	logger?: ITelemetryLogger,
 ): Promise<T> {
-    let req: IRequest = request;
-    for (;;) {
-        try {
-            return await api(req);
-        } catch (error: any) {
-            if (!isLocationRedirectionError(error)) {
-                throw error;
-            }
-            logger?.sendTelemetryEvent({ eventName: "LocationRedirectionError" });
-            const resolvedUrl = error.redirectUrl;
-            // Generate the new request with new location details from the resolved url.
-            const absoluteUrl = await urlResolver.getAbsoluteUrl(
-                resolvedUrl,
-                "/",
-                undefined,
-            );
-            req = { url: absoluteUrl, headers: req.headers };
-        }
-    }
+	let req: IRequest = request;
+	for (;;) {
+		try {
+			return await api(req);
+		} catch (error: any) {
+			if (!isLocationRedirectionError(error)) {
+				throw error;
+			}
+			logger?.sendTelemetryEvent({ eventName: "LocationRedirectionError" });
+			const resolvedUrl = error.redirectUrl;
+			// Generate the new request with new location details from the resolved url. For datastore/relative path,
+			// we don't need to pass "/" as host could have asked for a specific data store. So driver need to
+			// extract it from the resolved url.
+			const absoluteUrl = await urlResolver.getAbsoluteUrl(resolvedUrl, "", undefined);
+			req = { url: absoluteUrl, headers: req.headers };
+		}
+	}
 }

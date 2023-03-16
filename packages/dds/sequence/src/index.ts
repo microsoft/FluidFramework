@@ -17,27 +17,37 @@
  */
 export { IMapMessageLocalMetadata, IValueOpEmitter } from "./defaultMapInterfaces";
 export {
-    DeserializeCallback,
-    IIntervalCollectionEvent,
-    IIntervalHelpers,
-    Interval,
-    IntervalCollection,
-    IntervalCollectionIterator,
-    IntervalLocator,
-    intervalLocatorFromEndpoint,
-    IntervalType,
-    ISerializableInterval,
-    ISerializedInterval,
-    SequenceInterval,
-    ISerializedIntervalCollectionV2,
-    CompressedSerializedInterval,
-    SerializedIntervalDelta,
+	DeserializeCallback,
+	IIntervalCollectionEvent,
+	IIntervalHelpers,
+	Interval,
+	IntervalCollection,
+	IntervalCollectionIterator,
+	IntervalLocator,
+	intervalLocatorFromEndpoint,
+	IntervalType,
+	ISerializableInterval,
+	ISerializedInterval,
+	SequenceInterval,
+	ISerializedIntervalCollectionV2,
+	CompressedSerializedInterval,
+	SerializedIntervalDelta,
 } from "./intervalCollection";
 export { IInterval, IntervalConflictResolver } from "./intervalTree";
 export { ISharedSegmentSequenceEvents, SharedSegmentSequence } from "./sequence";
-export { ISequenceDeltaRange, SequenceDeltaEvent, SequenceEvent, SequenceMaintenanceEvent } from "./sequenceDeltaEvent";
+export {
+	ISequenceDeltaRange,
+	SequenceDeltaEvent,
+	SequenceEvent,
+	SequenceMaintenanceEvent,
+} from "./sequenceDeltaEvent";
 export { SharedStringFactory } from "./sequenceFactory";
-export { getTextAndMarkers, ISharedString, SharedString, SharedStringSegment } from "./sharedString";
+export {
+	getTextAndMarkers,
+	ISharedString,
+	SharedString,
+	SharedStringSegment,
+} from "./sharedString";
 export {
 	ISharedIntervalCollection,
 	SharedIntervalCollection,

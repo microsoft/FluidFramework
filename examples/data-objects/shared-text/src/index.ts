@@ -4,9 +4,16 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
+
+import React from "react";
+
 import { SharedTextDataObject } from "./dataObject";
-import { SharedTextView } from "./view";
+import { SharedTextReactView } from "./view";
 
-const sharedTextViewCallback = (sharedTextDataObject: SharedTextDataObject) => new SharedTextView(sharedTextDataObject);
+const sharedTextViewCallback = (sharedTextDataObject: SharedTextDataObject) =>
+	React.createElement(SharedTextReactView, { sharedTextDataObject });
 
-export const fluidExport = new ContainerViewRuntimeFactory(SharedTextDataObject.factory, sharedTextViewCallback);
+export const fluidExport = new ContainerViewRuntimeFactory(
+	SharedTextDataObject.factory,
+	sharedTextViewCallback,
+);

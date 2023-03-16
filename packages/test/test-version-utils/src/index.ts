@@ -4,25 +4,35 @@
  */
 export { mochaGlobalSetup } from "./compatConfig";
 export {
-    getDataStoreFactory,
-    getVersionedTestObjectProvider,
-    ITestDataObject,
-    TestDataObjectType,
+	getDataStoreFactory,
+	getVersionedTestObjectProvider,
+	ITestDataObject,
+	TestDataObjectType,
 } from "./compatUtils";
 export { describeInstallVersions } from "./describeWithVersions";
 export {
-    DescribeCompat,
-    DescribeCompatSuite,
-    describeFullCompat,
-    describeLoaderCompat,
-    describeNoCompat,
-    ITestObjectProviderOptions,
+	DescribeCompat,
+	DescribeCompatSuite,
+	describeFullCompat,
+	describeLoaderCompat,
+	describeNoCompat,
+	ITestObjectProviderOptions,
 } from "./describeCompat";
+export {
+	describeE2EDocs,
+	DocumentType,
+	DescribeE2EDocInfo,
+	BenchmarkType,
+	describeE2EDocsMemory,
+	describeE2EDocsRuntime,
+	describeE2EDocRun,
+	getCurrentBenchmarkType,
+} from "./describeE2eDocs";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects";
 export {
-    ensurePackageInstalled,
-    getContainerRuntimeApi,
-    getDataRuntimeApi,
-    getDriverApi,
-    getLoaderApi,
+	ensurePackageInstalled,
+	getContainerRuntimeApi,
+	getDataRuntimeApi,
+	getDriverApi,
+	getLoaderApi,
 } from "./testApi";

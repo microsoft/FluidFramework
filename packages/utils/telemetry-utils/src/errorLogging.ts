@@ -4,90 +4,89 @@
  */
 
 import {
-    ILoggingError,
-    ITaggedTelemetryPropertyType,
-    ITelemetryLogger,
-    ITelemetryProperties,
-    TelemetryEventPropertyType,
+	ILoggingError,
+	ITaggedTelemetryPropertyType,
+	ITelemetryLogger,
+	ITelemetryProperties,
+	TelemetryEventPropertyType,
 } from "@fluidframework/common-definitions";
 import { v4 as uuid } from "uuid";
 import {
-    hasErrorInstanceId,
-    IFluidErrorBase,
-    isFluidError,
-    isValidLegacyError,
+	hasErrorInstanceId,
+	IFluidErrorBase,
+	isFluidError,
+	isValidLegacyError,
 } from "./fluidErrorBase";
 import { ITaggedTelemetryPropertyTypeExt, TelemetryEventPropertyTypeExt } from "./telemetryTypes";
 
 /** @returns true if value is an object but neither null nor an array */
 const isRegularObject = (value: any): boolean => {
-    return value !== null && !Array.isArray(value) && typeof value === "object";
+	return value !== null && !Array.isArray(value) && typeof value === "object";
 };
 
 /** Inspect the given error for common "safe" props and return them */
 export function extractLogSafeErrorProperties(error: any, sanitizeStack: boolean) {
-    const removeMessageFromStack = (stack: string, errorName?: string) => {
-        if (!sanitizeStack) {
-            return stack;
-        }
-        const stackFrames = stack.split("\n");
-        stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
-        if (errorName !== undefined) {
-            stackFrames.unshift(errorName); // Add "[ErrorName]"
-        }
-        return stackFrames.join("\n");
-    };
+	const removeMessageFromStack = (stack: string, errorName?: string) => {
+		if (!sanitizeStack) {
+			return stack;
+		}
+		const stackFrames = stack.split("\n");
+		stackFrames.shift(); // Remove "[ErrorName]: [ErrorMessage]"
+		if (errorName !== undefined) {
+			stackFrames.unshift(errorName); // Add "[ErrorName]"
+		}
+		return stackFrames.join("\n");
+	};
 
-    const message = (typeof error?.message === "string")
-        ? error.message as string
-        : String(error);
+	const message = typeof error?.message === "string" ? (error.message as string) : String(error);
 
-    const safeProps: { message: string; errorType?: string; stack?: string; } = {
-        message,
-    };
+	const safeProps: { message: string; errorType?: string; stack?: string } = {
+		message,
+	};
 
-    if (isRegularObject(error)) {
-        const { errorType, stack, name } = error;
+	if (isRegularObject(error)) {
+		const { errorType, stack, name } = error;
 
-        if (typeof errorType === "string") {
-            safeProps.errorType = errorType;
-        }
+		if (typeof errorType === "string") {
+			safeProps.errorType = errorType;
+		}
 
-        if (typeof stack === "string") {
-            const errorName = (typeof name === "string") ? name : undefined;
-            safeProps.stack = removeMessageFromStack(stack, errorName);
-        }
-    }
+		if (typeof stack === "string") {
+			const errorName = typeof name === "string" ? name : undefined;
+			safeProps.stack = removeMessageFromStack(stack, errorName);
+		}
+	}
 
-    return safeProps;
+	return safeProps;
 }
 
 /** type guard for ILoggingError interface */
-export const isILoggingError = (x: any): x is ILoggingError => typeof x?.getTelemetryProperties === "function";
+export const isILoggingError = (x: any): x is ILoggingError =>
+	typeof x?.getTelemetryProperties === "function";
 
 /** Copy props from source onto target, but do not overwrite an existing prop that matches */
 function copyProps(target: ITelemetryProperties | LoggingError, source: ITelemetryProperties) {
-    for (const key of Object.keys(source)) {
-        if (target[key] === undefined) {
-            target[key] = source[key];
-        }
-    }
+	for (const key of Object.keys(source)) {
+		if (target[key] === undefined) {
+			target[key] = source[key];
+		}
+	}
 }
 
 /** Metadata to annotate an error object when annotating or normalizing it */
 export interface IFluidErrorAnnotations {
-    /** Telemetry props to log with the error */
-    props?: ITelemetryProperties;
+	/** Telemetry props to log with the error */
+	props?: ITelemetryProperties;
 }
 
 /** For backwards compatibility with pre-errorInstanceId valid errors */
 function patchLegacyError(
-    legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
+	legacyError: Omit<IFluidErrorBase, "errorInstanceId">,
 ): asserts legacyError is IFluidErrorBase {
-    const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
-    if (patchMe.errorInstanceId === undefined) {
-        patchMe.errorInstanceId = uuid();
-    }
+	const patchMe: { -readonly [P in "errorInstanceId"]?: IFluidErrorBase[P] } = legacyError as any;
+	if (patchMe.errorInstanceId === undefined) {
+		patchMe.errorInstanceId = uuid();
+	}
 }
 
 /**
@@ -97,50 +96,50 @@ function patchLegacyError(
  * @param annotations - Annotations to apply to the normalized error
  */
 export function normalizeError(
-    error: unknown,
-    annotations: IFluidErrorAnnotations = {},
+	error: unknown,
+	annotations: IFluidErrorAnnotations = {},
 ): IFluidErrorBase {
-    // Back-compat, while IFluidErrorBase is rolled out
-    if (isValidLegacyError(error)) {
-        patchLegacyError(error);
-    }
+	// Back-compat, while IFluidErrorBase is rolled out
+	if (isValidLegacyError(error)) {
+		patchLegacyError(error);
+	}
 
-    if (isFluidError(error)) {
-        // We can simply add the telemetry props to the error and return it
-        error.addTelemetryProperties(annotations.props ?? {});
-        return error;
-    }
+	if (isFluidError(error)) {
+		// We can simply add the telemetry props to the error and return it
+		error.addTelemetryProperties(annotations.props ?? {});
+		return error;
+	}
 
-    // We have to construct a new Fluid Error, copying safe properties over
-    const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
-    const fluidError: IFluidErrorBase = new NormalizedLoggingError({
-        message,
-        stack,
-    });
+	// We have to construct a new Fluid Error, copying safe properties over
+	const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
+	const fluidError: IFluidErrorBase = new NormalizedLoggingError({
+		message,
+		stack,
+	});
 
-    // We need to preserve these properties which are used in a non-typesafe way throughout driver code (see #8743)
-    // Anywhere they are set should be on a valid Fluid Error that would have been returned above,
-    // but we can't prove it with the types, so adding this defensive measure.
-    if (typeof error === "object" && error !== null) {
-        const { canRetry, retryAfterSeconds } = error as any;
-        Object.assign(normalizeError, { canRetry, retryAfterSeconds });
-    }
+	// We need to preserve these properties which are used in a non-typesafe way throughout driver code (see #8743)
+	// Anywhere they are set should be on a valid Fluid Error that would have been returned above,
+	// but we can't prove it with the types, so adding this defensive measure.
+	if (typeof error === "object" && error !== null) {
+		const { canRetry, retryAfterSeconds } = error as any;
+		Object.assign(normalizeError, { canRetry, retryAfterSeconds });
+	}
 
-    if (typeof (error) !== "object") {
-        // This is only interesting for non-objects
-        fluidError.addTelemetryProperties({ typeofError: typeof (error) });
-    }
+	if (typeof error !== "object") {
+		// This is only interesting for non-objects
+		fluidError.addTelemetryProperties({ typeofError: typeof error });
+	}
 
-    const errorTelemetryProps = LoggingError.typeCheck(error)
-        ? error.getTelemetryProperties()
-        : { untrustedOrigin: 1 }; // This will let us filter errors that did not originate from our own codebase
+	const errorTelemetryProps = LoggingError.typeCheck(error)
+		? error.getTelemetryProperties()
+		: { untrustedOrigin: 1 }; // This will let us filter errors that did not originate from our own codebase
 
-    fluidError.addTelemetryProperties({
-        ...errorTelemetryProps,
-        ...annotations.props,
-    });
+	fluidError.addTelemetryProperties({
+		...errorTelemetryProps,
+		...annotations.props,
+	});
 
-    return fluidError;
+	return fluidError;
 }
 
 let stackPopulatedOnCreation: boolean | undefined;
@@ -155,25 +154,25 @@ let stackPopulatedOnCreation: boolean | undefined;
  * @returns Error object that has stack populated.
  */
 export function generateErrorWithStack(): Error {
-    const err = new Error("<<generated stack>>");
+	const err = new Error("<<generated stack>>");
 
-    if (stackPopulatedOnCreation === undefined) {
-        stackPopulatedOnCreation = (err.stack !== undefined);
-    }
+	if (stackPopulatedOnCreation === undefined) {
+		stackPopulatedOnCreation = err.stack !== undefined;
+	}
 
-    if (stackPopulatedOnCreation) {
-        return err;
-    }
+	if (stackPopulatedOnCreation) {
+		return err;
+	}
 
-    try {
-        throw err;
-    } catch (e) {
-        return e as Error;
-    }
+	try {
+		throw err;
+	} catch (e) {
+		return e as Error;
+	}
 }
 
 export function generateStack(): string | undefined {
-    return generateErrorWithStack().stack;
+	return generateErrorWithStack().stack;
 }
 
 /**
@@ -184,72 +183,72 @@ export function generateStack(): string | undefined {
  * @returns A new error object "wrapping" the given error
  */
 export function wrapError<T extends LoggingError>(
-    innerError: unknown,
-    newErrorFn: (message: string) => T,
+	innerError: unknown,
+	newErrorFn: (message: string) => T,
 ): T {
-    const {
-        message,
-        stack,
-    } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
+	const { message, stack } = extractLogSafeErrorProperties(innerError, false /* sanitizeStack */);
 
-    const newError = newErrorFn(message);
+	const newError = newErrorFn(message);
 
-    if (stack !== undefined) {
-        overwriteStack(newError, stack);
-    }
+	if (stack !== undefined) {
+		overwriteStack(newError, stack);
+	}
 
-    // Mark external errors with untrustedOrigin flag
-    if (isExternalError(innerError)) {
-        newError.addTelemetryProperties({ untrustedOrigin: 1 });
-    }
+	// Mark external errors with untrustedOrigin flag
+	if (isExternalError(innerError)) {
+		newError.addTelemetryProperties({ untrustedOrigin: 1 });
+	}
 
-    // Reuse errorInstanceId
-    if (hasErrorInstanceId(innerError)) {
-        newError.overwriteErrorInstanceId(innerError.errorInstanceId);
+	// Reuse errorInstanceId
+	if (hasErrorInstanceId(innerError)) {
+		newError.overwriteErrorInstanceId(innerError.errorInstanceId);
 
-        // For "back-compat" in the logs
-        newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
-    }
+		// For "back-compat" in the logs
+		newError.addTelemetryProperties({ innerErrorInstanceId: innerError.errorInstanceId });
+	}
 
-    // Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
-    // This will include the untrustedOrigin property if the inner error itself was created from an external error
-    if (isILoggingError(innerError)) {
-        newError.addTelemetryProperties(innerError.getTelemetryProperties());
-    }
+	// Lastly, copy over all other telemetry properties. Note these will not overwrite existing properties
+	// This will include the untrustedOrigin property if the inner error itself was created from an external error
+	if (isILoggingError(innerError)) {
+		newError.addTelemetryProperties(innerError.getTelemetryProperties());
+	}
 
-    return newError;
+	return newError;
 }
 
 /** The same as wrapError, but also logs the innerError, including the wrapping error's instance id */
 export function wrapErrorAndLog<T extends LoggingError>(
-    innerError: unknown,
-    newErrorFn: (message: string) => T,
-    logger: ITelemetryLogger,
+	innerError: unknown,
+	newErrorFn: (message: string) => T,
+	logger: ITelemetryLogger,
 ) {
-    const newError = wrapError(innerError, newErrorFn);
+	const newError = wrapError(innerError, newErrorFn);
 
-    // This will match innerError.errorInstanceId if present (see wrapError)
-    const errorInstanceId = newError.errorInstanceId;
+	// This will match innerError.errorInstanceId if present (see wrapError)
+	const errorInstanceId = newError.errorInstanceId;
 
-    // For "back-compat" in the logs
-    const wrappedByErrorInstanceId = errorInstanceId;
+	// For "back-compat" in the logs
+	const wrappedByErrorInstanceId = errorInstanceId;
 
-    logger.sendTelemetryEvent({
-        eventName: "WrapError",
-        errorInstanceId,
-        wrappedByErrorInstanceId,
-    }, innerError);
+	logger.sendTelemetryEvent(
+		{
+			eventName: "WrapError",
+			errorInstanceId,
+			wrappedByErrorInstanceId,
+		},
+		innerError,
+	);
 
-    return newError;
+	return newError;
 }
 
 function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
-    // supposedly setting stack on an Error can throw.
-    try {
-        Object.assign(error, { stack });
-    } catch (errorSettingStack) {
-        error.addTelemetryProperties({ stack2: stack });
-    }
+	// supposedly setting stack on an Error can throw.
+	try {
+		Object.assign(error, { stack });
+	} catch (errorSettingStack) {
+		error.addTelemetryProperties({ stack2: stack });
+	}
 }
 
 /**
@@ -258,25 +257,25 @@ function overwriteStack(error: IFluidErrorBase | LoggingError, stack: string) {
  * or wrapped in a well-known error type
  */
 export function isExternalError(e: any): boolean {
-    // LoggingErrors are an internal FF error type. However, an external error can be converted
-    // into a LoggingError if it is normalized. In this case we must use the untrustedOrigin flag to
-    // determine whether the original error was infact external.
-    if (LoggingError.typeCheck(e)) {
-        if ((e as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
-            return e.getTelemetryProperties().untrustedOrigin === 1;
-        }
-        return false;
-    }
-    return !isValidLegacyError(e);
+	// LoggingErrors are an internal FF error type. However, an external error can be converted
+	// into a LoggingError if it is normalized. In this case we must use the untrustedOrigin flag to
+	// determine whether the original error was infact external.
+	if (LoggingError.typeCheck(e)) {
+		if ((e as NormalizedLoggingError).errorType === NORMALIZED_ERROR_TYPE) {
+			return e.getTelemetryProperties().untrustedOrigin === 1;
+		}
+		return false;
+	}
+	return !isValidLegacyError(e);
 }
 
 /**
  * Type guard to identify if a particular telemetry property appears to be a tagged telemetry property
  */
 export function isTaggedTelemetryPropertyValue(
-    x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt,
+	x: ITaggedTelemetryPropertyTypeExt | TelemetryEventPropertyTypeExt,
 ): x is ITaggedTelemetryPropertyType | ITaggedTelemetryPropertyTypeExt {
-    return typeof ((x as any)?.tag) === "string";
+	return typeof (x as any)?.tag === "string";
 }
 
 /**
@@ -286,51 +285,51 @@ export function isTaggedTelemetryPropertyValue(
  * otherwise returns null since this is what we support at the moment.
  */
 function filterValidTelemetryProps(x: any, key: string): TelemetryEventPropertyType {
-    if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
-        return JSON.stringify(x);
-    }
-    if (isTelemetryEventPropertyValue(x)) {
-        return x;
-    }
-    // We don't support logging arbitrary objects
-    console.error(`UnSupported Format of Logging Error Property for key ${key}:`, x);
-    return "REDACTED (arbitrary object)";
+	if (Array.isArray(x) && x.every((val) => isTelemetryEventPropertyValue(val))) {
+		return JSON.stringify(x);
+	}
+	if (isTelemetryEventPropertyValue(x)) {
+		return x;
+	}
+	// We don't support logging arbitrary objects
+	console.error(`UnSupported Format of Logging Error Property for key ${key}:`, x);
+	return "REDACTED (arbitrary object)";
 }
 
 // checking type of x, returns false if x is null
 function isTelemetryEventPropertyValue(x: any): x is TelemetryEventPropertyType {
-    switch (typeof x) {
-        case "string":
-        case "number":
-        case "boolean":
-        case "undefined":
-            return true;
-        default:
-            return false;
-    }
+	switch (typeof x) {
+		case "string":
+		case "number":
+		case "boolean":
+		case "undefined":
+			return true;
+		default:
+			return false;
+	}
 }
 /**
  * Walk an object's enumerable properties to find those fit for telemetry.
  */
 function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryProperties {
-    const props: ITelemetryProperties = {};
-    for (const key of Object.keys(obj)) {
-        if (keysToOmit.has(key)) {
-            continue;
-        }
-        const val = obj[key];
+	const props: ITelemetryProperties = {};
+	for (const key of Object.keys(obj)) {
+		if (keysToOmit.has(key)) {
+			continue;
+		}
+		const val = obj[key];
 
-        // ensure only valid props get logged, since props of logging error could be in any shape
-        if (isTaggedTelemetryPropertyValue(val)) {
-            props[key] = {
-                value: filterValidTelemetryProps(val.value, key),
-                tag: val.tag,
-            };
-        } else {
-            props[key] = filterValidTelemetryProps(val, key);
-        }
-    }
-    return props;
+		// ensure only valid props get logged, since props of logging error could be in any shape
+		if (isTaggedTelemetryPropertyValue(val)) {
+			props[key] = {
+				value: filterValidTelemetryProps(val.value, key),
+				tag: val.tag,
+			};
+		} else {
+			props[key] = filterValidTelemetryProps(val, key);
+		}
+	}
+	return props;
 }
 
 /**
@@ -339,18 +338,18 @@ function getValidTelemetryProps(obj: any, keysToOmit: Set<string>): ITelemetryPr
  * Avoids runtime errors with circular references.
  * Not ideal, as will cut values that are not necessarily circular references.
  * Could be improved by implementing Node's util.inspect() for browser (minus all the coloring code)
-*/
+ */
 export const getCircularReplacer = () => {
-    const seen = new WeakSet();
-    return (key: string, value: any): any => {
-        if (typeof value === "object" && value !== null) {
-            if (seen.has(value)) {
-                return "<removed/circular>";
-            }
-            seen.add(value);
-        }
-        return value;
-    };
+	const seen = new WeakSet();
+	return (key: string, value: any): any => {
+		if (typeof value === "object" && value !== null) {
+			if (seen.has(value)) {
+				return "<removed/circular>";
+			}
+			seen.add(value);
+		}
+		return value;
+	};
 };
 
 /**
@@ -360,90 +359,94 @@ export const getCircularReplacer = () => {
  *
  * PLEASE take care to avoid setting sensitive data on this object without proper tagging!
  */
-export class LoggingError extends Error implements ILoggingError, Omit<IFluidErrorBase, "errorType"> {
-    private _errorInstanceId = uuid();
-    get errorInstanceId() { return this._errorInstanceId; }
-    overwriteErrorInstanceId(id: string) { this._errorInstanceId = id; }
+export class LoggingError
+	extends Error
+	implements ILoggingError, Omit<IFluidErrorBase, "errorType">
+{
+	private _errorInstanceId = uuid();
+	get errorInstanceId() {
+		return this._errorInstanceId;
+	}
+	overwriteErrorInstanceId(id: string) {
+		this._errorInstanceId = id;
+	}
 
-    /** Back-compat to appease isFluidError typeguard in old code that may handle this error */
-    // @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
-    private readonly fluidErrorCode: "-" = "-";
+	/** Back-compat to appease isFluidError typeguard in old code that may handle this error */
+	// @ts-expect-error - This field shouldn't be referenced in the current version, but needs to exist at runtime.
+	private readonly fluidErrorCode: "-" = "-";
 
-    /**
-     * Create a new LoggingError
-     * @param message - Error message to use for Error base class
-     * @param props - telemetry props to include on the error for when it's logged
-     * @param omitPropsFromLogging - properties by name to omit from telemetry props
-     */
-    constructor(
-        message: string,
-        props?: ITelemetryProperties,
-        private readonly omitPropsFromLogging: Set<string> = new Set(),
-    ) {
-        super(message);
+	/**
+	 * Create a new LoggingError
+	 * @param message - Error message to use for Error base class
+	 * @param props - telemetry props to include on the error for when it's logged
+	 * @param omitPropsFromLogging - properties by name to omit from telemetry props
+	 */
+	constructor(
+		message: string,
+		props?: ITelemetryProperties,
+		private readonly omitPropsFromLogging: Set<string> = new Set(),
+	) {
+		super(message);
 
-        // Don't log this list itself, or the private _errorInstanceId
-        omitPropsFromLogging.add("omitPropsFromLogging");
-        omitPropsFromLogging.add("_errorInstanceId");
+		// Don't log this list itself, or the private _errorInstanceId
+		omitPropsFromLogging.add("omitPropsFromLogging");
+		omitPropsFromLogging.add("_errorInstanceId");
 
-        if (props) {
-            this.addTelemetryProperties(props);
-        }
-    }
+		if (props) {
+			this.addTelemetryProperties(props);
+		}
+	}
 
-    /**
-    * Determines if a given object is an instance of a LoggingError
-    * @param object - any object
-    * @returns - true if the object is an instance of a LoggingError, false if not.
-    */
-    public static typeCheck(object: unknown): object is LoggingError {
-        if (typeof object === "object" && object !== null) {
-            return typeof (object as LoggingError).addTelemetryProperties === "function"
-                && typeof (object as LoggingError).getTelemetryProperties === "function"
-                && typeof (object as LoggingError).errorInstanceId === "string";
-        }
-        return false;
-    }
+	/**
+	 * Determines if a given object is an instance of a LoggingError
+	 * @param object - any object
+	 * @returns - true if the object is an instance of a LoggingError, false if not.
+	 */
+	public static typeCheck(object: unknown): object is LoggingError {
+		if (typeof object === "object" && object !== null) {
+			return (
+				typeof (object as LoggingError).addTelemetryProperties === "function" &&
+				typeof (object as LoggingError).getTelemetryProperties === "function" &&
+				typeof (object as LoggingError).errorInstanceId === "string"
+			);
+		}
+		return false;
+	}
 
-    /**
-     * Add additional properties to be logged
-     */
-    public addTelemetryProperties(props: ITelemetryProperties) {
-        copyProps(this, props);
-    }
+	/**
+	 * Add additional properties to be logged
+	 */
+	public addTelemetryProperties(props: ITelemetryProperties) {
+		copyProps(this, props);
+	}
 
-    /**
-     * Get all properties fit to be logged to telemetry for this error
-     */
-    public getTelemetryProperties(): ITelemetryProperties {
-        const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
-        // Include non-enumerable props that are not returned by getValidTelemetryProps
-        return {
-            ...taggableProps,
-            stack: this.stack,
-            message: this.message,
-            errorInstanceId: this._errorInstanceId,
-        };
-    }
+	/**
+	 * Get all properties fit to be logged to telemetry for this error
+	 */
+	public getTelemetryProperties(): ITelemetryProperties {
+		const taggableProps = getValidTelemetryProps(this, this.omitPropsFromLogging);
+		// Include non-enumerable props that are not returned by getValidTelemetryProps
+		return {
+			...taggableProps,
+			stack: this.stack,
+			message: this.message,
+			errorInstanceId: this._errorInstanceId,
+		};
+	}
 }
 
 /** The Error class used when normalizing an external error */
 export const NORMALIZED_ERROR_TYPE = "genericError";
 class NormalizedLoggingError extends LoggingError {
-    // errorType "genericError" is used as a default value throughout the code.
-    // Note that this matches ContainerErrorType/DriverErrorType's genericError
-    errorType = NORMALIZED_ERROR_TYPE;
+	// errorType "genericError" is used as a default value throughout the code.
+	// Note that this matches ContainerErrorType/DriverErrorType's genericError
+	errorType = NORMALIZED_ERROR_TYPE;
 
-    constructor(
-        errorProps: Pick<IFluidErrorBase,
-            | "message"
-            | "stack"
-        >,
-    ) {
-        super(errorProps.message);
+	constructor(errorProps: Pick<IFluidErrorBase, "message" | "stack">) {
+		super(errorProps.message);
 
-        if (errorProps.stack !== undefined) {
-            overwriteStack(this, errorProps.stack);
-        }
-    }
+		if (errorProps.stack !== undefined) {
+			overwriteStack(this, errorProps.stack);
+		}
+	}
 }

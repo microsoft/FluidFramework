@@ -4,7 +4,8 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { compareArrays, copyPropertyIfDefined, fail, Mutable } from './Common';
+import { compareArrays } from '@fluidframework/core-utils';
+import { copyPropertyIfDefined, fail, Mutable } from './Common';
 import { Definition, DetachedSequenceId, EditId, NodeId, StableNodeId, TraitLabel } from './Identifiers';
 import { NodeIdContext, NodeIdConverter } from './NodeIdUtilities';
 import {

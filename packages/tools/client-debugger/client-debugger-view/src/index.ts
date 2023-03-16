@@ -21,22 +21,34 @@
  */
 
 export {
-    AudienceMemberViewProps,
-    ClientDebugView,
-    clientDebugViewClassName,
-    ClientDebugViewProps,
+	_ContainerSummaryView,
+	_ContainerSummaryViewProps,
+	_TelemetryView,
+	_TelemetryViewProps,
+	AudienceMemberViewProps, // TODO: remove this
+	ClientDebugView,
+	clientDebugViewClassName,
+	ClientDebugViewProps,
+	ContainerSelectionDropdown,
+	ContainerSelectionDropdownProps,
+	ContainerSummaryView,
+	ContainerSummaryViewProps,
+	IContainerActions,
+	PanelView,
+	PanelViewSelectionMenu,
+	PanelViewSelectionMenuProps,
 } from "./components";
 
 export { AudienceMember } from "./Audience";
-export { HasClientDebugger, HasContainerId } from "./CommonProps";
-export { FluidClientDebugger, FluidClientDebuggerProps } from "./Debugger";
+export { HasClientDebugger } from "./CommonProps";
+export { FluidClientDebuggers, FluidClientDebuggersProps } from "./Debugger";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
-    defaultRenderOptions,
-    defaultSharedObjectRenderers,
-    RenderChild,
-    RenderOptions,
-    RenderSharedObject,
-    SharedObjectRenderOptions,
-    SharedObjectType,
+	defaultRenderOptions,
+	defaultSharedObjectRenderers,
+	RenderChild,
+	RenderOptions,
+	RenderSharedObject,
+	SharedObjectRenderOptions,
+	SharedObjectType,
 } from "./RendererOptions";

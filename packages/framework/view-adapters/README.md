@@ -1,6 +1,7 @@
 # @fluidframework/view-adapters
 
-Views may be written using a variety of UI frameworks.  The view adapters module provides helpful tools for composing these views, intended for use when either:
+Views may be written using a variety of UI frameworks. The view adapters module provides helpful tools for composing these views, intended for use when either:
+
 1. The view being composed is from a different framework than its visual host.
 2. It is not known which framework was used in the view being composed.
 

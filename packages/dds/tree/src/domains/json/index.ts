@@ -5,12 +5,12 @@
 
 export { singleJsonCursor, cursorToJsonObject } from "./jsonCursor";
 export {
-    jsonSchemaData,
-    jsonObject,
-    jsonArray,
-    jsonNumber,
-    jsonString,
-    jsonNull,
-    jsonBoolean,
-    jsonRoot,
+	jsonSchemaData,
+	jsonObject,
+	jsonArray,
+	jsonNumber,
+	jsonString,
+	jsonNull,
+	jsonBoolean,
+	jsonRoot,
 } from "./jsonDomainSchema";

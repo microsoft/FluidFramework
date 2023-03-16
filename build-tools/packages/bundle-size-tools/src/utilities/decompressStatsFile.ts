@@ -11,8 +11,8 @@ import { StatsCompilation } from "webpack";
  * in a compressed file path and outputs the webpack stats object.
  */
 export function decompressStatsFile(buffer: Buffer): StatsCompilation {
-    // Inflate the gzipped data to get the mspack data
-    const mspackData = inflate(buffer);
+	// Inflate the gzipped data to get the mspack data
+	const mspackData = inflate(buffer);
 
-    return decode(mspackData);
+	return decode(mspackData);
 }

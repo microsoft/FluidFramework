@@ -18,34 +18,34 @@ import { isObjMark, isSkipMark, tryExtendMark } from "./utils";
  * - Merges marks together
  */
 export class MarkListFactory {
-    private offset = 0;
-    public readonly list: T.MarkList = [];
+	private offset = 0;
+	public readonly list: T.MarkList = [];
 
-    public push(...marks: T.Mark[]): void {
-        for (const item of marks) {
-            if (isSkipMark(item)) {
-                this.pushOffset(item);
-            } else {
-                this.pushContent(item);
-            }
-        }
-    }
+	public push(...marks: T.Mark[]): void {
+		for (const item of marks) {
+			if (isSkipMark(item)) {
+				this.pushOffset(item);
+			} else {
+				this.pushContent(item);
+			}
+		}
+	}
 
-    public pushOffset(offset: Skip): void {
-        this.offset += offset;
-    }
+	public pushOffset(offset: Skip): void {
+		this.offset += offset;
+	}
 
-    public pushContent(mark: T.ObjectMark): void {
-        if (this.offset > 0) {
-            this.list.push(this.offset);
-            this.offset = 0;
-        }
-        const prev = this.list[this.list.length - 1];
-        if (isObjMark(prev) && prev.type === mark.type) {
-            if (tryExtendMark(prev, mark)) {
-                return;
-            }
-        }
-        this.list.push(mark);
-    }
+	public pushContent(mark: T.ObjectMark): void {
+		if (this.offset > 0) {
+			this.list.push(this.offset);
+			this.offset = 0;
+		}
+		const prev = this.list[this.list.length - 1];
+		if (isObjMark(prev) && prev.type === mark.type) {
+			if (tryExtendMark(prev, mark)) {
+				return;
+			}
+		}
+		this.list.push(mark);
+	}
 }

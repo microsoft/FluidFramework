@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ContainerStateChangeKind } from "./Container";
 
 /**
  * Base interface for data logs, associating data with a timestamp at which the data was recorded by the debugger.
@@ -11,10 +11,10 @@ import { IClient } from "@fluidframework/protocol-definitions";
  * @internal
  */
 export interface LogEntry {
-    /**
-     * The time at which some data was recorded.
-     */
-    timestamp: number;
+	/**
+	 * The time at which some data was recorded.
+	 */
+	timestamp: number;
 }
 
 /**
@@ -25,10 +25,10 @@ export interface LogEntry {
  * @internal
  */
 export interface StateChangeLogEntry<TState> extends LogEntry {
-    /**
-     * The new state value.
-     */
-    newState: TState;
+	/**
+	 * The new state value.
+	 */
+	newState: TState;
 }
 
 /**
@@ -36,14 +36,15 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
  *
  * @internal
  */
-export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ConnectionState> {
-    /**
-     * When associated with a new connection (i.e. state transition to
-     * {@link @fluidframework/container-loader#ConnectionState.Connected}), this will be the new client ID.
-     *
-     * Will always be undefined for disconnects.
-     */
-    clientId: string | undefined;
+export interface ConnectionStateChangeLogEntry
+	extends StateChangeLogEntry<ContainerStateChangeKind> {
+	/**
+	 * When associated with a new connection (i.e. state transition to
+	 * {@link @fluidframework/container-loader#ConnectionState.Connected}), this will be the new client ID.
+	 *
+	 * Will always be undefined for disconnects.
+	 */
+	clientId: string | undefined;
 }
 
 /**
@@ -57,18 +58,18 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conne
  * @internal
  */
 export interface AudienceChangeLogEntry extends LogEntry {
-    /**
-     * The ID of the client that was added or removed.
-     */
-    clientId: string;
+	/**
+	 * The ID of the client that was added or removed.
+	 */
+	clientId: string;
 
-    /**
-     * Metadata abou the client that was added or removed.
-     */
-    client: IClient;
+	/**
+	 * Metadata abou the client that was added or removed.
+	 */
+	client: IClient;
 
-    /**
-     * Whether the change represents a client being added to or removed from the collaborative session.
-     */
-    changeKind: "added" | "removed";
+	/**
+	 * Whether the change represents a client being added to or removed from the collaborative session.
+	 */
+	changeKind: "added" | "removed";
 }

@@ -1,6 +1,12 @@
-# @fluidframework/attributor
+# @fluid-experimental/attributor
 
 This package contains definitions and implementations for framework-provided attribution functionality.
+
+## Status
+
+All attribution APIs (both in this package and elsewhere in `@fluidframework` packages) are marked as [alpha](https://api-extractor.com/pages/tsdoc/tag_alpha/) to enable fast iteration (as third-party use is not officially supported, breaking API changes can be made in minor versions).
+
+Despite this, the APIs are generally ready for early adoption--feel free to play around with them in local setups and provide feedback on their shape, usability, or other factors!
 
 ## Quickstart
 
@@ -9,27 +15,30 @@ When you instantiate your container runtime, pass a scope which implements `IPro
 
 ```typescript
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { mixinAttributor, createRuntimeAttributor } from "@fluidframework/attributor";
+import { mixinAttributor, createRuntimeAttributor } from "@fluid-experimental/attributor";
 
 const ContainerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
 // ...then, in your ContainerRuntime factory use this class:
 class ContainerRuntimeFactory implements IRuntimeFactory {
-    public async instantiateRuntime(context: IContainerContext, existing?: boolean): Promise<IRuntime> {
-        const attributor = createRuntimeAttributor();
-        // ...make this attributor accessible to your application however you deem fit; e.g. by registering it on a DependencyContainer.
-        // To inject loading and storing of attribution data on your runtime, provide a scope implementing IProvideRuntimeAttributor:
-        const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
-        const runtime = await ContainerRuntimeWithAttribution.load(
-            context,
-            dataStoreRegistry,
-            undefined,
-            undefined,
-            scope,
-        );
-        // do whatever setup is necessary with the runtime here
-        return runtime;
-    }
+	public async instantiateRuntime(
+		context: IContainerContext,
+		existing?: boolean,
+	): Promise<IRuntime> {
+		const attributor = createRuntimeAttributor();
+		// ...make this attributor accessible to your application however you deem fit; e.g. by registering it on a DependencyContainer.
+		// To inject loading and storing of attribution data on your runtime, provide a scope implementing IProvideRuntimeAttributor:
+		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
+		const runtime = await ContainerRuntimeWithAttribution.load(
+			context,
+			dataStoreRegistry,
+			undefined,
+			undefined,
+			scope,
+		);
+		// do whatever setup is necessary with the runtime here
+		return runtime;
+	}
 }
 ```
 
@@ -41,13 +50,23 @@ For a more comprehensive list of backwards-compatability concerns which shed mor
 Applications can recover this information using APIs on the DDSes they use. For example, the following code snippet illustrates how that works for `SharedString`:
 
 ```typescript
-function getAttributionInfo(attributor: IRuntimeAttributor, sharedString: SharedString, pos: number): AttributionInfo {
-    const { segment, offset } = sharedString.getContainingSegment(pos);
-    if (!segment || !offset) {
-        throw new UsageError("Invalid pos");
-    }
-    const attributionKey: AttributionKey = segment.attribution.getAtOffset(offset);
-    return attributor.getAttributionInfo(attributionKey);
+function getAttributionInfo(
+	attributor: IRuntimeAttributor,
+	sharedString: SharedString,
+	pos: number,
+): AttributionInfo | undefined {
+	const { segment, offset } = sharedString.getContainingSegment(pos);
+	if (!segment || !offset) {
+		throw new UsageError("Invalid pos");
+	}
+	const attributionKey: AttributionKey = segment.attribution.getAtOffset(offset);
+	// BEWARE: DDSes may track attribution key with type "detached" and "local", which aren't yet
+	// supported out-of-the-box in IRuntimeAttributor. The application can recover AttributionInfo
+	// from these keys if it wants using user information about the creator of the document and the
+	// current active user, respectively.
+	if (attributor.has(attributionKey)) {
+		return attributor.get(attributionKey);
+	}
 }
 
 // Get the user who inserted the text at position 0 in `sharedString` and the timestamp for when they did so.
@@ -65,7 +84,7 @@ These attribution keys can be exchanged for user and timestamp information using
 
 The following DDSes currently support attribution:
 
-- [SharedString](../../dds/sequence/README.md#attribution)
+-   [SharedString](../../dds/sequence/README.md#attribution)
 
 ### Op Stream Attribution
 

@@ -10,35 +10,33 @@ import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
  */
 
 /**
- * Base interface for component props that observe data and updates coming from the Client debugger.
- *
- * @internal
+ * Base interface for component props that observe the Client debuggers list update.
  */
-export interface HasClientDebugger {
-    /**
-     * Debugger object that is collecting session data to be displayed.
-     */
-    clientDebugger: IFluidClientDebugger;
+export interface HasClientDebuggers {
+	/**
+	 * Debugger object that is collecting session data to be displayed.
+	 */
+	clientDebuggers: IFluidClientDebugger[];
 }
 
 /**
- * Base interface for component props that include the ID of a Fluid Container.
+ * Base interface for component props that observe data and updates coming from the Client debugger.
  *
- * @internal
+ * @public
  */
-export interface HasContainerId {
-    /**
-     * The unique ID of the Fliud Container with which the debugger is associated.
-     */
-    containerId: string;
+export interface HasClientDebugger {
+	/**
+	 * Debugger object that is collecting session data to be displayed.
+	 */
+	clientDebugger: IFluidClientDebugger;
 }
 
 /**
  * Base interface for component props that include a session client ID.
  */
 export interface HasClientId {
-    /**
-     * The unique ID of the session client.
-     */
-    clientId: string;
+	/**
+	 * The unique ID of the session client.
+	 */
+	clientId: string;
 }

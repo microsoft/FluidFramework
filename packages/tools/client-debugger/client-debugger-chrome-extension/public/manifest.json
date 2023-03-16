@@ -1,24 +1,21 @@
 {
-  "manifest_version": 3,
-  "name": "Fluid Client Debugger",
-  "description": "Displays a live debug view of the Fluid client in your application.",
-  "version": "1.0",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "action": {
-    "default_icon": "images/icon.png"
-  },
-  "background": {
-    "service_worker": "BackgroundScript.js"
-  },
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "OpenDebuggerPanelScript.js",
-        "CloseDebuggerPanelScript.js",
-        "InjectDebuggerOpenScript.js",
-        "InjectDebuggerCloseScript.js"
-      ],
-      "matches": ["<all_urls>"]
-    }
-  ]
+	"manifest_version": 3,
+	"name": "Fluid Framework Devtools",
+	"description": "DevTools extension providing live Fluid Client debug data.",
+	"version": "0.1",
+	"action": {
+		"default_icon": "images/Icon.png",
+		"default_popup": "popup/popup.html"
+	},
+	"permissions": ["activeTab", "scripting", "storage"],
+	"devtools_page": "devtools/devtools.html",
+	"background": {
+		"service_worker": "background/BackgroundScript.js"
+	},
+	"content_scripts": [
+		{
+			"js": ["content/ContentScript.js"],
+			"matches": ["<all_urls>"]
+		}
+	]
 }

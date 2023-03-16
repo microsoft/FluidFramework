@@ -10,27 +10,27 @@ import { ITelemetryBaseLogger, TelemetryEventCategory } from "@fluidframework/co
  * Includes extra types beyond TelemetryEventPropertyType (which will be deprecated in favor of this one)
  */
 export type TelemetryEventPropertyTypeExt =
-    | string
-    | number
-    | boolean
-    | undefined
-    | (string | number | boolean)[];
+	| string
+	| number
+	| boolean
+	| undefined
+	| (string | number | boolean)[];
 
- /**
-  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
-  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
-  * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
-  */
+/**
+ * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
+ * to mark pieces of information that should be organized or handled differently by loggers in various first or third
+ * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
+ */
 export interface ITaggedTelemetryPropertyTypeExt {
-    value: TelemetryEventPropertyTypeExt;
-    tag: string;
+	value: TelemetryEventPropertyTypeExt;
+	tag: string;
 }
 
 /**
  * JSON-serializable properties, which will be logged with telemetry.
  */
 export interface ITelemetryPropertiesExt {
-    [index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
+	[index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
 }
 
 /**
@@ -39,18 +39,18 @@ export interface ITelemetryPropertiesExt {
  * @param category - category of the event, like "error", "performance", "generic", etc.
  * @param eventName - name of the event.
  */
- export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
-    category: string;
-    eventName: string;
+export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
+	category: string;
+	eventName: string;
 }
 
 /**
  * Informational (non-error) telemetry event
  * Maps to category = "generic"
  */
- export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
-    eventName: string;
-    category?: TelemetryEventCategory;
+export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
+	eventName: string;
+	category?: TelemetryEventCategory;
 }
 
 /**
@@ -58,7 +58,7 @@ export interface ITelemetryPropertiesExt {
  * Maps to category = "error"
  */
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
-    eventName: string;
+	eventName: string;
 }
 
 /**
@@ -66,7 +66,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
  * Maps to category = "performance"
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
-    duration?: number; // Duration of event (optional)
+	duration?: number; // Duration of event (optional)
 }
 
 /**
@@ -75,22 +75,22 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
  * and ITelemetryBaseLogger should be used when loggers are passed between layers.
  */
 export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
-    /**
-     * Send information telemetry event
-     * @param event - Event to send
-     * @param error - optional error object to log
-     */
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
+	/**
+	 * Send information telemetry event
+	 * @param event - Event to send
+	 * @param error - optional error object to log
+	 */
+	sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: any): void;
 
-    /**
-     * Send error telemetry event
-     * @param event - Event to send
-     */
-    sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
+	/**
+	 * Send error telemetry event
+	 * @param event - Event to send
+	 */
+	sendErrorEvent(event: ITelemetryErrorEventExt, error?: any): void;
 
-    /**
-     * Send performance telemetry event
-     * @param event - Event to send
-     */
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
+	/**
+	 * Send performance telemetry event
+	 * @param event - Event to send
+	 */
+	sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: any): void;
 }

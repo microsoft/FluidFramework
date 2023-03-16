@@ -1,177 +1,922 @@
 *[data-debug]::after {
-    content: "ᅜ";
-    color: #ccc;
-    padding: 0px 2px 0px 3px;
+	content: "ᅜ";
+	color: #ccc;
+	padding: 0px 2px 0px 3px;
 }
 
 *[data-debug] *::before {
-    border: 1px solid #d97;
-    background: #d97;
+	border: 1px solid #d97;
+	background: #d97;
 }
 
-*[data-debug] *::after { 
-    border: 1px solid #796;
-    background: #796;
+*[data-debug] *::after {
+	border: 1px solid #796;
+	background: #796;
 }
 
-*[data-debug] *::before, *[data-debug] *::after { 
-    color: white;
-    font-size: 0.4em;
-    vertical-align: middle;
-    border-radius: 1em;
-    display: table;
+*[data-debug] *::before,
+*[data-debug] *::after {
+	color: white;
+	font-size: 0.4em;
+	vertical-align: middle;
+	border-radius: 1em;
+	display: table;
 }
 
-*[data-debug] a::before, *[data-debug] li::before, *[data-debug] span::before,
-*[data-debug] a::after, *[data-debug] li::after, *[data-debug] span::after { 
-    display: inline
+*[data-debug] a::before,
+*[data-debug] li::before,
+*[data-debug] span::before,
+*[data-debug] a::after,
+*[data-debug] li::after,
+*[data-debug] span::after {
+	display: inline;
 }
 
-*[data-debug] a::before { content: "<a>"} *[data-debug] a::after { content: "</a>" }
-*[data-debug] abbr::before { content: "<abbr>"} *[data-debug] abbr::after { content: "</abbr>" }
-*[data-debug] acronym::before { content: "<acronym>"} *[data-debug] acronym::after { content: "</acronym>" }
-*[data-debug] address::before { content: "<address>"} *[data-debug] address::after { content: "</address>" }
-*[data-debug] applet::before { content: "<applet>"} *[data-debug] applet::after { content: "</applet>" }
-*[data-debug] area::before { content: "<area>"} *[data-debug] area::after { content: "</area>" }
-*[data-debug] article::before { content: "<article>"} *[data-debug] article::after { content: "</article>" }
-*[data-debug] aside::before { content: "<aside>"} *[data-debug] aside::after { content: "</aside>" }
-*[data-debug] audio::before { content: "<audio>"} *[data-debug] audio::after { content: "</audio>" }
-*[data-debug] b::before { content: "<b>"} *[data-debug] b::after { content: "</b>" }
-*[data-debug] base::before { content: "<base>"} *[data-debug] base::after { content: "</base>" }
-*[data-debug] basefont::before { content: "<basefont>"} *[data-debug] basefont::after { content: "</basefont>" }
-*[data-debug] bdi::before { content: "<bdi>"} *[data-debug] bdi::after { content: "</bdi>" }
-*[data-debug] bdo::before { content: "<bdo>"} *[data-debug] bdo::after { content: "</bdo>" }
-*[data-debug] bgsound::before { content: "<bgsound>"} *[data-debug] bgsound::after { content: "</bgsound>" }
-*[data-debug] big::before { content: "<big>"} *[data-debug] big::after { content: "</big>" }
-*[data-debug] blink::before { content: "<blink>"} *[data-debug] blink::after { content: "</blink>" }
-*[data-debug] blockquote::before { content: "<blockquote>"} *[data-debug] blockquote::after { content: "</blockquote>" }
-*[data-debug] body::before { content: "<body>"} *[data-debug] body::after { content: "</body>" }
-*[data-debug] br::before { content: "<br>"} *[data-debug] br::after { content: "</br>" }
-*[data-debug] button::before { content: "<button>"} *[data-debug] button::after { content: "</button>" }
-*[data-debug] canvas::before { content: "<canvas>"} *[data-debug] canvas::after { content: "</canvas>" }
-*[data-debug] caption::before { content: "<caption>"} *[data-debug] caption::after { content: "</caption>" }
-*[data-debug] center::before { content: "<center>"} *[data-debug] center::after { content: "</center>" }
-*[data-debug] cite::before { content: "<cite>"} *[data-debug] cite::after { content: "</cite>" }
-*[data-debug] code::before { content: "<code>"} *[data-debug] code::after { content: "</code>" }
-*[data-debug] col::before { content: "<col>"} *[data-debug] col::after { content: "</col>" }
-*[data-debug] colgroup::before { content: "<colgroup>"} *[data-debug] colgroup::after { content: "</colgroup>" }
-*[data-debug] command::before { content: "<command>"} *[data-debug] command::after { content: "</command>" }
-*[data-debug] content::before { content: "<content>"} *[data-debug] content::after { content: "</content>" }
-*[data-debug] data::before { content: "<data>"} *[data-debug] data::after { content: "</data>" }
-*[data-debug] datalist::before { content: "<datalist>"} *[data-debug] datalist::after { content: "</datalist>" }
-*[data-debug] dd::before { content: "<dd>"} *[data-debug] dd::after { content: "</dd>" }
-*[data-debug] del::before { content: "<del>"} *[data-debug] del::after { content: "</del>" }
-*[data-debug] details::before { content: "<details>"} *[data-debug] details::after { content: "</details>" }
-*[data-debug] dfn::before { content: "<dfn>"} *[data-debug] dfn::after { content: "</dfn>" }
-*[data-debug] dialog::before { content: "<dialog>"} *[data-debug] dialog::after { content: "</dialog>" }
-*[data-debug] dir::before { content: "<dir>"} *[data-debug] dir::after { content: "</dir>" }
-*[data-debug] div::before { content: "<div>"} *[data-debug] div::after { content: "</div>" }
-*[data-debug] dl::before { content: "<dl>"} *[data-debug] dl::after { content: "</dl>" }
-*[data-debug] dt::before { content: "<dt>"} *[data-debug] dt::after { content: "</dt>" }
-*[data-debug] element::before { content: "<element>"} *[data-debug] element::after { content: "</element>" }
-*[data-debug] em::before { content: "<em>"} *[data-debug] em::after { content: "</em>" }
-*[data-debug] embed::before { content: "<embed>"} *[data-debug] embed::after { content: "</embed>" }
-*[data-debug] fieldset::before { content: "<fieldset>"} *[data-debug] fieldset::after { content: "</fieldset>" }
-*[data-debug] figcaption::before { content: "<figcaption>"} *[data-debug] figcaption::after { content: "</figcaption>" }
-*[data-debug] figure::before { content: "<figure>"} *[data-debug] figure::after { content: "</figure>" }
-*[data-debug] font::before { content: "<font>"} *[data-debug] font::after { content: "</font>" }
-*[data-debug] footer::before { content: "<footer>"} *[data-debug] footer::after { content: "</footer>" }
-*[data-debug] form::before { content: "<form>"} *[data-debug] form::after { content: "</form>" }
-*[data-debug] frame::before { content: "<frame>"} *[data-debug] frame::after { content: "</frame>" }
-*[data-debug] frameset::before { content: "<frameset>"} *[data-debug] frameset::after { content: "</frameset>" }
-*[data-debug] h1::before { content: "<h1>"} *[data-debug] h1::after { content: "</h1>" }
-*[data-debug] h2::before { content: "<h2>"} *[data-debug] h2::after { content: "</h2>" }
-*[data-debug] h3::before { content: "<h3>"} *[data-debug] h3::after { content: "</h3>" }
-*[data-debug] h4::before { content: "<h4>"} *[data-debug] h4::after { content: "</h4>" }
-*[data-debug] h5::before { content: "<h5>"} *[data-debug] h5::after { content: "</h5>" }
-*[data-debug] h6::before { content: "<h6>"} *[data-debug] h6::after { content: "</h6>" }
-*[data-debug] head::before { content: "<head>"} *[data-debug] head::after { content: "</head>" }
-*[data-debug] header::before { content: "<header>"} *[data-debug] header::after { content: "</header>" }
-*[data-debug] hgroup::before { content: "<hgroup>"} *[data-debug] hgroup::after { content: "</hgroup>" }
-*[data-debug] hr::before { content: "<hr>"} *[data-debug] hr::after { content: "</hr>" }
-*[data-debug] html::before { content: "<html>"} *[data-debug] html::after { content: "</html>" }
-*[data-debug] i::before { content: "<i>"} *[data-debug] i::after { content: "</i>" }
-*[data-debug] iframe::before { content: "<iframe>"} *[data-debug] iframe::after { content: "</iframe>" }
-*[data-debug] image::before { content: "<image>"} *[data-debug] image::after { content: "</image>" }
-*[data-debug] img::before { content: "<img>"} *[data-debug] img::after { content: "</img>" }
-*[data-debug] input::before { content: "<input>"} *[data-debug] input::after { content: "</input>" }
-*[data-debug] ins::before { content: "<ins>"} *[data-debug] ins::after { content: "</ins>" }
-*[data-debug] isindex::before { content: "<isindex>"} *[data-debug] isindex::after { content: "</isindex>" }
-*[data-debug] kbd::before { content: "<kbd>"} *[data-debug] kbd::after { content: "</kbd>" }
-*[data-debug] keygen::before { content: "<keygen>"} *[data-debug] keygen::after { content: "</keygen>" }
-*[data-debug] label::before { content: "<label>"} *[data-debug] label::after { content: "</label>" }
-*[data-debug] legend::before { content: "<legend>"} *[data-debug] legend::after { content: "</legend>" }
-*[data-debug] li::before { content: "<li>"} *[data-debug] li::after { content: "</li>" }
-*[data-debug] link::before { content: "<link>"} *[data-debug] link::after { content: "</link>" }
-*[data-debug] listing::before { content: "<listing>"} *[data-debug] listing::after { content: "</listing>" }
-*[data-debug] main::before { content: "<main>"} *[data-debug] main::after { content: "</main>" }
-*[data-debug] map::before { content: "<map>"} *[data-debug] map::after { content: "</map>" }
-*[data-debug] mark::before { content: "<mark>"} *[data-debug] mark::after { content: "</mark>" }
-*[data-debug] marquee::before { content: "<marquee>"} *[data-debug] marquee::after { content: "</marquee>" }
-*[data-debug] math::before { content: "<math>"} *[data-debug] math::after { content: "</math>" }
-*[data-debug] menu::before { content: "<menu>"} *[data-debug] menu::after { content: "</menu>" }
-*[data-debug] menuitem::before { content: "<menuitem>"} *[data-debug] menuitem::after { content: "</menuitem>" }
-*[data-debug] meta::before { content: "<meta>"} *[data-debug] meta::after { content: "</meta>" }
-*[data-debug] meter::before { content: "<meter>"} *[data-debug] meter::after { content: "</meter>" }
-*[data-debug] multicol::before { content: "<multicol>"} *[data-debug] multicol::after { content: "</multicol>" }
-*[data-debug] nav::before { content: "<nav>"} *[data-debug] nav::after { content: "</nav>" }
-*[data-debug] nextid::before { content: "<nextid>"} *[data-debug] nextid::after { content: "</nextid>" }
-*[data-debug] nobr::before { content: "<nobr>"} *[data-debug] nobr::after { content: "</nobr>" }
-*[data-debug] noembed::before { content: "<noembed>"} *[data-debug] noembed::after { content: "</noembed>" }
-*[data-debug] noframes::before { content: "<noframes>"} *[data-debug] noframes::after { content: "</noframes>" }
-*[data-debug] noscript::before { content: "<noscript>"} *[data-debug] noscript::after { content: "</noscript>" }
-*[data-debug] object::before { content: "<object>"} *[data-debug] object::after { content: "</object>" }
-*[data-debug] ol::before { content: "<ol>"} *[data-debug] ol::after { content: "</ol>" }
-*[data-debug] optgroup::before { content: "<optgroup>"} *[data-debug] optgroup::after { content: "</optgroup>" }
-*[data-debug] option::before { content: "<option>"} *[data-debug] option::after { content: "</option>" }
-*[data-debug] output::before { content: "<output>"} *[data-debug] output::after { content: "</output>" }
-*[data-debug] p::before { content: "<p>"} *[data-debug] p::after { content: "</p>" }
-*[data-debug] param::before { content: "<param>"} *[data-debug] param::after { content: "</param>" }
-*[data-debug] picture::before { content: "<picture>"} *[data-debug] picture::after { content: "</picture>" }
-*[data-debug] plaintext::before { content: "<plaintext>"} *[data-debug] plaintext::after { content: "</plaintext>" }
-*[data-debug] pre::before { content: "<pre>"} *[data-debug] pre::after { content: "</pre>" }
-*[data-debug] progress::before { content: "<progress>"} *[data-debug] progress::after { content: "</progress>" }
-*[data-debug] q::before { content: "<q>"} *[data-debug] q::after { content: "</q>" }
-*[data-debug] rb::before { content: "<rb>"} *[data-debug] rb::after { content: "</rb>" }
-*[data-debug] rbc::before { content: "<rbc>"} *[data-debug] rbc::after { content: "</rbc>" }
-*[data-debug] rp::before { content: "<rp>"} *[data-debug] rp::after { content: "</rp>" }
-*[data-debug] rt::before { content: "<rt>"} *[data-debug] rt::after { content: "</rt>" }
-*[data-debug] rtc::before { content: "<rtc>"} *[data-debug] rtc::after { content: "</rtc>" }
-*[data-debug] ruby::before { content: "<ruby>"} *[data-debug] ruby::after { content: "</ruby>" }
-*[data-debug] s::before { content: "<s>"} *[data-debug] s::after { content: "</s>" }
-*[data-debug] samp::before { content: "<samp>"} *[data-debug] samp::after { content: "</samp>" }
-*[data-debug] script::before { content: "<script>"} *[data-debug] script::after { content: "</script>" }
-*[data-debug] section::before { content: "<section>"} *[data-debug] section::after { content: "</section>" }
-*[data-debug] select::before { content: "<select>"} *[data-debug] select::after { content: "</select>" }
-*[data-debug] shadow::before { content: "<shadow>"} *[data-debug] shadow::after { content: "</shadow>" }
-*[data-debug] slot::before { content: "<slot>"} *[data-debug] slot::after { content: "</slot>" }
-*[data-debug] small::before { content: "<small>"} *[data-debug] small::after { content: "</small>" }
-*[data-debug] source::before { content: "<source>"} *[data-debug] source::after { content: "</source>" }
-*[data-debug] spacer::before { content: "<spacer>"} *[data-debug] spacer::after { content: "</spacer>" }
-*[data-debug] span::before { content: "<span>"} *[data-debug] span::after { content: "</span>" }
-*[data-debug] strike::before { content: "<strike>"} *[data-debug] strike::after { content: "</strike>" }
-*[data-debug] strong::before { content: "<strong>"} *[data-debug] strong::after { content: "</strong>" }
-*[data-debug] style::before { content: "<style>"} *[data-debug] style::after { content: "</style>" }
-*[data-debug] sub::before { content: "<sub>"} *[data-debug] sub::after { content: "</sub>" }
-*[data-debug] summary::before { content: "<summary>"} *[data-debug] summary::after { content: "</summary>" }
-*[data-debug] sup::before { content: "<sup>"} *[data-debug] sup::after { content: "</sup>" }
-*[data-debug] svg::before { content: "<svg>"} *[data-debug] svg::after { content: "</svg>" }
-*[data-debug] table::before { content: "<table>"} *[data-debug] table::after { content: "</table>" }
-*[data-debug] tbody::before { content: "<tbody>"} *[data-debug] tbody::after { content: "</tbody>" }
-*[data-debug] td::before { content: "<td>"} *[data-debug] td::after { content: "</td>" }
-*[data-debug] template::before { content: "<template>"} *[data-debug] template::after { content: "</template>" }
-*[data-debug] textarea::before { content: "<textarea>"} *[data-debug] textarea::after { content: "</textarea>" }
-*[data-debug] tfoot::before { content: "<tfoot>"} *[data-debug] tfoot::after { content: "</tfoot>" }
-*[data-debug] th::before { content: "<th>"} *[data-debug] th::after { content: "</th>" }
-*[data-debug] thead::before { content: "<thead>"} *[data-debug] thead::after { content: "</thead>" }
-*[data-debug] time::before { content: "<time>"} *[data-debug] time::after { content: "</time>" }
-*[data-debug] title::before { content: "<title>"} *[data-debug] title::after { content: "</title>" }
-*[data-debug] tr::before { content: "<tr>"} *[data-debug] tr::after { content: "</tr>" }
-*[data-debug] track::before { content: "<track>"} *[data-debug] track::after { content: "</track>" }
-*[data-debug] tt::before { content: "<tt>"} *[data-debug] tt::after { content: "</tt>" }
-*[data-debug] u::before { content: "<u>"} *[data-debug] u::after { content: "</u>" }
-*[data-debug] ul::before { content: "<ul>"} *[data-debug] ul::after { content: "</ul>" }
-*[data-debug] var::before { content: "<var>"} *[data-debug] var::after { content: "</var>" }
-*[data-debug] video::before { content: "<video>"} *[data-debug] video::after { content: "</video>" }
-*[data-debug] wbr::before { content: "<wbr>"} *[data-debug] wbr::after { content: "</wbr>" }
-*[data-debug] xmp::before { content: "<xmp>"} *[data-debug] xmp::after { content: "</xmp>" }
+*[data-debug] a::before {
+	content: "<a>";
+}
+*[data-debug] a::after {
+	content: "</a>";
+}
+*[data-debug] abbr::before {
+	content: "<abbr>";
+}
+*[data-debug] abbr::after {
+	content: "</abbr>";
+}
+*[data-debug] acronym::before {
+	content: "<acronym>";
+}
+*[data-debug] acronym::after {
+	content: "</acronym>";
+}
+*[data-debug] address::before {
+	content: "<address>";
+}
+*[data-debug] address::after {
+	content: "</address>";
+}
+*[data-debug] applet::before {
+	content: "<applet>";
+}
+*[data-debug] applet::after {
+	content: "</applet>";
+}
+*[data-debug] area::before {
+	content: "<area>";
+}
+*[data-debug] area::after {
+	content: "</area>";
+}
+*[data-debug] article::before {
+	content: "<article>";
+}
+*[data-debug] article::after {
+	content: "</article>";
+}
+*[data-debug] aside::before {
+	content: "<aside>";
+}
+*[data-debug] aside::after {
+	content: "</aside>";
+}
+*[data-debug] audio::before {
+	content: "<audio>";
+}
+*[data-debug] audio::after {
+	content: "</audio>";
+}
+*[data-debug] b::before {
+	content: "<b>";
+}
+*[data-debug] b::after {
+	content: "</b>";
+}
+*[data-debug] base::before {
+	content: "<base>";
+}
+*[data-debug] base::after {
+	content: "</base>";
+}
+*[data-debug] basefont::before {
+	content: "<basefont>";
+}
+*[data-debug] basefont::after {
+	content: "</basefont>";
+}
+*[data-debug] bdi::before {
+	content: "<bdi>";
+}
+*[data-debug] bdi::after {
+	content: "</bdi>";
+}
+*[data-debug] bdo::before {
+	content: "<bdo>";
+}
+*[data-debug] bdo::after {
+	content: "</bdo>";
+}
+*[data-debug] bgsound::before {
+	content: "<bgsound>";
+}
+*[data-debug] bgsound::after {
+	content: "</bgsound>";
+}
+*[data-debug] big::before {
+	content: "<big>";
+}
+*[data-debug] big::after {
+	content: "</big>";
+}
+*[data-debug] blink::before {
+	content: "<blink>";
+}
+*[data-debug] blink::after {
+	content: "</blink>";
+}
+*[data-debug] blockquote::before {
+	content: "<blockquote>";
+}
+*[data-debug] blockquote::after {
+	content: "</blockquote>";
+}
+*[data-debug] body::before {
+	content: "<body>";
+}
+*[data-debug] body::after {
+	content: "</body>";
+}
+*[data-debug] br::before {
+	content: "<br>";
+}
+*[data-debug] br::after {
+	content: "</br>";
+}
+*[data-debug] button::before {
+	content: "<button>";
+}
+*[data-debug] button::after {
+	content: "</button>";
+}
+*[data-debug] canvas::before {
+	content: "<canvas>";
+}
+*[data-debug] canvas::after {
+	content: "</canvas>";
+}
+*[data-debug] caption::before {
+	content: "<caption>";
+}
+*[data-debug] caption::after {
+	content: "</caption>";
+}
+*[data-debug] center::before {
+	content: "<center>";
+}
+*[data-debug] center::after {
+	content: "</center>";
+}
+*[data-debug] cite::before {
+	content: "<cite>";
+}
+*[data-debug] cite::after {
+	content: "</cite>";
+}
+*[data-debug] code::before {
+	content: "<code>";
+}
+*[data-debug] code::after {
+	content: "</code>";
+}
+*[data-debug] col::before {
+	content: "<col>";
+}
+*[data-debug] col::after {
+	content: "</col>";
+}
+*[data-debug] colgroup::before {
+	content: "<colgroup>";
+}
+*[data-debug] colgroup::after {
+	content: "</colgroup>";
+}
+*[data-debug] command::before {
+	content: "<command>";
+}
+*[data-debug] command::after {
+	content: "</command>";
+}
+*[data-debug] content::before {
+	content: "<content>";
+}
+*[data-debug] content::after {
+	content: "</content>";
+}
+*[data-debug] data::before {
+	content: "<data>";
+}
+*[data-debug] data::after {
+	content: "</data>";
+}
+*[data-debug] datalist::before {
+	content: "<datalist>";
+}
+*[data-debug] datalist::after {
+	content: "</datalist>";
+}
+*[data-debug] dd::before {
+	content: "<dd>";
+}
+*[data-debug] dd::after {
+	content: "</dd>";
+}
+*[data-debug] del::before {
+	content: "<del>";
+}
+*[data-debug] del::after {
+	content: "</del>";
+}
+*[data-debug] details::before {
+	content: "<details>";
+}
+*[data-debug] details::after {
+	content: "</details>";
+}
+*[data-debug] dfn::before {
+	content: "<dfn>";
+}
+*[data-debug] dfn::after {
+	content: "</dfn>";
+}
+*[data-debug] dialog::before {
+	content: "<dialog>";
+}
+*[data-debug] dialog::after {
+	content: "</dialog>";
+}
+*[data-debug] dir::before {
+	content: "<dir>";
+}
+*[data-debug] dir::after {
+	content: "</dir>";
+}
+*[data-debug] div::before {
+	content: "<div>";
+}
+*[data-debug] div::after {
+	content: "</div>";
+}
+*[data-debug] dl::before {
+	content: "<dl>";
+}
+*[data-debug] dl::after {
+	content: "</dl>";
+}
+*[data-debug] dt::before {
+	content: "<dt>";
+}
+*[data-debug] dt::after {
+	content: "</dt>";
+}
+*[data-debug] element::before {
+	content: "<element>";
+}
+*[data-debug] element::after {
+	content: "</element>";
+}
+*[data-debug] em::before {
+	content: "<em>";
+}
+*[data-debug] em::after {
+	content: "</em>";
+}
+*[data-debug] embed::before {
+	content: "<embed>";
+}
+*[data-debug] embed::after {
+	content: "</embed>";
+}
+*[data-debug] fieldset::before {
+	content: "<fieldset>";
+}
+*[data-debug] fieldset::after {
+	content: "</fieldset>";
+}
+*[data-debug] figcaption::before {
+	content: "<figcaption>";
+}
+*[data-debug] figcaption::after {
+	content: "</figcaption>";
+}
+*[data-debug] figure::before {
+	content: "<figure>";
+}
+*[data-debug] figure::after {
+	content: "</figure>";
+}
+*[data-debug] font::before {
+	content: "<font>";
+}
+*[data-debug] font::after {
+	content: "</font>";
+}
+*[data-debug] footer::before {
+	content: "<footer>";
+}
+*[data-debug] footer::after {
+	content: "</footer>";
+}
+*[data-debug] form::before {
+	content: "<form>";
+}
+*[data-debug] form::after {
+	content: "</form>";
+}
+*[data-debug] frame::before {
+	content: "<frame>";
+}
+*[data-debug] frame::after {
+	content: "</frame>";
+}
+*[data-debug] frameset::before {
+	content: "<frameset>";
+}
+*[data-debug] frameset::after {
+	content: "</frameset>";
+}
+*[data-debug] h1::before {
+	content: "<h1>";
+}
+*[data-debug] h1::after {
+	content: "</h1>";
+}
+*[data-debug] h2::before {
+	content: "<h2>";
+}
+*[data-debug] h2::after {
+	content: "</h2>";
+}
+*[data-debug] h3::before {
+	content: "<h3>";
+}
+*[data-debug] h3::after {
+	content: "</h3>";
+}
+*[data-debug] h4::before {
+	content: "<h4>";
+}
+*[data-debug] h4::after {
+	content: "</h4>";
+}
+*[data-debug] h5::before {
+	content: "<h5>";
+}
+*[data-debug] h5::after {
+	content: "</h5>";
+}
+*[data-debug] h6::before {
+	content: "<h6>";
+}
+*[data-debug] h6::after {
+	content: "</h6>";
+}
+*[data-debug] head::before {
+	content: "<head>";
+}
+*[data-debug] head::after {
+	content: "</head>";
+}
+*[data-debug] header::before {
+	content: "<header>";
+}
+*[data-debug] header::after {
+	content: "</header>";
+}
+*[data-debug] hgroup::before {
+	content: "<hgroup>";
+}
+*[data-debug] hgroup::after {
+	content: "</hgroup>";
+}
+*[data-debug] hr::before {
+	content: "<hr>";
+}
+*[data-debug] hr::after {
+	content: "</hr>";
+}
+*[data-debug] html::before {
+	content: "<html>";
+}
+*[data-debug] html::after {
+	content: "</html>";
+}
+*[data-debug] i::before {
+	content: "<i>";
+}
+*[data-debug] i::after {
+	content: "</i>";
+}
+*[data-debug] iframe::before {
+	content: "<iframe>";
+}
+*[data-debug] iframe::after {
+	content: "</iframe>";
+}
+*[data-debug] image::before {
+	content: "<image>";
+}
+*[data-debug] image::after {
+	content: "</image>";
+}
+*[data-debug] img::before {
+	content: "<img>";
+}
+*[data-debug] img::after {
+	content: "</img>";
+}
+*[data-debug] input::before {
+	content: "<input>";
+}
+*[data-debug] input::after {
+	content: "</input>";
+}
+*[data-debug] ins::before {
+	content: "<ins>";
+}
+*[data-debug] ins::after {
+	content: "</ins>";
+}
+*[data-debug] isindex::before {
+	content: "<isindex>";
+}
+*[data-debug] isindex::after {
+	content: "</isindex>";
+}
+*[data-debug] kbd::before {
+	content: "<kbd>";
+}
+*[data-debug] kbd::after {
+	content: "</kbd>";
+}
+*[data-debug] keygen::before {
+	content: "<keygen>";
+}
+*[data-debug] keygen::after {
+	content: "</keygen>";
+}
+*[data-debug] label::before {
+	content: "<label>";
+}
+*[data-debug] label::after {
+	content: "</label>";
+}
+*[data-debug] legend::before {
+	content: "<legend>";
+}
+*[data-debug] legend::after {
+	content: "</legend>";
+}
+*[data-debug] li::before {
+	content: "<li>";
+}
+*[data-debug] li::after {
+	content: "</li>";
+}
+*[data-debug] link::before {
+	content: "<link>";
+}
+*[data-debug] link::after {
+	content: "</link>";
+}
+*[data-debug] listing::before {
+	content: "<listing>";
+}
+*[data-debug] listing::after {
+	content: "</listing>";
+}
+*[data-debug] main::before {
+	content: "<main>";
+}
+*[data-debug] main::after {
+	content: "</main>";
+}
+*[data-debug] map::before {
+	content: "<map>";
+}
+*[data-debug] map::after {
+	content: "</map>";
+}
+*[data-debug] mark::before {
+	content: "<mark>";
+}
+*[data-debug] mark::after {
+	content: "</mark>";
+}
+*[data-debug] marquee::before {
+	content: "<marquee>";
+}
+*[data-debug] marquee::after {
+	content: "</marquee>";
+}
+*[data-debug] math::before {
+	content: "<math>";
+}
+*[data-debug] math::after {
+	content: "</math>";
+}
+*[data-debug] menu::before {
+	content: "<menu>";
+}
+*[data-debug] menu::after {
+	content: "</menu>";
+}
+*[data-debug] menuitem::before {
+	content: "<menuitem>";
+}
+*[data-debug] menuitem::after {
+	content: "</menuitem>";
+}
+*[data-debug] meta::before {
+	content: "<meta>";
+}
+*[data-debug] meta::after {
+	content: "</meta>";
+}
+*[data-debug] meter::before {
+	content: "<meter>";
+}
+*[data-debug] meter::after {
+	content: "</meter>";
+}
+*[data-debug] multicol::before {
+	content: "<multicol>";
+}
+*[data-debug] multicol::after {
+	content: "</multicol>";
+}
+*[data-debug] nav::before {
+	content: "<nav>";
+}
+*[data-debug] nav::after {
+	content: "</nav>";
+}
+*[data-debug] nextid::before {
+	content: "<nextid>";
+}
+*[data-debug] nextid::after {
+	content: "</nextid>";
+}
+*[data-debug] nobr::before {
+	content: "<nobr>";
+}
+*[data-debug] nobr::after {
+	content: "</nobr>";
+}
+*[data-debug] noembed::before {
+	content: "<noembed>";
+}
+*[data-debug] noembed::after {
+	content: "</noembed>";
+}
+*[data-debug] noframes::before {
+	content: "<noframes>";
+}
+*[data-debug] noframes::after {
+	content: "</noframes>";
+}
+*[data-debug] noscript::before {
+	content: "<noscript>";
+}
+*[data-debug] noscript::after {
+	content: "</noscript>";
+}
+*[data-debug] object::before {
+	content: "<object>";
+}
+*[data-debug] object::after {
+	content: "</object>";
+}
+*[data-debug] ol::before {
+	content: "<ol>";
+}
+*[data-debug] ol::after {
+	content: "</ol>";
+}
+*[data-debug] optgroup::before {
+	content: "<optgroup>";
+}
+*[data-debug] optgroup::after {
+	content: "</optgroup>";
+}
+*[data-debug] option::before {
+	content: "<option>";
+}
+*[data-debug] option::after {
+	content: "</option>";
+}
+*[data-debug] output::before {
+	content: "<output>";
+}
+*[data-debug] output::after {
+	content: "</output>";
+}
+*[data-debug] p::before {
+	content: "<p>";
+}
+*[data-debug] p::after {
+	content: "</p>";
+}
+*[data-debug] param::before {
+	content: "<param>";
+}
+*[data-debug] param::after {
+	content: "</param>";
+}
+*[data-debug] picture::before {
+	content: "<picture>";
+}
+*[data-debug] picture::after {
+	content: "</picture>";
+}
+*[data-debug] plaintext::before {
+	content: "<plaintext>";
+}
+*[data-debug] plaintext::after {
+	content: "</plaintext>";
+}
+*[data-debug] pre::before {
+	content: "<pre>";
+}
+*[data-debug] pre::after {
+	content: "</pre>";
+}
+*[data-debug] progress::before {
+	content: "<progress>";
+}
+*[data-debug] progress::after {
+	content: "</progress>";
+}
+*[data-debug] q::before {
+	content: "<q>";
+}
+*[data-debug] q::after {
+	content: "</q>";
+}
+*[data-debug] rb::before {
+	content: "<rb>";
+}
+*[data-debug] rb::after {
+	content: "</rb>";
+}
+*[data-debug] rbc::before {
+	content: "<rbc>";
+}
+*[data-debug] rbc::after {
+	content: "</rbc>";
+}
+*[data-debug] rp::before {
+	content: "<rp>";
+}
+*[data-debug] rp::after {
+	content: "</rp>";
+}
+*[data-debug] rt::before {
+	content: "<rt>";
+}
+*[data-debug] rt::after {
+	content: "</rt>";
+}
+*[data-debug] rtc::before {
+	content: "<rtc>";
+}
+*[data-debug] rtc::after {
+	content: "</rtc>";
+}
+*[data-debug] ruby::before {
+	content: "<ruby>";
+}
+*[data-debug] ruby::after {
+	content: "</ruby>";
+}
+*[data-debug] s::before {
+	content: "<s>";
+}
+*[data-debug] s::after {
+	content: "</s>";
+}
+*[data-debug] samp::before {
+	content: "<samp>";
+}
+*[data-debug] samp::after {
+	content: "</samp>";
+}
+*[data-debug] script::before {
+	content: "<script>";
+}
+*[data-debug] script::after {
+	content: "</script>";
+}
+*[data-debug] section::before {
+	content: "<section>";
+}
+*[data-debug] section::after {
+	content: "</section>";
+}
+*[data-debug] select::before {
+	content: "<select>";
+}
+*[data-debug] select::after {
+	content: "</select>";
+}
+*[data-debug] shadow::before {
+	content: "<shadow>";
+}
+*[data-debug] shadow::after {
+	content: "</shadow>";
+}
+*[data-debug] slot::before {
+	content: "<slot>";
+}
+*[data-debug] slot::after {
+	content: "</slot>";
+}
+*[data-debug] small::before {
+	content: "<small>";
+}
+*[data-debug] small::after {
+	content: "</small>";
+}
+*[data-debug] source::before {
+	content: "<source>";
+}
+*[data-debug] source::after {
+	content: "</source>";
+}
+*[data-debug] spacer::before {
+	content: "<spacer>";
+}
+*[data-debug] spacer::after {
+	content: "</spacer>";
+}
+*[data-debug] span::before {
+	content: "<span>";
+}
+*[data-debug] span::after {
+	content: "</span>";
+}
+*[data-debug] strike::before {
+	content: "<strike>";
+}
+*[data-debug] strike::after {
+	content: "</strike>";
+}
+*[data-debug] strong::before {
+	content: "<strong>";
+}
+*[data-debug] strong::after {
+	content: "</strong>";
+}
+*[data-debug] style::before {
+	content: "<style>";
+}
+*[data-debug] style::after {
+	content: "</style>";
+}
+*[data-debug] sub::before {
+	content: "<sub>";
+}
+*[data-debug] sub::after {
+	content: "</sub>";
+}
+*[data-debug] summary::before {
+	content: "<summary>";
+}
+*[data-debug] summary::after {
+	content: "</summary>";
+}
+*[data-debug] sup::before {
+	content: "<sup>";
+}
+*[data-debug] sup::after {
+	content: "</sup>";
+}
+*[data-debug] svg::before {
+	content: "<svg>";
+}
+*[data-debug] svg::after {
+	content: "</svg>";
+}
+*[data-debug] table::before {
+	content: "<table>";
+}
+*[data-debug] table::after {
+	content: "</table>";
+}
+*[data-debug] tbody::before {
+	content: "<tbody>";
+}
+*[data-debug] tbody::after {
+	content: "</tbody>";
+}
+*[data-debug] td::before {
+	content: "<td>";
+}
+*[data-debug] td::after {
+	content: "</td>";
+}
+*[data-debug] template::before {
+	content: "<template>";
+}
+*[data-debug] template::after {
+	content: "</template>";
+}
+*[data-debug] textarea::before {
+	content: "<textarea>";
+}
+*[data-debug] textarea::after {
+	content: "</textarea>";
+}
+*[data-debug] tfoot::before {
+	content: "<tfoot>";
+}
+*[data-debug] tfoot::after {
+	content: "</tfoot>";
+}
+*[data-debug] th::before {
+	content: "<th>";
+}
+*[data-debug] th::after {
+	content: "</th>";
+}
+*[data-debug] thead::before {
+	content: "<thead>";
+}
+*[data-debug] thead::after {
+	content: "</thead>";
+}
+*[data-debug] time::before {
+	content: "<time>";
+}
+*[data-debug] time::after {
+	content: "</time>";
+}
+*[data-debug] title::before {
+	content: "<title>";
+}
+*[data-debug] title::after {
+	content: "</title>";
+}
+*[data-debug] tr::before {
+	content: "<tr>";
+}
+*[data-debug] tr::after {
+	content: "</tr>";
+}
+*[data-debug] track::before {
+	content: "<track>";
+}
+*[data-debug] track::after {
+	content: "</track>";
+}
+*[data-debug] tt::before {
+	content: "<tt>";
+}
+*[data-debug] tt::after {
+	content: "</tt>";
+}
+*[data-debug] u::before {
+	content: "<u>";
+}
+*[data-debug] u::after {
+	content: "</u>";
+}
+*[data-debug] ul::before {
+	content: "<ul>";
+}
+*[data-debug] ul::after {
+	content: "</ul>";
+}
+*[data-debug] var::before {
+	content: "<var>";
+}
+*[data-debug] var::after {
+	content: "</var>";
+}
+*[data-debug] video::before {
+	content: "<video>";
+}
+*[data-debug] video::after {
+	content: "</video>";
+}
+*[data-debug] wbr::before {
+	content: "<wbr>";
+}
+*[data-debug] wbr::after {
+	content: "</wbr>";
+}
+*[data-debug] xmp::before {
+	content: "<xmp>";
+}
+*[data-debug] xmp::after {
+	content: "</xmp>";
+}

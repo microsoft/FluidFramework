@@ -78,6 +78,8 @@ variables:
   # skip injected CG detection as we manually trigger it in a parallel job
   - name: skipComponentGovernanceDetection
     value: true
+  - name: pnpmStorePath
+    value: $(Pipeline.Workspace)/.pnpm-store
 
 # no PR triggers
 trigger:
@@ -137,6 +139,7 @@ stages:
             echo repoToTrigger ${{ variables.repoToTrigger }}
             echo shouldDeploy ${{ variables.shouldDeploy }}
             echo shouldRetainGuardianAssets ${{ variables.shouldRetainGuardianAssets }}
+            echo publishGuardianBaselines ${{ variables.publishGuardianBaselines }}
           displayName: Show Variables
 
     - job: component_detection
@@ -184,28 +187,43 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - task: UseNode@1
-          displayName: 'Use Node 14.x'
+          displayName: 'Use Node 16.x'
           inputs:
-            version: 14.x
+            version: 16.x
 
-        - task: Npm@1
-          displayName: npm ci
+        - task: Cache@2
+          displayName: Cache pnpm store
           inputs:
-            command: 'custom'
-            workingDir: '$(Build.SourcesDirectory)/docs'
-            customCommand: 'ci'
+            key: '"pnpm-store" | "$(Agent.OS)" | $(Build.SourcesDirectory)/docs/pnpm-lock.yaml'
+            path: ${{ variables.pnpmStorePath }}
+
+        - task: Bash@3
+          displayName: Install and configure pnpm
+          inputs:
+            targetType: 'inline'
+            script: |
+              npm i -g pnpm
+              pnpm config set store-dir $(pnpmStorePath)
+
+        - task: Bash@3
+          displayName: Install dependencies
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)/docs
+            script: |
+              pnpm i --frozen-lockfile
 
         - task: Npm@1
           displayName: npm run build
           inputs:
             command: 'custom'
-            workingDir: '$(Build.SourcesDirectory)/docs'
+            workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: '$(Build.SourcesDirectory)/docs/public'
+            BuildDropPath: $(Build.SourcesDirectory)/docs/public
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
@@ -230,9 +248,9 @@ stages:
           clean: true
 
         - task: UseNode@1
-          displayName: 'Use Node 14.x'
+          displayName: 'Use Node 16.x'
           inputs:
-            version: 14.x
+            version: 16.x
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'
@@ -272,13 +290,13 @@ stages:
             GdnBreakGdnToolESLint: true
             GdnBreakGdnToolESLintSeverity: Warning
             GdnBreakPolicy: M365
-            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)\'
+            GdnBreakOutputBaselineFile: '$(Build.ArtifactStagingDirectory)/'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish Baselines'
           condition: eq('${{ parameters.publishGuardianBaselines }}', 'true')
           inputs:
-            targetPath: '$(Build.ArtifactStagingDirectory)\.gdnbaselines'
+            targetPath: '$(Build.ArtifactStagingDirectory)/.gdnbaselines'
             artifactName: .gdn
 # END Secure development tasks
 

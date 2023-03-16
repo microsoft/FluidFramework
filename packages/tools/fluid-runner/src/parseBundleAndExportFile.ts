@@ -21,60 +21,68 @@ const clientArgsValidationError = "Client_ArgsValidationError";
  * @param codeLoader - path to provided JS bundle that implements ICodeLoaderBundle (see codeLoaderBundle.ts)
  */
 export async function parseBundleAndExportFile(
-    codeLoader: string,
-    inputFile: string,
-    outputFile: string,
-    telemetryFile: string,
-    options?: string,
-    telemetryOptions?: ITelemetryOptions,
+	codeLoader: string,
+	inputFile: string,
+	outputFile: string,
+	telemetryFile: string,
+	options?: string,
+	telemetryOptions?: ITelemetryOptions,
 ): Promise<IExportFileResponse> {
-    const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
-    if (telemetryArgError) {
-        const eventName = clientArgsValidationError;
-        return { success: false, eventName, errorMessage: telemetryArgError };
-    }
-    const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
+	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
+	if (telemetryArgError) {
+		const eventName = clientArgsValidationError;
+		return { success: false, eventName, errorMessage: telemetryArgError };
+	}
+	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
 
-    try {
-        return await PerformanceEvent.timedExecAsync(logger, { eventName: "ParseBundleAndExportFile" }, async () => {
-            // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
-            const codeLoaderBundle = require(codeLoader);
-            if (!isCodeLoaderBundle(codeLoaderBundle)) {
-                const eventName = clientArgsValidationError;
-                const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
-                logger.sendErrorEvent({ eventName, message: errorMessage });
-                return { success: false, eventName, errorMessage };
-            }
+	try {
+		return await PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "ParseBundleAndExportFile" },
+			async () => {
+				// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+				const codeLoaderBundle = require(codeLoader);
+				if (!isCodeLoaderBundle(codeLoaderBundle)) {
+					const eventName = clientArgsValidationError;
+					const errorMessage = "Code loader bundle is not of type ICodeLoaderBundle";
+					logger.sendErrorEvent({ eventName, message: errorMessage });
+					return { success: false, eventName, errorMessage };
+				}
 
-            const fluidExport = await codeLoaderBundle.fluidExport;
-            if (!isFluidFileConverter(fluidExport)) {
-                const eventName = clientArgsValidationError;
-                const errorMessage = "Fluid export from CodeLoaderBundle is not of type IFluidFileConverter";
-                logger.sendErrorEvent({ eventName, message: errorMessage });
-                return { success: false, eventName, errorMessage };
-            }
+				const fluidExport = await codeLoaderBundle.fluidExport;
+				if (!isFluidFileConverter(fluidExport)) {
+					const eventName = clientArgsValidationError;
+					const errorMessage =
+						"Fluid export from CodeLoaderBundle is not of type IFluidFileConverter";
+					logger.sendErrorEvent({ eventName, message: errorMessage });
+					return { success: false, eventName, errorMessage };
+				}
 
-            const argsValidationError = getArgsValidationError(inputFile, outputFile);
-            if (argsValidationError) {
-                const eventName = clientArgsValidationError;
-                logger.sendErrorEvent({ eventName, message: argsValidationError });
-                return { success: false, eventName, errorMessage: argsValidationError };
-            }
+				const argsValidationError = getArgsValidationError(inputFile, outputFile);
+				if (argsValidationError) {
+					const eventName = clientArgsValidationError;
+					logger.sendErrorEvent({ eventName, message: argsValidationError });
+					return { success: false, eventName, errorMessage: argsValidationError };
+				}
 
-            fs.writeFileSync(outputFile, await createContainerAndExecute(
-                getSnapshotFileContent(inputFile),
-                fluidExport,
-                logger,
-                options,
-            ));
+				fs.writeFileSync(
+					outputFile,
+					await createContainerAndExecute(
+						getSnapshotFileContent(inputFile),
+						fluidExport,
+						logger,
+						options,
+					),
+				);
 
-            return { success: true };
-        });
-    } catch (error) {
-        const eventName = "Client_UnexpectedError";
-        logger.sendErrorEvent({ eventName }, error);
-        return { success: false, eventName, errorMessage: "Unexpected error", error };
-    } finally {
-        await fileLogger.close();
-    }
+				return { success: true };
+			},
+		);
+	} catch (error) {
+		const eventName = "Client_UnexpectedError";
+		logger.sendErrorEvent({ eventName }, error);
+		return { success: false, eventName, errorMessage: "Unexpected error", error };
+	} finally {
+		await fileLogger.close();
+	}
 }

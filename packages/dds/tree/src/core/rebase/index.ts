@@ -4,22 +4,30 @@
  */
 
 export {
-    ChangeRebaser,
-    ChangesetFromChangeRebaser,
-    FinalChange,
-    FinalChangeStatus,
-    makeAnonChange,
-    Rebaser,
-    RevisionTag,
-    tagChange,
-    tagInverse,
-    TaggedChange,
-} from "./rebaser";
+	assertIsRevisionTag,
+	mintRevisionTag,
+	isRevisionTag,
+	mintCommit,
+	GraphCommit,
+	RevisionTag,
+	SessionId,
+} from "./types";
 export {
-    Exception,
-    Failure,
-    noFailure,
-    OutputType,
-    verifyChangeRebaser,
-    Violation,
+	ChangeRebaser,
+	FinalChange,
+	FinalChangeStatus,
+	makeAnonChange,
+	tagChange,
+	tagRollbackInverse,
+	TaggedChange,
+} from "./changeRebaser";
+export {
+	Exception,
+	Failure,
+	noFailure,
+	OutputType,
+	verifyChangeRebaser,
+	Violation,
 } from "./verifyChangeRebaser";
+export { Rebaser } from "./rebaser";
+export { findAncestor, findCommonAncestor } from "./utils";

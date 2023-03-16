@@ -5,24 +5,25 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { Serializable } from "@fluidframework/datastore-definitions";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 
 /**
  * Events emitted by {@link ISharedCell}.
  */
 export interface ISharedCellEvents<T> extends ISharedObjectEvents {
-    /**
-     * Emitted when the value has changed.
-     *
-     * @remarks Event paramters:
-     *
-     * - `value`: The new value of the cell.
-     */
-    (event: "valueChanged", listener: (value: Serializable<T>) => void);
+	/**
+	 * Emitted when the value has changed.
+	 *
+	 * @remarks Event paramters:
+	 *
+	 * - `value`: The new value of the cell.
+	 */
+	(event: "valueChanged", listener: (value: Serializable<T>) => void);
 
-    /**
-     * Emitted when the value has been deleted.
-     */
-    (event: "delete", listener: () => void);
+	/**
+	 * Emitted when the value has been deleted.
+	 */
+	(event: "delete", listener: () => void);
 }
 
 /**
@@ -76,31 +77,37 @@ export interface ISharedCellEvents<T> extends ISharedObjectEvents {
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>> {
-    /**
-     * Retrieves the cell value.
-     *
-     * @returns - the value of the cell
-     */
-    get(): Serializable<T> | undefined;
+	/**
+	 * Retrieves the cell value.
+	 *
+	 * @returns - the value of the cell
+	 */
+	get(): Serializable<T> | undefined;
 
-    /**
-     * Sets the cell value.
-     *
-     * @param value - a JSON-able or SharedObject value to set the cell to
-     */
-    set(value: Serializable<T>): void;
+	/**
+	 * Sets the cell value.
+	 *
+	 * @param value - a JSON-able or SharedObject value to set the cell to
+	 */
+	set(value: Serializable<T>): void;
 
-    /**
-     * Checks whether cell is empty or not.
-     *
-     * @returns - `true` if the value of cell is `undefined`, `false` otherwise
-     */
-    empty(): boolean;
+	/**
+	 * Checks whether cell is empty or not.
+	 *
+	 * @returns - `true` if the value of cell is `undefined`, `false` otherwise
+	 */
+	empty(): boolean;
 
-    /**
-     * Delete the value from the cell.
-     */
-    delete(): void;
+	/**
+	 * Delete the value from the cell.
+	 */
+	delete(): void;
+
+	/**
+	 * @alpha
+	 * @returns the AttributionKey associated with the cell's most recent change.
+	 */
+	getAttribution(): AttributionKey | undefined;
 }
 
 /**
@@ -109,13 +116,34 @@ export interface ISharedCell<T = any> extends ISharedObject<ISharedCellEvents<T>
 // TODO: use `unknown` instead.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface ICellLocalOpMetadata<T = any> {
-    /**
-     * Unique identifier for this local operation (op).
-     */
-    pendingMessageId: number;
+	/**
+	 * Unique identifier for this local operation (op).
+	 */
+	pendingMessageId: number;
 
-    /**
-     * The value of the {@link ISharedCell} prior to this operation (op).
-     */
-    previousValue?: Serializable<T> ;
+	/**
+	 * The value of the {@link ISharedCell} prior to this operation (op).
+	 */
+	previousValue?: Serializable<T>;
+}
+
+/**
+ * Options related to attribution
+ *
+ * @alpha
+ */
+export interface ICellOptions {
+	attribution?: ICellAttributionOptions;
+}
+
+/**
+ * This enables the cell to store the attribution information which can be accessed with the runtime
+ * (i.e. who creeated the content and when it was created)
+ *
+ * default: false
+ *
+ * @alpha
+ */
+export interface ICellAttributionOptions {
+	track?: boolean;
 }

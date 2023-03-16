@@ -74,13 +74,19 @@ versions of Node.js side-by-side.
 Because of a transitive dependency on a native addon module, you'll also need to ensure that you have the prerequisites for `node-gyp`. Depending on your operating system, you'll have slightly different installation requirements (these are largely copied from `node-gyp`'s [documentation](https://github.com/nodejs/node-gyp#readme)):
 
 ### On Windows
+
 The node installer should ask if you want to install "Tools for Native Modules." If you check the box for this nothing further should be needed. Otherwise, you can follow the steps listed [here](https://github.com/Microsoft/nodejs-guidelines/blob/master/windows-environment.md#prerequisites)
+
 ### On Unix
+
 1. Python v3.7, v3.8, v3.9, or v3.10
 2. `make`
 3. A C/C++ toolchain (like [GCC](https://gcc.gnu.org/))
+
 ### On MacOS
-If you've *upgraded* your Mac to Catalina or higher, you may need to follow [these](https://github.com/nodejs/node-gyp/blob/main/macOS_Catalina.md) instructions.
+
+If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [these](https://github.com/nodejs/node-gyp/blob/main/macOS_Catalina.md) instructions.
+
 1. Python v3.7, v3.8, v3.9, or v3.10
 2. `XCode Command Line Tools`, which will install `make`, `clang`, and `clang++`
     - You can install these by running `xcode-select --install` from a command line.
@@ -95,7 +101,8 @@ cd FluidFramework
 Run the following to build the client packages:
 
 ```shell
-npm install
+npm i -g pnpm
+pnpm install
 npm run build:fast
 ```
 
@@ -184,6 +191,51 @@ Then:
 -   Navigate to the example of your choice (same as above)
 -   `npm run start:tinylicious`
 -   Browse to <http://localhost:8080,> copy the full URL you're redirected to, and open in a second window to collaborate
+
+## Tools
+
+### Prettier
+
+This repository uses [prettier](https://prettier.io/) as its code formatter.
+Right now, this is implemented on a per-package basis, with a [shared base configuration](./common/build/build-common/prettier.config.cjs).
+
+-   To run `prettier` on your code, run `npm run format` from the appropriate package or release group, or run
+    `npm run format:changed` from the root of the repo to format only files changed since the main branch.
+    If your change is for the next branch instead, you can run `npm run format:changed:next`.
+-   To run `prettier` with [fluid-build](./build-tools/packages/build-tools/README.md), you can specify "format" via the
+    script argument: `fluid-build -s format` or `npm run build:fast -- -s format`
+
+To ensure our formatting remains consistent, we run a formatting check as a part of each package's `lint` script.
+
+#### VSCode Options
+
+Our [workspace configuration](./.vscode/settings.json) specifies `prettier` as the default formatter.
+Please do not change this.
+
+It is not configured to do any formatting automatically, however.
+This is intentional, to ensure that each developer can work formatting into their workflow as they see fit.
+If you wish to configure your setup to format on save/paste/etc., please feel free to update your [user preferences](https://code.visualstudio.com/docs/getstarted/settings) to do so.
+
+Notable setting options:
+
+-   `format on save`
+-   `format on paste`
+
+<img src="https://user-images.githubusercontent.com/54606601/217620203-0cb07007-0aaa-4e57-bc83-973ed4a3f2d7.png" alt="User editor formatting setting options" style="height:400px;"/>
+
+### Git Configuration
+
+Run the following command in each of your repositories to ignore formatting changes in git blame commands: `git config --local blame.ignoreRevsFile .git-blame-ignore-revs`
+
+## Developer notes
+
+### Root dependencies
+
+The root package.json in the repo includes devDependencies on the mocha and jest testing tools. This is to enable easier
+test running and debugging using VSCode. However, this makes it possible for projects to have a 'phantom dependency' on
+these tools. That is, because mocha/jest is always available in the root, projects in the repo will be able to find
+mocha/jest even if they don't express a dependency on those packages in their package.json. We have lint rules in place
+to prevent phantom dependencies from being introduced but they're not foolproof.
 
 ## Contributing
 

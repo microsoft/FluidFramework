@@ -28,8 +28,8 @@ Our recommended approach is to add this to the plugin section of your webpack co
 
 ```javascript
 new BundleComparisonPlugin({
-    // File to create, relative to the webpack build output path:
-    file: resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
+	// File to create, relative to the webpack build output path:
+	file: resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
 });
 ```
 
@@ -43,8 +43,8 @@ Bundle-size-tool's comparisons are implemented using `WebpackStatsProcessors`, w
 
 ```typescript
 export type WebpackStatsProcessor = (
-    stats: Webpack.StatsCompilation,
-    config: BundleBuddyConfig | undefined,
+	stats: Webpack.StatsCompilation,
+	config: BundleBuddyConfig | undefined,
 ) => BundleMetricSet | undefined;
 ```
 
@@ -54,7 +54,7 @@ A `WebpackStatsProcessor` takes a webpack stats object in as input and outputs a
 export type BundleMetricSet = Map<string, BundleMetric>;
 
 export interface BundleMetric {
-    parsedSize: number;
+	parsedSize: number;
 }
 ```
 

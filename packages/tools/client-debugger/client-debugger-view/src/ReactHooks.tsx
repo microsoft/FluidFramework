@@ -18,24 +18,24 @@ import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
  * @internal
  */
 export function useMyClientId(clientDebugger: IFluidClientDebugger): string | undefined {
-    const { container } = clientDebugger;
-    const [myClientId, setMyClientId] = React.useState<string | undefined>(container.clientId);
+	const { container } = clientDebugger;
+	const [myClientId, setMyClientId] = React.useState<string | undefined>(container.clientId);
 
-    React.useEffect(() => {
-        function onContainerConnectionChange(): void {
-            setMyClientId(container.clientId);
-        }
+	React.useEffect(() => {
+		function onContainerConnectionChange(): void {
+			setMyClientId(container.clientId);
+		}
 
-        container.on("connected", onContainerConnectionChange);
-        container.on("disconnected", onContainerConnectionChange);
+		container.on("connected", onContainerConnectionChange);
+		container.on("disconnected", onContainerConnectionChange);
 
-        return (): void => {
-            container.off("connected", onContainerConnectionChange);
-            container.off("disconnected", onContainerConnectionChange);
-        };
-    }, [container, setMyClientId]);
+		return (): void => {
+			container.off("connected", onContainerConnectionChange);
+			container.off("disconnected", onContainerConnectionChange);
+		};
+	}, [container, setMyClientId]);
 
-    return myClientId;
+	return myClientId;
 }
 
 /**
@@ -44,26 +44,26 @@ export function useMyClientId(clientDebugger: IFluidClientDebugger): string | un
  * @internal
  */
 export function useAudience(clientDebugger: IFluidClientDebugger): Map<string, IClient> {
-    const { audience } = clientDebugger;
-    const [audienceData, setAudienceData] = React.useState<Map<string, IClient>>(
-        audience.getMembers(),
-    );
+	const { audience } = clientDebugger;
+	const [audienceData, setAudienceData] = React.useState<Map<string, IClient>>(
+		audience.getMembers(),
+	);
 
-    React.useEffect(() => {
-        function onAudienceMemberChange(): void {
-            setAudienceData(audience.getMembers());
-        }
+	React.useEffect(() => {
+		function onAudienceMemberChange(): void {
+			setAudienceData(audience.getMembers());
+		}
 
-        audience.on("addMember", onAudienceMemberChange);
-        audience.on("removeMember", onAudienceMemberChange);
+		audience.on("addMember", onAudienceMemberChange);
+		audience.on("removeMember", onAudienceMemberChange);
 
-        return (): void => {
-            audience.off("addMember", onAudienceMemberChange);
-            audience.off("removeMember", onAudienceMemberChange);
-        };
-    }, [audience, setAudienceData]);
+		return (): void => {
+			audience.off("addMember", onAudienceMemberChange);
+			audience.off("removeMember", onAudienceMemberChange);
+		};
+	}, [audience, setAudienceData]);
 
-    return audienceData;
+	return audienceData;
 }
 
 /**
@@ -72,8 +72,8 @@ export function useAudience(clientDebugger: IFluidClientDebugger): Map<string, I
  * @internal
  */
 export function useMyClientConnection(clientDebugger: IFluidClientDebugger): IClient | undefined {
-    const myClientId = useMyClientId(clientDebugger);
-    const audience = useAudience(clientDebugger);
+	const myClientId = useMyClientId(clientDebugger);
+	const audience = useAudience(clientDebugger);
 
-    return myClientId === undefined ? undefined : audience.get(myClientId);
+	return myClientId === undefined ? undefined : audience.get(myClientId);
 }

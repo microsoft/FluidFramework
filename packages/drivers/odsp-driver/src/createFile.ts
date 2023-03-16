@@ -9,39 +9,41 @@ import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import {
-    InstrumentedStorageTokenFetcher,
-    IOdspResolvedUrl,
-    OdspErrorType,
-    ShareLinkInfoType,
-    ISharingLinkKind,
-    ShareLinkTypes,
-    IFileEntry,
+	InstrumentedStorageTokenFetcher,
+	IOdspResolvedUrl,
+	OdspErrorType,
+	ShareLinkInfoType,
+	ISharingLinkKind,
+	ShareLinkTypes,
+	IFileEntry,
 } from "@fluidframework/odsp-driver-definitions";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import {
-    ICreateFileResponse,
-} from "./contracts";
+import { ICreateFileResponse } from "./contracts";
 import { getUrlAndHeadersWithAuth } from "./getUrlAndHeadersWithAuth";
 import {
-    buildOdspShareLinkReqParams,
-    createCacheSnapshotKey,
-    getWithRetryForTokenRefresh,
-    INewFileInfo,
-    getOrigin
+	buildOdspShareLinkReqParams,
+	createCacheSnapshotKey,
+	getWithRetryForTokenRefresh,
+	INewFileInfo,
+	getOrigin,
 } from "./odspUtils";
 import { ISnapshotContents } from "./odspPublicUtils";
 import { createOdspUrl } from "./createOdspUrl";
 import { getApiRoot } from "./odspUrlHelper";
 import { EpochTracker } from "./epochTracker";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver";
-import { convertCreateNewSummaryTreeToTreeAndBlobs, convertSummaryIntoContainerSnapshot, createNewFluidContainerCore } from "./createNewUtils";
+import {
+	convertCreateNewSummaryTreeToTreeAndBlobs,
+	convertSummaryIntoContainerSnapshot,
+	createNewFluidContainerCore,
+} from "./createNewUtils";
 import { runWithRetry } from "./retryUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ClpCompliantAppHeader } from "./contractsPublic";
 
 const isInvalidFileName = (fileName: string): boolean => {
-    const invalidCharsRegex = /["*/:<>?\\|]+/g;
-    return !!fileName.match(invalidCharsRegex);
+	const invalidCharsRegex = /["*/:<>?\\|]+/g;
+	return !!fileName.match(invalidCharsRegex);
 };
 
 /**
@@ -49,69 +51,81 @@ const isInvalidFileName = (fileName: string): boolean => {
  * Returns resolved url
  */
 export async function createNewFluidFile(
-    getStorageToken: InstrumentedStorageTokenFetcher,
-    newFileInfo: INewFileInfo,
-    logger: ITelemetryLogger,
-    createNewSummary: ISummaryTree | undefined,
-    epochTracker: EpochTracker,
-    fileEntry: IFileEntry,
-    createNewCaching: boolean,
-    forceAccessTokenViaAuthorizationHeader: boolean,
-    isClpCompliantApp?: boolean,
-    enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean
+	getStorageToken: InstrumentedStorageTokenFetcher,
+	newFileInfo: INewFileInfo,
+	logger: ITelemetryLogger,
+	createNewSummary: ISummaryTree | undefined,
+	epochTracker: EpochTracker,
+	fileEntry: IFileEntry,
+	createNewCaching: boolean,
+	forceAccessTokenViaAuthorizationHeader: boolean,
+	isClpCompliantApp?: boolean,
+	enableSingleRequestForShareLinkWithCreate?: boolean,
+	enableShareLinkWithCreate?: boolean,
 ): Promise<IOdspResolvedUrl> {
-    // Check for valid filename before the request to create file is actually made.
-    if (isInvalidFileName(newFileInfo.filename)) {
-        throw new NonRetryableError(
-            // pre-0.58 error message: Invalid filename
-            "Invalid filename for createNew", OdspErrorType.invalidFileNameError, { driverVersion });
-    }
+	// Check for valid filename before the request to create file is actually made.
+	if (isInvalidFileName(newFileInfo.filename)) {
+		throw new NonRetryableError(
+			// pre-0.58 error message: Invalid filename
+			"Invalid filename for createNew",
+			OdspErrorType.invalidFileNameError,
+			{ driverVersion },
+		);
+	}
 
-    let itemId: string;
-    let summaryHandle: string = "";
-    let shareLinkInfo: ShareLinkInfoType | undefined;
-    if (createNewSummary === undefined) {
-        itemId = await createNewEmptyFluidFile(
-            getStorageToken, newFileInfo, logger, epochTracker, forceAccessTokenViaAuthorizationHeader);
-    } else {
-        const content = await createNewFluidFileFromSummary(
-            getStorageToken,
-            newFileInfo,
-            logger,
-            createNewSummary,
-            epochTracker,
-            forceAccessTokenViaAuthorizationHeader,
-        );
-        itemId = content.itemId;
-        summaryHandle = content.id;
+	let itemId: string;
+	let summaryHandle: string = "";
+	let shareLinkInfo: ShareLinkInfoType | undefined;
+	if (createNewSummary === undefined) {
+		itemId = await createNewEmptyFluidFile(
+			getStorageToken,
+			newFileInfo,
+			logger,
+			epochTracker,
+			forceAccessTokenViaAuthorizationHeader,
+		);
+	} else {
+		const content = await createNewFluidFileFromSummary(
+			getStorageToken,
+			newFileInfo,
+			logger,
+			createNewSummary,
+			epochTracker,
+			forceAccessTokenViaAuthorizationHeader,
+		);
+		itemId = content.itemId;
+		summaryHandle = content.id;
 
-        shareLinkInfo = extractShareLinkData(
-            newFileInfo.createLinkType,
-            content,
-            enableSingleRequestForShareLinkWithCreate,
-            enableShareLinkWithCreate);
-    }
+		shareLinkInfo = extractShareLinkData(
+			newFileInfo.createLinkType,
+			content,
+			enableSingleRequestForShareLinkWithCreate,
+			enableShareLinkWithCreate,
+		);
+	}
 
-    const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
-    const resolver = new OdspDriverUrlResolver();
-    const odspResolvedUrl = await resolver.resolve({
-        url: odspUrl,
-        headers: { [ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp },
-    });
-    fileEntry.docId = odspResolvedUrl.hashedDocumentId;
-    fileEntry.resolvedUrl = odspResolvedUrl;
+	const odspUrl = createOdspUrl({ ...newFileInfo, itemId, dataStorePath: "/" });
+	const resolver = new OdspDriverUrlResolver();
+	const odspResolvedUrl = await resolver.resolve({
+		url: odspUrl,
+		headers: { [ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp },
+	});
+	fileEntry.docId = odspResolvedUrl.hashedDocumentId;
+	fileEntry.resolvedUrl = odspResolvedUrl;
 
-    odspResolvedUrl.shareLinkInfo = shareLinkInfo;
+	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
 
-    if (createNewSummary !== undefined && createNewCaching) {
-        assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
-        // converting summary and getting sequence number
-        const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(createNewSummary, summaryHandle);
-        // caching the converted summary
-        await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
-    }
-    return odspResolvedUrl;
+	if (createNewSummary !== undefined && createNewCaching) {
+		assert(summaryHandle !== undefined, 0x203 /* "Summary handle is undefined" */);
+		// converting summary and getting sequence number
+		const snapshot: ISnapshotContents = convertCreateNewSummaryTreeToTreeAndBlobs(
+			createNewSummary,
+			summaryHandle,
+		);
+		// caching the converted summary
+		await epochTracker.put(createCacheSnapshotKey(odspResolvedUrl), snapshot);
+	}
+	return odspResolvedUrl;
 }
 
 /**
@@ -125,145 +139,155 @@ export async function createNewFluidFile(
  * @returns Sharing link information received in the response from a successful creation of a file.
  */
 function extractShareLinkData(
-    requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
-    response: ICreateFileResponse,
-    enableSingleRequestForShareLinkWithCreate?: boolean,
-    enableShareLinkWithCreate?: boolean,
+	requestedSharingLinkKind: ShareLinkTypes | ISharingLinkKind | undefined,
+	response: ICreateFileResponse,
+	enableSingleRequestForShareLinkWithCreate?: boolean,
+	enableShareLinkWithCreate?: boolean,
 ): ShareLinkInfoType | undefined {
-    if (!requestedSharingLinkKind) {
-        return;
-    }
-    let shareLinkInfo: ShareLinkInfoType | undefined;
-    if (enableSingleRequestForShareLinkWithCreate) {
-        const { sharing } = response;
-        if (!sharing) {
-            return;
-        }
-        shareLinkInfo = {
-            createLink: {
-                type: requestedSharingLinkKind,
-                link: sharing.sharingLink ? {
-                    scope: sharing.sharingLink.scope,
-                    role: sharing.sharingLink.type,
-                    webUrl: sharing.sharingLink.webUrl,
-                    ...sharing.sharingLink,
-                } : undefined,
-                error: sharing.error,
-                shareId: sharing.shareId,
-            },
-        };
-    } else if (enableShareLinkWithCreate) {
-        const { sharing, sharingLink, sharingLinkErrorReason } = response;
-        if (!sharingLink && !sharingLinkErrorReason) {
-            return;
-        }
-        shareLinkInfo = {
-            createLink: {
-                type: requestedSharingLinkKind,
-                link: sharingLink,
-                error: sharingLinkErrorReason,
-                shareId: sharing?.shareId,
-            },
-        };
-    }
-    return shareLinkInfo;
+	if (!requestedSharingLinkKind) {
+		return;
+	}
+	let shareLinkInfo: ShareLinkInfoType | undefined;
+	if (enableSingleRequestForShareLinkWithCreate) {
+		const { sharing } = response;
+		if (!sharing) {
+			return;
+		}
+		shareLinkInfo = {
+			createLink: {
+				type: requestedSharingLinkKind,
+				link: sharing.sharingLink
+					? {
+							scope: sharing.sharingLink.scope,
+							role: sharing.sharingLink.type,
+							webUrl: sharing.sharingLink.webUrl,
+							...sharing.sharingLink,
+					  }
+					: undefined,
+				error: sharing.error,
+				shareId: sharing.shareId,
+			},
+		};
+	} else if (enableShareLinkWithCreate) {
+		const { sharing, sharingLink, sharingLinkErrorReason } = response;
+		if (!sharingLink && !sharingLinkErrorReason) {
+			return;
+		}
+		shareLinkInfo = {
+			createLink: {
+				type: requestedSharingLinkKind,
+				link: sharingLink,
+				error: sharingLinkErrorReason,
+				shareId: sharing?.shareId,
+			},
+		};
+	}
+	return shareLinkInfo;
 }
 
 export async function createNewEmptyFluidFile(
-    getStorageToken: InstrumentedStorageTokenFetcher,
-    newFileInfo: INewFileInfo,
-    logger: ITelemetryLogger,
-    epochTracker: EpochTracker,
-    forceAccessTokenViaAuthorizationHeader: boolean,
+	getStorageToken: InstrumentedStorageTokenFetcher,
+	newFileInfo: INewFileInfo,
+	logger: ITelemetryLogger,
+	epochTracker: EpochTracker,
+	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<string> {
-    const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    // add .tmp extension to empty file (host is expected to rename)
-    const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
-    const initialUrl =
-        `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:/${filePath
-        }/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
+	// add .tmp extension to empty file (host is expected to rename)
+	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
+	const initialUrl = `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${
+		newFileInfo.driveId
+	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
-    return getWithRetryForTokenRefresh(async (options) => {
-        const storageToken = await getStorageToken(options, "CreateNewFile");
+	return getWithRetryForTokenRefresh(async (options) => {
+		const storageToken = await getStorageToken(options, "CreateNewFile");
 
-        return PerformanceEvent.timedExecAsync(
-            logger,
-            { eventName: "createNewEmptyFile" },
-            async (event) => {
-                const { url, headers } = getUrlAndHeadersWithAuth(
-                    initialUrl, storageToken, forceAccessTokenViaAuthorizationHeader);
-                headers["Content-Type"] = "application/json";
+		return PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "createNewEmptyFile" },
+			async (event) => {
+				const { url, headers } = getUrlAndHeadersWithAuth(
+					initialUrl,
+					storageToken,
+					forceAccessTokenViaAuthorizationHeader,
+				);
+				headers["Content-Type"] = "application/json";
 
-                const fetchResponse = await runWithRetry(
-                    async () => epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
-                        url,
-                        {
-                            body: undefined,
-                            headers,
-                            method: "PUT",
-                        },
-                        "createFile",
-                    ),
-                    "createFile",
-                    logger,
-                );
+				const fetchResponse = await runWithRetry(
+					async () =>
+						epochTracker.fetchAndParseAsJSON<ICreateFileResponse>(
+							url,
+							{
+								body: undefined,
+								headers,
+								method: "PUT",
+							},
+							"createFile",
+						),
+					"createFile",
+					logger,
+				);
 
-                const content = fetchResponse.content;
-                if (!content || !content.id) {
-                    throw new NonRetryableError(
-                        // pre-0.58 error message: ODSP CreateFile call returned no item ID
-                        "ODSP CreateFile call returned no item ID (for empty file)",
-                        DriverErrorType.incorrectServerResponse,
-                        { driverVersion });
-                }
-                event.end({
-                    headers: Object.keys(headers).length !== 0 ? true : undefined,
-                    ...fetchResponse.propsToLog,
-                });
-                return content.id;
-            },
-            { end: true, cancel: "error" });
-    });
+				const content = fetchResponse.content;
+				if (!content || !content.id) {
+					throw new NonRetryableError(
+						// pre-0.58 error message: ODSP CreateFile call returned no item ID
+						"ODSP CreateFile call returned no item ID (for empty file)",
+						DriverErrorType.incorrectServerResponse,
+						{ driverVersion },
+					);
+				}
+				event.end({
+					headers: Object.keys(headers).length !== 0 ? true : undefined,
+					...fetchResponse.propsToLog,
+				});
+				return content.id;
+			},
+			{ end: true, cancel: "error" },
+		);
+	});
 }
 
 export async function createNewFluidFileFromSummary(
-    getStorageToken: InstrumentedStorageTokenFetcher,
-    newFileInfo: INewFileInfo,
-    logger: ITelemetryLogger,
-    createNewSummary: ISummaryTree,
-    epochTracker: EpochTracker,
-    forceAccessTokenViaAuthorizationHeader: boolean,
+	getStorageToken: InstrumentedStorageTokenFetcher,
+	newFileInfo: INewFileInfo,
+	logger: ITelemetryLogger,
+	createNewSummary: ISummaryTree,
+	epochTracker: EpochTracker,
+	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<ICreateFileResponse> {
-    const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
-    const encodedFilename = encodeURIComponent(newFileInfo.filename);
-    const baseUrl =
-        `${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
-        `${filePath}/${encodedFilename}`;
+	const filePath = newFileInfo.filePath ? encodeURIComponent(`/${newFileInfo.filePath}`) : "";
+	const encodedFilename = encodeURIComponent(newFileInfo.filename);
+	const baseUrl =
+		`${getApiRoot(getOrigin(newFileInfo.siteUrl))}/drives/${newFileInfo.driveId}/items/root:` +
+		`${filePath}/${encodedFilename}`;
 
-    const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
+	const containerSnapshot = convertSummaryIntoContainerSnapshot(createNewSummary);
 
-    // Build share link parameter based on the createLinkType provided so that the
-    // snapshot api can create and return the share link along with creation of file in the response.
-    const createShareLinkParam = buildOdspShareLinkReqParams(newFileInfo.createLinkType);
-    const initialUrl =
-        `${baseUrl}:/opStream/snapshots/snapshot${createShareLinkParam ? `?${createShareLinkParam}` : ""}`;
+	// Build share link parameter based on the createLinkType provided so that the
+	// snapshot api can create and return the share link along with creation of file in the response.
+	const createShareLinkParam = buildOdspShareLinkReqParams(newFileInfo.createLinkType);
+	const initialUrl = `${baseUrl}:/opStream/snapshots/snapshot${
+		createShareLinkParam ? `?${createShareLinkParam}` : ""
+	}`;
 
-    return createNewFluidContainerCore<ICreateFileResponse>({
-        containerSnapshot,
-        getStorageToken,
-        logger,
-        initialUrl,
-        forceAccessTokenViaAuthorizationHeader,
-        epochTracker,
-        telemetryName: "CreateNewFile",
-        fetchType: "createFile",
-        validateResponseCallback: content => {
-            if (!content || !content.itemId) {
-                throw new NonRetryableError(
-                    "ODSP CreateFile call returned no item ID",
-                    DriverErrorType.incorrectServerResponse,
-                    { driverVersion });
-            }
-        }
-    });
+	return createNewFluidContainerCore<ICreateFileResponse>({
+		containerSnapshot,
+		getStorageToken,
+		logger,
+		initialUrl,
+		forceAccessTokenViaAuthorizationHeader,
+		epochTracker,
+		telemetryName: "CreateNewFile",
+		fetchType: "createFile",
+		validateResponseCallback: (content) => {
+			if (!content || !content.itemId) {
+				throw new NonRetryableError(
+					"ODSP CreateFile call returned no item ID",
+					DriverErrorType.incorrectServerResponse,
+					{ driverVersion },
+				);
+			}
+		},
+	});
 }

@@ -1,5 +1,5 @@
 {
-  "tags": ["events"],
-  "exports": ["index"],
-  "imports": ["util"]
+	"tags": ["events"],
+	"exports": ["index"],
+	"imports": ["util"]
 }

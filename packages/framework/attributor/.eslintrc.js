@@ -4,20 +4,17 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"
-    ],
-    "parserOptions": {
-        "project": ["./tsconfig.json", "./src/test/tsconfig.json"]
-    },
-    overrides: [{
-        // Rules only for test files
-        files: ["*.spec.ts", "src/test/**"],
-        rules: {
-            "import/no-nodejs-modules": [
-                "error",
-                { allow: ["assert", "fs", "path"] },
-            ],
-        },
-    }],
-}
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				"import/no-nodejs-modules": ["error", { allow: ["assert", "fs", "path"] }],
+			},
+		},
+	],
+};

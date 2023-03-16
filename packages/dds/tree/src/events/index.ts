@@ -4,12 +4,14 @@
  */
 
 export {
-    createEmitter,
-    EventEmitter,
-    Events,
-    ISubscribable,
-    IsEvent,
-    TransformEvents,
-    UnionToIntersection,
-    IEmitter,
+	createEmitter,
+	EventEmitter,
+	Events,
+	ISubscribable,
+	IsEvent,
+	TransformEvents,
+	UnionToIntersection,
+	IEmitter,
+	NoListenersCallback,
+	HasListeners,
 } from "./events";

@@ -17,18 +17,20 @@ import { JSONFileLogger } from "./jsonFileLogger";
  * Note: if an output format is not supplied, default is JSON
  * @returns - both the IFileLogger implementation and ITelemetryLogger wrapper to be called
  */
- export function createLogger(
-    filePath: string,
-    options?: ITelemetryOptions,
-): { logger: ITelemetryLogger; fileLogger: IFileLogger; } {
-    const fileLogger = options?.outputFormat === OutputFormat.CSV
-        ? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)
-        : new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
+export function createLogger(
+	filePath: string,
+	options?: ITelemetryOptions,
+): { logger: ITelemetryLogger; fileLogger: IFileLogger } {
+	const fileLogger =
+		options?.outputFormat === OutputFormat.CSV
+			? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)
+			: new JSONFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps);
 
-    const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp",
-        { all: { Event_Time: () => Date.now() } });
+	const logger = ChildLogger.create(fileLogger, "LocalSnapshotRunnerApp", {
+		all: { Event_Time: () => Date.now() },
+	});
 
-    return { logger, fileLogger };
+	return { logger, fileLogger };
 }
 
 /**
@@ -36,13 +38,13 @@ import { JSONFileLogger } from "./jsonFileLogger";
  * @param telemetryFile - path where telemetry will be written
  */
 export function getTelemetryFileValidationError(telemetryFile: string): string | undefined {
-    if (!telemetryFile) {
-        return "Telemetry file argument is missing.";
-    } else if (fs.existsSync(telemetryFile)) {
-        return `Telemetry file already exists [${telemetryFile}].`;
-    }
+	if (!telemetryFile) {
+		return "Telemetry file argument is missing.";
+	} else if (fs.existsSync(telemetryFile)) {
+		return `Telemetry file already exists [${telemetryFile}].`;
+	}
 
-    return undefined;
+	return undefined;
 }
 
 /**
@@ -52,30 +54,36 @@ export function getTelemetryFileValidationError(telemetryFile: string): string |
  * @internal
  */
 export function validateAndParseTelemetryOptions(
-    format?: string,
-    props?: (string | number)[],
-): { success: false; error: string; } | { success: true; telemetryOptions: ITelemetryOptions; } {
-    let outputFormat: OutputFormat | undefined;
-    const defaultProps: Record<string, string | number> = {};
+	format?: string,
+	props?: (string | number)[],
+): { success: false; error: string } | { success: true; telemetryOptions: ITelemetryOptions } {
+	let outputFormat: OutputFormat | undefined;
+	const defaultProps: Record<string, string | number> = {};
 
-    if (format) {
-        outputFormat = OutputFormat[format];
-        if (outputFormat === undefined) {
-            return { success: false, error: `Invalid telemetry format [${format}]` };
-        }
-    }
+	if (format) {
+		outputFormat = OutputFormat[format];
+		if (outputFormat === undefined) {
+			return { success: false, error: `Invalid telemetry format [${format}]` };
+		}
+	}
 
-    if (props && props.length > 0) {
-        if (props.length % 2 !== 0) {
-            return { success: false, error: `Invalid number of telemetry properties to add [${props.length}]` };
-        }
-        for (let i = 0; i < props.length; i += 2) {
-            if (typeof props[i] === "number") {
-                return { success: false, error: `Property name cannot be number at index [${i}] -> [${props[i]}]` };
-            }
-            defaultProps[props[i]] = props[i + 1];
-        }
-    }
+	if (props && props.length > 0) {
+		if (props.length % 2 !== 0) {
+			return {
+				success: false,
+				error: `Invalid number of telemetry properties to add [${props.length}]`,
+			};
+		}
+		for (let i = 0; i < props.length; i += 2) {
+			if (typeof props[i] === "number") {
+				return {
+					success: false,
+					error: `Property name cannot be number at index [${i}] -> [${props[i]}]`,
+				};
+			}
+			defaultProps[props[i]] = props[i + 1];
+		}
+	}
 
-    return { success: true, telemetryOptions: { outputFormat, defaultProps } };
+	return { success: true, telemetryOptions: { outputFormat, defaultProps } };
 }

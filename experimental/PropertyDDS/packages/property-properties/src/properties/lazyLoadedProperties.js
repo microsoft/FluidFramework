@@ -10,15 +10,15 @@
  */
 
 export const LazyLoadedProperties = {
-    PropertyFactory: undefined,
-    AbstractStaticCollectionProperty: undefined,
-    ArrayProperty: undefined,
-    EnumArrayProperty: undefined,
-    ReferenceProperty: undefined,
-    StringProperty: undefined,
-    ValueProperty: undefined,
-    ValueMapProperty: undefined,
-    ReferenceMapProperty: undefined,
-    NodeProperty: undefined,
-    IndexedCollectionBaseProperty: undefined,
+	PropertyFactory: undefined,
+	AbstractStaticCollectionProperty: undefined,
+	ArrayProperty: undefined,
+	EnumArrayProperty: undefined,
+	ReferenceProperty: undefined,
+	StringProperty: undefined,
+	ValueProperty: undefined,
+	ValueMapProperty: undefined,
+	ReferenceMapProperty: undefined,
+	NodeProperty: undefined,
+	IndexedCollectionBaseProperty: undefined,
 };
