@@ -9,29 +9,9 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { ClientManager, ExternalTaskListId } from "../utilities";
+import { ClientManager } from "../utilities";
 import { assertValidTaskData, ITaskData } from "../model-interface";
-/**
- * Registers for webhook on receiving a specific resource to register for.
- */
-async function registerForWebhook(
-	port: string,
-	externalDataServiceWebhookRegistrationUrl: string,
-	externalTaskListId: ExternalTaskListId,
-): Promise<void> {
-	// Register with external data service for webhook notifications.
-	await fetch(externalDataServiceWebhookRegistrationUrl, {
-		method: "POST",
-		headers: {
-			"Access-Control-Allow-Origin": "*",
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			// External data service will call our webhook echoer to notify our subscribers of the data changes.
-			url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
-		}),
-	});
-}
+
 /**
  * Submits notifications of changes to Fluid Service.
  */
@@ -229,11 +209,19 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
 				),
 			);
-			registerForWebhook(
-				port.toString(),
-				externalDataServiceWebhookRegistrationUrl,
-				externalTaskListId,
-			).catch((error) => {
+
+			// Register with external data service for webhook notifications.
+			fetch(externalDataServiceWebhookRegistrationUrl, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					// External data service will call our webhook echoer to notify our subscribers of the data changes.
+					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
+				}),
+			}).catch((error) => {
 				console.error(
 					formatLogMessage(
 						`Registering for data update notifications webhook with the external data service failed due to an error.`,
