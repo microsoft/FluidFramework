@@ -7,19 +7,41 @@ import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import fastRedact from "fast-redact";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
-const redactJsonKeys = fastRedact({
-	// we want to redact the 'op' key at the following paths within error JSON object.
-	paths: ["op", "err.op", "result.writeErrors[*].op", "writeErrors[*].op"],
-	// this instructs fast-redact to mutate the original object,
-	// instead of returning the serialization of the modified object.
-	serialize: false,
-});
+const errorSanitizationMessage = "REDACTED";
+const errorResponseKeysAllowList = new Set([
+	"_id",
+	"code",
+	"codeName",
+	"documentId",
+	"driver",
+	"err",
+	"errmsg",
+	"errorDetails",
+	"errorLabels",
+	"index",
+	"insertedIds",
+	"message",
+	"mongoTimestamp",
+	"name",
+	"nInserted",
+	"nMatched",
+	"nModified",
+	"nRemoved",
+	"nUpserted",
+	"ok",
+	"result",
+	"stack",
+	"tenantId",
+	"type",
+	"upserted",
+	"writeErrors",
+	"writeConcernErrors",
+]);
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
 	constructor(
@@ -27,7 +49,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		public readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) { }
+	) {}
 
 	public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
 		const req = async () =>
@@ -144,8 +166,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
-			};
-		}
+			}
+		};
 		await this.requestWithRetry(
 			req, // request
 			"MongoCollection.insertMany", // callerName
@@ -315,7 +337,13 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	private sanitizeError(error: any) {
 		if (error) {
 			try {
-				redactJsonKeys(error);
+				Object.keys(error).forEach((key) => {
+					if (typeof error[key] === "object") {
+						this.sanitizeError(error[key]);
+					} else if (!errorResponseKeysAllowList.has(key)) {
+						error[key] = errorSanitizationMessage;
+					}
+				});
 			} catch (err) {
 				Lumberjack.error(`Error sanitization failed.`, undefined, err);
 				throw err;
@@ -330,7 +358,7 @@ export class MongoDb implements core.IDb {
 		private readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) { }
+	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public close(): Promise<void> {
