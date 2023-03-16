@@ -50,22 +50,19 @@ interface BenchmarkResults {
 
 export const failedData: BenchmarkData = {
 	aborted: true,
-	error: { name: "Aborted", message: "Reason Unknown" },
-	count: 0,
+	iterationPerCycle: 0,
 	cycles: 0,
 
-	hz: NaN,
-
 	stats: {
-		deviation: NaN,
-		mean: NaN,
-		moe: NaN,
-		rme: NaN,
-		sample: [],
-		sem: NaN,
+		standardDeviation: NaN,
+		arithmeticMean: NaN,
+		marginOfError: NaN,
+		relatedMarginOfError: NaN,
+		samples: [],
+		standardErrorOfMean: NaN,
 		variance: NaN,
 	},
-	times: { cycle: NaN, elapsed: NaN, period: NaN, timeStamp: NaN },
+	elapsedSeconds: NaN,
 };
 
 /**
@@ -143,20 +140,24 @@ export class BenchmarkReporter {
 		table.cell("name", italicize(testName));
 		if (!benchmarkInstance.aborted) {
 			const numIterations: number =
-				benchmarkInstance.stats.sample.length * benchmarkInstance.count;
+				benchmarkInstance.stats.samples.length * benchmarkInstance.iterationPerCycle;
 			table.cell(
 				"period (ns/op)",
-				prettyNumber(1e9 * benchmarkInstance.times.period, 1),
+				prettyNumber(1e9 * benchmarkInstance.stats.arithmeticMean, 1),
 				Table.padLeft,
 			);
 			table.cell(
 				"relative margin of error",
-				`±${benchmarkInstance.stats.rme.toFixed(2)}%`,
+				`±${benchmarkInstance.stats.relatedMarginOfError.toFixed(2)}%`,
 				Table.padLeft,
 			);
 			table.cell("iterations", `${prettyNumber(numIterations, 0)}`, Table.padLeft);
-			table.cell("samples", benchmarkInstance.stats.sample.length.toString(), Table.padLeft);
-			table.cell("total time (s)", benchmarkInstance.times.elapsed.toFixed(2), Table.padLeft);
+			table.cell("samples", benchmarkInstance.stats.samples.length.toString(), Table.padLeft);
+			table.cell(
+				"total time (s)",
+				benchmarkInstance.elapsedSeconds.toFixed(2),
+				Table.padLeft,
+			);
 		}
 		table.newRow();
 	}
@@ -199,8 +200,8 @@ export class BenchmarkReporter {
 			if (value.aborted) {
 				countFailure++;
 			} else {
-				benchmarkPeriodsSeconds.push(value.times.period);
-				sumRuntime += value.times.elapsed;
+				benchmarkPeriodsSeconds.push(value.stats.arithmeticMean);
+				sumRuntime += value.elapsedSeconds;
 				countSuccessful++;
 			}
 		});
@@ -289,7 +290,7 @@ export class BenchmarkReporter {
 		const outputFriendlyBenchmarks: unknown[] = [];
 
 		for (const [key, bench] of benchmarks.entries()) {
-			if (bench.cycles && Number.isFinite(bench.hz) && bench.error === undefined) {
+			if (bench.aborted === false) {
 				// successful benchmarks: ready them for output to file
 				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, bench));
 			}
@@ -320,12 +321,12 @@ export class BenchmarkReporter {
 		benchmark: BenchmarkData,
 	): Record<string, unknown> {
 		const obj = {
-			iterationsPerSecond: benchmark.hz,
+			iterationsPerSecond: 1 / benchmark.stats.arithmeticMean,
 			stats: this.outputFriendlyObjectFromStats(benchmark.stats),
-			iterationCountPerSample: benchmark.count,
-			numSamples: benchmark.stats.sample.length,
+			iterationCountPerSample: benchmark.iterationPerCycle,
+			numSamples: benchmark.stats.samples.length,
 			benchmarkName,
-			totalTimeSeconds: benchmark.times.elapsed,
+			totalTimeSeconds: benchmark.elapsedSeconds,
 		};
 		return obj;
 	}
@@ -336,13 +337,13 @@ export class BenchmarkReporter {
 	 */
 	private outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, unknown> {
 		const obj = {
-			marginOfError: benchmarkStats.moe,
-			relatedMarginOfError: benchmarkStats.rme,
-			arithmeticMean: benchmarkStats.mean,
-			standardErrorOfMean: benchmarkStats.sem,
+			marginOfError: benchmarkStats.marginOfError,
+			relatedMarginOfError: benchmarkStats.relatedMarginOfError,
+			arithmeticMean: benchmarkStats.arithmeticMean,
+			standardErrorOfMean: benchmarkStats.standardErrorOfMean,
 			variance: benchmarkStats.variance,
-			standardDeviation: benchmarkStats.deviation,
-			sample: benchmarkStats.sample,
+			standardDeviation: benchmarkStats.standardDeviation,
+			sample: benchmarkStats.samples,
 		};
 		return obj;
 	}

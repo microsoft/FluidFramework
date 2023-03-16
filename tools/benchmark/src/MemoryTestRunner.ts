@@ -287,12 +287,12 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				},
 			},
 			stats: {
-				moe: NaN,
-				rme: NaN,
-				sem: NaN,
-				deviation: NaN,
-				mean: NaN,
-				sample: [],
+				marginOfError: NaN,
+				relatedMarginOfError: NaN,
+				standardErrorOfMean: NaN,
+				standardDeviation: NaN,
+				arithmeticMean: NaN,
+				samples: [],
 				variance: NaN,
 			},
 			aborted: false,
@@ -301,12 +301,12 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 		try {
 			const startTime = performance.now();
 			let heapUsedStats: Stats = {
-				moe: NaN,
-				rme: NaN,
-				sem: NaN,
-				deviation: NaN,
-				mean: NaN,
-				sample: [],
+				marginOfError: NaN,
+				relatedMarginOfError: NaN,
+				standardErrorOfMean: NaN,
+				standardDeviation: NaN,
+				arithmeticMean: NaN,
+				samples: [],
 				variance: NaN,
 			};
 			do {
@@ -347,7 +347,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				}
 			} while (
 				benchmarkStats.runs < options.minSampleCount ||
-				heapUsedStats.rme > options.maxRelativeMarginOfError
+				heapUsedStats.relatedMarginOfError > options.maxRelativeMarginOfError
 			);
 
 			benchmarkStats.stats = heapUsedStats;

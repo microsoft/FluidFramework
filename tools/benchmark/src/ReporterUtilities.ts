@@ -201,5 +201,13 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 	const moe = sem * critical; // Margin of Error
 	const rme = (moe / Math.abs(mean)) * 100 || 0; // Relative Margin of Error
 
-	return { mean, variance, deviation, moe, sem, sample: finalSamples, rme };
+	return {
+		arithmeticMean: mean,
+		variance,
+		standardDeviation: deviation,
+		marginOfError: moe,
+		standardErrorOfMean: sem,
+		samples: finalSamples,
+		relatedMarginOfError: rme,
+	};
 }

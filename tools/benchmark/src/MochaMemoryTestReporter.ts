@@ -125,29 +125,29 @@ class MochaMemoryTestReporter {
 						if (!testData.aborted) {
 							table.cell(
 								"Heap Used Avg",
-								prettyNumber(testData.stats.mean, 2),
+								prettyNumber(testData.stats.arithmeticMean, 2),
 								Table.padLeft,
 							);
 							table.cell(
 								"Heap Used StdDev",
-								prettyNumber(testData.stats.deviation, 2),
+								prettyNumber(testData.stats.standardDeviation, 2),
 								Table.padLeft,
 							);
 							table.cell(
 								"Margin of Error",
-								`±${prettyNumber(testData.stats.moe, 2)}`,
+								`±${prettyNumber(testData.stats.marginOfError, 2)}`,
 								Table.padLeft,
 							);
 							table.cell(
 								"Relative Margin of Error",
-								`±${prettyNumber(testData.stats.rme, 2)}%`,
+								`±${prettyNumber(testData.stats.relatedMarginOfError, 2)}%`,
 								Table.padLeft,
 							);
 
 							table.cell("Iterations", testData.runs.toString(), Table.padLeft);
 							table.cell(
 								"Samples used",
-								testData.stats.sample.length.toString(),
+								testData.stats.samples.length.toString(),
 								Table.padLeft,
 							);
 						}

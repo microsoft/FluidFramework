@@ -18,36 +18,39 @@ import { getArrayStatistics } from "./ReporterUtilities";
  */
 export interface BenchmarkData {
 	aborted: boolean;
-	readonly error?: Error;
-	readonly count: number;
-	readonly cycles: number;
-	readonly hz: number;
 
+	/**
+	 * Iterations per cycle
+	 */
+	readonly iterationPerCycle: number;
+
+	/**
+	 * Number of batches of `count` iterations.
+	 */
+	readonly cycles: number;
+
+	/**
+	 * Stats about runtime, in seconds.
+	 */
 	readonly stats: Stats;
-	readonly times: Times;
+
+	/**
+	 * Time it took to run the benchmark in seconds.
+	 */
+	readonly elapsedSeconds: number;
 }
 
 /**
  * @public
  */
 export interface Stats {
-	moe: number;
-	rme: number;
-	sem: number;
-	deviation: number;
-	mean: number;
-	sample: number[];
-	variance: number;
-}
-
-/**
- * @public
- */
-export interface Times {
-	cycle: number;
-	elapsed: number;
-	period: number;
-	timeStamp: number;
+	readonly marginOfError: number;
+	readonly relatedMarginOfError: number;
+	readonly standardErrorOfMean: number;
+	readonly standardDeviation: number;
+	readonly arithmeticMean: number;
+	readonly samples: readonly number[];
+	readonly variance: number;
 }
 
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
@@ -241,17 +244,11 @@ function computeData(samples: number[], count: number, timeStamp: unknown): Benc
 	const now = timer.now();
 	const stats: Stats = getArrayStatistics(samples.map((v) => v / count));
 	const data: BenchmarkData = {
-		hz: 1 / stats.mean,
-		times: {
-			cycle: stats.mean * count,
-			period: stats.mean,
-			elapsed: timer.toSeconds(timeStamp, now),
-			timeStamp: Number(timeStamp),
-		},
+		elapsedSeconds: timer.toSeconds(timeStamp, now),
 		aborted: false,
 		cycles: samples.length,
 		stats,
-		count,
+		iterationPerCycle: count,
 	};
 	return data;
 }
@@ -332,5 +329,5 @@ function getResolution(t: Timer): number {
 		sample.push(delta);
 	}
 
-	return getArrayStatistics(sample, 0.8).mean;
+	return getArrayStatistics(sample, 0.8).arithmeticMean;
 }
