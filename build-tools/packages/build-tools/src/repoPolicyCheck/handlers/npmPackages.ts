@@ -640,7 +640,7 @@ export const handlers: Handler[] = [
 						hasPrettierScriptResolver ||
 						hasPrettierFixScriptResolver
 					) {
-						const formatScript = json["scripts"]["format"]?.includes("lerna");
+						const formatScript = json.scripts.format?.includes("lerna");
 						const prettierScript =
 							json.scripts.prettier?.includes("--ignore-path");
 						const prettierFixScript =
