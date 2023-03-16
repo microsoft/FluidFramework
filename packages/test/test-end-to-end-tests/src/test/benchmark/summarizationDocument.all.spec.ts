@@ -7,7 +7,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { createSummarizer, ITestObjectProvider, summarizeNow } from "@fluidframework/test-utils";
 import { SharedMap } from "@fluidframework/map";
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
 import { benchmarkAll, createDocument } from "./DocumentCreator";
 import { DocumentMap } from "./DocumentMap";
 
