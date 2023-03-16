@@ -140,11 +140,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async insertMany(values: T[], ordered: boolean): Promise<void> {
 		const req = async () => {
 			try {
-				this.collection.insertMany(values, { ordered: false });
+				await this.collection.insertMany(values, { ordered: false });
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
 			};
+		}
 		await this.requestWithRetry(
 			req, // request
 			"MongoCollection.insertMany", // callerName
