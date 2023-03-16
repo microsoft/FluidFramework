@@ -1,0 +1,24 @@
+name: "Merge Next Notifier"
+
+on:
+  pull_request:
+    types: [ labeled ]
+
+jobs:
+  build:
+    if: ${{ github.event.label.name == 'msftbot: merge-next' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Load PR number
+        id: load_pr
+        run: echo "pr=$(cat pr)" >> $GITHUB_OUTPUT
+        working-directory: ./results
+
+      - name: Notify in comment
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          recreate: true
+          number: ${{ steps.load_pr.outputs.pr }}
+          message: |
+            Hi @scottn12 check this out :)
