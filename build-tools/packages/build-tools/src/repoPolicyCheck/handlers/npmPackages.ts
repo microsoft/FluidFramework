@@ -648,19 +648,19 @@ export const handlers: Handler[] = [
 					) {
 						const formatScript = json["scripts"]["format"]?.includes("lerna");
 						const prettierScript =
-							json["scripts"]["prettier"]?.includes("--ignore-path");
+							json.scripts.prettier?.includes("--ignore-path");
 						const prettierFixScript =
-							json["scripts"]["prettier:fix"]?.includes("--ignore-path");
+							json.scripts["prettier:fix"]?.includes("--ignore-path");
 
 						if (!formatScript) {
-							json["scripts"]["format"] = "npm run prettier:fix";
+							json.scripts.format = "npm run prettier:fix";
 
 							if (!prettierScript) {
-								json["scripts"]["prettier"] = "prettier --check .";
+								json.scripts.prettier = "prettier --check .";
 							}
 
 							if (!prettierFixScript) {
-								json["scripts"]["prettier:fix"] = "prettier --write .";
+								json.scripts["prettier:fix"] = "prettier --write .";
 							}
 						}
 					}
