@@ -6,7 +6,8 @@ on:
 
 jobs:
   build:
-    if: ${{ github.event.label.name == 'msftbot: merge-next' }}
+    if: |
+      ${{ github.event.label.name == 'msftbot: merge-next' }}
     runs-on: ubuntu-latest
 
     steps:
