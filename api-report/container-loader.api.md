@@ -223,8 +223,6 @@ export class Loader implements IHostLoader {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    requestResolvedObjectFromContainer(container: IContainer): Promise<IResponse>;
-    // (undocumented)
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
     // (undocumented)
     readonly services: ILoaderServices;
@@ -243,6 +241,9 @@ export class RelativeLoader implements ILoader {
     // (undocumented)
     resolve(request: IRequest): Promise<IContainer>;
 }
+
+// @public
+export function requestResolvedObjectFromContainer(container: IContainer): Promise<IResponse>;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

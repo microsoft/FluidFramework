@@ -271,15 +271,10 @@ export async function requestResolvedObjectFromContainer(
 	if (parsedUrl === undefined) {
 		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
 	}
-	return PerformanceEvent.timedExecAsync(
-		ChildLogger.create(),
-		{ eventName: "Request" },
-		async () => {
-			return container.request({
-				url: `${parsedUrl.path}${parsedUrl.query}`,
-			});
-		},
-	);
+
+	return container.request({
+		url: `${parsedUrl.path}${parsedUrl.query}`,
+	});
 }
 
 /**
