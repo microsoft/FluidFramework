@@ -47,7 +47,7 @@ export class AnchorSet {
     track(path: UpPath | null): Anchor;
 }
 
-// @alpha (undocumented)
+// @alpha
 export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
 
 // @alpha
