@@ -6,7 +6,6 @@
 import { expect } from "chai";
 import { benchmark } from "../Runner";
 import { BenchmarkType, isParentProcess } from "../Configuration";
-import { Benchmark, Options } from "../benchmark";
 import { runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
 
 describe("`benchmark` function", () => {
@@ -48,46 +47,6 @@ describe("`benchmark` function", () => {
 		});
 	});
 
-	it("do a benchmark", () => {
-		const benchmarkOptions: Options = {
-			maxTime: 0.01,
-			minSamples: 1,
-			minTime: 0,
-			defer: false,
-			fn: () => {
-				// This is a benchmark.
-			},
-		};
-
-		const benchmarkInstance = new Benchmark(benchmarkOptions);
-		benchmarkInstance.run();
-	});
-
-	it("do a benchmark async", async () => {
-		const benchmarkOptions: Options = {
-			maxTime: 0.01,
-			minSamples: 1,
-			minTime: 0,
-			defer: true,
-			fn: async (deferred: { resolve: Mocha.Done }) => {
-				// We have to do a little translation because the Benchmark library expects callback-based
-				// asynchronicity.
-				await delay(0);
-				deferred.resolve();
-			},
-		};
-
-		await new Promise<void>((resolve) => {
-			const benchmarkInstance = new Benchmark(benchmarkOptions);
-			// benchmarkInstance.on("start end", () => global?.gc?.());
-			// benchmarkInstance.on("cycle", options.onCycle);
-			benchmarkInstance.on("complete", async () => {
-				resolve();
-			});
-			benchmarkInstance.run();
-		});
-	});
-
 	it("runBenchmark sync", async () => {
 		await runBenchmark({
 			maxBenchmarkDurationSeconds: 0.1,
@@ -99,7 +58,7 @@ describe("`benchmark` function", () => {
 		});
 	});
 
-	it("runBenchmark sync2", async () => {
+	it("runBenchmarkSync", async () => {
 		runBenchmarkSync({
 			maxBenchmarkDurationSeconds: 0.1,
 			minSampleCount: 1,
@@ -110,7 +69,7 @@ describe("`benchmark` function", () => {
 		});
 	});
 
-	it("do a benchmark async", async () => {
+	it("runBenchmark async", async () => {
 		await runBenchmark({
 			maxBenchmarkDurationSeconds: 0.1,
 			minSampleCount: 1,
@@ -122,7 +81,7 @@ describe("`benchmark` function", () => {
 		});
 	});
 
-	it("do a benchmark async2", async () => {
+	it("runBenchmarkAsync", async () => {
 		await runBenchmarkAsync({
 			maxBenchmarkDurationSeconds: 0.1,
 			minSampleCount: 1,

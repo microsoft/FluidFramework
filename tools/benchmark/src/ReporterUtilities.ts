@@ -5,19 +5,22 @@
 
 import { assert } from "chai";
 import { Suite } from "mocha";
-import { Stats } from "./benchmark";
 import {
 	benchmarkTypes,
 	performanceTestSuiteTag,
 	testTypes,
 	userCategoriesSplitter,
 } from "./Configuration";
+import { Stats } from "./runBenchmark";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
  * output to the command line.
  */
 
+/**
+ * Tags used to mark tests.
+ */
 const tags = [
 	performanceTestSuiteTag,
 	...benchmarkTypes.map((x) => `@${x}`),

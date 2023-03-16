@@ -223,20 +223,20 @@ export type HookFunction = () => void | Promise<unknown>;
  * @remarks
  *
  * Be careful when writing non-pure benchmark functions!
- * Benchmark.js is written with the assumption that each cycle it runs is an independent sample.
+ * This library is written with the assumption that each cycle it runs is an independent sample.
  * This can typically be achieved by using the `onCycle` hook to reset state, with some caveats.
  * For more details, read below.
  *
- * Benchmark.js runs the benchmark function in two hierarchical groups: cycles and iterations.
+ * This library runs the benchmark function in two hierarchical groups: cycles and iterations.
  * One iteration consists of a single execution of `benchmarkFn`.
  * Since the time taken by a single iteration might be significantly smaller than the clock resolution, benchmark
  * dynamically decides to run a number of iterations per cycle.
- * After a warmup period, this number is fixed across cycles (i.e. if Benchmark.js decides to run 10,000 iterations
+ * After a warmup period, this number is fixed across cycles (i.e. if this library decides to run 10,000 iterations
  * per cycle, all statistical analysis will be performed on cycles which consist of 10,000 iterations)
  * This strategy also helps minimize noise from JITting code.
  *
- * Statistical analysis is performed at the cycle level: Benchmark.js treats each cycle's timing information as a data
- * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshhold or its max
+ * Statistical analysis is performed at the cycle level: this library treats each cycle's timing information as a data
+ * point taken from a normal distribution, and runs cycles until the root-mean error is below a threshold or its max
  * time has been reached.
  * The statistical analysis it uses is invalid if cycles aren't independent trials: consider the test
  * ```typescript
@@ -269,7 +269,7 @@ export type HookFunction = () => void | Promise<unknown>;
  *
  * With this change, it's more reasonable to model each cycle as an independent event.
  *
- * Note that this approach is slightly misleading in the data it measures: if Benchmark.js chooses a cycle size of 10k,
+ * Note that this approach is slightly misleading in the data it measures: if this library chooses a cycle size of 10k,
  * the time reported per iteration is really an average of the time taken to insert 10k elements at the start, and not
  * the average time to insert an element to the start of the empty list as the test body might suggest at a glance.
  * @example

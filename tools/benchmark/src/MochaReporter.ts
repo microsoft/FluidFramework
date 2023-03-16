@@ -7,7 +7,7 @@ import { Runner, Suite, Test } from "mocha";
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter, failedData } from "./Reporter";
 import { red, getName, getSuiteName } from "./ReporterUtilities";
-import { BenchmarkData } from "./benchmark";
+import { BenchmarkData } from "./runBenchmark";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).

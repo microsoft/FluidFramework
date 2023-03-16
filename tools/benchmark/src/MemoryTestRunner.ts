@@ -7,7 +7,6 @@ import * as v8 from "v8";
 import { performance } from "perf_hooks";
 import { assert } from "chai";
 import { Test } from "mocha";
-import { Stats } from "./benchmark";
 import {
 	isParentProcess,
 	isInPerformanceTestingMode,
@@ -19,6 +18,7 @@ import {
 	TestType,
 } from "./Configuration";
 import { getArrayStatistics } from "./ReporterUtilities";
+import { Stats } from "./runBenchmark";
 
 /**
  * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was

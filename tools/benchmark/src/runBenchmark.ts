@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkData, Stats } from "./benchmark";
 import {
 	validateBenchmarkArguments,
 	BenchmarkRunningOptions,
@@ -11,6 +10,45 @@ import {
 	BenchmarkRunningOptionsAsync,
 } from "./Configuration";
 import { getArrayStatistics } from "./ReporterUtilities";
+
+/**
+ * Subset of Benchmark type which is output data.
+ * Json compatible.
+ * @public
+ */
+export interface BenchmarkData {
+	aborted: boolean;
+	readonly error?: Error;
+	readonly count: number;
+	readonly cycles: number;
+	readonly hz: number;
+
+	readonly stats: Stats;
+	readonly times: Times;
+}
+
+/**
+ * @public
+ */
+export interface Stats {
+	moe: number;
+	rme: number;
+	sem: number;
+	deviation: number;
+	mean: number;
+	sample: number[];
+	variance: number;
+}
+
+/**
+ * @public
+ */
+export interface Times {
+	cycle: number;
+	elapsed: number;
+	period: number;
+	timeStamp: number;
+}
 
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
 	const options = {

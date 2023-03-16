@@ -31,7 +31,6 @@ SOFTWARE.
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
-import { BenchmarkData, Stats } from "./benchmark";
 import {
 	bold,
 	geometricMean,
@@ -42,6 +41,7 @@ import {
 	red,
 	yellow,
 } from "./ReporterUtilities";
+import { BenchmarkData, Stats } from "./runBenchmark";
 
 interface BenchmarkResults {
 	table: Table;
@@ -71,8 +71,6 @@ export const failedData: BenchmarkData = {
 /**
  * Collects and formats performance data for a sequence of suites of benchmarks.
  * Data must be provided in the form of one {@link BenchmarkData} for each test in each suite.
- *
- * Benchmark.js is typically used to collect the data.
  *
  * The data will be aggregated and processed.
  * Human friendly tables are logged to the console, and a machine friendly version is logged to json files.
