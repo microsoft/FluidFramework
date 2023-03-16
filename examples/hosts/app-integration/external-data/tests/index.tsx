@@ -8,8 +8,8 @@ import ReactDOM from "react-dom";
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { TaskListContainerRuntimeFactory } from "../src/model";
-import type { IAppModel } from "../src/model-interface";
+import { BaseDocumentContainerRuntimeFactory } from "../src/model";
+import type { IAppModel, ITaskList } from "../src/model-interface";
 import { TaskListView } from "../src/view";
 
 /**
@@ -18,7 +18,7 @@ import { TaskListView } from "../src/view";
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
 	const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
-		new StaticCodeLoader(new TaskListContainerRuntimeFactory()),
+		new StaticCodeLoader(new BaseDocumentContainerRuntimeFactory()),
 	);
 
 	let id: string;
@@ -31,14 +31,30 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		const createResponse = await sessionStorageModelLoader.createDetached("1.0");
 		model = createResponse.model;
 
-		// Add a test task so we can see something.
-		model.taskList.addDraftTask("1", "testName", 3);
-
 		id = await createResponse.attach();
+		model.baseDocument.addTaskList({ externalTaskListId: "task-list-test" });
 	} else {
 		id = location.hash.slice(1);
 		model = await sessionStorageModelLoader.loadExisting(id);
 	}
+
+	// This block is necessary so that we render after the task list
+	// has instantiated. In a future PR this will go away, replaced
+	// by the registration api call.
+	let taskList: ITaskList | undefined;
+	while (taskList === undefined) {
+		const taskListsChangedP = new Promise<void>((resolve) => {
+			model.baseDocument.once("taskListCollectionChanged", () => {
+				resolve();
+			});
+		});
+		taskList = model.baseDocument.getTaskList("task-list-1");
+		if (taskList === undefined) {
+			await taskListsChangedP;
+		}
+	}
+	// Add a test task so we can see something.
+	taskList.addDraftTask("1", "testName", 3);
 
 	// update the browser URL and the window title with the actual container ID
 	// eslint-disable-next-line require-atomic-updates
@@ -46,7 +62,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	document.title = id;
 
 	// Render it
-	ReactDOM.render(<TaskListView taskList={model.taskList} />, element);
+	ReactDOM.render(<TaskListView taskList={taskList} />, element);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation

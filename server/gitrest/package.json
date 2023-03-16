@@ -73,5 +73,10 @@
 		"sillyname": "^0.1.0",
 		"supertest": "^3.4.2",
 		"typescript": "~4.5.5"
+	},
+	"pnpm": {
+		"overrides": {
+			"qs": "^6.11.0"
+		}
 	}
 }

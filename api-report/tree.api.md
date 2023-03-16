@@ -101,6 +101,11 @@ type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<T ex
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 // @alpha
+export interface BranchEvents {
+    afterBatch(): void;
+}
+
+// @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @alpha
@@ -177,11 +182,6 @@ export interface ChangeRebaser<TChangeset> {
 
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
-
-// @alpha
-export interface CheckoutEvents {
-    afterBatch(): void;
-}
 
 // @alpha
 export type ChildCollection = FieldKey | RootField;
@@ -733,18 +733,19 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {
+export interface ISharedTree extends ISharedObject, ISharedTreeBranch {
 }
 
 // @alpha
-export interface ISharedTreeCheckout extends AnchorLocator {
+export interface ISharedTreeBranch extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
-    readonly events: ISubscribable<CheckoutEvents>;
+    readonly events: ISubscribable<BranchEvents>;
     readonly forest: IForestSubscription;
-    fork(): ISharedTreeCheckoutFork;
+    fork(): ISharedTreeFork;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
+    readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: {
         start(): void;
@@ -755,7 +756,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 }
 
 // @alpha
-export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
+export interface ISharedTreeFork extends ISharedTreeBranch {
     isMerged(): boolean;
     merge(): void;
     pull(): void;
@@ -1286,7 +1287,7 @@ export const rootFieldKey: GlobalFieldKey;
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
-export function runSynchronous(checkout: ISharedTreeCheckout, transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void): TransactionResult;
+export function runSynchronous(branch: ISharedTreeBranch, transaction: (branch: ISharedTreeBranch) => TransactionResult | void): TransactionResult;
 
 declare namespace SchemaAware {
     export {
