@@ -18,7 +18,11 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { getUrlFromDetachedBlobStorage, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
+import {
+	driverSupportsBlobs,
+	getUrlFromDetachedBlobStorage,
+	MockDetachedBlobStorage,
+} from "../mockDetachedBlobStorage";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
@@ -429,7 +433,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			if (provider.driver.type !== "local" && provider.driver.type !== "odsp") {
+			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
 
