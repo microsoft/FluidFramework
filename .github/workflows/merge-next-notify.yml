@@ -3,6 +3,8 @@ name: "Merge Next Notifier"
 on:
   pull_request:
     types: [ labeled ]
+    branches:
+      - next
 
 jobs:
   build:
@@ -15,4 +17,4 @@ jobs:
         with:
           only_create: true
           message: |
-            Hi @scottn12 check this out :)
+            Please review this PR: @scottn12
