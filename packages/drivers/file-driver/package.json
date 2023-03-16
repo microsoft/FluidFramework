@@ -62,6 +62,9 @@
 		"broken": {
 			"ClassDeclaration_FileDocumentService": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_FileDocumentServiceFactory": {
+				"backCompat": false
 			}
 		}
 	}

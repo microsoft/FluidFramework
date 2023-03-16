@@ -126,6 +126,12 @@
 			"RemovedFunctionDeclaration_createSummarizerWithContainer": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ITestObjectProvider": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TestObjectProvider": {
+				"backCompat": false
 			}
 		}
 	}

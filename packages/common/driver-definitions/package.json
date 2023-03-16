@@ -79,6 +79,9 @@
 			"RemovedInterfaceDeclaration_IWebResolvedUrl": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IDocumentServiceFactory": {
+				"backCompat": false
 			}
 		}
 	}

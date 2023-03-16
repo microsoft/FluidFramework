@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
-import random from "random-js";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { Trace } from "@fluidframework/common-utils";
 import { ReferenceType } from "../ops";
 import { createMap, extend, MapLike } from "../properties";
@@ -122,12 +122,11 @@ export function propertyCopy() {
 }
 
 function makeBookmarks(client: TestClient, bookmarkCount: number) {
-	const mt = random.engines.mt19937();
-	mt.seedWithArray([0xdeadbeef, 0xfeedbed]);
+	const random = makeRandom(0xdeadbeef, 0xfeedbed);
 	const bookmarks: ReferencePosition[] = [];
 	const len = client.getLength();
 	for (let i = 0; i < bookmarkCount; i++) {
-		const pos = random.integer(0, len - 1)(mt);
+		const pos = random.integer(0, len - 1);
 		const segoff = client.getContainingSegment(pos);
 		let refType = ReferenceType.Simple;
 		if (i & 1) {

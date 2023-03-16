@@ -50,10 +50,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
  * use the routerlicious implementation.
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
-	/**
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	public readonly protocolName = "fluid:";
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
 	private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>;

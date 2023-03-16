@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/common-utils";
 import { createEmitter, ISubscribable } from "../../events";
 import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
-import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
+import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
 
@@ -80,12 +80,12 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 
 /**
  * Events for {@link AnchorNode}.
+ * These events are triggered while the internal data structures are being updated.
+ * Thus these events must not trigger reading of the anchorSet or forest.
  *
  * TODO:
- * - Design how events should be ordered.
- * - Determine if events should be deferred until update of forest is done, and/or AnchorSet and forest should be updated together with events as it goes.
+ * - Include sub-deltas in events.
  * - Add more events.
- * - Work out how slots should interact with event related lifetime extension.
  *
  * @alpha
  */
@@ -99,6 +99,50 @@ export interface AnchorEvents {
 	 * It's possible nodes removed from the tree will be kept indefinably, and thus never trigger this event, or they may be discarded immediately.
 	 */
 	afterDelete(anchor: AnchorNode): void;
+
+	/**
+	 * What children the node has is changing.
+	 *
+	 * @remarks
+	 * Does not include edits of child subtrees: instead only includes changes to which nodes are in this node's fields.
+	 */
+	childrenChanging(anchor: AnchorNode): void;
+
+	/**
+	 * Something in this tree is changing.
+	 * Called on every parent (transitively) when a change is occurring.
+	 * Includes changes to this node itself.
+	 */
+	subtreeChanging(anchor: AnchorNode): void;
+
+	/**
+	 * Value on this node is changing.
+	 */
+	valueChanging(anchor: AnchorNode, value: Value): void;
+}
+
+/**
+ * Events for {@link AnchorSet}.
+ * These events are triggered while the internal data structures are being updated.
+ * Thus these events must not trigger reading of the anchorSet or forest.
+ *
+ * TODO:
+ * - Design how events should be ordered.
+ * - Include sub-deltas in events.
+ * - Add more events.
+ *
+ * @alpha
+ */
+export interface AnchorSetRootEvents {
+	/**
+	 * What children are at the root is changing.
+	 */
+	childrenChanging(anchors: AnchorSet): void;
+
+	/**
+	 * Something in the tree is changing.
+	 */
+	treeChanging(anchors: AnchorSet): void;
 }
 
 /**
@@ -163,10 +207,15 @@ let slotCounter = 0;
  *
  * See `Rebaser` for how to update across revisions.
  *
+ * TODO: this should either not be package exported.
+ * If its needed outside the package an Interface should be used instead which can reduce its
+ * API surface to a small subset.
+ *
  * @sealed
  * @alpha
  */
-export class AnchorSet {
+export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
+	private readonly events = createEmitter<AnchorSetRootEvents>();
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.
 	 * "0" is reserved for the `NeverAnchor`.
@@ -189,6 +238,13 @@ export class AnchorSet {
 	// TODO: anchor system could be optimized a bit to avoid the maps (Anchor is ref to Path, path has ref count).
 	// For now use this more encapsulated approach with maps.
 	private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
+
+	public on<K extends keyof AnchorSetRootEvents>(
+		eventName: K,
+		listener: AnchorSetRootEvents[K],
+	): () => void {
+		return this.events.on(eventName, listener);
+	}
 
 	/**
 	 * Check if there are currently no anchors tracked.
@@ -255,7 +311,7 @@ export class AnchorSet {
 	}
 
 	/**
-	 * Finds a path node if it already exists
+	 * Finds a path node if it already exists.
 	 */
 	private find(path: UpPath): PathNode | undefined {
 		if (path instanceof PathNode) {
@@ -266,6 +322,61 @@ export class AnchorSet {
 		const parent = path.parent ?? this.root;
 		const parentPath = this.find(parent);
 		return parentPath?.tryGetChild(path.parentField, path.parentIndex);
+	}
+
+	/**
+	 * Returns an equivalent path making as much of it with PathNodes as possible.
+	 * This allows future operations (like find, track, locate) on this path (and derived ones) to be faster.
+	 * Note that the returned path may use AnchorNodes from this AnchorSet,
+	 * but does not have a tracked reference to them, so this should not be held onto across anything that might free an AnchorNode.
+	 *
+	 * @remarks
+	 * Also ensures that any PathNode in the path is from this AnchorSet.
+	 */
+	public internalizePath(originalPath: UpPath): UpPath {
+		let path: UpPath | undefined = originalPath;
+		const stack: UpPath[] = [];
+		while (path !== undefined) {
+			if (path instanceof PathNode) {
+				if (path.anchorSet === this) {
+					break;
+				}
+			}
+			stack.push(path);
+			path = path.parent;
+		}
+
+		// Now `path` contains an internalized path.
+		// It just needs the paths from stackOut to wrap it.
+
+		let wrapWith: UpPath | undefined;
+		while ((wrapWith = stack.pop()) !== undefined) {
+			if (path === undefined || path instanceof PathNode) {
+				// If path already has an anchor, get an anchor for it's child if there is one:
+				const child = (path ?? this.root).tryGetChild(
+					wrapWith.parentField,
+					wrapWith.parentIndex,
+				);
+				if (child !== undefined) {
+					path = child;
+					continue;
+				}
+			}
+			// Replacing this if with a ternary makes the documentation harder to include and hurts readability.
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (path === wrapWith.parent && !(wrapWith instanceof PathNode)) {
+				// path is safe to reuse from input path, so use it to avoid allocating another object.
+				path = wrapWith;
+			} else {
+				path = {
+					parent: path,
+					parentField: wrapWith.parentField,
+					parentIndex: wrapWith.parentIndex,
+				};
+			}
+		}
+
+		return path ?? fail("internalize path must be a path");
 	}
 
 	/**
@@ -297,13 +408,13 @@ export class AnchorSet {
 	 * Add an API to resurrect them? Store them in special detached fields? Store them in special non-detached fields?
 	 *
 	 * TODO:
-	 * Now should custom anchors work (ex: ones not just tied to a specific Node)?
+	 * How should custom anchors work (ex: ones not just tied to a specific Node)?
 	 * This design assumes they can be expressed in terms of a Node anchor + some extra stuff,
 	 * but we don't have an API for the extra stuff yet.
 	 *
 	 * TODO: tests
 	 */
-	public moveChildren(
+	private moveChildren(
 		count: number,
 		srcStart: UpPath | undefined,
 		dst: UpPath | undefined,
@@ -430,13 +541,41 @@ export class AnchorSet {
 		let parent: UpPath | undefined;
 		const moveTable = new Map<Delta.MoveId, UpPath>();
 
-		const visitor = {
+		// Run `withNode` on anchorNode for parent if there is such an anchorNode.
+		// If at root, run `withRoot` instead.
+		const maybeWithNode: (
+			withNode: (anchorNode: PathNode) => void,
+			withRoot?: () => void,
+		) => void = (withNode, withRoot) => {
+			if (parent === undefined && withRoot !== undefined) {
+				withRoot();
+			} else {
+				assert(parent !== undefined, "parent must exist");
+				// TODO:Perf:
+				// When traversing to a depth D when there are not anchors in that subtree, this goes O(D^2).
+				// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
+				parent = this.internalizePath(parent);
+				if (parent instanceof PathNode) {
+					withNode(parent);
+				}
+			}
+		};
+
+		const visitor: DeltaVisitor = {
 			onDelete: (start: number, count: number): void => {
 				assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				this.moveChildren(count, { parent, parentField, parentIndex: start }, undefined);
 			},
 			onInsert: (start: number, content: Delta.ProtoNode[]): void => {
 				assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				this.moveChildren(content.length, undefined, {
 					parent,
 					parentField,
@@ -445,19 +584,30 @@ export class AnchorSet {
 			},
 			onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				moveTable.set(id, { parent, parentField, parentIndex: start });
 			},
 			onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				const srcPath =
 					moveTable.get(id) ?? fail("Must visit a move in after its move out");
 				this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
 			},
-			onSetValue: (value: Value): void => {},
+			onSetValue: (value: Value): void => {
+				maybeWithNode((p) => p.events.emit("valueChanging", p, value));
+			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 				parent = { parent, parentField, parentIndex: index };
 				parentField = undefined;
+				maybeWithNode((p) => p.events.emit("subtreeChanging", p));
 			},
 			exitNode: (index: number): void => {
 				assert(parent !== undefined, 0x3ac /* Must have parent node */);
@@ -471,7 +621,7 @@ export class AnchorSet {
 				parentField = undefined;
 			},
 		};
-
+		this.events.emit("treeChanging", this);
 		visitDelta(delta, visitor);
 	}
 }

@@ -33,6 +33,7 @@ export class PartitionManager extends EventEmitter {
 		private readonly factory: IPartitionLambdaFactory<IPartitionConfig>,
 		private readonly consumer: IConsumer,
 		private readonly logger?: ILogger,
+		listenForConsumerErrors = true,
 	) {
 		super();
 
@@ -49,13 +50,15 @@ export class PartitionManager extends EventEmitter {
 			this.rebalanced(partitions);
 		});
 
-		this.consumer.on("error", (error, errorData: IContextErrorData) => {
-			if (this.stopped) {
-				return;
-			}
+		if (listenForConsumerErrors) {
+			this.consumer.on("error", (error, errorData: IContextErrorData) => {
+				if (this.stopped) {
+					return;
+				}
 
-			this.emit("error", error, errorData);
-		});
+				this.emit("error", error, errorData);
+			});
+		}
 	}
 
 	public async stop(): Promise<void> {
