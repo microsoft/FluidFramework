@@ -29,5 +29,5 @@ steps:
         else
           echo "##[error] $failedTests"
         fi
-      workingDirectory: tools/pipelines/scripts/report-parser
+      workingDirectory: scripts/report-parser
     condition: and(eq(variables['TestReportsExists'], 'true'))
