@@ -827,6 +827,103 @@ importers:
       webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
       webpack-merge: 5.8.0
 
+  examples/data-objects/hello-shared-tree:
+    specifiers:
+      '@fluid-internal/tree': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/aqueduct': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/azure-client': ^1.1.0
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/cell': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/container-runtime': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/core-interfaces': ^0.43.1000
+      '@fluidframework/data-object-base': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/datastore-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/map': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@fluidframework/test-client-utils': '>=2.0.0-internal.3.1.0 <2.0.0-internal.4.0.0'
+      '@rushstack/eslint-config': ^2.5.1
+      '@sinclair/typebox': ^0.25.8
+      '@types/node': ^14.18.36
+      '@types/react': ^17.0.1
+      '@typescript-eslint/eslint-plugin': ~5.9.0
+      '@typescript-eslint/parser': ~5.9.0
+      '@uifabric/fluent-theme': ^7.1.3
+      concurrently: ^6.2.0
+      css-loader: ^1.0.0
+      eslint: ~8.6.0
+      eslint-plugin-editorconfig: ~3.2.0
+      eslint-plugin-eslint-comments: ~3.2.0
+      eslint-plugin-import: ~2.25.4
+      eslint-plugin-jest: ^27.1.5
+      eslint-plugin-mocha: ~10.0.3
+      eslint-plugin-promise: ~6.0.0
+      eslint-plugin-react: ~7.28.0
+      eslint-plugin-tsdoc: ~0.2.14
+      eslint-plugin-unicorn: ~40.0.0
+      react: ^17.0.1
+      react-dom: ^17.0.1
+      reflect-metadata: ^0.1.13
+      rimraf: ^2.6.2
+      style-loader: ^1.0.0
+      ts-loader: ^9.3.0
+      typescript: ~4.5.5
+      typescript-formatter: 7.1.0
+      webpack: ^5.72.0
+      webpack-cli: ^4.9.2
+      webpack-dev-server: ~4.6.0
+      webpack-merge: ^5.8.0
+    dependencies:
+      '@fluid-internal/tree': link:../../../packages/dds/tree
+      '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
+      '@fluidframework/azure-client': 1.1.1
+      '@fluidframework/cell': link:../../../packages/dds/cell
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
+      '@fluidframework/core-interfaces': 0.43.1000
+      '@fluidframework/data-object-base': link:../../../packages/framework/data-object-base
+      '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/map': link:../../../packages/dds/map
+      '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/test-client-utils': link:../../../packages/framework/test-client-utils
+      '@sinclair/typebox': 0.25.24
+      '@uifabric/fluent-theme': 7.7.33_gzv7pa6nrbev3fs6gyzn7sadkq
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      reflect-metadata: 0.1.13
+      typescript: 4.5.5
+    devDependencies:
+      '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@rushstack/eslint-config': 2.6.2_kufnqfq7tb5rpdawkdb6g5smma
+      '@types/node': 14.18.36
+      '@types/react': 17.0.52
+      '@typescript-eslint/eslint-plugin': 5.9.1_i37r4pxnuonvhfobrnldva5ppi
+      '@typescript-eslint/parser': 5.9.1_kufnqfq7tb5rpdawkdb6g5smma
+      concurrently: 6.3.0
+      css-loader: 1.0.1_webpack@5.75.0
+      eslint: 8.6.0
+      eslint-plugin-editorconfig: 3.2.0_4x3vxi7gdq53yv6dpzqqqrxppq
+      eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
+      eslint-plugin-import: 2.25.4_gyqcce5u2ijhn2hqkipmk56rmu
+      eslint-plugin-jest: 27.1.7_yzeesn36t6b4xilow3qtxcqada
+      eslint-plugin-mocha: 10.0.5_eslint@8.6.0
+      eslint-plugin-promise: 6.0.1_eslint@8.6.0
+      eslint-plugin-react: 7.28.0_eslint@8.6.0
+      eslint-plugin-tsdoc: 0.2.17
+      eslint-plugin-unicorn: 40.0.0_eslint@8.6.0
+      rimraf: 2.7.1
+      style-loader: 1.3.0_webpack@5.75.0
+      ts-loader: 9.4.1_uyjeyilaoraoef7u6cc2jqrzqe
+      typescript-formatter: 7.1.0_typescript@4.5.5
+      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack-cli: 4.10.0_5g4oj3hy5spohe65dtfjx2t5f4
+      webpack-dev-server: 4.6.0_pda42hcaj7d62cr262fr632kue
+      webpack-merge: 5.8.0
+
   examples/data-objects/monaco:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
@@ -10795,7 +10892,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.19.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -12153,6 +12250,24 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@fluentui/react-compose/0.19.24_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-4PO7WSIZjwBGObpknjK8d1+PhPHJGSlVSXKFHGEoBjLWVlCTMw6Xa1S4+3K6eE3TEBbe9rsqwwocMTFHjhWwtQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@types/classnames': 2.3.1
+      '@types/react': 17.0.52
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
+      classnames: 2.3.2
+      react: 17.0.2
+      tslib: 1.14.1
+    transitivePeerDependencies:
+      - '@types/react-dom'
+      - react-dom
+    dev: false
+
   /@fluentui/react-context-selector/9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-3U0d6qOP1IMASLpWK6ek9PLagxdGK0L0EKBhaO7U9Q89k2DJ0JQRzz2kZSrnN0a23yL0BipxtKGZiqhO0u6AHA==}
     peerDependencies:
@@ -12186,6 +12301,25 @@ packages:
       '@uifabric/set-version': 7.0.24
       '@uifabric/styling': 7.25.1_74b3ggvk3akyhuq4eydyx3fqim
       '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
+    dev: false
+
+  /@fluentui/react-focus/7.18.17_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-W+sLIhX7wLzMsJ0jhBrDAblkG3DNbRbF8UoSieRVdAAm7xVf5HpiwJ6tb6nGqcFOnpRh8y+fjyVM+dV3K6GNHA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/keyboard-key': 0.2.17
+      '@types/react': 17.0.52
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/styling': 7.25.1_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.14.1
@@ -12278,6 +12412,18 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@fluentui/react-stylesheets/0.2.9_q5o373oqrklnndq2vhekyuzhxi:
+    resolution: {integrity: sha512-6GDU/cUEG/eJ4owqQXDWPmP5L1zNh2NLEDKdEzxd7cWtGnoXLeMjbs4vF4t5wYGzGaxZmUQILOvJdgCIuc9L9Q==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@types/react': 17.0.52
+      '@uifabric/set-version': 7.0.24
+      react: 17.0.2
+      tslib: 1.14.1
+    dev: false
+
   /@fluentui/react-tabs/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-U0fjKZOV5Z6BZW+ZtOOvS43ttkCVZGdE+OlbkU8+6r+DHltl5Y4hPu0d4pL39NnwPHuDGyayB7MRixrNT64Myg==}
     peerDependencies:
@@ -12321,6 +12467,29 @@ packages:
       tslib: 2.5.0
     dev: false
 
+  /@fluentui/react-theme-provider/0.19.16_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-Kf7z4ZfNLS/onaFL5eQDSlizgwy2ytn6SDyjEKV+9VhxIXdDtOh8AaMXWE7dsj1cRBfBUvuGPVnsnoaGdHxJ+A==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-compose': 0.19.24_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@fluentui/react-stylesheets': 0.2.9_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-window-provider': 1.0.6_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@fluentui/theme': 1.7.13_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@types/react': 17.0.52
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/react-hooks': 7.16.4_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
+      classnames: 2.3.2
+      react: 17.0.2
+      tslib: 1.14.1
+    transitivePeerDependencies:
+      - '@types/react-dom'
+      - react-dom
+    dev: false
+
   /@fluentui/react-theme/9.1.5:
     resolution: {integrity: sha512-VOvPOM2IY2M9MpvA0voGIsDMdVxjTfakqu9ReNtaOrH/1pbUy5A+Z7ycHSo7eh7jVDj8W7KG79v0Q8kFPjymQQ==}
     dependencies:
@@ -12350,6 +12519,21 @@ packages:
     dependencies:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
+      '@uifabric/set-version': 7.0.24
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
+    dev: false
+
+  /@fluentui/react-window-provider/1.0.6_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-m2HoxhU2m/yWxUauf79y+XZvrrWNx+bMi7ZiL6DjiAKHjTSa8KOyvicbOXd/3dvuVzOaNTnLDdZAvhRFcelOIA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@types/react': 17.0.52
       '@uifabric/set-version': 7.0.24
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -12429,6 +12613,23 @@ packages:
       '@uifabric/merge-styles': 7.20.2
       '@uifabric/set-version': 7.0.24
       '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
+    dev: false
+
+  /@fluentui/theme/1.7.13_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-/1ZDHZNzV7Wgohay47DL9TAH4uuib5+B2D6Rxoc3T6ULoWcFzwLeVb+VZB/WOCTUbG+NGTrmsWPBOz5+lbuOxA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@types/react': 17.0.52
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.14.1
@@ -12735,6 +12936,30 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/aqueduct/1.3.6:
+    resolution: {integrity: sha512-33vWqX1UEwYYTHb3Iv6+1B4ZFFcPNdD3cqfAmYbR7nOwxPYq1uKflUzafUOKW6SMpRyomeebCy/f5/PIoG+yJA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-loader': 1.3.6
+      '@fluidframework/container-runtime': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/map': 1.3.6
+      '@fluidframework/request-handler': 1.3.6
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/synthesize': 1.3.6
+      '@fluidframework/view-interfaces': 1.3.6
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/aqueduct/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-ZjX7pPuTUPt/z1rY7aENDmf37FIsCV7nnCtNx0S9EUhkKq6RvpM90u9PXHy/TGeDACKNWnD9T3LfS+yuaIcQDA==}
     dependencies:
@@ -12802,6 +13027,37 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/azure-client/1.1.1:
+    resolution: {integrity: sha512-2raaGv2nWxdMbcrw9kuDhHd8coqqVloIoM7X19NmcCVP7FLkT7n8Fj2O/7gg8ccqsaMSXNWCRhbtMpca/lcD8g==}
+    peerDependencies:
+      fluid-framework: ^1.3.3
+    peerDependenciesMeta:
+      fluid-framework:
+        optional: true
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-loader': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/fluid-static': 1.3.6
+      '@fluidframework/map': 1.3.6
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/routerlicious-driver': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/server-services-client': 0.1036.5001
+      axios: 0.21.4
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   /@fluidframework/build-common/1.1.0:
     resolution: {integrity: sha512-ueCMYxa8/xgptrQc3JDAUio9HaXbwpiHe1A/CllbRXRlJfKJa31m6wcoBpmqkDzNPbCS+oehNDZOd6ZpnrUwnA==}
@@ -12941,6 +13197,18 @@ packages:
   /@fluidframework/common-definitions/0.20.1:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
 
+  /@fluidframework/common-utils/0.32.2:
+    resolution: {integrity: sha512-PoGX7/l0vWKt5JaAxcgFOdGje30Q6qSE06YzFIKh9Ba3oq7B60+TFqu7c2ErQt6sNddmvcAcAiLVNaTGAip3vw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@types/events': 3.0.0
+      base64-js: 1.5.1
+      buffer: 6.0.3
+      events: 3.3.0
+      lodash: 4.17.21
+      sha.js: 2.4.11
+    dev: false
+
   /@fluidframework/common-utils/1.1.1:
     resolution: {integrity: sha512-XCPEFE1JAg+juQZYQQVZjHZJlM5+Wm9NxRbsnsix05M1tSq0p3SLqwgfaSGssXhLLX5QtG+aF1QD5a3LA1qtNQ==}
     dependencies:
@@ -12951,6 +13219,16 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
       sha.js: 2.4.11
+
+  /@fluidframework/container-definitions/1.3.6:
+    resolution: {integrity: sha512-+5fuIUG7jGjKrRHtrH2VgrRI0YUXcP9jSLrHdI4Ks+4kNSDiOlu+UT7j9T9KoBAfHOpnihS3PVeDBJtIeqgDZw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      events: 3.3.0
+    dev: false
 
   /@fluidframework/container-definitions/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-ha4VYvAgozdUxjzGXJEdWNhQkxS8LmCwKKaBgiJsZW9XB87c7NU2IXd/Rx1E3BzfakhVDYYUKO/pfoILks/+aA==}
@@ -12981,6 +13259,30 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       events: 3.3.0
     dev: true
+
+  /@fluidframework/container-loader/1.3.6:
+    resolution: {integrity: sha512-J7nF7XTHCtL24gGnUhg155kolokX8HRWJqj2XEjaPrBsRmkyiySP+qCnrKY0bgLqaFLHW4WYfmC80lFE3oaELg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+      abort-controller: 3.0.0
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      lodash: 4.17.21
+      url: 0.11.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/container-loader/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-bsFWzfqdPfyk7ldumau+Qngsk9fK+4Cd2hULUnZV9rmiYBQv3/BUL3+aSR6B6sdekvzBzOU8MWu+X68g+XNmmQ==}
@@ -13030,6 +13332,17 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/container-runtime-definitions/1.3.6:
+    resolution: {integrity: sha512-cQP/F2F9BjeXKyUNmwQCRRb5qJPoufZ/iIyBSdj8qEYwhTyv3Ogbk+LyHz5cG8wPYlM2ff8IirxwEdgq7VTL/w==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+    dev: false
+
   /@fluidframework/container-runtime-definitions/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-Rc2W7SL/a7fbQ0MzPsX7rTfZu32TEVvaiCDs5C7JYAyK212JlyE74W3ELeZyWqoB92rtdu4Oqry5/fiamEQbFw==}
     dependencies:
@@ -13062,6 +13375,32 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
     dev: true
+
+  /@fluidframework/container-runtime/1.3.6:
+    resolution: {integrity: sha512-YC1Bvd8UiO3YID/sU9yxMMibW0FPqpf+sS47Czg1ILf2twK48U2BopDDKNeIHJFDl3yNOqxJniUkJJLNoYWwqg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/garbage-collector': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/container-runtime/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-ki2fSbvDxvAmtjl+uO83jvpEcoakCdG+lVXiGyyzRNjZap1zLlrnJFTZo7X2/1FnNHcYBn3kVKZah3QkBuR5Gw==}
@@ -13171,6 +13510,18 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/container-utils/1.3.6:
+    resolution: {integrity: sha512-Hf3kxHuRzQv3a7J+I/3q5OH3WW5lajy3ENucc1HLCuOKYi39MM5AfAMBEfaTl1aI5iMxhHEyDAZJhaGJvvgOew==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@fluidframework/container-utils/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-arXFcu2jAgVVTmDDQpKN4TifrFKjf8B1WQpy6SIRC6jGvCtw58tvw7XBm9APJ9L6obJbtubbGp+VeMsek8fKsA==}
     dependencies:
@@ -13206,6 +13557,14 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@fluidframework/core-interfaces/0.43.1000:
+    resolution: {integrity: sha512-RU7BxVQUaleOz+415dig6m3cE7tDAtFJP1IRlfOj83meKoQyMclRyXIKQpE5HD0EhI1BLRtl/nc4YsZDa9AHbA==}
+    dev: false
+
+  /@fluidframework/core-interfaces/1.3.6:
+    resolution: {integrity: sha512-6ccflpLJvlPhZ58MiMUUC5XvWF1s5yTmP3dXHsJf514IzuAvS5PCGLdZWUjWCgxA2fPvZKzA4VfWpwyFt1H0LA==}
+    dev: false
 
   /@fluidframework/core-interfaces/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-Fnox1Hgk7PbhVCH1lCQe3Cr/204r4vaQBSOYLMfO/ai3xvfy9oirEfFcBYdt3+5gs2f+fY85ip2zvmE0wTXwyw==}
@@ -13253,6 +13612,17 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/datastore-definitions/1.3.6:
+    resolution: {integrity: sha512-9kgqa5FsIHHuxQPL50cm/FX6FOukBDDHG45ByGEChISbnfkS13xncLrY6mE4FgTC1jW0d7y3CgGT3pn4n9Hc+g==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+    dev: false
+
   /@fluidframework/datastore-definitions/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-aHm94gMa35ITiLb82JGewW8PpsFsilwKGy2wudP3vYiTMs6rJiJjASX6bySQO7hSARc2hdmsvYVIvaESErHBaQ==}
     dependencies:
@@ -13285,6 +13655,30 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
     dev: true
+
+  /@fluidframework/datastore/1.3.6:
+    resolution: {integrity: sha512-eQTkB/Z0Sn5JwZ66EvY3r4RflSoZth0Zi7ezD4kbx75c4wmixRSs+qGSMM0xbllFXjyA24ucbL21zduVLxZGcg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/garbage-collector': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+      lodash: 4.17.21
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/datastore/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-g+0veJ+1RJQBLE+AVKKP5V6K66cc9JS2E4HnbNkSGhyrOLPEqB/pYzJCIkYezCZpn+SCpUV7AkY6N+ny7ElOpw==}
@@ -13409,6 +13803,20 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/driver-base/1.3.6:
+    resolution: {integrity: sha512-Ini7PyyIP+out9+5eAqq+QYWfxSGprVtxTrtipmoKCjI6XTmgfmSwrs9VPrgdIl6lI52RjEFWQtC/J3vmjAesg==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/driver-base/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-xPH31GtvDo4qLU4o/F0GYv8iwVWTmTYEJF279XZzbWpSNzh/kTAHD7ALeNFuE9cAZht3p1Ypi1wVJ0FPR5IiRg==}
     dependencies:
@@ -13437,6 +13845,14 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/driver-definitions/1.3.6:
+    resolution: {integrity: sha512-5Rvk2NhXxh2bhk8WWnBtcJq/9TgVYhAj4z7DDuqXqJyRUF/XYhyxqOfMuo7IAhTa2oTpp8o7QDwZqsfWKfC9tA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+    dev: false
+
   /@fluidframework/driver-definitions/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-mcxzMqDqKCK3BIq8BIjLRze2EgBvdrz51B23k+zuu1VskpzzFF6W6+VKhBcP5/MCcWhVZ62jOQg4+jf2ZJRe0w==}
     dependencies:
@@ -13460,6 +13876,24 @@ packages:
       '@fluidframework/core-interfaces': 2.0.0-internal.3.2.2
       '@fluidframework/protocol-definitions': 1.1.0
     dev: true
+
+  /@fluidframework/driver-utils/1.3.6:
+    resolution: {integrity: sha512-yDbuR4eMj0Y+kbIwV0XaXd3kh+U1YxmU1Qgcxa2RgD3MEMsDiCBaQrUCPjjxmBT9diUfBijVxjjOc5vUfm/eBA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/telemetry-utils': 1.3.6
+      axios: 0.26.1
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/driver-utils/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-rl0/4fsbmvVsjpbzJTu/XCCfM/xysNs9xQQ+TfK9Rcdh6xZABL1Dgzc/iz7So/aRI8OjjDI9fi/Xglmkq7md5g==}
@@ -13611,6 +14045,26 @@ packages:
       - utf-8-validate
     dev: true
 
+  /@fluidframework/fluid-static/1.3.6:
+    resolution: {integrity: sha512-ncGgaDmewFQJou9roh+8K94hhpIlNEGvLaxNnofgFHAq1R2vLlx+zb5VGMMywnof+gvjgrsk4JOP2C9XpMs9Tw==}
+    dependencies:
+      '@fluidframework/aqueduct': 1.3.6
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-loader': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/request-handler': 1.3.6
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/fluid-static/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-0OesqwiGz9ctRDdZWlKyODFYY+cag8eHdDDBwDGeXZWu89n7yE8lvm2o2z/xycmuRpCJ2twJFRDMINk1rHNIug==}
     dependencies:
@@ -13630,6 +14084,14 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/garbage-collector/1.3.6:
+    resolution: {integrity: sha512-uJpvkWNzTsLJAmGwu6LUjR8cVoAzlfmhxoudaGrA3DeWhGheDcGVP/hiKht+pMw3u1CCA4AKOfE+0bIOQXyFBA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/runtime-definitions': 1.3.6
+    dev: false
 
   /@fluidframework/garbage-collector/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-kET9OCET+SgojGG6W011EPrEO9X+K8wDWYIUjTVyn60ZTfQRHJ4IJzR/xyV6F28Q0pXVTJSHVR5xLCQWcNI4VQ==}
@@ -13657,6 +14119,10 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': 2.0.0-internal.3.2.2
     dev: true
+
+  /@fluidframework/gitresources/0.1036.5001:
+    resolution: {integrity: sha512-Beg1A/eR7wCPYYb5u5iqqc092NkWnSvl4XCn2ImA4FDKtnYggD2/KYd9Hp0feM6Z99aU4FYSBidL2NewWlvF7A==}
+    dev: false
 
   /@fluidframework/gitresources/0.1038.3000:
     resolution: {integrity: sha512-w4vuRUnb6t5hPVq5/4vYDC41NRhS3SXBwcaRIPJ1jT8/H792BjVT0tKnR5x/sqR6maKOLdll3Z4itzq+pdeisQ==}
@@ -13748,6 +14214,25 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@fluidframework/map/1.3.6:
+    resolution: {integrity: sha512-CEuDHKLbJGt8SwwyUKoY1ZBkeFcn7Y+XPbm6lqsctYM08Fz2n1IsI6cl7KqppR3xJ2SpGyzDnVzNXeiPyOapfQ==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/shared-object-base': 1.3.6
+      path-browserify: 1.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
 
   /@fluidframework/map/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-CZYl0nj9Zvb2ibEuRjbE62tuk1sNFV5Q/vVDmXlnbTGnbeqxcQ5nknQCcAU1FZzH1kEZibqG0/3CAZQRxWhySg==}
@@ -13951,6 +14436,15 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/protocol-base/0.1036.5001:
+    resolution: {integrity: sha512-Btjy2bWVbVsmzNTBxTQZ9l/WXljsjDpGbBgJsn9GLacrTG9aDDtIVMXuwLAcEV1IVkxGcIipXryvfhbPHDYcMg==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      lodash: 4.17.21
+    dev: false
+
   /@fluidframework/protocol-base/0.1038.3000:
     resolution: {integrity: sha512-e0G1JSlcpWiZTgIJqpU28EnmqNyfmwoiTZOL8DVrxOWArawqhEsBFBZUhL3zP2Y4vobrcjS9lMhQDsSXptwYSg==}
     dependencies:
@@ -13968,6 +14462,12 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       events: 3.3.0
       lodash: 4.17.21
+
+  /@fluidframework/protocol-definitions/0.1028.2000:
+    resolution: {integrity: sha512-ZUPCmPFcK7UAK4RkfVWfzQPAWFvYNm6ywP51V42YC38gCGye+Epvyr3beA+FSaHPIZGxm5+Uw52+ykTvmDb2UA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+    dev: false
 
   /@fluidframework/protocol-definitions/1.1.0:
     resolution: {integrity: sha512-Q4YA6FBlB2cHicgvfs9z3LPKnfZMdx5JrmIEGOmxFmom/l9EV1F43sXl6K9/j5se8tQ9V9L8drFbDzqVf37roQ==}
@@ -14003,6 +14503,18 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/request-handler/1.3.6:
+    resolution: {integrity: sha512-4z0XRVuj3mu6ZYceUbTf/DZfRt1u0cClnpVZPthEs26QSk6LJvEpt5UBE3oIGkESoxZ3LHtAnkS2zCEl8jcrFw==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@fluidframework/request-handler/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-Ibo63Q8Tx5f/9RG0k9/XGK7naoMphyLGjmYmVP6GEfF7P9QwXKJ1rdXNL+LvtfN8uSHuWmNygZ2YWnjhq+X4bQ==}
     dependencies:
@@ -14014,6 +14526,33 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@fluidframework/routerlicious-driver/1.3.6:
+    resolution: {integrity: sha512-b9NXLWI7YH4l2dEkgjDuIF9BNb1ggxkzS8ZtZpr+eBtegRN+E+WSbkR7JCPwrDmA+vPa9z0mXNS88ZeCwnQp3A==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/driver-base': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/driver-utils': 1.3.6
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/server-services-client': 0.1036.5001
+      '@fluidframework/telemetry-utils': 1.3.6
+      cross-fetch: 3.1.5
+      json-stringify-safe: 5.0.1
+      querystring: 0.2.1
+      socket.io-client: 4.5.4
+      url-parse: 1.5.10
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - encoding
+      - supports-color
+      - utf-8-validate
+    dev: false
 
   /@fluidframework/routerlicious-driver/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-gLLONsTz1trnW1wtCQtXhPyYdy+qQNcI4wNs+ZfPviWKKFwG8LAd9o6lX6VTB7f6CXani3q3USffFvrxKQDhPA==}
@@ -14080,6 +14619,17 @@ packages:
       url: 0.11.0
     dev: true
 
+  /@fluidframework/runtime-definitions/1.3.6:
+    resolution: {integrity: sha512-sFCUkN4sCz1ww7XKhIFiiXuaUtrps8Dd4h0VaYLsvzkH9bD/lcbbcvgmaMmqPa3tOy0ROsLAM5QSr5jBYipidw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/driver-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+    dev: false
+
   /@fluidframework/runtime-definitions/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-RP22j5+lEP+1s7IAyl8qq5HCti8BdzQafPgoV75nN85dizB1fkuFC0/CSarxNZ/JeaxHd7Eaj2gQtPIc4JxVDg==}
     dependencies:
@@ -14112,6 +14662,24 @@ packages:
       '@fluidframework/driver-definitions': 2.0.0-internal.3.2.2
       '@fluidframework/protocol-definitions': 1.1.0
     dev: true
+
+  /@fluidframework/runtime-utils/1.3.6:
+    resolution: {integrity: sha512-Yl0oWTcUwgDBWIaW6UsyfHE9D5yhmY11lx5ij3RcEn2Up07mD7+DzFXvxXTjdCioc4B0ssad70vvGJKJOwk6Nw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-runtime-definitions': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/garbage-collector': 1.3.6
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@fluidframework/runtime-utils/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-9rtuhFQz/Nivhi3LqLxTq8a11m0ooyQ4hdMetdpxsZEvRtVsg2x5We8NwKw3ahM+PJ1I8Iw7ikau6eyksrR1Og==}
@@ -14420,6 +14988,26 @@ packages:
       - supports-color
       - utf-8-validate
 
+  /@fluidframework/server-services-client/0.1036.5001:
+    resolution: {integrity: sha512-e+Zk2uPcds9yqlalAZ0PpfEAKPPUIpIoQb3YSm42ZVpAgQmLYIRqTpXrmTC7qdeQnSGFJUAliW4DfHBEwpSXlQ==}
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/gitresources': 0.1036.5001
+      '@fluidframework/protocol-base': 0.1036.5001
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      axios: 0.26.1_debug@4.3.4
+      crc-32: 1.2.0
+      debug: 4.3.4
+      json-stringify-safe: 5.0.1
+      jsrsasign: 10.6.1
+      jwt-decode: 3.1.2
+      querystring: 0.2.1
+      sillyname: 0.1.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@fluidframework/server-services-client/0.1038.3000:
     resolution: {integrity: sha512-M43mO67cEfwhog6QmfMbWE9Qkoj/61dWvUsgIE0RNBbH2exWjfsyOwGuMdq6hH4enh2dZTTKTfBXEBw4FrfxLg==}
     dependencies:
@@ -14598,6 +15186,27 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluidframework/shared-object-base/1.3.6:
+    resolution: {integrity: sha512-eUMtIosNBwDJXpw69BJuOLGJw4Lf53f6sU6ZgNKU1l2C5/Ht7gG2iDEBxYnNUvVAMQprTHYt5T1qTwn8uaT+Lw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.3.6
+      '@fluidframework/container-runtime': 1.3.6
+      '@fluidframework/container-utils': 1.3.6
+      '@fluidframework/core-interfaces': 1.3.6
+      '@fluidframework/datastore': 1.3.6
+      '@fluidframework/datastore-definitions': 1.3.6
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.3.6
+      '@fluidframework/runtime-utils': 1.3.6
+      '@fluidframework/telemetry-utils': 1.3.6
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+    dev: false
+
   /@fluidframework/shared-object-base/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-Std8EzMRrkeiKMwOvPeu7X4WAjVkGtvJQ8hAEWq6GqmK0kelObW3R8+HAUd6Te4FIkTXba2TT0xJAeULkg9isQ==}
     dependencies:
@@ -14697,6 +15306,10 @@ packages:
       - supports-color
     dev: true
 
+  /@fluidframework/synthesize/1.3.6:
+    resolution: {integrity: sha512-avt0K5uxvOjs1Y6XpisonkMmG3RaI901h5XfIWFlxOhkHSgeN7T3ZmTdAinlpyRv+XKHzVzN1SqaccpGeC0+lw==}
+    dev: false
+
   /@fluidframework/synthesize/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-lJbTdNe2vl/zpawe5i3MnFcslaBQLxMLWs8S+miFTGL5GkVeisFZ34D+q8Cm7EMTb0/Kv6z90kMEfs8LCQDsOg==}
     dev: true
@@ -14719,6 +15332,18 @@ packages:
       - debug
       - supports-color
     dev: true
+
+  /@fluidframework/telemetry-utils/1.3.6:
+    resolution: {integrity: sha512-9DoLzKwnELWBN2NiCJPgfj2lCER4IiHSgiBMwbLoEZ0qTqGKhWJ1+7m1PupuwGuKX1zbb9HjUNxv2ommokZcqw==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      debug: 4.3.4
+      events: 3.3.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
 
   /@fluidframework/telemetry-utils/2.0.0-internal.2.4.0:
     resolution: {integrity: sha512-lCODM/TUikeCDm0hY9KM/HIQnCLpthQGwxMZIQ2V8LE7HWn7BTd7vq2xetulzCrbEqcRqcT0hyza7gla/Y+A6A==}
@@ -15114,6 +15739,12 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
     dev: true
+
+  /@fluidframework/view-interfaces/1.3.6:
+    resolution: {integrity: sha512-QEBEPmJdNCO7BdCjUaFxA32fjH91LePRs2xMV5iK8KRQwkyYnp4kRa3nKD3Iv2ezYKG+MvtAIDmUvfzICwWxUA==}
+    dependencies:
+      '@fluidframework/core-interfaces': 1.3.6
+    dev: false
 
   /@fluidframework/view-interfaces/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-kwMOGl/stYyRiiL0+C7RwKLQewQHNghEVAD1HyJspDZ42fHA27SUOFfleCU6bz+lmZv+CRgNiXZynzFI1s//IA==}
@@ -18420,6 +19051,10 @@ packages:
   /@sideway/pinpoint/2.0.0:
     resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
 
+  /@sinclair/typebox/0.25.24:
+    resolution: {integrity: sha512-XJfwUVUKDHF5ugKwIcxEgc9k8b7HbznCp6eUfWgu710hMPNIO4aw4/zB5RogDQz8nd6gyCDpU9O/m6qYEWY6yQ==}
+    dev: false
+
   /@sindresorhus/is/0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}
     engines: {node: '>=6'}
@@ -20014,6 +20649,13 @@ packages:
       '@types/har-format': 1.2.10
     dev: true
 
+  /@types/classnames/2.3.1:
+    resolution: {integrity: sha512-zeOWb0JGBoVmlQoznvqXbE0tEC/HONsnoUNH19Hc96NFsTAwTXbTqb8FMYkru1F/iqp7a18Ws3nWJvtA1sHD1A==}
+    deprecated: This is a stub types definition. classnames provides its own type definitions, so you do not need this installed.
+    dependencies:
+      classnames: 2.3.2
+    dev: false
+
   /@types/cli-progress/3.11.0:
     resolution: {integrity: sha512-XhXhBv1R/q2ahF3BM7qT5HLzJNlIL0wbcGyZVjqOTqAybAnsLisd7gy1UCyIqpL+5Iv6XhlSyzjLCnI2sIdbCg==}
     dependencies:
@@ -20626,7 +21268,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/eslint-plugin/5.43.0_i37r4pxnuonvhfobrnldva5ppi:
+  /@typescript-eslint/eslint-plugin/5.43.0_bbzbxlo3azetmd26uxywfchwoi:
     resolution: {integrity: sha512-wNPzG+eDR6+hhW4yobEmpR36jrqqQv1vxBq5LJO3fBAktjkvekfr4BRl+3Fn1CM/A+s8/EiGUbOMDoYqWdbtXA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -20639,10 +21281,10 @@ packages:
     dependencies:
       '@typescript-eslint/parser': 5.9.1_kufnqfq7tb5rpdawkdb6g5smma
       '@typescript-eslint/scope-manager': 5.43.0
-      '@typescript-eslint/type-utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@typescript-eslint/type-utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
+      '@typescript-eslint/utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
       debug: 4.3.4
-      eslint: 8.6.0
+      eslint: 8.28.0
       ignore: 5.2.4
       natural-compare-lite: 1.4.0
       regexpp: 3.2.0
@@ -20820,7 +21462,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/type-utils/5.43.0_kufnqfq7tb5rpdawkdb6g5smma:
+  /@typescript-eslint/type-utils/5.43.0_24w3dq2y5hvyqjdcjculbumysy:
     resolution: {integrity: sha512-K21f+KY2/VvYggLf5Pk4tgBOPs2otTaIHy2zjclo7UZGLyFH86VfUOm5iq+OtDtxq/Zwu2I3ujDBykVW4Xtmtg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -20831,9 +21473,9 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/typescript-estree': 5.43.0_typescript@4.5.5
-      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@typescript-eslint/utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
       debug: 4.3.4
-      eslint: 8.6.0
+      eslint: 8.28.0
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -20981,6 +21623,26 @@ packages:
       - typescript
     dev: true
 
+  /@typescript-eslint/utils/5.43.0_24w3dq2y5hvyqjdcjculbumysy:
+    resolution: {integrity: sha512-8nVpA6yX0sCjf7v/NDfeaOlyaIIqL7OaIGOWSPFqUKK59Gnumd3Wa+2l8oAaYO2lk0sO+SbWFWRSvhu8gLGv4A==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
+    dependencies:
+      '@types/json-schema': 7.0.11
+      '@types/semver': 7.3.13
+      '@typescript-eslint/scope-manager': 5.43.0
+      '@typescript-eslint/types': 5.43.0
+      '@typescript-eslint/typescript-estree': 5.43.0_typescript@4.5.5
+      eslint: 8.28.0
+      eslint-scope: 5.1.1
+      eslint-utils: 3.0.0_eslint@8.28.0
+      semver: 7.3.8
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+    dev: true
+
   /@typescript-eslint/utils/5.43.0_kufnqfq7tb5rpdawkdb6g5smma:
     resolution: {integrity: sha512-8nVpA6yX0sCjf7v/NDfeaOlyaIIqL7OaIGOWSPFqUKK59Gnumd3Wa+2l8oAaYO2lk0sO+SbWFWRSvhu8gLGv4A==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -21033,6 +21695,23 @@ packages:
       eslint-visitor-keys: 3.3.0
     dev: true
 
+  /@uifabric/fluent-theme/7.7.33_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-93UtFn/V8cJYDHugyDOwK/o8ddVHg7JlT8KotY5e/noFhxCf9XrG9NmfusAUqLXLyjujkJON2EtCj3ok53hxIQ==}
+    dependencies:
+      '@fluentui/theme': 1.7.13_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/styling': 7.25.1_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/variants': 7.3.4_gzv7pa6nrbev3fs6gyzn7sadkq
+      office-ui-fabric-react: 7.204.0_gzv7pa6nrbev3fs6gyzn7sadkq
+      tslib: 1.14.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react
+      - react-dom
+    dev: false
+
   /@uifabric/foundation/7.10.16_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-x13xS9aKh6FEWsyQP2jrjyiXmUUdgyuAfWKMLhUTK4Rsc+vJANwwVk4fqGsU021WA6pghcIirvEVpWf5MlykDQ==}
     peerDependencies:
@@ -21052,12 +21731,44 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@uifabric/foundation/7.10.16_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-x13xS9aKh6FEWsyQP2jrjyiXmUUdgyuAfWKMLhUTK4Rsc+vJANwwVk4fqGsU021WA6pghcIirvEVpWf5MlykDQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@types/react': 17.0.52
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/styling': 7.25.1_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
+    dev: false
+
   /@uifabric/icons/7.9.5_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-0e2fEURtR7sNqoGr9gU/pzcOp24B/Lkdc05s1BSnIgXlaL2QxRszfaEsl3/E9vsNmqA3tvRwDJWbtRolDbjCpQ==}
     dependencies:
       '@uifabric/set-version': 7.0.24
       '@uifabric/styling': 7.25.1_74b3ggvk3akyhuq4eydyx3fqim
       '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      tslib: 1.14.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react
+      - react-dom
+    dev: false
+
+  /@uifabric/icons/7.9.5_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-0e2fEURtR7sNqoGr9gU/pzcOp24B/Lkdc05s1BSnIgXlaL2QxRszfaEsl3/E9vsNmqA3tvRwDJWbtRolDbjCpQ==}
+    dependencies:
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/styling': 7.25.1_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
       tslib: 1.14.1
     transitivePeerDependencies:
       - '@types/react'
@@ -21091,6 +21802,23 @@ packages:
       tslib: 1.14.1
     dev: false
 
+  /@uifabric/react-hooks/7.16.4_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-k8RJYTMICWA6varT5Y+oCf2VDHHXN0tC2GuPD4I2XqYCTLaXtNCm4+dMcVA2x8mv1HIO7khvm/8aqKheU/tDfQ==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/react-window-provider': 1.0.6_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@types/react': 17.0.52
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
+    dev: false
+
   /@uifabric/set-version/7.0.24:
     resolution: {integrity: sha512-t0Pt21dRqdC707/ConVJC0WvcQ/KF7tKLU8AZY7YdjgJpMHi1c0C427DB4jfUY19I92f60LOQyhJ4efH+KpFEg==}
     dependencies:
@@ -21105,6 +21833,22 @@ packages:
       '@uifabric/merge-styles': 7.20.2
       '@uifabric/set-version': 7.0.24
       '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      tslib: 1.14.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react
+      - react-dom
+    dev: false
+
+  /@uifabric/styling/7.25.1_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-bd4QDYyb0AS0+KmzrB8VsAfOkxZg0dpEpF1YN5Ben10COmT8L1DoE4bEF5NvybHEaoTd3SKxpJ42m+ceNzehSw==}
+    dependencies:
+      '@fluentui/theme': 1.7.13_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@microsoft/load-themed-styles': 1.10.295
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
       tslib: 1.14.1
     transitivePeerDependencies:
       - '@types/react'
@@ -21130,6 +21874,37 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       tslib: 1.14.1
+    dev: false
+
+  /@uifabric/utilities/7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-5yM4sm142VEBg3/Q5SFheBXqnrZi9CNF5rjHNoex0GgGtG3AHPuS7U8gjm+/Io1MvbuCrn6lyyIw0MDvh1Ebkw==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/dom-utilities': 1.1.2
+      '@types/react': 17.0.52
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/set-version': 7.0.24
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
+    dev: false
+
+  /@uifabric/variants/7.3.4_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-y+QTqZLJ5ipKDosJGK3L8IrrGmRkzYptenYKydob+K0C6AR2LNWYRrKTwSGYDkltMIg/EMrwhXeUOGvBbM1ncQ==}
+    dependencies:
+      '@fluentui/theme': 1.7.13_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/set-version': 7.0.24
+      tslib: 1.14.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react
+      - react-dom
     dev: false
 
   /@ungap/structured-clone/0.3.4:
@@ -22297,10 +23072,18 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /axios/0.21.4_debug@4.3.2:
+  /axios/0.21.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
       follow-redirects: 1.15.2
+    transitivePeerDependencies:
+      - debug
+    dev: false
+
+  /axios/0.21.4_debug@4.3.2:
+    resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
+    dependencies:
+      follow-redirects: 1.15.2_debug@4.3.2
     transitivePeerDependencies:
       - debug
 
@@ -22972,7 +23755,7 @@ packages:
     dependencies:
       ansi-align: 2.0.0
       camelcase: 4.1.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-boxes: 1.0.0
       string-width: 2.1.1
       term-size: 1.2.0
@@ -23611,7 +24394,6 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
-    dev: true
 
   /chalk/3.0.0:
     resolution: {integrity: sha512-4D3B6Wf41KOYRFdszmDqMCGq5VV/uMAB273JILmO+3jAlh8X4qDtdtgCR3fxtbLEMzSx22QdhnDcJvu2u1fVwg==}
@@ -25126,7 +25908,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.2.0
       async-retry: 1.2.3
-      chalk: 2.4.1
+      chalk: 2.4.2
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -26394,9 +27176,9 @@ packages:
   /eslint-plugin-editorconfig/3.2.0_4x3vxi7gdq53yv6dpzqqqrxppq:
     resolution: {integrity: sha512-XiUg69+qgv6BekkPCjP8+2DMODzPqtLV5i0Q9FO1v40P62pfodG1vjIihVbw/338hS5W26S+8MTtXaAlrg37QQ==}
     dependencies:
-      '@typescript-eslint/eslint-plugin': 5.43.0_i37r4pxnuonvhfobrnldva5ppi
+      '@typescript-eslint/eslint-plugin': 5.43.0_bbzbxlo3azetmd26uxywfchwoi
       editorconfig: 0.15.3
-      eslint: 8.6.0
+      eslint: 8.28.0
       klona: 2.0.5
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
@@ -26509,6 +27291,27 @@ packages:
       - typescript
     dev: true
 
+  /eslint-plugin-jest/27.1.7_yzeesn36t6b4xilow3qtxcqada:
+    resolution: {integrity: sha512-0QVzf+og4YI1Qr3UoprkqqhezAZjFffdi62b0IurkCXMqPtRW84/UT4CKsYT80h/D82LA9avjO/80Ou1LdgbaQ==}
+    engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
+    peerDependencies:
+      '@typescript-eslint/eslint-plugin': ^5.0.0
+      eslint: ^7.0.0 || ^8.0.0
+      jest: '*'
+    peerDependenciesMeta:
+      '@typescript-eslint/eslint-plugin':
+        optional: true
+      jest:
+        optional: true
+    dependencies:
+      '@typescript-eslint/eslint-plugin': 5.9.1_i37r4pxnuonvhfobrnldva5ppi
+      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
+      eslint: 8.6.0
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+    dev: true
+
   /eslint-plugin-jsdoc/39.3.25_eslint@8.6.0:
     resolution: {integrity: sha512-7JiFOOaipz7Z7lNQ9sMJ6cdvclmVUwNYtFWGS3a0k0uEFcdZPPD64WOfENuyNHpl86C0AKIEPgOpZby5kd+pew==}
     engines: {node: ^14 || ^16 || ^17 || ^18 || ^19}
@@ -26532,6 +27335,17 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       vscode-json-languageservice: 3.11.0
+    dev: true
+
+  /eslint-plugin-mocha/10.0.5_eslint@8.6.0:
+    resolution: {integrity: sha512-H5xuD5NStlpaKLqUWYC5BsMx8fHgrIYsdloFbONUTc2vgVNiJcWdKoX29Tt0BO75QgAltplPLIziByMozGGixA==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      eslint: '>=7.0.0'
+    dependencies:
+      eslint: 8.6.0
+      eslint-utils: 3.0.0_eslint@8.6.0
+      rambda: 7.5.0
     dev: true
 
   /eslint-plugin-node/6.0.1_eslint@8.6.0:
@@ -27636,6 +28450,17 @@ packages:
       debug:
         optional: true
 
+  /follow-redirects/1.15.2_debug@4.3.2:
+    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dependencies:
+      debug: 4.3.2
+
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
     engines: {node: '>=4.0'}
@@ -27696,7 +28521,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.18.6
-      chalk: 2.4.1
+      chalk: 2.4.2
       eslint: 8.6.0
       micromatch: 3.1.10
       minimatch: 3.1.2
@@ -32060,7 +32885,7 @@ packages:
     resolution: {integrity: sha512-04PDPqSlsqIOaaaGZ+41vq5FejI9auqTInicFRndCBgE3bXG8D6W1I+mWhk+1nqbHmyhla/6BUrd5OSiHwKRXw==}
     engines: {node: '>=4'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-cursor: 2.1.0
       date-fns: 1.30.1
       figures: 2.0.0
@@ -33309,7 +34134,7 @@ packages:
     resolution: {integrity: sha512-/lFmlpY1cPfLXmV/Qb7kprbQS5VYExEaJGRR86rCLYUdLQM5uivIwvulUEt5VV9mbK/GttN2XPb8al7/5VgtOw==}
     hasBin: true
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       dateformat: 3.0.3
       fs-extra: 4.0.3
       fsu: 1.1.1
@@ -34493,6 +35318,34 @@ packages:
       '@uifabric/set-version': 7.0.24
       '@uifabric/styling': 7.25.1_74b3ggvk3akyhuq4eydyx3fqim
       '@uifabric/utilities': 7.38.2_74b3ggvk3akyhuq4eydyx3fqim
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 1.14.1
+    dev: false
+
+  /office-ui-fabric-react/7.204.0_gzv7pa6nrbev3fs6gyzn7sadkq:
+    resolution: {integrity: sha512-W1xIsYEwxPrGYojvVtGTGvSfdnUoPEm8w6hhMlW/uFr5YwIB1isG/dVk4IZxWbcbea7612u059p+jRf+RjPW0w==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <18.0.0'
+      '@types/react-dom': '>=16.8.0 <18.0.0'
+      react: '>=16.8.0 <18.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <18.0.0 || 17.0.2'
+    dependencies:
+      '@fluentui/date-time-utilities': 7.9.1
+      '@fluentui/react-focus': 7.18.17_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@fluentui/react-theme-provider': 0.19.16_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@fluentui/react-window-provider': 1.0.6_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@fluentui/theme': 1.7.13_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@microsoft/load-themed-styles': 1.10.295
+      '@types/react': 17.0.52
+      '@uifabric/foundation': 7.10.16_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/icons': 7.9.5_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/merge-styles': 7.20.2
+      '@uifabric/react-hooks': 7.16.4_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/set-version': 7.0.24
+      '@uifabric/styling': 7.25.1_gzv7pa6nrbev3fs6gyzn7sadkq
+      '@uifabric/utilities': 7.38.2_gzv7pa6nrbev3fs6gyzn7sadkq
       prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
@@ -36241,6 +37094,10 @@ packages:
     resolution: {integrity: sha512-cz93DjNeLY0idrCNOH6PviZGRN9GJhsdm9hpn1YCS879fj4W+x5IFJhhkRZcwVgMmFF7R82UA/7Oh+R8lLZg6A==}
     dev: true
 
+  /rambda/7.5.0:
+    resolution: {integrity: sha512-y/M9weqWAH4iopRd7EHDEQQvpFPHj1AA3oHozE9tfITHUtTR7Z9PSlIRRG2l1GuW7sefC1cXFfIcF+cgnShdBA==}
+    dev: true
+
   /ramda/0.25.0:
     resolution: {integrity: sha512-GXpfrYVPwx3K7RQ6aYT8KPS8XViSXUVJT1ONhoKPE9VAleW42YE+U+8VEyGWt41EnEQW7gwecYJriTI0pKoecQ==}
 
@@ -36907,6 +37764,10 @@ packages:
   /reduce-to-639-1/1.1.0:
     resolution: {integrity: sha512-9yy/xgTE8qPlZKQrQmyCU1Y1ZSnnOCP4K0Oe1YrBtteUmVXk0AgyINp0NS5kHGzZfpvjgHr6ygFZc9fpqf7moQ==}
     dev: true
+
+  /reflect-metadata/0.1.13:
+    resolution: {integrity: sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==}
+    dev: false
 
   /regenerate-unicode-properties/10.1.0:
     resolution: {integrity: sha512-d1VudCLoIGitcU/hEg2QqvyGZQmdC0Lf8BqdOMXGFSvJP4bNV1+XqbPQeHHLD51Jh4QJJ225dlIFvY4Ly6MXmQ==}

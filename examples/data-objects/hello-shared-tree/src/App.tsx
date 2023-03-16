@@ -49,8 +49,10 @@ import {
     isLocalKey,
     ITreeCursorSynchronous,
     isGlobalFieldKey,
+    ChangeFamilyEditor,
+    FieldKindSpecifier,
 } from "@fluid-internal/tree/dist/core";
-import { DefaultChangeFamily, DefaultChangeset, EditManagerIndex, ForestIndex, SchemaIndex } from "@fluid-internal/tree/dist/feature-libraries";
+import { DefaultChangeFamily, EditManagerIndex, ForestIndex, SchemaIndex } from "@fluid-internal/tree/dist/feature-libraries";
 import { SharedTreeCore } from "@fluid-internal/tree/dist/shared-tree-core";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -112,7 +114,7 @@ export class PathElem {
     constructor(
         public readonly parentIndex: number,
         public readonly fieldKey: LocalFieldKey,
-        public readonly fieldKind: FieldKindIdentifier | undefined,
+        public readonly fieldKind: FieldKindSpecifier | undefined,
         public readonly fieldSchemaIdentifiers: ReadonlySet<TreeSchemaIdentifier>
     ) { }
 
@@ -484,9 +486,9 @@ export default function App() {
     };
 
     const registerBatchComplete = (wrksp: Workspace, batchComplete: () => void) => {
-        (wrksp.tree as unknown as SharedTreeCore<DefaultChangeset,
+        (wrksp.tree as unknown as SharedTreeCore<ChangeFamilyEditor,
             DefaultChangeFamily,
-            [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+            [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
         >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
             batchComplete();
         });
@@ -498,9 +500,9 @@ export default function App() {
             filter: Path,
             adapter: OperationAdapter,
         ) => {
-            (wrksp.tree as unknown as SharedTreeCore<DefaultChangeset,
+            (wrksp.tree as unknown as SharedTreeCore<ChangeFamilyEditor,
                 DefaultChangeFamily,
-                [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset, DefaultChangeFamily>]
+                [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
             >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
                 // console.log('Delta');
                 // console.log(JSON.stringify(delta, replacer, 2));
