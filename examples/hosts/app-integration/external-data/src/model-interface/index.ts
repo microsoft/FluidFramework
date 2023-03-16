@@ -178,7 +178,6 @@ export interface IBaseDocumentEvents extends IEvent {
 	(event: "taskListCollectionChanged", listener: () => void);
 }
 
-
 /**
  * Properties necessary to instantiate a {@link ITaskList}.
  * TODO: Figure out a better form factor for passing these in once we know all the pieces necessary.
