@@ -416,7 +416,7 @@ export interface IContainerRuntimeOptions {
 	 * If enabled, the runtime will group messages within a batch into a single
 	 * message to be sent to the service.
 	 * The grouping an ungrouping of such messages is handled by the {@link OpGroupingManager}.
-	 * 
+	 *
 	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
 	 * flag can be used to disable it at runtime.
 	 */
