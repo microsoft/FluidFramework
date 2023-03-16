@@ -45,6 +45,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [Aqueduct members removed](#Aqueduct-members-removed)
 -   [driver-utils members removed](#driver-utils-members-removed)
 -   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
+-   [IDocumentServiceFactory.protocolName removed](#IDocumentServiceFactory.protocolName-removed)
 
 ### Container and RelativeLoader no longer exported
 
@@ -151,6 +152,9 @@ The following members of the `@fluidframework/driver-utils` package were depreca
 
 Note: `IConnectableRuntime` is only to be implemented internally, so removing this should not be impactful.
 
+## IDocumentServiceFactory.protocolName removed
+
+`IDocumentServiceFactory.protocolName` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
 
 # 2.0.0-internal.3.3.0
 

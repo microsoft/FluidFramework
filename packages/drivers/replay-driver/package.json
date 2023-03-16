@@ -64,6 +64,13 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_ReplayDocumentServiceFactory": {
+				"backCompat": false
+			},
+			"ClassDeclaration_StaticStorageDocumentServiceFactory": {
+				"backCompat": false
+			}
+		}
 	}
 }
