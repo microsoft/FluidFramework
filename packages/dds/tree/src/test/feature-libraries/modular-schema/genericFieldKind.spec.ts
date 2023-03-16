@@ -15,7 +15,7 @@ import {
 	CrossFieldManager,
 	RevisionMetadataSource,
 } from "../../../feature-libraries";
-// TODO: this is not the file being tests, importing it should not be required here.
+// TODO: this is not the file being tested, importing it should not be required here.
 // eslint-disable-next-line import/no-internal-modules
 import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
