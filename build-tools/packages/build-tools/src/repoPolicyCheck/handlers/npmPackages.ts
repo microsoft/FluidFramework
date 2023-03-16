@@ -538,30 +538,19 @@ export const handlers: Handler[] = [
 			return undefined;
 		},
 		resolver: (file, root) => {
+			let valid = false;
 			updatePackageJsonFile(path.dirname(file), (json) => {
-				const { valid, validationResults } = runNpmJsonLint(json, file);
+				const lintResults = runNpmJsonLint(json, file);
+				valid = lintResults.valid;
 
-				if (!valid) {
-					for (const result of validationResults.results) {
-						for (const issue of result.issues) {
-							switch (issue.lintId) {
-								case "require-repository-directory":
-									if (typeof json.repository !== "string") {
-										json.repository.directory = path.posix.relative(
-											root,
-											path.dirname(file),
-										);
-									}
-									break;
-								default:
-									break;
-							}
-						}
-					}
-				}
+				json.repository = {
+					type: "git",
+					url: repository,
+					directory: path.posix.relative(root, path.dirname(file)),
+				};
 			});
 
-			return { resolved: true };
+			return { resolved: valid };
 		},
 	},
 	{
@@ -641,8 +630,7 @@ export const handlers: Handler[] = [
 						hasPrettierFixScriptResolver
 					) {
 						const formatScript = json.scripts.format?.includes("lerna");
-						const prettierScript =
-							json.scripts.prettier?.includes("--ignore-path");
+						const prettierScript = json.scripts.prettier?.includes("--ignore-path");
 						const prettierFixScript =
 							json.scripts["prettier:fix"]?.includes("--ignore-path");
 
