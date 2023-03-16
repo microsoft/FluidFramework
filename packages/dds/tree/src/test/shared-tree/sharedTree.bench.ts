@@ -775,13 +775,13 @@ function readCursorTree(
 	switch (shape) {
 		case TreeShape.Deep:
 			for (let i = 0; i < numberOfNodes; i++) {
-				assert(readCursor.firstField());
-				assert(readCursor.firstNode());
+				readCursor.enterField(localFieldKey)
+				readCursor.enterNode(0)
 				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
 			}
 			break;
 		case TreeShape.Wide:
-			assert(readCursor.firstField());
+			readCursor.enterField(localFieldKey)
 			for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
 				nodesRead += 1;
 				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
