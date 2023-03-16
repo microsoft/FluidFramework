@@ -164,7 +164,7 @@ describe("SharedTree benchmarks", () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep, dataType);
 					},
 					benchmarkFn: () => {
-						assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes)
+						assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes);
 					},
 				});
 			}
@@ -177,7 +177,7 @@ describe("SharedTree benchmarks", () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide, dataType);
 					},
 					benchmarkFn: () => {
-						assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes)
+						assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes);
 					},
 				});
 			}
@@ -254,7 +254,10 @@ describe("SharedTree benchmarks", () => {
 						);
 					},
 					benchmarkFn: () => {
-						assert.equal(readCursorTree(tree.forest, numberOfNodes, TreeShape.Deep), numberOfNodes);
+						assert.equal(
+							readCursorTree(tree.forest, numberOfNodes, TreeShape.Deep),
+							numberOfNodes,
+						);
 					},
 				});
 			}
@@ -277,7 +280,10 @@ describe("SharedTree benchmarks", () => {
 						);
 					},
 					benchmarkFn: () => {
-						assert.equal(readCursorTree(tree.forest, numberOfNodes, TreeShape.Wide), numberOfNodes);
+						assert.equal(
+							readCursorTree(tree.forest, numberOfNodes, TreeShape.Wide),
+							numberOfNodes,
+						);
 					},
 				});
 			}
@@ -554,7 +560,10 @@ async function insertNodesToTestTree(
 ): Promise<void> {
 	tree.runTransaction((forest, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, singleTextCursor({ type: dataSchema.name, value: testSubtrees.get(dataType)?.value }));
+		field.insert(
+			0,
+			singleTextCursor({ type: dataSchema.name, value: testSubtrees.get(dataType)?.value }),
+		);
 		return TransactionResult.Apply;
 	});
 	switch (shape) {
@@ -762,11 +771,7 @@ function getLeafNodeFromJSObject(tree: Jsonable): Jsonable {
 	}
 }
 
-function readCursorTree(
-	forest: IForestSubscription,
-	numberOfNodes: number,
-	shape: TreeShape,
-) {
+function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shape: TreeShape) {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	assert(readCursor.firstNode());
@@ -775,13 +780,13 @@ function readCursorTree(
 	switch (shape) {
 		case TreeShape.Deep:
 			for (let i = 0; i < numberOfNodes; i++) {
-				readCursor.enterField(localFieldKey)
-				readCursor.enterNode(0)
+				readCursor.enterField(localFieldKey);
+				readCursor.enterNode(0);
 				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
 			}
 			break;
 		case TreeShape.Wide:
-			readCursor.enterField(localFieldKey)
+			readCursor.enterField(localFieldKey);
 			for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
 				nodesRead += 1;
 				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
@@ -792,18 +797,15 @@ function readCursorTree(
 			throw new Error("unreachable case");
 	}
 	readCursor.free();
-	return currentTotal
+	return currentTotal;
 }
 
-function applyOperationDuringRead(
-	current: number,
-	value: Value,
-) {
+function applyOperationDuringRead(current: number, value: Value) {
 	assert(value !== undefined);
-	if (typeof value === "number" ){
-		return current + value
+	if (typeof value === "number") {
+		return current + value;
 	}
-	return current + 1
+	return current + 1;
 }
 
 /**
