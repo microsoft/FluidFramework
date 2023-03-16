@@ -16,8 +16,9 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskData,
-	IBaseDocument,
+	ITaskList,
 	IBaseDocumentInitialState,
+	IBaseDocument,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import { customerServicePort } from "../mock-customer-service-interface";
@@ -351,14 +352,24 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	};
 
 	protected async initializingFirstTime(props: IBaseDocumentInitialState): Promise<void> {
-		const externalTaskListId = props?.externalTaskListId;
+		const externalTaskListId = props.externalTaskListId;
 		if (externalTaskListId === undefined) {
 			throw new Error(
 				"externalTaskListId not present in instantiation. Cannot instantiate task list",
 			);
 		}
-		await this.registerWithCustomerService(externalTaskListId, props?.containerUrl);
 		this._externalTaskListId = externalTaskListId;
+		// TODO: The check below is a hack for ensuring that the container is attached
+		// before creating and registering the task list, and importing the task list data
+		// form the external server. This is pretty anti-fluid, so we need a better way to
+		// do this check.
+		if (props.containerUrl === undefined) {
+			throw new Error(
+				"containerUrl is required to register the task list for external change notifications",
+			);
+		}
+		// Need to cast as IFluidResolvedUrl as IResolvedUrl does not have all url as a parameter
+		await this.registerWithCustomerService(props.containerUrl);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
@@ -372,20 +383,14 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * Register container session data with the customer service.
 	 * @returns A promise that resolves when the registration call returns successfully.
 	 */
-	public async registerWithCustomerService(
-		externalTaskListId: string,
-		containerUrlData: IFluidResolvedUrl | undefined,
-	): Promise<void> {
+	public async registerWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
+		if (this.externalTaskListId === undefined) {
+			throw new Error("externalTaskListId is undefined");
+		}
 		try {
 			console.log(
-				`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`,
+				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
 			);
-			if (containerUrlData?.url === undefined) {
-				console.error(
-					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
-				);
-				return;
-			}
 			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
 				method: "POST",
 				headers: {
@@ -483,6 +488,9 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	{},
 );
 
+/**
+ * The BaseDocument is our data object that implements the IBaseDocument interface.
+ */
 export class BaseDocument extends DataObject implements IBaseDocument {
 	private readonly taskListCollection = new Map<string, TaskList>();
 
@@ -504,7 +512,7 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 		this.emit("taskListCollectionChanged");
 	};
 
-	public readonly getTaskList = (id: string): TaskList | undefined => {
+	public readonly getTaskList = (id: string): ITaskList | undefined => {
 		return this.taskListCollection.get(id);
 	};
 

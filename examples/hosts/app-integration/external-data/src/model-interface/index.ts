@@ -39,9 +39,10 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	readonly sendCustomDebugSignal: () => void;
 
 	/**
-	 * The resolved URL for the container.
+	 * Returns the resolved URL for the attached container. If container is not
+	 * attached then returns undefined.
 	 */
-	readonly containerResolvedUrl: () => IFluidResolvedUrl;
+	readonly getContainerResolvedUrl: () => IFluidResolvedUrl | undefined;
 }
 
 /**
@@ -155,10 +156,7 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	 * This will allow the Customer Service to pass on the container information to the Fluid
 	 * Service to send the signal that some new information has come through.
 	 */
-	readonly registerWithCustomerService: (
-		externalTaskListId: string,
-		url: IFluidResolvedUrl | undefined,
-	) => Promise<void>;
+	readonly registerWithCustomerService: (url: IFluidResolvedUrl) => Promise<void>;
 
 	// TODO: Should there be an imperative API to trigger importing changes from the external source?
 	// Even if we don't want this to be how the signal gets routed, we might want a "fetch latest changes" button
@@ -179,11 +177,20 @@ export interface IBaseDocumentEvents extends IEvent {
 	 */
 	(event: "taskListCollectionChanged", listener: () => void);
 }
+
+/**
+ * Properties necessary to instantiate a {@link ITaskList}.
+ * TODO: Figure out a better form factor for passing these in once we know all the pieces necessary.
+ */
 export interface IBaseDocumentInitialState {
 	externalTaskListId: string;
 	containerUrl: IFluidResolvedUrl;
 }
 
+/**
+ * A single DataStore object that allows the app to load and the container to instantiate
+ * without a instantiating {@link ITaskList} right away.
+ */
 export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	/**
 	 * Add a task list with a specific id.

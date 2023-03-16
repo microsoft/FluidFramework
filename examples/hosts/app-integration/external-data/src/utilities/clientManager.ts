@@ -53,6 +53,39 @@ export class ClientManager<TData = unknown> {
 	}
 
 	/**
+	 * Checks if the client and the external resource already have a mapping and returns the result.
+	 * The user can determine whether to re-register given this information.
+	 */
+	public needsNewMappingEntry(
+		client: ClientSessionUrl,
+		externalTaskListId: ExternalTaskListId,
+	): boolean {
+		let needsNewMappingEntry = true;
+		const clientTaskListIds = this._clientMapping.get(client);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
+			const taskListClients = this._taskListMapping.get(client);
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+			if (taskListClients !== undefined && taskListClients.has(client)) {
+				needsNewMappingEntry = false;
+			}
+		}
+		return needsNewMappingEntry;
+	}
+
+	/**
+	 * Returns a boolean if externalTaskListId already exists entry exists. This means that the customer service
+	 * is already subscribed for webhook notifications for it so we do not need to re-subscribe.
+	 */
+	public needsNewSubscription(externalTaskListId: ExternalTaskListId): boolean {
+		const externalTaskListIdClients = this._taskListMapping.get(externalTaskListId);
+		if (externalTaskListIdClients !== undefined) {
+			return externalTaskListIdClients.size > 0;
+		}
+		return true;
+	}
+
+	/**
 	 * Registers a client session url to an external resource id for the duration of the client session.
 	 */
 	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
