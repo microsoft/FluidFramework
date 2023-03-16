@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { clone, fail } from "../../util";
+import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
 	InputSpanningMark,
@@ -18,7 +18,7 @@ import {
 	ReturnTo,
 	Skip,
 } from "./format";
-import { getInputLength, getOutputLength, isSkipMark } from "./utils";
+import { cloneMark, getInputLength, getOutputLength, isSkipMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -134,11 +134,12 @@ export function getOrAddEffect<T>(
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	resetMerges: boolean = false,
+	invalidate: boolean = true,
 ): MoveEffect<T> {
 	if (resetMerges) {
 		clearMergeability(moveEffects, target, revision, id);
 	}
-	return moveEffects.getOrCreate(target, revision, id, {});
+	return moveEffects.getOrCreate(target, revision, id, {}, invalidate);
 }
 
 export function getMoveEffect<T>(
@@ -146,8 +147,9 @@ export function getMoveEffect<T>(
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
+	addDependency: boolean = true,
 ): MoveEffect<T> {
-	return moveEffects.get(target, revision, id) ?? {};
+	return moveEffects.get(target, revision, id, addDependency) ?? {};
 }
 
 export function clearMergeability<T>(
@@ -158,11 +160,13 @@ export function clearMergeability<T>(
 ): void {
 	const effect = getOrAddEffect(moveEffects, target, revision, id);
 	if (effect.mergeLeft !== undefined) {
-		delete getOrAddEffect(moveEffects, target, revision, effect.mergeLeft).mergeRight;
+		delete getOrAddEffect(moveEffects, target, revision, effect.mergeLeft, false, false)
+			.mergeRight;
 		delete effect.mergeLeft;
 	}
 	if (effect.mergeRight !== undefined) {
-		delete getOrAddEffect(moveEffects, target, revision, effect.mergeRight).mergeLeft;
+		delete getOrAddEffect(moveEffects, target, revision, effect.mergeRight, false, false)
+			.mergeLeft;
 		delete effect.mergeRight;
 	}
 }
@@ -174,8 +178,8 @@ export function makeMergeable<T>(
 	leftId: MoveId,
 	rightId: MoveId,
 ): void {
-	getOrAddEffect(moveEffects, target, revision, leftId).mergeRight = rightId;
-	getOrAddEffect(moveEffects, target, revision, rightId).mergeLeft = leftId;
+	getOrAddEffect(moveEffects, target, revision, leftId, false, false).mergeRight = rightId;
+	getOrAddEffect(moveEffects, target, revision, rightId, false, false).mergeLeft = leftId;
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
@@ -211,7 +215,7 @@ function applyMoveEffectsToDest<T>(
 
 	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
 
-	if (!effect.shouldRemove) {
+	if (effect.shouldRemove !== true) {
 		const newMark: MoveIn | ReturnTo = {
 			...mark,
 			count: effect.count ?? mark.count,
@@ -273,8 +277,8 @@ function applyMoveEffectsToSource<T>(
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (!effect.shouldRemove) {
-		const newMark = clone(mark);
+	if (effect.shouldRemove !== true) {
+		const newMark = cloneMark(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {
 			assert(
@@ -429,8 +433,13 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+				{ ...markObj, content: mark.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: mark.content.slice(length),
+					count: remainder,
+					detachIndex: mark.detachIndex + length,
+				},
 			] as [TMark, TMark];
 		case "Delete":
 			return [
@@ -549,8 +558,13 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: markObj.detachIndex + length },
+				{ ...markObj, content: markObj.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: markObj.content.slice(length),
+					count: remainder,
+					detachIndex: markObj.detachIndex + length,
+				},
 			];
 		default:
 			unreachableCase(type);

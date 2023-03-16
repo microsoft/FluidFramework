@@ -8,7 +8,7 @@ import { MergeTreeDeltaType } from "../ops";
 import { markRangeRemoved } from "./testUtils";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 
-describe("removal perf", () => {
+describe("MergeTree remove", () => {
 	let summary;
 
 	benchmark({
@@ -24,9 +24,10 @@ describe("removal perf", () => {
 				str.append("a", false);
 			}
 
+			str.applyPendingOps();
 			summary = str.getSummary();
 		},
-		benchmarkFn: async () => {
+		benchmarkFnAsync: async () => {
 			await loadSnapshot(summary);
 		},
 	});
@@ -41,9 +42,10 @@ describe("removal perf", () => {
 				str.append("a", false);
 			}
 
+			str.applyPendingOps();
 			summary = str.getSummary();
 		},
-		benchmarkFn: async () => {
+		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
 			markRangeRemoved({
@@ -69,9 +71,10 @@ describe("removal perf", () => {
 				str.append("a", false);
 			}
 
+			str.applyPendingOps();
 			summary = str.getSummary();
 		},
-		benchmarkFn: async () => {
+		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
 			markRangeRemoved({
@@ -97,9 +100,10 @@ describe("removal perf", () => {
 				str.append("a", false);
 			}
 
+			str.applyPendingOps();
 			summary = str.getSummary();
 		},
-		benchmarkFn: async () => {
+		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
 			markRangeRemoved({
@@ -125,9 +129,10 @@ describe("removal perf", () => {
 				str.append("a", false);
 			}
 
+			str.applyPendingOps();
 			summary = str.getSummary();
 		},
-		benchmarkFn: async () => {
+		benchmarkFnAsync: async () => {
 			const str = await loadSnapshot(summary);
 
 			markRangeRemoved({

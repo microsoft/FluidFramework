@@ -41,6 +41,7 @@ export interface MemoryBenchmarkStats {
 	stats: Stats;
 	aborted: boolean;
 	error?: Error;
+	totalRunTimeMs: number;
 }
 
 export interface IMemoryTestObject extends MemoryTestObjectProps {
@@ -295,10 +296,11 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				variance: NaN,
 			},
 			aborted: false,
+			totalRunTimeMs: -1,
 		};
 
+		const startTime = performance.now();
 		try {
-			const startTime = performance.now();
 			let heapUsedStats: Stats = {
 				marginOfError: NaN,
 				marginOfErrorPercent: NaN,
@@ -348,11 +350,13 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				benchmarkStats.runs < options.minSampleCount ||
 				heapUsedStats.marginOfErrorPercent > options.maxRelativeMarginOfError
 			);
-
 			benchmarkStats.stats = heapUsedStats;
 		} catch (error) {
 			benchmarkStats.aborted = true;
 			benchmarkStats.error = error as Error;
+		} finally {
+			// It's not perfect, since we don't compute it *immediately* after we stop running tests but it's good enough.
+			benchmarkStats.totalRunTimeMs = performance.now() - startTime;
 		}
 
 		test.emit("benchmark end", benchmarkStats);

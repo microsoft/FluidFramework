@@ -4,6 +4,8 @@
 
 ```ts
 
+import { AttachState } from '@fluidframework/container-definitions';
+import { ConnectionState } from '@fluidframework/container-loader';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IContainer } from '@fluidframework/container-definitions';
@@ -11,6 +13,10 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
+import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @internal
@@ -24,11 +30,35 @@ export interface AudienceChangeLogEntry extends LogEntry {
 export function clearDebuggerRegistry(): void;
 
 // @public
+export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+    // (undocumented)
+    type: "CLOSE_CONTAINER";
+}
+
+// @public
+export type CloseContainerMessageData = HasContainerId;
+
+// @public
 export function closeFluidClientDebugger(containerId: string): void;
+
+// @public
+export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+    // (undocumented)
+    type: "CONNECT_CONTAINER";
+}
+
+// @public
+export type ConnectContainerMessageData = HasContainerId;
 
 // @internal
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
+}
+
+// @public
+export interface ContainerMetadata {
+    id: string;
+    nickname?: string;
 }
 
 // @internal
@@ -39,6 +69,32 @@ export enum ContainerStateChangeKind {
     Disconnected = "disconnected",
     Disposed = "disposed"
 }
+
+// @public
+export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
+    // (undocumented)
+    type: "CONTAINER_STATE_CHANGE";
+}
+
+// @public
+export interface ContainerStateChangeMessageData extends HasContainerId {
+    containerState: ContainerStateMetadata;
+}
+
+// @public
+export interface ContainerStateMetadata extends ContainerMetadata {
+    // (undocumented)
+    attachState: AttachState;
+    audienceId?: string;
+    // (undocumented)
+    clientId?: string;
+    closed: boolean;
+    // (undocumented)
+    connectionState: ConnectionState;
+}
+
+// @public
+export const debuggerMessageSource: string;
 
 // @internal
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
@@ -57,12 +113,43 @@ export interface DebuggerRegistryEvents extends IEvent {
 }
 
 // @public
+export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
+    // (undocumented)
+    type: "DISCONNECT_CONTAINER";
+}
+
+// @public
+export type DisconnectContainerMessageData = HasContainerId;
+
+// @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
     containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
 }
+
+// @internal @sealed
+export class FluidDebuggerLogger extends TelemetryLogger {
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
+    // (undocumented)
+    type: "GET_CONTAINER_LIST";
+}
+
+// @public
+export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_CONTAINER_STATE";
+}
+
+// @public
+export type GetContainerStateMessageData = HasContainerId;
 
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
@@ -72,6 +159,24 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
+
+// @internal
+export function handleIncomingMessage(message: Partial<IDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+
+// @internal
+export function handleIncomingWindowMessage(event: MessageEvent<Partial<IDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+
+// @public
+export interface HasContainerId {
+    containerId: string;
+}
+
+// @public
+export interface IDebuggerMessage<TData = unknown> {
+    data: TData;
+    source: string;
+    type: string;
+}
 
 // @internal
 export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
@@ -90,8 +195,16 @@ export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "disposed", listener: () => void): any;
 }
 
+// @internal
+export interface InboundHandlers {
+    [type: string]: (message: IDebuggerMessage) => boolean;
+}
+
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
+
+// @internal
+export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage;
 
 // @internal
 export interface LogEntry {
@@ -105,8 +218,38 @@ export enum MemberChangeKind {
 }
 
 // @internal
+export interface MessageLoggingOptions {
+    context?: string;
+}
+
+// @internal
+export function postMessageToWindow<TMessage extends IDebuggerMessage>(message: TMessage, loggingOptions?: MessageLoggingOptions): void;
+
+// @public
+export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
+    // (undocumented)
+    type: "REGISTRY_CHANGE";
+}
+
+// @public
+export interface RegistryChangeMessageData {
+    containers: ContainerMetadata[];
+}
+
+// @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
+}
+
+// @public
+export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
+    // (undocumented)
+    type: "TELEMETRY_EVENT";
+}
+
+// @public
+export interface TelemetryEventMessageData {
+    contents: ITelemetryBaseEvent;
 }
 
 ```

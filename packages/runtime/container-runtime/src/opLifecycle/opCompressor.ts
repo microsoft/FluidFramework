@@ -27,7 +27,7 @@ export class OpCompressor {
 	public compressBatch(batch: IBatch): IBatch {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
-			"Batch should not be empty",
+			0x5a4 /* Batch should not be empty */,
 		);
 
 		const compressionStart = Date.now();
@@ -44,8 +44,17 @@ export class OpCompressor {
 			compression: CompressionAlgorithms.lz4,
 		});
 
+		// Add empty placeholder messages to reserve the sequence numbers
 		for (const message of batch.content.slice(1)) {
-			messages.push({ ...message, contents: undefined });
+			messages.push({
+				deserializedContent: {
+					contents: undefined,
+					type: message.deserializedContent.type,
+				},
+				localOpMetadata: message.localOpMetadata,
+				metadata: message.metadata,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+			});
 		}
 
 		const compressedBatch: IBatch = {

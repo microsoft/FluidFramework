@@ -5,7 +5,7 @@
 
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ITreeCursor, RevisionTag } from "../../core";
-import { FieldEditor } from "../modular-schema";
+import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
 import { brand } from "../../util";
 import { Changeset, Mark, MoveId, NodeChangeType, Reattach } from "./format";
 import { MarkListFactory } from "./markListFactory";
@@ -17,6 +17,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		index: number,
 		count: number,
 		detachedBy: RevisionTag,
+		reviver: NodeReviver,
 		detachIndex: number,
 		isIntention?: true,
 	): Changeset<never>;
@@ -32,6 +33,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
+		id: ChangesetLocalId,
 	): [Changeset<never>, Changeset<never>];
 	return(
 		sourceIndex: number,
@@ -60,11 +62,13 @@ export const sequenceFieldEditor = {
 		index: number,
 		count: number,
 		detachedBy: RevisionTag,
+		reviver: NodeReviver,
 		detachIndex?: number,
 		isIntention?: true,
 	): Changeset<never> => {
 		const mark: Reattach<never> = {
 			type: "Revive",
+			content: reviver(detachedBy, index, count),
 			count,
 			detachedBy,
 			// Revives are typically created to undo a delete from the prior revision.
@@ -81,16 +85,17 @@ export const sequenceFieldEditor = {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
+		id: ChangesetLocalId,
 	): [Changeset<never>, Changeset<never>] {
 		const moveOut: Mark<never> = {
 			type: "MoveOut",
-			id: brand(0),
+			id,
 			count,
 		};
 
 		const moveIn: Mark<never> = {
 			type: "MoveIn",
-			id: brand(0),
+			id,
 			count,
 		};
 

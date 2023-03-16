@@ -92,16 +92,7 @@ export class DocumentDeltaConnection
 				0x244 /* "Socket is closed, but connection is not!" */,
 			);
 		} catch (error) {
-			const normalizedError = normalizeError(error, {
-				props: {
-					details: JSON.stringify({
-						disposed: this._disposed,
-						socketConnected: this.socket?.connected,
-						clientId: this._details?.clientId,
-						conenctionId: this.connectionId,
-					}),
-				},
-			});
+			const normalizedError = this.addPropsToError(error);
 			throw normalizedError;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
@@ -252,16 +243,7 @@ export class DocumentDeltaConnection
 			(Error as any).stackTraceLimit = 50;
 			assert(!this.disposed, 0x20c /* "connection disposed" */);
 		} catch (error) {
-			const normalizedError = normalizeError(error, {
-				props: {
-					details: JSON.stringify({
-						disposed: this._disposed,
-						socketConnected: this.socket?.connected,
-						clientId: this._details?.clientId,
-						conenctionId: this.connectionId,
-					}),
-				},
-			});
+			const normalizedError = this.addPropsToError(error);
 			throw normalizedError;
 		} finally {
 			(Error as any).stackTraceLimit = originalStackTraceLimit;
@@ -472,14 +454,34 @@ export class DocumentDeltaConnection
 
 		this._details = await new Promise<IConnected>((resolve, reject) => {
 			const failAndCloseSocket = (err: IAnyDriverError) => {
-				this.closeSocket(err);
+				try {
+					this.closeSocket(err);
+				} catch (failError) {
+					const normalizedError = this.addPropsToError(failError);
+					this.logger.sendErrorEvent({ eventName: "CloseSocketError" }, normalizedError);
+				}
 				reject(err);
 			};
 
 			const failConnection = (err: IAnyDriverError) => {
-				this.disconnect(err);
+				try {
+					this.disconnect(err);
+				} catch (failError) {
+					const normalizedError = this.addPropsToError(failError);
+					this.logger.sendErrorEvent(
+						{ eventName: "FailConnectionError" },
+						normalizedError,
+					);
+				}
 				reject(err);
 			};
+
+			// Immediately set the connection timeout.
+			// Give extra 2 seconds for handshake on top of socket connection timeout.
+			this.socketConnectionTimeout = setTimeout(() => {
+				failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
+			}, timeout + 2000);
+
 			// Listen for connection issues
 			this.addConnectionListener("connect_error", (error) => {
 				internalSocketConnectionFailureCount++;
@@ -629,14 +631,23 @@ export class DocumentDeltaConnection
 			});
 
 			this.socket.emit("connect_document", connectMessage);
-
-			// Give extra 2 seconds for handshake on top of socket connection timeout
-			this.socketConnectionTimeout = setTimeout(() => {
-				failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
-			}, timeout + 2000);
 		});
 
 		assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
+	}
+
+	private addPropsToError(errorToBeNormalized: unknown) {
+		const normalizedError = normalizeError(errorToBeNormalized, {
+			props: {
+				details: JSON.stringify({
+					disposed: this._disposed,
+					socketConnected: this.socket?.connected,
+					clientId: this._details?.clientId,
+					conenctionId: this.connectionId,
+				}),
+			},
+		});
+		return normalizedError;
 	}
 
 	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {

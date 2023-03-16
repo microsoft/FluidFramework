@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
 import chalk from "chalk";
 import { Machine } from "jssm";
 
@@ -34,7 +33,6 @@ export const promptToCommitChanges: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter } = data;
-	assert(context !== undefined, "Context is undefined.");
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO COMMIT LOCAL CHANGES",
@@ -73,12 +71,10 @@ export const promptToCreateReleaseBranch: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { command, context, promptWriter, releaseGroup, releaseVersion } = data;
-	assert(context !== undefined, "Context is undefined.");
+	const { command, promptWriter, releaseGroup, releaseVersion } = data;
 
 	if (isReleaseGroup(releaseGroup)) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
+		const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
 		const prompt: InstructionalPrompt = {
 			title: "CREATE A RELEASE BRANCH",
@@ -130,7 +126,6 @@ export const promptToIntegrateNext: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { context, promptWriter } = data;
-	assert(context !== undefined, "Context is undefined.");
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO INTEGRATE MAIN AND NEXT BRANCHES",
@@ -170,7 +165,6 @@ export const promptToPRBump: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter, releaseGroup, releaseVersion } = data;
-	assert(context !== undefined, "Context is undefined.");
 
 	const bumpBranch = await context.gitRepo.getCurrentBranchName();
 	const prompt: InstructionalPrompt = {
@@ -184,8 +178,7 @@ export const promptToPRBump: StateHandlerFunction = async (
 	};
 
 	if (isReleaseGroup(releaseGroup)) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion!);
+		const releaseBranch = generateReleaseBranchName(releaseGroup, releaseVersion);
 
 		const releaseBranchExists =
 			(await context.gitRepo.getShaForBranch(releaseBranch)) !== undefined;
@@ -223,7 +216,6 @@ export const promptToPRDeps: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter, releaseGroup } = data;
-	assert(context !== undefined, "Context is undefined.");
 
 	await promptWriter?.writePrompt({
 		title: "NEED TO UPDATE DEPENDENCIES",
@@ -264,13 +256,11 @@ export const promptToRelease: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, releaseGroup, releaseVersion, promptWriter } = data;
-	assert(context !== undefined, "Context is undefined.");
 
 	const flag = isReleaseGroup(releaseGroup) ? "-g" : "-p";
 
 	const prompt: InstructionalPrompt = {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		title: `READY TO RELEASE version ${chalk.bold(releaseVersion!)}!`,
+		title: `READY TO RELEASE version ${chalk.bold(releaseVersion)}!`,
 		sections: [
 			{
 				title: "FIRST",
@@ -278,8 +268,7 @@ export const promptToRelease: StateHandlerFunction = async (
 					chalk.bold("release"),
 				)} build for the following release group in ADO for branch ${chalk.blue(
 					chalk.bold(context.originalBranchName),
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				)}:\n\n    ${chalk.green(chalk.bold(releaseGroup!))}: ${mapADOLinks(releaseGroup)}`,
+				)}:\n\n    ${chalk.green(chalk.bold(releaseGroup))}: ${mapADOLinks(releaseGroup)}`,
 			},
 			{
 				title: "NEXT",
@@ -313,11 +302,8 @@ export const promptToReleaseDeps: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter, releaseGroup } = data;
-	assert(context !== undefined, "Context is undefined.");
-	assert(promptWriter !== undefined, "promptWriter is undefined.");
 
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const prereleaseDepNames = await getPreReleaseDependencies(context, releaseGroup!);
+	const prereleaseDepNames = await getPreReleaseDependencies(context, releaseGroup);
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO RELEASE DEPENDENCIES",
@@ -382,10 +368,6 @@ export const promptToRunMinorReleaseCommand: StateHandlerFunction = async (
 	if (testMode) return true;
 
 	const { command, context, promptWriter, releaseGroup } = data;
-	assert(command !== undefined, "Command is undefined.");
-	assert(context !== undefined, "Context is undefined.");
-	assert(promptWriter !== undefined, "promptWriter is undefined.");
-	assert(releaseGroup !== undefined, "Release group is undefined.");
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO DO A MINOR RELEASE",
@@ -450,9 +432,7 @@ export const promptToRunTypeTests: StateHandlerFunction = async (
 ): Promise<boolean> => {
 	if (testMode) return true;
 
-	const { command, context, promptWriter } = data;
-	assert(context !== undefined, "Context is undefined.");
-	assert(promptWriter !== undefined, "promptWriter is undefined.");
+	const { command, promptWriter } = data;
 
 	const prompt: InstructionalPrompt = {
 		title: "NEED TO RUN TYPE TEST GENERATION",

@@ -19,7 +19,11 @@ const newConfig = {
 	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
 	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
-	"spec": ["dist/test/benchmark/**/*.memory.spec.js", "--perfMode"],
-	"timeout": "60000",
+	"spec": [
+		"dist/test/benchmark/**/*.memory.spec.js",
+		"dist/test/benchmark/**/*.all.spec.js",
+		"--perfMode",
+	],
+	"timeout": "120000", // depending on the test and the size of the E2E document, the timeout might not be enough. To address it, let's first try to decrease the number of iterations (minSampleCount).
 };
 module.exports = newConfig;

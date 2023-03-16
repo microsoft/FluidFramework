@@ -13,10 +13,12 @@ import {
 	GenericChangeset,
 	genericFieldKind,
 	IdAllocator,
+	CrossFieldManager,
+	RevisionMetadataSource,
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { noRepair } from "../../utils";
+import { fakeRepair } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
@@ -73,6 +75,11 @@ const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const idAllocator: IdAllocator = unexpectedDelegate;
 
+const revisionMetadata: RevisionMetadataSource = {
+	getIndex: () => assert.fail("Unexpected revision index query"),
+	getInfo: () => assert.fail("Unexpected revision info query"),
+};
+
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
 	const valueChanges = nodeChanges.map((c) =>
 		tagChange(valueChangeFromNodeChange(c.change), c.revision),
@@ -82,6 +89,7 @@ const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangese
 		unexpectedDelegate,
 		idAllocator,
 		crossFieldManager,
+		revisionMetadata,
 	);
 	return nodeChangeFromValueChange(valueChange);
 };
@@ -91,6 +99,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		makeAnonChange(valueChange),
 		unexpectedDelegate,
+		fakeRepair,
 		idAllocator,
 		crossFieldManager,
 	);
@@ -106,6 +115,7 @@ const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): N
 		unexpectedDelegate,
 		idAllocator,
 		crossFieldManager,
+		revisionMetadata,
 	);
 	return nodeChangeFromValueChange(rebased);
 };
@@ -130,10 +140,9 @@ const childDecoder = (nodeChange: JsonCompatibleReadOnly): NodeChangeset => {
 	return nodeChangeFromValueChange(valueChange);
 };
 
-const crossFieldManager = {
+const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
 	getOrCreate: unexpectedDelegate,
-	consume: unexpectedDelegate,
 };
 
 describe("Generic FieldKind", () => {
@@ -144,6 +153,7 @@ describe("Generic FieldKind", () => {
 				childComposer,
 				idAllocator,
 				crossFieldManager,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, []);
 		});
@@ -188,6 +198,7 @@ describe("Generic FieldKind", () => {
 				childComposer,
 				idAllocator,
 				crossFieldManager,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -232,6 +243,7 @@ describe("Generic FieldKind", () => {
 				childComposer,
 				idAllocator,
 				crossFieldManager,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -275,6 +287,7 @@ describe("Generic FieldKind", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -316,6 +329,7 @@ describe("Generic FieldKind", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -345,6 +359,7 @@ describe("Generic FieldKind", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			makeAnonChange(forward),
 			childInverter,
+			fakeRepair,
 			idAllocator,
 			crossFieldManager,
 		);
@@ -375,7 +390,7 @@ describe("Generic FieldKind", () => {
 
 		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
-		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta, noRepair);
+		const actual = genericFieldKind.changeHandler.intoDelta(input, childToDelta);
 		assert.deepEqual(actual, expected);
 	});
 

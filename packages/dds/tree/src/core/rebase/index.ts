@@ -18,7 +18,7 @@ export {
 	FinalChangeStatus,
 	makeAnonChange,
 	tagChange,
-	tagInverse,
+	tagRollbackInverse,
 	TaggedChange,
 } from "./changeRebaser";
 export {

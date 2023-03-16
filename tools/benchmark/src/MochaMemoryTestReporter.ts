@@ -150,6 +150,11 @@ class MochaMemoryTestReporter {
 								testData.stats.samples.length.toString(),
 								Table.padLeft,
 							);
+							table.cell(
+								"Avg ms/iteration",
+								`${prettyNumber(testData.totalRunTimeMs / testData.runs, 2)}`,
+								Table.padLeft,
+							);
 						}
 						table.newRow();
 					});

@@ -43,13 +43,13 @@ import {
 	isEditableField,
 	UnwrappedEditableTree,
 	getField,
-	indexSymbol,
 	getPrimaryField,
 	namedTreeSchema,
 	ContextuallyTypedNodeData,
 	ContextuallyTypedNodeDataObject,
 	MarkedArrayLike,
 	EditableTreeContext,
+	DefaultEditBuilder,
 } from "../../../feature-libraries";
 
 import {
@@ -77,6 +77,12 @@ import {
 } from "./mockData";
 import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils";
 
+function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
+	// This will error if someone tries to call mutation methods on it
+	const dummyEditor = {} as unknown as DefaultEditBuilder;
+	return getEditableTreeContext(forest, dummyEditor);
+}
+
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
 	const forest = buildForest(schemaRepo);
@@ -86,7 +92,7 @@ function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest 
 
 function buildTestTree(data: JsonableTree): EditableTreeContext {
 	const forest = setupForest(fullSchemaData, [data]);
-	const context = getEditableTreeContext(forest);
+	const context = getReadonlyEditableTreeContext(forest);
 	return context;
 }
 
@@ -225,16 +231,6 @@ describe("editable-tree: read-only", () => {
 		}
 
 		{
-			const descriptor = Object.getOwnPropertyDescriptor(nameNode, indexSymbol);
-			assert.deepEqual(descriptor, {
-				configurable: true,
-				enumerable: false,
-				value: 0,
-				writable: false,
-			});
-		}
-
-		{
 			const descriptor = Object.getOwnPropertyDescriptor(nameNode, Symbol.iterator);
 			assert(typeof descriptor?.value === "function");
 			delete descriptor.value;
@@ -314,7 +310,7 @@ describe("editable-tree: read-only", () => {
 
 	it("traverse a complete tree by iteration", () => {
 		const forest = setupForest(fullSchemaData, [personData]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		expectFieldEquals(forest.schema, context.root, [personData]);
 	});
 
@@ -331,7 +327,6 @@ describe("editable-tree: read-only", () => {
 		assert(proxyTargetSymbol in personProxy);
 		assert(typeSymbol in personProxy);
 		assert(typeNameSymbol in personProxy);
-		assert(indexSymbol in personProxy);
 		assert(getField in personProxy);
 		// Check fields show up:
 		assert("age" in personProxy);
@@ -370,7 +365,7 @@ describe("editable-tree: read-only", () => {
 		// Test empty
 		{
 			const forest = setupForest(schemaData, []);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			assert.deepEqual([...context.unwrappedRoot], []);
 			expectFieldEquals(forest.schema, context.root, []);
@@ -379,7 +374,7 @@ describe("editable-tree: read-only", () => {
 		// Test 1 item
 		{
 			const forest = setupForest(schemaData, [emptyNode]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode]);
 			expectFieldEquals(forest.schema, context.root, [emptyNode]);
@@ -388,7 +383,7 @@ describe("editable-tree: read-only", () => {
 		// Test 2 items
 		{
 			const forest = setupForest(schemaData, [emptyNode, emptyNode]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode, emptyNode]);
 			expectFieldEquals(forest.schema, context.root, [emptyNode, emptyNode]);
@@ -403,7 +398,7 @@ describe("editable-tree: read-only", () => {
 			globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
 		};
 		const forest = setupForest(schemaData, [emptyNode]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert(isUnwrappedNode(context.unwrappedRoot));
 		expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
 		context.free();
@@ -418,7 +413,7 @@ describe("editable-tree: read-only", () => {
 		// Empty
 		{
 			const forest = setupForest(schemaData, []);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert.equal(context.unwrappedRoot, undefined);
 			expectFieldEquals(forest.schema, context.root, []);
 			context.free();
@@ -426,7 +421,7 @@ describe("editable-tree: read-only", () => {
 		// With value
 		{
 			const forest = setupForest(schemaData, [emptyNode]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
 			expectFieldEquals(forest.schema, context.root, [emptyNode]);
 			context.free();
@@ -449,7 +444,10 @@ describe("editable-tree: read-only", () => {
 		});
 		const rootSchema = fieldSchema(FieldKinds.optional, [childWithGlobalFieldSchema.name]);
 		const schemaData: SchemaData = {
-			treeSchema: schemaMap,
+			treeSchema: new Map([
+				[childWithGlobalFieldSchema.name, childWithGlobalFieldSchema],
+				[stringSchema.name, stringSchema],
+			]),
 			globalFieldSchema: new Map([
 				[rootFieldKey, rootSchema],
 				[globalFieldKey, globalFieldSchema],
@@ -466,7 +464,7 @@ describe("editable-tree: read-only", () => {
 				},
 			},
 		]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert(isUnwrappedNode(context.unwrappedRoot));
 		assert.deepEqual(
 			context.unwrappedRoot[getField](globalFieldSymbol).getNode(0)[typeSymbol],
@@ -504,7 +502,7 @@ describe("editable-tree: read-only", () => {
 			globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
 		};
 		const forest = setupForest(schemaData, [{ type: int32Schema.name, value: 1 }]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert.equal(context.unwrappedRoot, 1);
 		expectFieldEquals(forest.schema, context.root, [{ type: int32Schema.name, value: 1 }]);
 		context.free();
@@ -522,7 +520,7 @@ describe("editable-tree: read-only", () => {
 				fields: { child: [{ type: int32Schema.name, value: 1 }] },
 			},
 		]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert(isUnwrappedNode(context.unwrappedRoot));
 		assert.equal(context.unwrappedRoot["child" as FieldKey], 1);
 
@@ -545,7 +543,7 @@ describe("editable-tree: read-only", () => {
 				fields: { child: [{ type: int32Schema.name, value: undefined }] },
 			},
 		]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert.throws(
 			() => (context.unwrappedRoot as EditableTree)["child" as FieldKey],
 			(e) => validateAssertionError(e, "`undefined` values not allowed for primitive fields"),
@@ -565,7 +563,7 @@ describe("editable-tree: read-only", () => {
 		{
 			const data = { type: phonesSchema.name };
 			const forest = setupForest(schemaData, [data]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			assert.equal(context.unwrappedRoot.length, 0);
 			assert.deepEqual([...context.unwrappedRoot], []);
@@ -591,7 +589,7 @@ describe("editable-tree: read-only", () => {
 				},
 			];
 			const forest = setupForest(schemaData, data);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			assert.equal(context.unwrappedRoot.length, 1);
 			assert.deepEqual([...context.unwrappedRoot], [1]);
