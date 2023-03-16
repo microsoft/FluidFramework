@@ -177,11 +177,21 @@ export interface IBaseDocumentEvents extends IEvent {
 	 */
 	(event: "taskListCollectionChanged", listener: () => void);
 }
+
+
+/**
+ * Properties necessary to instantiate a {@link ITaskList}.
+ * TODO: Figure out a better form factor for passing these in once we know all the pieces necessary.
+ */
 export interface IBaseDocumentInitialState {
 	externalTaskListId: string;
 	containerUrl: IFluidResolvedUrl;
 }
 
+/**
+ * A single DataStore object that allows the app to load and the container to instantiate
+ * without a instantiating {@link ITaskList} right away.
+ */
 export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	/**
 	 * Add a task list with a specific id.
