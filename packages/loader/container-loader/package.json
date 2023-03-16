@@ -116,6 +116,15 @@
 			"RemovedClassDeclaration_RelativeLoader": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_ILoaderProps": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ILoaderServices": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Loader": {
+				"backCompat": false
 			}
 		}
 	}

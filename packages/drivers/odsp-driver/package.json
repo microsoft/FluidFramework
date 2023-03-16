@@ -105,6 +105,16 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_OdspDocumentServiceFactory": {
+				"backCompat": false
+			},
+			"ClassDeclaration_OdspDocumentServiceFactoryCore": {
+				"backCompat": false
+			},
+			"ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit": {
+				"backCompat": false
+			}
+		}
 	}
 }

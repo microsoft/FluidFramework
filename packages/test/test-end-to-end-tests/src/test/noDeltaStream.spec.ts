@@ -205,7 +205,6 @@ describeFullCompat("No Delta stream loading mode testing", (getTestObjectProvide
 					createContainer: provider.documentServiceFactory.createContainer.bind(
 						provider.documentServiceFactory,
 					),
-					protocolName: provider.documentServiceFactory.protocolName,
 					createDocumentService: async (
 						resolvedUrl: IResolvedUrl,
 						logger?: ITelemetryBaseLogger,
