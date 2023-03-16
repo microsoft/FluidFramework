@@ -264,6 +264,7 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
  */
 export async function requestResolvedObjectFromContainer(
 	container: IContainer,
+	headers?: IRequestHeader,
 ): Promise<IResponse> {
 	ensureFluidResolvedUrl(container.resolvedUrl);
 	const parsedUrl = parseUrl(container.resolvedUrl.url);
@@ -274,6 +275,7 @@ export async function requestResolvedObjectFromContainer(
 
 	return container.request({
 		url: `${parsedUrl.path}${parsedUrl.query}`,
+		headers,
 	});
 }
 
