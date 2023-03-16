@@ -15,9 +15,9 @@ import type {
 	ExternalSnapshotTask,
 	ITask,
 	ITaskEvents,
+	ITaskData,
 	IBaseDocument,
 	IBaseDocumentInitialState,
-	TaskData,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import { customerServicePort } from "../mock-customer-service-interface";
@@ -234,7 +234,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		][];
 		try {
 			const response = await fetch(
-				`http://localhost:${externalDataServicePort}/fetch-tasks`,
+				`http://localhost:${externalDataServicePort}/fetch-tasks/${this.externalTaskListId}`,
 				{
 					method: "GET",
 					headers: {
@@ -248,7 +248,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody.taskList as TaskData;
+			const data = responseBody.taskList as ITaskData;
 			incomingExternalData = Object.entries(data);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {
@@ -332,14 +332,17 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		}
 
 		try {
-			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
+			await fetch(
+				`http://localhost:${externalDataServicePort}/set-tasks/${this.externalTaskListId}`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ taskList: formattedTasks }),
 				},
-				body: JSON.stringify({ taskList: formattedTasks }),
-			});
+			);
 		} catch (error) {
 			console.error(`Task list submition failed due to an error:\n${error}`);
 

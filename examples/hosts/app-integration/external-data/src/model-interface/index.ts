@@ -194,4 +194,5 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	 */
 	readonly getTaskList: (id: string) => ITaskList | undefined;
 }
-export { assertValidTaskData, TaskData } from "./TaskData";
+
+export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData";
