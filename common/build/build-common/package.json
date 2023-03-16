@@ -1,12 +1,12 @@
 {
-	"name": "@fluid-tools/markdown-magic",
-	"version": "0.1.0",
-	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic",
+	"name": "@fluidframework/build-common",
+	"version": "1.2.0",
+	"description": "Package containing common configs",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "tools/markdown-magic"
+		"directory": "common/build/build-common"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
