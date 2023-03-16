@@ -23,7 +23,7 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 		: Object.entries(summaryTree.tree);
 
 	for (const [key, value] of allSummaryEntries) {
-		const k = adaptSumaryTree && ["attributes"].includes(key) ? `.${key}` : key;
+		const k = adaptSumaryTree && key === "attributes" ? ".attributes" : key;
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;

@@ -44,6 +44,7 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isFluidResolvedUrl,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -771,10 +772,15 @@ export class Container
 			this.connectionStateHandler.containerSaved();
 		});
 
+		const addProtocolSummaryIfMissing = (summaryTree: ISummaryTree) =>
+			isCombinedAppAndProtocolSummary(summaryTree) === true
+				? summaryTree
+				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
+
 		this.storageService = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
-			() => this.captureProtocolSummary(),
+			addProtocolSummaryIfMissing,
 			this.options,
 		);
 
