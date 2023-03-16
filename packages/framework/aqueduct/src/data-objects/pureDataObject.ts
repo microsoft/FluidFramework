@@ -12,11 +12,9 @@ import {
 	IProvideFluidHandle,
 	IRequest,
 	IResponse,
-	FluidObject,
 } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDirectory } from "@fluidframework/map";
-import { handleFromLegacyUri } from "@fluidframework/request-handler";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
 import { defaultFluidObjectRequestHandler } from "../request-handlers";
