@@ -299,11 +299,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		},
 	);
 
+	const compressionSizeThreshold = 1024 * 1024;
 	const chunkingBatchesConfig: ITestContainerConfig = {
 		...testContainerConfig,
 		runtimeOptions: {
 			compressionOptions: {
-				minimumBatchSizeInBytes: 1024 * 1024,
+				minimumBatchSizeInBytes: compressionSizeThreshold,
 				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
 			chunkSizeInBytes: 800 * 1024,
@@ -542,6 +543,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		const assertPayloadSize = (totalMessageSizeInBytes: number): void => {
 			// Expecting the message size on the wire should have
 			// at most 35% extra from stringification and envelope overhead.
+			// If any of the tests fail, this value can be increased only if
+			// the payload size increase is intentional.
 			const overheadRatio = 1.35;
 			assert.ok(
 				totalPayloadSizeInBytes < overheadRatio * totalMessageSizeInBytes,
@@ -578,20 +581,23 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				}, // Three small uncompressed messages
 				{
 					messagesInBatch: 1,
-					messageSize: 1025 * 1024,
-					expectedSize: compressionRatio * 1025 * 1024,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: compressionRatio * compressionSizeThreshold,
 					payloadGenerator: generateStringOfSize,
 				}, // One large message with compression
 				{
 					messagesInBatch: 10,
-					messageSize: 1025 * 1024,
-					expectedSize: compressionRatio * 1025 * 1024,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: compressionRatio * (compressionSizeThreshold + 1),
 					payloadGenerator: generateStringOfSize,
 				}, // Ten large messages with compression
 				{
 					messagesInBatch: 10,
-					messageSize: 1025 * 1024,
-					expectedSize: badCompressionRatio * 10 * 1025 * 1024,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: badCompressionRatio * 10 * (compressionSizeThreshold + 1),
+					// In order for chunking to kick in, we need to force compression to output
+					// a payload larger than the payload size limit, which is done by compressing
+					// random data.
 					payloadGenerator: generateRandomStringOfSize,
 				}, // Ten large messages with compression and chunking
 			].forEach((config) => {
