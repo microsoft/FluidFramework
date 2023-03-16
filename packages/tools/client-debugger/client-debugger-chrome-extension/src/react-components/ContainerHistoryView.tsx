@@ -11,7 +11,8 @@ import {
 	InboundHandlers,
 	handleIncomingMessage,
 	HasContainerId,
- ConnectionStateChangeLogEntry } from "@fluid-tools/client-debugger";
+	ConnectionStateChangeLogEntry,
+} from "@fluid-tools/client-debugger";
 import { _ContainerHistoryView } from "@fluid-tools/client-debugger-view";
 import { Waiting } from "./Waiting";
 import { MessageRelayContext } from "./MessageRelayContext";
@@ -21,7 +22,10 @@ const loggingContext = "EXTENSION(ContainerHistoryView)";
 /**
  * {@link ContainerHistory} input props.
  */
-type ContainerHistoryProps = HasContainerId;
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ContainerHistoryProps extends HasContainerId {
+	// TODO
+}
 
 /**
  * Displays information about the provided {@link IFluidClientDebugger.getContainerConnectionLog}.
@@ -65,12 +69,10 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 
 		messageRelay.on("message", messageHandler);
 
-		// Send a message to the webpage to request the container state history. (???)
-
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, messageRelay, setContainerHistory]);
+	}, [containerHistory, messageRelay, setContainerHistory]);
 
 	if (containerHistory === undefined) {
 		return <Waiting label="Waiting for Container Summary data." />;

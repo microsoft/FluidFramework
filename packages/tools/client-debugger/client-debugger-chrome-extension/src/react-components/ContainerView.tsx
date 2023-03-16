@@ -9,6 +9,7 @@ import { Stack, StackItem } from "@fluentui/react";
 import { HasContainerId } from "@fluid-tools/client-debugger";
 import { PanelView, PanelViewSelectionMenu } from "@fluid-tools/client-debugger-view";
 
+import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { ContainerDataView } from "./ContainerDataView";
 import { AudienceView } from "./AudienceView";
@@ -46,6 +47,9 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 				break;
 			case PanelView.Telemetry:
 				innerView = <TelemetryView />;
+				break;
+			case PanelView.ContainerStateHistory:
+				innerView = <ContainerHistoryView containerId={containerId} />;
 				break;
 			default:
 				throw new Error(`Unrecognized RootView selection value: "${viewSelection}".`);

@@ -82,6 +82,18 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 }
 
 // @public
+export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+    // (undocumented)
+    type: "CONTAINER_STATE_HISTORY";
+}
+
+// @public
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+    // Warning: (ae-incompatible-release-tags) The symbol "history" is marked as @public, but its signature references "ConnectionStateChangeLogEntry" which is marked as @internal
+    history: ConnectionStateChangeLogEntry[];
+}
+
+// @public
 export interface ContainerStateMetadata extends ContainerMetadata {
     // (undocumented)
     attachState: AttachState;
