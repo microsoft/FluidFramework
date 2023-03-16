@@ -121,6 +121,10 @@
 			"RemovedVariableDeclaration_serviceRoutePathRoot": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_waitForAttach": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

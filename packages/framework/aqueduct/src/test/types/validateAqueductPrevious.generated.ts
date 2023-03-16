@@ -424,23 +424,23 @@ use_old_VariableDeclaration_mountableViewRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForAttach": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_waitForAttach": {"forwardCompat": false}
 */
 declare function get_old_FunctionDeclaration_waitForAttach():
     TypeOnly<typeof old.waitForAttach>;
-declare function use_current_FunctionDeclaration_waitForAttach(
+declare function use_current_RemovedFunctionDeclaration_waitForAttach(
     use: TypeOnly<typeof current.waitForAttach>);
-use_current_FunctionDeclaration_waitForAttach(
+use_current_RemovedFunctionDeclaration_waitForAttach(
     get_old_FunctionDeclaration_waitForAttach());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForAttach": {"backCompat": false}
+* "RemovedFunctionDeclaration_waitForAttach": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_waitForAttach():
+declare function get_current_RemovedFunctionDeclaration_waitForAttach():
     TypeOnly<typeof current.waitForAttach>;
 declare function use_old_FunctionDeclaration_waitForAttach(
     use: TypeOnly<typeof old.waitForAttach>);
 use_old_FunctionDeclaration_waitForAttach(
-    get_current_FunctionDeclaration_waitForAttach());
+    get_current_RemovedFunctionDeclaration_waitForAttach());
