@@ -37,5 +37,4 @@ export {
 	getDefaultObjectFromContainer,
 	getObjectFromContainer,
 	getObjectWithIdFromContainer,
-	waitForAttach,
 } from "./utils";

@@ -42,6 +42,8 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
 -   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
 -   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
+-   [Remove deprecated ContainerServices in @fluidframework/aqueduct](#Remove-deprecated-ContainerServices-in-@fluidframework/aqueduct)
+-   [Remove deprecated waitForAttach](#Remove-deprecated-waitForAttach)
 
 ### Container and RelativeLoader no longer exported
 
@@ -121,6 +123,12 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 -   `IPendingFlush`
 -   `IPendingState`
 -   `IPendingLocalState`
+
+### Remove deprecated ContainerServices in @fluidframework/aqueduct
+`ContainerServices` in `@fluidframework/aqueduct` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### Remove deprecated waitForAttach
+`waitForAttach()` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
 
 # 2.0.0-internal.3.3.0
 
