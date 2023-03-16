@@ -680,7 +680,6 @@ export class GitWholeSummaryManager {
 		repoManager: IRepositoryManager,
 		precomputeFullTree: boolean = true,
 		currentPath: string = "",
-		entryCache: Record<string, ITreeEntry> = {},
 		treeCache: Record<string, ITree> = {},
 		blobCache: Record<string, IBlob> = {},
 	): Promise<IFullGitTree> {
@@ -691,7 +690,6 @@ export class GitWholeSummaryManager {
 					repoManager,
 					precomputeFullTree,
 					currentPath,
-					entryCache,
 					treeCache,
 					blobCache,
 				);
@@ -699,17 +697,21 @@ export class GitWholeSummaryManager {
 		);
 
 		const createdTree = await repoManager.createTree({ tree: entries });
-		if (!precomputeFullTree) {
+		if (!precomputeFullTree || currentPath !== "") {
 			return {
 				tree: createdTree,
 				blobs: blobCache,
 				parsedFullTreeBlobs: false,
 			};
 		}
-		const gitTreeEntries: ITreeEntry[] = [];
-		const retrieveEntries = async (tree: ITree): Promise<void> => {
+		const retrieveEntries = async (tree: ITree, path: string = ""): Promise<ITreeEntry[]> => {
+			const treeEntries: ITreeEntry[] = [];
 			for (const treeEntry of tree.tree) {
-				gitTreeEntries.push(entryCache[treeEntry.sha]);
+				const entryPath = path ? `${path}/${treeEntry.path}` : treeEntry.path;
+				treeEntries.push({
+					...treeEntry,
+					path: entryPath,
+				});
 				if (treeEntry.type === "tree") {
 					const cachedTree: ITree | undefined = treeCache[treeEntry.sha];
 					if (!cachedTree) {
@@ -719,20 +721,27 @@ export class GitWholeSummaryManager {
 							treeEntry.sha,
 							true /* recursive */,
 						);
-						gitTreeEntries.push(...missingTree.tree);
+						treeEntries.push(
+							...missingTree.tree.map((entry) => ({
+								...entry,
+								path: `${entryPath}/${entry.path}`,
+							})),
+						);
 					} else {
-						await retrieveEntries(cachedTree);
+						treeEntries.push(...(await retrieveEntries(cachedTree, entryPath)));
 					}
 				}
 			}
+			return treeEntries;
 		};
-		await retrieveEntries(createdTree);
+		const gitTreeEntries = await retrieveEntries(createdTree);
+		const computedGitTree: ITree = {
+			sha: createdTree.sha,
+			url: createdTree.url,
+			tree: gitTreeEntries,
+		};
 		return buildFullGitTreeFromGitTree(
-			{
-				sha: createdTree.sha,
-				url: createdTree.url,
-				tree: gitTreeEntries,
-			},
+			computedGitTree,
 			repoManager,
 			blobCache,
 			true /* parseInnerFullGitTrees */,
@@ -745,7 +754,6 @@ export class GitWholeSummaryManager {
 		repoManager: IRepositoryManager,
 		precomputeFullTree: boolean,
 		currentPath: string,
-		entryCache: Record<string, ITreeEntry>,
 		treeCache: Record<string, ITree>,
 		blobCache: Record<string, IBlob>,
 	): Promise<ICreateTreeEntry> {
@@ -785,7 +793,6 @@ export class GitWholeSummaryManager {
 				repoManager,
 				precomputeFullTree,
 				fullPath,
-				entryCache,
 				treeCache,
 				blobCache,
 			);
@@ -810,11 +817,6 @@ export class GitWholeSummaryManager {
 			path,
 			sha,
 			type,
-		};
-		entryCache[sha] = {
-			...createEntry,
-			url,
-			size,
 		};
 		return createEntry;
 	}
