@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-// import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
@@ -46,7 +45,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		},
 	};
 
-	const messageRelay = React.useContext(MessageRelayContext);
+	const messageRelay = useMessageRelay();
+
 	if (messageRelay === undefined) {
 		throw new Error(
 			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
