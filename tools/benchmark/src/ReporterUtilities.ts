@@ -11,7 +11,6 @@ import {
 	testTypes,
 	userCategoriesSplitter,
 } from "./Configuration";
-import { Stats } from "./runBenchmark";
 
 /**
  * This file contains generic utilities of use to a mocha reporter, especially for convenient formatting of textual
@@ -153,6 +152,19 @@ const tTable = {
 };
 
 /**
+ * @public
+ */
+export interface Stats {
+	readonly marginOfError: number;
+	readonly marginOfErrorPercent: number;
+	readonly standardErrorOfMean: number;
+	readonly standardDeviation: number;
+	readonly arithmeticMean: number;
+	readonly samples: readonly number[];
+	readonly variance: number;
+}
+
+/**
  * Compute statistics for an array of numbers. For homogeneity, it outputs the same
  * object that the Benchmark library does.
  *
@@ -208,6 +220,6 @@ export function getArrayStatistics(array: number[], fractionOfSamplesToUse: numb
 		marginOfError: moe,
 		standardErrorOfMean: sem,
 		samples: finalSamples,
-		relatedMarginOfError: rme,
+		marginOfErrorPercent: rme,
 	};
 }

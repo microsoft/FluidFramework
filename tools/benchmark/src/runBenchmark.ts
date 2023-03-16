@@ -10,7 +10,7 @@ import {
 	BenchmarkRunningOptionsAsync,
 	BenchmarkTimingOptions,
 } from "./Configuration";
-import { getArrayStatistics } from "./ReporterUtilities";
+import { Stats, getArrayStatistics } from "./ReporterUtilities";
 import { Timer, defaultMinTime, timer } from "./timer";
 
 export const defaults: Required<BenchmarkTimingOptions> = {
@@ -48,19 +48,6 @@ export interface BenchmarkData {
 	readonly elapsedSeconds: number;
 }
 
-/**
- * @public
- */
-export interface Stats {
-	readonly marginOfError: number;
-	readonly relatedMarginOfError: number;
-	readonly standardErrorOfMean: number;
-	readonly standardDeviation: number;
-	readonly arithmeticMean: number;
-	readonly samples: readonly number[];
-	readonly variance: number;
-}
-
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
 	const options = {
 		...defaults,
@@ -95,10 +82,17 @@ function tryRunGarbageCollection(): void {
 	global?.gc?.();
 }
 
+enum Mode {
+	WarmUp,
+	AdjustCount,
+	CollectData,
+}
+
 class BenchmarkState<T> {
-	public readonly samples: number[];
-	public readonly options: Readonly<Required<BenchmarkTimingOptions>>;
-	public readonly startTime: T;
+	private readonly samples: number[];
+	private readonly options: Readonly<Required<BenchmarkTimingOptions>>;
+	private readonly startTime: T;
+	private mode: Mode = Mode.WarmUp;
 	public count: number;
 	public constructor(public readonly timer: Timer<T>, options: BenchmarkTimingOptions) {
 		this.startTime = timer.now();
@@ -115,10 +109,28 @@ class BenchmarkState<T> {
 		tryRunGarbageCollection();
 	}
 
+	public batch(sample: number): boolean {
+		switch (this.mode) {
+			case Mode.WarmUp: {
+				this.mode = Mode.AdjustCount;
+				return true;
+			}
+			case Mode.AdjustCount: {
+				if (!this.growCount(sample)) {
+					this.mode = Mode.CollectData;
+				}
+				return true;
+			}
+			default: {
+				return this.addSample(sample);
+			}
+		}
+	}
+
 	/**
 	 * Returns true if count should be grown more.
 	 */
-	public growCount(sample: number): boolean {
+	private growCount(sample: number): boolean {
 		if (sample < this.options.minSampleDurationSeconds) {
 			// TODO: use consider using Benchmark.js's algorithm for this.
 			this.count *= 2;
@@ -130,7 +142,7 @@ class BenchmarkState<T> {
 	/**
 	 * Returns true is more samples should be collected.
 	 */
-	public addSample(sample: number): boolean {
+	private addSample(sample: number): boolean {
 		this.samples.push(sample);
 		if (this.samples.length < this.options.minSampleCount) {
 			return true;
@@ -140,10 +152,19 @@ class BenchmarkState<T> {
 			return false;
 		}
 
-		// TODO: exit before this if enough confidence is reached. (But what about low frequency noise?)
+		const stats = getArrayStatistics(this.samples);
+		if (stats.marginOfErrorPercent < 1.0) {
+			// Already below 1% margin of error.
+			// Note that this margin of error computation doesn't account for low frequency noise (noise spanning a time scale longer than this test so far)
+			// which can be caused by many factors like CPU frequency changes due to limited boost time or thermals.
+			// It also does not handle long tail distributions well (for example if one in 10000 iterations contains a GC and you want to include that in the mean).
+			return false;
+		}
 
 		// Exit if way too many samples to avoid out of memory.
 		if (this.samples.length > 1000000) {
+			// Test failed to converge after many samples.
+			// TODO: produce some warning or error state in this case (and probably the case for hitting max time as well).
 			return false;
 		}
 
@@ -170,8 +191,7 @@ class BenchmarkState<T> {
  */
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
 	const state = new BenchmarkState(timer, args);
-	while (state.growCount(doBatch(state.count, args.benchmarkFn, args.onCycle))) {}
-	while (state.addSample(doBatch(state.count, args.benchmarkFn, args.onCycle))) {}
+	while (state.batch(doBatch(state.count, args.benchmarkFn, args.onCycle))) {}
 	return state.computeData();
 }
 
@@ -183,8 +203,7 @@ export async function runBenchmarkAsync(
 	args: BenchmarkRunningOptionsAsync,
 ): Promise<BenchmarkData> {
 	const state = new BenchmarkState(timer, args);
-	while (state.growCount(await doBatchAsync(state.count, args.benchmarkFnAsync, args.onCycle))) {}
-	while (state.addSample(await doBatchAsync(state.count, args.benchmarkFnAsync, args.onCycle))) {}
+	while (state.batch(await doBatchAsync(state.count, args.benchmarkFnAsync, args.onCycle))) {}
 	return state.computeData();
 }
 

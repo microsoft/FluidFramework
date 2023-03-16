@@ -140,7 +140,7 @@ class MochaMemoryTestReporter {
 							);
 							table.cell(
 								"Relative Margin of Error",
-								`±${prettyNumber(testData.stats.relatedMarginOfError, 2)}%`,
+								`±${prettyNumber(testData.stats.marginOfErrorPercent, 2)}%`,
 								Table.padLeft,
 							);
 

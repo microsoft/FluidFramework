@@ -35,6 +35,6 @@ export {
 } from "./Configuration";
 export { benchmark } from "./Runner";
 export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./MemoryTestRunner";
-export { prettyNumber, geometricMean } from "./ReporterUtilities";
+export { prettyNumber, geometricMean, Stats } from "./ReporterUtilities";
 export { BenchmarkReporter } from "./Reporter";
-export { Stats, BenchmarkData } from "./runBenchmark";
+export { BenchmarkData } from "./runBenchmark";

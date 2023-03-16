@@ -40,8 +40,9 @@ import {
 	green,
 	red,
 	yellow,
+	Stats,
 } from "./ReporterUtilities";
-import { BenchmarkData, Stats } from "./runBenchmark";
+import { BenchmarkData } from "./runBenchmark";
 
 interface BenchmarkResults {
 	table: Table;
@@ -57,7 +58,7 @@ export const failedData: BenchmarkData = {
 		standardDeviation: NaN,
 		arithmeticMean: NaN,
 		marginOfError: NaN,
-		relatedMarginOfError: NaN,
+		marginOfErrorPercent: NaN,
 		samples: [],
 		standardErrorOfMean: NaN,
 		variance: NaN,
@@ -143,12 +144,12 @@ export class BenchmarkReporter {
 				benchmarkInstance.stats.samples.length * benchmarkInstance.iterationPerCycle;
 			table.cell(
 				"period (ns/op)",
-				prettyNumber(1e9 * benchmarkInstance.stats.arithmeticMean, 1),
+				prettyNumber(1e9 * benchmarkInstance.stats.arithmeticMean, 2),
 				Table.padLeft,
 			);
 			table.cell(
 				"relative margin of error",
-				`±${benchmarkInstance.stats.relatedMarginOfError.toFixed(2)}%`,
+				`±${benchmarkInstance.stats.marginOfErrorPercent.toFixed(2)}%`,
 				Table.padLeft,
 			);
 			table.cell("iterations", `${prettyNumber(numIterations, 0)}`, Table.padLeft);
@@ -338,7 +339,7 @@ export class BenchmarkReporter {
 	private outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, unknown> {
 		const obj = {
 			marginOfError: benchmarkStats.marginOfError,
-			relatedMarginOfError: benchmarkStats.relatedMarginOfError,
+			marginOfErrorPercent: benchmarkStats.marginOfErrorPercent,
 			arithmeticMean: benchmarkStats.arithmeticMean,
 			standardErrorOfMean: benchmarkStats.standardErrorOfMean,
 			variance: benchmarkStats.variance,

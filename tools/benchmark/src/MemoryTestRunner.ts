@@ -17,8 +17,7 @@ import {
 	userCategoriesSplitter,
 	TestType,
 } from "./Configuration";
-import { getArrayStatistics } from "./ReporterUtilities";
-import { Stats } from "./runBenchmark";
+import { getArrayStatistics, Stats } from "./ReporterUtilities";
 
 /**
  * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
@@ -288,7 +287,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			},
 			stats: {
 				marginOfError: NaN,
-				relatedMarginOfError: NaN,
+				marginOfErrorPercent: NaN,
 				standardErrorOfMean: NaN,
 				standardDeviation: NaN,
 				arithmeticMean: NaN,
@@ -302,7 +301,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 			const startTime = performance.now();
 			let heapUsedStats: Stats = {
 				marginOfError: NaN,
-				relatedMarginOfError: NaN,
+				marginOfErrorPercent: NaN,
 				standardErrorOfMean: NaN,
 				standardDeviation: NaN,
 				arithmeticMean: NaN,
@@ -347,7 +346,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				}
 			} while (
 				benchmarkStats.runs < options.minSampleCount ||
-				heapUsedStats.relatedMarginOfError > options.maxRelativeMarginOfError
+				heapUsedStats.marginOfErrorPercent > options.maxRelativeMarginOfError
 			);
 
 			benchmarkStats.stats = heapUsedStats;

@@ -40,7 +40,7 @@ describe("getArrayStatistics() function", () => {
 			2.0545635302905576,
 			"Computed incorrect margin of error",
 		);
-		expect(results.relatedMarginOfError).to.equal(
+		expect(results.marginOfErrorPercent).to.equal(
 			37.35570055073741,
 			"Computed incorrect relative margin of error",
 		);
@@ -68,7 +68,7 @@ describe("getArrayStatistics() function", () => {
 			2.0545635302905576,
 			"Computed incorrect margin of error",
 		);
-		expect(results.relatedMarginOfError).to.equal(
+		expect(results.marginOfErrorPercent).to.equal(
 			37.35570055073741,
 			"Computed incorrect relative margin of error",
 		);
