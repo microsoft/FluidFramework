@@ -41,7 +41,23 @@ import {
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
 } from "../feature-libraries";
+import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { TransactionResult } from "../util";
+
+/**
+ * Events for {@link ISharedTreeCheckout}.
+ * @alpha
+ */
+export interface CheckoutEvents {
+	/**
+	 * A batch of changes has finished processing and the checkout is in a consistent state.
+	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 *
+	 * @remarks
+	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
+	 */
+	afterBatch(): void;
+}
 
 /**
  * Provides a means for interacting with a SharedTree.
@@ -140,6 +156,11 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 * Any mutations of the new checkout will not apply to this checkout until the new checkout is merged back in.
 	 */
 	fork(): ISharedTreeCheckoutFork;
+
+	/**
+	 * Events about this checkout.
+	 */
+	readonly events: ISubscribable<CheckoutEvents>;
 }
 
 /**
@@ -187,7 +208,7 @@ class SharedTree
 	extends SharedTreeCore<
 		DefaultEditBuilder,
 		DefaultChangeset,
-		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
+		readonly [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
 	>
 	implements ISharedTree
 {
@@ -195,6 +216,8 @@ class SharedTree
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 	public readonly transaction: ISharedTreeCheckout["transaction"];
+
+	public readonly events: ISubscribable<CheckoutEvents> & IEmitter<CheckoutEvents>;
 
 	public constructor(
 		id: string,
@@ -206,11 +229,15 @@ class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
 		super(
-			(events, editManager) => [
-				new SchemaIndex(runtime, events, schema),
-				new ForestIndex(runtime, events, forest),
-				new EditManagerIndex(runtime, editManager),
-			],
+			(events, editManager) => {
+				const indexes = [
+					new SchemaIndex(runtime, events, schema),
+					new ForestIndex(runtime, events, forest),
+					new EditManagerIndex(runtime, editManager),
+				] as const;
+				events.on("newLocalState", () => this.events.emit("afterBatch"));
+				return indexes;
+			},
 			defaultChangeFamily,
 			anchors,
 			id,
@@ -219,6 +246,7 @@ class SharedTree
 			telemetryContextPrefix,
 		);
 
+		this.events = createEmitter<CheckoutEvents>();
 		this.forest = forest;
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 
@@ -306,6 +334,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 class SharedTreeCheckout implements ISharedTreeCheckoutFork {
+	public readonly events = createEmitter<CheckoutEvents>();
 	public readonly context: EditableTreeContext;
 
 	public constructor(
@@ -318,6 +347,7 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
+			this.events.emit("afterBatch");
 		});
 	}
 

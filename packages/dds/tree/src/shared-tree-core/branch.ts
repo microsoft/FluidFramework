@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	AnchorSet,
 	ChangeFamily,
+	ChangeFamilyEditor,
 	findAncestor,
 	GraphCommit,
 	mintCommit,
@@ -31,7 +32,7 @@ export interface SharedTreeBranchEvents<TChange> {
 /**
  * A branch of changes that can be applied to a SharedTree.
  */
-export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
+export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> extends EventEmitter<
 	SharedTreeBranchEvents<TChange>
 > {
 	private head: GraphCommit<TChange>;
@@ -93,10 +94,12 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 
 	public startTransaction(repairStore?: RepairDataStore): void {
 		this.transactions.push(this.head.revision, repairStore);
+		this.editor.enterTransaction();
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
 		const [startCommit, commits] = this.popTransaction();
+		this.editor.exitTransaction();
 
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
@@ -123,6 +126,7 @@ export class SharedTreeBranch<TEditor, TChange> extends EventEmitter<
 
 	public abortTransaction(): TransactionResult.Abort {
 		const [startCommit, commits, repairStore] = this.popTransaction();
+		this.editor.exitTransaction();
 		this.head = startCommit;
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const inverse = this.changeFamily.rebaser.invert(commits[i], false, repairStore);

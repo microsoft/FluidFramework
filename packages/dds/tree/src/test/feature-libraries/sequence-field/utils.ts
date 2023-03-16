@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	ChangesetLocalId,
 	IdAllocator,
+	idAllocatorFromMaxId,
 	RevisionMetadataSource,
 	SequenceField as SF,
 } from "../../../feature-libraries";
@@ -203,11 +204,4 @@ export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
 			mark.id = newId!;
 		}
 	}
-}
-
-export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
-	let currId = maxId ?? -1;
-	return () => {
-		return brand(++currId);
-	};
 }
