@@ -415,7 +415,7 @@ export interface IContainerRuntimeOptions {
 	/**
 	 * If enabled, the runtime will group messages within a batch into a single
 	 * message to be sent to the service.
-	 * The grouping an ungrouping of such messages is handled by the {@link OpGroupingManager}.
+	 * The grouping an ungrouping of such messages is handled by the "OpGroupingManager".
 	 *
 	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
 	 * flag can be used to disable it at runtime.
@@ -3542,7 +3542,6 @@ export class OpGroupingManager {
 			} else {
 				const groupedOp: IBatchMessage = {
 					metadata: undefined,
-					compression: simplifiedBatch[0].compression,
 					referenceSequenceNumber,
 					contents: JSON.stringify({
 						type: OpGroupingManager.groupedBatchOp,
@@ -3568,8 +3567,6 @@ export class OpGroupingManager {
 		return messages.map((subMessage) => ({
 			...message,
 			clientSequenceNumber: fakeCsn++,
-			referenceSequenceNumber:
-				subMessage.referenceSequenceNumber ?? message.referenceSequenceNumber,
 			contents: subMessage.contents,
 			metadata: subMessage.metadata,
 			compression: subMessage.compression,
