@@ -245,13 +245,9 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file) => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
-				if (json.author === undefined || json.author !== author) {
-					json.author = author;
-				}
+				json.author = author;
 
-				if (json.license === undefined || json.license !== licenseId) {
-					json.license = licenseId;
-				}
+				json.license = licenseId;
 
 				if (json.repository === undefined || typeof json.repository === "string") {
 					json.repository = {
@@ -264,9 +260,7 @@ export const handlers: Handler[] = [
 					json.repository.url = repository;
 				}
 
-				if (json.homepage === undefined || json.homepage !== homepage) {
-					json.homepage = homepage;
-				}
+				json.homepage = homepage;
 			});
 
 			return { resolved: true };

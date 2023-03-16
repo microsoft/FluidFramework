@@ -493,8 +493,8 @@ export function updatePackageJsonFile(
 	const indentation = detectIndent(packagePath).indent || "\t";
 	const pkgJson: PackageJson = readJsonSync(packagePath);
 
-	// Transform the package.json if needed
-	packageTransformer?.(pkgJson);
+	// Transform the package.json
+	packageTransformer(pkgJson);
 
 	writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indentation });
 }
