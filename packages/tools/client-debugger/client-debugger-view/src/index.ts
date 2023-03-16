@@ -21,6 +21,8 @@
  */
 
 export {
+	_AudienceView,
+	_AudienceViewProps,
 	_ContainerSummaryView,
 	_ContainerSummaryViewProps,
 	_TelemetryView,

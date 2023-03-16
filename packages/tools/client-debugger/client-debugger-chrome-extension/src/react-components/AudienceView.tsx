@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack, StackItem } from "@fluentui/react";
+// import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
@@ -13,7 +13,7 @@ import {
 	AudienceEventMessage,
 	HasContainerId,
 } from "@fluid-tools/client-debugger";
-// import { _AudienceView, _AudienceViewProps } from "@fluid-tools/client-debugger-view";
+import { defaultRenderOptions, _AudienceView } from "@fluid-tools/client-debugger-view";
 import { extensionMessageSource } from "../messaging";
 import { MessageRelayContext } from "./MessageRelayContext";
 
@@ -53,9 +53,10 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		);
 	}
 
-	const [audienceState, setAudienceState] = React.useState<IClient[] | undefined>();
-	const [audienceHistory, setAudienceHistory] =
-		React.useState<readonly AudienceChangeLogEntry[]>();
+	const [audienceState, setAudienceState] = React.useState<IClient[]>([]);
+	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
+		[],
+	);
 
 	React.useEffect(() => {
 		/**
@@ -91,31 +92,13 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		};
 	}, [containerId, setAudienceState, setAudienceHistory]);
 
-	console.log("audienceState:", audienceState);
-	console.log("--------------------------");
-	console.log("audienceHistory:", audienceHistory);
-
 	return (
-		<Stack>
-			<StackItem>
-				<h3>Audience Data</h3>
-			</StackItem>
-			<StackItem>
-				<div>
-					{" "}
-					{audienceState === undefined ? <h1> Hello </h1> : JSON.stringify(audienceState)}
-				</div>
-				<h1> ------------------------------------------------ </h1>
-				<div>
-					{" "}
-					{audienceHistory === undefined ? (
-						<h1> Hello </h1>
-					) : (
-						JSON.stringify(audienceHistory)
-					)}{" "}
-				</div>
-				<div> {audienceState === undefined ? <h1> Hello </h1> : audienceState.length} </div>
-			</StackItem>
-		</Stack>
+		<_AudienceView
+			clientId={"12"}
+			allAudienceMembers={audienceState}
+			myClientConnection={undefined}
+			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
+			audienceHistory={audienceHistory}
+		/>
 	);
 }

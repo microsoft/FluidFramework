@@ -62,10 +62,14 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		};
 	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
 
+	const audienceMembersArray: IClient[] = [...allAudienceMembers.values()];
+	// const audienceMembersKeyArray: string[] = [...allAudienceMembers.keys()];
+
+	// console.log("...allAudienceMembers.keys()", ...allAudienceMembers.keys());
 	return (
 		<_AudienceView
 			clientId={myClientId}
-			allAudienceMembers={allAudienceMembers}
+			allAudienceMembers={audienceMembersArray}
 			myClientConnection={myClientConnection}
 			onRenderAudienceMember={onRenderAudienceMember}
 			audienceHistory={audienceHistory}
@@ -78,7 +82,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
  */
 export interface _AudienceViewProps {
 	clientId: string | undefined;
-	allAudienceMembers: Map<string, IClient>;
+	allAudienceMembers: IClient[];
 	myClientConnection: IClient | undefined;
 	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
 	audienceHistory: readonly AudienceChangeLogEntry[];
@@ -111,7 +115,7 @@ export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
 		>
 			<StackItem>
 				<div className="audience-view-members-list">
-					<h3>Audience members ({allAudienceMembers.size})</h3>
+					<h3>Audience members ({allAudienceMembers.length})</h3>
 				</div>
 				<MembersView
 					audience={allAudienceMembers}
@@ -137,7 +141,7 @@ interface MembersViewProps {
 	/**
 	 * The current audience
 	 */
-	audience: Map<string, IClient>;
+	audience: IClient[];
 
 	/**
 	 * My client ID, if the Container is connected.
@@ -196,16 +200,19 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 	const { history } = props;
 
 	const nowTimeStamp = new Date();
-	const historyViews: React.ReactElement[] = [];
 
 	// Reverse history such that newest events are displayed first
-	for (let i = history.length - 1; i >= 0; i--) {
-		const changeTimeStamp = new Date(history[i].timestamp);
+	const reversedHistoryLog = [...history].reverse();
+
+	const historyViews: React.ReactElement[] = [];
+
+	for (const changeEntry of reversedHistoryLog) {
+		const changeTimeStamp = new Date(changeEntry.timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
 		const accordianBackgroundColor: IStackItemStyles = {
 			root: {
-				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
+				background: changeEntry.changeKind === "added" ? "#90ee90" : "#FF7377",
 				borderStyle: "solid",
 				borderWidth: 1,
 				borderColor: DefaultPalette.neutralTertiary,
@@ -220,22 +227,22 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		};
 
 		historyViews.push(
-			<div key={`audience-history-info-${i}`}>
+			<div>
 				<Stack horizontal={true} styles={accordianBackgroundColor}>
 					<StackItem styles={iconStyle}>
 						<Icon
 							iconName={
-								history[i].changeKind === "added" ? "AddFriend" : "UserRemove"
+								changeEntry.changeKind === "added" ? "AddFriend" : "UserRemove"
 							}
 							title={
-								history[i].changeKind === "added" ? "Member Joined" : "Member Left"
+								changeEntry.changeKind === "added" ? "Member Joined" : "Member Left"
 							}
 						/>
 					</StackItem>
 					<StackItem>
-						<div key={`${history[i].clientId}-${history[i].changeKind}`}>
+						<div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
 							<b>Client ID: </b>
-							{history[i].clientId}
+							{changeEntry.clientId}
 							<br />
 							<b>Time: </b>{" "}
 							{wasChangeToday

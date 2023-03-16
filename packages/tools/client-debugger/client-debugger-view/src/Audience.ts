@@ -24,11 +24,12 @@ export interface AudienceMember {
  * Combines multiple member instances for the same user, and enumerates their separate client connections.
  */
 export function combineMembersWithMultipleConnections(
-	clients: Map<string, IClient>,
+	clients: IClient[],
 ): Map<string, AudienceMember> {
 	const audienceMembers = new Map<string, AudienceMember>();
-	for (const [clientId, clientMember] of clients) {
-		const userId = clientMember.user.id;
+
+	for (const client of clients) {
+		const userId = client.user.id;
 		// Ensure we're tracking the user
 		let audienceMember = audienceMembers.get(userId);
 		if (audienceMember === undefined) {
@@ -40,7 +41,7 @@ export function combineMembersWithMultipleConnections(
 		}
 
 		// Add this connection to their collection
-		audienceMember.clients.set(clientId, clientMember);
+		audienceMember.clients.set(userId, client);
 	}
 	return audienceMembers;
 }
