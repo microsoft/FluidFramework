@@ -601,12 +601,6 @@ export class Container
 	}
 
 	/**
-	 * Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
-	 * Even if not forced on via this flag, combined summaries may still be enabled by service policy.
-	 */
-	private readonly forceEnableSummarizeProtocolTree: boolean | undefined;
-
-	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
 	public async getEntryPoint?(): Promise<FluidObject | undefined> {
@@ -704,10 +698,6 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		this.forceEnableSummarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.loader.services.options.summarizeProtocolTree;
-
 		this.options = {
 			...this.loader.services.options,
 		};
@@ -777,16 +767,25 @@ export class Container
 			this.connectionStateHandler.containerSaved();
 		});
 
+		// We expose our storage publicly, so it's possible others may call uploadSummaryWithContext() with a
+		// non-combined summary tree (in particular, ContainerRuntime.submitSummary).  We'll intercept those calls
+		// using this callback and fix them up.
 		const addProtocolSummaryIfMissing = (summaryTree: ISummaryTree) =>
 			isCombinedAppAndProtocolSummary(summaryTree) === true
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
+		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
+		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
+		const forceEnableSummarizeProtocolTree =
+			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
+			this.loader.services.options.summarizeProtocolTree;
+
 		this.storageAdapter = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
 			addProtocolSummaryIfMissing,
-			this.forceEnableSummarizeProtocolTree,
+			forceEnableSummarizeProtocolTree,
 		);
 
 		const isDomAvailable =
