@@ -353,7 +353,7 @@ export class DocumentDeltaConnection
 						disposed: this._disposed,
 						socketConnected: this.socket?.connected,
 						trackedListenerCount: this.trackedListeners.size,
-						clientId: this.clientId,
+						clientId: this._details?.clientId,
 						connectionId: this.connectionId,
 					}),
 				},
@@ -603,8 +603,15 @@ export class DocumentDeltaConnection
 			// Socket can be disconnected while waiting for Fluid protocol messages
 			// (connect_document_error / connect_document_success), as well as before DeltaManager
 			// had a chance to register its handlers.
-			this.addTrackedListener("disconnect", (reason) => {
-				const err = this.createErrorObject("disconnect", reason);
+			this.addTrackedListener("disconnect", (reason, description) => {
+				const err = this.createErrorObject(
+					"disconnect",
+					`${reason}${
+						typeof description === "object"
+							? ` description: ${description?.description}`
+							: ""
+					}`,
+				);
 				failAndCloseSocket(err);
 			});
 

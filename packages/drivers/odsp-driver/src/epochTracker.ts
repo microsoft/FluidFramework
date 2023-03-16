@@ -453,7 +453,7 @@ export class EpochTracker implements IPersistedFileCache {
 			return new NonRetryableError(
 				"Epoch mismatch",
 				DriverErrorType.fileOverwrittenInStorage,
-				{ driverVersion },
+				{ driverVersion, serverEpoch: epochFromResponse },
 			);
 		}
 	}
