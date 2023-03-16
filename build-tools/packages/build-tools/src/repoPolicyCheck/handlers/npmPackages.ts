@@ -243,22 +243,18 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file) => {
+		resolver: (file, root) => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
-
 				json.license = licenseId;
 
 				if (json.repository === undefined || typeof json.repository === "string") {
-					json.repository = {
-						type: "git",
-						url: repository,
-					};
-				}
-
-				if (json.repository.url !== repository) {
-					json.repository.url = repository;
-				}
+          json.repository = {
+            type: "git",
+            url: repository,
+            directory: path.posix.relative(root, path.dirname(file)),
+          };
+        }
 
 				json.homepage = homepage;
 			});
@@ -536,22 +532,7 @@ export const handlers: Handler[] = [
 			}
 
 			return undefined;
-		},
-		resolver: (file, root) => {
-			let valid = false;
-			updatePackageJsonFile(path.dirname(file), (json) => {
-				const lintResults = runNpmJsonLint(json, file);
-				valid = lintResults.valid;
-
-				json.repository = {
-					type: "git",
-					url: repository,
-					directory: path.posix.relative(root, path.dirname(file)),
-				};
-			});
-
-			return { resolved: valid };
-		},
+		}
 	},
 	{
 		name: "npm-package-json-prettier",
