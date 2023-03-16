@@ -11,8 +11,8 @@ jobs:
 
     steps:
       - name: Notify in comment
-        only_create: true
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
+          only_create: true
           message: |
             Hi @scottn12 check this out :)
