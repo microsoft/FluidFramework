@@ -3,135 +3,159 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { singleTextCursor } from "../../feature-libraries";
-import { jsonString } from "../../domains";
-import { moveToDetachedField, rootFieldKeySymbol, UpPath } from "../../core";
-import { brand, JsonCompatible } from "../../util";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import { FieldKinds, singleTextCursor } from "../../feature-libraries";
+import { jsonSchemaData, jsonString, singleJsonCursor } from "../../domains";
+import { rootFieldKeySymbol, UpPath, fieldSchema, rootFieldKey, SchemaData } from "../../core";
+import { JsonCompatible, brand } from "../../util";
 import { fakeRepair } from "../utils";
+import { ISharedTree, ISharedTreeBranch, SharedTreeFactory } from "../../shared-tree";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
+
+const factory = new SharedTreeFactory();
+const runtime = new MockFluidDataStoreRuntime();
+// For now, require tree to be a list of strings.
+const schema: SchemaData = {
+	treeSchema: jsonSchemaData.treeSchema,
+	globalFieldSchema: new Map([
+		[rootFieldKey, fieldSchema(FieldKinds.sequence, [jsonString.name])],
+	]),
+};
+
+function makeTree(...json: string[]): ISharedTree {
+	const tree = factory.create(runtime, "TestSharedTree");
+	tree.storedSchema.update(schema);
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, json.map(singleJsonCursor));
+	return tree;
+}
 
 describe("Editing", () => {
 	describe("Sequence Field", () => {
 		it("can order concurrent inserts within concurrently deleted content", () => {
-			const sequencer = new Sequencer();
-			const tree1 = TestTree.fromJson(["A", "B", "C", "D"]);
-			const tree2 = tree1.fork();
-			const tree3 = tree1.fork();
-			const tree4 = tree1.fork();
+			const tree = makeTree("A", "B", "C", "D");
+			const delAB = tree.fork();
+			const delCD = tree.fork();
+			const addX = tree.fork();
+			const addY = tree.fork();
 
 			// Make deletions in two steps to ensure that gap tracking handles comparing insertion places that
 			// were affected by different deletes.
-			const delAB = remove(tree1, 0, 2);
-			const delCD = remove(tree2, 2, 2);
-			const addX = insert(tree3, 1, "x");
-			const addY = insert(tree4, 3, "y");
+			remove(delAB, 0, 2);
+			remove(delCD, 2, 2);
+			insert(addX, 1, "x");
+			insert(addY, 3, "y");
 
-			const sequenced = sequencer.sequence([delAB, delCD, addX, addY]);
-			tree1.receive(sequenced);
-			tree2.receive(sequenced);
-			tree3.receive(sequenced);
-			tree4.receive(sequenced);
+			delAB.merge();
+			delCD.merge();
+			addX.merge();
+			addY.merge();
 
-			expectJsonTree([tree1, tree2, tree3, tree4], ["x", "y"]);
+			expectJsonTree(tree, ["x", "y"]);
 		});
 
 		it("can handle competing deletes", () => {
 			for (const index of [0, 1, 2, 3]) {
-				const sequencer = new Sequencer();
 				const startingState = ["A", "B", "C", "D"];
-				const tree1 = TestTree.fromJson(startingState);
-				const tree2 = tree1.fork();
-				const tree3 = tree1.fork();
-				const tree4 = tree1.fork();
+				const tree = makeTree(...startingState);
+				const tree1 = tree.fork();
+				const tree2 = tree.fork();
+				const tree3 = tree.fork();
+				const tree4 = tree.fork();
 
-				const del1 = remove(tree1, index, 1);
-				const del2 = remove(tree2, index, 1);
-				const del3 = remove(tree3, index, 1);
+				remove(tree1, index, 1);
+				remove(tree2, index, 1);
+				remove(tree3, index, 1);
 
-				const sequenced = sequencer.sequence([del1, del2, del3]);
-				tree1.receive(sequenced);
-				tree2.receive(sequenced);
-				tree3.receive(sequenced);
-				tree4.receive(sequenced);
+				tree1.merge();
+				tree2.merge();
+				tree3.merge();
+				tree4.pull();
 
 				const expected = [...startingState];
 				expected.splice(index, 1);
-				expectJsonTree([tree1, tree2, tree3, tree4], expected);
+				expectJsonTree([tree, tree4], expected);
 			}
 		});
 
 		it("can rebase local dependent inserts", () => {
-			const sequencer = new Sequencer();
-			const tree1 = TestTree.fromJson("y");
+			const tree1 = makeTree("y");
 			const tree2 = tree1.fork();
-
-			const x = insert(tree1, 0, "x");
-
-			const ac = insert(tree2, 1, "a", "c");
-			const b = insert(tree2, 2, "b");
-			expectJsonTree(tree2, ["y", "a", "b", "c"]);
-
-			// Get an anchor to node b
-			const cursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, cursor);
-			cursor.enterNode(2);
-			assert.equal(cursor.value, "b");
-			const anchor = cursor.buildAnchor();
-			cursor.free();
-
-			const sequenced = sequencer.sequence([x, ac, b]);
-			tree1.receive(sequenced);
-			tree2.receive(sequenced);
-
-			expectJsonTree([tree1, tree2], ["x", "y", "a", "b", "c"]);
-
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const { parent, parentField, parentIndex } = tree2.forest.anchors.locate(anchor)!;
-			const expectedPath: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 3,
-			};
-			assert.deepEqual({ parent, parentField, parentIndex }, expectedPath);
+			insert(tree1, 0, "x");
+			insert(tree2, 1, "a", "c");
+			insert(tree2, 2, "b");
+			tree2.merge();
+			expectJsonTree([tree1], ["x", "y", "a", "b", "c"]);
 		});
 
 		it("can rebase a local delete", () => {
-			const sequencer = new Sequencer();
-			const tree1 = TestTree.fromJson(["x", "y"]);
-			const tree2 = tree1.fork();
+			const addW = makeTree("x", "y");
+			const delY = addW.fork();
 
-			const delY = remove(tree1, 1, 1);
+			remove(delY, 1, 1);
+			insert(addW, 0, "w");
 
-			const addW = insert(tree2, 0, "w");
+			delY.merge();
 
-			const sequenced = sequencer.sequence([addW, delY]);
-			tree1.receive(sequenced);
-			tree2.receive(sequenced);
-
-			expectJsonTree([tree1, tree2], ["w", "x"]);
+			expectJsonTree([addW, delY], ["w", "x"]);
 		});
 
 		it("inserts that concurrently target the same insertion point do not interleave their contents", () => {
-			const sequencer = new Sequencer();
-			const tree1 = TestTree.fromJson([]);
-			const tree2 = tree1.fork();
-			const tree3 = tree1.fork();
-			const tree4 = tree1.fork();
+			const tree = makeTree();
+			const abc = tree.fork();
+			const rst = tree.fork();
+			const xyz = tree.fork();
 
-			const abc = insert(tree1, 0, "a", "b", "c");
-			const rst = insert(tree2, 0, "r", "s", "t");
-			const xyz = insert(tree3, 0, "x", "y", "z");
+			insert(abc, 0, "a", "b", "c");
+			insert(rst, 0, "r", "s", "t");
+			insert(xyz, 0, "x", "y", "z");
 
-			const sequenced = sequencer.sequence([xyz, rst, abc]);
-			tree1.receive(sequenced);
-			tree2.receive(sequenced);
-			tree3.receive(sequenced);
-			tree4.receive(sequenced);
+			xyz.merge();
+			rst.merge();
+			abc.merge();
 
-			expectJsonTree(
-				[tree1, tree2, tree3, tree4],
-				["a", "b", "c", "r", "s", "t", "x", "y", "z"],
-			);
+			expectJsonTree(tree, ["a", "b", "c", "r", "s", "t", "x", "y", "z"]);
+		});
+
+		// Branches can not currently perform this scenario
+		// TODO: make branch merging more flexible (so it can do all merges remote clients can)
+		// And port the remaining tests here to branches.
+		// When done, delete testTree.ts
+		it.skip("merge-left tie-breaking does not interleave concurrent left to right inserts with branches", () => {
+			const tree = makeTree();
+			const a = tree.fork();
+			const r = tree.fork();
+			const x = tree.fork();
+
+			insert(a, 0, "a");
+			const b = a.fork();
+			insert(b, 1, "b");
+			const c = b.fork();
+			insert(c, 2, "c");
+
+			insert(r, 0, "r");
+			const s = r.fork();
+			insert(s, 1, "s");
+			const t = s.fork();
+			insert(s, 2, "t");
+
+			insert(x, 0, "x");
+			const y = x.fork();
+			insert(y, 1, "y");
+			const z = y.fork();
+			insert(z, 2, "z");
+
+			x.merge();
+			r.merge();
+			a.merge();
+			s.merge();
+			b.merge();
+			y.merge();
+			c.merge();
+			z.merge();
+			t.merge();
+
+			expectJsonTree(tree, ["a", "b", "c", "r", "s", "t", "x", "y", "z"]);
 		});
 
 		it("merge-left tie-breaking does not interleave concurrent left to right inserts", () => {
@@ -141,17 +165,17 @@ describe("Editing", () => {
 			const tree3 = tree1.fork();
 			const tree4 = tree1.fork();
 
-			const a = insert(tree1, 0, "a");
-			const b = insert(tree1, 1, "b");
-			const c = insert(tree1, 2, "c");
+			const a = insertLegacy(tree1, 0, "a");
+			const b = insertLegacy(tree1, 1, "b");
+			const c = insertLegacy(tree1, 2, "c");
 
-			const r = insert(tree2, 0, "r");
-			const s = insert(tree2, 1, "s");
-			const t = insert(tree2, 2, "t");
+			const r = insertLegacy(tree2, 0, "r");
+			const s = insertLegacy(tree2, 1, "s");
+			const t = insertLegacy(tree2, 2, "t");
 
-			const x = insert(tree3, 0, "x");
-			const y = insert(tree3, 1, "y");
-			const z = insert(tree3, 2, "z");
+			const x = insertLegacy(tree3, 0, "x");
+			const y = insertLegacy(tree3, 1, "y");
+			const z = insertLegacy(tree3, 2, "z");
 
 			const sequenced = sequencer.sequence([x, r, a, s, b, y, c, z, t]);
 			tree1.receive(sequenced);
@@ -159,7 +183,7 @@ describe("Editing", () => {
 			tree3.receive(sequenced);
 			tree4.receive(sequenced);
 
-			expectJsonTree(
+			expectJsonTreeLegacy(
 				[tree1, tree2, tree3, tree4],
 				["a", "b", "c", "r", "s", "t", "x", "y", "z"],
 			);
@@ -177,17 +201,17 @@ describe("Editing", () => {
 			const tree3 = tree1.fork();
 			const tree4 = tree1.fork();
 
-			const c = insert(tree1, 0, "c");
-			const b = insert(tree1, 0, "b");
-			const a = insert(tree1, 0, "a");
+			const c = insertLegacy(tree1, 0, "c");
+			const b = insertLegacy(tree1, 0, "b");
+			const a = insertLegacy(tree1, 0, "a");
 
-			const t = insert(tree2, 0, "t");
-			const s = insert(tree2, 0, "s");
-			const r = insert(tree2, 0, "r");
+			const t = insertLegacy(tree2, 0, "t");
+			const s = insertLegacy(tree2, 0, "s");
+			const r = insertLegacy(tree2, 0, "r");
 
-			const z = insert(tree3, 0, "z");
-			const y = insert(tree3, 0, "y");
-			const x = insert(tree3, 0, "x");
+			const z = insertLegacy(tree3, 0, "z");
+			const y = insertLegacy(tree3, 0, "y");
+			const x = insertLegacy(tree3, 0, "x");
 
 			const sequenced = sequencer.sequence([z, t, c, s, b, y, a, x, r]);
 			tree1.receive(sequenced);
@@ -195,7 +219,7 @@ describe("Editing", () => {
 			tree3.receive(sequenced);
 			tree4.receive(sequenced);
 
-			expectJsonTree(
+			expectJsonTreeLegacy(
 				[tree1, tree2, tree3, tree4],
 				["a", "b", "c", "r", "s", "t", "x", "y", "z"],
 			);
@@ -207,9 +231,9 @@ describe("Editing", () => {
 			const tree1 = TestTree.fromJson(["a", "b", "c"]);
 			const tree2 = tree1.fork();
 
-			const delB = remove(tree1, 1, 1);
+			const delB = removeLegacy(tree1, 1, 1);
 
-			const delABC = remove(tree2, 0, 3);
+			const delABC = removeLegacy(tree2, 0, 3);
 
 			const seqDelB = sequencer.sequence(delB);
 			const seqDelABC = sequencer.sequence(delABC);
@@ -224,7 +248,7 @@ describe("Editing", () => {
 			tree1.receive(sequenced);
 			tree2.receive(sequenced);
 
-			expectJsonTree([tree1, tree2], ["a", "c"]);
+			expectJsonTreeLegacy([tree1, tree2], ["a", "c"]);
 		});
 
 		// TODO: Enable once local branch repair data is supported
@@ -233,9 +257,9 @@ describe("Editing", () => {
 			const tree1 = TestTree.fromJson(["a", "b", "c"]);
 			const tree2 = tree1.fork();
 
-			const delB = remove(tree1, 1, 1);
+			const delB = removeLegacy(tree1, 1, 1);
 
-			const delABC = remove(tree2, 0, 3);
+			const delABC = removeLegacy(tree2, 0, 3);
 
 			const seqDelB = sequencer.sequence(delB);
 			const seqDelABC = sequencer.sequence(delABC);
@@ -250,7 +274,7 @@ describe("Editing", () => {
 			tree1.receive(sequenced);
 			tree2.receive(sequenced);
 
-			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
+			expectJsonTreeLegacy([tree1, tree2], ["a", "b", "c"]);
 		});
 
 		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
@@ -266,7 +290,7 @@ describe("Editing", () => {
 			const seqChange = sequencer.sequence(change);
 			tree1.receive(seqChange);
 
-			expectJsonTree(tree1, ["b", "a"]);
+			expectJsonTreeLegacy(tree1, ["b", "a"]);
 		});
 
 		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
@@ -289,7 +313,7 @@ describe("Editing", () => {
 			const seqChange = sequencer.sequence(change);
 			tree1.receive(seqChange);
 
-			expectJsonTree(tree1, ["x", { foo: ["b", "a"] }]);
+			expectJsonTreeLegacy(tree1, ["x", { foo: ["b", "a"] }]);
 		});
 	});
 });
@@ -301,7 +325,26 @@ describe("Editing", () => {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: TestTree, index: number, ...values: string[]): TestTreeEdit {
+function insert(tree: ISharedTreeBranch, index: number, ...values: string[]): void {
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	field.insert(index, nodes);
+}
+
+function remove(tree: ISharedTreeBranch, index: number, count: number): void {
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.delete(index, count);
+}
+
+function expectJsonTree(actual: ISharedTreeBranch | ISharedTreeBranch[], expected: string[]): void {
+	const trees = Array.isArray(actual) ? actual : [actual];
+	for (const tree of trees) {
+		const roots = [...tree.context.root];
+		assert.deepEqual(roots, expected);
+	}
+}
+
+function insertLegacy(tree: TestTree, index: number, ...values: string[]): TestTreeEdit {
 	return tree.runTransaction((forest, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
@@ -309,14 +352,13 @@ function insert(tree: TestTree, index: number, ...values: string[]): TestTreeEdi
 	});
 }
 
-function remove(tree: TestTree, index: number, count: number): TestTreeEdit {
+function removeLegacy(tree: TestTree, index: number, count: number): TestTreeEdit {
 	return tree.runTransaction((forest, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
 		field.delete(index, count);
 	});
 }
-
-function expectJsonTree(actual: TestTree | TestTree[], expected: JsonCompatible[]): void {
+function expectJsonTreeLegacy(actual: TestTree | TestTree[], expected: JsonCompatible[]): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
 	for (const tree of trees) {
 		const roots = tree.jsonRoots();
