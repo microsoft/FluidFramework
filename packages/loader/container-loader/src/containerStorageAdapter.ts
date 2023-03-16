@@ -21,7 +21,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { IDetachedBlobStorage, ILoaderOptions } from "./loader";
+import { IDetachedBlobStorage } from "./loader";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService";
 import { RetriableDocumentStorageService } from "./retriableDocumentStorageService";
 
@@ -37,7 +37,7 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 		detachedBlobStorage: IDetachedBlobStorage | undefined,
 		private readonly logger: ITelemetryLogger,
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
-		private readonly options: ILoaderOptions,
+		private readonly forceEnableSummarizeProtocolTree: boolean,
 	) {
 		this._storageService = new BlobOnlyStorage(detachedBlobStorage, logger);
 	}
@@ -59,9 +59,10 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 			this.logger,
 		));
 
-		this.options.summarizeProtocolTree =
-			this.options.summarizeProtocolTree ?? service.policies?.summarizeProtocolTree;
-		if (this.options.summarizeProtocolTree === true) {
+		const enableSummarizeProtocolTree =
+			this.forceEnableSummarizeProtocolTree ||
+			service.policies?.summarizeProtocolTree === true;
+		if (enableSummarizeProtocolTree) {
 			this.logger.sendTelemetryEvent({ eventName: "summarizeProtocolTreeEnabled" });
 			this._storageService = new ProtocolTreeStorageService(
 				retriableStorage,

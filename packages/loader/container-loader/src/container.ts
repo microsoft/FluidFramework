@@ -601,6 +601,12 @@ export class Container
 	}
 
 	/**
+	 * Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
+	 * Even if not forced on via this flag, combined summaries may still be enabled by service policy.
+	 */
+	private readonly forceEnableSummarizeProtocolTree: boolean;
+
+	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
 	 */
 	public async getEntryPoint?(): Promise<FluidObject | undefined> {
@@ -698,13 +704,12 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		const summarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.loader.services.options.summarizeProtocolTree;
+		this.forceEnableSummarizeProtocolTree =
+			(this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
+				this.loader.services.options.summarizeProtocolTree) === true;
 
 		this.options = {
 			...this.loader.services.options,
-			summarizeProtocolTree,
 		};
 
 		this._deltaManager = this.createDeltaManager();
@@ -781,7 +786,7 @@ export class Container
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
 			addProtocolSummaryIfMissing,
-			this.options,
+			this.forceEnableSummarizeProtocolTree,
 		);
 
 		const isDomAvailable =
@@ -1991,7 +1996,7 @@ export class Container
 		if (summary.details === undefined) {
 			summary.details = {};
 		}
-		summary.details.includesProtocolTree = this.options.summarizeProtocolTree === true;
+		summary.details.includesProtocolTree = this.forceEnableSummarizeProtocolTree;
 		return this.submitMessage(
 			MessageType.Summarize,
 			JSON.stringify(summary),
