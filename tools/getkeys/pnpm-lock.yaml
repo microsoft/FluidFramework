@@ -1,25 +1,27 @@
 lockfileVersion: 5.4
 
-importers:
+overrides:
+  qs: ^6.11.0
 
-  .:
-    specifiers:
-      '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/tool-utils': ^0.35.0
-      azure-keyvault: ^3.0.4
-      eslint: ~8.6.0
-      ms-rest-azure: ^2.6.0
-      prettier: ~2.6.2
-      typescript: ~4.5.5
-    dependencies:
-      '@fluidframework/tool-utils': 0.35.6
-      azure-keyvault: 3.0.5
-      ms-rest-azure: 2.6.2
-    devDependencies:
-      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      eslint: 8.6.0
-      prettier: 2.6.2
-      typescript: 4.5.5
+specifiers:
+  '@fluidframework/eslint-config-fluid': ^2.0.0
+  '@fluidframework/tool-utils': ^0.35.0
+  azure-keyvault: ^3.0.4
+  eslint: ~8.6.0
+  ms-rest-azure: ^2.6.0
+  prettier: ~2.6.2
+  typescript: ~4.5.5
+
+dependencies:
+  '@fluidframework/tool-utils': 0.35.6
+  azure-keyvault: 3.0.5
+  ms-rest-azure: 2.6.2
+
+devDependencies:
+  '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+  eslint: 8.6.0
+  prettier: 2.6.2
+  typescript: 4.5.5
 
 packages:
 
@@ -2084,7 +2086,6 @@ packages:
 
   /object-inspect/1.12.3:
     resolution: {integrity: sha512-geUvdk7c+eizMNUDkRpW1wJwgfOiOeHbxBR/hLXK1aT6zmVSO0jsQcs7fj6MGw89jC/cjGfLcNOrtMYtGqm81g==}
-    dev: true
 
   /object-is/1.1.5:
     resolution: {integrity: sha512-3cyDsyHgtmi7I7DfSSI2LDp6SK2lwvtbg0p0R1e0RvTqF5ceGx+K2dfSjm1bKDMVCFEDAQvy+o8c6a7VujOddw==}
@@ -2278,9 +2279,11 @@ packages:
     resolution: {integrity: sha512-rRV+zQD8tVFys26lAGR9WUuS4iUAngJScM+ZRSKtvl5tKeZ2t5bvdNFdNHBW9FWR4guGHlgmsZ1G7BSm2wTbuA==}
     engines: {node: '>=6'}
 
-  /qs/6.5.3:
-    resolution: {integrity: sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==}
+  /qs/6.11.1:
+    resolution: {integrity: sha512-0wsrzgTz/kAVIeuxSjnpGC56rzYtr6JT/2BwEvMaPhFIoYa1aGO8LbzuU1R0uUYQkLpWBTOj0l/CLAJB64J6nQ==}
     engines: {node: '>=0.6'}
+    dependencies:
+      side-channel: 1.0.4
     dev: false
 
   /queue-microtask/1.2.3:
@@ -2349,7 +2352,7 @@ packages:
       mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
-      qs: 6.5.3
+      qs: 6.11.1
       safe-buffer: 5.2.1
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
@@ -2475,7 +2478,6 @@ packages:
       call-bind: 1.0.2
       get-intrinsic: 1.2.0
       object-inspect: 1.12.3
-    dev: true
 
   /sigmund/1.0.1:
     resolution: {integrity: sha512-fCvEXfh6NWpm+YSuY2bpXb/VIihqWA6hLsgboC+0nl71Q7N7o2eaCW8mJa/NLvQhs6jpd3VZV4UiUQlV6+lc8g==}
