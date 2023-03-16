@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 overrides:
   '@types/node': ^14.18.36
   node-fetch: ^2.6.9
+  qs: ^6.11.0
 
 importers:
 
@@ -13,9 +14,11 @@ importers:
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.17.9
       '@microsoft/api-extractor': ^7.22.2
+      '@octokit/core': ^4.0.5
       c8: ^7.7.1
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
+      danger: ^10.9.0
       jest: ^26.6.3
       lerna: ^5.6.2
       mocha: ^10.0.0
@@ -31,9 +34,11 @@ importers:
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.17.9
       '@microsoft/api-extractor': 7.22.2
+      '@octokit/core': 4.2.0
       c8: 7.7.1
       concurrently: 6.3.0
       copyfiles: 2.4.1
+      danger: 10.9.0_@octokit+core@4.2.0
       jest: 26.6.3
       lerna: 5.6.2
       mocha: 10.2.0
@@ -3903,7 +3908,7 @@ importers:
       nyc: ^15.0.0
       prettier: ~2.6.2
       promisify: 0.0.3
-      qs: 6.11.0
+      qs: ^6.11.0
       request: ^2.88.0
       request-promise-native: 1.0.7
       rimraf: ^2.6.2
@@ -22290,7 +22295,7 @@ packages:
   /axios/0.21.4_debug@4.3.2:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.2
+      follow-redirects: 1.15.2_debug@4.3.2
     transitivePeerDependencies:
       - debug
 
@@ -22782,7 +22787,6 @@ packages:
 
   /base64-js/1.3.0:
     resolution: {integrity: sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==}
-    dev: false
 
   /base64-js/1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -23164,7 +23168,7 @@ packages:
     resolution: {integrity: sha512-DNK4ruAqtyHaN8Zne7PkBTO+dD1Lr0YfTduMqlIyjvQIoztBkUxrvL+hKeLW8NXFKHOq/2upkxuoS9znQ9bW9A==}
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -23172,7 +23176,7 @@ packages:
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.5.1
+      base64-js: 1.3.0
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -27625,6 +27629,17 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+
+  /follow-redirects/1.15.2_debug@4.3.2:
+    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dependencies:
+      debug: 4.3.2
 
   /follow-redirects/1.15.2_debug@4.3.4:
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
@@ -36160,11 +36175,6 @@ packages:
     dependencies:
       side-channel: 1.0.4
 
-  /qs/6.5.3:
-    resolution: {integrity: sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==}
-    engines: {node: '>=0.6'}
-    dev: true
-
   /query-string/4.3.4:
     resolution: {integrity: sha512-O2XLNDBIg1DnTOa+2XrIwSiXEV8h2KImXUnjhhn2+UsvZ+Es2uyd5CCRTNQlDGbzUQOW3aYCBx9rVA6dzsiY7Q==}
     engines: {node: '>=0.10.0'}
@@ -37214,7 +37224,7 @@ packages:
       mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
-      qs: 6.5.3
+      qs: 6.11.0
       safe-buffer: 5.2.1
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0

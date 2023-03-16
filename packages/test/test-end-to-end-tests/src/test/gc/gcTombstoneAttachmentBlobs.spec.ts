@@ -18,8 +18,11 @@ import {
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
+import {
+	driverSupportsBlobs,
+	getUrlFromDetachedBlobStorage,
+	MockDetachedBlobStorage,
+} from "../mockDetachedBlobStorage";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
@@ -430,7 +433,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			if (provider.driver.type !== "odsp") {
+			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
 
@@ -491,10 +494,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should have the blob tombstoned.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -579,10 +579,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should have the blob tombstoned.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -694,10 +691,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should have the blobs tombstoned.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
