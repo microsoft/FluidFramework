@@ -22,6 +22,7 @@ import {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
 	ICompressionRuntimeOptions,
+	OpGroupingManager,
 } from "../../containerRuntime";
 
 describe("Outbox", () => {
@@ -181,9 +182,14 @@ describe("Outbox", () => {
 		new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
-			submitFn: params.context.submitFn,
-			submitBatchFn: params.context.submitBatchFn,
-			flush: params.context.deltaManager.flush,
+			canCompressBatch: params.context.submitBatchFn !== undefined,
+			submitBatchFn: (batch: BatchMessage[], referenceSequenceNumber?: number) => {
+				new OpGroupingManager(false).submitBatch(
+					params.context,
+					batch,
+					referenceSequenceNumber,
+				);
+			},
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,

@@ -5,9 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
-import { IBatchMessage } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
-import { MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ChildLogger,
 	loggerToMonitoringContext,
@@ -30,9 +28,8 @@ export interface IOutboxConfig {
 export interface IOutboxParameters {
 	readonly shouldSend: () => boolean;
 	readonly pendingStateManager: PendingStateManager;
-	readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
-	readonly submitBatchFn?: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
-	readonly flush: () => void;
+	readonly canCompressBatch: boolean;
+	readonly submitBatchFn: (batch: BatchMessage[], referenceSequenceNumber?: number) => void;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
@@ -179,7 +176,7 @@ export class Outbox {
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
-			this.params.submitBatchFn === undefined
+			!this.params.canCompressBatch
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
 			return batch;
@@ -232,39 +229,7 @@ export class Outbox {
 			});
 		}
 
-		if (this.params.submitBatchFn === undefined) {
-			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
-			// version that has support for batches (submitBatchFn)
-			assert(
-				batch.content[0].compression === undefined,
-				0x5a6 /* Compression should not have happened if the loader does not support it */,
-			);
-
-			for (const message of batch.content) {
-				this.params.submitFn(
-					MessageType.Operation,
-					message.deserializedContent,
-					true, // batch
-					message.metadata,
-				);
-			}
-
-			this.params.flush();
-		} else {
-			assert(
-				batch.referenceSequenceNumber !== undefined,
-				0x58e /* Batch must not be empty */,
-			);
-			this.params.submitBatchFn(
-				batch.content.map((message) => ({
-					contents: message.contents,
-					metadata: message.metadata,
-					compression: message.compression,
-					referenceSequenceNumber: message.referenceSequenceNumber,
-				})),
-				batch.referenceSequenceNumber,
-			);
-		}
+		this.params.submitBatchFn(batch.content, batch.referenceSequenceNumber);
 	}
 
 	private persistBatch(batch: BatchMessage[]) {

@@ -1002,7 +1002,7 @@ export class ContainerRuntime
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
-	private readonly opGroupingManager: OpGroupingManager = new OpGroupingManager();
+	private readonly opGroupingManager: OpGroupingManager;
 
 	/**
 	 * @internal
@@ -1084,32 +1084,20 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.DisableCompressionChunking",
 		);
 
-		let opSplitter: OpSplitter;
-		// eslint-disable-next-line unicorn/prefer-ternary
-		if (this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
-			opSplitter = new OpSplitter(
-				chunks,
-				this.context.submitBatchFn === undefined
-					? undefined
-					: (batch: IBatchMessage[], refSqn?: number) =>
-							this.opGroupingManager.submitBatch(this.context, batch, refSqn),
-				disableChunking === true
-					? Number.POSITIVE_INFINITY
-					: runtimeOptions.chunkSizeInBytes,
-				runtimeOptions.maxBatchSizeInBytes,
-				this.mc.logger,
-			);
-		} else {
-			opSplitter = new OpSplitter(
-				chunks,
-				this.context.submitBatchFn,
-				disableChunking === true
-					? Number.POSITIVE_INFINITY
-					: runtimeOptions.chunkSizeInBytes,
-				runtimeOptions.maxBatchSizeInBytes,
-				this.mc.logger,
-			);
-		}
+		this.opGroupingManager = new OpGroupingManager(
+			this.mc.config.getBoolean(groupedBatchFeatureFlag) ?? false,
+		);
+
+		const opSplitter = new OpSplitter(
+			chunks,
+			this.context.submitBatchFn === undefined
+				? undefined
+				: (batch: BatchMessage[], refSqn?: number) =>
+						this.opGroupingManager.submitBatch(this.context, batch, refSqn),
+			disableChunking === true ? Number.POSITIVE_INFINITY : runtimeOptions.chunkSizeInBytes,
+			runtimeOptions.maxBatchSizeInBytes,
+			this.mc.logger,
+		);
 
 		this.remoteMessageProcessor = new RemoteMessageProcessor(
 			opSplitter,
@@ -1292,44 +1280,21 @@ export class ContainerRuntime
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
-		// eslint-disable-next-line unicorn/prefer-ternary
-		if (this.mc.config.getBoolean(groupedBatchFeatureFlag)) {
-			this.outbox = new Outbox({
-				shouldSend: () => this.canSendOps(),
-				pendingStateManager: this.pendingStateManager,
-				submitFn: this.context.submitFn,
-				submitBatchFn:
-					this.context.submitBatchFn === undefined
-						? undefined
-						: (batch: IBatchMessage[], refSqn?: number) =>
-								this.opGroupingManager.submitBatch(this.context, batch, refSqn),
-				flush: () => this.deltaManager.flush(),
-				compressor: new OpCompressor(this.mc.logger),
-				splitter: opSplitter,
-				config: {
-					compressionOptions,
-					maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-					disablePartialFlush: disablePartialFlush === true,
-				},
-				logger: this.mc.logger,
-			});
-		} else {
-			this.outbox = new Outbox({
-				shouldSend: () => this.canSendOps(),
-				pendingStateManager: this.pendingStateManager,
-				submitFn: this.context.submitFn,
-				submitBatchFn: this.context.submitBatchFn,
-				flush: () => this.deltaManager.flush(),
-				compressor: new OpCompressor(this.mc.logger),
-				splitter: opSplitter,
-				config: {
-					compressionOptions,
-					maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
-					disablePartialFlush: disablePartialFlush === true,
-				},
-				logger: this.mc.logger,
-			});
-		}
+		this.outbox = new Outbox({
+			shouldSend: () => this.canSendOps(),
+			pendingStateManager: this.pendingStateManager,
+			canCompressBatch: this.context.submitBatchFn !== undefined,
+			submitBatchFn: (batch: BatchMessage[], refSqn?: number) =>
+				this.opGroupingManager.submitBatch(this.context, batch, refSqn),
+			compressor: new OpCompressor(this.mc.logger),
+			splitter: opSplitter,
+			config: {
+				compressionOptions,
+				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
+				disablePartialFlush: disablePartialFlush === true,
+			},
+			logger: this.mc.logger,
+		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
 			this.remoteMessageProcessor.clearPartialMessagesFor(clientId);
@@ -3519,27 +3484,59 @@ const waitForSeq = async (
 
 export const groupedBatchFeatureFlag = "Fluid.ContainerRuntime.GroupedBatches";
 
-class OpGroupingManager {
+export class OpGroupingManager {
 	static groupedBatchOp = "groupedBatch";
+
+	constructor(private readonly groupedBatchingEnabled: boolean) {}
 
 	public submitBatch(
 		context: IContainerContext,
-		batch: IBatchMessage[],
-		referenceSequenceNumber?: number | undefined,
-	): number {
-		if (batch.length < 2) {
-			return context.submitBatchFn(batch, referenceSequenceNumber);
+		batch: BatchMessage[],
+		referenceSequenceNumber?: number,
+	) {
+		if (context.submitBatchFn === undefined) {
+			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
+			// version that has support for batches (submitBatchFn)
+			assert(
+				batch[0].compression === undefined,
+				0x5a6 /* Compression should not have happened if the loader does not support it */,
+			);
+
+			for (const message of batch) {
+				context.submitFn(
+					MessageType.Operation,
+					message.deserializedContent,
+					true, // batch
+					message.metadata,
+				);
+			}
+
+			context.deltaManager.flush();
+		} else {
+			assert(referenceSequenceNumber !== undefined, 0x58e /* Batch must not be empty */);
+
+			const simplifiedBatch: IBatchMessage[] = batch.map((message) => ({
+				contents: message.contents,
+				metadata: message.metadata,
+				compression: message.compression,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+			}));
+
+			if (simplifiedBatch.length < 2 || !this.groupedBatchingEnabled) {
+				context.submitBatchFn(simplifiedBatch, referenceSequenceNumber);
+			} else {
+				const groupedOp: IBatchMessage = {
+					metadata: undefined,
+					compression: simplifiedBatch[0].compression,
+					referenceSequenceNumber,
+					contents: JSON.stringify({
+						type: OpGroupingManager.groupedBatchOp,
+						contents: simplifiedBatch,
+					}),
+				};
+				context.submitBatchFn([groupedOp], referenceSequenceNumber);
+			}
 		}
-		const groupedOp: IBatchMessage = {
-			metadata: undefined,
-			compression: batch[0].compression,
-			referenceSequenceNumber,
-			contents: JSON.stringify({
-				type: OpGroupingManager.groupedBatchOp,
-				contents: batch,
-			}),
-		};
-		return context.submitBatchFn([groupedOp], referenceSequenceNumber);
 	}
 
 	public processOp(message: ISequencedDocumentMessage): ISequencedDocumentMessage[] | undefined {
