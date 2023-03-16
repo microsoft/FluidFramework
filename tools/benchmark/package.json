@@ -38,7 +38,6 @@
 	"dependencies": {
 		"chai": "^4.2.0",
 		"easy-table": "^1.1.1",
-		"lodash": "^4.17.21",
 		"mocha": "^10.0.0"
 	},
 	"devDependencies": {
