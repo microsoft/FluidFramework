@@ -6,7 +6,7 @@
 import { expect } from "chai";
 import { benchmark } from "../Runner";
 import { BenchmarkType, isParentProcess } from "../Configuration";
-import { Benchmark, Options } from "../benchmark";
+import { Benchmark, Options, runBenchmarkAsync, runBenchmarkSync } from "../benchmark";
 import { runBenchmark } from "../runBenchmark";
 
 describe("`benchmark` function", () => {
@@ -99,8 +99,31 @@ describe("`benchmark` function", () => {
 		});
 	});
 
+	it("runBenchmark sync2", async () => {
+		runBenchmarkSync({
+			maxBenchmarkDurationSeconds: 0.1,
+			minSampleCount: 1,
+			minSampleDurationSeconds: 0,
+			benchmarkFn: () => {
+				// This is a benchmark.
+			},
+		});
+	});
+
 	it("do a benchmark async", async () => {
 		await runBenchmark({
+			maxBenchmarkDurationSeconds: 0.1,
+			minSampleCount: 1,
+			minSampleDurationSeconds: 0,
+			benchmarkFnAsync: async () => {
+				// This is a benchmark.
+				await delay(0);
+			},
+		});
+	});
+
+	it("do a benchmark async2", async () => {
+		await runBenchmarkAsync({
 			maxBenchmarkDurationSeconds: 0.1,
 			minSampleCount: 1,
 			minSampleDurationSeconds: 0,

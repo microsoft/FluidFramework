@@ -100,6 +100,8 @@ export type BenchmarkRunningOptions = (BenchmarkSyncArguments | BenchmarkAsyncAr
 
 export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions;
 
+export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments & BenchmarkTimingOptions;
+
 /**
  * Object with a "title".
  * @public

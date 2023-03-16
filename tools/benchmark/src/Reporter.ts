@@ -31,7 +31,7 @@ SOFTWARE.
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
-import { Stats, Times } from "./benchmark";
+import { BenchmarkData, Stats } from "./benchmark";
 import {
 	bold,
 	geometricMean,
@@ -46,22 +46,6 @@ import {
 interface BenchmarkResults {
 	table: Table;
 	benchmarksMap: Map<string, BenchmarkData>;
-}
-
-/**
- * Subset of Benchmark type which is output data.
- * Json compatible.
- * @public
- */
-export interface BenchmarkData {
-	aborted: boolean;
-	readonly error?: Error;
-	readonly count: number;
-	readonly cycles: number;
-	readonly hz: number;
-
-	readonly stats: Stats;
-	readonly times: Times;
 }
 
 export const failedData: BenchmarkData = {

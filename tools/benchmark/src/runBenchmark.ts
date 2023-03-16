@@ -3,19 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { Benchmark, Options } from "./benchmark";
+import _ from "lodash";
+import {
+	Benchmark,
+	BenchmarkData,
+	Options,
+	defaultOptions,
+	computeStats,
+	Stats,
+	timer,
+} from "./benchmark";
 import {
 	validateBenchmarkArguments,
 	BenchmarkTimingOptions,
 	BenchmarkRunningOptions,
 	BenchmarkRunningOptionsSync,
+	BenchmarkRunningOptionsAsync,
 } from "./Configuration";
-import { BenchmarkData } from "./Reporter";
 
-const defaults: Required<BenchmarkTimingOptions> = {
-	maxBenchmarkDurationSeconds: 5,
-	minSampleCount: 5,
-	minSampleDurationSeconds: 0,
+export const defaults: Required<BenchmarkTimingOptions> = {
+	maxBenchmarkDurationSeconds: defaultOptions.maxTime,
+	minSampleCount: defaultOptions.minSamples,
+	minSampleDurationSeconds: defaultOptions.minTime,
 };
 
 /**
@@ -91,6 +100,27 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 	});
 }
 
+export async function runBenchmark2(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
+	const options = {
+		...defaults,
+		...args,
+	};
+	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
+
+	await options.before?.();
+
+	if (isAsync) {
+		const data = await runBenchmarkAsync({
+			...options,
+			benchmarkFnAsync: argsBenchmarkFn as any,
+		});
+		return data;
+	} else {
+		const data = runBenchmarkSync2({ ...options, benchmarkFn: argsBenchmarkFn });
+		return data;
+	}
+}
+
 /**
  * Run a performance benchmark and return its results.
  *
@@ -145,4 +175,189 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
 		times: benchmarkInstance.times,
 	};
 	return stats;
+}
+
+/**
+ * Run a performance benchmark and return its results.
+ *
+ * Here is how benchmarking works:
+ *
+ * ```
+ *  For each benchmark
+ *      For each sampled run
+ *          // Run fn once to check for errors
+ *          fn()
+ *          // Run fn multiple times and measure results.
+ *          for each Benchmark.count
+ *              fn()
+ * ```
+ *
+ * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
+ * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing
+ * the iterations until it hits a low uncertainty point.
+ *
+ * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
+ *
+ * @public
+ */
+export function runBenchmarkSync2(args: BenchmarkRunningOptionsSync): BenchmarkData {
+	const timeStamp = +_.now();
+
+	const options = {
+		...defaults,
+		...args,
+	};
+
+	// Run a garbage collection, if possible, before the test.
+	// This helps noise from allocations before the test (ex: from previous tests or startup) from
+	// impacting the test.
+	global?.gc?.();
+
+	let count = 1;
+
+	while (
+		doBatch(count, options.benchmarkFn, options.onCycle) < options.minSampleDurationSeconds
+	) {
+		count *= 2;
+	}
+
+	const samples: number[] = [];
+	let totalTime = 0;
+	while (
+		samples.length < options.minSampleCount ||
+		// TODO: exit before this if enough confidence is reached. (But what about low frequency noise?)
+		totalTime < options.maxBenchmarkDurationSeconds
+	) {
+		const sample = doBatch(count, options.benchmarkFn, options.onCycle);
+		totalTime += sample;
+		samples.push(sample);
+		// Exit if way too many samples to avoid out of memory.
+		if (samples.length > 1000000) {
+			break;
+		}
+	}
+	return computeData(samples, count, timeStamp);
+}
+
+/**
+ * Returns time to run `f` `count` times in seconds.
+ */
+function doBatch(
+	count: number,
+	f: () => void,
+	onCycle: undefined | ((event: unknown) => void),
+): number {
+	let i = count;
+	const n = timer.ns;
+	const before: [number, number] = n();
+	while (i--) {
+		f();
+	}
+	const elapsed: [number, number] = n(before);
+	onCycle?.(0);
+	return elapsed[0] + elapsed[1] / 1e9;
+}
+
+/**
+ * Run a performance benchmark and return its results.
+ *
+ * Here is how benchmarking works:
+ *
+ * ```
+ *  For each benchmark
+ *      For each sampled run
+ *          // Run fn once to check for errors
+ *          fn()
+ *          // Run fn multiple times and measure results.
+ *          for each Benchmark.count
+ *              fn()
+ * ```
+ *
+ * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
+ * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing
+ * the iterations until it hits a low uncertainty point.
+ *
+ * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
+ *
+ * @public
+ */
+export async function runBenchmarkAsync(
+	args: BenchmarkRunningOptionsAsync,
+): Promise<BenchmarkData> {
+	const timeStamp = +_.now();
+
+	const options = {
+		...defaults,
+		...args,
+	};
+
+	// Run a garbage collection, if possible, before the test.
+	// This helps noise from allocations before the test (ex: from previous tests or startup) from
+	// impacting the test.
+	global?.gc?.();
+
+	let count = 1;
+
+	// TODO: use consider using benchmark's algorithm for this.
+	while (
+		(await doBatchAsync(count, options.benchmarkFnAsync, options.onCycle)) <
+		options.minSampleDurationSeconds
+	) {
+		count *= 2;
+	}
+
+	const samples: number[] = [];
+	let totalTime = 0;
+	while (
+		samples.length < options.minSampleCount ||
+		// TODO: exit before this if enough confidence is reached. (But what about low frequency noise?)
+		totalTime < options.maxBenchmarkDurationSeconds
+	) {
+		const sample = await doBatchAsync(count, options.benchmarkFnAsync, options.onCycle);
+		totalTime += sample;
+		samples.push(sample);
+		// Exit if way too many samples to avoid out of memory.
+		if (samples.length > 1000000) {
+			break;
+		}
+	}
+	return computeData(samples, count, timeStamp);
+}
+
+/**
+ * Returns time to run `f` `count` times in seconds.
+ */
+async function doBatchAsync(
+	count: number,
+	f: () => Promise<unknown>,
+	onCycle: undefined | ((event: unknown) => void),
+): Promise<number> {
+	let i = count;
+	const n = timer.ns;
+	const before: [number, number] = n();
+	while (i--) {
+		await f();
+	}
+	const elapsed: [number, number] = n(before);
+	onCycle?.(0);
+	return elapsed[0] + elapsed[1] / 1e9;
+}
+
+function computeData(samples: number[], count: number, timeStamp: number): BenchmarkData {
+	const now = +_.now();
+	const stats: Stats = computeStats(samples.map((v) => v / count));
+	const data: BenchmarkData = {
+		hz: 1 / stats.mean,
+		times: {
+			cycle: stats.mean * count,
+			period: stats.mean,
+			elapsed: (now - timeStamp) / 1e3,
+			timeStamp,
+		},
+		aborted: false,
+		cycles: samples.length,
+		stats,
+		count,
+	};
+	return data;
 }
