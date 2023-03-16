@@ -14,7 +14,6 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
 	CloseContainerMessage,
 	ConnectContainerMessage,
-	ContainerStateChangeMessage,
 	debuggerMessageSource,
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
@@ -217,10 +216,11 @@ export class FluidClientDebugger
 	};
 
 	/**
-	 * Posts a {@link ContainerStateChangeMessage} to the window (globalThis).
+	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessageToWindow<ContainerStateChangeMessage>(
+		postMessageToWindow<IDebuggerMessage>(
+			this.messageLoggingOptions,
 			{
 				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_CHANGE",
@@ -229,7 +229,14 @@ export class FluidClientDebugger
 					containerState: this.getContainerState(),
 				},
 			},
-			this.messageLoggingOptions,
+			{
+				source: debuggerMessageSource,
+				type: "CONTAINER_STATE_HISTORY",
+				data: {
+					containerId: this.containerId,
+					history: [...this._connectionStateLog],
+				},
+			},
 		);
 	};
 

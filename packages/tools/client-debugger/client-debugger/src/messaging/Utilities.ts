@@ -8,7 +8,7 @@ import { IDebuggerMessage } from "./Messages";
 /**
  * Posts the provided message to the window (globalThis).
  *
- * @param message - The message to be posted
+ * @param message - The list of message to be posted
  * @param loggingOptions - Settings related to logging to console for troubleshooting.
  * If not passed, this function won't log to console before posting the message.
  *
@@ -17,8 +17,8 @@ import { IDebuggerMessage } from "./Messages";
  * @internal
  */
 export function postMessageToWindow<TMessage extends IDebuggerMessage>(
-	message: TMessage,
 	loggingOptions?: MessageLoggingOptions,
+	...message: TMessage[]
 ): void {
 	// TODO: remove loggingOptions once things settle.
 	// If we need special logic for globalThis.postMessage maybe keep this function, but otherwise maybe remove it too.
