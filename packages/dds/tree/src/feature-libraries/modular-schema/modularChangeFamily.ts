@@ -749,7 +749,7 @@ export class ModularChangeFamily
 		anchors.applyDelta(this.intoDelta(over));
 	}
 
-	public intoDelta(change: ModularChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
+	public intoDelta(change: ModularChangeset): Delta.Root {
 		return this.intoDeltaImpl(change.fieldChanges);
 	}
 
