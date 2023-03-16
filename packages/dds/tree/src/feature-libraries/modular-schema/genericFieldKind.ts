@@ -241,3 +241,7 @@ const invalidCrossFieldManager: CrossFieldManager = {
 	getOrCreate: invalidFunc,
 	get: invalidFunc,
 };
+
+export function newGenericChangeset(): GenericChangeset {
+	return [];
+}

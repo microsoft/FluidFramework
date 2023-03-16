@@ -55,7 +55,12 @@ import {
 	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
-import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
+import {
+	convertGenericChange,
+	GenericChangeset,
+	genericFieldKind,
+	newGenericChangeset,
+} from "./genericFieldKind";
 import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding";
 
 /**
@@ -507,7 +512,7 @@ export class ModularChangeFamily
 		crossFieldTable.invalidatedFields = new Set();
 		for (const fieldToAmend of fieldsToAmend) {
 			const fieldContext = crossFieldTable.baseChangeToContext.get(fieldToAmend);
-			let fieldChange: FieldChange;
+			let newChange: FieldChange;
 			let baseChanges: FieldChange;
 			let baseRevision: RevisionTag | undefined;
 			let newNode: HasFieldChanges | undefined;
@@ -523,7 +528,7 @@ export class ModularChangeFamily
 
 				baseChanges = fieldToAmend;
 				field = fieldContext.field;
-				fieldChange = newNode.fieldChanges?.get(field) ?? {
+				newChange = newNode.fieldChanges?.get(field) ?? {
 					fieldKind: genericFieldKind.identifier,
 					change: brand(newGenericChangeset()),
 				};
@@ -531,7 +536,7 @@ export class ModularChangeFamily
 				baseRevision = baseChanges.revision ?? fieldContext.revision;
 			} else {
 				// fieldToAmend is part of the rebased changeset.
-				fieldChange = fieldToAmend;
+				newChange = fieldToAmend;
 				baseChanges = {
 					fieldKind: genericFieldKind.identifier,
 					change: brand(newGenericChangeset()),
@@ -541,7 +546,7 @@ export class ModularChangeFamily
 			const {
 				fieldKind,
 				changesets: [fieldChangeset, baseChangeset],
-			} = this.normalizeFieldChanges([fieldChange, baseChanges], genId, revisionMetadata);
+			} = this.normalizeFieldChanges([newChange, baseChanges], genId, revisionMetadata);
 
 			const amendedChange = fieldKind.changeHandler.rebaser.amendRebase(
 				fieldChangeset,
@@ -553,8 +558,8 @@ export class ModularChangeFamily
 						genId,
 						crossFieldTable,
 						undefined,
-						(base, newChange) =>
-							newChange === undefined && invalidatedEmptyFields.has(base),
+						(base, newNodeChange) =>
+							newNodeChange === undefined && invalidatedEmptyFields.has(base),
 						revisionMetadata,
 					),
 				genId,
@@ -576,7 +581,7 @@ export class ModularChangeFamily
 					});
 				}
 			} else {
-				fieldChange.change = brand(amendedChange);
+				newChange.change = brand(amendedChange);
 			}
 		}
 	}
@@ -591,6 +596,7 @@ export class ModularChangeFamily
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
 
+		// Rebase fields contained in the base changeset
 		for (const [field, baseChanges] of over.change) {
 			if (!fieldFilter(baseChanges, change.get(field))) {
 				continue;
@@ -644,6 +650,7 @@ export class ModularChangeFamily
 			});
 		}
 
+		// Rebase the fields of the new changeset which don't have a corresponding base field.
 		for (const [field, fieldChange] of change) {
 			if (!over.change?.has(field)) {
 				const baseChanges: FieldChange = {
@@ -828,10 +835,6 @@ function getFieldsToAmend(
 	}
 
 	return [fieldsToAmend, invalidatedEmptyFields];
-}
-
-function newGenericChangeset(): GenericChangeset {
-	return [];
 }
 
 function revisionMetadataSourceFromInfo(revInfos: readonly RevisionInfo[]): RevisionMetadataSource {
