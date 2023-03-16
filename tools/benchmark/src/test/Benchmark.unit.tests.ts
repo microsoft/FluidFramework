@@ -6,8 +6,8 @@
 import { expect } from "chai";
 import { benchmark } from "../Runner";
 import { BenchmarkType, isParentProcess } from "../Configuration";
-import { Benchmark, Options, runBenchmarkAsync, runBenchmarkSync } from "../benchmark";
-import { runBenchmark } from "../runBenchmark";
+import { Benchmark, Options } from "../benchmark";
+import { runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
 
 describe("`benchmark` function", () => {
 	describe("uses `before` and `after`", () => {
