@@ -4,7 +4,7 @@ on:
   pull_request:
     types: [ labeled ]
     branches:
-      - main
+      - next
 
 jobs:
   build:
@@ -17,4 +17,4 @@ jobs:
         with:
           only_create: true
           message: |
-            Please review this PR: @scottn12
+            Please review this PR: @sonalideshpandemsft @tylerbutler @scottn12
