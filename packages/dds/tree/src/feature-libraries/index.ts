@@ -139,8 +139,8 @@ import { FieldEditor, FieldKind, Multiplicity } from "./modular-schema";
 /**
  * @alpha
  */
-export const FieldKinds = {
-	value: FieldKindsOriginal.value as FieldKind<FieldEditor<any>, Multiplicity.Value>,
-	optional: FieldKindsOriginal.optional as FieldKind<FieldEditor<any>, Multiplicity.Optional>,
-	sequence: FieldKindsOriginal.sequence as FieldKind<FieldEditor<any>, Multiplicity.Sequence>,
-} as const;
+export const FieldKinds: {
+	readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
+	readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
+	readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+} = FieldKindsOriginal;
