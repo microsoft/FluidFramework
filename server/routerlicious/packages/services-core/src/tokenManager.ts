@@ -29,7 +29,10 @@ export interface IJsonWebTokenManager {
 
 	start();
 
-	stop(): Promise<void>;
+	/**
+	 * Close and clean up resources.
+	 */
+	close(): Promise<void>;
 
 	// Revoke the access of a token given its jwtId
 	revokeToken(tenantId: string, documentId: string, jwtId: string): Promise<void>;

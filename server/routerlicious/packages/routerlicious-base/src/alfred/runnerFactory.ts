@@ -120,7 +120,7 @@ export class AlfredResources implements core.IResources {
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
-		const tokenManagerP = this.tokenManager ? this.tokenManager.stop() : Promise.resolve();
+		const tokenManagerP = this.tokenManager ? this.tokenManager.close() : Promise.resolve();
 		await Promise.all([producerClosedP, mongoClosedP, tokenManagerP]);
 	}
 }

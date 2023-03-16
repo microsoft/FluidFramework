@@ -87,8 +87,8 @@ export class DummyTokenManager implements IJsonWebTokenManager {
 		Lumberjack.info(`DummyTokenManager initialize called`);
 	}
 
-	public async stop(): Promise<void> {
-		Lumberjack.info(`DummyTokenManager stopped`);
+	public async close(): Promise<void> {
+		Lumberjack.info(`DummyTokenManager closed`);
 	}
 
 	// Revoke the access of a token given its jwtId
