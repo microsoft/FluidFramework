@@ -69,7 +69,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 }
 
 /**
- * Container package info handed off to resolver.
+ * Container package info handed off to the resolver.
  */
 export interface IContainerPackageInfo {
 	/**
@@ -92,9 +92,11 @@ export interface IUrlResolver {
 
 	/**
 	 * Creates a URL for the created Container with any datastore path given in the relative URL.
+	 * 
 	 * @param resolvedUrl - Resolved URL for the Container.
 	 * @param relativeUrl - Relative URL containing data store path. `/` represents root path.
 	 * @param packageInfoSource - (optional) Represents Container package information to be included in URL.
+	 * 
 	 * @returns An absolute URL combining Container URL with the data store path and optional additional information.
 	 */
 	getAbsoluteUrl(
@@ -115,8 +117,9 @@ export interface DriverPreCheckInfo {
 	codeDetailsHint?: string;
 
 	/**
-	 * Domains that will be connected to on the critical boot path. Hosts can choose to preconnect to these for
-	 * improved performance.
+	 * Domains that will be connected to on the critical boot path.
+	 * 
+	 * @remarks Hosts can choose to pre-connect to these for improved performance.
 	 */
 	criticalBootDomains?: string[];
 }
@@ -131,7 +134,7 @@ export enum DriverHeader {
 	summarizingClient = "fluid-client-summarizer",
 	
 	/**
-	 * createNew information, specific to each driver
+	 * `createNew` information, specific to each driver
 	 */
 	createNew = "createNew",
 }
