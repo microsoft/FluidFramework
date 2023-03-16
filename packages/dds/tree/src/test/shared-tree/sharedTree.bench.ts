@@ -143,7 +143,7 @@ const testSubtrees: Map<string, JsonableTree> = new Map<string, JsonableTree>([
 		{
 			value: {
 				mapField2: {
-					mapField3: [{ type: dataSchema.name, value: "testString" }],
+					mapField3: [{ type: dataSchema.name, value: 1 }],
 				},
 			},
 			type: dataSchema.name,
@@ -164,7 +164,7 @@ describe("SharedTree benchmarks", () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep, dataType);
 					},
 					benchmarkFn: () => {
-						readTreeAsJSObject(tree, 0, dataType);
+						assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes)
 					},
 				});
 			}
@@ -177,7 +177,7 @@ describe("SharedTree benchmarks", () => {
 						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide, dataType);
 					},
 					benchmarkFn: () => {
-						readTreeAsJSObject(tree, 0, dataType);
+						assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes)
 					},
 				});
 			}
@@ -254,7 +254,7 @@ describe("SharedTree benchmarks", () => {
 						);
 					},
 					benchmarkFn: () => {
-						readCursorTree(tree.forest, numberOfNodes, TreeShape.Deep, dataType);
+						assert.equal(readCursorTree(tree.forest, numberOfNodes, TreeShape.Deep), numberOfNodes);
 					},
 				});
 			}
@@ -277,7 +277,7 @@ describe("SharedTree benchmarks", () => {
 						);
 					},
 					benchmarkFn: () => {
-						readCursorTree(tree.forest, numberOfNodes, TreeShape.Wide, dataType);
+						assert.equal(readCursorTree(tree.forest, numberOfNodes, TreeShape.Wide), numberOfNodes);
 					},
 				});
 			}
@@ -554,7 +554,7 @@ async function insertNodesToTestTree(
 ): Promise<void> {
 	tree.runTransaction((forest, editor) => {
 		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, singleTextCursor({ type: dataSchema.name, value: true }));
+		field.insert(0, singleTextCursor({ type: dataSchema.name, value: testSubtrees.get(dataType)?.value }));
 		return TransactionResult.Apply;
 	});
 	switch (shape) {
@@ -711,16 +711,17 @@ function getJSTestTreeDeep(numberOfNodes: number, dataType: string): Jsonable {
 	return tree;
 }
 
-function readTreeAsJSObject(tree: Jsonable, initialTotal: Jsonable, dataType: string): Jsonable {
-	let currentTotal = initialTotal as number | string | boolean | JsonableTree;
+function readTreeAsJSObject(tree: Jsonable, initialTotal: Jsonable): Jsonable {
+	let currentTotal = initialTotal as number;
 	for (const key of Object.keys(tree)) {
 		if (typeof tree[key] === "object" && tree[key] !== null) {
-			currentTotal = readTreeAsJSObject(tree[key], currentTotal, dataType);
+			currentTotal = readTreeAsJSObject(tree[key], currentTotal);
 		}
 		if (key === "value") {
 			assert(tree[key] !== undefined);
-			const currentDataType = typeof tree[key] === "object" ? "Map" : "string";
-			currentTotal = applyOperationDuringRead(currentTotal, tree[key], currentDataType);
+			if (typeof tree[key] !== "object") {
+				currentTotal = applyOperationDuringRead(currentTotal, tree[key]);
+			}
 		}
 	}
 	return currentTotal;
@@ -735,14 +736,14 @@ function manipulateTreeAsJSObject(tree: Jsonable, shape: TreeShape): void {
 	let nodesUnderRoot;
 	switch (shape) {
 		case TreeShape.Deep:
-			tree[0].value = 123;
+			tree[0].value = 1;
 			break;
 		case TreeShape.Wide:
 			nodesUnderRoot = tree.fields.foo.length;
 			if (nodesUnderRoot === 0) {
-				tree.fields.value = 123;
+				tree.fields.value = 1;
 			} else {
-				tree.fields.foo[nodesUnderRoot - 1].value = 123;
+				tree.fields.foo[nodesUnderRoot - 1].value = 1;
 			}
 			break;
 		default:
@@ -765,26 +766,25 @@ function readCursorTree(
 	forest: IForestSubscription,
 	numberOfNodes: number,
 	shape: TreeShape,
-	dataType: string,
 ) {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	assert(readCursor.firstNode());
 	let nodesRead = 0;
-	let currentTotal = 0 as number | string | boolean | JsonableTree;
+	let currentTotal = 0 as number;
 	switch (shape) {
 		case TreeShape.Deep:
 			for (let i = 0; i < numberOfNodes; i++) {
 				assert(readCursor.firstField());
 				assert(readCursor.firstNode());
-				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value, dataType);
+				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
 			}
 			break;
 		case TreeShape.Wide:
 			assert(readCursor.firstField());
 			for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
 				nodesRead += 1;
-				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value, dataType);
+				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
 			}
 			assert(nodesRead === numberOfNodes);
 			break;
@@ -792,31 +792,18 @@ function readCursorTree(
 			throw new Error("unreachable case");
 	}
 	readCursor.free();
+	return currentTotal
 }
 
 function applyOperationDuringRead(
-	current: number | string | boolean | JsonableTree,
+	current: number,
 	value: Value,
-	dataType: string,
 ) {
 	assert(value !== undefined);
-	switch (dataType) {
-		case "Number": {
-			return (current as number) + (value as number);
-		}
-		case "Float":
-			return (current as number) + (value as number);
-		case "String":
-			return (current as string) + (value[0] as string);
-		case "Boolean":
-			return (current as boolean) !== (current as boolean);
-		case "Map": {
-			const addValue = value.mapField2.mapField3[0].value;
-			return (current as string) + (addValue[0] as string);
-		}
-		default:
-			return current;
+	if (typeof value === "number" ){
+		return current + value
 	}
+	return current + 1
 }
 
 /**
