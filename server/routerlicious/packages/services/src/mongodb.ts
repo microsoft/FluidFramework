@@ -15,7 +15,7 @@ const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
 const redactJsonKeys = fastRedact({
 	// we want to redact the 'op' key at the following paths within error JSON object.
-	paths: ["op", "err.op", "result.writeErrors[*].op"],
+	paths: ["op", "err.op", "result.writeErrors[*].op", "writeErrors[*].op"],
 	// this instructs fast-redact to mutate the original object,
 	// instead of returning the serialization of the modified object.
 	serialize: false,
