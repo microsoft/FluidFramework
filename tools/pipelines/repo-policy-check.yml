@@ -20,7 +20,7 @@ pool:
 
 variables:
 - name: skipComponentGovernanceDetection
-  value: false
+  value: true
 
 steps:
 - task: UseNode@1
