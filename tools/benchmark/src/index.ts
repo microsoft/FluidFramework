@@ -29,6 +29,9 @@ export {
 	Titled,
 	BenchmarkTimingOptions,
 	BenchmarkRunningOptions,
+	BenchmarkSyncFunction,
+	BenchmarkAsyncFunction,
+	OnCycle,
 } from "./Configuration";
 export { benchmark } from "./Runner";
 export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./MemoryTestRunner";

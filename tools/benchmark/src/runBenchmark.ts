@@ -8,15 +8,16 @@ import {
 	BenchmarkRunningOptions,
 	BenchmarkRunningOptionsSync,
 	BenchmarkRunningOptionsAsync,
+	BenchmarkTimingOptions,
 } from "./Configuration";
 import { getArrayStatistics } from "./ReporterUtilities";
-import { defaultMinTime, timer } from "./timer";
+import { Timer, defaultMinTime, timer } from "./timer";
 
-export const defaults = {
+export const defaults: Required<BenchmarkTimingOptions> = {
 	maxBenchmarkDurationSeconds: 5,
 	minSampleCount: 5,
 	minSampleDurationSeconds: defaultMinTime,
-} as const;
+};
 
 /**
  * Subset of Benchmark type which is output data.
@@ -94,47 +95,97 @@ function tryRunGarbageCollection(): void {
 	global?.gc?.();
 }
 
+class BenchmarkState<T> {
+	public readonly samples: number[];
+	public readonly options: Readonly<Required<BenchmarkTimingOptions>>;
+	public readonly startTime: T;
+	public count: number;
+	public constructor(public readonly timer: Timer<T>, options: BenchmarkTimingOptions) {
+		this.startTime = timer.now();
+		this.samples = [];
+		this.options = {
+			...defaults,
+			...options,
+		};
+
+		if (this.options.minSampleCount < 1) {
+			throw new Error("Invalid minSampleCount");
+		}
+		this.count = this.options.minSampleCount;
+		tryRunGarbageCollection();
+	}
+
+	/**
+	 * Returns true if count should be grown more.
+	 */
+	public growCount(sample: number): boolean {
+		if (sample < this.options.minSampleDurationSeconds) {
+			// TODO: use consider using Benchmark.js's algorithm for this.
+			this.count *= 2;
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns true is more samples should be collected.
+	 */
+	public addSample(sample: number): boolean {
+		this.samples.push(sample);
+		if (this.samples.length < this.options.minSampleCount) {
+			return true;
+		}
+		const soFar = this.timer.toSeconds(this.startTime, this.timer.now());
+		if (soFar > this.options.maxBenchmarkDurationSeconds) {
+			return false;
+		}
+
+		// TODO: exit before this if enough confidence is reached. (But what about low frequency noise?)
+
+		// Exit if way too many samples to avoid out of memory.
+		if (this.samples.length > 1000000) {
+			return false;
+		}
+
+		return true;
+	}
+
+	public computeData(): BenchmarkData {
+		const now = this.timer.now();
+		const stats: Stats = getArrayStatistics(this.samples.map((v) => v / this.count));
+		const data: BenchmarkData = {
+			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
+			aborted: false,
+			cycles: this.samples.length,
+			stats,
+			iterationPerCycle: this.count,
+		};
+		return data;
+	}
+}
+
 /**
  * Run a performance benchmark and return its results.
  * @public
  */
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
-	const timeStamp = timer.now();
+	const state = new BenchmarkState(timer, args);
+	while (state.growCount(doBatch(state.count, args.benchmarkFn, args.onCycle))) {}
+	while (state.addSample(doBatch(state.count, args.benchmarkFn, args.onCycle))) {}
+	return state.computeData();
+}
 
-	const options = {
-		...defaults,
-		...args,
-	};
-
-	tryRunGarbageCollection();
-
-	if (options.minSampleCount < 1) {
-		throw new Error("Invalid minSampleCount");
-	}
-	let count = options.minSampleCount;
-
-	while (
-		doBatch(count, options.benchmarkFn, options.onCycle) < options.minSampleDurationSeconds
-	) {
-		count *= 2;
-	}
-
-	const samples: number[] = [];
-	let totalTime = 0;
-	while (
-		samples.length < options.minSampleCount ||
-		// TODO: exit before this if enough confidence is reached. (But what about low frequency noise?)
-		totalTime < options.maxBenchmarkDurationSeconds
-	) {
-		const sample = doBatch(count, options.benchmarkFn, options.onCycle);
-		totalTime += sample;
-		samples.push(sample);
-		// Exit if way too many samples to avoid out of memory.
-		if (samples.length > 1000000) {
-			break;
-		}
-	}
-	return computeData(samples, count, timeStamp);
+/**
+ * Run a performance benchmark and return its results.
+ * @public
+ */
+export async function runBenchmarkAsync(
+	args: BenchmarkRunningOptionsAsync,
+): Promise<BenchmarkData> {
+	const state = new BenchmarkState(timer, args);
+	while (state.growCount(await doBatchAsync(state.count, args.benchmarkFnAsync, args.onCycle))) {}
+	while (state.addSample(await doBatchAsync(state.count, args.benchmarkFnAsync, args.onCycle))) {}
+	return state.computeData();
 }
 
 /**
@@ -156,53 +207,6 @@ function doBatch(
 }
 
 /**
- * Run a performance benchmark and return its results.
- * @public
- */
-export async function runBenchmarkAsync(
-	args: BenchmarkRunningOptionsAsync,
-): Promise<BenchmarkData> {
-	const timeStamp = timer.now();
-
-	const options = {
-		...defaults,
-		...args,
-	};
-
-	tryRunGarbageCollection();
-
-	if (options.minSampleCount < 1) {
-		throw new Error("Invalid minSampleCount");
-	}
-	let count = options.minSampleCount;
-
-	// TODO: use consider using Benchmark.js's algorithm for this.
-	while (
-		(await doBatchAsync(count, options.benchmarkFnAsync, options.onCycle)) <
-		options.minSampleDurationSeconds
-	) {
-		count *= 2;
-	}
-
-	const samples: number[] = [];
-	let totalTime = 0;
-	while (
-		samples.length < options.minSampleCount ||
-		// TODO: exit before this if enough confidence is reached. (But what about low frequency noise?)
-		totalTime < options.maxBenchmarkDurationSeconds
-	) {
-		const sample = await doBatchAsync(count, options.benchmarkFnAsync, options.onCycle);
-		totalTime += sample;
-		samples.push(sample);
-		// Exit if way too many samples to avoid out of memory.
-		if (samples.length > 1000000) {
-			break;
-		}
-	}
-	return computeData(samples, count, timeStamp);
-}
-
-/**
  * Returns time to run `f` `count` times in seconds.
  */
 async function doBatchAsync(
@@ -218,17 +222,4 @@ async function doBatchAsync(
 	const after = timer.now();
 	onCycle?.(0);
 	return timer.toSeconds(before, after);
-}
-
-function computeData(samples: number[], count: number, timeStamp: unknown): BenchmarkData {
-	const now = timer.now();
-	const stats: Stats = getArrayStatistics(samples.map((v) => v / count));
-	const data: BenchmarkData = {
-		elapsedSeconds: timer.toSeconds(timeStamp, now),
-		aborted: false,
-		cycles: samples.length,
-		stats,
-		iterationPerCycle: count,
-	};
-	return data;
 }

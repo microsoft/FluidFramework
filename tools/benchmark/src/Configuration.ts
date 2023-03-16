@@ -96,11 +96,14 @@ export type BenchmarkArguments = Titled & (BenchmarkSyncArguments | BenchmarkAsy
 
 export type BenchmarkRunningOptions = (BenchmarkSyncArguments | BenchmarkAsyncArguments) &
 	BenchmarkTimingOptions &
+	OnCycle &
 	HookArguments;
 
-export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions;
+export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnCycle;
 
-export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments & BenchmarkTimingOptions;
+export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments &
+	BenchmarkTimingOptions &
+	OnCycle;
 
 /**
  * Object with a "title".
@@ -117,7 +120,13 @@ export interface Titled {
  * Arguments to benchmark a synchronous function
  * @public
  */
-export interface BenchmarkSyncArguments extends BenchmarkOptions {
+export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions {}
+
+/**
+ * Arguments to benchmark a synchronous function
+ * @public
+ */
+export interface BenchmarkSyncFunction extends BenchmarkOptions {
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
@@ -128,7 +137,13 @@ export interface BenchmarkSyncArguments extends BenchmarkOptions {
  * Arguments to benchmark a callback-based asynchronous function
  * @public
  */
-export interface BenchmarkAsyncArguments extends BenchmarkOptions {
+export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {}
+
+/**
+ * Arguments to benchmark a callback-based asynchronous function
+ * @public
+ */
+export interface BenchmarkAsyncFunction extends BenchmarkOptions {
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
 	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -159,7 +174,14 @@ export interface BenchmarkTimingOptions {
 	 * The minimum time in seconds to run an individual sample.
 	 */
 	minSampleDurationSeconds?: number;
+}
 
+/**
+ * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
+ * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * @public
+ */
+export interface OnCycle {
 	/**
 	 * Executes before the start of each cycle. This has the same semantics as benchmarkjs's `onCycle`:
 	 * https://benchmarkjs.com/docs/#options_onCycle
@@ -183,7 +205,8 @@ export interface BenchmarkTimingOptions {
 export interface BenchmarkOptions
 	extends MochaExclusiveOptions,
 		HookArguments,
-		BenchmarkTimingOptions {
+		BenchmarkTimingOptions,
+		OnCycle {
 	/**
 	 * The kind of benchmark.
 	 */
