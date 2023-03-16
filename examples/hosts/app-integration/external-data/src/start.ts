@@ -42,6 +42,7 @@ async function start(): Promise<void> {
 	let id: string;
 	let model: IAppModel;
 	let showExternalServerView: boolean = true;
+	let containerUrl;
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
@@ -52,13 +53,17 @@ async function start(): Promise<void> {
 
 		id = await createResponse.attach();
 
+		containerUrl = model.getContainerResolvedUrl();
 		// Hardcoding a taskListId here. A follow up will be to introduce a form
 		// where the user can enter an external taskListId that they want
 		// to import from the external server.
-		model.baseDocument.addTaskList({
-			externalTaskListId: "task-list-1",
-			containerUrl: model.containerResolvedUrl(),
-		});
+		if (containerUrl !== undefined) {
+			model.baseDocument.addTaskList({
+				externalTaskListId: "task-list-1",
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				containerUrl,
+			});
+		}
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);

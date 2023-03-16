@@ -188,7 +188,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 *		externalTaskListId: string
 	 *	}
 	 * ```
-	 * 
+	 *
 	 * Note: Implementers choice --can choose to break up containerUrl into multiple pieces
 	 * containing tenantId, documentId and socketStreamURL separately and send them as a json
 	 * object. The URL also contains all this information so for simplicity I use the url here.
@@ -206,34 +206,39 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			const errorMessage =
 				'No external task list id provided by client. Expected under "externalTaskListId" property.';
 			result.status(400).json({ message: errorMessage });
-		}  else {
-			clientManager.registerClient(containerUrl, externalTaskListId);
-			console.log(
-				formatLogMessage(
-					`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
-				),
-			);
+		} else {
+			if (clientManager.needsNewSubscription(externalTaskListId)) {
+				// Register with external data service for webhook notifications.
+				fetch(externalDataServiceWebhookRegistrationUrl, {
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						// External data service will call our webhook echoer to notify our subscribers of the data changes.
+						url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
+					}),
+				}).catch((error) => {
+					console.error(
+						formatLogMessage(
+							`Registering for data update notifications webhook with the external data service failed due to an error.`,
+						),
+						error,
+					);
+					throw error;
+				});
+			}
 
-			// Register with external data service for webhook notifications.
-			fetch(externalDataServiceWebhookRegistrationUrl, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					// External data service will call our webhook echoer to notify our subscribers of the data changes.
-					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
-				}),
-			}).catch((error) => {
-				console.error(
+			// We do not have the mapping stored in the client manager yet, so add it
+			if (clientManager.needsNewMappingEntry(containerUrl, externalTaskListId)) {
+				clientManager.registerClient(containerUrl, externalTaskListId);
+				console.log(
 					formatLogMessage(
-						`Registering for data update notifications webhook with the external data service failed due to an error.`,
+						`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
 					),
-					error,
 				);
-				throw error;
-			});
+			}
 			result.send();
 		}
 	});

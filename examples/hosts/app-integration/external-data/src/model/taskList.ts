@@ -16,7 +16,9 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskData,
+	ITaskList,
 	IBaseDocumentInitialState,
+	IBaseDocument,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import { customerServicePort } from "../mock-customer-service-interface";
@@ -362,8 +364,11 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		// form the external server. This is pretty anti-fluid, so we need a better way to
 		// do this check.
 		if (props.containerUrl === undefined) {
-			throw new Error("container url is not resolved (container is not attached). Cannot add taskList.")
+			throw new Error(
+				"containerUrl is required to register the task list for external change notifications",
+			);
 		}
+		// Need to cast as IFluidResolvedUrl as IResolvedUrl does not have all url as a parameter
 		await this.registerWithCustomerService(props.containerUrl);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
@@ -378,15 +383,13 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * Register container session data with the customer service.
 	 * @returns A promise that resolves when the registration call returns successfully.
 	 */
-	public async registerWithCustomerService(
-		containerUrlData: IFluidResolvedUrl,
-	): Promise<void> {
+	public async registerWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
 		if (this.externalTaskListId === undefined) {
 			throw new Error("externalTaskListId is undefined");
 		}
 		try {
 			console.log(
-				`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`,
+				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
 			);
 			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
 				method: "POST",
@@ -483,4 +486,51 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},
+);
+
+
+/**
+ * The BaseDocument is our data object that implements the IBaseDocument interface.
+ */
+export class BaseDocument extends DataObject implements IBaseDocument {
+	private readonly taskListCollection = new Map<string, TaskList>();
+
+	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
+		if (this.taskListCollection.has(props.externalTaskListId)) {
+			throw new Error(
+				`task list ${props.externalTaskListId} already exists on this collection`,
+			);
+		}
+		const taskList = await TaskListInstantiationFactory.createChildInstance(
+			this.context,
+			props,
+		);
+		this.taskListCollection.set(props.externalTaskListId, taskList);
+
+		// Storing the handles here are necessary for non leader
+		// clients to rehydrate local this.taskListCollection in hasInitialized().
+		this.root.set(props.externalTaskListId, taskList.handle);
+		this.emit("taskListCollectionChanged");
+	};
+
+	public readonly getTaskList = (id: string): ITaskList | undefined => {
+		return this.taskListCollection.get(id);
+	};
+
+	protected async hasInitialized(): Promise<void> {
+		for (const [id, taskListHandle] of this.root) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const taskListResolved = await taskListHandle.get();
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			this.taskListCollection.set(id, taskListResolved);
+		}
+	}
+}
+
+export const BaseDocumentInstantiationFactory = new DataObjectFactory<BaseDocument>(
+	"base-document",
+	BaseDocument,
+	[],
+	{},
+	new Map([TaskListInstantiationFactory.registryEntry]),
 );
