@@ -20,6 +20,7 @@ import {
 	ISequencedDocumentSystemMessage,
 } from "@fluidframework/protocol-definitions";
 import { DataProcessingError } from "@fluidframework/container-utils";
+import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 
 /**
  * In all cases we end up with a permanently corrupt file.
@@ -76,6 +77,7 @@ async function runAndValidateBatch(
 	provider: ITestObjectProvider,
 	proxyDsf: IDocumentServiceFactory,
 	timeout: number,
+	runtimeOptions?: IContainerRuntimeOptions,
 ) {
 	let containerUrl: string | undefined;
 	{
@@ -90,15 +92,20 @@ async function runAndValidateBatch(
 	}
 	assert(containerUrl);
 	{
+		const defaultRuntimeOptions: IContainerRuntimeOptions = {
+			summaryOptions: {
+				summaryConfigOverrides: { state: "disabled" },
+			},
+		};
+
 		const loader = provider.createLoader(
 			[
 				[
 					provider.defaultCodeDetails,
 					provider.createFluidEntryPoint({
 						runtimeOptions: {
-							summaryOptions: {
-								summaryConfigOverrides: { state: "disabled" },
-							},
+							...defaultRuntimeOptions,
+							...runtimeOptions,
 						},
 					}),
 				],
@@ -161,49 +168,53 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 		await runAndValidateBatch(provider, provider.documentServiceFactory, this.timeout());
 	});
 
-	it("contains batch metadata", async function () {
-		const provider = getTestObjectProvider({ resetAfterEach: true });
-		let batchesSent = 0;
-		const sentMessages: IDocumentMessage[][] = [];
+	[true, false].forEach((enableGroupedBatching) => {
+		it(`contains batch metadata groupedBatchingEnabled: ${enableGroupedBatching}`, async function () {
+			const provider = getTestObjectProvider({ resetAfterEach: true });
+			let batchesSent = 0;
+			const sentMessages: IDocumentMessage[][] = [];
 
-		const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
-			provider.documentServiceFactory,
-			{
-				createDocumentService: {
-					connectToDeltaStream: {
-						submit: (ds) => (messages) => {
-							sentMessages.push([...messages]);
-							batchesSent++;
-							ds.submit(messages);
+			const proxyDsf = createFunctionOverrideProxy<IDocumentServiceFactory>(
+				provider.documentServiceFactory,
+				{
+					createDocumentService: {
+						connectToDeltaStream: {
+							submit: (ds) => (messages) => {
+								sentMessages.push([...messages]);
+								batchesSent++;
+								ds.submit(messages);
+							},
 						},
 					},
 				},
-			},
-		);
+			);
 
-		await runAndValidateBatch(provider, proxyDsf, this.timeout());
-		assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
+			await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
+				enableGroupedBatching,
+			});
+			assert.strictEqual(batchesSent, 1, "expected only a single batch to be sent");
 
-		{
-			let batch = sentMessages[0];
-			if (batch.length === 1) {
-				const contents = JSON.parse(batch[0].contents);
-				assert.strictEqual(contents.type, "groupedBatch");
-				batch = contents.contents;
+			{
+				let batch = sentMessages[0];
+				if (batch.length === 1) {
+					const contents = JSON.parse(batch[0].contents);
+					assert.strictEqual(contents.type, "groupedBatch");
+					batch = contents.contents;
+				}
+
+				assert.strictEqual(batch.length, 11, "expected 11 messages");
+				assert.strictEqual(
+					batch[0].metadata?.batch,
+					true,
+					"first message should contain batch metadata",
+				);
+				assert.strictEqual(
+					batch[10].metadata?.batch,
+					false,
+					"last message should contain batch metadata",
+				);
 			}
-
-			assert.strictEqual(batch.length, 11, "expected 11 messages");
-			assert.strictEqual(
-				batch[0].metadata?.batch,
-				true,
-				"first message should contain batch metadata",
-			);
-			assert.strictEqual(
-				batch[10].metadata?.batch,
-				false,
-				"last message should contain batch metadata",
-			);
-		}
+		});
 	});
 
 	describe("client sends invalid batches ", () => {
