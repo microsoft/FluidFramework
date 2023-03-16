@@ -1,5 +1,8 @@
 lockfileVersion: 5.4
 
+overrides:
+  qs: ^6.11.0
+
 specifiers:
   '@fluid-tools/api-markdown-documenter': ^0.6.0
   '@microsoft/api-extractor-model': ^7.23.0
@@ -3509,9 +3512,6 @@ packages:
     resolution: {integrity: sha512-dlCojsiJLV9BcL8ar03qycI0H5quM47Ei+mh14It0dTYhLAoH8B/91J0/pLDX3Wba9wTkPCbEKzNVvV8ea0WlQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
-    peerDependenciesMeta:
-      markdown-magic:
-        optional: true
     dependencies:
       findup: 0.1.5
       markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
@@ -3522,9 +3522,6 @@ packages:
     resolution: {integrity: sha512-eoYa+jZHd7TIijM0xuBJWC7rEF75OgFnN0/cwNDbLsmeYCAprR5x0EvZFaHVl2deJN+ziBN3rQ9/m/TD7n4bAQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
-    peerDependenciesMeta:
-      markdown-magic:
-        optional: true
     dependencies:
       lodash.template: 4.5.0
       markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
@@ -4640,11 +4637,6 @@ packages:
       side-channel: 1.0.4
     dev: false
 
-  /qs/6.5.3:
-    resolution: {integrity: sha512-qxXIEh4pCGfHICj1mAJQ2/2XVZkjCDTcEgfoSQxc/fYivUZxTkk7L3bDBJSoNrEzXI17oUO5Dp07ktqE5KzczA==}
-    engines: {node: '>=0.6'}
-    dev: false
-
   /queue-microtask/1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: false
@@ -4876,7 +4868,7 @@ packages:
       mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
-      qs: 6.5.3
+      qs: 6.11.0
       safe-buffer: 5.2.1
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
