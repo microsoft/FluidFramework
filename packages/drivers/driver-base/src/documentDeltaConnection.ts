@@ -608,7 +608,9 @@ export class DocumentDeltaConnection
 					"disconnect",
 					`${reason}${
 						typeof description === "object"
-							? ` description: ${description?.description}`
+							? description instanceof Error
+								? ` message: ${description?.message}`
+								: ` description: ${description?.description}`
 							: ""
 					}`,
 				);
