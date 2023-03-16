@@ -127,6 +127,7 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 -   `IPendingLocalState`
 
 ### Aqueduct members removed
+
 `ContainerServices` in `@fluidframework/aqueduct` and `waitForAttach()` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
 
 ### driver-utils members removed
