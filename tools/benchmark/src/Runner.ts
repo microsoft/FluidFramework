@@ -15,7 +15,7 @@ import {
 	userCategoriesSplitter,
 	TestType,
 } from "./Configuration";
-import { runBenchmark2 } from "./runBenchmark";
+import { runBenchmark } from "./runBenchmark";
 
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
@@ -118,7 +118,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 
 		// Create and run a benchmark if we are in perfMode, else run the passed in function normally
 		if (isInPerformanceTestingMode) {
-			const stats = await runBenchmark2(args);
+			const stats = await runBenchmark(args);
 			test.emit("benchmark end", stats);
 		} else {
 			const { benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);

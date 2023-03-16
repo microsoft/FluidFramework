@@ -159,6 +159,20 @@ export interface BenchmarkTimingOptions {
 	 * The minimum time in seconds to run an individual sample.
 	 */
 	minSampleDurationSeconds?: number;
+
+	/**
+	 * Executes before the start of each cycle. This has the same semantics as benchmarkjs's `onCycle`:
+	 * https://benchmarkjs.com/docs/#options_onCycle
+	 *
+	 * @remarks
+	 * Beware that cycles run `benchmarkFn` more than once: a typical microbenchmark might involve 10k
+	 * iterations per cycle.
+	 *
+	 * This is passed an argument but it should be ignored.
+	 * The argument is listed in the signature here to help reduce the chance
+	 * of a function which has an optional argument being used here and being passed unexpected data.
+	 */
+	onCycle?: (event: unknown) => void;
 }
 
 /**
@@ -310,20 +324,6 @@ export interface HookArguments {
 	 * @remarks This does *not* execute on each iteration or cycle.
 	 */
 	after?: HookFunction;
-
-	/**
-	 * Executes before the start of each cycle. This has the same semantics as benchmarkjs's `onCycle`:
-	 * https://benchmarkjs.com/docs/#options_onCycle
-	 *
-	 * @remarks
-	 * Beware that cycles run `benchmarkFn` more than once: a typical microbenchmark might involve 10k
-	 * iterations per cycle.
-	 *
-	 * This is passed an argument but it should be ignored.
-	 * The argument is listed in the signature here to help reduce the change
-	 * of a function which has an optional argument being used here and being passed unexpected data.
-	 */
-	onCycle?: (event: unknown) => void;
 }
 
 /**

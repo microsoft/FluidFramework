@@ -15,17 +15,16 @@ import {
 } from "./benchmark";
 import {
 	validateBenchmarkArguments,
-	BenchmarkTimingOptions,
 	BenchmarkRunningOptions,
 	BenchmarkRunningOptionsSync,
 	BenchmarkRunningOptionsAsync,
 } from "./Configuration";
 
-export const defaults: Required<BenchmarkTimingOptions> = {
+export const defaults = {
 	maxBenchmarkDurationSeconds: defaultOptions.maxTime,
 	minSampleCount: defaultOptions.minSamples,
 	minSampleDurationSeconds: defaultOptions.minTime,
-};
+} as const;
 
 /**
  * Run a performance benchmark and return its results.
@@ -50,7 +49,7 @@ export const defaults: Required<BenchmarkTimingOptions> = {
  *
  * @public
  */
-export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
+export async function runBenchmarkLegacy(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
 	const options = {
 		...defaults,
 		...args,
@@ -100,7 +99,7 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 	});
 }
 
-export async function runBenchmark2(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
+export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
 	const options = {
 		...defaults,
 		...args,
@@ -109,16 +108,18 @@ export async function runBenchmark2(args: BenchmarkRunningOptions): Promise<Benc
 
 	await options.before?.();
 
+	let data: BenchmarkData;
+	// eslint-disable-next-line unicorn/prefer-ternary
 	if (isAsync) {
-		const data = await runBenchmarkAsync({
+		data = await runBenchmarkAsync({
 			...options,
 			benchmarkFnAsync: argsBenchmarkFn as any,
 		});
-		return data;
 	} else {
-		const data = runBenchmarkSync2({ ...options, benchmarkFn: argsBenchmarkFn });
-		return data;
+		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn });
 	}
+	await options.after?.();
+	return data;
 }
 
 /**
@@ -145,62 +146,6 @@ export async function runBenchmark2(args: BenchmarkRunningOptions): Promise<Benc
  * @public
  */
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
-	const options = {
-		...defaults,
-		...args,
-	};
-
-	const benchmarkOptions: Options = {
-		maxTime: options.maxBenchmarkDurationSeconds,
-		minSamples: options.minSampleCount,
-		minTime: options.minSampleDurationSeconds,
-		onCycle: options.onCycle,
-		onComplete: async () => {},
-		fn: args.benchmarkFn,
-	};
-
-	const benchmarkInstance = new Benchmark(benchmarkOptions);
-	// Run a garbage collection, if possible, before the test.
-	// This helps noise from allocations before the test (ex: from previous tests or startup) from
-	// impacting the test.
-	global?.gc?.();
-	benchmarkInstance.run();
-	const stats: BenchmarkData = {
-		aborted: benchmarkInstance.aborted,
-		count: benchmarkInstance.count,
-		cycles: benchmarkInstance.cycles,
-		error: benchmarkInstance.error,
-		hz: benchmarkInstance.hz,
-		stats: benchmarkInstance.stats,
-		times: benchmarkInstance.times,
-	};
-	return stats;
-}
-
-/**
- * Run a performance benchmark and return its results.
- *
- * Here is how benchmarking works:
- *
- * ```
- *  For each benchmark
- *      For each sampled run
- *          // Run fn once to check for errors
- *          fn()
- *          // Run fn multiple times and measure results.
- *          for each Benchmark.count
- *              fn()
- * ```
- *
- * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
- * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing
- * the iterations until it hits a low uncertainty point.
- *
- * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
- *
- * @public
- */
-export function runBenchmarkSync2(args: BenchmarkRunningOptionsSync): BenchmarkData {
 	const timeStamp = +_.now();
 
 	const options = {
