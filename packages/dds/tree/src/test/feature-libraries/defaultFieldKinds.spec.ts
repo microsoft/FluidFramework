@@ -251,8 +251,8 @@ describe("Value field changesets", () => {
 		const expected: Delta.MarkList = [
 			{ type: Delta.MarkType.Delete, count: 1 },
 			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
+				type: Delta.MarkType.Insert,
+				content: [singleTextCursor(tree1)],
 				setValue: "value3",
 			},
 		];
@@ -412,8 +412,8 @@ describe("Optional field changesets", () => {
 	it("can be converted to a delta when field was empty", () => {
 		const expected: Delta.MarkList = [
 			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
+				type: Delta.MarkType.Insert,
+				content: [singleTextCursor(tree1)],
 				setValue: "value3",
 			},
 		];

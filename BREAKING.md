@@ -15,6 +15,18 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.4.0
+
+## 2.0.0-internal.3.4.0 Upcoming changes
+
+[IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+
+## IResolvedUrl will be equivalent to IFluidResolvedUrl
+
+In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl are deprecated as they are not used.
+This will make IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls will now be FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
+ensureFluidResolvedUrl will be deprecated and removed due to this.
+
 # 2.0.0-internal.3.3.0
 
 ## 2.0.0-internal.3.3.0 Upcoming changes
