@@ -2639,7 +2639,7 @@ export class ContainerRuntime
 			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree ?? forcedFullTree,
+					fullTree: (fullTree ?? false) || forcedFullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
