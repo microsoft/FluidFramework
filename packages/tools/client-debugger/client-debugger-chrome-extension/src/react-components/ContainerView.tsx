@@ -39,17 +39,17 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 	} else {
 		let innerView: React.ReactElement;
 		switch (viewSelection) {
-			case PanelView.ContainerData:
-				innerView = <ContainerDataView containerId={containerId} />;
-				break;
 			case PanelView.Audience:
 				innerView = <AudienceView containerId={containerId} />;
 				break;
-			case PanelView.Telemetry:
-				innerView = <TelemetryView />;
+			case PanelView.ContainerData:
+				innerView = <ContainerDataView containerId={containerId} />;
 				break;
 			case PanelView.ContainerStateHistory:
 				innerView = <ContainerHistoryView containerId={containerId} />;
+				break;
+			case PanelView.Telemetry:
+				innerView = <TelemetryView />;
 				break;
 			default:
 				throw new Error(`Unrecognized RootView selection value: "${viewSelection}".`);
