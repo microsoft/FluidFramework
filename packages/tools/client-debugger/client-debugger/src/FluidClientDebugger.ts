@@ -252,6 +252,8 @@ export class FluidClientDebugger
 	 */
 	private readonly postAudienceStateChange = (): void => {
 		const audienceMembersMap = this.container.audience.getMembers();
+
+		const audienceClientIdArray: string[] = [...audienceMembersMap.keys()];
 		const audienceMembersArray: IClient[] = [...audienceMembersMap.values()];
 
 		postMessageToWindow<AudienceEventMessage>(
@@ -260,6 +262,7 @@ export class FluidClientDebugger
 				type: "AUDIENCE_EVENT",
 				data: {
 					containerId: this.containerId,
+					allAudienceClientId: audienceClientIdArray,
 					audienceState: audienceMembersArray,
 					audienceHistory: this.getAudienceHistory(),
 				},

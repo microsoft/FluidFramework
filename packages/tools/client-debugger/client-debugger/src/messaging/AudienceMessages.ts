@@ -26,6 +26,7 @@ export interface AudienceEventMessageData extends HasContainerId {
 	/**
 	 * Contents of the Audience event
 	 */
+	allAudienceClientId: string[];
 	audienceState: IClient[];
 	audienceHistory: readonly AudienceChangeLogEntry[];
 }

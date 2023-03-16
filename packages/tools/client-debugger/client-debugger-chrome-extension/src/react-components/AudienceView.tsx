@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+// import { Stack, StackItem } from "@fluentui/react";
 import React from "react";
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
@@ -14,7 +15,7 @@ import {
 } from "@fluid-tools/client-debugger";
 import { defaultRenderOptions, _AudienceView } from "@fluid-tools/client-debugger-view";
 import { extensionMessageSource } from "../messaging";
-import { MessageRelayContext } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(AudienceView)";
 
@@ -45,14 +46,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		},
 	};
 
-	const messageRelay = React.useContext(MessageRelayContext);
+	const messageRelay = useMessageRelay();
 
-	if (messageRelay === undefined) {
-		throw new Error(
-			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
-		);
-	}
-
+	const [clientId, setClientId] = React.useState<string[]>([]);
 	const [audienceState, setAudienceState] = React.useState<IClient[]>([]);
 	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
 		[],
@@ -66,6 +62,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
 				const message: AudienceEventMessage = untypedMessage as AudienceEventMessage;
 
+				setClientId(message.data.allAudienceClientId);
 				setAudienceState(message.data.audienceState);
 				setAudienceHistory(message.data.audienceHistory);
 
@@ -76,6 +73,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
+
 		function messageHandler(message: Partial<IDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
@@ -93,7 +91,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	return (
 		<_AudienceView
-			clientId={"foo"}
+			clientId={undefined}
+			allAudienceClientId={clientId}
 			allAudienceMembers={audienceState}
 			myClientConnection={undefined}
 			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}

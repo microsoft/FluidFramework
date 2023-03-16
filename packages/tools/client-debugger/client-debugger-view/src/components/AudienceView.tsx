@@ -63,12 +63,12 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
 
 	const audienceMembersArray: IClient[] = [...allAudienceMembers.values()];
-	// const audienceMembersKeyArray: string[] = [...allAudienceMembers.keys()];
+	const audienceMembersKeyArray: string[] = [...allAudienceMembers.keys()];
 
-	// console.log("...allAudienceMembers.keys()", ...allAudienceMembers.keys());
 	return (
 		<_AudienceView
 			clientId={myClientId}
+			allAudienceClientId={audienceMembersKeyArray}
 			allAudienceMembers={audienceMembersArray}
 			myClientConnection={myClientConnection}
 			onRenderAudienceMember={onRenderAudienceMember}
@@ -82,6 +82,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
  */
 export interface _AudienceViewProps {
 	clientId: string | undefined;
+	allAudienceClientId: string[];
 	allAudienceMembers: IClient[];
 	myClientConnection: IClient | undefined;
 	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
@@ -99,6 +100,7 @@ export interface _AudienceViewProps {
 export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
 	const {
 		clientId,
+		allAudienceClientId,
 		allAudienceMembers,
 		myClientConnection,
 		onRenderAudienceMember,
@@ -121,6 +123,7 @@ export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
 					audience={allAudienceMembers}
 					myClientId={clientId}
 					myClientConnection={myClientConnection}
+					allAudienceClientId={allAudienceClientId}
 					onRenderAudienceMember={onRenderAudienceMember}
 				/>
 			</StackItem>
@@ -154,6 +157,11 @@ interface MembersViewProps {
 	myClientConnection: IClient | undefined;
 
 	/**
+	 * List of clientId
+	 */
+	allAudienceClientId: string[];
+
+	/**
 	 * Callback to render data about an individual audience member.
 	 */
 	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
@@ -163,9 +171,18 @@ interface MembersViewProps {
  * Displays a list of current audience members and their metadata.
  */
 function MembersView(props: MembersViewProps): React.ReactElement {
-	const { audience, myClientId, myClientConnection, onRenderAudienceMember } = props;
+	const {
+		audience,
+		myClientId,
+		myClientConnection,
+		allAudienceClientId,
+		onRenderAudienceMember,
+	} = props;
 
-	const transformedAudience = combineMembersWithMultipleConnections(audience);
+	const transformedAudience = combineMembersWithMultipleConnections(
+		allAudienceClientId,
+		audience,
+	);
 
 	const memberViews: React.ReactElement[] = [];
 	for (const member of transformedAudience.values()) {

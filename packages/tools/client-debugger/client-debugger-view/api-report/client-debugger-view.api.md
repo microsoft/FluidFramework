@@ -32,6 +32,8 @@ export function _AudienceView(props: _AudienceViewProps): React_2.ReactElement;
 // @public
 export interface _AudienceViewProps {
     // (undocumented)
+    allAudienceClientId: string[];
+    // (undocumented)
     allAudienceMembers: IClient[];
     // (undocumented)
     audienceHistory: readonly AudienceChangeLogEntry[];
