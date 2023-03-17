@@ -18,11 +18,9 @@ import {
 	mintRevisionTag,
 	SeqNumber,
 	ChangeFamilyEditor,
-	AnchorSet,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
-	AnchorRebaseData,
 	TestAnchorSet,
 	TestChangeEncoder,
 	TestChangeFamily,
