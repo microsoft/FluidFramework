@@ -10,11 +10,15 @@ const webpack = require("webpack"); //to access built-in plugins
 
 module.exports = (env) => {
 	const isProduction = env?.production;
+	const tree = env?.tree;
 
 	return merge(
 		{
 			entry: {
-				main: "./src/index.ts",
+				main:
+					tree === "cursor"
+						? "./src/cursor-tree/index.ts"
+						: "./src/editable-tree/index.ts",
 			},
 			resolve: {
 				extensions: [".ts", ".tsx", ".js"],
