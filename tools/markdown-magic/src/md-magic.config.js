@@ -162,8 +162,8 @@ function includeTransform(content, options, config) {
 	const { path: relativeFilePath, start: startLineString, end: endLineString } = options;
 	const { originalPath: documentFilePath } = config;
 	
-	const startLine = Number.parseInt(startLineString);
-	const endLine = Number.parseInt(endLineString); // May be negative
+	const startLine = startLineString === undefined ? undefined : Number.parseInt(startLineString);
+	const endLine = endLineString === undefined ? undefined : Number.parseInt(endLineString);
 	
 	if (!relativeFilePath) {
 		throw new Error(
