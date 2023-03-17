@@ -15,7 +15,13 @@ const { embeddedContentNotice, generatedContentNotice } = require("./constants")
  * @param {string} relativePath - A path, relative to `documentPath`, to resolve.
  */
 function resolveRelativePath(documentPath, relativePath) {
-	return path.resolve(path.dirname(documentPath), relativePath);
+	const resolvedFilePath = path.resolve(path.dirname(documentPath), relativePath);
+	
+	if (!fs.existsSync(resolvedRelativePath)) {
+		throw new Error(`${documentPath}: Encountered invalid relative file path "${relativePath}". "${resolvedFilePath}" does not exist.`);
+	}
+	
+	return resolvedFilePath;
 }
 
 /**
