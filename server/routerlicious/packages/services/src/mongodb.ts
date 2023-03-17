@@ -89,7 +89,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async update(filter: object, set: any, addToSet: any): Promise<void> {
-		const req = async () => this.updateCore(filter, set, addToSet, false);
+		const req = async () => {
+			try {
+				await this.updateCore(filter, set, addToSet, false);
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
+		};
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.update", // callerName
@@ -98,7 +105,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
-		const req = async () => this.updateManyCore(filter, set, addToSet, false);
+		const req = async () => {
+			try {
+				await this.updateManyCore(filter, set, addToSet, false);
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
+		};
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.updateMany", // callerName
@@ -107,7 +121,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
-		const req = async () => this.updateCore(filter, set, addToSet, true);
+		const req = async () => {
+			try {
+				await this.updateCore(filter, set, addToSet, true);
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
+		};
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.upsert", // callerName
@@ -210,20 +231,25 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
-			const result = await this.collection.findOneAndUpdate(
-				query,
-				{
-					$setOnInsert: value,
-				},
-				{
-					returnOriginal: true,
-					upsert: true,
-				},
-			);
+			try {
+				const result = await this.collection.findOneAndUpdate(
+					query,
+					{
+						$setOnInsert: value,
+					},
+					{
+						returnOriginal: true,
+						upsert: true,
+					},
+				);
 
-			return result.value
-				? { value: result.value, existing: true }
-				: { value, existing: false };
+				return result.value
+					? { value: result.value, existing: true }
+					: { value, existing: false };
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
 		};
 		return this.requestWithRetry(
 			req, // request
@@ -234,19 +260,24 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
-			const result = await this.collection.findOneAndUpdate(
-				query,
-				{
-					$set: value,
-				},
-				{
-					returnOriginal: true,
-				},
-			);
+			try {
+				const result = await this.collection.findOneAndUpdate(
+					query,
+					{
+						$set: value,
+					},
+					{
+						returnOriginal: true,
+					},
+				);
 
-			return result.value
-				? { value: result.value, existing: true }
-				: { value, existing: false };
+				return result.value
+					? { value: result.value, existing: true }
+					: { value, existing: false };
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
 		};
 		return this.requestWithRetry(
 			req, // request
