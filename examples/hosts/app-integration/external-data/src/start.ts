@@ -54,16 +54,17 @@ async function start(): Promise<void> {
 		id = await createResponse.attach();
 
 		containerUrl = model.getContainerResolvedUrl();
+		if (containerUrl === undefined) {
+			throw new Error("Container is not attached");
+		}
 		// Hardcoding a taskListId here. A follow up will be to introduce a form
 		// where the user can enter an external taskListId that they want
 		// to import from the external server.
-		if (containerUrl !== undefined) {
-			model.baseDocument.addTaskList({
-				externalTaskListId: "task-list-1",
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				containerUrl,
-			});
-		}
+		model.baseDocument.addTaskList({
+			externalTaskListId: "task-list-1",
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			containerUrl,
+		});
 	} else {
 		id = location.hash.slice(1);
 		model = await tinyliciousModelLoader.loadExisting(id);

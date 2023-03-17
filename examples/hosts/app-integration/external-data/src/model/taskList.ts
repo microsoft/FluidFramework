@@ -368,22 +368,25 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 				"containerUrl is required to register the task list for external change notifications",
 			);
 		}
-		// Need to cast as IFluidResolvedUrl as IResolvedUrl does not have all url as a parameter
-		await this.registerWithCustomerService(props.containerUrl);
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
 		this.root.set("externalDataSnapshot", this._externalDataSnapshot.handle);
+
 		// TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
 		// at some point in the future.
 		await this.importExternalData();
+		await this.registerWithCustomerService(props.containerUrl);
 	}
 
 	/**
 	 * Register container session data with the customer service.
 	 * @returns A promise that resolves when the registration call returns successfully.
+	 *
+	 * @remarks This will allow the Customer Service to pass on the container information
+	 * to the Fluid Service to send the signal that some new information has come through.
 	 */
-	public async registerWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
+	private async registerWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
 		if (this.externalTaskListId === undefined) {
 			throw new Error("externalTaskListId is undefined");
 		}
@@ -403,7 +406,8 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 				}),
 			});
 		} catch (error) {
-			console.error(`Customer service registration failed:\n${error}`);
+			const message = `Customer service registration failed:\n${error}`;
+			throw new Error(message);
 		}
 	}
 	/**

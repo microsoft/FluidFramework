@@ -209,47 +209,47 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		const externalTaskListId = request.body?.externalTaskListId as string;
 		if (containerUrl === undefined) {
 			const errorMessage =
-				'No session data provided by client. Expected under "sessionUrl" property.';
+				'No session data provided by client. Expected under "containerUrl" property.';
 			result.status(400).json({ message: errorMessage });
-		} else if (externalTaskListId === undefined) {
+			return;
+		}
+		if (externalTaskListId === undefined) {
 			const errorMessage =
 				'No external task list id provided by client. Expected under "externalTaskListId" property.';
 			result.status(400).json({ message: errorMessage });
-		} else {
-			if (clientManager.needsNewSubscription(externalTaskListId)) {
-				// Register with external data service for webhook notifications.
-				fetch(externalDataServiceWebhookRegistrationUrl, {
-					method: "POST",
-					headers: {
-						"Access-Control-Allow-Origin": "*",
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						// External data service will call our webhook echoer to notify our subscribers of the data changes.
-						url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
-					}),
-				}).catch((error) => {
-					console.error(
-						formatLogMessage(
-							`Registering for data update notifications webhook with the external data service failed due to an error.`,
-						),
-						error,
-					);
-					throw error;
-				});
-			}
-
-			// We do not have the mapping stored in the client manager yet, so add it
-			if (clientManager.needsNewMappingEntry(containerUrl, externalTaskListId)) {
-				clientManager.registerClient(containerUrl, externalTaskListId);
-				console.log(
-					formatLogMessage(
-						`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
-					),
-				);
-			}
-			result.send();
+			return;
 		}
+		if (!clientManager.isSubscribed(externalTaskListId)) {
+			// Register with external data service for webhook notifications.
+			fetch(externalDataServiceWebhookRegistrationUrl, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					// External data service will call our webhook echoer to notify our subscribers of the data changes.
+					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
+				}),
+			}).catch((error) => {
+				console.error(
+					formatLogMessage(
+						`Registering for data update notifications webhook with the external data service failed due to an error.`,
+					),
+					error,
+				);
+				throw error;
+			});
+		}
+
+		clientManager.registerClient(containerUrl, externalTaskListId);
+		console.log(
+			formatLogMessage(
+				`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
+			),
+		);
+
+		result.send();
 	});
 
 	const server = expressApp.listen(port.toString());
