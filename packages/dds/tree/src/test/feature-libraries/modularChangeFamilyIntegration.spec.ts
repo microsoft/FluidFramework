@@ -84,8 +84,7 @@ function normalizeDeltaField(
 		const mark: Mutable<Delta.Mark> = { ...origMark };
 		switch (mark.type) {
 			case Delta.MarkType.MoveIn:
-			case Delta.MarkType.MoveOut:
-			case Delta.MarkType.ModifyAndMoveOut: {
+			case Delta.MarkType.MoveOut: {
 				let newId = idMap.get(mark.moveId);
 				if (newId === undefined) {
 					newId = genId();
@@ -101,9 +100,9 @@ function normalizeDeltaField(
 
 		switch (mark.type) {
 			case Delta.MarkType.Modify:
-			case Delta.MarkType.ModifyAndDelete:
-			case Delta.MarkType.ModifyAndMoveOut:
-			case Delta.MarkType.InsertAndModify: {
+			case Delta.MarkType.Delete:
+			case Delta.MarkType.Insert:
+			case Delta.MarkType.MoveOut: {
 				if (mark.fields !== undefined) {
 					mark.fields = normalizeDelta(mark.fields, genId, idMap);
 				}
