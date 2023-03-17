@@ -5,9 +5,9 @@
 
 import { Runner, Suite, Test } from "mocha";
 import { isChildProcess, ReporterOptions } from "./Configuration";
-import { BenchmarkReporter, failedData } from "./Reporter";
+import { BenchmarkReporter } from "./Reporter";
 import { red, getName, getSuiteName } from "./ReporterUtilities";
-import { BenchmarkData } from "./runBenchmark";
+import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
@@ -49,27 +49,21 @@ module.exports = class {
 				}
 
 				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
-				const benchmark = data.get(test);
+				let benchmark: BenchmarkResult | undefined = data.get(test);
 				if (benchmark === undefined) {
 					// Mocha test complected with out reporting data.
 					// This is an error, so report it as such.
-					console.error(
-						red(
-							`Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`,
-						),
-					);
-					benchmarkReporter.recordTestResult(suite, getName(test.title), failedData);
+					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`;
+					console.error(red(error));
+					benchmarkReporter.recordTestResult(suite, getName(test.title), { error });
 					return;
 				}
 				if (test.state !== "passed") {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
-					console.error(
-						red(
-							`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`,
-						),
-					);
-					benchmark.aborted = true;
+					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
+					console.error(red(error));
+					benchmark = { error };
 				}
 
 				if (isChildProcess) {

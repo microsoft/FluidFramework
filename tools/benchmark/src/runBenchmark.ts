@@ -20,13 +20,10 @@ export const defaults: Required<BenchmarkTimingOptions> = {
 };
 
 /**
- * Subset of Benchmark type which is output data.
- * Json compatible.
+ * Result of successfully running a benchmark.
  * @public
  */
 export interface BenchmarkData {
-	aborted: boolean;
-
 	/**
 	 * Iterations per batch.
 	 */
@@ -47,6 +44,27 @@ export interface BenchmarkData {
 	 * Time it took to run the benchmark in seconds.
 	 */
 	readonly elapsedSeconds: number;
+}
+
+/**
+ * Result of trying to run a benchmark.
+ * @public
+ */
+export type BenchmarkResult = BenchmarkError | BenchmarkData;
+
+/**
+ * @public
+ */
+export function isResultError(result: BenchmarkResult): result is BenchmarkError {
+	return (result as Partial<BenchmarkError>).error !== undefined;
+}
+
+/**
+ * Result of failing to run a benchmark.
+ * @public
+ */
+export interface BenchmarkError {
+	error: string;
 }
 
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
@@ -182,7 +200,6 @@ class BenchmarkState<T> {
 		);
 		const data: BenchmarkData = {
 			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
-			aborted: false,
 			numberOfBatches: this.samples.length,
 			stats,
 			iterationsPerBatch: this.iterationsPerBatch,

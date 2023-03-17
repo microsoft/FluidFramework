@@ -42,29 +42,42 @@ import {
 	yellow,
 	Stats,
 } from "./ReporterUtilities";
-import { BenchmarkData } from "./runBenchmark";
+import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
+import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
 
 interface BenchmarkResults {
 	table: Table;
-	benchmarksMap: Map<string, BenchmarkData>;
+	benchmarksMap: Map<string, BenchmarkResult>;
 }
 
-export const failedData: BenchmarkData = {
-	aborted: true,
-	iterationsPerBatch: 0,
-	numberOfBatches: 0,
-
-	stats: {
-		standardDeviation: NaN,
-		arithmeticMean: NaN,
-		marginOfError: NaN,
-		marginOfErrorPercent: NaN,
-		samples: [],
-		standardErrorOfMean: NaN,
-		variance: NaN,
+const expectedKeys: ExpectedCell[] = [
+	stringCell("error", "error", (message) => red(message || "Error")),
+	{
+		key: "stats",
+		cell: (table, data) => {
+			const stats = data.stats as Stats;
+			table.cell(
+				"period (ns/op)",
+				prettyNumber(1e9 * stats.arithmeticMean, 2),
+				Table.padLeft,
+			);
+			table.cell(
+				"relative margin of error",
+				`±${stats.marginOfErrorPercent.toFixed(2)}%`,
+				Table.padLeft,
+			);
+		},
 	},
-	elapsedSeconds: NaN,
-};
+	numberCell(
+		"iterationsPerBatch",
+		"iterations per batch",
+		(iterationsPerBatch) => `${prettyNumber(iterationsPerBatch, 0)}`,
+	),
+	numberCell("numberOfBatches", "batch count", (elapsedSeconds) =>
+		prettyNumber(elapsedSeconds, 0),
+	),
+	numberCell("elapsedSeconds", "total time (s)", (elapsedSeconds) => elapsedSeconds.toFixed(2)),
+];
 
 /**
  * Collects and formats performance data for a sequence of suites of benchmarks.
@@ -119,47 +132,28 @@ export class BenchmarkReporter {
 	 * Appends a prettified version of the results of a benchmark instance provided to the provided
 	 * BenchmarkResults object.
 	 */
-	public recordTestResult(
-		suiteName: string,
-		testName: string,
-		benchmarkInstance: BenchmarkData,
-	): void {
+	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
 		let results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
-			results = { table: new Table(), benchmarksMap: new Map<string, BenchmarkData>() };
+			results = { table: new Table(), benchmarksMap: new Map<string, BenchmarkResult>() };
 			this.inProgressSuites.set(suiteName, results);
 		}
 
 		const { table, benchmarksMap } = results;
 
-		benchmarksMap.set(testName, benchmarkInstance);
-		if (benchmarkInstance.aborted) {
+		benchmarksMap.set(testName, result);
+		if (isResultError(result)) {
 			table.cell("status", `${pad(4)}${red("×")}`);
 		} else {
 			table.cell("status", `${pad(4)}${green("✔")}`);
 		}
 		table.cell("name", italicize(testName));
-		if (!benchmarkInstance.aborted) {
-			const numIterations: number =
-				benchmarkInstance.stats.samples.length * benchmarkInstance.iterationsPerBatch;
-			table.cell(
-				"period (ns/op)",
-				prettyNumber(1e9 * benchmarkInstance.stats.arithmeticMean, 2),
-				Table.padLeft,
-			);
-			table.cell(
-				"relative margin of error",
-				`±${benchmarkInstance.stats.marginOfErrorPercent.toFixed(2)}%`,
-				Table.padLeft,
-			);
-			table.cell("iterations", `${prettyNumber(numIterations, 0)}`, Table.padLeft);
-			table.cell("samples", benchmarkInstance.stats.samples.length.toString(), Table.padLeft);
-			table.cell(
-				"total time (s)",
-				benchmarkInstance.elapsedSeconds.toFixed(2),
-				Table.padLeft,
-			);
-		}
+
+		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
+		// This is useful if this reported is given unexpected data (such as from a memory test).
+		// It can also be used as a way to add extensible data formatting in the future.
+		addCells(table, result as unknown as Record<string, unknown>, expectedKeys);
+
 		table.newRow();
 	}
 
@@ -197,8 +191,8 @@ export class BenchmarkReporter {
 		let sumRuntime = 0;
 		let countSuccessful = 0;
 		let countFailure = 0;
-		benchmarksMap.forEach((value: BenchmarkData, key: string) => {
-			if (value.aborted) {
+		benchmarksMap.forEach((value: BenchmarkResult, key: string) => {
+			if (isResultError(value)) {
 				countFailure++;
 			} else {
 				benchmarkPeriodsSeconds.push(value.stats.arithmeticMean);
@@ -286,12 +280,12 @@ export class BenchmarkReporter {
 
 	private writeCompletedBenchmarks(
 		suiteName: string,
-		benchmarks: Map<string, BenchmarkData>,
+		benchmarks: Map<string, BenchmarkResult>,
 	): string {
 		const outputFriendlyBenchmarks: unknown[] = [];
 
 		for (const [key, bench] of benchmarks.entries()) {
-			if (bench.aborted === false) {
+			if (!isResultError(bench)) {
 				// successful benchmarks: ready them for output to file
 				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, bench));
 			}

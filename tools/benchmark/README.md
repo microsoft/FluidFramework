@@ -21,7 +21,7 @@ To run them as profiling tests, invoke `mocha` as you normally would for your pa
 like this:
 
 ```console
---expose-gc --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js
+--v8-expose-gc --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js
 ```
 
 ### `--perfMode` (required)
@@ -30,7 +30,7 @@ Indicates that the tests should be run as profiling instead of just correctness 
 When run like this, many iterations will be run and measured, but when run as correctness tests only one iteration
 will be run and no measuring will take place.
 
-### `--expose-gc` (required)
+### `--v8-expose-gc` (required)
 
 This is necessary so the package can perform explicit garbage collection between tests to help reduce
 cross-test contamination.
