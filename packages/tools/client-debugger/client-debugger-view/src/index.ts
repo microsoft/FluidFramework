@@ -21,6 +21,8 @@
  */
 
 export {
+	_ContainerHistoryView,
+	_ContainerHistoryViewProps,
 	_ContainerSummaryView,
 	_ContainerSummaryViewProps,
 	_TelemetryView,
