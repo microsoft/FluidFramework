@@ -106,10 +106,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"InterfaceDeclaration_SerializedAttributionCollection": {
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
