@@ -32,11 +32,10 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
-		"@rushstack/eslint-config": "^2.5.1",
-		"concurrently": "^6.2.0",
+		"concurrently": "^6.5.1",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",
-		"rimraf": "^2.6.2",
+		"rimraf": "^2.7.1",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
