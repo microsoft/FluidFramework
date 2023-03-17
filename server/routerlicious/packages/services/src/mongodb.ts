@@ -15,7 +15,7 @@ const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
 const redactJsonKeys = fastRedact({
 	// we want to redact the 'op' key at the following paths within error JSON object.
-	paths: ["op", "err.op", "result.writeErrors[*].op"],
+	paths: ["op", "err.op", "result.writeErrors[*].op", "writeErrors[*].op"],
 	// this instructs fast-redact to mutate the original object,
 	// instead of returning the serialization of the modified object.
 	serialize: false,
@@ -27,7 +27,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		public readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) {}
+	) { }
 
 	public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
 		const req = async () =>
@@ -122,8 +122,13 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async insertOne(value: T): Promise<any> {
 		const req = async () => {
-			const result = await this.collection.insertOne(value);
-			return result.insertedId;
+			try {
+				const result = await this.collection.insertOne(value);
+				return result.insertedId;
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
 		};
 		return this.requestWithRetry(
 			req, // request
@@ -133,7 +138,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async insertMany(values: T[], ordered: boolean): Promise<void> {
-		const req = async () => this.collection.insertMany(values, { ordered: false });
+		const req = async () => {
+			try {
+				await this.collection.insertMany(values, { ordered: false });
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			};
+		}
 		await this.requestWithRetry(
 			req, // request
 			"MongoCollection.insertMany", // callerName
@@ -318,7 +330,7 @@ export class MongoDb implements core.IDb {
 		private readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) {}
+	) { }
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public close(): Promise<void> {

@@ -1,0 +1,20 @@
+name: "Merge Next Notifier"
+
+on:
+  pull_request:
+    types: [ labeled ]
+    branches:
+      - next
+
+jobs:
+  build:
+    if: "${{ github.event.label.name == 'msftbot: merge-next' }}"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify in comment
+        uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
+        with:
+          only_create: true
+          message: |
+            Please review this PR: @sonalideshpandemsft @tylerbutler @scottn12

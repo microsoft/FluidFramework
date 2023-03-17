@@ -47,6 +47,8 @@ export {
 	getFieldKind,
 	getFieldSchema,
 	ArrayLikeMut,
+	cursorFromContextualData,
+	cursorsFromContextualData,
 } from "./contextuallyTyped";
 
 export { ForestIndex } from "./forestIndex";
@@ -106,11 +108,12 @@ export {
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
+	HasFieldChanges,
 	ValueConstraint,
 	TypedSchema,
 } from "./modular-schema";
 
-export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
 export {
 	EditManagerIndex,
@@ -128,5 +131,17 @@ export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
-import * as FieldKinds from "./defaultFieldKinds";
-export { SchemaAware, FieldKinds };
+import * as FieldKindsOriginal from "./defaultFieldKinds";
+export { SchemaAware };
+
+// Export subset of FieldKinds in an API-Extractor compatible way:
+import { FieldEditor, FieldKind, Multiplicity } from "./modular-schema";
+
+/**
+ * @alpha
+ */
+export const FieldKinds: {
+	readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
+	readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
+	readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+} = FieldKindsOriginal;

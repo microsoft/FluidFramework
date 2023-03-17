@@ -141,19 +141,16 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 * Posts a {@link RegistryChangeMessage} to the window (globalThis).
 	 */
 	private readonly postRegistryChange = (): void => {
-		postMessageToWindow<RegistryChangeMessage>(
-			{
-				source: debuggerMessageSource,
-				type: "REGISTRY_CHANGE",
-				data: {
-					containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
-						id: clientDebugger.containerId,
-						nickname: clientDebugger.containerNickname,
-					})),
-				},
+		postMessageToWindow<RegistryChangeMessage>(registryMessageLoggingOptions, {
+			source: debuggerMessageSource,
+			type: "REGISTRY_CHANGE",
+			data: {
+				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				})),
 			},
-			registryMessageLoggingOptions,
-		);
+		});
 	};
 
 	// #endregion
