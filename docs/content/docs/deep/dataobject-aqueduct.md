@@ -5,6 +5,8 @@ aliases:
   - "/docs/concepts/dataobject-aqueduct/"
 draft: true
 ---
+<!-- ignore lint errors since this is a draft article -->
+<!-- markdownlint-disable-file -->
 
 In the previous section we introduced distributed data structures and demonstrated how to use them. We'll now discuss
 how to combine those distributed data structures with custom code (business logic) to create modular, reusable pieces.

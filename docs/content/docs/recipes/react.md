@@ -5,7 +5,7 @@ aliases:
   - "/start/react-tutorial/"
 ---
 
-In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://reactjs.org/).
+In this tutorial, you'll learn about using the Fluid Framework by building a simple application that enables every client of the application to change a dynamic time stamp on itself and all other clients almost instantly. You'll also learn how to connect the Fluid data layer with a view layer made in [React](https://react.dev/reference/react/useRef).
 
 To jump ahead into the finished demo, check out the [React demo in our FluidExamples repo](https://github.com/microsoft/FluidExamples/tree/main/react-demo).
 
@@ -19,7 +19,7 @@ The following image shows the same four clients one second after the **click** b
 
 {{< callout note >}}
 
-This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [QuickStart]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
+This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [Quick Start]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://react.dev/), [creating React projects](https://react.dev/learn/start-a-new-react-project), and [React Hooks](https://react.dev/learn/state-a-components-memory#meet-your-first-hook).
 
 {{< /callout >}}
 
