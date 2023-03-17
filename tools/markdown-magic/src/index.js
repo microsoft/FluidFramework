@@ -18,10 +18,19 @@ const argv = yargs(hideBin(process.argv))
 	.usage("Usage: $0 [options]")
 	.alias("f", "files")
 	.array("f")
-	.describe("f", `Glob pattern(s) indicating the files to process. Default: "${defaultMatchPattern}".`)
-	.example("$0 -f docs/**/*.md !docs/README.md", "Run on all Markdown files under 'docs', except 'README.md'.")
+	.describe(
+		"f",
+		`Glob pattern(s) indicating the files to process. Default: "${defaultMatchPattern}".`,
+	)
+	.example(
+		"$0 -f docs/**/*.md !docs/README.md",
+		"Run on all Markdown files under 'docs', except 'README.md'.",
+	)
 	.alias("w", "workingDirectory")
-	.describe("w", "The working directory in which to run the script. Default: the current Node.js working directory.")
+	.describe(
+		"w",
+		"The working directory in which to run the script. Default: the current Node.js working directory.",
+	)
 	.help("h")
 	.alias("h", "--help").argv;
 
@@ -33,7 +42,9 @@ if (argv.workingDirectory) {
 	process.chdir(workingDirectory);
 }
 
-console.log(`Searching for files matching pattern "${matchPattern}" under "${workingDirectory}"...`);
+console.log(
+	`Searching for files matching pattern "${matchPattern}" under "${workingDirectory}"...`,
+);
 
 markdownMagic(matchPattern, config).then(
 	() => {
@@ -41,7 +52,10 @@ markdownMagic(matchPattern, config).then(
 		process.exit(0);
 	},
 	(error) => {
-		console.error(chalk.red("FAILURE: Markdown Magic could not be completed due to an error: "), error);
+		console.error(
+			chalk.red("FAILURE: Markdown Magic could not be completed due to an error: "),
+			error,
+		);
 		process.exit(1);
 	},
 );

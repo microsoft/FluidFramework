@@ -13,7 +13,8 @@ const templatesDirectoryPath = path.join(__dirname, "templates");
 /**
  * Notice added to generated content output, noting that it is generated and should not be directly modified.
  */
-const generatedContentNotice = "<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->";
+const generatedContentNotice =
+	"<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->";
 
 /**
  * Notice added to embedded output content, noting that it is derived from other content and should not be directly modified.

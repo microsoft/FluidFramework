@@ -148,12 +148,12 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
  * @param {string | undefined} options.start - (optional) First line from the target file to be embedded (inclusive).
  * Expected to be a string-formatted integer.
  * Default: 0.
- * Constraints are the same as those for the `end` parameter to 
+ * Constraints are the same as those for the `end` parameter to
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
  * @param {string | undefined} options.end - (optional) Line of the target file at which to end the embedded range (exclusive).
  * Expected to be a string-formatted integer.
  * Default: <file-line-count> + 1.
- * Constraints are the same as those for the `end` parameter to 
+ * Constraints are the same as those for the `end` parameter to
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/slice#parameters | Array.slice}
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
@@ -161,10 +161,10 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
 function includeTransform(content, options, config) {
 	const { path: relativeFilePath, start: startLineString, end: endLineString } = options;
 	const { originalPath: documentFilePath } = config;
-	
+
 	const startLine = startLineString === undefined ? undefined : Number.parseInt(startLineString);
 	const endLine = endLineString === undefined ? undefined : Number.parseInt(endLineString);
-	
+
 	if (!relativeFilePath) {
 		throw new Error(
 			"No 'path' parameter provided. Must specify a relative path to the file containing the contents to be embedded.",

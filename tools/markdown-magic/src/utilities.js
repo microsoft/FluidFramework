@@ -16,11 +16,13 @@ const { embeddedContentNotice, generatedContentNotice } = require("./constants")
  */
 function resolveRelativePath(documentPath, relativePath) {
 	const resolvedFilePath = path.resolve(path.dirname(documentPath), relativePath);
-	
+
 	if (!fs.existsSync(resolvedFilePath)) {
-		throw new Error(`"${documentPath}": Encountered invalid relative file path "${relativePath}". "${resolvedFilePath}" does not exist.`);
+		throw new Error(
+			`"${documentPath}": Encountered invalid relative file path "${relativePath}". "${resolvedFilePath}" does not exist.`,
+		);
 	}
-	
+
 	return resolvedFilePath;
 }
 
