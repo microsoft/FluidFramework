@@ -132,6 +132,20 @@
 			},
 			"InterfaceDeclaration_IConnectableRuntime": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IProvideSummarizer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_ISummarizer": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISummarizer": {
+				"backCompat": false
+			},
+			"ClassDeclaration_Summarizer": {
+				"backCompat": false
 			}
 		}
 	}
