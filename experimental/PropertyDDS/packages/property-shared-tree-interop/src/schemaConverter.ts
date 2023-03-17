@@ -26,6 +26,10 @@ import {
 import { PropertyFactory, PropertyTemplate } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
 
+const nodePropertyType = "NodeProperty";
+const referenceGenericTypePrefix = "Reference<";
+const referenceType = "Reference";
+const basePropertyType = "BaseProperty";
 const booleanTypes = new Set(["Bool"]);
 const numberTypes = new Set([
 	"Int8",
@@ -202,8 +206,8 @@ export function convertPropertyToSharedTreeStorageSchema(
 					valueType = ValueSchema.Number;
 				} else if (
 					splitTypeId.typeid === "String" ||
-					splitTypeId.typeid.startsWith("Reference<") ||
-					splitTypeId.typeid === "Reference"
+					splitTypeId.typeid.startsWith(referenceGenericTypePrefix) ||
+					splitTypeId.typeid === referenceType
 				) {
 					valueType = ValueSchema.String;
 				} else if (booleanTypes.has(splitTypeId.typeid)) {
@@ -221,7 +225,7 @@ export function convertPropertyToSharedTreeStorageSchema(
 				});
 				// }
 			} else {
-				if (splitTypeId.typeid === "NodeProperty") {
+				if (splitTypeId.typeid === nodePropertyType) {
 					typeSchema = namedTreeSchema({
 						name: referencedTypeId,
 						extraLocalFields: fieldSchema(FieldKinds.optional),
@@ -234,7 +238,7 @@ export function convertPropertyToSharedTreeStorageSchema(
 					inheritanceChain.push(splitTypeId.typeid);
 
 					for (const typeIdInInheritanceChain of inheritanceChain) {
-						if (typeIdInInheritanceChain === "NodeProperty") {
+						if (typeIdInInheritanceChain === nodePropertyType) {
 							continue;
 						}
 
@@ -275,7 +279,10 @@ export function convertPropertyToSharedTreeStorageSchema(
 								}
 							}
 						} else if (
-							!PropertyFactory.inheritsFrom(typeIdInInheritanceChain, "NodeProperty")
+							!PropertyFactory.inheritsFrom(
+								typeIdInInheritanceChain,
+								nodePropertyType,
+							)
 						) {
 							fail(
 								`"${typeIdInInheritanceChain}" contains no properties and does not inherit from "NodeProperty".`,
@@ -288,7 +295,7 @@ export function convertPropertyToSharedTreeStorageSchema(
 						localFields,
 						extraLocalFields: PropertyFactory.inheritsFrom(
 							splitTypeId.typeid,
-							"NodeProperty",
+							nodePropertyType,
 						)
 							? fieldSchema(FieldKinds.optional)
 							: emptyField,
@@ -299,7 +306,7 @@ export function convertPropertyToSharedTreeStorageSchema(
 			const fieldKind =
 				splitTypeId.context === "array" ? FieldKinds.sequence : FieldKinds.optional;
 			let localFieldTypes: Set<TreeSchemaIdentifier> | undefined;
-			if (splitTypeId.typeid !== "" && splitTypeId.typeid !== "BaseProperty") {
+			if (splitTypeId.typeid !== "" && splitTypeId.typeid !== basePropertyType) {
 				localFieldTypes = new Set<TreeSchemaIdentifier>([brand(splitTypeId.typeid)]);
 				getChildrenForType(inheritingChildrenByType, splitTypeId.typeid).forEach(
 					(childType) => localFieldTypes?.add(childType),
