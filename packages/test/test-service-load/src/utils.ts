@@ -52,7 +52,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	public static async createLogger(dimensions: {
 		driverType: string;
 		driverEndpointName: string | undefined;
-		profile: string | undefined;
+		profile: string;
 		runId: number | undefined;
 	}) {
 		return ChildLogger.create(await this.loggerP, undefined, {
@@ -160,8 +160,8 @@ export async function initialize(
 	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
+	profileName: string,
 	testIdn?: string,
-	profileName?: string,
 ) {
 	const random = makeRandom(seed);
 	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;

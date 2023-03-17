@@ -21,3 +21,18 @@ export const MessageRelayContext = React.createContext<IMessageRelay | undefined
 	// eslint-disable-next-line unicorn/no-useless-undefined
 	undefined,
 );
+
+/**
+ * Gets the {@link IMessageRelay} from the local {@link MessageRelayContext}.
+ *
+ * @throws If {@link MessageRelayContext} has not been set.
+ */
+export function useMessageRelay(): IMessageRelay {
+	const messageRelay = React.useContext(MessageRelayContext);
+	if (messageRelay === undefined) {
+		throw new Error(
+			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
+		);
+	}
+	return messageRelay;
+}

@@ -50,7 +50,10 @@ export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContain
 // @public
 export type ConnectContainerMessageData = HasContainerId;
 
-// @internal
+// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "StateChangeLogEntry" which is marked as @internal
+// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "ContainerStateChangeKind" which is marked as @internal
+//
+// @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
 }
@@ -79,6 +82,17 @@ export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerS
 // @public
 export interface ContainerStateChangeMessageData extends HasContainerId {
     containerState: ContainerStateMetadata;
+}
+
+// @public
+export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+    // (undocumented)
+    type: "CONTAINER_STATE_HISTORY";
+}
+
+// @public
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+    history: ConnectionStateChangeLogEntry[];
 }
 
 // @public
@@ -223,7 +237,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(message: TMessage, loggingOptions?: MessageLoggingOptions): void;
+export function postMessageToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...message: TMessage[]): void;
 
 // @public
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
