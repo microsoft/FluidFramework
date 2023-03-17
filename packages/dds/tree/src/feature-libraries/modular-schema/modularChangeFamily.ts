@@ -551,7 +551,7 @@ export class ModularChangeFamily
 		crossFieldTable.invalidatedFields = new Set();
 		for (const fieldToAmend of fieldsToAmend) {
 			const fieldContext = crossFieldTable.baseChangeToContext.get(fieldToAmend);
-			let newChange: FieldChange;
+			let rebasedChange: FieldChange;
 			let baseChanges: FieldChange;
 			let baseRevision: RevisionTag | undefined;
 			let newNode: HasFieldChanges | undefined;
@@ -567,7 +567,7 @@ export class ModularChangeFamily
 
 				baseChanges = fieldToAmend;
 				field = fieldContext.field;
-				newChange = newNode.fieldChanges?.get(field) ?? {
+				rebasedChange = newNode.fieldChanges?.get(field) ?? {
 					fieldKind: genericFieldKind.identifier,
 					change: brand(newGenericChangeset()),
 				};
@@ -575,7 +575,7 @@ export class ModularChangeFamily
 				baseRevision = baseChanges.revision ?? fieldContext.revision;
 			} else {
 				// fieldToAmend is part of the rebased changeset.
-				newChange = fieldToAmend;
+				rebasedChange = fieldToAmend;
 				baseChanges = {
 					fieldKind: genericFieldKind.identifier,
 					change: brand(newGenericChangeset()),
@@ -585,7 +585,7 @@ export class ModularChangeFamily
 			const {
 				fieldKind,
 				changesets: [fieldChangeset, baseChangeset],
-			} = this.normalizeFieldChanges([newChange, baseChanges], genId, revisionMetadata);
+			} = this.normalizeFieldChanges([rebasedChange, baseChanges], genId, revisionMetadata);
 
 			const amendedChange = fieldKind.changeHandler.rebaser.amendRebase(
 				fieldChangeset,
@@ -621,7 +621,7 @@ export class ModularChangeFamily
 					});
 				}
 			} else {
-				newChange.change = brand(amendedChange);
+				rebasedChange.change = brand(amendedChange);
 			}
 		}
 	}
@@ -805,6 +805,10 @@ export class ModularChangeFamily
 			}
 		}
 
+		if (isEmptyNodeChangeset(rebasedChange)) {
+			return undefined;
+		}
+
 		if (over?.change?.fieldChanges !== undefined) {
 			crossFieldTable.baseMapToRebased.set(over.change.fieldChanges, rebasedChange);
 		}
@@ -907,6 +911,14 @@ function revisionMetadataSourceFromInfo(revInfos: readonly RevisionInfo[]): Revi
 		return revInfos[getIndex(tag)];
 	};
 	return { getIndex, getInfo };
+}
+
+function isEmptyNodeChangeset(change: NodeChangeset): boolean {
+	return (
+		change.fieldChanges === undefined &&
+		change.valueChange === undefined &&
+		change.valueConstraint === undefined
+	);
 }
 
 export function getFieldKind(
