@@ -1,7 +1,7 @@
 <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluidframework/build-common/markdown-magic. Do not update these generated contents directly. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 You can run this example using the following steps:
 
@@ -18,7 +18,7 @@ You can run this example using the following steps:
 <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:includeHeading=TRUE&usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluidframework/build-common/markdown-magic. Do not update these generated contents directly. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
 

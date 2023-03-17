@@ -1,7 +1,7 @@
 <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluidframework/build-common/markdown-magic. Do not update these generated contents directly. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 Not finding what you're looking for in this README?
 Check out our [GitHub Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
@@ -16,7 +16,7 @@ Thank you!
 <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluidframework/build-common/markdown-magic. Do not update these generated contents directly. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Help
 
