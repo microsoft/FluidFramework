@@ -731,9 +731,13 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
 			listener(),
 		);
+		// const unsubscribeFromValueSubtreeChange = this.anchorNode.on("subtreeChanging", () =>
+		// 	listener(),
+		// );
 		return () => {
 			unsubscribeFromValueChange();
 			unsubscribeFromChildrenChange();
+			// unsubscribeFromValueSubtreeChange();
 		};
 	}
 }
