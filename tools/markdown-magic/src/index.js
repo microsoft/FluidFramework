@@ -17,6 +17,7 @@ const defaultMatchPattern = "**/*.md";
 const argv = yargs(hideBin(process.argv))
 	.usage("Usage: $0 [options]")
 	.alias("f", "files")
+	.array("f")
 	.describe("f", `Glob pattern(s) indicating the files to process. Default: "${defaultMatchPattern}".`)
 	.example("$0 -f docs/**/*.md !docs/README.md", "Run on all Markdown files under 'docs', except 'README.md'.")
 	.alias("w", "workingDirectory")
