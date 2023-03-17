@@ -128,7 +128,9 @@ export class AlfredRunner implements IRunner {
 
 		// Start token manager
 		if (this.tokenManager) {
-			this.tokenManager.start();
+			this.tokenManager.start().catch((error) => {
+				this.runningDeferred.reject(error);
+			});
 		}
 
 		return this.runningDeferred.promise;

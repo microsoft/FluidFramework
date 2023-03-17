@@ -79,7 +79,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 }
 
 export class DummyTokenManager implements IJsonWebTokenManager {
-	public start() {
+	public async start() {
 		Lumberjack.info(`DummyTokenManager started`);
 	}
 

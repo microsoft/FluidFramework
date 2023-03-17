@@ -27,7 +27,7 @@ export interface IWebSocketTracker {
 export interface IJsonWebTokenManager {
 	initialize(): Promise<void>;
 
-	start();
+	start(): Promise<void>;
 
 	/**
 	 * Close and clean up resources.
