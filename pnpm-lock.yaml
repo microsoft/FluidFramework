@@ -4179,7 +4179,6 @@ importers:
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/shared-object-base': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/test-driver-definitions': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-drivers': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
@@ -4233,7 +4232,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/test-driver-definitions': link:../../../packages/test/test-driver-definitions
       '@fluidframework/test-drivers': link:../../../packages/test/test-drivers
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
@@ -9142,7 +9140,6 @@ importers:
       '@fluidframework/runtime-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
-      '@fluidframework/test-driver-definitions': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-version-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@rushstack/eslint-config': ^2.5.1
@@ -9181,7 +9178,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../dds/sequence
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-utils': link:../test-utils
       '@fluidframework/test-version-utils': link:../test-version-utils
       mocha: 10.2.0
