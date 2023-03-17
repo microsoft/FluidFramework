@@ -57,12 +57,11 @@ export const defaultMinTime = Math.max(timersWithResolution[0].resolution / 2 / 
  * Either way, this is a conservative estimate of timer resolution.
  */
 function getResolution(t: Timer): number {
-	let after;
-	let count = 30;
 	const sample: number[] = [];
 
 	// Get average smallest measurable time.
-	while (count--) {
+	for (let index = 0; index < 30; index++) {
+		let after;
 		const before = t.now();
 		do {
 			after = t.now();

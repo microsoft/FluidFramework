@@ -96,14 +96,14 @@ export type BenchmarkArguments = Titled & (BenchmarkSyncArguments | BenchmarkAsy
 
 export type BenchmarkRunningOptions = (BenchmarkSyncArguments | BenchmarkAsyncArguments) &
 	BenchmarkTimingOptions &
-	OnCycle &
+	OnBatch &
 	HookArguments;
 
-export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnCycle;
+export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnBatch;
 
 export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments &
 	BenchmarkTimingOptions &
-	OnCycle;
+	OnBatch;
 
 /**
  * Object with a "title".
@@ -165,15 +165,15 @@ export interface BenchmarkTimingOptions {
 	maxBenchmarkDurationSeconds?: number;
 
 	/**
-	 * The min sample count to reach.
+	 * The minimum number of batches to measure.
 	 * @remarks This takes precedence over {@link BenchmarkTimingOptions.maxBenchmarkDurationSeconds}.
 	 */
-	minSampleCount?: number;
+	minBatchCount?: number;
 
 	/**
-	 * The minimum time in seconds to run an individual sample.
+	 * The minimum time in seconds to run an individual batch.
 	 */
-	minSampleDurationSeconds?: number;
+	minBatchDurationSeconds?: number;
 }
 
 /**
@@ -181,20 +181,16 @@ export interface BenchmarkTimingOptions {
  * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
  * @public
  */
-export interface OnCycle {
+export interface OnBatch {
 	/**
-	 * Executes before the start of each cycle. This has the same semantics as benchmarkjs's `onCycle`:
+	 * Executes before the start of each batch. This has the same semantics as benchmarkjs's `onCycle`:
 	 * https://benchmarkjs.com/docs/#options_onCycle
 	 *
 	 * @remarks
-	 * Beware that cycles run `benchmarkFn` more than once: a typical microbenchmark might involve 10k
-	 * iterations per cycle.
-	 *
-	 * This is passed an argument but it should be ignored.
-	 * The argument is listed in the signature here to help reduce the chance
-	 * of a function which has an optional argument being used here and being passed unexpected data.
+	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
+	 * iterations per batch.
 	 */
-	onCycle?: (event: unknown) => void;
+	beforeEachBatch?: () => void;
 }
 
 /**
@@ -206,7 +202,7 @@ export interface BenchmarkOptions
 	extends MochaExclusiveOptions,
 		HookArguments,
 		BenchmarkTimingOptions,
-		OnCycle {
+		OnBatch {
 	/**
 	 * The kind of benchmark.
 	 */

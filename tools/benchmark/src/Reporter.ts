@@ -51,8 +51,8 @@ interface BenchmarkResults {
 
 export const failedData: BenchmarkData = {
 	aborted: true,
-	iterationPerCycle: 0,
-	cycles: 0,
+	iterationsPerBatch: 0,
+	numberOfBatches: 0,
 
 	stats: {
 		standardDeviation: NaN,
@@ -141,7 +141,7 @@ export class BenchmarkReporter {
 		table.cell("name", italicize(testName));
 		if (!benchmarkInstance.aborted) {
 			const numIterations: number =
-				benchmarkInstance.stats.samples.length * benchmarkInstance.iterationPerCycle;
+				benchmarkInstance.stats.samples.length * benchmarkInstance.iterationsPerBatch;
 			table.cell(
 				"period (ns/op)",
 				prettyNumber(1e9 * benchmarkInstance.stats.arithmeticMean, 2),
@@ -324,7 +324,7 @@ export class BenchmarkReporter {
 		const obj = {
 			iterationsPerSecond: 1 / benchmark.stats.arithmeticMean,
 			stats: this.outputFriendlyObjectFromStats(benchmark.stats),
-			iterationCountPerSample: benchmark.iterationPerCycle,
+			iterationCountPerSample: benchmark.iterationsPerBatch,
 			numSamples: benchmark.stats.samples.length,
 			benchmarkName,
 			totalTimeSeconds: benchmark.elapsedSeconds,

@@ -20,26 +20,15 @@ import { runBenchmark } from "./runBenchmark";
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
  *
- * Here is how benchmarking works:
- *
- * ```
- *  For each benchmark
- *      For each sampled run
- *          // Run fn once to check for errors
- *          fn()
- *          // Run fn multiple times and measure results.
- *          for each Benchmark.count
- *              fn()
- * ```
- *
- * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
- * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing
- * the iterations until it hits a low uncertainty point.
+ * When not {@link isInPerformanceTestingMode}, runs one iteration as a normal Mocha test.
+ * When run in performance testing mode, the test runs the function many times in batches.
+ * First larger and larger batches are run to determine a good batch size to measure,
+ * then many iterations of that batch size are timed.
  *
  * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
  *
  * Tests created with this function get tagged with '\@ExecutionTime', so mocha's --grep/--fgrep
- * options can be used to only run this type of tests by fitering on that value.
+ * options can be used to only run this type of tests by filtering on that value.
  *
  * @public
  */
@@ -124,7 +113,7 @@ export function benchmark(args: BenchmarkArguments): Test {
 			const { benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
 			await args.before?.();
 			await argsBenchmarkFn();
-			args.onCycle?.(0);
+			args.beforeEachBatch?.();
 			await args.after?.();
 			await Promise.resolve();
 		}

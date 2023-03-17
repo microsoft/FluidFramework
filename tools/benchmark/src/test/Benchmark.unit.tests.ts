@@ -50,8 +50,8 @@ describe("`benchmark` function", () => {
 	it("runBenchmark sync", async () => {
 		await runBenchmark({
 			maxBenchmarkDurationSeconds: 0.1,
-			minSampleCount: 1,
-			minSampleDurationSeconds: 0,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
 			benchmarkFn: () => {
 				// This is a benchmark.
 			},
@@ -61,8 +61,8 @@ describe("`benchmark` function", () => {
 	it("runBenchmarkSync", async () => {
 		runBenchmarkSync({
 			maxBenchmarkDurationSeconds: 0.1,
-			minSampleCount: 1,
-			minSampleDurationSeconds: 0,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
 			benchmarkFn: () => {
 				// This is a benchmark.
 			},
@@ -72,8 +72,8 @@ describe("`benchmark` function", () => {
 	it("runBenchmark async", async () => {
 		await runBenchmark({
 			maxBenchmarkDurationSeconds: 0.1,
-			minSampleCount: 1,
-			minSampleDurationSeconds: 0,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
 			benchmarkFnAsync: async () => {
 				// This is a benchmark.
 				await delay(0);
@@ -84,8 +84,8 @@ describe("`benchmark` function", () => {
 	it("runBenchmarkAsync", async () => {
 		await runBenchmarkAsync({
 			maxBenchmarkDurationSeconds: 0.1,
-			minSampleCount: 1,
-			minSampleDurationSeconds: 0,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
 			benchmarkFnAsync: async () => {
 				// This is a benchmark.
 				await delay(0);

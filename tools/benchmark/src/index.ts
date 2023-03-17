@@ -31,7 +31,7 @@ export {
 	BenchmarkRunningOptions,
 	BenchmarkSyncFunction,
 	BenchmarkAsyncFunction,
-	OnCycle,
+	OnBatch,
 } from "./Configuration";
 export { benchmark } from "./Runner";
 export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./MemoryTestRunner";

@@ -15,8 +15,8 @@ import { Timer, defaultMinTime, timer } from "./timer";
 
 export const defaults: Required<BenchmarkTimingOptions> = {
 	maxBenchmarkDurationSeconds: 5,
-	minSampleCount: 5,
-	minSampleDurationSeconds: defaultMinTime,
+	minBatchCount: 5,
+	minBatchDurationSeconds: defaultMinTime,
 };
 
 /**
@@ -28,17 +28,18 @@ export interface BenchmarkData {
 	aborted: boolean;
 
 	/**
-	 * Iterations per cycle
+	 * Iterations per batch.
 	 */
-	readonly iterationPerCycle: number;
+	readonly iterationsPerBatch: number;
 
 	/**
-	 * Number of batches of `count` iterations.
+	 * Number of batches, each with `iterationsPerBatch` iterations.
 	 */
-	readonly cycles: number;
+	readonly numberOfBatches: number;
 
 	/**
 	 * Stats about runtime, in seconds.
+	 * This is already scaled to be per iteration and not per batch.
 	 */
 	readonly stats: Stats;
 
@@ -84,16 +85,19 @@ function tryRunGarbageCollection(): void {
 
 enum Mode {
 	WarmUp,
-	AdjustCount,
+	AdjustIterationPerBatch,
 	CollectData,
 }
 
 class BenchmarkState<T> {
+	/**
+	 * Duration for each batch, in seconds.
+	 */
 	private readonly samples: number[];
 	private readonly options: Readonly<Required<BenchmarkTimingOptions>>;
 	private readonly startTime: T;
 	private mode: Mode = Mode.WarmUp;
-	public count: number;
+	public iterationsPerBatch: number;
 	public constructor(public readonly timer: Timer<T>, options: BenchmarkTimingOptions) {
 		this.startTime = timer.now();
 		this.samples = [];
@@ -102,38 +106,38 @@ class BenchmarkState<T> {
 			...options,
 		};
 
-		if (this.options.minSampleCount < 1) {
+		if (this.options.minBatchCount < 1) {
 			throw new Error("Invalid minSampleCount");
 		}
-		this.count = this.options.minSampleCount;
+		this.iterationsPerBatch = this.options.minBatchCount;
 		tryRunGarbageCollection();
 	}
 
-	public batch(sample: number): boolean {
+	public recordBatch(duration: number): boolean {
 		switch (this.mode) {
 			case Mode.WarmUp: {
-				this.mode = Mode.AdjustCount;
+				this.mode = Mode.AdjustIterationPerBatch;
 				return true;
 			}
-			case Mode.AdjustCount: {
-				if (!this.growCount(sample)) {
+			case Mode.AdjustIterationPerBatch: {
+				if (!this.growBatchSize(duration)) {
 					this.mode = Mode.CollectData;
 				}
 				return true;
 			}
 			default: {
-				return this.addSample(sample);
+				return this.addSample(duration);
 			}
 		}
 	}
 
 	/**
-	 * Returns true if count should be grown more.
+	 * Returns true if IterationPerBatch should be grown more.
 	 */
-	private growCount(sample: number): boolean {
-		if (sample < this.options.minSampleDurationSeconds) {
+	private growBatchSize(duration: number): boolean {
+		if (duration < this.options.minBatchDurationSeconds) {
 			// TODO: use consider using Benchmark.js's algorithm for this.
-			this.count *= 2;
+			this.iterationsPerBatch *= 2;
 			return true;
 		}
 		return false;
@@ -142,9 +146,9 @@ class BenchmarkState<T> {
 	/**
 	 * Returns true is more samples should be collected.
 	 */
-	private addSample(sample: number): boolean {
-		this.samples.push(sample);
-		if (this.samples.length < this.options.minSampleCount) {
+	private addSample(duration: number): boolean {
+		this.samples.push(duration);
+		if (this.samples.length < this.options.minBatchCount) {
 			return true;
 		}
 		const soFar = this.timer.toSeconds(this.startTime, this.timer.now());
@@ -173,13 +177,15 @@ class BenchmarkState<T> {
 
 	public computeData(): BenchmarkData {
 		const now = this.timer.now();
-		const stats: Stats = getArrayStatistics(this.samples.map((v) => v / this.count));
+		const stats: Stats = getArrayStatistics(
+			this.samples.map((v) => v / this.iterationsPerBatch),
+		);
 		const data: BenchmarkData = {
 			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
 			aborted: false,
-			cycles: this.samples.length,
+			numberOfBatches: this.samples.length,
 			stats,
-			iterationPerCycle: this.count,
+			iterationsPerBatch: this.iterationsPerBatch,
 		};
 		return data;
 	}
@@ -191,7 +197,9 @@ class BenchmarkState<T> {
  */
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
 	const state = new BenchmarkState(timer, args);
-	while (state.batch(doBatch(state.count, args.benchmarkFn, args.onCycle))) {}
+	while (
+		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
+	) {}
 	return state.computeData();
 }
 
@@ -203,42 +211,50 @@ export async function runBenchmarkAsync(
 	args: BenchmarkRunningOptionsAsync,
 ): Promise<BenchmarkData> {
 	const state = new BenchmarkState(timer, args);
-	while (state.batch(await doBatchAsync(state.count, args.benchmarkFnAsync, args.onCycle))) {}
+	while (
+		state.recordBatch(
+			await doBatchAsync(
+				state.iterationsPerBatch,
+				args.benchmarkFnAsync,
+				args.beforeEachBatch,
+			),
+		)
+	) {}
 	return state.computeData();
 }
 
 /**
- * Returns time to run `f` `count` times in seconds.
+ * Returns time to run `f` `iterationCount` times in seconds.
  */
 function doBatch(
-	count: number,
+	iterationCount: number,
 	f: () => void,
-	onCycle: undefined | ((event: unknown) => void),
+	beforeEachBatch: undefined | (() => void),
 ): number {
-	let i = count;
+	beforeEachBatch?.();
+	let i = iterationCount;
 	const before = timer.now();
 	while (i--) {
 		f();
 	}
 	const after = timer.now();
-	onCycle?.(0);
 	return timer.toSeconds(before, after);
 }
 
 /**
- * Returns time to run `f` `count` times in seconds.
+ * Returns time to run `f` `iterationCount` times in seconds.
  */
 async function doBatchAsync(
-	count: number,
+	iterationCount: number,
 	f: () => Promise<unknown>,
-	onCycle: undefined | ((event: unknown) => void),
+	beforeEachBatch: undefined | (() => void),
 ): Promise<number> {
-	let i = count;
+	beforeEachBatch?.();
+	let i = iterationCount;
 	const before = timer.now();
 	while (i--) {
 		await f();
 	}
 	const after = timer.now();
-	onCycle?.(0);
 	return timer.toSeconds(before, after);
 }
