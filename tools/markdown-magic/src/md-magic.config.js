@@ -49,7 +49,8 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 
 	const sectionBody = [];
 	sectionBody.push("You can run this example using the following steps:\n");
-	sectionBody.push(`1. Run \`npm install\` and \`npm run build:fast -- --nolint\` from the \`FluidFramework\` root directory.
+	sectionBody.push("1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.");
+	sectionBody.push(`1. Run \`pnpm install\` and \`npm run build:fast -- --nolint\` from the \`FluidFramework\` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       \`npm run build:fast -- --nolint ${packageName}\``);
 
@@ -60,7 +61,7 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 	}
 
 	sectionBody.push(
-		`1. Run \`npm run start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
+		`1. Run \`npm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
 	);
 
 	return formattedSectionText(
@@ -286,27 +287,27 @@ function examplePackageReadmeTransform(content, options, config) {
 		sections.push(
 			generateGettingStartedSection(
 				resolvedPackageJsonPath,
-				options.usesTinylicious !== "FALSE",
-				true,
+				/* includeTinyliciousStep: */ options.usesTinylicious !== "FALSE",
+				/* includeHeading: */ true,
 			),
 		);
 	}
 
 	if (options.scripts === "TRUE") {
 		const scriptsTable = scripts(content, options, config);
-		sections.push(generatePackageScriptsSection(scriptsTable, true));
+		sections.push(generatePackageScriptsSection(scriptsTable, /* includeHeading: */ true));
 	}
 
 	if (options.contributionGuidelines !== "FALSE") {
-		sections.push(generateContributionGuidelinesSection(true));
+		sections.push(generateContributionGuidelinesSection(/* includeHeading: */ true));
 	}
 
 	if (options.help !== "FALSE") {
-		sections.push(generateHelpSection(true));
+		sections.push(generateHelpSection(/* includeHeading: */ true));
 	}
 
 	if (options.trademark !== "FALSE") {
-		sections.push(generateTrademarkSection(true));
+		sections.push(generateTrademarkSection(/* includeHeading: */ true));
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));
