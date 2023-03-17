@@ -347,7 +347,9 @@ export class EditManager<
 				false,
 				repairStore,
 			);
-			inverses.push(makeAnonChange(inverse));
+			// We assign a revision tag to the inverse changesets so that the compose code can lookup the relative order
+			// of individual changesets. These revisions don't actually make it to the document history.
+			inverses.push(tagChange(inverse, mintRevisionTag()));
 		}
 		const composedInverse = this.changeFamily.rebaser.compose(inverses);
 		if (this.anchors !== undefined) {
