@@ -1,3 +1,7 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
 import { DefaultPalette, IStackStyles, Stack } from "@fluentui/react";
 import React from "react";
 
