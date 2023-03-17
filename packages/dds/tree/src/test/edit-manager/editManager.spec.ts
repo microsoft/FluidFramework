@@ -30,6 +30,7 @@ import {
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
 } from "../testChange";
+import { assertDeltaEqual } from "../utils";
 
 const rootKey: FieldKey = brand("root");
 
@@ -326,7 +327,7 @@ describe("EditManager", () => {
 			const composedInverse = TestChange.compose(inverseChanges.map(makeAnonChange));
 			const inverseDelta = family.intoDelta(composedInverse);
 			const delta = manager.rollbackLocalChanges(startingRevision);
-			assert.deepEqual(delta, inverseDelta);
+			assertDeltaEqual(delta, inverseDelta);
 			const totalRebases = [...changes, composedInverse];
 			assert.deepEqual(anchors.rebases, totalRebases);
 			assert.deepEqual(anchors.intentions, []);
