@@ -1,0 +1,5 @@
+{
+	"tags": ["persisted-config"],
+	"exports": ["index"],
+	"imports": []
+}
