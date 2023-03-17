@@ -74,6 +74,7 @@ export class MockWebhook<TData = unknown> {
 			// TODO: use a query string parser here instead of this hacky lookup of '=externalTaskListId'
 			// Tried using node:querystring and node:url but that is not allowed by
 			// the rules and haven't found another one that works in a simple search so far.
+			// This method is incredibly brittle and will break if we add any other qs param
 			const externalTaskListId = subscriberUrl.slice(
 				subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
 			);
