@@ -236,8 +236,8 @@ export function create(
 						new NetworkError(
 							501,
 							"Token revocation is not supported for now",
-							false, /* canRetry */
-							true, /* isFatal */
+							false /* canRetry */,
+							true /* isFatal */,
 						),
 					),
 					response,
