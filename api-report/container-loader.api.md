@@ -34,6 +34,7 @@ import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-defi
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
+import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
@@ -241,6 +242,9 @@ export class RelativeLoader implements ILoader {
     // (undocumented)
     resolve(request: IRequest): Promise<IContainer>;
 }
+
+// @public
+export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;
