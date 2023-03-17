@@ -217,7 +217,7 @@ We use custom handlers to build the Container Services pattern.
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
 
 <!-- prettier-ignore-start -->
 

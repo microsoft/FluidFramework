@@ -84,7 +84,7 @@ efficient spatial querying of the nearest Marker to a given position. -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
 
 <!-- prettier-ignore-start -->
 
