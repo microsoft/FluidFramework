@@ -18,6 +18,7 @@ import {
 	mintRevisionTag,
 	SeqNumber,
 	ChangeFamilyEditor,
+	makeAnonChange,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
@@ -29,6 +30,7 @@ import {
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
 } from "../testChange";
+import { assertDeltaEqual } from "../utils";
 
 const rootKey: FieldKey = brand("root");
 
@@ -322,10 +324,11 @@ describe("EditManager", () => {
 			assert.deepEqual(anchors.intentions, [1, 3]);
 
 			const inverseChanges = changes.map(TestChange.invert).reverse();
-			const inverseDeltas = inverseChanges.map(family.intoDelta);
-			const deltas = Array.from(manager.rollbackLocalChanges(startingRevision));
-			assert.deepEqual(deltas, inverseDeltas);
-			const totalRebases = [...changes, ...inverseChanges];
+			const composedInverse = TestChange.compose(inverseChanges.map(makeAnonChange));
+			const inverseDelta = family.intoDelta(composedInverse);
+			const delta = manager.rollbackLocalChanges(startingRevision);
+			assertDeltaEqual(delta, inverseDelta);
+			const totalRebases = [...changes, composedInverse];
 			assert.deepEqual(anchors.rebases, totalRebases);
 			assert.deepEqual(anchors.intentions, []);
 		});
