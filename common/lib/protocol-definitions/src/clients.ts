@@ -10,11 +10,28 @@ import { IUser } from "./users";
  */
 export type ConnectionMode = "write" | "read";
 
+/**
+ * TODO
+ */
 export interface ICapabilities {
+	/**
+	 * TODO
+	 */
 	interactive: boolean;
 }
+
+/**
+ * TODO
+ */
 export interface IClientDetails {
+	/**
+	 * TODO
+	 */
 	capabilities: ICapabilities;
+	
+	/**
+	 * TODO
+	 */
 	type?: string;
 
 	/**
@@ -22,15 +39,30 @@ export interface IClientDetails {
 	 * it should be in particular format like: `prop1:val1;prop2:val2;prop3:val3`.
 	 */
 	environment?: string;
+	
+	/**
+	 * TODO
+	 */
 	device?: string;
 }
 
+/**
+ * TODO
+ */
 export interface IClient {
 	/**
 	 * {@inheritDoc ConnectionMode}
 	 */
 	mode: ConnectionMode;
+	
+	/**
+	 * TODO
+	 */
 	details: IClientDetails;
+	
+	/**
+	 * TODO
+	 */
 	permission: string[];
 	
 	/**
@@ -39,6 +71,10 @@ export interface IClient {
 	 * @remarks There may be more than 1 client associated with the same user.
 	 */
 	user: IUser;
+	
+	/**
+	 * TODO
+	 */
 	scopes: string[];
 
 	/**
@@ -47,15 +83,30 @@ export interface IClient {
 	timestamp?: number;
 }
 
+/**
+ * TODO
+ */
 export interface ISequencedClient {
+	/**
+	 * The underlying client details.
+	 */
 	client: IClient;
 
+	/**
+	 * TODO
+	 */
 	sequenceNumber: number;
 }
 
 export interface ISignalClient {
+	/**
+	 * The {@link ISignalClient.client}'s ID.
+	 */
 	clientId: string;
 
+	/**
+	 * The underlying client details.
+	 */
 	client: IClient;
 
 	/**
