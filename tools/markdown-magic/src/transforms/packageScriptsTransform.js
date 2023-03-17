@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+const scripts = require("markdown-magic-package-scripts");
+
 const { formattedGeneratedContentBody, formattedSectionText } = require("../utilities");
 
 /**
