@@ -134,14 +134,15 @@ export class CheckpointManager implements ICheckpointManager {
                 } else {
                     // No active clients, delete from local collection, write to global collection
                     Lumberjack.info(`Removing checkpoint data from the local database. No active clients.`, lumberProperties);
-                    await this.localCheckpointCollection.deleteOne({
-                        documentId: this.documentId,
-                        tenantId: this.tenantId,
-                    }).catch((error) => {
-                        Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
-                    });
-                    Lumberjack.info(`Writing checkpoint to global database`, lumberProperties);
-                    await this.writeScribeCheckpointToCollection(checkpoint, false);
+                    await Promise.all([
+                        this.localCheckpointCollection.deleteOne({
+                            documentId: this.documentId,
+                            tenantId: this.tenantId,
+                        }).catch((error) => {
+                            Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
+                        }),
+                        await this.writeScribeCheckpointToCollection(checkpoint, false)
+                    ]);
                 }
             } else {
                 Lumberjack.info(`No local collection found. Writing checkpoint to global database.`, lumberProperties);
@@ -168,7 +169,7 @@ export class CheckpointManager implements ICheckpointManager {
         await (isLocal ? this.localCheckpointCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
                 Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
             }) : this.documentCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
-                Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
+                Lumberjack.error(`Error removing checkpoint data from the global database.`, lumberProperties, error);
             }));
     }
 

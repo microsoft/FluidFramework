@@ -206,6 +206,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     ...getLumberBaseProperties(documentId, tenantId),
                     lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
                     logOffset: lastCheckpoint.logOffset,
+                    checkpointTimestamp: lastCheckpoint.checkpointTimestamp,
                     retrievedFromLocalDB: isLocalCheckpoint
                 }
 

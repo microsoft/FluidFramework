@@ -109,12 +109,9 @@ export class CheckpointContext {
 		}
 
 		let updateP: Promise<void>;
-        let isLocal = false;
 
         // determine if checkpoint is local
-        if(this.localCheckpointEnabled && (checkpoint.reason !== CheckpointReason.NoClients)) {
-            isLocal = true;
-        }
+        const isLocal = (this.localCheckpointEnabled && (checkpoint.reason !== CheckpointReason.NoClients))
 
 		if (checkpoint.clear) {
 			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);
