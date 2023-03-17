@@ -108,6 +108,7 @@ export {
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
+	HasFieldChanges,
 	ValueConstraint,
 	TypedSchema,
 } from "./modular-schema";
