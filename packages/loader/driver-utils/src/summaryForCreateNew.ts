@@ -51,6 +51,8 @@ export function isCombinedAppAndProtocolSummary(
  * @param appSummary - Summary of the app.
  * @param protocolSummary - Summary of the protocol.
  * @internal
+ *
+ * @deprecated 2.0.0-internal.3.4.0 - Not intended for public use.  Will be moved to container-loader and no longer exported in an upcoming release.
  */
 export function combineAppAndProtocolSummary(
 	appSummary: ISummaryTree,

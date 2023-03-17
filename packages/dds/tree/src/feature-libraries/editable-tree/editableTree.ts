@@ -43,10 +43,10 @@ import {
 	arrayLikeMarkerSymbol,
 	ContextuallyTypedNodeDataObject,
 	applyFieldTypesFromContext,
-	applyTypesFromContext,
 	getPossibleTypes,
 	typeNameSymbol,
 	valueSymbol,
+	cursorFromContextualData,
 	allowsValue,
 } from "../contextuallyTyped";
 import {
@@ -1141,8 +1141,10 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		value: ContextuallyTypedNodeData,
 		receiver: unknown,
 	): boolean => {
-		const cursor = singleMapTreeCursor(
-			applyTypesFromContext(target.context.schema, target.fieldSchema.types, value),
+		const cursor = cursorFromContextualData(
+			target.context.schema,
+			target.fieldSchema.types,
+			value,
 		);
 		// This is just a cheap way to check if there might be a node at the given index.
 		// An implementation of the target methods holds all relevant key assertions.
