@@ -5,13 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
-import {
-	FluidObject,
-	IFluidRouter,
-	IRequest,
-	IRequestHeader,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	IContainer,
 	IFluidModule,
@@ -301,11 +295,7 @@ export class Loader implements IHostLoader {
 	}
 
 	public async createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer> {
-		return Container.createDetached(
-			this,
-			codeDetails,
-			this.protocolHandlerBuilder,
-		);
+		return Container.createDetached(this, codeDetails, this.protocolHandlerBuilder);
 	}
 
 	public async rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer> {
@@ -362,7 +352,7 @@ export class Loader implements IHostLoader {
 		}
 
 		const { fromSequenceNumber } = this.parseHeader(parsed, request);
-	
+
 		const container = await this.loadContainer(request, resolvedAsFluid, pendingLocalState);
 
 		if (container.deltaManager.lastSequenceNumber <= fromSequenceNumber) {
