@@ -30,7 +30,6 @@ import {
 	mintRevisionTag,
 	tagChange,
 	TaggedChange,
-	makeAnonChange,
 } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 
