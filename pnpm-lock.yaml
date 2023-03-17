@@ -73,7 +73,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -86,7 +86,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -123,7 +123,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -133,7 +133,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -161,7 +161,7 @@ importers:
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -174,7 +174,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -208,7 +208,7 @@ importers:
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -218,7 +218,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -257,7 +257,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -276,7 +276,7 @@ importers:
       react-collapsible: ^2.7.0
       react-dom: ^17.0.1
       react-grid-layout: ^0.18.3
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sass-loader: ^7.1.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
@@ -325,7 +325,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
@@ -338,7 +338,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sass-loader: 7.3.1_webpack@5.76.2
       source-map-loader: 2.0.2_webpack@5.76.2
       style-loader: 1.3.0_webpack@5.76.2
@@ -367,7 +367,7 @@ importers:
       '@types/fs-extra': ^9.0.11
       '@types/node': ^14.18.38
       buffer: ^6.0.3
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       css-loader: ^1.0.0
       eslint: ~8.6.0
       express: ^4.16.3
@@ -375,7 +375,7 @@ importers:
       nconf: ^0.12.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -406,13 +406,13 @@ importers:
       '@types/fs-extra': 9.0.13
       '@types/node': 14.18.38
       buffer: 6.0.3
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       fs-extra: 9.1.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -443,7 +443,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -456,7 +456,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -491,7 +491,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -501,7 +501,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -528,7 +528,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -540,7 +540,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -568,7 +568,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
@@ -579,7 +579,7 @@ importers:
       less-loader: 4.1.0_less@3.9.0+webpack@5.76.2
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -610,7 +610,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -619,7 +619,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -649,7 +649,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -657,7 +657,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -689,14 +689,14 @@ importers:
       '@types/node': ^14.18.38
       '@types/react': ^17.0.44
       codemirror: ^5.65.11
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
       prettier: ~2.6.2
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -729,12 +729,12 @@ importers:
       '@types/codemirror': 5.60.7
       '@types/node': 14.18.38
       '@types/react': 17.0.52
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -761,7 +761,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -770,7 +770,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -797,7 +797,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -805,7 +805,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -828,7 +828,7 @@ importers:
       '@fluidframework/sequence': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@types/node': ^14.18.38
       '@types/react': ^17.0.44
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       css-loader: ^1.0.0
       eslint: ~8.6.0
       html-loader: ^3.1.0
@@ -837,7 +837,7 @@ importers:
       monaco-editor-webpack-plugin: ^6.0.0
       prettier: ~2.6.2
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sass: ^1.42.1
       sass-loader: ^7.1.0
       source-map-loader: ^2.0.0
@@ -865,14 +865,14 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/react': 17.0.52
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       html-loader: 3.1.2_webpack@5.76.2
       loader-utils: 1.4.2
       monaco-editor-webpack-plugin: 6.0.0_6bacmpib6xgpdlrsmo2zmk7zau
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sass: 1.56.1
       sass-loader: 7.3.1_webpack@5.76.2
       source-map-loader: 2.0.2_webpack@5.76.2
@@ -902,7 +902,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -910,7 +910,7 @@ importers:
       jest-puppeteer: ^4.3.0
       prettier: ~2.6.2
       puppeteer: ^1.20.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -935,7 +935,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -943,7 +943,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -967,7 +967,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -978,7 +978,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1003,7 +1003,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
@@ -1013,7 +1013,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -1049,7 +1049,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -1060,7 +1060,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1096,7 +1096,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
@@ -1106,7 +1106,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -1131,7 +1131,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -1139,7 +1139,7 @@ importers:
       jest-puppeteer: ^4.3.0
       prettier: ~2.6.2
       puppeteer: ^1.20.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -1162,7 +1162,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -1170,7 +1170,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -1189,11 +1189,11 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       prettier: ~2.6.2
       puppeteer: ^1.20.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       webpack: ^5.76.2
@@ -1209,11 +1209,11 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
       webpack: 5.76.2_webpack-cli@4.10.0
@@ -1235,7 +1235,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -1246,7 +1246,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1270,7 +1270,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
@@ -1280,7 +1280,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -1304,7 +1304,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -1315,7 +1315,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1339,7 +1339,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
@@ -1349,7 +1349,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -1373,7 +1373,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -1384,7 +1384,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1408,7 +1408,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
@@ -1418,7 +1418,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -1443,7 +1443,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       fluid-framework: '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
@@ -1453,7 +1453,7 @@ importers:
       jest-puppeteer: ^4.3.0
       prettier: ~2.6.2
       puppeteer: ^1.20.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -1477,7 +1477,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -1486,7 +1486,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -1522,7 +1522,7 @@ importers:
       '@types/prosemirror-state': ^1.4.0
       '@types/prosemirror-view': ^1.24.0
       '@types/react': ^17.0.44
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -1539,7 +1539,7 @@ importers:
       prosemirror-transform: ^1.7.1
       prosemirror-view: ^1.30.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -1586,12 +1586,12 @@ importers:
       '@types/prosemirror-state': 1.4.0
       '@types/prosemirror-view': 1.24.0
       '@types/react': 17.0.52
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -1631,7 +1631,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       bootstrap: ^3.3.7
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       debug: ^4.1.1
@@ -1646,7 +1646,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -1691,7 +1691,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
@@ -1702,7 +1702,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -1736,13 +1736,13 @@ importers:
       '@types/events': ^3.0.0
       '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
       prettier: ~2.6.2
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       simplemde: ^1.11.2
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -1777,11 +1777,11 @@ importers:
       '@types/events': 3.0.0
       '@types/react': 17.0.52
       '@types/simplemde': 1.11.8
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -1814,14 +1814,14 @@ importers:
       '@types/debug': ^4.1.5
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       debug: ^4.1.1
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
@@ -1848,13 +1848,13 @@ importers:
       '@types/debug': 4.1.7
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   examples/data-objects/table-view:
@@ -1875,13 +1875,13 @@ importers:
       '@tiny-calc/micro': 0.0.0-alpha.5
       '@types/node': ^14.18.38
       '@types/react': ^17.0.44
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       css-loader: ^1.0.0
       eslint: ~8.6.0
       prettier: ~2.6.2
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -1910,12 +1910,12 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/node': 14.18.38
       '@types/react': 17.0.52
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -1949,7 +1949,7 @@ importers:
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -1960,7 +1960,7 @@ importers:
       prettier: ~2.6.2
       process: ^0.11.10
       puppeteer: ^1.20.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -1994,7 +1994,7 @@ importers:
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -2004,7 +2004,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -2035,7 +2035,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -2046,7 +2046,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       style-loader: ^1.0.0
       ts-loader: ^9.3.0
@@ -2081,7 +2081,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
@@ -2090,7 +2090,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       style-loader: 1.3.0_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -2126,7 +2126,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       assert: ^2.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -2143,7 +2143,7 @@ importers:
       prettier: ~2.6.2
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       source-map-support: ^0.5.16
       style-loader: ^1.0.0
@@ -2186,7 +2186,7 @@ importers:
       '@types/node': 14.18.38
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
@@ -2199,7 +2199,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       source-map-support: 0.5.21
       style-loader: 1.3.0_webpack@5.76.2
@@ -2238,7 +2238,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       html-webpack-plugin: ^5.5.0
@@ -2249,7 +2249,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -2284,7 +2284,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -2293,7 +2293,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -2342,7 +2342,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/valid-url': ^1.0.3
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cors: ^2.8.4
       cross-env: ^7.0.3
       css-loader: ^1.0.0
@@ -2368,7 +2368,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       stream-http: ^3.2.0
       style-loader: ^1.0.0
@@ -2434,7 +2434,7 @@ importers:
       '@types/react-dom': 17.0.18
       '@types/valid-url': 1.0.3
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.6.0
@@ -2452,7 +2452,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       start-server-and-test: 1.14.0
       stream-http: 3.2.0
       supertest: 3.4.2
@@ -2483,7 +2483,7 @@ importers:
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -2494,7 +2494,7 @@ importers:
       prettier: ~2.6.2
       process: ^0.11.10
       puppeteer: ^1.20.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -2523,7 +2523,7 @@ importers:
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -2533,7 +2533,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -2566,7 +2566,7 @@ importers:
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -2577,7 +2577,7 @@ importers:
       prettier: ~2.6.2
       process: ^0.11.10
       puppeteer: ^1.20.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -2612,7 +2612,7 @@ importers:
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -2622,7 +2622,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -2667,7 +2667,7 @@ importers:
       '@types/react-dom': ^17.0.18
       '@types/uuid': ^8.3.0
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       css-loader: ^1.0.0
       eslint: ~8.6.0
@@ -2688,7 +2688,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       style-loader: ^1.0.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
@@ -2738,7 +2738,7 @@ importers:
       '@types/react-dom': 17.0.18
       '@types/uuid': 8.3.4
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
@@ -2756,7 +2756,7 @@ importers:
       prettier: 2.6.2
       process: 0.11.10
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       style-loader: 1.3.0_webpack@5.76.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -2782,11 +2782,11 @@ importers:
       '@mixer/webpack-bundle-compare': ^0.1.0
       '@types/node': ^14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -2810,11 +2810,11 @@ importers:
       '@mixer/webpack-bundle-compare': 0.1.1
       '@types/node': 14.18.38
       '@types/puppeteer': 1.3.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
       webpack: 5.76.2_webpack-cli@4.10.0
@@ -2850,11 +2850,11 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -2887,11 +2887,11 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/PropertyDDS/examples/partial-checkout:
@@ -2935,7 +2935,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/uuid': ^8.3.0
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
@@ -2949,7 +2949,7 @@ importers:
       puppeteer: ^1.20.0
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sass: ^1.42.1
       sass-loader: ^7.1.0
       style-loader: ^1.0.0
@@ -3004,7 +3004,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -3013,7 +3013,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sass: 1.56.1
       sass-loader: 7.3.1_webpack@5.76.2
       style-loader: 1.3.0_webpack@5.76.2
@@ -3066,7 +3066,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/uuid': ^8.3.0
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       css-loader: ^1.0.0
       eslint: ~8.6.0
       events: ^3.1.0
@@ -3081,7 +3081,7 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       react-virtualized-auto-sizer: ^1.0.6
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sass: ^1.42.1
       sass-loader: ^7.1.0
       source-map-loader: ^2.0.0
@@ -3140,7 +3140,7 @@ importers:
       '@types/jest-environment-puppeteer': 2.2.0
       '@types/puppeteer': 1.3.0
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       css-loader: 1.0.1_webpack@5.76.2
       eslint: 8.6.0
       html-webpack-plugin: 5.5.0_webpack@5.76.2
@@ -3149,7 +3149,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sass: 1.56.1
       sass-loader: 7.3.1_webpack@5.76.2
       source-map-loader: 2.0.2_webpack@5.76.2
@@ -3163,17 +3163,17 @@ importers:
   experimental/PropertyDDS/examples/schemas:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     devDependencies:
       '@fluidframework/build-common': 1.1.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/PropertyDDS/packages/property-binder:
@@ -3204,7 +3204,7 @@ importers:
       babel-plugin-transform-jsx: ^2.0.0
       body-parser: ^1.18.3
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
@@ -3213,7 +3213,7 @@ importers:
       lodash: ^4.17.21
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       source-map-support: ^0.5.16
       typedoc: ^0.12.0
@@ -3250,7 +3250,7 @@ importers:
       babel-plugin-transform-jsx: 2.0.0
       body-parser: 1.20.1
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       jest: 26.6.3
       jest-junit: 10.0.0
@@ -3258,7 +3258,7 @@ importers:
       lighthouse: 5.6.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       source-map-support: 0.5.21
       typedoc: 0.12.0
@@ -3277,7 +3277,7 @@ importers:
       ajv-keywords: 4.0.0
       async: ^3.2.2
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -3287,7 +3287,7 @@ importers:
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       semver: ^7.3.4
       sinon: ^7.4.2
       traverse: 0.6.6
@@ -3308,7 +3308,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -3316,7 +3316,7 @@ importers:
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -3336,7 +3336,7 @@ importers:
       async: ^3.2.2
       base64-js: 1.3.0
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -3348,7 +3348,7 @@ importers:
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       semver: ^7.3.4
       sinon: ^7.4.2
       traverse: 0.6.6
@@ -3375,7 +3375,7 @@ importers:
       '@types/node': 14.18.38
       '@types/semver': 7.3.13
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -3383,7 +3383,7 @@ importers:
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -3421,7 +3421,7 @@ importers:
       axios: ^0.26.0
       buffer: ^6.0.3
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       easy-table: ^1.1.1
@@ -3435,7 +3435,7 @@ importers:
       nyc: ^15.1.0
       pako: ^2.0.4
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -3475,7 +3475,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       easy-table: 1.2.0
@@ -3484,7 +3484,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/PropertyDDS/packages/property-inspector-table:
@@ -3520,7 +3520,7 @@ importers:
       body-parser: ^1.18.3
       classnames: ^2.3.1
       clean-webpack-plugin: ^4.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       enzyme: ^3.10.0
       eslint: ~8.6.0
@@ -3543,7 +3543,7 @@ importers:
       react-select: ^2.4.3
       react-virtualized-auto-sizer: ^1.0.6
       require-from-string: ^2.0.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       source-map-support: ^0.5.16
       svg-sprite-loader: ^6.0.11
@@ -3599,7 +3599,7 @@ importers:
       async: 3.2.4
       body-parser: 1.20.1
       clean-webpack-plugin: 4.0.0_webpack@5.76.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       enzyme: 3.11.0
       eslint: 8.6.0
@@ -3613,7 +3613,7 @@ importers:
       lighthouse: 5.6.0
       prettier: 2.6.2
       process: 0.11.10
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       source-map-support: 0.5.21
       svg-sprite-loader: 6.0.11
@@ -3639,7 +3639,7 @@ importers:
       ajv: 7.1.1
       async: ^3.2.2
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       fastest-json-copy: ^1.0.1
@@ -3648,7 +3648,7 @@ importers:
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       semver: ^7.3.4
       sinon: ^7.4.2
       traverse: 0.6.6
@@ -3670,14 +3670,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -3693,13 +3693,13 @@ importers:
       '@types/jest': 22.2.3
       '@types/node': ^14.18.38
       babel-loader: ^8.0.5
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       jest: ^26.6.3
       jest-junit: ^10.0.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       source-map-support: ^0.5.16
       ts-jest: ^26.4.4
@@ -3718,13 +3718,13 @@ importers:
       '@types/jest': 22.2.3
       '@types/node': 14.18.38
       babel-loader: 8.3.0_kvtikqp4x5zr2yxxdvsimfklpq
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       jest: 26.6.3
       jest-junit: 10.0.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       source-map-support: 0.5.21
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
@@ -3830,7 +3830,7 @@ importers:
       qs: ^6.11.0
       request: ^2.88.0
       request-promise-native: 1.0.7
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       rmfr: 2.0.0
       sanitize: 2.1.0
       sinon: ^7.4.2
@@ -3894,7 +3894,7 @@ importers:
       promisify: 0.0.3
       request: 2.88.2
       request-promise-native: 1.0.7_request@2.88.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       sinon-chai: 3.3.0_chai@4.3.7+sinon@7.5.0
       stats-percentile: 3.1.0
@@ -3919,7 +3919,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       best-random: ^1.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -3927,7 +3927,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       quill-delta: ^4.2.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -3946,7 +3946,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       best-random: 1.0.3
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -3954,7 +3954,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       quill-delta: 4.2.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/dds/ot/sharejs/json1:
@@ -3974,7 +3974,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       best-random: ^1.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -3982,7 +3982,7 @@ importers:
       nyc: ^15.1.0
       ot-json1: ^1.0.1
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/ot': link:../../ot
@@ -4002,14 +4002,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       best-random: 1.0.3
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/dds/sequence-deprecated:
@@ -4031,7 +4031,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -4039,7 +4039,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -4060,7 +4060,7 @@ importers:
       '@types/diff': 3.5.5
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -4068,7 +4068,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/dds/tree:
@@ -4103,7 +4103,7 @@ importers:
       '@types/uuid': ^8.3.0
       buffer: ^6.0.3
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       denque: ^1.5.1
@@ -4115,7 +4115,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -4155,7 +4155,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/uuid': 8.3.4
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       easy-table: 1.2.0
@@ -4165,7 +4165,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/dds/tree-graphql:
@@ -4184,7 +4184,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/ws': ^6.0.1
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
@@ -4193,7 +4193,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/tree': link:../tree
@@ -4213,14 +4213,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/ws': 6.0.4
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/examples/bubblebench/baseline:
@@ -4239,7 +4239,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -4248,7 +4248,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -4273,7 +4273,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -4281,7 +4281,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -4302,7 +4302,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       best-random: ^1.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
@@ -4310,7 +4310,7 @@ importers:
       prettier: ~2.6.2
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       use-resize-observer: ^7.0.0
     dependencies:
@@ -4328,13 +4328,13 @@ importers:
       '@types/node': 14.18.38
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/examples/bubblebench/editable-shared-tree:
@@ -4355,7 +4355,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -4364,7 +4364,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -4392,7 +4392,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -4400,7 +4400,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -4428,7 +4428,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -4438,7 +4438,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -4466,7 +4466,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -4474,7 +4474,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -4502,7 +4502,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jest: ^26.6.3
@@ -4511,7 +4511,7 @@ importers:
       prettier: ~2.6.2
       puppeteer: ^1.20.0
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -4539,7 +4539,7 @@ importers:
       '@types/puppeteer': 1.3.0
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       jest: 26.6.3
@@ -4547,7 +4547,7 @@ importers:
       jest-puppeteer: 4.4.0_puppeteer@1.20.0
       prettier: 2.6.2
       puppeteer: 1.20.0
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -4569,13 +4569,13 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -4591,12 +4591,12 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/framework/last-edited:
@@ -4616,13 +4616,13 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -4641,13 +4641,13 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   experimental/framework/react-inputs:
@@ -4663,12 +4663,12 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^14.18.38
       '@types/react': ^17.0.44
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
       react: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/cell': link:../../../packages/dds/cell
@@ -4684,11 +4684,11 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/node': 14.18.38
       '@types/react': 17.0.52
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/common/container-definitions:
@@ -4704,12 +4704,12 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@microsoft/api-extractor': ^7.34.4
       '@types/events': ^3.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       events: ^3.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -4725,11 +4725,11 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4
       '@types/events': 3.0.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/common/core-interfaces:
@@ -4741,11 +4741,11 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.12.0
@@ -4755,11 +4755,11 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/common/core-utils:
@@ -4773,7 +4773,7 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -4781,7 +4781,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-support: ^0.5.16
       typescript: ~4.5.5
     devDependencies:
@@ -4794,7 +4794,7 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -4802,7 +4802,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-support: 0.5.21
       typescript: 4.5.5
 
@@ -4817,11 +4817,11 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
       '@microsoft/api-extractor': ^7.34.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -4834,11 +4834,11 @@ importers:
       '@fluidframework/driver-definitions-previous': /@fluidframework/driver-definitions/2.0.0-internal.3.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/cell:
@@ -4861,14 +4861,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -4890,14 +4890,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/counter:
@@ -4919,14 +4919,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -4947,14 +4947,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/ink:
@@ -4975,14 +4975,14 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -5004,14 +5004,14 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.4
       '@types/mocha': 9.1.1
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/map:
@@ -5040,7 +5040,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/path-browserify': ^1.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -5048,7 +5048,7 @@ importers:
       nyc: ^15.1.0
       path-browserify: ^1.0.1
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -5077,14 +5077,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/path-browserify': 1.0.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/matrix:
@@ -5115,7 +5115,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       best-random: ^1.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -5124,7 +5124,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-support: ^0.5.16
       ts-node: ^7.0.1
       tslib: ^1.10.0
@@ -5160,7 +5160,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       best-random: 1.0.3
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -5168,7 +5168,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-support: 0.5.21
       ts-node: 7.0.1
       typescript: 4.5.5
@@ -5201,7 +5201,7 @@ importers:
       '@types/diff': ^3.5.1
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -5209,7 +5209,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-support: ^0.5.16
       typescript: ~4.5.5
     dependencies:
@@ -5239,7 +5239,7 @@ importers:
       '@types/diff': 3.5.5
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -5247,7 +5247,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-support: 0.5.21
       typescript: 4.5.5
 
@@ -5271,14 +5271,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -5302,14 +5302,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/pact-map:
@@ -5331,7 +5331,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -5340,7 +5340,7 @@ importers:
       mocha-junit-reporter: ^1.18.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -5362,7 +5362,7 @@ importers:
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -5370,7 +5370,7 @@ importers:
       mocha-junit-reporter: 1.23.3_mocha@10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/register-collection:
@@ -5393,14 +5393,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -5422,14 +5422,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/sequence:
@@ -5463,7 +5463,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/random-js': ^1.0.31
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -5472,7 +5472,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -5507,7 +5507,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -5516,7 +5516,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       random-js: 1.0.8
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/shared-object-base:
@@ -5545,14 +5545,14 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       benchmark: ^2.1.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-node: ^7.0.1
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -5583,14 +5583,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       benchmark: 2.1.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-node: 7.0.1
       typescript: 4.5.5
 
@@ -5615,14 +5615,14 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       benchmark: ^2.1.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -5645,14 +5645,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       benchmark: 2.1.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/task-manager:
@@ -5680,7 +5680,7 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -5689,7 +5689,7 @@ importers:
       mocha-junit-reporter: ^1.18.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -5717,7 +5717,7 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -5725,7 +5725,7 @@ importers:
       mocha-junit-reporter: 1.23.3_mocha@10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/test-dds-utils:
@@ -5736,11 +5736,11 @@ importers:
       '@fluidframework/shared-object-base': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       mocha: ^10.0.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -5751,10 +5751,10 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/dds/tree:
@@ -5790,7 +5790,7 @@ importers:
       '@types/ungap__structured-clone': ^0.3.0
       '@types/uuid': ^8.3.0
       '@ungap/structured-clone': ^0.3.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -5801,7 +5801,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sorted-btree: ^1.8.0
       source-map-support: ^0.5.16
       typescript: ~4.5.5
@@ -5841,7 +5841,7 @@ importers:
       '@types/node': 14.18.38
       '@types/ungap__structured-clone': 0.3.0
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -5852,7 +5852,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-support: 0.5.21
       typescript: 4.5.5
 
@@ -5871,13 +5871,13 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       jsonschema: ^1.2.6
       mocha: ^10.2.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -5895,12 +5895,12 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/driver-base:
@@ -5918,11 +5918,11 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       socket.io-client: ^4.4.1
       typescript: ~4.5.5
     dependencies:
@@ -5940,11 +5940,11 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       socket.io-client: 4.5.4
       typescript: 4.5.5
 
@@ -5961,14 +5961,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/jest': 22.2.3
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       fake-indexeddb: 3.1.4
       idb: ^6.1.2
       jest: ^26.6.3
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -5984,13 +5984,13 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/jest': 22.2.3
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       fake-indexeddb: 3.1.4
       jest: 26.6.3
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/file-driver:
@@ -6008,11 +6008,11 @@ importers:
       '@fluidframework/replay-driver': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -6029,11 +6029,11 @@ importers:
       '@fluidframework/file-driver-previous': /@fluidframework/file-driver/2.0.0-internal.3.2.0
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/fluidapp-odsp-urlResolver:
@@ -6051,12 +6051,12 @@ importers:
       '@fluidframework/odsp-driver-definitions': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -6073,12 +6073,12 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/local-driver:
@@ -6107,7 +6107,7 @@ importers:
       '@types/jsrsasign': ^8.0.8
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
@@ -6115,7 +6115,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       socket.io-client: ^4.4.1
       typescript: ~4.5.5
       url: ^0.11.0
@@ -6150,13 +6150,13 @@ importers:
       '@types/jsrsasign': 8.0.13
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       socket.io-client: 4.5.4
       typescript: 4.5.5
 
@@ -6187,7 +6187,7 @@ importers:
       '@types/sha.js': ^2.4.0
       '@types/sinon': ^7.0.13
       abort-controller: ^3.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -6195,7 +6195,7 @@ importers:
       node-fetch: ^2.6.9
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.4.1
       typescript: ~4.5.5
@@ -6230,14 +6230,14 @@ importers:
       '@types/node-fetch': 2.6.2
       '@types/sha.js': 2.4.0
       '@types/sinon': 7.5.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -6251,12 +6251,12 @@ importers:
       '@fluidframework/odsp-driver-definitions-previous': npm:@fluidframework/odsp-driver-definitions@2.0.0-internal.3.2.0
       '@fluidframework/protocol-definitions': ^1.1.0
       '@microsoft/api-extractor': ^7.34.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
@@ -6268,12 +6268,12 @@ importers:
       '@fluidframework/odsp-driver-definitions-previous': /@fluidframework/odsp-driver-definitions/2.0.0-internal.3.2.0
       '@fluidframework/protocol-definitions': 1.1.0
       '@microsoft/api-extractor': 7.34.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/odsp-urlResolver:
@@ -6290,12 +6290,12 @@ importers:
       '@fluidframework/odsp-urlresolver-previous': npm:@fluidframework/odsp-urlresolver@2.0.0-internal.3.2.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6311,12 +6311,12 @@ importers:
       '@fluidframework/odsp-urlresolver-previous': /@fluidframework/odsp-urlresolver/2.0.0-internal.3.2.0
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/replay-driver:
@@ -6336,13 +6336,13 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/nock': ^9.3.0
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
       nock: ^10.0.1
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -6361,13 +6361,13 @@ importers:
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
       nock: 10.0.6
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/routerlicious-driver:
@@ -6396,7 +6396,7 @@ importers:
       '@types/url-parse': 1.4.4
       '@types/uuid': ^8.3.0
       axios: ^0.26.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       cross-fetch: ^3.1.5
@@ -6407,7 +6407,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       querystring: ^0.2.0
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sinon: ^7.4.2
       socket.io-client: ^4.4.1
       typescript: ~4.5.5
@@ -6445,7 +6445,7 @@ importers:
       '@types/url-parse': 1.4.4
       '@types/uuid': 8.3.4
       axios: 0.26.1
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -6453,7 +6453,7 @@ importers:
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -6473,13 +6473,13 @@ importers:
       '@types/nconf': ^0.10.0
       '@types/node': ^14.18.38
       assert: ^2.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nconf: ^0.12.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       url: ^0.11.0
     dependencies:
@@ -6500,12 +6500,12 @@ importers:
       '@types/nconf': 0.10.3
       '@types/node': 14.18.38
       assert: 2.0.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/drivers/tinylicious-driver:
@@ -6527,13 +6527,13 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       jsrsasign: ^10.5.25
       mocha: ^10.2.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -6557,12 +6557,12 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/agent-scheduler:
@@ -6586,12 +6586,12 @@ importers:
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -6616,12 +6616,12 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/aqueduct:
@@ -6650,14 +6650,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -6687,14 +6687,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/attributor:
@@ -6723,7 +6723,7 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -6731,7 +6731,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -6760,14 +6760,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/data-object-base:
@@ -6793,13 +6793,13 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -6824,13 +6824,13 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/dds-interceptions:
@@ -6852,7 +6852,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/random-js': ^1.0.31
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -6861,7 +6861,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -6882,7 +6882,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -6891,7 +6891,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       random-js: 1.0.8
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/fluid-framework:
@@ -6909,12 +6909,12 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -6931,12 +6931,12 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/fluid-static:
@@ -6964,14 +6964,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/aqueduct': link:../aqueduct
@@ -6998,14 +6998,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/oldest-client-observer:
@@ -7024,7 +7024,7 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -7032,7 +7032,7 @@ importers:
       mocha-junit-reporter: ^1.18.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -7050,7 +7050,7 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -7058,7 +7058,7 @@ importers:
       mocha-junit-reporter: 1.23.3_mocha@10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/request-handler:
@@ -7080,7 +7080,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/random-js': ^1.0.31
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -7089,7 +7089,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -7110,7 +7110,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -7119,7 +7119,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       random-js: 1.0.8
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/synthesize:
@@ -7135,14 +7135,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.12.0
@@ -7156,14 +7156,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/test-client-utils:
@@ -7177,11 +7177,11 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sillyname: ^0.1.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -7198,11 +7198,11 @@ importers:
       '@fluidframework/test-client-utils-previous': /@fluidframework/test-client-utils/2.0.0-internal.3.2.0
       '@microsoft/api-extractor': 7.34.4
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/tinylicious-client:
@@ -7231,12 +7231,12 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: 0.6.0
       typescript: ~4.5.5
@@ -7268,12 +7268,12 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       start-server-and-test: 1.14.0
       tinylicious: 0.6.0
       typescript: 4.5.5
@@ -7297,7 +7297,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/random-js': ^1.0.31
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
@@ -7307,7 +7307,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/map': link:../../dds/map
@@ -7329,7 +7329,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -7338,7 +7338,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       random-js: 1.0.8
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/view-adapters:
@@ -7353,13 +7353,13 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7375,11 +7375,11 @@ importers:
       '@microsoft/api-extractor': 7.34.4
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/framework/view-interfaces:
@@ -7393,11 +7393,11 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7410,11 +7410,11 @@ importers:
       '@microsoft/api-extractor': 7.34.4
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/loader/container-loader:
@@ -7444,7 +7444,7 @@ importers:
       '@types/node': ^14.18.38
       '@types/sinon': ^7.0.13
       abort-controller: ^3.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
@@ -7454,7 +7454,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~4.5.5
       url: ^0.11.0
@@ -7491,14 +7491,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/sinon': 7.5.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -7519,14 +7519,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -7545,14 +7545,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/loader/driver-utils:
@@ -7577,14 +7577,14 @@ importers:
       '@types/node': ^14.18.38
       '@types/sinon': ^7.0.13
       axios: ^0.26.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~4.5.5
       url: ^0.11.0
@@ -7613,14 +7613,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/sinon': 7.5.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -7640,14 +7640,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -7665,14 +7665,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/loader/test-loader-utils:
@@ -7687,10 +7687,10 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/test-loader-utils-previous': npm:@fluidframework/test-loader-utils@2.0.0-internal.3.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -7704,10 +7704,10 @@ importers:
       '@fluidframework/build-tools': 0.12.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/test-loader-utils-previous': /@fluidframework/test-loader-utils/2.0.0-internal.3.2.0
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/loader/web-code-loader:
@@ -7722,12 +7722,12 @@ importers:
       '@fluidframework/web-code-loader-previous': npm:@fluidframework/web-code-loader@2.0.0-internal.3.2.0
       '@microsoft/api-extractor': ^7.34.4
       '@types/isomorphic-fetch': ^0.0.35
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       isomorphic-fetch: ^3.0.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       source-map-loader: ^2.0.0
       typescript: ~4.5.5
       webpack: ^5.76.2
@@ -7744,11 +7744,11 @@ importers:
       '@fluidframework/web-code-loader-previous': /@fluidframework/web-code-loader/2.0.0-internal.3.2.0
       '@microsoft/api-extractor': 7.34.4
       '@types/isomorphic-fetch': 0.0.35
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       typescript: 4.5.5
       webpack: 5.76.2
@@ -7783,7 +7783,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/sinon': ^7.0.13
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
@@ -7793,7 +7793,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -7831,14 +7831,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/sinon': 7.5.2
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -7856,11 +7856,11 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -7876,11 +7876,11 @@ importers:
       '@fluidframework/container-runtime-definitions-previous': /@fluidframework/container-runtime-definitions/2.0.0-internal.3.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/runtime/datastore:
@@ -7910,7 +7910,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -7918,7 +7918,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -7950,14 +7950,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/runtime/datastore-definitions:
@@ -7974,11 +7974,11 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -7994,11 +7994,11 @@ importers:
       '@fluidframework/datastore-definitions-previous': /@fluidframework/datastore-definitions/2.0.0-internal.3.2.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.34.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/runtime/garbage-collector:
@@ -8017,14 +8017,14 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -8042,14 +8042,14 @@ importers:
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/runtime/runtime-definitions:
@@ -8066,11 +8066,11 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions-previous': npm:@fluidframework/runtime-definitions@2.0.0-internal.3.2.0
       '@microsoft/api-extractor': ^7.34.4
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -8086,11 +8086,11 @@ importers:
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/runtime-definitions-previous': /@fluidframework/runtime-definitions/2.0.0-internal.3.2.0
       '@microsoft/api-extractor': 7.34.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/runtime/runtime-utils:
@@ -8115,14 +8115,14 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sinon: ^7.4.2
       ts-node: ^7.0.1
       typescript: ~4.5.5
@@ -8148,14 +8148,14 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       ts-node: 7.0.1
       typescript: 4.5.5
@@ -8184,7 +8184,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -8193,7 +8193,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -8223,14 +8223,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/functional-tests:
@@ -8250,14 +8250,14 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       webpack: ^5.76.2
@@ -8280,13 +8280,13 @@ importers:
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
       webpack: 5.76.2_webpack-cli@4.10.0
@@ -8337,14 +8337,14 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -8394,14 +8394,14 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
       uuid: 8.3.2
@@ -8420,13 +8420,13 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.0.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -8441,12 +8441,12 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/snapshots:
@@ -8479,13 +8479,13 @@ importers:
       '@fluidframework/test-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
@@ -8517,13 +8517,13 @@ importers:
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/stochastic-test-utils:
@@ -8537,7 +8537,7 @@ importers:
       '@types/node': ^14.18.38
       '@types/random-js': ^1.0.31
       best-random: ^1.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -8545,7 +8545,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -8558,7 +8558,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -8566,7 +8566,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       random-js: 1.0.8
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-app-insights-logger:
@@ -8580,13 +8580,13 @@ importers:
       '@types/node': ^14.18.38
       '@types/random-js': ^1.0.31
       applicationinsights: ^2.1.9
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       typescript: ~4.5.5
     dependencies:
@@ -8600,13 +8600,13 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       start-server-and-test: 1.14.0
       typescript: 4.5.5
 
@@ -8623,13 +8623,13 @@ importers:
       '@fluidframework/test-driver-definitions-previous': npm:@fluidframework/test-driver-definitions@2.0.0-internal.3.2.0
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -8646,13 +8646,13 @@ importers:
       '@fluidframework/test-driver-definitions-previous': /@fluidframework/test-driver-definitions/2.0.0-internal.3.2.0
       '@microsoft/api-extractor': 7.34.4
       '@types/mocha': 9.1.1
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-drivers:
@@ -8683,13 +8683,13 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       axios: ^0.26.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       semver: ^7.3.4
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -8723,13 +8723,13 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-end-to-end-tests:
@@ -8785,14 +8785,14 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.2
       eslint: ~8.6.0
       mocha: ^10.0.0
       nock: ^10.0.1
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       semver: ^7.3.4
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
@@ -8861,12 +8861,12 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-gc-sweep-tests:
@@ -8901,7 +8901,7 @@ importers:
       '@types/nock': ^9.3.0
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.0.0
@@ -8909,7 +8909,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -8947,13 +8947,13 @@ importers:
       '@types/nock': 9.3.1
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-pairwise-generator:
@@ -8967,13 +8967,13 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/random-js': ^1.0.31
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -8987,12 +8987,12 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-service-load:
@@ -9027,14 +9027,14 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       commander: ^5.1.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
       ps-node: ^0.1.6
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: 0.6.0
       typescript: ~4.5.5
@@ -9073,13 +9073,13 @@ importers:
       '@fluidframework/mocha-test-setup': link:../mocha-test-setup
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-utils:
@@ -9117,7 +9117,7 @@ importers:
       '@types/random-js': ^1.0.31
       '@types/uuid': ^8.3.0
       best-random: ^1.0.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.1.1
@@ -9127,7 +9127,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       random-js: ^1.0.8
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -9167,7 +9167,7 @@ importers:
       '@types/node': 14.18.38
       '@types/random-js': 1.0.31
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
@@ -9176,7 +9176,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       random-js: 1.0.8
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/test/test-version-utils:
@@ -9218,7 +9218,7 @@ importers:
       '@types/node': ^14.18.38
       '@types/semver': ^7.3.6
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
@@ -9227,7 +9227,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       proper-lockfile: ^4.1.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       semver: ^7.3.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -9276,14 +9276,14 @@ importers:
       '@types/node': 14.18.38
       '@types/semver': 7.3.13
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nock: 10.0.6
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
       uuid: 8.3.2
@@ -9309,7 +9309,7 @@ importers:
       '@types/events': ^3.0.0
       '@types/mocha': ^9.1.1
       chai: ^4.2.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
@@ -9318,7 +9318,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -9339,7 +9339,7 @@ importers:
       '@types/events': 3.0.0
       '@types/mocha': 9.1.1
       chai: 4.3.7
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
@@ -9348,7 +9348,7 @@ importers:
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/tools/client-debugger/client-debugger-chrome-extension:
@@ -9377,7 +9377,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/testing-library__jest-dom': ^5.14.5
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copy-webpack-plugin: ^11.0.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
@@ -9391,7 +9391,7 @@ importers:
       prettier: ~2.6.2
       react: ^17.0.1
       react-dom: ^17.0.1
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       scheduler: ^0.20.0
       start-server-and-test: ^1.11.7
       ts-jest: ^26.4.4
@@ -9428,7 +9428,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/testing-library__jest-dom': 5.14.5
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copy-webpack-plugin: 11.0.0_webpack@5.76.2
       copyfiles: 2.4.1
       eslint: 8.6.0
@@ -9440,7 +9440,7 @@ importers:
       jest-junit: 10.0.0
       jest-webextension-mock: 3.8.7
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       start-server-and-test: 1.14.0
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
@@ -9484,7 +9484,7 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/testing-library__jest-dom': ^5.14.5
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
@@ -9499,7 +9499,7 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       react-json-view: ^1.21.3
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       scheduler: ^0.20.0
       start-server-and-test: ^1.11.7
       style-loader: ^1.0.0
@@ -9552,7 +9552,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/testing-library__jest-dom': 5.14.5
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
@@ -9563,7 +9563,7 @@ importers:
       jest: 26.6.3
       jest-junit: 10.0.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       start-server-and-test: 1.14.0
       style-loader: 1.3.0_webpack@5.76.2
       tinylicious: 0.6.0
@@ -9600,10 +9600,10 @@ importers:
       '@fluidframework/test-client-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/tool-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       eslint: ~8.6.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluid-tools/fluidapp-odsp-urlresolver': link:../../drivers/fluidapp-odsp-urlResolver
@@ -9630,10 +9630,10 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/tools/fluid-runner:
@@ -9656,14 +9656,14 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/yargs': ^13
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       json2csv: ^5.0.7
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
       yargs: 13.2.2
     dependencies:
@@ -9688,13 +9688,13 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/yargs': 13.0.12
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/tools/replay-tool:
@@ -9733,12 +9733,12 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@types/json-stable-stringify': ^1.0.32
       '@types/node': ^14.18.38
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       eslint: ~8.6.0
       json-stable-stringify: ^1.0.1
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluid-experimental/sequence-deprecated': link:../../../experimental/dds/sequence-deprecated
@@ -9777,11 +9777,11 @@ importers:
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/json-stable-stringify': 1.0.34
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.6.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/tools/webpack-fluid-loader:
@@ -9819,7 +9819,7 @@ importers:
       '@types/node': ^14.18.38
       axios: ^0.26.0
       buffer: ^6.0.3
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       express: ^4.16.3
@@ -9828,7 +9828,7 @@ importers:
       nconf: ^0.12.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sillyname: ^0.1.0
       source-map-loader: ^2.0.0
       ts-loader: ^9.3.0
@@ -9877,14 +9877,14 @@ importers:
       '@types/fs-extra': 9.0.13
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       fs-extra: 9.1.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       source-map-loader: 2.0.2_webpack@5.76.2
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -9908,14 +9908,14 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/node-fetch': ^2.5.10
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       cross-env: ^7.0.3
       eslint: ~8.6.0
       mocha: ^10.2.0
       node-fetch: ^2.6.9
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
@@ -9935,13 +9935,13 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/node-fetch': 2.6.2
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
   packages/utils/telemetry-utils:
@@ -9960,7 +9960,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       '@types/uuid': ^8.3.0
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.1.1
@@ -9969,7 +9969,7 @@ importers:
       mocha: ^10.2.0
       nyc: ^15.1.0
       prettier: ~2.6.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       sinon: ^7.4.2
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -9992,14 +9992,14 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/uuid': 8.3.4
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       sinon: 7.5.0
       typescript: 4.5.5
 
@@ -10021,7 +10021,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       async-mutex: ^0.3.1
-      concurrently: ^6.5.1
+      concurrently: ^7.6.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       debug: ^4.1.1
@@ -10031,7 +10031,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       proper-lockfile: ^4.1.2
-      rimraf: ^2.7.1
+      rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -10054,14 +10054,14 @@ importers:
       '@types/jwt-decode': 2.2.1
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
-      concurrently: 6.5.1
+      concurrently: 7.6.0
       copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
       nyc: 15.1.0
       prettier: 2.6.2
-      rimraf: 2.7.1
+      rimraf: 4.4.0
       typescript: 4.5.5
 
 packages:
@@ -24633,21 +24633,6 @@ packages:
       inherits: 2.0.4
       readable-stream: 3.6.2
       typedarray: 0.0.6
-    dev: true
-
-  /concurrently/6.5.1:
-    resolution: {integrity: sha512-FlSwNpGjWQfRwPLXvJ/OgysbBxPkWpiVjy1042b0U7on7S7qwwMIILRj7WTN1mTgqa582bG6NFuScOoh6Zgdag==}
-    engines: {node: '>=10.0.0'}
-    hasBin: true
-    dependencies:
-      chalk: 4.1.2
-      date-fns: 2.29.3
-      lodash: 4.17.21
-      rxjs: 6.6.7
-      spawn-command: 0.0.2-1
-      supports-color: 8.1.1
-      tree-kill: 1.2.2
-      yargs: 16.2.0
     dev: true
 
   /concurrently/7.6.0:
