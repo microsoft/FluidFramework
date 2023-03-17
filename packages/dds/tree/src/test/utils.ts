@@ -49,6 +49,9 @@ import {
 	rootFieldKey,
 	rootFieldKeySymbol,
 	Value,
+	compareUpPaths,
+	UpPath,
+	clonePath,
 } from "../core";
 import { brand, makeArray } from "../util";
 
@@ -131,7 +134,7 @@ export enum SummarizeType {
 
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
- * class are created via {@link create} and satisfy the {@link ITestObjectProvider} interface.
+ * class are created via {@link TestTreeProvider.create} and satisfy the {@link ITestObjectProvider} interface.
  */
 export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
@@ -426,4 +429,13 @@ export function initializeTestTree(
 	const writeCursor = singleTextCursor(state);
 	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 	field.insert(0, writeCursor);
+}
+
+export function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
+	if (!compareUpPaths(path, expectedPath)) {
+		// This is slower than above compare, so only do it in the error case.
+		// Make a nice error message:
+		assert.deepEqual(clonePath(path), clonePath(expectedPath));
+		assert.fail("unequal paths, but clones compared equal");
+	}
 }

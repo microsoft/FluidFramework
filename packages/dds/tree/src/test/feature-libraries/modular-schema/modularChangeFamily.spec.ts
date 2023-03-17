@@ -11,7 +11,6 @@ import {
 	FieldKind,
 	Multiplicity,
 	ModularChangeFamily,
-	FieldKinds,
 	FieldEditor,
 	NodeChangeset,
 	genericFieldKind,
@@ -20,6 +19,9 @@ import {
 	ChangesetLocalId,
 	RevisionInfo,
 } from "../../../feature-libraries";
+// TODO: this is not the file being tests, importing it should not be required here.
+// eslint-disable-next-line import/no-internal-modules
+import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import {
 	makeAnonChange,
 	RevisionTag,
@@ -775,18 +777,27 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	it("Json encoding", () => {
-		const version = 0;
-		const encoded = JSON.stringify(family.encoder.encodeForJson(version, rootChange1a));
-		const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
-		assert.deepEqual(decoded, rootChange1a);
-	});
+	const encodingTestData: [string, ModularChangeset][] = [
+		["without constrain", rootChange1a],
+		["with constrain", rootChange3],
+	];
 
-	it("Json encoding with constraint", () => {
+	describe("Encoding", () => {
 		const version = 0;
-		const encoded = JSON.stringify(family.encoder.encodeForJson(version, rootChange3));
-		const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
-		assert.deepEqual(decoded, rootChange3);
+		for (const [name, data] of encodingTestData) {
+			describe(name, () => {
+				it("roundtrip", () => {
+					const encoded = family.encoder.encodeForJson(version, data);
+					const decoded = family.encoder.decodeJson(version, encoded);
+					assert.deepEqual(decoded, data);
+				});
+				it("json roundtrip", () => {
+					const encoded = JSON.stringify(family.encoder.encodeForJson(version, data));
+					const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
+					assert.deepEqual(decoded, data);
+				});
+			});
+		}
 	});
 
 	it("build child change", () => {

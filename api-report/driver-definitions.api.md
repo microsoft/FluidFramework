@@ -251,7 +251,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 // @public (undocumented)
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IResolvedUrlBase {
     // (undocumented)
     type: string;
@@ -294,7 +294,7 @@ export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IWebResolvedUrl extends IResolvedUrlBase {
     // (undocumented)
     data: string;

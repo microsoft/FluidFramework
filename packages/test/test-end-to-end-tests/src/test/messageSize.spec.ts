@@ -44,10 +44,10 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 	let localContainer: IContainer;
 	let remoteContainer: IContainer;
-	let dataObject1: ITestFluidObject;
-	let dataObject2: ITestFluidObject;
-	let dataObject1map: SharedMap;
-	let dataObject2map: SharedMap;
+	let localDataObject: ITestFluidObject;
+	let remoteDataObject: ITestFluidObject;
+	let localMap: SharedMap;
+	let remoteMap: SharedMap;
 
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
 		return {
@@ -66,16 +66,19 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		localContainer = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(localContainer, "default");
-		dataObject1map = await dataObject1.getSharedObject<SharedMap>(mapId);
+		localDataObject = await requestFluidObject<ITestFluidObject>(localContainer, "default");
+		localMap = await localDataObject.getSharedObject<SharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
 		remoteContainer = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
-		dataObject2map = await dataObject2.getSharedObject<SharedMap>(mapId);
+		remoteDataObject = await requestFluidObject<ITestFluidObject>(remoteContainer, "default");
+		remoteMap = await remoteDataObject.getSharedObject<SharedMap>(mapId);
+
 		await waitForContainerConnection(localContainer, true);
 		await waitForContainerConnection(remoteContainer, true);
 
+		// Force the local container into write-mode by sending a small op
+		localMap.set("test", "test");
 		await provider.ensureSynchronized();
 	};
 
@@ -117,7 +120,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
 			const messageCount = 1;
 			try {
-				setMapKeys(dataObject1map, messageCount, largeString);
+				setMapKeys(localMap, messageCount, largeString);
 				assert(false, "should throw");
 			} catch {}
 
@@ -133,14 +136,14 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 	);
 
 	it("Small ops will pass", async () => {
-		const maxMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
+		const totalMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
 		await setupContainers(testContainerConfig);
-		const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
+		const largeString = generateStringOfSize(totalMessageSizeInBytes / 10);
 		const messageCount = 10;
-		setMapKeys(dataObject1map, messageCount, largeString);
+		setMapKeys(localMap, messageCount, largeString);
 		await provider.ensureSynchronized();
 
-		assertMapValues(dataObject2map, messageCount, largeString);
+		assertMapValues(remoteMap, messageCount, largeString);
 	});
 
 	itExpects(
@@ -156,7 +159,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			const messageCount = 10;
 			localContainer.disconnect();
 			for (let i = 0; i < 3; i++) {
-				setMapKeys(dataObject1map, messageCount, largeString);
+				setMapKeys(localMap, messageCount, largeString);
 				await new Promise<void>((resolve) => setTimeout(resolve));
 				// Individual small batches will pass, as the container is disconnected and
 				// batches will be stored as pending
@@ -179,16 +182,17 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			...testContainerConfig,
 			runtimeOptions: { flushMode: FlushMode.Immediate },
 		});
-		const largeString = generateStringOfSize(500000);
+		const messageSizeInBytes = 500000;
+		const largeString = generateStringOfSize(messageSizeInBytes);
 		const messageCount = 10;
-		setMapKeys(dataObject1map, messageCount, largeString);
+		setMapKeys(localMap, messageCount, largeString);
 		await provider.ensureSynchronized();
 
-		assertMapValues(dataObject2map, messageCount, largeString);
+		assertMapValues(remoteMap, messageCount, largeString);
 	});
 
 	it("Single large op passes when compression enabled and over max op size", async () => {
-		const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
+		const messageSizeInBytes = 1024 * 1024 + 1; // 1Mb
 		await setupContainers({
 			...testContainerConfig,
 			runtimeOptions: {
@@ -199,9 +203,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			},
 		});
 
-		const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
+		const largeString = generateStringOfSize(messageSizeInBytes);
 		const messageCount = 1;
-		setMapKeys(dataObject1map, messageCount, largeString);
+		setMapKeys(localMap, messageCount, largeString);
 	});
 
 	it("Batched small ops pass when compression enabled and batch is larger than max op size", async function () {
@@ -214,12 +218,13 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				},
 			},
 		});
-		const largeString = generateStringOfSize(500000);
+		const messageSizeInBytes = 500000;
+		const largeString = generateStringOfSize(messageSizeInBytes);
 		const messageCount = 10;
-		setMapKeys(dataObject1map, messageCount, largeString);
+		setMapKeys(localMap, messageCount, largeString);
 		await provider.ensureSynchronized();
 
-		assertMapValues(dataObject2map, messageCount, largeString);
+		assertMapValues(remoteMap, messageCount, largeString);
 	});
 
 	itExpects(
@@ -234,7 +239,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
-			assert.throws(() => setMapKeys(dataObject1map, messageCount, largeString));
+			assert.throws(() => setMapKeys(localMap, messageCount, largeString));
 			await provider.ensureSynchronized();
 		},
 	);
@@ -264,7 +269,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 			const largeString = generateStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 10;
-			assert.throws(() => setMapKeys(dataObject1map, messageCount, largeString));
+			assert.throws(() => setMapKeys(localMap, messageCount, largeString));
 			await provider.ensureSynchronized();
 		},
 	);
@@ -289,25 +294,26 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
-			setMapKeys(dataObject1map, messageCount, largeString);
+			setMapKeys(localMap, messageCount, largeString);
 			await provider.ensureSynchronized();
 		},
 	);
 
-	describe("Large payloads (exceeding the 1MB limit)", () => {
-		const chunkingBatchesConfig: ITestContainerConfig = {
-			...testContainerConfig,
-			runtimeOptions: {
-				compressionOptions: {
-					minimumBatchSizeInBytes: 1024 * 1024,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
-				chunkSizeInBytes: 800 * 1024,
-				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+	const compressionSizeThreshold = 1024 * 1024;
+	const chunkingBatchesConfig: ITestContainerConfig = {
+		...testContainerConfig,
+		runtimeOptions: {
+			compressionOptions: {
+				minimumBatchSizeInBytes: compressionSizeThreshold,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
 			},
-		};
-		const chunkingBatchesTimeoutMs = 200000;
+			chunkSizeInBytes: 800 * 1024,
+			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+		},
+	};
+	const chunkingBatchesTimeoutMs = 200000;
 
+	describe("Large payloads (exceeding the 1MB limit)", () => {
 		describe("Chunking compressed batches", () =>
 			[
 				{ messagesInBatch: 1, messageSize: 5 * 1024 * 1024 }, // One large message
@@ -333,30 +339,25 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 						await setupContainers(chunkingBatchesConfig);
 
-						// Force the container into write-mode by sending a small op,
-						// so that it won't resend the whole large batch at reconnection
-						dataObject1map.set("test", "test");
-						await provider.ensureSynchronized();
-
 						const generated: string[] = [];
 						for (let i = 0; i < config.messagesInBatch; i++) {
 							// Ensure that the contents don't get compressed properly, by
 							// generating a random string for each map value instead of repeating it
 							const content = generateRandomStringOfSize(config.messageSize);
 							generated.push(content);
-							dataObject1map.set(`key${i}`, content);
+							localMap.set(`key${i}`, content);
 						}
 
 						await provider.ensureSynchronized();
 
 						for (let i = 0; i < config.messagesInBatch; i++) {
 							assert.strictEqual(
-								dataObject1map.get(`key${i}`),
+								localMap.get(`key${i}`),
 								generated[i],
 								`Wrong value for key${i} in local map`,
 							);
 							assert.strictEqual(
-								dataObject2map.get(`key${i}`),
+								remoteMap.get(`key${i}`),
 								generated[i],
 								`Wrong value for key${i} in remote map`,
 							);
@@ -379,7 +380,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 				const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 				const messageCount = 3; // Will result in a 15 MB payload
-				setMapKeys(dataObject1map, messageCount, largeString);
+				setMapKeys(localMap, messageCount, largeString);
 				await provider.ensureSynchronized();
 			},
 		);
@@ -390,12 +391,12 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 			const sendAndAssertSynchronization = async (connection: Promise<void>) => {
 				const largeString = generateRandomStringOfSize(messageSize);
-				setMapKeys(dataObject1map, messagesInBatch, largeString);
+				setMapKeys(localMap, messagesInBatch, largeString);
 				await connection;
 				await provider.ensureSynchronized();
 
-				assertMapValues(dataObject2map, messagesInBatch, largeString);
-				assertMapValues(dataObject1map, messagesInBatch, largeString);
+				assertMapValues(remoteMap, messagesInBatch, largeString);
+				assertMapValues(localMap, messagesInBatch, largeString);
 			};
 
 			describe("Remote container", () => {
@@ -534,5 +535,102 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				}).timeout(chunkingBatchesTimeoutMs);
 			});
 		});
+	});
+
+	describe("Payload size on the wire", () => {
+		let totalPayloadSizeInBytes = 0;
+
+		const assertPayloadSize = (totalMessageSizeInBytes: number): void => {
+			// Expecting the message size on the wire should have
+			// at most 35% extra from stringification and envelope overhead.
+			// If any of the tests fail, this value can be increased only if
+			// the payload size increase is intentional.
+			const overheadRatio = 1.35;
+			assert.ok(
+				totalPayloadSizeInBytes < overheadRatio * totalMessageSizeInBytes,
+				`Message size on the wire, ${totalPayloadSizeInBytes} is larger than expected ${
+					overheadRatio * totalMessageSizeInBytes
+				}, after sending ${totalMessageSizeInBytes} bytes`,
+			);
+		};
+
+		const setup = async (containerConfig: ITestContainerConfig) => {
+			await setupContainers(containerConfig);
+			totalPayloadSizeInBytes = 0;
+			localContainer.deltaManager.outbound.on(
+				"push",
+				(messages) => (totalPayloadSizeInBytes += JSON.stringify(messages).length),
+			);
+		};
+
+		const compressionRatio = 0.1;
+		const badCompressionRatio = 1;
+		describe("Check batch size on the wire", () =>
+			[
+				{
+					messagesInBatch: 1,
+					messageSize: 1024,
+					expectedSize: 1 * 1024,
+					payloadGenerator: generateStringOfSize,
+				}, // One small uncompressed message
+				{
+					messagesInBatch: 3,
+					messageSize: 1024,
+					expectedSize: 3 * 1024,
+					payloadGenerator: generateStringOfSize,
+				}, // Three small uncompressed messages
+				{
+					messagesInBatch: 1,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: compressionRatio * compressionSizeThreshold,
+					payloadGenerator: generateStringOfSize,
+				}, // One large message with compression
+				{
+					messagesInBatch: 10,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: compressionRatio * (compressionSizeThreshold + 1),
+					payloadGenerator: generateStringOfSize,
+				}, // Ten large messages with compression
+				{
+					messagesInBatch: 10,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: badCompressionRatio * 10 * (compressionSizeThreshold + 1),
+					// In order for chunking to kick in, we need to force compression to output
+					// a payload larger than the payload size limit, which is done by compressing
+					// random data.
+					payloadGenerator: generateRandomStringOfSize,
+				}, // Ten large messages with compression and chunking
+			].forEach((config) => {
+				it(
+					"Payload size check, " +
+						"Sending " +
+						`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
+						`${((config.messagesInBatch * config.messageSize) / (1024 * 1024)).toFixed(
+							4,
+						)} MB, expecting ${(config.expectedSize / (1024 * 1024)).toFixed(
+							4,
+						)} MB on the wire`,
+					async function () {
+						// This is not supported by the local server due to chunking. See ADO:2690
+						// This test is flaky on tinylicious. See ADO:2964
+						if (
+							config.payloadGenerator === generateRandomStringOfSize &&
+							(provider.driver.type === "local" ||
+								provider.driver.type === "tinylicious")
+						) {
+							this.skip();
+						}
+
+						await setup(chunkingBatchesConfig);
+
+						for (let i = 0; i < config.messagesInBatch; i++) {
+							localMap.set(`key${i}`, config.payloadGenerator(config.messageSize));
+						}
+
+						await provider.ensureSynchronized();
+						assertPayloadSize(config.expectedSize);
+					},
+				).timeout(chunkingBatchesTimeoutMs);
+			}));
 	});
 });
