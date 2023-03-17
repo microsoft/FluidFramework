@@ -15,6 +15,7 @@ import * as core from "@fluidframework/server-services-core";
 import {
 	DefaultServiceConfiguration,
 	ICheckpointHeuristicsServerConfiguration,
+    ICheckpoint,
 	IDb,
 	IDocument,
 	IPartitionLambdaFactory,
@@ -28,6 +29,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 	// Access config values
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 	const documentsCollectionName = config.get("mongo:collectionNames:documents");
+    const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 	const messagesCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 	const createCosmosDBIndexes = config.get("mongo:createCosmosDBIndexes");
 
@@ -45,6 +47,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const internalAlfredUrl = config.get("worker:alfredUrl");
 	const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
+    const localCheckpointEnabled = config.get("scribe:localCheckpointEnabled") as boolean;
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -72,9 +75,10 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
 	const documentsCollectionDb: IDb = globalDbEnabled ? globalDb : operationsDb;
 
-	const [collection, scribeDeltas] = await Promise.all([
+	const [collection, scribeDeltas, localCollection] = await Promise.all([
 		documentsCollectionDb.collection<IDocument>(documentsCollectionName),
 		operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName),
+        operationsDb.collection<ICheckpoint>(checkpointsCollectionName),
 	]);
 
 	if (createCosmosDBIndexes) {
@@ -122,6 +126,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 	return new ScribeLambdaFactory(
 		operationsDbManager,
 		collection,
+        localCollection,
 		scribeDeltas,
 		producer,
 		deltaManager,
@@ -129,7 +134,7 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 		serviceConfiguration,
 		enableWholeSummaryUpload,
 		getDeltasViaAlfred,
-	);
+        localCheckpointEnabled);
 }
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {

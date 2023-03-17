@@ -8,7 +8,8 @@ import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitr
 import { GitManager } from "@fluidframework/server-services-client";
 import {
 	DefaultServiceConfiguration,
-	ICollection,
+	ICheckpoint,
+    ICollection,
 	IDocument,
 	IProducer,
 	ITenantManager,
@@ -37,7 +38,9 @@ describe("Routerlicious", () => {
 			const testDocumentId = "test";
 
 			let testMongoManager: MongoManager;
+            let testLocalMongoManager: MongoManager;
 			let testDocumentCollection: ICollection<IDocument>;
+            let testCheckpointCollection: ICollection<ICheckpoint>;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -83,8 +86,11 @@ describe("Routerlicious", () => {
 				];
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				testMongoManager = new MongoManager(dbFactory);
+                testLocalMongoManager = new MongoManager(dbFactory);
 				const database = await testMongoManager.getDatabase();
+                const localDatabase = await testLocalMongoManager.getDatabase();
 				testDocumentCollection = database.collection("documents");
+                testCheckpointCollection = localDatabase.collection("checkpoints");
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
 				testProducer = testKafka.createProducer();
@@ -104,6 +110,7 @@ describe("Routerlicious", () => {
 				let factory = new ScribeLambdaFactory(
 					testMongoManager,
 					testDocumentCollection,
+                    testCheckpointCollection,
 					testMessageCollection,
 					testProducer,
 					testDeltaManager,
@@ -111,6 +118,7 @@ describe("Routerlicious", () => {
 					DefaultServiceConfiguration,
 					false,
 					false,
+                    false,
 				);
 
 				testContext = new TestContext();

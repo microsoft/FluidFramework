@@ -97,6 +97,7 @@ describe("Routerlicious", () => {
 						collectionNames,
 						collectionNames,
 						collectionNames,
+                        collectionNames,
 						collectionNames,
 					);
 					const testStorage = new services.DocumentStorage(
@@ -554,6 +555,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						collectionNames,
 						collectionNames,
 						collectionNames,
+                        collectionNames,
 						collectionNames,
 					);
 					const testStorage = new services.DocumentStorage(
@@ -774,6 +776,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				collectionNames,
 				collectionNames,
 				collectionNames,
+                collectionNames,
 				collectionNames,
 			);
 			testStorage = new services.DocumentStorage(databaseManager, testTenantManager, false);

@@ -36,7 +36,7 @@ export {
 	IClientSequenceNumber,
 	IDeliState,
 	IDocument,
-	IDocumentDetails,
+	ICheckpoint, IDocumentDetails,
 	IDocumentStorage,
 	IScribe,
 } from "./document";

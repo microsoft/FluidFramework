@@ -107,6 +107,7 @@ scribe:
     idleTime: 10000
     maxTime: 60000
     maxMessages: 500
+  localCheckpointEnabled: true
 
 foreman:
   name: foreman

@@ -596,7 +596,7 @@ export class ScribeLambda implements IPartitionLambda {
 
 	private async writeCheckpoint(checkpoint: IScribe) {
 		const inserts = this.pendingCheckpointMessages.toArray();
-		await this.checkpointManager.write(checkpoint, this.protocolHead, inserts);
+		await this.checkpointManager.write(checkpoint, this.protocolHead, inserts, this.noActiveClients);
 		if (inserts.length > 0) {
 			// Since we are storing logTails with every summary, we need to make sure that messages are either in DB
 			// or in memory. In other words, we can only remove messages from memory once there is a copy in the DB
