@@ -31,11 +31,6 @@ import { createLocalDocumentService } from "./localDocumentService";
  * Implementation of document service factory for local use.
  */
 export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
-	/**
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	public readonly protocolName = "fluid-test:";
-
 	// A map of clientId to LocalDocumentService.
 	private readonly documentDeltaConnectionsMap: Map<string, LocalDocumentDeltaConnection> =
 		new Map();

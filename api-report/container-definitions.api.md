@@ -110,15 +110,17 @@ export interface IConnectionDetails {
     claims: ITokenClaims;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
-    existing: boolean;
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    // @deprecated (undocumented)
+}
+
+// @public
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+    // (undocumented)
+    initialClients: ISignalClient[];
+    // (undocumented)
+    mode: ConnectionMode;
+    // (undocumented)
     version: string;
 }
 
@@ -389,17 +391,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public @deprecated (undocumented)
-export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
-
-// @public @deprecated (undocumented)
-export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    // (undocumented)
-    intelligence: {
-        [service: string]: any;
-    };
-}
-
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -456,12 +447,6 @@ export interface IPendingLocalState {
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidTokenProvider {
-    // (undocumented)
-    readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 // @public (undocumented)

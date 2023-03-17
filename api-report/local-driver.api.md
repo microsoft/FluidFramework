@@ -83,8 +83,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     disconnectClient(clientId: string, disconnectReason: string): void;
     nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any): void;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid-test:";
 }
 
 // @public (undocumented)
