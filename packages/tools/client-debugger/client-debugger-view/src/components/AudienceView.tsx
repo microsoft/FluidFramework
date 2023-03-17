@@ -7,7 +7,7 @@ import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
 
-import { AudienceChangeLogEntry } from "@fluid-tools/client-debugger";
+import { AudienceChangeLogEntry, AudienceClientMetaData } from "@fluid-tools/client-debugger";
 
 import { combineMembersWithMultipleConnections } from "../Audience";
 import { HasClientDebugger } from "../CommonProps";
@@ -62,14 +62,16 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		};
 	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
 
-	const audienceMembersArray: IClient[] = [...allAudienceMembers.values()];
-	const audienceMembersKeyArray: string[] = [...allAudienceMembers.keys()];
+	const audienceClientMetaData: AudienceClientMetaData[] = [];
+
+	for (const [clientId, client] of allAudienceMembers) {
+		audienceClientMetaData.push({ clientId, client });
+	}
 
 	return (
 		<_AudienceView
 			clientId={myClientId}
-			allAudienceClientId={audienceMembersKeyArray}
-			allAudienceMembers={audienceMembersArray}
+			audienceClientMetaData={audienceClientMetaData}
 			myClientConnection={myClientConnection}
 			onRenderAudienceMember={onRenderAudienceMember}
 			audienceHistory={audienceHistory}
@@ -82,8 +84,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
  */
 export interface _AudienceViewProps {
 	clientId: string | undefined;
-	allAudienceClientId: string[];
-	allAudienceMembers: IClient[];
+	audienceClientMetaData: AudienceClientMetaData[];
 	myClientConnection: IClient | undefined;
 	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
 	audienceHistory: readonly AudienceChangeLogEntry[];
@@ -100,8 +101,7 @@ export interface _AudienceViewProps {
 export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
 	const {
 		clientId,
-		allAudienceClientId,
-		allAudienceMembers,
+		audienceClientMetaData,
 		myClientConnection,
 		onRenderAudienceMember,
 		audienceHistory,
@@ -117,13 +117,12 @@ export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
 		>
 			<StackItem>
 				<div className="audience-view-members-list">
-					<h3>Audience members ({allAudienceMembers.length})</h3>
+					<h3>Audience members ({audienceClientMetaData.length})</h3>
 				</div>
 				<MembersView
-					audience={allAudienceMembers}
+					audience={audienceClientMetaData}
 					myClientId={clientId}
 					myClientConnection={myClientConnection}
-					allAudienceClientId={allAudienceClientId}
 					onRenderAudienceMember={onRenderAudienceMember}
 				/>
 			</StackItem>
@@ -144,7 +143,7 @@ interface MembersViewProps {
 	/**
 	 * The current audience
 	 */
-	audience: IClient[];
+	audience: AudienceClientMetaData[];
 
 	/**
 	 * My client ID, if the Container is connected.
@@ -157,11 +156,6 @@ interface MembersViewProps {
 	myClientConnection: IClient | undefined;
 
 	/**
-	 * List of clientId
-	 */
-	allAudienceClientId: string[];
-
-	/**
 	 * Callback to render data about an individual audience member.
 	 */
 	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
@@ -171,18 +165,9 @@ interface MembersViewProps {
  * Displays a list of current audience members and their metadata.
  */
 function MembersView(props: MembersViewProps): React.ReactElement {
-	const {
-		audience,
-		myClientId,
-		myClientConnection,
-		allAudienceClientId,
-		onRenderAudienceMember,
-	} = props;
+	const { audience, myClientId, myClientConnection, onRenderAudienceMember } = props;
 
-	const transformedAudience = combineMembersWithMultipleConnections(
-		allAudienceClientId,
-		audience,
-	);
+	const transformedAudience = combineMembersWithMultipleConnections(audience);
 
 	const memberViews: React.ReactElement[] = [];
 	for (const member of transformedAudience.values()) {

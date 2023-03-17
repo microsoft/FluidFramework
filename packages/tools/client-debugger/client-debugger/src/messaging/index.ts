@@ -35,6 +35,7 @@ export {
 } from "./RegistryMessages";
 export {
 	GetAudienceMessage,
+	AudienceClientMetaData,
 	AudienceEventMessageData,
 	AudienceEventMessage,
 } from "./AudienceMessages";

@@ -12,6 +12,7 @@ import { ContainerStateMetadata } from "./ContainerMetadata";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
+	AudienceClientMetaData,
 	AudienceEventMessage,
 	GetAudienceMessage,
 	CloseContainerMessage,
@@ -189,6 +190,7 @@ export class FluidClientDebugger
 			const message = untypedMessage as ConnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.connect();
+				this.postAudienceStateChange();
 				return true;
 			}
 			return false;
@@ -197,6 +199,7 @@ export class FluidClientDebugger
 			const message = untypedMessage as DisconnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
+				this.postAudienceStateChange();
 				return true;
 			}
 			return false;
@@ -251,10 +254,14 @@ export class FluidClientDebugger
 	 *
 	 */
 	private readonly postAudienceStateChange = (): void => {
-		const audienceMembersMap = this.container.audience.getMembers();
+		const allAudienceMembers = this.container.audience.getMembers();
 
-		const audienceClientIdArray: string[] = [...audienceMembersMap.keys()];
-		const audienceMembersArray: IClient[] = [...audienceMembersMap.values()];
+		const audienceClientMetaData: AudienceClientMetaData[] = [];
+
+		for (const [clientId, client] of allAudienceMembers) {
+			const metaData: AudienceClientMetaData = { clientId, client };
+			audienceClientMetaData.push(metaData);
+		}
 
 		postMessageToWindow<AudienceEventMessage>(
 			{
@@ -262,8 +269,7 @@ export class FluidClientDebugger
 				type: "AUDIENCE_EVENT",
 				data: {
 					containerId: this.containerId,
-					allAudienceClientId: audienceClientIdArray,
-					audienceState: audienceMembersArray,
+					audienceState: audienceClientMetaData,
 					audienceHistory: this.getAudienceHistory(),
 				},
 			},

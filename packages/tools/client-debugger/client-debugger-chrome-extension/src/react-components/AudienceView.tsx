@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { IClient } from "@fluidframework/protocol-definitions";
+// import { IClient } from "@fluidframework/protocol-definitions";
 import {
+	AudienceClientMetaData,
 	AudienceChangeLogEntry,
 	handleIncomingMessage,
 	IDebuggerMessage,
@@ -47,8 +48,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	const messageRelay = useMessageRelay();
 
-	const [clientId, setClientId] = React.useState<string[]>([]);
-	const [audienceState, setAudienceState] = React.useState<IClient[]>([]);
+	const [audienceState, setAudienceState] = React.useState<AudienceClientMetaData[]>([]);
 	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
 		[],
 	);
@@ -61,7 +61,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
 				const message: AudienceEventMessage = untypedMessage as AudienceEventMessage;
 
-				setClientId(message.data.allAudienceClientId);
 				setAudienceState(message.data.audienceState);
 				setAudienceHistory(message.data.audienceHistory);
 
@@ -91,8 +90,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	return (
 		<_AudienceView
 			clientId={undefined}
-			allAudienceClientId={clientId}
-			allAudienceMembers={audienceState}
+			audienceClientMetaData={audienceState}
 			myClientConnection={undefined}
 			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
 			audienceHistory={audienceHistory}

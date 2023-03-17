@@ -5,6 +5,7 @@
 ```ts
 
 import { AudienceChangeLogEntry } from '@fluid-tools/client-debugger';
+import { AudienceClientMetaData } from '@fluid-tools/client-debugger';
 import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -32,9 +33,7 @@ export function _AudienceView(props: _AudienceViewProps): React_2.ReactElement;
 // @public
 export interface _AudienceViewProps {
     // (undocumented)
-    allAudienceClientId: string[];
-    // (undocumented)
-    allAudienceMembers: IClient[];
+    audienceClientMetaData: AudienceClientMetaData[];
     // (undocumented)
     audienceHistory: readonly AudienceChangeLogEntry[];
     // (undocumented)

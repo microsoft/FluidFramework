@@ -9,6 +9,15 @@ import { HasContainerId } from "./DebuggerMessages";
 import { IDebuggerMessage } from "./Messages";
 
 /**
+ * Metadata of clients within the Audience List
+ * @public
+ */
+export interface AudienceClientMetaData {
+	clientId: string;
+	client: IClient;
+}
+
+/**
  * Inbound event requesting {@link AudienceChangeLogEntry} of the Container with the specific ID.
  * Will result in the {@link AudienceEventMessage} message being posted.
  *
@@ -26,8 +35,7 @@ export interface AudienceEventMessageData extends HasContainerId {
 	/**
 	 * Contents of the Audience event
 	 */
-	allAudienceClientId: string[];
-	audienceState: IClient[];
+	audienceState: AudienceClientMetaData[];
 	audienceHistory: readonly AudienceChangeLogEntry[];
 }
 

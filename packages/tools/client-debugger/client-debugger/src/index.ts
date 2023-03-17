@@ -55,6 +55,7 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
+	AudienceClientMetaData,
 	AudienceEventMessageData,
 	AudienceEventMessage,
 	GetAudienceMessage,
