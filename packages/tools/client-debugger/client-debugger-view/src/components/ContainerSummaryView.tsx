@@ -142,6 +142,7 @@ export interface _ContainerSummaryViewProps extends ContainerStateMetadata, ICon
 export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.ReactElement {
 	const {
 		id,
+		nickname,
 		attachState,
 		connectionState,
 		closed,
@@ -168,7 +169,7 @@ export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.
 		<Stack className="container-summary-view">
 			<StackItem>
 				<span>
-					<b>Container ID</b>: {id}
+					<b>Container</b>: {nickname !== undefined ? `${nickname} (${id})` : {id} }
 				</span>
 			</StackItem>
 			<StackItem>

@@ -12,7 +12,6 @@ import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
-import { TelemetryView } from "./TelemetryView";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -77,11 +76,6 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 				/>
 			);
 			break;
-		case PanelView.Telemetry:
-			innerView = <TelemetryView />;
-			break;
-		// TODO: add the Telemetry view here, without ReactContext
-
 		case PanelView.ContainerStateHistory:
 			innerView = <ContainerHistoryView clientDebugger={clientDebugger} />;
 			break;
@@ -118,7 +112,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 }
 
 /**
- * View options for the container visualizer.
+ * Inner view options within the container view.
  *
  * @internal
  */
@@ -132,11 +126,6 @@ export enum PanelView {
 	 * Display view of Audience participants / history.
 	 */
 	Audience = "Audience",
-
-	/**
-	 * Display view of Telemetry events.
-	 */
-	Telemetry = "Telemetry",
 
 	/**
 	 * Display view of Container state history.
@@ -155,18 +144,18 @@ export enum PanelView {
  */
 export interface PanelViewSelectionMenuProps {
 	/**
-	 * The currently-selected inner app view.
+	 * The currently selected inner view.
 	 */
 	currentSelection: PanelView;
 
 	/**
-	 * Updates the inner app view to the one specified.
+	 * Updates the inner view to the one specified.
 	 */
 	updateSelection(newSelection: PanelView): void;
 }
 
 /**
- * Menu for selecting the inner app view to be displayed in the debug panel.
+ * Menu for selecting the inner view to be displayed within the view for the currently selected container.
  *
  * @internal
  */
@@ -212,7 +201,7 @@ export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): Reac
 
 	return (
 		<OverflowSet
-			aria-label="Debug root view selection"
+			aria-label="Container sub-view selection"
 			items={options}
 			// TODO: We can add additional menu options here. Reserved for less-frequently used views items.
 			// overflowItems={}

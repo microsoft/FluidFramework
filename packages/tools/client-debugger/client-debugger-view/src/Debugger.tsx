@@ -12,9 +12,11 @@ import {
 	getDebuggerRegistry,
 } from "@fluid-tools/client-debugger";
 
+import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { RenderOptions } from "./RendererOptions";
-import { ContainerSelectionDropdown, MainView } from "./components";
+import { ClientDebugView, TelemetryView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
+import { MenuItem, MenuSection } from "./Menu";
 
 // Ensure FluentUI icons are initialized.
 initializeFluentUiIcons();
@@ -43,26 +45,13 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(
 		getFluidClientDebuggers(),
 	);
-
-	// This function is pure, so there are no state concerns here.
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	function getDefaultDebuggerSelectionId(options: IFluidClientDebugger[]): string | undefined {
-		return options.length === 0 ? undefined : options[0].containerId;
-	}
-
-	const [selectedContainerId, setSelectedContainerId] = React.useState<string | undefined>(
-		getDefaultDebuggerSelectionId(clientDebuggers) ?? undefined,
-	);
+	const [menuSelection, setMenuSelection] = React.useState<string>("");
+	const [containerId, setContainerId] = React.useState<string>("");
 
 	React.useEffect(() => {
 		function onDebuggerChanged(): void {
 			const newDebuggerList = getFluidClientDebuggers();
 			setClientDebuggers(newDebuggerList);
-			if (selectedContainerId === undefined) {
-				const newSelection = getDefaultDebuggerSelectionId(newDebuggerList);
-				console.log(`Updating selection to container ID "${newSelection}".`);
-				setSelectedContainerId(newSelection);
-			}
 		}
 
 		debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
@@ -72,21 +61,64 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			debuggerRegistry.off("debuggerRegistered", onDebuggerChanged);
 			debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
 		};
-	}, [getDefaultDebuggerSelectionId, selectedContainerId, debuggerRegistry, setClientDebuggers]);
+	}, [debuggerRegistry, setClientDebuggers]);
 
-	const selectionView: React.ReactElement =
-		clientDebuggers.length > 1 ? (
-			<ContainerSelectionDropdown
-				initialSelection={selectedContainerId}
-				options={clientDebuggers.map((clientDebugger) => ({
-					id: clientDebugger.containerId,
-					nickname: clientDebugger.containerNickname,
-				}))}
-				onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
-			/>
-		) : (
-			<></>
-		);
+	let innerView: React.ReactElement;
+	switch (menuSelection) {
+		case "telemetry":
+			innerView = <TelemetryView />;
+			break;
+		case "container":
+			// eslint-disable-next-line no-case-declarations
+			const containerDebugger = clientDebuggers.find((x) => x.containerId === containerId);
+			innerView =
+				containerDebugger === undefined ? (
+					<div>Could not find a debugger for that container.</div>
+				) : (
+					<ClientDebugView clientDebugger={containerDebugger} />
+				);
+			break;
+		// TODO: add the Telemetry view here, without ReactContext
+		default:
+			innerView = <div>Select an option from the menu</div>;
+			break;
+	}
+
+	// Styles definition
+	const stackStyles: IStackStyles = {
+		root: {
+			background: DefaultPalette.themeTertiary,
+			height: 500,
+		},
+	};
+	const contentViewStyles: IStackItemStyles = {
+		root: {
+			alignItems: "center",
+			background: DefaultPalette.themeLight,
+			color: DefaultPalette.black,
+			display: "flex",
+			justifyContent: "center",
+		},
+	};
+
+	const menuStyles: IStackItemStyles = {
+		root: {
+			...contentViewStyles,
+			display: "flex",
+			flexDirection: "column",
+			borderRight: `1px solid ${DefaultPalette.themePrimary}`,
+			minWidth: 150
+		},
+	};
+
+	function onContainerClicked(id: string): void {
+		setMenuSelection("container");
+		setContainerId(id);
+	}
+
+	function onTelemetryClicked(): void {
+		setMenuSelection("telemetry");
+	}
 
 	return (
 		<Resizable
@@ -101,8 +133,31 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			defaultSize={{ width: 400, height: "100%" }}
 			className={"debugger-panel"}
 		>
-			{selectionView}
-			<MainView></MainView>
+			<Stack enableScopedSelectors horizontal styles={stackStyles}>
+				<Stack.Item grow={1} styles={menuStyles}>
+					<MenuSection header="Containers">
+						{clientDebuggers.map((clientDebugger) => (
+							<MenuItem
+								key={clientDebugger.containerId}
+								text={
+									clientDebugger.containerNickname ?? clientDebugger.containerId
+								}
+								onClick={(event): void => {
+									onContainerClicked(`${clientDebugger.containerId}`);
+								}}
+							/>
+						))}
+					</MenuSection>
+					<MenuSection header="Telemetry">
+						<MenuItem text="See Telemetry" onClick={onTelemetryClicked} />
+					</MenuSection>
+				</Stack.Item>
+				<Stack.Item grow={5} styles={contentViewStyles}>
+					<div id="debugger-view-content" style={{ width: "100%", height: "100%", overflowY: "auto" }}>
+						{innerView}
+					</div>
+				</Stack.Item>
+			</Stack>
 		</Resizable>
 	);
 }
