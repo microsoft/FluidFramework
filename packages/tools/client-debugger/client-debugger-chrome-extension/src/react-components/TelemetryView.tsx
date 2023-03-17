@@ -13,7 +13,7 @@ import {
 } from "@fluid-tools/client-debugger";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { _TelemetryView } from "@fluid-tools/client-debugger-view";
-import { MessageRelayContext } from "./MessageRelayContext";
+import { useMessageRelay } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel:Telemetry)";
 
@@ -23,12 +23,7 @@ const loggingContext = "EXTENSION(DebuggerPanel:Telemetry)";
  * @remarks Must be run under a {@link MessageRelayContext}.
  */
 export function TelemetryView(): React.ReactElement {
-	const messageRelay = React.useContext(MessageRelayContext);
-	if (messageRelay === undefined) {
-		throw new Error(
-			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
-		);
-	}
+	const messageRelay = useMessageRelay();
 
 	const [telemetryEvents, setTelemetryEvents] = React.useState<ITelemetryBaseEvent[]>([]);
 

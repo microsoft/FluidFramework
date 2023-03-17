@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 overrides:
+  qs: ^6.11.0
   socket.io-parser: ^4.2.1
 
 importers:
@@ -12206,11 +12207,6 @@ packages:
     dependencies:
       side-channel: 1.0.4
 
-  /qs/6.5.2:
-    resolution: {integrity: sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==}
-    engines: {node: '>=0.6'}
-    dev: false
-
   /query-string/6.14.1:
     resolution: {integrity: sha512-XDxAeVmpfu1/6IjyT/gXHOl+S0vQ9owggJ30hhWKdHAsNPOcasn5o9BW0eejZqL2e4vMjhAxoW3jVHcD6mbcYw==}
     engines: {node: '>=6'}
@@ -12561,7 +12557,7 @@ packages:
       mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
-      qs: 6.5.2
+      qs: 6.11.0
       safe-buffer: 5.2.1
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
@@ -13844,7 +13840,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.3.8
       typescript: 4.5.5
-      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack: 5.75.0
     dev: true
 
   /ts-morph/7.3.0:

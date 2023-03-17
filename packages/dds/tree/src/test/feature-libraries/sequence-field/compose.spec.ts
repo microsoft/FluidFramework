@@ -4,13 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	RevisionTag,
-	makeAnonChange,
-	tagChange,
-	TaggedChange,
-	TreeSchemaIdentifier,
-} from "../../../core";
+import { RevisionTag, makeAnonChange, tagChange, TreeSchemaIdentifier } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -438,10 +432,10 @@ describe("SequenceField - Compose", () => {
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected: SF.Changeset = [
-			{ type: "Insert", content: [{ type, value: 2 }] },
-			{ type: "Delete", count: 3 },
+			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }] },
+			{ type: "Delete", revision: tag1, count: 3 },
 		];
-		const actual = shallowCompose([makeAnonChange(deletion), makeAnonChange(insert)]);
+		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -805,8 +799,3 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 });
-function tagggedChange(
-	reviveA: SF.Changeset<never>,
-): TaggedChange<SF.Changeset<import("../../../feature-libraries").NodeChangeset>> {
-	throw new Error("Function not implemented.");
-}

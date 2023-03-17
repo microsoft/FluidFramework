@@ -27,6 +27,9 @@ class LocalSessionStorageCollection<T> implements ICollection<T> {
 	public async distinct(key: any, query: any): Promise<any> {
 		throw new Error("Method Not Implemented");
 	}
+	public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
+		throw new Error("Method not implemented.");
+	}
 
 	/**
 	 * {@inheritDoc @fluidframework/server-services-core#ICollection.find}

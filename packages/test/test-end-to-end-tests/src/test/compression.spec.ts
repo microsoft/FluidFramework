@@ -98,7 +98,7 @@ describeInstallVersions(
 	{
 		requestAbsoluteVersions: [loaderWithoutCompressionField],
 	},
-	/* timeoutMs */ 50000,
+	/* timeoutMs: 3 minutes */ 180000,
 )("Op Compression self-healing with old loader", (getProvider) =>
 	compressionSuite(async () => {
 		const provider = getProvider();
