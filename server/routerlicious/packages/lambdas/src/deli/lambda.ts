@@ -276,6 +276,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private sessionMetric: Lumber<LumberEventName.SessionResult> | undefined,
 		private sessionStartMetric: Lumber<LumberEventName.StartSessionResult> | undefined,
+        private readonly localCheckpointEnabled: boolean,
 		private readonly sequencedSignalClients: Map<string, ISequencedSignalClient> = new Map(),
 	) {
 		super();
@@ -341,7 +342,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			this.documentId,
 			checkpointManager,
 			context,
-		);
+		    this.localCheckpointEnabled);
 
 		// start the activity idle timer when created
 		this.setActivityIdleTimer();
@@ -549,26 +550,22 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 							message as IRawOperationMessage,
 						);
 
-						const signalMessage = this.createSignalMessage(
-							message as IRawOperationMessage,
-							sequencedMessage.sequenceNumber - 1,
-							dataContent,
-						);
+                        const signalMessage = this.createSignalMessage(
+                            message as IRawOperationMessage,
+                            sequencedMessage.sequenceNumber - 1,
+                            dataContent);
 
-						if (sequencedMessage.type === MessageType.ClientJoin) {
-							this.addSequencedSignalClient(
-								dataContent as IClientJoin,
-								signalMessage,
-							);
-						} else {
-							this.sequencedSignalClients.delete(dataContent);
-						}
+                        if (sequencedMessage.type === MessageType.ClientJoin) {
+                            this.addSequencedSignalClient(dataContent as IClientJoin, signalMessage);
+                        } else {
+                            this.sequencedSignalClients.delete(dataContent);
+                        }
 
-						this.produceMessage(this.signalsProducer, signalMessage.message);
-					}
+                        this.produceMessage(this.signalsProducer, signalMessage.message);
+                    }
 
-					break;
-				}
+                    break;
+                }
 
 				case TicketType.Nack: {
 					if (this.serviceConfiguration.deli.maintainBatches) {

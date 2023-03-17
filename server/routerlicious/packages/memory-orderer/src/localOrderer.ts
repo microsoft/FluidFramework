@@ -94,7 +94,7 @@ export class LocalOrderer implements IOrderer {
 	public static async load(
 		storage: IDocumentStorage,
 		databaseManager: IDatabaseManager,
-        localDatabaseManager: IDatabaseManager,
+		localDatabaseManager: IDatabaseManager,
 		tenantId: string,
 		documentId: string,
 		taskMessageSender: ITaskMessageSender,
@@ -296,11 +296,13 @@ export class LocalOrderer implements IOrderer {
 			this.deliContext,
 			async (lambdaSetup, context) => {
 				const documentCollection = await lambdaSetup.documentCollectionP();
+				const localCheckpointCollection = await lambdaSetup.localCheckpointCollectionP();
 				const lastCheckpoint = JSON.parse(this.dbObject.deli);
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					this.tenantId,
 					this.documentId,
 					documentCollection,
+                    localCheckpointCollection,
 				);
 				return new DeliLambda(
 					context,
@@ -315,6 +317,7 @@ export class LocalOrderer implements IOrderer {
 					this.serviceConfiguration,
 					undefined,
 					undefined,
+                    false,
 				);
 			},
 		);
@@ -335,21 +338,16 @@ export class LocalOrderer implements IOrderer {
 		}
 	}
 
-    private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
-        // Scribe lambda
-        const [
-            documentCollection,
-            localCheckpointCollection,
-            scribeMessagesCollection,
-            protocolHead,
-            scribeMessages,
-        ] = await Promise.all([
-            setup.documentCollectionP(),
-            setup.localCheckpointCollectionP(),
-            setup.scribeDeltaCollectionP(),
-            setup.protocolHeadP(),
-            setup.scribeMessagesP(),
-        ]);
+	private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
+		// Scribe lambda
+		const [documentCollection, localCheckpointCollection, scribeMessagesCollection, protocolHead, scribeMessages] =
+			await Promise.all([
+				setup.documentCollectionP(),
+				setup.localCheckpointCollectionP(),
+				setup.scribeDeltaCollectionP(),
+				setup.protocolHeadP(),
+				setup.scribeMessagesP(),
+			]);
 
 		const scribe = this.getScribeState();
 		const lastState = scribe.protocolState
@@ -392,7 +390,8 @@ export class LocalOrderer implements IOrderer {
 			scribeMessagesCollection,
 			null /* deltaService */,
 			false /* getDeltasViaAlfred */,
-            false /* localCheckpointEnabled */);
+            false /* localCheckpointEnabled */,
+		);
 		return new ScribeLambda(
 			context,
 			this.tenantId,

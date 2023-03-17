@@ -93,6 +93,7 @@ session:
 deli:
   name: deli
   replicas: 8
+  localCheckpointEnabled: true
 
 scriptorium:
   name: scriptorium

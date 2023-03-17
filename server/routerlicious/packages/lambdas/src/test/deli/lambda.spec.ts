@@ -134,13 +134,15 @@ describe("Routerlicious", () => {
 				factory = new DeliLambdaFactory(
 					mongoManager,
 					testCollection,
+                    testCollection,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
 					undefined,
 					testReverseProducer,
 					DefaultServiceConfiguration,
-				);
+				,
+                    false);
 				lambda = await factory.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
 					testContext,
@@ -152,6 +154,7 @@ describe("Routerlicious", () => {
 				factoryWithSignals = new DeliLambdaFactory(
 					mongoManager,
 					testCollection,
+                    testCollection,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -164,7 +167,8 @@ describe("Routerlicious", () => {
 							enableWriteClientSignals: true,
 						},
 					},
-				);
+				,
+                    false);
 				lambdaWithSignals = await factoryWithSignals.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
 					testContext,
@@ -173,6 +177,7 @@ describe("Routerlicious", () => {
 				factoryWithBatching = new DeliLambdaFactory(
 					mongoManager,
 					testCollection,
+                    testCollection,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -185,7 +190,8 @@ describe("Routerlicious", () => {
 							maintainBatches: true,
 						},
 					},
-				);
+				,
+                    false);
 				lambdaWithBatching = await factoryWithBatching.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
 					testContext,

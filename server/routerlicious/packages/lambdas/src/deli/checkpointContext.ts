@@ -5,6 +5,7 @@
 
 import { IContext, IDeliState } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { CheckpointReason } from "../utils";
 import { ICheckpointParams, IDeliCheckpointManager } from "./checkpointManager";
 
 export class CheckpointContext {
@@ -18,7 +19,7 @@ export class CheckpointContext {
 		private readonly id: string,
 		private readonly checkpointManager: IDeliCheckpointManager,
 		private readonly context: IContext,
-	) {}
+        private readonly localCheckpointEnabled: boolean) {}
 
 	/**
 	 * Checkpoints to the database & kafka
@@ -108,14 +109,19 @@ export class CheckpointContext {
 		}
 
 		let updateP: Promise<void>;
+        let isLocal = false;
+
+        // determine if checkpoint is local
+        if(this.localCheckpointEnabled && (checkpoint.reason !== CheckpointReason.NoClients)) {
+            isLocal = true;
+        }
 
 		if (checkpoint.clear) {
-			updateP = this.checkpointManager.deleteCheckpoint(checkpoint);
+			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);
 		} else {
 			// clone the checkpoint
 			const deliCheckpoint: IDeliState = { ...checkpoint.deliState };
-
-			updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint, checkpoint.reason);
+			updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint, isLocal, checkpoint.reason);
 		}
 
 		// Retry the checkpoint on error

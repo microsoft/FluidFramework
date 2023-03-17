@@ -33,6 +33,9 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	const reverseSendTopic = config.get("alfred:topic");
 
 	const documentsCollectionName = config.get("mongo:collectionNames:documents");
+    const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
+
+    const localCheckpointEnabled = config.get("deli:localCheckpointEnabled");
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
@@ -65,6 +68,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const collection = await db.collection<core.IDocument>(documentsCollectionName);
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+     const localCollection = await db.collection<core.ICheckpoint>(checkpointsCollectionName);
 
 	const forwardProducer = services.createProducer(
 		kafkaLibrary,
@@ -134,13 +139,14 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	return new DeliLambdaFactory(
 		operationsDbManager,
 		collection,
+        localCollection,
 		tenantManager,
 		undefined,
 		combinedProducer,
 		undefined,
 		reverseProducer,
 		serviceConfiguration,
-	);
+        localCheckpointEnabled);
 }
 
 export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {

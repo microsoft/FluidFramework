@@ -167,7 +167,8 @@ data:
             "kafkaClientId": "{{ template "deli.fullname" . }}",
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
-            "checkpointTimeIntervalMsec": 1000
+            "checkpointTimeIntervalMsec": 1000,
+            "localCheckpointEnabled": {{ .Values.deli.localCheckpointEnabled }}
         },
         "scribe": {
             "kafkaClientId": "{{ template "scribe.fullname" . }}",

@@ -8,6 +8,7 @@ import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
+    ICheckpoint,
 	IClientManager,
 	ICollection,
 	IContext,
@@ -61,13 +62,14 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly collection: ICollection<IDocument>,
+        private readonly localCheckpointCollection: ICollection<ICheckpoint>,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
-	) {
+        private readonly localCheckpointEnabled: boolean) {
 		super();
 	}
 
@@ -180,8 +182,35 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			} else {
-				lastCheckpoint = JSON.parse(document.deli);
-			}
+                let checkpoint;
+                let isLocalCheckpoint = false;
+                if(this.localCheckpointEnabled){
+                    // Search local db for checkpoint
+                    Lumberjack.info(`Searching local collection for checkpoint.`, getLumberBaseProperties(documentId, tenantId));
+                    checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
+                        Lumberjack.error(`Error retrieving local checkpoint`, getLumberBaseProperties(documentId, tenantId));
+                    });
+
+                    if(checkpoint !== null && checkpoint !== undefined){
+                        lastCheckpoint = JSON.parse(checkpoint.deli);
+                        isLocalCheckpoint = true;
+                    } else {
+                        lastCheckpoint = JSON.parse(document.deli);
+                    }
+
+                } else {
+                    lastCheckpoint = JSON.parse(document.deli);
+                }
+
+                const lumberjackProperties = {
+                    ...getLumberBaseProperties(documentId, tenantId),
+                    lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
+                    logOffset: lastCheckpoint.logOffset,
+                    retrievedFromLocalDB: isLocalCheckpoint
+                }
+
+                Lumberjack.info(`Restored checkpoint from database.`, lumberjackProperties);
+            }
 		}
 
 		// Add checkpointTimestamp as UTC now if checkpoint doesn't have a timestamp yet.
@@ -214,7 +243,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			tenantId,
 			documentId,
 			this.collection,
-		);
+		    this.localCheckpointCollection);
 
 		// Should the lambda reaize that term has flipped to send a no-op message at the beginning?
 		const deliLambda = new DeliLambda(
@@ -231,7 +260,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			this.serviceConfiguration,
 			sessionMetric,
 			sessionStartMetric,
-		);
+            this.localCheckpointEnabled);
 
 		deliLambda.on("close", (closeType) => {
 			const handler = async () => {

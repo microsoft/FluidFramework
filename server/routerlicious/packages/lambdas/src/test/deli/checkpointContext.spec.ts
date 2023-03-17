@@ -63,13 +63,13 @@ describe("Routerlicious", () => {
 					testTenant,
 					testId,
 					testCollection,
-				);
+				    testCollection);
 				testCheckpointContext = new CheckpointContext(
 					testTenant,
 					testId,
 					checkpointManager,
 					testContext,
-				);
+				    false);
 			});
 
 			describe(".checkpoint", () => {
