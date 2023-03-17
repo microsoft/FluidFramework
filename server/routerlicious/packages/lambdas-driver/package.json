@@ -71,7 +71,7 @@
 		"@types/async": "^3.2.9",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.0",
-		"@types/node": "^16.11.7",
+		"@types/node": "^16.18.16",
 		"concurrently": "^7.5.0",
 		"eslint": "~8.27.0",
 		"mocha": "^10.1.0",

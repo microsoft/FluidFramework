@@ -74,7 +74,7 @@
 		"@rushstack/eslint-config": "^2.6.1",
 		"@types/ioredis": "^4.22.0",
 		"@types/nconf": "^0.10.2",
-		"@types/node": "^16.11.7",
+		"@types/node": "^16.18.16",
 		"@types/request": "^2.47.1",
 		"concurrently": "^7.5.0",
 		"eslint": "~8.27.0",
