@@ -68,7 +68,7 @@ describe("schema converter", () => {
 		expect(nodePropertySchema).toEqual({
 			name: "NodeProperty",
 			localFields: new Map(),
-			extraLocalFields: { kind: "Optional" },
+			extraLocalFields: { kind: FieldKinds.optional },
 			globalFields: new Set(),
 			extraGlobalFields: false,
 			value: ValueSchema.Nothing,
@@ -92,7 +92,7 @@ describe("schema converter", () => {
 				["country", fieldSchema(FieldKinds.optional, [brand("String")])],
 				["phones", fieldSchema(FieldKinds.optional, [brand("array<Test:Phone-1.0.0>")])],
 			]),
-			extraLocalFields: { kind: "Optional" },
+			extraLocalFields: { kind: FieldKinds.optional },
 			globalFields: new Set(),
 			extraGlobalFields: false,
 			value: ValueSchema.Nothing,
