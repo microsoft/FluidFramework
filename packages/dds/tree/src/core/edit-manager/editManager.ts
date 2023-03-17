@@ -327,7 +327,7 @@ export class EditManager<
 	}
 
 	/**
-	 * Given a revision on the local branch, remove all commits after it.
+	 * Given a revision on the local branch, remove all commits after it, and updates anchors accordingly.
 	 * @param startRevision - the revision on the local branch that will become the new head
 	 * @param repairStore - an optional repair data store to assist with generating inverses of the removed commits
 	 * @returns a delta that describes the change from rolling back all of the removed commits.
