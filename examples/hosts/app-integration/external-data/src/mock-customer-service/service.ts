@@ -19,7 +19,7 @@ function echoExternalDataWebhookToFluid(
 	taskData: ITaskData,
 	fluidServiceUrl: string,
 	containerUrl: string,
-	externalTaskListId: ExternalTaskListId,
+	externalTaskListId: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
