@@ -135,7 +135,11 @@ describe("client.rollback", () => {
 			foo: "bar",
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
-		client.annotateMarker(marker, { abc: "def" }, { name: "rewrite" });
+		client.annotateMarker(
+			marker,
+			{ [reservedMarkerIdKey]: "markerId", abc: "def" },
+			{ name: "rewrite" },
+		);
 		client.rollback?.(
 			{ type: MergeTreeDeltaType.ANNOTATE, combiningOp: { name: "rewrite" } },
 			client.peekPendingSegmentGroups(),
@@ -151,7 +155,11 @@ describe("client.rollback", () => {
 			foo: "bar",
 		});
 		const marker = client.getMarkerFromId("markerId") as Marker;
-		client.annotateMarker(marker, { abc: "def", foo: null }, { name: "rewrite" });
+		client.annotateMarker(
+			marker,
+			{ [reservedMarkerIdKey]: "markerId", abc: "def", foo: null },
+			{ name: "rewrite" },
+		);
 		client.rollback?.(
 			{ type: MergeTreeDeltaType.ANNOTATE, combiningOp: { name: "rewrite" } },
 			client.peekPendingSegmentGroups(),

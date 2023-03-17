@@ -104,6 +104,7 @@ export function rebase(
 		rebasedChange = SF.amendRebase(
 			rebasedChange,
 			base,
+			(a, b) => a,
 			idAllocator,
 			moveEffects,
 			revisionMetadata ?? defaultRevisionMetadata,
