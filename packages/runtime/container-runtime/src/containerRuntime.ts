@@ -1317,7 +1317,6 @@ export class ContainerRuntime
 
 			if (this.context.clientDetails.type === summarizerClientType) {
 				this._summarizer = new Summarizer(
-					"/_summarizer",
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
@@ -1432,7 +1431,12 @@ export class ContainerRuntime
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
-		this.entryPoint = new LazyPromise(async () => initializeEntryPoint?.(this));
+		this.entryPoint = new LazyPromise(
+			async () =>
+				// this summarizer only exists for the summarizer clients
+				// so make that the entrypoint if it exists.
+				this._summarizer ?? initializeEntryPoint?.(this),
+		);
 	}
 
 	/**
