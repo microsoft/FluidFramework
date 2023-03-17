@@ -200,14 +200,16 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		const externalTaskListId = request.body?.externalTaskListId as string;
 		if (containerUrl === undefined) {
 			const errorMessage =
-				'No session data provided by client. Expected under "sessionUrl" property.';
+				'No session data provided by client. Expected under "containerUrl" property.';
 			result.status(400).json({ message: errorMessage });
+			result.send();
 		} else if (externalTaskListId === undefined) {
 			const errorMessage =
 				'No external task list id provided by client. Expected under "externalTaskListId" property.';
 			result.status(400).json({ message: errorMessage });
+			result.send();
 		} else {
-			if (clientManager.needsNewSubscription(externalTaskListId)) {
+			if (!clientManager.isSubscribed(externalTaskListId)) {
 				// Register with external data service for webhook notifications.
 				fetch(externalDataServiceWebhookRegistrationUrl, {
 					method: "POST",
@@ -230,15 +232,13 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				});
 			}
 
-			// We do not have the mapping stored in the client manager yet, so add it
-			if (clientManager.needsNewMappingEntry(containerUrl, externalTaskListId)) {
-				clientManager.registerClient(containerUrl, externalTaskListId);
-				console.log(
-					formatLogMessage(
-						`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
-					),
-				);
-			}
+			clientManager.registerClient(containerUrl, externalTaskListId);
+			console.log(
+				formatLogMessage(
+					`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
+				),
+			);
+
 			result.send();
 		}
 	});

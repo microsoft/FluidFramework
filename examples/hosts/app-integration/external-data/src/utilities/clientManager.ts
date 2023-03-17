@@ -4,16 +4,16 @@
  */
 
 /**
- * Represents a Fluid client URL.
+ * Represents a Fluid containers URL.
  * This URL contains the client's Fluid session information necessary for broadcasting signals to.
  */
-export type ClientSessionUrl = string;
+type ClientSessionUrl = string;
 
 /**
  * Represents the external data servers query url or uuid.
  * This is the URL or the id of the external resource that the customer service needs to subscribe for at the external service.
  */
-export type ExternalTaskListId = string;
+type ExternalTaskListId = string;
 
 /**
  * Mock client manager.
@@ -44,58 +44,34 @@ export class ClientManager<TData = unknown> {
 	 */
 	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionUrl> {
 		const clientSessionUrls = this._clientMapping.get(externalTaskListId);
-		if (clientSessionUrls === undefined) {
-			console.error(
-				`CUSTOMER SERVICE: "${externalTaskListId}" is not registered to a client session.`,
-			);
-		}
 		return clientSessionUrls ?? new Set<ClientSessionUrl>();
-	}
-
-	/**
-	 * Checks if the client and the external resource already have a mapping and returns the result.
-	 * The user can determine whether to re-register given this information.
-	 */
-	public needsNewMappingEntry(
-		client: ClientSessionUrl,
-		externalTaskListId: ExternalTaskListId,
-	): boolean {
-		let needsNewMappingEntry = true;
-		const clientTaskListIds = this._clientMapping.get(client);
-		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
-			const taskListClients = this._taskListMapping.get(client);
-			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-			if (taskListClients !== undefined && taskListClients.has(client)) {
-				needsNewMappingEntry = false;
-			}
-		}
-		return needsNewMappingEntry;
 	}
 
 	/**
 	 * Returns a boolean if externalTaskListId already exists entry exists. This means that the customer service
 	 * is already subscribed for webhook notifications for it so we do not need to re-subscribe.
 	 */
-	public needsNewSubscription(externalTaskListId: ExternalTaskListId): boolean {
-		const externalTaskListIdClients = this._taskListMapping.get(externalTaskListId);
-		if (externalTaskListIdClients !== undefined) {
-			return externalTaskListIdClients.size > 0;
-		}
-		return true;
+	public isSubscribed(externalTaskListId: string): boolean {
+		return this._taskListMapping.has(externalTaskListId);
 	}
 
 	/**
-	 * Registers a client session url to an external resource id for the duration of the client session.
+	 * Registers a client session url to an external resource id until removeClientTaskListRegistration is called.
+	 * The client can choose when to call it, typically it will be at the end of the session.
 	 */
 	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
 		if (this._taskListMapping.get(client) === undefined) {
 			this._taskListMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
+		} else {
+			this._taskListMapping.get(client)?.add(externalTaskListId);
 		}
 
 		if (this._clientMapping.get(externalTaskListId) === undefined) {
 			this._clientMapping.set(externalTaskListId, new Set<ClientSessionUrl>([client]));
+		} else {
+			this._clientMapping.get(externalTaskListId)?.add(client);
 		}
+
 		console.log(
 			`CUSTOMER SERVICE: "${client}" has been registered with ${externalTaskListId}.`,
 		);
@@ -113,10 +89,10 @@ export class ClientManager<TData = unknown> {
 		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
 			clientTaskListIds.delete(externalTaskListId);
 		}
-		const taskListClients = this._taskListMapping.get(client);
+		const taskListClients = this._taskListMapping.get(externalTaskListId);
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 		if (taskListClients !== undefined && taskListClients.has(client)) {
-			this._taskListMapping.delete(client);
+			taskListClients.delete(client);
 		}
 	}
 }

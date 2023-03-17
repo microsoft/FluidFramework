@@ -6,7 +6,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
 import { BaseDocumentContainerRuntimeFactory } from "../src/model";
@@ -35,7 +34,8 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 		id = await createResponse.attach();
 		model.baseDocument.addTaskList({
 			externalTaskListId: "task-list-test",
-			containerUrl: model.getContainerResolvedUrl() as IFluidResolvedUrl,
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			containerUrl: model.getContainerResolvedUrl()!,
 		});
 	} else {
 		id = location.hash.slice(1);
