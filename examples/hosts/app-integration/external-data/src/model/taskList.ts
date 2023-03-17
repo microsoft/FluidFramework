@@ -7,6 +7,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { ISharedCell, SharedCell } from "@fluidframework/cell";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedMap } from "@fluidframework/map";
 
@@ -15,10 +16,12 @@ import type {
 	ITask,
 	ITaskEvents,
 	ITaskData,
-	IBaseDocument,
+	ITaskList,
 	IBaseDocumentInitialState,
+	IBaseDocument,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
+import { customerServicePort } from "../mock-customer-service-interface";
 
 class Task extends TypedEventEmitter<ITaskEvents> implements ITask {
 	public get id(): string {
@@ -349,26 +352,64 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	};
 
 	protected async initializingFirstTime(props: IBaseDocumentInitialState): Promise<void> {
-		const externalTaskListId = props?.externalTaskListId;
+		const externalTaskListId = props.externalTaskListId;
 		if (externalTaskListId === undefined) {
 			throw new Error(
 				"externalTaskListId not present in instantiation. Cannot instantiate task list",
 			);
 		}
 		this._externalTaskListId = externalTaskListId;
-		// TODO: remove console.log of externalTaskListId once it is used in upcoming PRs.
-		// Linter complains about it not being used and then tried to remove
-		// _externalTaskListId as well. This log is simpy to allow building for now.
-		console.log(this.externalTaskListId);
+		// TODO: The check below is a hack for ensuring that the container is attached
+		// before creating and registering the task list, and importing the task list data
+		// form the external server. This is pretty anti-fluid, so we need a better way to
+		// do this check.
+		if (props.containerUrl === undefined) {
+			throw new Error(
+				"containerUrl is required to register the task list for external change notifications",
+			);
+		}
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
 		this.root.set("externalDataSnapshot", this._externalDataSnapshot.handle);
+
 		// TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
 		// at some point in the future.
 		await this.importExternalData();
+		await this.registerWithCustomerService(props.containerUrl);
 	}
 
+	/**
+	 * Register container session data with the customer service.
+	 * @returns A promise that resolves when the registration call returns successfully.
+	 *
+	 * @remarks This will allow the Customer Service to pass on the container information
+	 * to the Fluid Service to send the signal that some new information has come through.
+	 */
+	private async registerWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
+		if (this.externalTaskListId === undefined) {
+			throw new Error("externalTaskListId is undefined");
+		}
+		try {
+			console.log(
+				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
+			);
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					containerUrl: containerUrlData.url,
+					externalTaskListId: this.externalTaskListId,
+				}),
+			});
+		} catch (error) {
+			const message = `Customer service registration failed:\n${error}`;
+			throw new Error(message);
+		}
+	}
 	/**
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for changes to the task list.
@@ -451,6 +492,9 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	{},
 );
 
+/**
+ * The BaseDocument is our data object that implements the IBaseDocument interface.
+ */
 export class BaseDocument extends DataObject implements IBaseDocument {
 	private readonly taskListCollection = new Map<string, TaskList>();
 
@@ -472,7 +516,7 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 		this.emit("taskListCollectionChanged");
 	};
 
-	public readonly getTaskList = (id: string): TaskList | undefined => {
+	public readonly getTaskList = (id: string): ITaskList | undefined => {
 		return this.taskListCollection.get(id);
 	};
 
