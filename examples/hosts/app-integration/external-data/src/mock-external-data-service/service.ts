@@ -10,7 +10,7 @@ import express from "express";
 import { isWebUri } from "valid-url";
 
 import { assertValidTaskData, ITaskData } from "../model-interface";
-import { MockWebhook } from "../utilities";
+import { MockWebhook } from "./webhook";
 import { ExternalDataSource } from "./externalDataSource";
 
 /**
@@ -50,9 +50,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 */
 	const webhook = new MockWebhook<ITaskData>();
 
-	function notifyWebhookSubscribers(newData: ITaskData): void {
+	function notifyWebhookSubscribers(newData: ITaskData, externalTaskListId: string): void {
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
-		webhook.notifySubscribers(newData);
+		webhook.notifySubscribers(newData, externalTaskListId);
 	}
 
 	externalDataSource.on("debugDataWritten", notifyWebhookSubscribers);
