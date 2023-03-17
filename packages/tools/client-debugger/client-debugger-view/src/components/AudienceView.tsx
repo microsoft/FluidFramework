@@ -157,19 +157,16 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 	const { history } = props;
 
 	const nowTimeStamp = new Date();
-
-	// Reverse history such that newest events are displayed first
-	const reversedHistoryLog = [...history].reverse();
-
 	const historyViews: React.ReactElement[] = [];
 
-	for (const changeEntry of reversedHistoryLog) {
-		const changeTimeStamp = new Date(changeEntry.timestamp);
+	// Reverse history such that newest events are displayed first
+	for (let i = history.length - 1; i >= 0; i--) {
+		const changeTimeStamp = new Date(history[i].timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
 		const accordianBackgroundColor: IStackItemStyles = {
 			root: {
-				background: changeEntry.changeKind === "added" ? "#90ee90" : "#FF7377",
+				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
 				borderStyle: "solid",
 				borderWidth: 1,
 				borderColor: DefaultPalette.neutralTertiary,
@@ -184,22 +181,22 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		};
 
 		historyViews.push(
-			<div>
+			<div key={`audience-history-info-${i}`}>
 				<Stack horizontal={true} styles={accordianBackgroundColor}>
 					<StackItem styles={iconStyle}>
 						<Icon
 							iconName={
-								changeEntry.changeKind === "added" ? "AddFriend" : "UserRemove"
+								history[i].changeKind === "added" ? "AddFriend" : "UserRemove"
 							}
 							title={
-								changeEntry.changeKind === "added" ? "Member Joined" : "Member Left"
+								history[i].changeKind === "added" ? "Member Joined" : "Member Left"
 							}
 						/>
 					</StackItem>
 					<StackItem>
-						<div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
+						<div key={`${history[i].clientId}-${history[i].changeKind}`}>
 							<b>Client ID: </b>
-							{changeEntry.clientId}
+							{history[i].clientId}
 							<br />
 							<b>Time: </b>{" "}
 							{wasChangeToday

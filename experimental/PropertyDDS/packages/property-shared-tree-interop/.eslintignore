@@ -1,0 +1,5 @@
+doc
+node_modules
+dist
+jest.config.js
+src/index.d.ts

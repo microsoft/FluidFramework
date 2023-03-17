@@ -82,7 +82,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 
 		const newEvent: ITelemetryBaseEvent = this.prepareEvent(event);
 
-		postMessageToWindow<TelemetryEventMessage>({
+		postMessageToWindow<TelemetryEventMessage>(undefined, {
 			source: debuggerMessageSource,
 			type: "TELEMETRY_EVENT",
 			data: {

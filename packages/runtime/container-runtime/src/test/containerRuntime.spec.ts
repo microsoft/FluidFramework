@@ -518,7 +518,7 @@ describe("Runtime", () => {
 		});
 
 		describe("Pending state progress tracking", () => {
-			const maxReconnects = 7;
+			const maxReconnects = 7; // 7 is the default used by ContainerRuntime for the max reconnection attempts
 
 			let containerRuntime: ContainerRuntime;
 			const mockLogger = new MockLogger();
@@ -625,8 +625,8 @@ describe("Runtime", () => {
 				);
 
 			it(
-				`No progress for ${maxReconnects} connection state changes and pending state will ` +
-					"close the container",
+				`No progress for ${maxReconnects} connection state changes, with pending state, should ` +
+					"generate telemetry event and throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -636,8 +636,14 @@ describe("Runtime", () => {
 						toggleConnection(containerRuntime);
 					}
 
+					// NOTE: any errors returned by getFirstContainerError() are from a variable set in a mock closeFn function passed
+					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
 					assert.ok(error instanceof DataProcessingError);
+					assert.strictEqual(
+						error.message,
+						"Runtime detected too many reconnects with no progress syncing local ops.",
+					);
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
@@ -654,8 +660,8 @@ describe("Runtime", () => {
 			);
 
 			it(
-				`No progress for ${maxReconnects} / 2 connection state changes and pending state will ` +
-					"not close the container",
+				`No progress for ${maxReconnects} / 2 connection state changes, with pending state, should ` +
+					"generate telemetry event but not throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -665,6 +671,7 @@ describe("Runtime", () => {
 						toggleConnection(containerRuntime);
 					}
 
+					// The particulars of the setup for this test mean that no errors here indicate the container did not close.
 					assert.equal(containerErrors.length, 0);
 					mockLogger.assertMatchAny([
 						{
@@ -677,25 +684,30 @@ describe("Runtime", () => {
 			);
 
 			it(
-				`No progress for ${maxReconnects} connection state changes and pending state with` +
-					"feature disabled will not close the container",
+				`No progress for ${maxReconnects} connection state changes, with pending state, with ` +
+					"feature disabled, should not generate telemetry event nor throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
-					patchRuntime(pendingStateManager, -1 /* maxConsecutiveReplays */);
+					patchRuntime(pendingStateManager, -1 /* maxConsecutiveReconnects */);
 
 					for (let i = 0; i < maxReconnects; i++) {
 						addPendingMessage(pendingStateManager);
 						toggleConnection(containerRuntime);
 					}
 
+					// The particulars of the setup for this test mean that no errors here indicate the container did not close.
 					assert.equal(containerErrors.length, 0);
-					mockLogger.assertMatch([]);
+					mockLogger.assertMatchNone([
+						{
+							eventName: "ContainerRuntime:ReconnectsWithNoProgress",
+						},
+					]);
 				},
 			);
 
 			it(
-				`No progress for ${maxReconnects} connection state changes and no pending state will ` +
-					"not close the container",
+				`No progress for ${maxReconnects} connection state changes, with no pending state, should ` +
+					"not generate telemetry event nor throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -704,14 +716,19 @@ describe("Runtime", () => {
 						toggleConnection(containerRuntime);
 					}
 
+					// The particulars of the setup for this test mean that no errors here indicate the container did not close.
 					assert.equal(containerErrors.length, 0);
-					mockLogger.assertMatch([]);
+					mockLogger.assertMatchNone([
+						{
+							eventName: "ContainerRuntime:ReconnectsWithNoProgress",
+						},
+					]);
 				},
 			);
 
 			it(
-				`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
-					"processing local op will not close the container",
+				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
+					"processing local op, should not generate telemetry event nor throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -732,14 +749,19 @@ describe("Runtime", () => {
 						);
 					}
 
+					// The particulars of the setup for this test mean that no errors here indicate the container did not close.
 					assert.equal(containerErrors.length, 0);
-					mockLogger.assertMatch([]);
+					mockLogger.assertMatchNone([
+						{
+							eventName: "ContainerRuntime:ReconnectsWithNoProgress",
+						},
+					]);
 				},
 			);
 
 			it(
-				`No progress for ${maxReconnects} connection state changes and pending state but successfully ` +
-					"processing remote op will close the container",
+				`No progress for ${maxReconnects} connection state changes, with pending state, successfully ` +
+					"processing remote op, should generate telemetry event and throw an error that closes the container",
 				async () => {
 					const pendingStateManager = getMockPendingStateManager();
 					patchRuntime(pendingStateManager);
@@ -760,8 +782,14 @@ describe("Runtime", () => {
 						);
 					}
 
+					// NOTE: any errors returned by getFirstContainerError() are from a variable set in a mock closeFn function passed
+					// around during test setup, which executes when the container runtime causes the context (container) to close.
 					const error = getFirstContainerError();
 					assert.ok(error instanceof DataProcessingError);
+					assert.strictEqual(
+						error.message,
+						"Runtime detected too many reconnects with no progress syncing local ops.",
+					);
 					assert.strictEqual(error.getTelemetryProperties().attempts, maxReconnects);
 					assert.strictEqual(
 						error.getTelemetryProperties().pendingMessages,
