@@ -376,8 +376,6 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		// TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
 		// at some point in the future.
 		await this.importExternalData();
-
-		// Need to cast as IFluidResolvedUrl as IResolvedUrl does not have all url as a parameter
 		await this.registerWithCustomerService(props.containerUrl);
 	}
 
