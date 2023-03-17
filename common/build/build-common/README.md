@@ -7,8 +7,7 @@ See [GitHub](https://github.com/microsoft/FluidFramework) for more details on Fl
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- NOTE: This section is automatically generated using @fluidframework/build-common/markdown-magic. Do not update these generated contents directly. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 
