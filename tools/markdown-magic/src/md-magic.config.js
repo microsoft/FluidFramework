@@ -46,7 +46,6 @@ const readTemplate = (templateFileName) => {
 const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, includeHeading) => {
 	const packageJsonMetadata = getPackageMetadata(packageJsonPath);
 	const packageName = packageJsonMetadata.name;
-	const packageDirectory = pathLib.dirname(packageJsonPath);
 
 	const sectionBody = [];
 	sectionBody.push("You can run this example using the following steps:\n");
@@ -61,7 +60,7 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 	}
 
 	sectionBody.push(
-		`1. Run \`npm run start\` from this directory (${packageDirectory}) and open <http://localhost:8080> in a web browser to see the app running.`,
+		`1. Run \`npm run start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
 	);
 
 	return formattedSectionText(
@@ -275,11 +274,11 @@ function libraryPackageReadmeTransform(content, options, config) {
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function examplePackageReadmeTransform(content, options, config) {
-	const { packageJsonPath: relativeackageJsonPath } = options;
-
+	const { packageJsonPath: relativePackageJsonPath } = options;
+	
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
-		relativeackageJsonPath,
+		relativePackageJsonPath,
 	);
 
 	const sections = [];
