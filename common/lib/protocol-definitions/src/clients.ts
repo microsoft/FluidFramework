@@ -5,6 +5,9 @@
 
 import { IUser } from "./users";
 
+/**
+ * A client's connection mode. Readonly or read/write.
+ */
 export type ConnectionMode = "write" | "read";
 
 export interface ICapabilities {
@@ -22,6 +25,9 @@ export interface IClientDetails {
 }
 
 export interface IClient {
+	/**
+	 * {@inheritDoc ConnectionMode}
+	 */
 	mode: ConnectionMode;
 	details: IClientDetails;
 	permission: string[];
