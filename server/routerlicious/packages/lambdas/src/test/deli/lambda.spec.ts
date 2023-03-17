@@ -141,7 +141,6 @@ describe("Routerlicious", () => {
 					undefined,
 					testReverseProducer,
 					DefaultServiceConfiguration,
-				,
                     false);
 				lambda = await factory.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
@@ -167,7 +166,6 @@ describe("Routerlicious", () => {
 							enableWriteClientSignals: true,
 						},
 					},
-				,
                     false);
 				lambdaWithSignals = await factoryWithSignals.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
@@ -190,7 +188,6 @@ describe("Routerlicious", () => {
 							maintainBatches: true,
 						},
 					},
-				,
                     false);
 				lambdaWithBatching = await factoryWithBatching.create(
 					{ documentId: testId, tenantId: testTenantId, leaderEpoch: 0 },
