@@ -325,7 +325,7 @@ export class EditManager<
 	}
 
 	/**
-	 * Given a revision on the local branch, remove all commits after it.
+	 * Given a revision on the local branch, remove all commits after it, and updates anchors accordingly.
 	 * @param startRevision - the revision on the local branch that will become the new head
 	 * @param repairStore - an optional repair data store to assist with generating inverses of the removed commits
 	 * @returns an iterator of deltas where each delta describes the change from rolling back one of the removed commits.
@@ -341,14 +341,14 @@ export class EditManager<
 
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const { change, revision } = commits[i];
-			if (this.anchors !== undefined) {
-				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-			}
 			const inverse = this.changeFamily.rebaser.invert(
 				tagChange(change, revision),
 				false,
 				repairStore,
 			);
+			if (this.anchors !== undefined) {
+				this.changeFamily.rebaser.rebaseAnchors(this.anchors, inverse);
+			}
 			yield this.changeFamily.intoDelta(inverse);
 		}
 	}
