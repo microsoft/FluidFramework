@@ -27,6 +27,7 @@ export {
 } from "./nestedMap";
 export { addToNestedSet, NestedSet, nestedSetContains } from "./nestedSet";
 export { OffsetList, OffsetListFactory } from "./offsetList";
+export { TransactionResult } from "./transactionResult";
 export {
 	areSafelyAssignable,
 	Bivariant,
@@ -46,7 +47,6 @@ export {
 export { StackyIterator } from "./stackyIterator";
 export {
 	clone,
-	compareArrays,
 	compareSets,
 	fail,
 	getOrAddEmptyToMap,
@@ -57,7 +57,9 @@ export {
 	JsonCompatibleObject,
 	JsonCompatibleReadOnly,
 	makeArray,
+	mapIterable,
 	Mutable,
 	RecursiveReadonly,
-	unreachableCase,
+	zipIterables,
 } from "./utils";
+export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";

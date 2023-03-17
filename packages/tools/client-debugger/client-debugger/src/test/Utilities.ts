@@ -11,9 +11,11 @@ import {
 	IAudienceOwner,
 	IContainer,
 	IContainerEvents,
+	IErrorBase,
 } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -48,10 +50,13 @@ class MockAudience extends EventEmitter implements IAudienceOwner {
 	}
 
 	public addMember(clientId: string, member: IClient): void {
+		this.emit("addMember", clientId, member);
 		this.audienceMembers.set(clientId, member);
 	}
 
 	public removeMember(clientId: string): boolean {
+		const member = this.audienceMembers.get(clientId);
+		this.emit("removeMember", clientId, member);
 		return this.audienceMembers.delete(clientId);
 	}
 
@@ -78,15 +83,44 @@ class MockContainer
 		return this._connectionState;
 	}
 
+	public set connectionState(connectionState: ConnectionState) {
+		this._connectionState = connectionState;
+	}
+
 	public connect(): void {
-		this._connectionState = ConnectionState.Connected;
 		this.emit("connected");
 	}
 
+	public contextChanged(): void {
+		this.emit("contextChanged");
+	}
+
 	public disconnect(): void {
-		this._connectionState = ConnectionState.Disconnected;
 		this.emit("disconnected");
 	}
+
+	public async attach(request: IRequest): Promise<void> {
+		this.emit("attached");
+	}
+
+	public dispose(error?: IErrorBase | undefined): void {
+		this.emit("disposed");
+	}
+
+	public close(): void {
+		this.emit("closed");
+	}
+}
+
+function createMockClient(clientId: string): IClient {
+	return {
+		mode: "read",
+		details: { capabilities: { interactive: false } },
+		permission: [],
+		user: { id: clientId },
+		scopes: [],
+		timestamp: Date.now(),
+	};
 }
 
 /**
@@ -101,4 +135,23 @@ export function createMockContainer(): IContainer {
 	return new MockContainer() as unknown as IContainer;
 }
 
+/**
+ * Add a member for mock audience from mock container for use in tests.
+ * @returns member id
+ */
+export function addAudienceMember(container: IContainer): string {
+	const audience = container.audience as MockAudience;
+	const testClientId = Math.random().toString(36).slice(2, 7);
+	audience.addMember(testClientId, createMockClient(testClientId));
+
+	return testClientId;
+}
+
+/**
+ * Remove a member for mock audience from mock container for use in tests.
+ */
+export function removeAudienceMember(container: IContainer, clientId: string): void {
+	const audience = container.audience as MockAudience;
+	audience.removeMember(clientId);
+}
 /* eslint-enable @typescript-eslint/no-explicit-any */

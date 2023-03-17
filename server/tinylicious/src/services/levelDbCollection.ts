@@ -71,6 +71,10 @@ export class Collection<T> implements ICollection<T> {
 		}
 	}
 
+	public async findAndUpdate(query: any, value: any): Promise<{ value: any; existing: boolean }> {
+		throw new Error("Method Not Implemented");
+	}
+
 	public async upsert(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = await this.findOneInternal(filter);
 		if (!value) {

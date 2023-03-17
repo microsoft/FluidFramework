@@ -10,6 +10,8 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 
 // TODOs:
 // - Data recording configuration (what things the user wishes to subscribe to)
+// - Allow consumers to opt out of posting messages to the window?
+// - Pass diffs instead of all data in change events (probably requires defining separate full-dump messages from delta messages)
 
 /**
  * Events emitted by {@link IFluidClientDebugger}.

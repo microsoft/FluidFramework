@@ -21,7 +21,7 @@ import {
 	summarizeNow,
 	createSummarizerFromFactory,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
+import { describeFullCompat, getContainerRuntimeApi } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
@@ -94,7 +94,7 @@ async function createSummarizer(
 	container: IContainer,
 	summaryVersion?: string,
 ): Promise<ISummarizer> {
-	return createSummarizerFromFactory(
+	const createSummarizerResult = await createSummarizerFromFactory(
 		provider,
 		container,
 		dataStoreFactory1,
@@ -102,12 +102,13 @@ async function createSummarizer(
 		containerRuntimeFactoryWithDefaultDataStore,
 		registryStoreEntries,
 	);
+	return createSummarizerResult.summarizer;
 }
 
 /**
  * Validates the scenario in which we always retrieve the latest snapshot.
  */
-describeNoCompat("Summarizer fetches expected number of times", (getTestObjectProvider) => {
+describeFullCompat("Summarizer fetches expected number of times", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject1;

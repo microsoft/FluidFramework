@@ -47,6 +47,7 @@ module.exports = (env) => {
 			// So use DefinePlugin to recreate just the part we need:
 			new webpack.DefinePlugin({
 				"process.env.NODE_DEBUG": undefined,
+				"process.env.NODE_NAME": undefined,
 			}),
 			new HtmlWebpackPlugin({
 				template: "./tests/index.html",

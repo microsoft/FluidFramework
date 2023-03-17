@@ -11,6 +11,7 @@ import {
 	TaggedChange,
 	AnchorSet,
 	Delta,
+	ChangeFamilyEditor,
 } from "../core";
 import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
@@ -166,13 +167,14 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.NodeChanges | undefined {
+function toDelta(change: TestChange): Delta.Modify {
 	if (change.intentions.length > 0) {
 		return {
+			type: Delta.MarkType.Modify,
 			setValue: change.intentions.map(String).join("|"),
 		};
 	}
-	return undefined;
+	return { type: Delta.MarkType.Modify };
 }
 
 export interface AnchorRebaseData {
@@ -251,4 +253,4 @@ export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
 	public intentions: number[] = [];
 }
 
-export type TestChangeFamily = ChangeFamily<unknown, TestChange>;
+export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;

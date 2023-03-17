@@ -4,19 +4,51 @@
  */
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
+import { ContainerStateChangeKind } from "./Container";
+import { ContainerStateMetadata } from "./ContainerMetadata";
 
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
+import {
+	CloseContainerMessage,
+	ConnectContainerMessage,
+	ContainerStateChangeMessage,
+	debuggerMessageSource,
+	DisconnectContainerMessage,
+	GetContainerStateMessage,
+	handleIncomingWindowMessage,
+	IDebuggerMessage,
+	InboundHandlers,
+	MessageLoggingOptions,
+	postMessageToWindow,
+} from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
 /**
  * {@link IFluidClientDebugger} implementation.
  *
- * @remarks This class is not intended for external use. Only its interface is exported by the library.
+ * @remarks
  *
+ * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
+ * state changes and when requested.
+ *
+ * **Messages it listens for:**
+ *
+ * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast {@link ContainerStateChangeMessage}.
+ * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to the container.
+ * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect from the container.
+ * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
+ * TODO: Document others as they are added.
+ *
+ * **Messages it posts:**
+ *
+ * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
+ * or when requested (via {@link GetContainerStateMessage}).
+ * TODO: Document others as they are added.
+ *
+ * @sealed
  * @internal
  */
 export class FluidClientDebugger
@@ -66,17 +98,46 @@ export class FluidClientDebugger
 
 	// #region Container-related event handlers
 
-	private readonly containerConnectedHandler = (clientId: string): void => {
+	private readonly containerAttachedHandler = (): void => {
+		this.postContainerStateChange();
 		this._connectionStateLog.push({
-			newState: ConnectionState.Connected,
+			newState: ContainerStateChangeKind.Attached,
+			timestamp: Date.now(),
+			clientId: undefined,
+		});
+	};
+
+	private readonly containerConnectedHandler = (clientId: string): void => {
+		this.postContainerStateChange();
+		this._connectionStateLog.push({
+			newState: ContainerStateChangeKind.Connected,
 			timestamp: Date.now(),
 			clientId,
 		});
 	};
 
 	private readonly containerDisconnectedHandler = (): void => {
+		this.postContainerStateChange();
 		this._connectionStateLog.push({
-			newState: ConnectionState.Disconnected,
+			newState: ContainerStateChangeKind.Disconnected,
+			timestamp: Date.now(),
+			clientId: undefined,
+		});
+	};
+
+	private readonly containerClosedHandler = (): void => {
+		this.postContainerStateChange();
+		this._connectionStateLog.push({
+			newState: ContainerStateChangeKind.Closed,
+			timestamp: Date.now(),
+			clientId: undefined,
+		});
+	};
+
+	private readonly containerDisposedHandler = (): void => {
+		this.postContainerStateChange();
+		this._connectionStateLog.push({
+			newState: ContainerStateChangeKind.Disposed,
 			timestamp: Date.now(),
 			clientId: undefined,
 		});
@@ -106,7 +167,82 @@ export class FluidClientDebugger
 
 	// #endregion
 
+	// #region Window event handlers
+
+	/**
+	 * Handlers for inbound messages related to the debugger.
+	 */
+	private readonly inboundMessageHandlers: InboundHandlers = {
+		["GET_CONTAINER_STATE"]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerStateMessage;
+			if (message.data.containerId === this.containerId) {
+				this.postContainerStateChange();
+				return true;
+			}
+			return false;
+		},
+		["CONNECT_CONTAINER"]: (untypedMessage) => {
+			const message = untypedMessage as ConnectContainerMessage;
+			if (message.data.containerId === this.containerId) {
+				this.container.connect();
+				return true;
+			}
+			return false;
+		},
+		["DISCONNECT_CONTAINER"]: (untypedMessage) => {
+			const message = untypedMessage as DisconnectContainerMessage;
+			if (message.data.containerId === this.containerId) {
+				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
+				return true;
+			}
+			return false;
+		},
+		["CLOSE_CONTAINER"]: (untypedMessage) => {
+			const message = untypedMessage as CloseContainerMessage;
+			if (message.data.containerId === this.containerId) {
+				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
+				return true;
+			}
+			return false;
+		},
+	};
+
+	/**
+	 * Event handler for messages coming from the window (globalThis).
+	 */
+	private readonly windowMessageHandler = (
+		event: MessageEvent<Partial<IDebuggerMessage>>,
+	): void => {
+		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
+	};
+
+	/**
+	 * Posts a {@link ContainerStateChangeMessage} to the window (globalThis).
+	 */
+	private readonly postContainerStateChange = (): void => {
+		postMessageToWindow<ContainerStateChangeMessage>(
+			{
+				source: debuggerMessageSource,
+				type: "CONTAINER_STATE_CHANGE",
+				data: {
+					containerId: this.containerId,
+					containerState: this.getContainerState(),
+				},
+			},
+			this.messageLoggingOptions,
+		);
+	};
+
+	// #endregion
+
 	private readonly debuggerDisposedHandler = (): boolean => this.emit("disposed");
+
+	/**
+	 * Message logging options used by the debugger.
+	 */
+	private get messageLoggingOptions(): MessageLoggingOptions {
+		return { context: `Debugger(${this.containerId})` };
+	}
 
 	/**
 	 * Whether or not the instance has been disposed yet.
@@ -130,12 +266,18 @@ export class FluidClientDebugger
 		this._audienceChangeLog = [];
 
 		// Bind Container events required for change-logging
+		this.container.on("attached", this.containerAttachedHandler);
 		this.container.on("connected", this.containerConnectedHandler);
 		this.container.on("disconnected", this.containerDisconnectedHandler);
+		this.container.on("disposed", this.containerDisposedHandler);
+		this.container.on("closed", this.containerClosedHandler);
 
 		// Bind Audience events required for change-logging
 		this.audience.on("addMember", this.audienceMemberAddedHandler);
 		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
+
+		// Register listener for inbound messages from the window (globalThis)
+		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
 		this._disposed = false;
 	}
@@ -161,12 +303,18 @@ export class FluidClientDebugger
 	 */
 	public dispose(): void {
 		// Unbind Container events
+		this.container.off("attached", this.containerAttachedHandler);
 		this.container.off("connected", this.containerConnectedHandler);
 		this.container.off("disconnected", this.containerDisconnectedHandler);
+		this.container.off("disposed", this.containerDisposedHandler);
+		this.container.off("closed", this.containerClosedHandler);
 
 		// Unbind Audience events
 		this.audience.off("addMember", this.audienceMemberAddedHandler);
 		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
+
+		// Unbind window event listener
+		globalThis.removeEventListener?.("message", this.windowMessageHandler);
 
 		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 
@@ -178,5 +326,19 @@ export class FluidClientDebugger
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
+	}
+
+	private getContainerState(): ContainerStateMetadata {
+		const clientId = this.container.clientId;
+		return {
+			id: this.containerId,
+			nickname: this.containerNickname,
+			attachState: this.container.attachState,
+			connectionState: this.container.connectionState,
+			closed: this.container.closed,
+			clientId: this.container.clientId,
+			audienceId:
+				clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
+		};
 	}
 }

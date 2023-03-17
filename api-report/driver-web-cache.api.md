@@ -4,13 +4,14 @@
 
 ```ts
 
+import { DeleteDBCallbacks } from 'idb';
 import { ICacheEntry } from '@fluidframework/odsp-driver-definitions';
 import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
-export function deleteFluidCacheIndexDbInstance(): Promise<void>;
+export function deleteFluidCacheIndexDbInstance(deleteDBCallbacks?: DeleteDBCallbacks): Promise<void>;
 
 // @public
 export class FluidCache implements IPersistedCache {
@@ -29,7 +30,6 @@ export interface FluidCacheConfig {
     maxCacheItemAge: number;
     partitionKey: string | null;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

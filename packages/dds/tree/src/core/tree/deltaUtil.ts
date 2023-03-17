@@ -21,7 +21,12 @@ export function inputLength(mark: Mark<unknown>): number {
 		case MarkType.Delete:
 		case MarkType.MoveOut:
 			return mark.count;
+		case MarkType.Modify:
+		case MarkType.ModifyAndDelete:
+		case MarkType.ModifyAndMoveOut:
+			return 1;
 		case MarkType.Insert:
+		case MarkType.InsertAndModify:
 		case MarkType.MoveIn:
 			return 0;
 		default:

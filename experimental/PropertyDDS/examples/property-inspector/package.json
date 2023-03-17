@@ -1,6 +1,7 @@
 {
-	"name": "@fluid-experimental/property-inspector",
+	"name": "@fluid-example/property-inspector",
 	"version": "2.0.0-internal.4.0.0",
+	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,6 +40,7 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+		"@fluid-example/schemas": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-experimental/property-binder": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-experimental/property-changeset": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-experimental/property-common": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
@@ -46,9 +48,8 @@
 		"@fluid-experimental/property-inspector-table": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-experimental/property-properties": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-experimental/property-proxy": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluid-experimental/schemas": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/aqueduct": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/common-utils": "^1.0.0",
+		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/container-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/container-loader": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/container-runtime": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
@@ -122,5 +123,9 @@
 	"jest-junit": {
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
 	}
 }

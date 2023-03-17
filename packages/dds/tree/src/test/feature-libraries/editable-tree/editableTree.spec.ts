@@ -21,8 +21,9 @@ import {
 	GlobalFieldKey,
 	ValueSchema,
 	LocalFieldKey,
+	rootFieldKeySymbol,
 } from "../../../core";
-import { brand, clone, isAssignableTo, requireTrue } from "../../../util";
+import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
 import {
 	defaultSchemaPolicy,
 	getEditableTreeContext,
@@ -42,17 +43,19 @@ import {
 	isEditableField,
 	UnwrappedEditableTree,
 	getField,
-	indexSymbol,
 	getPrimaryField,
 	namedTreeSchema,
 	ContextuallyTypedNodeData,
 	ContextuallyTypedNodeDataObject,
 	MarkedArrayLike,
+	EditableTreeContext,
+	DefaultEditBuilder,
 } from "../../../feature-libraries";
 
 import {
 	FieldProxyTarget,
 	NodeProxyTarget,
+	parentField,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTree";
@@ -74,6 +77,12 @@ import {
 } from "./mockData";
 import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils";
 
+function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
+	// This will error if someone tries to call mutation methods on it
+	const dummyEditor = {} as unknown as DefaultEditBuilder;
+	return getEditableTreeContext(forest, dummyEditor);
+}
+
 function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
 	const forest = buildForest(schemaRepo);
@@ -81,18 +90,15 @@ function setupForest(schema: SchemaData, data: JsonableTree[]): IEditableForest 
 	return forest;
 }
 
-function buildTestProxy(
-	data: JsonableTree,
-): readonly [SchemaDataAndPolicy, UnwrappedEditableField] {
+function buildTestTree(data: JsonableTree): EditableTreeContext {
 	const forest = setupForest(fullSchemaData, [data]);
-	const context = getEditableTreeContext(forest);
-	const root: UnwrappedEditableField = context.unwrappedRoot;
-	return [forest.schema, root];
+	const context = getReadonlyEditableTreeContext(forest);
+	return context;
 }
 
 function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
-	const [schema, proxy] = buildTestProxy(personData);
-	return [schema, proxy as Person];
+	const context = buildTestTree(personData);
+	return [context.schema, context.unwrappedRoot as Person];
 }
 
 describe("editable-tree: read-only", () => {
@@ -151,7 +157,7 @@ describe("editable-tree: read-only", () => {
 			configurable: true,
 			enumerable: true,
 			value: expected,
-			writable: false,
+			writable: true,
 		});
 
 		// primitive node of a sequence field is unwrapped into value
@@ -220,16 +226,6 @@ describe("editable-tree: read-only", () => {
 				configurable: true,
 				enumerable: false,
 				value: stringSchema,
-				writable: false,
-			});
-		}
-
-		{
-			const descriptor = Object.getOwnPropertyDescriptor(nameNode, indexSymbol);
-			assert.deepEqual(descriptor, {
-				configurable: true,
-				enumerable: false,
-				value: 0,
 				writable: false,
 			});
 		}
@@ -314,7 +310,7 @@ describe("editable-tree: read-only", () => {
 
 	it("traverse a complete tree by iteration", () => {
 		const forest = setupForest(fullSchemaData, [personData]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		expectFieldEquals(forest.schema, context.root, [personData]);
 	});
 
@@ -331,7 +327,6 @@ describe("editable-tree: read-only", () => {
 		assert(proxyTargetSymbol in personProxy);
 		assert(typeSymbol in personProxy);
 		assert(typeNameSymbol in personProxy);
-		assert(indexSymbol in personProxy);
 		assert(getField in personProxy);
 		// Check fields show up:
 		assert("age" in personProxy);
@@ -342,20 +337,20 @@ describe("editable-tree: read-only", () => {
 		// Value does not show up when empty:
 		assert.equal(valueSymbol in personProxy, false);
 
-		const [, emptyOptional] = buildTestProxy(emptyNode);
+		const emptyOptional = buildTestTree(emptyNode).unwrappedRoot;
 		assert(isUnwrappedNode(emptyOptional));
 		// Check empty field does not show up:
 		assert.equal("child" in emptyOptional, false);
 
-		const [, fullOptional] = buildTestProxy({
+		const fullOptional = buildTestTree({
 			type: optionalChildSchema.name,
 			fields: { child: [{ type: int32Schema.name, value: 1 }] },
-		});
+		}).unwrappedRoot;
 		assert(isUnwrappedNode(fullOptional));
 		// Check full field does show up:
 		assert("child" in fullOptional);
 
-		const [, hasValue] = buildTestProxy({ type: optionalChildSchema.name, value: 1 });
+		const hasValue = buildTestTree({ type: optionalChildSchema.name, value: 1 }).unwrappedRoot;
 		assert(isUnwrappedNode(hasValue));
 		// Value does show up when not empty:
 		assert(valueSymbol in hasValue);
@@ -370,7 +365,7 @@ describe("editable-tree: read-only", () => {
 		// Test empty
 		{
 			const forest = setupForest(schemaData, []);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			assert.deepEqual([...context.unwrappedRoot], []);
 			expectFieldEquals(forest.schema, context.root, []);
@@ -379,7 +374,7 @@ describe("editable-tree: read-only", () => {
 		// Test 1 item
 		{
 			const forest = setupForest(schemaData, [emptyNode]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode]);
 			expectFieldEquals(forest.schema, context.root, [emptyNode]);
@@ -388,7 +383,7 @@ describe("editable-tree: read-only", () => {
 		// Test 2 items
 		{
 			const forest = setupForest(schemaData, [emptyNode, emptyNode]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			expectTreeSequence(forest.schema, context.unwrappedRoot, [emptyNode, emptyNode]);
 			expectFieldEquals(forest.schema, context.root, [emptyNode, emptyNode]);
@@ -403,7 +398,7 @@ describe("editable-tree: read-only", () => {
 			globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
 		};
 		const forest = setupForest(schemaData, [emptyNode]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert(isUnwrappedNode(context.unwrappedRoot));
 		expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
 		context.free();
@@ -418,7 +413,7 @@ describe("editable-tree: read-only", () => {
 		// Empty
 		{
 			const forest = setupForest(schemaData, []);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert.equal(context.unwrappedRoot, undefined);
 			expectFieldEquals(forest.schema, context.root, []);
 			context.free();
@@ -426,7 +421,7 @@ describe("editable-tree: read-only", () => {
 		// With value
 		{
 			const forest = setupForest(schemaData, [emptyNode]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			expectTreeEquals(forest.schema, context.unwrappedRoot, emptyNode);
 			expectFieldEquals(forest.schema, context.root, [emptyNode]);
 			context.free();
@@ -449,7 +444,10 @@ describe("editable-tree: read-only", () => {
 		});
 		const rootSchema = fieldSchema(FieldKinds.optional, [childWithGlobalFieldSchema.name]);
 		const schemaData: SchemaData = {
-			treeSchema: schemaMap,
+			treeSchema: new Map([
+				[childWithGlobalFieldSchema.name, childWithGlobalFieldSchema],
+				[stringSchema.name, stringSchema],
+			]),
 			globalFieldSchema: new Map([
 				[rootFieldKey, rootSchema],
 				[globalFieldKey, globalFieldSchema],
@@ -466,7 +464,7 @@ describe("editable-tree: read-only", () => {
 				},
 			},
 		]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert(isUnwrappedNode(context.unwrappedRoot));
 		assert.deepEqual(
 			context.unwrappedRoot[getField](globalFieldSymbol).getNode(0)[typeSymbol],
@@ -504,7 +502,7 @@ describe("editable-tree: read-only", () => {
 			globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
 		};
 		const forest = setupForest(schemaData, [{ type: int32Schema.name, value: 1 }]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert.equal(context.unwrappedRoot, 1);
 		expectFieldEquals(forest.schema, context.root, [{ type: int32Schema.name, value: 1 }]);
 		context.free();
@@ -522,7 +520,7 @@ describe("editable-tree: read-only", () => {
 				fields: { child: [{ type: int32Schema.name, value: 1 }] },
 			},
 		]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert(isUnwrappedNode(context.unwrappedRoot));
 		assert.equal(context.unwrappedRoot["child" as FieldKey], 1);
 
@@ -545,7 +543,7 @@ describe("editable-tree: read-only", () => {
 				fields: { child: [{ type: int32Schema.name, value: undefined }] },
 			},
 		]);
-		const context = getEditableTreeContext(forest);
+		const context = getReadonlyEditableTreeContext(forest);
 		assert.throws(
 			() => (context.unwrappedRoot as EditableTree)["child" as FieldKey],
 			(e) => validateAssertionError(e, "`undefined` values not allowed for primitive fields"),
@@ -565,7 +563,7 @@ describe("editable-tree: read-only", () => {
 		{
 			const data = { type: phonesSchema.name };
 			const forest = setupForest(schemaData, [data]);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			assert.equal(context.unwrappedRoot.length, 0);
 			assert.deepEqual([...context.unwrappedRoot], []);
@@ -591,13 +589,49 @@ describe("editable-tree: read-only", () => {
 				},
 			];
 			const forest = setupForest(schemaData, data);
-			const context = getEditableTreeContext(forest);
+			const context = getReadonlyEditableTreeContext(forest);
 			assert(isEditableField(context.unwrappedRoot));
 			assert.equal(context.unwrappedRoot.length, 1);
 			assert.deepEqual([...context.unwrappedRoot], [1]);
 			expectFieldEquals(forest.schema, context.root, data);
 			context.free();
 		}
+	});
+
+	describe("parent access", () => {
+		it("root node", () => {
+			const context = buildTestTree(personData);
+			const tree = context.unwrappedRoot;
+			assert(isUnwrappedNode(tree));
+			const { index, parent: rootParent } = tree[parentField];
+			assert.equal(index, 0);
+			expectFieldEquals(context.schema, rootParent, [personData]);
+			assert.equal(rootParent.parent, undefined);
+			assert.equal(rootParent.fieldKey, rootFieldKeySymbol);
+		});
+
+		it("child field", () => {
+			const context = buildTestTree(personData);
+			const tree = context.unwrappedRoot;
+			assert(isUnwrappedNode(tree));
+			const childField = tree[getField](brand("name"));
+			const rootNodeAgain = childField.parent;
+			expectTreeEquals(context.schema, rootNodeAgain, personData);
+
+			const child = childField.getNode(0);
+			expectTreeEquals(context.schema, child, { value: "Adam", type: stringSchema.name });
+
+			const parentInfo = child[parentField];
+			assert.equal(parentInfo.index, 0);
+			expectFieldEquals(context.schema, parentInfo.parent, [
+				{ value: "Adam", type: stringSchema.name },
+			]);
+
+			// Check that navigating up multiple times works.
+			const rootAgain =
+				parentInfo.parent.parent?.[parentField].parent ?? fail("missing parent");
+			expectFieldEquals(context.schema, rootAgain, [personData]);
+		});
 	});
 
 	it("read downwards", () => {
@@ -663,8 +697,8 @@ describe("editable-tree: read-only", () => {
 			"fieldKey",
 			"fieldSchema",
 			"primaryType",
+			"parent",
 		]);
-		assert.equal(proxy.address.phones.primaryType, phonesSchema.name);
 		const act = [...proxy.address.phones].map(
 			(phone: UnwrappedEditableTree): Value | object => {
 				if (isPrimitiveValue(phone)) {
@@ -699,8 +733,6 @@ describe("editable-tree: read-only", () => {
 		const phonesPrimaryField = phonesNode[getField](phonesPrimary.key);
 		assert(isEditableField(phonesPrimaryField));
 		assert.equal(phonesPrimaryField.length, 4);
-		// assert the primary field has no primaryType if accessed without prior unwrapping
-		assert.equal(phonesPrimaryField.primaryType, undefined);
 
 		// get the sequence node with the primary field
 		const simplePhonesNode = phonesPrimaryField.getNode(3);
