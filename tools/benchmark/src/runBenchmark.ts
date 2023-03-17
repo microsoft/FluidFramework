@@ -132,7 +132,7 @@ class BenchmarkState<T> {
 	 */
 	private growCount(sample: number): boolean {
 		if (sample < this.options.minSampleDurationSeconds) {
-			// TODO: use consider using Benchmark.js's algorithm for this.
+			// TODO: consider using Benchmark.js's algorithm for this.
 			this.count *= 2;
 			return true;
 		}
@@ -140,7 +140,7 @@ class BenchmarkState<T> {
 	}
 
 	/**
-	 * Returns true is more samples should be collected.
+	 * Returns true if more samples should be collected.
 	 */
 	private addSample(sample: number): boolean {
 		this.samples.push(sample);

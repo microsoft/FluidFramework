@@ -140,7 +140,7 @@ export interface BenchmarkSyncFunction extends BenchmarkOptions {
 export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {}
 
 /**
- * Arguments to benchmark a callback-based asynchronous function
+ * Arguments to benchmark an asynchronous function
  * @public
  */
 export interface BenchmarkAsyncFunction extends BenchmarkOptions {
