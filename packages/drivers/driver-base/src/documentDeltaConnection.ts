@@ -404,7 +404,8 @@ export class DocumentDeltaConnection
 		this._disposed = true;
 
 		// Remove all listeners listening on the socket. These are listeners on socket and not on this connection
-		// object.
+		// object. Anyway since we have disposed this connection object, nobody should listen to event on socket
+		// anymore.
 		this.removeTrackedListeners();
 
 		// Clear the connection/socket before letting the deltaManager/connection manager know about the disconnect.
