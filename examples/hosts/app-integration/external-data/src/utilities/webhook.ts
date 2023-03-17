@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
+import qs from "querystring";
 import fetch from "node-fetch";
 
 /**
@@ -72,12 +74,8 @@ export class MockWebhook<TData = unknown> {
 
 		for (const subscriberUrl of this._subscribers) {
 			console.log(`EXTERNAL DATA SERVICE WEBHOOK: Notifying ${subscriberUrl}`);
-			// TODO: use a query string parser here instead of this hacky lookup of '=externalTaskListId'
-			// Tried using node:querystring and node:url but that is not allowed by
-			// the rules and haven't found another one that works in a simple search so far.
-			const externalTaskListId = subscriberUrl.slice(
-				subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
-			);
+
+			const externalTaskListId = qs.parse(subscriberUrl).externalTaskListId as string;
 
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const taskList = data[externalTaskListId];
