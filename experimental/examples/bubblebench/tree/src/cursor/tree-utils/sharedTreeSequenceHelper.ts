@@ -7,8 +7,8 @@ import {
 	FieldKey,
 	ISharedTree,
 	JsonableTree,
+	runSynchronous,
 	singleTextCursor,
-	TransactionResult,
 	TreeNavigationResult,
 } from "@fluid-internal/tree";
 import { SharedTreeNodeHelper } from "./sharedTreeNodeHelper";
@@ -77,30 +77,28 @@ export class SharedTreeSequenceHelper {
 		const cursor = this.tree.forest.allocateCursor();
 		this.tree.forest.tryMoveCursorToNode(this.parentAnchor, cursor);
 
-		this.tree.runTransaction((forest, editor) => {
+		runSynchronous(this.tree, (t) => {
 			const parentPath = this.tree.locate(cursor.buildAnchor());
 			if (!parentPath) {
 				throw new Error("path to anchor does not exist");
 			}
-			const field = editor.sequenceField(parentPath, this.sequenceFieldKey);
+			const field = t.editor.sequenceField(parentPath, this.sequenceFieldKey);
 			this.tree.context.prepareForEdit();
 			cursor.free();
 			field.insert(this.length(), singleTextCursor(jsonTree));
-			return TransactionResult.Apply;
 		});
 	}
 
 	public pop(): void {
-		this.tree.runTransaction((forest, editor) => {
+		runSynchronous(this.tree, (t) => {
 			const cursor = this.treeNodeHelper.getCursor();
 			const parentAnchor = cursor.buildAnchor();
 			const parentPath = this.tree.locate(parentAnchor);
-			const field = editor.sequenceField(parentPath, this.sequenceFieldKey);
+			const field = t.editor.sequenceField(parentPath, this.sequenceFieldKey);
 			this.tree.forest.forgetAnchor(parentAnchor);
 			this.tree.context.prepareForEdit();
 			cursor.free();
 			field.delete(this.length() - 1, 1);
-			return TransactionResult.Apply;
 		});
 	}
 }

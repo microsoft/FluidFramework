@@ -7,7 +7,7 @@ import {
 	FieldKey,
 	ISharedTree,
 	ITreeSubscriptionCursor,
-	TransactionResult,
+	runSynchronous,
 	Value,
 } from "@fluid-internal/tree";
 
@@ -48,15 +48,14 @@ export class SharedTreeNodeHelper {
 		cursor.enterField(fieldKey);
 		cursor.enterNode(0);
 		const fieldAnchor = cursor.buildAnchor();
-		this.tree.runTransaction((forest, editor) => {
+		runSynchronous(this.tree, (t) => {
 			const path = this.tree.locate(fieldAnchor);
 			if (!path) {
 				throw new Error("path to anchor does not exist");
 			}
 			this.tree.context.prepareForEdit();
 			cursor.free();
-			editor.setValue(path, value);
-			return TransactionResult.Apply;
+			t.editor.setValue(path, value);
 		});
 		this.tree.forest.forgetAnchor(fieldAnchor);
 	}

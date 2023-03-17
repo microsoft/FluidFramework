@@ -6,9 +6,9 @@ import {
 	fail,
 	ISharedTree,
 	rootFieldKeySymbol,
+	runSynchronous,
 	SharedTreeFactory,
 	singleTextCursor,
-	TransactionResult,
 } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -76,7 +76,7 @@ export class Bubblebench extends DataObject {
 
 		// Apply an edit to the tree which inserts a node with
 		// the initial AppState as the root of the tree
-		tree.runTransaction((forest, editor) => {
+		runSynchronous(tree, (t) => {
 			// This cursor contains the initial state of the root of the
 			// bubblebench shared tree as a JsonableTree
 			const writeCursor = singleTextCursor({
@@ -85,9 +85,8 @@ export class Bubblebench extends DataObject {
 					clients: [],
 				},
 			});
-			const field = editor.sequenceField(undefined, rootFieldKeySymbol);
+			const field = t.editor.sequenceField(undefined, rootFieldKeySymbol);
 			field.insert(0, writeCursor);
-			return TransactionResult.Apply;
 		});
 	}
 
