@@ -4,7 +4,7 @@ menuPosition: 4
 author: scottn12
 ---
 
-Collaborating on text is one of the paradigmatic collaboration scenarios for information workers. In this tutorial, you'll learn how to create a collaborative text area. Fluid Framework provides a [distributed data structure (DDS)]({{< relref "dds.md" >}}) called [SharedString]({{< relref "string.md" >}}) for precisely this kind of scenario. It is a DDS with specialized features and behaviors for working with text. The UI of the app is based on [React](https://reactjs.org/).
+Collaborating on text is one of the paradigmatic collaboration scenarios for information workers. In this tutorial, you'll learn how to create a collaborative text area. Fluid Framework provides a [distributed data structure (DDS)]({{< relref "dds.md" >}}) called [SharedString]({{< relref "string.md" >}}) for precisely this kind of scenario. It is a DDS with specialized features and behaviors for working with text. The UI of the app is based on [React](https://react.dev/).
 
 {{< callout note >}}
 
@@ -22,7 +22,7 @@ The next image shows the same four clients after an edit was made in one of the 
 
 {{< callout note >}}
 
-This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [Quick Start]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://reactjs.org/), [creating React projects](https://reactjs.org/docs/create-a-new-react-app.html#create-react-app), and [React Hooks](https://reactjs.org/docs/hooks-intro.html).
+This tutorial assumes that you are familiar with the [Fluid Framework Overview]({{< relref "/docs/_index.md" >}}) and that you have completed the [Quick Start]({{< relref "quick-start.md" >}}). You should also be familiar with the basics of [React](https://react.dev/), [creating React projects](https://react.dev/learn/start-a-new-react-project), and [React Hooks](https://react.dev/learn/state-a-components-memory#meet-your-first-hook).
 
 {{< /callout >}}
 
@@ -200,7 +200,7 @@ if (sharedString) {
     }
     ```
 
-1. Replace `TODO 1` with the following code. This code sets up the React state and gets a reference to the HTML `<textarea>` element. To learn more about `useRef`, check out the [React documentation](https://reactjs.org/docs/hooks-reference.html#useref).
+1. Replace `TODO 1` with the following code. This code sets up the React state and gets a reference to the HTML `<textarea>` element. To learn more about `useRef`, check out the [React documentation](https://react.dev/reference/react/useRef).
 
     ```ts
     const sharedStringHelper = props.sharedStringHelper;
