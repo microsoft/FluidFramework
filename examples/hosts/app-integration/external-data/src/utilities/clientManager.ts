@@ -52,18 +52,17 @@ export class ClientManager<TData = unknown> {
 	 * The client can choose when to call it, typically it will be at the end of the session.
 	 */
 	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
-		if (this._taskListMapping.get(client) === undefined) {
-			this._taskListMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
+		if (this._clientMapping.get(client) === undefined) {
+			this._clientMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
 		} else {
-			this._taskListMapping.get(client)?.add(externalTaskListId);
+			this._clientMapping.get(client)?.add(externalTaskListId);
 		}
 
-		if (this._clientMapping.get(externalTaskListId) === undefined) {
-			this._clientMapping.set(externalTaskListId, new Set<ClientSessionUrl>([client]));
+		if (this._taskListMapping.get(externalTaskListId) === undefined) {
+			this._taskListMapping.set(externalTaskListId, new Set<ClientSessionUrl>([client]));
 		} else {
-			this._clientMapping.get(externalTaskListId)?.add(client);
+			this._taskListMapping.get(externalTaskListId)?.add(client);
 		}
-
 		console.log(
 			`CUSTOMER SERVICE: "${client}" has been registered with ${externalTaskListId}.`,
 		);
