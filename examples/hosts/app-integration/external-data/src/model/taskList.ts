@@ -408,7 +408,8 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 				}),
 			});
 		} catch (error) {
-			console.error(`Customer service registration failed:\n${error}`);
+			const message = `Customer service registration failed:\n${error}`
+			throw new Error(message);
 		}
 	}
 	/**
