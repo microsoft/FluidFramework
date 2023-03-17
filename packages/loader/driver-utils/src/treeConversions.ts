@@ -14,8 +14,8 @@ import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew";
  */
 export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): ITree {
 	const entries: ITreeEntry[] = [];
-	const adaptSumaryTree = isCombinedAppAndProtocolSummary(summaryTree);
-	const allSummaryEntries = adaptSumaryTree
+	const adaptSummaryTree = isCombinedAppAndProtocolSummary(summaryTree);
+	const allSummaryEntries = adaptSummaryTree
 		? [
 				...Object.entries(summaryTree.tree[".protocol"].tree),
 				...Object.entries(summaryTree.tree[".app"].tree),
@@ -23,7 +23,7 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 		: Object.entries(summaryTree.tree);
 
 	for (const [key, value] of allSummaryEntries) {
-		const k = adaptSumaryTree && ["attributes"].includes(key) ? `.${key}` : key;
+		const k = adaptSummaryTree && key === "attributes" ? ".attributes" : key;
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;
