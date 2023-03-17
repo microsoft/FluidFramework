@@ -40,14 +40,6 @@ export class ClientManager<TData = unknown> {
 	}
 
 	/**
-	 * Gets the current list of client session URLs for the specified task list id.
-	 */
-	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionUrl> {
-		const clientSessionUrls = this._clientMapping.get(externalTaskListId);
-		return clientSessionUrls ?? new Set<ClientSessionUrl>();
-	}
-
-	/**
 	 * Returns a boolean if externalTaskListId already exists entry exists. This means that the customer service
 	 * is already subscribed for webhook notifications for it so we do not need to re-subscribe.
 	 */
