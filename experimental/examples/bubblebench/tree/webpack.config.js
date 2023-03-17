@@ -15,10 +15,7 @@ module.exports = (env) => {
 	return merge(
 		{
 			entry: {
-				main:
-					tree === "cursor"
-						? "./src/cursor-tree/index.ts"
-						: "./src/editable-tree/index.ts",
+				main: tree === "cursor" ? "./src/cursor/index.ts" : "./src/editable-tree/index.ts",
 			},
 			resolve: {
 				extensions: [".ts", ".tsx", ".js"],
