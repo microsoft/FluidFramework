@@ -833,26 +833,14 @@ use_old_VariableDeclaration_emptyMessageStream(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_ensureFluidResolvedUrl": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_ensureFluidResolvedUrl": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_ensureFluidResolvedUrl():
-    TypeOnly<typeof old.ensureFluidResolvedUrl>;
-declare function use_current_FunctionDeclaration_ensureFluidResolvedUrl(
-    use: TypeOnly<typeof current.ensureFluidResolvedUrl>);
-use_current_FunctionDeclaration_ensureFluidResolvedUrl(
-    get_old_FunctionDeclaration_ensureFluidResolvedUrl());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_ensureFluidResolvedUrl": {"backCompat": false}
+* "RemovedFunctionDeclaration_ensureFluidResolvedUrl": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_ensureFluidResolvedUrl():
-    TypeOnly<typeof current.ensureFluidResolvedUrl>;
-declare function use_old_FunctionDeclaration_ensureFluidResolvedUrl(
-    use: TypeOnly<typeof old.ensureFluidResolvedUrl>);
-use_old_FunctionDeclaration_ensureFluidResolvedUrl(
-    get_current_FunctionDeclaration_ensureFluidResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type

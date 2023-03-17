@@ -40,7 +40,6 @@ import {
 	readAndParse,
 	OnlineStatus,
 	isOnline,
-	ensureFluidResolvedUrl,
 	combineAppAndProtocolSummary,
 	runWithRetry,
 } from "@fluidframework/driver-utils";
@@ -316,7 +315,7 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(version, mode, pendingLocalState)
+						.load(version, mode, loadOptions.resolvedUrl, pendingLocalState)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -465,7 +464,6 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private messageCountAfterDisconnection: number = 0;
 	private _loadedFromVersion: IVersion | undefined;
-	private _resolvedUrl: IFluidResolvedUrl | undefined;
 	private attachStarted = false;
 	private _dirtyContainer = false;
 
@@ -486,7 +484,7 @@ export class Container
 	}
 
 	public get resolvedUrl(): IResolvedUrl | undefined {
-		return this._resolvedUrl;
+		return this.service?.resolvedUrl;
 	}
 
 	public get loadedFromVersion(): IVersion | undefined {
@@ -648,7 +646,6 @@ export class Container
 		});
 
 		this.clientDetailsOverride = config.clientDetailsOverride;
-		this._resolvedUrl = config.resolvedUrl;
 		if (config.canReconnect !== undefined) {
 			this._canReconnect = config.canReconnect;
 		}
@@ -665,7 +662,7 @@ export class Container
 			all: {
 				clientType, // Differentiating summarizer container from main container
 				containerId: uuid(),
-				docId: () => this._resolvedUrl?.id ?? undefined,
+				docId: () => this.resolvedUrl?.id,
 				containerAttachState: () => this._attachState,
 				containerLifecycleState: () => this._lifecycleState,
 				containerConnectionState: () => ConnectionState[this.connectionState],
@@ -1036,11 +1033,11 @@ export class Container
 					}
 
 					// Actually go and create the resolved document
-					const createNewResolvedUrl = await this.urlResolver.resolve(request);
-					ensureFluidResolvedUrl(createNewResolvedUrl);
 					if (this.service === undefined) {
+						const createNewResolvedUrl = await this.urlResolver.resolve(request);
 						assert(
-							this.client.details.type !== summarizerClientType,
+							this.client.details.type !== summarizerClientType &&
+								createNewResolvedUrl !== undefined,
 							0x2c4 /* "client should not be summarizer before container is created" */,
 						);
 						this.service = await runWithRetry(
@@ -1058,7 +1055,6 @@ export class Container
 							}, // progress
 						);
 					}
-					this._resolvedUrl = this.service.resolvedUrl;
 					await this.storageService.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
@@ -1295,13 +1291,11 @@ export class Container
 	private async load(
 		specifiedVersion: string | undefined,
 		loadMode: IContainerLoadMode,
+		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	) {
-		if (this._resolvedUrl === undefined) {
-			throw new Error("Attempting to load without a resolved url");
-		}
 		this.service = await this.serviceFactory.createDocumentService(
-			this._resolvedUrl,
+			resolvedUrl,
 			this.subLogger,
 			this.client.details.type === summarizerClientType,
 		);

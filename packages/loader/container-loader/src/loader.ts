@@ -39,7 +39,6 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -71,8 +70,8 @@ export class RelativeLoader implements ILoader {
 			if (canUseCache(request)) {
 				return this.container;
 			} else {
-				const resolvedUrl = this.container.resolvedUrl;
-				ensureFluidResolvedUrl(resolvedUrl);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const resolvedUrl = this.container.resolvedUrl!;
 				const container = await Container.load(this.loader as Loader, {
 					canReconnect: request.headers?.[LoaderHeader.reconnect],
 					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
@@ -310,8 +309,7 @@ export class Loader implements IHostLoader {
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
-				ensureFluidResolvedUrl(container.resolvedUrl);
-				const parsedUrl = parseUrl(container.resolvedUrl.url);
+				const parsedUrl = parseUrl(container.resolvedUrl?.url ?? "");
 				if (parsedUrl !== undefined) {
 					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
 				}
@@ -379,10 +377,12 @@ export class Loader implements IHostLoader {
 		pendingLocalState?: IPendingContainerState,
 	): Promise<{ container: Container; parsed: IParsedUrl }> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
-		ensureFluidResolvedUrl(resolvedAsFluid);
+		if (resolvedAsFluid === undefined) {
+			throw new Error();
+		}
 
 		// Parse URL into data stores
-		const parsed = parseUrl(resolvedAsFluid.url);
+		const parsed = parseUrl(resolvedAsFluid.url ?? "");
 		if (parsed === undefined) {
 			throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
 		}

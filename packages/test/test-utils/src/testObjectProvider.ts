@@ -21,7 +21,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -137,8 +136,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 				get: () => documentId,
 				update: (resolvedUrl?: IResolvedUrl) => {
 					// Extract the document ID from the resolved container's URL and reset the ID property
-					ensureFluidResolvedUrl(resolvedUrl);
-					documentId = resolvedUrl.id ?? documentId;
+					documentId = resolvedUrl?.id ?? documentId;
 				},
 				reset: () => {
 					documentId = createDocumentId();

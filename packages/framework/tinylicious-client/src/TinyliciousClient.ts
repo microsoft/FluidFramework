@@ -16,7 +16,6 @@ import {
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import {
 	ContainerSchema,
 	DOProviderContainerRuntimeFactory,
@@ -82,9 +81,8 @@ export class TinyliciousClient {
 			}
 			const request = createTinyliciousCreateNewRequest();
 			await container.attach(request);
-			const resolved = container.resolvedUrl;
-			ensureFluidResolvedUrl(resolved);
-			return resolved.id;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return container.resolvedUr!.id;
 		};
 
 		const fluidContainer = new FluidContainer(container, rootDataObject);

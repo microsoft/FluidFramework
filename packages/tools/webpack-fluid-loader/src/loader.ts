@@ -28,7 +28,7 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
-import { ensureFluidResolvedUrl, InsecureUrlResolver } from "@fluidframework/driver-utils";
+import { InsecureUrlResolver } from "@fluidframework/driver-utils";
 import { Port } from "webpack-dev-server";
 import { getUrlResolver } from "./getUrlResolver";
 import { deltaConnectionServer, getDocumentServiceFactory } from "./getDocumentServiceFactory";
@@ -417,7 +417,7 @@ async function attachContainer(
 	shouldUseContainerId: boolean,
 ) {
 	// This is called once loading is complete to replace the url in the address bar with the new `url`.
-	const replaceUrl = (resolvedUrl: IResolvedUrl | undefined) => {
+	const replaceUrl = (resolvedUrl: IResolvedUrl) => {
 		let [docUrl, title] = [url, documentId];
 		if (shouldUseContainerId) {
 			// for a r11s and t9s container we need to use the actual ID
@@ -425,7 +425,6 @@ async function attachContainer(
 			// as opposed to the ID requested on the client prior to attaching the container.
 			// NOTE: in case of an odsp container, the ID in the resolved URL cannot be used for
 			// referring/opening the attached container.
-			ensureFluidResolvedUrl(resolvedUrl);
 			docUrl = url.replace(documentId, resolvedUrl.id);
 			title = resolvedUrl.id;
 		}
@@ -494,7 +493,8 @@ async function attachContainer(
 			currentContainer.attach(attachUrl).then(
 				() => {
 					attachDiv.remove();
-					replaceUrl(currentContainer.resolvedUrl);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					replaceUrl(currentContainer.resolvedUrl!);
 
 					if (rightDiv) {
 						rightDiv.innerText = "";
@@ -514,7 +514,8 @@ async function attachContainer(
 		}
 	} else {
 		await currentContainer.attach(attachUrl);
-		replaceUrl(currentContainer.resolvedUrl);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		replaceUrl(currentContainer.resolvedUrl!);
 		attached.resolve();
 	}
 	await attached.promise;

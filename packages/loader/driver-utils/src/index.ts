@@ -6,7 +6,6 @@
 export { buildSnapshotTree } from "./buildSnapshotTree";
 export { DocumentStorageServiceProxy } from "./documentStorageServiceProxy";
 export { UsageError } from "./error";
-export { ensureFluidResolvedUrl } from "./fluidResolvedUrl";
 export { InsecureUrlResolver } from "./insecureUrlResolver";
 export { canBeCoalescedByService, isRuntimeMessage, MessageType2 } from "./messageRecognition";
 export {

@@ -35,7 +35,6 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
@@ -662,7 +661,7 @@ describeNoCompat("Driver", (getTestObjectProvider) => {
 		const fiveDaysMs: FiveDaysMs = 432_000_000;
 
 		const { resolvedUrl } = await provider.makeTestContainer();
-		ensureFluidResolvedUrl(resolvedUrl);
+		assert.strict(resolvedUrl);
 		const ds = await provider.documentServiceFactory.createDocumentService(resolvedUrl);
 		const storage = await ds.connectToStorage();
 		assert.equal(storage.policies?.maximumCacheDurationMs, fiveDaysMs);

@@ -162,6 +162,10 @@
 			"RemovedVariableDeclaration_isFluidResolvedUrl": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_ensureFluidResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
