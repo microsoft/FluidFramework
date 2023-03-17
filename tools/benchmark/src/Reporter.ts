@@ -150,7 +150,7 @@ export class BenchmarkReporter {
 		table.cell("name", italicize(testName));
 
 		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
-		// This is useful if this reported is given unexpected data (such as from a memory test).
+		// This is useful if this reporter is given unexpected data (such as from a memory test).
 		// It can also be used as a way to add extensible data formatting in the future.
 		addCells(table, result as unknown as Record<string, unknown>, expectedKeys);
 
