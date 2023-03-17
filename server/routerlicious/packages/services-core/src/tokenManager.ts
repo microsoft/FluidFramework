@@ -10,10 +10,10 @@ import { IWebSocket } from "./http";
  */
 export interface IWebSocketTracker {
 	// Add a socket to internal map
-	addSocket(compositeTokenId: string, webSocket: IWebSocket);
+	addSocketForToken(compositeTokenId: string, webSocket: IWebSocket);
 
 	// Get socket objects from internal map
-	getSockets(compositeTokenId: string): IWebSocket[];
+	getSocketsForToken(compositeTokenId: string): IWebSocket[];
 
 	// Remove socket from tracking
 	// Return true if socket is removed, false if socket is not found
@@ -24,7 +24,7 @@ export interface IWebSocketTracker {
  * Interface of Json Web Token(JWT) manager
  * It is mainly used to manage token revocation
  */
-export interface IJsonWebTokenManager {
+export interface ITokenRevocationManager {
 	initialize(): Promise<void>;
 
 	start(): Promise<void>;

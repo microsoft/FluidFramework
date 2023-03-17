@@ -7,7 +7,7 @@ import {
 	IDeltaService,
 	ITenantManager,
 	IThrottler,
-	IJsonWebTokenManager,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -29,7 +29,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	tenantThrottler: IThrottler,
 	clusterThrottlers: Map<string, IThrottler>,
-	tokenManager?: IJsonWebTokenManager,
+	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");

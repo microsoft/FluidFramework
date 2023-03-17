@@ -19,7 +19,7 @@ import {
 	IThrottleAndUsageStorageManager,
 	IWebServer,
 	IWebServerFactory,
-	IJsonWebTokenManager,
+	ITokenRevocationManager,
 	IWebSocketTracker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
@@ -58,7 +58,7 @@ export class AlfredRunner implements IRunner {
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
 		private readonly socketTracker?: IWebSocketTracker,
-		private readonly tokenManager?: IJsonWebTokenManager,
+		private readonly tokenManager?: ITokenRevocationManager,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async

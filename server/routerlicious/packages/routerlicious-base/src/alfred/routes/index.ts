@@ -12,7 +12,7 @@ import {
 	ICache,
 	ICollection,
 	IDocument,
-	IJsonWebTokenManager,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -35,7 +35,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentsCollection: ICollection<IDocument>,
-	tokenManager?: IJsonWebTokenManager,
+	tokenManager?: ITokenRevocationManager,
 ) {
 	return {
 		api: api.create(

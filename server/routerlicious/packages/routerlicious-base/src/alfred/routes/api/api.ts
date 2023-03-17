@@ -36,7 +36,7 @@ export function create(
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
 	throttler: core.IThrottler,
-	tokenManager?: core.IJsonWebTokenManager,
+	tokenManager?: core.ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
@@ -195,7 +195,7 @@ const verifyRequest = async (
 	storage: core.IDocumentStorage,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
-	tokenManager?: core.IJsonWebTokenManager,
+	tokenManager?: core.ITokenRevocationManager,
 ) =>
 	Promise.all([
 		verifyToken(
@@ -213,7 +213,7 @@ async function verifyToken(
 	tenantManager: core.ITenantManager,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
-	tokenManager?: core.IJsonWebTokenManager,
+	tokenManager?: core.ITokenRevocationManager,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {

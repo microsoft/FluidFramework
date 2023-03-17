@@ -18,7 +18,7 @@ import {
 import type {
 	ICache,
 	ITenantManager,
-	IJsonWebTokenManager,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
@@ -146,7 +146,7 @@ function getTokenFromRequest(request: Request): string {
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
 	config: Provider,
-	tokenManager: IJsonWebTokenManager | undefined,
+	tokenManager: ITokenRevocationManager | undefined,
 	options: IVerifyTokenOptions = {
 		requireDocumentId: true,
 		ensureSingleUseToken: false,

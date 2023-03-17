@@ -11,7 +11,7 @@ import {
 	ITenantManager,
 	ICache,
 	ICollection,
-	IJsonWebTokenManager,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
@@ -39,7 +39,7 @@ export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
 	documentsCollection: ICollection<IDocument>,
-	tokenManager?: IJsonWebTokenManager,
+	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");

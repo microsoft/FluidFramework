@@ -577,7 +577,7 @@ export function configureWebSocketServices(
 
 			// Track socket and tokens for this connection
 			if (socketTracker && claims.jti) {
-				socketTracker.addSocket(
+				socketTracker.addSocketForToken(
 					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
 					socket,
 				);

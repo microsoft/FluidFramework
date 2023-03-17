@@ -12,7 +12,7 @@ import {
 	IProducer,
 	ITenantManager,
 	IThrottler,
-	IJsonWebTokenManager,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import cors from "cors";
 import { Router } from "express";
@@ -33,7 +33,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentsCollection: ICollection<IDocument>,
-	tokenManager?: IJsonWebTokenManager,
+	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(

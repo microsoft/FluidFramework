@@ -5,7 +5,7 @@
 import {
 	IWebSocket,
 	IWebSocketTracker,
-	IJsonWebTokenManager,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -24,7 +24,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 		this.socketIdToTokenIdMap = new Map();
 	}
 
-	public addSocket(compositeTokenId: string, webSocket: IWebSocket) {
+	public addSocketForToken(compositeTokenId: string, webSocket: IWebSocket) {
 		if (this.tokenIdToSocketIdMap.has(compositeTokenId)) {
 			this.tokenIdToSocketIdMap.get(compositeTokenId)?.add(webSocket.id);
 		} else {
@@ -40,7 +40,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 		this.socketIdToSocketMap.set(webSocket.id, webSocket);
 	}
 
-	public getSockets(compositeTokenId: string): IWebSocket[] {
+	public getSocketsForToken(compositeTokenId: string): IWebSocket[] {
 		const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
 
 		if (!socketIds) {
@@ -48,12 +48,12 @@ export class WebSocketTracker implements IWebSocketTracker {
 		}
 
 		const socketResult: IWebSocket[] = [];
-		for (const socketId of socketIds) {
+		socketIds.forEach((socketId: string) => {
 			const socketObj = this.socketIdToSocketMap.get(socketId);
 			if (socketObj) {
 				socketResult.push(socketObj);
 			}
-		}
+		});
 		return socketResult;
 	}
 
@@ -78,7 +78,7 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 }
 
-export class DummyTokenManager implements IJsonWebTokenManager {
+export class DummyTokenManager implements ITokenRevocationManager {
 	public async start() {
 		Lumberjack.info(`DummyTokenManager started`);
 	}
