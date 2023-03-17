@@ -330,23 +330,18 @@ export class EditManager<
 	 * Given a revision on the local branch, remove all commits after it.
 	 * @param startRevision - the revision on the local branch that will become the new head
 	 * @param repairStore - an optional repair data store to assist with generating inverses of the removed commits
-	 * @returns an iterator of deltas where each delta describes the change from rolling back one of the removed commits.
+	 * @returns a delta that describes the change from rolling back all of the removed commits.
 	 */
-	// TODO: This is emitting a delta for each change rather than a single squashed delta because composing the changes causes a rollback test to fail.
-	// It seems that this is likely a bug in compose; when the bug is fixed, this method can return a single delta composed of all the inverse deltas.
-	public *rollbackLocalChanges(
+	public rollbackLocalChanges(
 		startRevision: RevisionTag,
 		repairStore?: ReadonlyRepairDataStore,
-	): Iterable<Delta.Root> {
+	): Delta.Root {
 		const [rollbackTo, commits] = this.findLocalCommit(startRevision);
 		this.localBranch = rollbackTo;
 
 		const inverses: TaggedChange<TChangeset>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const { change, revision } = commits[i];
-			if (this.anchors !== undefined) {
-				this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
-			}
 			const inverse = this.changeFamily.rebaser.invert(
 				tagChange(change, revision),
 				false,
@@ -355,7 +350,10 @@ export class EditManager<
 			inverses.push(makeAnonChange(inverse));
 		}
 		const composedInverse = this.changeFamily.rebaser.compose(inverses);
-		yield this.changeFamily.intoDelta(composedInverse);
+		if (this.anchors !== undefined) {
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, composedInverse);
+		}
+		return this.changeFamily.intoDelta(composedInverse);
 	}
 
 	private findLocalCommit(

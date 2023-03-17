@@ -33,12 +33,15 @@ import {
 	SchemaData,
 	EditManager,
 	ValueSchema,
+	Anchor,
+	TreeSchemaIdentifier,
 } from "../../core";
 import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
 const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
+const type: TreeSchemaIdentifier = brand("NodeType");
 
 describe("SharedTree", () => {
 	it("reads only one node", async () => {
@@ -981,6 +984,22 @@ describe("SharedTree", () => {
 	});
 
 	describe("Anchors", () => {
+		function getAnchorFromIndex(tree: ISharedTreeBranch, index: number): Anchor {
+			const cursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, cursor);
+			cursor.enterNode(1);
+			const anchor = cursor.buildAnchor();
+			cursor.free();
+			return anchor;
+		}
+
+		function cursorFromAnchor(tree: ISharedTreeBranch, anchor: Anchor) {
+			const cursor = tree.forest.allocateCursor();
+			moveToDetachedField(tree.forest, cursor);
+			tree.forest.tryMoveCursorToNode(anchor, cursor);
+			return cursor;
+		}
+
 		it("Anchors can be created and dereferenced", async () => {
 			const provider = await TestTreeProvider.create(1);
 			const tree = provider.trees[0];
@@ -1016,6 +1035,62 @@ describe("SharedTree", () => {
 				parentIndex: 1,
 			};
 			assert(compareUpPaths(childPath, expected));
+		});
+
+		it("Anchors are adjusted in the face of edits", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const tree = provider.trees[0];
+
+			const initialState: JsonableTree[] = [
+				{ type, value: "bar" },
+				{ type, value: "baz" },
+			];
+			initializeTestTree(tree, initialState);
+
+			const baz = getAnchorFromIndex(tree, 1);
+
+			tree.editor
+				.sequenceField(undefined, rootFieldKeySymbol)
+				.insert(0, singleTextCursor({ type: brand("Node"), value: "foo" }));
+
+			const afterInsert = cursorFromAnchor(tree, baz);
+			assert.equal(afterInsert.value, "baz");
+			afterInsert.free();
+
+			tree.editor.sequenceField(undefined, rootFieldKeySymbol).delete(0, 2);
+
+			const afterDelete = cursorFromAnchor(tree, baz);
+			assert.equal(afterDelete.value, "baz");
+			afterDelete.free();
+		});
+
+		it("Anchors are restored in the face of aborted transactions", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const tree = provider.trees[0];
+
+			const initialState: JsonableTree[] = [
+				{ type, value: "bar" },
+				{ type, value: "baz" },
+			];
+			initializeTestTree(tree, initialState);
+
+			const baz = getAnchorFromIndex(tree, 1);
+
+			tree.transaction.start();
+			tree.editor
+				.sequenceField(undefined, rootFieldKeySymbol)
+				.insert(0, singleTextCursor({ type: brand("Node"), value: "foo" }));
+
+			const afterInsert = cursorFromAnchor(tree, baz);
+			assert.equal(afterInsert.value, "baz");
+			afterInsert.free();
+
+			tree.editor.sequenceField(undefined, rootFieldKeySymbol).delete(0, 2);
+			tree.transaction.abort();
+
+			const afterDelete = cursorFromAnchor(tree, baz);
+			assert.equal(afterDelete.value, "baz");
+			afterDelete.free();
 		});
 	});
 
