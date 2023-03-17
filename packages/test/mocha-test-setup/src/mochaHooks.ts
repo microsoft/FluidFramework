@@ -19,7 +19,8 @@ class TestLogger implements ITelemetryBufferedLogger {
 			return;
 		}
 
-		event.testName = this.testName;
+		// This test logger is currently only instantiated once and, in case the testName is undefined we will make use of the currentTestName.
+		event.testName = this.testName ?? currentTestName;
 		event.testVariant = testVariant;
 		event.hostName = pkgName;
 		this.parentLogger.send(event);
