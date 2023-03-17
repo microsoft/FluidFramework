@@ -145,34 +145,46 @@ function getPackageMetadataFromRelativePath(documentFilePath, packageJsonFilePat
  * @param {object} content - The original document file contents.
  * @param {object} options - Transform options.
  * @param {string} options.path - Relative path from the document to the file being embedded.
- * @param {number | undefined} options.start - (optional) First line from the target file to be embedded (inclusive).
+ * @param {string | undefined} options.start - (optional) First line from the target file to be embedded (inclusive).
  * Default: 0.
  * If specified, must be on [0,`endLine`).
- * @param {number | undefined} options.end - (optional) Line of the target file at which to end the embedded range (exclusive).
+ * @param {string | undefined} options.end - (optional) Line of the target file at which to end the embedded range (exclusive).
  * Default: <file-line-count> + 1.
  * If specified, must be on (`startLine`,<file-line-count> + 1].
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function includeTransform(content, options, config) {
-	const { path: relativeFilePath, start: startLine, end: endLine } = options;
+	const { path: relativeFilePath, start: startLineString, end: endLineString } = options;
+	const { originalPath: documentFilePath } = config;
+	
+	const startLine = Number.parseInt(startLineString);
+	const endLine = Number.parseInt(endLineString);
+	
+	/**
+	 * Helper for error messaging while validating include pragma 
+	 */
+	function throwFormattedError(error) {
+		throw new Error(`Exception processing include pragma in "${documentFilePath}":\n${error}`);
+	}
+	
 	if (!relativeFilePath) {
-		throw new Error(
-			"No 'path' parameter provided. Must specify a file path whose contents will be embedded.",
+		throwFormattedError(
+			"No 'path' parameter provided. Must specify a relative path to the file containing the contents to be embedded.",
 		);
 	}
 
-	if (startLine && endLine && startLine >= endLine) {
-		throw new Error(
+	if (startLine !== undefined && endLine !== undefined && startLine >= endLine) {
+		throwFormattedError(
 			`Start line must be less than end line. Got: "start: ${startLine}, end: ${endLine}".`,
 		);
 	}
 
 	if (startLine < 0) {
-		throw new Error("Invalid start line index. Must be 0 or positive.");
+		throwFormattedError("Invalid start line index. Must be 0 or positive.");
 	}
 
-	const resolvedFilePath = resolveRelativePath(config.originalPath, relativeFilePath);
+	const resolvedFilePath = resolveRelativePath(documentFilePath, relativeFilePath);
 
 	try {
 		let fileContents = fs.readFileSync(resolvedFilePath, "utf8");
