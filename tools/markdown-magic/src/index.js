@@ -32,7 +32,7 @@ markdownMagic(matchPattern, config).then(
 		process.exit(0);
 	},
 	(error) => {
-		console.error("FAILURE: Markdown Magic could not be completed due to an error.", error);
+		console.error(chalk.red("FAILURE: Markdown Magic could not be completed due to an error: "), error);
 		process.exit(1);
 	},
 );
