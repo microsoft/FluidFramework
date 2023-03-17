@@ -333,7 +333,7 @@ export class BenchmarkReporter {
 	}
 
 	/**
-	 * The Stats object contains a lot of data we don't need and also has vague names,
+	 * The Stats object contains a lot of data we don't need,
 	 * so this method extracts the necessary data and provides friendlier names.
 	 */
 	private outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, unknown> {

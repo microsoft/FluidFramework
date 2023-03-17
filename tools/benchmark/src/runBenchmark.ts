@@ -136,7 +136,7 @@ class BenchmarkState<T> {
 	 */
 	private growBatchSize(duration: number): boolean {
 		if (duration < this.options.minBatchDurationSeconds) {
-			// TODO: use consider using Benchmark.js's algorithm for this.
+			// TODO: consider using Benchmark.js's algorithm for this.
 			this.iterationsPerBatch *= 2;
 			return true;
 		}
@@ -144,7 +144,7 @@ class BenchmarkState<T> {
 	}
 
 	/**
-	 * Returns true is more samples should be collected.
+	 * Returns true if more samples should be collected.
 	 */
 	private addSample(duration: number): boolean {
 		this.samples.push(duration);
