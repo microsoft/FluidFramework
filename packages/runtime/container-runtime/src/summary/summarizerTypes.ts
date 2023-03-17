@@ -84,8 +84,6 @@ export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
-	/** @deprecated - Moved to `ISummarizerRuntime` as it's no longer needed here */
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
