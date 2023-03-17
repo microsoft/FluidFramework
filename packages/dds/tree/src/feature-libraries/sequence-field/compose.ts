@@ -688,10 +688,26 @@ export class ComposeQueue<T> {
 				};
 			} else if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
 				const baseRev = baseMark.revision ?? this.baseMarks.revision;
-				assert(
-					baseRev !== undefined,
-					0x4df /* Compose base mark should carry revision info */,
-				);
+				if (baseRev === undefined) {
+					// The case of baseRev === undefined occurs when anonymous changesets are being composed.
+					// This only happens when composing the inverse changes of a transaction for the purpose of
+					// reverting its changes.
+					// In such a scenario, the two marks cannot refer to the same cell because we do not support
+					// inverse/undo changesets in transactions.
+					// This means the two marks should not cancel out, but leaves the question of which one should
+					// come before the other. A transaction reversal with such marks means the transaction first
+					// deleted a range of nodes then inserted a new set in the gap where the deleted range was.
+					// This means no explicit ordering was ever established between the two sets of nodes.
+					// When that's the case, we consider what the merge outcome would have been had the deleted nodes
+					// been concurrently revived.
+					// Since we only support the "merge-left" tie-breaking policy, we know the insertion made
+					// during the transaction should be treated as being left of the deleted node.
+					// This means the detach march for that inserted node should come first.
+					// TODO: Update this code to return the new mark when the "merge-right" tie-breaking policy is
+					// supported and used.
+					// TODO: Delete this if block once anonymous revisions are no longer composed.
+					return this.dequeueBase();
+				}
 				const areInverses =
 					// The same RevisionTag implies the two changesets are inverses in a rebase sandwich
 					(newRev !== undefined && baseRev === newRev) ||

@@ -29,6 +29,8 @@ import {
 	assertIsRevisionTag,
 	mintRevisionTag,
 	tagChange,
+	TaggedChange,
+	makeAnonChange,
 } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 
@@ -339,6 +341,7 @@ export class EditManager<
 		const [rollbackTo, commits] = this.findLocalCommit(startRevision);
 		this.localBranch = rollbackTo;
 
+		const inverses: TaggedChange<TChangeset>[] = [];
 		for (let i = commits.length - 1; i >= 0; i--) {
 			const { change, revision } = commits[i];
 			if (this.anchors !== undefined) {
@@ -349,8 +352,10 @@ export class EditManager<
 				false,
 				repairStore,
 			);
-			yield this.changeFamily.intoDelta(inverse);
+			inverses.push(makeAnonChange(inverse));
 		}
+		const composedInverse = this.changeFamily.rebaser.compose(inverses);
+		yield this.changeFamily.intoDelta(composedInverse);
 	}
 
 	private findLocalCommit(

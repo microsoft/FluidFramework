@@ -4,7 +4,7 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, OffsetListFactory } from "../../util";
+import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
 import { singleTextCursor } from "../treeTextCursor";
 import { MarkList, ProtoNode } from "./format";
@@ -72,11 +72,26 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "Revive": {
 					if (mark.conflictsWith === undefined) {
-						const insertMark: Delta.Insert = {
-							type: Delta.MarkType.Insert,
-							content: mark.content,
-						};
-						out.pushContent(insertMark);
+						if (mark.changes !== undefined) {
+							const modify = deltaFromChild(mark.changes);
+							const insertMark: Mutable<Delta.InsertAndModify> = {
+								type: Delta.MarkType.InsertAndModify,
+								content: mark.content[0],
+							};
+							if (modify.setValue !== undefined) {
+								insertMark.setValue = modify.setValue;
+							}
+							if (modify.fields !== undefined) {
+								insertMark.fields = modify.fields;
+							}
+							out.pushContent(insertMark);
+						} else {
+							const insertMark: Delta.Insert = {
+								type: Delta.MarkType.Insert,
+								content: mark.content,
+							};
+							out.pushContent(insertMark);
+						}
 					} else if (mark.lastDetachedBy === undefined) {
 						out.pushOffset(mark.count);
 					}

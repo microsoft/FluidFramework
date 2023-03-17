@@ -144,13 +144,15 @@ describe("SequenceField - toDelta", () => {
 		const fieldChanges = new Map([[fooField, [{ type: Delta.MarkType.Insert, content: [] }]]]);
 		const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
 			assert.deepEqual(child, nodeChange);
-			return { type: Delta.MarkType.Modify, fields: fieldChanges };
+			return { type: Delta.MarkType.Modify, fields: fieldChanges, setValue: 42 };
 		};
 		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
 		const expected: Delta.MarkList = [
 			{
-				type: Delta.MarkType.Insert,
-				content: contentCursor,
+				type: Delta.MarkType.InsertAndModify,
+				content: contentCursor[0],
+				fields: fieldChanges,
+				setValue: 42,
 			},
 		];
 		assertMarkListEqual(actual, expected);
