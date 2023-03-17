@@ -37,6 +37,10 @@
 		"policy-check": "cd ../.. && npm run policy-check",
 		"policy-check:asserts": "cd ../.. && npm run policy-check:asserts",
 		"policy-check:fix": "cd ../.. && npm run policy-check:fix",
+		"prettier": "npm run prettier:root && lerna run prettier --no-sort --stream",
+		"prettier:fix": "npm run prettier:root:fix && lerna run prettier:fix --no-sort --stream",
+		"prettier:root": "prettier --check ./*.* --ignore-path ./.prettierignore",
+		"prettier:root:fix": "prettier --write ./*.* --ignore-path ./.prettierignore",
 		"restart": "docker-compose restart gateway && docker-compose restart alfred && docker-compose restart deli && docker-compose restart scriptorium && docker-compose restart foreman && docker-compose restart paparazzi",
 		"start": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
 		"start:debug": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.debug.yml up",
@@ -88,6 +92,7 @@
 	"packageManager": "pnpm@7.14.2",
 	"pnpm": {
 		"overrides": {
+			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.1"
 		}
 	}

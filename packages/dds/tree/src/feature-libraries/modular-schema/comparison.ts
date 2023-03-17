@@ -118,12 +118,9 @@ export function allowsFieldSuperset(
 	original: FieldSchema,
 	superset: FieldSchema,
 ): boolean {
-	return (policy.fieldKinds.get(original.kind) ?? fail("missing kind")).allowsFieldSuperset(
-		policy,
-		originalData,
-		original.types,
-		superset,
-	);
+	return (
+		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind")
+	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 
 /**
@@ -205,8 +202,8 @@ export function isNeverField(
 	field: FieldSchema,
 ): boolean {
 	if (
-		(policy.fieldKinds.get(field.kind) ?? fail("missing field kind")).multiplicity ===
-			Multiplicity.Value &&
+		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
+			.multiplicity === Multiplicity.Value &&
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
@@ -233,7 +230,7 @@ export function isNeverTree(
 	tree: TreeSchema,
 ): boolean {
 	if (
-		(policy.fieldKinds.get(tree.extraLocalFields.kind) ?? fail("missing field kind"))
+		(policy.fieldKinds.get(tree.extraLocalFields.kind.identifier) ?? fail("missing field kind"))
 			.multiplicity === Multiplicity.Value
 	) {
 		return true;

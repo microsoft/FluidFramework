@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { containsPathTraversal, defaultErrorMessage, handleResponse, validateRequestParams } from "./http";
+export {
+	containsPathTraversal,
+	defaultErrorMessage,
+	handleResponse,
+	validateRequestParams,
+} from "./http";
 export {
 	ISocketIoRedisConnection,
 	ISocketIoRedisOptions,

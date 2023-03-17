@@ -4,7 +4,7 @@
  */
 
 import { AnchorSet } from "../tree";
-import { ChangeFamily } from "./changeFamily";
+import { ChangeFamily, ChangeFamilyEditor } from "./changeFamily";
 
 /**
  * @alpha
@@ -20,12 +20,12 @@ export interface ProgressiveEditBuilder<TChange> {
  * @alpha
  */
 export abstract class ProgressiveEditBuilderBase<TChange>
-	implements ProgressiveEditBuilder<TChange>
+	implements ProgressiveEditBuilder<TChange>, ChangeFamilyEditor
 {
 	private readonly changes: TChange[] = [];
 
 	public constructor(
-		protected readonly changeFamily: ChangeFamily<unknown, TChange>,
+		protected readonly changeFamily: ChangeFamily<ChangeFamilyEditor, TChange>,
 		private readonly changeReceiver: (change: TChange) => void,
 		private readonly anchorSet: AnchorSet,
 	) {}
@@ -48,4 +48,7 @@ export abstract class ProgressiveEditBuilderBase<TChange>
 	public getChanges(): TChange[] {
 		return [...this.changes];
 	}
+
+	public enterTransaction(): void {}
+	public exitTransaction(): void {}
 }

@@ -8,21 +8,17 @@ import {
 	FieldChangeHandler,
 	FieldKind,
 	Multiplicity,
-	FieldKinds,
 	NodeChangeset,
 	GenericChangeset,
 	genericFieldKind,
 	IdAllocator,
 	CrossFieldManager,
+	RevisionMetadataSource,
 } from "../../../feature-libraries";
-import {
-	makeAnonChange,
-	tagChange,
-	TaggedChange,
-	Delta,
-	FieldKey,
-	RevisionTag,
-} from "../../../core";
+// TODO: this is not the file being tested, importing it should not be required here.
+// eslint-disable-next-line import/no-internal-modules
+import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
+import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { fakeRepair } from "../../utils";
 
@@ -81,8 +77,9 @@ const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const idAllocator: IdAllocator = unexpectedDelegate;
 
-const failingRevisionIndexer = (tag: RevisionTag) => {
-	assert.fail("Unexpected revision index query");
+const revisionMetadata: RevisionMetadataSource = {
+	getIndex: () => assert.fail("Unexpected revision index query"),
+	getInfo: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -94,7 +91,7 @@ const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangese
 		unexpectedDelegate,
 		idAllocator,
 		crossFieldManager,
-		failingRevisionIndexer,
+		revisionMetadata,
 	);
 	return nodeChangeFromValueChange(valueChange);
 };
@@ -120,7 +117,7 @@ const childRebaser = (nodeChangeA: NodeChangeset, nodeChangeB: NodeChangeset): N
 		unexpectedDelegate,
 		idAllocator,
 		crossFieldManager,
-		failingRevisionIndexer,
+		revisionMetadata,
 	);
 	return nodeChangeFromValueChange(rebased);
 };
@@ -158,7 +155,7 @@ describe("Generic FieldKind", () => {
 				childComposer,
 				idAllocator,
 				crossFieldManager,
-				failingRevisionIndexer,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, []);
 		});
@@ -203,7 +200,7 @@ describe("Generic FieldKind", () => {
 				childComposer,
 				idAllocator,
 				crossFieldManager,
-				failingRevisionIndexer,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -248,7 +245,7 @@ describe("Generic FieldKind", () => {
 				childComposer,
 				idAllocator,
 				crossFieldManager,
-				failingRevisionIndexer,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -292,7 +289,7 @@ describe("Generic FieldKind", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				failingRevisionIndexer,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});
@@ -334,7 +331,7 @@ describe("Generic FieldKind", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				failingRevisionIndexer,
+				revisionMetadata,
 			);
 			assert.deepEqual(actual, expected);
 		});

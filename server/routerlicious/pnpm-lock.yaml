@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 overrides:
+  qs: ^6.11.0
   socket.io-parser: ^4.2.1
 
 importers:
@@ -665,6 +666,7 @@ importers:
       '@socket.io/redis-emitter': ^4.1.1
       '@types/amqplib': ^0.5.17
       '@types/debug': ^4.1.5
+      '@types/fast-redact': 3.0.2
       '@types/ioredis': ^4.22.0
       '@types/lru-cache': ^5.1.0
       '@types/mocha': ^10.0.0
@@ -678,6 +680,7 @@ importers:
       debug: ^4.1.1
       eslint: ~8.27.0
       events: ^3.1.0
+      fast-redact: 3.1.2
       ioredis: ^4.24.2
       ioredis-mock: ^5.2.5
       lru-cache: ^6.0.0
@@ -709,6 +712,7 @@ importers:
       axios: 0.26.1_debug@4.3.4
       debug: 4.3.4
       events: 3.3.0
+      fast-redact: 3.1.2
       ioredis: 4.28.5
       lru-cache: 6.0.0
       mongodb: 3.2.2
@@ -726,6 +730,7 @@ importers:
       '@rushstack/eslint-config': 2.6.2_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/amqplib': 0.5.17
       '@types/debug': 4.1.7
+      '@types/fast-redact': 3.0.2
       '@types/ioredis': 4.28.10
       '@types/lru-cache': 5.1.1
       '@types/mocha': 10.0.1
@@ -3995,6 +4000,10 @@ packages:
       '@types/express-serve-static-core': 4.17.32
       '@types/qs': 6.9.7
       '@types/serve-static': 1.15.0
+    dev: true
+
+  /@types/fast-redact/3.0.2:
+    resolution: {integrity: sha512-VQ8OBFBFnGT9hGbeBOzKrtHQYev7HN72tsD/7kxQ+/2tQ5PS9cifUOxT8Z42O6iNJK5QPN6IsFm7DNMw6Uq2SQ==}
     dev: true
 
   /@types/glob/7.2.0:
@@ -7697,6 +7706,11 @@ packages:
   /fast-memoize/2.5.2:
     resolution: {integrity: sha512-Ue0LwpDYErFbmNnZSF0UH6eImUwDmogUO1jyE+JbN2gsQz/jICm1Ve7t9QT0rNSsfJt+Hs4/S3GnsDVjL4HVrw==}
     dev: true
+
+  /fast-redact/3.1.2:
+    resolution: {integrity: sha512-+0em+Iya9fKGfEQGcd62Yv6onjBmmhV1uh86XVfOU8VwAe6kaFdQCWI9s0/Nnugx5Vd9tdbZ7e6gE2tR9dzXdw==}
+    engines: {node: '>=6'}
+    dev: false
 
   /fastest-levenshtein/1.0.16:
     resolution: {integrity: sha512-eRnCtTTtGZFpQCwhJiUOuxPQWRXVKYDn0b2PeHfXL6/Zi53SLAzAHfVhVWK2AryC/WH05kGfxhFIPvTF0SXQzg==}
@@ -12206,11 +12220,6 @@ packages:
     dependencies:
       side-channel: 1.0.4
 
-  /qs/6.5.2:
-    resolution: {integrity: sha512-N5ZAX4/LxJmF+7wN74pUD6qAh9/wnvdQcjq9TZjevvXzSUo7bfmw91saqMjzGS2xq91/odN2dW/WOl7qQHNDGA==}
-    engines: {node: '>=0.6'}
-    dev: false
-
   /query-string/6.14.1:
     resolution: {integrity: sha512-XDxAeVmpfu1/6IjyT/gXHOl+S0vQ9owggJ30hhWKdHAsNPOcasn5o9BW0eejZqL2e4vMjhAxoW3jVHcD6mbcYw==}
     engines: {node: '>=6'}
@@ -12561,7 +12570,7 @@ packages:
       mime-types: 2.1.35
       oauth-sign: 0.9.0
       performance-now: 2.1.0
-      qs: 6.5.2
+      qs: 6.11.0
       safe-buffer: 5.2.1
       tough-cookie: 2.5.0
       tunnel-agent: 0.6.0
@@ -13844,7 +13853,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.3.8
       typescript: 4.5.5
-      webpack: 5.75.0_webpack-cli@4.10.0
+      webpack: 5.75.0
     dev: true
 
   /ts-morph/7.3.0:
