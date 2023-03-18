@@ -61,21 +61,10 @@ export class MessageRelay extends TypedEventEmitter<IMessageRelayEvents> impleme
 	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
 	 */
 	private readonly onWindowMessage = (event: MessageEvent<Partial<IDebuggerMessage>>): void => {
-		// console.log('message relay handling', , event.data)
-		if (Array.isArray(event.data)) {
-			for (const m of event.data) {
-				if (isDebuggerMessage(m as Partial<IDebuggerMessage>)) {
-					// Forward incoming message onto subscribers.
-					// TODO: validate source
-					this.emit("message", m);
-				}
-			}
-		} else {
-			if (isDebuggerMessage(event.data)) {
-				// Forward incoming message onto subscribers.
-				// TODO: validate source
-				this.emit("message", event.data);
-			}
+		if (isDebuggerMessage(event.data)) {
+			// Forward incoming message onto subscribers.
+			// TODO: validate source
+			this.emit("message", event.data);
 		}
 	};
 }
