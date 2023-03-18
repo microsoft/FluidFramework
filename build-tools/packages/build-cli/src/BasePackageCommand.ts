@@ -11,6 +11,7 @@ import path from "node:path";
 
 import { BaseCommand } from "./base";
 import { releaseGroupFlag } from "./flags";
+import { ReleaseGroup } from "./releaseGroups";
 
 /**
  * Commands that run operations per project.
@@ -56,7 +57,7 @@ export abstract class PackageCommand<
 
 	protected abstract processPackage(directory: string): Promise<void>;
 
-	private async processPackages(directories: string[]): Promise<void> {
+	protected async processPackages(directories: string[]): Promise<void> {
 		const scopeIn = scopesToPrefix(this.flags.scope);
 		const scopeOut = scopesToPrefix(this.flags.skipScope);
 
@@ -142,16 +143,25 @@ export abstract class PackageCommand<
 			return this.processPackages(["."]);
 		}
 
-		const ctx = await this.getContext();
 		if (releaseGroup !== undefined) {
-			this.info(`Finding packages for release group: ${releaseGroup}`);
-			return this.processPackages(
-				ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
-			);
+			return this.processReleaseGroup(releaseGroup);
 		}
 		assert(independentPackages);
+		return this.processIndependentPackages();
+	}
+
+	protected async processIndependentPackages(): Promise<void> {
+		const ctx = await this.getContext();
 		this.info(`Finding independent packages`);
 		return this.processPackages(ctx.independentPackages.map((p) => p.directory));
+	}
+
+	protected async processReleaseGroup(releaseGroup: ReleaseGroup): Promise<void> {
+		this.info(`Finding packages for release group: ${releaseGroup}`);
+		const ctx = await this.getContext();
+		await this.processPackages(
+			ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
+		);
 	}
 }
 
