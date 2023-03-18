@@ -41,7 +41,6 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@rushstack/eslint-config": "^2.6.2",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",

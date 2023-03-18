@@ -71,7 +71,6 @@
 		"@fluidframework/test-client-utils": "1.4.0-121020",
 		"@fluidframework/test-utils": "^1.4.0-121020",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@rushstack/eslint-config": "^2.6.2",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^14.18.38",
 		"concurrently": "^7.6.0",

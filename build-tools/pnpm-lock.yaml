@@ -13,7 +13,7 @@ importers:
       '@commitlint/config-conventional': ^17.1.0
       '@commitlint/cz-commitlint': ^17.1.2
       '@fluidframework/test-tools': ^0.2.3074
-      '@microsoft/api-documenter': ^7.21.5
+      '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
       c8: ^7.7.1
       commitizen: ^4.2.5
@@ -34,7 +34,7 @@ importers:
       '@commitlint/config-conventional': 17.2.0
       '@commitlint/cz-commitlint': 17.2.0_yes7iyjckc3rubj3ixzwc3ince
       '@fluidframework/test-tools': 0.2.3074
-      '@microsoft/api-documenter': 7.21.5
+      '@microsoft/api-documenter': 7.21.6
       '@microsoft/api-extractor': 7.34.4
       c8: 7.11.3
       commitizen: 4.2.5
@@ -1791,8 +1791,8 @@ packages:
       write-file-atomic: 4.0.2
     dev: true
 
-  /@microsoft/api-documenter/7.21.5:
-    resolution: {integrity: sha512-RTYtqbNqlPvDSqYV2ZCNWSajSieXG58mG1w4MFkHdHhxhWbC9FHqQk7MwIMUKBQBNagW3rE/11Jv5cV0TXuW2Q==}
+  /@microsoft/api-documenter/7.21.6:
+    resolution: {integrity: sha512-Z7orii4J9nsPfiehngONhKHQJwqfHaqwr8CvhHkgeK1jf1stECBMaej/+iKw/+KzXpP9eDdJDEGCnMprxU0kjg==}
     hasBin: true
     dependencies:
       '@microsoft/api-extractor-model': 7.26.4

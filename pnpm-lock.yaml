@@ -12,7 +12,7 @@ importers:
       '@fluid-tools/build-cli': ^0.12.0
       '@fluidframework/build-tools': ^0.12.0
       '@fluidframework/test-tools': ^0.2.3074
-      '@microsoft/api-documenter': ^7.21.5
+      '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
       '@octokit/core': ^4.0.5
       c8: ^7.7.1
@@ -32,7 +32,7 @@ importers:
       '@fluid-tools/build-cli': 0.12.0
       '@fluidframework/build-tools': 0.12.0
       '@fluidframework/test-tools': 0.2.3074
-      '@microsoft/api-documenter': 7.21.5
+      '@microsoft/api-documenter': 7.21.6
       '@microsoft/api-extractor': 7.34.4
       '@octokit/core': 4.2.0
       c8: 7.7.1
@@ -17474,8 +17474,8 @@ packages:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: true
 
-  /@microsoft/api-documenter/7.21.5:
-    resolution: {integrity: sha512-RTYtqbNqlPvDSqYV2ZCNWSajSieXG58mG1w4MFkHdHhxhWbC9FHqQk7MwIMUKBQBNagW3rE/11Jv5cV0TXuW2Q==}
+  /@microsoft/api-documenter/7.21.6:
+    resolution: {integrity: sha512-Z7orii4J9nsPfiehngONhKHQJwqfHaqwr8CvhHkgeK1jf1stECBMaej/+iKw/+KzXpP9eDdJDEGCnMprxU0kjg==}
     hasBin: true
     dependencies:
       '@microsoft/api-extractor-model': 7.26.4

@@ -50,7 +50,6 @@
 		"@fluidframework/build-tools": "0.11.0-135362",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@rushstack/eslint-config": "^2.6.2",
 		"@types/jsrsasign": "^8.0.8",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",

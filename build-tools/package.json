@@ -79,7 +79,7 @@
 		"@commitlint/config-conventional": "^17.1.0",
 		"@commitlint/cz-commitlint": "^17.1.2",
 		"@fluidframework/test-tools": "^0.2.3074",
-		"@microsoft/api-documenter": "^7.21.5",
+		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
 		"c8": "^7.7.1",
 		"commitizen": "^4.2.5",
