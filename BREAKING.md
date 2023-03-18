@@ -46,6 +46,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
 -   [IDocumentServiceFactory.protocolName removed](#IDocumentServiceFactory.protocolName-removed)
 -   [Closing Container no longer disposes](#Closing-Container-no-longer-disposes)
+-   [IContainer.dispose is now required](#IContainer.dispose-is-now-required)
 
 ### Container and RelativeLoader no longer exported
 
@@ -159,6 +160,12 @@ Calling `IContainer.close(...)` will no longer dispose the container runtime, do
 
 If the container is not expected to be used after the `close(...)` call, replace it instead with a `IContainer.dispose(...)` call. Using `IContainer.dispose(...)` will no longer switch the container to "readonly" mode and relevant code should instead listen to the Container's "disposed" event.
 Otherwise, to retain all previous behavior, add a call to `IContainer.dispose(...)` after every `close(...)` call (passing the same error object if present).
+
+Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
+
+### `IContainer.dispose` is now required
+
+`IContainer.dispose` is now a required method. This method should dispose any resources and switch the container to a permanently disconnected state.
 
 Please see the [Closure](packages/loader/container-loader/README.md#Closure) section of Loader README.md for more details.
 
