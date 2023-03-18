@@ -69,12 +69,12 @@
 		"@types/node": "^16.18.16",
 		"@types/supertest": "^2.0.5",
 		"@types/uuid": "^8.3.0",
-		"concurrently": "^7.5.0",
+		"concurrently": "^7.6.0",
 		"eslint": "~8.27.0",
 		"mocha": "^10.1.0",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
-		"rimraf": "^3.0.2",
+		"rimraf": "^4.4.0",
 		"sinon": "^9.2.1",
 		"typescript": "~4.5.5"
 	}
