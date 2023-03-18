@@ -4,7 +4,7 @@
  */
 
 import { IEvent, IEventProvider } from "@fluidframework/common-definitions";
-import { IDebuggerMessage } from "@fluid-tools/client-debugger";
+import { IBaseDebuggerMessage, IDebuggerMessage } from "./Messages";
 
 /**
  * Events emitted by {@link IMessageRelay}.
@@ -23,7 +23,7 @@ export interface IMessageRelayEvents<TMessage extends IDebuggerMessage = IDebugg
  * Manages relaying messages between the consumer of this interface, and some external message sender/receiver.
  */
 export interface IMessageRelay<
-	TSend extends IDebuggerMessage = IDebuggerMessage,
+	TSend extends IBaseDebuggerMessage = IBaseDebuggerMessage,
 	TReceive extends IDebuggerMessage = IDebuggerMessage,
 > extends IEventProvider<IMessageRelayEvents<TReceive>> {
 	/**

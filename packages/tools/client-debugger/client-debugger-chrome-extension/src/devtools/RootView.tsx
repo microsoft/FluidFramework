@@ -10,10 +10,11 @@
  * by our internal React components.
  */
 
+import { FluidClientDebuggers, MessageRelayContext } from "@fluid-tools/client-debugger-view";
 import React from "react";
 import ReactDOM from "react-dom";
+import { extensionMessageSource } from "../messaging";
 
-import { DebuggerPanel, MessageRelayContext } from "../react-components";
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
@@ -32,10 +33,13 @@ panelElement.style.width = "100%";
  * @remarks Sets up message-passing context and renders the debugger.
  */
 function RootView(): React.ReactElement {
-	const messageRelay = React.useMemo<BackgroundConnection>(() => new BackgroundConnection(), []);
+	const messageRelay = React.useMemo<BackgroundConnection>(
+		() => new BackgroundConnection(extensionMessageSource),
+		[],
+	);
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>
-			<DebuggerPanel />
+			<FluidClientDebuggers />
 		</MessageRelayContext.Provider>
 	);
 }

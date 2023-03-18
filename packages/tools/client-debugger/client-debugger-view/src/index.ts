@@ -28,9 +28,9 @@ export {
 	_TelemetryView,
 	_TelemetryViewProps,
 	AudienceMemberViewProps, // TODO: remove this
-	ClientDebugView,
+	ContainerView as ClientDebugView,
 	// clientDebugViewClassName,
-	ClientDebugViewProps,
+	ContainerViewProps as ClientDebugViewProps,
 	ContainerSummaryView,
 	ContainerSummaryViewProps,
 	IContainerActions,
@@ -38,11 +38,14 @@ export {
 	PanelView,
 	PanelViewSelectionMenu,
 	PanelViewSelectionMenuProps,
+	Waiting,
+	WaitingProps,
 } from "./components";
 
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger } from "./CommonProps";
 export { FluidClientDebuggers, FluidClientDebuggersProps } from "./Debugger";
+export { useMessageRelay, MessageRelayContext } from "./MessageRelayContext";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
 	defaultRenderOptions,

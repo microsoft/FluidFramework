@@ -6,20 +6,34 @@ import { Resizable } from "re-resizable";
 import React from "react";
 
 import {
-	DebuggerRegistry,
-	IFluidClientDebugger,
-	getFluidClientDebuggers,
-	getDebuggerRegistry,
+	ContainerMetadata,
+	IMessageRelay,
+	InboundHandlers,
+	RegistryChangeMessage,
+	IDebuggerMessage,
+	handleIncomingMessage,
+	IBaseDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { RenderOptions } from "./RendererOptions";
-import { ClientDebugView, TelemetryView } from "./components";
+import { ContainerView, TelemetryView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { MenuItem, MenuSection } from "./Menu";
+import { useMessageRelay } from "./MessageRelayContext";
+
+const loggingContext = "INLINE(DebuggerPanel)";
 
 // Ensure FluentUI icons are initialized.
 initializeFluentUiIcons();
+
+/**
+ * Message sent to the webpage to query for the full container list.
+ */
+const getContainerListMessage: IBaseDebuggerMessage = {
+	type: "GET_CONTAINER_LIST",
+	data: undefined,
+};
 
 /**
  * {@link FluidClientDebuggers} input props.
@@ -40,28 +54,41 @@ export interface FluidClientDebuggersProps {
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
-	const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
-
-	const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(
-		getFluidClientDebuggers(),
-	);
+	const [containers, setContainers] = React.useState<ContainerMetadata[]>([]);
 	const [menuSelection, setMenuSelection] = React.useState<string>("");
 	const [containerId, setContainerId] = React.useState<string>("");
 
+	const messageRelay: IMessageRelay = useMessageRelay();
+
 	React.useEffect(() => {
-		function onDebuggerChanged(): void {
-			const newDebuggerList = getFluidClientDebuggers();
-			setClientDebuggers(newDebuggerList);
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			["REGISTRY_CHANGE"]: (untypedMessage) => {
+				const message = untypedMessage as RegistryChangeMessage;
+				setContainers(message.data.containers);
+				return true;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the Message Relay
+		 */
+		function messageHandler(message: Partial<IDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: loggingContext,
+			});
 		}
 
-		debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
-		debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
+		messageRelay.on("message", messageHandler);
+
+		messageRelay.postMessage(getContainerListMessage);
 
 		return (): void => {
-			debuggerRegistry.off("debuggerRegistered", onDebuggerChanged);
-			debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [debuggerRegistry, setClientDebuggers]);
+	}, [setContainers, messageRelay]);
 
 	let innerView: React.ReactElement;
 	switch (menuSelection) {
@@ -70,12 +97,12 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			break;
 		case "container":
 			// eslint-disable-next-line no-case-declarations
-			const containerDebugger = clientDebuggers.find((x) => x.containerId === containerId);
+			const container = containers.find((x) => x.id === containerId);
 			innerView =
-				containerDebugger === undefined ? (
+				container === undefined ? (
 					<div>Could not find a debugger for that container.</div>
 				) : (
-					<ClientDebugView clientDebugger={containerDebugger} />
+					<ContainerView containerId={containerId} />
 				);
 			break;
 		// TODO: add the Telemetry view here, without ReactContext
@@ -107,7 +134,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			display: "flex",
 			flexDirection: "column",
 			borderRight: `1px solid ${DefaultPalette.themePrimary}`,
-			minWidth: 150
+			minWidth: 150,
 		},
 	};
 
@@ -135,15 +162,16 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 		>
 			<Stack enableScopedSelectors horizontal styles={stackStyles}>
 				<Stack.Item grow={1} styles={menuStyles}>
+					{ /* TODO: button to refresh list of containers */}
 					<MenuSection header="Containers">
-						{clientDebuggers.map((clientDebugger) => (
+						{containers.map((container) => (
 							<MenuItem
-								key={clientDebugger.containerId}
+								key={container.id}
 								text={
-									clientDebugger.containerNickname ?? clientDebugger.containerId
+									container.nickname ?? container.id
 								}
 								onClick={(event): void => {
-									onContainerClicked(`${clientDebugger.containerId}`);
+									onContainerClicked(`${container.id}`);
 								}}
 							/>
 						))}
@@ -153,7 +181,10 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 					</MenuSection>
 				</Stack.Item>
 				<Stack.Item grow={5} styles={contentViewStyles}>
-					<div id="debugger-view-content" style={{ width: "100%", height: "100%", overflowY: "auto" }}>
+					<div
+						id="debugger-view-content"
+						style={{ width: "100%", height: "100%", overflowY: "auto" }}
+					>
 						{innerView}
 					</div>
 				</Stack.Item>

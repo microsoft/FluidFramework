@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
+import { HasContainerId } from "@fluid-tools/client-debugger";
 import React from "react";
 
-import { HasClientDebugger } from "../CommonProps";
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
@@ -23,18 +23,18 @@ import { DataObjectsView } from "./DataObjectsView";
 initializeFluentUiIcons();
 
 /**
- * `className` used by {@link ClientDebugView}.
+ * `className` used by {@link ContainerView}.
  *
  * @internal
  */
 const clientDebugViewClassName = `fluid-client-debugger-view`;
 
 /**
- * {@link ClientDebugView} input props.
+ * {@link ContainerView} input props.
  *
  * @internal
  */
-export interface ClientDebugViewProps extends HasClientDebugger {
+export interface ContainerViewProps extends HasContainerId {
 	/**
 	 * Rendering policies for different kinds of Fluid client and object data.
 	 *
@@ -50,8 +50,8 @@ export interface ClientDebugViewProps extends HasClientDebugger {
  *
  * @internal
  */
-export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
-	const { clientDebugger, renderOptions: userRenderOptions } = props;
+export function ContainerView(props: ContainerViewProps): React.ReactElement {
+	const { containerId, renderOptions: userRenderOptions } = props;
 	const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
 	// Inner view selection
@@ -63,7 +63,8 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 		case PanelView.ContainerData:
 			innerView = (
 				<DataObjectsView
-					clientDebugger={clientDebugger}
+					containerId={containerId}
+					containerData={undefined}
 					renderOptions={renderOptions.sharedObjectRenderOptions}
 				/>
 			);
@@ -71,13 +72,13 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 		case PanelView.Audience:
 			innerView = (
 				<AudienceView
-					clientDebugger={clientDebugger}
+					containerId={containerId}
 					onRenderAudienceMember={renderOptions.onRenderAudienceMember}
 				/>
 			);
 			break;
 		case PanelView.ContainerStateHistory:
-			innerView = <ContainerHistoryView clientDebugger={clientDebugger} />;
+			innerView = <ContainerHistoryView containerId={containerId} />;
 			break;
 		default:
 			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
@@ -105,7 +106,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 			}}
 			className={clientDebugViewClassName}
 		>
-			<ContainerSummaryView clientDebugger={clientDebugger} />
+			<ContainerSummaryView containerId={containerId} />
 			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
 		</Stack>
 	);

@@ -2,33 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { HasContainerId } from "@fluid-tools/client-debugger";
 import React from "react";
 
-import { HasClientDebugger } from "../CommonProps";
 import { SharedObjectRenderOptions } from "../RendererOptions";
 import { DynamicDataView } from "./data-object-views";
 
 /**
  * {@link DataObjectsView} input props.
  */
-export interface DataObjectsViewProps extends HasClientDebugger {
+export interface DataObjectsViewProps extends HasContainerId {
 	/**
 	 * {@inheritDoc RendererOptions}
 	 */
 	renderOptions: SharedObjectRenderOptions;
+
+	containerData: unknown;
 }
 
 /**
- * View containing a drop-down style view of {@link DataObjectsViewProps.initialObjects}.
+ * Displays the data inside a container.
  *
  * @remarks
  *
  * Dispatches data object rendering based on those provided view {@link DataObjectsViewProps.renderOptions}.
  */
 export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement {
-	const { clientDebugger, renderOptions } = props;
+	const { containerData, renderOptions } = props;
 
-	const { containerData } = clientDebugger;
+	// TODO : use containerId to get its data
 
 	return (
 		<div className="data-objects-view">

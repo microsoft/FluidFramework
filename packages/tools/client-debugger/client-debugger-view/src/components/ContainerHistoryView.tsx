@@ -8,47 +8,70 @@ import React from "react";
 import {
 	ConnectionStateChangeLogEntry,
 	ContainerStateChangeKind,
+	ContainerStateHistoryMessage,
+	handleIncomingMessage,
+	HasContainerId,
+	IDebuggerMessage,
+	InboundHandlers,
 } from "@fluid-tools/client-debugger";
-
-import { HasClientDebugger } from "../CommonProps";
+import { useMessageRelay } from "../MessageRelayContext";
+import { Waiting } from "./Waiting";
 
 /**
- * {@link ContainerHistory} input props.
+ * {@link ContainerHistoryView} input props.
  */
-export type ContainerHistoryProps = HasClientDebugger;
+export type ContainerHistoryProps = HasContainerId;
 
 /**
- * Displays information about the provided {@link IFluidClientDebugger.getContainerConnectionLog}.
+ * Displays information about the container state history.
  *
  * @param props - See {@link ContainerHistoryViewProps}.
  */
 export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactElement {
-	const { clientDebugger } = props;
-	const { container } = clientDebugger;
+	const { containerId } = props;
+	const messageRelay = useMessageRelay();
+
+	// const { clientDebugger } = props;
+	// const { container } = clientDebugger;
 
 	const [containerHistory, setContainerHistory] = React.useState<
 		readonly ConnectionStateChangeLogEntry[]
-	>(clientDebugger.getContainerConnectionLog());
+	>([]);
 
 	React.useEffect(() => {
-		function onContainerHistoryChanged(): void {
-			setContainerHistory(clientDebugger.getContainerConnectionLog());
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			["CONTAINER_STATE_HISTORY"]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateHistoryMessage;
+				if (message.data.containerId === containerId) {
+					setContainerHistory(message.data.history);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the webpage.
+		 */
+		function messageHandler(message: Partial<IDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: "ContainerHistoryView", // TODO: Fix
+			});
 		}
 
-		container.on("attached", onContainerHistoryChanged);
-		container.on("connected", onContainerHistoryChanged);
-		container.on("disconnected", onContainerHistoryChanged);
-		container.on("disposed", onContainerHistoryChanged);
-		container.on("closed", onContainerHistoryChanged);
+		messageRelay.on("message", messageHandler);
 
 		return (): void => {
-			container.off("attached", onContainerHistoryChanged);
-			container.off("connected", onContainerHistoryChanged);
-			container.off("disconnected", onContainerHistoryChanged);
-			container.off("disposed", onContainerHistoryChanged);
-			container.off("closed", onContainerHistoryChanged);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [clientDebugger, container, setContainerHistory]);
+	}, [containerId, containerHistory, messageRelay, setContainerHistory]);
+
+	if (containerHistory === undefined) {
+		return <Waiting label="Waiting for Container Summary data." />;
+	}
 
 	return (
 		<Stack

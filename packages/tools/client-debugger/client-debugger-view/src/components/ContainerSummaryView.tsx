@@ -7,14 +7,14 @@ import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fl
 import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
-import { ContainerStateMetadata } from "@fluid-tools/client-debugger";
+import { ContainerStateChangeMessage, ContainerStateMetadata, handleIncomingMessage, HasContainerId, IDebuggerMessage, IMessageRelay, InboundHandlers } from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 
-import { HasClientDebugger } from "../CommonProps";
 import { initializeFluentUiIcons } from "../InitializeIcons";
-import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { connectionStateToString } from "../Utilities";
+import { useMessageRelay } from "../MessageRelayContext";
+import { Waiting } from "./Waiting";
 
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
@@ -26,76 +26,103 @@ initializeFluentUiIcons();
 /**
  * {@link ContainerSummaryView} input props.
  */
-export type ContainerSummaryViewProps = HasClientDebugger;
+export type ContainerSummaryViewProps = HasContainerId;
 
 /**
  * Debugger view displaying basic Container stats.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-	const { clientDebugger } = props;
-	const { container, containerNickname, containerId } = clientDebugger;
+	const { containerId } = props;
 
-	const myClientId = useMyClientId(clientDebugger);
-	const myClientConnection = useMyClientConnection(clientDebugger);
+	const messageRelay: IMessageRelay = useMessageRelay();
 
-	// #endregion
-
-	// #region Container State
-
-	const [containerAttachState, setContainerAttachState] = React.useState<AttachState>(
-		container.attachState,
-	);
-	const [containerConnectionState, setContainerConnectionState] = React.useState<ConnectionState>(
-		container.connectionState,
-	);
-	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
+	const [containerState, setContainerState] = React.useState<
+		ContainerStateMetadata | undefined
+	>();
 
 	React.useEffect(() => {
-		function onContainerAttached(): void {
-			setContainerAttachState(container.attachState);
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			["CONTAINER_STATE_CHANGE"]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateChangeMessage;
+				if (message.data.containerId === containerId) {
+					setContainerState(message.data.containerState);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the webpage.
+		 */
+		function messageHandler(message: Partial<IDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: "ContainerSummaryView", // TODO: fix
+			});
 		}
 
-		function onContainerConnectionChange(): void {
-			setContainerConnectionState(container.connectionState);
-		}
+		messageRelay.on("message", messageHandler);
 
-		function onContainerClosed(): void {
-			setIsContainerClosed(true);
-		}
+		// Reset Container State data, to ensure we aren't displaying stats for the wrong container while
+		// we wait for a response from the new debugger.
+		// eslint-disable-next-line unicorn/no-useless-undefined
+		setContainerState(undefined);
 
-		container.on("attached", onContainerAttached);
-		container.on("connected", onContainerConnectionChange);
-		container.on("disconnected", onContainerConnectionChange);
-		container.on("closed", onContainerClosed);
-
-		setContainerAttachState(container.attachState);
-		setContainerConnectionState(container.connectionState);
-		setIsContainerClosed(container.closed);
+		// Request state info for the newly specified containerId
+		messageRelay.postMessage({
+			type: "GET_CONTAINER_STATE",
+			data: {
+				containerId,
+			},
+		});
 
 		return (): void => {
-			container.off("attached", onContainerAttached);
-			container.off("connected", onContainerConnectionChange);
-			container.off("disconnected", onContainerConnectionChange);
-			container.off("closed", onContainerClosed);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [container, setContainerAttachState, setContainerConnectionState, setIsContainerClosed]);
+	}, [containerId, setContainerState, messageRelay]);
+
+	if (containerState === undefined) {
+		return <Waiting label="Waiting for Container Summary data." />;
+	}
+
+	function tryConnect(): void {
+		messageRelay.postMessage({
+			type: "CONNECT_CONTAINER",
+			data: {
+				containerId,
+			},
+		});
+	}
+
+	function forceDisconnect(): void {
+		messageRelay.postMessage({
+			type: "DISCONNECT_CONTAINER",
+			data: {
+				containerId,
+				/* TODO: Specify debugger reason here once it is supported */
+			},
+		});
+	}
+
+	function closeContainer(): void {
+		messageRelay.postMessage({
+			type: "CLOSE_CONTAINER",
+			data: {
+				containerId,
+				/* TODO: Specify debugger reason here once it is supported */
+			},
+		});
+	}
 
 	return (
 		<_ContainerSummaryView
-			id={containerId}
-			nickname={containerNickname}
-			attachState={containerAttachState}
-			connectionState={containerConnectionState}
-			closed={isContainerClosed}
-			clientId={myClientId}
-			audienceId={myClientConnection?.user.id}
-			tryConnect={(): void => container.connect()}
-			forceDisconnect={(): void =>
-				container.disconnect(/* TODO: Specify debugger reason here once it is supported */)
-			}
-			closeContainer={(): void =>
-				container.close(/* TODO: Specify debugger reason here once it is supported */)
-			}
+			{...containerState}
+			tryConnect={tryConnect}
+			forceDisconnect={forceDisconnect}
+			closeContainer={closeContainer}
 		/>
 	);
 }
@@ -169,7 +196,7 @@ export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.
 		<Stack className="container-summary-view">
 			<StackItem>
 				<span>
-					<b>Container</b>: {nickname !== undefined ? `${nickname} (${id})` : {id} }
+					<b>Container</b>: {nickname !== undefined ? `${nickname} (${id})` : { id }}
 				</span>
 			</StackItem>
 			<StackItem>

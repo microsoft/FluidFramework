@@ -29,7 +29,8 @@ export {
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage } from "./Messages";
+export { IDebuggerMessage, IBaseDebuggerMessage } from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
 	RegistryChangeMessage,

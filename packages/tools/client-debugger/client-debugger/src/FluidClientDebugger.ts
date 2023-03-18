@@ -216,7 +216,7 @@ export class FluidClientDebugger
 	};
 
 	/**
-	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
+	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
 		postMessageToWindow<IDebuggerMessage>(
@@ -283,6 +283,7 @@ export class FluidClientDebugger
 		this.audience.on("addMember", this.audienceMemberAddedHandler);
 		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
 
+		console.log('setting up globalthis listener');
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
 

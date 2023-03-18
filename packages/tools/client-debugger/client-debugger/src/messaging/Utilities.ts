@@ -97,7 +97,7 @@ export function handleIncomingMessage(
 	loggingOptions?: MessageLoggingOptions,
 ): void {
 	// TODO: remove loggingOptions once things settle.
-
+	console.log('handling', typeof message, message);
 	if (message === undefined || !isDebuggerMessage(message)) {
 		return;
 	}
@@ -106,7 +106,6 @@ export function handleIncomingMessage(
 		// No handler for this type provided. No-op.
 		return;
 	}
-
 	const handled = handlers[message.type](message);
 
 	// Only log if the message was actually handled by the recipient.

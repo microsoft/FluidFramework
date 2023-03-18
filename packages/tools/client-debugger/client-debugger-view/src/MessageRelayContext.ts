@@ -4,8 +4,7 @@
  */
 
 import React from "react";
-
-import { IMessageRelay } from "../messaging";
+import { IMessageRelay } from "@fluid-tools/client-debugger";
 
 /**
  * Context for accessing a shared {@link IMessageRelay} for communicating messages with the webpage.
@@ -28,11 +27,13 @@ export const MessageRelayContext = React.createContext<IMessageRelay | undefined
  * @throws If {@link MessageRelayContext} has not been set.
  */
 export function useMessageRelay(): IMessageRelay {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const messageRelay = React.useContext(MessageRelayContext);
 	if (messageRelay === undefined) {
 		throw new Error(
 			"MessageRelayContext was not defined. Parent component is responsible for ensuring this has been constructed.",
 		);
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return messageRelay;
 }

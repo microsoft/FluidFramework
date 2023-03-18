@@ -6,6 +6,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { FluidClientDebuggers } from "./Debugger";
+import { MessageRelay } from "./MessageRelay";
+import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
  * Renders Fluid client debug view by appending it to the provided DOM element.
@@ -22,13 +24,28 @@ import { FluidClientDebuggers } from "./Debugger";
  */
 export async function renderClientDebuggerView(targetElement: HTMLElement): Promise<void> {
 	const debuggerElement = document.createElement("debugger");
-	targetElement.append(debuggerElement);
 
 	return new Promise<void>((resolve, reject) => {
 		try {
-			ReactDOM.render(React.createElement(FluidClientDebuggers), debuggerElement, resolve);
+			ReactDOM.render(<RootView />, debuggerElement, () => {
+				targetElement.append(debuggerElement);
+				console.log("Rendered debug view in page!");
+				resolve();
+			});
 		} catch (error) {
 			reject(error);
 		}
 	});
+}
+
+function RootView(): React.ReactElement {
+	const messageRelay = React.useMemo<MessageRelay>(
+		() => new MessageRelay("fluid-client-debugger-inline"),
+		[],
+	);
+	return (
+		<MessageRelayContext.Provider value={messageRelay}>
+			<FluidClientDebuggers />
+		</MessageRelayContext.Provider>
+	);
 }
