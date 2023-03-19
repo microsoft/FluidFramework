@@ -106,7 +106,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 		this.data[externalTaskListId] = data;
 
 		// Emit for debug views to update
-		this.emit("debugDataWritten", this.data, externalTaskListId);
+		this.emit("debugDataWritten", externalTaskListId, data);
 		return new Response(undefined, {
 			status: 200,
 			statusText: "OK",
