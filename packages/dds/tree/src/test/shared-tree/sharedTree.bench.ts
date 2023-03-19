@@ -16,6 +16,7 @@ import {
 	namedTreeSchema,
 	singleTextCursor,
 	UnwrappedEditableField,
+	valueSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
@@ -135,20 +136,6 @@ const testSchema: SchemaData = {
 
 const testSubtrees: Map<string, JsonableTree> = new Map<string, JsonableTree>([
 	["Number", { value: 1, type: dataSchema.name }],
-	["Float", { value: 1.0, type: dataSchema.name }],
-	["String", { value: "testString", type: dataSchema.name }],
-	["Boolean", { value: true, type: dataSchema.name }],
-	[
-		"Map",
-		{
-			value: {
-				mapField2: {
-					mapField3: [{ type: dataSchema.name, value: 1 }],
-				},
-			},
-			type: dataSchema.name,
-		},
-	],
 ]);
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
@@ -397,14 +384,14 @@ describe("SharedTree benchmarks", () => {
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
 							getTestSchema(FieldKinds.optional),
-							[{ type: rootSchemaName }],
+							[{ type: rootSchemaName, value:1 }],
 							1,
 						);
 						tree = trees[0];
 						insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Deep, dataType);
 					},
 					benchmarkFn: () => {
-						readEditableTree(tree, numberOfNodes, TreeShape.Deep);
+						assert.equal(numberOfNodes, readEditableTree(tree, numberOfNodes, TreeShape.Deep));
 					},
 				});
 			}
@@ -418,14 +405,14 @@ describe("SharedTree benchmarks", () => {
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
 							getTestSchema(FieldKinds.sequence),
-							[{ type: rootSchemaName }],
+							[{ type: rootSchemaName, value:1 }],
 							1,
 						);
 						tree = trees[0];
 						insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Wide, dataType);
 					},
 					benchmarkFn: () => {
-						readEditableTree(tree, numberOfNodes, TreeShape.Wide);
+						assert.equal(numberOfNodes, readEditableTree(tree, numberOfNodes, TreeShape.Wide));
 					},
 				});
 			}
@@ -439,7 +426,7 @@ describe("SharedTree benchmarks", () => {
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
 							getTestSchema(FieldKinds.sequence),
-							[{ type: rootSchemaName }],
+							[{ type: rootSchemaName, value:1 }],
 							1,
 						);
 						tree = trees[0];
@@ -459,7 +446,7 @@ describe("SharedTree benchmarks", () => {
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
 							getTestSchema(FieldKinds.sequence),
-							[{ type: rootSchemaName }],
+							[{ type: rootSchemaName, value:1 }],
 							1,
 						);
 						tree = trees[0];
@@ -481,7 +468,7 @@ describe("SharedTree benchmarks", () => {
 						before: async () => {
 							[provider, trees] = await createSharedTrees(
 								getTestSchema(FieldKinds.sequence),
-								[{ type: rootSchemaName }],
+								[{ type: rootSchemaName, value:1 }],
 								1,
 							);
 							tree = trees[0];
@@ -519,7 +506,7 @@ describe("SharedTree benchmarks", () => {
 						before: async () => {
 							[provider, trees] = await createSharedTrees(
 								getTestSchema(FieldKinds.sequence),
-								[{ type: rootSchemaName }],
+								[{ type: rootSchemaName, value:1 }],
 								1,
 							);
 							tree = trees[0];
@@ -657,7 +644,7 @@ function insertNodesToEditableTree(
 			break;
 		case TreeShape.Wide:
 			assert(isUnwrappedNode(treeRoot));
-			for (let i = 0; i < numberOfNodes - 1; i++) {
+			for (let i = 0; i < numberOfNodes; i++) {
 				treeRoot[getField](localFieldKey).insertNodes(i, singleTextCursor(node));
 			}
 			break;
@@ -857,24 +844,31 @@ function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
 	}
 }
 
-function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeShape) {
+function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeShape): number {
+	let sum = 0;
 	switch (shape) {
 		case TreeShape.Deep: {
 			let currentNode: UnwrappedEditableField = tree.root;
-			for (let j = 0; j < numberOfNodes - 1; j++) {
+			for (let j = 0; j < numberOfNodes; j++) {
 				assert(isUnwrappedNode(currentNode));
+				const value = currentNode[valueSymbol] as number;
+				sum = applyOperationDuringRead(sum, value);
 				currentNode = currentNode.foo as UnwrappedEditableField;
 			}
-			break;
+			return sum
 		}
 		case TreeShape.Wide: {
 			const root = tree.root;
 			assert(isUnwrappedNode(root));
 			const field = root.foo as UnwrappedEditableField;
 			assert(isEditableField(field));
-			for (const iterator of field) {
+			for (let i = 0; i < numberOfNodes; i++) {
+				const currentNode = field[i] as UnwrappedEditableField;
+				assert(isUnwrappedNode(currentNode))
+				const value = currentNode[valueSymbol] as number;
+				sum = applyOperationDuringRead(sum, value);
 			}
-			break;
+			return sum
 		}
 		default:
 			unreachableCase(shape);
@@ -920,6 +914,7 @@ function getEditableLeafNode(
 			for (let j = 0; j < numberOfNodes; j++) {
 				currentField = currentNode[getField](localFieldKey);
 				currentNode = currentField.getNode(0);
+				const test = currentNode[valueSymbol];
 			}
 			assert(currentField !== undefined);
 			return currentField;
