@@ -30,6 +30,7 @@ import {
 	loggerToMonitoringContext,
 	MonitoringContext,
 	EventEmitterWithErrorHandling,
+	normalizeError,
 } from "@fluidframework/telemetry-utils";
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
@@ -81,10 +82,21 @@ export class DocumentDeltaConnection
 	}
 
 	public get disposed() {
-		assert(
-			this._disposed || this.socket.connected,
-			0x244 /* "Socket is closed, but connection is not!" */,
-		);
+		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		try {
+			(Error as any).stackTraceLimit = 50;
+			assert(
+				this._disposed || this.socket.connected,
+				0x244 /* "Socket is closed, but connection is not!" */,
+			);
+		} catch (error) {
+			const normalizedError = this.addPropsToError(error);
+			throw normalizedError;
+		} finally {
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
+		}
 		return this._disposed;
 	}
 
@@ -120,6 +132,7 @@ export class DocumentDeltaConnection
 		public documentId: string,
 		logger: ITelemetryLogger,
 		private readonly enableLongPollingDowngrades: boolean = false,
+		protected readonly connectionId?: string,
 	) {
 		super((name, error) => {
 			logger.sendErrorEvent(
@@ -223,7 +236,18 @@ export class DocumentDeltaConnection
 	}
 
 	private checkNotClosed() {
-		assert(!this.disposed, 0x20c /* "connection disposed" */);
+		// Increase the stack trace limit temporarily, so as to debug better in case it occurs.
+		// We are seeing this in telemetry and we are unable to figure out why it is happening, so this should help.
+		const originalStackTraceLimit = (Error as any).stackTraceLimit;
+		try {
+			(Error as any).stackTraceLimit = 50;
+			assert(!this.disposed, 0x20c /* "connection disposed" */);
+		} catch (error) {
+			const normalizedError = this.addPropsToError(error);
+			throw normalizedError;
+		} finally {
+			(Error as any).stackTraceLimit = originalStackTraceLimit;
+		}
 	}
 
 	/**
@@ -318,7 +342,26 @@ export class DocumentDeltaConnection
 	/**
 	 * Disconnect from the websocket and close the websocket too.
 	 */
-	protected closeSocket(error: IAnyDriverError) {
+	private closeSocket(error: IAnyDriverError) {
+		if (this._disposed) {
+			// This would be rare situation due to complexity around socket emitting events.
+			this.logger.sendTelemetryEvent(
+				{
+					eventName: "SocketCloseOnDisposedConnection",
+					driverVersion,
+					details: JSON.stringify({
+						...this.getConnectionDetailsProps(),
+						trackedListenerCount: this.trackedListeners.size,
+					}),
+				},
+				error,
+			);
+			return;
+		}
+		this.closeSocketCore(error);
+	}
+
+	protected closeSocketCore(error: IAnyDriverError) {
 		this.disconnect(error);
 	}
 
@@ -332,8 +375,7 @@ export class DocumentDeltaConnection
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
 			details: JSON.stringify({
-				disposed: this._disposed,
-				socketConnected: this.socket.connected,
+				...this.getConnectionDetailsProps(),
 			}),
 		});
 		this.disconnect(
@@ -361,23 +403,24 @@ export class DocumentDeltaConnection
 		// to prevent normal messages from being emitted.
 		this._disposed = true;
 
-		// Let user of connection object know about disconnect. This has to happen in between setting _disposed and
-		// removing all listeners!
+		// Remove all listeners listening on the socket. These are listeners on socket and not on this connection
+		// object. Anyway since we have disposed this connection object, nobody should listen to event on socket
+		// anymore.
+		this.removeTrackedListeners();
+
+		// Clear the connection/socket before letting the deltaManager/connection manager know about the disconnect.
+		this.disconnectCore();
+
+		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
 		this.logger.sendTelemetryEvent({
 			eventName: "AfterDisconnectEvent",
 			driverVersion,
 			details: JSON.stringify({
-				socketConnected: this.socket.connected,
+				...this.getConnectionDetailsProps(),
 				disconnectListenerCount: this.listenerCount("disconnect"),
 			}),
 		});
-		// user of DeltaConnection should have processed "disconnect" event and removed all listeners. Not clear
-		// if we want to enforce that, as some users (like LocalDocumentService) do not unregister any handlers
-		// assert(this.listenerCount("disconnect") === 0, "'disconnect` events should be processed synchronously");
-
-		this.removeTrackedListeners();
-		this.disconnectCore();
 	}
 
 	/**
@@ -403,14 +446,34 @@ export class DocumentDeltaConnection
 
 		this._details = await new Promise<IConnected>((resolve, reject) => {
 			const failAndCloseSocket = (err: IAnyDriverError) => {
-				this.closeSocket(err);
+				try {
+					this.closeSocket(err);
+				} catch (failError) {
+					const normalizedError = this.addPropsToError(failError);
+					this.logger.sendErrorEvent({ eventName: "CloseSocketError" }, normalizedError);
+				}
 				reject(err);
 			};
 
 			const failConnection = (err: IAnyDriverError) => {
-				this.disconnect(err);
+				try {
+					this.disconnect(err);
+				} catch (failError) {
+					const normalizedError = this.addPropsToError(failError);
+					this.logger.sendErrorEvent(
+						{ eventName: "FailConnectionError" },
+						normalizedError,
+					);
+				}
 				reject(err);
 			};
+
+			// Immediately set the connection timeout.
+			// Give extra 2 seconds for handshake on top of socket connection timeout.
+			this.socketConnectionTimeout = setTimeout(() => {
+				failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
+			}, timeout + 2000);
+
 			// Listen for connection issues
 			this.addConnectionListener("connect_error", (error) => {
 				internalSocketConnectionFailureCount++;
@@ -560,14 +623,29 @@ export class DocumentDeltaConnection
 			});
 
 			this.socket.emit("connect_document", connectMessage);
-
-			// Give extra 2 seconds for handshake on top of socket connection timeout
-			this.socketConnectionTimeout = setTimeout(() => {
-				failConnection(this.createErrorObject("orderingServiceHandshakeTimeout"));
-			}, timeout + 2000);
 		});
 
 		assert(!this.disposed, 0x246 /* "checking consistency of socket & _disposed flags" */);
+	}
+
+	private addPropsToError(errorToBeNormalized: unknown) {
+		const normalizedError = normalizeError(errorToBeNormalized, {
+			props: {
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
+		});
+		return normalizedError;
+	}
+
+	private getConnectionDetailsProps() {
+		return {
+			disposed: this._disposed,
+			socketConnected: this.socket?.connected,
+			clientId: this._details?.clientId,
+			connectionId: this.connectionId,
+		};
 	}
 
 	protected earlyOpHandler = (documentId: string, msgs: ISequencedDocumentMessage[]) => {
@@ -654,7 +732,12 @@ export class DocumentDeltaConnection
 		const errorObj = createGenericNetworkError(
 			`socket.io (${handler}): ${message}`,
 			{ canRetry },
-			{ driverVersion },
+			{
+				driverVersion,
+				details: JSON.stringify({
+					...this.getConnectionDetailsProps(),
+				}),
+			},
 		);
 
 		return errorObj;

@@ -22,7 +22,6 @@
     "plugins": [
         "eslint-comments",
         "import",
-        "react",
         "unused-imports",
         "promise",
         "jsdoc",
@@ -1288,7 +1287,7 @@
             "error"
         ],
         "unicorn/no-nested-ternary": [
-            "error"
+            "off"
         ],
         "unicorn/no-new-array": [
             "error"
@@ -1336,7 +1335,7 @@
             "error"
         ],
         "unicorn/no-useless-undefined": [
-            "error"
+            "off"
         ],
         "unicorn/no-zero-fractions": [
             "error"

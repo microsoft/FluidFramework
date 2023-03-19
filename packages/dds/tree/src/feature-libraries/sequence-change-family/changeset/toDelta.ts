@@ -5,7 +5,8 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
-import { TreeSchemaIdentifier, FieldKey, Value, Delta } from "../../../core";
+import { TreeSchemaIdentifier, FieldKey, Delta } from "../../../core";
+import { populateChildModifications } from "../../deltaUtils";
 import {
 	brand,
 	brandOpaque,
@@ -30,17 +31,11 @@ export function toDelta(changeset: T.LocalChangeset): Delta.Root {
 	return out;
 }
 
-function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
-	const markList = new OffsetListFactory<Delta.Mark>();
-	const beforeShallow: Delta.NestedChange[] = [];
-	const afterShallow: Delta.NestedChange[] = [];
-	let inputIndex = 0;
-	let outputIndex = 0;
+function convertMarkList(marks: T.MarkList): Delta.MarkList {
+	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
 		if (isSkipMark(mark)) {
-			markList.pushOffset(mark);
-			inputIndex += mark;
-			outputIndex += mark;
+			out.pushOffset(mark);
 		} else {
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
@@ -51,8 +46,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 						// TODO: can we skip this clone?
 						content: clone(mark.content).map(singleTextCursor),
 					};
-					markList.pushContent(insertMark);
-					outputIndex += mark.content.length;
+					out.pushContent(insertMark);
 					break;
 				}
 				case "MInsert": {
@@ -60,9 +54,8 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 						type: Delta.MarkType.Insert,
 						content: [singleTextCursor(mark.content)],
 					};
-					markList.pushContent(insertMark);
-					afterShallow.push({ index: outputIndex, ...convertModify(mark) });
-					outputIndex += 1;
+					populateChildModifications(convertModify(mark), insertMark);
+					out.pushContent(insertMark);
 					break;
 				}
 				case "MoveIn": {
@@ -71,20 +64,22 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 						count: mark.count,
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 					};
-					markList.pushContent(moveMark);
-					outputIndex += mark.count;
+					out.pushContent(moveMark);
 					break;
 				}
 				case "MMoveIn":
-					fail(ERR_NOT_IMPLEMENTED);
+					fail("MMoveIn not implemented");
 				case "Bounce":
 				case "Intake":
 					// These have no impacts on the document state.
 					break;
 				case "Modify": {
-					beforeShallow.push({ index: inputIndex, ...convertModify(mark) });
-					inputIndex += 1;
-					outputIndex += 1;
+					if (mark.tomb === undefined) {
+						out.pushContent({
+							type: Delta.MarkType.Modify,
+							...convertModify(mark),
+						});
+					}
 					break;
 				}
 				case "Delete": {
@@ -92,21 +87,16 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 						type: Delta.MarkType.Delete,
 						count: mark.count,
 					};
-					markList.pushContent(deleteMark);
-					inputIndex += mark.count;
+					out.pushContent(deleteMark);
 					break;
 				}
 				case "MDelete": {
-					const fields = convertModify(mark).fields;
-					if (fields !== undefined) {
-						beforeShallow.push({ index: inputIndex, ...convertModify(mark) });
-					}
 					const deleteMark: Delta.Delete = {
 						type: Delta.MarkType.Delete,
 						count: 1,
 					};
-					markList.pushContent(deleteMark);
-					inputIndex += 1;
+					populateChildModifications(convertModify(mark), deleteMark);
+					out.pushContent(deleteMark);
 					break;
 				}
 				case "MoveOut": {
@@ -115,8 +105,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 						count: mark.count,
 					};
-					markList.pushContent(moveMark);
-					inputIndex += mark.count;
+					out.pushContent(moveMark);
 					break;
 				}
 				case "Revive": {
@@ -127,8 +116,7 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 							singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }),
 						),
 					};
-					markList.pushContent(insertMark);
-					outputIndex += mark.count;
+					out.pushContent(insertMark);
 					break;
 				}
 				case "MRevive": {
@@ -137,15 +125,14 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 						// TODO: Restore the actual node
 						content: [singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE })],
 					};
-					markList.pushContent(insertMark);
-					outputIndex += 1;
+					out.pushContent(insertMark);
 					break;
 				}
 				case "MMoveOut":
 				case "Return":
 				case "MReturn":
 				case "Gap":
-					fail(ERR_NOT_IMPLEMENTED);
+					fail("Gap not implemented");
 				case "Tomb": {
 					// These tombs are only used to precisely describe the location of other attaches.
 					// They have no impact on the current state.
@@ -156,22 +143,10 @@ function convertMarkList(marks: T.MarkList): Delta.FieldChanges {
 			}
 		}
 	}
-	const fieldChanges: Mutable<Delta.FieldChanges> = {};
-	if (beforeShallow.length > 0) {
-		fieldChanges.beforeShallow = beforeShallow;
-	}
-	if (markList.list.length > 0) {
-		fieldChanges.shallow = markList.list;
-	}
-	if (afterShallow.length > 0) {
-		fieldChanges.afterShallow = afterShallow;
-	}
-	return fieldChanges;
+	return out.list;
 }
 
 const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("RevivedNode");
-
-const ERR_NOT_IMPLEMENTED = "Not implemented";
 
 /**
  * Modifications to a subtree as described by a Changeset.
@@ -182,18 +157,10 @@ interface ChangesetMods {
 }
 
 /**
- * Modifications to a subtree as described by a Delta.
- */
-interface DeltaMods {
-	fields?: Delta.FieldChangeMap;
-	setValue?: Value;
-}
-
-/**
  * Converts tree modifications from the Changeset to the Delta format.
  */
-function convertModify(modify: ChangesetMods): DeltaMods {
-	const out: DeltaMods = {};
+function convertModify(modify: ChangesetMods): Delta.HasModifications {
+	const out: Mutable<Delta.HasModifications> = {};
 	if (modify.value !== undefined) {
 		out.setValue = modify.value.value;
 	}
@@ -204,12 +171,12 @@ function convertModify(modify: ChangesetMods): DeltaMods {
 	return out;
 }
 
-function convertFieldMarks(fields: T.FieldMarks): Delta.FieldChangeMap {
-	const outFields: Map<FieldKey, Delta.FieldChanges> = new Map();
+function convertFieldMarks(fields: T.FieldMarks): Delta.FieldMarks {
+	const outFields: Map<FieldKey, Delta.MarkList> = new Map();
 	for (const key of Object.keys(fields)) {
-		const changes = convertMarkList(fields[key]);
+		const marks = convertMarkList(fields[key]);
 		const brandedKey: FieldKey = brand(key);
-		outFields.set(brandedKey, changes);
+		outFields.set(brandedKey, marks);
 	}
 	return outFields;
 }

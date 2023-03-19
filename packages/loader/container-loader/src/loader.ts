@@ -36,15 +36,10 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IFluidResolvedUrl,
-	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	ensureFluidResolvedUrl,
-	MultiUrlResolver,
-	MultiDocumentServiceFactory,
-} from "@fluidframework/driver-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { Container, IPendingContainerState } from "./container";
 import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
@@ -58,6 +53,9 @@ function canUseCache(request: IRequest): boolean {
 	return request.headers[LoaderHeader.cache] !== false;
 }
 
+/**
+ * @deprecated - In the next release RelativeLoader will no longer be exported. It is an internal class that should not be used directly.
+ */
 export class RelativeLoader implements ILoader {
 	constructor(
 		private readonly container: Container,
@@ -107,22 +105,6 @@ export class RelativeLoader implements ILoader {
 		}
 		return this.loader.request(request);
 	}
-}
-
-function createCachedResolver(resolver: IUrlResolver) {
-	const cacheResolver = Object.create(resolver) as IUrlResolver;
-	const resolveCache = new Map<string, Promise<IResolvedUrl | undefined>>();
-	cacheResolver.resolve = async (request: IRequest): Promise<IResolvedUrl | undefined> => {
-		if (!canUseCache(request)) {
-			return resolver.resolve(request);
-		}
-		if (!resolveCache.has(request.url)) {
-			resolveCache.set(request.url, resolver.resolve(request));
-		}
-
-		return resolveCache.get(request.url);
-	};
-	return cacheResolver;
 }
 
 export interface ILoaderOptions extends ILoaderOptions1 {
@@ -276,6 +258,28 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 };
 
 /**
+ * With an already-resolved container, we can request a component directly, without loading the container again
+ * @param container - a resolved container
+ * @returns component on the container
+ */
+export async function requestResolvedObjectFromContainer(
+	container: IContainer,
+	headers?: IRequestHeader,
+): Promise<IResponse> {
+	ensureFluidResolvedUrl(container.resolvedUrl);
+	const parsedUrl = parseUrl(container.resolvedUrl.url);
+
+	if (parsedUrl === undefined) {
+		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
+	}
+
+	return container.request({
+		url: `${parsedUrl.path}${parsedUrl.query}`,
+		headers,
+	});
+}
+
+/**
  * Manages Fluid resource loading
  */
 export class Loader implements IHostLoader {
@@ -303,10 +307,8 @@ export class Loader implements IHostLoader {
 		);
 
 		this.services = {
-			urlResolver: createCachedResolver(MultiUrlResolver.create(loaderProps.urlResolver)),
-			documentServiceFactory: MultiDocumentServiceFactory.create(
-				loaderProps.documentServiceFactory,
-			),
+			urlResolver: loaderProps.urlResolver,
+			documentServiceFactory: loaderProps.documentServiceFactory,
 			codeLoader: loaderProps.codeLoader,
 			options: loaderProps.options ?? {},
 			scope,
@@ -495,7 +497,6 @@ export class Loader implements IHostLoader {
 				resolvedUrl: resolved,
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				loadMode: request.headers?.[LoaderHeader.loadMode],
-				baseLogger: request.headers?.["fluid-base-logger"],
 			},
 			pendingLocalState,
 			this.protocolHandlerBuilder,

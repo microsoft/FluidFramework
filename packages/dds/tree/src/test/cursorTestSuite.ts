@@ -23,13 +23,12 @@ import {
 	setGenericTreeField,
 	isLocalKey,
 	UpPath,
-	compareUpPaths,
 	compareFieldUpPaths,
-	clonePath,
 	FieldUpPath,
 	PathRootPrefix,
 } from "../core";
 import { brand } from "../util";
+import { expectEqualPaths } from "./utils";
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	["minimal", { type: brand("Foo") }],
@@ -636,15 +635,6 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 	});
 }
 
-function expectEqualPaths(path: UpPath | undefined, expectedPath: UpPath | undefined): void {
-	if (!compareUpPaths(path, expectedPath)) {
-		// This is slower than above compare, so only do it in the error case.
-		// Make a nice error message:
-		assert.deepEqual(clonePath(path), clonePath(expectedPath));
-		assert.fail("unequal paths, but clones compared equal");
-	}
-}
-
 /**
  * Test that cursor works as a cursor.
  * This does NOT test that the data the cursor exposes is correct,
@@ -708,7 +698,7 @@ function checkTraversal(cursor: ITreeCursor, expectedPath: UpPath | undefined) {
  * This does NOT test that the data the cursor exposes is correct,
  * it simply checks that the traversal APIs function, and that a few aspects of them conform with the spec.
  */
-function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPath): void {
+export function checkFieldTraversal(cursor: ITreeCursor, expectedPath: FieldUpPath): void {
 	assert.equal(cursor.mode, CursorLocationType.Fields);
 	assert.equal(cursor.pending, false);
 	const expectedFieldLength = cursor.getFieldLength();

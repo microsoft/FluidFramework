@@ -74,15 +74,9 @@ jobs:
 
     # Install
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 16.x
       inputs:
-        version: 14.x
-
-    - task: Cache@2
-      displayName: Cache pnpm store
-      inputs:
-        key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
-        path: ${{ variables.pnpmStorePath }}
+        version: 16.x
 
     - task: Bash@3
       displayName: Install and configure pnpm

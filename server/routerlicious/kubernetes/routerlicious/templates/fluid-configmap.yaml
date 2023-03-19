@@ -67,24 +67,54 @@ data:
             "maxNumberOfClientsPerDocument": {{ .Values.alfred.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
+            "enableConnectionCountLogging": {{ .Values.alfred.enableConnectionCountLogging }},
             "throttling": {
-                "restCalls": {
-                    "maxPerMs": {{ .Values.alfred.throttling.restCalls.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.restCalls.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCalls.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCalls.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCalls.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCalls.enableEnhancedTelemetry }}
+                "restCallsPerTenant": {
+                    "maxPerMs": {{ .Values.alfred.throttling.restCallsPerTenant.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.restCallsPerTenant.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCallsPerTenant.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCallsPerTenant.minThrottleIntervalInMs }},
+                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsPerTenant.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsPerTenant.maxInMemoryCacheAgeInMs }},
+                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsPerTenant.enableEnhancedTelemetry }}
                 },
-                "socketConnections": {
-                    "maxPerMs": {{ .Values.alfred.throttling.socketConnections.maxPerMs }},
-                    "maxBurst": {{ .Values.alfred.throttling.socketConnections.maxBurst }},
-                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minCooldownIntervalInMs }},
-                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnections.minThrottleIntervalInMs }},
-                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheSize }},
-                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.socketConnections.maxInMemoryCacheAgeInMs }},
-                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.socketConnections.enableEnhancedTelemetry }}
+                "restCallsPerCluster": {
+                    "createDoc": {
+                        "maxPerMs": {{ .Values.alfred.throttling.restCallsPerCluster.createDoc.maxPerMs }},
+                        "maxBurst": {{ .Values.alfred.throttling.restCallsPerCluster.createDoc.maxBurst }},
+                        "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCallsPerCluster.createDoc.minCooldownIntervalInMs }},
+                        "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCallsPerCluster.createDoc.minThrottleIntervalInMs }},
+                        "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsPerCluster.createDoc.maxInMemoryCacheSize }},
+                        "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsPerCluster.createDoc.maxInMemoryCacheAgeInMs }},
+                        "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsPerCluster.createDoc.enableEnhancedTelemetry }}
+                    },
+                    "getDeltas": {
+                        "maxPerMs": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxPerMs }},
+                        "maxBurst": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxBurst }},
+                        "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.minCooldownIntervalInMs }},
+                        "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.minThrottleIntervalInMs }},
+                        "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxInMemoryCacheSize }},
+                        "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxInMemoryCacheAgeInMs }},
+                        "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.enableEnhancedTelemetry }}
+                    }
+                },
+                "socketConnectionsPerTenant": {
+                    "maxPerMs": {{ .Values.alfred.throttling.socketConnectionsPerTenant.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.socketConnectionsPerTenant.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnectionsPerTenant.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnectionsPerTenant.minThrottleIntervalInMs }},
+                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.socketConnectionsPerTenant.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.socketConnectionsPerTenant.maxInMemoryCacheAgeInMs }},
+                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.socketConnectionsPerTenant.enableEnhancedTelemetry }}
+                },
+                "socketConnectionsPerCluster": {
+                    "maxPerMs": {{ .Values.alfred.throttling.socketConnectionsPerCluster.maxPerMs }},
+                    "maxBurst": {{ .Values.alfred.throttling.socketConnectionsPerCluster.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.alfred.throttling.socketConnectionsPerCluster.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.alfred.throttling.socketConnectionsPerCluster.minThrottleIntervalInMs }},
+                    "maxInMemoryCacheSize": {{ .Values.alfred.throttling.socketConnectionsPerCluster.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.socketConnectionsPerCluster.maxInMemoryCacheAgeInMs }},
+                    "enableEnhancedTelemetry": {{ .Values.alfred.throttling.socketConnectionsPerCluster.enableEnhancedTelemetry }}
                 },
                 "submitOps": {
                     "maxPerMs": {{ .Values.alfred.throttling.submitOps.maxPerMs }},
@@ -145,7 +175,8 @@ data:
                 "idleTime": {{ .Values.scribe.checkpointHeuristics.idleTime }},
                 "maxTime": {{ .Values.scribe.checkpointHeuristics.maxTime }},
                 "maxMessages": {{ .Values.scribe.checkpointHeuristics.maxMessages }}
-            }
+            },
+            "getDeltasViaAlfred": {{ .Values.scribe.getDeltasViaAlfred }}
         },
         "system": {
             "httpServer": {

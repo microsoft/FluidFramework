@@ -130,7 +130,7 @@ import { FieldKey, Value } from "./types";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export type Root<TTree = ProtoNode> = FieldChangeMap<TTree>;
+export type Root<TTree = ProtoNode> = FieldMarks<TTree>;
 
 /**
  * The default representation for inserted content.
@@ -142,7 +142,13 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Represents a change being made to a part of the tree.
  * @alpha
  */
-export type Mark<TTree = ProtoNode> = Skip | Delete | MoveOut | MoveIn | Insert<TTree>;
+export type Mark<TTree = ProtoNode> =
+	| Skip
+	| Modify<TTree>
+	| Delete<TTree>
+	| MoveOut<TTree>
+	| MoveIn
+	| Insert<TTree>;
 
 /**
  * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
@@ -163,17 +169,34 @@ export type Skip = number;
  * Describes modifications made to a subtree.
  * @alpha
  */
-export interface NodeChanges<TTree = ProtoNode> {
+export interface HasModifications<TTree = ProtoNode> {
+	readonly fields?: FieldMarks<TTree>;
+	/**
+	 * When set, indicates the new value that should be assigned to the node.
+	 * Can be set to `undefined` to convey that the node's value should be cleared.
+	 * Readers of this field should use the following check to distinguish the above cases:
+	 * `Object.prototype.hasOwnProperty.call(mark, "setValue")`
+	 */
 	readonly setValue?: Value;
-	readonly fields?: FieldChangeMap<TTree>;
+}
+
+/**
+ * Describes modifications made to an otherwise untouched subtree.
+ * @alpha
+ */
+export interface Modify<TTree = ProtoNode> extends HasModifications<TTree> {
+	readonly type: typeof MarkType.Modify;
 }
 
 /**
  * Describes the deletion of a contiguous range of node.
  * @alpha
  */
-export interface Delete {
+export interface Delete<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Delete;
+	/**
+	 * Must be 1 when either `setValue` or `fields` is populated.
+	 */
 	readonly count: number;
 }
 
@@ -181,8 +204,11 @@ export interface Delete {
  * Describes the moving out of a contiguous range of node.
  * @alpha
  */
-export interface MoveOut {
+export interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.MoveOut;
+	/**
+	 * Must be 1 when either `setValue` or `fields` is populated.
+	 */
 	readonly count: number;
 	/**
 	 * The delta should carry exactly one `MoveIn` mark with the same move ID.
@@ -207,9 +233,12 @@ export interface MoveIn {
  * Describes the insertion of a contiguous range of node.
  * @alpha
  */
-export interface Insert<TTree = ProtoNode> {
+export interface Insert<TTree = ProtoNode> extends HasModifications<TTree> {
 	readonly type: typeof MarkType.Insert;
 	// TODO: use a single cursor with multiple nodes instead of array of cursors.
+	/**
+	 * Must be of length 1 when either `setValue` or `fields` is populated.
+	 */
 	readonly content: readonly TTree[];
 }
 
@@ -227,48 +256,15 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
 /**
  * @alpha
  */
-export type FieldChangeMap<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
-
-/**
- * @alpha
- */
-export interface FieldChanges<TTree = ProtoNode> {
-	/**
-	 * Changes to the subtrees contained in the field before any of the shallow changes are applied.
-	 * Ordered by ascending index.
-	 */
-	readonly beforeShallow?: readonly NestedChange<TTree>[];
-
-	/**
-	 * Changes to apply to the contents of the field.
-	 */
-	readonly shallow?: MarkList<TTree>;
-
-	/**
-	 * Changes to the subtrees contained in the field after all the shallow changes are applied.
-	 * Ordered by ascending index.
-	 */
-	readonly afterShallow?: readonly NestedChange<TTree>[];
-}
-
-/**
- * @alpha
- */
-export interface ChildIndex {
-	readonly index: number;
-}
-
-/**
- * @alpha
- */
-export type NestedChange<TTree = ProtoNode> = ChildIndex & NodeChanges<TTree>;
+export type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 /**
  * @alpha
  */
 export const MarkType = {
-	Insert: 0,
-	MoveIn: 1,
-	Delete: 2,
-	MoveOut: 3,
+	Modify: 0,
+	Insert: 1,
+	MoveIn: 2,
+	Delete: 3,
+	MoveOut: 4,
 } as const;

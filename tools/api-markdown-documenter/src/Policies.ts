@@ -134,6 +134,13 @@ export type LinkTextPolicy = (apiItem: ApiItem) => string;
 export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 
 /**
+ * Policy for generating document-level front-matter contents, which will be included at the top of a generated document.
+ *
+ * @remarks Note: this is arbitrary text, and will not be escaped.
+ */
+export type FrontMatterPolicy = (documentItem: ApiItem) => string | undefined;
+
+/**
  * Policy configuration options
  */
 export interface PolicyOptions {
@@ -206,13 +213,16 @@ export interface PolicyOptions {
 	packageFilterPolicy?: PackageFilterPolicy;
 
 	/**
-	 * Contents to display in what would otherwise be empty table cells.
+	 * See {@link FrontMatterPolicy}.
 	 *
-	 * @defaultValue ""
+	 * @defaultValue `undefined`
 	 */
-	emptyTableCellText?: string;
+	frontMatterPolicy?: FrontMatterPolicy;
 }
 
+/**
+ * Contains a list of default transformation policies, used by {@link PolicyOptions}.
+ */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultPolicies {
 	/**
@@ -322,6 +332,15 @@ export namespace DefaultPolicies {
 	export function defaultPackageFilterPolicy(): boolean {
 		return false;
 	}
+
+	/**
+	 * Default {@link PolicyOptions.frontMatterPolicy}.
+	 *
+	 * Unconditionally returns `undefined` (i.e. no front-matter will be generated).
+	 */
+	export function defaultFrontMatterPolicy(): undefined {
+		return undefined;
+	}
 }
 
 /**
@@ -337,7 +356,7 @@ export const defaultPolicyOptions: Required<PolicyOptions> = {
 	headingTitlePolicy: DefaultPolicies.defaultHeadingTitlePolicy,
 	linkTextPolicy: DefaultPolicies.defaultLinkTextPolicy,
 	packageFilterPolicy: DefaultPolicies.defaultPackageFilterPolicy,
-	emptyTableCellText: "",
+	frontMatterPolicy: DefaultPolicies.defaultFrontMatterPolicy,
 };
 
 /**

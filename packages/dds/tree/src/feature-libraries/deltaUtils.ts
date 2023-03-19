@@ -9,7 +9,7 @@ import { Mutable } from "../util";
 
 /**
  * Converts a `Delta.FieldMarks` whose tree content is represented with by `TIn` instances
- * into a `Delta.FieldMarks` whose tree content is represented with by `TOut` instances.
+ * into a `Delta.FieldMarks`whose tree content is represented with by `TOut` instances.
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
@@ -18,70 +18,19 @@ import { Mutable } from "../util";
  * @param func - The functions used to map tree content.
  */
 export function mapFieldMarks<TIn, TOut>(
-	fields: Delta.FieldChangeMap<TIn>,
+	fields: Delta.FieldMarks<TIn>,
 	func: (tree: TIn) => TOut,
-): Delta.FieldChangeMap<TOut> {
-	const out: Map<FieldKey, Delta.FieldChanges<TOut>> = new Map();
+): Delta.FieldMarks<TOut> {
+	const out: Map<FieldKey, Delta.MarkList<TOut>> = new Map();
 	for (const [k, v] of fields) {
-		out.set(k, mapFieldChanges<TIn, TOut>(v, func));
-	}
-	return out;
-}
-
-/**
- * Converts a `Delta.FieldChanges` whose tree content is represented with by `TIn` instances
- * into a `Delta.FieldChanges` whose tree content is represented with by `TOut` instances.
- *
- * This function is useful for converting `Delta`s that represent tree content with cursors
- * into `Delta`s that represent tree content with a deep-comparable representation of the content.
- * See {@link assertDeltaEqual}.
- * @param changes - The FieldChanges to convert. Not mutated.
- * @param func - The functions used to map tree content.
- */
-export function mapFieldChanges<TIn, TOut>(
-	changes: Delta.FieldChanges<TIn>,
-	func: (tree: TIn) => TOut,
-): Delta.FieldChanges<TOut> {
-	const field: Mutable<Delta.FieldChanges<TOut>> = {};
-	if (changes.beforeShallow) {
-		field.beforeShallow = changes.beforeShallow.map((nested) => mapNodeChanges(nested, func));
-	}
-	if (changes.shallow) {
-		field.shallow = mapMarkList(changes.shallow, func);
-	}
-	if (changes.afterShallow) {
-		field.afterShallow = changes.afterShallow.map((nested) => mapNodeChanges(nested, func));
-	}
-	return field;
-}
-
-/**
- * Converts a `Delta.NodeChanges` whose tree content is represented with by `TIn` instances
- * into a `Delta.NodeChanges` whose tree content is represented with by `TOut` instances.
- *
- * This function is useful for converting `Delta`s that represent tree content with cursors
- * into `Delta`s that represent tree content with a deep-comparable representation of the content.
- * See {@link assertDeltaEqual}.
- * @param changes - The node changes to convert. Not mutated.
- * @param func - The functions used to map tree content.
- */
-export function mapNodeChanges<TIn, TOut>(
-	changes: Delta.NestedChange<TIn>,
-	func: (tree: TIn) => TOut,
-): Delta.NestedChange<TOut> {
-	const out: Mutable<Delta.NestedChange<TOut>> = { index: changes.index };
-	if (changes.fields !== undefined) {
-		out.fields = mapFieldMarks(changes.fields, func);
-	}
-	if (changes.setValue !== undefined) {
-		out.setValue = changes.setValue;
+		out.set(k, mapMarkList(v, func));
 	}
 	return out;
 }
 
 /**
  * Converts a `Delta.MarkList` whose tree content is represented with by `TIn` instances
- * into a `Delta.MarkList` whose tree content is represented with by `TOut` instances.
+ * into a `Delta.MarkList`whose tree content is represented with by `TOut` instances.
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
@@ -98,7 +47,7 @@ export function mapMarkList<TIn, TOut>(
 
 /**
  * Converts a `Delta.Mark` whose tree content is represented with by `TIn` instances
- * into a `Delta.Mark` whose tree content is represented with by `TOut` instances.
+ * into a `Delta.Mark`whose tree content is represented with by `TOut` instances.
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
@@ -118,14 +67,60 @@ export function mapMark<TIn, TOut>(
 		case Delta.MarkType.Insert: {
 			return {
 				type: Delta.MarkType.Insert,
+				...mapModifications(mark, func),
 				content: mark.content.map(func),
 			};
 		}
-		case Delta.MarkType.Delete:
+		case Delta.MarkType.Modify: {
+			return {
+				type: Delta.MarkType.Modify,
+				...mapModifications(mark, func),
+			};
+		}
+		case Delta.MarkType.MoveOut: {
+			return {
+				type: Delta.MarkType.MoveOut,
+				count: mark.count,
+				moveId: mark.moveId,
+				...mapModifications(mark, func),
+			};
+		}
+		case Delta.MarkType.Delete: {
+			return {
+				type: Delta.MarkType.Delete,
+				count: mark.count,
+				...mapModifications(mark, func),
+			};
+		}
 		case Delta.MarkType.MoveIn:
-		case Delta.MarkType.MoveOut:
 			return mark;
 		default:
 			unreachableCase(type);
+	}
+}
+
+function mapModifications<TIn, TOut>(
+	mark: Delta.HasModifications<TIn>,
+	func: (tree: TIn) => TOut,
+): Delta.HasModifications<TOut> {
+	const out: Mutable<Delta.HasModifications<TOut>> = {};
+	if (mark.fields !== undefined) {
+		out.fields = mapFieldMarks(mark.fields, func);
+	}
+	if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+		out.setValue = mark.setValue;
+	}
+	return out;
+}
+
+export function populateChildModifications(
+	modifications: Delta.HasModifications,
+	deltaMark: Mutable<Delta.HasModifications>,
+): void {
+	if (Object.prototype.hasOwnProperty.call(modifications, "setValue")) {
+		deltaMark.setValue = modifications.setValue;
+	}
+	if (modifications.fields !== undefined) {
+		deltaMark.fields = modifications.fields;
 	}
 }
