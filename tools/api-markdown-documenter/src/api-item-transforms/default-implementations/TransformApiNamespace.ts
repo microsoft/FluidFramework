@@ -4,8 +4,8 @@
  */
 import { ApiItem, ApiNamespace } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { transformApiModuleLike } from "./TransformApiModuleLike";
 
 /**
@@ -13,7 +13,7 @@ import { transformApiModuleLike } from "./TransformApiModuleLike";
  */
 export function transformApiNamespace(
 	apiNamespace: ApiNamespace,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	return transformApiModuleLike(apiNamespace, apiNamespace.members, config, generateChildContent);

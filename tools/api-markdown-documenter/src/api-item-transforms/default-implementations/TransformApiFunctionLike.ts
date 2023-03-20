@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
 import { ApiFunctionLike } from "../ApiItemUtilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSection, createReturnsSection } from "../helpers";
 
 /**
@@ -13,7 +13,7 @@ import { createParametersSection, createReturnsSection } from "../helpers";
  */
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 

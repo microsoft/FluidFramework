@@ -18,7 +18,6 @@ import {
 	DocSection,
 } from "@microsoft/tsdoc";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Link } from "../Link";
 import { Logger } from "../Logging";
 import {
@@ -34,6 +33,7 @@ import {
 	SingleLineSpanNode,
 } from "../documentation-domain";
 import { getDocNodeTransformationOptions } from "./Utilities";
+import { ApiItemTransformationConfiguration } from "./configuration";
 
 /**
  * Library of transformations from {@link https://github.com/microsoft/tsdoc/blob/main/tsdoc/src/nodes/DocNode.ts| DocNode}s
@@ -55,7 +55,7 @@ import { getDocNodeTransformationOptions } from "./Utilities";
 export function transformDocNode(
 	docNode: DocNode,
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentationNode | undefined {
 	const transformOptions = getDocNodeTransformationOptions(contextApiItem, config);
 	return _transformDocNode(docNode, transformOptions);

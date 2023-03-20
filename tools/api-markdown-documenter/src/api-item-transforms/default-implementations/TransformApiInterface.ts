@@ -13,9 +13,9 @@ import {
 	ApiPropertySignature,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
 import { filterByKind } from "../ApiItemUtilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**
@@ -53,7 +53,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  */
 export function transformApiInterface(
 	apiInterface: ApiInterface,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];

@@ -4,7 +4,8 @@
  */
 import { ApiModel } from "@microsoft/api-extractor-model";
 
-import { Logger, defaultConsoleLogger } from "../../Logging";
+import { ConfigurationBase } from "../../ConfigurationBase";
+import { defaultConsoleLogger } from "../../Logging";
 import {
 	DocumentationSuiteOptions,
 	getDocumentationSuiteOptionsWithDefaults,
@@ -19,7 +20,8 @@ import {
  */
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationOptions,
-		DocumentationSuiteOptions {
+		DocumentationSuiteOptions,
+		ConfigurationBase {
 	/**
 	 * API Model for which the documentation is being generated.
 	 * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
@@ -36,17 +38,6 @@ export interface ApiItemTransformationConfiguration
 	 * Default root URI used when generating content links.
 	 */
 	readonly uriRoot: string;
-
-	/**
-	 * Policy object for logging system events.
-	 *
-	 * @remarks A custom logger can be provided for customized policy, or for a target other than the console.
-	 *
-	 * If you wish to enable `verbose` logging, consider using {@link verboseConsoleLogger}.
-	 *
-	 * @defaultValue {@link defaultConsoleLogger}
-	 */
-	readonly logger?: Logger;
 }
 
 /**

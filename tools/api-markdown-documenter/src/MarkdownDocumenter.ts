@@ -8,17 +8,20 @@ import { ApiItem } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 
 import {
-	MarkdownDocumenterConfiguration,
-	markdownDocumenterConfigurationWithDefaults,
-} from "./Configuration";
-import {
+	ApiItemTransformationConfiguration,
 	apiItemToDocument,
 	apiModelToDocument,
 	apiPackageToDocument,
 	doesItemRequireOwnDocument,
+	getApiItemTransformationConfigurationWithDefaults,
 } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
-import { MarkdownRenderers, renderDocument } from "./markdown-renderer";
+import {
+	RenderConfiguration as MarkdownRenderConfiguration,
+	MarkdownRenderers,
+	getRenderConfigurationWithDefaults as getMarkdownRenderConfigurationWithDefaults,
+	renderDocument as renderDocumentAsMarkdown,
+} from "./markdown-renderer";
 
 /**
  * This module contains the primary rendering entrypoints to the system.
@@ -39,11 +42,13 @@ import { MarkdownRenderers, renderDocument } from "./markdown-renderer";
  * Which API members get their own documents and which get written to the contents of their parent is
  * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
- * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
+ * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
+ * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
  */
-export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration): DocumentNode[] {
-	const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
+export function transformApiModel(
+	transformConfig: ApiItemTransformationConfiguration,
+): DocumentNode[] {
+	const config = getApiItemTransformationConfigurationWithDefaults(transformConfig);
 	const apiModel = config.apiModel;
 
 	config.logger.info(
@@ -103,28 +108,32 @@ export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration
  *
  * @param apiModel - The API model being processed.
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
- * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
- * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
+ * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
+ * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
  * @param customRenderers - Custom rendering policies. Specified per {@link DocumentationNode."type"}.
  */
 export async function renderApiModelAsMarkdown(
-	partialConfig: MarkdownDocumenterConfiguration,
+	transformConfig: ApiItemTransformationConfiguration,
+	renderConfig: MarkdownRenderConfiguration,
 	outputDirectoryPath: string,
 	customRenderers?: MarkdownRenderers,
 ): Promise<void> {
-	const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
+	const completeTransformConfig =
+		getApiItemTransformationConfigurationWithDefaults(transformConfig);
+	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(renderConfig);
 
 	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
-	const documents = transformApiModel(config);
+	const documents = transformApiModel(completeTransformConfig);
 
+	// TODO: Move actual rendering logic into `markdown-renderer`
 	await Promise.all(
 		documents.map(async (document) => {
-			const renderedDocument = renderDocument(document, customRenderers);
+			const renderedDocument = renderDocumentAsMarkdown(document, customRenderers);
 
 			const filePath = Path.join(outputDirectoryPath, document.filePath);
 			await FileSystem.writeFileAsync(filePath, renderedDocument, {
-				convertLineEndings: config.newlineKind,
+				convertLineEndings: completeRenderConfig.newlineKind,
 				ensureFolderExists: true,
 			});
 		}),
@@ -141,7 +150,7 @@ export async function renderApiModelAsMarkdown(
  */
 function getDocumentItems(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): ApiItem[] {
 	const result: ApiItem[] = [];
 	for (const childItem of apiItem.members) {

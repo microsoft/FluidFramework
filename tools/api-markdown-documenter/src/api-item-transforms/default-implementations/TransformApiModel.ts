@@ -4,8 +4,8 @@
  */
 import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createTableWithHeading } from "../helpers";
 
 /**
@@ -13,7 +13,7 @@ import { createTableWithHeading } from "../helpers";
  */
 export function transformApiModel(
 	apiModel: ApiModel,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	if (apiModel.packages.length === 0) {
 		// If no packages under model, print simple note.

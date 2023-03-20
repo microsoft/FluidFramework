@@ -23,12 +23,12 @@ import {
 	ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
 import * as DefaultTransformationImplementations from "../default-implementations";
+import { ApiItemTransformationConfiguration } from "./Configuration";
 
 /**
- * This module contains transformation-policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
+ * This module contains transformation-policy-related types that are consumed via the {@link ApiItemTransformationConfiguration}.
  */
 
 /**
@@ -37,7 +37,7 @@ import * as DefaultTransformationImplementations from "../default-implementation
  */
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildSection: (apiItem: ApiItem) => SectionNode[],
 ) => SectionNode[];
 
@@ -47,7 +47,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
  */
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ) => SectionNode[];
 
 /**
@@ -57,7 +57,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 export type CreateChildContentSections = (
 	apiItem: ApiItem,
 	childSections: SectionNode[] | undefined,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ) => SectionNode[];
 
 /**

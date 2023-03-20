@@ -26,6 +26,7 @@ export {
 	type DocumentBoundaries,
 	type FileNamePolicy,
 	type FrontMatterPolicy,
+	getApiItemTransformationConfigurationWithDefaults,
 	type HeadingTitlePolicy,
 	type HierarchyBoundaries,
 	type LinkTextPolicy,
@@ -43,10 +44,10 @@ export * from "./documentation-domain";
 export {
 	createDocumentWriter,
 	DocumentWriter,
-	getContextWithDefaults as getMarkdownRenderContextWithDefaults,
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
+	type RenderConfiguration as MarkdownRenderConfiguration,
 	renderDocument as renderDocumentAsMarkdown,
 	renderNode as renderNodeAsMarkdown,
 	renderNodes as renderNodesAsMarkdown,
@@ -54,10 +55,7 @@ export {
 
 export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
 
-export {
-	MarkdownDocumenterConfiguration,
-	markdownDocumenterConfigurationWithDefaults,
-} from "./Configuration";
+export type { ConfigurationBase } from "./ConfigurationBase";
 export type { Heading } from "./Heading";
 export type { Link, UrlTarget } from "./Link";
 export { loadModel } from "./LoadModel";
@@ -67,7 +65,6 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
-export {} from "./api-item-transforms";
 
 // Conveinence re-exports of API model types
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

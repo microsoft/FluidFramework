@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import type { TextFormatting } from "../documentation-domain";
-import { MarkdownRenderers, getRenderersWithDefaults } from "./RenderConfiguration";
+import { MarkdownRenderers, getRenderersWithDefaults } from "./configuration";
 
 /**
  * Context passed down during recursive {@link DocumentationNode} rendering.
