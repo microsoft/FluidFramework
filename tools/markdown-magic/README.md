@@ -4,6 +4,50 @@ This library contains tools for generating and embedding documentation contents 
 
 Note: this package is currently private, and only intended for use in this repository.
 
+## Usage
+
+### Script
+
+To run the `markdown-magic` script against your Markdown files, run the following from the command line:
+
+```shell
+npm run markdown-magic [--files <one or more file globs, space-separated>] [--workingDirectory <directory in which to run the script>]
+```
+
+#### Arguments
+
+##### `files`
+
+Accepts one or more glob values to match against.
+Only file names matching the pattern(s) will have their contents parsed and updated.
+
+Uses the [globby](https://github.com/sindresorhus/globby#readme) format.
+
+**Default**: "**/*.md"
+
+###### Example
+
+```shell
+npm run markdown-magic --files \"docs/*\" \"!docs/README.md\"
+```
+
+Will run on all Markdown contents under the `docs` directory, except for `!docs/README.md`.
+
+##### `workingDirectory`
+
+Specifies the directory from which the script will be run.
+Useful when the directory from which the Node.js process is run is not the hierarchical root from which you wish to run documentation generation.
+
+Default: `Node.js`'s working directory (i.e. the directory from which the script was executed).
+
+###### Example
+
+```shell
+npm run markdown-magic --workingDirectory ../../
+```
+
+Will run the script from two levels higher in the file structure relative to where the `npm` script itself was executed.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
