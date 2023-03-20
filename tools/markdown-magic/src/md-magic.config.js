@@ -435,7 +435,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=FALSE&       contributionGuidelines=TRUE&help=TRUE&trademark=TRUE&devDependency=FALSE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_LIBRARY_PACKAGE:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE&scripts=FALSE&       contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
 		 * ```
 		 */
 		LIBRARY_PACKAGE_README: libraryPackageReadmeTransform,
