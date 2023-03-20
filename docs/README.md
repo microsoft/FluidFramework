@@ -325,7 +325,7 @@ The site theme/template lives in `themes/thxvscode`.
 
 The following npm scripts are supported in this directory:
 
-<!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCRIPTS:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
 
