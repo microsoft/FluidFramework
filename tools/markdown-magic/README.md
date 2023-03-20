@@ -138,7 +138,7 @@ Arguments:
 * `gettingStarted`: Whether or not to include a simple "getting started" usage section.
   * Default: `true`.
   * See [README_EXAMPLE_GETTING_STARTED_SECTION](#readme_example_getting_started_section).
-* `usesTinylicious`: Whether or not running the example app requires running [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious) from another terminal.
+* `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
   * Default: `true`.
   * Only observed if `gettingStarted` is `true`.
 * `scripts`: Whether or not to include a section listing the package's `npm` scripts.
@@ -156,7 +156,16 @@ Arguments:
 
 #### `README_EXAMPLE_GETTING_STARTED_SECTION`
 
-Generates a section
+Generates a simple "getting started" usage section for a `Fluid` example app README.
+
+Arguments:
+
+* `packageJsonPath`: Relative file path to the library package's `package.json` file.
+  Used for generation of package metadata.
+* `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
+  * Default: `true`.
+* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+  * Default: `true`.
 
 #### `API_DOCS_LINK_SECTION`
 
@@ -235,3 +244,6 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- Links -->
+[Tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious/
