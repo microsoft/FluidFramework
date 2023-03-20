@@ -70,8 +70,6 @@ export class WebSocketTracker implements IWebSocketTracker {
 					}
 				}
 			});
-		} else {
-			return false;
 		}
 		this.socketIdToTokenIdMap.delete(socketId);
 		return this.socketIdToSocketMap.delete(socketId);
