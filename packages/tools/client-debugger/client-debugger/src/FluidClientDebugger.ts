@@ -43,6 +43,7 @@ import { FluidClientDebuggerProps } from "./Registry";
  * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to the container.
  * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect from the container.
  * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
+ * - {@link AudienceEventMessage}: When received (if the container ID matches), the debugger will send the Audience data consisting of contaierId, current connected members, and history of audience members
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
@@ -256,12 +257,11 @@ export class FluidClientDebugger
 	private readonly postAudienceStateChange = (): void => {
 		const allAudienceMembers = this.container.audience.getMembers();
 
-		const audienceClientMetaData: AudienceClientMetaData[] = [];
-
-		for (const [clientId, client] of allAudienceMembers) {
-			const metaData: AudienceClientMetaData = { clientId, client };
-			audienceClientMetaData.push(metaData);
-		}
+		const audienceClientMetaData: AudienceClientMetaData[] = [
+			...allAudienceMembers.entries(),
+		].map(([clientId, client]): AudienceClientMetaData => {
+			return { clientId, client };
+		});
 
 		postMessageToWindow<AudienceEventMessage>(
 			{

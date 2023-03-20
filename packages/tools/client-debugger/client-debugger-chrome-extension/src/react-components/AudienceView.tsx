@@ -80,6 +80,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 		// Request state info for the newly specified containerId
 		messageRelay.on("message", messageHandler);
+
+		// Request the current Audience State of the Container using "AUDIENCE_EVENT" Message
+		// Message to FluidClientDebugger
 		messageRelay.postMessage(getAudienceMessage);
 
 		return (): void => {
@@ -91,7 +94,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		<_AudienceView
 			clientId={undefined}
 			audienceClientMetaData={audienceState}
-			myClientConnection={undefined}
 			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
 			audienceHistory={audienceHistory}
 		/>

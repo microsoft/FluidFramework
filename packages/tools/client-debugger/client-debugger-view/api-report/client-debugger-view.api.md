@@ -39,8 +39,6 @@ export interface _AudienceViewProps {
     // (undocumented)
     clientId: string | undefined;
     // (undocumented)
-    myClientConnection: IClient | undefined;
-    // (undocumented)
     onRenderAudienceMember: (props: AudienceMemberViewProps) => React_2.ReactElement;
 }
 

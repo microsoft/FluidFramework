@@ -41,8 +41,8 @@ export interface AudienceEventMessageData extends HasContainerId {
 
 /**
  * Outbound event listing the current audience and audience history of the application
- * Includes the contents of the audience event
- *
+ * AudienceState: List of AudienceClientMetaData with clientId and IClient
+ * AudienceHistory: List of entire audience memebers that were connected/disconnected to the container
  * @public
  */
 export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMessageData> {

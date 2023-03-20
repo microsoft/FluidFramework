@@ -11,7 +11,7 @@ import { AudienceChangeLogEntry, AudienceClientMetaData } from "@fluid-tools/cli
 
 import { combineMembersWithMultipleConnections } from "../Audience";
 import { HasClientDebugger } from "../CommonProps";
-import { useMyClientConnection, useMyClientId } from "../ReactHooks";
+import { useMyClientId } from "../ReactHooks";
 import { AudienceMemberViewProps } from "./client-data-views";
 
 // TODOs:
@@ -38,7 +38,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { audience } = clientDebugger;
 
 	const myClientId = useMyClientId(clientDebugger);
-	const myClientConnection = useMyClientConnection(clientDebugger);
+	// const myClientConnection = useMyClientConnection(clientDebugger);
 
 	const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
 		audience.getMembers(),
@@ -72,7 +72,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		<_AudienceView
 			clientId={myClientId}
 			audienceClientMetaData={audienceClientMetaData}
-			myClientConnection={myClientConnection}
 			onRenderAudienceMember={onRenderAudienceMember}
 			audienceHistory={audienceHistory}
 		/>
@@ -85,7 +84,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 export interface _AudienceViewProps {
 	clientId: string | undefined;
 	audienceClientMetaData: AudienceClientMetaData[];
-	myClientConnection: IClient | undefined;
 	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
 	audienceHistory: readonly AudienceChangeLogEntry[];
 }
@@ -99,13 +97,15 @@ export interface _AudienceViewProps {
  * @internal
  */
 export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
-	const {
-		clientId,
-		audienceClientMetaData,
-		myClientConnection,
-		onRenderAudienceMember,
-		audienceHistory,
-	} = props;
+	const { clientId, audienceClientMetaData, onRenderAudienceMember, audienceHistory } = props;
+
+	let myClientConnection: IClient | undefined;
+
+	for (const audience of audienceClientMetaData) {
+		if (audience.clientId === clientId) {
+			myClientConnection = audience.client;
+		}
+	}
 
 	return (
 		<Stack
