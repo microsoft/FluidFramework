@@ -23,7 +23,7 @@ Only file names matching the pattern(s) will have their contents parsed and upda
 
 Uses the [globby](https://github.com/sindresorhus/globby#readme) format.
 
-**Default**: "**/*.md"
+**Default**: `**/*.md`
 
 ###### Example
 
@@ -57,15 +57,22 @@ Will run the script from two levels higher in the file structure relative to whe
 
 The following is a list of supported transform pragmas that can be included in your Markdown documentation to automatically generate / embed contents.
 
+To include a transform in your document, use the following syntax:
+
+```markdown
+<!-- AUTO-GENERATED-CONTENT:START (<transform-name>[:<argument-1>=<value-1>[&<argument-2>=<value-2>...&<argument-N>=<value-N>]]) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
+```
+
 #### `INCLUDE`
 
 Can be used to embed contents from another file into the Markdown file.
 
 Arguments:
 
-* **path**: Relative path from the document to the file being embedded.
-* **start**: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
-* **end**: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
+* `path`: Relative path from the document to the file being embedded.
+* `start`: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
+* `end`: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 
 ##### Example
 
@@ -77,11 +84,65 @@ Would include the contents of `../file.js`, starting on line 10 and running thro
 
 #### `LIBRARY_PACKAGE_README`
 
-TODO
+Generates a complete starter `README.md` file for a libary package.
+
+Notes:
+
+* This strictly intended as a starter template to remove the need for some handwritten boilerplate.
+  You will still need to fill in semantic and usage information.
+* This is effectively just a wrapper around lower-level templates.
+  If you want more fine-grained control over the content structure, we recommend using other templates.
+
+Arguments:
+
+* `packageJsonPath`: Relative file path to the library package's `package.json` file.
+  Used for generation of package metadata.
+* `installation`: Whether or not to include the package "Installation" section.
+  Default: `true`.
+* `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
+  Default: `false`.
+  Only observed if `installation` is `true`.
+* `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
+  Default: `true`.
+  * Assumes that the package is published, uses [API-Extractor](https://api-extractor.com/), and has its documentation published under `fluidframework.com/apis/<package-name>`.
+* `scripts`: Whether or not to include a section listing the package's `npm` scripts.
+  Default: `false`.
+* `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
+  Default: `true`.
+* `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
+  * Default: `true`.
+* `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
+  * Default: `true`.
+
 
 #### `EXAMPLE_PACKAGE_README`
 
-TODO
+Generates a complete starter `README.md` file for an `Fluid` example app package.
+
+Notes:
+
+* This strictly intended as a starter template to remove the need for some handwritten boilerplate.
+  You will still need to fill in semantic and usage information.
+* This is effectively just a wrapper around lower-level templates.
+  If you want more fine-grained control over the content structure, we recommend using other templates.
+
+Arguments:
+
+* `packageJsonPath`: Relative file path to the library package's `package.json` file.
+  Used for generation of package metadata.
+* `gettingStarted`: Whether or not to include a simple "getting started" usage section.
+  Default: `true`.
+* `usesTinylicious`: Whether or not running the example app requires running [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious) from another terminal.
+  Default: `true`.
+  Only observed if `gettingStarted` is `true`.
+* `scripts`: Whether or not to include a section listing the package's `npm` scripts.
+  Default: `false`.
+* `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
+  Default: `true`.
+* `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
+  * Default: `true`.
+* `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
+  * Default: `true`.
 
 #### `README_EXAMPLE_GETTING_STARTED_SECTION`
 
