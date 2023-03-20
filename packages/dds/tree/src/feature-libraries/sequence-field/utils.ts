@@ -595,7 +595,7 @@ export class DetachedNodeTracker {
 								old: v,
 								new: {
 									rev:
-										mark.revision ??
+										change.intention ??
 										change.revision ??
 										fail("Unable to track detached nodes"),
 									index: k,
@@ -734,7 +734,11 @@ export class DetachedNodeTracker {
 		const original = { rev: mark.detachedBy!, index: mark.detachIndex };
 		const updated = this.getUpdatedDetach(original);
 		if (updated.rev !== original.rev || updated.index !== original.index) {
-			mark.detachedBy = updated.rev;
+			if (mark.isIntention === true) {
+				mark.detachedBy = updated.rev;
+			} else if (updated.rev !== mark.detachedBy) {
+				mark.lastDetachedBy = updated.rev;
+			}
 			mark.detachIndex = updated.index;
 		}
 	}

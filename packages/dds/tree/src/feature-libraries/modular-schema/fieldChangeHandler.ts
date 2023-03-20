@@ -298,9 +298,13 @@ export interface RevisionInfo {
 	 */
 	readonly isRollback?: boolean;
 	/**
-	 * When populated, indicates that the changeset is the inverse of the given revision.
+	 * When populated, indicates the original intention that the changeset is based on.
+	 * When omitted, the `tag` field represents the intention.
+	 * This degree of freedom is used to accurately characterize made up inverse changesets that are generated during
+	 * sandwich rebasing. Those inverse changes have a unique `tag` but their `intention` is set to the `tag` of the
+	 * change being inverted.
 	 */
-	readonly inverseOf?: RevisionTag;
+	readonly intention?: RevisionTag;
 }
 
 /**

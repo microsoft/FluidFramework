@@ -859,7 +859,7 @@ describe("ModularChangeFamily", () => {
 			assert.deepEqual(revsInfos, [
 				{ tag: rev1 },
 				{ tag: rev2 },
-				{ tag: rev3, isRollback: true, inverseOf: rev0 },
+				{ tag: rev3, isRollback: true, intention: rev0 },
 				{ tag: rev4, isRollback: true },
 			]);
 			composeWasTested = true;
@@ -945,7 +945,7 @@ describe("ModularChangeFamily", () => {
 		assert.deepEqual(composed.revisions, [
 			{ tag: rev1 },
 			{ tag: rev2 },
-			{ tag: rev3, isRollback: true, inverseOf: rev0 },
+			{ tag: rev3, isRollback: true, intention: rev0 },
 			{ tag: rev4, isRollback: true },
 		]);
 		assert(composeWasTested);

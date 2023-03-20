@@ -28,6 +28,7 @@ const tag4: RevisionTag = numberTag(4);
 const tag5: RevisionTag = numberTag(5);
 const tag6: RevisionTag = numberTag(6);
 const tag7: RevisionTag = numberTag(7);
+const tag8: RevisionTag = numberTag(8);
 
 const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
 	["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],
@@ -73,12 +74,12 @@ describe("SequenceField - Rebaser Axioms", () => {
 						for (let offset1 = 1; offset1 <= 4; ++offset1) {
 							for (let offset2 = 1; offset2 <= 4; ++offset2) {
 								const tracker = new SF.DetachedNodeTracker();
-								const change1 = tagChange(makeChange1(offset1), tag6);
+								const change1 = tagChange(makeChange1(offset1), tag7);
 								const change2 = tagChange(makeChange2(offset2), tag5);
 								if (!SF.areRebasable(change1.change, change2.change)) {
 									continue;
 								}
-								const inv = tagChange(invert(change2), change2.revision);
+								const inv = tagChange(invert(change2), tag6, change2.revision);
 								const r1 = rebaseTagged(change1, change2);
 								tracker.apply(change2);
 								const r2 = rebaseTagged(r1, inv);
@@ -167,7 +168,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 					for (let offset1 = 1; offset1 <= 4; ++offset1) {
 						for (let offset2 = 1; offset2 <= 4; ++offset2) {
 							const tracker = new SF.DetachedNodeTracker();
-							const change1 = tagChange(makeChange1(offset1), tag7);
+							const change1 = tagChange(makeChange1(offset1), tag8);
 							const change2 = tagChange(makeChange2(offset2), tag5);
 							if (!SF.areRebasable(change1.change, change2.change)) {
 								continue;
@@ -245,21 +246,9 @@ describe("SequenceField - Rebaser Axioms", () => {
 describe("SequenceField - Sandwich Rebasing", () => {
 	it("Nested inserts rebasing", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
-		const insertB = tagChange(Change.insert(1, 1), tag3);
-		const inverseA = tagRollbackInverse(invert(insertA), tag2, insertA.revision);
+		const insertB = tagChange(Change.insert(1, 1), tag2);
+		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 		const insertB2 = rebaseTagged(insertB, inverseA);
-		const insertB3 = rebaseTagged(insertB2, insertA);
-		assert.deepEqual(insertB3.change, insertB.change);
-	});
-
-	it("Nested inserts", () => {
-		const insertA = tagChange(Change.insert(0, 2), tag1);
-		const insertB = tagChange(Change.insert(1, 1), tag3);
-		const inverseA = invert(insertA);
-		const insertB2 = rebaseTagged(
-			insertB,
-			tagRollbackInverse(inverseA, tag2, insertA.revision),
-		);
 		const insertB3 = rebaseTagged(insertB2, insertA);
 		assert.deepEqual(insertB3.change, insertB.change);
 	});
@@ -267,10 +256,12 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	it("Nested inserts composition", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag3);
 		const insertB = tagChange(Change.insert(1, 1), tag4);
-		const inverseA = tagRollbackInverse(invert(insertA), tag2, insertA.revision);
 		const inverseB = tagRollbackInverse(invert(insertB), tag1, insertB.revision);
+		const inverseA = tagRollbackInverse(invert(insertA), tag2, insertA.revision);
+		const inverseA2 = tagRollbackInverse(invert(inverseA), insertA.revision, inverseA.revision);
+		const inverseB2 = tagRollbackInverse(invert(inverseB), insertB.revision, inverseB.revision);
 
-		const composed = compose([inverseB, inverseA, insertA, insertB]);
+		const composed = compose([inverseB, inverseA, inverseA2, inverseB2]);
 		assert.deepEqual(composed, []);
 	});
 
@@ -278,12 +269,9 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertX = tagChange(Change.insert(0, 1), tag1);
 		const insertA = tagChange(Change.insert(1, 2), tag2);
 		const insertB = tagChange(Change.insert(2, 1), tag4);
-		const inverseA = invert(insertA);
+		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 		const insertA2 = rebaseTagged(insertA, insertX);
-		const insertB2 = rebaseTagged(
-			insertB,
-			tagRollbackInverse(inverseA, tag3, insertA.revision),
-		);
+		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertX);
 		const insertB4 = rebaseTagged(insertB3, insertA2);
 		assert.deepEqual(insertB4.change, Change.insert(3, 1));
@@ -294,10 +282,11 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const delABC = tagChange(Change.delete(0, 3), tag2);
 		const revABC = tagChange(Change.revive(0, 3, tag2, 0), tag4);
 		const delABC2 = rebaseTagged(delABC, delB);
-		const invDelABC = invert(delABC);
-		const revABC2 = rebaseTagged(revABC, tagRollbackInverse(invDelABC, tag3, delABC2.revision));
+		const invDelABC = tagRollbackInverse(invert(delABC), tag3, delABC2.revision);
+		const revABC2 = rebaseTagged(revABC, invDelABC);
 		const revABC3 = rebaseTagged(revABC2, delB);
 		const revABC4 = rebaseTagged(revABC3, delABC2);
+		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delABC2, revABC4]);
 		const delta = toDelta(actual);
 		assert.deepEqual(delta, []);
@@ -321,6 +310,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		// This will be easier to rectify once movABC2 carries (conflicted) marks for B as opposed to those marks
 		// being deleted when rebasing over the deleted of B.
 		const retABC4 = rebaseTagged(retABC3, movABC2);
+		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([movABC2, retABC4]);
 		const delta = toDelta(actual);
 		assert.deepEqual(delta, []);
@@ -335,6 +325,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const revAC2 = rebaseTagged(revAC, tagRollbackInverse(invDelAC, tag3, delAC2.revision));
 		const revAC3 = rebaseTagged(revAC2, addB);
 		const revAC4 = rebaseTagged(revAC3, delAC2);
+		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delAC2, revAC4]);
 		const delta = toDelta(actual);
 		assert.deepEqual(delta, []);

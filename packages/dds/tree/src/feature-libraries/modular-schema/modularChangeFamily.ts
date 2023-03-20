@@ -1016,8 +1016,8 @@ function revisionInfoFromTaggedChange(
 		if (taggedChange.isRollback === true) {
 			info.isRollback = true;
 		}
-		if (taggedChange.inverseOf !== undefined) {
-			info.inverseOf = taggedChange.inverseOf;
+		if (taggedChange.intention !== undefined) {
+			info.intention = taggedChange.intention;
 		}
 		revInfos.push(info);
 	}

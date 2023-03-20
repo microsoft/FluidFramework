@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { RevisionTag, makeAnonChange, tagChange, TreeSchemaIdentifier } from "../../../core";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeRepair } from "../../utils";
@@ -17,6 +17,7 @@ const tag1: RevisionTag = numberTag(1);
 const tag2: RevisionTag = numberTag(2);
 const tag3: RevisionTag = numberTag(3);
 const tag4: RevisionTag = numberTag(4);
+const revInfos: RevisionInfo[] = [{ tag: tag1 }, { tag: tag2 }, { tag: tag3 }, { tag: tag4 }];
 
 describe("SequenceField - Compose", () => {
 	describe("associativity of triplets", () => {
@@ -39,9 +40,9 @@ describe("SequenceField - Compose", () => {
 					} else {
 						it(title, () => {
 							const ab = composeNoVerify([taggedA, taggedB]);
-							const left = composeNoVerify([makeAnonChange(ab), taggedC]);
+							const left = composeNoVerify([makeAnonChange(ab), taggedC], revInfos);
 							const bc = composeNoVerify([taggedB, taggedC]);
-							const right = composeNoVerify([taggedA, makeAnonChange(bc)]);
+							const right = composeNoVerify([taggedA, makeAnonChange(bc)], revInfos);
 
 							normalizeMoveIds(left);
 							normalizeMoveIds(right);
@@ -104,7 +105,7 @@ describe("SequenceField - Compose", () => {
 				changes: childChangeAB,
 			},
 		];
-		const actual = compose([makeAnonChange(insert), makeAnonChange(modify)]);
+		const actual = compose([tagChange(insert, tag1), tagChange(modify, tag2)]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -263,7 +264,7 @@ describe("SequenceField - Compose", () => {
 			},
 		];
 		const deletion = Change.delete(1, 4);
-		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(deletion)]);
+		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(deletion)], revInfos);
 		const expected: SF.Changeset = [
 			{
 				type: "Insert",
@@ -305,7 +306,7 @@ describe("SequenceField - Compose", () => {
 			},
 		];
 		const move = Change.move(1, 4, 0);
-		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)]);
+		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)], revInfos);
 		const expected: SF.Changeset = [
 			{
 				type: "Insert",
@@ -401,14 +402,13 @@ describe("SequenceField - Compose", () => {
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 1),
 				count: 1,
-				revision: tag1,
 				detachedBy: tag1,
 				detachIndex: 0,
 				changes: { valueChange: { value: 1 } },
 			},
 		];
-		const deletion: SF.Changeset = [{ type: "Delete", revision: tag3, count: 2 }];
-		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(deletion)]);
+		const deletion: SF.Changeset = [{ type: "Delete", count: 2 }];
+		const actual = shallowCompose([tagChange(revive, tag2), tagChange(deletion, tag3)]);
 		const expected: SF.Changeset = [{ type: "Delete", revision: tag3, count: 1 }];
 		assert.deepEqual(actual, expected);
 	});
@@ -475,7 +475,7 @@ describe("SequenceField - Compose", () => {
 			4,
 			{ type: "Insert", revision: tag4, content: [{ type, value: 4 }] },
 		];
-		const actual = shallowCompose([makeAnonChange(insertA), makeAnonChange(insertB)]);
+		const actual = shallowCompose([makeAnonChange(insertA), makeAnonChange(insertB)], revInfos);
 		const expected: SF.Changeset = [
 			{ type: "Insert", revision: tag3, content: [{ type, value: 3 }] },
 			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }] },
@@ -568,6 +568,37 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	// This composition is underspecified, meaning the ordering of marks could go either way.
+	// We must avoid producing such scenarios through rebase,
+	// and update this test to reflect the inputs of the scenarios we do produce.
+	it.skip("blocked revive ○ related conflicted revive", () => {
+		const blockedRevive = makeAnonChange(
+			Change.revive(0, 1, tag1, 1, fakeRepair, tag2, undefined, tag3),
+		);
+		const conflictedRevive = makeAnonChange(Change.revive(0, 1, tag1, 2, fakeRepair, tag2));
+		const expected: SF.Changeset = [
+			{
+				type: "Revive",
+				content: fakeRepair(tag1, 1, 1),
+				count: 1,
+				detachedBy: tag1,
+				detachIndex: 1,
+				conflictsWith: tag2,
+				lastDetachedBy: tag3,
+			},
+			{
+				type: "Revive",
+				content: fakeRepair(tag1, 2, 1),
+				count: 1,
+				detachedBy: tag1,
+				detachIndex: 2,
+				conflictsWith: tag2,
+			},
+		];
+		const actual = shallowCompose([blockedRevive, conflictedRevive]);
+		assert.deepEqual(actual, expected);
+	});
+
 	it("delete1 ○ delete2 ○ revive (delete1)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
@@ -619,7 +650,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag1, 0, 2),
+				content: fakeRepair(tag1, 1, 2),
 				count: 2,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -646,7 +677,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag1, 0, 1),
+				content: fakeRepair(tag1, 1, 1),
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -654,7 +685,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag2, 2, 1),
+				content: fakeRepair(tag2, 1, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 1,
@@ -684,7 +715,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag2, 2, 1),
+				content: fakeRepair(tag2, 0, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 0,
@@ -743,7 +774,7 @@ describe("SequenceField - Compose", () => {
 				detachIndex: 0,
 			},
 		];
-		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)]);
+		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)], revInfos);
 		const expected: SF.Changeset = [
 			{
 				type: "Revive",

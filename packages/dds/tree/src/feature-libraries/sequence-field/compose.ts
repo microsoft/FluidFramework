@@ -46,6 +46,7 @@ import {
 	isDeleteMark,
 	isModify,
 } from "./utils";
+import { isAttachAfterBaseAttach } from "./rebase";
 
 /**
  * @alpha
@@ -182,7 +183,7 @@ function composeMarks<TNodeChange>(
 	}
 
 	const newMarkRevision = isModify(newMark) ? newRev : newMark.revision ?? newRev;
-	const newMarkInverseOf = getInverseOf(newMarkRevision, revisionMetadata);
+	const newIntention = getIntention(newMarkRevision, revisionMetadata);
 
 	switch (baseType) {
 		case "Insert":
@@ -337,7 +338,7 @@ function composeMarks<TNodeChange>(
 					return 0;
 				}
 				case "MoveOut": {
-					if (baseMark.detachedBy === newMarkInverseOf) {
+					if (baseMark.detachedBy === newIntention) {
 						getOrAddEffect(
 							moveEffects,
 							CrossFieldTarget.Source,
@@ -373,7 +374,7 @@ function composeMarks<TNodeChange>(
 				}
 				case "ReturnFrom": {
 					if (
-						baseMark.detachedBy === newMarkInverseOf ||
+						baseMark.detachedBy === newIntention ||
 						newMark.detachedBy === baseMark.revision
 					) {
 						getOrAddEffect(
@@ -627,8 +628,8 @@ export class ComposeQueue<T> {
 		for (const mark of newMarks) {
 			if (isObjMark(mark) && mark.type === "Insert") {
 				const newRev = mark.revision ?? this.newRevision;
-				const newInverseOf = getInverseOf(newRev, revisionMetadata);
-				if (newInverseOf !== undefined && deletes.has(newInverseOf)) {
+				const newIntention = getIntention(newRev, revisionMetadata);
+				if (newIntention !== undefined && deletes.has(newIntention)) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					this.cancelledInserts.add(newRev!);
 				}
@@ -923,14 +924,16 @@ type ComposeMarks<T> =
  * Only valid in the context of a compose (i.e., the output context of `baseMarks` is the input context of `newMark`).
  */
 function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
-	return newMark.detachedBy === baseMark.detachedBy;
+	const newEither = newMark.lastDetachedBy ?? newMark.detachedBy;
+	const baseEither = baseMark.lastDetachedBy ?? baseMark.detachedBy;
+	return newEither === baseEither;
 }
 
-function getInverseOf(
+function getIntention(
 	rev: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).inverseOf;
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).intention ?? rev;
 }
 
 function areInverseRevisions(
@@ -938,10 +941,10 @@ function areInverseRevisions(
 	rev2: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): boolean {
-	if (rev1 === undefined || rev2 === undefined) {
+	if (rev1 === undefined || rev2 === undefined || rev1 === rev2) {
 		return false;
 	}
-	const inverseOfRev1 = revisionMetadata.getInfo(rev1).inverseOf;
-	const inverseOfRev2 = revisionMetadata.getInfo(rev2).inverseOf;
-	return rev1 === inverseOfRev2 || rev2 === inverseOfRev1;
+	const info1 = revisionMetadata.getInfo(rev1);
+	const info2 = revisionMetadata.getInfo(rev2);
+	return rev1 === info2.intention || rev2 === info1.intention;
 }

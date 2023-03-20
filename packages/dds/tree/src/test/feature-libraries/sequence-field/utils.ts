@@ -23,8 +23,11 @@ export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
 	return compose(changes.map(makeAnonChange));
 }
 
-export function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false));
+export function composeNoVerify(
+	changes: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
+): TestChangeset {
+	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
 }
 
 export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
@@ -35,11 +38,18 @@ export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Cha
 	return shallowCompose(changes.map(makeAnonChange));
 }
 
-export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
-	return composeI(changes, (children) => {
-		assert(children.length === 1, "Should only have one child to compose");
-		return children[0].change;
-	});
+export function shallowCompose<T>(
+	changes: TaggedChange<SF.Changeset<T>>[],
+	revInfos?: RevisionInfo[],
+): SF.Changeset<T> {
+	return composeI(
+		changes,
+		(children) => {
+			assert(children.length === 1, "Should only have one child to compose");
+			return children[0].change;
+		},
+		revInfos,
+	);
 }
 
 /**
@@ -71,7 +81,7 @@ function defaultRevisionMetadataFromChanges(
 		if (change.revision !== undefined) {
 			revInfos.push({
 				tag: change.revision,
-				inverseOf: change.inverseOf,
+				intention: change.intention,
 				isRollback: change.isRollback,
 			});
 		}
@@ -82,6 +92,7 @@ function defaultRevisionMetadataFromChanges(
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
+	revInfos?: RevisionInfo[],
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
@@ -90,7 +101,9 @@ function composeI<T>(
 		composer,
 		idAllocator,
 		moveEffects,
-		defaultRevisionMetadataFromChanges(changes),
+		revInfos !== undefined
+			? revisionMetadataSourceFromInfo(revInfos)
+			: defaultRevisionMetadataFromChanges(changes),
 	);
 
 	if (moveEffects.isInvalidated) {
