@@ -231,8 +231,8 @@ export function configureWebSocketServices(
 	submitSignalThrottler?: core.IThrottler,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
-    httpServer?: core.IHttpServer,
-    eventEmitter?: EventEmitter,
+	httpServer?: core.IHttpServer,
+	eventEmitter?: EventEmitter,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.

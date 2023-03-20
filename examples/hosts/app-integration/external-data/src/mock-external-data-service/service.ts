@@ -101,14 +101,12 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 *
 	 * ```json
 	 * {
-	 *		taskList: {
-	 * 			[ taskListId: string]: {
-	 *      		[id: string]: {
-	 *      	    	name: string,
-	 *      	    	priority: number
-	 *      		}
-	 * 			}
-	 *  	}
+	 *  taskList: {
+	 *      [id: string]: {
+	 *          name: string,
+	 *          priority: number
+	 *      }
+	 *  }
 	 * }
 	 * ```
 	 */
@@ -155,14 +153,12 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 *
 	 * ```json
 	 * {
-	 *		taskList: {
-	 * 			[ taskListId: string]: {
-	 *      		[id: string]: {
-	 *      	    	name: string,
-	 *      	    	priority: number
-	 *      		}
-	 * 			}
-	 *  	}
+	 *  taskList: {
+	 *      [id: string]: {
+	 *          name: string,
+	 *          priority: number
+	 *      }
+	 *  }
 	 * }
 	 * ```
 	 */
@@ -219,8 +215,6 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
-		console.log("messageData");
-		console.log(messageData);
 		if (messageData === undefined) {
 			const errorMessage = 'No task list data provided. Expected under "taskList" property.';
 			console.error(formatLogMessage(errorMessage));

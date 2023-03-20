@@ -35,9 +35,6 @@ const render = (model: IAppModel, showExternalServerView: boolean): void => {
 };
 
 async function start(): Promise<void> {
-	// TODO: Create a form to input the task list id to import from external server.
-	// Hardcoded it here for now.
-
 	const tinyliciousModelLoader = new TinyliciousModelLoader<IAppModel>(
 		new StaticCodeLoader(new BaseDocumentContainerRuntimeFactory()),
 	);

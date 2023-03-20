@@ -486,7 +486,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
  * scenario, the fourth argument is not used.
  */
 export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
-	"task-list-1",
+	"task-list",
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},
