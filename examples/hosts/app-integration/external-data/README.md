@@ -2,7 +2,7 @@
 
 This example demonstrates how data from an external data source (e.g. a work tracking system) might be integrated with Fluid to enable more-real-time collaboration. For example, to allow collaborators to see proposed changes updating live before committing them back to the database.
 
-Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production.
+Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production. When this changes we will update the doucments accordingly.
 
 ## Scenario
 
@@ -20,15 +20,14 @@ In order to accomplish the goals above, we have split up the responsibilities in
 
 **External Data Service**
 
-Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. vi REST call or similar) which are not well suited to rapid updates.
+Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. via REST call or similar) which are not well suited to rapid updates.
 However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data.
 
 This repo contains a service that mocks the external "source of truth" data server. This mock service offers a REST API collection and webhook interfaces in `./src/mock-external-data-service`. The API requests served by this "external" service are the following:
 
-1. POST `/register-for-webhook`: Register's the sender's URL to receive notifications when the external task-list data changes. Currently, the Customer Service registers its `/external-data-webhook` endpoint here to be called when data changes.
-2. GET `/fetch-tasks`: Fetches the task list from the external data store. Called by the Fluid client.
-3. POST `/set-tasks`: Updates external data store with new tasks list (complete override). Called by the Fluid client.
-4. POST `/debug-reset-task-list`: Resets the external data to its original contents. Called by the Fluid client.
+1. POST `/register-for-webhook?externalTaskListId=XXX`. Required body parameters: `url` (string). Registers the sender's URL to receive notifications when the external task-list data changes. Currently, the Customer Service registers its `/external-data-webhook` endpoint here to be called when data changes.
+2. GET `/fetch-tasks/:externalTaskListId`: Fetches the task list from the external data store. Called by the Fluid client.
+3. POST `/set-tasks/:externalTaskListId`: Updates external data store with new tasks list (complete override). Called by the Fluid client.
 
 Find the details of the API in the [External Data Service README](./src/mock-external-data-service/README.md)
 
@@ -38,39 +37,29 @@ Next we need a customer service that functions as the intermediary between the E
 
 In this example, the Customer Service contains the following endpoints:
 
-1. POST `/external-data-webhook`: Registered to be called by the External Data Service webhook when there's been a change to data upstream. On being called, the Customer Service behaves in different ways given the two patterns listed below. For the echo webhook pattern, it calls the `broadcast-signal` endpoint in the Fluid Service. More details below in the Echo Webhook Pattern section. Note that this is a route established by the customer service to be used exclusively as a subscription endpoint for the external data service's webhook, and should be considered a private implementation detail to the service. Customers may choose to implement this differently.
+1.POST `/register-session-url`. Required body parameters: `containerUrl` (string), `externalTaskListId` (string). Creates an entry in the Customer Service of the mapping between the container and the external resource id. It then calls the External Service's `/register-for-webhook` endpoint to call it's own `/external-data-webhook?externalTaskListId=XXX` endpoint (details below), in order to notify the Fluid Service containers subscribed to that externalTaskListId of the coresponding change. 2. POST `/external-data-webhook`. Required querystring parameters: `externalTaskListId`(string). Registered to be called by the External Data Service webhook when there's been a change to data upstream. On being called, the Customer Service calls the `/broadcast-signal` endpoint in the Fluid Service. Note that this is a route established by the Customer Service to be used exclusively as a subscription endpoint for the external data service's webhook, and should be considered a private implementation detail to the service. Customers may choose to implement this differently.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
 
-Next we come to how the Fluid collaboration session and clients will consume the APIs above and render the data to the screen. This example repo explores two routes to accomplish this. One is the Echo Webhook Pattern and the other is the Bot Pattern. Both are documented in more detail below.
+**Fluid Service**
 
-### Echo Webhook Pattern
+_Driver Layer_
 
-<img width="1356" alt="Scenario: Collaboration session gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216415477-14d0b193-29c9-48e5-8b6b-0a549a5dde58.png">
+The driver layer section is internal facing and anyone implementing this pattern need not be concerned with this. The changes in the driver layer are a new (and still under construction) `broadcast-signal` endpoint and the logic to relay the signal to the correct Fluid container when called.
 
-<img width="1404" alt="Scenario: Collaboration session gets an update from outside of Fluid" src="https://user-images.githubusercontent.com/6777404/216417448-2a43db3e-12a2-48a6-b6d0-a6c4a95e27d1.png">
+1. POST `/broadcast-signal`. Required body parameters: `containerUrl` (string), `externalTaskListId` (string), `taskData`(ITaskData). On receiving this, the driver will broadcast a signal of `SignalType.RuntimeSignal` to the clients to alert them of an upstream change. This endpoint is called by the Customer Service to let the Fluid service know that there has been a change in the data. The body must contain the `conainerUrl` that is composed ot the `socketStreamUrl`, the `containerId` (sometimes known as the documentId), and the tenantId. In this way, it "echoes" the webhook from the External Data Service to the Customer Service. It is called by the Customer Service when it needs to notify the Fluid Clients that there has been a change to the data.
 
-<img width="1374" alt="Scenario: EXternal data is updated from within Fluid,if only authenticated users are able to write" src="https://user-images.githubusercontent.com/6777404/216417779-12861504-7909-489c-b7a2-4d75814a396f.png">
+This example uses the example tinylicious driver to stub out what changes will be necessary in the odsp-driver. A prototype lives [in a dev branch](https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts)
 
-In the architecture so far, since the Customer Service is registered to the webhooks and listening for incoming changes, the clients do not have a way to know that there has been a change upstream. So the last piece of the puzzle here is an endpoint in the Fluid Service:
+The prototype of the full signal and flow can be seen in this [`dev/external-data-prototyping` branch to main comparison](https://github.com/microsoft/FluidFramework/compare/main...dev/external-data-prototyping).
 
-1. POST `broadcast-signal`: Broadcasts a Signal to the clients to alert them of an upstream change. Called by the Customer Service to let the Fluid service know that there has been a change in the data.
-
-In this way, it "echoes" the webhook from the External Data Service to the Customer Service. A prototype of the webhook subscription and signal broadcast lives is currently prototyped in Alfred [in a dev branch](https://github.com/microsoft/FluidFramework/blob/dev/external-data-prototyping/server/routerlicious/packages/lambdas/src/alfred/index.ts).
+_Fluid Client_
 
 On receiving the signal, the clients (or elected leader client) can then send a fetch call to retrieve the information and display it to screen by making a call to the external data server's GET `/fetch-tasks` endpoint.
 
 The client can then display the diff on the screen and the users can choose how to reconcile the changes.
 
 Once the changes are reconciled, the collaboration session can continue as expected, and when the collaboration session is ready to be closed, the clients can simply Save Changes to write back to the External Data Source by making a request to the External Data Server's POST `/set-tasks` endpoint.
-
-### Bot Pattern
-
-TODO: Document the bot pattern and how it is surfaced in the example code.
-
-## Generalizing to other data sources
-
-TBD
 
 ### Concepts of data in this repository
 
@@ -80,7 +69,15 @@ Task - This is the unit that can be edited and attributed to an author. It is al
 
 TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the app. The app stores two types of TaskLists - a "draft" version and a "saved version". More on these below.
 
+TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the app. The app stores two types of TaskLists - a "draft" version and a "saved version". More on these below.
+
+ITaskData - This is similar to Task except that it is the External Data Services model of the task.
+
+ITaskListData - This is similar to TaskList except that it is the External Data Services model of the taskList.
+
+<!-- prettier-ignore-start -->
 SavedData - Data that comes in fresh from the external data source is first stored in a [SharedMap](https://fluidframework.com/docs/data-structures/map/) known as "SavedData".
+<!-- prettier-ignore-end -->
 
 DraftData - Local collaboration state between the Fluid clients is stored in a SharedMap known as "DraftData". This is known as draft data because we are treating the Fluid collaboration session as a drafting surface.
 
