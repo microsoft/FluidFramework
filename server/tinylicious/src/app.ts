@@ -84,7 +84,7 @@ export function create(
 				const containerUrl = req.body?.containerUrl;
 				eventEmitter.emit("broadcast-signal", taskListData, containerUrl);
 				res.status(200).send("Triggering debug signal from tinylicious");
-			} catch(error) {
+			} catch (error) {
 				res.status(500).send(error);
 			}
 		}),

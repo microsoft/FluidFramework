@@ -78,6 +78,8 @@ export class TinyliciousRunner implements IRunner {
 			undefined,
 			undefined,
 			undefined,
+			undefined,
+			undefined,
 			httpServer,
 			eventEmitter,
 		);
