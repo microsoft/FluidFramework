@@ -153,7 +153,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly activeConnection: () => boolean;
 
 	public get summaryStateNeedsReset(): boolean {
-		return this.summaryStateTracker.doesSummaryStateNeedReset();
+		return this.summaryStateTracker.doesSummaryStateNeedReset;
 	}
 
 	/** Handler to respond to when a SweepReady object is used */
@@ -467,8 +467,7 @@ export class GarbageCollector implements IGarbageCollector {
 	): Promise<IGCStats | undefined> {
 		const fullGC =
 			options.fullGC ??
-			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.doesSummaryStateNeedReset());
+			(this.configs.runFullGC === true || this.summaryStateTracker.doesSummaryStateNeedReset);
 		const logger = options.logger
 			? ChildLogger.create(options.logger, undefined, {
 					all: { completedGCRuns: () => this.completedRuns },
