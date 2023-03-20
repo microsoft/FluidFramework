@@ -38,6 +38,7 @@ Next we need a customer service that functions as the intermediary between the E
 In this example, the Customer Service contains the following endpoints:
 
 1.POST `/register-session-url`. Required body parameters: `containerUrl` (string), `externalTaskListId` (string). Creates an entry in the Customer Service of the mapping between the container and the external resource id. It then calls the External Service's `/register-for-webhook` endpoint to call it's own `/external-data-webhook?externalTaskListId=XXX` endpoint (details below), in order to notify the Fluid Service containers subscribed to that externalTaskListId of the corresponding change.
+
 2. POST `/external-data-webhook`. Required querystring parameters: `externalTaskListId`(string). Registered to be called by the External Data Service webhook when there's been a change to data upstream. On being called, the Customer Service calls the `/broadcast-signal` endpoint in the Fluid Service. Note that this is a route established by the Customer Service to be used exclusively as a subscription endpoint for the external data service's webhook, and should be considered a private implementation detail to the service. Customers may choose to implement this differently.
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
