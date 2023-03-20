@@ -16,19 +16,19 @@ var directory = process.argv.slice(2)[0];
 
 let files  = [];
 
-const getFilesRecursively = (directory) => {
+const getJunitTestReports = (directory) => {
     const filesInDirectory = fs.readdirSync(directory);
     for (const file of filesInDirectory) {
       const absolute = path.join(directory, file);
       if (fs.statSync(absolute).isDirectory()) {
-          getFilesRecursively(absolute);
+        getJunitTestReports(absolute);
       } else if (/junit-report.json$/.test(absolute)) {
           files.push(absolute);
       }
     }
   }
 
-getFilesRecursively(directory);
+  getJunitTestReports(directory);
 
 let output = [];
 for(const filename of files) {
