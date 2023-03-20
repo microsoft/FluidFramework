@@ -81,7 +81,7 @@ interface IWriteSummaryInfo {
 	/**
 	 * Response containing commit sha for "container" write or tree sha for "channel" write.
 	 */
-	writeSummaryResponse: IWriteSummaryResponse;
+	writeSummaryResponse: IWriteSummaryResponse | IWholeFlatSummary;
 }
 
 interface ISummaryWriteOptions {
@@ -160,6 +160,7 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
 async function buildFullGitTreeFromGitTree(
 	gitTree: ITree,
 	repoManager: IRepositoryManager,
+	blobCache: Record<string, IBlob> = {},
 	parseInnerFullGitTrees = true,
 	retrieveBlobs = true,
 	depth = 0,
@@ -167,11 +168,13 @@ async function buildFullGitTreeFromGitTree(
 	let parsedFullTreeBlobs = false;
 	const blobPs: Promise<IBlob>[] = [];
 	const treeEntries: ITreeEntry[] = [];
+	const getBlob = async (sha: string): Promise<IBlob> =>
+		blobCache[sha] ?? repoManager.getBlob(sha);
 	for (const treeEntry of gitTree.tree) {
 		if (treeEntry.type === "blob") {
 			if (treeEntry.path.endsWith(fullTreePath) && parseInnerFullGitTrees) {
 				parsedFullTreeBlobs = true;
-				const fullTreeBlob = await repoManager.getBlob(treeEntry.sha);
+				const fullTreeBlob = await getBlob(treeEntry.sha);
 				const fullTree = JSON.parse(
 					fullTreeBlob.encoding === "base64"
 						? // Convert base64 to utf-8 for JSON parsing
@@ -181,6 +184,7 @@ async function buildFullGitTreeFromGitTree(
 				const builtFullGitTree = await buildFullGitTreeFromGitTree(
 					fullTree.tree,
 					repoManager,
+					blobCache,
 					true /* parseInnerFullGitTrees */,
 					// All blobs associated with full git tree are included in the full git tree blob, and
 					// will not exists in storage individually.
@@ -201,7 +205,7 @@ async function buildFullGitTreeFromGitTree(
 				blobPs.push(...Object.values(fullTreeBlobs).map(async (blob) => blob));
 				continue;
 			} else if (retrieveBlobs) {
-				blobPs.push(repoManager.getBlob(treeEntry.sha));
+				blobPs.push(getBlob(treeEntry.sha));
 			}
 		}
 		treeEntries.push(treeEntry);
@@ -415,6 +419,7 @@ export class GitWholeSummaryManager {
 		const fullGitTree = await buildFullGitTreeFromGitTree(
 			rawTree,
 			repoManager,
+			{} /* blobCache */,
 			true /* parseInnerFullGitTrees */,
 			true /* retrieveBlobs */,
 		);
@@ -490,7 +495,13 @@ export class GitWholeSummaryManager {
 	private async writeChannelSummary(payload: IWholeSummaryPayload): Promise<string> {
 		const useLowIoWrite = this.writeOptions.enableLowIoWrite === true;
 		const existingRef: IRef | undefined = useLowIoWrite ? await this.getDocRef() : undefined;
-		return this.writeSummaryTree(payload.entries, existingRef, useLowIoWrite);
+		const fullGitTree = await this.writeSummaryTree(
+			payload.entries,
+			existingRef,
+			useLowIoWrite,
+			false /* precomputeFullTree */,
+		);
+		return fullGitTree.tree.sha;
 	}
 
 	private async writeContainerSummary(
@@ -508,7 +519,11 @@ export class GitWholeSummaryManager {
 			this.writeOptions.enableLowIoWrite === true ||
 			(isNewDocument && this.writeOptions.enableLowIoWrite === "initial");
 
-		const treeHandle = await this.writeSummaryTree(payload.entries, existingRef, useLowIoWrite);
+		const fullGitTree = await this.writeSummaryTree(
+			payload.entries,
+			existingRef,
+			useLowIoWrite,
+		);
 
 		const commitMessage = isNewDocument
 			? "New document"
@@ -523,7 +538,7 @@ export class GitWholeSummaryManager {
 			},
 			message: commitMessage,
 			parents: existingRef ? [existingRef.object.sha] : [],
-			tree: treeHandle,
+			tree: fullGitTree.tree.sha,
 		};
 		const commit = await this.repoManager.createCommit(commitParams);
 
@@ -549,11 +564,23 @@ export class GitWholeSummaryManager {
 			);
 		}
 
+		const fullSummaryTree = convertFullGitTreeToFullSummaryTree(fullGitTree);
+		const wholeFlatSummary: IWholeFlatSummary = {
+			id: commit.sha,
+			trees: [
+				{
+					id: fullGitTree.tree.sha,
+					entries: fullSummaryTree.treeEntries,
+					// We don't store sequence numbers in git
+					sequenceNumber: undefined,
+				},
+			],
+			blobs: fullSummaryTree.blobs,
+		};
+
 		return {
 			isNew: isNewDocument,
-			writeSummaryResponse: {
-				id: commit.sha,
-			},
+			writeSummaryResponse: wholeFlatSummary,
 		};
 	}
 
@@ -561,9 +588,14 @@ export class GitWholeSummaryManager {
 		wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
 		existingRef: IRef | undefined,
 		useLowIoWrite: boolean = false,
-	): Promise<string> {
+		precomputeFullTree: boolean = true,
+	): Promise<IFullGitTree> {
 		if (!useLowIoWrite) {
-			return this.writeSummaryTreeCore(wholeSummaryTreeEntries, this.repoManager);
+			return this.writeSummaryTreeCore(
+				wholeSummaryTreeEntries,
+				this.repoManager,
+				precomputeFullTree,
+			);
 		}
 
 		const inMemoryFsManagerFactory = new MemFsManagerFactory();
@@ -615,7 +647,7 @@ export class GitWholeSummaryManager {
 		wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
 		existingRef: IRef | undefined,
 		inMemoryRepoManager: IRepositoryManager,
-	) {
+	): Promise<IFullGitTree> {
 		if (existingRef) {
 			// Update in-memory repo manager with previous summary for handle references.
 			const previousSummary = await this.readSummary(existingRef.object.sha);
@@ -623,21 +655,10 @@ export class GitWholeSummaryManager {
 				treeEntries: previousSummary.trees[0].entries,
 				blobs: previousSummary.blobs ?? [],
 			});
-			const previousSummaryMemoryHandle = await this.writeSummaryTreeCore(
+			const previousSummaryMemoryFullGitTree = await this.writeSummaryTreeCore(
 				fullSummaryPayload,
 				inMemoryRepoManager,
 			);
-			const previousSummaryMemoryGitTree = await inMemoryRepoManager.getTree(
-				previousSummaryMemoryHandle,
-				true /* recursive */,
-			);
-			const previousSummaryMemoryFullGitTree: IFullGitTree =
-				await buildFullGitTreeFromGitTree(
-					previousSummaryMemoryGitTree,
-					inMemoryRepoManager,
-					true /* parseInnerFullGitTrees */,
-					false /* retrieveBlobs */,
-				);
 			for (const treeEntry of previousSummaryMemoryFullGitTree.tree.tree) {
 				// Update entry handle to object sha map for reference when writing summary handles.
 				this.entryHandleToObjectShaCache.set(
@@ -647,133 +668,157 @@ export class GitWholeSummaryManager {
 			}
 		}
 
-		const inMemorySummaryTreeHandle = await this.writeSummaryTreeCore(
+		const inMemorySummaryFullGitTree = await this.writeSummaryTreeCore(
 			wholeSummaryTreeEntries,
 			inMemoryRepoManager,
 		);
-		const getGitTreeWithStorageFallback = async (
-			treeHandle: string,
-			repoManager: IRepositoryManager,
-			depth: number = 0,
-		): Promise<ITree> => {
-			try {
-				const tree = await repoManager.getTree(treeHandle, true /* recursive */);
-				return tree;
-			} catch (error: any) {
-				if (error.code === "NotFoundError" && typeof error.data.what === "string") {
-					// Likely, In-memory RepoManager is missing a previous channel summary.
-					// We can attempt to recover by retrieving it from storage and writing it back into memory.
-					const missingElementSha = error.data.what;
-					const missingTreeElement = await this.repoManager.getTree(
-						missingElementSha,
-						true /* recursive */,
-					);
-					const fullMissingGitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
-						missingTreeElement,
-						this.repoManager,
-						// We do not want to parse into embedded full git tree blobs here.
-						// It is important that the sha for the tree remains the same. The hidden blobs
-						// in the full git tree blob are handled elsewhere.
-						false /* parseInnerFullGitTrees */,
-					);
-
-					const inMemoryTreeHandle = await this.writeFullGitTreeAsSummaryTree(
-						fullMissingGitTree,
-						inMemoryRepoManager,
-					);
-
-					if (inMemoryTreeHandle !== missingElementSha) {
-						throw new Error(
-							`Recovery tree sha (${inMemoryTreeHandle}) did not match missing tree sha (${missingElementSha}).`,
-						);
-					}
-					return getGitTreeWithStorageFallback(treeHandle, repoManager, depth + 1);
-				}
-				throw error;
-			}
-		};
-		const gitTree = await getGitTreeWithStorageFallback(
-			inMemorySummaryTreeHandle,
-			inMemoryRepoManager,
-		);
-		const fullGitTree = await buildFullGitTreeFromGitTree(
-			gitTree,
-			inMemoryRepoManager,
-			false /* parseInnerFullGitTrees */,
-		);
-		return fullGitTree;
+		return inMemorySummaryFullGitTree;
 	}
 
 	private async writeSummaryTreeCore(
 		wholeSummaryTreeEntries: WholeSummaryTreeEntry[],
 		repoManager: IRepositoryManager,
+		precomputeFullTree: boolean = true,
 		currentPath: string = "",
-	): Promise<string> {
+		treeCache: Record<string, ITree> = {},
+		blobCache: Record<string, IBlob> = {},
+	): Promise<IFullGitTree> {
 		const entries: ICreateTreeEntry[] = await Promise.all(
 			wholeSummaryTreeEntries.map(async (entry) => {
-				const summaryObject = getSummaryObjectFromWholeSummaryTreeEntry(entry);
-				const type = getGitType(summaryObject);
-				const path = entry.path;
-				const fullPath = currentPath ? `${currentPath}/${entry.path}` : entry.path;
-				const pathHandle = await this.writeSummaryTreeObject(
+				return this.writeSummaryTreeObject(
 					entry,
-					summaryObject,
 					repoManager,
-					fullPath,
+					precomputeFullTree,
+					currentPath,
+					treeCache,
+					blobCache,
 				);
-				return {
-					mode: getGitMode(summaryObject),
-					path,
-					sha: pathHandle,
-					type,
-				};
 			}),
 		);
 
 		const createdTree = await repoManager.createTree({ tree: entries });
-		return createdTree.sha;
+		if (!precomputeFullTree || currentPath !== "") {
+			return {
+				tree: createdTree,
+				blobs: blobCache,
+				parsedFullTreeBlobs: false,
+			};
+		}
+		const retrieveEntries = async (tree: ITree, path: string = ""): Promise<ITreeEntry[]> => {
+			const treeEntries: ITreeEntry[] = [];
+			for (const treeEntry of tree.tree) {
+				const entryPath = path ? `${path}/${treeEntry.path}` : treeEntry.path;
+				treeEntries.push({
+					...treeEntry,
+					path: entryPath,
+				});
+				if (treeEntry.type === "tree") {
+					const cachedTree: ITree | undefined = treeCache[treeEntry.sha];
+					if (!cachedTree) {
+						// This is likely caused by a Handle object in the written tree.
+						// We must retrieve it to send a full summary back to historian.
+						const missingTree = await repoManager.getTree(
+							treeEntry.sha,
+							true /* recursive */,
+						);
+						treeEntries.push(
+							...missingTree.tree.map((entry) => ({
+								...entry,
+								path: `${entryPath}/${entry.path}`,
+							})),
+						);
+					} else {
+						treeEntries.push(...(await retrieveEntries(cachedTree, entryPath)));
+					}
+				}
+			}
+			return treeEntries;
+		};
+		const gitTreeEntries = await retrieveEntries(createdTree);
+		const computedGitTree: ITree = {
+			sha: createdTree.sha,
+			url: createdTree.url,
+			tree: gitTreeEntries,
+		};
+		return buildFullGitTreeFromGitTree(
+			computedGitTree,
+			repoManager,
+			blobCache,
+			true /* parseInnerFullGitTrees */,
+			true /* retrieveBlobs */,
+		);
 	}
 
 	private async writeSummaryTreeObject(
 		wholeSummaryTreeEntry: WholeSummaryTreeEntry,
-		summaryObject: SummaryObject,
 		repoManager: IRepositoryManager,
+		precomputeFullTree: boolean,
 		currentPath: string,
-	): Promise<string> {
-		switch (summaryObject.type) {
-			case SummaryType.Blob:
-				return this.writeSummaryBlob(
-					(wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry)
-						.value as IWholeSummaryBlob,
-					repoManager,
-				);
-			case SummaryType.Tree:
-				return this.writeSummaryTreeCore(
-					(
-						(wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry)
-							.value as IWholeSummaryTree
-					).entries ?? [],
-					repoManager,
-					currentPath,
-				);
-			case SummaryType.Handle:
-				return this.getShaFromTreeHandleEntry(
-					wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry,
-				);
-			default:
-				throw new NetworkError(501, "Not Implemented");
+		treeCache: Record<string, ITree>,
+		blobCache: Record<string, IBlob>,
+	): Promise<ICreateTreeEntry> {
+		const summaryObject = getSummaryObjectFromWholeSummaryTreeEntry(wholeSummaryTreeEntry);
+		const type = getGitType(summaryObject);
+		const path = wholeSummaryTreeEntry.path;
+		const fullPath = currentPath
+			? `${currentPath}/${wholeSummaryTreeEntry.path}`
+			: wholeSummaryTreeEntry.path;
+		const mode = getGitMode(summaryObject);
+		let sha: string;
+		let url: string;
+		let size: number;
+		// eslint-disable-next-line unicorn/prefer-switch
+		if (summaryObject.type === SummaryType.Blob) {
+			const blob = (wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry)
+				.value as IWholeSummaryBlob;
+			const blobResponse = await repoManager.createBlob({
+				content: blob.content,
+				encoding: blob.encoding,
+			});
+			sha = blobResponse.sha;
+			url = blobResponse.url;
+			size = blob.content.length;
+			// Store blob in cache for use upstream
+			blobCache[sha] = {
+				content: blob.content,
+				encoding: blob.encoding,
+				sha,
+				url,
+				size,
+			};
+		} else if (summaryObject.type === SummaryType.Tree) {
+			const fullGitTree = await this.writeSummaryTreeCore(
+				((wholeSummaryTreeEntry as IWholeSummaryTreeValueEntry).value as IWholeSummaryTree)
+					.entries ?? [],
+				repoManager,
+				precomputeFullTree,
+				fullPath,
+				treeCache,
+				blobCache,
+			);
+			sha = fullGitTree.tree.sha;
+			url = fullGitTree.tree.url;
+			size = fullGitTree.tree.tree.length;
+			treeCache[sha] = {
+				sha,
+				url,
+				tree: fullGitTree.tree.tree,
+			};
+		} else if (summaryObject.type === SummaryType.Handle) {
+			sha = await this.getShaFromTreeHandleEntry(
+				wholeSummaryTreeEntry as IWholeSummaryTreeHandleEntry,
+			);
+		} else {
+			// Invalid/unimplemented summary object type
+			throw new NetworkError(501, "Not Implemented");
 		}
-	}
-
-	private async writeSummaryBlob(
-		blob: IWholeSummaryBlob,
-		repoManager: IRepositoryManager,
-	): Promise<string> {
-		const blobResponse = await repoManager.createBlob({
-			content: blob.content,
-			encoding: blob.encoding,
-		});
-		return blobResponse.sha;
+		const createEntry: ICreateTreeEntry = {
+			mode,
+			path,
+			sha,
+			type,
+		};
+		return createEntry;
 	}
 
 	private async writeFullGitTreeAsSummaryTree(
@@ -782,7 +827,8 @@ export class GitWholeSummaryManager {
 	): Promise<string> {
 		const fullSummaryTree = convertFullGitTreeToFullSummaryTree(fullGitTree);
 		const wholeSummaryTreeEntries = convertFullSummaryToWholeSummaryEntries(fullSummaryTree);
-		return this.writeSummaryTreeCore(wholeSummaryTreeEntries, repoManager);
+		const tree = await this.writeSummaryTreeCore(wholeSummaryTreeEntries, repoManager);
+		return tree.tree.sha;
 	}
 
 	private async getShaFromTreeHandleEntry(entry: IWholeSummaryTreeHandleEntry): Promise<string> {
@@ -810,6 +856,7 @@ export class GitWholeSummaryManager {
 		const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
 			parentTree,
 			this.repoManager,
+			{} /* blobCache */,
 			// Parse inner git tree blobs so that we can properly reference blob shas in new summary.
 			true /* parseInnerFullGitTrees */,
 			// We only need shas here, so don't waste resources retrieving blobs that are not included in fullGitTrees.
