@@ -69,6 +69,8 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: common/build/build-common
     tagName: build-common
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     taskBuild: false
     taskBuildDocs: false
     taskLint: false

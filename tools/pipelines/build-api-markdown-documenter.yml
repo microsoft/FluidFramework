@@ -60,6 +60,8 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: tools/api-markdown-documenter
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     tagName: api-markdown-documenter
     taskBuild: build
     taskBuildDocs: true
