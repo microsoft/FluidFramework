@@ -28,9 +28,9 @@ export {
 	_TelemetryView,
 	_TelemetryViewProps,
 	AudienceMemberViewProps, // TODO: remove this
-	ContainerView as ClientDebugView,
+	ContainerView,
 	// clientDebugViewClassName,
-	ContainerViewProps as ClientDebugViewProps,
+	ContainerViewProps,
 	ContainerSummaryView,
 	ContainerSummaryViewProps,
 	IContainerActions,
@@ -56,3 +56,4 @@ export {
 	SharedObjectRenderOptions,
 	SharedObjectType,
 } from "./RendererOptions";
+export { IMessageRelay } from "@fluid-tools/client-debugger";
