@@ -534,7 +534,7 @@ module.exports = {
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		PACKAGE_SCRIPTS: packageScriptsSectionTransform,
+		README_PACKAGE_SCRIPTS: packageScriptsSectionTransform,
 	},
 	globbyOptions: {
 		gitignore: true,

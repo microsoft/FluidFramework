@@ -48,11 +48,6 @@ npm run markdown-magic --workingDirectory ../../
 
 Will run the script from two levels higher in the file structure relative to where the `npm` script itself was executed.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
 ### Transforms
 
 The following is a list of supported transform pragmas that can be included in your Markdown documentation to automatically generate / embed contents.
@@ -70,17 +65,9 @@ Can be used to embed contents from another file into the Markdown file.
 
 Arguments:
 
-* `path`: Relative path from the document to the file being embedded.
-* `start`: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
-* `end`: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
-
-##### Example
-
-```markdown
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js&start=10) -->
-```
-
-Would include the contents of `../file.js`, starting on line 10 and running through the end of the file.
+-   `path`: Relative path from the document to the file being embedded.
+-   `start`: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
+-   `end`: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
 
 #### `LIBRARY_PACKAGE_README`
 
@@ -88,37 +75,37 @@ Generates a complete starter `README.md` file for a libary package.
 
 Notes:
 
-* This strictly intended as a starter template to remove the need for some handwritten boilerplate.
-  You will still need to fill in semantic and usage information.
-* This is effectively just a wrapper around lower-level templates.
-  If you want more fine-grained control over the content structure, we recommend using other templates.
+-   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
+    You will still need to fill in semantic and usage information.
+-   This is effectively just a wrapper around lower-level templates.
+    If you want more fine-grained control over the content structure, we recommend using other templates.
 
 Arguments:
 
-* `packageJsonPath`: Relative file path to the library package's `package.json` file.
-  Used for generation of package metadata.
-* `installation`: Whether or not to include the package "Installation" section.
-  * Default: `true`.
-  * See [README_INSTALLATION_SECTION](#readme_installation_section).
-* `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
-  * Default: `false`.
-  * Only observed if `installation` is `true`.
-* `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
-  * Default: `true`.
-  * Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
-  * See [API_DOCS_LINK_SECTION](#api_docs_link_section)
-* `scripts`: Whether or not to include a section listing the package's `npm` scripts.
-  * Default: `false`.
-  * See [PACKAGE_SCRIPTS](#package_scripts).
-* `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
-  * Default: `true`.
-  * See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
-* `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
-  * Default: `true`.
-  * See [README_HELP_SECTION](#readme_help_section).
-* `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
-  * Default: `true`.
-  * See [README_TRADEMARK_SECTION](#readme_trademark_section).
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+-   `installation`: Whether or not to include the package "Installation" section.
+    -   Default: `true`.
+    -   See [README_INSTALLATION_SECTION](#readme_installation_section).
+-   `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
+    -   Default: `false`.
+    -   Only observed if `installation` is `true`.
+-   `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
+    -   Default: `true`.
+    -   Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
+    -   See [API_DOCS_LINK_SECTION](#api_docs_link_section)
+-   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
+    -   Default: `false`.
+    -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
+-   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
+    -   Default: `true`.
+    -   See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
+-   `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
+    -   Default: `true`.
+    -   See [README_HELP_SECTION](#readme_help_section).
+-   `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
+    -   Default: `true`.
+    -   See [README_TRADEMARK_SECTION](#readme_trademark_section).
 
 #### `EXAMPLE_PACKAGE_README`
 
@@ -126,33 +113,33 @@ Generates a complete starter `README.md` file for an `Fluid` example app package
 
 Notes:
 
-* This strictly intended as a starter template to remove the need for some handwritten boilerplate.
-  You will still need to fill in semantic and usage information.
-* This is effectively just a wrapper around lower-level templates.
-  If you want more fine-grained control over the content structure, we recommend using other templates.
+-   This strictly intended as a starter template to remove the need for some handwritten boilerplate.
+    You will still need to fill in semantic and usage information.
+-   This is effectively just a wrapper around lower-level templates.
+    If you want more fine-grained control over the content structure, we recommend using other templates.
 
 Arguments:
 
-* `packageJsonPath`: Relative file path to the library package's `package.json` file.
-  Used for generation of package metadata.
-* `gettingStarted`: Whether or not to include a simple "getting started" usage section.
-  * Default: `true`.
-  * See [README_EXAMPLE_GETTING_STARTED_SECTION](#readme_example_getting_started_section).
-* `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
-  * Default: `true`.
-  * Only observed if `gettingStarted` is `true`.
-* `scripts`: Whether or not to include a section listing the package's `npm` scripts.
-  * Default: `false`.
-  * See [PACKAGE_SCRIPTS](#package_scripts).
-* `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
-  * Default: `true`.
-  * See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
-* `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
-  * Default: `true`.
-  * See [README_HELP_SECTION](#readme_help_section).
-* `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
-  * Default: `true`.
-  * See [README_TRADEMARK_SECTION](#readme_trademark_section).
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+-   `gettingStarted`: Whether or not to include a simple "getting started" usage section.
+    -   Default: `true`.
+    -   See [README_EXAMPLE_GETTING_STARTED_SECTION](#readme_example_getting_started_section).
+-   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
+    -   Default: `true`.
+    -   Only observed if `gettingStarted` is `true`.
+-   `scripts`: Whether or not to include a section listing the package's `npm` scripts.
+    -   Default: `false`.
+    -   See [README_PACKAGE_SCRIPTS](#readme-package_scripts).
+-   `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
+    -   Default: `true`.
+    -   See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
+-   `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
+    -   Default: `true`.
+    -   See [README_HELP_SECTION](#readme_help_section).
+-   `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
+    -   Default: `true`.
+    -   See [README_TRADEMARK_SECTION](#readme_trademark_section).
 
 #### `README_EXAMPLE_GETTING_STARTED_SECTION`
 
@@ -160,12 +147,12 @@ Generates a simple "getting started" usage section for a `Fluid` example app REA
 
 Arguments:
 
-* `packageJsonPath`: Relative file path to the library package's `package.json` file.
-  Used for generation of package metadata.
-* `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
-  * Default: `true`.
-* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
-  * Default: `true`.
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+-   `usesTinylicious`: Whether or not running the example app requires running [Tinylicious][] from another terminal.
+    -   Default: `true`.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
 
 #### `API_DOCS_LINK_SECTION`
 
@@ -175,10 +162,10 @@ Assumes that the package is published, uses [API-Extractor][], and has its docum
 
 Arguments:
 
-* `packageJsonPath`: Relative file path to the library package's `package.json` file.
-  Used for generation of package metadata.
-* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
-  * Default: `true`.
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
 
 #### `README_INSTALLATION_SECTION`
 
@@ -188,10 +175,10 @@ Assumes that the package is published and can be installed via `npm`.
 
 Arguments:
 
-* `packageJsonPath`: Relative file path to the library package's `package.json` file.
-  Used for generation of package metadata.
-* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
-  * Default: `true`.
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
 
 #### `README_TRADEMARK_SECTION`
 
@@ -201,8 +188,8 @@ See the corresponding template [here](./src/templates/Trademark-Template.md).
 
 Arguments:
 
-* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
-  * Default: `true`.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
 
 #### `README_CONTRIBUTION_GUIDELINES_SECTION`
 
@@ -212,8 +199,8 @@ See the corresponding template [here](./src/templates/Contribution-Guidelines-Te
 
 Arguments:
 
-* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
-  * Default: `true`.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
 
 #### `README_HELP_SECTION`
 
@@ -223,19 +210,24 @@ See the corresponding template [here](./src/templates/Help-Template.md).
 
 Arguments:
 
-* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
-  * Default: `true`.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
 
-#### `PACKAGE_SCRIPTS`
+#### `README_PACKAGE_SCRIPTS`
 
 Generates a section containing a table enumerating the package's `npm` scripts.
 
 Arguments:
 
-* `packageJsonPath`: Relative file path to the library package's `package.json` file.
-  Used for generation of package metadata.
-* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
-  * Default: `true`.
+-   `packageJsonPath`: Relative file path to the library package's `package.json` file.
+    Used for generation of package metadata.
+-   `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+    -   Default: `true`.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Contribution Guidelines
 
@@ -292,5 +284,6 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
+
 [tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious/
 [api-extractor]: https://api-extractor.com/
