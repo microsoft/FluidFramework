@@ -1,6 +1,6 @@
 # @fluid-tools/markdown-magic
 
-This library contains tools for generating and embedding documentation contents in [Markdown]() documentation.
+This library contains tools for generating and embedding documentation contents in [Markdown](https://www.markdownguide.org/) documentation.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 

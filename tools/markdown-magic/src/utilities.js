@@ -94,7 +94,7 @@ function formattedSectionText(sectionBody, maybeHeaderText) {
 
 /**
  * Wraps the provided generated / embedded content in prettier-ignore pragma comments.
- * @param {string} contents The Markdown contents to be wrapped.
+ * @param {string} contents - The Markdown contents to be wrapped.
  */
 function bundlePrettierPragmas(contents) {
 	return ["\n<!-- prettier-ignore-start -->", contents, "<!-- prettier-ignore-end -->\n"].join(
