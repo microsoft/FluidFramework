@@ -44,6 +44,7 @@ import {
     ModularChangeset,
     on,
     getField,
+    ISharedTree,
 } from "@fluid-internal/tree";
 import {
     DeltaVisitor,
@@ -54,7 +55,7 @@ import {
     ChangeFamilyEditor,
     FieldKindSpecifier,
 } from "@fluid-internal/tree/dist/core";
-import { DefaultChangeFamily, EditManagerIndex, ForestIndex, SchemaIndex } from "@fluid-internal/tree/dist/feature-libraries";
+import { DefaultChangeFamily, EditableField, EditManagerIndex, ForestIndex, SchemaIndex } from "@fluid-internal/tree/dist/feature-libraries";
 import { SharedTreeCore } from "@fluid-internal/tree/dist/shared-tree-core";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -219,269 +220,92 @@ function buildSchemaPath(indexedFields: IndexedField[], schema: SchemaData): Pat
     return out;
 }
 
-// enum Mode {
-//     Node = 1,
-//     Field = 2,
-// }
+export interface EditableTreeResolver {
 
-// export class PathVisitor implements DeltaVisitor {
-//     protected readonly parentIndexVector: number[] = [];
-//     protected readonly path: Path = new Path();
-//     protected mode: Mode | undefined;
-//     constructor(
-//         protected readonly schemaData: SchemaData,
-//         protected readonly schemaIdentifiers: ReadonlySet<TreeSchemaIdentifier>
-//     ) {
-//         this.mode = undefined;
-//     }
-//     currentSchemaIdentifiers(): ReadonlySet<TreeSchemaIdentifier> {
-//         return this.path.length === 0 ?
-//             this.schemaIdentifiers : this.path.last().fieldSchemaIdentifiers;
-//     }
-//     onDelete(index: number, count: number): void { console.log('onDelete', index, count); }
-//     onInsert(index: number, content: readonly Delta.ProtoNode[]): void { console.log('onInsert'); }
-//     onMoveOut(index: number, count: number, id: Delta.MoveId): void { console.log('onMoveOut', index, count); }
-//     onMoveIn(index: number, count: number, id: Delta.MoveId): void { console.log('onMoveIn', index, count); }
-//     onSetValue(value: Value): void { console.log('onSetValue', value); }
-//     enterNode(index: number): void {
-//         this.mode = Mode.Node;
-//         this.parentIndexVector.push(index);
-//     }
-//     exitNode(index: number): void {
-//         this.mode = undefined;
-//         const foundIndex = this.parentIndexVector.pop();
-//         if (foundIndex !== index) throw new Error(`inconsistent parent index state; expected ${index} found ${foundIndex}`);
-//     }
-//     enterField(fieldKey: FieldKey): void {
-//         this.mode = Mode.Field;
-//         if (isLocalKey(fieldKey)) {
-//             const currentIdentifiers: ReadonlySet<TreeSchemaIdentifier> = this.currentSchemaIdentifiers();
-//             let localFieldSchema: FieldSchema | undefined;
-//             for (const currentIdentifier of currentIdentifiers) {
-//                 const currentNamedTreeSchema: NamedTreeSchema = this.schemaData.treeSchema
-//                     .get(currentIdentifier)! as NamedTreeSchema;
-//                 localFieldSchema = currentNamedTreeSchema.localFields.get(fieldKey);
-//                 if (localFieldSchema !== undefined) {
-//                     break;
-//                 }
-//             }
-//             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//             // @ts-ignore
-//             const fieldSchemaIdentifiers = localFieldSchema.types!;
-//             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-//             // @ts-ignore
-//             const fieldKindIdentifier = localFieldSchema.kind;
-//             const parentIndex = this.parentIndexVector[this.parentIndexVector.length - 1];
-//             this.path.push(new PathElem(parentIndex, fieldKey, fieldKindIdentifier, fieldSchemaIdentifiers));
-//         } else if (isGlobalFieldKey(fieldKey) && fieldKey === rootFieldKeySymbol) {
-//             //
-//         }
-//     }
-//     exitField(fieldKey: FieldKey): void {
-//         if (isLocalKey(fieldKey)) {
-//             this.path.pop();
-//         } else if (isGlobalFieldKey(fieldKey) && fieldKey === rootFieldKeySymbol) {
-//             //
-//         }
-//         this.mode = undefined;
-//     }
-// }
+    resolve(): Iterable<EditableTree>;
+}
 
-// export class DomainVisitor extends PathVisitor {
+export interface ChangeBinder {
 
-//     constructor(
-//         protected readonly schemaData: SchemaData,
-//         protected readonly filter: Path,
-//         protected readonly schemaIdentifiers: ReadonlySet<TreeSchemaIdentifier>,
-//         protected readonly adapter: OperationAdapter,
-//     ) {
-//         super(schemaData, schemaIdentifiers);
-//     }
-//     onInsert(index: number, content: readonly Delta.ProtoNode[]): void {
-//         if (this.filter.equals(this.path)) {
-//             const jsonArray: JsonableTree[] = [];
-//             for (const node of content) {
-//                 jsonArray.push(jsonableTreeFromCursor(node));
-//             }
-//             const values: Int32[] = jsonArray.map(json => typedInt32(json));
-//             const parentIndex = this.path.last().parentIndex;
-//             this.adapter.onInsert(parentIndex, index, values);
-//         }
-//     }
-//     onDelete(index: number, count: number): void {
-//         if (this.filter.equals(this.path)) {
-//             const parentIndex = this.path.last().parentIndex;
-//             this.adapter.onDelete(parentIndex, index, count);
-//         }
-//     }
-// }
+    bindOnChange(fn: () => void): () => void;
+}
+
+export interface BatchBinder {
+
+    bindOnBatch(fn: () => void): () => void;
+}
+
+
+export class PathBasedResolver implements EditableTreeResolver {
+    constructor(
+        public readonly root: EditableField,
+        public readonly path: Path,
+        public readonly index: number,
+    ) { }
+
+    resolve(): Iterable<EditableTree> {
+        let currentField = this.root;
+        for (const pathElem of this.path) {
+            currentField = currentField.getNode(pathElem.parentIndex)[getField](pathElem.fieldKey);
+        }
+        return [currentField.getNode(this.index)];
+    }
+}
+
+export class SimpleBinder implements ChangeBinder, BatchBinder {
+    constructor(
+        public readonly sharedTree: ISharedTree,
+        public readonly resolver: EditableTreeResolver,
+    ) { }
+    bindOnBatch(fn: () => void): () => void {
+        const handle = this.sharedTree.events.on("afterBatch", () => fn());
+        return () => handle();
+    }
+    bindOnChange(fn: () => void): () => void {
+        const handles: (() => void)[] = [];
+        const nodes = this.resolver.resolve();
+        for (const node of nodes) {
+            handles.push(node[on]("changing", () => fn()));
+        }
+        return () => {
+            for (const handle of handles) {
+                handle();
+            }
+        };
+    }
+}
 
 /**
  * Describes transitions from one state of the system to a new one, for instance updating the react state
  */
-export type DeriveState<T> = (deriveStateFn: (prevState: T) => /* nextState */ T) => void;
+export type TransitionState<T> = (transitionStateFn: (prevState: T) => /* nextState */ T) => void;
 
 /**
  * Transforms SharedTree operations into application state changes
  */
 export interface OperationAdapter {
-    deriveState: DeriveState<number[][]>;
-    // onDelete: (row: number, col: number, count: number) => void;
-    // onInsert: (row: number, col: number, values: Int32[]) => void;
+    transitionState: TransitionState<number[][]>;
     onChange: () => void;
-    dispatch: () => void;
+    onBatch: () => void;
 }
 
-// /**
-//  * Selective adapter, typically more efficient
-//  */
-// export class OperationAdapterSelective implements OperationAdapter {
-//     constructor(public readonly deriveState: DeriveState<number[][]>) { }
-//     onDelete(row: number, col: number, count: number): void {
-//         this.onDeleteDispatch(row, col, count);
-//     }
-//     protected onDeleteDispatch(row: number, col: number, count: number) {
-//         console.log(`DELETE at row:${row} col:${col} ${count} domain  values`);
-//         this.deriveState(
-//             prevRows => {
-//                 const nextRows = prevRows.map(
-//                     (drawRow, drawRowIndex) => {
-//                         if (drawRowIndex === row)
-//                             drawRow.splice(col, count);
-//                         return drawRow;
-//                     });
-//                 for (const [drawRowIndex, drawRow] of nextRows.entries()) {
-//                     if (drawRow !== undefined && drawRow.length === 0) {
-//                         // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-//                         delete nextRows[drawRowIndex];
-//                     }
-//                 }
-//                 return nextRows;
-//             }
-//         );
-//     }
-
-//     onInsert(row: number, col: number, values: Int32[]): void {
-//         this.onInsertDispatch(row, col, values);
-//     }
-//     protected onInsertDispatch(row: number, col: number, values: Int32[]) {
-//         console.log(`INSERT at row:${row}, col:${col} ${values.length} domain values`);
-//         const numbers: number[] = values.map(value => value[valueSymbol] as number);
-//         this.deriveState(
-//             prevRows => prevRows.map(
-//                 (drawRow, drawRowIndex) => {
-//                     if (drawRowIndex === row)
-//                         drawRow.splice(col, numbers.length, ...numbers);
-//                     return drawRow;
-//                 })
-//         );
-//     }
-// }
-
-// // Cantor pairing function
-// function pair(x: number, y: number): number {
-//     return ((x + y) * (x + y + 1)) / 2 + y;
-// }
-
-// export interface DomainChange {
-//     row: number;
-//     col: number;
-//     hash: () => number;
-// }
-
-// export class DomainChangeInsert implements DomainChange {
-//     constructor(public readonly row: number, public readonly col: number, public readonly values: Int32[]) { }
-//     hash() {
-//         return pair(this.row, this.col);
-//     }
-// }
-
-// export class DomainChangeDelete implements DomainChange {
-//     constructor(public readonly row: number, public readonly col: number, public count: number) { }
-//     hash() {
-//         return pair(this.row, this.col);
-//     }
-// }
-
-// export class OperationAdapterSelectiveBuffering extends OperationAdapterSelective implements OperationAdapter {
-//     protected readonly buffer: DomainChange[] = [];
-
-//     constructor(public readonly deriveState: DeriveState<number[][]>, private readonly wrksp: Workspace) {
-//         super(deriveState);
-//     }
-
-//     override onDelete(row: number, col: number, count: number): void {
-//         this.buffer.push(new DomainChangeDelete(row, col, count));
-//     }
-
-//     override onInsert(row: number, col: number, values: Int32[]): void {
-//         this.buffer.push(new DomainChangeInsert(row, col, values));
-//     }
-
-//     dispatch(): () => void {
-//         return () => {
-//             const collisions: Set<number> = new Set<number>();
-//             const squashed: DomainChange[] = [];
-//             for (let i = this.buffer.length - 1; i >= 0; i--) {
-//                 const change: DomainChange = this.buffer[i];
-//                 const hash = change.hash();
-//                 if (!collisions.has(hash)) {
-//                     squashed.unshift(change);
-//                 } else {
-//                     // skip as overwritten by subsequent change
-//                 }
-//                 collisions.add(hash);
-//             }
-//             // Apply the changes in the sorted order
-//             for (const change of squashed) {
-//                 switch (change.constructor) {
-//                     case DomainChangeDelete:
-//                         // eslint-disable-next-line no-case-declarations
-//                         const del = change as DomainChangeDelete;
-//                         super.onDeleteDispatch(del.row, del.col, del.count);
-//                         break;
-//                     case DomainChangeInsert:
-//                         // eslint-disable-next-line no-case-declarations
-//                         const ins = change as DomainChangeInsert;
-//                         super.onInsertDispatch(ins.row, ins.col, ins.values);
-//                         break;
-//                     default:
-//                         throw new Error("Unknown domain change");
-//                 }
-//             }
-//             // Clear the buffer
-//             this.buffer.length = 0;
-//         };
-//     }
-// }
-
-
-// /**
-//  * Brute force adapter, simple but has additional overhead
-//  */
-// export class OperationAdapterBruteForce implements OperationAdapter {
-//     constructor(public readonly deriveState: DeriveState<number[][]>, protected readonly workspace: Workspace) { }
-//     onDelete(row: number, col: number, count: number): void {
-//         this.deriveState(prevRows => readDrawValues(this.workspace));
-//     }
-//     onInsert(row: number, col: number, values: Int32[]): void {
-//         this.deriveState(prevRows => readDrawValues(this.workspace));
-//     }
-// }
 
 let countOnChange = 0;
 let countOnBatch = 0;
-export class OperationAdapterOnChange implements OperationAdapter {
+export class DomainAdapterReact implements OperationAdapter {
     protected changed: boolean = false;
-    constructor(public readonly deriveState: DeriveState<number[][]>, protected readonly workspace: Workspace) { }
+    constructor(
+        public readonly transitionState: TransitionState<number[][]>,
+        protected readonly workspace: Workspace,
+    ) { }
     onChange(): void {
         console.log('onChange received', countOnChange++);
         this.changed = true;
     }
-    dispatch(): void {
+    onBatch(): void {
         console.log('Dispatch received', countOnBatch++);
         if (this.changed) {
-            this.deriveState(prevRows => readDrawValues(this.workspace));
+            this.transitionState(prevRows => readDrawValues(this.workspace));
         }
         this.changed = false;
     }
@@ -508,24 +332,6 @@ export default function App() {
             myWorkspace.tree.on("error", (event) => {
                 console.log("Tree error received!");
             });
-            // const listenPath = buildSchemaPath([drawKeys, valueKeys], appSchema);
-            // const operationAdapter: OperationAdapter = new OperationAdapterBruteForce(setDrawValues, myWorkspace);
-            // const operationAdapter: OperationAdapter = new OperationAdapterSelective(setDrawValues);
-            // const operationAdapter = new OperationAdapterSelectiveBuffering(
-            //     setDrawValues,
-            //     myWorkspace
-            // );
-
-            // registerBatchComplete(
-            //     myWorkspace,
-            //     operationAdapter.dispatch(),
-            // );
-            // // registerPathOnIndex()
-            // registerPathOnEditableTreeContext(
-            //     myWorkspace,
-            //     listenPath,
-            //     operationAdapter,
-            // );
 
             if (first) {
                 insertDrawValues(myWorkspace);
@@ -554,8 +360,11 @@ export default function App() {
 
     const register = () => {
         const path: Path = buildSchemaPath([{ index: 0, field: drawKeys }], appSchema);
-        registerPathChanges(workspace!, path, 2);
-        // registerNotification(workspace!);
+        const resolver: EditableTreeResolver = new PathBasedResolver(workspace!.tree.context.root, path, 2);
+        const binder = new SimpleBinder(workspace!.tree, resolver);
+        const reactAdapter = new DomainAdapterReact(setDrawValues, workspace!);
+        binder.bindOnChange(() => reactAdapter.onChange());
+        binder.bindOnBatch(() => reactAdapter.onBatch());
     };
 
     const deleteSingle = () => {
@@ -570,101 +379,6 @@ export default function App() {
         deleteAllValues(workspace!);
     };
 
-    // const registerBatchComplete = (wrksp: Workspace, batchComplete: () => void) => {
-    //     (wrksp.tree as unknown as SharedTreeCore<ChangeFamilyEditor,
-    //         DefaultChangeFamily,
-    //         [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
-    //     >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
-    //         batchComplete();
-    //     });
-    // };
-
-    // const registerPathOnIndex =
-    //     (
-    //         wrksp: Workspace,
-    //         filter: Path,
-    //         adapter: OperationAdapter,
-    //     ) => {
-    //         (wrksp.tree as unknown as SharedTreeCore<ChangeFamilyEditor,
-    //             DefaultChangeFamily,
-    //             [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
-    //         >).indexEventEmitter.on("newLocalState", (delta: Delta.Root) => {
-    //             // console.log('Delta');
-    //             // console.log(JSON.stringify(delta, replacer, 2));
-    //             visitDelta(delta, new DomainVisitor(
-    //                 appSchema,
-    //                 filter,
-    //                 new Set([drawSchema.name]),
-    //                 adapter,
-    //             ));
-    //         });
-    //     };
-
-    // const registerPathOnEditableTreeContext =
-    //     (
-    //         wrksp: Workspace,
-    //         filter: Path,
-    //         adapter: OperationAdapter,
-    //     ) => {
-    //         wrksp.tree.context.on("afterDelta", (delta: Delta.Root) => {
-    //             // console.log('Delta');
-    //             // console.log(JSON.stringify(delta, replacer, 2));
-    //             visitDelta(delta, new DomainVisitor(
-    //                 appSchema,
-    //                 filter,
-    //                 new Set([drawSchema.name]),
-    //                 adapter,
-    //             ));
-    //         });
-    //     };
-
-    const registerNotification =
-        (
-            wrksp: Workspace,
-        ) => {
-            const adapter = new OperationAdapterOnChange(
-                setDrawValues,
-                wrksp,
-            );
-            wrksp.tree.events.on("afterBatch", () => adapter.dispatch());
-            const root = wrksp.tree.context.root;
-            const rootNode = root.getNode(0);
-            const lastCell = root
-                .getNode(0)[getField](drawKeys)
-                .getNode(2);
-               // .getNode(2)[getField](valueKeys)
-               // .getNode(4);
-            // const someField = root
-            //     .getNode(0)[getField](drawKeys)
-            //     .getNode(2)[getField](valueKeys)
-            //     .getNode(4)[valueSymbol];
-            // .getNode(4)[valueSymbol];
-            lastCell[on]("changing", () => adapter.onChange());
-        };
-
-
-    const registerPathChanges =
-        (
-            wrksp: Workspace,
-            path: Path,
-            index: number
-        ) => {
-            const adapter = new OperationAdapterOnChange(
-                setDrawValues,
-                wrksp,
-            );
-            const root = wrksp.tree.context.root;
-            if (path.length > 0) {
-                let lastField;
-                for (const pathElem of path) {
-                    lastField = root.getNode(pathElem.parentIndex)[getField](pathElem.fieldKey);
-                }
-                lastField.getNode(index)[on]("changing", () => adapter.onChange());
-            } else {
-                root[on]("changing", () => adapter.onChange());
-            }
-            wrksp.tree.events.on("afterBatch", () => adapter.dispatch());
-        };
 
     return (
         <div className="App">
@@ -701,7 +415,6 @@ export default function App() {
         </div>
     );
 }
-
 
 function typedInt32(json: JsonableTree): Int32 {
     return {
