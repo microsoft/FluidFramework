@@ -53,6 +53,52 @@ Will run the script from two levels higher in the file structure relative to whe
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
+### Transforms
+
+The following is a list of supported transform pragmas that can be included in your Markdown documentation to automatically generate / embed contents.
+
+#### `INCLUDE`
+
+Can be used to embed contents from another file into the Markdown file.
+
+TODO: arguments and example
+
+#### `LIBRARY_PACKAGE_README`
+
+TODO
+
+#### `EXAMPLE_PACKAGE_README`
+
+TODO
+
+#### `README_EXAMPLE_GETTING_STARTED_SECTION`
+
+TODO
+
+#### `API_DOCS_LINK_SECTION`
+
+TODO
+
+#### `README_INSTALLATION_SECTION`
+
+TODO
+
+#### `README_TRADEMARK_SECTION`
+
+TODO
+
+#### `README_CONTRIBUTION_GUIDELINES_SECTION`
+
+TODO
+
+#### `README_HELP_SECTION`
+
+TODO
+
+#### `PACKAGE_SCRIPTS`
+
+TODO
+
 ## Contribution Guidelines
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
