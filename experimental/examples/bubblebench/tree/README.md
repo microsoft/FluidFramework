@@ -1,6 +1,8 @@
-# @fluid-example/bubblebench-editable-shared-tree
+# @fluid-example/bubblebench-tree
 
 ### Running the test locally
+
+This package contains both an editable-tree and a cursor implementation of bubblebench. The suite will default to the editable-tree version, but the cursor version can be launched by passing `--env tree=cursor` to any of the `start` scripts.
 
 > Bubble bench is currently at a state where it fails to run in a normal state with 2 clients due to the inability of the front end application to observe and react accordingly to backpressure on the server. So, at this point in time, to get it to run you must take the following steps:
 >
