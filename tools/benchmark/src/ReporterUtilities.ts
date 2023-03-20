@@ -4,7 +4,6 @@
  */
 
 import { assert } from "chai";
-import chalk from "chalk";
 import { Suite } from "mocha";
 import {
 	benchmarkTypes,
@@ -46,31 +45,6 @@ export function getName(name: string): string {
 	}
 	return s.trim();
 }
-
-/**
- * @returns a red version of the input string
- */
-export const red = (s: string): string => chalk.red(s);
-
-/**
- * @returns a green version of the input string
- */
-export const green = (s: string): string => chalk.green(s);
-
-/**
- * @returns a yellow version of the input string
- */
-export const yellow = (s: string): string => chalk.yellow(s);
-
-/**
- * @returns an italicized version of the input string
- */
-export const italicize = (s: string): string => chalk.italic(s);
-
-/**
- * @returns a bolded version of the input string
- */
-export const bold = (s: string): string => chalk.bold(s);
 
 /**
  * @param num - Number of characters to pad
