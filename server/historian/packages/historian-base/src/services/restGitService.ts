@@ -518,11 +518,11 @@ export class RestGitService {
 		if (this.cache) {
 			// Attempt to cache to Redis - log any errors but don't fail
 			runWithRetry(
-				async () => this.cache.set(key, value),
-				"RestGitService.setCache",
-				3,
-				1000,
-				winston,
+				async () => this.cache.set(key, value) /* api */,
+				"RestGitService.setCache" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				this.lumberProperties /* telemetryProperties */,
 			).catch((error) => {
 				winston.error(`Error caching ${key} to redis`, error);
 				Lumberjack.error(`Error caching ${key} to redis`, this.lumberProperties, error);
@@ -534,11 +534,11 @@ export class RestGitService {
 		if (this.cache) {
 			// Attempt to cache to Redis - log any errors but don't fail
 			const cachedValue: T | undefined = await runWithRetry(
-				async () => this.cache.get<T | undefined>(key),
-				"RestGitService.getCache",
-				3,
-				1000,
-				winston,
+				async () => this.cache.get<T | undefined>(key) /* api */,
+				"RestGitService.getCache" /* callName */,
+				3 /* maxRetries */,
+				1000 /* retryAfterMs */,
+				this.lumberProperties /* telemetryProperties */,
 			).catch((error) => {
 				winston.error(`Error fetching ${key} from cache`, error);
 				Lumberjack.error(`Error fetching ${key} from cache`, this.lumberProperties, error);
