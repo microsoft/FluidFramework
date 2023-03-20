@@ -105,7 +105,7 @@ Arguments:
   * Only observed if `installation` is `true`.
 * `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
   * Default: `true`.
-  * Assumes that the package is published, uses [API-Extractor](https://api-extractor.com/), and has its documentation published under `fluidframework.com/apis/<package-name>`.
+  * Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
   * See [API_DOCS_LINK_SECTION](#api_docs_link_section)
 * `scripts`: Whether or not to include a section listing the package's `npm` scripts.
   * Default: `false`.
@@ -169,27 +169,73 @@ Arguments:
 
 #### `API_DOCS_LINK_SECTION`
 
-TODO
+Generates a README section pointing to the library's generated API documentation on `fluidframework.com`.
+
+Assumes that the package is published, uses [API-Extractor][], and has its documentation published under `fluidframework.com/apis/<package-name>`.
+
+Arguments:
+
+* `packageJsonPath`: Relative file path to the library package's `package.json` file.
+  Used for generation of package metadata.
+* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+  * Default: `true`.
 
 #### `README_INSTALLATION_SECTION`
 
-TODO
+Generates a README section including package installation instructions.
+
+Assumes that the package is published and can be installed via `npm`.
+
+Arguments:
+
+* `packageJsonPath`: Relative file path to the library package's `package.json` file.
+  Used for generation of package metadata.
+* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+  * Default: `true`.
 
 #### `README_TRADEMARK_SECTION`
 
-TODO
+Generates a section containing our `Microsoft` trademark.
+
+See the corresponding template [here](./src/templates/Trademark-Template.md).
+
+Arguments:
+
+* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+  * Default: `true`.
 
 #### `README_CONTRIBUTION_GUIDELINES_SECTION`
 
-TODO
+Generates a section enumerating `fluid-framework`'s contribution guidelines.
+
+See the corresponding template [here](./src/templates/Contribution-Guidelines-Template.md).
+
+Arguments:
+
+* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+  * Default: `true`.
 
 #### `README_HELP_SECTION`
 
-TODO
+Generates a simple "help" section, which points the reader to various resources.
+
+See the corresponding template [here](./src/templates/Help-Template.md).
+
+Arguments:
+
+* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+  * Default: `true`.
 
 #### `PACKAGE_SCRIPTS`
 
-TODO
+Generates a section containing a table enumerating the package's `npm` scripts.
+
+Arguments:
+
+* `packageJsonPath`: Relative file path to the library package's `package.json` file.
+  Used for generation of package metadata.
+* `includeHeading`: Whether or not to include a 2nd level heading above the generated contents.
+  * Default: `true`.
 
 ## Contribution Guidelines
 
@@ -246,4 +292,5 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- Links -->
-[Tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious/
+[tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious/
+[api-extractor]: https://api-extractor.com/
