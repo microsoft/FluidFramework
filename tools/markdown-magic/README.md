@@ -98,22 +98,27 @@ Arguments:
 * `packageJsonPath`: Relative file path to the library package's `package.json` file.
   Used for generation of package metadata.
 * `installation`: Whether or not to include the package "Installation" section.
-  Default: `true`.
+  * Default: `true`.
+  * See [README_INSTALLATION_SECTION](#readme_installation_section).
 * `devDependency`: Whether or not the package is intended to be installed as a dev dependency.
-  Default: `false`.
-  Only observed if `installation` is `true`.
+  * Default: `false`.
+  * Only observed if `installation` is `true`.
 * `apiDocs`: Whether or not to include a section pointing to the library's generated API documentation on `fluidframework.com`.
-  Default: `true`.
+  * Default: `true`.
   * Assumes that the package is published, uses [API-Extractor](https://api-extractor.com/), and has its documentation published under `fluidframework.com/apis/<package-name>`.
+  * See [API_DOCS_LINK_SECTION](#api_docs_link_section)
 * `scripts`: Whether or not to include a section listing the package's `npm` scripts.
-  Default: `false`.
+  * Default: `false`.
+  * See [PACKAGE_SCRIPTS](#package_scripts).
 * `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
-  Default: `true`.
+  * Default: `true`.
+  * See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
 * `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
   * Default: `true`.
+  * See [README_HELP_SECTION](#readme_help_section).
 * `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
   * Default: `true`.
-
+  * See [README_TRADEMARK_SECTION](#readme_trademark_section).
 
 #### `EXAMPLE_PACKAGE_README`
 
@@ -131,22 +136,27 @@ Arguments:
 * `packageJsonPath`: Relative file path to the library package's `package.json` file.
   Used for generation of package metadata.
 * `gettingStarted`: Whether or not to include a simple "getting started" usage section.
-  Default: `true`.
+  * Default: `true`.
+  * See [README_EXAMPLE_GETTING_STARTED_SECTION](#readme_example_getting_started_section).
 * `usesTinylicious`: Whether or not running the example app requires running [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious) from another terminal.
-  Default: `true`.
-  Only observed if `gettingStarted` is `true`.
+  * Default: `true`.
+  * Only observed if `gettingStarted` is `true`.
 * `scripts`: Whether or not to include a section listing the package's `npm` scripts.
-  Default: `false`.
+  * Default: `false`.
+  * See [PACKAGE_SCRIPTS](#package_scripts).
 * `contributionGuidelines`: Whether or not to include a section enumerating `fluid-framework`'s contribution guidelines.
-  Default: `true`.
+  * Default: `true`.
+  * See [README_CONTRIBUTION_GUIDELINES_SECTION](#readme_contribution_guidelines_section).
 * `help`: Whether or not to include a simple "help" section, which points the reader to various resources.
   * Default: `true`.
+  * See [README_HELP_SECTION](#readme_help_section).
 * `trademark`: Whether or not to include a section containing our `Microsoft` trademark.
   * Default: `true`.
+  * See [README_TRADEMARK_SECTION](#readme_trademark_section).
 
 #### `README_EXAMPLE_GETTING_STARTED_SECTION`
 
-TODO
+Generates a section
 
 #### `API_DOCS_LINK_SECTION`
 
