@@ -215,6 +215,7 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	HasFieldChanges,
 	EditableTreeEvents,
 	on,
 	ValueConstraint,
