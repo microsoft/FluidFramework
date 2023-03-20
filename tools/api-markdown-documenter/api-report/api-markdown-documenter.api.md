@@ -25,6 +25,7 @@ import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { Data } from 'unist';
 import { DocNode } from '@microsoft/tsdoc';
+import { DocSection } from '@microsoft/tsdoc';
 import { IndentedWriter as DocumentWriter } from '@microsoft/api-documenter/lib/utils/IndentedWriter';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
@@ -48,6 +49,9 @@ export class AlertNode extends DocumentationParentNodeBase {
     readonly title?: string;
     readonly type = DocumentationNodeType.Alert;
 }
+
+// @public
+export type ApiFunctionLike = ApiConstructSignature | ApiConstructor | ApiFunction | ApiMethod | ApiMethodSignature;
 
 export { ApiItem }
 
@@ -84,7 +88,22 @@ export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKi
 
 export { ApiModel }
 
+// @public
+export enum ApiModifier {
+    Optional = "optional",
+    Readonly = "readonly",
+    Sealed = "sealed",
+    Static = "static",
+    Virtual = "virtual"
+}
+
+// @public
+export type ApiModuleLike = ApiPackage | ApiNamespace;
+
 export { ApiPackage }
+
+// @public
+export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
 export class BlockQuoteNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -233,6 +252,42 @@ export type FrontMatterPolicy = (documentItem: ApiItem) => string | undefined;
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
+export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
+
+// @public
+export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
+export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
+export function getFilePathForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): string;
+
+// @public
+export function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
+
+// @public
+export function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
+
+// @public
+export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
+
+// @public
+export function getQualifiedApiItemName(apiItem: ApiItem): string;
+
+// @public
+export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
+export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
+export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
+
+// @public
+export function getUnscopedPackageName(apiPackage: ApiPackage): string;
+
+// @public
 export interface Heading {
     readonly id?: string;
     readonly level?: number;
@@ -262,6 +317,18 @@ export class HorizontalRuleNode implements MultiLineDocumentationNode {
     static readonly Singleton: HorizontalRuleNode;
     readonly type = DocumentationNodeType.HorizontalRule;
 }
+
+// @public
+export function isDeprecated(apiItem: ApiItem): boolean;
+
+// @public
+export function isOptional(apiItem: ApiItem): boolean;
+
+// @public
+export function isReadonly(apiItem: ApiItem): boolean;
+
+// @public
+export function isStatic(apiItem: ApiItem): boolean;
 
 // @public
 export class LineBreakNode implements MultiLineDocumentationNode {
