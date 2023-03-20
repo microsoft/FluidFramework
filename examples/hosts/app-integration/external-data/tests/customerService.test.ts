@@ -15,9 +15,9 @@ import { initializeCustomerService } from "../src/mock-customer-service";
 import { customerServicePort } from "../src/mock-customer-service-interface";
 import { initializeExternalDataService } from "../src/mock-external-data-service";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface";
-import { closeServer } from "./utilities";
 import { MockWebhook } from "../src/mock-external-data-service/webhook";
 import { ITaskData } from "../src/model-interface";
+import { closeServer } from "./utilities";
 
 const localServicePort = 5002;
 const externalTaskListId = "task-list-1";
@@ -44,7 +44,6 @@ describe("mock-customer-service", () => {
 	 * @defaultValue A new new map will be initialized.
 	 */
 	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
-
 
 	beforeEach(async () => {
 		externalDataService = await initializeExternalDataService({
@@ -73,8 +72,7 @@ describe("mock-customer-service", () => {
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
-	// TODO: re-enable this test in a future PR
-	it.skip("register-for-webhook: Complete data flow", async () => {
+	it("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
 		const localServiceApp = express();
 		localServiceApp.use(express.json());

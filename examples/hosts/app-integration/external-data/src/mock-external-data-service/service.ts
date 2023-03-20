@@ -51,7 +51,8 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	const { port } = props;
 	const externalDataSource: ExternalDataSource =
 		props.externalDataSource ?? new ExternalDataSource();
-	const webhookCollection = new Map<ExternalTaskListId, MockWebhook<ITaskData>>();
+	const webhookCollection =
+		props.webhookCollection ?? new Map<ExternalTaskListId, MockWebhook<ITaskData>>();
 
 	/**
 	 * Helper function to prepend service-specific metadata to messages logged by this service.

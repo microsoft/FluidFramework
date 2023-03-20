@@ -22,6 +22,14 @@ import { MockWebhook } from "../src/mock-external-data-service/webhook";
 import { closeServer } from "./utilities";
 
 const externalTaskListId = "task-list-1";
+
+const newData: ITaskData = {
+	42: {
+		name: "Determine meaning of life",
+		priority: 37,
+	},
+};
+
 describe("mock-external-data-service", () => {
 	/**
 	 * External data source backing our service.
@@ -47,6 +55,10 @@ describe("mock-external-data-service", () => {
 
 	beforeEach(async () => {
 		externalDataSource = new ExternalDataSource();
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
+		const webhook = new MockWebhook();
+		webhook.registerSubscriber("https://www.fluidframework.com");
+		webhookCollection.set("task-list-1", webhook);
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			externalDataSource,
@@ -86,20 +98,7 @@ describe("mock-external-data-service", () => {
 	});
 
 	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
-	it.skip("set-tasks: Ensure external data is updated with provided data", async () => {
-		const newData: ITaskData = {
-			42: {
-				name: "Determine meaning of life",
-				priority: 37,
-			},
-		};
-		// First register a subscriber so that set-tasks does not error on finding
-		// a subscriber
-		await request(externalDataService!)
-		.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
-		.send({ url: "https://www.fluidframework.com" })
-		.expect(200);
-
+	it("set-tasks: Ensure external data is updated with provided data", async () => {
 		await request(externalDataService!)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ taskList: newData })
@@ -109,18 +108,9 @@ describe("mock-external-data-service", () => {
 		expect(currentData).toEqual(newData);
 	});
 
-	
 	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure server rejects update with no data", async () => {
 		const oldData = await getCurrentExternalData();
-
-		// First register a subscriber so that set-tasks does not error on finding
-		// a subscriber
-		await request(externalDataService!)
-		.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
-		.send({ url: "https://www.fluidframework.com" })
-		.expect(200);
-
 		await request(externalDataService!)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send()
@@ -164,6 +154,10 @@ describe("mock-external-data-service: webhook", () => {
 	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
 	beforeEach(async () => {
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
+		const webhook = new MockWebhook();
+		webhook.registerSubscriber("https://www.fluidframework.com");
+		webhookCollection.set("task-list-1", webhook);
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			webhookCollection,
@@ -179,8 +173,7 @@ describe("mock-external-data-service: webhook", () => {
 		await closeServer(_externalDataService);
 	});
 
-	// TODO: investigate why this is failing and re-enable.
-	it.skip("register-for-webhook", async () => {
+	it("register-for-webhook", async () => {
 		// Set up mock local service, which will be registered as webhook listener
 		const localServicePort = 5002;
 		const localServiceApp = express();
@@ -199,7 +192,7 @@ describe("mock-external-data-service: webhook", () => {
 		try {
 			// Register with the external service for notifications
 			const webhookRegistrationResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/register-for-webhook?externalTaskListId=${externalTaskListId}`,
+				`http://localhost:${externalDataServicePort}/register-for-webhook`,
 				{
 					method: "POST",
 					headers: {
@@ -207,7 +200,7 @@ describe("mock-external-data-service: webhook", () => {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						url: `http://localhost:${localServicePort}/broadcast-signal`,
+						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
 					}),
 				},
 			);
