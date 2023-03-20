@@ -46,9 +46,6 @@ describe("mock-customer-service", () => {
 
 	beforeEach(async () => {
 		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
-		const webhook = new MockWebhook();
-		webhook.registerSubscriber("https://www.fluidframework.com");
-		webhookCollection.set("task-list-1", webhook);
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			webhookCollection,

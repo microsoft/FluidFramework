@@ -56,9 +56,6 @@ describe("mock-external-data-service", () => {
 	beforeEach(async () => {
 		externalDataSource = new ExternalDataSource();
 		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
-		const webhook = new MockWebhook();
-		webhook.registerSubscriber("https://www.fluidframework.com");
-		webhookCollection.set("task-list-1", webhook);
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			externalDataSource,
@@ -154,9 +151,6 @@ describe("mock-external-data-service: webhook", () => {
 
 	beforeEach(async () => {
 		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
-		const webhook = new MockWebhook();
-		webhook.registerSubscriber("https://www.fluidframework.com");
-		webhookCollection.set("task-list-1", webhook);
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			webhookCollection,
