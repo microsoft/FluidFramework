@@ -183,6 +183,8 @@ function composeMarks<TNodeChange>(
 
 	const newMarkRevision = isModify(newMark) ? newRev : newMark.revision ?? newRev;
 	const newIntention = getIntention(newMarkRevision, revisionMetadata);
+	const baseMarkRevision = isModify(baseMark) ? undefined : baseMark.revision;
+	const baseIntention = getIntention(baseMarkRevision, revisionMetadata);
 
 	switch (baseType) {
 		case "Insert":
@@ -276,7 +278,7 @@ function composeMarks<TNodeChange>(
 					return 0;
 				}
 				case "ReturnFrom": {
-					if (newMark.detachedBy === baseMark.revision) {
+					if (newMark.detachedBy === baseIntention) {
 						getOrAddEffect(
 							moveEffects,
 							CrossFieldTarget.Source,
@@ -374,7 +376,7 @@ function composeMarks<TNodeChange>(
 				case "ReturnFrom": {
 					if (
 						baseMark.detachedBy === newIntention ||
-						newMark.detachedBy === baseMark.revision
+						newMark.detachedBy === baseIntention
 					) {
 						getOrAddEffect(
 							moveEffects,

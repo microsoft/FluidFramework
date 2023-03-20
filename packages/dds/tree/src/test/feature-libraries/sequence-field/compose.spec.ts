@@ -808,6 +808,13 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("return ○ return", () => {
+		const return1 = tagChange(Change.return(0, 1, 3, tag2), tag3, tag1);
+		const return2 = tagChange(Change.return(3, 1, 0, tag3), tag4, tag1);
+		const actual = shallowCompose([return1, return2]);
+		assert.deepEqual(actual, []);
+	});
+
 	it("move ○ move with no net effect (back and forward)", () => {
 		const move1 = Change.move(1, 1, 0);
 		const move2 = Change.move(0, 1, 1);

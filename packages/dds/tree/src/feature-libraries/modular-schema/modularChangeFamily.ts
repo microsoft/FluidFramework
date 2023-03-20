@@ -857,9 +857,6 @@ export class ModularChangeFamily
 	}
 }
 
-/**
- * @alpha
- */
 function getFieldsToAmend(
 	invalidatedFields: Set<FieldChange>,
 	baseMapToRebased: Map<FieldChangeMap, HasFieldChanges>,
