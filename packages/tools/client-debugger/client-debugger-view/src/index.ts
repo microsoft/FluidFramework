@@ -23,6 +23,8 @@
 export {
 	_AudienceView,
 	_AudienceViewProps,
+	_ContainerHistoryView,
+	_ContainerHistoryViewProps,
 	_ContainerSummaryView,
 	_ContainerSummaryViewProps,
 	_TelemetryView,

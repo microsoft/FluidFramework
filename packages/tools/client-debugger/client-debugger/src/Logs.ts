@@ -34,7 +34,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 /**
  * Represents a {@link @fluidframework/container-loader#ConnectionState} change.
  *
- * @internal
+ * @public
  */
 export interface ConnectionStateChangeLogEntry
 	extends StateChangeLogEntry<ContainerStateChangeKind> {

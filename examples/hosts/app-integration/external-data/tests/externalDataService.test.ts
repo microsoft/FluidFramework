@@ -16,9 +16,19 @@ import { externalDataServicePort } from "../src/mock-external-data-service-inter
 import {
 	ExternalDataSource,
 	initializeExternalDataService,
+	MockWebhook,
 } from "../src/mock-external-data-service";
-import { assertValidTaskData, TaskData } from "../src/model-interface";
+import { assertValidTaskData, ITaskData } from "../src/model-interface";
 import { closeServer } from "./utilities";
+
+const externalTaskListId = "task-list-1";
+
+const newData: ITaskData = {
+	42: {
+		name: "Determine meaning of life",
+		priority: 37,
+	},
+};
 
 describe("mock-external-data-service", () => {
 	/**
@@ -36,11 +46,20 @@ describe("mock-external-data-service", () => {
 	 */
 	let externalDataService: Server | undefined;
 
+	/**
+	 * Datastore mapping of external resource id to its subscribers.
+	 *
+	 * @defaultValue A new new map will be initialized.
+	 */
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
+
 	beforeEach(async () => {
 		externalDataSource = new ExternalDataSource();
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			externalDataSource,
+			webhookCollection,
 		});
 	});
 
@@ -55,8 +74,8 @@ describe("mock-external-data-service", () => {
 		await closeServer(_externalDataService);
 	});
 
-	async function getCurrentExternalData(): Promise<TaskData> {
-		const fetchResponse = await externalDataSource!.fetchData();
+	async function getCurrentExternalData(): Promise<ITaskData> {
+		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown
@@ -68,23 +87,17 @@ describe("mock-external-data-service", () => {
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
 	/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-
 	it("fetch-tasks: Ensure server yields the data we expect", async () => {
 		const expectedData = await getCurrentExternalData();
 		await request(externalDataService!)
-			.get("/fetch-tasks")
+			.get(`/fetch-tasks/${externalTaskListId}`)
 			.expect(200, { taskList: expectedData });
 	});
 
+	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
-		const newData: TaskData = {
-			42: {
-				name: "Determine meaning of life",
-				priority: 37,
-			},
-		};
 		await request(externalDataService!)
-			.post("/set-tasks")
+			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ taskList: newData })
 			.expect(200);
 
@@ -94,7 +107,10 @@ describe("mock-external-data-service", () => {
 
 	it("set-tasks: Ensure server rejects update with no data", async () => {
 		const oldData = await getCurrentExternalData();
-		await request(externalDataService!).post("/set-tasks").send().expect(400);
+		await request(externalDataService!)
+			.post(`/set-tasks/${externalTaskListId}`)
+			.send()
+			.expect(400);
 
 		const currentData = await getCurrentExternalData();
 		expect(currentData).toEqual(oldData); // Sanity check that we didn't blow away data
@@ -103,7 +119,7 @@ describe("mock-external-data-service", () => {
 	it("set-tasks: Ensure server rejects update with malformed data", async () => {
 		const oldData = await getCurrentExternalData();
 		await request(externalDataService!)
-			.post("/set-tasks")
+			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ tasks: "42:Determine meaning of life:37" })
 			.expect(400);
 
@@ -113,14 +129,14 @@ describe("mock-external-data-service", () => {
 
 	it("register-for-webhook: Registering valid URI succeeds", async () => {
 		await request(externalDataService!)
-			.post("/register-for-webhook")
+			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
 			.send({ url: "https://www.fluidframework.com" })
 			.expect(200);
 	});
 
 	it("register-for-webhook: Registering invalid URI fails", async () => {
 		await request(externalDataService!)
-			.post("/register-for-webhook")
+			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
 			.send({ url: "I am not a URI" })
 			.expect(400);
 	});
@@ -131,10 +147,13 @@ describe("mock-external-data-service", () => {
 
 describe("mock-external-data-service: webhook", () => {
 	let externalDataService: Server | undefined;
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
 	beforeEach(async () => {
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
+			webhookCollection,
 		});
 	});
 
@@ -174,7 +193,7 @@ describe("mock-external-data-service: webhook", () => {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						url: `http://localhost:${localServicePort}/broadcast-signal`,
+						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
 					}),
 				},
 			);
@@ -185,7 +204,7 @@ describe("mock-external-data-service: webhook", () => {
 
 			// Update external data
 			const dataUpdateResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/set-tasks`,
+				`http://localhost:${externalDataServicePort}/set-tasks/${externalTaskListId}`,
 				{
 					method: "POST",
 					headers: {

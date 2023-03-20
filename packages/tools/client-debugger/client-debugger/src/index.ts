@@ -69,6 +69,8 @@ export {
 	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
 	IDebuggerMessage,
 	GetContainerListMessage,
 	GetContainerStateMessage,

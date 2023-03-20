@@ -6,6 +6,7 @@
 
 import { AudienceChangeLogEntry } from '@fluid-tools/client-debugger';
 import { AudienceClientMetaData } from '@fluid-tools/client-debugger';
+import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
 import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -51,6 +52,14 @@ export const clientDebugViewClassName = "fluid-client-debugger-view";
 // @internal
 export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
+}
+
+// @public
+export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React_2.ReactElement;
+
+// @public
+export interface _ContainerHistoryViewProps {
+    containerHistory: readonly ConnectionStateChangeLogEntry[];
 }
 
 // @internal
