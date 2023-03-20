@@ -68,7 +68,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
 		const webhook = webhookCollection.get(externalTaskListId);
 		if (webhook === undefined) {
-			throw new Error(`No webhook subscribers for ${externalTaskListId}`);
+			return; // No subscribers for this task list
 		}
 		webhook.notifySubscribers(newData);
 	}

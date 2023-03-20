@@ -108,7 +108,6 @@ describe("mock-external-data-service", () => {
 		expect(currentData).toEqual(newData);
 	});
 
-	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure server rejects update with no data", async () => {
 		const oldData = await getCurrentExternalData();
 		await request(externalDataService!)
