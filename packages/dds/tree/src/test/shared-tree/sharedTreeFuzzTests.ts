@@ -195,10 +195,10 @@ function applyFuzzChange(
 		case "delete":
 			runSynchronous(tree, () => {
 				const field = tree.editor.sequenceField(
-					contents.firstNodePath?.parent,
-					contents.firstNodePath?.parentField,
+					contents.firstNode?.parent,
+					contents.firstNode?.parentField,
 				);
-				field.delete(contents.firstNodePath?.parentIndex, contents.count);
+				field.delete(contents.firstNode?.parentIndex, contents.count);
 				return transactionResult;
 			});
 			break;
