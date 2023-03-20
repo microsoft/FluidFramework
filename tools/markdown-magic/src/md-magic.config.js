@@ -424,7 +424,7 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js&start=1&end=-1) -->
 		 * ```
 		 */
 		INCLUDE: includeTransform,
