@@ -1,11 +1,11 @@
 name: "Merge Next Notifier"
 
 on:
-  pull_request_target:
+  pull_request:
     types: 
       - labeled
     branches:
-      - next
+      - main
 
 jobs:
   check-label:
