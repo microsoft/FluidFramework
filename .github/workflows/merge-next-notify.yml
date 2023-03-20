@@ -2,14 +2,16 @@ name: "Merge Next Notifier"
 
 on:
   pull_request:
-    types: [ labeled ]
+    types: 
+      - labeled
     branches:
       - next
 
 jobs:
-  build:
-    if: "${{ github.event.label.name == 'msftbot: merge-next' }}"
+  check-label:
+    name: Check Label
     runs-on: ubuntu-latest
+    if: "${{ github.event.label.name == 'msftbot: merge-next' }}"
 
     steps:
       - name: Notify in comment
