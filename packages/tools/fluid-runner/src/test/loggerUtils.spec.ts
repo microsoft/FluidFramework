@@ -8,6 +8,7 @@ import { strict as assert } from "assert";
 /* eslint-disable import/no-internal-modules */
 import { OutputFormat } from "../logger/fileLogger";
 import {
+	createLogger,
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
 } from "../logger/loggerUtils";
@@ -75,7 +76,7 @@ describe("logger utils", () => {
 		it("valid", () => {
 			const props = ["prop1", "value1", "prop2", 10.5];
 			{
-				const result = validateAndParseTelemetryOptions("CSV", props);
+				const result = validateAndParseTelemetryOptions("CSV", props, -2);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}
@@ -89,9 +90,10 @@ describe("logger utils", () => {
 					prop1: "value1",
 					prop2: 10.5,
 				});
+				assert.deepStrictEqual(telemetryOptions.eventsPerFlush, -2);
 			}
 			{
-				const result = validateAndParseTelemetryOptions("JSON", props);
+				const result = validateAndParseTelemetryOptions("JSON", props, -2);
 				if (!result.success) {
 					assert.fail(`unexpected error [${result.error}]`);
 				}
@@ -105,6 +107,7 @@ describe("logger utils", () => {
 					prop1: "value1",
 					prop2: 10.5,
 				});
+				assert.deepStrictEqual(telemetryOptions.eventsPerFlush, -2);
 			}
 		});
 
@@ -160,6 +163,27 @@ describe("logger utils", () => {
 				assert.deepStrictEqual(result.telemetryOptions.defaultProps, {
 					"prop1=aaa": 'aaa"bbb',
 				});
+			});
+		});
+
+		it("invalid eventsPerFlush", () => {
+			const result = validateAndParseTelemetryOptions(undefined, undefined, NaN);
+			assert(!result.success, "expected invalid eventsPerFlush");
+			assert(
+				result.error.includes("eventsPerFlush"),
+				`error message does not contain "eventsPerFlush" [${result.error}]`,
+			);
+		});
+	});
+
+	describe("createLogger", () => {
+		[-1, 0, 1, 25].forEach((eventsPerFlush) => {
+			it(`sets eventsPerFlush [${eventsPerFlush}] properly`, () => {
+				const { fileLogger } = createLogger("fake/path", {
+					outputFormat: OutputFormat.CSV,
+					eventsPerFlush,
+				});
+				assert.strictEqual((fileLogger as any).eventsPerFlush, eventsPerFlush);
 			});
 		});
 	});

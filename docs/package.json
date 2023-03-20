@@ -28,7 +28,7 @@
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
     "hugo": "hugo",
     "preinstall": "node ../scripts/only-pnpm.cjs",
-    "linkcheck": "start-server-and-test start 1313 linkcheck:full",
+    "linkcheck": "start-server-and-test start http://localhost:1313 linkcheck:full",
     "linkcheck:fast": "linkcheck http://localhost:1313 --skip-file skipped-urls.txt",
     "linkcheck:full": "npm run linkcheck:fast -- --external",
     "linkcheck:reflinks": "cross-env RG_PATH='./node_modules/@vscode/ripgrep/bin/rg' bash find-broken-reflinks.sh",
@@ -38,36 +38,49 @@
   },
   "dependencies": {
     "@fluid-tools/api-markdown-documenter": "^0.6.0",
-    "@microsoft/api-extractor-model": "^7.23.0",
+    "@microsoft/api-extractor-model": "^7.26.4",
     "@tylerbu/dl-cli": "1.1.2-tylerbu-0",
-    "@vscode/codicons": "0.0.28",
-    "@vscode/ripgrep": "^1.14.2",
+    "@vscode/codicons": "0.0.32",
+    "@vscode/ripgrep": "^1.15.0",
     "broken-link-checker": "^0.7.8",
-    "chalk": "^2.4.2",
-    "concurrently": "^6.5.1",
+    "chalk": "^4.1.2",
+    "concurrently": "^7.6.0",
     "copyfiles": "^2.4.1",
     "cpy": "^8.1.2",
     "cross-env": "^7.0.3",
     "deepdash": "^5.3.9",
-    "fs-extra": "^10.1.0",
+    "fs-extra": "^11.1.0",
     "glob": "^7.2.3",
-    "hugo-extended": "^0.93.3",
+    "hugo-extended": "^0.111.3",
     "linkcheck-bin": "3.0.0-0",
     "markdown-magic": "npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1",
     "markdown-magic-package-json": "^2.0.2",
     "markdown-magic-package-scripts": "^1.2.2",
     "markdown-magic-template": "^1.0.1",
-    "markdownlint-cli2": "^0.4.0",
+    "markdownlint-cli2": "^0.6.0",
     "markdownlint-rule-emphasis-style": "^1.0.1",
-    "markdownlint-rule-github-internal-links": "^0.0.2",
-    "markdownlint-rule-helpers": "^0.15.0",
+    "markdownlint-rule-github-internal-links": "^0.1.0",
+    "markdownlint-rule-helpers": "^0.18.0",
     "node-fetch": "^2.6.9",
     "pm2": "^5.2.2",
     "replace-in-file": "^6.3.5",
-    "rimraf": "^2.7.1",
+    "rimraf": "^4.4.0",
     "run-script-os": "^1.1.6",
     "serve": "^14.2.0",
     "shelljs": "^0.8.5",
-    "start-server-and-test": "^1.15.4"
+    "start-server-and-test": "^2.0.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "qs": "^6.11.0"
+    },
+    "updateConfig": {
+      "ignoreDependencies": [
+        "chalk",
+        "cpy",
+        "glob",
+        "node-fetch"
+      ]
+    }
   }
 }
