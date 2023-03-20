@@ -136,6 +136,7 @@ export interface PolicyConfig {
 	dependencies?: {
 		requireTilde?: string[];
 	};
+  exclusions?: string[];
 }
 
 /**

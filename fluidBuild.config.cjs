@@ -43,6 +43,16 @@ module.exports = {
 
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
+		exclusions: [
+			"docs/layouts/",
+			"docs/themes/thxvscode/assets/",
+			"docs/themes/thxvscode/layouts/",
+			"docs/themes/thxvscode/static/assets/",
+			"docs/tutorials/.*\\.tsx?",
+			"azure/packages/azure-local-service/src/index.ts",
+			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
+			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+		],
 		dependencies: {
 			// Packages require tilde dependencies
 			requireTilde: [
@@ -59,6 +69,19 @@ module.exports = {
 				"webpack-dev-server",
 			],
 		},
+		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
+		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
+		// pnpm workspaces should have.
+		pnpmSinglePackageWorkspace: [
+			"@fluid-tools/api-markdown-documenter",
+			"@fluid-tools/benchmark",
+			"@fluidframework/build-common",
+			"@fluidframework/common-definitions",
+			"@fluidframework/common-utils",
+			"@fluidframework/eslint-config-fluid",
+			"@fluidframework/protocol-definitions",
+			"@fluidframework/test-tools",
+		],
 	},
 
 	// This defines the branch release types for type tests. It applies only to the client release group. Settings for
