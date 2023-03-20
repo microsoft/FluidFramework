@@ -38,6 +38,13 @@ export class ClientManager<TData = unknown> {
 		this._clientMapping = new Map<ClientSessionUrl, Set<ExternalTaskListId>>();
 		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionUrl>>();
 	}
+	/**
+	 * Gets the current list of client session URLs for the specified task list id.
+	 */
+	public getClientSessions(externalTaskListId: ExternalTaskListId): Set<ClientSessionUrl> {
+		const clientSessionUrls = this._taskListMapping.get(externalTaskListId);
+		return clientSessionUrls ?? new Set<ClientSessionUrl>();
+	}
 
 	/**
 	 * Returns a boolean if externalTaskListId already exists entry exists. This means that the customer service

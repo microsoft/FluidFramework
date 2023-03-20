@@ -20,5 +20,6 @@ export {
 	ILoaderServices,
 	Loader,
 	RelativeLoader,
+	requestResolvedObjectFromContainer,
 } from "./loader";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
