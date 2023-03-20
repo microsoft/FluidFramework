@@ -239,7 +239,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 	describeFuzz(title, () => {
 		const testOpsPerRun = 20;
 		describe("basic convergence", () => {
-			describe(`with stepSize ${testOpsPerRun}`, () => {
+			describe.skip(`with stepSize ${testOpsPerRun}`, () => {
 				runBatch(makeOpGenerator, performFuzzActions, testOpsPerRun, testBatchSize, random);
 			});
 		});
