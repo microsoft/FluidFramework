@@ -596,6 +596,7 @@ export class DetachedNodeTracker {
 								new: {
 									rev:
 										change.intention ??
+										mark.revision ??
 										change.revision ??
 										fail("Unable to track detached nodes"),
 									index: k,

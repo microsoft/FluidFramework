@@ -775,8 +775,8 @@ function handleCurrAttach<T>(
 ) {
 	const rebasedMark = cloneMark(currMark);
 
-	// If the changeset we are rebasing over is the inverse of an event in rebasedMark's lineage,
-	// we remove the lineage event.
+	// If the changeset we are rebasing over has the same intention as an event in rebasedMark's lineage,
+	// we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.
 	// TODO: Handle cases where the base changeset is a composition of multiple revisions.
 	// TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset,
 	// e.g., if the inverse of the lineage event is muted after rebasing.
