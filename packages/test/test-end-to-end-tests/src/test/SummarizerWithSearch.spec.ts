@@ -86,7 +86,6 @@ async function loadSummarizer(
 	loaderProps?: Partial<ILoaderProps>,
 ) {
 	const requestHeader = {
-		[LoaderHeader.cache]: false,
 		[LoaderHeader.clientDetails]: {
 			capabilities: { interactive: true },
 			type: "summarizer",

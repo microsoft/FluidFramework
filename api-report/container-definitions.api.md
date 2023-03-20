@@ -413,8 +413,6 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
 // @public
 export interface ILoaderHeader {
     // (undocumented)
-    [LoaderHeader.cache]: boolean;
-    // (undocumented)
     [LoaderHeader.clientDetails]: IClientDetails;
     // (undocumented)
     [LoaderHeader.reconnect]: boolean;
@@ -527,7 +525,6 @@ export interface IUsageError extends IErrorBase {
 
 // @public
 export enum LoaderHeader {
-    cache = "fluid-cache",
     // (undocumented)
     clientDetails = "fluid-client-details",
     loadMode = "loadMode",

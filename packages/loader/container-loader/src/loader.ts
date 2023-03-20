@@ -39,14 +39,6 @@ import { IParsedUrl, parseUrl } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
 
-function canUseCache(request: IRequest): boolean {
-	if (request.headers === undefined) {
-		return true;
-	}
-
-	return request.headers[LoaderHeader.cache] !== false;
-}
-
 /**
  * @deprecated - In the next release RelativeLoader will no longer be exported. It is an internal class that should not be used directly.
  */
@@ -62,20 +54,16 @@ export class RelativeLoader implements ILoader {
 
 	public async resolve(request: IRequest): Promise<IContainer> {
 		if (request.url.startsWith("/")) {
-			if (canUseCache(request)) {
-				return this.container;
-			} else {
-				const resolvedUrl = this.container.resolvedUrl;
-				ensureFluidResolvedUrl(resolvedUrl);
-				const container = await Container.load(this.loader as Loader, {
-					canReconnect: request.headers?.[LoaderHeader.reconnect],
-					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-					resolvedUrl: { ...resolvedUrl },
-					version: request.headers?.[LoaderHeader.version] ?? undefined,
-					loadMode: request.headers?.[LoaderHeader.loadMode],
-				});
-				return container;
-			}
+			const resolvedUrl = this.container.resolvedUrl;
+			ensureFluidResolvedUrl(resolvedUrl);
+			const container = await Container.load(this.loader as Loader, {
+				canReconnect: request.headers?.[LoaderHeader.reconnect],
+				clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
+				resolvedUrl: { ...resolvedUrl },
+				version: request.headers?.[LoaderHeader.version] ?? undefined,
+				loadMode: request.headers?.[LoaderHeader.loadMode],
+			});
+			return container;
 		}
 
 		if (this.loader === undefined) {
