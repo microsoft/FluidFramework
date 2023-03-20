@@ -6,20 +6,24 @@
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { IClient, IClientJoin, ScopeType } from "@fluidframework/protocol-definitions";
-import { validateTokenClaimsExpiration } from "@fluidframework/server-services-client";
+import {
+	BasicRestWrapper,
+	validateTokenClaimsExpiration,
+} from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import {
 	validateTokenClaims,
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
+	getCorrelationId,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
-import requestAPI from "request";
 import winston from "winston";
+import { v4 as uuid } from "uuid";
 import { Constants } from "../../../utils";
 import {
 	craftClientJoinMessage,
@@ -236,24 +240,19 @@ async function checkDocumentExistence(
 const uploadBlob = async (
 	uri: string,
 	blobData: git.ICreateBlobParams,
-): Promise<git.ICreateBlobResponse> =>
-	new Promise<git.ICreateBlobResponse>((resolve, reject) => {
-		requestAPI(
-			{
-				body: blobData,
-				headers: {
-					"Content-Type": "application/json",
-				},
-				json: true,
-				method: "POST",
-				uri,
-			},
-			(err, resp, body) => {
-				if (err) {
-					reject(err);
-				} else {
-					resolve(body as git.ICreateBlobResponse);
-				}
-			},
-		);
+): Promise<git.ICreateBlobResponse> => {
+	const restWrapper = new BasicRestWrapper(
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		undefined,
+		() => getCorrelationId() || uuid(),
+	);
+	return restWrapper.post(uri, blobData, undefined, {
+		"Content-Type": "application/json",
 	});
+};
