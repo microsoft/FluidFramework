@@ -159,6 +159,7 @@ export class PendingStateManager implements IDisposable {
 						(initialState as IPendingMessageOld).messageType !== undefined &&
 						typeof initialState.content !== "string"
 					) {
+						// Convert IPendingMessageOld to IPendingMessageNew
 						messageContent = JSON.stringify({
 							type: (initialState as IPendingMessageOld).messageType,
 							contents: initialState.content,
