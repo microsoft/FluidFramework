@@ -10,6 +10,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': ^0.12.0
+      '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.12.0
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.21.6
@@ -30,6 +31,7 @@ importers:
       typescript: ~4.5.5
     devDependencies:
       '@fluid-tools/build-cli': 0.12.0
+      '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.12.0
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.21.6
