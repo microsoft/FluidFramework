@@ -33,10 +33,10 @@ import {
 } from "../../../feature-libraries/editable-tree/utilities";
 import {
 	arraySchema,
+	buildTestSchema,
 	int32Schema,
 	mapStringSchema,
 	optionalChildSchema,
-	schemaMap,
 	stringSchema,
 } from "./mockData";
 
@@ -70,11 +70,7 @@ describe("editable-tree utilities", () => {
 		};
 
 		const rootSchema = fieldSchema(FieldKinds.value, [arraySchema.name]);
-
-		const fullSchemaData: SchemaData = {
-			treeSchema: schemaMap,
-			globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
-		};
+		const fullSchemaData: SchemaData = buildTestSchema(rootSchema);
 		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
 		assert.deepEqual(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), rootSchema);
 		assert.throws(

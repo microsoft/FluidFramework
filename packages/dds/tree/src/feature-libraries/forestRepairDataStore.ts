@@ -68,16 +68,10 @@ export class ForestRepairDataStore implements RepairDataStore {
 					// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 					const type = mark.type;
 					switch (type) {
-						case Delta.MarkType.ModifyAndMoveOut:
-						case Delta.MarkType.ModifyAndDelete: {
-							const child = parent.getOrCreateChild(key, index, repairDataFactory);
-							visitModify(mark, child);
-							onDelete(parent, key, index, 1);
-							index += 1;
-							break;
-						}
 						case Delta.MarkType.MoveOut:
 						case Delta.MarkType.Delete: {
+							const child = parent.getOrCreateChild(key, index, repairDataFactory);
+							visitModify(mark, child);
 							onDelete(parent, key, index, mark.count);
 							index += mark.count;
 							break;
@@ -91,7 +85,6 @@ export class ForestRepairDataStore implements RepairDataStore {
 							break;
 						}
 						case Delta.MarkType.Insert:
-						case Delta.MarkType.InsertAndModify:
 						case Delta.MarkType.MoveIn:
 							break;
 						default:
@@ -101,11 +94,11 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
-		function visitModify(modify: ModifyLike, node: RepairDataNode): void {
-			// Note that the `in` operator return true for properties that are present on the object even if they
-			// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
-			// `undefined` as opposed to leaving the value untouched.
-			if ("setValue" in modify) {
+		function visitModify(modify: Delta.HasModifications, node: RepairDataNode): void {
+			// Note that the check below returns true for properties that are present on the object even if they
+			// are set to `undefined`. This is leveraged here to represent the fact that the value should be set to
+			// `undefined` as opposed to leaving the value unchanged.
+			if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
 				if (node.data === undefined) {
 					node.data = repairDataFactory();
 				}
@@ -184,9 +177,4 @@ export class ForestRepairDataStore implements RepairDataStore {
 		assert(valueMap?.has(revision) === true, 0x47e /* No repair data found */);
 		return valueMap.get(revision);
 	}
-}
-
-interface ModifyLike {
-	setValue?: Value;
-	fields?: Delta.FieldMarks;
 }

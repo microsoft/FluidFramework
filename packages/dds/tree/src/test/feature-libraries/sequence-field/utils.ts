@@ -131,7 +131,14 @@ export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>)
 	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, moveEffects, metadata);
+		rebasedChange = SF.amendRebase(
+			rebasedChange,
+			base,
+			(a, b) => a,
+			idAllocator,
+			moveEffects,
+			metadata,
+		);
 		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
