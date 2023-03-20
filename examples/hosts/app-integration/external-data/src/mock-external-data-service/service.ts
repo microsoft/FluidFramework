@@ -34,6 +34,14 @@ export interface ServiceProps {
 	 * @defaultValue A new data source will be initialized.
 	 */
 	externalDataSource?: ExternalDataSource;
+
+	/**
+	 * Map of ExternalTaskListId string with a webbook that contains all the subscribers of that external task list id.
+	 * In this implementation this stays in memory but for production it makes sense to keep this in a more redundant
+	 * memory store like redis. In the implementation of using an external redundant memory source, this will be passed
+	 * into the service.
+	 */
+	webhookCollection: Map<ExternalTaskListId, MockWebhook<ITaskData>>;
 }
 
 /**
@@ -43,11 +51,6 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	const { port } = props;
 	const externalDataSource: ExternalDataSource =
 		props.externalDataSource ?? new ExternalDataSource();
-	/**
-	 * Map of ExternalTaskListId string with a webbook that contains all the subscribers of that external task list id.
-	 * In this implementation this stays in memory but for production it makes sense to keep this in a more redundant
-	 * memory store like redis.
-	 */
 	const webhookCollection = new Map<ExternalTaskListId, MockWebhook<ITaskData>>();
 
 	/**

@@ -16,6 +16,8 @@ import { customerServicePort } from "../src/mock-customer-service-interface";
 import { initializeExternalDataService } from "../src/mock-external-data-service";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface";
 import { closeServer } from "./utilities";
+import { MockWebhook } from "../src/mock-external-data-service/webhook";
+import { ITaskData } from "../src/model-interface";
 
 const localServicePort = 5002;
 const externalTaskListId = "task-list-1";
@@ -36,9 +38,18 @@ describe("mock-customer-service", () => {
 	 */
 	let customerService: Server | undefined;
 
+	/**
+	 * Datastore mapping of external resource id to its subscribers.
+	 *
+	 * @defaultValue A new new map will be initialized.
+	 */
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
+
+
 	beforeEach(async () => {
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
+			webhookCollection,
 		});
 		customerService = await initializeCustomerService({
 			port: customerServicePort,

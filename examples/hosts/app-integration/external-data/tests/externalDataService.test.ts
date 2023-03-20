@@ -18,6 +18,7 @@ import {
 	initializeExternalDataService,
 } from "../src/mock-external-data-service";
 import { assertValidTaskData, ITaskData } from "../src/model-interface";
+import { MockWebhook } from "../src/mock-external-data-service/webhook";
 import { closeServer } from "./utilities";
 
 const externalTaskListId = "task-list-1";
@@ -37,11 +38,19 @@ describe("mock-external-data-service", () => {
 	 */
 	let externalDataService: Server | undefined;
 
+	/**
+	 * Datastore mapping of external resource id to its subscribers.
+	 *
+	 * @defaultValue A new new map will be initialized.
+	 */
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
+
 	beforeEach(async () => {
 		externalDataSource = new ExternalDataSource();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			externalDataSource,
+			webhookCollection,
 		});
 	});
 
@@ -69,15 +78,6 @@ describe("mock-external-data-service", () => {
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
 	/* eslint-disable @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
-
-	// TODO: write a test for register-for-webhook that works
-	// it("register-for-webhook: Ensure we can register for webhook", async () => {
-	// 	await request(externalDataService!)
-	// 		.post(`/register-for-webhook`)
-	// 		.send({subscriberUrl: `fluid://localhost:8080/fdsfd-dsfds-sdfsfd-sdfsf&externalTaskListId=${externalTaskListId}`})
-	// 		.expect(200);
-	// });
-
 	it("fetch-tasks: Ensure server yields the data we expect", async () => {
 		const expectedData = await getCurrentExternalData();
 		await request(externalDataService!)
@@ -93,6 +93,13 @@ describe("mock-external-data-service", () => {
 				priority: 37,
 			},
 		};
+		// First register a subscriber so that set-tasks does not error on finding
+		// a subscriber
+		await request(externalDataService!)
+		.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
+		.send({ url: "https://www.fluidframework.com" })
+		.expect(200);
+
 		await request(externalDataService!)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ taskList: newData })
@@ -102,8 +109,18 @@ describe("mock-external-data-service", () => {
 		expect(currentData).toEqual(newData);
 	});
 
+	
+	// TODO: figure out a way to mock the webhookCollection or instantiate in the tests so that this test passes
 	it("set-tasks: Ensure server rejects update with no data", async () => {
 		const oldData = await getCurrentExternalData();
+
+		// First register a subscriber so that set-tasks does not error on finding
+		// a subscriber
+		await request(externalDataService!)
+		.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
+		.send({ url: "https://www.fluidframework.com" })
+		.expect(200);
+
 		await request(externalDataService!)
 			.post(`/set-tasks/${externalTaskListId}`)
 			.send()
@@ -144,10 +161,12 @@ describe("mock-external-data-service", () => {
 
 describe("mock-external-data-service: webhook", () => {
 	let externalDataService: Server | undefined;
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
 	beforeEach(async () => {
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
+			webhookCollection,
 		});
 	});
 
