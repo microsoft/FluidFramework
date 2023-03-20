@@ -8,12 +8,48 @@
  */
 
 export {
+	ApiFunctionLike,
+	ApiMemberKind,
+	ApiModuleLike,
+	ApiSignatureLike,
+	ApiModifier,
+	doesItemRequireOwnDocument,
+	getDefaultValueBlock,
+	getDeprecatedBlock,
+	getExampleBlocks,
+	getFilePathForApiItem,
+	getHeadingForApiItem,
+	getLinkForApiItem,
+	getModifiers,
+	getQualifiedApiItemName,
+	getReturnsBlock,
+	getSeeBlocks,
+	getThrowsBlocks,
+	getUnscopedPackageName,
+	isDeprecated,
+	isOptional,
+	isReadonly,
+	isStatic,
+} from "./ApiItemUtilities";
+export {
 	ApiItemTransformationConfiguration,
+	ApiItemTransformationOptions,
 	CreateChildContentSections,
-	defaultApiItemTransformations,
+	// Consumers should not use this, it exists externally for documentation purposes only.
+	type DefaultDocumentationSuiteOptions,
+	DocumentationSuiteOptions,
+	DocumentBoundaries,
+	FileNamePolicy,
+	FrontMatterPolicy,
+	getApiItemTransformationConfigurationWithDefaults,
+	HeadingTitlePolicy,
+	HierarchyBoundaries,
+	LinkTextPolicy,
+	PackageFilterPolicy,
 	TransformApiItemWithChildren,
 	TransformApiItemWithoutChildren,
-} from "./Configuration";
+	UriBaseOverridePolicy,
+} from "./configuration";
 export { transformDocNode } from "./DocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";
 export { apiPackageToDocument } from "./TransformApiPackage";

@@ -16,7 +16,7 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
-import { ApiModuleLike, filterByKind } from "../../utilities";
+import { ApiModuleLike, filterByKind } from "../ApiItemUtilities";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**
@@ -40,7 +40,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  *
  * - namespaces
  *
- * Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteOptions.documentBoundaries})
  *
  * - interfaces
  *

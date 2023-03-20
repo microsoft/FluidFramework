@@ -24,7 +24,7 @@ import {
 
 import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { doesItemRequireOwnDocument } from "../utilities";
+import { doesItemRequireOwnDocument } from "./ApiItemUtilities";
 import { createDocument } from "./Utilities";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
 
@@ -35,7 +35,7 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
  *
  * This should only be called for API item kinds that are intended to be rendered to their own document
  * (as opposed to being rendered to the same document as their parent) per the provided `config`
- * (see {@link PolicyOptions.documentBoundaries}).
+ * (see {@link DocumentationSuiteOptions.documentBoundaries}).
  *
  * Also note that this should not be called for the following item kinds, which must be handled specially:
  *

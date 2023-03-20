@@ -18,11 +18,22 @@
 
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
+	type ApiMemberKind,
 	type CreateChildContentSections,
-	defaultApiItemTransformations,
+	type DefaultDocumentationSuiteOptions,
+	type DocumentationSuiteOptions,
+	type DocumentBoundaries,
+	type FileNamePolicy,
+	type FrontMatterPolicy,
+	type HeadingTitlePolicy,
+	type HierarchyBoundaries,
+	type LinkTextPolicy,
+	type PackageFilterPolicy,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformDocNode,
+	type UriBaseOverridePolicy,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.
@@ -44,30 +55,6 @@ export {
 export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
 
 export {
-	type ApiFunctionLike,
-	type ApiMemberKind,
-	type ApiModuleLike,
-	type ApiSignatureLike,
-	type ApiModifier,
-	getDefaultValueBlock,
-	getDeprecatedBlock,
-	getExampleBlocks,
-	getFilePathForApiItem,
-	getHeadingForApiItem,
-	getLinkForApiItem,
-	getModifiers,
-	getQualifiedApiItemName,
-	getReturnsBlock,
-	getSeeBlocks,
-	getThrowsBlocks,
-	getUnscopedPackageName,
-	isDeprecated,
-	isOptional,
-	isReadonly,
-	isStatic,
-} from "./utilities";
-
-export {
 	MarkdownDocumenterConfiguration,
 	markdownDocumenterConfigurationWithDefaults,
 } from "./Configuration";
@@ -80,19 +67,7 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
-export {
-	DefaultPolicies,
-	defaultPolicyOptions,
-	type DocumentBoundaries,
-	type FileNamePolicy,
-	type FrontMatterPolicy,
-	type HeadingTitlePolicy,
-	type HierarchyBoundaries,
-	type LinkTextPolicy,
-	type PackageFilterPolicy,
-	type PolicyOptions,
-	type UriBaseOverridePolicy,
-} from "./Policies";
+export {} from "./api-item-transforms";
 
 // Conveinence re-exports of API model types
 export type { ApiItem, ApiItemKind, ApiModel, ApiPackage } from "@microsoft/api-extractor-model";

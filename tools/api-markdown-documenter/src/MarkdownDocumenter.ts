@@ -11,10 +11,14 @@ import {
 	MarkdownDocumenterConfiguration,
 	markdownDocumenterConfigurationWithDefaults,
 } from "./Configuration";
-import { apiItemToDocument, apiModelToDocument, apiPackageToDocument } from "./api-item-transforms";
+import {
+	apiItemToDocument,
+	apiModelToDocument,
+	apiPackageToDocument,
+	doesItemRequireOwnDocument,
+} from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
 import { MarkdownRenderers, renderDocument } from "./markdown-renderer";
-import { doesItemRequireOwnDocument } from "./utilities";
 
 /**
  * This module contains the primary rendering entrypoints to the system.
@@ -33,7 +37,7 @@ import { doesItemRequireOwnDocument } from "./utilities";
  *
  * @remarks
  * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link PolicyOptions.documentBoundaries}.
+ * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
  * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
  * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
@@ -89,13 +93,13 @@ export function transformApiModel(partialConfig: MarkdownDocumenterConfiguration
  *
  * @remarks
  * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link PolicyOptions.documentBoundaries}.
+ * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
  * The file paths under which the files will be saved is determined by the provided output path and the
  * following configuration properties:
  *
- * - {@link PolicyOptions.documentBoundaries}
- * - {@link PolicyOptions.hierarchyBoundaries}
+ * - {@link DocumentationSuiteOptions.documentBoundaries}
+ * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
  * @param apiModel - The API model being processed.
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.

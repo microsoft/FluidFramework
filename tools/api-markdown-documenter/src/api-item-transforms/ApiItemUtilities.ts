@@ -26,10 +26,13 @@ import {
 import { DocSection, StandardTags } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { Heading } from "../Heading";
 import { Link } from "../Link";
-import { DocumentBoundaries, HierarchyBoundaries } from "../Policies";
+import {
+	ApiItemTransformationConfiguration,
+	DocumentBoundaries,
+	HierarchyBoundaries,
+} from "./configuration";
 
 /**
  * Represents "member" API item kinds.
@@ -156,12 +159,12 @@ export function getFirstAncestorWithOwnDocument(
  * information to link to the appropriate heading.
  *
  * @param apiItem - The API item for which we are generating the link.
- * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param config - See {@link ApiItemTransformationConfiguration}
  * @param textOverride - Text to use in the link. If not provided, the default item name/signature will be used.
  */
 export function getLinkForApiItem(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	textOverride?: string,
 ): Link {
 	const text = textOverride ?? config.linkTextPolicy(apiItem);
@@ -180,11 +183,11 @@ export function getLinkForApiItem(
  * information to link to the appropriate heading.
  *
  * @param apiItem - The API item for which we are generating the link.
- * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param config - See {@link ApiItemTransformationConfiguration}
  */
 export function getLinkUrlForApiItem(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): string {
 	const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
 	let documentPath = getApiItemPath(apiItem, config, /* includeExtension: */ false).join("/");
@@ -222,14 +225,14 @@ export function getUnscopedPackageName(apiPackage: ApiPackage): string {
  * In the case of an item that does not get rendered to its own document, this will point to the document
  * of the ancestor item under which the provided item will be rendered.
  *
- * The generated path is relative to {@link MarkdownDocumenterConfiguration.uriRoot}.
+ * The generated path is relative to {@link ApiItemTransformationConfiguration.uriRoot}.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function getFilePathForApiItem(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): string {
 	const pathSegments = getApiItemPath(apiItem, config, true);
 	return Path.join(...pathSegments);
@@ -239,12 +242,12 @@ export function getFilePathForApiItem(
  * Gets the path to the specified API item, represented as an ordered list of path segments.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the path.
  */
 function getApiItemPath(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	includeExtension: boolean,
 ): string[] {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
@@ -273,12 +276,12 @@ function getApiItemPath(
  * To get the path, use {@link getFilePathForApiItem}.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param includeExtension - Whether or not to include the `.md` file extension at the end of the file name.
  */
 export function getFileNameForApiItem(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	includeExtension: boolean,
 ): string {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
@@ -334,14 +337,14 @@ export function getFileNameForApiItem(
  * Generates a {@link Heading} for the specified API item.
  *
  * @param apiItem - The API item for which the heading is being generated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param headingLevel - Heading level to use.
  * If not specified, the heading level will be automatically generated based on the item's context in the resulting
  * document.
  */
 export function getHeadingForApiItem(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	headingLevel?: number,
 ): Heading {
 	// Don't generate an ID for the root heading
@@ -369,13 +372,13 @@ export function getHeadingForApiItem(
  * hierarchical information up to the ancester item whose document the specified item will ultimately be rendered to.
  *
  * @param apiItem - The API item for which the heading ID is being generated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns A unique heading ID for the API item if one is needed. Otherwise, `undefined`.
  */
 export function getHeadingIdForApiItem(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): string {
 	let baseName: string | undefined;
 	const apiItemKind: ApiItemKind = apiItem.kind;
@@ -461,7 +464,7 @@ export function getAncestralHierarchy(
 /**
  * Determines whether or not the specified API item kind is one that should be rendered to its own document.
  *
- * @remarks This is essentially a wrapper around {@link PolicyOptions.documentBoundaries}, but also enforces
+ * @remarks This is essentially a wrapper around {@link DocumentationSuiteOptions.documentBoundaries}, but also enforces
  * system-wide invariants.
  *
  * Namely...
@@ -509,7 +512,7 @@ export function doesItemRequireOwnDocument(
  * in the resulting documentation suite.
  * I.e. whether or not child item documents should be generated under a sub-directory adjacent to the item in question.
  *
- * @remarks This is essentially a wrapper around {@link PolicyOptions.hierarchyBoundaries}, but also enforces
+ * @remarks This is essentially a wrapper around {@link DocumentationSuiteOptions.hierarchyBoundaries}, but also enforces
  * system-wide invariants.
  *
  * Namely...
@@ -604,14 +607,14 @@ function getCustomBlockSectionsForMultiInstanceTags(
  * @param apiItem - The API item whose documentation is being queried.
  * @param tagName - The TSDoc tag name being queried for.
  * Must start with `@`. See {@link https://tsdoc.org/pages/spec/tag_kinds/#block-tags}.
- * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param config - See {@link ApiItemTransformationConfiguration}
  *
  * @returns The list of comment blocks with the matching tag, if any. Otherwise, `undefined`.
  */
 function getCustomBlockSectionForSingleInstanceTag(
 	apiItem: ApiItem,
 	tagName: string,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocSection | undefined {
 	const blocks = getCustomBlockSectionsForMultiInstanceTags(apiItem, tagName);
 	if (blocks === undefined) {
@@ -669,13 +672,13 @@ export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined {
  * if it has one.
  *
  * @param apiItem - The API item whose documentation is being queried.
- * @param config - See {@link MarkdownDocumenterConfiguration}
+ * @param config - See {@link ApiItemTransformationConfiguration}
  *
  * @returns The `@defaultValue` comment block section, if the API item has one. Otherwise, `undefined`.
  */
 export function getDefaultValueBlock(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocSection | undefined {
 	return getCustomBlockSectionForSingleInstanceTag(
 		apiItem,

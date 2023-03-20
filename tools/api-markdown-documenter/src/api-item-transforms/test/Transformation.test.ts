@@ -32,7 +32,7 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain";
-import { getHeadingForApiItem } from "../../utilities";
+import { getHeadingForApiItem } from "../ApiItemUtilities";
 import { apiItemToSections } from "../TransformApiItem";
 import { wrapInSection } from "../helpers";
 

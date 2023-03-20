@@ -4,7 +4,7 @@
  */
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
-import { ApiFunctionLike } from "../../utilities";
+import { ApiFunctionLike } from "../ApiItemUtilities";
 import { createParametersSection, createReturnsSection } from "../helpers";
 
 /**

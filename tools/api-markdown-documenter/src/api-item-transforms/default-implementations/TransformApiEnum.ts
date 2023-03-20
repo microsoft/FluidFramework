@@ -6,7 +6,7 @@ import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-ext
 
 import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { DocumentationNode, SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../../utilities";
+import { filterByKind } from "../ApiItemUtilities";
 import { createMemberTables, wrapInSection } from "../helpers";
 
 /**

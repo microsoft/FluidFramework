@@ -23,9 +23,9 @@ import {
 	ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
-import { SectionNode } from "../documentation-domain";
-import * as DefaultTransformationImplementations from "./default-implementations";
+import { MarkdownDocumenterConfiguration } from "../../Configuration";
+import { SectionNode } from "../../documentation-domain";
+import * as DefaultTransformationImplementations from "../default-implementations";
 
 /**
  * This module contains transformation-policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
@@ -63,12 +63,9 @@ export type CreateChildContentSections = (
 /**
  * Policies for transforming different kinds of API content into {@link DocumentationNode} trees.
  *
- * @remarks
- *
- * For any policies not explicitly provided, {@link defaultApiItemTransformations} will be used to
- * supply defaults.
+ * @remarks For any transformation not explicitly configured, a default will be used.
  */
-export interface ApiItemTransformationConfiguration {
+export interface ApiItemTransformationOptions {
 	/**
 	 * Policy for transforming a section describing a `Call Signature`.
 	 */
@@ -166,7 +163,7 @@ export interface ApiItemTransformationConfiguration {
 /**
  * The default {@link ApiItemTransformationConfiguration}.
  */
-export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration> = {
+const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions> = {
 	/**
 	 * Default policy for transforming `Call Signature`s.
 	 */
@@ -248,3 +245,16 @@ export const defaultApiItemTransformations: Required<ApiItemTransformationConfig
 	 */
 	createChildContentSections: DefaultTransformationImplementations.createSectionWithChildContent,
 };
+
+/**
+ * Gets a complete {@link ApiItemTransformationOptions} using the provided partial configuration, and filling
+ * in the remainder with the documented defaults.
+ */
+export function getApiItemTransformationOptionsWithDefaults(
+	inputOptions: ApiItemTransformationOptions,
+): Required<ApiItemTransformationOptions> {
+	return {
+		...defaultApiItemTransformationOptions,
+		...inputOptions,
+	};
+}
