@@ -5,10 +5,13 @@
 ```ts
 
 import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
-import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
+import { HasContainerId } from '@fluid-tools/client-debugger';
+import { IBaseDebuggerMessage } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
+import { IDebuggerMessage } from '@fluid-tools/client-debugger';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
+import { IMessageRelay } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { default as React_2 } from 'react';
@@ -26,33 +29,12 @@ export interface AudienceMemberViewProps {
     myClientId: string | undefined;
 }
 
-// @internal
-export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
-
-// @internal
-export const clientDebugViewClassName = "fluid-client-debugger-view";
-
-// @internal
-export interface ClientDebugViewProps extends HasClientDebugger {
-    renderOptions?: RenderOptions;
-}
-
 // @public
 export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React_2.ReactElement;
 
 // @public
 export interface _ContainerHistoryViewProps {
     containerHistory: readonly ConnectionStateChangeLogEntry[];
-}
-
-// @internal
-export function ContainerSelectionDropdown(props: ContainerSelectionDropdownProps): React_2.ReactElement;
-
-// @internal
-export interface ContainerSelectionDropdownProps {
-    initialSelection?: string;
-    onChangeSelection(containerId: string | undefined): void;
-    options: ContainerMetadata[];
 }
 
 // @public
@@ -62,10 +44,18 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React_2.
 export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
 
 // @public
-export type ContainerSummaryViewProps = HasClientDebugger;
+export type ContainerSummaryViewProps = HasContainerId;
 
 // @public
 export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {
+}
+
+// @internal
+export function ContainerView(props: ContainerViewProps): React_2.ReactElement;
+
+// @internal
+export interface ContainerViewProps extends HasContainerId {
+    renderOptions?: RenderOptions;
 }
 
 // @public
@@ -94,15 +84,16 @@ export interface IContainerActions {
     tryConnect?: () => void;
 }
 
-// @internal
-export function MainView(): React_2.ReactElement;
+export { IMessageRelay }
+
+// @public
+export const MessageRelayContext: React_2.Context<IMessageRelay<IBaseDebuggerMessage<unknown>, IDebuggerMessage<unknown>> | undefined>;
 
 // @internal
 export enum PanelView {
     Audience = "Audience",
     ContainerData = "Data",
-    ContainerStateHistory = "States",
-    Telemetry = "Telemetry"
+    ContainerStateHistory = "States"
 }
 
 // @internal
@@ -146,6 +137,17 @@ export function _TelemetryView(props: _TelemetryViewProps): React_2.ReactElement
 export interface _TelemetryViewProps {
     // (undocumented)
     telemetryEvents: ITelemetryBaseEvent[];
+}
+
+// @public
+export function useMessageRelay(): IMessageRelay;
+
+// @public
+export function Waiting(props: WaitingProps): React_2.ReactElement;
+
+// @public
+export interface WaitingProps {
+    label?: string;
 }
 
 ```

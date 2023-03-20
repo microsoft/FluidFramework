@@ -7,7 +7,15 @@ import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fl
 import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
-import { ContainerStateChangeMessage, ContainerStateMetadata, handleIncomingMessage, HasContainerId, IDebuggerMessage, IMessageRelay, InboundHandlers } from "@fluid-tools/client-debugger";
+import {
+	ContainerStateChangeMessage,
+	ContainerStateMetadata,
+	handleIncomingMessage,
+	HasContainerId,
+	IDebuggerMessage,
+	IMessageRelay,
+	InboundHandlers,
+} from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 

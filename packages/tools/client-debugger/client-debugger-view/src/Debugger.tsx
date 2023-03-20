@@ -162,14 +162,12 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 		>
 			<Stack enableScopedSelectors horizontal styles={stackStyles}>
 				<Stack.Item grow={1} styles={menuStyles}>
-					{ /* TODO: button to refresh list of containers */}
+					{/* TODO: button to refresh list of containers */}
 					<MenuSection header="Containers">
 						{containers.map((container) => (
 							<MenuItem
 								key={container.id}
-								text={
-									container.nickname ?? container.id
-								}
+								text={container.nickname ?? container.id}
 								onClick={(event): void => {
 									onContainerClicked(`${container.id}`);
 								}}
