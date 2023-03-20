@@ -69,7 +69,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const collection = await db.collection<core.IDocument>(documentsCollectionName);
     // eslint-disable-next-line @typescript-eslint/await-thenable
-     const localCollection = await db.collection<core.ICheckpoint>(checkpointsCollectionName);
+     const localCollection = await operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
 
 	const forwardProducer = services.createProducer(
 		kafkaLibrary,
