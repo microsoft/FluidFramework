@@ -126,7 +126,6 @@ export async function renderApiModelAsMarkdown(
 
 	const documents = transformApiModel(completeTransformConfig);
 
-	// TODO: Move actual rendering logic into `markdown-renderer`
 	await Promise.all(
 		documents.map(async (document) => {
 			const renderedDocument = renderDocumentAsMarkdown(document, customRenderers);
