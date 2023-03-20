@@ -125,6 +125,13 @@ export interface EditableTreeEvents {
 	 * Note that this is shallow: it does not include changes to the values of nodes it its fields for example.
 	 */
 	changing(): void;
+
+	/**
+	 * Something in this tree is changing.
+	 * Called on every parent (transitively) when a change is occurring.
+	 * Includes changes to this node itself.
+	 */
+	subtreeChanging(): void;
 }
 
 /**
@@ -711,19 +718,26 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
-		assert(eventName === "changing", "unexpected eventName");
-		const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () => listener());
-		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
-			listener(),
-		);
-		// const unsubscribeFromValueSubtreeChange = this.anchorNode.on("subtreeChanging", () =>
-		// 	listener(),
-		// );
-		return () => {
-			unsubscribeFromValueChange();
-			unsubscribeFromChildrenChange();
-			// unsubscribeFromValueSubtreeChange();
-		};
+		// assert(eventName === "changing", "unexpected eventName");
+		if (eventName === "changing") {
+			const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () =>
+				listener(),
+			);
+			const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
+				listener(),
+			);
+			return () => {
+				unsubscribeFromValueChange();
+				unsubscribeFromChildrenChange();
+			};
+		} else if (eventName === "subtreeChanging") {
+			const unsubscribeFromValueSubtreeChange = this.anchorNode.on("subtreeChanging", () =>
+				listener(),
+			);
+			return () => {
+				unsubscribeFromValueSubtreeChange();
+			};
+		} else throw new Error("unexpected eventName");
 	}
 }
 

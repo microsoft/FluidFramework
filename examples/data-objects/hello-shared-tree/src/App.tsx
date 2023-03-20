@@ -220,14 +220,18 @@ function buildSchemaPath(indexedFields: IndexedField[], schema: SchemaData): Pat
     return out;
 }
 
-export interface EditableTreeResolver {
+export interface NodeResolver {
 
     resolve(): Iterable<EditableTree>;
 }
 
+export enum ChangeCategory {
+    LOCAL, SUBTREE
+}
+
 export interface ChangeBinder {
 
-    bindOnChange(fn: () => void): () => void;
+    bindOnChange(category: ChangeCategory, fn: () => void): () => void;
 }
 
 export interface BatchBinder {
@@ -236,7 +240,7 @@ export interface BatchBinder {
 }
 
 
-export class PathBasedResolver implements EditableTreeResolver {
+export class PathBasedResolver implements NodeResolver {
     constructor(
         public readonly root: EditableField,
         public readonly path: Path,
@@ -252,20 +256,41 @@ export class PathBasedResolver implements EditableTreeResolver {
     }
 }
 
-export class SimpleBinder implements ChangeBinder, BatchBinder {
+export class RootResolver implements NodeResolver {
+    constructor(
+        public readonly root: EditableField,
+    ) { }
+
+    resolve(): Iterable<EditableTree> {
+        const currentField = this.root;
+        return [currentField.getNode(0)];
+    }
+}
+
+export class BatchedChangesBinder implements ChangeBinder, BatchBinder {
     constructor(
         public readonly sharedTree: ISharedTree,
-        public readonly resolver: EditableTreeResolver,
+        public readonly resolver: NodeResolver,
     ) { }
     bindOnBatch(fn: () => void): () => void {
         const handle = this.sharedTree.events.on("afterBatch", () => fn());
         return () => handle();
     }
-    bindOnChange(fn: () => void): () => void {
+    bindOnChange(category: ChangeCategory, fn: () => void): () => void {
         const handles: (() => void)[] = [];
         const nodes = this.resolver.resolve();
+        let eventName;
+        switch (category) {
+            case ChangeCategory.LOCAL:
+                eventName = "changing";
+                break;
+            case ChangeCategory.SUBTREE:
+                eventName = "subtreeChanging";
+                break;
+            default: throw new Error("unknown change category");
+        }
         for (const node of nodes) {
-            handles.push(node[on]("changing", () => fn()));
+            handles.push(node[on](eventName, () => fn()));
         }
         return () => {
             for (const handle of handles) {
@@ -278,13 +303,13 @@ export class SimpleBinder implements ChangeBinder, BatchBinder {
 /**
  * Describes transitions from one state of the system to a new one, for instance updating the react state
  */
-export type TransitionState<T> = (transitionStateFn: (prevState: T) => /* nextState */ T) => void;
+export type Transition<T> = (transitionFn: (prevState: T) => /* nextState */ T) => void;
 
 /**
  * Transforms SharedTree operations into application state changes
  */
 export interface OperationAdapter {
-    transitionState: TransitionState<number[][]>;
+    transition: Transition<number[][]>;
     onChange: () => void;
     onBatch: () => void;
 }
@@ -295,7 +320,7 @@ let countOnBatch = 0;
 export class DomainAdapterReact implements OperationAdapter {
     protected changed: boolean = false;
     constructor(
-        public readonly transitionState: TransitionState<number[][]>,
+        public readonly transition: Transition<number[][]>,
         protected readonly workspace: Workspace,
     ) { }
     onChange(): void {
@@ -305,7 +330,7 @@ export class DomainAdapterReact implements OperationAdapter {
     onBatch(): void {
         console.log('Dispatch received', countOnBatch++);
         if (this.changed) {
-            this.transitionState(prevRows => readDrawValues(this.workspace));
+            this.transition(prevRows => readDrawValues(this.workspace));
         }
         this.changed = false;
     }
@@ -342,7 +367,8 @@ export default function App() {
             setDrawValues(readDrawValues(w));
             return w;
         }).then((w) => {
-            // registerNotification(w);
+            registerRootBinding(w, setDrawValues);
+            // registerPathBinding(w, setDrawValues);
         });
     }, []);
 
@@ -358,14 +384,10 @@ export default function App() {
         updateSingleValue(workspace!);
     };
 
-    const register = () => {
-        const path: Path = buildSchemaPath([{ index: 0, field: drawKeys }], appSchema);
-        const resolver: EditableTreeResolver = new PathBasedResolver(workspace!.tree.context.root, path, 2);
-        const binder = new SimpleBinder(workspace!.tree, resolver);
-        const reactAdapter = new DomainAdapterReact(setDrawValues, workspace!);
-        binder.bindOnChange(() => reactAdapter.onChange());
-        binder.bindOnBatch(() => reactAdapter.onBatch());
-    };
+    // const register = () => {
+    //     registerRootBinding(workspace!, setDrawValues);
+    // };
+
 
     const deleteSingle = () => {
         deleteSingleValue(workspace!);
@@ -408,9 +430,9 @@ export default function App() {
                 <span onClick={() => deleteSingle()}>
                     D1 &nbsp;
                 </span>
-                <span onClick={() => register()}>
+                {/* <span onClick={() => register()}>
                     R1 &nbsp;
-                </span>
+                </span> */}
             </div>
         </div>
     );
@@ -464,6 +486,23 @@ function insertDrawValues(workspace: Workspace) {
     const data: Draw = drawData();
     const tree = workspace.tree;
     tree.root = data;
+}
+
+function registerPathBinding(workspace: Workspace, stateTransition: Transition<number[][]>) {
+    const path = buildSchemaPath([{ index: 0, field: drawKeys }], appSchema);
+    const resolver = new PathBasedResolver(workspace.tree.context.root, path, 2);
+    const binder = new BatchedChangesBinder(workspace.tree, resolver);
+    const reactAdapter = new DomainAdapterReact(stateTransition, workspace);
+    binder.bindOnChange(ChangeCategory.LOCAL, () => reactAdapter.onChange());
+    binder.bindOnBatch(() => reactAdapter.onBatch());
+}
+
+function registerRootBinding(workspace: Workspace, stateTransition: Transition<number[][]>) {
+    const resolver = new RootResolver(workspace.tree.context.root);
+    const binder = new BatchedChangesBinder(workspace.tree, resolver);
+    const reactAdapter = new DomainAdapterReact(stateTransition, workspace);
+    binder.bindOnChange(ChangeCategory.SUBTREE, () => reactAdapter.onChange());
+    binder.bindOnBatch(() => reactAdapter.onBatch());
 }
 
 function updateAllValues(workspace: Workspace) {

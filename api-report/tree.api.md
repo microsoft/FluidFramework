@@ -377,6 +377,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 // @alpha
 export interface EditableTreeEvents {
     changing(): void;
+    subtreeChanging(): void;
 }
 
 // @alpha
