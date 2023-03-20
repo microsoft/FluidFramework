@@ -46,6 +46,10 @@ describe("mock-customer-service", () => {
 	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
 
 	beforeEach(async () => {
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
+		const webhook = new MockWebhook();
+		webhook.registerSubscriber("https://www.fluidframework.com");
+		webhookCollection.set("task-list-1", webhook);
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
 			webhookCollection,
@@ -88,6 +92,25 @@ describe("mock-customer-service", () => {
 		const localService: Server = localServiceApp.listen(localServicePort);
 
 		try {
+			// Register with the external service for notifications
+			const webhookRegistrationResponse = await fetch(
+				`http://localhost:${externalDataServicePort}/register-for-webhook`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
+					}),
+				},
+			);
+
+			if (!webhookRegistrationResponse.ok) {
+				fail(`Webhook registration failed. Code: ${webhookRegistrationResponse.status}.`);
+			}
+
 			// Update external data
 			const dataUpdateResponse = await fetch(
 				`http://localhost:${externalDataServicePort}/set-tasks/${externalTaskListId}`,
