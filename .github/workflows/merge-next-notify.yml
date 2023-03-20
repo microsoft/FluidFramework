@@ -1,7 +1,7 @@
 name: "Merge Next Notifier"
 
 on:
-  pull_request:
+  pull_request_target:
     types: 
       - labeled
     branches:
@@ -11,14 +11,12 @@ jobs:
   check-label:
     name: Check Label
     runs-on: ubuntu-latest
-    permissions: write-all
     if: "${{ github.event.label.name == 'msftbot: merge-next' }}"
 
     steps:
       - name: Notify in comment
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           only_create: true
           message: |
             Please review this PR: @sonalideshpandemsft @tylerbutler @scottn12
