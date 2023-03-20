@@ -8,7 +8,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
-import type { IAppModel, IAppModelEvents, ITaskList } from "../model-interface";
+import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface";
 
 /**
  * In this demo, the AppModel just needs to hold the taskList.  In a real scenario, this may have further
@@ -16,7 +16,7 @@ import type { IAppModel, IAppModelEvents, ITaskList } from "../model-interface";
  */
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
 	public constructor(
-		public readonly taskList: ITaskList,
+		public readonly baseDocument: IBaseDocument,
 		private readonly container: IContainer,
 		private readonly runtime: IContainerRuntime,
 	) {
@@ -27,7 +27,17 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 * {@inheritDoc IAppModel.sendCustomDebugSignal}
 	 */
 	public readonly sendCustomDebugSignal = (): void => {
-		this.runtime.submitSignal("debugSignal", { type: "ExternalDataChange" });
+		this.runtime.submitSignal("debugSignal", {
+			type: "ExternalDataChange",
+			taskListId: "task-list-1",
+		});
+	};
+
+	/**
+	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
+	 */
+	public readonly getContainerResolvedUrl = (): IFluidResolvedUrl | undefined => {
+		return this.container?.resolvedUrl as IFluidResolvedUrl;
 	};
 
 	/**

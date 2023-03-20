@@ -16,8 +16,16 @@
 export { debuggerMessageSource } from "./Constants";
 export {
 	HasContainerId,
+	ConnectContainerMessage,
+	ConnectContainerMessageData,
+	DisconnectContainerMessage,
+	DisconnectContainerMessageData,
+	CloseContainerMessage,
+	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";
@@ -27,6 +35,7 @@ export {
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
 } from "./RegistryMessages";
+export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,

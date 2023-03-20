@@ -16,8 +16,6 @@
 		"build:compile": "lerna run build:compile --stream",
 		"build:docs": "lerna run build:docs --stream --parallel",
 		"build:fast": "fluid-build --root .. --buildTools",
-		"build:full": "npm run build:genver && npm run build:full:compile",
-		"build:full:compile": "lerna run build:full:compile --stream",
 		"build:genver": "lerna run build:genver --stream --parallel",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats",
@@ -81,11 +79,11 @@
 		"@commitlint/config-conventional": "^17.1.0",
 		"@commitlint/cz-commitlint": "^17.1.2",
 		"@fluidframework/test-tools": "^0.2.3074",
-		"@microsoft/api-documenter": "^7.17.9",
-		"@microsoft/api-extractor": "^7.22.2",
+		"@microsoft/api-documenter": "^7.21.6",
+		"@microsoft/api-extractor": "^7.34.4",
 		"c8": "^7.7.1",
 		"commitizen": "^4.2.5",
-		"concurrently": "^6.2.0",
+		"concurrently": "^7.6.0",
 		"conventional-changelog-cli": "^2.2.2",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
 		"copyfiles": "^2.4.1",
@@ -94,7 +92,7 @@
 		"inquirer": "^8.0.0",
 		"lerna": "^5.6.2",
 		"prettier": "~2.6.2",
-		"rimraf": "^2.6.2",
+		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
 		"typescript": "~4.5.5"
 	},
@@ -110,7 +108,8 @@
 		},
 		"overrides": {
 			"json5@<1.0.2": ">=1.0.2",
-			"json5@>=2.0.0 <2.2.2": ">=2.2.2"
+			"json5@>=2.0.0 <2.2.2": ">=2.2.2",
+			"qs": "^6.11.0"
 		}
 	}
 }

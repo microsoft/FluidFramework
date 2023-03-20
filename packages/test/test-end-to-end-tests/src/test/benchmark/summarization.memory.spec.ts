@@ -8,14 +8,11 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { createLogger } from "./FileLogger";
 
 const defaultDataStoreId = "default";
 const testContainerConfig: ITestContainerConfig = {
@@ -38,28 +35,9 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
-	let logger: ITelemetryLogger | undefined;
 	before(async () => {
 		provider = getTestObjectProvider();
-		// runId will be populated on the logger.
-		logger =
-			process.env.FLUID_TEST_LOGGER_PKG_PATH !== undefined
-				? await createLogger({
-						runId: undefined,
-						driverType: provider.driver.type,
-						driverEndpointName: provider.driver.endpointName,
-						profile: "",
-				  })
-				: undefined;
-
-		const loader = provider.makeTestLoader(
-			logger !== undefined
-				? {
-						...testContainerConfig,
-						loaderProps: { logger },
-				  }
-				: testContainerConfig,
-		);
+		const loader = provider.makeTestLoader(testContainerConfig);
 		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		await mainContainer.attach(provider.driver.createCreateNewRequest());
 	});
@@ -81,7 +59,6 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 					runGC: false,
 					fullTree: false,
 					trackState: false,
-					summaryLogger: logger ?? new TelemetryNullLogger(),
 				});
 
 				// Validate stats

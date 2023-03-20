@@ -6,7 +6,7 @@
 /**
  * Mock model for external task data
  */
-export interface TaskData {
+export interface ITaskData {
 	[key: string]: {
 		name: string;
 		priority: number;
@@ -16,14 +16,14 @@ export interface TaskData {
 /**
  * Mock model for external taskList data
  */
-export interface TaskListData {
-	[taskListId: string]: TaskData;
+export interface ITaskListData {
+	[externalTaskListId: string]: ITaskData;
 }
 
 /**
- * Asserts that the input data is a valid {@link TaskData}.
+ * Asserts that the input data is a valid {@link ITaskData}.
  */
-export function assertValidTaskListData(input: unknown): TaskListData {
+export function assertValidTaskData(input: unknown): ITaskData {
 	if (input === null || input === undefined) {
 		throw new Error("Task data was not defined.");
 	}
@@ -33,35 +33,25 @@ export function assertValidTaskListData(input: unknown): TaskListData {
 		if (typeof outerKey !== "string") {
 			throw new TypeError(`Input task data contained malformed key: "${outerKey}".`);
 		}
-		const jsonOuterValue = outerValue as Record<string | number | symbol, unknown>;
-		for (const [key, jsonInnerValue] of Object.entries(jsonOuterValue)) {
-			if (typeof key !== "string") {
-				throw new TypeError(`Input task data contained malformed key: "${key}".`);
-			}
-
-			const jsonValue = jsonInnerValue as Record<string | number | symbol, unknown>;
-			if (typeof jsonValue !== "object" && jsonValue !== null) {
-				throw new TypeError(`Input task data contained malformed value: "${jsonValue}".`);
-			}
-			if (!Object.prototype.hasOwnProperty.call(jsonValue, "name")) {
-				throw new Error(
-					`Input task entry under ID "${key}" does not contain required "name" property. Received: "${jsonValue}".`,
-				);
-			}
-			if (typeof jsonValue.name !== "string") {
-				throw new TypeError(`Invalid TaskData "name" value received: "${jsonValue.name}".`);
-			}
-			if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
-				throw new Error(
-					`Input task entry under ID "${key}" does not contain required "priority" property. Received: "${jsonValue}".`,
-				);
-			}
-			if (typeof jsonValue.priority !== "number") {
-				throw new TypeError(
-					`Invalid TaskData "priority" value received: "${jsonValue.priority}".`,
-				);
-			}
+		const jsonValue = value as Record<string | number | symbol, unknown>;
+		if (!Object.prototype.hasOwnProperty.call(jsonValue, "name")) {
+			throw new Error(
+				`Input task entry under ID "${key}" does not contain required "name" property. Received: "${jsonValue}".`,
+			);
+		}
+		if (typeof jsonValue.name !== "string") {
+			throw new TypeError(`Invalid ITaskData "name" value received: "${jsonValue.name}".`);
+		}
+		if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
+			throw new Error(
+				`Input task entry under ID "${key}" does not contain required "priority" property. Received: "${jsonValue}".`,
+			);
+		}
+		if (typeof jsonValue.priority !== "number") {
+			throw new TypeError(
+				`Invalid ITaskData "priority" value received: "${jsonValue.priority}".`,
+			);
 		}
 	}
-	return input as TaskListData;
+	return input as ITaskData;
 }

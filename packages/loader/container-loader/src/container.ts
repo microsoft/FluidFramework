@@ -44,6 +44,7 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isFluidResolvedUrl,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -438,9 +439,9 @@ export class Container
 
 	private _attachState = AttachState.Detached;
 
-	private readonly storageService: ContainerStorageAdapter;
+	private readonly storageAdapter: ContainerStorageAdapter;
 	public get storage(): IDocumentStorageService {
-		return this.storageService;
+		return this.storageAdapter;
 	}
 
 	private readonly clientDetailsOverride: IClientDetails | undefined;
@@ -627,7 +628,7 @@ export class Container
 			// should have set this._context; making sure.
 			assert(
 				this._context !== undefined,
-				"Context still not defined after contextChanged event",
+				0x5a2 /* Context still not defined after contextChanged event */,
 			);
 		}
 		// Disable lint rule for the sake of more complete stack traces
@@ -698,13 +699,8 @@ export class Container
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		const summarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.loader.services.options.summarizeProtocolTree;
-
 		this.options = {
 			...this.loader.services.options,
-			summarizeProtocolTree,
 		};
 
 		this._deltaManager = this.createDeltaManager();
@@ -772,12 +768,25 @@ export class Container
 			this.connectionStateHandler.containerSaved();
 		});
 
-		this.storageService = new ContainerStorageAdapter(
+		// We expose our storage publicly, so it's possible others may call uploadSummaryWithContext() with a
+		// non-combined summary tree (in particular, ContainerRuntime.submitSummary).  We'll intercept those calls
+		// using this callback and fix them up.
+		const addProtocolSummaryIfMissing = (summaryTree: ISummaryTree) =>
+			isCombinedAppAndProtocolSummary(summaryTree) === true
+				? summaryTree
+				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
+
+		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
+		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
+		const forceEnableSummarizeProtocolTree =
+			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
+			this.loader.services.options.summarizeProtocolTree;
+
+		this.storageAdapter = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
-			this.options.summarizeProtocolTree === true
-				? () => this.captureProtocolSummary()
-				: undefined,
+			addProtocolSummaryIfMissing,
+			forceEnableSummarizeProtocolTree,
 		);
 
 		const isDomAvailable =
@@ -896,7 +905,7 @@ export class Container
 
 				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-				this.storageService.dispose();
+				this.storageAdapter.dispose();
 
 				// Notify storage about critical errors. They may be due to disconnect between client & server knowledge
 				// about file, like file being overwritten in storage, but client having stale local cache.
@@ -945,7 +954,7 @@ export class Container
 
 				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-				this.storageService.dispose();
+				this.storageAdapter.dispose();
 
 				// Notify storage about critical errors. They may be due to disconnect between client & server knowledge
 				// about file, like file being overwritten in storage, but client having stale local cache.
@@ -1102,7 +1111,7 @@ export class Container
 					const resolvedUrl = this.service.resolvedUrl;
 					ensureFluidResolvedUrl(resolvedUrl);
 					this._resolvedUrl = resolvedUrl;
-					await this.storageService.connectToService(this.service);
+					await this.storageAdapter.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
@@ -1122,7 +1131,7 @@ export class Container
 							for (const id of newIds) {
 								const blob =
 									await this.loader.services.detachedBlobStorage.readBlob(id);
-								const response = await this.storageService.createBlob(blob);
+								const response = await this.storageAdapter.createBlob(blob);
 								redirectTable.set(id, response.id);
 							}
 						}
@@ -1137,7 +1146,7 @@ export class Container
 							getSnapshotTreeFromSerializedContainer(summary),
 						);
 
-						await this.storageService.uploadSummaryWithContext(summary, {
+						await this.storageAdapter.uploadSummaryWithContext(summary, {
 							referenceSequenceNumber: 0,
 							ackHandle: undefined,
 							proposalHandle: undefined,
@@ -1312,7 +1321,7 @@ export class Container
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
-		const versions = await this.storageService.getVersions(version, 1);
+		const versions = await this.storageAdapter.getVersions(version, 1);
 		return versions[0];
 	}
 
@@ -1374,10 +1383,10 @@ export class Container
 		}
 
 		if (!pendingLocalState) {
-			await this.storageService.connectToService(this.service);
+			await this.storageAdapter.connectToService(this.service);
 		} else {
 			// if we have pendingLocalState we can load without storage; don't wait for connection
-			this.storageService.connectToService(this.service).catch((error) => {
+			this.storageAdapter.connectToService(this.service).catch((error) => {
 				this.close(error);
 				this.dispose?.(error);
 			});
@@ -1397,7 +1406,7 @@ export class Container
 
 		const attributes: IDocumentAttributes =
 			pendingLocalState === undefined
-				? await this.getDocumentAttributes(this.storageService, snapshot)
+				? await this.getDocumentAttributes(this.storageAdapter, snapshot)
 				: {
 						sequenceNumber: pendingLocalState.protocol.sequenceNumber,
 						minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
@@ -1432,7 +1441,7 @@ export class Container
 		if (pendingLocalState === undefined) {
 			await this.initializeProtocolStateFromSnapshot(
 				attributes,
-				this.storageService,
+				this.storageAdapter,
 				snapshot,
 			);
 		} else {
@@ -1552,15 +1561,15 @@ export class Container
 		}
 
 		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-		this.storageService.loadSnapshotForRehydratingContainer(snapshotTree);
-		const attributes = await this.getDocumentAttributes(this.storageService, snapshotTree);
+		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTree);
+		const attributes = await this.getDocumentAttributes(this.storageAdapter, snapshotTree);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
 		const baseTree = getProtocolSnapshotTree(snapshotTree);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
-			this.storageService,
+			this.storageAdapter,
 			baseTree.blobs.quorumValues,
 		);
 		const codeDetails = getCodeDetailsFromQuorumValues(qValues);
@@ -1987,7 +1996,7 @@ export class Container
 		if (summary.details === undefined) {
 			summary.details = {};
 		}
-		summary.details.includesProtocolTree = this.options.summarizeProtocolTree === true;
+		summary.details.includesProtocolTree = this.storageAdapter.summarizeProtocolTree;
 		return this.submitMessage(
 			MessageType.Summarize,
 			JSON.stringify(summary),
@@ -2100,7 +2109,7 @@ export class Container
 			});
 		}
 		this._loadedFromVersion = version;
-		const snapshot = (await this.storageService.getSnapshotTree(version)) ?? undefined;
+		const snapshot = (await this.storageAdapter.getSnapshotTree(version)) ?? undefined;
 
 		if (snapshot === undefined && version !== undefined) {
 			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });

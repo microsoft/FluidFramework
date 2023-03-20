@@ -15,12 +15,25 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.3.4.0
+
+## 2.0.0-internal.3.4.0 Upcoming changes
+
+[IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+
+## IResolvedUrl will be equivalent to IFluidResolvedUrl
+
+In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl are deprecated as they are not used.
+This will make IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls will now be FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
+ensureFluidResolvedUrl will be deprecated and removed due to this.
+
 # 2.0.0-internal.3.3.0
 
 ## 2.0.0-internal.3.3.0 Upcoming changes
 
 -   [deltaManager property in IConnectableRuntime moved](#deltaManager-property-in-IConnectableRuntime-moved)
 -   [attachGraph and bind methods in IFluidHandle deprecated](#attachGraph-and-bind-methods-in-IFluidHandle-deprecated)
+-   [Some APIs meant only for internal usage are deprecated](#some-apis-meant-only-for-internal-usage-are-deprecated)
 
 ### deltaManager property in IConnectableRuntime moved
 
@@ -29,6 +42,13 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 ### attachGraph and bind methods in IFluidHandle deprecated
 
 `attachGraph` and `bind` methods in IFluidHandle have been deprecated. These are internal methods used by the Fluid Framework and should not be used. They will be removed in a future release.
+
+### Some APIs meant only for internal usage are deprecated
+
+`IGarbageCollectionRuntime` in the `@fluidframework/container-runtime` package should not be used outside the FF codebase.
+It has been deprecated and is expected to be removed in the next major release.
+
+`IConnectableRuntime.deltaManager` in the same package is no longer used and deprecated as well.
 
 # 2.0.0-internal.3.0.0
 
@@ -46,6 +66,7 @@ The deltaManager property in IConnectableRuntime has been moved to ISummarizerRu
 -   [driver-utils members deprecated](#driver-utils-members-deprecated)
 -   [Aqueduct members deprecated](#Aqueduct-members-deprecated)
 -   [IDocumentServiceFactory.protocolName deprecated](#IDocumentServiceFactory.protocolName-deprecated)
+-   [Some Interval APIs on SharedString deprecated](#some-interval-apis-on-sharedstring-deprecated)
 
 ### For Driver Authors: Document Storage Service policy may become required
 
@@ -89,7 +110,7 @@ The Container and RelativeLoader classes in `@fluidframework/container-loader` h
 
 ### BlobAggregationStorage and SnapshotExtractor deprecated
 
-The Container and RelativeLoader classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
+The BlobAggregationStorage and SnapshotExtractor classes in `@fluidframework/driver-utils` have been deprecated and will be removed in
 the next major release. These classes were experimental and never widely used. There are no replacements.
 
 ### Summarizer node and related items deprecated
@@ -135,10 +156,18 @@ The following members of the `@fluidframework/aqueduct` package have been deprec
 
 -   `waitForAttach()`
     -   Prefer not to inspect and react to the attach state unless necessary. If needed, instead inspect the IFluidDataStoreRuntime's attachState property, and await the "attached" event if not attached.
+-   `BaseContainerService`, `ContainerServiceRegistryEntries`, `generateContainerServicesRequestHandler()`, `serviceRoutePathRoot`, and `PureDataObject.getService()`
+    -   Aqueduct supports the Providers pattern. Providers are a replacement and extension for the existing Container Services pattern. Providers allow Components developers to have strongly typed objects passed into them from the Container and allows Container developers to inject IComponent keyed objects
 
 ### IDocumentServiceFactory.protocolName deprecated
 
 Document service factories should not be distinguished by unique non-standard protocols, and so the `IDocumentServiceFactory.protocolName` member will be removed in an upcoming release. Instead prefer to map urls to factories using standards-compliant components of the url (e.g. host name, path, etc.).
+
+### Some Interval APIs on SharedString deprecated
+
+`IInterval` and `ISerializableInterval` contain several functions marked internal.
+However, the implementations of these functions in `Interval` and `SequenceInterval` were erroneously left exposed.
+All of these internal method implementations have been marked deprecated, and will be correctly tagged internal in a future release.
 
 ## 2.0.0-internal.3.0.0 Breaking changes
 

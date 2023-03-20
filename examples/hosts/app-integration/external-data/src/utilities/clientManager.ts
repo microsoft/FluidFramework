@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-// import fetch from "node-fetch";
-
 /**
- * Represents a Fluid client URL.
+ * Represents a Fluid containers URL.
  * This URL contains the client's Fluid session information necessary for broadcasting signals to.
  */
-export type ClientSessionUrl = string;
+type ClientSessionUrl = string;
 
 /**
  * Represents the external data servers query url or uuid.
  * This is the URL or the id of the external resource that the customer service needs to subscribe for at the external service.
  */
-export type ExternalTaskListId = string;
+type ExternalTaskListId = string;
 
 /**
  * Mock client manager.
@@ -26,103 +24,66 @@ export type ExternalTaskListId = string;
  */
 export class ClientManager<TData = unknown> {
 	/**
-	 * Map of active external query id to client session.
-	 * Values are the URLs that will be notified of changes.
+	 * Map of active external resource id to client sessions.
+	 * Values are the set of Fluid Container URLs that will be notified of changes.
 	 */
-	private readonly _taskListMapping: Map<ExternalTaskListId, ClientSessionUrl>;
+	private readonly _taskListMapping: Map<ExternalTaskListId, Set<ClientSessionUrl>>;
 	/**
-	 * Map of active clients to external query id.
-	 * Values are the URLs that will be notified of changes.
+	 * Map of active clients to external resource id.
+	 * Values are the set of external resource id's that the client has active and is registered to listen for.
 	 */
-	private readonly _clientMapping: Map<ClientSessionUrl, ExternalTaskListId>;
+	private readonly _clientMapping: Map<ClientSessionUrl, Set<ExternalTaskListId>>;
 
 	public constructor() {
-		this._clientMapping = new Map<ClientSessionUrl, ExternalTaskListId>();
-		this._taskListMapping = new Map<ExternalTaskListId, ClientSessionUrl>();
+		this._clientMapping = new Map<ClientSessionUrl, Set<ExternalTaskListId>>();
+		this._taskListMapping = new Map<ExternalTaskListId, Set<ClientSessionUrl>>();
 	}
 
 	/**
-	 * Gets the current list of client session URLs.
+	 * Returns a boolean if externalTaskListId already exists entry exists. This means that the customer service
+	 * is already subscribed for webhook notifications for it so we do not need to re-subscribe.
 	 */
-	public get clients(): readonly ClientSessionUrl[] {
-		return [...this._clientMapping.keys()];
+	public isSubscribed(externalTaskListId: string): boolean {
+		return this._taskListMapping.has(externalTaskListId);
 	}
 
 	/**
-	 * Gets the current list external resource ids registered to client session URLs.
+	 * Registers a client session url to an external resource id until removeClientTaskListRegistration is called.
+	 * The client can choose when to call it, typically it will be at the end of the session.
 	 */
-	public get taskLists(): readonly ExternalTaskListId[] {
-		return [...this._taskListMapping.keys()];
-	}
-
-	/**
-	 * Gets the current list of client session URLs.
-	 */
-	public getClientSession(taskListId: ExternalTaskListId): ClientSessionUrl | undefined {
-		if (this._taskListMapping.has(taskListId)) {
-			return this._taskListMapping.get(taskListId);
+	public registerClient(client: ClientSessionUrl, externalTaskListId: ExternalTaskListId): void {
+		if (this._clientMapping.get(client) === undefined) {
+			this._clientMapping.set(client, new Set<ExternalTaskListId>([externalTaskListId]));
 		} else {
-			console.error(
-				`CUSTOMER SERVICE: "${taskListId}" is not registered to a client session.`,
-			);
+			this._clientMapping.get(client)?.add(externalTaskListId);
 		}
-	}
 
-	/**
-	 * Registers a client session url to an external resource  for the duration of the client session.
-	 */
-	public registerClient(client: ClientSessionUrl, taskListId: ExternalTaskListId): void {
-		if (this._taskListMapping.has(client) && this._clientMapping.has(taskListId)) {
-			console.warn(
-				`CUSTOMER SERVICE: "${client}" has already been registered with ${taskListId}.`,
-			);
+		if (this._taskListMapping.get(externalTaskListId) === undefined) {
+			this._taskListMapping.set(externalTaskListId, new Set<ClientSessionUrl>([client]));
 		} else {
-			this._taskListMapping.set(taskListId, client);
-			this._clientMapping.set(client, taskListId);
-			console.log(`CUSTOMER SERVICE: "${client}" has been registered with ${taskListId}.`);
+			this._taskListMapping.get(externalTaskListId)?.add(client);
 		}
+		console.log(
+			`CUSTOMER SERVICE: "${client}" has been registered with ${externalTaskListId}.`,
+		);
 	}
 
 	/**
 	 * De-registers the provided subscriber URL from future notifications.
 	 */
-	public removeClient(client: ClientSessionUrl): void {
-		if (this._clientMapping.has(client)) {
-			const taskListId = this._clientMapping.get(client);
-			if (taskListId !== undefined && this._taskListMapping.has(taskListId)) {
-				this._taskListMapping.delete(taskListId);
-			}
-			this._clientMapping.delete(client);
-		} else {
-			console.warn(
-				`CUSTOMER SERVICE: URL "${client}" is not registered for data notifications.`,
-			);
+	public removeClientTaskListRegistration(
+		client: ClientSessionUrl,
+		externalTaskListId: ExternalTaskListId,
+	): void {
+		const clientTaskListIds = this._clientMapping.get(client);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+		if (clientTaskListIds !== undefined && clientTaskListIds.has(externalTaskListId)) {
+			clientTaskListIds.delete(externalTaskListId);
+		}
+		const taskListClients = this._taskListMapping.get(externalTaskListId);
+		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
+		if (taskListClients !== undefined && taskListClients.has(client)) {
+			taskListClients.delete(client);
 		}
 	}
-
-	// /**
-	//  * Submits notifications of changes to webhook subscribers.
-	//  */
-	// public notifySubscribers(data: TData): void {
-	// 	console.log(
-	// 		`EXTERNAL DATA SERVICE WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
-	// 	);
-
-	// 	const messageBody = JSON.stringify({ data });
-	// 	for (const subscriberUrl of this._subscribers) {
-	// 		fetch(subscriberUrl, {
-	// 			method: "POST",
-	// 			headers: {
-	// 				"Access-Control-Allow-Origin": "*",
-	// 				"Content-Type": "application/json",
-	// 			},
-	// 			body: messageBody,
-	// 		}).catch((error) => {
-	// 			console.error(
-	// 				"EXTERNAL DATA SERVICE WEBHOOK: Encountered an error while notifying subscribers:",
-	// 				error,
-	// 			);
-	// 		});
-	// 	}
-	// }
 }

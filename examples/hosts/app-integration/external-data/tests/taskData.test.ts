@@ -3,20 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assertValidTaskListData, TaskListData } from "../src/model-interface";
+import { assertValidTaskData, ITaskData } from "../src/model-interface";
 
 /**
- * {@link TaskListData} unit tests.
+ * {@link ITaskData} unit tests.
  */
-describe("TaskListData", () => {
-	describe("assertValidTaskListData", () => {
+describe("ITaskData", () => {
+	describe("assertValidTaskData", () => {
 		it("Parses valid task data", () => {
-			const input: TaskListData = {
-				"1": {
-					"42": {
-						name: "The meaning of life",
-						priority: 2,
-					},
+			const input: ITaskData = {
+				42: {
+					name: "The meaning of life",
+					priority: 2,
 				},
 			};
 			expect(() => assertValidTaskListData(input)).not.toThrow();

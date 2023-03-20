@@ -229,9 +229,9 @@ stages:
 
         # Install
         - task: UseNode@1
-          displayName: Use Node 14.x
+          displayName: Use Node 16.x
           inputs:
-            version: 14.x
+            version: 16.x
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - task: Cache@2

@@ -3,13 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import Benchmark from "benchmark";
 import { assert } from "chai";
 import { Test } from "mocha";
 import {
 	BenchmarkType,
 	BenchmarkArguments,
-	BenchmarkOptions,
 	validateBenchmarkArguments,
 	isParentProcess,
 	isInPerformanceTestingMode,
@@ -17,56 +15,33 @@ import {
 	userCategoriesSplitter,
 	TestType,
 } from "./Configuration";
-import { BenchmarkData } from "./Reporter";
+import { runBenchmark } from "./runBenchmark";
 
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
  *
- * Here is how benchmarking works:
- *
- * ```
- *  For each benchmark
- *      For each sampled run
- *          // Run fn once to check for errors
- *          fn()
- *          // Run fn multiple times and measure results.
- *          for each Benchmark.count
- *              fn()
- * ```
- *
- * For the first few sampled runs, the benchmarking library is in an analysis phase. It uses these sample runs to
- * determine an iteration number that his at most 1% statistical uncertainty. It does this by incrementally increasing
- * the iterations until it hits a low uncertainty point.
+ * When not {@link isInPerformanceTestingMode}, runs one iteration as a normal Mocha test.
+ * When run in performance testing mode, the test runs the function many times in batches.
+ * First larger and larger batches are run to determine a good batch size to measure,
+ * then many iterations of that batch size are timed.
  *
  * Optionally, setup and teardown functions can be provided via the `before` and `after` options.
  *
  * Tests created with this function get tagged with '\@ExecutionTime', so mocha's --grep/--fgrep
- * options can be used to only run this type of tests by fitering on that value.
+ * options can be used to only run this type of tests by filtering on that value.
  *
  * @public
  */
 export function benchmark(args: BenchmarkArguments): Test {
-	const options: Required<BenchmarkOptions> = {
-		maxBenchmarkDurationSeconds: args.maxBenchmarkDurationSeconds ?? 5,
-		minSampleCount: args.minSampleCount ?? 5,
-		minSampleDurationSeconds: args.minSampleDurationSeconds ?? 0,
-		type: args.type ?? BenchmarkType.Measurement,
-		only: args.only ?? false,
-		before: args.before ?? (() => {}),
-		after: args.after ?? (() => {}),
-		onCycle: args.onCycle ?? (() => {}),
-		category: args.category ?? "",
-	};
-	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
-	const benchmarkTypeTag = BenchmarkType[options.type];
+	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
 	const testTypeTag = TestType[TestType.ExecutionTime];
 	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
 
-	if (options.category !== "") {
-		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${options.category}`;
+	if (args.category !== "") {
+		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
 	}
 
-	const itFunction = options.only ? it.only : it;
+	const itFunction = args.only === true ? it.only : it;
 	const test = itFunction(qualifiedTitle, async () => {
 		if (isParentProcess) {
 			// Instead of running the benchmark in this process, create a new process.
@@ -132,63 +107,16 @@ export function benchmark(args: BenchmarkArguments): Test {
 
 		// Create and run a benchmark if we are in perfMode, else run the passed in function normally
 		if (isInPerformanceTestingMode) {
-			await options.before();
-
-			const benchmarkOptions: Benchmark.Options = {
-				maxTime: options.maxBenchmarkDurationSeconds,
-				minSamples: options.minSampleCount,
-				minTime: options.minSampleDurationSeconds,
-				defer: isAsync,
-			};
-
-			const benchmarkFunction: (deferred: {
-				resolve: Mocha.Done;
-			}) => void | Promise<unknown> = isAsync
-				? async (deferred: { resolve: Mocha.Done }) => {
-						// We have to do a little translation because the Benchmark library expects callback-based
-						// asynchronicity.
-						await argsBenchmarkFn();
-						deferred.resolve();
-				  }
-				: argsBenchmarkFn;
-
-			await new Promise<void>((resolve) => {
-				const benchmarkInstance = new Benchmark(
-					args.title,
-					benchmarkFunction,
-					benchmarkOptions,
-				);
-				// Run a garbage collection, if possible, before the test.
-				// This helps noise from allocations before the test (ex: from previous tests or startup) from
-				// impacting the test.
-				benchmarkInstance.on("start end", () => global?.gc?.());
-				benchmarkInstance.on("cycle", options.onCycle);
-				benchmarkInstance.on("complete", async () => {
-					const stats: BenchmarkData = {
-						aborted: benchmarkInstance.aborted,
-						count: benchmarkInstance.count,
-						cycles: benchmarkInstance.cycles,
-						error: benchmarkInstance.error,
-						hz: benchmarkInstance.hz,
-						stats: benchmarkInstance.stats,
-						times: benchmarkInstance.times,
-					};
-
-					test.emit("benchmark end", stats);
-
-					await options.after();
-					resolve();
-				});
-				benchmarkInstance.run();
-			});
-			return;
+			const stats = await runBenchmark(args);
+			test.emit("benchmark end", stats);
+		} else {
+			const { benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
+			await args.before?.();
+			await argsBenchmarkFn();
+			args.beforeEachBatch?.();
+			await args.after?.();
+			await Promise.resolve();
 		}
-
-		await options.before();
-		await argsBenchmarkFn();
-		await options.onCycle();
-		await options.after();
-		await Promise.resolve();
 	});
 	return test;
 }

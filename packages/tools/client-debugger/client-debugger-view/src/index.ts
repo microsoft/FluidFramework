@@ -21,8 +21,12 @@
  */
 
 export {
+	_ContainerHistoryView,
+	_ContainerHistoryViewProps,
 	_ContainerSummaryView,
 	_ContainerSummaryViewProps,
+	_TelemetryView,
+	_TelemetryViewProps,
 	AudienceMemberViewProps, // TODO: remove this
 	ClientDebugView,
 	clientDebugViewClassName,

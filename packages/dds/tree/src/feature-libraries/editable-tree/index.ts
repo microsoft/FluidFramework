@@ -13,11 +13,12 @@ export {
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
-	indexSymbol,
 	getField,
 	createField,
 	replaceField,
 	parentField,
+	EditableTreeEvents,
+	on,
 } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";

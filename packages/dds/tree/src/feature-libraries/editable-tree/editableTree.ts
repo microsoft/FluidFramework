@@ -43,10 +43,11 @@ import {
 	arrayLikeMarkerSymbol,
 	ContextuallyTypedNodeDataObject,
 	applyFieldTypesFromContext,
-	applyTypesFromContext,
 	getPossibleTypes,
 	typeNameSymbol,
 	valueSymbol,
+	cursorFromContextualData,
+	allowsValue,
 } from "../contextuallyTyped";
 import {
 	AdaptingProxyHandler,
@@ -69,13 +70,6 @@ export const proxyTargetSymbol: unique symbol = Symbol("editable-tree:proxyTarge
  * @alpha
  */
 export const typeSymbol: unique symbol = Symbol("editable-tree:type");
-
-/**
- * A symbol to get the index of {@link EditableTree} within its parent field
- * in contexts where string keys are already in use for fields.
- * @alpha
- */
-export const indexSymbol: unique symbol = Symbol("editable-tree:index");
 
 /**
  * A symbol to get the function, which returns the field of {@link EditableTree} without unwrapping,
@@ -104,6 +98,34 @@ export const replaceField: unique symbol = Symbol("editable-tree:replaceField()"
  * @alpha
  */
 export const parentField: unique symbol = Symbol("editable-tree:parentField()");
+
+/**
+ * A symbol for subscribing to events.
+ * @alpha
+ */
+export const on: unique symbol = Symbol("editable-tree:on");
+
+/**
+ * Events for {@link EditableTree}.
+ * These events are triggered while the internal data structures are being updated.
+ * Thus these events must not trigger reading of the anchorSet or forest.
+ *
+ * TODO:
+ * - Design how events should be ordered.
+ * - Include sub-deltas in events.
+ * - Add more events.
+ * - Have some events (or a way to defer events) until the tree can be read.
+ *
+ * @alpha
+ */
+export interface EditableTreeEvents {
+	/**
+	 * A specific EditableTree node is changing.
+	 * This includes its values and fields.
+	 * Note that this is shallow: it does not include changes to the values of nodes it its fields for example.
+	 */
+	changing(): void;
+}
 
 /**
  * A tree which can be traversed and edited.
@@ -139,20 +161,10 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	/**
 	 * Value stored on this node.
 	 *
-	 * Setting the value using the simple assignment operator (`=`) is only supported for {@link PrimitiveValue}s.
+	 * Set the value using the simple assignment operator (`=`).
 	 * Concurrently setting the value will follow the "last-write-wins" semantics.
 	 */
 	[valueSymbol]: Value;
-
-	/**
-	 * Index of this node within its parent field.
-	 */
-	// TODO: this is a temporary solution.
-	// It should be replaced with a more general location symbol like
-	// `readonly [location]: EditableTreeUpPath`
-	// to cover all the cases, where the code may be lacking information about an origin of the node.
-	// See proposed API: https://github.com/microsoft/FluidFramework/pull/12810#issuecomment-1303949419
-	readonly [indexSymbol]: number;
 
 	/**
 	 * Stores the target for the proxy which implements reading and writing for this node.
@@ -180,6 +192,8 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 *
 	 * See `EditableTreeContext.unwrappedRoot` for how to use the simple assignment operator in other cases,
 	 * as it works the same way for all children of the tree starting from its root.
+	 *
+	 * Use with the `delete` operator to delete `optional` or `sequence` fields of this node.
 	 */
 	// TODO: update docs for concurrently deleting the field.
 	[key: FieldKey]: UnwrappedEditableField;
@@ -230,6 +244,14 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * The field this tree is in, and the index within that field.
 	 */
 	readonly [parentField]: { readonly parent: EditableField; readonly index: number };
+
+	/**
+	 * {@inheritDoc ISubscribable#on}
+	 */
+	[on]<K extends keyof EditableTreeEvents>(
+		eventName: K,
+		listener: EditableTreeEvents[K],
+	): () => void;
 }
 
 /**
@@ -380,7 +402,7 @@ export function makeField(
 export abstract class ProxyTarget<T extends Anchor | FieldAnchor> {
 	private readonly lazyCursor: ITreeSubscriptionCursor;
 
-	constructor(
+	public constructor(
 		public readonly context: ProxyContext,
 		cursor: ITreeSubscriptionCursor,
 		private anchor?: T,
@@ -479,7 +501,7 @@ function getPrimaryArrayKey(
 export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public readonly proxy: EditableTree;
 	private readonly removeDeleteCallback: () => void;
-	constructor(
+	public constructor(
 		context: ProxyContext,
 		cursor: ITreeSubscriptionCursor,
 		public readonly anchorNode: AnchorNode,
@@ -491,6 +513,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.proxy = adaptWithProxy(this, nodeProxyHandler);
 		anchorNode.slots.set(editableTreeSlot, this.proxy);
 		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+
+		assert(
+			this.context.schema.treeSchema.get(this.typeName) !== undefined,
+			"There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData",
+		);
 	}
 
 	protected buildAnchor(): Anchor {
@@ -513,27 +540,24 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.forest.anchors.forget(anchor);
 	}
 
-	get typeName(): TreeSchemaIdentifier {
+	public get typeName(): TreeSchemaIdentifier {
 		return this.cursor.type;
 	}
 
-	get type(): TreeSchema {
+	public get type(): TreeSchema {
 		return lookupTreeSchema(this.context.schema, this.typeName);
 	}
 
-	get value(): Value {
+	public get value(): Value {
 		return this.cursor.value;
 	}
 
-	set value(value: Value) {
-		assert(isPrimitive(this.type), 0x44d /* Cannot set a value of a non-primitive field */);
-		assertPrimitiveValueType(value, this.type);
-		const path = this.cursor.getPath();
-		assert(path !== undefined, 0x44e /* Cannot locate a path to set a value of the node */);
-		this.context.setNodeValue(path, value);
+	public set value(value: Value) {
+		assert(allowsValue(this.type.value, value), "Out of schema value can not be set on tree");
+		this.context.setNodeValue(this.anchorNode, value);
 	}
 
-	get currentIndex(): number {
+	public get currentIndex(): number {
 		return this.cursor.fieldIndex;
 	}
 
@@ -568,7 +592,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		);
 	}
 
-	[Symbol.iterator](): IterableIterator<EditableField> {
+	public [Symbol.iterator](): IterableIterator<EditableField> {
 		const type = this.type;
 		return mapCursorFields(this.cursor, (cursor) =>
 			makeField(
@@ -582,7 +606,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	public createField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
 		assert(!this.has(fieldKey), 0x44f /* The field already exists. */);
 		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = this.cursor.getPath();
+		const path = this.anchorNode;
 		switch (fieldKind.multiplicity) {
 			case Multiplicity.Optional: {
 				assert(
@@ -609,7 +633,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 	public deleteField(fieldKey: FieldKey): void {
 		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = this.cursor.getPath();
+		const path = this.anchorNode;
 		switch (fieldKind.multiplicity) {
 			case Multiplicity.Optional: {
 				this.context.setOptionalField(path, fieldKey, undefined, false);
@@ -629,7 +653,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 	public replaceField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
 		const fieldKind = this.lookupFieldKind(fieldKey);
-		const path = this.cursor.getPath();
+		const path = this.anchorNode;
 		switch (fieldKind.multiplicity) {
 			case Multiplicity.Optional: {
 				assert(
@@ -682,6 +706,21 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		return { parent: proxifiedField, index };
 	}
+
+	public on<K extends keyof EditableTreeEvents>(
+		eventName: K,
+		listener: EditableTreeEvents[K],
+	): () => void {
+		assert(eventName === "changing", "unexpected eventName");
+		const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () => listener());
+		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
+			listener(),
+		);
+		return () => {
+			unsubscribeFromValueChange();
+			unsubscribeFromChildrenChange();
+		};
+	}
 }
 
 /**
@@ -702,8 +741,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.typeName;
 			case valueSymbol:
 				return target.value;
-			case indexSymbol:
-				return target.currentIndex;
 			case proxyTargetSymbol:
 				return target;
 			case Symbol.iterator:
@@ -716,6 +753,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.replaceField.bind(target);
 			case parentField:
 				return target.parentField;
+			case on:
+				return target.on.bind(target);
 			default:
 				return undefined;
 		}
@@ -787,12 +826,12 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case proxyTargetSymbol:
 			case typeSymbol:
 			case typeNameSymbol:
-			case indexSymbol:
 			case Symbol.iterator:
 			case getField:
 			case createField:
 			case replaceField:
 			case parentField:
+			case on:
 				return true;
 			case valueSymbol:
 				// Could do `target.value !== ValueSchema.Nothing`
@@ -848,13 +887,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.value,
 					writable: false,
 				};
-			case indexSymbol:
-				return {
-					configurable: true,
-					enumerable: false,
-					value: target.currentIndex,
-					writable: false,
-				};
 			case Symbol.iterator:
 				return {
 					configurable: true,
@@ -890,6 +922,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.parentField,
 					writable: false,
 				};
+			case on:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.on.bind(target),
+					writable: false,
+				};
 			default:
 				return undefined;
 		}
@@ -905,7 +944,11 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public readonly fieldSchema: FieldSchema;
 	public readonly [arrayLikeMarkerSymbol]: true;
 
-	constructor(context: ProxyContext, fieldSchema: FieldSchema, cursor: ITreeSubscriptionCursor) {
+	public constructor(
+		context: ProxyContext,
+		fieldSchema: FieldSchema,
+		cursor: ITreeSubscriptionCursor,
+	) {
 		assert(cursor.mode === CursorLocationType.Fields, 0x453 /* must be in fields mode */);
 		super(context, cursor);
 		this.fieldKey = cursor.getFieldKey();
@@ -913,11 +956,11 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		this[arrayLikeMarkerSymbol] = true;
 	}
 
-	get [proxyTargetSymbol](): FieldProxyTarget {
+	public get [proxyTargetSymbol](): FieldProxyTarget {
 		return this;
 	}
 
-	get parent(): EditableTree | undefined {
+	public get parent(): EditableTree | undefined {
 		if (this.getAnchor().parent === undefined) {
 			return undefined;
 		}
@@ -976,7 +1019,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		return mapCursorField(this.cursor, (cursor) => unwrappedTree(this.context, cursor));
 	}
 
-	[Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
+	public [Symbol.iterator](): IterableIterator<UnwrappedEditableTree> {
 		return this.asArray().values();
 	}
 
@@ -1098,8 +1141,10 @@ const fieldProxyHandler: AdaptingProxyHandler<FieldProxyTarget, EditableField> =
 		value: ContextuallyTypedNodeData,
 		receiver: unknown,
 	): boolean => {
-		const cursor = singleMapTreeCursor(
-			applyTypesFromContext(target.context.schema, target.fieldSchema.types, value),
+		const cursor = cursorFromContextualData(
+			target.context.schema,
+			target.fieldSchema.types,
+			value,
 		);
 		// This is just a cheap way to check if there might be a node at the given index.
 		// An implementation of the target methods holds all relevant key assertions.
@@ -1237,7 +1282,7 @@ export function unwrappedField(
 	assert(
 		fieldKind.multiplicity === Multiplicity.Optional ||
 			fieldKind.multiplicity === Multiplicity.Forbidden,
-		"invalid empty field",
+		0x59a /* invalid empty field */,
 	);
 	return undefined;
 }
