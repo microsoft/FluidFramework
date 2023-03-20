@@ -198,7 +198,7 @@ function applyFuzzChange(
 					contents.path?.parent,
 					contents.path?.parentField,
 				);
-				field.delete(contents.path?.parentIndex, 1);
+				field.delete(contents.path?.parentIndex, contents.nodesToDelete);
 				return transactionResult;
 			});
 			break;

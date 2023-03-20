@@ -42,6 +42,7 @@ export interface FuzzInsert {
 export interface FuzzDelete {
 	fuzzType: "delete";
 	path: UpPath;
+	nodesToDelete: number;
 }
 
 export interface FuzzSetPayload {
@@ -63,6 +64,11 @@ export interface FuzzTestState extends BaseFuzzTestState {
 
 export interface TreeContext {
 	treeIndex: number;
+}
+
+export interface PathWithNodeRange {
+	path: UpPath;
+	nodesToDelete: number;
 }
 
 export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> => {
@@ -91,10 +97,11 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 		const trees = state.testTreeProvider.trees;
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
-		const path = getExistingRandomNodePosition(tree, state.random);
+		const { path, nodesToDelete } = getExistingRandomNodePosition(tree, state.random);
 		return {
 			fuzzType: "delete",
 			path,
+			nodesToDelete,
 		};
 	}
 
@@ -102,7 +109,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 		const trees = state.testTreeProvider.trees;
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
-		const path = getExistingRandomNodePosition(tree, state.random);
+		const path = getExistingRandomNodePosition(tree, state.random).path;
 		return {
 			fuzzType: "setPayload",
 			path,
@@ -175,7 +182,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
 		cursor.free();
 		return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
 	}
-	currentPath = getExistingRandomNodePosition(tree, random);
+	currentPath = getExistingRandomNodePosition(tree, random).path;
 	const choosePath = random.pick(nodePlaceType);
 	switch (choosePath) {
 		case "beforeNode":
@@ -192,7 +199,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
 	}
 }
 
-function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPath {
+function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): PathWithNodeRange {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	const firstNode = cursor.firstNode();
@@ -204,10 +211,11 @@ function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPa
 	if (!firstField) {
 		// no fields, return the rootnode
 		cursor.free();
-		return path;
+		return { path, nodesToDelete: 1 };
 	}
 	let fieldNodes: number = cursor.getFieldLength();
 	let nodeIndex: number = 0;
+	let nodesToDelete: number = 1;
 
 	let currentMove = random.pick(moves.field);
 	assert(cursor.mode === CursorLocationType.Fields);
@@ -217,6 +225,7 @@ function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPa
 			case "enterNode":
 				if (fieldNodes > 0) {
 					nodeIndex = random.integer(0, fieldNodes - 1);
+					nodesToDelete = random.integer(1, fieldNodes - nodeIndex);
 					cursor.enterNode(nodeIndex);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					path = cursor.getPath()!;
@@ -224,7 +233,7 @@ function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPa
 				} else {
 					// if the node does not exist, return the most recently entered node
 					cursor.free();
-					return path;
+					return { path, nodesToDelete };
 				}
 				break;
 			case "firstField":
@@ -248,7 +257,7 @@ function getExistingRandomNodePosition(tree: ISharedTree, random: IRandom): UpPa
 		}
 	}
 	cursor.free();
-	return path;
+	return { path, nodesToDelete };
 }
 
 function containsAtLeastOneNode(tree: ISharedTree): boolean {
