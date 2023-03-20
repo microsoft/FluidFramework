@@ -99,13 +99,9 @@ export interface _AudienceViewProps {
 export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
 	const { clientId, audienceClientMetaData, onRenderAudienceMember, audienceHistory } = props;
 
-	let myClientConnection: IClient | undefined;
-
-	for (const audience of audienceClientMetaData) {
-		if (audience.clientId === clientId) {
-			myClientConnection = audience.client;
-		}
-	}
+	const myClientConnection = audienceClientMetaData.find(
+		(audience) => audience.clientId === clientId,
+	)?.client;
 
 	return (
 		<Stack
