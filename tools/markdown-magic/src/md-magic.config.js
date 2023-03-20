@@ -276,7 +276,7 @@ function libraryPackageReadmeTransform(content, options, config) {
  */
 function examplePackageReadmeTransform(content, options, config) {
 	const { packageJsonPath: relativePackageJsonPath } = options;
-	
+
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
 		relativePackageJsonPath,
