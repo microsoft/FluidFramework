@@ -118,12 +118,12 @@ function apiTestSuite(
 		for (const configProps of configs) {
 			describe(configProps.configName, () => {
 				/**
-				 * Complete config generated in `before` hook.
+				 * Complete transform config used in tests. Generated in `before` hook.
 				 */
 				let transformConfig: Required<ApiItemTransformationConfiguration>;
 
 				/**
-				 * Complete config generated in `before` hook.
+				 * Complete Markdown render config used in tests. Generated in `before` hook.
 				 */
 				let renderConfig: Required<MarkdownRenderConfiguration>;
 
