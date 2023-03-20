@@ -14,6 +14,7 @@ import {
 	ISignalMessage,
 	NackErrorType,
 	ScopeType,
+	SignalType,
 } from "@fluidframework/protocol-definitions";
 import {
 	canSummarize,
@@ -230,6 +231,8 @@ export function configureWebSocketServices(
 	submitSignalThrottler?: core.IThrottler,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
+    httpServer?: core.IHttpServer,
+    eventEmitter?: EventEmitter,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -576,6 +579,34 @@ export function configureWebSocketServices(
 			};
 		}
 
+		// TODO: KLUDGE webhook connection
+		if(httpServer !== undefined && eventEmitter !== undefined) {
+
+			// Only for debugging purposes
+			eventEmitter.on('broadcast-signal', (_, containerUrl) => {
+				const documentId = containerUrl.split('/')[containerUrl.split('/').length - 1];
+				const tenantId = containerUrl.split('/')[containerUrl.split('/').length - 2];
+				const roomFromBroadcastSignal: IRoom = { tenantId, documentId }
+				console.log(`ALFRED: Trigger broadcast-signal event to tenantId: ${tenantId} documentId: ${documentId}`);
+				const signalMessageRuntimeMessage : ISignalMessage = {
+					clientId: null, // system signal
+					content: JSON.stringify({
+						type: SignalType.RuntimeMessage,
+						contents: {
+							content: {
+								type: "ExternalDataChanged",
+								content: "Data has changed upstream. Please import new data."
+							},
+							type: SignalType.RuntimeMessage
+						}
+					})
+				}
+				console.log("\nsignalMessageRuntimeMessage\n");
+				console.log(signalMessageRuntimeMessage);
+				socket.emitToRoom(getRoomId(roomFromBroadcastSignal), "signal", signalMessageRuntimeMessage );
+			});
+		}
+	
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on("connect_document", async (connectionMessage: IConnect) => {

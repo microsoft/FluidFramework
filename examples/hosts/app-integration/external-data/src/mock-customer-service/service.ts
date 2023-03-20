@@ -18,15 +18,13 @@ import { assertValidTaskData, ITaskData } from "../model-interface";
 function echoExternalDataWebhookToFluid(
 	taskData: ITaskData,
 	fluidServiceUrl: string,
-	containerUrl: string,
 	externalTaskListId: string,
+	containerUrl: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	// TODO: we will need to add details (like ContainerId) to the message body or the url,
-	// so this message body format will evolve
 	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
 	fetch(fluidServiceUrl, {
 		method: "POST",
@@ -110,16 +108,14 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * Expected input data format:
 	 *
 	 * ```json
-	 * {
+	 *	{
 	 *		taskList: {
-	 * 			[ taskListId: string]: {
-	 *      		[id: string]: {
-	 *      	    	name: string,
-	 *      	    	priority: number
-	 *      		}
-	 * 			}
-	 *  	}
-	 * }
+	 *			[id: string]: {
+	 *				name: string,
+	 * 				priority: number
+	 *			}
+	 *		}
+	 *	}
 	 * ```
 	 *
 	 * This data will be forwarded to our own subscribers.
@@ -146,17 +142,17 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 
 			const containerUrls = clientManager.getClientSessions(externalTaskListId);
 
-			console.log(
-				formatLogMessage(
-					`Data update received from external data service. Notifying webhook subscribers.`,
-				),
-			);
 			for (const containerUrl of containerUrls) {
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
-					containerUrl,
 					externalTaskListId,
+					containerUrl,
+				);
+				console.log(
+					formatLogMessage(
+						`Data update received from external data service. Notifying webhook subscribers at ${containerUrl}`,
+					),
 				);
 			}
 			result.send();
