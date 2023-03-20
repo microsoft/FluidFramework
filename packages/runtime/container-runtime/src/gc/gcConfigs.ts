@@ -7,6 +7,7 @@ import { UsageError } from "@fluidframework/driver-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
+	currentGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
@@ -14,6 +15,7 @@ import {
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
 	GCVersion,
+	gcVersionUpgradeToV2Key,
 	IGarbageCollectorConfigs,
 	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
@@ -21,6 +23,7 @@ import {
 	runGCKey,
 	runSessionExpiryKey,
 	runSweepKey,
+	stableGCVersion,
 } from "./gcDefinitions";
 import { getGCVersion } from "./gcHelpers";
 
@@ -147,6 +150,12 @@ export function generateGCConfigs(
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
+	// If version upgrade is not enabled, fall back to the stable GC version.
+	const gcVersionInEffect =
+		mc.config.getBoolean(gcVersionUpgradeToV2Key) === true
+			? currentGCVersion
+			: stableGCVersion;
+
 	return {
 		gcEnabled,
 		sweepEnabled,
@@ -160,6 +169,7 @@ export function generateGCConfigs(
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
+		gcVersionInEffect,
 	};
 }
 

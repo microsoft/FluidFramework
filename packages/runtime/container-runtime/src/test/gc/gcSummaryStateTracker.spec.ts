@@ -4,11 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	MockLogger,
-	MonitoringContext,
-	mixinMonitoringContext,
-} from "@fluidframework/telemetry-utils";
 import { GCSummaryStateTracker, GCVersion } from "../../gc";
 
 type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSummaryGCVersion"> & {
@@ -17,16 +12,16 @@ type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSumm
 
 describe("Garbage Collection Tests", () => {
 	describe("GCSummaryStateTracker", () => {
-		const mockLogger = new MockLogger();
-		const mc: MonitoringContext = mixinMonitoringContext(mockLogger);
 		describe("latestSummaryGCVersion", () => {
 			it("Persisted < Current: Do Need Reset", () => {
 				const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-					true /* shouldRunGC */,
-					false /* tombstoneMode */,
-					mc,
+					{
+						shouldRunGC: true,
+						tombstoneMode: false,
+						gcVersionInBaseSnapshot: 0,
+						gcVersionInEffect: 1,
+					},
 					true /* wasGCRunInBaseSnapshot */,
-					0 /* gcVersionInBaseSnapshot */,
 				) as any;
 				assert.equal(tracker.doesGCStateNeedReset(), false, "Precondition 1");
 				assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
@@ -39,11 +34,13 @@ describe("Garbage Collection Tests", () => {
 
 			it("Persisted === Current: Don't Need Reset", () => {
 				const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-					true /* shouldRunGC */,
-					false /* tombstoneMode */,
-					mc,
+					{
+						shouldRunGC: true,
+						tombstoneMode: false,
+						gcVersionInBaseSnapshot: 1,
+						gcVersionInEffect: 1,
+					},
 					true /* wasGCRunInBaseSnapshot */,
-					1 /* gcVersionInBaseSnapshot */,
 				) as any;
 				assert.equal(tracker.doesGCStateNeedReset(), false, "Precondition 1");
 				assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
@@ -56,13 +53,14 @@ describe("Garbage Collection Tests", () => {
 
 			it("Persisted > Current: Do Need Reset", () => {
 				// Set value to true for gcVersionUpgradeToV2Key
-				//*				const mc: MonitoringContext = mixinMonitoringContext(mockLogger, { getRawConfig: (name: string) => name === gcVersionUpgradeToV2Key ? true : undefined });
 				const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
-					true /* shouldRunGC */,
-					false /* tombstoneMode */,
-					mc,
+					{
+						shouldRunGC: true,
+						tombstoneMode: false,
+						gcVersionInBaseSnapshot: 2,
+						gcVersionInEffect: 1,
+					},
 					true /* wasGCRunInBaseSnapshot */,
-					2 /* gcVersionInBaseSnapshot */,
 				) as any;
 				assert.equal(tracker.doesGCStateNeedReset(), false, "Precondition 1");
 				assert.equal(tracker.currentGCVersion, 1, "Precondition 2");

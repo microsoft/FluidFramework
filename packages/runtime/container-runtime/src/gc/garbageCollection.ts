@@ -201,11 +201,8 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		this.summaryStateTracker = new GCSummaryStateTracker(
-			this.shouldRunGC,
-			this.configs.tombstoneMode,
-			this.mc,
+			this.configs,
 			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
-			this.configs.gcVersionInBaseSnapshot,
 		);
 
 		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it

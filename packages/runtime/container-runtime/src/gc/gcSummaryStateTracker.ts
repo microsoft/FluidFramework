@@ -21,15 +21,10 @@ import {
 	RefreshSummaryResult,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils";
-import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata, metadataBlobName } from "../summary";
-import {
-	currentGCVersion,
-	GCVersion,
-	gcVersionUpgradeToV2Key,
-	stableGCVersion,
-} from "./gcDefinitions";
+import { GCVersion } from "./gcDefinitions";
 import { generateSortedGCState, getGCVersion } from "./gcHelpers";
+import { IGarbageCollectorConfigs } from ".";
 
 /**
  * The GC data that is tracked for a summary.
@@ -48,7 +43,7 @@ interface IGCSummaryTrackingData {
  */
 export class GCSummaryStateTracker {
 	// The current version of GC running.
-	public readonly currentGCVersion: GCVersion;
+	public readonly currentGCVersion: GCVersion = this.configs.gcVersionInEffect;
 	// This is the version of GC data in the latest summary being tracked.
 	private latestSummaryGCVersion: GCVersion;
 
@@ -62,24 +57,18 @@ export class GCSummaryStateTracker {
 
 	constructor(
 		// Tells whether GC should run or not.
-		private readonly shouldRunGC: boolean,
-		// Tells whether tombstone mode is enabled or not.
-		private readonly tombstoneMode: boolean,
-		private readonly mc: MonitoringContext,
+		private readonly configs: Pick<
+			IGarbageCollectorConfigs,
+			"shouldRunGC" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
+		>,
 		// Tells whether GC was run in the base snapshot this container loaded from.
 		wasGCRunInBaseSnapshot: boolean,
-		// The GC version in the base snapshot this container loaded from.
-		gcVersionInBaseSnapshot: GCVersion | undefined,
 	) {
 		this.wasGCRunInLatestSummary = wasGCRunInBaseSnapshot;
-		// If version upgrade is not enabled, fall back to the stable GC version.
-		this.currentGCVersion =
-			this.mc.config.getBoolean(gcVersionUpgradeToV2Key) === true
-				? currentGCVersion
-				: stableGCVersion;
 		// For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
 		// latest tracked GC version. For new documents, we will be writing the first summary with the current version.
-		this.latestSummaryGCVersion = gcVersionInBaseSnapshot ?? this.currentGCVersion;
+		this.latestSummaryGCVersion =
+			this.configs.gcVersionInBaseSnapshot ?? this.currentGCVersion;
 	}
 
 	/**
@@ -97,7 +86,7 @@ export class GCSummaryStateTracker {
 	 * this will return false.
 	 */
 	public doesGCStateNeedReset(): boolean {
-		return this.wasGCRunInLatestSummary !== this.shouldRunGC;
+		return this.wasGCRunInLatestSummary !== this.configs.shouldRunGC;
 	}
 
 	/**
@@ -118,7 +107,7 @@ export class GCSummaryStateTracker {
 	public doesSummaryStateNeedReset(): boolean {
 		return (
 			this.doesGCStateNeedReset() ||
-			(this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
+			(this.configs.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
 		);
 	}
 
@@ -135,7 +124,7 @@ export class GCSummaryStateTracker {
 		deletedNodes: Set<string>,
 		tombstones: string[],
 	): ISummarizeResult | undefined {
-		if (!this.shouldRunGC) {
+		if (!this.configs.shouldRunGC) {
 			return;
 		}
 
@@ -145,7 +134,7 @@ export class GCSummaryStateTracker {
 		const serializedDeletedNodes =
 			deletedNodes.size > 0 ? JSON.stringify(Array.from(deletedNodes).sort()) : undefined;
 		// If running in tombstone mode, serialize and write tombstones, if any.
-		const serializedTombstones = this.tombstoneMode
+		const serializedTombstones = this.configs.tombstoneMode
 			? tombstones.length > 0
 				? JSON.stringify(tombstones.sort())
 				: undefined
@@ -276,10 +265,10 @@ export class GCSummaryStateTracker {
 		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
 		// true in scenarios where GC is disabled but enabled in the snapshot we loaded from.
 		if (result.latestSummaryUpdated && result.wasSummaryTracked) {
-			this.wasGCRunInLatestSummary = this.shouldRunGC;
+			this.wasGCRunInLatestSummary = this.configs.shouldRunGC;
 		}
 
-		if (!result.latestSummaryUpdated || !this.shouldRunGC) {
+		if (!result.latestSummaryUpdated || !this.configs.shouldRunGC) {
 			return undefined;
 		}
 
