@@ -133,8 +133,8 @@ const testSchema: SchemaData = {
 	]),
 };
 
-const testTreeNode: JsonableTree = { value: 1, type: dataSchema.name }
-const replacementTestNode: JsonableTree = { value: "1.0", type: dataSchema.name }
+const testTreeNode: JsonableTree = { value: 1, type: dataSchema.name };
+const replacementTestNode: JsonableTree = { value: "1.0", type: dataSchema.name };
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -227,12 +227,7 @@ describe("SharedTree benchmarks", () => {
 					provider = await TestTreeProvider.create(1);
 					tree = provider.trees[0];
 					tree.storedSchema.update(testSchema);
-					await insertNodesToTestTree(
-						provider,
-						tree,
-						numberOfNodes,
-						TreeShape.Deep,
-					);
+					await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Deep);
 				},
 				benchmarkFn: () => {
 					assert.equal(
@@ -252,12 +247,7 @@ describe("SharedTree benchmarks", () => {
 					provider = await TestTreeProvider.create(1);
 					tree = provider.trees[0];
 					tree.storedSchema.update(testSchema);
-					await insertNodesToTestTree(
-						provider,
-						tree,
-						numberOfNodes,
-						TreeShape.Wide,
-					);
+					await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Wide);
 				},
 				benchmarkFn: () => {
 					assert.equal(
@@ -279,12 +269,7 @@ describe("SharedTree benchmarks", () => {
 					tree.storedSchema.update(testSchema);
 				},
 				benchmarkFn: async () => {
-					await insertNodesToTestTree(
-						provider,
-						tree,
-						numberOfNodes,
-						TreeShape.Deep,
-					);
+					await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Deep);
 				},
 			});
 		}
@@ -300,12 +285,7 @@ describe("SharedTree benchmarks", () => {
 					tree.storedSchema.update(testSchema);
 				},
 				benchmarkFn: async () => {
-					await insertNodesToTestTree(
-						provider,
-						tree,
-						numberOfNodes,
-						TreeShape.Wide,
-					);
+					await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Wide);
 				},
 			});
 		}
@@ -321,12 +301,7 @@ describe("SharedTree benchmarks", () => {
 						provider = await TestTreeProvider.create(1);
 						tree = provider.trees[0];
 						tree.storedSchema.update(testSchema);
-						await insertNodesToTestTree(
-							provider,
-							tree,
-							numberOfNodes,
-							TreeShape.Deep,
-						);
+						await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Deep);
 						path = getCursorLeafNode(numberOfNodes, TreeShape.Deep);
 					},
 					benchmarkFn: () => {
@@ -345,12 +320,7 @@ describe("SharedTree benchmarks", () => {
 						provider = await TestTreeProvider.create(1);
 						tree = provider.trees[0];
 						tree.storedSchema.update(testSchema);
-						await insertNodesToTestTree(
-							provider,
-							tree,
-							numberOfNodes,
-							TreeShape.Wide,
-						);
+						await insertNodesToTestTree(provider, tree, numberOfNodes, TreeShape.Wide);
 						path = getCursorLeafNode(numberOfNodes, TreeShape.Wide);
 					},
 					benchmarkFn: () => {
@@ -371,14 +341,17 @@ describe("SharedTree benchmarks", () => {
 				before: async () => {
 					[provider, trees] = await createSharedTrees(
 						getTestSchema(FieldKinds.optional),
-						[{ type: rootSchemaName, value:1 }],
+						[{ type: rootSchemaName, value: 1 }],
 						1,
 					);
 					tree = trees[0];
 					insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Deep);
 				},
 				benchmarkFn: () => {
-					assert.equal(numberOfNodes, readEditableTree(tree, numberOfNodes, TreeShape.Deep));
+					assert.equal(
+						numberOfNodes,
+						readEditableTree(tree, numberOfNodes, TreeShape.Deep),
+					);
 				},
 			});
 		}
@@ -392,14 +365,17 @@ describe("SharedTree benchmarks", () => {
 				before: async () => {
 					[provider, trees] = await createSharedTrees(
 						getTestSchema(FieldKinds.sequence),
-						[{ type: rootSchemaName, value:1 }],
+						[{ type: rootSchemaName, value: 1 }],
 						1,
 					);
 					tree = trees[0];
 					insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Wide);
 				},
 				benchmarkFn: () => {
-					assert.equal(numberOfNodes, readEditableTree(tree, numberOfNodes, TreeShape.Wide));
+					assert.equal(
+						numberOfNodes,
+						readEditableTree(tree, numberOfNodes, TreeShape.Wide),
+					);
 				},
 			});
 		}
@@ -413,7 +389,7 @@ describe("SharedTree benchmarks", () => {
 				before: async () => {
 					[provider, trees] = await createSharedTrees(
 						getTestSchema(FieldKinds.sequence),
-						[{ type: rootSchemaName, value:1 }],
+						[{ type: rootSchemaName, value: 1 }],
 						1,
 					);
 					tree = trees[0];
@@ -433,7 +409,7 @@ describe("SharedTree benchmarks", () => {
 				before: async () => {
 					[provider, trees] = await createSharedTrees(
 						getTestSchema(FieldKinds.sequence),
-						[{ type: rootSchemaName, value:1 }],
+						[{ type: rootSchemaName, value: 1 }],
 						1,
 					);
 					tree = trees[0];
@@ -455,28 +431,15 @@ describe("SharedTree benchmarks", () => {
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
 							getTestSchema(FieldKinds.sequence),
-							[{ type: rootSchemaName, value:1 }],
+							[{ type: rootSchemaName, value: 1 }],
 							1,
 						);
 						tree = trees[0];
-						insertNodesToEditableTree(
-							tree,
-							numberOfNodes,
-							TreeShape.Deep,
-						);
-						editableField = getEditableLeafNode(
-							tree,
-							numberOfNodes,
-							TreeShape.Deep,
-						);
+						insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Deep);
+						editableField = getEditableLeafNode(tree, numberOfNodes, TreeShape.Deep);
 					},
 					benchmarkFn: () => {
-						manipulateEditableTree(
-							tree,
-							numberOfNodes,
-							TreeShape.Deep,
-							editableField,
-						);
+						manipulateEditableTree(tree, numberOfNodes, TreeShape.Deep, editableField);
 					},
 				});
 			}
@@ -491,28 +454,15 @@ describe("SharedTree benchmarks", () => {
 					before: async () => {
 						[provider, trees] = await createSharedTrees(
 							getTestSchema(FieldKinds.sequence),
-							[{ type: rootSchemaName, value:1 }],
+							[{ type: rootSchemaName, value: 1 }],
 							1,
 						);
 						tree = trees[0];
-						insertNodesToEditableTree(
-							tree,
-							numberOfNodes,
-							TreeShape.Wide,
-						);
-						editableField = getEditableLeafNode(
-							tree,
-							numberOfNodes,
-							TreeShape.Wide,
-						);
+						insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Wide);
+						editableField = getEditableLeafNode(tree, numberOfNodes, TreeShape.Wide);
 					},
 					benchmarkFn: () => {
-						manipulateEditableTree(
-							tree,
-							numberOfNodes,
-							TreeShape.Wide,
-							editableField,
-						);
+						manipulateEditableTree(tree, numberOfNodes, TreeShape.Wide, editableField);
 					},
 				});
 			}
@@ -528,10 +478,7 @@ async function insertNodesToTestTree(
 ): Promise<void> {
 	runSynchronous(tree, () => {
 		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(
-			0,
-			singleTextCursor(testTreeNode),
-		);
+		field.insert(0, singleTextCursor(testTreeNode));
 		return TransactionResult.Commit;
 	});
 	switch (shape) {
@@ -559,10 +506,7 @@ async function setNodesNarrow(
 	for (let i = 0; i < numberOfNodes; i++) {
 		runSynchronous(tree, () => {
 			const field = tree.editor.sequenceField(currPath, localFieldKey);
-			field.insert(
-				0,
-				singleTextCursor(testTreeNode),
-			);
+			field.insert(0, singleTextCursor(testTreeNode));
 			return TransactionResult.Commit;
 		});
 		currPath = {
@@ -587,10 +531,7 @@ async function setNodesWide(
 	for (let j = 0; j < numberOfNodes; j++) {
 		runSynchronous(tree, () => {
 			const field = tree.editor.sequenceField(path, localFieldKey);
-			field.insert(
-				j,
-				singleTextCursor(testTreeNode),
-			);
+			field.insert(j, singleTextCursor(testTreeNode));
 			return TransactionResult.Commit;
 		});
 	}
@@ -630,10 +571,7 @@ function insertNodesToEditableTree(
 	}
 }
 
-function getTestTreeAsJSObject(
-	numberOfNodes: number,
-	shape: TreeShape,
-): Jsonable {
+function getTestTreeAsJSObject(numberOfNodes: number, shape: TreeShape): Jsonable {
 	let tree;
 	switch (shape) {
 		case TreeShape.Deep:
@@ -824,7 +762,7 @@ function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeS
 				sum = applyOperationDuringRead(sum, value);
 				currentNode = currentNode.foo as UnwrappedEditableField;
 			}
-			return sum
+			return sum;
 		}
 		case TreeShape.Wide: {
 			const root = tree.root;
@@ -833,11 +771,11 @@ function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeS
 			assert(isEditableField(field));
 			for (let i = 0; i < numberOfNodes; i++) {
 				const currentNode = field[i] as UnwrappedEditableField;
-				assert(isUnwrappedNode(currentNode))
+				assert(isUnwrappedNode(currentNode));
 				const value = currentNode[valueSymbol] as number;
 				sum = applyOperationDuringRead(sum, value);
 			}
-			return sum
+			return sum;
 		}
 		default:
 			unreachableCase(shape);
