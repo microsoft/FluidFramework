@@ -8,7 +8,7 @@ import { RevisionTag, makeAnonChange, tagChange, TreeSchemaIdentifier } from "..
 import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, normalizeMoveIds, numberTag, shallowCompose } from "./utils";
 

@@ -12,6 +12,7 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -60,10 +61,11 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: tools/api-markdown-documenter
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     tagName: api-markdown-documenter
     taskBuild: build
     taskBuildDocs: true
     taskLint: true
     taskTest:
     - test
-    buildNumberInPatch: false # Publish as is, do override patch with build number
