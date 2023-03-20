@@ -118,7 +118,7 @@ export class GCSummaryStateTracker {
 	public doesSummaryStateNeedReset(): boolean {
 		return (
 			this.doesGCStateNeedReset() ||
-			(this.shouldRunGC && this.latestSummaryGCVersion < this.currentGCVersion)
+			(this.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
 		);
 	}
 

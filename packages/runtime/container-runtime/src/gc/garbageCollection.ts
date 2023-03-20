@@ -298,6 +298,7 @@ export class GarbageCollector implements IGarbageCollector {
 			return { gcData: { gcNodes }, usedRoutes };
 		});
 
+		//* Log current GC Version (maybe add to gcConfigs)
 		// Log all the GC options and the state determined by the garbage collector. This is interesting only for the
 		// summarizer client since it is the only one that runs GC. It also helps keep the telemetry less noisy.
 		if (this.isSummarizerClient) {

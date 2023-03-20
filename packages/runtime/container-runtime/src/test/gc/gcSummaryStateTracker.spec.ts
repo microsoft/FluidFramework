@@ -16,8 +16,7 @@ type GCSummaryStateTrackerWithPrivates = Omit<GCSummaryStateTracker, "latestSumm
 };
 
 describe("Garbage Collection Tests", () => {
-	//* ONLY
-	describe.only("GCSummaryStateTracker", () => {
+	describe("GCSummaryStateTracker", () => {
 		const mockLogger = new MockLogger();
 		const mc: MonitoringContext = mixinMonitoringContext(mockLogger);
 		describe("latestSummaryGCVersion", () => {
@@ -55,7 +54,7 @@ describe("Garbage Collection Tests", () => {
 				);
 			});
 
-			it("Persisted > Current: Don't Need Reset", () => {
+			it("Persisted > Current: Do Need Reset", () => {
 				// Set value to true for gcVersionUpgradeToV2Key
 				//*				const mc: MonitoringContext = mixinMonitoringContext(mockLogger, { getRawConfig: (name: string) => name === gcVersionUpgradeToV2Key ? true : undefined });
 				const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
@@ -71,8 +70,8 @@ describe("Garbage Collection Tests", () => {
 				// This covers the case where we rolled back an upgrade. Containers that successfully "upgraded" (reset) shouldn't need to do it again.
 				assert.equal(
 					tracker.doesSummaryStateNeedReset(),
-					false,
-					"Shouldn't need reset: Persisted GC Version is not old",
+					true,
+					"Should need reset: Persisted GC Version is not old",
 				);
 			});
 		});
