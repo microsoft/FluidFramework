@@ -32,6 +32,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
+    BaseTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -184,15 +185,25 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			} else {
                 let checkpoint;
                 let isLocalCheckpoint = false;
-                if(this.localCheckpointEnabled){
+                const restoreFromCheckpointMetric = Lumberjack.newLumberMetric(LumberEventName.RestoreFromCheckpoint);
+                let checkpointSource = "defaultGlobalCollection";
+
+                if(this.localCheckpointEnabled && (this.localCheckpointCollection !== null && this.localCheckpointCollection !== undefined)){
                     // Search local db for checkpoint
-                    Lumberjack.info(`Searching local collection for checkpoint.`, getLumberBaseProperties(documentId, tenantId));
-                    checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
-                        Lumberjack.error(`Error retrieving local checkpoint`, getLumberBaseProperties(documentId, tenantId));
-                    });
+                    checkpoint = await this.localCheckpointCollection.findOne(
+                        {
+                            _id: documentId,
+                            documentId,
+                            tenantId
+                        })
+                        .catch((error) => {
+                            Lumberjack.error(`Error retrieving local checkpoint`, getLumberBaseProperties(documentId, tenantId));
+                            checkpointSource = "notFoundInLocalCollection";
+                        })
 
                     if(checkpoint !== null && checkpoint !== undefined){
                         lastCheckpoint = JSON.parse(checkpoint.deli);
+                        checkpointSource = "foundInLocalCollection"
                         isLocalCheckpoint = true;
                     } else {
                         lastCheckpoint = JSON.parse(document.deli);
@@ -202,15 +213,18 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                     lastCheckpoint = JSON.parse(document.deli);
                 }
 
-                const lumberjackProperties = {
-                    ...getLumberBaseProperties(documentId, tenantId),
-                    lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
-                    logOffset: lastCheckpoint.logOffset,
-                    checkpointTimestamp: lastCheckpoint.checkpointTimestamp,
-                    retrievedFromLocalDB: isLocalCheckpoint
-                }
+                restoreFromCheckpointMetric.setProperties({
+                    [BaseTelemetryProperties.tenantId]: tenantId,
+                    [BaseTelemetryProperties.documentId]: documentId,
+                    checkpointSource,
+                    retrievedFromLocalDatabase: isLocalCheckpoint,
+                });
 
-                Lumberjack.info(`Restored checkpoint from database.`, lumberjackProperties);
+                if(lastCheckpoint) {
+                    restoreFromCheckpointMetric.success(`Restored checkpoint from database.`);
+                } else {
+                    restoreFromCheckpointMetric.error(`Error restoring checkpoint from database. Last checkpoint not found.`);
+                }
             }
 		}
 

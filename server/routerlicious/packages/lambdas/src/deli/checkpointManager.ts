@@ -52,6 +52,7 @@ export function createDeliCheckpointManagerFromCollection(
     const checkpointManager = {
         writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
             return isLocal ? localCollection.upsert({
+                _id: documentId,
                 documentId,
                 tenantId,
             },
@@ -70,6 +71,7 @@ export function createDeliCheckpointManagerFromCollection(
         deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal:boolean) => {
             return isLocal ? localCollection.upsert(
                 {
+                    _id: documentId,
                     documentId,
                     tenantId,
                 },
