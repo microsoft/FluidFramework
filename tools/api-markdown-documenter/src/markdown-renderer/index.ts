@@ -8,11 +8,15 @@
  */
 
 export {
-	type RenderConfiguration,
-	getRenderConfigurationWithDefaults,
+	type RenderConfiguration as MarkdownRenderConfiguration,
+	getRenderConfigurationWithDefaults as getMarkdownRenderConfigurationWithDefaults,
 	type MarkdownRenderers,
 	type RenderDocumentationNode,
 } from "./configuration";
 export { createDocumentWriter, DocumentWriter } from "./DocumentWriter";
-export { renderDocument, renderNode, renderNodes } from "./Render";
+export {
+	renderDocument as renderDocumentAsMarkdown,
+	renderNode as renderNodeAsMarkdown,
+	renderNodes as renderNodesAsMarkdown,
+} from "./Render";
 export { type MarkdownRenderContext } from "./RenderContext";

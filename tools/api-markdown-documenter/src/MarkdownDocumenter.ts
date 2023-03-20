@@ -17,10 +17,10 @@ import {
 } from "./api-item-transforms";
 import { DocumentNode } from "./documentation-domain";
 import {
-	RenderConfiguration as MarkdownRenderConfiguration,
+	MarkdownRenderConfiguration,
 	MarkdownRenderers,
-	getRenderConfigurationWithDefaults as getMarkdownRenderConfigurationWithDefaults,
-	renderDocument as renderDocumentAsMarkdown,
+	getMarkdownRenderConfigurationWithDefaults,
+	renderDocumentAsMarkdown,
 } from "./markdown-renderer";
 
 /**

@@ -18,7 +18,10 @@ import {
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../api-item-transforms";
 import { DocumentNode } from "../documentation-domain";
-import { RenderConfiguration, getRenderConfigurationWithDefaults } from "../markdown-renderer";
+import {
+	MarkdownRenderConfiguration,
+	getMarkdownRenderConfigurationWithDefaults,
+} from "../markdown-renderer";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
@@ -41,7 +44,7 @@ const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "sna
 async function snapshotTest(
 	relativeSnapshotDirectoryPath: string,
 	transformConfig: ApiItemTransformationConfiguration,
-	renderConfig: RenderConfiguration,
+	renderConfig: MarkdownRenderConfiguration,
 ): Promise<void> {
 	const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
 	const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
@@ -91,7 +94,7 @@ interface ConfigTestProps {
 	/**
 	 * The Markdown rendering config to use.
 	 */
-	renderConfig: RenderConfiguration;
+	renderConfig: MarkdownRenderConfiguration;
 }
 
 /**
@@ -122,7 +125,7 @@ function apiTestSuite(
 				/**
 				 * Complete config generated in `before` hook.
 				 */
-				let renderConfig: Required<RenderConfiguration>;
+				let renderConfig: Required<MarkdownRenderConfiguration>;
 
 				before(async () => {
 					const apiModel = new ApiModel();
@@ -135,7 +138,9 @@ function apiTestSuite(
 						apiModel,
 					});
 
-					renderConfig = getRenderConfigurationWithDefaults(configProps.renderConfig);
+					renderConfig = getMarkdownRenderConfigurationWithDefaults(
+						configProps.renderConfig,
+					);
 				});
 
 				it("Render Model document (smoke test)", () => {

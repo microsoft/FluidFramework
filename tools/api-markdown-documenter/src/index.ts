@@ -47,10 +47,10 @@ export {
 	type MarkdownRenderContext,
 	type MarkdownRenderers,
 	type RenderDocumentationNode as RenderDocumentationNodeAsMarkdown,
-	type RenderConfiguration as MarkdownRenderConfiguration,
-	renderDocument as renderDocumentAsMarkdown,
-	renderNode as renderNodeAsMarkdown,
-	renderNodes as renderNodesAsMarkdown,
+	type MarkdownRenderConfiguration,
+	renderDocumentAsMarkdown,
+	renderNodeAsMarkdown,
+	renderNodesAsMarkdown,
 } from "./markdown-renderer";
 
 export { transformApiModel, renderApiModelAsMarkdown } from "./MarkdownDocumenter";
