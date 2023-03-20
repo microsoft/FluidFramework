@@ -67,8 +67,7 @@ export class GCSummaryStateTracker {
 		this.wasGCRunInLatestSummary = wasGCRunInBaseSnapshot;
 		// For existing document, the latest summary is the one that we loaded from. So, use its GC version as the
 		// latest tracked GC version. For new documents, we will be writing the first summary with the current version.
-		this.latestSummaryGCVersion =
-			this.configs.gcVersionInBaseSnapshot ?? this.currentGCVersion;
+		this.latestSummaryGCVersion = this.configs.gcVersionInBaseSnapshot ?? this.currentGCVersion;
 	}
 
 	/**
@@ -85,7 +84,7 @@ export class GCSummaryStateTracker {
 	 * Note that the state will be reset only once for the first summary generated after this returns true. After that,
 	 * this will return false.
 	 */
-	public doesGCStateNeedReset(): boolean {
+	public get doesGCStateNeedReset(): boolean {
 		return this.wasGCRunInLatestSummary !== this.configs.shouldRunGC;
 	}
 
@@ -104,9 +103,9 @@ export class GCSummaryStateTracker {
 	 *
 	 * 4.2. This client's latest summary was updated from a snapshot that has a different GC version.
 	 */
-	public doesSummaryStateNeedReset(): boolean {
+	public get doesSummaryStateNeedReset(): boolean {
 		return (
-			this.doesGCStateNeedReset() ||
+			this.doesGCStateNeedReset ||
 			(this.configs.shouldRunGC && this.latestSummaryGCVersion !== this.currentGCVersion)
 		);
 	}

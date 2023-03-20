@@ -23,10 +23,10 @@ describe("Garbage Collection Tests", () => {
 					},
 					true /* wasGCRunInBaseSnapshot */,
 				) as any;
-				assert.equal(tracker.doesGCStateNeedReset(), false, "Precondition 1");
+				assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
 				assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
 				assert.equal(
-					tracker.doesSummaryStateNeedReset(),
+					tracker.doesSummaryStateNeedReset,
 					true,
 					"Should need reset: Persisted GC Version was old",
 				);
@@ -42,10 +42,10 @@ describe("Garbage Collection Tests", () => {
 					},
 					true /* wasGCRunInBaseSnapshot */,
 				) as any;
-				assert.equal(tracker.doesGCStateNeedReset(), false, "Precondition 1");
+				assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
 				assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
 				assert.equal(
-					tracker.doesSummaryStateNeedReset(),
+					tracker.doesSummaryStateNeedReset,
 					false,
 					"Shouldn't need reset: GC Versions match",
 				);
@@ -62,12 +62,12 @@ describe("Garbage Collection Tests", () => {
 					},
 					true /* wasGCRunInBaseSnapshot */,
 				) as any;
-				assert.equal(tracker.doesGCStateNeedReset(), false, "Precondition 1");
+				assert.equal(tracker.doesGCStateNeedReset, false, "Precondition 1");
 				assert.equal(tracker.currentGCVersion, 1, "Precondition 2");
 
 				// This covers the case where we rolled back an upgrade. Containers that successfully "upgraded" (reset) shouldn't need to do it again.
 				assert.equal(
-					tracker.doesSummaryStateNeedReset(),
+					tracker.doesSummaryStateNeedReset,
 					true,
 					"Should need reset: Persisted GC Version is not old",
 				);
