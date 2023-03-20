@@ -31,7 +31,7 @@ import {
 	ValueSchema,
 } from "../../core";
 import { JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual, fakeRepair } from "../utils";
+import { assertMarkListEqual, fakeTaggedRepair as fakeRepair } from "../utils";
 
 const nodeSchema = TypedSchema.tree("Node", {
 	value: ValueSchema.String,

@@ -8,7 +8,7 @@ import { RevisionTag, makeAnonChange, tagChange, TreeSchemaIdentifier } from "..
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, normalizeMoveIds, numberTag, shallowCompose } from "./utils";
 
@@ -619,7 +619,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag1, 0, 2),
+				content: fakeRepair(tag1, 1, 2),
 				count: 2,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -646,7 +646,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag1, 0, 1),
+				content: fakeRepair(tag1, 1, 1),
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -654,7 +654,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag2, 2, 1),
+				content: fakeRepair(tag2, 1, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 1,
@@ -684,7 +684,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag2, 2, 1),
+				content: fakeRepair(tag2, 0, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 0,
