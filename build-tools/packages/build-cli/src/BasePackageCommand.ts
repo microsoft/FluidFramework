@@ -14,12 +14,44 @@ import { releaseGroupFlag } from "./flags";
 import { ReleaseGroup } from "./releaseGroups";
 
 /**
+ * A type indicating the kind of package that is being processed. This enables subcommands to vary behavior based on the
+ * type of package.
+ */
+type PackageKind =
+	/**
+	 * Package is an independent package.
+	 */
+	| "independentPackage"
+
+	/**
+	 * Package is part of a release group
+	 */
+	| "releaseGroupPackage"
+
+	/**
+	 * Package is the root package of a release group.
+	 */
+	| "releaseGroupRoot"
+
+	/**
+	 * Package is being loaded from a directory. The package may be one of the other three kinds. This kind is only used
+	 * when running on a package diurectly using its directory.
+	 */
+	| "packageDir";
+
+/**
  * Commands that run operations per project.
  */
 export abstract class PackageCommand<
 	T extends typeof Command & { flags: typeof PackageCommand.flags },
 > extends BaseCommand<T> {
 	static flags = {
+		all: Flags.boolean({
+			char: "a",
+			description:
+				"Run on all packages and release groups. Cannot be used with --releaseGroup, --packages, or --dir.",
+			exclusive: ["dir", "packages", "releaseGroup"],
+		}),
 		dir: Flags.directory({
 			char: "d",
 			description:
@@ -37,9 +69,13 @@ export abstract class PackageCommand<
 				"Run on all packages within this release group. Cannot be used with --dir or --packages.",
 			exclusive: ["dir", "packages"],
 		}),
+		releaseGroupRoots: Flags.boolean({
+			description:
+				"Runs only on the root package of release groups. Can only be used with --all or --releaseGroup.",
+			relationships: [{ type: "some", flags: ["all", "releaseGroup"] }],
+		}),
 		private: Flags.boolean({
 			description: "Only include private packages (or non-private packages for --no-private)",
-			exclusive: ["skipPrivate"],
 			allowNo: true,
 		}),
 		scope: Flags.string({
@@ -55,9 +91,15 @@ export abstract class PackageCommand<
 		...BaseCommand.flags,
 	};
 
-	protected abstract processPackage(directory: string): Promise<void>;
+	protected abstract processPackage(
+		directory: string,
+		packageDetails: { kind: PackageKind },
+	): Promise<void>;
 
-	protected async processPackages(directories: string[]): Promise<void> {
+	private async processPackages(
+		directories: string[],
+		packageDetails: { kind: PackageKind },
+	): Promise<void> {
 		const scopeIn = scopesToPrefix(this.flags.scope);
 		const scopeOut = scopesToPrefix(this.flags.skipScope);
 
@@ -113,7 +155,7 @@ export abstract class PackageCommand<
 				started += 1;
 				updateStatus();
 				try {
-					await this.processPackage(directory);
+					await this.processPackage(directory, packageDetails);
 					succeeded += 1;
 				} finally {
 					finished += 1;
@@ -128,40 +170,64 @@ export abstract class PackageCommand<
 		}
 	}
 
+	/**
+	 * Runs processPackage for each package in a release group, exlcuding the root.
+	 */
+	private async processReleaseGroup(releaseGroup: ReleaseGroup): Promise<void> {
+		this.info(`Finding packages for release group: ${releaseGroup}`);
+		const ctx = await this.getContext();
+		await this.processPackages(
+			ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
+			{ kind: "releaseGroupPackage" },
+		);
+	}
+
+	/**
+	 * Runs processPackage for each independent package in the repo.
+	 */
+	private async processIndependentPackages(): Promise<void> {
+		const ctx = await this.getContext();
+		this.info(`Finding independent packages`);
+		return this.processPackages(
+			ctx.independentPackages.map((p) => p.directory),
+			{ kind: "independentPackage" },
+		);
+	}
+
 	public async run(): Promise<void> {
 		const flags = this.flags;
 
-		const releaseGroup = flags.releaseGroup;
-		const independentPackages = flags.packages;
-		const dir = flags.dir;
+		const { all, dir, releaseGroup, releaseGroupRoots, packages } = flags;
 
-		if (dir !== undefined) {
-			return this.processPackages([dir]);
+		const ctx = await this.getContext();
+		if (all) {
+			// for each release group, run on its root or all its packages based on the releaseGroupRoots
+			const releaseGroupPromises = [...ctx.repo.releaseGroups.entries()].map(async (item) => {
+				const [rg, rgRepo] = item;
+				return releaseGroupRoots
+					? this.processPackages([rgRepo.repoPath], { kind: "releaseGroupRoot" })
+					: this.processReleaseGroup(rg);
+			});
+
+			await Promise.all([...releaseGroupPromises, this.processIndependentPackages()]);
+			return;
 		}
 
-		if (flags.releaseGroup === undefined && flags.packages === false) {
-			return this.processPackages(["."]);
+		if (dir !== undefined) {
+			return this.processPackages([dir], { kind: "packageDir" });
+		}
+
+		// Use dir="." as the default if neither a release group nor --packages was provided.
+		if (releaseGroup === undefined && packages === false) {
+			return this.processPackages(["."], { kind: "packageDir" });
 		}
 
 		if (releaseGroup !== undefined) {
 			return this.processReleaseGroup(releaseGroup);
 		}
-		assert(independentPackages);
+
+		assert(packages);
 		return this.processIndependentPackages();
-	}
-
-	protected async processIndependentPackages(): Promise<void> {
-		const ctx = await this.getContext();
-		this.info(`Finding independent packages`);
-		return this.processPackages(ctx.independentPackages.map((p) => p.directory));
-	}
-
-	protected async processReleaseGroup(releaseGroup: ReleaseGroup): Promise<void> {
-		this.info(`Finding packages for release group: ${releaseGroup}`);
-		const ctx = await this.getContext();
-		await this.processPackages(
-			ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
-		);
 	}
 }
 

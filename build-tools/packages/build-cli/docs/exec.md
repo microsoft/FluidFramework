@@ -3,19 +3,19 @@
 
 Run a shell command in the context of a package or release group.
 
-* [`flub exec EXECCMD`](#flub-exec-execcmd)
+* [`flub exec CMD`](#flub-exec-cmd)
 
-## `flub exec EXECCMD`
+## `flub exec CMD`
 
 Run a shell command in the context of a package or release group.
 
 ```
 USAGE
-  $ flub exec EXECCMD [-v] [--private | ] [--scope <value> | -g client|server|azure|build-tools] [--roots
-    [-a | [-d <value> | --packages | -g client|server|azure|build-tools] |  | ]]
+  $ flub exec CMD [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools]
+    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools]
 
 ARGUMENTS
-  EXECCMD  The shell command to execute.
+  CMD  The shell command to execute.
 
 FLAGS
   -a, --all                    Run on all packages and release groups. Cannot be used with --releaseGroup, --packages,
@@ -29,7 +29,8 @@ FLAGS
   --packages                   Run on all independent packages in the repo. This is an alternative to using the --dir
                                flag for independent packages.
   --[no-]private               Only include private packages (or non-private packages for --no-private)
-  --roots                      Runs only on the root package of release groups. Can only be used with --all.
+  --releaseGroupRoots          Runs only on the root package of release groups. Can only be used with --all or
+                               --releaseGroup.
   --scope=<value>...           Package scopes to filter to.
 
 DESCRIPTION

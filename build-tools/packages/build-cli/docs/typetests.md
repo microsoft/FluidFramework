@@ -15,10 +15,14 @@ Updates configuration for type tests in package.json files. If the previous vers
 
 ```
 USAGE
-  $ flub typetests [-v] [-d <value> | --packages | -g client|server|azure|build-tools] [--private | ] [--scope
-    <value> | -g client|server|azure|build-tools] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
+  $ flub typetests [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools]
+    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools] [--reset] [-p | --exact
+    <value> | -r | --disable] [-n | --enable]
 
 FLAGS
+  -a, --all
+      Run on all packages and release groups. Cannot be used with --releaseGroup, --packages, or --dir.
+
   -d, --dir=<value>
       Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
 
@@ -71,6 +75,9 @@ FLAGS
 
   --[no-]private
       Only include private packages (or non-private packages for --no-private)
+
+  --releaseGroupRoots
+      Runs only on the root package of release groups. Can only be used with --all or --releaseGroup.
 
   --reset
       Resets the broken type test settings in package.json.
