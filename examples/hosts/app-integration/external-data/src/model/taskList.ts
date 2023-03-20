@@ -226,7 +226,6 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	public async importExternalData(): Promise<void> {
 		console.log("TASK-LIST: Fetching external data from service...");
 
-		const taskListId = "task-list-1";
 		let incomingExternalData: [
 			string,
 			{
@@ -303,38 +302,6 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		}
 	}
 
-	/**
-	 * Register container session data with the customer service.
-	 * @returns A promise that resolves when the registration call returns successfully.
-	 */
-	public async registerWithCustomerService(
-		taskListId: string,
-		containerUrlData: IFluidResolvedUrl | undefined,
-	): Promise<void> {
-		try {
-			if (containerUrlData?.url === undefined) {
-				console.log(`TASK-LIST: Registering client ${containerUrlData?.url} with customer service...`);
-				console.error(
-					`Customer service registration failed: containerUrlData is undefined or does not contain url`,
-				);
-				return;
-			}
-			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({ containerUrl: containerUrlData.url, taskListId }),
-			});
-		} catch (error) {
-			console.error(`Customer service registration failed:\n${error}`);
-
-			// TODO: Display error status to user? Attempt some number of retries on failure?
-
-			return;
-		}
-	}
 	/**
 	 * Save the current data in the container back to the external data source.
 	 *

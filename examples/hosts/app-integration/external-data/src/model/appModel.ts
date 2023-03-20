@@ -39,16 +39,4 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	public readonly getContainerResolvedUrl = (): IFluidResolvedUrl | undefined => {
 		return this.container?.resolvedUrl as IFluidResolvedUrl;
 	};
-
-	/**
-	 * {@inheritDoc IAppModel.registerWithCustomerService}
-	 */
-	public readonly registerWithCustomerService = (taskListId: string): void => {
-		this.taskList
-			.registerWithCustomerService(
-				taskListId,
-				this.container?.resolvedUrl as IFluidResolvedUrl,
-			)
-			.catch(console.error);
-	};
 }

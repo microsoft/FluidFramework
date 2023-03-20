@@ -16,8 +16,9 @@ import { assertValidTaskData, ITaskData } from "../model-interface";
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	data: ITaskData,
+	taskData: ITaskData,
 	fluidServiceUrl: string,
+	containerUrl: string,
 	externalTaskListId: string,
 ): void {
 	console.log(
@@ -26,7 +27,7 @@ function echoExternalDataWebhookToFluid(
 
 	// TODO: we will need to add details (like ContainerId) to the message body or the url,
 	// so this message body format will evolve
-	const messageBody = JSON.stringify({ data, externalTaskListId });
+	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -39,27 +40,6 @@ function echoExternalDataWebhookToFluid(
 			"CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:",
 			error,
 		);
-	});
-}
-
-/**
- * Registers for webhook on receiving a specific resource to register for.
- */
-async function registerForWebhook(
-	port: string,
-	externalDataServiceWebhookRegistrationUrl: string,
-): Promise<void> {
-	// Register with external data service for webhook notifications.
-	await fetch(externalDataServiceWebhookRegistrationUrl, {
-		method: "POST",
-		headers: {
-			"Access-Control-Allow-Origin": "*",
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			// External data service will call our webhook echoer to notify our subscribers of the data changes.
-			url: `http://localhost:${port}/external-data-webhook`,
-		}),
 	});
 }
 
@@ -111,16 +91,11 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * Client manager for managing clients session to resourse on external data service.
 	 */
-	const clientManager = new ClientManager<TaskListData>();
+	const clientManager = new ClientManager<ITaskData>();
 
 	const expressApp = express();
 	expressApp.use(express.json());
 	expressApp.use(cors());
-
-	/**
-	 * Client manager for managing clients session to resourse on external data service.
-	 */
-	const clientManager = new ClientManager<ITaskData>();
 
 	/**
 	 * Default route. Can be used to verify connectivity to the service.
@@ -161,7 +136,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		} else {
 			let taskData: ITaskData;
 			try {
-				taskListData = assertValidTaskListData(messageData);
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);
@@ -169,16 +144,21 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
-			// Retrieve exact Fluid session address for taskList
-			const taskListId = Object.keys(taskListData.taskList)[0];
-			const containerUrl = clientManager.getClientSession(taskListId) as string;
+			const containerUrls = clientManager.getClientSessions(externalTaskListId);
 
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl, externalTaskListId);
+			for (const containerUrl of containerUrls) {
+				echoExternalDataWebhookToFluid(
+					taskData,
+					fluidServiceUrl,
+					containerUrl,
+					externalTaskListId,
+				);
+			}
 			result.send();
 		}
 	});

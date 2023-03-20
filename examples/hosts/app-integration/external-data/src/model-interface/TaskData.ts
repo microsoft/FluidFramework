@@ -28,30 +28,25 @@ export function assertValidTaskData(input: unknown): ITaskData {
 		throw new Error("Task data was not defined.");
 	}
 
-	const jsonInput = input as Record<string | number | symbol, unknown>;
-	for (const [outerKey, outerValue] of Object.entries(jsonInput)) {
-		if (typeof outerKey !== "string") {
-			throw new TypeError(`Input task data contained malformed key: "${outerKey}".`);
-		}
-		const jsonValue = value as Record<string | number | symbol, unknown>;
-		if (!Object.prototype.hasOwnProperty.call(jsonValue, "name")) {
-			throw new Error(
-				`Input task entry under ID "${key}" does not contain required "name" property. Received: "${jsonValue}".`,
-			);
-		}
-		if (typeof jsonValue.name !== "string") {
-			throw new TypeError(`Invalid ITaskData "name" value received: "${jsonValue.name}".`);
-		}
-		if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
-			throw new Error(
-				`Input task entry under ID "${key}" does not contain required "priority" property. Received: "${jsonValue}".`,
-			);
-		}
-		if (typeof jsonValue.priority !== "number") {
-			throw new TypeError(
-				`Invalid ITaskData "priority" value received: "${jsonValue.priority}".`,
-			);
-		}
+	const jsonValue = input as Record<string | number | symbol, unknown>;
+	if (!Object.prototype.hasOwnProperty.call(jsonValue, "name")) {
+		throw new Error(
+			`${input} does not contain required "name" property. Received: "${jsonValue}".`,
+		);
 	}
+	if (typeof jsonValue.name !== "string") {
+		throw new TypeError(`Invalid ITaskData "name" value received: "${jsonValue.name}".`);
+	}
+	if (!Object.prototype.hasOwnProperty.call(jsonValue, "priority")) {
+		throw new Error(
+			`${input} does not contain required "priority" property. Received: "${jsonValue}".`,
+		);
+	}
+	if (typeof jsonValue.priority !== "number") {
+		throw new TypeError(
+			`Invalid ITaskData "priority" value received: "${jsonValue.priority}".`,
+		);
+	}
+
 	return input as ITaskData;
 }

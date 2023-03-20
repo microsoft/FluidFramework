@@ -17,12 +17,12 @@ describe("ITaskData", () => {
 					priority: 2,
 				},
 			};
-			expect(() => assertValidTaskListData(input)).not.toThrow();
+			expect(() => assertValidTaskData(input)).not.toThrow();
 		});
 
 		it("Throws on invalid task data", () => {
 			const input = "42:Determine meaning of life:37";
-			expect(() => assertValidTaskListData(input)).toThrow();
+			expect(() => assertValidTaskData(input)).toThrow();
 		});
 	});
 });

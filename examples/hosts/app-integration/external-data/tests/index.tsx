@@ -17,7 +17,6 @@ import { TaskListView } from "../src/view";
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
-	const taskListId = "task-list-1";
 	const sessionStorageModelLoader = new SessionStorageModelLoader<IAppModel>(
 		new StaticCodeLoader(new BaseDocumentContainerRuntimeFactory()),
 	);

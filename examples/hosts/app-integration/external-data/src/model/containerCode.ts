@@ -31,7 +31,6 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		super(
 			new Map([BaseDocumentInstantiationFactory.registryEntry]), // registryEntries
 		);
-		this._taskListId = taskListId;
 	}
 
 	/**

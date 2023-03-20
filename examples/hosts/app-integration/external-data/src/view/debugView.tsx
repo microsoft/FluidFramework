@@ -34,7 +34,7 @@ async function pollForServiceUpdates(
 		const newData = responseBody.taskList as ITaskData;
 		if (newData !== undefined && !isEqual(newData, externalData)) {
 			console.log("APP: External data has changed. Updating local state with:\n", newData);
-			setExternalData(newData[taskListId]);
+			setExternalData(newData);
 		}
 	} catch (error) {
 		console.error("APP: An error was encountered while polling external data:", error);
@@ -237,7 +237,6 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 	const tasks = parsedExternalData.map(([id, { name, priority }]) => ({ id, name, priority }));
 	const taskRows = tasks.map((task) => <ExternalServerTaskRow key={task.id} task={task} />);
 	const writeToExternalServer = async (): Promise<void> => {
-		const taskListId = "task-list-1";
 		const formattedTasks = {};
 		for (const task of tasks) {
 			formattedTasks[task.id] = {
