@@ -61,7 +61,19 @@ The following is a list of supported transform pragmas that can be included in y
 
 Can be used to embed contents from another file into the Markdown file.
 
-TODO: arguments and example
+Arguments:
+
+* **path**: Relative path from the document to the file being embedded.
+* **start**: (optional) First line from the target file to be embedded (inclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
+* **end**: (optional) Limit line from the target file to be embedded (exclusive). If positive, the value is relative to the beginning of the file. If negative, the value is relative to the end of the file.
+
+##### Example
+
+```markdown
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../file.js&start=10) -->
+```
+
+Would include the contents of `../file.js`, starting on line 10 and running through the end of the file.
 
 #### `LIBRARY_PACKAGE_README`
 
