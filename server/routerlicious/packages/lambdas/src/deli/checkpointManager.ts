@@ -89,28 +89,3 @@ export function createDeliCheckpointManagerFromCollection(
     };
     return checkpointManager;
 }
-
-/*
-        writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
-            return collection.update(
-                {
-                    documentId,
-                    tenantId,
-                },
-                {
-                    deli: JSON.stringify(checkpoint),
-                },
-                null);
-        },
-        deleteCheckpoint: async (isLocal: boolean) => {
-            return collection.update(
-                {
-                    documentId,
-                    tenantId,
-                },
-                {
-                    deli: "",
-                },
-                null);
-        },
-*/
