@@ -183,7 +183,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             let checkpoint;
             let isLocalCheckpoint = false;
 
-            if(this.localCheckpointEnabled) {
+            if(this.localCheckpointEnabled && this.localCheckpointCollection) {
                 // Search local database for checkpoint
                 Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
                 checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
@@ -197,6 +197,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                     lastCheckpoint = JSON.parse(document.scribe);
                 }
             } else {
+                if(this.localCheckpointEnabled && !this.localCheckpointCollection) {
+                    Lumberjack.info(`Unable to find local checkpoint collection. Using global collection.`, lumberProperties);
+                }
                 lastCheckpoint = JSON.parse(document.scribe);
             }
 

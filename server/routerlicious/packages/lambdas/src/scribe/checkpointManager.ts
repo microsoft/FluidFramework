@@ -125,7 +125,7 @@ export class CheckpointManager implements ICheckpointManager {
         const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 
         if(this.localCheckpointEnabled) {
-            if (this.localCheckpointCollection) {
+            if (this.localCheckpointCollection !== null && this.localCheckpointCollection !== undefined) {
                 if(!noActiveClients) {
                     // If there are active clients, we write to the local collection
                     Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
