@@ -297,7 +297,7 @@ function writeTestResultXmlFile(results: RunnerResult[], durationSec: number) {
 		let failureReason = "";
 		// The returnCode is -2 for GC failures.
 		if (returnCode === -2) {
-			failureReason = "GC failure - check pipeline logs to find the error."
+			failureReason = "GC failure - check pipeline logs to find the error.";
 		}
 		return {
 			testcase: [
