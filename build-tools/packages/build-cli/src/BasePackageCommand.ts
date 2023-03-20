@@ -49,30 +49,33 @@ export abstract class PackageCommand<
 		all: Flags.boolean({
 			char: "a",
 			description:
-				"Run on all packages and release groups. Cannot be used with --releaseGroup, --packages, or --dir.",
+				"Run on all packages and release groups. Cannot be used with --dir, --packages, or --releaseGroup.",
 			exclusive: ["dir", "packages", "releaseGroup"],
 		}),
 		dir: Flags.directory({
 			char: "d",
 			description:
-				"Run on the package in this directory. Cannot be used with --releaseGroup or --packages.",
-			exclusive: ["packages", "releaseGroup"],
+				"Run on the package in this directory. Cannot be used with --all, --packages, or --releaseGroup.",
+			exclusive: ["packages", "releaseGroup", "all"],
 		}),
 		packages: Flags.boolean({
 			description:
-				"Run on all independent packages in the repo. This is an alternative to using the --dir flag for independent packages.",
+				"Run on all independent packages in the repo. Cannot be used with --all, --dir, or --releaseGroup.",
 			default: false,
-			exclusive: ["dir", "releaseGroup"],
+			exclusive: ["dir", "releaseGroup", "all"],
 		}),
 		releaseGroup: releaseGroupFlag({
 			description:
-				"Run on all packages within this release group. Cannot be used with --dir or --packages.",
-			exclusive: ["dir", "packages"],
+				"Run on all packages within this release group. Cannot be used with --all, --dir, or --packages.",
+			exclusive: ["all", "dir", "packages"],
 		}),
 		releaseGroupRoots: Flags.boolean({
 			description:
 				"Runs only on the root package of release groups. Can only be used with --all or --releaseGroup.",
-			relationships: [{ type: "some", flags: ["all", "releaseGroup"] }],
+			relationships: [
+				{ type: "some", flags: ["all", "releaseGroup"] },
+				{ type: "none", flags: ["dir", "packages"] },
+			],
 		}),
 		private: Flags.boolean({
 			description: "Only include private packages (or non-private packages for --no-private)",
@@ -173,10 +176,19 @@ export abstract class PackageCommand<
 	/**
 	 * Runs processPackage for each package in a release group, exlcuding the root.
 	 */
-	private async processReleaseGroup(releaseGroup: ReleaseGroup): Promise<void> {
+	private async processReleaseGroup(
+		releaseGroup: ReleaseGroup,
+		rootPackageOnly: boolean,
+	): Promise<void> {
 		this.info(`Finding packages for release group: ${releaseGroup}`);
 		const ctx = await this.getContext();
-		await this.processPackages(
+		if (rootPackageOnly) {
+			const rg = ctx.repo.releaseGroups.get(releaseGroup);
+			assert(rg !== undefined);
+			return this.processPackages([rg.repoPath], { kind: "releaseGroupRoot" });
+		}
+
+		return this.processPackages(
 			ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
 			{ kind: "releaseGroupPackage" },
 		);
@@ -202,12 +214,9 @@ export abstract class PackageCommand<
 		const ctx = await this.getContext();
 		if (all) {
 			// for each release group, run on its root or all its packages based on the releaseGroupRoots
-			const releaseGroupPromises = [...ctx.repo.releaseGroups.entries()].map(async (item) => {
-				const [rg, rgRepo] = item;
-				return releaseGroupRoots
-					? this.processPackages([rgRepo.repoPath], { kind: "releaseGroupRoot" })
-					: this.processReleaseGroup(rg);
-			});
+			const releaseGroupPromises = [...ctx.repo.releaseGroups.keys()].map(async (rg) =>
+				this.processReleaseGroup(rg, releaseGroupRoots),
+			);
 
 			await Promise.all([...releaseGroupPromises, this.processIndependentPackages()]);
 			return;
@@ -223,7 +232,7 @@ export abstract class PackageCommand<
 		}
 
 		if (releaseGroup !== undefined) {
-			return this.processReleaseGroup(releaseGroup);
+			return this.processReleaseGroup(releaseGroup, releaseGroupRoots);
 		}
 
 		assert(packages);

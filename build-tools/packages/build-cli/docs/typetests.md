@@ -21,13 +21,13 @@ USAGE
 
 FLAGS
   -a, --all
-      Run on all packages and release groups. Cannot be used with --releaseGroup, --packages, or --dir.
+      Run on all packages and release groups. Cannot be used with --dir, --packages, or --releaseGroup.
 
   -d, --dir=<value>
-      Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
+      Run on the package in this directory. Cannot be used with --all, --packages, or --releaseGroup.
 
   -g, --releaseGroup=<option>
-      Run on all packages within this release group. Cannot be used with --dir or --packages.
+      Run on all packages within this release group. Cannot be used with --all, --dir, or --packages.
       <options: client|server|azure|build-tools>
 
   -g, --skipScope=<option>...
@@ -70,8 +70,7 @@ FLAGS
       An exact string to use as the previous version constraint. The string will be used as-is.
 
   --packages
-      Run on all independent packages in the repo. This is an alternative to using the --dir flag for independent
-      packages.
+      Run on all independent packages in the repo. Cannot be used with --all, --dir, or --releaseGroup.
 
   --[no-]private
       Only include private packages (or non-private packages for --no-private)

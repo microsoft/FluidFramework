@@ -18,16 +18,18 @@ ARGUMENTS
   CMD  The shell command to execute.
 
 FLAGS
-  -a, --all                    Run on all packages and release groups. Cannot be used with --releaseGroup, --packages,
-                               or --dir.
-  -d, --dir=<value>            Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
-  -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --dir or --packages.
+  -a, --all                    Run on all packages and release groups. Cannot be used with --dir, --packages, or
+                               --releaseGroup.
+  -d, --dir=<value>            Run on the package in this directory. Cannot be used with --all, --packages, or
+                               --releaseGroup.
+  -g, --releaseGroup=<option>  Run on all packages within this release group. Cannot be used with --all, --dir, or
+                               --packages.
                                <options: client|server|azure|build-tools>
   -g, --skipScope=<option>...  Package scopes to filter out.
                                <options: client|server|azure|build-tools>
   -v, --verbose                Verbose logging.
-  --packages                   Run on all independent packages in the repo. This is an alternative to using the --dir
-                               flag for independent packages.
+  --packages                   Run on all independent packages in the repo. Cannot be used with --all, --dir, or
+                               --releaseGroup.
   --[no-]private               Only include private packages (or non-private packages for --no-private)
   --releaseGroupRoots          Runs only on the root package of release groups. Can only be used with --all or
                                --releaseGroup.
