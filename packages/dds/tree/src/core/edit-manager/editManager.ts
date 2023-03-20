@@ -27,7 +27,11 @@ import {
 	SessionId,
 	Rebaser,
 	assertIsRevisionTag,
+	mintRevisionTag,
+	tagChange,
+	TaggedChange,
 } from "../rebase";
+import { ReadonlyRepairDataStore } from "../repair";
 
 export interface Commit<TChangeset> extends Omit<GraphCommit<TChangeset>, "parent"> {}
 export type SeqNumber = Brand<number, "edit-manager.SeqNumber">;
@@ -63,8 +67,6 @@ export class EditManager<
 
 	private minimumSequenceNumber: number = -1;
 
-	public readonly computationName: string = "EditManager";
-
 	private readonly rebaser: Rebaser<TChangeset>;
 
 	/**
@@ -85,7 +87,7 @@ export class EditManager<
 		public readonly localSessionId: SessionId,
 		public readonly anchors?: AnchorSet,
 	) {
-		super();
+		super("EditManager");
 		this.rebaser = new Rebaser(changeFamily.rebaser);
 		this.trunkBase = {
 			revision: nullRevisionTag,
@@ -287,14 +289,81 @@ export class EditManager<
 		return this.changeFamily.intoDelta(this.rebaseLocalBranchOverTrunk());
 	}
 
-	public addLocalChange(revision: RevisionTag, change: TChangeset): Delta.Root {
+	public addLocalChange(
+		revision: RevisionTag,
+		change: TChangeset,
+		rebaseAnchors = true,
+	): Delta.Root {
 		this.pushToLocalBranch(revision, change);
 
-		if (this.anchors !== undefined) {
+		if (rebaseAnchors && this.anchors !== undefined) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		}
 
 		return this.changeFamily.intoDelta(change);
+	}
+
+	/**
+	 * Given a revision on the local branch, replace all commits after it with a single commit containing
+	 * an equivalent composition of changes.
+	 * @returns the new commit (which is now the head of the local branch)
+	 */
+	public squashLocalChanges(startRevision: RevisionTag): Commit<TChangeset> {
+		const [squashStart, commits] = this.findLocalCommit(startRevision);
+		// Anonymize the commits from this transaction by stripping their revision tags.
+		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
+		const anonymousCommits = commits.map(({ change }) => ({ change, revision: undefined }));
+
+		{
+			const change = this.changeFamily.rebaser.compose(anonymousCommits);
+			this.localBranch = mintCommit(squashStart, {
+				revision: mintRevisionTag(),
+				sessionId: this.localSessionId,
+				change,
+			});
+			return this.localBranch;
+		}
+	}
+
+	/**
+	 * Given a revision on the local branch, remove all commits after it, and updates anchors accordingly.
+	 * @param startRevision - the revision on the local branch that will become the new head
+	 * @param repairStore - an optional repair data store to assist with generating inverses of the removed commits
+	 * @returns a delta that describes the change from rolling back all of the removed commits.
+	 */
+	public rollbackLocalChanges(
+		startRevision: RevisionTag,
+		repairStore?: ReadonlyRepairDataStore,
+	): Delta.Root {
+		const [rollbackTo, commits] = this.findLocalCommit(startRevision);
+		this.localBranch = rollbackTo;
+
+		const inverses: TaggedChange<TChangeset>[] = [];
+		for (let i = commits.length - 1; i >= 0; i--) {
+			const { change, revision } = commits[i];
+			const inverse = this.changeFamily.rebaser.invert(
+				tagChange(change, revision),
+				false,
+				repairStore,
+			);
+			// We assign a revision tag to the inverse changesets so that the compose code can lookup the relative order
+			// of individual changesets. These revisions don't actually make it to the document history.
+			inverses.push(tagChange(inverse, mintRevisionTag()));
+		}
+		const composedInverse = this.changeFamily.rebaser.compose(inverses);
+		if (this.anchors !== undefined) {
+			this.changeFamily.rebaser.rebaseAnchors(this.anchors, composedInverse);
+		}
+		return this.changeFamily.intoDelta(composedInverse);
+	}
+
+	private findLocalCommit(
+		revision: RevisionTag,
+	): [commit: GraphCommit<TChangeset>, commitsAfter: GraphCommit<TChangeset>[]] {
+		const commits: GraphCommit<TChangeset>[] = [];
+		const commit = findAncestor([this.localBranch, commits], (c) => c.revision === revision);
+		assert(commit !== undefined, 0x599 /* Expected local branch to contain revision */);
+		return [commit, commits];
 	}
 
 	private pushToTrunk(sequenceNumber: SeqNumber, commit: Commit<TChangeset>): void {

@@ -17,9 +17,10 @@ import {
 	ExternalDataSource,
 	initializeExternalDataService,
 } from "../src/mock-external-data-service";
-import { assertValidTaskListData, TaskListData } from "../src/model-interface";
+import { assertValidTaskData, ITaskData } from "../src/model-interface";
 import { closeServer } from "./utilities";
 
+const externalTaskListId = "task-list-1";
 describe("mock-external-data-service", () => {
 	/**
 	 * External data source backing our service.
@@ -55,9 +56,8 @@ describe("mock-external-data-service", () => {
 		await closeServer(_externalDataService);
 	});
 
-	async function getCurrentExternalData(): Promise<TaskListData> {
-		const taskListId = "task-list-1";
-		const fetchResponse = await externalDataSource!.fetchData(taskListId);
+	async function getCurrentExternalData(): Promise<ITaskData> {
+		const fetchResponse = await externalDataSource!.fetchData(externalTaskListId);
 		const responseBody = JSON.parse(fetchResponse.body.toString()) as Record<
 			string | number | symbol,
 			unknown
@@ -74,21 +74,19 @@ describe("mock-external-data-service", () => {
 		const expectedData = await getCurrentExternalData();
 		const taskListId = 1;
 		await request(externalDataService!)
-			.get(`/fetch-tasks/${taskListId}`)
+			.get(`/fetch-tasks/${externalTaskListId}`)
 			.expect(200, { taskList: expectedData });
 	});
 
 	it("set-tasks: Ensure external data is updated with provided data", async () => {
-		const newData: TaskListData = {
-			1: {
-				42: {
-					name: "Determine meaning of life",
-					priority: 37,
-				},
+		const newData: ITaskData = {
+			42: {
+				name: "Determine meaning of life",
+				priority: 37,
 			},
 		};
 		await request(externalDataService!)
-			.post("/set-tasks")
+			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ taskList: newData })
 			.expect(200);
 
@@ -98,7 +96,10 @@ describe("mock-external-data-service", () => {
 
 	it("set-tasks: Ensure server rejects update with no data", async () => {
 		const oldData = await getCurrentExternalData();
-		await request(externalDataService!).post("/set-tasks").send().expect(400);
+		await request(externalDataService!)
+			.post(`/set-tasks/${externalTaskListId}`)
+			.send()
+			.expect(400);
 
 		const currentData = await getCurrentExternalData();
 		expect(currentData).toEqual(oldData); // Sanity check that we didn't blow away data
@@ -107,7 +108,7 @@ describe("mock-external-data-service", () => {
 	it("set-tasks: Ensure server rejects update with malformed data", async () => {
 		const oldData = await getCurrentExternalData();
 		await request(externalDataService!)
-			.post("/set-tasks")
+			.post(`/set-tasks/${externalTaskListId}`)
 			.send({ tasks: "42:Determine meaning of life:37" })
 			.expect(400);
 
@@ -117,14 +118,14 @@ describe("mock-external-data-service", () => {
 
 	it("register-for-webhook: Registering valid URI succeeds", async () => {
 		await request(externalDataService!)
-			.post("/register-for-webhook")
+			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
 			.send({ url: "https://www.fluidframework.com" })
 			.expect(200);
 	});
 
 	it("register-for-webhook: Registering invalid URI fails", async () => {
 		await request(externalDataService!)
-			.post("/register-for-webhook")
+			.post(`/register-for-webhook?externalTaskListId=${externalTaskListId}`)
 			.send({ url: "I am not a URI" })
 			.expect(400);
 	});
@@ -170,7 +171,7 @@ describe("mock-external-data-service: webhook", () => {
 		try {
 			// Register with the external service for notifications
 			const webhookRegistrationResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/register-for-webhook`,
+				`http://localhost:${externalDataServicePort}/register-for-webhook?externalTaskListId=${externalTaskListId}`,
 				{
 					method: "POST",
 					headers: {
@@ -189,7 +190,7 @@ describe("mock-external-data-service: webhook", () => {
 
 			// Update external data
 			const dataUpdateResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/set-tasks`,
+				`http://localhost:${externalDataServicePort}/set-tasks/${externalTaskListId}`,
 				{
 					method: "POST",
 					headers: {

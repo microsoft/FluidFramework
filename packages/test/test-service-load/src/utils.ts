@@ -5,7 +5,7 @@
 
 import crypto from "crypto";
 import fs from "fs";
-import random from "random-js";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -52,7 +52,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	public static async createLogger(dimensions: {
 		driverType: string;
 		driverEndpointName: string | undefined;
-		profile: string | undefined;
+		profile: string;
 		runId: number | undefined;
 	}) {
 		return ChildLogger.create(await this.loggerP, undefined, {
@@ -160,22 +160,18 @@ export async function initialize(
 	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
+	profileName: string,
 	testIdn?: string,
-	profileName?: string,
 ) {
-	const randEng = random.engines.mt19937();
-	randEng.seed(seed);
+	const random = makeRandom(seed);
 	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
 	const loaderOptions = random.pick(
-		randEng,
 		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
 	);
 	const containerOptions = random.pick(
-		randEng,
 		generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container),
 	);
 	const configurations = random.pick(
-		randEng,
 		generateConfigurations(
 			seed,
 			testConfig?.optionOverrides?.[optionsOverride]?.configurations,
@@ -216,7 +212,7 @@ export async function initialize(
 			"attachment blobs in detached container not supported on this service",
 		);
 		const ds = await requestFluidObject<ILoadTest>(container, "/");
-		const dsm = await ds.detached({ testConfig, verbose, randEng, logger });
+		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(
 			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
 		);

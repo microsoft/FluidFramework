@@ -16,6 +16,7 @@ import {
 	Value,
 	ITreeCursor,
 	RevisionTag,
+	ChangeFamilyEditor,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -46,19 +47,19 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		this.modularFamily = new ModularChangeFamily(defaultFieldKinds);
 	}
 
-	get rebaser(): ChangeRebaser<DefaultChangeset> {
+	public get rebaser(): ChangeRebaser<DefaultChangeset> {
 		return this.modularFamily.rebaser;
 	}
 
-	get encoder(): ChangeEncoder<DefaultChangeset> {
+	public get encoder(): ChangeEncoder<DefaultChangeset> {
 		return this.modularFamily.encoder;
 	}
 
-	intoDelta(change: DefaultChangeset): Delta.Root {
+	public intoDelta(change: DefaultChangeset): Delta.Root {
 		return this.modularFamily.intoDelta(change);
 	}
 
-	buildEditor(
+	public buildEditor(
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchorSet: AnchorSet,
 	): DefaultEditBuilder {
@@ -111,6 +112,8 @@ export interface IDefaultEditBuilder {
 		destField: FieldKey,
 		destIndex: number,
 	): void;
+
+	addValueConstraint(path: UpPath, value: Value): void;
 }
 
 /**
@@ -122,12 +125,19 @@ export class DefaultEditBuilder
 {
 	private readonly modularBuilder: ModularEditBuilder;
 
-	constructor(
-		family: ChangeFamily<unknown, DefaultChangeset>,
+	public constructor(
+		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchors: AnchorSet,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+	}
+
+	public enterTransaction(): void {
+		this.modularBuilder.enterTransaction();
+	}
+	public exitTransaction(): void {
+		this.modularBuilder.exitTransaction();
 	}
 
 	public apply(change: DefaultChangeset): void {
@@ -136,6 +146,10 @@ export class DefaultEditBuilder
 
 	public setValue(path: UpPath, value: Value): void {
 		this.modularBuilder.setValue(path, value);
+	}
+
+	public addValueConstraint(path: UpPath, value: Value): void {
+		this.modularBuilder.addValueConstraint(path, value);
 	}
 
 	public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
@@ -169,7 +183,12 @@ export class DefaultEditBuilder
 		destField: FieldKey,
 		destIndex: number,
 	): void {
-		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex);
+		const changes = sequence.changeHandler.editor.move(
+			sourceIndex,
+			count,
+			destIndex,
+			this.modularBuilder.generateId(),
+		);
 		this.modularBuilder.submitChanges(
 			[
 				{
@@ -205,7 +224,12 @@ export class DefaultEditBuilder
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.move(sourceIndex, count, destIndex),
+					sequence.changeHandler.editor.move(
+						sourceIndex,
+						count,
+						destIndex,
+						this.modularBuilder.generateId(),
+					),
 				);
 				this.modularBuilder.submitChange(
 					parent,

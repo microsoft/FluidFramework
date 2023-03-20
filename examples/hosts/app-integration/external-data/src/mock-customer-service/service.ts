@@ -9,22 +9,24 @@ import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
 
-import { assertValidTaskListData, TaskListData } from "../model-interface";
 import { ClientManager } from "../utilities";
+import { assertValidTaskData, ITaskData } from "../model-interface";
 
 /**
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	data: TaskListData,
+	taskData: ITaskData,
 	fluidServiceUrl: string,
+	externalTaskListId: string,
 	containerUrl: string,
 ): void {
 	console.log(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidServiceUrl}`,
 	);
 
-	const messageBody = JSON.stringify({ data, containerUrl });
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId});
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -37,27 +39,6 @@ function echoExternalDataWebhookToFluid(
 			"CUSTOMER SERVICE: Encountered an error while notifying Fluid Service:",
 			error,
 		);
-	});
-}
-
-/**
- * Registers for webhook on receiving a specific resource to register for.
- */
-async function registerForWebhook(
-	port: string,
-	externalDataServiceWebhookRegistrationUrl: string,
-): Promise<void> {
-	// Register with external data service for webhook notifications.
-	await fetch(externalDataServiceWebhookRegistrationUrl, {
-		method: "POST",
-		headers: {
-			"Access-Control-Allow-Origin": "*",
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			// External data service will call our webhook echoer to notify our subscribers of the data changes.
-			url: `http://localhost:${port}/external-data-webhook`,
-		}),
 	});
 }
 
@@ -109,11 +90,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	/**
 	 * Client manager for managing clients session to resourse on external data service.
 	 */
-	const clientManager = new ClientManager<TaskListData>();
+	const clientManager = new ClientManager<ITaskData>();
 
 	const expressApp = express();
 	expressApp.use(express.json());
 	expressApp.use(cors());
+
 
 	/**
 	 * Default route. Can be used to verify connectivity to the service.
@@ -141,17 +123,19 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	 * This data will be forwarded to our own subscribers.
 	 */
 	expressApp.post("/external-data-webhook", (request, result) => {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const messageData = request.body?.data as unknown;
+		const externalTaskListId = request.query.externalTaskListId as string;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+		const messageData = request.body?.data as ITaskData;
 		if (messageData === undefined) {
 			const errorMessage =
 				'No data provided by external data service webhook. Expected under "data" property.';
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskListData: TaskListData;
+			let taskData: ITaskData;
 			try {
-				taskListData = assertValidTaskListData(messageData);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+				taskData = assertValidTaskData(messageData);
 			} catch (error) {
 				const errorMessage = "Malformed data received from external data service webhook.";
 				console.error(formatLogMessage(errorMessage), error);
@@ -159,12 +143,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
-			// Retrieve exact Fluid session address for taskList
-			const taskListId = Object.keys(taskListData.taskList)[0];
-			const containerUrls = clientManager.getClientSessions(taskListId);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+			const containerUrls = clientManager.getClientSessions(externalTaskListId);
 
 			for (const containerUrl of containerUrls) {
-				echoExternalDataWebhookToFluid(taskListData, fluidServiceUrl, containerUrl);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+				echoExternalDataWebhookToFluid(taskData, fluidServiceUrl, externalTaskListId, containerUrl);
 				console.log(
 					formatLogMessage(
 						`Data update received from external data service. Notifying webhook subscribers at ${containerUrl}`,
@@ -176,55 +160,73 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 	});
 
 	/**
-	 * "Echoes" the external data services data update notifications to our own webhook subscribers.
+	 * Creates an entry in the Customer Service of the mapping between the container and the external resource id
+	 * (externalTaskListId in this example). Also, it signs up the container with the external service
+	 * so that when there is a change upstream and it uses a webhook notification to inform the customer service,
+	 * the customer service can in turn notify the container of the change.
 	 *
 	 * Expected input data format:
 	 *
 	 * ```json
-	 * {
-	 *		taskList: {
-	 * 			[ taskListId: string]: {
-	 *      		[id: string]: {
-	 *      	    	name: string,
-	 *      	    	priority: number
-	 *      		}
-	 * 			}
-	 *  	}
-	 * }
+	 *	{
+	 *		containerUrl: string,
+	 *		externalTaskListId: string
+	 *	}
 	 * ```
 	 *
-	 * This data will be forwarded to our own subscribers.
+	 * Note: Implementers choice --can choose to break up containerUrl into multiple pieces
+	 * containing tenantId, documentId and socketStreamURL separately and send them as a json
+	 * object. The URL also contains all this information so for simplicity I use the url here.
 	 */
 	expressApp.post("/register-session-url", (request, result) => {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const containerUrl = request.body?.containerUrl as string;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const taskListId = request.body?.taskListId as string;
+		const externalTaskListId = request.body?.externalTaskListId as string;
 		if (containerUrl === undefined) {
 			const errorMessage =
-				'No session data provided by client. Expected under "sessionUrl" property.';
-			console.error(formatLogMessage(errorMessage));
+				'No session data provided by client. Expected under "containerUrl" property.';
 			result.status(400).json({ message: errorMessage });
-		} else {
-			clientManager.registerClient(containerUrl, taskListId);
-			console.log(
-				formatLogMessage(
-					`Registered containerUrl ${containerUrl} with external query: ${taskListId}".`,
-				),
-			);
-			registerForWebhook(port.toString(), externalDataServiceWebhookRegistrationUrl).catch(
-				(error) => {
-					console.error(
-						formatLogMessage(
-							`Registering for data update notifications webhook with the external data service failed due to an error.`,
-						),
-						error,
-					);
-					throw error;
-				},
-			);
-			result.send();
+			return;
 		}
+		if (externalTaskListId === undefined) {
+			const errorMessage =
+				'No external task list id provided by client. Expected under "externalTaskListId" property.';
+			result.status(400).json({ message: errorMessage });
+			return;
+		}
+		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-call
+		if (!clientManager.isSubscribed(externalTaskListId)) {
+			// Register with external data service for webhook notifications.
+			fetch(externalDataServiceWebhookRegistrationUrl, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					// External data service will call our webhook echoer to notify our subscribers of the data changes.
+					url: `http://localhost:${port}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
+				}),
+			}).catch((error) => {
+				console.error(
+					formatLogMessage(
+						`Registering for data update notifications webhook with the external data service failed due to an error.`,
+					),
+					error,
+				);
+				throw error;
+			});
+		}
+
+		clientManager.registerClient(containerUrl, externalTaskListId);
+		console.log(
+			formatLogMessage(
+				`Registered containerUrl ${containerUrl} with external query: ${externalTaskListId}".`,
+			),
+		);
+
+		result.send();
 	});
 
 	const server = expressApp.listen(port.toString());

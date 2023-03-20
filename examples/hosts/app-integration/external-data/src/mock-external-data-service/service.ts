@@ -9,7 +9,7 @@ import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { assertValidTaskListData, TaskData, TaskListData } from "../model-interface";
+import { assertValidTaskData, ITaskData } from "../model-interface";
 import { MockWebhook } from "../utilities";
 import { ExternalDataSource } from "./externalDataSource";
 
@@ -48,9 +48,9 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Mock webhook for notifying subscribers to changes in external data.
 	 */
-	const webhook = new MockWebhook<TaskData>();
+	const webhook = new MockWebhook<ITaskData>();
 
-	function notifyWebhookSubscribers(newData: TaskData): void {
+	function notifyWebhookSubscribers(newData: ITaskData): void {
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
 		webhook.notifySubscribers(newData);
 	}
@@ -134,33 +134,32 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	 * }
 	 * ```
 	 */
-	expressApp.get("/fetch-tasks/:taskListId", (request, result) => {
-		console.log(request.params);
-		const taskListId = request.params?.taskListId;
-		if (taskListId === undefined) {
-			result.status(400).json({ message: "Missing parameter taskListId in request url" });
+	expressApp.get("/fetch-tasks/:externalTaskListId", (request, result) => {
+		const externalTaskListId = request.params?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			result
+				.status(400)
+				.json({ message: "Missing parameter externalTaskListId in request url" });
 		}
-		externalDataSource.fetchData(taskListId).then(
+		externalDataSource.fetchData(externalTaskListId).then(
 			(response) => {
 				const responseBody = JSON.parse(response.body.toString()) as Record<
 					string | number | symbol,
 					unknown
 				>;
 
-				let taskListData: TaskListData;
+				let taskData: ITaskData;
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-					taskListData = assertValidTaskListData((responseBody as any).taskList);
+					taskData = assertValidTaskData((responseBody as any).taskList);
 				} catch (error) {
 					const errorMessage = "Received task data received from external data source.";
 					console.error(formatLogMessage(errorMessage), error);
 					result.status(400).json({ message: errorMessage });
 					return;
 				}
-
-				console.log(formatLogMessage("Returning current task list:"), taskListData);
-
-				result.send({ taskList: taskListData });
+				console.log(formatLogMessage("Returning current task list:"), taskData);
+				result.send({ taskList: taskData });
 			},
 			(error) => {
 				console.error(
@@ -177,11 +176,15 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Updates external data store with new tasks list (complete override).
 	 *
-	 * Expected input data format: {@link TaskListData}.
+	 * Expected input data format: {@link ITaskData}.
 	 */
-	expressApp.post("/set-tasks/", (request, result) => {
-		console.log("request.body");
-		console.log(request.body);
+	expressApp.post("/set-tasks/:externalTaskListId", (request, result) => {
+		const externalTaskListId = request.params?.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			result
+				.status(400)
+				.json({ message: "Missing parameter externalTaskListId in request url" });
+		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		const messageData = request.body?.taskList;
 		console.log("messageData");
@@ -191,7 +194,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.error(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
-			let taskListData: TaskListData;
+			let taskData: ITaskData;
 			try {
 				taskListData = assertValidTaskListData(messageData);
 			} catch (error) {
@@ -200,7 +203,7 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 				result.status(400).json({ message: errorMessage });
 				return;
 			}
-			externalDataSource.writeData(taskListData).then(
+			externalDataSource.writeData(taskData, externalTaskListId).then(
 				() => {
 					console.log(formatLogMessage("Data set request completed!"));
 					result.send();

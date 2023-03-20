@@ -8,9 +8,11 @@ import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
-import type { ITaskList, IAppModel } from "../model-interface";
+import type { IAppModel, IBaseDocument } from "../model-interface";
 import { AppModel } from "./appModel";
-import { TaskListInstantiationFactory } from "./taskList";
+import { BaseDocumentInstantiationFactory } from "./taskList";
+
+const taskListCollectionId = "base-document";
 
 /*
  * This is a server origin signal that lets the client know that the external source of truth
@@ -24,11 +26,10 @@ const SignalType = {
 /**
  * {@inheritDoc ModelContainerRuntimeFactory}
  */
-export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-	private readonly _taskListId: string;
-	public constructor(taskListId: string) {
+export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
+	public constructor() {
 		super(
-			new Map([TaskListInstantiationFactory.registryEntry]), // registryEntries
+			new Map([BaseDocumentInstantiationFactory.registryEntry]), // registryEntries
 		);
 		this._taskListId = taskListId;
 	}
@@ -37,8 +38,10 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
-		const taskList = await runtime.createDataStore(TaskListInstantiationFactory.type);
-		await taskList.trySetAlias(this._taskListId);
+		const taskListCollection = await runtime.createDataStore(
+			BaseDocumentInstantiationFactory.type,
+		);
+		await taskListCollection.trySetAlias(taskListCollectionId);
 	}
 
 	/**
@@ -59,17 +62,27 @@ export class TaskListContainerRuntimeFactory extends ModelContainerRuntimeFactor
 		runtime: IContainerRuntime,
 		container: IContainer,
 	): Promise<AppModel> {
-		const taskList = await requestFluidObject<ITaskList>(
-			await runtime.getRootDataStore(this._taskListId),
+		const taskListCollection = await requestFluidObject<IBaseDocument>(
+			await runtime.getRootDataStore(taskListCollectionId),
 			"",
 		);
 		// Register listener only once the model is fully loaded and ready
 		runtime.on("signal", (message) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			if (message?.content?.type === SignalType.ExternalDataChanged) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				const taskListId = message?.content?.taskListId as string;
+				console.log(taskListId);
+				const taskList = taskListCollection.getTaskList(taskListId);
+				console.log(taskList);
+				if (taskList === undefined) {
+					throw new Error(
+						`TaskList with id '${taskListId}' does not exist in collection`,
+					);
+				}
 				taskList.importExternalData().catch(console.error);
 			}
 		});
-		return new AppModel(taskList, container, runtime);
+		return new AppModel(taskListCollection, container, runtime);
 	}
 }

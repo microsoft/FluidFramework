@@ -15,8 +15,10 @@ import type {
 	ExternalSnapshotTask,
 	ITask,
 	ITaskEvents,
+	ITaskData,
 	ITaskList,
-	TaskListData,
+	IBaseDocumentInitialState,
+	IBaseDocument,
 } from "../model-interface";
 import { externalDataServicePort } from "../mock-external-data-service-interface";
 import { customerServicePort } from "../mock-customer-service-interface";
@@ -91,7 +93,7 @@ interface PersistedTask {
 /**
  * The TaskList is our data object that implements the ITaskList interface.
  */
-export class TaskList extends DataObject implements ITaskList {
+export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialState }> {
 	/**
 	 * The tasks collection holds local facades on the data.  These facades encapsulate the data for a single task
 	 * so we don't have to hand out references to the whole SharedDirectory.  Additionally, we only create them
@@ -112,6 +114,12 @@ export class TaskList extends DataObject implements ITaskList {
 	private _draftData: SharedMap | undefined;
 
 	private _errorFlagCount: number = 0;
+
+	private _externalTaskListId: string | undefined;
+
+	private get externalTaskListId(): string | undefined {
+		return this._externalTaskListId;
+	}
 
 	private get externalDataSnapshot(): SharedMap {
 		if (this._externalDataSnapshot === undefined) {
@@ -141,7 +149,7 @@ export class TaskList extends DataObject implements ITaskList {
 
 		draftPriorityCell.set(priority);
 
-		// To add a task, we update the root SharedDirectory. This way the change is propagated to all collaborators
+		// To add a task, we update the SharedMap draftData on TaskList. This way the change is propagated to all collaborators
 		// and persisted.  In turn, this will trigger the "valueChanged" event and handleDraftTaskAdded which will update
 		// the this.tasks collection.
 		const draftDataPT: PersistedTask = {
@@ -228,7 +236,7 @@ export class TaskList extends DataObject implements ITaskList {
 		][];
 		try {
 			const response = await fetch(
-				`http://localhost:${externalDataServicePort}/fetch-tasks/${taskListId}`,
+				`http://localhost:${externalDataServicePort}/fetch-tasks/${this.externalTaskListId}`,
 				{
 					method: "GET",
 					headers: {
@@ -242,11 +250,8 @@ export class TaskList extends DataObject implements ITaskList {
 			if (responseBody.taskList === undefined) {
 				throw new Error("Task list fetch returned no data.");
 			}
-			const data = responseBody.taskList as TaskListData;
-			// TODO: do some check to ensure that the requested taskListId matches the
-			// returned taskList id.
-
-			incomingExternalData = Object.entries(data[taskListId]);
+			const data = responseBody.taskList as ITaskData;
+			incomingExternalData = Object.entries(data);
 			console.log("TASK-LIST: Data imported from service.", incomingExternalData);
 		} catch (error) {
 			console.error(`Task list fetch failed due to an error:\n${error}`);
@@ -363,14 +368,17 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 
 		try {
-			await fetch(`http://localhost:${externalDataServicePort}/set-tasks`, {
-				method: "POST",
-				headers: {
-					"Access-Control-Allow-Origin": "*",
-					"Content-Type": "application/json",
+			await fetch(
+				`http://localhost:${externalDataServicePort}/set-tasks/${this.externalTaskListId}`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ taskList: formattedTasks }),
 				},
-				body: JSON.stringify({ taskList: formattedTasks }),
-			});
+			);
 		} catch (error) {
 			console.error(`Task list submition failed due to an error:\n${error}`);
 
@@ -378,16 +386,65 @@ export class TaskList extends DataObject implements ITaskList {
 		}
 	};
 
-	protected async initializingFirstTime(): Promise<void> {
+	protected async initializingFirstTime(props: IBaseDocumentInitialState): Promise<void> {
+		const externalTaskListId = props.externalTaskListId;
+		if (externalTaskListId === undefined) {
+			throw new Error(
+				"externalTaskListId not present in instantiation. Cannot instantiate task list",
+			);
+		}
+		this._externalTaskListId = externalTaskListId;
+		// TODO: The check below is a hack for ensuring that the container is attached
+		// before creating and registering the task list, and importing the task list data
+		// form the external server. This is pretty anti-fluid, so we need a better way to
+		// do this check.
+		if (props.containerUrl === undefined) {
+			throw new Error(
+				"containerUrl is required to register the task list for external change notifications",
+			);
+		}
 		this._draftData = SharedMap.create(this.runtime);
 		this._externalDataSnapshot = SharedMap.create(this.runtime);
 		this.root.set("draftData", this._draftData.handle);
 		this.root.set("externalDataSnapshot", this._externalDataSnapshot.handle);
+
 		// TODO: Probably don't need to await this once the sync'ing flow is solid, we can just trust it to sync
 		// at some point in the future.
 		await this.importExternalData();
+		await this.registerWithCustomerService(props.containerUrl);
 	}
 
+	/**
+	 * Register container session data with the customer service.
+	 * @returns A promise that resolves when the registration call returns successfully.
+	 *
+	 * @remarks This will allow the Customer Service to pass on the container information
+	 * to the Fluid Service to send the signal that some new information has come through.
+	 */
+	private async registerWithCustomerService(containerUrlData: IFluidResolvedUrl): Promise<void> {
+		if (this.externalTaskListId === undefined) {
+			throw new Error("externalTaskListId is undefined");
+		}
+		try {
+			console.log(
+				`TASK-LIST: Registering client ${containerUrlData.url} with customer service...`,
+			);
+			await fetch(`http://localhost:${customerServicePort}/register-session-url`, {
+				method: "POST",
+				headers: {
+					"Access-Control-Allow-Origin": "*",
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					containerUrl: containerUrlData.url,
+					externalTaskListId: this.externalTaskListId,
+				}),
+			});
+		} catch (error) {
+			const message = `Customer service registration failed:\n${error}`;
+			throw new Error(message);
+		}
+	}
 	/**
 	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
 	 * DataObject, by registering an event listener for changes to the task list.
@@ -468,4 +525,50 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
 	TaskList,
 	[SharedCell.getFactory(), SharedString.getFactory(), SharedMap.getFactory()],
 	{},
+);
+
+/**
+ * The BaseDocument is our data object that implements the IBaseDocument interface.
+ */
+export class BaseDocument extends DataObject implements IBaseDocument {
+	private readonly taskListCollection = new Map<string, TaskList>();
+
+	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
+		if (this.taskListCollection.has(props.externalTaskListId)) {
+			throw new Error(
+				`task list ${props.externalTaskListId} already exists on this collection`,
+			);
+		}
+		const taskList = await TaskListInstantiationFactory.createChildInstance(
+			this.context,
+			props,
+		);
+		this.taskListCollection.set(props.externalTaskListId, taskList);
+
+		// Storing the handles here are necessary for non leader
+		// clients to rehydrate local this.taskListCollection in hasInitialized().
+		this.root.set(props.externalTaskListId, taskList.handle);
+		this.emit("taskListCollectionChanged");
+	};
+
+	public readonly getTaskList = (id: string): ITaskList | undefined => {
+		return this.taskListCollection.get(id);
+	};
+
+	protected async hasInitialized(): Promise<void> {
+		for (const [id, taskListHandle] of this.root) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			const taskListResolved = await taskListHandle.get();
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			this.taskListCollection.set(id, taskListResolved);
+		}
+	}
+}
+
+export const BaseDocumentInstantiationFactory = new DataObjectFactory<BaseDocument>(
+	"base-document",
+	BaseDocument,
+	[],
+	{},
+	new Map([TaskListInstantiationFactory.registryEntry]),
 );
