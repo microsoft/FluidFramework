@@ -11,18 +11,13 @@ jobs:
   check-label:
     name: Check Label
     runs-on: ubuntu-latest
+    permissions: write-all
     if: "${{ github.event.label.name == 'msftbot: merge-next' }}"
 
     steps:
-      - name: Get PR Number
-        id: pr
-        run: echo "::set-output name=pr_number::$(gh pr view --json number -q .number || echo "")"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Notify in comment
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
-          number: ${{ steps.load_pr.outputs.pr_number }}
           only_create: true
           message: |
             Please review this PR: @sonalideshpandemsft @tylerbutler @scottn12
