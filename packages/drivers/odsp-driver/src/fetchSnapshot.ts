@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, fromUtf8ToBase64, performance } from "@fluidframework/common-utils";

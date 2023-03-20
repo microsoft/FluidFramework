@@ -6345,7 +6345,6 @@ importers:
       '@types/node-fetch': ^2.5.10
       '@types/sha.js': ^2.4.0
       '@types/sinon': ^7.0.13
-      abort-controller: ^3.0.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
@@ -6372,7 +6371,6 @@ importers:
       '@fluidframework/protocol-base': 0.1038.4000-138073
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      abort-controller: 3.0.0
       node-fetch: 2.6.9
       socket.io-client: 4.5.4
       uuid: 8.3.2
@@ -7646,7 +7644,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.36
       '@types/sinon': ^7.0.13
-      abort-controller: ^3.0.0
       concurrently: ^6.2.0
       copyfiles: ^2.4.1
       cross-env: ^7.0.2
@@ -7673,7 +7670,6 @@ importers:
       '@fluidframework/protocol-base': 0.1038.4000-138073
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      abort-controller: 3.0.0
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21

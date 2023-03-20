@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, performance } from "@fluidframework/common-utils";
 import { loggerToMonitoringContext, PerformanceEvent } from "@fluidframework/telemetry-utils";

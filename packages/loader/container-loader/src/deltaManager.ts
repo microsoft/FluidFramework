@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLogger,
@@ -605,7 +604,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			// This is useless for known ranges (to is defined) as it means request is over either way.
 			// And it will cancel unbound request too early, not allowing us to learn where the end of the file is.
 			if (!opsFromFetch && cancelFetch(op)) {
-				controller.abort();
+				controller.abort("DeltaManager getDeltas fetch cancelled");
 				this._inbound.off("push", opListener);
 			}
 		};
@@ -613,7 +612,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		try {
 			this._inbound.on("push", opListener);
 			assert(this.closeAbortController.signal.onabort === null, 0x1e8 /* "reentrancy" */);
-			this.closeAbortController.signal.onabort = () => controller.abort();
+			this.closeAbortController.signal.onabort = () =>
+				controller.abort(this.closeAbortController.signal.reason);
 
 			const stream = this.deltaStorage.fetchMessages(
 				from, // inclusive
@@ -663,7 +663,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		this.connectionManager.dispose(error, doDispose !== true);
 
-		this.closeAbortController.abort();
+		this.closeAbortController.abort("DeltaManager was closed");
 
 		this._inbound.clear();
 		this._inboundSignal.clear();
