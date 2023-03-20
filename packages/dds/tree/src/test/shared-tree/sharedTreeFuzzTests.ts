@@ -195,10 +195,10 @@ function applyFuzzChange(
 		case "delete":
 			runSynchronous(tree, () => {
 				const field = tree.editor.sequenceField(
-					contents.path?.parent,
-					contents.path?.parentField,
+					contents.firstNodePath?.parent,
+					contents.firstNodePath?.parentField,
 				);
-				field.delete(contents.path?.parentIndex, contents.nodesToDelete);
+				field.delete(contents.firstNodePath?.parentIndex, contents.count);
 				return transactionResult;
 			});
 			break;
@@ -239,7 +239,7 @@ export function runSharedTreeFuzzTests(title: string): void {
 	describeFuzz(title, () => {
 		const testOpsPerRun = 20;
 		describe("basic convergence", () => {
-			describe.skip(`with stepSize ${testOpsPerRun}`, () => {
+			describe(`with stepSize ${testOpsPerRun}`, () => {
 				runBatch(makeOpGenerator, performFuzzActions, testOpsPerRun, testBatchSize, random);
 			});
 		});
