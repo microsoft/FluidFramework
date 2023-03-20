@@ -13,9 +13,8 @@ import { delay } from "@fluidframework/common-utils";
 
 import { initializeCustomerService } from "../src/mock-customer-service";
 import { customerServicePort } from "../src/mock-customer-service-interface";
-import { initializeExternalDataService } from "../src/mock-external-data-service";
+import { initializeExternalDataService, MockWebhook } from "../src/mock-external-data-service";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface";
-import { MockWebhook } from "../src/mock-external-data-service/webhook";
 import { ITaskData } from "../src/model-interface";
 import { closeServer } from "./utilities";
 

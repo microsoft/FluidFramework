@@ -16,9 +16,9 @@ import { externalDataServicePort } from "../src/mock-external-data-service-inter
 import {
 	ExternalDataSource,
 	initializeExternalDataService,
+	MockWebhook,
 } from "../src/mock-external-data-service";
 import { assertValidTaskData, ITaskData } from "../src/model-interface";
-import { MockWebhook } from "../src/mock-external-data-service/webhook";
 import { closeServer } from "./utilities";
 
 const externalTaskListId = "task-list-1";
