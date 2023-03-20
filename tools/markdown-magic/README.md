@@ -2,22 +2,7 @@
 
 This library contains tools for generating and embedding documentation contents in [Markdown](https://www.markdownguide.org/) documentation.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## Installation
-
-To get started, install the package by running the following command:
-
-```bash
-npm i @fluid-tools/markdown-magic -D
-```
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
+Note: this package is currently private, and only intended for use in this repository.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
