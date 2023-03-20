@@ -91,7 +91,7 @@
 		"@types/lodash.isequal": "^4.5.5",
 		"@types/lodash.merge": "^4.6.6",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.16",
 		"@types/rimraf": "^2.0.3",
 		"@types/semver": "^7.3.10",
 		"@types/shelljs": "^0.8.8",

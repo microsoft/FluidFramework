@@ -84,7 +84,7 @@
 		"@oclif/test": "^2.3.8",
 		"@types/chai": "^4",
 		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.38",
+		"@types/node": "^16.18.16",
 		"@types/semver": "^7.3.10",
 		"chai": "^4.2.0",
 		"concurrently": "^7.6.0",
