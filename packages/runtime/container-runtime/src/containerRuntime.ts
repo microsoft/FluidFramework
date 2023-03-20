@@ -1001,6 +1001,8 @@ export class ContainerRuntime
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
+	private readonly documentGuid: string;
+
 	/**
 	 * @internal
 	 */
@@ -1073,6 +1075,8 @@ export class ContainerRuntime
 					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
 			}),
 		});
+
+		this.documentGuid = metadata?.documentGuid ?? uuid();
 
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
@@ -1428,6 +1432,7 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 			}),
+			documentGuid: this.documentGuid,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1608,6 +1613,7 @@ export class ContainerRuntime
 			message:
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
+			documentGuid: this.documentGuid,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
