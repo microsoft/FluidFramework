@@ -717,7 +717,7 @@ function handleCurrAttach<T>(
 	lineageRequests.push({ mark: rebasedMark, offset });
 }
 
-export function isAttachAfterBaseAttach<T>(currMark: Attach<T>, baseMark: Attach<T>): boolean {
+function isAttachAfterBaseAttach<T>(currMark: Attach<T>, baseMark: Attach<T>): boolean {
 	const lineageCmp = compareLineages(currMark.lineage, baseMark.lineage);
 	if (lineageCmp < 0) {
 		return false;

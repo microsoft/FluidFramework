@@ -46,7 +46,6 @@ import {
 	isDeleteMark,
 	isModify,
 } from "./utils";
-import { isAttachAfterBaseAttach } from "./rebase";
 
 /**
  * @alpha
