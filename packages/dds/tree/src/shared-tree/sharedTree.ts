@@ -20,6 +20,7 @@ import {
 	AnchorSet,
 	AnchorNode,
 	IEditableForest,
+	AnchorSetRootEvents,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -41,14 +42,30 @@ import {
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
 } from "../feature-libraries";
+import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { TransactionResult } from "../util";
+
+/**
+ * Events for {@link ISharedTreeBranch}.
+ * @alpha
+ */
+export interface BranchEvents {
+	/**
+	 * A batch of changes has finished processing and the branch is in a consistent state.
+	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 *
+	 * @remarks
+	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
+	 */
+	afterBatch(): void;
+}
 
 /**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @alpha
  */
-export interface ISharedTreeCheckout extends AnchorLocator {
+export interface ISharedTreeBranch extends AnchorLocator {
 	/**
 	 * Gets or sets the root field of the tree.
 	 *
@@ -67,7 +84,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	set root(data: ContextuallyTypedNodeData | undefined);
 
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeCheckout.root}.
+	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeBranch.root}.
 	 *
 	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
 	 */
@@ -111,7 +128,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
 	 *
 	 * To avoid updating observers of the branch state with intermediate results during a transaction,
-	 * use {@link ISharedTreeCheckout#fork} and {@link ISharedTreeCheckoutFork#merge}.
+	 * use {@link ISharedTreeBranch#fork} and {@link ISharedTreeFork#merge}.
 	 */
 	readonly transaction: {
 		/**
@@ -130,39 +147,49 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 		 */
 		abort(): TransactionResult.Abort;
 		/**
-		 * True if there is at least one transaction currently in progress on this checkout, otherwise false.
+		 * True if there is at least one transaction currently in progress on this branch, otherwise false.
 		 */
 		inProgress(): boolean;
 	};
 
 	/**
-	 * Spawn a new checkout which is based off of the current state of this checkout.
-	 * Any mutations of the new checkout will not apply to this checkout until the new checkout is merged back in.
+	 * Spawn a new branch which is based off of the current state of this branch.
+	 * Any mutations of the new branch will not apply to this branch until the new branch is merged back in.
 	 */
-	fork(): ISharedTreeCheckoutFork;
+	fork(): ISharedTreeFork;
+
+	/**
+	 * Events about this branch.
+	 */
+	readonly events: ISubscribable<BranchEvents>;
+
+	/**
+	 * Events about the root of the tree on this branch.
+	 */
+	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 }
 
 /**
- * An `ISharedTreeCheckout` which has been forked from a pre-existing checkout.
+ * An `ISharedTreeBranch` which has been forked from a pre-existing branch.
  * @alpha
  */
-export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
+export interface ISharedTreeFork extends ISharedTreeBranch {
 	/**
-	 * Rebase the changes that have been applied to this checkout over all the changes in the base checkout that have
-	 * occurred since this checkout last pulled (or was forked).
+	 * Rebase the changes that have been applied to this branch over all the changes in the base branch that have
+	 * occurred since this branch last pulled (or was forked).
 	 */
 	pull(): void;
 
 	/**
-	 * Apply all the changes on this checkout to the base checkout from which it was forked.
-	 * If the base checkout has new changes since this checkout last pulled (or was forked),
-	 * then this checkout's changes will be rebased over those first.
-	 * After the merge completes, this checkout may no longer be forked or mutated.
+	 * Apply all the changes on this branch to the base branch from which it was forked.
+	 * If the base branch has new changes since this branch last pulled (or was forked),
+	 * then this branch's changes will be rebased over those first.
+	 * After the merge completes, this branch may no longer be forked or mutated.
 	 */
 	merge(): void;
 
 	/**
-	 * Whether or not this checkout has been merged into its base checkout via `merge()`.
+	 * Whether or not this branch has been merged into its base branch via `merge()`.
 	 * If it has, then it may no longer be forked or mutated.
 	 */
 	isMerged(): boolean;
@@ -175,7 +202,7 @@ export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
+export interface ISharedTree extends ISharedObject, ISharedTreeBranch {}
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
@@ -187,14 +214,19 @@ class SharedTree
 	extends SharedTreeCore<
 		DefaultEditBuilder,
 		DefaultChangeset,
-		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
+		readonly [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
 	>
 	implements ISharedTree
 {
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	public readonly transaction: ISharedTreeCheckout["transaction"];
+	public readonly transaction: ISharedTreeBranch["transaction"];
+
+	public readonly events: ISubscribable<BranchEvents> & IEmitter<BranchEvents>;
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		return this.forest.anchors;
+	}
 
 	public constructor(
 		id: string,
@@ -206,11 +238,15 @@ class SharedTree
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
 		super(
-			(events, editManager) => [
-				new SchemaIndex(runtime, events, schema),
-				new ForestIndex(runtime, events, forest),
-				new EditManagerIndex(runtime, editManager),
-			],
+			(events, editManager) => {
+				const indexes = [
+					new SchemaIndex(runtime, events, schema),
+					new ForestIndex(runtime, events, forest),
+					new EditManagerIndex(runtime, editManager),
+				] as const;
+				events.on("newLocalState", () => this.events.emit("afterBatch"));
+				return indexes;
+			},
 			defaultChangeFamily,
 			anchors,
 			id,
@@ -219,6 +255,7 @@ class SharedTree
 			telemetryContextPrefix,
 		);
 
+		this.events = createEmitter<BranchEvents>();
 		this.forest = forest;
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 
@@ -244,9 +281,9 @@ class SharedTree
 		this.context.unwrappedRoot = data;
 	}
 
-	public fork(): ISharedTreeCheckoutFork {
+	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
-		return new SharedTreeCheckout(
+		return new SharedTreeFork(
 			this.createBranch(anchors),
 			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
@@ -305,7 +342,8 @@ export class SharedTreeFactory implements IChannelFactory {
 	}
 }
 
-class SharedTreeCheckout implements ISharedTreeCheckoutFork {
+class SharedTreeFork implements ISharedTreeFork {
+	public readonly events = createEmitter<BranchEvents>();
 	public readonly context: EditableTreeContext;
 
 	public constructor(
@@ -318,14 +356,19 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
+			this.events.emit("afterBatch");
 		});
+	}
+
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		return this.forest.anchors;
 	}
 
 	public get editor() {
 		return this.branch.editor;
 	}
 
-	public readonly transaction: ISharedTreeCheckout["transaction"] = {
+	public readonly transaction: ISharedTreeBranch["transaction"] = {
 		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
 		commit: () => this.branch.commitTransaction(),
 		abort: () => this.branch.abortTransaction(),
@@ -340,10 +383,10 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.branch.pull();
 	}
 
-	public fork(): ISharedTreeCheckoutFork {
+	public fork(): ISharedTreeFork {
 		const storedSchema = this.storedSchema.clone();
 		const anchors = new AnchorSet();
-		return new SharedTreeCheckout(
+		return new SharedTreeFork(
 			this.branch.fork(anchors),
 			this.changeFamily,
 			storedSchema,
@@ -369,21 +412,21 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 }
 
 /**
- * Run a synchronous transaction on the given shared tree checkout.
- * This is a convenience helper around the {@link SharedTreeCheckout#transaction} APIs.
- * @param checkout - the checkout on which to run the transaction
- * @param transaction - the transaction function. This will be executed immediately. It is passed `checkout` as an argument for convenience.
+ * Run a synchronous transaction on the given shared tree branch.
+ * This is a convenience helper around the {@link SharedTreeFork#transaction} APIs.
+ * @param branch - the branch on which to run the transaction
+ * @param transaction - the transaction function. This will be executed immediately. It is passed `branch` as an argument for convenience.
  * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns whether or not the transaction was committed or aborted
  * @alpha
  */
 export function runSynchronous(
-	checkout: ISharedTreeCheckout,
-	transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void,
+	branch: ISharedTreeBranch,
+	transaction: (branch: ISharedTreeBranch) => TransactionResult | void,
 ): TransactionResult {
-	checkout.transaction.start();
-	const result = transaction(checkout);
+	branch.transaction.start();
+	const result = transaction(branch);
 	return result === TransactionResult.Abort
-		? checkout.transaction.abort()
-		: checkout.transaction.commit();
+		? branch.transaction.abort()
+		: branch.transaction.commit();
 }

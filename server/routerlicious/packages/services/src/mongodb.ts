@@ -7,12 +7,41 @@ import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
 import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { requestWithRetry } from "@fluidframework/server-services-core";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;
 const MaxRetryAttempts = 3;
 const InitialRetryIntervalInMs = 1000;
+const errorSanitizationMessage = "REDACTED";
+const errorResponseKeysAllowList = new Set([
+	"_id",
+	"code",
+	"codeName",
+	"documentId",
+	"driver",
+	"err",
+	"errmsg",
+	"errorDetails",
+	"errorLabels",
+	"index",
+	"insertedIds",
+	"message",
+	"mongoTimestamp",
+	"name",
+	"nInserted",
+	"nMatched",
+	"nModified",
+	"nRemoved",
+	"nUpserted",
+	"ok",
+	"result",
+	"stack",
+	"tenantId",
+	"type",
+	"upserted",
+	"writeErrors",
+	"writeConcernErrors",
+]);
 
 export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable {
 	constructor(
@@ -60,7 +89,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async update(filter: object, set: any, addToSet: any): Promise<void> {
-		const req = async () => this.updateCore(filter, set, addToSet, false);
+		const req = async () => {
+			try {
+				await this.updateCore(filter, set, addToSet, false);
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
+		};
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.update", // callerName
@@ -69,7 +105,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
-		const req = async () => this.updateManyCore(filter, set, addToSet, false);
+		const req = async () => {
+			try {
+				await this.updateManyCore(filter, set, addToSet, false);
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
+		};
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.updateMany", // callerName
@@ -78,7 +121,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
-		const req = async () => this.updateCore(filter, set, addToSet, true);
+		const req = async () => {
+			try {
+				await this.updateCore(filter, set, addToSet, true);
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
+		};
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.upsert", // callerName
@@ -115,8 +165,13 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async insertOne(value: T): Promise<any> {
 		const req = async () => {
-			const result = await this.collection.insertOne(value);
-			return result.insertedId;
+			try {
+				const result = await this.collection.insertOne(value);
+				return result.insertedId;
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
 		};
 		return this.requestWithRetry(
 			req, // request
@@ -126,7 +181,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	}
 
 	public async insertMany(values: T[], ordered: boolean): Promise<void> {
-		const req = async () => this.collection.insertMany(values, { ordered: false });
+		const req = async () => {
+			try {
+				await this.collection.insertMany(values, { ordered: false });
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
+		};
 		await this.requestWithRetry(
 			req, // request
 			"MongoCollection.insertMany", // callerName
@@ -169,20 +231,25 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
-			const result = await this.collection.findOneAndUpdate(
-				query,
-				{
-					$setOnInsert: value,
-				},
-				{
-					returnOriginal: true,
-					upsert: true,
-				},
-			);
+			try {
+				const result = await this.collection.findOneAndUpdate(
+					query,
+					{
+						$setOnInsert: value,
+					},
+					{
+						returnOriginal: true,
+						upsert: true,
+					},
+				);
 
-			return result.value
-				? { value: result.value, existing: true }
-				: { value, existing: false };
+				return result.value
+					? { value: result.value, existing: true }
+					: { value, existing: false };
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
 		};
 		return this.requestWithRetry(
 			req, // request
@@ -193,19 +260,24 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 
 	public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
-			const result = await this.collection.findOneAndUpdate(
-				query,
-				{
-					$set: value,
-				},
-				{
-					returnOriginal: true,
-				},
-			);
+			try {
+				const result = await this.collection.findOneAndUpdate(
+					query,
+					{
+						$set: value,
+					},
+					{
+						returnOriginal: true,
+					},
+				);
 
-			return result.value
-				? { value: result.value, existing: true }
-				: { value, existing: false };
+				return result.value
+					? { value: result.value, existing: true }
+					: { value, existing: false };
+			} catch (error) {
+				this.sanitizeError(error);
+				throw error;
+			}
 		};
 		return this.requestWithRetry(
 			req, // request
@@ -255,16 +327,17 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		queryOrFilter?: any,
 	): Promise<TOut> {
 		const telemetryProperties = this.getTelemetryPropertiesFromQuery(queryOrFilter);
-		return requestWithRetry<TOut>(
+		return core.runWithRetry<TOut>(
 			request,
 			callerName,
-			telemetryProperties,
-			(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
 			MaxRetryAttempts, // maxRetries
 			InitialRetryIntervalInMs, // retryAfterMs
+			telemetryProperties,
+			(e) => e.code === 11000, // shouldIgnoreError
+			(e) => this.retryEnabled && this.mongoErrorRetryAnalyzer.shouldRetry(e), // ShouldRetry
 			(error: any, numRetries: number, retryAfterInterval: number) =>
-				numRetries * retryAfterInterval, // retryAfterIntervalCalculator
-			undefined /* onErrorFn */,
+				numRetries * retryAfterInterval, // calculateIntervalMs
+			(error) => this.sanitizeError(error) /* onErrorFn */,
 			this.telemetryEnabled, // telemetryEnabled
 		);
 	}
@@ -290,6 +363,23 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 
 		return properties;
+	}
+
+	private sanitizeError(error: any) {
+		if (error) {
+			try {
+				Object.keys(error).forEach((key) => {
+					if (typeof error[key] === "object") {
+						this.sanitizeError(error[key]);
+					} else if (!errorResponseKeysAllowList.has(key)) {
+						error[key] = errorSanitizationMessage;
+					}
+				});
+			} catch (err) {
+				Lumberjack.error(`Error sanitization failed.`, undefined, err);
+				throw err;
+			}
+		}
 	}
 }
 

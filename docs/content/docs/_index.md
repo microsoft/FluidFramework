@@ -36,7 +36,7 @@ scenarios such as real-time typing across text editors. Client developers can fo
 letting Fluid do the work of keeping data in sync.
 
 Fluid Framework works with your application framework of choice.
-Whether you prefer plain JavaScript or a framework like [React](https://reactjs.org), [Angular](https://angular.io),
+Whether you prefer plain JavaScript or a framework like [React](https://react.dev), [Angular](https://angular.io),
 or [Vue](https://vuejs.org), Fluid Framework makes building collaborative experiences simple and flexible.
 
 ## How Fluid works
