@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/driver-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
