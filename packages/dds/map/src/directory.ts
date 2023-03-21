@@ -1011,11 +1011,6 @@ interface IClearLocalOpMetadata {
 interface ICreateSubDirLocalOpMetadata {
 	type: "createSubDir";
 	pendingMessageId: number;
-	/**
-	 * @deprecated - If the directory already exists, then op will not be submitted. Keeping
-	 * it for back compat. Will be removed in future.
-	 */
-	previouslyExisted: boolean;
 }
 
 interface IDeleteSubDirLocalOpMetadata {
@@ -1649,18 +1644,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): ICreateSubDirLocalOpMetadata {
 		this.throwIfDisposed();
 		// Create the sub directory locally first.
-		const isNew = this.createSubDirectoryCore(
-			op.subdirName,
-			true,
-			-1,
-			this.runtime.clientId ?? "detached",
-		);
+		this.createSubDirectoryCore(op.subdirName, true, -1, this.runtime.clientId ?? "detached");
 		const newMessageId = this.getSubDirMessageId(op);
 
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 			pendingMessageId: newMessageId,
-			previouslyExisted: !isNew,
 		};
 		return localOpMetadata;
 	}
@@ -1833,7 +1822,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 			pendingMessageId: newMessageId,
-			previouslyExisted: false,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
