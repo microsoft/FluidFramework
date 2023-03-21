@@ -9,7 +9,7 @@ import { Provider } from "nconf";
 import Redis from "ioredis";
 import winston from "winston";
 import * as historianServices from "./services";
-import { normalizePort,Constants } from "./utils";
+import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
 
 export class HistorianResources implements core.IResources {

@@ -46,23 +46,22 @@ export function create(
 ): IRoutes {
 	return {
 		git: {
-			blobs: blobs.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
-			commits: commits.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
-			refs: refs.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
-			tags: tags.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
-			trees: trees.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+			blobs: blobs.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
+			commits: commits.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
+			refs: refs.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
+			tags: tags.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
+			trees: trees.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
 		},
 		repository: {
 			commits: repositoryCommits.create(
 				config,
 				tenantService,
 				restTenantThrottler,
-                restClusterThrottlers,
 				cache,
 				asyncLocalStorage,
 			),
-			contents: contents.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
-			headers: headers.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+			contents: contents.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
+			headers: headers.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
 		},
 		summaries: summaries.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
 	};
