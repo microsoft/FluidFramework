@@ -95,13 +95,10 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 		const trees = state.testTreeProvider.trees;
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
-		const { firstNode: firstNodePath, count } = getExistingRandomNodeRangePath(
-			tree,
-			state.random,
-		);
+		const { firstNode, count } = getExistingRandomNodeRangePath(tree, state.random);
 		return {
 			fuzzType: "delete",
-			firstNode: firstNodePath,
+			firstNode,
 			count,
 		};
 	}
