@@ -193,7 +193,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
                     Lumberjack.error(`Error retrieving checkpoint from local DB.`, lumberProperties, error);
                 });
 
-                if(checkpoint !== null && checkpoint !== undefined) {
+                if(checkpoint?.scribe) {
                     lastCheckpoint = JSON.parse(checkpoint.scribe);
                     isLocalCheckpoint = true;
                 } else {

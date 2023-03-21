@@ -201,7 +201,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
                             checkpointSource = "notFoundInLocalCollection";
                         })
 
-                    if(checkpoint !== null && checkpoint !== undefined){
+                    if(checkpoint?.deli){
                         lastCheckpoint = JSON.parse(checkpoint.deli);
                         checkpointSource = "foundInLocalCollection"
                         isLocalCheckpoint = true;
