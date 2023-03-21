@@ -44,9 +44,7 @@ Find the details of the API in the [Customer Service README](./src/mock-customer
 
 ### Fluid Service
 
-#### Driver Layer
-
-The `broadcast-signal` endpoint is new and still under construction. We will update it here once it is available to use. The fact that it lives in the driver layer should not be of concern to the implementer of this pattern.
+The `broadcast-signal` endpoint is new and still under construction. We will update it here once it is available to use.
 
 1. POST `/broadcast-signal`. Required body parameters: `containerUrl` (string), `externalTaskListId` (string), `taskData`(ITaskData). On receiving this, the driver will broadcast a signal of `SignalType.RuntimeSignal` to the clients to alert them of an upstream change. This endpoint is called by the Customer Service to let the Fluid service know that there has been a change in the data. The body must contain the `conainerUrl` that is composed ot the `socketStreamUrl`, the `containerId` (sometimes known as the documentId), and the tenantId. In this way, it "echoes" the webhook from the External Data Service to the Customer Service. It is called by the Customer Service when it needs to notify the Fluid Clients that there has been a change to the data.
 
