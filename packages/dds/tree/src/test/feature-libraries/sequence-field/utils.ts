@@ -13,7 +13,7 @@ import {
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
+import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
