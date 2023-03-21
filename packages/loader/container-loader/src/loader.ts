@@ -331,6 +331,16 @@ export class Loader implements IHostLoader {
 			codeDetails,
 			this.protocolHandlerBuilder,
 		);
+
+		if (this.cachingEnabled) {
+			container.once("attached", () => {
+				ensureFluidResolvedUrl(container.resolvedUrl);
+				const parsedUrl = parseUrl(container.resolvedUrl.url);
+				if (parsedUrl !== undefined) {
+					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
+				}
+			});
+		}
 		return container;
 	}
 
@@ -445,10 +455,14 @@ export class Loader implements IHostLoader {
 		return { container, parsed };
 	}
 
+	private get cachingEnabled() {
+		return this.services.options.cache === true;
+	}
+
 	private canCacheForRequest(headers: IRequestHeader): boolean {
 		return headers[LoaderHeader.cache] === undefined
-			? false
-			: (headers[LoaderHeader.cache] as boolean);
+			? this.cachingEnabled
+			: this.cachingEnabled && (headers[LoaderHeader.cache] as boolean);
 	}
 
 	private parseHeader(parsed: IParsedUrl, request: IRequest) {
