@@ -361,7 +361,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			address,
 			storage,
 			databaseManager,
-            databaseManager,
 			60000,
 			() => new NodeWebSocketServer(4000),
 			taskMessageSender,
@@ -371,6 +370,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			utils.generateToken,
 			winston,
 		);
+
 		const localOrderManager = new LocalOrderManager(nodeFactory, reservationManager);
 		const kafkaOrdererFactory = new KafkaOrdererFactory(
 			producer,

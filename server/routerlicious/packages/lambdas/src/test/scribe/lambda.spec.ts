@@ -86,11 +86,11 @@ describe("Routerlicious", () => {
 				];
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				testMongoManager = new MongoManager(dbFactory);
-                testLocalMongoManager = new MongoManager(dbFactory);
+				testLocalMongoManager = new MongoManager(dbFactory);
 				const database = await testMongoManager.getDatabase();
-                const localDatabase = await testLocalMongoManager.getDatabase();
+				const localDatabase = await testLocalMongoManager.getDatabase();
 				testDocumentCollection = database.collection("documents");
-                testCheckpointCollection = localDatabase.collection("checkpoints");
+				testCheckpointCollection = localDatabase.collection("checkpoints");
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
 				testProducer = testKafka.createProducer();

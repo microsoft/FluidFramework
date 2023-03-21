@@ -24,7 +24,6 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 		private readonly documentId: string,
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
-        private readonly localDatabaseManager: IDatabaseManager,
 		private readonly gitManager?: IGitManager,
 	) {}
 
@@ -39,7 +38,7 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 	}
     // eslint-disable-next-line @typescript-eslint/promise-function-async
     public localCheckpointCollectionP(): Promise<ICollection<ICheckpoint>> {
-        return this.localDatabaseManager.getCheckpointCollection();
+        return this.databaseManager.getCheckpointCollection();
     }
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async

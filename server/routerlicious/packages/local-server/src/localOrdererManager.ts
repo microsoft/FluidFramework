@@ -26,7 +26,6 @@ export class LocalOrdererManager implements IOrdererManager {
 	constructor(
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
-        private readonly localDatabaseManager: IDatabaseManager,
 		private readonly tenantManager: ITenantManager,
 		private readonly taskMessageSender: ITaskMessageSender,
 		private readonly permission: any, // Can probably remove
@@ -81,7 +80,6 @@ export class LocalOrdererManager implements IOrdererManager {
 		const orderer = await LocalOrderer.load(
 			this.storage,
 			this.databaseManager,
-            this.localDatabaseManager,
 			tenantId,
 			documentId,
 			this.taskMessageSender,

@@ -94,7 +94,6 @@ export class LocalOrderer implements IOrderer {
 	public static async load(
 		storage: IDocumentStorage,
 		databaseManager: IDatabaseManager,
-		localDatabaseManager: IDatabaseManager,
 		tenantId: string,
 		documentId: string,
 		taskMessageSender: ITaskMessageSender,
@@ -108,7 +107,6 @@ export class LocalOrderer implements IOrderer {
 			documentId,
 			storage,
 			databaseManager,
-            localDatabaseManager,
 			gitManager,
 		),
 		pubSub: IPubSub = new PubSub(),
