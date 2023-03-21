@@ -50,7 +50,9 @@ function canUseCache(request: IRequest): boolean {
 		return false;
 	}
 
-	return request.headers[LoaderHeader.cache] === undefined ? false : request.headers[LoaderHeader.cache] as boolean ;
+	return request.headers[LoaderHeader.cache] === undefined
+		? false
+		: (request.headers[LoaderHeader.cache] as boolean);
 }
 
 /**
@@ -444,7 +446,9 @@ export class Loader implements IHostLoader {
 	}
 
 	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return headers[LoaderHeader.cache] === undefined ? false : headers[LoaderHeader.cache] as boolean ;
+		return headers[LoaderHeader.cache] === undefined
+			? false
+			: (headers[LoaderHeader.cache] as boolean);
 	}
 
 	private parseHeader(parsed: IParsedUrl, request: IRequest) {
