@@ -137,6 +137,11 @@ export interface PolicyConfig {
 	dependencies?: {
 		requireTilde?: string[];
 	};
+	/**
+	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
+	 * policy-check.
+	 */
+	exclusions?: string[];
 }
 
 /**
