@@ -1001,7 +1001,11 @@ export class ContainerRuntime
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
-	private readonly documentGuid: string;
+	/**
+	 * GUID to identify a document in telemetry
+	 * ! Note: should not be used for anything other than telemetry and is not considered a stable GUID
+	 */
+	private readonly telemetryDocumentId: string;
 
 	/**
 	 * @internal
@@ -1076,7 +1080,7 @@ export class ContainerRuntime
 			}),
 		});
 
-		this.documentGuid = metadata?.documentGuid ?? uuid();
+		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
 
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
@@ -1432,7 +1436,7 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 			}),
-			documentGuid: this.documentGuid,
+			telemetryDocumentId: this.telemetryDocumentId,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1613,7 +1617,7 @@ export class ContainerRuntime
 			message:
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
-			documentGuid: this.documentGuid,
+			telemetryDocumentId: this.telemetryDocumentId,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
