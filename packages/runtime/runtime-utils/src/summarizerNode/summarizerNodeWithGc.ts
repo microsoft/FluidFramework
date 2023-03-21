@@ -518,13 +518,13 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 					const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
 						JSON.parse(summaryNodeWithGC.serializedUsedRoutes),
 					);
-					const newSerializedRoutes = childNodeUsedRoutes.get(id);
+					const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
 					const newLatestSummaryNode = new SummaryNodeWithGC(
-						JSON.stringify(newSerializedRoutes ?? [""]),
+						JSON.stringify(newSerializedRoutes),
 						{
 							referenceSequenceNumber: value.referenceSequenceNumber,
-							basePath: child.latestSummary.basePath,
-							localPath: child.latestSummary.localPath,
+							basePath: value.basePath,
+							localPath: value.localPath,
 						},
 					);
 					child.addPendingSummary(key, newLatestSummaryNode);
