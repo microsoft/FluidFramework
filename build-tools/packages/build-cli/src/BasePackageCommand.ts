@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { PackageJson } from "@fluidframework/build-tools";
+import { Context, PackageJson } from "@fluidframework/build-tools";
 import { ux, Flags, Command } from "@oclif/core";
 import async from "async";
 import { readJSONSync } from "fs-extra";
@@ -17,28 +17,35 @@ import { ReleaseGroup } from "./releaseGroups";
  * A type indicating the kind of package that is being processed. This enables subcommands to vary behavior based on the
  * type of package.
  */
-type PackageKind =
+export type PackageKind =
 	/**
 	 * Package is an independent package.
 	 */
 	| "independentPackage"
 
 	/**
-	 * Package is part of a release group
+	 * Package is part of a release group, but is _not_ the root.
 	 */
-	| "releaseGroupPackage"
+	| "releaseGroupChildPackage"
 
 	/**
 	 * Package is the root package of a release group.
 	 */
-	| "releaseGroupRoot"
+	| "releaseGroupRootPackage"
 
 	/**
 	 * Package is being loaded from a directory. The package may be one of the other three kinds. This kind is only used
 	 * when running on a package diurectly using its directory.
 	 */
-	| "packageDir";
+	| "packageFromDirectory";
 
+/**
+ * A convenience type mapping a directory containing a package to its PackageKind.
+ */
+interface PackageDetails {
+	directory: string;
+	kind: PackageKind;
+}
 /**
  * Commands that run operations per project.
  */
@@ -94,19 +101,106 @@ export abstract class PackageCommand<
 		...BaseCommand.flags,
 	};
 
-	protected abstract processPackage(
-		directory: string,
-		packageDetails: { kind: PackageKind },
-	): Promise<void>;
+	protected abstract processPackage(directory: string, kind: PackageKind): Promise<void>;
 
-	private async processPackages(
-		directories: string[],
-		packageDetails: { kind: PackageKind },
-	): Promise<void> {
+	private async processPackageFromDetails(packageDetails: PackageDetails) {
+		return this.processPackage(packageDetails.directory, packageDetails.kind);
+	}
+
+	private async processPackages(packageDetails: PackageDetails[]): Promise<void> {
 		const scopeIn = scopesToPrefix(this.flags.scope);
 		const scopeOut = scopesToPrefix(this.flags.skipScope);
+		const directories = packageDetails.map((pd) => pd.directory);
 
-		const packages = directories.filter((directory) => {
+		const packages = this.filterScopes(packageDetails, scopeIn, scopeOut);
+		let started = 0;
+		let finished = 0;
+		let succeeded = 0;
+		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
+		// spinner, so we only start the spinner if verbose is false.
+		const verbose = this.flags.verbose;
+
+		if (verbose) {
+			this.info(
+				`Filtered ${listNames(directories)} packages to ${listNames(
+					packages.map((p) => p.directory),
+				)}`,
+			);
+		}
+
+		function updateStatus(): void {
+			if (!verbose) {
+				ux.action.start(
+					"Processing Packages...",
+					`${finished}/${packages.length}: ${started - finished} pending. Errors: ${
+						finished - succeeded
+					}`,
+					{
+						stdout: true,
+					},
+				);
+			}
+		}
+		try {
+			await async.mapLimit(packages, 25, async (details: PackageDetails) => {
+				started += 1;
+				updateStatus();
+				try {
+					await this.processPackageFromDetails(details);
+					succeeded += 1;
+				} finally {
+					finished += 1;
+					updateStatus();
+				}
+			});
+		} finally {
+			// Stop the spinner if needed.
+			if (!verbose) {
+				ux.action.stop(`Done. ${packages.length} Packages. ${finished - succeeded} Errors`);
+			}
+		}
+	}
+
+	/**
+	 * Returns an array of the release group packages that should be processed.
+	 */
+	private getReleaseGroupPackages(
+		ctx: Context,
+		releaseGroup: ReleaseGroup,
+		rootPackageOnly: boolean,
+	): PackageDetails[] {
+		this.info(`Finding packages for release group: ${releaseGroup}`);
+		if (rootPackageOnly) {
+			const rg = ctx.repo.releaseGroups.get(releaseGroup);
+			assert(rg !== undefined);
+			return [{ directory: rg.repoPath, kind: "releaseGroupRootPackage" }];
+		}
+
+		return ctx.packagesInReleaseGroup(releaseGroup).map((p) => {
+			return { directory: p.directory, kind: "releaseGroupChildPackage" };
+		});
+	}
+
+	/**
+	 * Returns an array of the independent packages that should be processed.
+	 */
+	private getIndependentPackages(ctx: Context): PackageDetails[] {
+		this.info(`Finding independent packages`);
+		return ctx.independentPackages.map((p) => {
+			return { directory: p.directory, kind: "independentPackage" };
+		});
+	}
+
+	/**
+	 * Filters packages out of an array based on the scope settings.
+	 */
+	private filterScopes(
+		input: PackageDetails[],
+		scopeIn?: string[],
+		scopeOut?: string[],
+	): PackageDetails[] {
+		return input.filter((details) => {
+			const { directory } = details;
 			const json: PackageJson = readJSONSync(path.join(directory, "package.json"));
 			const isPrivate: boolean = json.private ?? false;
 			if (this.flags.private !== undefined && this.flags.private !== isPrivate) {
@@ -128,82 +222,6 @@ export abstract class PackageCommand<
 			}
 			return true;
 		});
-
-		let started = 0;
-		let finished = 0;
-		let succeeded = 0;
-		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
-		// spinner, so we only start the spinner if verbose is false.
-		const verbose = this.flags.verbose;
-
-		if (verbose) {
-			this.info(`Filtered ${listNames(directories)} packages to ${listNames(packages)}`);
-		}
-
-		function updateStatus(): void {
-			if (!verbose) {
-				ux.action.start(
-					"Processing Packages...",
-					`${finished}/${packages.length}: ${started - finished} pending. Errors: ${
-						finished - succeeded
-					}`,
-					{
-						stdout: true,
-					},
-				);
-			}
-		}
-		try {
-			await async.mapLimit(packages, 25, async (directory) => {
-				started += 1;
-				updateStatus();
-				try {
-					await this.processPackage(directory, packageDetails);
-					succeeded += 1;
-				} finally {
-					finished += 1;
-					updateStatus();
-				}
-			});
-		} finally {
-			// Stop the spinner if needed.
-			if (!verbose) {
-				ux.action.stop(`Done. ${packages.length} Packages. ${finished - succeeded} Errors`);
-			}
-		}
-	}
-
-	/**
-	 * Runs processPackage for each package in a release group, exlcuding the root.
-	 */
-	private async processReleaseGroup(
-		releaseGroup: ReleaseGroup,
-		rootPackageOnly: boolean,
-	): Promise<void> {
-		this.info(`Finding packages for release group: ${releaseGroup}`);
-		const ctx = await this.getContext();
-		if (rootPackageOnly) {
-			const rg = ctx.repo.releaseGroups.get(releaseGroup);
-			assert(rg !== undefined);
-			return this.processPackages([rg.repoPath], { kind: "releaseGroupRoot" });
-		}
-
-		return this.processPackages(
-			ctx.packagesInReleaseGroup(releaseGroup).map((p) => p.directory),
-			{ kind: "releaseGroupPackage" },
-		);
-	}
-
-	/**
-	 * Runs processPackage for each independent package in the repo.
-	 */
-	private async processIndependentPackages(): Promise<void> {
-		const ctx = await this.getContext();
-		this.info(`Finding independent packages`);
-		return this.processPackages(
-			ctx.independentPackages.map((p) => p.directory),
-			{ kind: "independentPackage" },
-		);
 	}
 
 	public async run(): Promise<void> {
@@ -212,31 +230,37 @@ export abstract class PackageCommand<
 		const { all, dir, releaseGroup, releaseGroupRoots, packages } = flags;
 
 		const ctx = await this.getContext();
-		if (all) {
-			// for each release group, run on its root or all its packages based on the releaseGroupRoots
-			const releaseGroupPromises = [...ctx.repo.releaseGroups.keys()].map(async (rg) =>
-				this.processReleaseGroup(rg, releaseGroupRoots),
-			);
+		const packagesToRunOn: PackageDetails[] = [];
 
-			await Promise.all([...releaseGroupPromises, this.processIndependentPackages()]);
-			return;
+		// Add independent packages
+		if (packages || all) {
+			packagesToRunOn.push(...this.getIndependentPackages(ctx));
 		}
 
+		// Add release group packages
+		if (releaseGroup !== undefined) {
+			packagesToRunOn.push(
+				...this.getReleaseGroupPackages(ctx, releaseGroup, releaseGroupRoots),
+			);
+		} else if (all) {
+			// for each release group, run on its root or all its packages based on the releaseGroupRoots
+			for (const rg of ctx.repo.releaseGroups.keys()) {
+				packagesToRunOn.push(...this.getReleaseGroupPackages(ctx, rg, releaseGroupRoots));
+			}
+		}
+
+		// Add package by directory
 		if (dir !== undefined) {
-			return this.processPackages([dir], { kind: "packageDir" });
+			packagesToRunOn.push({ directory: dir, kind: "packageFromDirectory" });
 		}
 
 		// Use dir="." as the default if neither a release group nor --packages was provided.
 		if (releaseGroup === undefined && packages === false) {
-			return this.processPackages(["."], { kind: "packageDir" });
-		}
-
-		if (releaseGroup !== undefined) {
-			return this.processReleaseGroup(releaseGroup, releaseGroupRoots);
+			packagesToRunOn.push({ directory: ".", kind: "packageFromDirectory" });
 		}
 
 		assert(packages);
-		return this.processIndependentPackages();
+		return this.processPackages(packagesToRunOn);
 	}
 }
 
