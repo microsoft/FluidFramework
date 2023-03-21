@@ -1316,6 +1316,12 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
+				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
+				// an initializeEntryPoint for that case.
+				assert(
+					initializeEntryPoint === undefined,
+					"Summarizer clients cannot have a custom entryPoint",
+				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -1431,12 +1437,16 @@ export class ContainerRuntime
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
-		this.entryPoint = new LazyPromise(
-			async () =>
-				// this summarizer only exists for the summarizer clients
-				// so make that the entrypoint if it exists.
-				this._summarizer ?? initializeEntryPoint?.(this),
-		);
+		this.entryPoint = new LazyPromise(async () => {
+			if (this.context.clientDetails.type === summarizerClientType) {
+				assert(
+					this._summarizer !== undefined,
+					"Summarizer object is undefined in a summarizer client",
+				);
+				return this._summarizer;
+			}
+			return initializeEntryPoint?.(this);
+		});
 	}
 
 	/**
