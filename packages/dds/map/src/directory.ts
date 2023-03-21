@@ -1822,9 +1822,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Submit a create subdirectory operation.
 	 * @param op - The operation
 	 */
-	private submitCreateSubDirectoryMessage(
-		op: IDirectorySubDirectoryOperation,
-	): void {
+	private submitCreateSubDirectoryMessage(op: IDirectorySubDirectoryOperation): void {
 		this.throwIfDisposed();
 		const newMessageId = this.getSubDirMessageId(op);
 
