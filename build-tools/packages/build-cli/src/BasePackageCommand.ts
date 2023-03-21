@@ -259,7 +259,6 @@ export abstract class PackageCommand<
 			packagesToRunOn.push({ directory: ".", kind: "packageFromDirectory" });
 		}
 
-		assert(packages);
 		return this.processPackages(packagesToRunOn);
 	}
 }
