@@ -91,7 +91,7 @@ Task - This is the unit that can be edited and attributed to an author. It is al
 
 TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the app. The app stores two types of TaskLists - a "draft" version and a "saved version". More on these below.
 
-TaskList - This can be compared to a "board" that holds all of the tasks. It is the larger visible entity to show up in a component within the app. The app stores two types of TaskLists - a "draft" version and a "saved version". More on these below.
+TaskList - This can be compared to a "board" that holds a list of related tasks; for example, the results of a particular query. It is the larger visible entity to show up in a component within the app. The app stores two types of TaskLists - a "draft" version and a "saved version". More on these below.
 
 ITaskData - This is similar to Task except that it is the External Data Services model of the task.
 
