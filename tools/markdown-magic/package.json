@@ -12,10 +12,10 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"main": "src/index.cjs",
 	"bin": {
 		"markdown-magic": "bin/markdown-magic"
 	},
-	"main": "src/index.cjs",
 	"scripts": {
 		"build": "npm run build:docs",
 		"build:docs": "node src/index.js --files README.md",
