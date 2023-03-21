@@ -321,7 +321,7 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 			}
 
 			case "PromptToPRDeps":
-      case "PromptToPRReleasedDepsBump": {
+			case "PromptToPRReleasedDepsBump": {
 				result = await promptToPRDeps(state, machine, testMode, log, data);
 				break;
 			}
