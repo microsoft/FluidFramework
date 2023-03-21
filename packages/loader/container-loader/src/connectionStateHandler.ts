@@ -9,7 +9,7 @@ import {
 	TelemetryEventCategory,
 } from "@fluidframework/common-definitions";
 import { assert, Timer } from "@fluidframework/common-utils";
-import { IConnectionDetails, IDeltaManager } from "@fluidframework/container-definitions";
+import { IConnectionDetailsInternal, IDeltaManager } from "@fluidframework/container-definitions";
 import { ILocalSequencedClient } from "@fluidframework/protocol-base";
 import { ISequencedClient, IClient } from "@fluidframework/protocol-definitions";
 import { PerformanceEvent, loggerToMonitoringContext } from "@fluidframework/telemetry-utils";
@@ -56,7 +56,7 @@ export interface IConnectionStateHandler {
 	containerSaved(): void;
 	dispose(): void;
 	initProtocol(protocol: IProtocolHandler): void;
-	receivedConnectEvent(details: IConnectionDetails): void;
+	receivedConnectEvent(details: IConnectionDetailsInternal): void;
 	receivedDisconnectEvent(reason: string): void;
 }
 
@@ -143,7 +143,7 @@ class ConnectionStateHandlerPassThrough
 		return this.pimpl.receivedDisconnectEvent(reason);
 	}
 
-	public receivedConnectEvent(details: IConnectionDetails) {
+	public receivedConnectEvent(details: IConnectionDetailsInternal) {
 		return this.pimpl.receivedConnectEvent(details);
 	}
 
@@ -288,7 +288,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	private readonly prevClientLeftTimer: Timer;
 	private readonly joinOpTimer: Timer;
 	private protocol?: IProtocolHandler;
-	private connection?: IConnectionDetails;
+	private connection?: IConnectionDetailsInternal;
 	private _clientId?: string;
 
 	private waitEvent: PerformanceEvent | undefined;
@@ -472,7 +472,7 @@ class ConnectionStateHandler implements IConnectionStateHandler {
 	 * @param deltaManager - DeltaManager to be used for delaying Connected transition until caught up.
 	 * If it's undefined, then don't delay and transition to Connected as soon as Leave/Join op are accounted for
 	 */
-	public receivedConnectEvent(details: IConnectionDetails) {
+	public receivedConnectEvent(details: IConnectionDetailsInternal) {
 		this.connection = details;
 
 		const oldState = this._connectionState;
