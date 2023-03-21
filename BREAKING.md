@@ -163,8 +163,8 @@ Note: `IConnectableRuntime` is only to be implemented internally, so removing th
 The following interfaces and exports in `@fluidframework/container-runtime` [deprecated since 0.14.0](https://github.com/microsoft/FluidFramework/pull/8299)
 have been removed and have no replacement:
 
-- `IProvideSummarizer` interface
-- `ISummarizer` const (**note:** the `ISummarizer` _interface_ still exists and is used)
+-   `IProvideSummarizer` interface
+-   `ISummarizer` const (**note:** the `ISummarizer` _interface_ still exists and is used)
 
 Additionally, the `ISummarizer` interface no longer extends `IFluidLoadable` nor `Partial<IProvideSummarizer>`.
 This means it no longer has readonly properties `IFluidLoadable` and `handle`.
