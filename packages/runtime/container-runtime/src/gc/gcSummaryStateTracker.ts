@@ -263,7 +263,7 @@ export class GCSummaryStateTracker {
 		proposalHandle: string | undefined,
 		result: RefreshSummaryResult,
 		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void> {
+	): Promise<IGarbageCollectionSnapshotData | undefined> {
 		// If the latest summary was updated and the summary was tracked, this client is the one that generated this
 		// summary. So, update wasGCRunInLatestSummary.
 		// Note that this has to be updated if GC did not run too. Otherwise, `gcStateNeedsReset` will always return
@@ -282,7 +282,7 @@ export class GCSummaryStateTracker {
 			this.latestSummaryGCVersion = this.currentGCVersion;
 			this.latestSummaryData = this.pendingSummaryData;
 			this.pendingSummaryData = undefined;
-			return;
+			return undefined;
 		}
 
 		// If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
@@ -294,15 +294,17 @@ export class GCSummaryStateTracker {
 		}
 
 		const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
+		let gcSnapshotData: IGarbageCollectionSnapshotData | undefined;
 		// If GC ran in the container that generated this snapshot, it will have a GC tree.
 		this.wasGCRunInLatestSummary = gcSnapshotTree !== undefined;
 		if (gcSnapshotTree !== undefined) {
-			const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
+			gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 			this.latestSummaryData = {
 				serializedGCState: JSON.stringify(gcSnapshotData.gcState),
 				serializedTombstones: JSON.stringify(gcSnapshotData.tombstones),
 				serializedDeletedNodes: JSON.stringify(gcSnapshotData.deletedNodes),
 			};
 		}
+		return gcSnapshotData;
 	}
 }
