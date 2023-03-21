@@ -293,10 +293,7 @@ export class ConnectionManager implements IConnectionManager {
 	 * and do not know if user has write access to a file.
 	 */
 	private get readonly(): boolean | undefined {
-		if (this._forceReadonly) {
-			return true;
-		}
-		return this._readonlyPermissions;
+		return this.readOnlyInfo.readonly;
 	}
 
 	public get readOnlyInfo(): ReadOnlyInfo {
