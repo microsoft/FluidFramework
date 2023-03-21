@@ -23,8 +23,21 @@ export const stableGCVersion: GCVersion = 1;
 /** The current version of garbage collection. */
 export const currentGCVersion: GCVersion = 2;
 
-/** This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value */
+/**
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value
+ *
+ * If unset, GC Tombstone phase will operate as otherwise configured
+ * Otherwise, only enforce GC Tombstone if the passed in value matches the persisted value
+ */
 export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
+/**
+ * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
+ *
+ * If unset altogether, Sweep will be disabled.
+ * If 0 is passed in, Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
+ * If any other number is passed in, Sweep will be enabled only for documents with the same value persisted.
+ */
+export const gcSweepGenerationOptionName = "gcSweepGeneration";
 
 // Feature gate key to turn GC on / off.
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
@@ -68,10 +81,16 @@ export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 export interface GCFeatureMatrix {
 	/**
 	 * The Tombstone Generation value in effect when this file was created.
-	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement
-	 * Provided via Container Runtime Options
+	 * Gives a way for an app to disqualify old files from GC Tombstone enforcement.
+	 * Provided via Container Runtime Options.
 	 */
 	tombstoneGeneration?: number;
+	/**
+	 * The Sweep Generation value in effect when this file was created.
+	 * Gives a way for an app to disqualify old files from GC Sweep.
+	 * Provided via Container Runtime Options.
+	 */
+	sweepGeneration?: number;
 }
 
 export interface IGCMetadata {
@@ -97,6 +116,8 @@ export interface IGCMetadata {
 	 */
 	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
+	 * @deprecated - @see GCFeatureMatrix.sweepGeneration
+	 *
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
@@ -255,6 +276,8 @@ export interface IGCRuntimeOptions {
 	gcAllowed?: boolean;
 
 	/**
+	 * @deprecated -  @see gcSweepGenerationOptionName and @see GCFeatureMatrix.sweepGeneration
+	 *
 	 * Flag that if true, enables GC's sweep phase for a new container.
 	 *
 	 * This will allow GC to eventually delete unreferenced objects from the container.
