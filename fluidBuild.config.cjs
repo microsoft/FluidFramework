@@ -43,6 +43,16 @@ module.exports = {
 
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
+		exclusions: [
+			"docs/layouts/",
+			"docs/themes/thxvscode/assets/",
+			"docs/themes/thxvscode/layouts/",
+			"docs/themes/thxvscode/static/assets/",
+			"docs/tutorials/.*\\.tsx?",
+			"azure/packages/azure-local-service/src/index.ts",
+			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
+			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+		],
 		dependencies: {
 			// Packages require tilde dependencies
 			requireTilde: [

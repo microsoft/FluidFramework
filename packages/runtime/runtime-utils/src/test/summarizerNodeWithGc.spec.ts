@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { cloneGCData, GCDataBuilder } from "@fluidframework/garbage-collector";
-import { SummaryType } from "@fluidframework/protocol-definitions";
+import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
@@ -23,6 +23,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summarizerNode/summarizerNodeWithGc";
 import { mergeStats } from "../summaryUtils";
+import { IFetchSnapshotResult } from "../summarizerNode";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
@@ -339,6 +340,128 @@ describe("SummarizerNodeWithGC Tests", () => {
 				},
 				"Complete summary should have failed at the leaf node",
 			);
+		});
+
+		let summaryRefSeq = 123;
+		const blobs = {
+			protocolAttributes: { sequenceNumber: summaryRefSeq },
+		} as const;
+		const readAndParseBlob = async <T>(id: string) => blobs[id] as T;
+
+		const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
+		const protocolTree: ISnapshotTree = {
+			blobs: { attributes: "protocolAttributes" },
+			trees: {},
+		};
+		const coreSnapshot: ISnapshotTree = {
+			blobs: {},
+			trees: {
+				[ids[1]]: {
+					blobs: {},
+					trees: {
+						[ids[2]]: emptySnapshot,
+					},
+				},
+			},
+		};
+		const simpleSnapshot: ISnapshotTree = {
+			blobs: {},
+			trees: {
+				...coreSnapshot.trees,
+				".protocol": protocolTree,
+			},
+		};
+		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
+			return {
+				snapshotTree: simpleSnapshot,
+				snapshotRefSeq: summaryRefSeq,
+			};
+		};
+
+		it("Should add GC pending summary node created after parent node was summarized with non-empty used routes", async () => {
+			createRoot();
+			createMid({ type: CreateSummarizerNodeSource.Local });
+			rootNode.startSummary(summaryRefSeq++, logger);
+			rootNode.updateUsedRoutes([""]);
+			midNode?.updateUsedRoutes([""]);
+
+			await rootNode.summarize(false);
+			await midNode?.summarize(false);
+			rootNode.completeSummary("test-handle1");
+
+			let result = await rootNode.refreshLatestSummary(
+				"test-handle1",
+				summaryRefSeq,
+				fetchLatestSnapshot,
+				readAndParseBlob,
+				logger,
+			);
+			assert(result.latestSummaryUpdated === true, "should update");
+			assert(result.wasSummaryTracked === true, "should be tracked");
+
+			rootNode.startSummary(summaryRefSeq++, logger);
+			rootNode.updateUsedRoutes([`/`, `/${ids[1]}`, `/${ids[1]}/${ids[2]}`]);
+			midNode?.updateUsedRoutes([`/`, `/${ids[2]}`]);
+
+			await rootNode.summarize(false);
+			await midNode?.summarize(false);
+			rootNode.completeSummary("test-handle2");
+
+			// Create a new child node for which we will need to create a pending summary for.
+			createLeaf({ type: CreateSummarizerNodeSource.Local });
+
+			result = await rootNode.refreshLatestSummary(
+				"test-handle2",
+				summaryRefSeq,
+				fetchLatestSnapshot,
+				readAndParseBlob,
+				logger,
+			);
+			assert(result.latestSummaryUpdated === true, "should update");
+			assert(result.wasSummaryTracked === true, "should be tracked");
+		});
+
+		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
+			createRoot();
+			createMid({ type: CreateSummarizerNodeSource.Local });
+			rootNode.startSummary(summaryRefSeq++, logger);
+			rootNode.updateUsedRoutes([""]);
+			midNode?.updateUsedRoutes([""]);
+
+			await rootNode.summarize(false);
+			await midNode?.summarize(false);
+			rootNode.completeSummary("test-handle1");
+
+			let result = await rootNode.refreshLatestSummary(
+				"test-handle1",
+				summaryRefSeq,
+				fetchLatestSnapshot,
+				readAndParseBlob,
+				logger,
+			);
+			assert(result.latestSummaryUpdated === true, "should update");
+			assert(result.wasSummaryTracked === true, "should be tracked");
+
+			rootNode.startSummary(summaryRefSeq++, logger);
+			rootNode.updateUsedRoutes([""]);
+			midNode?.updateUsedRoutes([""]);
+
+			await rootNode.summarize(false);
+			await midNode?.summarize(false);
+			rootNode.completeSummary("test-handle2");
+
+			// Create a new child node for which we will need to create a pending summary for.
+			createLeaf({ type: CreateSummarizerNodeSource.Local });
+
+			result = await rootNode.refreshLatestSummary(
+				"test-handle2",
+				summaryRefSeq,
+				fetchLatestSnapshot,
+				readAndParseBlob,
+				logger,
+			);
+			assert(result.latestSummaryUpdated === true, "should update");
+			assert(result.wasSummaryTracked === true, "should be tracked");
 		});
 	});
 });

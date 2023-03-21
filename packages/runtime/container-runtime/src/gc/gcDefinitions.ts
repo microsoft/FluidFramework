@@ -336,6 +336,8 @@ export interface IGarbageCollectorConfigs {
 	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 	/** The version of GC in the base snapshot. */
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
+	/** The current version of GC data in the running code */
+	readonly gcVersionInEffect: GCVersion;
 }
 
 /** The state of node that is unreferenced. */
