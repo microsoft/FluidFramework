@@ -52,3 +52,9 @@ steps:
   inputs:
     command: 'custom'
     customCommand: 'run layer-check'
+
+- task: Npm@1
+  displayName: npm run prettier:root
+  inputs:
+    command: 'custom'
+    customCommand: 'run prettier:root'
