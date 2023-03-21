@@ -20,28 +20,6 @@
  * @packageDocumentation
  */
 
-export {
-	_ContainerHistoryView,
-	_ContainerHistoryViewProps,
-	_ContainerSummaryView,
-	_ContainerSummaryViewProps,
-	_TelemetryView,
-	_TelemetryViewProps,
-	AudienceMemberViewProps, // TODO: remove this
-	ContainerView,
-	// clientDebugViewClassName,
-	ContainerViewProps,
-	ContainerSummaryView,
-	ContainerSummaryViewProps,
-	IContainerActions,
-	// MainView,
-	PanelView,
-	PanelViewSelectionMenu,
-	PanelViewSelectionMenuProps,
-	Waiting,
-	WaitingProps,
-} from "./components";
-
 export { AudienceMember } from "./Audience";
 export { HasClientDebugger } from "./CommonProps";
 export { FluidClientDebuggers, FluidClientDebuggersProps } from "./Debugger";

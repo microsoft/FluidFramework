@@ -6,7 +6,6 @@
 
 import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
 import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
-import { HasContainerId } from '@fluid-tools/client-debugger';
 import { IBaseDebuggerMessage } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IDebuggerMessage } from '@fluid-tools/client-debugger';
@@ -37,25 +36,11 @@ export interface _ContainerHistoryViewProps {
     containerHistory: readonly ConnectionStateChangeLogEntry[];
 }
 
-// @public
-export function ContainerSummaryView(props: ContainerSummaryViewProps): React_2.ReactElement;
-
 // @internal
 export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
 
 // @public
-export type ContainerSummaryViewProps = HasContainerId;
-
-// @public
 export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {
-}
-
-// @internal
-export function ContainerView(props: ContainerViewProps): React_2.ReactElement;
-
-// @internal
-export interface ContainerViewProps extends HasContainerId {
-    renderOptions?: RenderOptions;
 }
 
 // @public
@@ -88,22 +73,6 @@ export { IMessageRelay }
 
 // @public
 export const MessageRelayContext: React_2.Context<IMessageRelay<IBaseDebuggerMessage<unknown>, IDebuggerMessage<unknown>> | undefined>;
-
-// @internal
-export enum PanelView {
-    Audience = "Audience",
-    ContainerData = "Data",
-    ContainerStateHistory = "States"
-}
-
-// @internal
-export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React_2.ReactElement;
-
-// @internal
-export interface PanelViewSelectionMenuProps {
-    currentSelection: PanelView;
-    updateSelection(newSelection: PanelView): void;
-}
 
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
@@ -141,13 +110,5 @@ export interface _TelemetryViewProps {
 
 // @public
 export function useMessageRelay(): IMessageRelay;
-
-// @public
-export function Waiting(props: WaitingProps): React_2.ReactElement;
-
-// @public
-export interface WaitingProps {
-    label?: string;
-}
 
 ```
