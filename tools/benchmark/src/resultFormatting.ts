@@ -4,7 +4,7 @@
  */
 
 import Table from "easy-table";
-import { red } from "./ReporterUtilities";
+import chalk from "chalk";
 
 /**
  * Library for converting a `Record<string, unknown>` into formatted table cells.
@@ -25,7 +25,7 @@ export function numberCell(key: string, title: string, f: (v: number) => string)
 		cell: (table, data) => {
 			const field = data[key];
 			const content =
-				typeof field === "number" ? f(field) : red(`Expected number got "${field}"`);
+				typeof field === "number" ? f(field) : chalk.red(`Expected number got "${field}"`);
 			table.cell(title, content, Table.padLeft);
 		},
 	};
@@ -37,7 +37,7 @@ export function stringCell(key: string, title: string, f: (s: string) => string)
 		cell: (table, data) => {
 			const field = data[key];
 			const content =
-				typeof field === "string" ? f(field) : red(`Expected string got "${field}"`);
+				typeof field === "string" ? f(field) : chalk.red(`Expected string got "${field}"`);
 			table.cell(title, content);
 		},
 	};
@@ -48,7 +48,9 @@ export function arrayCell(key: string, title: string, f: (a: unknown[]) => strin
 		key,
 		cell: (table, data) => {
 			const field = data[key];
-			const content = Array.isArray(field) ? f(field) : red(`Expected array got "${field}"`);
+			const content = Array.isArray(field)
+				? f(field)
+				: chalk.red(`Expected array got "${field}"`);
 			table.cell(title, content);
 		},
 	};
@@ -60,7 +62,7 @@ export function objectCell(key: string, title: string, f: (a: object) => string)
 		cell: (table, data) => {
 			const field = data[key];
 			const content =
-				typeof field === "object" ? f(field) : red(`Expected object got "${field}"`);
+				typeof field === "object" ? f(field) : chalk.red(`Expected object got "${field}"`);
 			table.cell(title, content);
 		},
 	};
