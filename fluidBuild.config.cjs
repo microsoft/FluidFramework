@@ -59,16 +59,19 @@ module.exports = {
 				"webpack-dev-server",
 			],
 		},
-
-		// Lockfiles should only be found at these paths in the repo
-		additionalLockfilePaths: [
-			"common/build/build-common",
-			"common/build/eslint-config-fluid",
-			"docs",
-			"server/gitrest",
-			"server/historian",
-			"tools/telemetry-generator",
-		],
+    // These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
+    // around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
+    // pnpm workspaces should have.
+    pnpmSinglePackageWorkspace: [
+      "@fluid-tools/api-markdown-documenter",
+      "@fluid-tools/benchmark",
+      "@fluidframework/build-common",
+      "@fluidframework/common-definitions",
+      "@fluidframework/common-utils",
+      "@fluidframework/eslint-config-fluid",
+      "@fluidframework/protocol-definitions",
+      "@fluidframework/test-tools",
+    ],
 	},
 
 	// This defines the branch release types for type tests. It applies only to the client release group. Settings for

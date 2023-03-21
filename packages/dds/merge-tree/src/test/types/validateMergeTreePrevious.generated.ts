@@ -2267,7 +2267,6 @@ declare function get_current_InterfaceDeclaration_SerializedAttributionCollectio
 declare function use_old_InterfaceDeclaration_SerializedAttributionCollection(
     use: TypeOnly<old.SerializedAttributionCollection>);
 use_old_InterfaceDeclaration_SerializedAttributionCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_SerializedAttributionCollection());
 
 /*
