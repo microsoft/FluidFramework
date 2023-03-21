@@ -5762,6 +5762,7 @@ importers:
   packages/dds/tree:
     specifiers:
       '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
+      '@fluid-tools/api-markdown-documenter': ^0.6.0
       '@fluid-tools/benchmark': ^0.46.0
       '@fluid-tools/build-cli': ^0.12.0
       '@fluidframework/build-common': ^1.1.0
@@ -5785,6 +5786,8 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0'
       '@microsoft/api-extractor': ^7.34.4
+      '@microsoft/api-extractor-model': ^7.23.0
+      '@microsoft/tsdoc': ^0.14.1
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
@@ -5792,13 +5795,16 @@ importers:
       '@types/ungap__structured-clone': ^0.3.0
       '@types/uuid': ^8.3.0
       '@ungap/structured-clone': ^0.3.4
+      chalk: ^2.4.2
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
+      cpy: ^8.1.2
       cross-env: ^7.0.3
       diff: ^3.5.0
       easy-table: ^1.1.1
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
+      fs-extra: ^11.1.0
       good-fences: ^1.1.1
       mocha: ^10.2.0
       nyc: ^15.1.0
@@ -5824,6 +5830,7 @@ importers:
       uuid: 8.3.2
     devDependencies:
       '@fluid-internal/stochastic-test-utils': link:../../test/stochastic-test-utils
+      '@fluid-tools/api-markdown-documenter': 0.6.0_@types+node@14.18.38
       '@fluid-tools/benchmark': 0.46.133527
       '@fluid-tools/build-cli': 0.12.0
       '@fluidframework/build-common': 1.1.0
@@ -5837,19 +5844,24 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../test/test-utils
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
+      '@microsoft/api-extractor-model': 7.26.4_@types+node@14.18.38
+      '@microsoft/tsdoc': 0.14.2
       '@types/diff': 3.5.5
       '@types/easy-table': 0.0.32
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       '@types/ungap__structured-clone': 0.3.0
       '@types/uuid': 8.3.4
+      chalk: 2.4.2
       concurrently: 7.6.0
       copyfiles: 2.4.1
+      cpy: 8.1.2
       cross-env: 7.0.3
       diff: 3.5.0
       easy-table: 1.2.0
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
+      fs-extra: 11.1.0
       good-fences: 1.1.2
       mocha: 10.2.0
       nyc: 15.1.0
@@ -10520,7 +10532,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.19.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -12243,6 +12255,18 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
+    dev: true
+
+  /@fluid-tools/api-markdown-documenter/0.6.0_@types+node@14.18.38:
+    resolution: {integrity: sha512-yJzbkX9puglhMZ6rPZdIJYuuky6agqOWmWQWGq2nvFjkSBURa7ZFSmJBfy2kQFgzV3xIlbEoNsASG+2Uqff/4g==}
+    dependencies:
+      '@microsoft/api-documenter': 7.19.2
+      '@microsoft/api-extractor-model': 7.26.4_@types+node@14.18.38
+      '@microsoft/tsdoc': 0.14.2
+      '@rushstack/node-core-library': 3.55.2_@types+node@14.18.38
+      chalk: 2.4.2
+    transitivePeerDependencies:
+      - '@types/node'
     dev: true
 
   /@fluid-tools/benchmark/0.45.112032:
@@ -17476,6 +17500,19 @@ packages:
     resolution: {integrity: sha512-H1rQc1ZOHANWBvPcW+JpGwr+juXSxM8Q8YCkm3GhZd8REu1fHR3z99CErO1p9pkcfcxZnMdIZdIsXkOHY0NilA==}
     dev: true
 
+  /@microsoft/api-documenter/7.19.2:
+    resolution: {integrity: sha512-9Fb3Hpwv6uo7DB6IgcWByzHy8TLaZTprjueBDqMI6WmurqVtKWrTPdcZteUJaob5im8pzRTrVCxKDR/PpIAxsw==}
+    hasBin: true
+    dependencies:
+      '@microsoft/api-extractor-model': 7.23.0
+      '@microsoft/tsdoc': 0.14.1
+      '@rushstack/node-core-library': 3.50.1
+      '@rushstack/ts-command-line': 4.12.2
+      colors: 1.2.5
+      js-yaml: 3.13.1
+      resolve: 1.17.0
+    dev: true
+
   /@microsoft/api-documenter/7.21.6:
     resolution: {integrity: sha512-Z7orii4J9nsPfiehngONhKHQJwqfHaqwr8CvhHkgeK1jf1stECBMaej/+iKw/+KzXpP9eDdJDEGCnMprxU0kjg==}
     hasBin: true
@@ -17489,6 +17526,14 @@ packages:
       resolve: 1.22.1
     transitivePeerDependencies:
       - '@types/node'
+    dev: true
+
+  /@microsoft/api-extractor-model/7.23.0:
+    resolution: {integrity: sha512-h+2aVyf8IYidPZp+N+yIc/LY/aBwRZ1Vxlsx7rU31807bba5ScJ94bj7OjsPMje0vRYALf+yjZToYT0HdP6omA==}
+    dependencies:
+      '@microsoft/tsdoc': 0.14.1
+      '@microsoft/tsdoc-config': 0.16.2
+      '@rushstack/node-core-library': 3.50.1
     dev: true
 
   /@microsoft/api-extractor-model/7.26.4:
@@ -17569,6 +17614,10 @@ packages:
       ajv: 6.12.6
       jju: 1.4.0
       resolve: 1.19.0
+    dev: true
+
+  /@microsoft/tsdoc/0.14.1:
+    resolution: {integrity: sha512-6Wci+Tp3CgPt/B9B0a3J4s3yMgLNSku6w5TV6mN+61C71UqsRBv2FUibBf3tPGlNxebgPHMEUzKpb1ggE8KCKw==}
     dev: true
 
   /@microsoft/tsdoc/0.14.2:
@@ -18706,6 +18755,20 @@ packages:
       - typescript
     dev: true
 
+  /@rushstack/node-core-library/3.50.1:
+    resolution: {integrity: sha512-9d2xE7E9yQEBS6brTptdP8cslt6iL5+UnkY2lRxQQ4Q/jlXtsrWCCJCxwr56W/eJEe9YT/yHR4mMn5QY64Ps2w==}
+    dependencies:
+      '@types/node': 14.18.38
+      colors: 1.2.5
+      fs-extra: 7.0.1
+      import-lazy: 4.0.0
+      jju: 1.4.0
+      resolve: 1.17.0
+      semver: 7.3.8
+      timsort: 0.3.0
+      z-schema: 5.0.5
+    dev: true
+
   /@rushstack/node-core-library/3.53.2:
     resolution: {integrity: sha512-FggLe5DQs0X9MNFeJN3/EXwb+8hyZUTEp2i+V1e8r4Va4JgkjBNY0BuEaQI+3DW6S4apV3UtXU3im17MSY00DA==}
     dependencies:
@@ -18763,6 +18826,15 @@ packages:
 
   /@rushstack/tree-pattern/0.2.3:
     resolution: {integrity: sha512-8KWZxzn6XKuy3iKRSAd2CHXSXneRlGCmH9h/qM7jYQDekp+U18oUzub5xqOqHS2PLUC+torOMYZxgAIO/fF86A==}
+    dev: true
+
+  /@rushstack/ts-command-line/4.12.2:
+    resolution: {integrity: sha512-poBtnumLuWmwmhCEkVAgynWgtnF9Kygekxyp4qtQUSbBrkuyPQTL85c8Cva1YfoUpOdOXxezMAkUt0n5SNKGqw==}
+    dependencies:
+      '@types/argparse': 1.0.38
+      argparse: 1.0.10
+      colors: 1.2.5
+      string-argv: 0.3.1
     dev: true
 
   /@rushstack/ts-command-line/4.13.2:
@@ -23051,6 +23123,7 @@ packages:
 
   /base64-js/1.3.0:
     resolution: {integrity: sha512-ccav/yGvoa80BQDljCxsmmQ3Xvx60/UpBIij5QN21W3wBi/hhIC9OoO+KLpu9IJTS9j4DRVJ3aDDF9cMSoa2lw==}
+    dev: false
 
   /base64-js/1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
@@ -23249,7 +23322,7 @@ packages:
     dependencies:
       ansi-align: 2.0.0
       camelcase: 4.1.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-boxes: 1.0.0
       string-width: 2.1.1
       term-size: 1.2.0
@@ -23452,14 +23525,14 @@ packages:
     deprecated: This version of 'buffer' is out-of-date. You must update to v4.9.2 or newer
     dependencies:
       base64-js: 1.5.1
-      ieee754: 1.1.13
+      ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
 
   /buffer/4.9.2:
     resolution: {integrity: sha512-xq+q3SRMOxGivLhBNaUdC64hDTQwejJ+H0T/NB1XMtTVEwNTrfFF3gAxiyW0Bu/xWEGhjVKgUcMhCrUy2+uCWg==}
     dependencies:
-      base64-js: 1.3.0
+      base64-js: 1.5.1
       ieee754: 1.2.1
       isarray: 1.0.0
     dev: true
@@ -23888,7 +23961,6 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
-    dev: true
 
   /chalk/3.0.0:
     resolution: {integrity: sha512-4D3B6Wf41KOYRFdszmDqMCGq5VV/uMAB273JILmO+3jAlh8X4qDtdtgCR3fxtbLEMzSx22QdhnDcJvu2u1fVwg==}
@@ -24376,7 +24448,7 @@ packages:
     engines: {node: '>= 4.0'}
     dependencies:
       '@types/q': 1.5.5
-      chalk: 2.4.1
+      chalk: 2.4.2
       q: 1.5.1
     dev: true
 
@@ -25392,7 +25464,7 @@ packages:
       '@babel/polyfill': 7.12.1
       '@octokit/rest': 16.43.2_@octokit+core@4.2.0
       async-retry: 1.2.3
-      chalk: 2.4.1
+      chalk: 2.4.2
       commander: 2.20.3
       debug: 4.3.4
       fast-json-patch: 3.1.1
@@ -27972,7 +28044,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.18.6
-      chalk: 2.4.1
+      chalk: 2.4.2
       eslint: 8.6.0
       micromatch: 3.1.10
       minimatch: 3.1.2
@@ -29893,7 +29965,7 @@ packages:
     resolution: {integrity: sha512-h+xtnyk4EwKvFWHrUYsWErEVR+igKtLdchu+o0Z1RL7VU/jVMFbYir2bp6bAj8efFNxWqHX0dIss6fJQ+/+qeQ==}
     dependencies:
       ansi-escapes: 3.2.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-cursor: 2.1.0
       cli-width: 2.2.1
       external-editor: 2.2.0
@@ -32370,7 +32442,7 @@ packages:
     resolution: {integrity: sha512-04PDPqSlsqIOaaaGZ+41vq5FejI9auqTInicFRndCBgE3bXG8D6W1I+mWhk+1nqbHmyhla/6BUrd5OSiHwKRXw==}
     engines: {node: '>=4'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-cursor: 2.1.0
       date-fns: 1.30.1
       figures: 2.0.0
@@ -33620,7 +33692,7 @@ packages:
     resolution: {integrity: sha512-/lFmlpY1cPfLXmV/Qb7kprbQS5VYExEaJGRR86rCLYUdLQM5uivIwvulUEt5VV9mbK/GttN2XPb8al7/5VgtOw==}
     hasBin: true
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       dateformat: 3.0.3
       fs-extra: 4.0.3
       fsu: 1.1.1
@@ -35885,7 +35957,7 @@ packages:
     resolution: {integrity: sha512-soOk1h6J3VMTZtVeVpv15/Hpdl2cBLX3CAw4TAbkpTJiNPk9YP/zWcD1ND+xEtvyuuvKzbxliTOIyvkSeSJ6ag==}
     engines: {node: '>=4.0.0'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       source-map: 0.6.1
       supports-color: 5.5.0
 
@@ -39764,6 +39836,10 @@ packages:
       next-tick: 1.1.0
     dev: true
 
+  /timsort/0.3.0:
+    resolution: {integrity: sha512-qsdtZH+vMoCARQtyod4imc2nIJwg9Cc7lPRrw9CzF8ZKR0khdr8+2nX80PBhET3tcyTtJDxAffGh2rXH4tyU8A==}
+    dev: true
+
   /tiny-warning/1.0.3:
     resolution: {integrity: sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==}
     dev: false
@@ -40717,7 +40793,7 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       boxen: 1.3.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       configstore: 3.1.5
       import-lazy: 2.1.0
       is-ci: 1.2.1
