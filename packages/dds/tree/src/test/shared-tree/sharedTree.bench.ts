@@ -394,7 +394,7 @@ describe("SharedTree benchmarks", () => {
 					);
 					tree = trees[0];
 				},
-				benchmarkFn: async () => {
+				benchmarkFn: () => {
 					insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Deep);
 				},
 			});
@@ -414,7 +414,7 @@ describe("SharedTree benchmarks", () => {
 					);
 					tree = trees[0];
 				},
-				benchmarkFn: async () => {
+				benchmarkFn: () => {
 					insertNodesToEditableTree(tree, numberOfNodes, TreeShape.Wide);
 				},
 			});
