@@ -9,7 +9,7 @@ const {
 	getPackageMetadata,
 	getShortPackageName,
 	resolveRelativePackageJsonPath,
-} = require("../utilities");
+} = require("../utilities.cjs");
 
 /**
  * Generats a simple Markdown heading and contents with information about API documentation for the package.

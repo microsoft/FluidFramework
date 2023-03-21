@@ -7,7 +7,7 @@ const fs = require("fs");
 const pathLib = require("path");
 const scripts = require("markdown-magic-package-scripts");
 
-const { templatesDirectoryPath } = require("./constants");
+const { templatesDirectoryPath } = require("./constants.cjs");
 const {
 	formattedEmbeddedContentBody,
 	formattedGeneratedContentBody,
@@ -15,13 +15,13 @@ const {
 	getPackageMetadata,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
-} = require("./utilities");
+} = require("./utilities.cjs");
 const {
 	apiDocsLinkSectionTransform,
 	generateApiDocsLinkSection,
 	generatePackageScriptsSection,
 	packageScriptsSectionTransform,
-} = require("./transforms");
+} = require("./transforms/index.cjs");
 
 /**
  * Reads and returns the contents from the specified template file.

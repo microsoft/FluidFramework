@@ -15,7 +15,7 @@
 	"bin": {
 		"markdown-magic": "bin/markdown-magic"
 	},
-	"main": "src/index.js",
+	"main": "src/index.cjs",
 	"scripts": {
 		"build": "npm run build:docs",
 		"build:docs": "node src/index.js --files README.md",

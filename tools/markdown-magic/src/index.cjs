@@ -10,7 +10,7 @@ const process = require("process");
 const yargs = require("yargs/yargs");
 const { hideBin } = require("yargs/helpers");
 
-const config = require("./md-magic.config.js");
+const config = require("./md-magic.config.cjs");
 
 const defaultMatchPattern = "**/*.md";
 

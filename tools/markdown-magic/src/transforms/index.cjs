@@ -6,12 +6,12 @@
 const {
 	apiDocsLinkSectionTransform,
 	generateApiDocsLinkSection,
-} = require("./apiDocsLinkSectionTransform");
+} = require("./apiDocsLinkSectionTransform.cjs");
 
 const {
 	generatePackageScriptsSection,
 	packageScriptsSectionTransform,
-} = require("./packageScriptsTransform");
+} = require("./packageScriptsTransform.cjs");
 
 module.exports = {
 	apiDocsLinkSectionTransform,

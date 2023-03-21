@@ -6,7 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const { embeddedContentNotice, generatedContentNotice } = require("./constants");
+const { embeddedContentNotice, generatedContentNotice } = require("./constants.cjs");
 
 /**
  * Resolves the provided relative path from its document path.
