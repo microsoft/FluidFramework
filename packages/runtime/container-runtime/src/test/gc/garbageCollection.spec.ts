@@ -19,6 +19,7 @@ import {
 	IGarbageCollectionSummaryDetailsLegacy,
 	ISummarizeResult,
 	gcDeletedBlobKey,
+	IGarbageCollectionSnapshotData,
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
@@ -53,6 +54,7 @@ type GcWithPrivates = IGarbageCollector & {
 		latestSummaryGCVersion: GCVersion;
 	};
 	readonly sessionExpiryTimer: Omit<Timer, "defaultTimeout"> & { defaultTimeout: number };
+	readonly baseSnapshotDataP: Promise<IGarbageCollectionSnapshotData | undefined>;
 };
 
 describe("Garbage Collection Tests", () => {
@@ -95,7 +97,7 @@ describe("Garbage Collection Tests", () => {
 		> = new Map(),
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
 		isSummarizerClient: boolean = true,
-	) {
+	): GcWithPrivates {
 		const getNodeType = (nodePath: string) => {
 			if (nodePath.split("/").length !== 2) {
 				return GCNodeType.Other;
@@ -139,7 +141,7 @@ describe("Garbage Collection Tests", () => {
 			getLastSummaryTimestampMs: () => Date.now(),
 			activeConnection: () => true,
 			getContainerDiagnosticId: () => "someDocId",
-		});
+		}) as GcWithPrivates;
 	}
 	let gc: GcWithPrivates | undefined;
 
@@ -182,6 +184,24 @@ describe("Garbage Collection Tests", () => {
 		assert(
 			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
 			"Close should have been called at exactly defaultSessionExpiryDurationMs",
+		);
+	});
+
+	//* ONLY ONLY ONLY ONLY
+	it.only("Base GC Data ignored if GC Version doesn't match", async () => {
+		gc = createGarbageCollector({
+			metadata: {
+				gcFeature: 0, // Current GC version is 1 (or higher)
+				summaryFormatVersion: 1,
+				message: undefined,
+			},
+			baseSnapshot: { trees: { gc: { blobs: {}, trees: {} } }, blobs: {} },
+		});
+		const baseSnapshot = await gc?.baseSnapshotDataP;
+		assert.equal(
+			baseSnapshot,
+			undefined,
+			"baseSnapshot should be undefined if GC Versions don't match",
 		);
 	});
 
