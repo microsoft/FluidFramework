@@ -257,7 +257,25 @@ export class GarbageCollector implements IGarbageCollector {
 			if (baseSnapshotData === undefined) {
 				return;
 			}
-			this.updateStateFromSnapshotData(baseSnapshotData, currentReferenceTimestampMs);
+
+			// Update unreferenced state tracking as per the GC state in the snapshot data and update gcDataFromLastRun
+			// to the GC data from the snapshot data.
+			const gcNodes: { [id: string]: string[] } = {};
+			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
+				if (nodeData.unreferencedTimestampMs !== undefined) {
+					this.unreferencedNodesState.set(
+						nodeId,
+						new UnreferencedStateTracker(
+							nodeData.unreferencedTimestampMs,
+							this.configs.inactiveTimeoutMs,
+							currentReferenceTimestampMs,
+							this.configs.sweepTimeoutMs,
+						),
+					);
+				}
+				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+			}
+			this.gcDataFromLastRun = { gcNodes };
 		});
 
 		// Get the GC details from the GC state in the base summary. This is returned in getBaseGCDetails which is
@@ -320,93 +338,8 @@ export class GarbageCollector implements IGarbageCollector {
 			this.tombstones = Array.from(baseSnapshotData.tombstones);
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
-	}
 
-	/**
-	 * Update state from the given snapshot data. This is done during load and during refreshing state from a snapshot.
-	 * All current tracking is reset and updated from the data in the snapshot.
-	 * @param snapshotData - The snapshot data to update state from. If this is undefined, all GC state and tracking
-	 * is reset.
-	 * @param currentReferenceTimestampMs - The current reference timestamp for marking unreferenced nodes' unreferenced
-	 * timestamp.
-	 */
-	private updateStateFromSnapshotData(
-		snapshotData: IGarbageCollectionSnapshotData | undefined,
-		currentReferenceTimestampMs: number,
-	) {
-		/**
-		 * Note: "newReferencesSinceLastRun" is not reset here. This is done because there may be references since the
-		 * snapshot that we are updating state from. For example, this client may have processed ops till seq#1000 and
-		 * its refreshing state from a summary that happened at seq#900. In this case, there may be references between
-		 * seq#901 and seq#1000 that we don't want to reset.
-		 * Unfortunately, there is no way to track the seq# of ops that add references, so we choose to not reset any
-		 * references here. This should be fine because, in the worst case, we may end up updating the unreferenced
-		 * timestamp of a node which will delay its deletion. Although not ideal, this will only happen in rare
-		 * scenarios, so it should be okay.
-		 */
-
-		// Clear all existing unreferenced state tracking.
-		for (const [, nodeStateTracker] of this.unreferencedNodesState) {
-			nodeStateTracker.stopTracking();
-		}
-		this.unreferencedNodesState.clear();
-
-		// If running sweep, the tombstone state represents the list of nodes that have been deleted during sweep.
-		// If running in tombstone mode, the tombstone state represents the list of nodes that have been marked as
-		// tombstones.
-		// If this call is because we are refreshing from a snapshot due to an ack, it is likely that the GC state
-		// in the snapshot is newer than this client's. And so, the deleted / tombstone nodes need to be updated.
-		if (this.configs.shouldRunSweep) {
-			const snapshotDeletedNodes = snapshotData?.deletedNodes
-				? new Set(snapshotData.deletedNodes)
-				: undefined;
-			// If the snapshot contains deleted nodes that are not yet deleted by this client, ask the runtime to
-			// delete them.
-			if (snapshotDeletedNodes !== undefined) {
-				const newDeletedNodes: string[] = [];
-				for (const nodeId of snapshotDeletedNodes) {
-					if (!this.deletedNodes.has(nodeId)) {
-						newDeletedNodes.push(nodeId);
-					}
-				}
-				if (newDeletedNodes.length > 0) {
-					// Call container runtime to delete these nodes and add deleted nodes to this.deletedNodes.
-				}
-			}
-		} else if (this.configs.tombstoneMode) {
-			// The snapshot may contain more or fewer tombstone nodes than this client. Update tombstone state and
-			// notify the runtime to update its state as well.
-			this.tombstones = snapshotData?.tombstones ? Array.from(snapshotData.tombstones) : [];
-			this.runtime.updateTombstonedRoutes(this.tombstones);
-		}
-
-		// Update the summary state tracker's state from this snapshot.
-		this.summaryStateTracker.updateStateFromSnapshotData(snapshotData);
-
-		// If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
-		if (snapshotData === undefined) {
-			this.gcDataFromLastRun = undefined;
-			return;
-		}
-
-		// Update unreferenced state tracking as per the GC state in the snapshot data and update gcDataFromLastRun
-		// to the GC data from the snapshot data.
-		const gcNodes: { [id: string]: string[] } = {};
-		for (const [nodeId, nodeData] of Object.entries(snapshotData.gcState.gcNodes)) {
-			if (nodeData.unreferencedTimestampMs !== undefined) {
-				this.unreferencedNodesState.set(
-					nodeId,
-					new UnreferencedStateTracker(
-						nodeData.unreferencedTimestampMs,
-						this.configs.inactiveTimeoutMs,
-						currentReferenceTimestampMs,
-						this.configs.sweepTimeoutMs,
-					),
-				);
-			}
-			gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
-		}
-		this.gcDataFromLastRun = { gcNodes };
+		this.summaryStateTracker.initializeBaseState(baseSnapshotData);
 	}
 
 	/**
@@ -625,32 +558,11 @@ export class GarbageCollector implements IGarbageCollector {
 		result: RefreshSummaryResult,
 		readAndParseBlob: ReadAndParseBlob,
 	): Promise<void> {
-		const latestSnapshotData = await this.summaryStateTracker.refreshLatestSummary(
+		return this.summaryStateTracker.refreshLatestSummary(
 			proposalHandle,
 			result,
 			readAndParseBlob,
 		);
-
-		// If the latest summary was updated but it was not tracked by this client, our state needs to be updated from
-		// this snapshot data.
-		if (this.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
-			// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
-			// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
-			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
-			if (currentReferenceTimestampMs === undefined) {
-				throw DataProcessingError.create(
-					"No reference timestamp when updating GC state from snapshot",
-					"refreshLatestSummary",
-					undefined,
-					{
-						proposalHandle,
-						summaryRefSeq: result.summaryRefSeq,
-						gcConfigs: JSON.stringify(this.configs),
-					},
-				);
-			}
-			this.updateStateFromSnapshotData(latestSnapshotData, currentReferenceTimestampMs);
-		}
 	}
 
 	/**
@@ -891,13 +803,13 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 
 		if (missingExplicitReferences.length > 0) {
-			missingExplicitReferences.forEach((missingExplicitReference) => {
-				logger.sendErrorEvent({
-					eventName: "gcUnknownOutboundReferences",
-					gcNodeId: missingExplicitReference[0],
-					gcRoutes: JSON.stringify(missingExplicitReference[1]),
-				});
-			});
+			// missingExplicitReferences.forEach((missingExplicitReference) => {
+			// 	logger.sendErrorEvent({
+			// 		eventName: "gcUnknownOutboundReferences",
+			// 		gcNodeId: missingExplicitReference[0],
+			// 		gcRoutes: JSON.stringify(missingExplicitReference[1]),
+			// 	});
+			// });
 		}
 
 		// No references were added since the last run so we don't have to update reference states of any unreferenced
