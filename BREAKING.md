@@ -58,6 +58,7 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [driver-utils members removed](#driver-utils-members-removed)
 -   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
 -   [IDocumentServiceFactory.protocolName removed](#IDocumentServiceFactory.protocolName-removed)
+-   [Changes to Summarizer's public API](#changes-to-summarizers-public-api)
 
 ### Container and RelativeLoader no longer exported
 
@@ -168,6 +169,17 @@ Note: `IConnectableRuntime` is only to be implemented internally, so removing th
 ## IDocumentServiceFactory.protocolName removed
 
 `IDocumentServiceFactory.protocolName` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### Changes to Summarizer's public API
+
+The following interfaces and exports in `@fluidframework/container-runtime` [deprecated since 0.14.0](https://github.com/microsoft/FluidFramework/pull/8299)
+have been removed and have no replacement:
+
+- `IProvideSummarizer` interface
+- `ISummarizer` const (**note:** the `ISummarizer` _interface_ still exists and is used)
+
+Additionally, the `ISummarizer` interface no longer extends `IFluidLoadable` nor `Partial<IProvideSummarizer>`.
+This means it no longer has readonly properties `IFluidLoadable` and `handle`.
 
 # 2.0.0-internal.3.3.0
 
