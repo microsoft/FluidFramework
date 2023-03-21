@@ -38,7 +38,6 @@ import {
     TreeSchema,
     TreeTypeSet,
     NamedTreeSchema,
-    UpPath,
     jsonableTreeFromCursor,
     BrandedType,
     ModularChangeset,
@@ -60,6 +59,7 @@ import { SharedTreeCore } from "@fluid-internal/tree/dist/shared-tree-core";
 
 import React, { useState, useEffect, useRef } from "react";
 import "./App.css";
+import { ChangeCategory, createCustomBinder, createPathBinder, createRootBinder } from "./binder";
 import { initializeWorkspace, Workspace } from "./workspace";
 
 const valueKeys: LocalFieldKey = brand("valueKeys");
@@ -112,193 +112,6 @@ const appSchema: SchemaData = {
         [rootFieldKey, fieldSchema(FieldKinds.optional, [drawSchema.name])],
     ]),
 };
-
-export class PathElem {
-    constructor(
-        public readonly parentIndex: number,
-        public readonly fieldKey: LocalFieldKey,
-        public readonly fieldKind: FieldKindSpecifier | undefined,
-        public readonly fieldSchemaIdentifiers: ReadonlySet<TreeSchemaIdentifier>
-    ) { }
-
-    get typeArray(): TreeSchemaIdentifier[] {
-        return [...this.fieldSchemaIdentifiers];
-    }
-
-    public equals(other: PathElem): boolean {
-        return this.fieldKey === other.fieldKey;
-    }
-}
-
-export class Path implements Iterable<PathElem>{
-    protected readonly content: PathElem[] = [];
-    get length(): number {
-        return this.content.length;
-    }
-    push(pathElem: PathElem): Path {
-        this.content.push(pathElem);
-        return this;
-    }
-    get(index: number): PathElem {
-        return this.content[index];
-    }
-    pop(): void {
-        this.content.pop();
-    }
-    last(): PathElem {
-        return this.content[this.content.length - 1];
-    }
-    [Symbol.iterator](): Iterator<PathElem> {
-        let currentIndex = 0;
-        const maxIndex = this.content.length;
-        return {
-            next: (): IteratorResult<PathElem> => {
-                if (currentIndex < maxIndex) {
-                    const result = { value: this.content[currentIndex], done: false };
-                    currentIndex++;
-                    return result;
-                } else {
-                    return { value: undefined, done: true };
-                }
-            }
-        };
-    }
-    public equals(other: Path): boolean {
-        if (this.length !== other.length)
-            return false;
-
-        for (let i = 0; i < this.content.length; i++) {
-            const localElem: PathElem = this.content[i];
-            const otherElem: PathElem = other.get(i);
-            if (!localElem.equals(otherElem))
-                return false;
-        }
-        return true;
-    }
-    toExpr(): string {
-        return this.content.length > 0 ? this.content.map(pathElem => {
-            const typeExpr = `(${pathElem.typeArray.join(',')})`;
-            return `[${pathElem.parentIndex}].${pathElem.fieldKey}:${typeExpr}`;
-        }).join('.') : 'root';
-    }
-}
-
-export interface IndexedField {
-    index: number;
-    field: LocalFieldKey;
-}
-
-function buildSchemaPath(indexedFields: IndexedField[], schema: SchemaData): Path {
-    const rootSchemaIdentifiers = schema.globalFieldSchema.get(rootFieldKey)?.types;
-    let nextSchemaIdentifiers = rootSchemaIdentifiers;
-    const out = new Path();
-    label: for (const indexedField of indexedFields) {
-        let found = false;
-        if (nextSchemaIdentifiers !== undefined) {
-            const nextSchemaIdentifiersExist = nextSchemaIdentifiers as ReadonlySet<TreeSchemaIdentifier>;
-            for (const nextSchemaIdentifier of nextSchemaIdentifiersExist) {
-                const treeSchema: TreeSchema | undefined = schema.treeSchema.get(nextSchemaIdentifier);
-                if (treeSchema !== undefined) {
-                    const localFieldSchema: FieldSchema | undefined = treeSchema.localFields.get(indexedField.field);
-                    if (localFieldSchema !== undefined) {
-
-                        out.push(new PathElem(
-                            indexedField.index,
-                            indexedField.field,
-                            undefined,
-                            nextSchemaIdentifiersExist
-                        ));
-                        nextSchemaIdentifiers = localFieldSchema?.types;
-                        found = true;
-                        continue label;
-                    }
-                }
-            }
-        }
-        if (!found) throw new Error(`Path error, field ${indexedField.field} not found`);
-    }
-    return out;
-}
-
-export interface NodeResolver {
-
-    resolve(): Iterable<EditableTree>;
-}
-
-export enum ChangeCategory {
-    LOCAL, SUBTREE
-}
-
-export interface ChangeBinder {
-
-    bindOnChange(category: ChangeCategory, fn: () => void): () => void;
-}
-
-export interface BatchBinder {
-
-    bindOnBatch(fn: () => void): () => void;
-}
-
-
-export class PathBasedResolver implements NodeResolver {
-    constructor(
-        public readonly root: EditableField,
-        public readonly path: Path,
-        public readonly index: number,
-    ) { }
-
-    resolve(): Iterable<EditableTree> {
-        let currentField = this.root;
-        for (const pathElem of this.path) {
-            currentField = currentField.getNode(pathElem.parentIndex)[getField](pathElem.fieldKey);
-        }
-        return [currentField.getNode(this.index)];
-    }
-}
-
-export class RootResolver implements NodeResolver {
-    constructor(
-        public readonly root: EditableField,
-    ) { }
-
-    resolve(): Iterable<EditableTree> {
-        const currentField = this.root;
-        return [currentField.getNode(0)];
-    }
-}
-
-export class BatchedChangesBinder implements ChangeBinder, BatchBinder {
-    constructor(
-        public readonly sharedTree: ISharedTree,
-        public readonly resolver: NodeResolver,
-    ) { }
-    bindOnBatch(fn: () => void): () => void {
-        const handle = this.sharedTree.events.on("afterBatch", () => fn());
-        return () => handle();
-    }
-    bindOnChange(category: ChangeCategory, fn: () => void): () => void {
-        const handles: (() => void)[] = [];
-        const nodes = this.resolver.resolve();
-        let eventName;
-        switch (category) {
-            case ChangeCategory.LOCAL:
-                eventName = "changing";
-                break;
-            case ChangeCategory.SUBTREE:
-                eventName = "subtreeChanging";
-                break;
-            default: throw new Error("unknown change category");
-        }
-        for (const node of nodes) {
-            handles.push(node[on](eventName, () => fn()));
-        }
-        return () => {
-            for (const handle of handles) {
-                handle();
-            }
-        };
-    }
-}
 
 /**
  * Describes transitions from one state of the system to a new one, for instance updating the react state
@@ -367,8 +180,10 @@ export default function App() {
             setDrawValues(readDrawValues(w));
             return w;
         }).then((w) => {
-            registerRootBinding(w, setDrawValues);
-            // registerPathBinding(w, setDrawValues);
+            // registerRootBinder(w, setDrawValues);
+            // registerCustomBinder(w, setDrawValues);
+            registerPathBinder(w, setDrawValues);
+
         });
     }, []);
 
@@ -385,7 +200,9 @@ export default function App() {
     };
 
     // const register = () => {
-    //     registerRootBinding(workspace!, setDrawValues);
+    //     // registerRootBinder(workspace!, setDrawValues);
+    //     // registerCustomBinder(workspace!, setDrawValues);
+    //     // registerPathBinder(workspace!, setDrawValues);
     // };
 
 
@@ -488,25 +305,28 @@ function insertDrawValues(workspace: Workspace) {
     tree.root = data;
 }
 
-function registerPathBinding(workspace: Workspace, stateTransition: Transition<number[][]>) {
-    const path = buildSchemaPath([{ index: 0, field: drawKeys }], appSchema);
-    const resolver = new PathBasedResolver(workspace.tree.context.root, path, 2);
-    const binder = new BatchedChangesBinder(workspace.tree, resolver);
+function registerCustomBinder(workspace: Workspace, stateTransition: Transition<number[][]>) {
+    const binder = createCustomBinder(workspace.tree);
     const reactAdapter = new DomainAdapterReact(stateTransition, workspace);
     binder.bindOnChange(ChangeCategory.LOCAL, () => reactAdapter.onChange());
     binder.bindOnBatch(() => reactAdapter.onBatch());
 }
 
-function registerRootBinding(workspace: Workspace, stateTransition: Transition<number[][]>) {
-    const resolver = new RootResolver(workspace.tree.context.root);
-    const binder = new BatchedChangesBinder(workspace.tree, resolver);
+function registerPathBinder(workspace: Workspace, stateTransition: Transition<number[][]>) {
+    const binder = createPathBinder(workspace.tree, appSchema, 'drawKeys[2]');
+    const reactAdapter = new DomainAdapterReact(stateTransition, workspace);
+    binder.bindOnChange(ChangeCategory.LOCAL, () => reactAdapter.onChange());
+    binder.bindOnBatch(() => reactAdapter.onBatch());
+}
+
+function registerRootBinder(workspace: Workspace, stateTransition: Transition<number[][]>) {
+    const binder = createRootBinder(workspace.tree);
     const reactAdapter = new DomainAdapterReact(stateTransition, workspace);
     binder.bindOnChange(ChangeCategory.SUBTREE, () => reactAdapter.onChange());
     binder.bindOnBatch(() => reactAdapter.onBatch());
 }
 
 function updateAllValues(workspace: Workspace) {
-    // console.log(`updateAllValues called`);
     const tree = workspace.tree;
     const draw: Draw = tree.root as Draw;
     const dicesIndex = draw.drawKeys.length - 1;
@@ -518,7 +338,6 @@ function updateAllValues(workspace: Workspace) {
 }
 
 function updateDrawValues(workspace: Workspace) {
-    // console.log(`updateManyValues called`);
     const tree = workspace.tree;
     const draw: Draw = tree.root as Draw;
     const dicesIndex = draw.drawKeys.length - 1;
@@ -528,7 +347,6 @@ function updateDrawValues(workspace: Workspace) {
 }
 
 function updateSingleValue(workspace: Workspace) {
-    // console.log(`updateSingleValue called`);
     const tree = workspace.tree;
     const draw: Draw = tree.root as Draw;
     const dicesIndex = draw.drawKeys.length - 1;
@@ -544,7 +362,6 @@ function updateSingleValue(workspace: Workspace) {
 }
 
 function deleteSingleValue(workspace: Workspace) {
-    // console.log(`deleteSingleValue called`);
     const tree = workspace.tree;
     const draw = tree.root!;
     const dicesField = draw[drawKeys];
@@ -561,7 +378,6 @@ function deleteSingleValue(workspace: Workspace) {
 }
 
 function deleteDrawValues(workspace: Workspace) {
-    // console.log(`deleteDrawValues called`);
     const tree = workspace.tree;
     const draw = tree.root!;
     const dicesField = draw[drawKeys];
@@ -572,7 +388,6 @@ function deleteDrawValues(workspace: Workspace) {
 }
 
 function deleteAllValues(workspace: Workspace) {
-    // console.log(`deleteRoot called`);
     const tree = workspace.tree;
     tree.root = {
         [typeNameSymbol]: drawSchema.name,
