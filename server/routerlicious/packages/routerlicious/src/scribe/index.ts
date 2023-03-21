@@ -81,8 +81,6 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
         operationsDb.collection<ICheckpoint>(checkpointsCollectionName),
 	]);
 
-    console.log(`TESTING LOCAL COLLECTION: Undefined: ${localCollection === undefined}`);
-
 	if (createCosmosDBIndexes) {
 		await scribeDeltas.createIndex({ documentId: 1 }, false);
 		await scribeDeltas.createIndex({ tenantId: 1 }, false);

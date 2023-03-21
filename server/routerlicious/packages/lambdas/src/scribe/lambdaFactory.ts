@@ -183,9 +183,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
             let checkpoint;
             let isLocalCheckpoint = false;
 
-            console.log(`LOCAL CHECKPOINT ENABLED: ${this.localCheckpointEnabled}`);
-            console.log(`CHECKPOINT COLLECTION - IS_NULL: ${this.localCheckpointCollection === null},  IS_UNDEFINED: ${this.localCheckpointCollection === undefined}`);
-
             if(this.localCheckpointEnabled && (this.localCheckpointCollection !== undefined || this.localCheckpointCollection !== null)) {
                 // Search local database for checkpoint
                 Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
