@@ -59,7 +59,7 @@ function defaultRevisionMetadataFromChanges(
 	for (const change of changes) {
 		if (change.revision !== undefined) {
 			revInfos.push({
-				tag: change.revision,
+				revision: change.revision,
 				intention: change.intention,
 				isRollback: change.isRollback,
 			});

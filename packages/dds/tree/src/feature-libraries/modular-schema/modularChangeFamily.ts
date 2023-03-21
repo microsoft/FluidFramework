@@ -354,7 +354,7 @@ export class ModularChangeFamily
 			revInfo === undefined
 				? undefined
 				: (isRollback
-						? revInfo.map(({ tag }) => ({ tag, isRollback: true }))
+						? revInfo.map(({ revision }) => ({ revision, isRollback: true }))
 						: Array.from(revInfo)
 				  ).reverse(),
 			change.change.constraintViolationCount,
@@ -897,13 +897,13 @@ function getFieldsToAmend(
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (tag: RevisionTag): number => {
-		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
+	const getIndex = (revision: RevisionTag): number => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
 		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
 		return index;
 	};
-	const getInfo = (tag: RevisionTag): RevisionInfo => {
-		return revInfos[getIndex(tag)];
+	const getInfo = (revision: RevisionTag): RevisionInfo => {
+		return revInfos[getIndex(revision)];
 	};
 	return { getIndex, getInfo };
 }
@@ -1257,7 +1257,7 @@ function revisionInfoFromTaggedChange(
 	if (taggedChange.change.revisions !== undefined) {
 		revInfos.push(...taggedChange.change.revisions);
 	} else if (taggedChange.revision !== undefined) {
-		const info: Mutable<RevisionInfo> = { tag: taggedChange.revision };
+		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
 		if (taggedChange.isRollback === true) {
 			info.isRollback = true;
 		}

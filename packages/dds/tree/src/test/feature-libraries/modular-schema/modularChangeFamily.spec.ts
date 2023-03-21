@@ -521,7 +521,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
-				revisions: [{ tag: tag1 }, { tag: tag2 }],
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
 			assert.deepEqual(composed, expected);
@@ -800,7 +800,7 @@ describe("ModularChangeFamily", () => {
 					},
 				],
 			]),
-			revisions: [{ tag: rev1 }, { tag: rev2 }],
+			revisions: [{ revision: rev1 }, { revision: rev2 }],
 		};
 		const changeB: ModularChangeset = {
 			fieldChanges: new Map([
@@ -823,7 +823,7 @@ describe("ModularChangeFamily", () => {
 					},
 				],
 			]),
-			revisions: [{ tag: rev4, isRollback: true }],
+			revisions: [{ revision: rev4, isRollback: true }],
 		};
 		const composed = dummyFamily.compose([
 			makeAnonChange(changeA),

@@ -23,7 +23,12 @@ const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
-const revInfos: RevisionInfo[] = [{ tag: tag1 }, { tag: tag2 }, { tag: tag3 }, { tag: tag4 }];
+const revInfos: RevisionInfo[] = [
+	{ revision: tag1 },
+	{ revision: tag2 },
+	{ revision: tag3 },
+	{ revision: tag4 },
+];
 
 describe("SequenceField - Compose", () => {
 	describe("associativity of triplets", () => {

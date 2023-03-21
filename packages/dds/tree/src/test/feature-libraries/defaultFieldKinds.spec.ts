@@ -74,7 +74,7 @@ const revisionIndexer = (tag: RevisionTag) => {
 
 const revisionMetadata: RevisionMetadataSource = {
 	getIndex: revisionIndexer,
-	getInfo: (tag: RevisionTag) => ({ tag }),
+	getInfo: (revision: RevisionTag) => ({ revision }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {

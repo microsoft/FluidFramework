@@ -1222,7 +1222,7 @@ export interface RevisionInfo {
     readonly intention?: RevisionTag;
     readonly isRollback?: boolean;
     // (undocumented)
-    readonly tag: RevisionTag;
+    readonly revision: RevisionTag;
 }
 
 // @alpha (undocumented)
