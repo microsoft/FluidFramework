@@ -75,7 +75,7 @@ module.exports = {
 		pnpmSinglePackageWorkspace: [
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
-      "@fluid-tools/telemetry-generator",
+			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
 			"@fluidframework/common-definitions",
 			"@fluidframework/common-utils",
