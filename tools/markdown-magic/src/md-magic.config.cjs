@@ -214,10 +214,10 @@ function includeTransform(content, options, config) {
  * @param {string} config.originalPath - Path to the document being modified.
  */
 function libraryPackageReadmeTransform(content, options, config) {
-	const { packageJsonPath: relativeackageJsonPath } = options;
+	const { packageJsonPath: relativePackageJsonPath } = options;
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
-		relativeackageJsonPath,
+		relativePackageJsonPath,
 	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
@@ -232,6 +232,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 	}
 
 	if (options.scripts === "TRUE") {
+		options.pkg = relativePackageJsonPath;
 		const scriptsTable = scripts(content, options, config);
 		sections.push(generatePackageScriptsSection(scriptsTable, true));
 	}
@@ -294,6 +295,7 @@ function examplePackageReadmeTransform(content, options, config) {
 	}
 
 	if (options.scripts === "TRUE") {
+		options.pkg = relativePackageJsonPath;
 		const scriptsTable = scripts(content, options, config);
 		sections.push(generatePackageScriptsSection(scriptsTable, /* includeHeading: */ true));
 	}
