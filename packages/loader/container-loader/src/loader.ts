@@ -47,10 +47,10 @@ import { ProtocolHandlerBuilder } from "./protocol";
 
 function canUseCache(request: IRequest): boolean {
 	if (request.headers === undefined) {
-		return true;
+		return false;
 	}
 
-	return request.headers[LoaderHeader.cache] !== false;
+	return request.headers[LoaderHeader.cache] === undefined ? false : request.headers[LoaderHeader.cache] as boolean ;
 }
 
 /**
@@ -329,17 +329,6 @@ export class Loader implements IHostLoader {
 			codeDetails,
 			this.protocolHandlerBuilder,
 		);
-
-		if (this.cachingEnabled) {
-			container.once("attached", () => {
-				ensureFluidResolvedUrl(container.resolvedUrl);
-				const parsedUrl = parseUrl(container.resolvedUrl.url);
-				if (parsedUrl !== undefined) {
-					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
-				}
-			});
-		}
-
 		return container;
 	}
 
@@ -421,7 +410,7 @@ export class Loader implements IHostLoader {
 		}
 
 		const { canCache, fromSequenceNumber } = this.parseHeader(parsed, request);
-		const shouldCache = pendingLocalState !== undefined ? false : canCache;
+		const shouldCache = canCache === undefined ? false : canCache;
 
 		let container: Container;
 		if (shouldCache) {
@@ -454,12 +443,8 @@ export class Loader implements IHostLoader {
 		return { container, parsed };
 	}
 
-	private get cachingEnabled() {
-		return this.services.options.cache !== false;
-	}
-
 	private canCacheForRequest(headers: IRequestHeader): boolean {
-		return this.cachingEnabled && headers[LoaderHeader.cache] !== false;
+		return headers[LoaderHeader.cache] === undefined ? false : headers[LoaderHeader.cache] as boolean ;
 	}
 
 	private parseHeader(parsed: IParsedUrl, request: IRequest) {
