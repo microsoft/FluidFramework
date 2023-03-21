@@ -144,7 +144,7 @@ describe.only("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Deep Tree as JS Object: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep);
+					tree = getJSTestTreeDeep(numberOfNodes)
 				},
 				benchmarkFn: () => {
 					assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes);
@@ -157,7 +157,7 @@ describe.only("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Wide Tree as JS Object: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide);
+					tree = getJSTestTreeWide(numberOfNodes);
 				},
 				benchmarkFn: () => {
 					assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes);
@@ -165,22 +165,20 @@ describe.only("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: Jsonable;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree as JS Object: writes with ${numberOfNodes} nodes`,
 				benchmarkFn: () => {
-					tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep);
+					const tree = getJSTestTreeDeep(numberOfNodes);
 				},
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: Jsonable;
 			benchmark({
 				type: benchmarkType,
 				title: `Wide Tree as JS Object: writes with ${numberOfNodes} nodes`,
 				benchmarkFn: () => {
-					tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide);
+					const tree = getJSTestTreeWide(numberOfNodes);
 				},
 			});
 		}
@@ -192,7 +190,7 @@ describe.only("SharedTree benchmarks", () => {
 					type: benchmarkType,
 					title: `Update value at leaf of ${numberOfNodes} deep tree`,
 					before: () => {
-						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Deep);
+						tree = getJSTestTreeDeep(numberOfNodes);
 						leafNode = getLeafNodeFromJSObject(tree);
 					},
 					benchmarkFn: () => {
@@ -206,7 +204,7 @@ describe.only("SharedTree benchmarks", () => {
 					type: benchmarkType,
 					title: `Update value at leaf of ${numberOfNodes} Wide tree`,
 					before: () => {
-						tree = getTestTreeAsJSObject(numberOfNodes, TreeShape.Wide);
+						tree = getJSTestTreeWide(numberOfNodes);
 					},
 					benchmarkFn: () => {
 						manipulateTreeAsJSObject(tree, TreeShape.Wide);
@@ -564,21 +562,6 @@ function insertNodesToEditableTree(
 	}
 }
 
-function getTestTreeAsJSObject(numberOfNodes: number, shape: TreeShape): Jsonable {
-	let tree;
-	switch (shape) {
-		case TreeShape.Deep:
-			tree = [getJSTestTreeDeep(numberOfNodes)];
-			break;
-		case TreeShape.Wide:
-			tree = getJSTestTreeWide(numberOfNodes);
-			break;
-		default:
-			unreachableCase(shape);
-	}
-	return tree;
-}
-
 function getJSTestTreeWide(numberOfNodes: number): Jsonable {
 	const nodes = [];
 	for (let i = 0; i < numberOfNodes - 1; i++) {
@@ -596,7 +579,7 @@ function getJSTestTreeWide(numberOfNodes: number): Jsonable {
 
 function getJSTestTreeDeep(numberOfNodes: number): Jsonable {
 	if (numberOfNodes === 1) {
-		return testTreeNode;
+		return [testTreeNode];
 	}
 	const tree = {
 		type: dataSchema.name,
@@ -605,7 +588,7 @@ function getJSTestTreeDeep(numberOfNodes: number): Jsonable {
 		},
 		value: testTreeNode.value,
 	};
-	return tree;
+	return [tree];
 }
 
 function readTreeAsJSObject(tree: Jsonable, initialTotal: Jsonable): Jsonable {
