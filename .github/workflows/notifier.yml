@@ -1,0 +1,36 @@
+name: msftbot merge-next
+
+on:
+  pull_request:
+    types: [labeled]
+  branches: 
+    - main  
+
+jobs:
+  merge-next:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if label is exist
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const labelName = 'msftbot: merge-next';
+            const prNumber = context.payload.pull_request.number;
+            const prLabels = await github.pulls.listLabels({ owner: context.repo.owner, repo: context.repo.repo, pull_number: prNumber });
+            const prHasLabel = prLabels.data.some(label => label.name === labelName);
+            if (prHasLabel) {
+              return { prNumber };
+            } else {
+              return { skip: `Label "${labelName}" not found on PR #${prNumber}.` };
+            }
+
+      - name: Add comment to PR
+        if: ${{ success() }}
+        uses: actions/github-script@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const prNumber = context.payload.checks.merge-next.outputs.prNumber;
+            const commentBody = 'Please review this PR: @sonalideshpandemsft @tylerbutler @scottn12';
+            return github.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: prNumber, body: commentBody });
