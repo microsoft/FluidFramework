@@ -4,7 +4,9 @@
  */
 import { queue } from "async";
 import * as chalk from "chalk";
+import detectIndent from "detect-indent";
 import * as fs from "fs";
+import { writeJsonSync } from "fs-extra";
 import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
@@ -23,7 +25,6 @@ import {
 	readJsonSync,
 	rimrafWithErrorAsync,
 	unlinkAsync,
-	writeFileAsync,
 } from "./utils";
 
 const { info, verbose, errorLog: error } = defaultLogger;
@@ -47,7 +48,7 @@ export interface PackageJson {
 	homepage: string;
 	bugs: { url: string; email: string };
 	license: string;
-	author: IPerson;
+	author: IPerson | string;
 	contributors: IPerson[];
 	files: string[];
 	main: string;
@@ -55,7 +56,7 @@ export interface PackageJson {
 	browser: string;
 	bin: { [key: string]: string };
 	man: string | string[];
-	repository: string | { type: string; url: string };
+	repository: string | { type: string; url: string; directory?: string };
 	scripts: { [key: string]: string | undefined };
 	config: { [key: string]: string };
 	dependencies: { [key: string]: string };
@@ -206,10 +207,9 @@ export class Package {
 	}
 
 	public async savePackageJson() {
-		return writeFileAsync(
-			this.packageJsonFileName,
-			`${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`,
-		);
+		updatePackageJsonFile(this.directory, () => {
+			return;
+		});
 	}
 
 	public reload() {
@@ -471,4 +471,30 @@ export class Packages {
 		const results = await this.queueExecOnAllPackageCore(exec, message);
 		return !results.some((result) => result.error);
 	}
+}
+
+/**
+ * Reads the contents of package.json, applies a transform function to it, then writes the results back to the source
+ * file.
+ *
+ * @param packageDir - The path to the directory containing package.json.
+ * @param packageTransformer - A function that will be executed on the package.json contents before writing it
+ * back to the file.
+ *
+ * @remarks
+ *
+ * The package.json is always sorted using sort-package-json.
+ */
+export function updatePackageJsonFile(
+	packageDir: string,
+	packageTransformer: (json: PackageJson) => void,
+): void {
+	const packagePath = path.join(packageDir, "package.json");
+	const indentation = detectIndent(packagePath).indent || "\t";
+	const pkgJson: PackageJson = readJsonSync(packagePath);
+
+	// Transform the package.json
+	packageTransformer(pkgJson);
+
+	writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indentation });
 }
