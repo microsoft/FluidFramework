@@ -574,37 +574,6 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	// This composition is underspecified, meaning the ordering of marks could go either way.
-	// We must avoid producing such scenarios through rebase,
-	// and update this test to reflect the inputs of the scenarios we do produce.
-	it.skip("blocked revive ○ related conflicted revive", () => {
-		const blockedRevive = makeAnonChange(
-			Change.revive(0, 1, tag1, 1, fakeRepair, tag2, undefined, tag3),
-		);
-		const conflictedRevive = makeAnonChange(Change.revive(0, 1, tag1, 2, fakeRepair, tag2));
-		const expected: SF.Changeset = [
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 1, 1),
-				count: 1,
-				detachedBy: tag1,
-				detachIndex: 1,
-				conflictsWith: tag2,
-				lastDetachedBy: tag3,
-			},
-			{
-				type: "Revive",
-				content: fakeRepair(tag1, 2, 1),
-				count: 1,
-				detachedBy: tag1,
-				detachIndex: 2,
-				conflictsWith: tag2,
-			},
-		];
-		const actual = shallowCompose([blockedRevive, conflictedRevive]);
-		assert.deepEqual(actual, expected);
-	});
-
 	it("delete1 ○ delete2 ○ revive (delete1)", () => {
 		const delete1 = Change.delete(1, 3);
 		const delete2 = Change.delete(0, 2);
