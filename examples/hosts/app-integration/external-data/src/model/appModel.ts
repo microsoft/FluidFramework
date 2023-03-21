@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
 import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interface";
 
@@ -16,7 +17,7 @@ import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interfa
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
 	public constructor(
 		public readonly baseDocument: IBaseDocument,
-		container: IContainer,
+		private readonly container: IContainer,
 		private readonly runtime: IContainerRuntime,
 	) {
 		super();
@@ -30,5 +31,12 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 			type: "ExternalDataChange",
 			taskListId: "task-list-1",
 		});
+	};
+
+	/**
+	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
+	 */
+	public readonly getContainerResolvedUrl = (): IFluidResolvedUrl | undefined => {
+		return this.container?.resolvedUrl as IFluidResolvedUrl;
 	};
 }

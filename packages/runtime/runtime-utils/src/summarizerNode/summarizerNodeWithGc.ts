@@ -10,6 +10,7 @@ import {
 	getGCDataFromSnapshot,
 	runGarbageCollection,
 	unpackChildNodesGCDetails,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -24,6 +25,7 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
@@ -307,9 +309,28 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	): void {
 		// If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
 		if (!this.gcDisabled) {
-			const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
-			if (summaryNode?.serializedUsedRoutes !== undefined) {
-				this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
+			const summaryNode = this.pendingSummaries.get(proposalHandle);
+			if (summaryNode !== undefined) {
+				// If a pending summary exists, it must have used routes since GC is enabled.
+				const summaryNodeWithGC = summaryNode as SummaryNodeWithGC;
+				if (summaryNodeWithGC.serializedUsedRoutes === undefined) {
+					const error = new LoggingError("MissingGCStateInPendingSummary", {
+						proposalHandle,
+						referenceSequenceNumber,
+						id: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: this.telemetryNodeId,
+						},
+					});
+					this.logger.sendErrorEvent(
+						{
+							eventName: error.message,
+						},
+						error,
+					);
+					throw error;
+				}
+				this.referenceUsedRoutes = JSON.parse(summaryNodeWithGC.serializedUsedRoutes);
 			}
 		}
 
@@ -444,7 +465,6 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 	): ISummarizerNodeWithGC {
 		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
-
 		/**
 		 * Update the child node's base GC details from this node's current GC details instead of updating from the base
 		 * GC details of this node. This will handle scenarios where the GC details was updated during refresh from
@@ -476,10 +496,45 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
 		// tracked, the child's summary tracking state needs to be updated too.
-		this.maybeUpdateChildState(child);
+		this.maybeUpdateChildState(child, id);
 
 		this.children.set(id, child);
 		return child;
+	}
+
+	/**
+	 * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
+	 * summary tracking state needs to be updated too.
+	 * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
+	 * pending summary as well. Finally, if the pendingSummaries entries have serializedRoutes, replicate them to the
+	 * pendingSummaries from the child nodes.
+	 * @param child - The child node whose state is to be updated.
+	 * @param id - Initial id or path part of this node
+	 */
+	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string) {
+		super.maybeUpdateChildState(child, id);
+
+		// In case we have pending summaries on the parent, let's initialize it on the child.
+		if (child.latestSummary !== undefined) {
+			for (const [key, value] of this.pendingSummaries.entries()) {
+				const summaryNodeWithGC = value as SummaryNodeWithGC;
+				if (summaryNodeWithGC.serializedUsedRoutes !== undefined) {
+					const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
+						JSON.parse(summaryNodeWithGC.serializedUsedRoutes),
+					);
+					const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
+					const newLatestSummaryNode = new SummaryNodeWithGC(
+						JSON.stringify(newSerializedRoutes),
+						{
+							referenceSequenceNumber: value.referenceSequenceNumber,
+							basePath: value.basePath,
+							localPath: value.localPath,
+						},
+					);
+					child.addPendingSummary(key, newLatestSummaryNode);
+				}
+			}
+		}
 	}
 
 	/**

@@ -10,8 +10,14 @@ import express from "express";
 import { isWebUri } from "valid-url";
 
 import { assertValidTaskData, ITaskData } from "../model-interface";
-import { MockWebhook } from "../utilities";
+import { MockWebhook } from "./webhook";
 import { ExternalDataSource } from "./externalDataSource";
+
+/**
+ * Represents the external data servers query url or uuid.
+ * This is the URL or the id of the external resource that the customer service needs to subscribe for at the external service.
+ */
+type ExternalTaskListId = string;
 
 /**
  * {@link initializeExternalDataService} input properties.
@@ -28,6 +34,14 @@ export interface ServiceProps {
 	 * @defaultValue A new data source will be initialized.
 	 */
 	externalDataSource?: ExternalDataSource;
+
+	/**
+	 * Map of ExternalTaskListId string with a webbook that contains all the subscribers of that external task list id.
+	 * In this implementation this stays in memory but for production it makes sense to keep this in a more redundant
+	 * memory store like redis. In the implementation of using an external redundant memory source, this will be passed
+	 * into the service.
+	 */
+	webhookCollection: Map<ExternalTaskListId, MockWebhook<ITaskData>>;
 }
 
 /**
@@ -37,6 +51,8 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	const { port } = props;
 	const externalDataSource: ExternalDataSource =
 		props.externalDataSource ?? new ExternalDataSource();
+	const webhookCollection =
+		props.webhookCollection ?? new Map<ExternalTaskListId, MockWebhook<ITaskData>>();
 
 	/**
 	 * Helper function to prepend service-specific metadata to messages logged by this service.
@@ -48,10 +64,12 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 	/**
 	 * Mock webhook for notifying subscribers to changes in external data.
 	 */
-	const webhook = new MockWebhook<ITaskData>();
-
-	function notifyWebhookSubscribers(newData: ITaskData): void {
+	function notifyWebhookSubscribers(externalTaskListId: string, newData: ITaskData): void {
 		console.log(formatLogMessage("External data has changed. Notifying webhook subscribers."));
+		const webhook = webhookCollection.get(externalTaskListId);
+		if (webhook === undefined) {
+			return; // No subscribers for this task list
+		}
 		webhook.notifySubscribers(newData);
 	}
 
@@ -104,6 +122,20 @@ export async function initializeExternalDataService(props: ServiceProps): Promis
 			console.log(formatLogMessage(errorMessage));
 			result.status(400).json({ message: errorMessage });
 		} else {
+			// TODO: use a query string parser here instead of this hacky lookup of '=externalTaskListId'
+			// Tried using node:querystring and node:url but that is not allowed by
+			// the rules and haven't found another one that works in a simple search so far.
+			// This method is incredibly brittle and will break if we add any other qs param
+			const externalTaskListId = subscriberUrl.slice(
+				subscriberUrl.indexOf("externalTaskListId=") + "externalTaskListId=".length,
+			);
+			console.log(`externalTaskListId: ${externalTaskListId}`);
+			console.log(`subscriberUrl: ${subscriberUrl}`);
+			let webhook = webhookCollection.get(externalTaskListId);
+			if (webhook === undefined) {
+				webhook = new MockWebhook();
+				webhookCollection.set(externalTaskListId, webhook);
+			}
 			webhook.registerSubscriber(subscriberUrl);
 			console.log(
 				formatLogMessage(

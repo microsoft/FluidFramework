@@ -22,9 +22,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	sessionStorageConfigProvider,
 	TelemetryDataTag,
 	ConfigTypes,
+	IConfigProviderBase,
+	mixinMonitoringContext,
+	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
@@ -44,6 +46,10 @@ import {
 import { dataStoreAttributesBlobName } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 
+export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
 /** @see - sweepReadyUsageDetectionSetting */
 const SweepReadyUsageDetectionKey = "Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
 
@@ -61,13 +67,13 @@ describe("Garbage Collection Tests", () => {
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4"];
 
-	const mockLogger: MockLogger = new MockLogger();
 	const testPkgPath = ["testPkg"];
 	// The package data is tagged in the telemetry event.
 	const eventPkg = { value: testPkgPath.join("/"), tag: TelemetryDataTag.CodeArtifact };
 
-	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 	let injectedSettings: Record<string, ConfigTypes> = {};
+	let mockLogger: MockLogger;
+	let mc: MonitoringContext;
 	let clock: SinonFakeTimers;
 
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
@@ -126,7 +132,7 @@ describe("Garbage Collection Tests", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mockLogger,
+			baseLogger: mc.logger,
 			existing: createParams.metadata !== undefined /* existing */,
 			metadata: createParams.metadata,
 			createContainerMetadata: {
@@ -145,11 +151,12 @@ describe("Garbage Collection Tests", () => {
 
 	before(() => {
 		clock = useFakeTimers();
-		sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
 	});
 
 	beforeEach(() => {
 		gc = undefined;
+		mockLogger = new MockLogger();
+		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
 	});
 
 	afterEach(() => {
@@ -162,7 +169,6 @@ describe("Garbage Collection Tests", () => {
 
 	after(() => {
 		clock.restore();
-		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 	});
 
 	it("Session expiry closes container", () => {
