@@ -542,7 +542,7 @@ export type ILoaderOptions = {
  */
 export enum LoaderHeader {
 	/**
-	 * @deprecated
+	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
 	 * Override the Loader's default caching behavior for this container.
 	 */
 	cache = "fluid-cache",

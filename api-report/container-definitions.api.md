@@ -542,6 +542,7 @@ export interface IUsageError extends IErrorBase {
 
 // @public
 export enum LoaderHeader {
+    // @deprecated (undocumented)
     cache = "fluid-cache",
     // (undocumented)
     clientDetails = "fluid-client-details",
