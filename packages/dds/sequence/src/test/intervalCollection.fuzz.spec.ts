@@ -16,8 +16,8 @@ import {
 import { PropertySet } from "@fluidframework/merge-tree";
 import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
-import { assertConsistent, assertEquivalentSharedStrings } from "./intervalUtils";
-import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "./ddsHarness";
+import { assertEquivalentSharedStrings } from "./intervalUtils";
+import { createDDSFuzzSuite, DDSFuzzModel, DDSFuzzTestState } from "./ddsFuzzHarness";
 
 type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
