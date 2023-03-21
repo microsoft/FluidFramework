@@ -162,12 +162,12 @@ steps:
         if [ -f "lerna.json" ]; then
           if [ "$VERSION_RELEASE" != "release" ]; then
             # no need to run anything here, as the version in the package should be correct
-            npx lerna exec "if [ \`npm -s run env echo '\$npm_package_version'\` != '$(SetVersion.version)' ]; then ( npm -s run env echo '\$npm_package_version' ) fi"
+            npx lerna exec "if [ \`npm -s run env echo '\$npm_package_version'\` != '$SETVERSION_VERSION' ]; then ( npm -s run env echo '\$npm_package_version' ) fi"
             exit $?
           fi
-          npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
+          npx lerna version $SETVERSION_VERSION --no-git-tag-version --no-push --yes --exact
         else
-          npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
+          npm version $SETVERSION_VERSION --no-git-tag-version -f --allow-same-version
         fi
 
   - task: Bash@3
