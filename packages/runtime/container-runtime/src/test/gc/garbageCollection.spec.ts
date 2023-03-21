@@ -187,8 +187,7 @@ describe("Garbage Collection Tests", () => {
 		);
 	});
 
-	//* ONLY ONLY ONLY ONLY
-	it.only("Base GC Data ignored if GC Version doesn't match", async () => {
+	it("Base GC Data ignored if GC Version doesn't match", async () => {
 		gc = createGarbageCollector({
 			metadata: {
 				gcFeature: 0, // Current GC version is 1 (or higher)

@@ -213,6 +213,11 @@ export class GarbageCollector implements IGarbageCollector {
 					return undefined;
 				}
 
+				// If the GC Version isn't current, don't load the GC data - we'll regenerate it anyway.
+				if (this.configs.gcVersionInBaseSnapshot !== this.configs.gcVersionInEffect) {
+					return undefined;
+				}
+
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
 					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
