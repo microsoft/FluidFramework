@@ -10,7 +10,7 @@ jobs:
   merge-next:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if label is exist
+      - name: Check if label exist
         uses: actions/github-script@v5
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
