@@ -1853,6 +1853,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			return CheckpointReason.ClearCache;
 		}
 
+        if (this.noActiveClients) {
+            return CheckpointReason.NoClients;
+        }
+
 		return undefined;
 	}
 
