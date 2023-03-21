@@ -2,8 +2,7 @@
 
 This example demonstrates how data from an external data source (e.g. a work tracking system) might be integrated with Fluid to enable more-real-time collaboration. For example, to allow collaborators to see proposed changes updating live before committing them back to the database.
 
-Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production. When this changes we will update the documents accordingly.
-
+Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production. When this changes, we will update the documents accordingly.
 ## Scenario
 
 This example demonstrates a scenario in which the "source of truth" of the customer data lives in a service that is external to the Fluid service. Customers can then:
@@ -18,7 +17,7 @@ In this case, the Fluid collaboration session serves as a "drafting surface" in 
 
 In order to accomplish the goals above, we have split up the responsibilities into a few different pieces:
 
-**External Data Service**
+### External Data Service
 
 Many services that would hold the "source of truth" data offer explicit commit style interfaces (e.g. via REST call or similar) which are not well suited to rapid updates.
 However, they often expose third-party integration via REST APIS for querying and manipulating data, as well as webhooks for watching updates to the data.
@@ -31,7 +30,7 @@ This repo contains a service that mocks the external "source of truth" data serv
 
 Find the details of the API in the [External Data Service README](./src/mock-external-data-service/README.md)
 
-**Customer Service**
+### Customer Service**
 
 Next we need a customer service that functions as the intermediary between the External Data Service and the Fluid Service. This server is responsible for authenticating to the external service on the customer's behalf. It registers to the External Data Service webhooks and listens for incoming changes. It also acts as a translation layer, translating to and from the External Data Service expected format and the Fluid Service's expected format.
 
@@ -43,17 +42,17 @@ In this example, the Customer Service contains the following endpoints:
 
 Find the details of the API in the [Customer Service README](./src/mock-customer-service/README.md).
 
-**Fluid Service**
+### Fluid Service
 
-_Driver Layer_
+#### Driver Layer
 
-The driver layer section is internal facing and anyone implementing this pattern need not be concerned with this. The changes in the driver layer are a new (and still under construction) `broadcast-signal` endpoint and the logic to relay the signal to the correct Fluid container when called.
+The `broadcast-signal` endpoint is new and still under construction. We will update it here once it is available to use. The fact that it lives in the driver layer should not be of concern to the implementer of this pattern.
 
 1. POST `/broadcast-signal`. Required body parameters: `containerUrl` (string), `externalTaskListId` (string), `taskData`(ITaskData). On receiving this, the driver will broadcast a signal of `SignalType.RuntimeSignal` to the clients to alert them of an upstream change. This endpoint is called by the Customer Service to let the Fluid service know that there has been a change in the data. The body must contain the `conainerUrl` that is composed ot the `socketStreamUrl`, the `containerId` (sometimes known as the documentId), and the tenantId. In this way, it "echoes" the webhook from the External Data Service to the Customer Service. It is called by the Customer Service when it needs to notify the Fluid Clients that there has been a change to the data.
 
 This example uses the example tinylicious driver to stub out what changes will be necessary in the odsp-driver. The prototype of the full signal and driver flow can be seen in this [`dev/external-data-prototyping` branch to main comparison](https://github.com/microsoft/FluidFramework/compare/main...dev/external-data-prototyping).
 
-_Fluid Client_
+#### Fluid Client
 
 On receiving the signal, the clients (or elected leader client) can then send a fetch call to retrieve the information and display it to screen by making a call to the external data server's GET `/fetch-tasks` endpoint.
 
