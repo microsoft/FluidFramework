@@ -104,6 +104,9 @@ importers:
       jssm-viz-cli: ^5.83.0
       minimatch: ^7.3.0
       mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
       npm-check-updates: ^16.0.0
       nyc: ^15.1.0
       oclif: ^3.7.0
@@ -183,6 +186,9 @@ importers:
       eslint-plugin-unused-imports: 2.0.0_fhnxgfsp6r3qynjxjvskmntitm
       globby: 11.1.0
       mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.0
@@ -374,6 +380,9 @@ importers:
       eslint-config-oclif-typescript: ^1.0.3
       eslint-config-prettier: ~8.5.0
       mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
       nyc: ^15.1.0
       oclif: ^3.7.0
       prettier: ~2.6.2
@@ -411,6 +420,9 @@ importers:
       eslint-config-oclif-typescript: 1.0.3_kufnqfq7tb5rpdawkdb6g5smma
       eslint-config-prettier: 8.5.0_eslint@8.6.0
       mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
       nyc: 15.1.0
       oclif: 3.7.0
       prettier: 2.6.2
@@ -5362,7 +5374,7 @@ packages:
     resolution: {integrity: sha512-T0yTFjdpldGY8PmuXXR0PyQ1ufZpEGiHVrp7zHKB7jdR4qlmZHhONVM5AQOAWXuF/w3dnHbEQVrNptJgt7F+cQ==}
     engines: {node: '>=10.13.0'}
     dependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
       tapable: 2.2.1
     dev: false
 
@@ -7825,7 +7837,7 @@ packages:
     dependencies:
       universalify: 2.0.0
     optionalDependencies:
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
 
   /jsonlines/0.1.1:
     resolution: {integrity: sha512-ekDrAGso79Cvf+dtm+mL8OBI2bmAOt3gssYs833De/C9NmIpWDWyUO4zPgB5x2/OhY366dkhgfPMYfwZF7yOZA==}
@@ -8623,6 +8635,29 @@ packages:
     resolution: {integrity: sha512-vVqVZQyf3WLx2Shd0qJ9xuvqgAyKPLAiqITEtqW0oIUjzo3PePDd6fW9iFz30ef7Ysp/oiWqbhszeGWW2T6Gzw==}
     engines: {node: '>=10'}
     hasBin: true
+
+  /mocha-json-output-reporter/2.1.0_mocha@10.2.0+moment@2.29.4:
+    resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
+    peerDependencies:
+      mocha: ^10.0.0
+      moment: ^2.21.0
+    dependencies:
+      mocha: 10.2.0
+      moment: 2.29.4
+    dev: true
+
+  /mocha-multi-reporters/1.5.1_mocha@10.2.0:
+    resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
+    engines: {node: '>=6.0.0'}
+    peerDependencies:
+      mocha: '>=3.1.2'
+    dependencies:
+      debug: 4.3.4
+      lodash: 4.17.21
+      mocha: 10.2.0
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /mocha/10.2.0:
     resolution: {integrity: sha512-IDY7fl/BecMwFHzoqF2sg/SHHANeBoMMXFlS9r0OXKDssYE1M5O43wUY/9BVPeIvfH2zmEbBfseqN9gBQZzXkg==}
@@ -11619,7 +11654,7 @@ packages:
     engines: {node: '>=10.13.0'}
     dependencies:
       glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.10
+      graceful-fs: 4.2.11
     dev: false
 
   /wcwidth/1.0.1:
