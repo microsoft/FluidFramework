@@ -104,6 +104,9 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		if (metadata.summaryCount !== undefined) {
 			metadata.summaryCount = 0;
 		}
+		if (metadata.telemetryDocumentId !== undefined) {
+			metadata.telemetryDocumentId = "a";
+		}
 		content = JSON.stringify(metadata);
 	}
 
