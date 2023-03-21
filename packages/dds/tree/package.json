@@ -112,6 +112,7 @@
 		"good-fences": "^1.1.1",
         "mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
+        "moment": "^2.21.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",
