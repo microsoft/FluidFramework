@@ -39,29 +39,31 @@ export interface IRoutes {
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+    restTenantThrottler: IThrottler,
+    restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): IRoutes {
 	return {
 		git: {
-			blobs: blobs.create(config, tenantService, throttler, cache, asyncLocalStorage),
-			commits: commits.create(config, tenantService, throttler, cache, asyncLocalStorage),
-			refs: refs.create(config, tenantService, throttler, cache, asyncLocalStorage),
-			tags: tags.create(config, tenantService, throttler, cache, asyncLocalStorage),
-			trees: trees.create(config, tenantService, throttler, cache, asyncLocalStorage),
+			blobs: blobs.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+			commits: commits.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+			refs: refs.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+			tags: tags.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+			trees: trees.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
 		},
 		repository: {
 			commits: repositoryCommits.create(
 				config,
 				tenantService,
-				throttler,
+				restTenantThrottler,
+                restClusterThrottlers,
 				cache,
 				asyncLocalStorage,
 			),
-			contents: contents.create(config, tenantService, throttler, cache, asyncLocalStorage),
-			headers: headers.create(config, tenantService, throttler, cache, asyncLocalStorage),
+			contents: contents.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+			headers: headers.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
 		},
-		summaries: summaries.create(config, tenantService, throttler, cache, asyncLocalStorage),
+		summaries: summaries.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
 	};
 }

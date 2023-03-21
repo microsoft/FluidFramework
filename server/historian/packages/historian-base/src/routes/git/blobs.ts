@@ -16,19 +16,20 @@ import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
+import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+	restTenantThrottler: IThrottler,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Router {
 	const router: Router = Router();
 
-	const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-		throttleIdSuffix: utils.Constants.throttleIdSuffix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
 
 	async function createBlob(
@@ -69,8 +70,8 @@ export function create(
 	 */
 	router.get(
 		"/repos/ping",
-		throttle(throttler, winston, {
-			...commonThrottleOptions,
+		throttle(restTenantThrottler, winston, {
+			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
 		async (request, response) => {
@@ -81,7 +82,7 @@ export function create(
 	router.post(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		utils.validateRequestParams("tenantId"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const blobP = createBlob(
 				request.params.tenantId,
@@ -98,7 +99,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/blobs/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const blobP = getBlob(
@@ -117,7 +118,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 

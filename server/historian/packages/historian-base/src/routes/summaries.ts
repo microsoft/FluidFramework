@@ -19,22 +19,35 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../services";
-import { parseToken } from "../utils";
+import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+    restTenantThrottler: IThrottler,
+    restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Router {
 	const router: Router = Router();
 
-	const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-		throttleIdSuffix: utils.Constants.throttleIdSuffix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+
+    // Throttling logic for creating summary to provide per-cluster rate-limiting at the HTTP route level
+    const createSummaryThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: Constants.createSummaryThrottleIdPrefix,
+        throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+    };
+
+    // Throttling logic for getting summary to provide per-cluster rate-limiting at the HTTP route level
+    const getSummaryThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+        throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
+        throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+    };
 
 	async function getSummary(
 		tenantId: string,
@@ -95,7 +108,8 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/summaries/:sha",
-		throttle(throttler, winston, commonThrottleOptions),
+        throttle(restClusterThrottlers.get(Constants.getSummaryThrottleIdPrefix), winston, getSummaryThrottleOptions),
+		throttle(restTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -116,7 +130,8 @@ export function create(
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/summaries",
-		throttle(throttler, winston, commonThrottleOptions),
+        throttle(restClusterThrottlers.get(Constants.createSummaryThrottleIdPrefix), winston, createSummaryThrottleOptions),
+		throttle(restTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -140,7 +155,7 @@ export function create(
 
 	router.delete(
 		"/repos/:ignored?/:tenantId/git/summaries",
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(
