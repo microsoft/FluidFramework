@@ -34,7 +34,7 @@ export interface AudienceClientMetaData {
     clientId: string;
 }
 
-// @public
+// @public (undocumented)
 export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMessageData> {
     // (undocumented)
     type: "AUDIENCE_EVENT";
@@ -43,8 +43,6 @@ export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMess
 // @public
 export interface AudienceEventMessageData extends HasContainerId {
     // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
-    //
-    // (undocumented)
     audienceHistory: readonly AudienceChangeLogEntry[];
     audienceState: AudienceClientMetaData[];
 }

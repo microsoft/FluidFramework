@@ -9,7 +9,8 @@ import { HasContainerId } from "./DebuggerMessages";
 import { IDebuggerMessage } from "./Messages";
 
 /**
- * Metadata of clients within the Audience List
+ * Metadata of clients within the Audience.
+ *
  * @public
  */
 export interface AudienceClientMetaData {
@@ -29,20 +30,21 @@ export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
 
 /**
  * Message data format used by {@link AudienceEventMessage}.
+ *
  * @public
  */
 export interface AudienceEventMessageData extends HasContainerId {
 	/**
-	 * Contents of the Audience event
+	 * Metadata of the current Audience state.
 	 */
 	audienceState: AudienceClientMetaData[];
+	/**
+	 * Connection history of members to the container
+	 */
 	audienceHistory: readonly AudienceChangeLogEntry[];
 }
 
 /**
- * Outbound event listing the current audience and audience history of the application
- * AudienceState: List of AudienceClientMetaData with clientId and IClient
- * AudienceHistory: List of entire audience memebers that were connected/disconnected to the container
  * @public
  */
 export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMessageData> {

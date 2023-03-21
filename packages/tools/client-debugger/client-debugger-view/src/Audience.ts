@@ -31,13 +31,7 @@ export function combineMembersWithMultipleConnections(
 
 	for (const audience of audiences) {
 		const clientId = audience.clientId;
-		console.log("clientId", clientId);
-		console.log("--------------------------");
-		console.log(audience.client.user);
-		console.log("***********************");
-		console.log(audience.client.user.id);
 		const userId = audience.client.user.id;
-		console.log("userId", userId);
 
 		// Ensure we're tracking the user
 		let audienceMember = audienceMembers.get(userId);

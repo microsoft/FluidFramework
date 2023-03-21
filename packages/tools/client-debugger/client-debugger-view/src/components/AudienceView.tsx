@@ -62,11 +62,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		};
 	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
 
-	const audienceClientMetaData: AudienceClientMetaData[] = [];
-
-	for (const [clientId, client] of allAudienceMembers) {
-		audienceClientMetaData.push({ clientId, client });
-	}
+	const audienceClientMetaData: AudienceClientMetaData[] = [...allAudienceMembers.entries()].map(
+		([clientId, client]): AudienceClientMetaData => ({ clientId, client }),
+	);
 
 	return (
 		<_AudienceView
@@ -79,6 +77,10 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 }
 
 /**
+ * audienceClientMetaData contains corresponding clientId and IClient object as element
+ * AudienceEventMessageData object is message-passed to chrome extension and sent to the _AudienceView
+ * TODO: Remove onRenderAudienceMember
+ *
  * {@link _AudienceView} input props.
  */
 export interface _AudienceViewProps {

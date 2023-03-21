@@ -259,7 +259,6 @@ export class FluidClientDebugger
 
 	/**
 	 * Posts a {@link AudienceEventMessage} to the window (globalThis)
-	 *
 	 */
 	private readonly postAudienceStateChange = (): void => {
 		const allAudienceMembers = this.container.audience.getMembers();
@@ -270,18 +269,15 @@ export class FluidClientDebugger
 			return { clientId, client };
 		});
 
-		postMessageToWindow<AudienceEventMessage>(
-			{
-				source: debuggerMessageSource,
-				type: "AUDIENCE_EVENT",
-				data: {
-					containerId: this.containerId,
-					audienceState: audienceClientMetaData,
-					audienceHistory: this.getAudienceHistory(),
-				},
+		postMessageToWindow<AudienceEventMessage>(this.messageLoggingOptions, {
+			source: debuggerMessageSource,
+			type: "AUDIENCE_EVENT",
+			data: {
+				containerId: this.containerId,
+				audienceState: audienceClientMetaData,
+				audienceHistory: this.getAudienceHistory(),
 			},
-			this.messageLoggingOptions,
-		);
+		});
 	};
 
 	// #endregion

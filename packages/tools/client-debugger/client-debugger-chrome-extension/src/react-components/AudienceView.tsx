@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-// import { IClient } from "@fluidframework/protocol-definitions";
 import {
 	AudienceClientMetaData,
 	AudienceChangeLogEntry,
@@ -82,7 +81,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container using "AUDIENCE_EVENT" Message
-		// Message to FluidClientDebugger
 		messageRelay.postMessage(getAudienceMessage);
 
 		return (): void => {
