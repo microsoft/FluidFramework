@@ -52,7 +52,7 @@
 		"typescript": "~4.5.5"
 	},
 	"engines": {
-		"node": ">=14.0.0"
+		"node": ">=16.16.0"
 	},
 	"typeValidation": {
 		"disabled": true,
