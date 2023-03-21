@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import fetch from "node-fetch";
 
 /**
@@ -69,10 +68,12 @@ export class MockWebhook<TData = unknown> {
 		console.log(
 			`EXTERNAL DATA SERVICE WEBHOOK: External data has been updated. Notifying ${this._subscribers.size} subscribers...`,
 		);
-
 		const messageBody = JSON.stringify({ data });
-		for (const subscriberUrl of this._subscribers) {
-			fetch(subscriberUrl, {
+
+		for (const subscriber of this._subscribers) {
+			console.log(`EXTERNAL DATA SERVICE WEBHOOK: Notifying ${subscriber}`);
+
+			fetch(subscriber, {
 				method: "POST",
 				headers: {
 					"Access-Control-Allow-Origin": "*",

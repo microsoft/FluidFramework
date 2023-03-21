@@ -16,6 +16,7 @@ export {
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
+	idAllocatorFromMaxId,
 } from "./crossFieldQueries";
 export { FieldKind, FullSchemaPolicy, Multiplicity } from "./fieldKind";
 export {
@@ -28,6 +29,7 @@ export {
 	FieldChangeRebaser,
 	FieldChangeset,
 	FieldEditor,
+	HasFieldChanges,
 	ModularChangeset,
 	NodeChangeComposer,
 	NodeChangeDecoder,

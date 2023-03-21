@@ -11,6 +11,7 @@ export interface IQueuedMessage {
 	partition: number;
 	offset: number;
 	value: string | any;
+	timestamp?: number | undefined;
 }
 
 export interface IPartition {

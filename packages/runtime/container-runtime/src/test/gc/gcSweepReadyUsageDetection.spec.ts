@@ -6,10 +6,10 @@
 import { strict as assert } from "assert";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	loggerToMonitoringContext,
 	MockLogger,
-	sessionStorageConfigProvider,
 	ConfigTypes,
+	MonitoringContext,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import {
@@ -18,6 +18,7 @@ import {
 	closuresMapLocalStorageKey,
 	SweepReadyUsageDetectionHandler,
 } from "../../gc";
+import { configProvider } from "./garbageCollection.spec";
 
 describe("Garbage Collection Tests", () => {
 	let clock: SinonFakeTimers;
@@ -27,7 +28,8 @@ describe("Garbage Collection Tests", () => {
 			"Fluid.GarbageCollection.Dogfood.SweepReadyUsageDetection";
 		const sweepReadyUsageErrorType = "unreferencedObjectUsedAfterGarbageCollected";
 
-		let mockLogger: MockLogger = new MockLogger();
+		let mockLogger: MockLogger;
+		let mc: MonitoringContext;
 		let closeErrors: ICriticalContainerError[] = [];
 		// used to inject settings into MonitoringContext, and also to mock localStorage for the handler
 		let mockLocalStorage: Record<string, ConfigTypes> = {};
@@ -38,7 +40,7 @@ describe("Garbage Collection Tests", () => {
 		) =>
 			new SweepReadyUsageDetectionHandler(
 				uniqueContainerKey,
-				loggerToMonitoringContext(mockLogger),
+				mc,
 				(e) => {
 					assert(e, "PRECONDITION: Only expected closure due to error");
 					closeErrors.push(e);
@@ -65,17 +67,15 @@ describe("Garbage Collection Tests", () => {
 					  },
 			);
 
-		const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 		before(() => {
 			clock = useFakeTimers();
-			sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
 		});
 		after(() => {
 			clock.restore();
-			sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 		});
 		beforeEach(() => {
 			mockLogger = new MockLogger();
+			mc = mixinMonitoringContext(mockLogger, configProvider(mockLocalStorage));
 			closeErrors = [];
 		});
 		afterEach(() => {
