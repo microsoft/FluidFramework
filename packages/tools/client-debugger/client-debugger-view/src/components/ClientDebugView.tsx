@@ -9,8 +9,10 @@ import { HasClientDebugger } from "../CommonProps";
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
+import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
+import { TelemetryView } from "./TelemetryView";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -18,7 +20,7 @@ import { DataObjectsView } from "./DataObjectsView";
 // - Move Container action bar (connection / disposal buttons) to summary header, rather than in
 //   the Container data view.
 
-// Ensure FluentUI icons are initialized.
+// Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
 /**
@@ -51,66 +53,50 @@ export interface ClientDebugViewProps extends HasClientDebugger {
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
 	const { clientDebugger, renderOptions: userRenderOptions } = props;
-	const { container } = clientDebugger;
-
 	const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
-	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
-
-	React.useEffect(() => {
-		function onContainerClose(): void {
-			setIsContainerClosed(true);
-		}
-
-		container.on("closed", onContainerClose);
-
-		setIsContainerClosed(container.closed);
-
-		return (): void => {
-			container.off("closed", onContainerClose);
-		};
-	}, [container, setIsContainerClosed]);
-
-	// UI state
-	const [rootViewSelection, updateRootViewSelection] = React.useState<RootView>(
-		RootView.ContainerData,
+	// Inner view selection
+	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
+		PanelView.ContainerData,
 	);
-
-	let view: React.ReactElement;
-	if (isContainerClosed) {
-		view = <div>The Container has been closed.</div>;
-	} else {
-		let innerView: React.ReactElement;
-		switch (rootViewSelection) {
-			case RootView.ContainerData:
-				innerView = (
-					<DataObjectsView
-						clientDebugger={clientDebugger}
-						renderOptions={renderOptions.sharedObjectRenderOptions}
-					/>
-				);
-				break;
-			case RootView.Audience:
-				innerView = (
-					<AudienceView
-						clientDebugger={clientDebugger}
-						onRenderAudienceMember={renderOptions.onRenderAudienceMember}
-					/>
-				);
-				break;
-			default:
-				throw new Error(`Unrecognized RootView selection value: "${rootViewSelection}".`);
-		}
-		view = (
-			<Stack tokens={{ childrenGap: 10 }}>
-				<ViewSelectionMenu
-					currentSelection={rootViewSelection}
-					updateSelection={updateRootViewSelection}
+	let innerView: React.ReactElement;
+	switch (innerViewSelection) {
+		case PanelView.ContainerData:
+			innerView = (
+				<DataObjectsView
+					clientDebugger={clientDebugger}
+					renderOptions={renderOptions.sharedObjectRenderOptions}
 				/>
-				{innerView}
-			</Stack>
-		);
+			);
+			break;
+		case PanelView.Audience:
+			innerView = (
+				<AudienceView
+					clientDebugger={clientDebugger}
+					onRenderAudienceMember={renderOptions.onRenderAudienceMember}
+				/>
+			);
+			break;
+		case PanelView.Telemetry:
+			innerView = <TelemetryView />;
+			break;
+		// TODO: add the Telemetry view here, without ReactContext
+
+		case PanelView.ContainerStateHistory:
+			innerView = <ContainerHistoryView clientDebugger={clientDebugger} />;
+			break;
+		default:
+			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 	}
+	const view = (
+		<Stack tokens={{ childrenGap: 10 }}>
+			<PanelViewSelectionMenu
+				currentSelection={innerViewSelection}
+				updateSelection={setInnerViewSelection}
+			/>
+			{innerView}
+		</Stack>
+	);
 
 	return (
 		<Stack
@@ -132,47 +118,62 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 }
 
 /**
- * Root view options for the container visualizer.
+ * View options for the container visualizer.
+ *
+ * @internal
  */
-enum RootView {
+export enum PanelView {
 	/**
-	 * Corresponds with {@link DataObjectsView}.
+	 * Display view of Container data.
 	 */
 	ContainerData = "Data",
 
 	/**
-	 * Corresponds with {@link AudienceView}.
+	 * Display view of Audience participants / history.
 	 */
 	Audience = "Audience",
 
+	/**
+	 * Display view of Telemetry events.
+	 */
+	Telemetry = "Telemetry",
+
+	/**
+	 * Display view of Container state history.
+	 */
+	ContainerStateHistory = "States",
+
 	// TODOs:
 	// - Network stats
-	// - Telemetry
 	// - Ops/message latency stats
 }
 
 /**
- * {@link ViewSelectionMenu} input props.
+ * {@link PanelViewSelectionMenu} input props.
+ *
+ * @internal
  */
-interface ViewSelectionMenuProps {
+export interface PanelViewSelectionMenuProps {
 	/**
 	 * The currently-selected inner app view.
 	 */
-	currentSelection: RootView;
+	currentSelection: PanelView;
 
 	/**
 	 * Updates the inner app view to the one specified.
 	 */
-	updateSelection(newSelection: RootView): void;
+	updateSelection(newSelection: PanelView): void;
 }
 
 /**
- * Menu for selecting the inner app view to be displayed.
+ * Menu for selecting the inner app view to be displayed in the debug panel.
+ *
+ * @internal
  */
-function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
+export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
 	const { currentSelection, updateSelection } = props;
 
-	const options: IOverflowSetItemProps[] = Object.entries(RootView).map(([_, flag]) => ({
+	const options: IOverflowSetItemProps[] = Object.entries(PanelView).map(([_, flag]) => ({
 		key: flag,
 	}));
 
@@ -185,7 +186,7 @@ function ViewSelectionMenu(props: ViewSelectionMenuProps): React.ReactElement {
 				aria-label={item.key}
 				styles={{ root: { marginRight: 10 } }}
 				disabled={item.key === currentSelection}
-				onClick={(): void => updateSelection(item.key as RootView)}
+				onClick={(): void => updateSelection(item.key as PanelView)}
 			>
 				{item.key}
 			</Link>

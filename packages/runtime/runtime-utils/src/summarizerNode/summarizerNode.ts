@@ -41,6 +41,10 @@ import {
 	SummaryNode,
 } from "./summarizerNodeUtils";
 
+/**
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
+ */
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 /**
@@ -543,7 +547,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
 		// tracked, the child's summary tracking state needs to be updated too. Same goes for pendingSummaries we might
 		// have outstanding on the parent in case we realize nodes in between Summary Op and Summary Ack.
-		this.maybeUpdateChildState(child);
+		this.maybeUpdateChildState(child, id);
 
 		this.children.set(id, child);
 		return child;
@@ -659,8 +663,10 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
 	 * pending summary as well.
 	 * @param child - The child node whose state is to be updated.
+	 * @param id - Initial id or path part of this node
+	 *
 	 */
-	protected maybeUpdateChildState(child: SummarizerNode) {
+	protected maybeUpdateChildState(child: SummarizerNode, id: string) {
 		// If a summary is in progress, this child was created after the summary started. So, we need to update the
 		// child's summary state as well.
 		if (this.isSummaryInProgress()) {
@@ -716,6 +722,9 @@ export class SummarizerNode implements IRootSummarizerNode {
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an
+ * upcoming release.
  */
 export const createRootSummarizerNode = (
 	logger: ITelemetryLogger,

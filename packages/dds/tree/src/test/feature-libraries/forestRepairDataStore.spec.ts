@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
 	Delta,
 	FieldKey,
+	mintRevisionTag,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	RevisionTag,
@@ -23,8 +24,8 @@ import {
 } from "../../feature-libraries";
 import { brand } from "../../util";
 
-const revision1: RevisionTag = brand(1);
-const revision2: RevisionTag = brand(2);
+const revision1: RevisionTag = mintRevisionTag();
+const revision2: RevisionTag = mintRevisionTag();
 const fooKey: FieldKey = brand("foo");
 
 const root: UpPath = {
@@ -63,57 +64,49 @@ describe("ForestRepairDataStore", () => {
 			},
 		};
 		initializeForest(forest, [singleTextCursor(data)]);
-		const delta1: Delta.Root = new Map([
+		const delta1 = new Map([
 			[
 				rootFieldKeySymbol,
-				{
-					beforeShallow: [
-						{
-							index: 0,
-							fields: new Map([
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
 								[
-									fooKey,
+									1,
 									{
-										shallow: [
-											1,
-											{
-												type: Delta.MarkType.Delete,
-												count: 2,
-											},
-										],
+										type: Delta.MarkType.Delete,
+										count: 2,
 									},
 								],
-							]),
-						},
-					],
-				},
+							],
+						]),
+					},
+				],
 			],
 		]);
 		store.capture(delta1, revision1);
 		forest.applyDelta(delta1);
-		const delta2: Delta.Root = new Map([
+		const delta2 = new Map([
 			[
 				rootFieldKeySymbol,
-				{
-					beforeShallow: [
-						{
-							index: 0,
-							fields: new Map([
+				[
+					{
+						type: Delta.MarkType.Modify,
+						fields: new Map([
+							[
+								fooKey,
 								[
-									fooKey,
 									{
-										shallow: [
-											{
-												type: Delta.MarkType.Delete,
-												count: 2,
-											},
-										],
+										type: Delta.MarkType.Delete,
+										count: 2,
 									},
 								],
-							]),
-						},
-					],
-				},
+							],
+						]),
+					},
+				],
 			],
 		]);
 		store.capture(delta2, revision2);
@@ -144,31 +137,39 @@ describe("ForestRepairDataStore", () => {
 			},
 		};
 		initializeForest(forest, [singleTextCursor(data)]);
-		const delta: Delta.Root = new Map([
-			[
-				rootFieldKeySymbol,
-				{
-					beforeShallow: [
+		store.capture(
+			new Map([
+				[
+					rootFieldKeySymbol,
+					[
 						{
-							index: 0,
+							type: Delta.MarkType.Modify,
 							fields: new Map([
 								[
 									fooKey,
-									{
-										beforeShallow: [
-											{ index: 0, setValue: 40 },
-											{ index: 2, setValue: 42 },
-											{ index: 3, setValue: undefined },
-										],
-									},
+									[
+										{
+											type: Delta.MarkType.Modify,
+											setValue: 40,
+										},
+										1,
+										{
+											type: Delta.MarkType.Modify,
+											setValue: 42,
+										},
+										{
+											type: Delta.MarkType.Modify,
+											setValue: undefined,
+										},
+									],
 								],
 							]),
 						},
 					],
-				},
-			],
-		]);
-		store.capture(delta, revision1);
+				],
+			]),
+			revision1,
+		);
 		const value0 = store.getValue(revision1, {
 			parent: root,
 			parentField: fooKey,

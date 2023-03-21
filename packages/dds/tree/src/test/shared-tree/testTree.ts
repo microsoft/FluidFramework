@@ -9,6 +9,7 @@ import {
 	AnchorSet,
 	Commit,
 	EditManager,
+	mintRevisionTag,
 	IEditableForest,
 	IForestSubscription,
 	initializeForest,
@@ -20,7 +21,8 @@ import {
 	SchemaPolicy,
 	SeqNumber,
 	SessionId,
-	TransactionResult,
+	RevisionTag,
+	makeAnonChange,
 } from "../../core";
 import { cursorToJsonObject, jsonSchemaData, singleJsonCursor } from "../../domains";
 import {
@@ -30,7 +32,6 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	defaultSchemaPolicy,
-	runSynchronousTransaction,
 } from "../../feature-libraries";
 import { brand, JsonCompatible } from "../../util";
 
@@ -38,25 +39,14 @@ export interface TestTreeEdit {
 	sessionId: SessionId;
 	sessionEditNumber: number;
 	refNumber: SeqNumber;
-	changeset: DefaultChangeset;
+	change: DefaultChangeset;
+	revision: RevisionTag;
 }
 
 export interface TestTreeOptions {
 	sessionId?: string;
 	schemaPolicy?: SchemaPolicy;
 	schemaData?: SchemaData;
-}
-
-/**
- * A command that cannot be aborted.
- */
-export type SucceedingCommand = (forest: IForestSubscription, editor: DefaultEditBuilder) => void;
-
-function commandWithResult(command: SucceedingCommand) {
-	return (forest: IForestSubscription, editor: DefaultEditBuilder) => {
-		command(forest, editor);
-		return TransactionResult.Apply;
-	};
 }
 
 /**
@@ -69,11 +59,11 @@ function commandWithResult(command: SucceedingCommand) {
  * actual `SharedTree` would be appropriate instead.
  */
 export class TestTree {
-	static fromForest(forest: IEditableForest, options: TestTreeOptions = {}): TestTree {
+	public static fromForest(forest: IEditableForest, options: TestTreeOptions = {}): TestTree {
 		return new TestTree(forest, options);
 	}
 
-	static fromCursor(
+	public static fromCursor(
 		cursor: ITreeCursorSynchronous[] | ITreeCursorSynchronous,
 		options: TestTreeOptions = {},
 	): TestTree {
@@ -84,7 +74,7 @@ export class TestTree {
 		return TestTree.fromForest(forest, options);
 	}
 
-	static fromJson<T>(
+	public static fromJson(
 		json: JsonCompatible[] | JsonCompatible,
 		options: TestTreeOptions = {},
 	): TestTree {
@@ -114,8 +104,9 @@ export class TestTree {
 		this.forest = forest;
 		this.editManager = new EditManager<DefaultChangeset, DefaultChangeFamily>(
 			defaultChangeFamily,
+			this.sessionId,
+			forest.anchors,
 		);
-		this.editManager.initSessionId(this.sessionId);
 	}
 
 	public jsonRoots(): JsonCompatible[] {
@@ -139,32 +130,36 @@ export class TestTree {
 	}
 
 	/**
-	 * Runs the given `command`, applying the resulting edit to the document.
+	 * Runs the given `transaction`, applying the resulting edit to the document.
+	 * @param transaction - the transaction to run. It may not be aborted.
 	 * @returns A edit that can be sequenced by the `Sequencer`.
 	 */
-	public runTransaction(command: SucceedingCommand): TestTreeEdit {
-		const trueCommand = commandWithResult(command);
-		let changeset: DefaultChangeset | undefined;
-		const checkout = {
-			forest: this.forest,
-			changeFamily: defaultChangeFamily,
-			submitEdit: (change: DefaultChangeset): void => {
-				changeset = change;
-			},
-		};
-		const result = runSynchronousTransaction(checkout, trueCommand);
-		assert(
-			result === TransactionResult.Apply && changeset !== undefined,
-			"The transaction should result in an edit being submitted",
-		);
-		const delta = this.editManager.addLocalChange(changeset);
+	public runTransaction(
+		transaction: (forest: IForestSubscription, editor: DefaultEditBuilder) => void,
+	): TestTreeEdit {
+		const editor = defaultChangeFamily.buildEditor((edit) => {
+			const delta = defaultChangeFamily.intoDelta(edit);
+			this.forest.applyDelta(delta);
+		}, this.forest.anchors);
+		transaction(this.forest, editor);
+		const changes = editor.getChanges();
+
+		// Using anonymous changes makes it impossible to chronologically order them during composition.
+		// Such an ordering is needed when composing/squashing inverse changes with other changes, which is currently
+		// not expected to happen in transactions but that could change in the future.
+		const anonChanges = changes.map((c) => makeAnonChange(c));
+
+		const changeset = defaultChangeFamily.rebaser.compose(anonChanges);
+		const revision = mintRevisionTag();
+		// Forest and anchors already reflect the results of this change since they were updated during transaction.
+		this.editManager.addLocalChange(revision, changeset);
 		const resultingEdit: TestTreeEdit = {
 			sessionId: this.sessionId,
-			changeset,
+			change: changeset,
 			sessionEditNumber: this._localEditsApplied,
 			refNumber: brand(this.refNumber),
+			revision,
 		};
-		this.forest.applyDelta(delta);
 		this._localEditsApplied += 1;
 		return resultingEdit;
 	}
@@ -178,7 +173,7 @@ export class TestTree {
 			return;
 		}
 		for (const edit of edits) {
-			const delta = this.editManager.addSequencedChange(edit);
+			const delta = this.editManager.addSequencedChange(edit, edit.seqNumber, edit.refNumber);
 			this.forest.applyDelta(delta);
 			this._remoteEditsApplied += 1;
 			this.refNumber = edit.seqNumber;
@@ -186,7 +181,8 @@ export class TestTree {
 	}
 }
 
-export type CommittedTestTreeEdit = TestTreeEdit & Commit<DefaultChangeset>;
+export type CommittedTestTreeEdit = TestTreeEdit &
+	Commit<DefaultChangeset> & { seqNumber: SeqNumber };
 
 interface ClientData {
 	localEditNumber: number;

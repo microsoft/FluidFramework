@@ -5,8 +5,8 @@
 
 import { URL } from "url";
 import child_process from "child_process";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
-import { configurableUrlResolver } from "@fluidframework/driver-utils";
+import { IRequest } from "@fluidframework/core-interfaces";
+import { IFluidResolvedUrl, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
 import { IClientConfig, IOdspAuthRequestInfo } from "@fluidframework/odsp-doclib-utils";
 import * as odsp from "@fluidframework/odsp-driver";
@@ -125,34 +125,62 @@ async function initializeR11s(
 	return r11sDocumentServiceFactory.createDocumentService(r11sResolvedUrl);
 }
 
-async function resolveUrl(url: string): Promise<IResolvedUrl | undefined> {
-	const resolversList: IUrlResolver[] = [
-		new OdspUrlResolver(),
-		new FluidAppOdspUrlResolver(),
-		// eslint-disable-next-line @typescript-eslint/promise-function-async
-		new RouterliciousUrlResolver(undefined, () => Promise.resolve(paramJWT), ""),
-	];
-	const resolved = await configurableUrlResolver(resolversList, { url });
-	return resolved;
+interface IResolvedInfo {
+	resolvedUrl: IResolvedUrl;
+	serviceType: "odsp" | "r11s";
+}
+async function resolveUrl(url: string): Promise<IResolvedInfo | undefined> {
+	const request: IRequest = { url };
+	let maybeResolvedUrl: IResolvedUrl | undefined;
+
+	// Try each url resolver in turn to figure out which one the request is compatible with.
+	maybeResolvedUrl = await new OdspUrlResolver().resolve(request);
+	if (maybeResolvedUrl !== undefined) {
+		return {
+			resolvedUrl: maybeResolvedUrl,
+			serviceType: "odsp",
+		};
+	}
+
+	maybeResolvedUrl = await new FluidAppOdspUrlResolver().resolve(request);
+	if (maybeResolvedUrl !== undefined) {
+		return {
+			resolvedUrl: maybeResolvedUrl,
+			serviceType: "odsp",
+		};
+	}
+
+	maybeResolvedUrl = await new RouterliciousUrlResolver(
+		undefined,
+		async () => Promise.resolve(paramJWT),
+		"",
+	).resolve(request);
+	if (maybeResolvedUrl !== undefined) {
+		return {
+			resolvedUrl: maybeResolvedUrl,
+			serviceType: "r11s",
+		};
+	}
+
+	return undefined;
 }
 
 export async function fluidFetchInit(urlStr: string) {
-	const resolvedUrl = (await resolveUrl(urlStr)) as IFluidResolvedUrl;
-	if (resolvedUrl === undefined) {
-		return Promise.reject(new Error(`Unknown URL ${urlStr}`));
+	const resolvedInfo = await resolveUrl(urlStr);
+	if (resolvedInfo === undefined) {
+		throw new Error(`Unknown URL ${urlStr}`);
 	}
-	const protocol = new URL(resolvedUrl.url).protocol;
-	if (protocol === "fluid-odsp:") {
-		const odspResolvedUrl = resolvedUrl as IOdspResolvedUrl;
+	const fluidResolvedUrl = resolvedInfo.resolvedUrl as IFluidResolvedUrl;
+	if (resolvedInfo.serviceType === "odsp") {
+		const odspResolvedUrl = fluidResolvedUrl as IOdspResolvedUrl;
 		return initializeODSPCore(
 			odspResolvedUrl,
 			new URL(odspResolvedUrl.siteUrl).host,
 			getMicrosoftConfiguration(),
 		);
-	} else if (protocol === "fluid:") {
+	} else if (resolvedInfo.serviceType === "r11s") {
 		const url = new URL(urlStr);
 		const server = url.hostname.toLowerCase();
-		return initializeR11s(server, url.pathname, resolvedUrl);
+		return initializeR11s(server, url.pathname, fluidResolvedUrl);
 	}
-	return Promise.reject(new Error(`Unknown resolved protocol ${protocol}`));
 }

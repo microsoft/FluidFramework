@@ -10,14 +10,19 @@ import { generateToken } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
 export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
-    const authEndpoint = config.get("auth:endpoint");
-    const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-    const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+	const authEndpoint = config.get("auth:endpoint");
+	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 
-    const foremanConfig = config.get("foreman");
-    const messageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
+	const foremanConfig = config.get("foreman");
+	const messageSender = services.createMessageSender(config.get("rabbitmq"), foremanConfig);
 
-    // Preps message sender.
-    await messageSender.initialize();
-    return new ForemanLambdaFactory(messageSender, tenantManager, generateToken, foremanConfig.permissions);
+	// Preps message sender.
+	await messageSender.initialize();
+	return new ForemanLambdaFactory(
+		messageSender,
+		tenantManager,
+		generateToken,
+		foremanConfig.permissions,
+	);
 }

@@ -19,6 +19,7 @@ import {
 	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
 import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
@@ -51,6 +52,9 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
  * use the routerlicious implementation.
  */
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
+	/**
+	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
+	 */
 	public readonly protocolName = "fluid:";
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
@@ -96,11 +100,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		}
 		const [, tenantId] = parsedUrl.pathname.split("/");
 
-		const protocolSummary = createNewSummary.tree[".protocol"] as ISummaryTree;
-		const appSummary = createNewSummary.tree[".app"] as ISummaryTree;
-		if (!(protocolSummary && appSummary)) {
+		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 			throw new Error("Protocol and App Summary required in the full summary");
 		}
+		const protocolSummary = createNewSummary.tree[".protocol"];
+		const appSummary = createNewSummary.tree[".app"];
+
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 

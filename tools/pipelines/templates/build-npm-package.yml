@@ -19,6 +19,10 @@ parameters:
   type: boolean
   default: true
 
+- name: taskLintName
+  type: string
+  default: lint
+
 - name: taskTest
   type: object
   default:
@@ -98,7 +102,11 @@ parameters:
   type: boolean
   default: true
 
-trigger: none
+# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
+# a pipeline stage separate from the build stage.
+- name: checks
+  type: object
+  default: []
 
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
@@ -117,9 +125,16 @@ variables:
     readonly: true
 
 stages:
+  - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+    - template: include-policy-check.yml
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        checks: ${{ parameters.checks }}
+
   # Install / Build / Test Stage
   - stage: build
     displayName: Build Stage
+    dependsOn: [] # this stage doesn't depend on preceding stage
     jobs:
       # Job - Build
       - job: build
@@ -157,6 +172,7 @@ stages:
                 BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
                 Lint=${{ parameters.taskLint }}
+                LintName: ${{ parameters.taskLintName }}
                 Test=${{ convertToJson(parameters.taskTest) }}
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 TestCoverage=$(testCoverage)
@@ -218,16 +234,20 @@ stages:
 
         # Install
         - task: UseNode@1
-          displayName: Use Node 14.x
+          displayName: Use Node 16.x
           inputs:
-            version: 14.x
+            version: 16.x
 
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
           - task: Cache@2
             displayName: Cache pnpm store
             inputs:
-              key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.tagName }}" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+              # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+              # in the cache key
+              key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
               path: ${{ variables.pnpmStorePath }}
+              restoreKeys: |
+                pnpm-store | "$(Agent.OS)"
 
           - task: Bash@3
             displayName: Install and configure pnpm
@@ -267,11 +287,11 @@ stages:
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
           - task: Npm@1
-            displayName: npm run lint
+            displayName: npm run ${{ parameters.taskLintName }}
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run lint'
+              customCommand: 'run ${{ parameters.taskLintName }}'
 
         # Test
         - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
@@ -357,7 +377,7 @@ stages:
                   mkdir $(Build.ArtifactStagingDirectory)/pack/non-scoped/
                 fi
                 if [ -f "lerna.json" ]; then
-                  npx lerna exec --no-private --no-sort -- npm pack --unsafe-perm && \
+                  npx lerna exec --no-private --no-sort -- ${{ parameters.packageManager }} pack && \
                   npx lerna exec --no-private --no-sort --parallel -- mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz && \
                   npx lerna exec --no-private --no-sort --parallel -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $(Build.ArtifactStagingDirectory)/test-files/ ./*test-files.tar)"
 
@@ -365,7 +385,7 @@ stages:
                   # Each package name is modified to match the packed tar files.
                   npx lerna ls --toposort | sed 's/@//' | sed 's/\//-/' | head -c -1 > $(Build.ArtifactStagingDirectory)/pack/packagePublishOrder.txt
                 else
-                  npm pack --unsafe-perm && \
+                  ${{ parameters.packageManager }} pack && \
                   mv -t $(Build.ArtifactStagingDirectory)/pack/scoped/ ./*.tgz
                 fi
 
@@ -538,6 +558,16 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 git checkout HEAD -- pnpm-lock.yaml
+
+          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+          - task: Bash@3
+            displayName: Prune pnpm store
+            inputs:
+              targetType: 'inline'
+              workingDirectory: ${{ parameters.buildDirectory }}
+              script: |
+                pnpm store prune
+
 
         - task: Bash@3
           displayName: Check for extraneous modified files

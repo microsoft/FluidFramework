@@ -193,6 +193,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	/**
 	 * Gets the service at a given id.
 	 * @param id - service id
+	 * @deprecated See https://github.com/microsoft/FluidFramework/pull/14430 for context
 	 */
 	protected async getService<T extends FluidObject>(id: string): Promise<T> {
 		return handleFromLegacyUri<T>(

@@ -54,6 +54,7 @@ import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
 
 // @public
 export interface IInsecureUser extends IUser {
@@ -474,6 +475,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    get visibilityState(): VisibilityState_2;
     // (undocumented)
     waitAttached(): Promise<void>;
 }

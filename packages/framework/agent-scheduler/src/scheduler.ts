@@ -181,8 +181,20 @@ export class AgentScheduler
 					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
 				});
 			}
-			// Note - the assumption is - we are connected.
-			// If not - all tasks should have been dropped already on disconnect / attachment
+			if (!this.runningTasks.has(taskUrl)) {
+				// If we got disconnected (and are attached), tasks that we WERE picked for at the time of disconnect
+				// will still show us as holding the task according to getTaskClientId (the CRC is stale), but we
+				// should not try to release because our disconnect will already result in either someone else or
+				// ourselves clearing the task upon reconnect.
+				// This UsageError is to enforce that the caller should check AgentScheduler.pickedTasks before trying
+				// to release a task.
+				throw new UsageError(`Task is not currently picked`, {
+					taskUrl: { tag: TelemetryDataTag.CodeArtifact, value: taskUrl },
+				});
+			}
+			// We may only release tasks that we KNOW we hold (detached state or connected and own the CRC).  If we're
+			// attached+disconnected then we'll lose the task automatically, and so may not release manually (someone
+			// else might hold it by the time we reconnect)
 			assert(active, 0x119 /* "This agent became inactive while releasing" */);
 			if (this.getTaskClientId(taskUrl) !== this.clientId) {
 				throw new UsageError(`Task was never picked`, {

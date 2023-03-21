@@ -139,7 +139,8 @@ the only difference between the message sent when undoing an edit that lies with
 and undoing an edit that lies outside it,
 would be that the latter includes additional historical data.
 
-This is the approach we currently intend to implement.
+This is the approach we currently intend to implement long term.
+(See [V1 Undo](./v1-undo.md) for short-term horizon)
 
 One challenge with this approach is that it could result in attempting to send prohibitively large amounts of historical data.
 That's because applying the undo _may_ require historical data not only from the edit to be undone,
@@ -168,6 +169,10 @@ Partial undo would allow such a user to only undo the changes within the region 
 
 This could be achieved by including in the undo message a characterization of the region of the document to be affected by the undo.
 This may need to be characterized as a combination of input context regions and output context regions.
+
+## Related
+
+-   [V1 Undo](./v1-undo.md)
 
 ## Glossary
 

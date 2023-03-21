@@ -8,7 +8,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
@@ -59,7 +58,6 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 				runGC: false,
 				fullTree: false,
 				trackState: false,
-				summaryLogger: new TelemetryNullLogger(),
 			});
 
 			// Validate stats

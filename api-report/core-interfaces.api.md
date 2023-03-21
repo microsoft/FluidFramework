@@ -45,7 +45,9 @@ export const IFluidHandle: keyof IProvideFluidHandle;
 export interface IFluidHandle<T = FluidObject & IFluidLoadable> extends IProvideFluidHandle {
     // @deprecated (undocumented)
     readonly absolutePath: string;
+    // @deprecated (undocumented)
     attachGraph(): void;
+    // @deprecated (undocumented)
     bind(handle: IFluidHandle): void;
     get(): Promise<T>;
     readonly isAttached: boolean;
