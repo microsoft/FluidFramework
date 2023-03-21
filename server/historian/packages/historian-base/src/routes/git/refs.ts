@@ -22,7 +22,6 @@ import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
-
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,

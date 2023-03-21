@@ -135,16 +135,16 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		const port = normalizePort(process.env.PORT || "3000");
 
-		return new HistorianResources(
-			config,
-			port,
-			riddler,
+        return new HistorianResources(
+            config,
+            port,
+            riddler,
             restTenantThrottler,
             restClusterThrottlers,
-			gitCache,
-			asyncLocalStorage,
-		);
-	}
+            gitCache,
+            asyncLocalStorage,
+        );
+    }
 }
 
 export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianResources> {
