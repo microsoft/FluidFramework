@@ -6,13 +6,15 @@
 /**
  * This file is meant to ensure that all public members have corresponding documentation published.
  * This includes code that is not normally package-exported.
+ *
+ * See ../docs/documentation-guidelines.md#internal-documentation-index-files for instructions on maintaining this file.
  */
 /* eslint-disable no-restricted-syntax */
-export * from "./core/internalDocumentationIndex";
-export * from "./domains";
-export * from "./feature-libraries";
-export * from "./shared-tree";
-export * from "./shared-tree-core";
+export * as core from "./core/internalDocumentationIndex";
+export * as domains from "./domains";
+export * as featureLibraries from "./feature-libraries";
+export * as sharedTree from "./shared-tree";
+export * as sharedTreeCore from "./shared-tree-core";
 export {
 	Brand,
 	BrandedType,
