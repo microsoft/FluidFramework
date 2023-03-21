@@ -35,7 +35,6 @@ import {
 	SchemaData,
 	TreeSchemaIdentifier,
 	UpPath,
-	Value,
 	ValueSchema,
 } from "../../core";
 
@@ -134,7 +133,7 @@ const testSchema: SchemaData = {
 };
 
 const testTreeNode: JsonableTree = { value: 1, type: dataSchema.name };
-const replacementTestNode: JsonableTree = { value: "1.0", type: dataSchema.name };
+const replacementTestNode: JsonableTree = { value: 1.0, type: dataSchema.name };
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe.only("SharedTree benchmarks", () => {
@@ -617,9 +616,8 @@ function readTreeAsJSObject(tree: Jsonable, initialTotal: Jsonable): Jsonable {
 		}
 		if (key === "value") {
 			assert(tree[key] !== undefined);
-			if (typeof tree[key] !== "object") {
-				currentTotal = applyOperationDuringRead(currentTotal, tree[key]);
-			}
+			const value = tree[key] as number;
+			currentTotal += value;
 		}
 	}
 	return currentTotal;
@@ -671,14 +669,16 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 			for (let i = 0; i < numberOfNodes; i++) {
 				readCursor.enterField(localFieldKey);
 				readCursor.enterNode(0);
-				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
+				const value = readCursor.value as number;
+				currentTotal += value;
 			}
 			break;
 		case TreeShape.Wide:
 			readCursor.enterField(localFieldKey);
 			for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
 				nodesRead += 1;
-				currentTotal = applyOperationDuringRead(currentTotal, readCursor.value);
+				const value = readCursor.value as number;
+				currentTotal += value;
 			}
 			assert(nodesRead === numberOfNodes);
 			break;
@@ -687,14 +687,6 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 	}
 	readCursor.free();
 	return currentTotal;
-}
-
-function applyOperationDuringRead(current: number, value: Value) {
-	assert(value !== undefined);
-	if (typeof value === "number") {
-		return current + value;
-	}
-	return current + 1;
 }
 
 /**
@@ -751,7 +743,7 @@ function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeS
 			for (let j = 0; j < numberOfNodes; j++) {
 				assert(isUnwrappedNode(currentNode));
 				const value = currentNode[valueSymbol] as number;
-				sum = applyOperationDuringRead(sum, value);
+				sum += value;
 				currentNode = currentNode.foo as UnwrappedEditableField;
 			}
 			return sum;
@@ -765,7 +757,7 @@ function readEditableTree(tree: ISharedTree, numberOfNodes: number, shape: TreeS
 				const currentNode = field[i] as UnwrappedEditableField;
 				assert(isUnwrappedNode(currentNode));
 				const value = currentNode[valueSymbol] as number;
-				sum = applyOperationDuringRead(sum, value);
+				sum += value;
 			}
 			return sum;
 		}
@@ -810,7 +802,6 @@ function getEditableLeafNode(
 			for (let j = 0; j < numberOfNodes; j++) {
 				currentField = currentNode[getField](localFieldKey);
 				currentNode = currentField.getNode(0);
-				const test = currentNode[valueSymbol];
 			}
 			assert(currentField !== undefined);
 			return currentField;
