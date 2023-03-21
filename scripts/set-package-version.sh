@@ -1,6 +1,6 @@
 echo SETVERSION_VERSION=$SETVERSION_VERSION
 if [ -f "lerna.json" ]; then
-  if [ "$VERSION_RELEASE" != "release" ]; then
+  if [ "$VERSION_RELEASE" = "release" ]; then
     # no need to run anything here, as the version in the package should be correct
     npx lerna exec "if [ \`npm -s run env echo '\$npm_package_version'\` != '$SETVERSION_VERSION' ]; then ( exit 1 ) fi"
     exit $?
