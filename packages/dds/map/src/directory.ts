@@ -189,6 +189,21 @@ export type IDirectorySubDirectoryOperation =
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 /**
+ * Create info for the subdirectory.
+ */
+export interface ICreateInfo {
+	/**
+	 * Sequence number at which this subdirectory was created.
+	 */
+	csn: number;
+
+	/**
+	 * clientids of the clients which created this sub directory.
+	 */
+	ccIds: string;
+}
+
+/**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
  *
  * @remarks Directly used in
@@ -206,6 +221,11 @@ export interface IDirectoryDataObject {
 	 * Recursive sub-directories {@link IDirectoryDataObject | objects}.
 	 */
 	subdirectories?: { [subdirName: string]: IDirectoryDataObject };
+
+	/**
+	 * Create info for the sub directory.
+	 */
+	ci?: ICreateInfo;
 }
 
 /**
@@ -628,9 +648,12 @@ export class SharedDirectory
 				)) {
 					let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
 					if (!newSubDir) {
+						const createInfo = subdirObject.ci;
 						newSubDir = new SubDirectory(
-							0,
-							new Set(),
+							createInfo !== undefined ? createInfo.csn : 0,
+							createInfo !== undefined
+								? new Set<string>(JSON.parse(createInfo.ccIds))
+								: new Set(),
 							this,
 							this.runtime,
 							this.serializer,
@@ -920,6 +943,7 @@ export class SharedDirectory
 		while (stack.length > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const [currentSubDir, currentSubDirObject] = stack.pop()!;
+			currentSubDirObject.ci = currentSubDir.getSerializedCreateInfo();
 			for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
@@ -1880,6 +1904,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const res: [string, ISerializedValue] = [key, value];
 			yield res;
 		}
+	}
+
+	public getSerializedCreateInfo() {
+		this.throwIfDisposed();
+		const createInfo: ICreateInfo = {
+			csn: this.sequenceNumber,
+			ccIds: JSON.stringify(Array.from(this.clientIds)),
+		};
+		return createInfo;
 	}
 
 	/**
