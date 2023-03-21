@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.13.0",
+	"version": "0.14.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -45,6 +45,7 @@
 		"test:mocha": "mocha --forbid-only \"test/**/*.test.ts\" --unhandled-rejections=strict",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "nyc npm run test:mocha:report",
+    "v": "node -p \"process.env.npm_package_version\"",
 		"tsc": "tsc"
 	},
 	"nyc": {
