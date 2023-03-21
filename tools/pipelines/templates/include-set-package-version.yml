@@ -140,16 +140,6 @@ steps:
 
 - ${{ if ne(parameters.tagName, 'client') }}:
   - task: Bash@3
-    displayName: FILE Update Package Version (lerna)
-    env:
-      VERSION_RELEASE: $(release)
-      RELEASE_GROUP: ${{ parameters.tagName }}
-    inputs:
-      targetType: 'filePath'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      filePath: $(Build.SourcesDirectory)/scripts/set-package-version.sh
-
-  - task: Bash@3
     displayName: DEBUGGING Update Package Version (lerna)
     env:
       VERSION_RELEASE: $(release)
@@ -169,6 +159,16 @@ steps:
         else
           npm version $SETVERSION_VERSION --no-git-tag-version -f --allow-same-version
         fi
+
+  - task: Bash@3
+    displayName: FILE Update Package Version (lerna)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+    inputs:
+      targetType: 'filePath'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      filePath: $(Build.SourcesDirectory)/scripts/set-package-version.sh
 
   - task: Bash@3
     displayName: Update Package Version (lerna)
