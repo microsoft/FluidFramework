@@ -201,7 +201,7 @@ const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	numberOfClients: 3,
 	only: [],
-	parseOperations: (serialized: string) => JSON.parse(serialized),
+	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
 	reconnectProbability: 0,
 	saveFailures: false,
 	validationStrategy: { type: "random", probability: 0.05 },
@@ -222,7 +222,7 @@ function mixinReconnect<
 			const baseOp = baseGenerator(state);
 			if (state.random.bool(options.reconnectProbability)) {
 				const { channel } = state;
-				const client = state.clients.find((client) => client.channel.id === channel.id);
+				const client = state.clients.find((c) => c.channel.id === channel.id);
 				assert(client !== undefined);
 				return {
 					type: "changeConnectionState",
@@ -348,12 +348,9 @@ function mixinSynchronization<
 			}
 			return state;
 		} else {
-			const isClientSpec = (operation: any): operation is ClientSpec =>
-				operation.channelId !== undefined;
+			const isClientSpec = (op: any): op is ClientSpec => op.channelId !== undefined;
 			assert(isClientSpec(operation), "operation should have been given a client");
-			const client = state.clients.find(
-				(client) => client.channel.id === operation.channelId,
-			);
+			const client = state.clients.find((c) => c.channel.id === operation.channelId);
 			assert(client !== undefined);
 			return model.reducer(
 				{ ...state, channel: client.channel, client },
@@ -398,6 +395,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 		});
 
 		const makeUnreachableCodepathProxy = <T extends object>(name: string): T =>
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			new Proxy({} as T, {
 				get: () => {
 					throw new Error(
