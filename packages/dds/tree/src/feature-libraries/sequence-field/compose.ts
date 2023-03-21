@@ -622,8 +622,11 @@ export class ComposeQueue<T> {
 		// Detect all inserts in the new marks that will be cancelled by deletes in the base marks
 		const deletes = new Set<RevisionTag>();
 		for (const mark of baseMarks) {
-			if (isDeleteMark(mark) && mark.revision !== undefined) {
-				deletes.add(mark.revision);
+			if (isDeleteMark(mark)) {
+				const baseIntention = getIntention(mark.revision, revisionMetadata);
+				if (baseIntention !== undefined) {
+					deletes.add(baseIntention);
+				}
 			}
 		}
 		for (const mark of newMarks) {
@@ -942,7 +945,7 @@ function areInverseRevisions(
 	rev2: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): boolean {
-	if (rev1 === undefined || rev2 === undefined || rev1 === rev2) {
+	if (rev1 === undefined || rev2 === undefined) {
 		return false;
 	}
 	const info1 = revisionMetadata.getInfo(rev1);
