@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { RevisionTag, tagChange, tagRollbackInverse } from "../../../core";
+import { mintRevisionTag, RevisionTag, tagChange, tagRollbackInverse } from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import {
@@ -15,20 +15,19 @@ import {
 	continuingAllocator,
 	invert,
 	normalizeMoveIds,
-	numberTag,
 	rebaseTagged,
 	toDelta,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
 
-const tag1: RevisionTag = numberTag(1);
-const tag2: RevisionTag = numberTag(2);
-const tag3: RevisionTag = numberTag(3);
-const tag4: RevisionTag = numberTag(4);
-const tag5: RevisionTag = numberTag(5);
-const tag6: RevisionTag = numberTag(6);
-const tag7: RevisionTag = numberTag(7);
-const tag8: RevisionTag = numberTag(8);
+const tag1: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
+const tag4: RevisionTag = mintRevisionTag();
+const tag5: RevisionTag = mintRevisionTag();
+const tag6: RevisionTag = mintRevisionTag();
+const tag7: RevisionTag = mintRevisionTag();
+const tag8: RevisionTag = mintRevisionTag();
 
 const testChanges: [string, (index: number) => SF.Changeset<TestChange>][] = [
 	["SetValue", (i) => Change.modify(i, TestChange.mint([], 1))],

@@ -4,19 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import { RevisionTag, makeAnonChange, tagChange, TreeSchemaIdentifier } from "../../../core";
+import {
+	RevisionTag,
+	makeAnonChange,
+	tagChange,
+	TreeSchemaIdentifier,
+	mintRevisionTag,
+} from "../../../core";
 import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
-import { compose, composeNoVerify, normalizeMoveIds, numberTag, shallowCompose } from "./utils";
+import { compose, composeNoVerify, normalizeMoveIds, shallowCompose } from "./utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
-const tag1: RevisionTag = numberTag(1);
-const tag2: RevisionTag = numberTag(2);
-const tag3: RevisionTag = numberTag(3);
-const tag4: RevisionTag = numberTag(4);
+const tag1: RevisionTag = mintRevisionTag();
+const tag2: RevisionTag = mintRevisionTag();
+const tag3: RevisionTag = mintRevisionTag();
+const tag4: RevisionTag = mintRevisionTag();
 const revInfos: RevisionInfo[] = [{ tag: tag1 }, { tag: tag2 }, { tag: tag3 }, { tag: tag4 }];
 
 describe("SequenceField - Compose", () => {
