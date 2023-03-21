@@ -13,8 +13,9 @@ import {
 } from "@fluidframework/runtime-definitions";
 import {
 	MockLogger,
-	sessionStorageConfigProvider,
 	ConfigTypes,
+	MonitoringContext,
+	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
@@ -42,6 +43,7 @@ import {
 } from "../../gc";
 import { IContainerRuntimeMetadata } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
+import { configProvider } from "./garbageCollection.spec";
 
 type GcWithPrivates = IGarbageCollector & {
 	readonly configs: IGarbageCollectorConfigs;
@@ -52,11 +54,11 @@ type GcWithPrivates = IGarbageCollector & {
 };
 
 describe("Garbage Collection configurations", () => {
-	const mockLogger: MockLogger = new MockLogger();
 	const testPkgPath = ["testPkg"];
 
-	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 	let injectedSettings: Record<string, ConfigTypes> = {};
+	let mockLogger: MockLogger;
+	let mc: MonitoringContext;
 	let clock: SinonFakeTimers;
 	// The default GC data returned by `getGCData` on which GC is run. Update this to update the referenced graph.
 	let defaultGCData: IGarbageCollectionData = { gcNodes: {} };
@@ -119,7 +121,7 @@ describe("Garbage Collection configurations", () => {
 			runtime: gcRuntime,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
-			baseLogger: mockLogger,
+			baseLogger: mc.logger,
 			existing: createParams.metadata !== undefined /* existing */,
 			metadata: createParams.metadata,
 			createContainerMetadata: {
@@ -137,18 +139,18 @@ describe("Garbage Collection configurations", () => {
 
 	before(() => {
 		clock = useFakeTimers();
-		sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
 	});
 
 	beforeEach(() => {
 		gc = undefined;
+		mockLogger = new MockLogger();
+		mc = mixinMonitoringContext(mockLogger, configProvider(injectedSettings));
 		// To ensure inactive timeout is less than sweep timeout.
 		injectedSettings[testOverrideInactiveTimeoutKey] = 1;
 	});
 
 	afterEach(() => {
 		clock.reset();
-		mockLogger.clear();
 		injectedSettings = {};
 		defaultGCData = { gcNodes: {} };
 		gc?.dispose();
@@ -156,7 +158,6 @@ describe("Garbage Collection configurations", () => {
 
 	after(() => {
 		clock.restore();
-		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 	});
 
 	describe("Existing container", () => {

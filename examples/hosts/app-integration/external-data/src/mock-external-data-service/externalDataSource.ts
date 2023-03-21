@@ -48,7 +48,7 @@ export interface IExternalDataSourceEvents extends IEvent {
 	 * @remarks Debug API for demo purposes - the real scenario will need to learn about the data changing via the
 	 * webhook path.
 	 */
-	(event: "debugDataWritten", listener: (data: ITaskData) => void);
+	(event: "debugDataWritten", listener: (data: ITaskData, externalTaskListId: string) => void);
 }
 
 /**
@@ -106,7 +106,7 @@ export class ExternalDataSource extends TypedEventEmitter<IExternalDataSourceEve
 		this.data[externalTaskListId] = data;
 
 		// Emit for debug views to update
-		this.emit("debugDataWritten", this.data);
+		this.emit("debugDataWritten", externalTaskListId, data);
 		return new Response(undefined, {
 			status: 200,
 			statusText: "OK",

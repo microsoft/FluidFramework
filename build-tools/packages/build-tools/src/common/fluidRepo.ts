@@ -133,6 +133,7 @@ export type PreviousVersionStyle =
  */
 export interface PolicyConfig {
 	additionalLockfilePaths?: string[];
+	pnpmSinglePackageWorkspace?: string[];
 	dependencies?: {
 		requireTilde?: string[];
 	};
