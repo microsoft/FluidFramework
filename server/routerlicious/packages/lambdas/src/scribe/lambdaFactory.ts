@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
 	ControlMessageType,
-    ICheckpoint,
+	ICheckpoint,
 	ICollection,
 	IContext,
 	IControlMessage,
@@ -64,7 +64,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly documentCollection: ICollection<IDocument>,
-        private readonly localCheckpointCollection: ICollection<ICheckpoint>,
+		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
 		private readonly messageCollection: ICollection<ISequencedOperationMessage>,
 		private readonly producer: IProducer,
 		private readonly deltaManager: IDeltaService,
@@ -72,7 +72,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly getDeltasViaAlfred: boolean,
-        private readonly localCheckpointEnabled: boolean,
+		private readonly localCheckpointEnabled: boolean,
 	) {
 		super();
 	}
@@ -101,7 +101,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			this.serviceConfiguration,
 		);
 
-        const lumberProperties = getLumberBaseProperties(tenantId, documentId);
+		const lumberProperties = getLumberBaseProperties(tenantId, documentId);
 
 		try {
 			document = await this.documentCollection.findOne({ documentId, tenantId });
@@ -150,71 +150,82 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			throw error;
 		}
 
+		if (document.scribe === undefined || document.scribe === null) {
+			// Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
+			// both to be safe. Empty sring denotes a cache that was cleared due to a service summary
+			const message = "New document. Setting empty scribe checkpoint";
+			context.log?.info(message, { messageMetaData });
+			Lumberjack.info(message, lumberProperties);
+			lastCheckpoint = DefaultScribe;
+		} else if (document.scribe === "") {
+			const message = "Existing document. Fetching checkpoint from summary";
+			context.log?.info(message, { messageMetaData });
+			Lumberjack.info(message, lumberProperties);
+			if (!latestSummary.fromSummary) {
+				context.log?.error(`Summary can't be fetched`, { messageMetaData });
+				Lumberjack.error(`Summary can't be fetched`, lumberProperties);
+				lastCheckpoint = DefaultScribe;
+			} else {
+				lastCheckpoint = JSON.parse(latestSummary.scribe);
+				opMessages = latestSummary.messages;
+				// Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
+				// Currently the lambda checkpoints only after updating the logOffset so setting this to lower
+				// is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
+				// the sequence number is 'n' rather than '0'.
+				lastCheckpoint.logOffset = -1;
+				const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
+				context.log?.info(checkpointMessage, { messageMetaData });
+				Lumberjack.info(checkpointMessage, lumberProperties);
+			}
+		} else {
+			let checkpoint;
+			let isLocalCheckpoint = false;
 
+			if (
+				this.localCheckpointEnabled &&
+				(this.localCheckpointCollection !== undefined ||
+					this.localCheckpointCollection !== null)
+			) {
+				// Search local database for checkpoint
+				Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
+				checkpoint = await this.localCheckpointCollection
+					.findOne({ documentId, tenantId })
+					.catch((error) => {
+						Lumberjack.error(
+							`Error retrieving checkpoint from local DB.`,
+							lumberProperties,
+							error,
+						);
+					});
 
-        if (document.scribe === undefined || document.scribe === null) {
-            // Restore scribe state if not present in the cache. Mongodb casts undefined as null so we are checking
-        // both to be safe. Empty sring denotes a cache that was cleared due to a service summary
-            const message = "New document. Setting empty scribe checkpoint";
-            context.log?.info(message, { messageMetaData });
-            Lumberjack.info(message, lumberProperties);
-            lastCheckpoint = DefaultScribe;
-        } else if (document.scribe === "") {
-            const message = "Existing document. Fetching checkpoint from summary";
-            context.log?.info(message, { messageMetaData });
-            Lumberjack.info(message, lumberProperties);
-            if (!latestSummary.fromSummary) {
-                context.log?.error(`Summary can't be fetched`, { messageMetaData });
-                Lumberjack.error(`Summary can't be fetched`, lumberProperties);
-                lastCheckpoint = DefaultScribe;
-            } else {
-                lastCheckpoint = JSON.parse(latestSummary.scribe);
-                opMessages = latestSummary.messages;
-                // Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
-                // Currently the lambda checkpoints only after updating the logOffset so setting this to lower
-                // is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
-                // the sequence number is 'n' rather than '0'.
-                lastCheckpoint.logOffset = -1;
-                const checkpointMessage = `Restoring checkpoint from latest summary. Seq number: ${lastCheckpoint.sequenceNumber}`;
-                context.log?.info(checkpointMessage, { messageMetaData });
-                Lumberjack.info(checkpointMessage, lumberProperties);
-            }
-        } else {
-            let checkpoint;
-            let isLocalCheckpoint = false;
+				if (checkpoint?.scribe) {
+					lastCheckpoint = JSON.parse(checkpoint.scribe);
+					isLocalCheckpoint = true;
+				} else {
+					lastCheckpoint = JSON.parse(document.scribe);
+				}
+			} else {
+				if (this.localCheckpointEnabled && !this.localCheckpointCollection) {
+					Lumberjack.info(
+						`Unable to find local checkpoint collection. Using global collection.`,
+						lumberProperties,
+					);
+				}
+				lastCheckpoint = JSON.parse(document.scribe);
+			}
 
-            if(this.localCheckpointEnabled && (this.localCheckpointCollection !== undefined || this.localCheckpointCollection !== null)) {
-                // Search local database for checkpoint
-                Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
-                checkpoint = await this.localCheckpointCollection.findOne( {documentId, tenantId }).catch((error) => {
-                    Lumberjack.error(`Error retrieving checkpoint from local DB.`, lumberProperties, error);
-                });
-
-                if(checkpoint?.scribe) {
-                    lastCheckpoint = JSON.parse(checkpoint.scribe);
-                    isLocalCheckpoint = true;
-                } else {
-                    lastCheckpoint = JSON.parse(document.scribe);
-                }
-            } else {
-                if(this.localCheckpointEnabled && !this.localCheckpointCollection) {
-                    Lumberjack.info(`Unable to find local checkpoint collection. Using global collection.`, lumberProperties);
-                }
-                lastCheckpoint = JSON.parse(document.scribe);
-            }
-
-            const lumberjackProperties = {
-                ...getLumberBaseProperties(documentId, tenantId),
-                lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
-                logOffset: lastCheckpoint.logOffset,
-                LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
-                retrievedFromLocalDB: isLocalCheckpoint
-            }
+			const lumberjackProperties = {
+				...getLumberBaseProperties(documentId, tenantId),
+				lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
+				logOffset: lastCheckpoint.logOffset,
+				LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
+				retrievedFromLocalDB: isLocalCheckpoint,
+			};
 
 			Lumberjack.info("Restoring checkpoint from db", lumberjackProperties);
 
-            opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
-        }
+			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
+		}
 
 		// Filter and keep ops after protocol state
 		const opsSinceLastSummary = opMessages.filter(
@@ -264,11 +275,12 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			tenantId,
 			documentId,
 			this.documentCollection,
-            this.localCheckpointCollection,
+			this.localCheckpointCollection,
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,
-            this.localCheckpointEnabled);
+			this.localCheckpointEnabled,
+		);
 
 		const pendingMessageReader = new PendingMessageReader(
 			tenantId,
@@ -310,18 +322,29 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		return scribeLambda;
 	}
 
-    private async getOpMessages(documentId: string, tenantId: string, lastCheckpoint: IScribe): Promise<ISequencedDocumentMessage[]>{
-        let opMessages: ISequencedDocumentMessage[] = [];
-        if (!this.getDeltasViaAlfred) {
-            // Fetch pending ops from scribeDeltas collection
-            const dbMessages =
-                await this.messageCollection.find({ documentId, tenantId }, { "operation.sequenceNumber": 1 });
-            opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
-        } else if (lastCheckpoint.logOffset !== -1) {
-            opMessages = await this.deltaManager.getDeltas("", tenantId, documentId, lastCheckpoint.protocolState.sequenceNumber);
-        }
-        return opMessages;
-    }
+	private async getOpMessages(
+		documentId: string,
+		tenantId: string,
+		lastCheckpoint: IScribe,
+	): Promise<ISequencedDocumentMessage[]> {
+		let opMessages: ISequencedDocumentMessage[] = [];
+		if (!this.getDeltasViaAlfred) {
+			// Fetch pending ops from scribeDeltas collection
+			const dbMessages = await this.messageCollection.find(
+				{ documentId, tenantId },
+				{ "operation.sequenceNumber": 1 },
+			);
+			opMessages = dbMessages.map((dbMessage) => dbMessage.operation);
+		} else if (lastCheckpoint.logOffset !== -1) {
+			opMessages = await this.deltaManager.getDeltas(
+				"",
+				tenantId,
+				documentId,
+				lastCheckpoint.protocolState.sequenceNumber,
+			);
+		}
+		return opMessages;
+	}
 
 	public async dispose(): Promise<void> {
 		await this.mongoManager.close();

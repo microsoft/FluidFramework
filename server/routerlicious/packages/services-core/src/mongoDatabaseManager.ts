@@ -19,7 +19,7 @@ export class MongoDatabaseManager implements IDatabaseManager {
 		private readonly globalDbMongoManager: MongoManager,
 		private readonly nodeCollectionName: string,
 		private readonly documentsCollectionName: string,
-        private readonly checkpointsCollectionName: string,
+		private readonly checkpointsCollectionName: string,
 		private readonly deltasCollectionName: string,
 		private readonly scribeDeltasCollectionName: string,
 	) {}
@@ -32,9 +32,9 @@ export class MongoDatabaseManager implements IDatabaseManager {
 		return this.getCollection<IDocument>(this.documentsCollectionName);
 	}
 
-    public async getCheckpointCollection(): Promise<ICollection<ICheckpoint>> {
-        return this.getCollection<ICheckpoint>(this.checkpointsCollectionName);
-    }
+	public async getCheckpointCollection(): Promise<ICollection<ICheckpoint>> {
+		return this.getCollection<ICheckpoint>(this.checkpointsCollectionName);
+	}
 
 	public async getDeltaCollection(
 		tenantId: string,

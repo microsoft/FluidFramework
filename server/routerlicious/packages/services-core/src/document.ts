@@ -147,14 +147,14 @@ export interface IDocument {
 	scheduledDeletionTime?: string;
 }
 
-export interface ICheckpoint{
-    _id: string;
+export interface ICheckpoint {
+	_id: string;
 
-    documentId: string;
+	documentId: string;
 
-    tenantId: string;
+	tenantId: string;
 
-    scribe: string;
+	scribe: string;
 
-    deli: string;
+	deli: string;
 }

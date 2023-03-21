@@ -8,7 +8,7 @@ import {
 	ICollection,
 	IContext,
 	IDocument,
-    ICheckpoint,
+	ICheckpoint,
 	isRetryEnabled,
 	IScribe,
 	ISequencedOperationMessage,
@@ -28,40 +28,59 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		private readonly documentCollection: ICollection<IDocument>,
-        private readonly localCheckpointCollection: ICollection<ICheckpoint>,
+		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
-        private readonly localCheckpointEnabled: boolean
+		private readonly localCheckpointEnabled: boolean,
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 	}
 
-    /**
-     * Writes the checkpoint information to MongoDB
-     */
-    public async write(
-        checkpoint: IScribe,
-        protocolHead: number,
-        pending: ISequencedOperationMessage[],
-        noActiveClients: boolean) {
-        if (this.getDeltasViaAlfred) {
-            if (pending.length > 0) {
-                // Verify that the last pending op has been persisted to op storage
-                // If it is, we can checkpoint
-                const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;
-                const lastDelta = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
+	/**
+	 * Writes the checkpoint information to MongoDB
+	 */
+	public async write(
+		checkpoint: IScribe,
+		protocolHead: number,
+		pending: ISequencedOperationMessage[],
+		noActiveClients: boolean,
+	) {
+		if (this.getDeltasViaAlfred) {
+			if (pending.length > 0) {
+				// Verify that the last pending op has been persisted to op storage
+				// If it is, we can checkpoint
+				const expectedSequenceNumber = pending[pending.length - 1].operation.sequenceNumber;
+				const lastDelta = await this.deltaService.getDeltas(
+					"",
+					this.tenantId,
+					this.documentId,
+					expectedSequenceNumber - 1,
+					expectedSequenceNumber + 1,
+				);
 
-                // If we don't get the expected delta, retry after a delay
-                if (lastDelta.length === 0 || lastDelta[0].sequenceNumber < expectedSequenceNumber) {
-                    const lumberjackProperties = {
-                        ...getLumberBaseProperties(this.documentId, this.tenantId),
-                        expectedSequenceNumber,
-                        lastDelta: lastDelta.length > 0 ? lastDelta[0].sequenceNumber: -1
-                    }
-                    Lumberjack.info(`Pending ops were not been persisted to op storage. Retrying after delay`, lumberjackProperties);
-                    await delay(1500);
-                    const lastDelta1 = await this.deltaService.getDeltas("", this.tenantId, this.documentId, expectedSequenceNumber-1, expectedSequenceNumber + 1);
+				// If we don't get the expected delta, retry after a delay
+				if (
+					lastDelta.length === 0 ||
+					lastDelta[0].sequenceNumber < expectedSequenceNumber
+				) {
+					const lumberjackProperties = {
+						...getLumberBaseProperties(this.documentId, this.tenantId),
+						expectedSequenceNumber,
+						lastDelta: lastDelta.length > 0 ? lastDelta[0].sequenceNumber : -1,
+					};
+					Lumberjack.info(
+						`Pending ops were not been persisted to op storage. Retrying after delay`,
+						lumberjackProperties,
+					);
+					await delay(1500);
+					const lastDelta1 = await this.deltaService.getDeltas(
+						"",
+						this.tenantId,
+						this.documentId,
+						expectedSequenceNumber - 1,
+						expectedSequenceNumber + 1,
+					);
 
 					if (
 						lastDelta1.length === 0 ||
@@ -121,57 +140,86 @@ export class CheckpointManager implements ICheckpointManager {
 		}
 	}
 
-    private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
-        const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
+	private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
+		const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 
-        if(this.localCheckpointEnabled) {
-            if (this.localCheckpointCollection !== null && this.localCheckpointCollection !== undefined) {
-                if(!noActiveClients) {
-                    // If there are active clients, we write to the local collection
-                    Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
-                    // Use upsert in case document does not exist in the local database
-                    await this.writeScribeCheckpointToCollection(checkpoint, true);
-                } else {
-                    // No active clients, delete from local collection, write to global collection
-                    Lumberjack.info(`Removing checkpoint data from the local database. No active clients.`, lumberProperties);
-                    await Promise.all([
-                        this.localCheckpointCollection.deleteOne({
-                            documentId: this.documentId,
-                            tenantId: this.tenantId,
-                        }).catch((error) => {
-                            Lumberjack.error(`Error removing checkpoint data from the local database.`, lumberProperties, error);
-                        }),
-                        await this.writeScribeCheckpointToCollection(checkpoint, false)
-                    ]);
-                }
-            } else {
-                Lumberjack.info(`No local collection found. Writing checkpoint to global database.`, lumberProperties);
-                await this.writeScribeCheckpointToCollection(checkpoint, false);
-            }
-        } else {
-            Lumberjack.info(`Local checkpoints disabled. Writing checkpoint to global database.`);
-            await this.writeScribeCheckpointToCollection(checkpoint, false);
-        }
-    }
+		if (this.localCheckpointEnabled) {
+			if (
+				this.localCheckpointCollection !== null &&
+				this.localCheckpointCollection !== undefined
+			) {
+				if (!noActiveClients) {
+					// If there are active clients, we write to the local collection
+					Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
+					// Use upsert in case document does not exist in the local database
+					await this.writeScribeCheckpointToCollection(checkpoint, true);
+				} else {
+					// No active clients, delete from local collection, write to global collection
+					Lumberjack.info(
+						`Removing checkpoint data from the local database. No active clients.`,
+						lumberProperties,
+					);
+					await Promise.all([
+						this.localCheckpointCollection
+							.deleteOne({
+								documentId: this.documentId,
+								tenantId: this.tenantId,
+							})
+							.catch((error) => {
+								Lumberjack.error(
+									`Error removing checkpoint data from the local database.`,
+									lumberProperties,
+									error,
+								);
+							}),
+						await this.writeScribeCheckpointToCollection(checkpoint, false),
+					]);
+				}
+			} else {
+				Lumberjack.info(
+					`No local collection found. Writing checkpoint to global database.`,
+					lumberProperties,
+				);
+				await this.writeScribeCheckpointToCollection(checkpoint, false);
+			}
+		} else {
+			Lumberjack.info(`Local checkpoints disabled. Writing checkpoint to global database.`);
+			await this.writeScribeCheckpointToCollection(checkpoint, false);
+		}
+	}
 
-    private async writeScribeCheckpointToCollection(checkpoint: IScribe, isLocal: boolean = false) {
-        const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
-        const checkpointFilter = {
-            documentId: this.documentId,
-            tenantId: this.tenantId,
-        }
-        const checkpointData = {
-            // MongoDB is particular about the format of stored JSON data. For this reason we store stringified
-            // given some data is user generated.
-            scribe: JSON.stringify(checkpoint),
-        }
+	private async writeScribeCheckpointToCollection(checkpoint: IScribe, isLocal: boolean = false) {
+		const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
+		const checkpointFilter = {
+			documentId: this.documentId,
+			tenantId: this.tenantId,
+		};
+		const checkpointData = {
+			// MongoDB is particular about the format of stored JSON data. For this reason we store stringified
+			// given some data is user generated.
+			scribe: JSON.stringify(checkpoint),
+		};
 
-        await (isLocal ? this.localCheckpointCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
-                Lumberjack.error(`Error writing checkpoint to local database`, lumberProperties, error);
-            }) : this.documentCollection.upsert(checkpointFilter, checkpointData, null).catch((error) => {
-                Lumberjack.error(`Error removing checkpoint data from the global database.`, lumberProperties, error);
-            }));
-    }
+		await (isLocal
+			? this.localCheckpointCollection
+					.upsert(checkpointFilter, checkpointData, null)
+					.catch((error) => {
+						Lumberjack.error(
+							`Error writing checkpoint to local database`,
+							lumberProperties,
+							error,
+						);
+					})
+			: this.documentCollection
+					.upsert(checkpointFilter, checkpointData, null)
+					.catch((error) => {
+						Lumberjack.error(
+							`Error removing checkpoint data from the global database.`,
+							lumberProperties,
+							error,
+						);
+					}));
+	}
 
 	/**
 	 * Removes the checkpoint information from MongoDB

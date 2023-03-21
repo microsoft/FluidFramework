@@ -9,7 +9,7 @@ import { GitManager } from "@fluidframework/server-services-client";
 import {
 	DefaultServiceConfiguration,
 	ICheckpoint,
-    ICollection,
+	ICollection,
 	IDocument,
 	IProducer,
 	ITenantManager,
@@ -38,9 +38,9 @@ describe("Routerlicious", () => {
 			const testDocumentId = "test";
 
 			let testMongoManager: MongoManager;
-            let testLocalMongoManager: MongoManager;
+			let testLocalMongoManager: MongoManager;
 			let testDocumentCollection: ICollection<IDocument>;
-            let testCheckpointCollection: ICollection<ICheckpoint>;
+			let testCheckpointCollection: ICollection<ICheckpoint>;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -110,7 +110,7 @@ describe("Routerlicious", () => {
 				let factory = new ScribeLambdaFactory(
 					testMongoManager,
 					testDocumentCollection,
-                    testCheckpointCollection,
+					testCheckpointCollection,
 					testMessageCollection,
 					testProducer,
 					testDeltaManager,
@@ -118,7 +118,7 @@ describe("Routerlicious", () => {
 					DefaultServiceConfiguration,
 					false,
 					false,
-                    false,
+					false,
 				);
 
 				testContext = new TestContext();

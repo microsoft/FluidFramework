@@ -21,11 +21,11 @@ export interface IDatabaseManager {
 	 */
 	getDocumentCollection(): Promise<ICollection<IDocument>>;
 
-    /**
-     * Retrieves the checkpoints collection
-     */
+	/**
+	 * Retrieves the checkpoints collection
+	 */
 
-    getCheckpointCollection(): Promise<ICollection<ICheckpoint>>;
+	getCheckpointCollection(): Promise<ICollection<ICheckpoint>>;
 
 	/**
 	 * Retrieves the delta collection

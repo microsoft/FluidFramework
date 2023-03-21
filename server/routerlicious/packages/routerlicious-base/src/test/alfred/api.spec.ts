@@ -85,7 +85,7 @@ describe("Routerlicious", () => {
 				defaultMongoManager,
 				nodeCollectionName,
 				documentsCollectionName,
-                checkpointsCollectionName,
+				checkpointsCollectionName,
 				deltasCollectionName,
 				rawDeltasCollectionName,
 			);

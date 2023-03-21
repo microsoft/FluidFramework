@@ -19,7 +19,8 @@ export class CheckpointContext {
 		private readonly id: string,
 		private readonly checkpointManager: IDeliCheckpointManager,
 		private readonly context: IContext,
-        private readonly localCheckpointEnabled: boolean) {}
+		private readonly localCheckpointEnabled: boolean,
+	) {}
 
 	/**
 	 * Checkpoints to the database & kafka
@@ -110,15 +111,20 @@ export class CheckpointContext {
 
 		let updateP: Promise<void>;
 
-        // determine if checkpoint is local
-        const isLocal = (this.localCheckpointEnabled && (checkpoint.reason !== CheckpointReason.NoClients))
+		// determine if checkpoint is local
+		const isLocal =
+			this.localCheckpointEnabled && checkpoint.reason !== CheckpointReason.NoClients;
 
 		if (checkpoint.clear) {
 			updateP = this.checkpointManager.deleteCheckpoint(checkpoint, isLocal);
 		} else {
 			// clone the checkpoint
 			const deliCheckpoint: IDeliState = { ...checkpoint.deliState };
-			updateP = this.checkpointManager.writeCheckpoint(deliCheckpoint, isLocal, checkpoint.reason);
+			updateP = this.checkpointManager.writeCheckpoint(
+				deliCheckpoint,
+				isLocal,
+				checkpoint.reason,
+			);
 		}
 
 		// Retry the checkpoint on error

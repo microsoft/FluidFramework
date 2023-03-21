@@ -187,7 +187,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Database connection for operations db
 		const operationsDbMongoManager = new core.MongoManager(factory);
 		const documentsCollectionName = config.get("mongo:collectionNames:documents");
-        const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
+		const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 
 		// Create the index on the documents collection
 		const dbManager = globalDbEnabled ? globalDbMongoManager : operationsDbMongoManager;
@@ -321,7 +321,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			globalDbMongoManager,
 			nodeCollectionName,
 			documentsCollectionName,
-            checkpointsCollectionName,
+			checkpointsCollectionName,
 			deltasCollectionName,
 			scribeCollectionName,
 		);

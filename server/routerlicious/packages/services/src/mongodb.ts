@@ -27,7 +27,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		public readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) { }
+	) {}
 
 	public async aggregate(pipeline: any, options?: any): Promise<AggregationCursor<T>> {
 		const req = async () =>
@@ -144,8 +144,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
-			};
-		}
+			}
+		};
 		await this.requestWithRetry(
 			req, // request
 			"MongoCollection.insertMany", // callerName
@@ -330,7 +330,7 @@ export class MongoDb implements core.IDb {
 		private readonly retryEnabled = false,
 		private readonly telemetryEnabled = false,
 		private readonly mongoErrorRetryAnalyzer: MongoErrorRetryAnalyzer,
-	) { }
+	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public close(): Promise<void> {

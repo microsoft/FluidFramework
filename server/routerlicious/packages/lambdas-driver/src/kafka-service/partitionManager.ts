@@ -59,15 +59,14 @@ export class PartitionManager extends EventEmitter {
 				this.emit("error", error, errorData);
 			});
 
-        this.consumer.on("checkpoint_success", (partitionId, queuedMessage) => {
-            Lumberjack.info(`Kafka checkpoint successful`, {
-                partitionId,
-                msgOffset: queuedMessage.offset,
-                topic: queuedMessage.topic,
-                msgPartition: queuedMessage.partition,
-            });
-        });
-
+			this.consumer.on("checkpoint_success", (partitionId, queuedMessage) => {
+				Lumberjack.info(`Kafka checkpoint successful`, {
+					partitionId,
+					msgOffset: queuedMessage.offset,
+					topic: queuedMessage.topic,
+					msgPartition: queuedMessage.partition,
+				});
+			});
 		}
 	}
 

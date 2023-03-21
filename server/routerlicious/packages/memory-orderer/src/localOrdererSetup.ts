@@ -7,7 +7,7 @@ import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
 import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
 import { IGitManager } from "@fluidframework/server-services-client";
 import {
-    ICheckpoint,
+	ICheckpoint,
 	ICollection,
 	IDatabaseManager,
 	IDocument,
@@ -36,10 +36,10 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 	public documentCollectionP(): Promise<ICollection<IDocument>> {
 		return this.databaseManager.getDocumentCollection();
 	}
-    // eslint-disable-next-line @typescript-eslint/promise-function-async
-    public localCheckpointCollectionP(): Promise<ICollection<ICheckpoint>> {
-        return this.databaseManager.getCheckpointCollection();
-    }
+	// eslint-disable-next-line @typescript-eslint/promise-function-async
+	public localCheckpointCollectionP(): Promise<ICollection<ICheckpoint>> {
+		return this.databaseManager.getCheckpointCollection();
+	}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public deltaCollectionP(): Promise<ICollection<any>> {

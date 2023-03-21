@@ -79,7 +79,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				this.pendingMetric = Lumberjack.newLumberMetric(
 					LumberEventName.ScriptoriumProcessBatch,
 					{
-						timestampQueuedMessage: message.timestamp ? new Date(message.timestamp).toISOString() : null,
+						timestampQueuedMessage: message.timestamp
+							? new Date(message.timestamp).toISOString()
+							: null,
 						timestampReadyToProcess: new Date().toISOString(),
 						[QueuedMessageProperties.partition]: this.pendingOffset?.partition,
 						[QueuedMessageProperties.offsetStart]: this.pendingOffset?.offset,

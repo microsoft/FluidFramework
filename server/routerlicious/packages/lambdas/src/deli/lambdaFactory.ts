@@ -8,7 +8,7 @@ import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-    ICheckpoint,
+	ICheckpoint,
 	IClientManager,
 	ICollection,
 	IContext,
@@ -32,7 +32,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
-    BaseTelemetryProperties,
+	BaseTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
@@ -63,14 +63,15 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly collection: ICollection<IDocument>,
-        private readonly localCheckpointCollection: ICollection<ICheckpoint>,
+		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,
 		private readonly signalProducer: IProducer | undefined,
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
-        private readonly localCheckpointEnabled: boolean) {
+		private readonly localCheckpointEnabled: boolean,
+	) {
 		super();
 	}
 
@@ -183,49 +184,59 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			} else {
-                let checkpoint;
-                let isLocalCheckpoint = false;
-                const restoreFromCheckpointMetric = Lumberjack.newLumberMetric(LumberEventName.RestoreFromCheckpoint);
-                let checkpointSource = "defaultGlobalCollection";
+				let checkpoint;
+				let isLocalCheckpoint = false;
+				const restoreFromCheckpointMetric = Lumberjack.newLumberMetric(
+					LumberEventName.RestoreFromCheckpoint,
+				);
+				let checkpointSource = "defaultGlobalCollection";
 
-                if(this.localCheckpointEnabled && (this.localCheckpointCollection !== null && this.localCheckpointCollection !== undefined)){
-                    // Search local db for checkpoint
-                    checkpoint = await this.localCheckpointCollection.findOne(
-                        {
-                            _id: documentId,
-                            documentId,
-                            tenantId
-                        })
-                        .catch((error) => {
-                            Lumberjack.error(`Error retrieving local checkpoint`, getLumberBaseProperties(documentId, tenantId));
-                            checkpointSource = "notFoundInLocalCollection";
-                        })
+				if (
+					this.localCheckpointEnabled &&
+					this.localCheckpointCollection !== null &&
+					this.localCheckpointCollection !== undefined
+				) {
+					// Search local db for checkpoint
+					checkpoint = await this.localCheckpointCollection
+						.findOne({
+							_id: documentId,
+							documentId,
+							tenantId,
+						})
+						.catch((error) => {
+							Lumberjack.error(
+								`Error retrieving local checkpoint`,
+								getLumberBaseProperties(documentId, tenantId),
+							);
+							checkpointSource = "notFoundInLocalCollection";
+						});
 
-                    if(checkpoint?.deli){
-                        lastCheckpoint = JSON.parse(checkpoint.deli);
-                        checkpointSource = "foundInLocalCollection"
-                        isLocalCheckpoint = true;
-                    } else {
-                        lastCheckpoint = JSON.parse(document.deli);
-                    }
+					if (checkpoint?.deli) {
+						lastCheckpoint = JSON.parse(checkpoint.deli);
+						checkpointSource = "foundInLocalCollection";
+						isLocalCheckpoint = true;
+					} else {
+						lastCheckpoint = JSON.parse(document.deli);
+					}
+				} else {
+					lastCheckpoint = JSON.parse(document.deli);
+				}
 
-                } else {
-                    lastCheckpoint = JSON.parse(document.deli);
-                }
+				restoreFromCheckpointMetric.setProperties({
+					[BaseTelemetryProperties.tenantId]: tenantId,
+					[BaseTelemetryProperties.documentId]: documentId,
+					checkpointSource,
+					retrievedFromLocalDatabase: isLocalCheckpoint,
+				});
 
-                restoreFromCheckpointMetric.setProperties({
-                    [BaseTelemetryProperties.tenantId]: tenantId,
-                    [BaseTelemetryProperties.documentId]: documentId,
-                    checkpointSource,
-                    retrievedFromLocalDatabase: isLocalCheckpoint,
-                });
-
-                if(lastCheckpoint) {
-                    restoreFromCheckpointMetric.success(`Restored checkpoint from database.`);
-                } else {
-                    restoreFromCheckpointMetric.error(`Error restoring checkpoint from database. Last checkpoint not found.`);
-                }
-            }
+				if (lastCheckpoint) {
+					restoreFromCheckpointMetric.success(`Restored checkpoint from database.`);
+				} else {
+					restoreFromCheckpointMetric.error(
+						`Error restoring checkpoint from database. Last checkpoint not found.`,
+					);
+				}
+			}
 		}
 
 		// Add checkpointTimestamp as UTC now if checkpoint doesn't have a timestamp yet.
@@ -258,7 +269,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			tenantId,
 			documentId,
 			this.collection,
-		    this.localCheckpointCollection);
+			this.localCheckpointCollection,
+		);
 
 		// Should the lambda reaize that term has flipped to send a no-op message at the beginning?
 		const deliLambda = new DeliLambda(
@@ -275,7 +287,8 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			this.serviceConfiguration,
 			sessionMetric,
 			sessionStartMetric,
-            this.localCheckpointEnabled);
+			this.localCheckpointEnabled,
+		);
 
 		deliLambda.on("close", (closeType) => {
 			const handler = async () => {
