@@ -63,25 +63,25 @@ Once the changes are reconciled, the collaboration session can continue as expec
 
 #### Set up on client joining a collaboration session
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746194-59bcf018-a9e9-4381-80a9-4e4b50590317.png">
+<img width="80%" alt="Client calls Customer Service's /register-session-url endpoint with externalTaskListId and containerUrl" src="https://user-images.githubusercontent.com/6777404/226746194-59bcf018-a9e9-4381-80a9-4e4b50590317.png">
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746263-baea46a1-822a-4bda-838d-be1fae7387db.png">
+<img width="80%" alt="Customer Service creates a registry entry mapping externalTaskListId to containerUrl and calls External Server's /register-for-webhook endpoint for registering for changes in that externalTaskListId" src="https://user-images.githubusercontent.com/6777404/226746263-baea46a1-822a-4bda-838d-be1fae7387db.png">
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746310-d89db865-ab29-495a-97be-9cf59490e9be.png">
+<img width="80%" alt="Client calls External Server's /fetch-tasks endpoint" src="https://user-images.githubusercontent.com/6777404/226746310-d89db865-ab29-495a-97be-9cf59490e9be.png">
 
 #### Data changes on External Service
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746508-04ff2ba0-99a1-4115-8a33-d3ae63cefaf5.png">
+<img width="80%" alt="External Server calls Customer Service's /external-data-webhook endpoint with notification that externalTaskListId data has changed" src="https://user-images.githubusercontent.com/6777404/226746508-04ff2ba0-99a1-4115-8a33-d3ae63cefaf5.png">
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746590-f523ebcd-6527-442e-9e71-1493de54acf1.png">
+<img width="80%" alt="Customer Service looks up the externalTaskListId in its registry and finds a containerUrl subscribed for changes to it, so it calls FLuid Service's /broadcast-signal endpoint passing on the containerUrl" src="https://user-images.githubusercontent.com/6777404/226766084-28a44c45-38d2-4e6c-a665-50d8cd759ca1.png">
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226748490-9117040c-ed0f-43e3-9b29-01c639c57031.png">
+<img width="80%" alt="Fluid Service receives the /broadcast-signal event and containerUrl information and broadcasts a signal to the correct container which notifies the clients of changes upstream" src="https://user-images.githubusercontent.com/6777404/226748490-9117040c-ed0f-43e3-9b29-01c639c57031.png">
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746710-598986d9-0c2d-43f8-a93f-5f31581bc245.png">
+<img width="80%" alt="Optionally, if the data is not transmitted through the signal, the client can fetch the data directly from the External Server's /fetch-tasks endpoint" src="https://user-images.githubusercontent.com/6777404/226767551-7f70f9a2-3160-44f6-8f6a-a6d0ffc28367.png">
 
 #### Collaboration session ends
 
-<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226747205-91cc0d33-1734-4d51-86c0-f886d0cfef9f.png">
+<img width="80%" alt="At the end of the collaboration session the client can update the External Server of the final state by calling the External Server's /set-tasks endpoint" src="https://user-images.githubusercontent.com/6777404/226747205-91cc0d33-1734-4d51-86c0-f886d0cfef9f.png">
 
 ### Concepts of data in this repository
 
