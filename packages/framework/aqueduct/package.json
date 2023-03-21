@@ -105,6 +105,27 @@
 	},
 	"module:es5": "es5/index.js",
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedClassDeclaration_BaseContainerService": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_generateContainerServicesRequestHandler": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_ContainerServiceRegistryEntries": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_serviceRoutePathRoot": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedFunctionDeclaration_waitForAttach": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
