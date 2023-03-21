@@ -22,6 +22,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 [IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
 [LoaderHeader.cache deprecated]
 (#LoaderHeader.cache-deprecated)
+
 ## IResolvedUrl will be equivalent to IFluidResolvedUrl
 
 In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl are deprecated as they are not used.
@@ -29,6 +30,7 @@ This will make IResolvedUrl and IFluidResolvedUrl equivalent. Since all Resolved
 ensureFluidResolvedUrl will be deprecated and removed due to this.
 
 ## LoaderHeader.cache deprecated
+
 In @fluidframework/container-definitions, the enum `LoaderHeader` has property cache, is deprecated.
 Therefore, `ILoaderHeader` has property `[LoaderHeader.cache]` is also deprecated. They will both be removed in the next major release, as well as all caching functionality of containers.
 
