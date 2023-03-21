@@ -18,13 +18,13 @@
 	},
 	"scripts": {
 		"build": "npm run build:docs",
-		"build:docs": "node src/index.js --files README.md",
+		"build:docs": "node src/index.cjs --files README.md",
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check .",
 		"prettier:fix": "prettier --write .",
-		"test": "node src/index.js --files test/**/*.md"
+		"test": "node src/indexc.js --files test/**/*.md"
 	},
 	"dependencies": {
 		"@fluidframework/build-common": "^1.1.0",
