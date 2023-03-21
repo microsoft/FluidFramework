@@ -200,7 +200,7 @@ export interface ICreateInfo {
 	/**
 	 * clientids of the clients which created this sub directory.
 	 */
-	ccIds: string;
+	ccIds: string[];
 }
 
 /**
@@ -223,7 +223,11 @@ export interface IDirectoryDataObject {
 	subdirectories?: { [subdirName: string]: IDirectoryDataObject };
 
 	/**
-	 * Create info for the sub directory.
+	 * Create info for the sub directory. Since directories with same name can get deleted/created by multiple clients
+	 * asynchronously, this info helps us to determine whether the ops where for the current instance of sub directory
+	 * or not and whether to process them or not based on that. Summaries which were not produced which this change
+	 * will not have this info and in that case we can still run in eventual consistency issues but that is no worse
+	 * than the state before this change.
 	 */
 	ci?: ICreateInfo;
 }
@@ -652,7 +656,7 @@ export class SharedDirectory
 						newSubDir = new SubDirectory(
 							createInfo !== undefined ? createInfo.csn : 0,
 							createInfo !== undefined
-								? new Set<string>(JSON.parse(createInfo.ccIds))
+								? new Set<string>(createInfo.ccIds)
 								: new Set(),
 							this,
 							this.runtime,
@@ -943,7 +947,7 @@ export class SharedDirectory
 		while (stack.length > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const [currentSubDir, currentSubDirObject] = stack.pop()!;
-			currentSubDirObject.ci = currentSubDir.getSerializedCreateInfo();
+			currentSubDirObject.ci = currentSubDir.getSerializableCreateInfo();
 			for (const [key, value] of currentSubDir.getSerializedStorage(serializer)) {
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
@@ -1905,11 +1909,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 	}
 
-	public getSerializedCreateInfo() {
+	public getSerializableCreateInfo() {
 		this.throwIfDisposed();
 		const createInfo: ICreateInfo = {
 			csn: this.sequenceNumber,
-			ccIds: JSON.stringify(Array.from(this.clientIds)),
+			ccIds: Array.from(this.clientIds),
 		};
 		return createInfo;
 	}

@@ -448,7 +448,7 @@ describeFuzz("SharedDirectory fuzz testing", ({ testCount }) => {
 				return { containerRuntime, sharedDirectory };
 			});
 
-			// Remove the summarizer client so that it does not get chosen to process ops.
+			// Remove the summarizer client so that it does not get chosen to submit ops.
 			const summarizerClient = clients.pop();
 			assert(
 				summarizerClient !== undefined && clients.length === numClients - 1,
