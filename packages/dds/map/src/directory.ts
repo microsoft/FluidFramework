@@ -1007,6 +1007,10 @@ interface IClearLocalOpMetadata {
 interface ICreateSubDirLocalOpMetadata {
 	type: "createSubDir";
 	pendingMessageId: number;
+	/**
+	 * @deprecated - If the directory already exists, then op will not be submitted. Keeping
+	 * it for back compat. Will be removed in future.
+	 */
 	previouslyExisted: boolean;
 }
 
@@ -1045,8 +1049,7 @@ function isSubDirLocalOpMetadata(metadata: any): metadata is SubDirLocalOpMetada
 	return (
 		metadata !== undefined &&
 		typeof metadata.pendingMessageId === "number" &&
-		((metadata.type === "createSubDir" && typeof metadata.previouslyExisted === "boolean") ||
-			metadata.type === "deleteSubDir")
+		(metadata.type === "createSubDir" || metadata.type === "deleteSubDir")
 	);
 }
 
@@ -1057,7 +1060,7 @@ function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOp
 		(metadata.type === "edit" ||
 			metadata.type === "deleteSubDir" ||
 			(metadata.type === "clear" && typeof metadata.previousStorage === "object") ||
-			(metadata.type === "createSubDir" && typeof metadata.previouslyExisted === "boolean"))
+			metadata.type === "createSubDir")
 	);
 }
 
@@ -1254,7 +1257,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				subdirName,
 				type: "createSubDirectory",
 			};
-			this.submitCreateSubDirectoryMessage(op, !isNew);
+			this.submitCreateSubDirectoryMessage(op);
 		}
 
 		return subDir;
@@ -1818,11 +1821,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * Submit a create subdirectory operation.
 	 * @param op - The operation
-	 * @param prevExisted - Whether the subdirectory existed before the op
 	 */
 	private submitCreateSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
-		prevExisted: boolean,
 	): void {
 		this.throwIfDisposed();
 		const newMessageId = this.getSubDirMessageId(op);
@@ -1830,7 +1831,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 			pendingMessageId: newMessageId,
-			previouslyExisted: prevExisted,
+			previouslyExisted: false,
 		};
 		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
@@ -1883,7 +1884,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		if (localOpMetadata.type === "createSubDir") {
-			this.submitCreateSubDirectoryMessage(op, localOpMetadata.previouslyExisted);
+			this.submitCreateSubDirectoryMessage(op);
 		} else {
 			this.submitDeleteSubDirectoryMessage(op, localOpMetadata.subDirectory);
 		}
@@ -2007,9 +2008,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				localOpMetadata.pendingMessageId,
 			);
 		} else if (op.type === "createSubDirectory" && localOpMetadata.type === "createSubDir") {
-			if (!localOpMetadata.previouslyExisted) {
-				this.deleteSubDirectoryCore(op.subdirName as string, true);
-			}
+			this.deleteSubDirectoryCore(op.subdirName as string, true);
 
 			this.rollbackPendingMessageId(
 				this.pendingSubDirectories,
