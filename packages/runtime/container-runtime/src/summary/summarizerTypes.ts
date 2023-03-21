@@ -305,6 +305,9 @@ export interface ISummarizerEvents extends IEvent {
 }
 
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
+	/**
+	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
+	 */
 	readonly ISummarizer?: ISummarizer;
 
 	/*
