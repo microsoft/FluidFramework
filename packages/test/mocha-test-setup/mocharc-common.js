@@ -74,10 +74,9 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	}
 
 	if (process.env.FLUID_TEST_MULTIREPORT === "1") {
-		const packageJson = require(`${packageDir}/package.json`);
 		config["reporter"] = `mocha-multi-reporters`;
-
 		config["reporter-options"] = [`configFile=${path.join(__dirname, "test-config.json")}`];
+		console.log(`configFile=${path.join(__dirname, "test-config.json")}`);
 	}
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {
