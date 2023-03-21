@@ -21,6 +21,8 @@ pool:
 variables:
 - name: skipComponentGovernanceDetection
   value: true
+- name: pnpmStorePath
+  value: $(Pipeline.Workspace)/.pnpm-store
 
 steps:
 - task: UseNode@1
@@ -74,6 +76,5 @@ steps:
   displayName: Prune pnpm store
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       pnpm store prune
