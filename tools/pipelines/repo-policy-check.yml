@@ -21,24 +21,12 @@ pool:
 variables:
 - name: skipComponentGovernanceDetection
   value: true
-- name: pnpmStorePath
-  value: $(Pipeline.Workspace)/.pnpm-store
 
 steps:
 - task: UseNode@1
   displayName: Use Node 16.x
   inputs:
     version: 16.x
-
-- task: Cache@2
-  displayName: Cache pnpm store
-  inputs:
-    # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
-    # in the cache key
-    key: 'pnpm-store | "$(Agent.OS)" | pnpm-lock.yaml'
-    path: ${{ variables.pnpmStorePath }}
-    restoreKeys: |
-      pnpm-store | "$(Agent.OS)"
 
 - task: Bash@3
   displayName: Install root dependencies
@@ -64,17 +52,3 @@ steps:
   inputs:
     command: 'custom'
     customCommand: 'run layer-check'
-
-- task: Npm@1
-  displayName: npm run prettier:root
-  inputs:
-    command: 'custom'
-    customCommand: 'run prettier:root'
-
-# Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
-- task: Bash@3
-  displayName: Prune pnpm store
-  inputs:
-    targetType: 'inline'
-    script: |
-      pnpm store prune
