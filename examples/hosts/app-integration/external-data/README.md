@@ -49,7 +49,7 @@ The `broadcast-signal` endpoint is new and still under construction. We will upd
 
 1. POST `/broadcast-signal`. Required body parameters: `containerUrl` (string), `externalTaskListId` (string), `taskData`(ITaskData). On receiving this, the driver will broadcast a signal of `SignalType.RuntimeSignal` to the clients to alert them of an upstream change. This endpoint is called by the Customer Service to let the Fluid service know that there has been a change in the data. The body must contain the `conainerUrl` that is composed ot the `socketStreamUrl`, the `containerId` (sometimes known as the documentId), and the tenantId. In this way, it "echoes" the webhook from the External Data Service to the Customer Service. It is called by the Customer Service when it needs to notify the Fluid Clients that there has been a change to the data.
 
-This example uses the example tinylicious driver to stub out what changes will be necessary in the odsp-driver. The prototype of the full signal and driver flow can be seen in this [`dev/external-data-prototyping` branch to main comparison](https://github.com/microsoft/FluidFramework/compare/main...dev/external-data-prototyping).
+This example uses the tinylicious driver to stub out what changes will be necessary in the odsp-driver. The prototype of the full signal and driver flow can be seen in this [`dev/external-data-prototyping` branch to main comparison](https://github.com/microsoft/FluidFramework/compare/main...dev/external-data-prototyping).
 
 #### Fluid Client
 
