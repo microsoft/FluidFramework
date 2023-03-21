@@ -4,6 +4,8 @@
  */
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	FieldKinds,
 	singleTextCursor,
@@ -723,6 +725,82 @@ describe("SharedTree", () => {
 			};
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
+		});
+		it.only("rebases stashed ops with prior state present", async () => {
+			const provider = await TestTreeProvider.create(2);
+
+			insert(provider.trees[0], 0, "a");
+			await provider.ensureSynchronized();
+
+			const pausedContainer = provider.containers[0];
+			const url = await pausedContainer.getAbsoluteUrl("");
+			const pausedTree = provider.trees[0];
+			await provider.opProcessingController.pauseProcessing(pausedContainer);
+			insert(pausedTree, 1, "b");
+			insert(pausedTree, 2, "c");
+			const pendingOps = pausedContainer.closeAndGetPendingLocalState();
+			provider.opProcessingController.resumeProcessing();
+
+			const otherLoadedTree = provider.trees[1];
+			insert(otherLoadedTree, 0, "d");
+			await provider.ensureSynchronized();
+
+			const loader = provider.makeTestLoader();
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const loadedContainer = await loader.resolve({ url: url! }, pendingOps);
+			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			await waitForContainerConnection(loadedContainer, true);
+			await provider.ensureSynchronized();
+
+			validateRootField(tree, ["b", "c", "a", "d"]);
+			validateRootField(otherLoadedTree, ["b", "c", "a", "d"]);
+		});
+
+		it("rebases stashed delete over move", async () => {
+			const provider = await TestTreeProvider.create(2);
+
+			insert(provider.trees[0], 0, "a", "b");
+			await provider.ensureSynchronized();
+
+			const pausedContainer = provider.containers[0];
+			const url = await pausedContainer.getAbsoluteUrl("");
+			const pausedTree = provider.trees[0];
+			await provider.opProcessingController.pauseProcessing(pausedContainer);
+			// Delete b
+			runSynchronous(pausedTree, () => {
+				const field = pausedTree.editor.sequenceField(undefined, rootFieldKeySymbol);
+				field.delete(1, 1);
+			});
+
+			const pendingOps = pausedContainer.closeAndGetPendingLocalState();
+			provider.opProcessingController.resumeProcessing();
+
+			const otherLoadedTree = provider.trees[1];
+			// Move b before a
+			runSynchronous(otherLoadedTree, () => {
+				otherLoadedTree.editor.move(
+					undefined,
+					rootFieldKeySymbol,
+					1,
+					1,
+					undefined,
+					rootFieldKeySymbol,
+					0,
+				);
+			});
+			await provider.ensureSynchronized();
+
+			const loader = provider.makeTestLoader();
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const loadedContainer = await loader.resolve({ url: url! }, pendingOps);
+			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			await waitForContainerConnection(loadedContainer, true);
+			await provider.ensureSynchronized();
+
+			validateRootField(tree, ["b"]);
+			validateRootField(otherLoadedTree, ["b"]);
 		});
 	});
 

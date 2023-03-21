@@ -353,7 +353,24 @@ export class SharedTreeCore<
 	}
 
 	protected applyStashedOp(content: any): unknown {
-		throw new Error("Method not implemented.");
+		// throw new Error("Method not implemented.");\
+		// TODO: Will need to change changeset to following form
+		// {
+		// 	changes: [
+		// 		rootFieldKey: {
+		// 			fieldKind: Sequence,
+		// 			change: [
+		// 				{
+		// 					type: insert,
+		// 					content: [{type: testvalue.....}]
+		// 				}
+		// 			]
+		// 		}
+		// 	]
+		// }
+
+		this.editManager.addLocalChange(content.revision, content.changeset)
+		return {};
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
