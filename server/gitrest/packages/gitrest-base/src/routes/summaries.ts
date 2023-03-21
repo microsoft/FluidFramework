@@ -148,44 +148,46 @@ async function createSummary(
 
 	// Waiting to pre-compute and persist latest summary would slow down document creation,
 	// so skip this step if it is a new document.
-	if (!isNew && isContainerSummary(payload)) {
-		const latestFullSummary: IWholeFlatSummary | undefined = await wholeSummaryManager
-			.readSummary(writeSummaryResponse.id)
-			.catch((error) => {
-				// This read is for Historian caching purposes, so it should be ignored on failure.
-				Lumberjack.error(
-					"Failed to read latest summary after writing container summary",
-					lumberjackProperties,
-					error,
-				);
-				return undefined;
-			});
+	if (isContainerSummary(payload)) {
+		const latestFullSummary: IWholeFlatSummary | undefined = (
+			writeSummaryResponse as IWholeFlatSummary
+		).trees
+			? writeSummaryResponse
+			: await wholeSummaryManager.readSummary(writeSummaryResponse.id).catch((error) => {
+					// This read is for Historian caching purposes, so it should be ignored on failure.
+					Lumberjack.error(
+						"Failed to read latest summary after writing container summary",
+						lumberjackProperties,
+						error,
+					);
+					return undefined;
+			  });
 		if (latestFullSummary) {
 			if (persistLatestFullSummary) {
-				try {
-					// TODO: does this fail if file is open and still being written to from a previous request?
-					await persistLatestFullSummaryInStorage(
-						fileSystemManager,
-						getFullSummaryDirectory(
-							repoManager,
-							repoManagerParams.storageRoutingId.documentId,
-						),
-						latestFullSummary,
-						lumberjackProperties,
-					);
-				} catch (error) {
+				// Send latest full summary to storage for faster read access.
+				const persistP = persistLatestFullSummaryInStorage(
+					fileSystemManager,
+					getFullSummaryDirectory(
+						repoManager,
+						repoManagerParams.storageRoutingId.documentId,
+					),
+					latestFullSummary,
+					lumberjackProperties,
+				).catch((error) => {
+					// Persisting latest summary is an optimization, not a requirement, so do not throw on failure.
 					Lumberjack.error(
 						"Failed to persist latest full summary to storage during createSummary",
 						lumberjackProperties,
 						error,
 					);
-					// TODO: Find and add more information about this failure so that Scribe can retry as necessary.
-					throw new NetworkError(
-						500,
-						"Failed to persist latest full summary to storage during createSummary",
-					);
+				});
+				if (!isNew) {
+					// To avoid any possible race conditions when outside the critical path, we can await the persist operation.
+					// Chances for a race condition are slim and likely inconsequential, but better safe than sorry.
+					await persistP;
 				}
 			}
+			// Return latest full summary to Historian for caching.
 			return latestFullSummary;
 		}
 	}
