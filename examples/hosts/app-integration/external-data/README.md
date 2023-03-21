@@ -97,9 +97,7 @@ ITaskData - This is similar to Task except that it is the External Data Services
 
 ITaskListData - This is similar to TaskList except that it is the External Data Services model of the taskList.
 
-<!-- prettier-ignore-start -->
 SavedData - Data that comes in fresh from the external data source is first stored in a [SharedMap](https://fluidframework.com/docs/data-structures/map/) known as "SavedData".
-<!-- prettier-ignore-end -->
 
 DraftData - Local collaboration state between the Fluid clients is stored in a SharedMap known as "DraftData". This is known as draft data because we are treating the Fluid collaboration session as a drafting surface.
 
