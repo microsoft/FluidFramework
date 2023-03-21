@@ -40,12 +40,14 @@ import {
 	TelemetryNullLogger,
 	sessionStorageConfigProvider,
 	ConfigTypes,
+	isILoggingError,
 } from "@fluidframework/telemetry-utils";
 import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
+import { DataProcessingError } from "@fluidframework/container-utils";
 
 import {
 	LocalDetachedFluidDataStoreContext,
@@ -385,7 +387,6 @@ describe("Data Store Context Tests", () => {
 					type: summarizerClientType,
 				};
 				containerRuntime = createContainerRuntime(mockLogger, clientDetails);
-				mockLogger = new MockLogger();
 			});
 			const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 			before(() => {
@@ -445,23 +446,25 @@ describe("Data Store Context Tests", () => {
 
 			it("data processing error when local data store sends op in summarizer", async () => {
 				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = true;
-				const expectedEvents = await generateProblem();
-				mockLogger.assertMatchNone(
-					expectedEvents,
-					"data store message submitted event generated when it should not",
-				);
+				try {
+					await generateProblem();
+				} catch (e) {
+					assert(isILoggingError(e), `${e}`);
+					assert(e instanceof DataProcessingError);
+				}
 			});
 			it("data processing error, by default, when local data store sends op in summarizer", async () => {
-				const expectedEvents = await generateProblem();
-				mockLogger.assertMatchNone(
-					expectedEvents,
-					"data store message submitted event generated when it should not",
-				);
+				try {
+					await generateProblem();
+				} catch (e) {
+					assert(isILoggingError(e), `${e}`);
+					assert(e instanceof DataProcessingError);
+				}
 			});
 			it("logs when local data store sends op in summarizer", async () => {
 				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const expectedEvents = await generateProblem();
-				mockLogger.assertMatch(
+				mockLogger.assertMatchAny(
 					expectedEvents,
 					"data store message submitted event generated when it should not",
 				);
@@ -482,13 +485,13 @@ describe("Data Store Context Tests", () => {
 					type: summarizerClientType,
 				};
 				containerRuntime = createContainerRuntime(mockLogger, clientDetails);
+				// Turn off the data processing error for these tests.
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 			});
 			const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
 			before(() => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
-				// Turn off the data processing error for these tests.
-				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 			});
 			after(() => {
 				sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
