@@ -253,14 +253,12 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	});
 
 	it("Nested inserts composition", () => {
-		const insertA = tagChange(Change.insert(0, 2), tag3);
-		const insertB = tagChange(Change.insert(1, 1), tag4);
-		const inverseB = tagRollbackInverse(invert(insertB), tag1, insertB.revision);
-		const inverseA = tagRollbackInverse(invert(insertA), tag2, insertA.revision);
-		const inverseA2 = tagRollbackInverse(invert(inverseA), insertA.revision, inverseA.revision);
-		const inverseB2 = tagRollbackInverse(invert(inverseB), insertB.revision, inverseB.revision);
+		const insertA = tagChange(Change.insert(0, 2), tag1);
+		const insertB = tagChange(Change.insert(1, 1), tag2);
+		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
+		const inverseB = tagRollbackInverse(invert(insertB), tag4, insertB.revision);
 
-		const composed = compose([inverseB, inverseA, inverseA2, inverseB2]);
+		const composed = compose([inverseB, inverseA, insertA, insertB]);
 		assert.deepEqual(composed, []);
 	});
 
