@@ -421,7 +421,7 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
 
 // @public
 export interface ILoaderHeader {
-    // (undocumented)
+    // @deprecated (undocumented)
     [LoaderHeader.cache]: boolean;
     // (undocumented)
     [LoaderHeader.clientDetails]: IClientDetails;
