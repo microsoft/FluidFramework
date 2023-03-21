@@ -30,7 +30,7 @@ This repo contains a service that mocks the external "source of truth" data serv
 
 Find the details of the API in the [External Data Service README](./src/mock-external-data-service/README.md)
 
-### Customer Service**
+### Customer Service
 
 Next we need a customer service that functions as the intermediary between the External Data Service and the Fluid Service. This server is responsible for authenticating to the external service on the customer's behalf. It registers to the External Data Service webhooks and listens for incoming changes. It also acts as a translation layer, translating to and from the External Data Service expected format and the Fluid Service's expected format.
 
@@ -59,6 +59,39 @@ On receiving the signal, the clients (or elected leader client) can then send a 
 The client can then display the diff on the screen and the users can choose how to reconcile the changes.
 
 Once the changes are reconciled, the collaboration session can continue as expected, and when the collaboration session is ready to be closed, the clients can simply Save Changes to write back to the External Data Source by making a request to the External Data Server's POST `/set-tasks` endpoint.
+
+
+### Functional Flows
+
+#### Set up on client joining a collaboration session
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746194-59bcf018-a9e9-4381-80a9-4e4b50590317.png">
+
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746263-baea46a1-822a-4bda-838d-be1fae7387db.png">
+
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746310-d89db865-ab29-495a-97be-9cf59490e9be.png">
+
+
+#### Data changes on External Service
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746508-04ff2ba0-99a1-4115-8a33-d3ae63cefaf5.png">
+
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746590-f523ebcd-6527-442e-9e71-1493de54acf1.png">
+
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226748490-9117040c-ed0f-43e3-9b29-01c639c57031.png">
+
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746710-598986d9-0c2d-43f8-a93f-5f31581bc245.png">
+
+#### Collaboration session ends 
+
+<img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226747205-91cc0d33-1734-4d51-86c0-f886d0cfef9f.png">
+
+
 
 ### Concepts of data in this repository
 
