@@ -3,6 +3,7 @@
 This example demonstrates how data from an external data source (e.g. a work tracking system) might be integrated with Fluid to enable more-real-time collaboration. For example, to allow collaborators to see proposed changes updating live before committing them back to the database.
 
 Please note that the ideas explored here are experimental and under development. They are not yet recommended for broad use in production. When this changes, we will update the documents accordingly.
+
 ## Scenario
 
 This example demonstrates a scenario in which the "source of truth" of the customer data lives in a service that is external to the Fluid service. Customers can then:
@@ -58,38 +59,29 @@ The client can then display the diff on the screen and the users can choose how 
 
 Once the changes are reconciled, the collaboration session can continue as expected, and when the collaboration session is ready to be closed, the clients can simply Save Changes to write back to the External Data Source by making a request to the External Data Server's POST `/set-tasks` endpoint.
 
-
 ### Functional Flows
 
 #### Set up on client joining a collaboration session
 
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746194-59bcf018-a9e9-4381-80a9-4e4b50590317.png">
 
-
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746263-baea46a1-822a-4bda-838d-be1fae7387db.png">
 
-
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746310-d89db865-ab29-495a-97be-9cf59490e9be.png">
-
 
 #### Data changes on External Service
 
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746508-04ff2ba0-99a1-4115-8a33-d3ae63cefaf5.png">
 
-
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746590-f523ebcd-6527-442e-9e71-1493de54acf1.png">
-
 
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226748490-9117040c-ed0f-43e3-9b29-01c639c57031.png">
 
-
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226746710-598986d9-0c2d-43f8-a93f-5f31581bc245.png">
 
-#### Collaboration session ends 
+#### Collaboration session ends
 
 <img width="80%" alt="image" src="https://user-images.githubusercontent.com/6777404/226747205-91cc0d33-1734-4d51-86c0-f886d0cfef9f.png">
-
-
 
 ### Concepts of data in this repository
 
