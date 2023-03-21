@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-loader-utils",
-	"version": "2.0.0-internal.3.3.0",
+	"version": "2.0.0-internal.3.4.0",
 	"description": "Mocks and other test utilities for the Fluid Framework Loader",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -34,20 +34,20 @@
 	"dependencies": {
 		"@fluidframework/common-definitions": "^0.20.1",
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/driver-definitions": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
-		"@fluidframework/driver-utils": ">=2.0.0-internal.3.3.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/driver-definitions": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
+		"@fluidframework/driver-utils": ">=2.0.0-internal.3.4.0 <2.0.0-internal.4.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.11.0-135362",
+		"@fluid-tools/build-cli": "^0.13.0-140685",
 		"@fluidframework/build-common": "^1.1.0",
+		"@fluidframework/build-tools": "^0.13.0-140685",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-loader-utils-previous": "npm:@fluidframework/test-loader-utils@2.0.0-internal.3.2.0",
-		"@rushstack/eslint-config": "^2.5.1",
-		"concurrently": "^6.2.0",
+		"concurrently": "^7.6.0",
 		"eslint": "~8.6.0",
 		"prettier": "~2.6.2",
-		"rimraf": "^2.6.2",
+		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {

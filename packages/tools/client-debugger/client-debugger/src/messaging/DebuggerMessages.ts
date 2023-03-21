@@ -4,6 +4,7 @@
  */
 
 import { ContainerStateMetadata } from "../ContainerMetadata";
+import { ConnectionStateChangeLogEntry } from "../Logs";
 import { IDebuggerMessage } from "./Messages";
 
 /**
@@ -27,6 +28,39 @@ export interface HasContainerId {
  * @public
  */
 export type GetContainerStateMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link ConnectContainerMessage}.
+ *
+ * @public
+ */
+export type ConnectContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link DisconnectContainerMessage}.
+ *
+ * @public
+ */
+export type DisconnectContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link CloseContainerMessage}.
+ *
+ * @public
+ */
+export type CloseContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link ContainerStateHistoryMessage}.
+ *
+ * @public
+ */
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+	/**
+	 * The Container's connection state history.
+	 */
+	history: ConnectionStateChangeLogEntry[];
+}
 
 /**
  * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
@@ -66,4 +100,41 @@ export interface ContainerStateChangeMessage
 	type: "CONTAINER_STATE_CHANGE";
 }
 
+/**
+ * Inbound event indicating Container connected.
+ *
+ * @public
+ */
+export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+	type: "CONNECT_CONTAINER";
+}
+
+/**
+ * Inbound event indicating Container disconnected.
+ *
+ * @public
+ */
+export interface DisconnectContainerMessage
+	extends IDebuggerMessage<DisconnectContainerMessageData> {
+	type: "DISCONNECT_CONTAINER";
+}
+
+/**
+ * Inbound event indicating Container closed.
+ *
+ * @public
+ */
+export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+	type: "CLOSE_CONTAINER";
+}
+
+/**
+ * Outbound event indicating Container state history.
+ *
+ * @public
+ */
+export interface ContainerStateHistoryMessage
+	extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+	type: "CONTAINER_STATE_HISTORY";
+}
 // #endregion

@@ -69,7 +69,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return this.events.on(eventName, listener);
 	}
 
-	clone(schema: StoredSchemaRepository<FullSchemaPolicy>, anchors: AnchorSet): ChunkedForest {
+	public clone(
+		schema: StoredSchemaRepository<FullSchemaPolicy>,
+		anchors: AnchorSet,
+	): ChunkedForest {
 		this.roots.referenceAdded();
 		return new ChunkedForest(this.roots, schema, anchors);
 	}
@@ -78,7 +81,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
-	applyDelta(delta: Delta.Root): void {
+	public applyDelta(delta: Delta.Root): void {
 		this.events.emit("beforeDelta", delta);
 		this.invalidateDependents();
 
@@ -237,7 +240,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		);
 	}
 
-	tryMoveCursorToNode(
+	public tryMoveCursorToNode(
 		destination: Anchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
@@ -249,7 +252,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	tryMoveCursorToField(
+	public tryMoveCursorToField(
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
@@ -275,7 +278,10 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 	 * This is NOT a relative move: current position is discarded.
 	 * Path must point to existing node.
 	 */
-	moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void {
+	private moveCursorToPath(
+		destination: UpPath | undefined,
+		cursorToMove: ITreeSubscriptionCursor,
+	): void {
 		assert(
 			cursorToMove instanceof Cursor,
 			0x53c /* ChunkedForest must only be given its own Cursor type */,

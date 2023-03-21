@@ -9,27 +9,26 @@ import { KafkaRunnerFactory } from "../../kafka-service/runnerFactory";
 import { TestPartitionLambdaFactory } from "./testPartitionLambdaFactory";
 
 describe("kafka-service", () => {
-    describe("KafkaRunnerFactory", () => {
-        let testFactory: KafkaRunnerFactory;
+	describe("KafkaRunnerFactory", () => {
+		let testFactory: KafkaRunnerFactory;
 
-        beforeEach(() => {
-            testFactory = new KafkaRunnerFactory();
-        });
+		beforeEach(() => {
+			testFactory = new KafkaRunnerFactory();
+		});
 
-        describe(".create", () => {
-            it("Should be able to create a runner", async () => {
-                const testKafka = new TestKafka();
-                const lambdaFactory = new TestPartitionLambdaFactory();
-                const consumer = testKafka.createConsumer();
+		describe(".create", () => {
+			it("Should be able to create a runner", async () => {
+				const testKafka = new TestKafka();
+				const lambdaFactory = new TestPartitionLambdaFactory();
+				const consumer = testKafka.createConsumer();
 
-                const runner = testFactory.create(
-                    {
-                        consumer,
-                        dispose: () => Promise.resolve(),
-                        lambdaFactory,
-                    });
-                assert.ok(runner);
-            });
-        });
-    });
+				const runner = testFactory.create({
+					consumer,
+					dispose: () => Promise.resolve(),
+					lambdaFactory,
+				});
+				assert.ok(runner);
+			});
+		});
+	});
 });

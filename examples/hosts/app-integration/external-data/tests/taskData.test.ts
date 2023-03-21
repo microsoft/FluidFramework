@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assertValidTaskData, TaskData } from "../src/model-interface";
+import { assertValidTaskData, ITaskData } from "../src/model-interface";
 
 /**
- * {@link TaskData} unit tests.
+ * {@link ITaskData} unit tests.
  */
-describe("TaskData", () => {
+describe("ITaskData", () => {
 	describe("assertValidTaskData", () => {
 		it("Parses valid task data", () => {
-			const input: TaskData = {
+			const input: ITaskData = {
 				42: {
 					name: "The meaning of life",
 					priority: 2,

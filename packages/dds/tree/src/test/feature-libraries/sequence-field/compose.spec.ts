@@ -4,17 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	RevisionTag,
-	makeAnonChange,
-	tagChange,
-	TaggedChange,
-	TreeSchemaIdentifier,
-} from "../../../core";
+import { RevisionTag, makeAnonChange, tagChange, TreeSchemaIdentifier } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { cases, ChangeMaker as Change, TestChangeset } from "./testEdits";
 import { compose, composeNoVerify, normalizeMoveIds, numberTag, shallowCompose } from "./utils";
 
@@ -438,10 +432,10 @@ describe("SequenceField - Compose", () => {
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected: SF.Changeset = [
-			{ type: "Insert", content: [{ type, value: 2 }] },
-			{ type: "Delete", count: 3 },
+			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }] },
+			{ type: "Delete", revision: tag1, count: 3 },
 		];
-		const actual = shallowCompose([makeAnonChange(deletion), makeAnonChange(insert)]);
+		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -625,7 +619,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag1, 0, 2),
+				content: fakeRepair(tag1, 1, 2),
 				count: 2,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -652,7 +646,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag1, 0, 1),
+				content: fakeRepair(tag1, 1, 1),
 				count: 1,
 				detachedBy: tag1,
 				detachIndex: 1,
@@ -660,7 +654,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag2, 2, 1),
+				content: fakeRepair(tag2, 1, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 1,
@@ -690,7 +684,7 @@ describe("SequenceField - Compose", () => {
 			},
 			{
 				type: "Revive",
-				content: fakeRepair(tag2, 2, 1),
+				content: fakeRepair(tag2, 0, 1),
 				count: 1,
 				detachedBy: tag2,
 				detachIndex: 0,
@@ -805,8 +799,3 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, expected);
 	});
 });
-function tagggedChange(
-	reviveA: SF.Changeset<never>,
-): TaggedChange<SF.Changeset<import("../../../feature-libraries").NodeChangeset>> {
-	throw new Error("Function not implemented.");
-}

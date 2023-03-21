@@ -76,8 +76,7 @@
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "^1.0.0",
-		"@microsoft/api-extractor": "^7.22.2",
-		"@rushstack/eslint-config": "^2.5.1",
+		"@microsoft/api-extractor": "^7.34.4",
 		"@types/compression": "^1.7.2",
 		"@types/cookie-parser": "^1.4.1",
 		"@types/cors": "^2.8.4",
@@ -89,17 +88,17 @@
 		"@types/mocha": "^9.1.1",
 		"@types/morgan": "^1.7.35",
 		"@types/nconf": "^0.10.0",
-		"@types/node": "^14.18.0",
+		"@types/node": "^14.18.38",
 		"@types/rimraf": "^3.0.0",
 		"@types/split": "^0.3.28",
 		"@types/uuid": "^8.3.1",
-		"concurrently": "^6.2.0",
+		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.6.0",
 		"forever": "^4.0.3",
-		"mocha": "^10.0.0",
+		"mocha": "^10.2.0",
 		"prettier": "~2.6.2",
-		"rimraf": "^2.6.2",
+		"rimraf": "^4.4.0",
 		"ts-node": "^8.6.2",
 		"typescript": "~4.5.5"
 	},
@@ -108,6 +107,7 @@
 	},
 	"pnpm": {
 		"overrides": {
+			"qs": "^6.11.0",
 			"socket.io-parser": "^4.2.1"
 		}
 	}

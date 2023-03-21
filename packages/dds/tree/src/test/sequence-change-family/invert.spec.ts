@@ -20,7 +20,7 @@ const type: TreeSchemaIdentifier = brand("Node");
 
 function invert(change: SequenceChangeset): SequenceChangeset {
 	deepFreeze(change);
-	return sequenceChangeRebaser.invert(makeAnonChange(change));
+	return sequenceChangeRebaser.invert(makeAnonChange(change), false);
 }
 
 describe("SequenceChangeFamily - Invert", () => {

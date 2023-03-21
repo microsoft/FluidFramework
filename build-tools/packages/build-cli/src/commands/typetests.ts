@@ -5,7 +5,7 @@
 import { Flags } from "@oclif/core";
 import sortPackageJson from "sort-package-json";
 
-import { PackageJson } from "@fluidframework/build-tools";
+import { PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
 import { readJsonSync, writeJsonSync } from "fs-extra";
 import path from "node:path";
 
@@ -182,17 +182,4 @@ function updateTypeTestConfiguration(pkgJson: PackageJson, options: TypeTestConf
 	if (options.resetBroken === true && pkgJson.typeValidation !== undefined) {
 		pkgJson.typeValidation.broken = {};
 	}
-}
-
-/**
- * Update package.json
- */
-function updatePackageJsonFile(
-	packageDir: string,
-	packageTransformer: (json: PackageJson) => void,
-): void {
-	const packagePath = path.join(packageDir, "package.json");
-	const pkgJson: PackageJson = readJsonSync(packagePath);
-	packageTransformer(pkgJson);
-	writeJsonSync(path.join(packagePath), sortPackageJson(pkgJson), { spaces: "\t" });
 }

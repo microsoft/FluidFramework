@@ -2544,7 +2544,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree, refreshLatestAck, summaryLogger } = options;
+		const { fullTree = false, refreshLatestAck, summaryLogger } = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -2639,7 +2639,7 @@ export class ContainerRuntime
 			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree ?? forcedFullTree,
+					fullTree: fullTree || forcedFullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
