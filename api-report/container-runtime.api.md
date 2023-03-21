@@ -456,7 +456,6 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
-    // (undocumented)
     readonly ISummarizer?: ISummarizer;
     // (undocumented)
     run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
