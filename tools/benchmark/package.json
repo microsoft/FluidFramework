@@ -42,8 +42,8 @@
 		"easy-table": "^1.1.1",
 		"mocha": "^10.0.0",
 		"mocha-json-output-reporter": "^2.0.1",
-        "moment": "^2.21.0",
-		"mocha-multi-reporters": "^1.5.1"
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
