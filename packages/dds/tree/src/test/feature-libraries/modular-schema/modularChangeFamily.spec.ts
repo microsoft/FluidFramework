@@ -743,12 +743,13 @@ describe("ModularChangeFamily", () => {
 			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
 			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
 			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
-			assert.deepEqual(revsInfos, [
-				{ tag: rev1 },
-				{ tag: rev2 },
-				{ tag: rev3, isRollback: true, intention: rev0 },
-				{ tag: rev4, isRollback: true },
-			]);
+			const expected: RevisionInfo[] = [
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev3, isRollback: true, intention: rev0 },
+				{ revision: rev4, isRollback: true },
+			];
+			assert.deepEqual(revsInfos, expected);
 			composeWasTested = true;
 			return [];
 		};
@@ -766,11 +767,12 @@ describe("ModularChangeFamily", () => {
 			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
 			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
 			assert.deepEqual(revsIndices, [0, 1, 2]);
-			assert.deepEqual(revsInfos, [
-				{ tag: rev1 },
-				{ tag: rev2 },
-				{ tag: rev4, isRollback: true },
-			]);
+			const expected: RevisionInfo[] = [
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev4, isRollback: true },
+			];
+			assert.deepEqual(revsInfos, expected);
 			rebaseWasTested = true;
 			return change;
 		};
@@ -830,15 +832,17 @@ describe("ModularChangeFamily", () => {
 			tagRollbackInverse(changeB, rev3, rev0),
 			makeAnonChange(changeC),
 		]);
-		assert.deepEqual(composed.revisions, [
-			{ tag: rev1 },
-			{ tag: rev2 },
-			{ tag: rev3, isRollback: true, intention: rev0 },
-			{ tag: rev4, isRollback: true },
-		]);
+		const expectedComposeInfo: RevisionInfo[] = [
+			{ revision: rev1 },
+			{ revision: rev2 },
+			{ revision: rev3, isRollback: true, intention: rev0 },
+			{ revision: rev4, isRollback: true },
+		];
+		assert.deepEqual(composed.revisions, expectedComposeInfo);
 		assert(composeWasTested);
 		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
-		assert.deepEqual(rebased.revisions, [{ tag: rev4, isRollback: true }]);
+		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, isRollback: true }];
+		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
 	});
 });
