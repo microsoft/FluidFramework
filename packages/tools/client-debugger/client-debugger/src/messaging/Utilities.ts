@@ -39,7 +39,7 @@ export function postMessageToWindow<TMessage extends IDebuggerMessage>(
  */
 export interface InboundHandlers {
 	/**
-	 * Mapping from {@link IDebuggerMessage."type"}s to a handler callback for that message type.
+	 * Mapping from {@link IBaseDebuggerMessage."type"}s to a handler callback for that message type.
 	 * @returns Whether or not the message was actually handled.
 	 */
 	[type: string]: (message: IDebuggerMessage) => boolean;

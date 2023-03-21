@@ -17,9 +17,8 @@ import {
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { RenderOptions } from "./RendererOptions";
-import { ContainerView, TelemetryView } from "./components";
+import { ContainerView, TelemetryView, MenuItem, MenuSection } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
-import { MenuItem, MenuSection } from "./Menu";
 import { useMessageRelay } from "./MessageRelayContext";
 
 const loggingContext = "INLINE(DebuggerPanel)";
@@ -54,7 +53,8 @@ export interface FluidClientDebuggersProps {
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
-	const [containers, setContainers] = React.useState<ContainerMetadata[]>([]);
+	// eslint-disable-next-line unicorn/no-useless-undefined
+	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>(undefined);
 	const [menuSelection, setMenuSelection] = React.useState<string>("");
 	const [containerId, setContainerId] = React.useState<string>("");
 
@@ -97,7 +97,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			break;
 		case "container":
 			// eslint-disable-next-line no-case-declarations
-			const container = containers.find((x) => x.id === containerId);
+			const container = containers?.find((x) => x.id === containerId);
 			innerView =
 				container === undefined ? (
 					<div>Could not find a debugger for that container.</div>
@@ -105,7 +105,6 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 					<ContainerView containerId={containerId} />
 				);
 			break;
-		// TODO: add the Telemetry view here, without ReactContext
 		default:
 			innerView = <div>Select an option from the menu</div>;
 			break;
@@ -164,7 +163,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 				<Stack.Item grow={1} styles={menuStyles}>
 					{/* TODO: button to refresh list of containers */}
 					<MenuSection header="Containers">
-						{containers.map((container) => (
+						{containers?.map((container) => (
 							<MenuItem
 								key={container.id}
 								text={container.nickname ?? container.id}

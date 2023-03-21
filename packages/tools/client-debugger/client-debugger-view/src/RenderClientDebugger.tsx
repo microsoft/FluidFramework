@@ -6,7 +6,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { FluidClientDebuggers } from "./Debugger";
-import { MessageRelay } from "./MessageRelay";
+import { WindowMessageRelay } from "./WindowMessageRelay";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
@@ -39,8 +39,8 @@ export async function renderClientDebuggerView(targetElement: HTMLElement): Prom
 }
 
 function RootView(): React.ReactElement {
-	const messageRelay = React.useMemo<MessageRelay>(
-		() => new MessageRelay("fluid-client-debugger-inline"),
+	const messageRelay = React.useMemo<WindowMessageRelay>(
+		() => new WindowMessageRelay("fluid-client-debugger-inline"),
 		[],
 	);
 	return (

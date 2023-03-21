@@ -21,6 +21,8 @@ export interface IMessageRelayEvents<TMessage extends IDebuggerMessage = IDebugg
 
 /**
  * Manages relaying messages between the consumer of this interface, and some external message sender/receiver.
+ *
+ * @internal
  */
 export interface IMessageRelay<
 	TSend extends IBaseDebuggerMessage = IBaseDebuggerMessage,
@@ -28,8 +30,6 @@ export interface IMessageRelay<
 > extends IEventProvider<IMessageRelayEvents<TReceive>> {
 	/**
 	 * Posts the provided message to external recipient.
-	 *
-	 * @remarks Must only be called when {@link IMessageRelay.connected} is `true`.
 	 */
 	postMessage: (message: TSend) => void;
 }

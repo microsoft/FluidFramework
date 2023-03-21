@@ -4,7 +4,13 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IBaseDebuggerMessage, IDebuggerMessage, IMessageRelay, IMessageRelayEvents, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import {
+	IBaseDebuggerMessage,
+	IDebuggerMessage,
+	IMessageRelay,
+	IMessageRelayEvents,
+	isDebuggerMessage,
+} from "@fluid-tools/client-debugger";
 
 import {
 	devToolsInitAcknowledgementType,
@@ -53,9 +59,13 @@ export class BackgroundConnection
 	 */
 	private readonly backgroundServiceConnection: TypedPortConnection;
 
-	public constructor(
-		private readonly messageSource: string
-	) {
+	/**
+	 * Creates an instance of {@link BackgroundConnection}.
+	 *
+	 * @param messageSource - All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
+	 * method will get this value written to their 'source' property.
+	 */
+	public constructor(private readonly messageSource: string) {
 		super();
 
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
@@ -90,8 +100,10 @@ export class BackgroundConnection
 	 * Post message to Background Script.
 	 */
 	public postMessage(message: IBaseDebuggerMessage): void {
-		const sourcedMessage: IDebuggerMessage = message as IDebuggerMessage;
-		sourcedMessage.source = this.messageSource;
+		const sourcedMessage: IDebuggerMessage = {
+			...message,
+			source: this.messageSource,
+		};
 		postMessageToPort(
 			sourcedMessage,
 			this.backgroundServiceConnection,

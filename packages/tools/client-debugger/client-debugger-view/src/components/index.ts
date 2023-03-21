@@ -13,6 +13,7 @@ export * from "./AudienceView";
 export * from "./ContainerView";
 export * from "./ContainerHistoryView";
 export * from "./ContainerSummaryView";
+export * from "./Menu";
 export * from "./TelemetryView";
 export * from "./Waiting";
 

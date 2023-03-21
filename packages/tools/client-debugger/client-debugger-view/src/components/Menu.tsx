@@ -8,16 +8,19 @@ import React from "react";
 /**
  * Props for {@link MenuSection}
  */
-export interface MenuSectionProps {
+export type MenuSectionProps = React.PropsWithChildren<{
+	/**
+	 * The text to display in header of the menu section.
+	 */
 	header: string;
-}
+}>;
 
 /**
  * Generic component for a section of the menu.
  *
  * @internal
  */
-export function MenuSection(props: React.PropsWithChildren<MenuSectionProps>): React.ReactElement {
+export function MenuSection(props: MenuSectionProps): React.ReactElement {
 	const { header, children } = props;
 
 	return (
@@ -32,7 +35,7 @@ export function MenuSection(props: React.PropsWithChildren<MenuSectionProps>): R
  * Props for {@link MenuItem}
  */
 export interface MenuItemProps {
-	onClick: React.MouseEventHandler<HTMLButtonElement>;
+	onClick: (event: unknown) => void;
 	text: string;
 }
 

@@ -186,10 +186,14 @@ export interface HasContainerId {
 }
 
 // @public
-export interface IDebuggerMessage<TData = unknown> {
+export interface IBaseDebuggerMessage<TData = unknown> {
     data: TData;
-    source: string;
     type: string;
+}
+
+// @public
+export interface IDebuggerMessage<TData = unknown> extends IBaseDebuggerMessage<TData> {
+    source: string;
 }
 
 // @internal
@@ -207,6 +211,16 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
 // @internal
 export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "disposed", listener: () => void): any;
+}
+
+// @internal
+export interface IMessageRelay<TSend extends IBaseDebuggerMessage = IBaseDebuggerMessage, TReceive extends IDebuggerMessage = IDebuggerMessage> extends IEventProvider<IMessageRelayEvents<TReceive>> {
+    postMessage: (message: TSend) => void;
+}
+
+// @internal
+export interface IMessageRelayEvents<TMessage extends IDebuggerMessage = IDebuggerMessage> extends IEvent {
+    (event: "message", listener: (message: TMessage) => void): any;
 }
 
 // @internal
@@ -237,7 +251,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...message: TMessage[]): void;
+export function postMessageToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
