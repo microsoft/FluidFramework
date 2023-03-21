@@ -57,6 +57,9 @@ class SocketIoServer implements core.IWebSocketServer {
 		private readonly sub: Redis.Redis,
 	) {
 		this.io.on("connection", (socket: Socket) => {
+            const transport = socket.conn.transport.name;
+            const lumberProperties = { transportName: transport };
+		    Lumberjack.info("Transport Name on connection", lumberProperties);
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
 		});
