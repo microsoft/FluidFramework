@@ -18,9 +18,9 @@ import {
 	UnwrappedEditableField,
 	valueSymbol,
 } from "../../feature-libraries";
-import { brand, TransactionResult } from "../../util";
+import { brand } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
-import { ISharedTree, runSynchronous } from "../../shared-tree";
+import { ISharedTree } from "../../shared-tree";
 import {
 	FieldKindIdentifier,
 	fieldSchema,
@@ -137,7 +137,7 @@ const testTreeNode: JsonableTree = { value: 1, type: dataSchema.name };
 const replacementTestNode: JsonableTree = { value: "1.0", type: dataSchema.name };
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
-describe("SharedTree benchmarks", () => {
+describe.only("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: Jsonable;
@@ -476,11 +476,9 @@ async function insertNodesToTestTree(
 	numberOfNodes: number,
 	shape: TreeShape,
 ): Promise<void> {
-	runSynchronous(tree, () => {
-		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, singleTextCursor(testTreeNode));
-		return TransactionResult.Commit;
-	});
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, singleTextCursor(testTreeNode));
+
 	switch (shape) {
 		case TreeShape.Deep:
 			await setNodesNarrow(tree, numberOfNodes, provider);
@@ -504,11 +502,9 @@ async function setNodesNarrow(
 		parentIndex: 0,
 	};
 	for (let i = 0; i < numberOfNodes; i++) {
-		runSynchronous(tree, () => {
-			const field = tree.editor.sequenceField(currPath, localFieldKey);
-			field.insert(0, singleTextCursor(testTreeNode));
-			return TransactionResult.Commit;
-		});
+		const field = tree.editor.sequenceField(currPath, localFieldKey);
+		field.insert(0, singleTextCursor(testTreeNode));
+
 		currPath = {
 			parent: currPath,
 			parentField: localFieldKey,
@@ -529,11 +525,9 @@ async function setNodesWide(
 		parentIndex: 0,
 	};
 	for (let j = 0; j < numberOfNodes; j++) {
-		runSynchronous(tree, () => {
-			const field = tree.editor.sequenceField(path, localFieldKey);
-			field.insert(j, singleTextCursor(testTreeNode));
-			return TransactionResult.Commit;
-		});
+		const field = tree.editor.sequenceField(path, localFieldKey);
+		field.insert(j, singleTextCursor(testTreeNode));
+
 	}
 	await provider.ensureSynchronized();
 }
@@ -710,10 +704,8 @@ function applyOperationDuringRead(current: number, value: Value) {
  */
 function manipulateCursorTree(tree: ISharedTree, path: UpPath) {
 	const value = 2; // arbitrary different value
-	runSynchronous(tree, () => {
-		tree.editor.setValue(path, replacementTestNode);
-		return TransactionResult.Commit;
-	});
+	tree.editor.setValue(path, replacementTestNode);
+
 }
 
 function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
