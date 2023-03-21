@@ -94,6 +94,7 @@
 		"jsdoc": "3.6.7",
         "mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
+        "moment": "^2.21.0",
 		"mocha-junit-reporter": "^1.18.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"mocha-xunit-reporter": "1.1.0",
