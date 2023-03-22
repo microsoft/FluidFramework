@@ -39,7 +39,7 @@ export interface IDatabaseManager {
 }
 
 /**
- * Abstract away IDocument collection logics and
+ * Abstract away IDocument collection logics
  */
 export interface IDocumentRepository {
 	/**
