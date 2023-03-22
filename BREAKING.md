@@ -31,7 +31,7 @@ ensureFluidResolvedUrl will be deprecated and removed due to this.
 ## LoaderHeader.cache deprecated
 
 In `@fluidframework/container-definitions`, the `cache` value from the `LoaderHeader` enum has been deprecated.
-Therefore, the `[LoaderHeader.cache]` property from `ILoaderHeader` is also deprecated. They will both be removed in the next major release, as well as all caching functionality of containers.
+Therefore, the `[LoaderHeader.cache]` property from `ILoaderHeader` is also deprecated. They will both be removed in the next major release, as well as all caching functionality of containers. Cache support will be removed soon, please try not to rely on caching, and inform us if you cannot do so.
 
 # 2.0.0-internal.3.3.0
 
