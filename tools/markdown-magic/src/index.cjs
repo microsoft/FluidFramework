@@ -12,7 +12,7 @@ const { hideBin } = require("yargs/helpers");
 
 const config = require("./md-magic.config.cjs");
 
-const defaultMatchPattern = "./**/*.md";
+const defaultMatchPattern = "**/*.md";
 
 const argv = yargs(hideBin(process.argv))
 	.usage("Usage: $0 [options]")
@@ -43,7 +43,7 @@ if (argv.workingDirectory) {
 }
 
 console.log(
-	`Searching for files matching pattern "${matchPattern}" under "${workingDirectory}"...`,
+	`Searching for files matching pattern(s) "${matchPattern}" under "${workingDirectory}"...`,
 );
 
 markdownMagic(matchPattern, config).then(
