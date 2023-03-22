@@ -132,7 +132,7 @@ const { container, services } =
 
 {{< callout tip >}}
 
-This section provides only basic information about the *most important* states that a container can be in. Details about *all* container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events](./container-states-events/index.md). 
+This section provides only basic information about the *most important* states that a container can be in. Details about *all* container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events](./container-states-events/). 
 
 {{< /callout >}}
 
