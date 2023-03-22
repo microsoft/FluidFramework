@@ -10,16 +10,15 @@
 
 const fs = require("fs");
 
-if(process.env.SETVERSION_VERSION === undefined) {
-  console.error("SETVERSION_VERSION env variable is undefined");
-  process.exit(1);
+if (process.env.SETVERSION_VERSION === undefined) {
+	console.error("SETVERSION_VERSION env variable is undefined");
+	process.exit(1);
 }
 
-const json = JSON.parse(fs.readFileSync("./package.json"));
-const pkg_version = json.version;
-if (pkg_version !== process.env.SETVERSION_VERSION) {
-	console.error(`versions don't match: ${json.name}`);
-  process.exit(1);
+const pkg = JSON.parse(fs.readFileSync("./package.json"));
+if (pkg.version !== process.env.SETVERSION_VERSION) {
+	console.error(`versions don't match: ${pkg.name}`);
+	process.exit(1);
 }
 
 process.exit(0);
