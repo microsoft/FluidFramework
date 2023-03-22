@@ -31,9 +31,6 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 	const { containerId } = props;
 	const messageRelay = useMessageRelay();
 
-	// const { clientDebugger } = props;
-	// const { container } = clientDebugger;
-
 	const [containerHistory, setContainerHistory] = React.useState<
 		readonly ConnectionStateChangeLogEntry[]
 	>([]);
@@ -73,37 +70,6 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
-	return (
-		<Stack
-			styles={{
-				root: {
-					height: "100%",
-				},
-			}}
-		>
-			<StackItem>
-				<h3>Container State History</h3>
-				<_ContainerHistoryView containerHistory={containerHistory} />
-			</StackItem>
-		</Stack>
-	);
-}
-
-/**
- * Input props for {@link _ContainerHistoryView}
- */
-export interface _ContainerHistoryViewProps {
-	/**
-	 * The connection state history of the container.
-	 */
-	containerHistory: readonly ConnectionStateChangeLogEntry[];
-}
-
-/**
- * Displays a container's history of connection state changes.
- */
-export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React.ReactElement {
-	const { containerHistory } = props;
 	const nowTimeStamp = new Date();
 	const historyViews: React.ReactElement[] = [];
 
@@ -186,12 +152,23 @@ export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React.
 		<Stack
 			styles={{
 				root: {
-					overflowY: "auto",
-					height: "300px",
+					height: "100%",
 				},
 			}}
 		>
-			<div style={{ overflowY: "scroll" }}>{historyViews}</div>
+			<StackItem>
+				<h3>Container State History</h3>
+				<Stack
+					styles={{
+						root: {
+							overflowY: "auto",
+							height: "300px",
+						},
+					}}
+				>
+					<div style={{ overflowY: "scroll" }}>{historyViews}</div>
+				</Stack>
+			</StackItem>
 		</Stack>
 	);
 }

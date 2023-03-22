@@ -125,13 +125,57 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		});
 	}
 
+	// Build up status string
+	const statusComponents: string[] = [];
+	if (closed) {
+		statusComponents.push("Closed");
+	} else {
+		statusComponents.push(containerState.attachState);
+		if (containerState.attachState === AttachState.Attached) {
+			statusComponents.push(connectionStateToString(containerState.connectionState));
+		}
+	}
+	const statusString = statusComponents.join(" | ");
+
 	return (
-		<_ContainerSummaryView
-			{...containerState}
-			tryConnect={tryConnect}
-			forceDisconnect={forceDisconnect}
-			closeContainer={closeContainer}
-		/>
+		<Stack className="container-summary-view">
+			<StackItem>
+				<span>
+					<b>Container</b>: {containerState.nickname !== undefined ? `${containerState.nickname} (${containerState.id})` : containerState.id}
+				</span>
+			</StackItem>
+			<StackItem>
+				<span>
+					<b>Status</b>: {statusString}
+				</span>
+			</StackItem>
+			<StackItem>
+				{containerState.clientId === undefined ? (
+					<></>
+				) : (
+					<span>
+						<b>Client ID</b>: {containerState.clientId}
+					</span>
+				)}
+			</StackItem>
+			<StackItem>
+				{containerState.audienceId === undefined ? (
+					<></>
+				) : (
+					<span>
+						<b>Audience ID</b>: {containerState.audienceId}
+					</span>
+				)}
+			</StackItem>
+			<StackItem align="end">
+				<ActionsBar
+					isContainerConnected={containerState.connectionState === ConnectionState.Connected}
+					tryConnect={tryConnect}
+					forceDisconnect={forceDisconnect}
+					closeContainer={closeContainer}
+				/>
+			</StackItem>
+		</Stack>
 	);
 }
 
@@ -159,87 +203,6 @@ export interface IContainerActions {
 	 * @remarks Button controls will be disabled if this is not provided.
 	 */
 	closeContainer?: () => void;
-}
-
-/**
- * {@link _ContainerSummaryView} input props.
- */
-export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {}
-
-/**
- * Debugger view displaying basic Container stats.
- *
- * @remarks Operates strictly on raw data, so it can be potentially re-used in contexts that don't have
- * direct access to the Client Debugger.
- *
- * @internal
- */
-export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React.ReactElement {
-	const {
-		id,
-		nickname,
-		attachState,
-		connectionState,
-		closed,
-		clientId,
-		audienceId,
-		tryConnect,
-		forceDisconnect,
-		closeContainer,
-	} = props;
-
-	// Build up status string
-	const statusComponents: string[] = [];
-	if (closed) {
-		statusComponents.push("Closed");
-	} else {
-		statusComponents.push(attachState);
-		if (attachState === AttachState.Attached) {
-			statusComponents.push(connectionStateToString(connectionState));
-		}
-	}
-	const statusString = statusComponents.join(" | ");
-
-	return (
-		<Stack className="container-summary-view">
-			<StackItem>
-				<span>
-					<b>Container</b>: {nickname !== undefined ? `${nickname} (${id})` : { id }}
-				</span>
-			</StackItem>
-			<StackItem>
-				<span>
-					<b>Status</b>: {statusString}
-				</span>
-			</StackItem>
-			<StackItem>
-				{clientId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Client ID</b>: {clientId}
-					</span>
-				)}
-			</StackItem>
-			<StackItem>
-				{audienceId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Audience ID</b>: {audienceId}
-					</span>
-				)}
-			</StackItem>
-			<StackItem align="end">
-				<ActionsBar
-					isContainerConnected={connectionState === ConnectionState.Connected}
-					tryConnect={tryConnect}
-					forceDisconnect={forceDisconnect}
-					closeContainer={closeContainer}
-				/>
-			</StackItem>
-		</Stack>
-	);
 }
 
 interface ActionsBarProps extends IContainerActions {
