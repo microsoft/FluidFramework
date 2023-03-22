@@ -583,6 +583,9 @@ export function configureWebSocketServices(
 			let clientSignalSequenceNumber = 0;
 			// Only for debugging purposes
 			eventEmitter.on("broadcast-signal", (taskData, containerUrl, taskListId) => {
+				eventEmitter.off("broadcast-signal", (_taskData, _containerUrl, _taskListId) => {
+					console.log("remove listener");
+				});
 				const documentId = containerUrl.split("/")[containerUrl.split("/").length - 1];
 				const tenantId = containerUrl.split("/")[containerUrl.split("/").length - 2];
 				const roomFromBroadcastSignal: IRoom = { tenantId, documentId };
@@ -611,10 +614,6 @@ export function configureWebSocketServices(
 					"signal",
 					signalMessageRuntimeMessage,
 				);
-			});
-
-			eventEmitter.off("broadcast-signal", (taskData, containerUrl, taskListId) => {
-				console.log("remove listener");
 			});
 		}
 
