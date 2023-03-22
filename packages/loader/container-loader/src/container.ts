@@ -339,7 +339,7 @@ export class Container
 						);
 				}),
 			{ start: true, end: true, cancel: "generic" },
-			true /* CollectMemory */,
+			true /* collectMemory */,
 		);
 	}
 
