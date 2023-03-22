@@ -12,7 +12,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "src/index.cjs",
 	"bin": {
 		"markdown-magic": "bin/markdown-magic"
 	},
