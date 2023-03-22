@@ -13,7 +13,7 @@ import {
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -104,6 +104,7 @@ export function rebase(
 		rebasedChange = SF.amendRebase(
 			rebasedChange,
 			base,
+			(a, b) => a,
 			idAllocator,
 			moveEffects,
 			revisionMetadata ?? defaultRevisionMetadata,

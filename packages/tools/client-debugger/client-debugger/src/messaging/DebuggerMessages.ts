@@ -4,6 +4,7 @@
  */
 
 import { ContainerStateMetadata } from "../ContainerMetadata";
+import { ConnectionStateChangeLogEntry } from "../Logs";
 import { IDebuggerMessage } from "./Messages";
 
 /**
@@ -48,6 +49,18 @@ export type DisconnectContainerMessageData = HasContainerId;
  * @public
  */
 export type CloseContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link ContainerStateHistoryMessage}.
+ *
+ * @public
+ */
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+	/**
+	 * The Container's connection state history.
+	 */
+	history: ConnectionStateChangeLogEntry[];
+}
 
 /**
  * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
@@ -115,4 +128,13 @@ export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMe
 	type: "CLOSE_CONTAINER";
 }
 
+/**
+ * Outbound event indicating Container state history.
+ *
+ * @public
+ */
+export interface ContainerStateHistoryMessage
+	extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+	type: "CONTAINER_STATE_HISTORY";
+}
 // #endregion

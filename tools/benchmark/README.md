@@ -21,7 +21,7 @@ To run them as profiling tests, invoke `mocha` as you normally would for your pa
 like this:
 
 ```console
---expose-gc --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js
+--v8-expose-gc --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js
 ```
 
 ### `--perfMode` (required)
@@ -30,7 +30,7 @@ Indicates that the tests should be run as profiling instead of just correctness 
 When run like this, many iterations will be run and measured, but when run as correctness tests only one iteration
 will be run and no measuring will take place.
 
-### `--expose-gc` (required)
+### `--v8-expose-gc` (required)
 
 This is necessary so the package can perform explicit garbage collection between tests to help reduce
 cross-test contamination.
@@ -81,7 +81,7 @@ When run, tests for runtime profiling will be tagged with `@Benchmark` (or whate
 when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
 
 > **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
-> Benchmark.js's test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
+> The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
 > The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
 > See documentation on `HookArguments` for more detail.
 
