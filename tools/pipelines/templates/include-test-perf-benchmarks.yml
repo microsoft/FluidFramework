@@ -117,8 +117,8 @@ jobs:
         workingDirectory: $(toolAbsolutePath)
         script: |
           cp ${{ parameters.testWorkspace }}/.npmrc . ;
-          npm install @ff-internal/aria-logger;
-          npm i;
+          pnpm install @ff-internal/aria-logger;
+          pnpm i;
           npm run build:compile;
 
     - ${{ parameters.customSteps }}

@@ -510,8 +510,8 @@ stages:
                 script: |
                   ls -la '${{ variables.toolAbsolutePath }}';
                   ls -la '${{ parameters.buildDirectory }}';
-                  npm install @ff-internal/aria-logger;
-                  npm i;
+                  pnpm install @ff-internal/aria-logger;
+                  pnpm i;
                   npm run build:compile;
 
             - task: Bash@3
