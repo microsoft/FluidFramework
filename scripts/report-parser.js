@@ -8,9 +8,9 @@
  * in a given directory and prints failed tests into the console
  */
 
-import * as fs from "fs";
-import * as util from "util";
-import * as path from "path";
+var fs = require('fs');
+var util = require('util');
+var path = require('path');
 
 var directory = process.argv.slice(2)[0];
 
