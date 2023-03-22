@@ -365,7 +365,6 @@ stages:
             - template: include-log-test-failures.yml
               parameters:
                 buildDirectory: ${{ parameters.buildDirectory }}
-                succeededOrFailed: succeededOrFailed()
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
