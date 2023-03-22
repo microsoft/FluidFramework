@@ -26,7 +26,7 @@ import {
 	runSweepKey,
 	stableGCVersion,
 } from "./gcDefinitions";
-import { getGCVersion, shouldAllowGcSweep as shouldAllowGcSweep } from "./gcHelpers";
+import { getGCVersion, shouldAllowGcSweep } from "./gcHelpers";
 
 /**
  * Generates configurations for the Garbage Collector that it uses to determine what to run and how.
@@ -102,8 +102,8 @@ export function generateGCConfigs(
 
 	// Is sweepEnabled for this document?
 	const sweepEnabled = shouldAllowGcSweep(
-		persistedGcFeatureMatrix ?? {},
-		createParams.gcOptions[gcSweepGenerationOptionName],
+		persistedGcFeatureMatrix ?? {} /* persistedGenerations */,
+		createParams.gcOptions[gcSweepGenerationOptionName] /* currentGeneration */,
 	);
 
 	/**
