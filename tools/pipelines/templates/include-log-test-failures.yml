@@ -30,5 +30,5 @@ steps:
         else
           echo "##[error] $failedTests"
         fi
-      workingDirectory: scripts/report-parser
+      workingDirectory: scripts
     condition: eq(variables['TestReportsExists'], 'true')
