@@ -20,7 +20,9 @@ ReactDOM.render(
 	},
 );
 
-renderClientDebuggerView(document.body).then(
+const debuggerElement = document.createElement("debugger");
+document.body.append(debuggerElement);
+renderClientDebuggerView(debuggerElement).then(
 	() => {
 		console.log("Debug panel rendered!");
 	},
