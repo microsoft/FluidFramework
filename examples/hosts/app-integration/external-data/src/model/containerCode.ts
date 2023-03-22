@@ -20,7 +20,7 @@ const taskListCollectionId = "base-document";
  * fetching the new data. This is an enum as there may be more signals that need to be created.
  */
 const SignalType = {
-	ExternalDataChanged: "ExternalDataChange",
+	ExternalDataChanged: "ExternalDataChanged",
 };
 
 /**

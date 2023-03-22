@@ -263,7 +263,10 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 			// TODO: display error status to user?
 		}
 		// Send signal to simulate RuntimeSignal that will get sent from alfred in the dev branch
-		model.sendCustomDebugSignal();
+		// Commenting it out here because this PR has a hacked Signal that is broadcast from alfred
+		// without being the full RuntimeSignal.
+		// model.sendCustomDebugSignal();
+		console.log(model);
 	};
 
 	return (

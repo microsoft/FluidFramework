@@ -48,6 +48,12 @@ export class TinyliciousTenant implements ITenant {
 export class TenantManager implements ITenantManager {
 	constructor(private readonly url: string) {}
 
+	// This is only here to allow npm linking between the server libraries. This is not part of the
+	// necessary code.
+	public async getTenantGitManager(tenantId: string, documentId: string): Promise<GitManager> {
+		throw new Error("Method not implemented.");
+	}
+
 	public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
 		throw new Error("Method not implemented.");
 	}

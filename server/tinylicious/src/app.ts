@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { EventEmitter } from "events";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { RestLessServer } from "@fluidframework/server-services-shared";
 import { json, urlencoded } from "body-parser";
@@ -26,7 +27,12 @@ const stream = split().on("data", (message) => {
 	winston.info(message);
 });
 
-export function create(config: Provider, storage: IDocumentStorage, mongoManager: MongoManager) {
+export function create(
+	config: Provider,
+	storage: IDocumentStorage,
+	mongoManager: MongoManager,
+	eventEmitter: EventEmitter,
+) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 
@@ -68,6 +74,21 @@ export function create(config: Provider, storage: IDocumentStorage, mongoManager
 			res.status(200).send(
 				"This is Tinylicious. Learn more at https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious",
 			);
+		}),
+	);
+
+	// API to broadcast a signal to a container
+	app.use(
+		Router().post("/broadcast-signal", (req, res) => {
+			try {
+				const taskData = req.body?.data;
+				const containerUrl = req.body?.containerUrl;
+				const externalTaskListId = req.body?.externalTaskListId;
+				eventEmitter.emit("broadcast-signal", taskData, containerUrl, externalTaskListId);
+				res.status(200).send("Triggering debug signal from tinylicious");
+			} catch (error) {
+				res.status(500).send(error);
+			}
 		}),
 	);
 

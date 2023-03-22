@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
 import {
 	ConnectionMode,
 	IClient,
@@ -229,6 +230,8 @@ export function configureWebSocketServices(
 	submitSignalThrottler?: core.IThrottler,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
+	httpServer?: core.IHttpServer,
+	eventEmitter?: EventEmitter,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -573,6 +576,46 @@ export function configureWebSocketServices(
 				connectVersions,
 				details: messageClient as IClient,
 			};
+		}
+
+		// TODO: KLUDGE webhook connection
+		if (httpServer !== undefined && eventEmitter !== undefined) {
+			let clientSignalSequenceNumber = 0;
+			// Only for debugging purposes
+			eventEmitter.on("broadcast-signal", (taskData, containerUrl, taskListId) => {
+				const documentId = containerUrl.split("/")[containerUrl.split("/").length - 1];
+				const tenantId = containerUrl.split("/")[containerUrl.split("/").length - 2];
+				const roomFromBroadcastSignal: IRoom = { tenantId, documentId };
+				console.log(
+					`ALFRED: Trigger broadcast-signal event to tenantId: ${tenantId} documentId: ${documentId}`,
+				);
+				const signalMessageRuntimeMessage: ISignalMessage = {
+					clientId: "fake-client", // should be null when we use the real signal to portray system signal
+					content: JSON.stringify({
+						clientSignalSequenceNumber: clientSignalSequenceNumber++,
+						contents: {
+							type: "debugSignal",
+							content: {
+								type: "ExternalDataChanged",
+								content: "Data has changed upstream. Please import new data.",
+								taskListId,
+								data: taskData,
+							},
+						},
+					}),
+				};
+				console.log("\nsignalMessageRuntimeMessage\n");
+				console.log(signalMessageRuntimeMessage);
+				socket.emitToRoom(
+					getRoomId(roomFromBroadcastSignal),
+					"signal",
+					signalMessageRuntimeMessage,
+				);
+			});
+
+			eventEmitter.off("broadcast-signal", (taskData, containerUrl, taskListId) => {
+				console.log("remove listener");
+			});
 		}
 
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
