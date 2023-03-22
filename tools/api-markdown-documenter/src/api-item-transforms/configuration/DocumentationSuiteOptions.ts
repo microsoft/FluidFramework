@@ -78,7 +78,7 @@ export type DocumentBoundaries = ApiMemberKind[];
 export type HierarchyBoundaries = ApiMemberKind[];
 
 /**
- * Policy for generating file names.
+ * Policy for generating a file name for an `ApiItem`.
  *
  * @remarks Note that this is not the complete file name, but the "leaf" component of the final file name.
  * Additional prefixes and suffixes will be appended to ensure file name collisions do not occur.
@@ -95,7 +95,7 @@ export type HierarchyBoundaries = ApiMemberKind[];
 export type FileNamePolicy = (apiItem: ApiItem) => string;
 
 /**
- * Policy for overriding the URI base for a specific API item.
+ * Policy for overriding the URI base for an `ApiItem`.
  *
  * @remarks This can be used to match on particular item kinds, package names, etc., and adjust the links generated
  * in the documentation accordingly.
@@ -109,7 +109,7 @@ export type FileNamePolicy = (apiItem: ApiItem) => string;
 export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 
 /**
- * Policy for generating heading titles for API items.
+ * Policy for generating a heading title for an `ApiItem`.
  *
  * @param apiItem - The API item for which the heading is being generated.
  * @returns The heading title for the API item.
@@ -117,7 +117,7 @@ export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 
 /**
- * Policy for generating text in links to API items.
+ * Policy for generating default link text for an `ApiItem`.
  *
  * @param apiItem - The API item for which the link is being generated.
  * @returns The text to use in the link to the API item.
@@ -125,7 +125,7 @@ export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
 export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 /**
- * Policy for filtering packages.
+ * Policy for filtering packages from documentation generation.
  *
  * @param apiPackage - The package that may or may not be filtered.
  * @returns `true` if the package should be filtered out of documentation generation (i.e. **should not** be included
@@ -134,7 +134,8 @@ export type LinkTextPolicy = (apiItem: ApiItem) => string;
 export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 
 /**
- * Policy for generating document-level front-matter contents, which will be included at the top of a generated document.
+ * Policy for generating document-level front-matter contents for an `ApiItem`, the result of which will be
+ * included at the top of a generated document.
  *
  * @remarks Note: this is arbitrary text, and will not be escaped.
  */
