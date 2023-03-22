@@ -23,6 +23,7 @@ import {
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
+import { v4 as uuid } from "uuid";
 
 enum ScriptoriumStatus {
 	Processing = "Processing",
@@ -79,6 +80,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				this.pendingMetric = Lumberjack.newLumberMetric(
 					LumberEventName.ScriptoriumProcessBatch,
 					{
+						metricCorrelationId: uuid(),
 						timestampQueuedMessage: message.timestamp ? new Date(message.timestamp).toISOString() : null,
 						timestampReadyToProcess: new Date().toISOString(),
 						[QueuedMessageProperties.partition]: this.pendingOffset?.partition,
@@ -122,7 +124,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			return;
 		}
 
-		let metric: Lumber<LumberEventName.ScriptoriumProcessBatch>;
+		let metric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
 		if (this.telemetryEnabled && this.pendingMetric) {
 			metric = this.pendingMetric;
 			this.pendingMetric = undefined;
@@ -142,7 +144,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 		// Process all the batches + checkpoint
 		for (const [, messages] of this.current) {
-			const processP = this.processMongoCore(messages);
+			const processP = this.processMongoCore(messages, metric?.properties.get("metricCorrelationId"));
 			allProcessed.push(processP);
 		}
 
@@ -206,11 +208,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		}
 	}
 
-	private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
-		return this.insertOp(messages);
+	private async processMongoCore(messages: ISequencedOperationMessage[], metricCorrelationId: string | undefined): Promise<void> {
+		return this.insertOp(messages, metricCorrelationId);
 	}
 
-	private async insertOp(messages: ISequencedOperationMessage[]) {
+	private async insertOp(messages: ISequencedOperationMessage[], metricCorrelationId: string | undefined) {
 		const dbOps = messages.map((message) => ({
 			...message,
 			mongoTimestamp: new Date(message.operation.timestamp),
@@ -230,7 +232,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			1000 /* retryAfterMs */,
 			{
 				...getLumberBaseProperties(documentId, tenantId),
-				...{ sequenceNumberRanges, insertBatchSize },
+				...{ sequenceNumberRanges, insertBatchSize, metricCorrelationId },
 			},
 			(error) => error.code === 11000,
 			(error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
