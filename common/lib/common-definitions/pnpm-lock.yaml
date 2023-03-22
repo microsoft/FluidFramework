@@ -1,6 +1,20 @@
 lockfileVersion: 5.4
 
-importers:
+specifiers:
+  '@fluid-tools/build-cli': 0.11.0-135362
+  '@fluidframework/build-common': ^1.1.0
+  '@fluidframework/build-tools': 0.11.0-135362
+  '@fluidframework/common-definitions-previous': npm:@fluidframework/common-definitions@0.20.1
+  '@fluidframework/eslint-config-fluid': ^2.0.0
+  '@microsoft/api-extractor': ^7.22.2
+  '@rushstack/eslint-config': ^2.5.1
+  concurrently: ^6.2.0
+  copyfiles: ^2.4.1
+  eslint: ~8.6.0
+  eslint-config-prettier: ~8.5.0
+  prettier: ~2.6.2
+  rimraf: ^2.6.2
+  typescript: ~4.5.5
 
   .:
     specifiers:
