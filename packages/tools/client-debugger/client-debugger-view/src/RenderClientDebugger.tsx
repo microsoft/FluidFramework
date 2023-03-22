@@ -23,12 +23,9 @@ import { MessageRelayContext } from "./MessageRelayContext";
  * If rendering fails for any reason, the promise will be rejected.
  */
 export async function renderClientDebuggerView(targetElement: HTMLElement): Promise<void> {
-	const debuggerElement = document.createElement("debugger");
-
 	return new Promise<void>((resolve, reject) => {
 		try {
-			ReactDOM.render(<RootView />, debuggerElement, () => {
-				targetElement.append(debuggerElement);
+			ReactDOM.render(<RootView />, targetElement, () => {
 				console.log("Rendered debug view in page!");
 				resolve();
 			});
