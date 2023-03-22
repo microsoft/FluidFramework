@@ -419,6 +419,25 @@ describe("Garbage Collection configurations", () => {
 				"getMetadata returned different metadata than expected",
 			);
 		});
+		it("Metadata Roundtrip with only sweepGeneration", () => {
+			const expectedMetadata: IGCMetadata = {
+				sweepEnabled: false, // hardcoded, not used
+				gcFeature: 1,
+				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+				sweepTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
+				gcFeatureMatrix: { sweepGeneration: 2, tombstoneGeneration: undefined },
+			};
+			gc = createGcWithPrivateMembers(undefined /* metadata */, {
+				sweepAllowed: true, // ignored
+				[gcSweepGenerationOptionName]: 2,
+			});
+			const outputMetadata = gc.getMetadata();
+			assert.deepEqual(
+				outputMetadata,
+				expectedMetadata,
+				"getMetadata returned different metadata than expected",
+			);
+		});
 	});
 
 	describe("Session Expiry and Sweep Timeout", () => {
