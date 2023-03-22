@@ -152,7 +152,7 @@ steps:
         if [ -f "lerna.json" ]; then
           if [ "$VERSION_RELEASE" = "release" ]; then
             # no need to run anything here, as the version in the package should be correct
-            npx lerna exec -- bash $(Build.SourcesDirectory)/scripts/check-package-version.sh
+            npx lerna exec -- node $(Build.SourcesDirectory)/scripts/check-package-version.cjs
             exit $?
           fi
           npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
