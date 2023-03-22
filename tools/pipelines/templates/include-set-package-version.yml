@@ -139,58 +139,6 @@ steps:
         fi
 
 - ${{ if ne(parameters.tagName, 'client') }}:
-  # - task: Bash@3
-  #   displayName: DEBUGGING Update Package Version (lerna)
-  #   env:
-  #     VERSION_RELEASE: $(release)
-  #     RELEASE_GROUP: ${{ parameters.tagName }}
-  #   inputs:
-  #     targetType: 'inline'
-  #     workingDirectory: ${{ parameters.buildDirectory }}
-  #     script: |
-  #       echo SETVERSION_VERSION=$SETVERSION_VERSION
-  #       if [ -f "lerna.json" ]; then
-  #         if [ "$VERSION_RELEASE" = "release" ]; then
-  #           # no need to run anything here, as the version in the package should be correct
-  #           npx lerna exec "if [ \`node -p \"require('./package.json').version\"\` != '$(SetVersion.version)' ]; then ( exit 1 ) fi"
-  #           exit $?
-  #         fi
-  #         # npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
-  #       # else
-  #       #   npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-  #       fi
-
-  - task: Bash@3
-    displayName: DEBUGGING-2 Update Package Version (lerna)
-    env:
-      VERSION_RELEASE: $(release)
-      RELEASE_GROUP: ${{ parameters.tagName }}
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        echo SETVERSION_VERSION=$SETVERSION_VERSION
-        if [ -f "lerna.json" ]; then
-          if [ "$VERSION_RELEASE" = "release" ]; then
-            # no need to run anything here, as the version in the package should be correct
-            npx lerna exec -- bash $(Build.SourcesDirectory)/scripts/set-package-version.sh
-            exit $?
-          fi
-          # npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
-        # else
-        #   npm version $(SetVersion.version) --no-git-tag-version -f --allow-same-version
-        fi
-
-  - task: Bash@3
-    displayName: FILE Update Package Version (lerna)
-    env:
-      VERSION_RELEASE: $(release)
-      RELEASE_GROUP: ${{ parameters.tagName }}
-    inputs:
-      targetType: 'filePath'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      filePath: $(Build.SourcesDirectory)/scripts/set-package-version.sh
-
   - task: Bash@3
     displayName: Update Package Version (lerna)
     env:
@@ -204,7 +152,7 @@ steps:
         if [ -f "lerna.json" ]; then
           if [ "$VERSION_RELEASE" = "release" ]; then
             # no need to run anything here, as the version in the package should be correct
-            npx lerna exec "if [ \`npm -s run env echo '\$npm_package_version'\` != '$(SetVersion.version)' ]; then ( exit 1 ) fi"
+            npx lerna exec -- bash $(Build.SourcesDirectory)/scripts/check-package-version.sh
             exit $?
           fi
           npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
