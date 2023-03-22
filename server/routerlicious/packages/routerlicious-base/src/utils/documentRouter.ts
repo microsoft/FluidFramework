@@ -21,20 +21,20 @@ export interface IPlugin {
 	 */
 	create(
 		config: nconf.Provider,
-		customization?: Record<string, any>,
+		customizations?: Record<string, any>,
 	): Promise<IPartitionLambdaFactory>;
 }
 
 export async function createDocumentRouter(
 	config: nconf.Provider,
-	customization?: Record<string, any>,
+	customizations?: Record<string, any>,
 ): Promise<IPartitionLambdaFactory<IPartitionConfig>> {
 	const pluginConfig = config.get("documentLambda") as string | object;
 	const plugin = // eslint-disable-next-line @typescript-eslint/no-require-imports
 		(typeof pluginConfig === "object" ? pluginConfig : require(pluginConfig)) as IPlugin;
 
 	// Factory used to create document lambda processors
-	const factory = await plugin.create(config, customization);
+	const factory = await plugin.create(config, customizations);
 
 	return new DocumentLambdaFactory(factory, DefaultServiceConfiguration.documentLambda);
 }

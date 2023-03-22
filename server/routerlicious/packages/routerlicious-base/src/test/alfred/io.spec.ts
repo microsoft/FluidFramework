@@ -51,7 +51,7 @@ import {
 	DebugLogger,
 	TestThrottler,
 	TestThrottleAndUsageStorageManager,
-	TestNonImplementDocumentRepository,
+	TestNotImplementedDocumentRepository,
 } from "@fluidframework/server-test-utils";
 import { OrdererManager } from "../../alfred";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
@@ -90,7 +90,7 @@ describe("Routerlicious", () => {
 					testClientManager = new TestClientManager();
 					const testDbFactory = new TestDbFactory(testData);
 					const mongoManager = new MongoManager(testDbFactory);
-					const testDocumentRepository = new TestNonImplementDocumentRepository();
+					const testDocumentRepository = new TestNotImplementedDocumentRepository();
 					const globalDbEnabled = false;
 
 					const databaseManager = new MongoDatabaseManager(
@@ -560,7 +560,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						collectionNames,
 						collectionNames,
 					);
-					const testDocumentRepository = new TestNonImplementDocumentRepository();
+					const testDocumentRepository = new TestNotImplementedDocumentRepository();
 					const testStorage = new services.DocumentStorage(
 						testDocumentRepository,
 						testTenantManager,
@@ -773,7 +773,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 			const testDbFactory = new TestDbFactory(testData);
 			const mongoManager = new MongoManager(testDbFactory);
 			const globalDbEnabled = false;
-			const testDocumentRepository = new TestNonImplementDocumentRepository();
+			const testDocumentRepository = new TestNotImplementedDocumentRepository();
 			const stub = Sinon.stub(testDocumentRepository, "findOneOrCreate");
 			stub.callsFake(async (filter: any, value: any, option: any) => {
 				return { value, existing: false };

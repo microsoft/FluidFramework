@@ -71,8 +71,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.requestWithRetry(req, "MongoCollection.find", query);
 	}
 
-	public async findOne(query: object, option?: FindOneOptions): Promise<T> {
-		const req: () => Promise<T> = async () => this.collection.findOne(query, option);
+	public async findOne(query: object, options?: FindOneOptions): Promise<T> {
+		const req: () => Promise<T> = async () => this.collection.findOne(query, options);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.findOne", // callerName
@@ -92,12 +92,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		filter: object,
 		set: any,
 		addToSet: any,
-		option: any = undefined,
+		options: any = undefined,
 	): Promise<void> {
-		const mongoOption = { ...option, upsert: false };
+		const mongoOptions = { ...options, upsert: false };
 		const req = async () => {
 			try {
-				await this.updateCore(filter, set, addToSet, mongoOption);
+				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -114,12 +114,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		filter: object,
 		set: any,
 		addToSet: any,
-		option: any = undefined,
+		options: any = undefined,
 	): Promise<void> {
-		const mongoOption = { ...option, upsert: false }; // This is a backward compatible change when passing in option to give more flexibility
+		const mongoOptions = { ...options, upsert: false }; // This is a backward compatible change when passing in options to give more flexibility
 		const req = async () => {
 			try {
-				await this.updateManyCore(filter, set, addToSet, mongoOption);
+				await this.updateManyCore(filter, set, addToSet, mongoOptions);
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -136,12 +136,12 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		filter: object,
 		set: any,
 		addToSet: any,
-		option: any = undefined,
+		options: any = undefined,
 	): Promise<void> {
-		const mongoOption = { ...option, upsert: true };
+		const mongoOptions = { ...options, upsert: true };
 		const req = async () => {
 			try {
-				await this.updateCore(filter, set, addToSet, mongoOption);
+				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -251,7 +251,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async findOrCreate(
 		query: any,
 		value: T,
-		option = {
+		options = {
 			returnOriginal: true,
 			upsert: true,
 		},
@@ -263,7 +263,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					{
 						$setOnInsert: value,
 					},
-					option,
+					options,
 				);
 
 				return result.value
@@ -284,7 +284,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async findAndUpdate(
 		query: any,
 		value: T,
-		option = {
+		options = {
 			returnOriginal: true,
 		},
 	): Promise<{ value: T; existing: boolean }> {
@@ -295,7 +295,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					{
 						$set: value,
 					},
-					option,
+					options,
 				);
 
 				return result.value
@@ -313,7 +313,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		);
 	}
 
-	private async updateCore(filter: any, set: any, addToSet: any, option: any): Promise<void> {
+	private async updateCore(filter: any, set: any, addToSet: any, options: any): Promise<void> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -323,10 +323,10 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			update.$addToSet = addToSet;
 		}
 
-		return this.collection.updateOne(filter, update, option);
+		return this.collection.updateOne(filter, update, options);
 	}
 
-	private async updateManyCore(filter: any, set: any, addToSet: any, option: any): Promise<void> {
+	private async updateManyCore(filter: any, set: any, addToSet: any, options: any): Promise<void> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -336,7 +336,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			update.$addToSet = addToSet;
 		}
 
-		return this.collection.updateMany(filter, update, option);
+		return this.collection.updateMany(filter, update, options);
 	}
 
 	private async requestWithRetry<TOut>(

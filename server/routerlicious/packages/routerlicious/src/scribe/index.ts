@@ -27,7 +27,7 @@ import { Provider } from "nconf";
 
 export async function scribeCreate(
 	config: Provider,
-	customization?: Record<string, any>,
+	customizations?: Record<string, any>,
 ): Promise<IPartitionLambdaFactory> {
 	// Access config values
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
@@ -79,7 +79,7 @@ export async function scribeCreate(
 	const scribeDeltas =
 		operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName);
 	const documentRepository =
-		customization?.documentRepository ??
+		customizations?.documentRepository ??
 		new MongoDocumentRepository(
 			documentsCollectionDb.collection<IDocument>(documentsCollectionName),
 		);
@@ -141,9 +141,9 @@ export async function scribeCreate(
 
 export async function create(
 	config: Provider,
-	customization?: Record<string, any>,
+	customizations?: Record<string, any>,
 ): Promise<IPartitionLambdaFactory> {
 	// Nconf has problems with prototype methods which prevents us from storing this as a class
 	config.set("documentLambda", { create: scribeCreate });
-	return createDocumentRouter(config, customization);
+	return createDocumentRouter(config, customizations);
 }

@@ -128,7 +128,7 @@ export class AlfredResources implements core.IResources {
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
 	public async create(
 		config: Provider,
-		customization?: Record<string, any>,
+		customizations?: Record<string, any>,
 	): Promise<AlfredResources> {
 		// Producer used to publish messages
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
@@ -320,7 +320,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			config.get("alfred:throttling:submitSignals") ?? {};
 		const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
 		const documentRepository =
-			customization?.documentRepository ??
+			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,

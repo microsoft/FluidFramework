@@ -21,7 +21,7 @@ import {
 	MessageFactory,
 	TestContext,
 	TestDbFactory,
-	TestNonImplementDocumentRepository,
+	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
 } from "@fluidframework/server-test-utils";
@@ -118,7 +118,7 @@ describe("Routerlicious", () => {
 			beforeEach(async () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				const mongoManager = new MongoManager(dbFactory);
-				const documentRepository = new TestNonImplementDocumentRepository();
+				const documentRepository = new TestNotImplementedDocumentRepository();
 				Sinon.replace(
 					documentRepository,
 					"readOne",

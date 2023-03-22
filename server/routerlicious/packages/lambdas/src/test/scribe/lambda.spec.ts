@@ -19,7 +19,7 @@ import {
 	TestContext,
 	TestDbFactory,
 	TestDeltaManager,
-	TestNonImplementDocumentRepository,
+	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
 } from "@fluidframework/server-test-utils";
@@ -37,7 +37,7 @@ describe("Routerlicious", () => {
 			const testDocumentId = "test";
 
 			let testMongoManager: MongoManager;
-			let testDocumentRepository: TestNonImplementDocumentRepository;
+			let testDocumentRepository: TestNotImplementedDocumentRepository;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -83,7 +83,7 @@ describe("Routerlicious", () => {
 				];
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				testMongoManager = new MongoManager(dbFactory);
-				testDocumentRepository = new TestNonImplementDocumentRepository();
+				testDocumentRepository = new TestNotImplementedDocumentRepository();
 				Sinon.replace(
 					testDocumentRepository,
 					"readOne",

@@ -48,8 +48,8 @@ export class KafkaResourcesFactory implements IResourcesFactory<KafkaResources> 
 				  require(this.lambdaModule)
 				: this.lambdaModule;
 
-		const customization = await (plugin.customize ? plugin.customize(config) : undefined);
-		const lambdaFactory = await plugin.create(config, customization);
+		const customizations = await (plugin.customize ? plugin.customize(config) : undefined);
+		const lambdaFactory = await plugin.create(config, customizations);
 
 		// Inbound Kafka configuration
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");

@@ -15,7 +15,7 @@ import {
 	TestDbFactory,
 	TestProducer,
 	TestKafka,
-	TestNonImplementDocumentRepository,
+	TestNotImplementedDocumentRepository,
 } from "@fluidframework/server-test-utils";
 import {
 	IDocument,
@@ -114,7 +114,7 @@ describe("Routerlicious", () => {
 			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
 			const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
-			const defaultDocumentRepository = new TestNonImplementDocumentRepository();
+			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			describe("throttling", () => {

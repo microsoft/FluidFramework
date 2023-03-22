@@ -3,41 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDb, IDocumentRepository } from "./database";
+import { ICollection, IDocumentRepository } from "./database";
 import { IDocument } from "./document";
 
 export class MongoDocumentRepository implements IDocumentRepository {
 	constructor(private readonly collection: ICollection<IDocument>) {}
 
-	public static create(database: IDb, collectionName: string): MongoDocumentRepository {
-		return new MongoDocumentRepository(database.collection<IDocument>(collectionName));
-	}
-
 	async readOne(filter: any): Promise<IDocument> {
 		return this.collection.findOne(filter);
 	}
 
-	async updateOne(filter: any, update: any, option: any): Promise<void> {
+	async updateOne(filter: any, update: any, options: any): Promise<void> {
 		const addToSet = undefined; // AddToSet is not used anywhere. Change the behavior in the future if things changed.
-		await (option?.upsert
-			? this.collection.upsert(filter, update, addToSet, option)
-			: this.collection.update(filter, update, addToSet, option));
+		await (options?.upsert
+			? this.collection.upsert(filter, update, addToSet, options)
+			: this.collection.update(filter, update, addToSet, options));
 	}
 
 	async findOneOrCreate(
 		filter: any,
 		value: any,
-		option: any = undefined,
+		options: any = undefined,
 	): Promise<{ value: IDocument; existing: boolean }> {
-		return this.collection.findOrCreate(filter, value, option);
+		return this.collection.findOrCreate(filter, value, options);
 	}
 
 	async findOneAndUpdate(
 		filter: any,
 		value: any,
-		option: any = undefined,
+		options: any = undefined,
 	): Promise<{ value: IDocument; existing: boolean }> {
-		return this.collection.findAndUpdate(filter, value, option);
+		return this.collection.findAndUpdate(filter, value, options);
 	}
 
 	async create(document: IDocument): Promise<any> {

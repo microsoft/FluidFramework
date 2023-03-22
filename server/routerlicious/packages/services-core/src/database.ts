@@ -50,7 +50,7 @@ export interface IDocumentRepository {
 	/**
 	 * Update one document in the database
 	 */
-	updateOne(filter: any, update: any, option?: any): Promise<void>;
+	updateOne(filter: any, update: any, options?: any): Promise<void>;
 
 	/**
 	 * Find and create a document in the database by following option behavior
@@ -58,7 +58,7 @@ export interface IDocumentRepository {
 	findOneOrCreate(
 		filter: any,
 		value: any,
-		option?: any,
+		options?: any,
 	): Promise<{ value: IDocument; existing: boolean }>;
 
 	/**
@@ -67,7 +67,7 @@ export interface IDocumentRepository {
 	findOneAndUpdate(
 		filter: any,
 		value: any,
-		option?: any,
+		options?: any,
 	): Promise<{ value: IDocument; existing: boolean }>;
 
 	create(document: IDocument): Promise<any>;
@@ -109,10 +109,10 @@ export interface ICollection<T> {
 	 * Finds one query in the database
 	 *
 	 * @param query - data we want to find
-	 * @param option - optional. If set, provide customized options to the implementations
+	 * @param options - optional. If set, provide customized options to the implementations
 	 * @returns - value of the query in the database
 	 */
-	findOne(query: any, option?: any): Promise<T>;
+	findOne(query: any, options?: any): Promise<T>;
 
 	/**
 	 * @returns - all values in the database
@@ -125,9 +125,9 @@ export interface ICollection<T> {
 	 *
 	 * @param query - data we want to find
 	 * @param value - data to insert to the database if we cannot find query
-	 * @param option - optional. If set, provide customized options to the implementations
+	 * @param options - optional. If set, provide customized options to the implementations
 	 */
-	findOrCreate(query: any, value: T, option?: any): Promise<{ value: T; existing: boolean }>;
+	findOrCreate(query: any, value: T, options?: any): Promise<{ value: T; existing: boolean }>;
 
 	/**
 	 * Finds query in the database and replace its value.
@@ -135,12 +135,12 @@ export interface ICollection<T> {
 	 *
 	 * @param query - data we want to find
 	 * @param value - data to update to the database
-	 * @param option - optional. If set, provide customized options to the implementations
+	 * @param options - optional. If set, provide customized options to the implementations
 	 */
 	findAndUpdate(
 		query: any,
 		value: T,
-		option?: any,
+		options?: any,
 	): Promise<{
 		value: T;
 		existing: boolean;
@@ -153,10 +153,10 @@ export interface ICollection<T> {
 	 * @param filter - data we want to find
 	 * @param set - new values to change to
 	 * @param addToSet - an operator that insert a value to array unless the value already exists;
-	 * @param option - optional. If set, provide customized options to the implementations
+	 * @param options - optional. If set, provide customized options to the implementations
 	 * only used in mongodb.ts
 	 */
-	update(filter: any, set: any, addToSet: any, option?: any): Promise<void>;
+	update(filter: any, set: any, addToSet: any, options?: any): Promise<void>;
 
 	/**
 	 * Finds the query in the database. If it exists, update all the values to set.
@@ -166,9 +166,9 @@ export interface ICollection<T> {
 	 * @param set - new values to change to
 	 * @param addToSet - an operator that insert a value to array unless the value already exists;
 	 * only used in mongodb.ts
-	 * @param option - optional. If set, provide customized options to the implementations
+	 * @param options - optional. If set, provide customized options to the implementations
 	 */
-	updateMany(filter: any, set: any, addToSet: any, option?: any): Promise<void>;
+	updateMany(filter: any, set: any, addToSet: any, options?: any): Promise<void>;
 
 	/**
 	 * Finds the value that satisfies query. If it exists, update the value to new set.
@@ -178,9 +178,9 @@ export interface ICollection<T> {
 	 * @param set - new values to change to
 	 * @param addToSet - an operator that insert a value to array unless the value already exists;
 	 * only used in mongodb.ts
-	 * @param option - optional. If set, provide customized options to the implementations
+	 * @param options - optional. If set, provide customized options to the implementations
 	 */
-	upsert(filter: any, set: any, addToSet: any, option?: any): Promise<void>;
+	upsert(filter: any, set: any, addToSet: any, options?: any): Promise<void>;
 
 	/**
 	 * Inserts an entry into the database.
