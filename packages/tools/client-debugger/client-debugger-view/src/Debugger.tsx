@@ -17,7 +17,7 @@ import {
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { RenderOptions } from "./RendererOptions";
-import { ContainerView, TelemetryView, MenuItem, MenuSection } from "./components";
+import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
 
@@ -115,7 +115,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 				);
 			break;
 		default:
-			innerView = <div>Select an option from the menu</div>;
+			innerView = <LandingView />;
 			break;
 	}
 
