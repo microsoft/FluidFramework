@@ -63,7 +63,7 @@ Once the changes are reconciled, the collaboration session can continue as expec
 
 #### Set up on client joining a collaboration session
 
-<img width="80%" alt="Client calls Customer Service's /register-session-url endpoint with externalTaskListId and containerUrl" src="https://user-images.githubusercontent.com/6777404/226746194-59bcf018-a9e9-4381-80a9-4e4b50590317.png">
+<img width="80%" alt="Client calls Customer Service's /register-session-url endpoint with externalTaskListId and containerUrl" src="https://user-images.githubusercontent.com/6777404/226771104-6a87b5e2-9f5f-4eb6-a97d-c83c98c95d73.png">
 
 <img width="80%" alt="Customer Service creates a registry entry mapping externalTaskListId to containerUrl and calls External Server's /register-for-webhook endpoint for registering for changes in that externalTaskListId" src="https://user-images.githubusercontent.com/6777404/226746263-baea46a1-822a-4bda-838d-be1fae7387db.png">
 
