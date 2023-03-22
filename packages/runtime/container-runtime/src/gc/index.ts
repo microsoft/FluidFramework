@@ -12,6 +12,8 @@ export {
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
+	gcSweepGenerationOptionName,
+	GCFeatureMatrix,
 	GCVersion,
 	gcVersionUpgradeToV2Key,
 	IGarbageCollectionRuntime, // Deprecated
@@ -36,6 +38,7 @@ export {
 	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
+	shouldAllowGcSweep,
 } from "./gcHelpers";
 export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {

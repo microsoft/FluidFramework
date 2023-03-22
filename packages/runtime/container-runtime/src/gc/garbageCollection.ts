@@ -618,7 +618,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
-			sweepEnabled: this.configs.sweepEnabled,
+			sweepEnabled: false, // DEPRECATED - to be removed
 			sweepTimeoutMs: this.configs.sweepTimeoutMs,
 		};
 	}

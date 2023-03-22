@@ -223,19 +223,28 @@ export class DefaultEditBuilder
 				this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.move(
-						sourceIndex,
-						count,
-						destIndex,
-						this.modularBuilder.generateId(),
-					),
+				const moves = sequence.changeHandler.editor.move(
+					sourceIndex,
+					count,
+					destIndex,
+					this.modularBuilder.generateId(),
 				);
-				this.modularBuilder.submitChange(
-					parent,
-					field,
-					sequence.identifier,
-					change,
+
+				this.modularBuilder.submitChanges(
+					[
+						{
+							path: parent,
+							field,
+							fieldKind: sequence.identifier,
+							change: brand(moves[0]),
+						},
+						{
+							path: parent,
+							field,
+							fieldKind: sequence.identifier,
+							change: brand(moves[1]),
+						},
+					],
 					brand(0),
 				);
 			},

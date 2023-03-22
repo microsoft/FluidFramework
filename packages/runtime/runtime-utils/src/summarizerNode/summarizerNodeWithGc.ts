@@ -142,8 +142,8 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		});
 
 		this.childNodesBaseGCDetailsP = new LazyPromise(async () => {
-			const baseGCDetails = await this.baseGCDetailsP;
-			return unpackChildNodesGCDetails(baseGCDetails);
+			await this.loadBaseGCDetails();
+			return unpackChildNodesGCDetails({ gcData: this.gcData, usedRoutes: this.usedRoutes });
 		});
 	}
 

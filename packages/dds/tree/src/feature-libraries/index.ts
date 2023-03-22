@@ -111,6 +111,7 @@ export {
 	HasFieldChanges,
 	ValueConstraint,
 	TypedSchema,
+	revisionMetadataSourceFromInfo,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
