@@ -43,7 +43,13 @@ describe("PerformanceEvent", () => {
 			return outerPromise.catch(() => {});
 		};
 
-		await PerformanceEvent.timedExecAsync(logger, { eventName: "Testing" }, callback);
+		await PerformanceEvent.timedExecAsync(
+			logger,
+			{ eventName: "Testing" },
+			callback,
+			{ start: true, end: true, cancel: "generic" },
+			true,
+		);
 		assert(logger.errorsLogged === 0, "Shouldn't have logged any errors");
 	});
 });
