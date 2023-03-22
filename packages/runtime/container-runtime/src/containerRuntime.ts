@@ -1709,10 +1709,24 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState(newState);
 	}
 
+	/**
+	 * Parse an op's type and actual content from given serialized content
+	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
+	 */
+	private parseOpContent(serializedContent?: string): {
+		type: ContainerMessageType;
+		contents: any;
+	} {
+		assert(serializedContent !== undefined, "content must be defined");
+		const parsed = JSON.parse(serializedContent);
+		assert(parsed.type !== undefined, "incorrect op content format");
+		return { type: parsed.type as ContainerMessageType, contents: parsed.contents };
+	}
+
 	private async applyStashedOp(op: string): Promise<unknown> {
-		const { type, contents } = JSON.parse(op);
-		const messageType: ContainerMessageType = type;
-		switch (messageType) {
+		// Need to parse from string for back-compat
+		const { type, contents } = this.parseOpContent(op);
+		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.dataStores.applyStashedOp(contents);
 			case ContainerMessageType.Attach:
@@ -1725,7 +1739,7 @@ export class ContainerRuntime
 			case ContainerMessageType.Rejoin:
 				throw new Error("rejoin not expected here");
 			default:
-				unreachableCase(messageType, `Unknown ContainerMessageType: ${messageType}`);
+				unreachableCase(type, `Unknown ContainerMessageType: ${type}`);
 		}
 	}
 
@@ -2029,13 +2043,7 @@ export class ContainerRuntime
 				// This will throw and close the container if rollback fails
 				try {
 					checkpoint.rollback((message: BatchMessage) =>
-						this.rollback(
-							message.type,
-							message.contents === undefined
-								? undefined
-								: JSON.parse(message.contents).contents,
-							message.localOpMetadata,
-						),
+						this.rollback(message.contents, message.localOpMetadata),
 					);
 				} catch (err) {
 					const error2 = wrapError(err, (message) => {
@@ -3005,7 +3013,8 @@ export class ContainerRuntime
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		const { contents, type } = JSON.parse(content);
+		// Need to parse from string for back-compat
+		const { contents, type } = this.parseOpContent(content);
 		this.reSubmitCore(type, contents, localOpMetadata, opMetadata);
 	}
 
@@ -3044,12 +3053,14 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(type: ContainerMessageType, content: any, localOpMetadata: unknown) {
+	private rollback(content: string | undefined, localOpMetadata: unknown) {
+		// Need to parse from string for back-compat
+		const { type, contents } = this.parseOpContent(content);
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
-				this.dataStores.rollbackDataStoreOp(content, localOpMetadata);
+				this.dataStores.rollbackDataStoreOp(contents, localOpMetadata);
 				break;
 			default:
 				throw new Error(`Can't rollback ${type}`);

@@ -241,6 +241,7 @@ export class Outbox {
 			for (const message of batch.content) {
 				this.params.containerContext.submitFn(
 					MessageType.Operation,
+					// For back-compat (submitFn only works on deserialized content)
 					message.contents === undefined ? undefined : JSON.parse(message.contents),
 					true, // batch
 					message.metadata,
