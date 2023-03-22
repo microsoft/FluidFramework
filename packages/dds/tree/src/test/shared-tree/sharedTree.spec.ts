@@ -1040,7 +1040,7 @@ describe("SharedTree", () => {
 		function getAnchorFromIndex(tree: ISharedTreeBranch, index: number): Anchor {
 			const cursor = tree.forest.allocateCursor();
 			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(1);
+			cursor.enterNode(index);
 			const anchor = cursor.buildAnchor();
 			cursor.free();
 			return anchor;
@@ -1147,10 +1147,19 @@ describe("SharedTree", () => {
 				branchCursor.free();
 			}
 
+			// Check import from branch to main for a node that predates the branch
+			{
+				const barFromBranch = getAnchorFromIndex(branch, 0);
+				const barFromBranchToMain = main.importAnchor(branch, barFromBranch);
+				const mainCursor = cursorFromAnchor(main, barFromBranchToMain);
+				assert.equal(mainCursor.value, "bar");
+				mainCursor.free();
+			}
+
 			// This should pull the insertion of "foo" into the branch, updating the anchor for baz
 			branch.merge();
 
-			// Check import from branch to main
+			// Check import from branch to main for a node introduced in the branch
 			{
 				const bazFromBranchToMain = main.importAnchor(branch, bazFromBranch);
 				const mainCursor = cursorFromAnchor(main, bazFromBranchToMain);
