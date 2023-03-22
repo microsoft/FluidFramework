@@ -47,7 +47,7 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			["TELEMETRY_EVENT"]: (untypedMessage) => {
 				const message: TelemetryEventMessage = untypedMessage as TelemetryEventMessage;
-				setTelemetryEvents([message.data.contents, ...telemetryEvents]);
+				setTelemetryEvents(currentEvents => [message.data.contents, ...currentEvents]);
 				return true;
 			},
 		};
@@ -62,7 +62,7 @@ export function TelemetryView(): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, telemetryEvents, setTelemetryEvents]);
+	}, [messageRelay, setTelemetryEvents]);
 
 	return (
 		<div>
