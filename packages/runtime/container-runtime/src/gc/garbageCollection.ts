@@ -352,15 +352,6 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 		this.unreferencedNodesState.clear();
 
-		// If this is called because we are refreshing from a snapshot due to an ack, the GC state in the snapshot
-		// is newer than this client's. And so, the tombstone nodes need to be updated.
-		if (this.configs.tombstoneMode) {
-			// The snapshot may contain more or fewer tombstone nodes than this client. Update tombstone state and
-			// notify the runtime to update its state as well.
-			this.tombstones = snapshotData?.tombstones ? Array.from(snapshotData.tombstones) : [];
-			this.runtime.updateTombstonedRoutes(this.tombstones);
-		}
-
 		// If there is no snapshot data, unset the GC state.
 		if (snapshotData === undefined) {
 			this.gcDataFromLastRun = undefined;
