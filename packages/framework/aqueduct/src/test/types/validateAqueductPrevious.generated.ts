@@ -40,26 +40,14 @@ use_old_ClassDeclaration_BaseContainerRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BaseContainerService": {"forwardCompat": false}
+* "RemovedClassDeclaration_BaseContainerService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BaseContainerService():
-    TypeOnly<old.BaseContainerService>;
-declare function use_current_ClassDeclaration_BaseContainerService(
-    use: TypeOnly<current.BaseContainerService>);
-use_current_ClassDeclaration_BaseContainerService(
-    get_old_ClassDeclaration_BaseContainerService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BaseContainerService": {"backCompat": false}
+* "RemovedClassDeclaration_BaseContainerService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BaseContainerService():
-    TypeOnly<current.BaseContainerService>;
-declare function use_old_ClassDeclaration_BaseContainerService(
-    use: TypeOnly<old.BaseContainerService>);
-use_old_ClassDeclaration_BaseContainerService(
-    get_current_ClassDeclaration_BaseContainerService());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -88,26 +76,14 @@ use_old_ClassDeclaration_ContainerRuntimeFactoryWithDefaultDataStore(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ContainerServiceRegistryEntries": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_ContainerServiceRegistryEntries": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_ContainerServiceRegistryEntries():
-    TypeOnly<old.ContainerServiceRegistryEntries>;
-declare function use_current_TypeAliasDeclaration_ContainerServiceRegistryEntries(
-    use: TypeOnly<current.ContainerServiceRegistryEntries>);
-use_current_TypeAliasDeclaration_ContainerServiceRegistryEntries(
-    get_old_TypeAliasDeclaration_ContainerServiceRegistryEntries());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_ContainerServiceRegistryEntries": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_ContainerServiceRegistryEntries": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_ContainerServiceRegistryEntries():
-    TypeOnly<current.ContainerServiceRegistryEntries>;
-declare function use_old_TypeAliasDeclaration_ContainerServiceRegistryEntries(
-    use: TypeOnly<old.ContainerServiceRegistryEntries>);
-use_old_TypeAliasDeclaration_ContainerServiceRegistryEntries(
-    get_current_TypeAliasDeclaration_ContainerServiceRegistryEntries());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -328,26 +304,14 @@ use_old_VariableDeclaration_defaultRouteRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_generateContainerServicesRequestHandler": {"forwardCompat": false}
+* "RemovedVariableDeclaration_generateContainerServicesRequestHandler": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_generateContainerServicesRequestHandler():
-    TypeOnly<typeof old.generateContainerServicesRequestHandler>;
-declare function use_current_VariableDeclaration_generateContainerServicesRequestHandler(
-    use: TypeOnly<typeof current.generateContainerServicesRequestHandler>);
-use_current_VariableDeclaration_generateContainerServicesRequestHandler(
-    get_old_VariableDeclaration_generateContainerServicesRequestHandler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_generateContainerServicesRequestHandler": {"backCompat": false}
+* "RemovedVariableDeclaration_generateContainerServicesRequestHandler": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_generateContainerServicesRequestHandler():
-    TypeOnly<typeof current.generateContainerServicesRequestHandler>;
-declare function use_old_VariableDeclaration_generateContainerServicesRequestHandler(
-    use: TypeOnly<typeof old.generateContainerServicesRequestHandler>);
-use_old_VariableDeclaration_generateContainerServicesRequestHandler(
-    get_current_VariableDeclaration_generateContainerServicesRequestHandler());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -448,47 +412,23 @@ use_old_VariableDeclaration_mountableViewRequestHandler(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_serviceRoutePathRoot": {"forwardCompat": false}
+* "RemovedVariableDeclaration_serviceRoutePathRoot": {"forwardCompat": false}
 */
-declare function get_old_VariableDeclaration_serviceRoutePathRoot():
-    TypeOnly<typeof old.serviceRoutePathRoot>;
-declare function use_current_VariableDeclaration_serviceRoutePathRoot(
-    use: TypeOnly<typeof current.serviceRoutePathRoot>);
-use_current_VariableDeclaration_serviceRoutePathRoot(
-    get_old_VariableDeclaration_serviceRoutePathRoot());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_serviceRoutePathRoot": {"backCompat": false}
+* "RemovedVariableDeclaration_serviceRoutePathRoot": {"backCompat": false}
 */
-declare function get_current_VariableDeclaration_serviceRoutePathRoot():
-    TypeOnly<typeof current.serviceRoutePathRoot>;
-declare function use_old_VariableDeclaration_serviceRoutePathRoot(
-    use: TypeOnly<typeof old.serviceRoutePathRoot>);
-use_old_VariableDeclaration_serviceRoutePathRoot(
-    get_current_VariableDeclaration_serviceRoutePathRoot());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForAttach": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_waitForAttach": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_waitForAttach():
-    TypeOnly<typeof old.waitForAttach>;
-declare function use_current_FunctionDeclaration_waitForAttach(
-    use: TypeOnly<typeof current.waitForAttach>);
-use_current_FunctionDeclaration_waitForAttach(
-    get_old_FunctionDeclaration_waitForAttach());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForAttach": {"backCompat": false}
+* "RemovedFunctionDeclaration_waitForAttach": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_waitForAttach():
-    TypeOnly<typeof current.waitForAttach>;
-declare function use_old_FunctionDeclaration_waitForAttach(
-    use: TypeOnly<typeof old.waitForAttach>);
-use_old_FunctionDeclaration_waitForAttach(
-    get_current_FunctionDeclaration_waitForAttach());

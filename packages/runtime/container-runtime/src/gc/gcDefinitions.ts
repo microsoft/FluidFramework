@@ -12,9 +12,13 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IContainerRuntimeMetadata, ICreateContainerMetadata } from "../summary";
+import {
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
+	RefreshSummaryResult,
+} from "../summary";
 
 export type GCVersion = number;
 
@@ -143,9 +147,7 @@ export const GCNodeType = {
 };
 export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
 
-// NOTE: Once this is removed from the package exports in the next major, the deprecation tag can be removed as well
 /**
- * @deprecated - Was only to be used internally anyway, no replacement provided.
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {

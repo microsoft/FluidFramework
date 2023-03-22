@@ -15,6 +15,160 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.4.0.0
+
+## 2.0.0-internal.4.0.0 Upcoming changes
+
+-   [bindToContext deprecated in IFluidDataStoreContext](#bindToContext-deprecated-in-IFluidDataStoreContext)
+-   [getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn](#getBaseGCDetails-deprecated-in-IFluidDataStoreContext-and-CreateChildSummarizerNodeFn)
+
+### bindToContext deprecated in IFluidDataStoreContext
+
+`bindToContext` in IFluidDataStoreContext was deprecated in 2.0.0-internal.2.0.0. This is a heads up that it will be removed in 2.0.0-internal.5.0.0. Its usage in FluidDataStoreRuntime was removed in this release.
+
+### getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn
+
+getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn. The functionality to update the base GC details of nodes has been moved to summarizer nodes. These will be removed in 2.0.0-internal.5.0.0.
+
+## 2.0.0-internal.4.0.0 Breaking changes
+
+-   [Container and RelativeLoader no longer exported](#Container-and-RelativeLoader-no-longer-exported)
+-   [Remove `ensureContainerConnected()` in `@fluidframework/test-utils`](#remove-ensurecontainerconnected-in-fluidframeworktest-utils)
+-   [New default parameter values for `waitForContainerConnection()` in `@fluidframework/test-utils`](#new-default-parameter-values-for-waitforcontainerconnection-in-fluidframeworktest-utils)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
+-   [IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed](#IFluidHTMLView-ReactViewAdapter-and-HTMLViewAdapter-removed)
+-   [IFluidTokenProvider removed](#IFluidTokenProvider-removed)
+-   [Summarizer node and related items removed](#Summarizer-node-and-related-items-removed)
+-   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
+-   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
+-   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
+-   [Aqueduct members removed](#Aqueduct-members-removed)
+-   [driver-utils members removed](#driver-utils-members-removed)
+-   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
+-   [IDocumentServiceFactory.protocolName removed](#IDocumentServiceFactory.protocolName-removed)
+-   [Changes to Summarizer's public API](#changes-to-summarizers-public-api)
+
+### Container and RelativeLoader no longer exported
+
+Container and RelativeLoader are no longer exported. All Container usages should have previously moved to IContainer. RelativeLoader is an internal implementation which should not be exposed or used directly.
+
+### Remove `ensureContainerConnected()` in `@fluidframework/test-utils`
+
+This function was [deprecated in a previous release](#200-internal240-upcoming-changes) and has now been removed.
+Use `waitForContainerConnection()` from the same package instead.
+See [the note](#new-default-parameter-values-for-waitforcontainerconnection-in-fluidframeworktest-utils) about breaking
+changes in that function in this release.
+
+### New default parameter values for `waitForContainerConnection()` in `@fluidframework/test-utils`
+
+The default value for the `failOnContainerClose` parameter has changed from `false` to `true` for function
+`waitForContainerConnection()` exported by `@fluidframework/test-utils`.
+
+This is overall a safer default because it ensures that unexpected errors which cause the Container to close are surfaced
+immediately, instead of potentially being hidden by a timeout.
+
+Most use cases should prefer `true`; explicit passing of `false` should only be necessary when the caller expects the
+Container to connect _or_ close for some reason.
+
+### Some test packages no longer published
+
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-drivers`
+-   `@fluidframework/test-pairwise-generator`
+-   `@fluidframework/test-version-utils`
+-   `@fluidframework/test-loader-utils`
+
+These have been moved to the `@fluid-internal` scope and are no longer published.
+
+### IFluidHTMLView, ReactViewAdapter, and HTMLViewAdapter removed
+
+`IFluidHTMLView`, `ReactViewAdapter`, and `HTMLViewAdapter` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### IFluidTokenProvider removed
+
+The IFluidTokenProvider interface was deprecated in 2.0.0-internal.3.2.0, and is now removed.
+
+### Summarizer node and related items removed
+
+The following functions, interfaces, and types currently available in `@fluidframework/runtime-utils` were deprecated in 2.0.0-internal.3.0.0 and are now removed.
+
+-   `createRootSummarizerNode`
+-   `createRootSummarizerNodeWithGC`
+-   `IFetchSnapshotResult`
+-   `IRootSummarizerNode`
+-   `IRootSummarizerNodeWithGC`
+-   `ISummarizerNodeRootContract`
+-   `RefreshSummaryResult`
+
+### web-code-loader and ICodeAllowList removed
+
+The `@fluidframework/web-code-loader` and the `ICodeAllowList` were deprecated in 2.0.0-internal.3.2.0, and are now removed.
+
+### Container and IContainer no longer raise events when a new listener is registered
+
+`Container` and `IContainer` had previously raised the `connected`, `disconnected`, `dirty`, and `saved` events when a new listener was registered and the corresponding state was true. This behavior has been removed. To avoid issues, add checks to the state of the container before registering listeners.
+
+```diff
+	// Ensure client is connected
++	if (container.connectionState !== ConnectionState.Connected) {
+		await new Promise<void>((resolve) => {
+			container.once("connected", resolve);
+		});
++   }
+```
+
+### Remove deprecated PendingStateManager interfaces
+
+The following interfaces used by the `PendingStateManager` are no longer exported:
+
+-   `IPendingMessage`
+-   `IPendingFlush`
+-   `IPendingState`
+-   `IPendingLocalState`
+
+### Aqueduct members removed
+
+`ContainerServices` in `@fluidframework/aqueduct` and `waitForAttach()` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### driver-utils members removed
+
+The following members of the `@fluidframework/driver-utils` package were deprecated in 2.0.0-internal.3.0.0 or earlier, and are now removed:
+
+-   `waitForConnectedState`
+-   `MapWithExpiration`
+-   `configurableUrlResolver`
+-   `MultiUrlResolver`
+-   `MultiDocumentServiceFactory`
+-   `BlobCacheStorageService`
+-   `EmptyDocumentDeltaStorageService`
+-   `convertSnapshotAndBlobsToSummaryTree`
+-   `ISummaryTreeAssemblerProps`
+-   `SummaryTreeAssembler`
+-   `BlobAggregationStorage`
+-   `SnapshotExtractor`
+-   `isUnpackedRuntimeMessage`
+-   `IAnyDriverError`
+
+### Remove IConnectableRuntime.deltaManager
+
+Note: `IConnectableRuntime` is only to be implemented internally, so removing this should not be impactful.
+
+## IDocumentServiceFactory.protocolName removed
+
+`IDocumentServiceFactory.protocolName` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### Changes to Summarizer's public API
+
+The following interfaces and exports in `@fluidframework/container-runtime` [deprecated since 0.14.0](https://github.com/microsoft/FluidFramework/pull/8299)
+have been removed and have no replacement:
+
+-   `IProvideSummarizer` interface
+-   `ISummarizer` const (**note:** the `ISummarizer` _interface_ still exists and is used)
+
+Additionally, the `ISummarizer` interface no longer extends `IFluidLoadable` nor `Partial<IProvideSummarizer>`.
+This means it no longer has readonly properties `IFluidLoadable` and `handle`.
+
 # 2.0.0-internal.3.4.0
 
 ## 2.0.0-internal.3.4.0 Upcoming changes
@@ -258,6 +412,14 @@ const tokenProvider = new InsecureTokenProvider("myTenantKey", user);
 ### Remove Deprecated IFluidObject Interface
 
 IFluidObject is removed and has been replaced with [FluidObject](#Deprecate-IFluidObject-and-introduce-FluidObject).
+
+### Remove internal connection details from `IConnectionDetails`
+
+Removing `existing`, `mode`, `version` and `initialClients` from `IConnectionDetails`, no longer exposing these to runtime. Reasons for removing each of them:
+
+-   `existing` : this will always be true, which no longer provides useful information
+-   `mode` : this is implementation detail of connection
+-   `initialClients` and `version` : these are implementation details of handshake protocol of establishing connection, and should not be accessible.
 
 ### Remove deprecated experimental get-container package
 

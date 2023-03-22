@@ -4,15 +4,15 @@
  */
 
 import { strict as assert } from "assert";
+import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IPendingLocalState,
 	ContainerErrorType,
-	LoaderHeader,
 	IFluidCodeDetails,
+	IContainer,
 } from "@fluidframework/container-definitions";
 import {
-	Container,
 	ConnectionState,
 	Loader,
 	ILoaderProps,
@@ -25,7 +25,6 @@ import {
 	IDocumentServiceFactory,
 	IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
-import { MockDocumentDeltaConnection } from "@fluidframework/test-loader-utils";
 import {
 	LocalCodeLoader,
 	TestObjectProvider,
@@ -44,7 +43,7 @@ import {
 	TestDataObjectType,
 	describeNoCompat,
 	itExpects,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
@@ -93,18 +92,10 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		});
 		loaderContainerTracker.add(loader);
 
-		const testResolved = await loader.services.urlResolver.resolve(testRequest);
-		ensureFluidResolvedUrl(testResolved);
-		return Container.load(loader, {
-			canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
-			clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-			resolvedUrl: testResolved,
-			version: testRequest.headers?.[LoaderHeader.version] ?? undefined,
-			loadMode: testRequest.headers?.[LoaderHeader.loadMode],
-		});
+		return loader.resolve(testRequest);
 	}
 
-	async function createConnectedContainer(): Promise<Container> {
+	async function createConnectedContainer(): Promise<IContainer> {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
 		const runtimeFactory = (_?: unknown) =>
@@ -117,7 +108,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = (await localTestObjectProvider.makeTestContainer()) as Container;
+		const container = await localTestObjectProvider.makeTestContainer();
 		await waitForContainerConnection(container, true, {
 			durationMs: timeoutMs,
 			errorMsg: "Container initial connection timeout",
@@ -132,11 +123,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 
 	it("Load container successfully", async () => {
 		const container = await loadContainer();
-		assert.strictEqual(
-			container.clientDetails.capabilities.interactive,
-			true,
-			"Client details should be set with interactive as true",
-		);
 	});
 
 	itExpects(
@@ -216,21 +202,20 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		);
 		// Note: this will create infinite loop of reconnects as every reconnect would bring closed connection.
 		// Only closing container will break that cycle.
-		deltaConnection.dispose();
 		try {
-			assert.strictEqual(
-				container.connectionState,
-				ConnectionState.Disconnected,
-				"Container should be in Disconnected state",
-			);
-
-			// 'disconnected' event listener should be invoked right after registration
-			let disconnectedEventArgs;
-			container.on("disconnected", (...args) => {
-				disconnectedEventArgs = args;
+			let disconnectEventRaised = false;
+			container.once("disconnected", () => {
+				disconnectEventRaised = true;
+				assert.strictEqual(
+					container.connectionState,
+					ConnectionState.Disconnected,
+					"Container should be in Disconnected state",
+				);
 			});
+			deltaConnection.dispose();
+			// Disconnected event should be raised on next JS turn
 			await Promise.resolve();
-			assert.deepEqual(disconnectedEventArgs, []);
+			assert(disconnectEventRaised, "Disconnected event should be raised");
 		} finally {
 			deltaConnection.removeAllListeners();
 			container.close();
@@ -248,11 +233,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			service.connectToDeltaStream = async () => deltaConnection;
 			return service;
 		};
-		let errorRaised = false;
 		const container = await loadContainer({ documentServiceFactory: mockFactory });
-		container.on("error", () => {
-			errorRaised = true;
-		});
 		assert.strictEqual(
 			container.connectionState,
 			ConnectionState.CatchingUp,
@@ -274,7 +255,6 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			);
 			// All errors on socket are not critical!
 			assert.strictEqual(container.closed, false, "Container should not be closed");
-			assert.strictEqual(errorRaised, false, "Error event should not be raised.");
 		} finally {
 			deltaConnection.removeAllListeners();
 			container.close();
@@ -293,9 +273,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			return service;
 		};
 		const container = await loadContainer({ documentServiceFactory: mockFactory });
-		container.on("error", () => {
-			assert.ok(false, "Error event should not be raised.");
-		});
+
 		assert.strictEqual(
 			container.connectionState,
 			ConnectionState.CatchingUp,
@@ -325,7 +303,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = (await localTestObjectProvider.makeTestContainer()) as Container;
+		const container = await localTestObjectProvider.makeTestContainer();
 		const dataObject = await requestFluidObject<ITestDataObject>(container, "default");
 
 		let runCount = 0;
@@ -334,7 +312,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runCount++;
 		});
 
-		container.forceReadonly(true);
+		container.forceReadonly?.(true);
 		assert.strictEqual(container.readOnlyInfo.readonly, true);
 
 		assert.strictEqual(runCount, 1);
@@ -352,7 +330,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = (await localTestObjectProvider.makeTestContainer()) as Container;
+		const container = await localTestObjectProvider.makeTestContainer();
 
 		const pendingLocalState: IPendingLocalState = JSON.parse(
 			container.closeAndGetPendingLocalState(),
@@ -405,7 +383,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container1 = (await localTestObjectProvider.makeTestContainer()) as Container;
+		const container1 = await localTestObjectProvider.makeTestContainer();
 		await waitForContainerConnection(container1, false, {
 			durationMs: timeoutMs,
 			errorMsg: "container1 initial connect timeout",
@@ -422,7 +400,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 		let value1 = await directory1.get("key");
 		assert.strictEqual(value1, "value", "value1 is not set");
 
-		const container2 = (await localTestObjectProvider.loadTestContainer()) as Container;
+		const container2 = await localTestObjectProvider.loadTestContainer();
 		await waitForContainerConnection(container2, false, {
 			durationMs: timeoutMs,
 			errorMsg: "container2 initial connect timeout",
@@ -683,7 +661,10 @@ describeNoCompat("Driver", (getTestObjectProvider) => {
 		const provider = getTestObjectProvider();
 		const fiveDaysMs: FiveDaysMs = 432_000_000;
 
-		const container = (await provider.makeTestContainer()) as Container;
-		assert.equal(container.storage.policies?.maximumCacheDurationMs, fiveDaysMs);
+		const { resolvedUrl } = await provider.makeTestContainer();
+		ensureFluidResolvedUrl(resolvedUrl);
+		const ds = await provider.documentServiceFactory.createDocumentService(resolvedUrl);
+		const storage = await ds.connectToStorage();
+		assert.equal(storage.policies?.maximumCacheDurationMs, fiveDaysMs);
 	});
 });

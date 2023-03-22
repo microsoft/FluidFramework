@@ -293,7 +293,6 @@ importers:
       '@fluidframework/fluid-static': ^1.4.0-121020
       '@fluidframework/map': ^1.4.0-121020
       '@fluidframework/matrix': ^1.4.0-121020
-      '@fluidframework/mocha-test-setup': ^1.4.0-121020
       '@fluidframework/sequence': ^1.4.0-121020
       '@fluidframework/server-services-client': ^0.1036.5000
       '@fluidframework/telemetry-utils': ^1.4.0-121020
@@ -327,7 +326,6 @@ importers:
       '@fluidframework/fluid-static': 1.4.0-121020
       '@fluidframework/map': 1.4.0-121020
       '@fluidframework/matrix': 1.4.0-121020
-      '@fluidframework/mocha-test-setup': 1.4.0-121020
       '@fluidframework/sequence': 1.4.0-121020
       '@fluidframework/server-services-client': 0.1036.5001
       '@fluidframework/telemetry-utils': 1.4.0-121020
@@ -371,7 +369,6 @@ importers:
       '@fluidframework/fluid-static': ^1.4.0-121020
       '@fluidframework/map': ^1.4.0-121020
       '@fluidframework/matrix': ^1.4.0-121020
-      '@fluidframework/mocha-test-setup': ^1.4.0-121020
       '@fluidframework/sequence': ^1.4.0-121020
       '@fluidframework/server-services-client': ^0.1036.5000
       '@fluidframework/telemetry-utils': ^1.4.0-121020
@@ -411,7 +408,6 @@ importers:
       '@fluidframework/fluid-static': 1.4.0-121020
       '@fluidframework/map': 1.4.0-121020
       '@fluidframework/matrix': 1.4.0-121020
-      '@fluidframework/mocha-test-setup': 1.4.0-121020
       '@fluidframework/sequence': 1.4.0-121020
       '@fluidframework/server-services-client': 0.1036.5001
       '@fluidframework/telemetry-utils': 1.4.0-121020
@@ -1754,14 +1750,6 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
-    dev: false
-
-  /@fluidframework/mocha-test-setup/1.4.0-121020:
-    resolution: {integrity: sha512-CcpWibJfDEuDO0gEdpmEByXl+s+voUJ1VOGGyBdIX7Em8wzpO0wYAwZff9bHqSFsn8PexlF2SZdGncdOplAiNA==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/test-driver-definitions': 1.4.0-121020
-      mocha: 10.2.0
     dev: false
 
   /@fluidframework/protocol-base/0.1036.5001:

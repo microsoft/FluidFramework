@@ -1,4 +1,4 @@
-# @fluidframework/test-drivers
+# @fluid-internal/test-drivers
 
 This package provides a simple and common driver abstraction that can be used by tests to be server agnostic.
 
