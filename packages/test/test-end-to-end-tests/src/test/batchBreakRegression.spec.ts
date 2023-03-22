@@ -92,19 +92,15 @@ async function runAndValidateBatch(
 	}
 	assert(containerUrl);
 	{
-		const defaultRuntimeOptions: IContainerRuntimeOptions = {
-			summaryOptions: {
-				summaryConfigOverrides: { state: "disabled" },
-			},
-		};
-
 		const loader = provider.createLoader(
 			[
 				[
 					provider.defaultCodeDetails,
 					provider.createFluidEntryPoint({
 						runtimeOptions: {
-							...defaultRuntimeOptions,
+							summaryOptions: {
+								summaryConfigOverrides: { state: "disabled" },
+							},
 							...runtimeOptions,
 						},
 					}),
@@ -374,7 +370,7 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 	});
 	describe("server sends invalid batch", () => {
 		// Batches are now all 1 message
-		itExpects.skip(
+		itExpects(
 			"interleave system message",
 			[
 				{
@@ -444,7 +440,9 @@ describeNoCompat("Batching failures", (getTestObjectProvider) => {
 					},
 				);
 				try {
-					await runAndValidateBatch(provider, proxyDsf, this.timeout());
+					await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
+						enableGroupedBatching: false,
+					});
 					assert.fail("expected error");
 				} catch (e) {
 					assert(isILoggingError(e), `${e}`);
