@@ -38,7 +38,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { audience } = clientDebugger;
 
 	const myClientId = useMyClientId(clientDebugger);
-	// const myClientConnection = useMyClientConnection(clientDebugger);
 
 	const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
 		audience.getMembers(),

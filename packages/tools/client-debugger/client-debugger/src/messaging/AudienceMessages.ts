@@ -19,7 +19,7 @@ export interface AudienceClientMetaData {
 }
 
 /**
- * Inbound event requesting {@link AudienceChangeLogEntry} of the Container with the specific ID.
+ * Inbound event requesting audience data from the Container with the specific ID.
  * Will result in the {@link AudienceEventMessage} message being posted.
  *
  * @public
@@ -34,6 +34,10 @@ export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
  * @public
  */
 export interface AudienceEventMessageData extends HasContainerId {
+	/**
+	 * Id of the client connected to the container
+	 */
+	clientId: string | undefined;
 	/**
 	 * Metadata of the current Audience state.
 	 */

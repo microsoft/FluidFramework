@@ -112,6 +112,7 @@ export class FluidClientDebugger
 
 	private readonly containerConnectedHandler = (clientId: string): void => {
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Connected,
 			timestamp: Date.now(),
@@ -121,6 +122,7 @@ export class FluidClientDebugger
 
 	private readonly containerDisconnectedHandler = (): void => {
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Disconnected,
 			timestamp: Date.now(),
@@ -130,6 +132,7 @@ export class FluidClientDebugger
 
 	private readonly containerClosedHandler = (): void => {
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Closed,
 			timestamp: Date.now(),
@@ -190,7 +193,6 @@ export class FluidClientDebugger
 			const message = untypedMessage as ConnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.connect();
-				this.postAudienceStateChange();
 				return true;
 			}
 			return false;
@@ -199,7 +201,6 @@ export class FluidClientDebugger
 			const message = untypedMessage as DisconnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
-				this.postAudienceStateChange();
 				return true;
 			}
 			return false;
@@ -269,11 +270,14 @@ export class FluidClientDebugger
 			return { clientId, client };
 		});
 
+		console.log("ClientId", this.container.clientId);
+
 		postMessageToWindow<AudienceEventMessage>(this.messageLoggingOptions, {
 			source: debuggerMessageSource,
 			type: "AUDIENCE_EVENT",
 			data: {
 				containerId: this.containerId,
+				clientId: this.container.clientId,
 				audienceState: audienceClientMetaData,
 				audienceHistory: this.getAudienceHistory(),
 			},

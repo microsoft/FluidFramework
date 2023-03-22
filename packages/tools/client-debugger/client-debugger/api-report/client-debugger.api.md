@@ -45,6 +45,7 @@ export interface AudienceEventMessageData extends HasContainerId {
     // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
     audienceHistory: readonly AudienceChangeLogEntry[];
     audienceState: AudienceClientMetaData[];
+    clientId: string | undefined;
 }
 
 // @internal

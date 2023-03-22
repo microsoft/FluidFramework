@@ -47,6 +47,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	const messageRelay = useMessageRelay();
 
+	const [clientId, setClientId] = React.useState<string | undefined>("");
 	const [audienceState, setAudienceState] = React.useState<AudienceClientMetaData[]>([]);
 	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
 		[],
@@ -60,6 +61,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
 				const message: AudienceEventMessage = untypedMessage as AudienceEventMessage;
 
+				setClientId(message.data.clientId);
 				setAudienceState(message.data.audienceState);
 				setAudienceHistory(message.data.audienceHistory);
 
@@ -90,7 +92,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	return (
 		<_AudienceView
-			clientId={undefined}
+			clientId={clientId}
 			audienceClientMetaData={audienceState}
 			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
 			audienceHistory={audienceHistory}
