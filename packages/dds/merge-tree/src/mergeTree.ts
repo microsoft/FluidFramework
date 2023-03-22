@@ -1914,7 +1914,7 @@ export class MergeTree {
 				!Marker.is(segment) ||
 					!(reservedMarkerIdKey in props) ||
 					props.markerId === segment.properties?.markerId,
-				"Cannot change the markerId of an existing marker",
+				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
 			const propertyDeltas = segment.addProperties(
 				props,

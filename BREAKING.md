@@ -19,13 +19,19 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.4.0 Upcoming changes
 
-[IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+-   [IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+-   [LoaderHeader.cache deprecated](#LoaderHeadercache-deprecated)
 
 ## IResolvedUrl will be equivalent to IFluidResolvedUrl
 
 In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl are deprecated as they are not used.
 This will make IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls will now be FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
 ensureFluidResolvedUrl will be deprecated and removed due to this.
+
+## LoaderHeader.cache deprecated
+
+In `@fluidframework/container-definitions`, the `cache` value from the `LoaderHeader` enum has been deprecated.
+Therefore, the `[LoaderHeader.cache]` property from `ILoaderHeader` is also deprecated. They will both be removed in the next major release, as well as all caching functionality of containers. Cache support will be removed soon, please try not to rely on caching, and inform us if you cannot do so.
 
 # 2.0.0-internal.3.3.0
 

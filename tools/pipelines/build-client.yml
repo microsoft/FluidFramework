@@ -103,8 +103,6 @@ extends:
     - ci:test:stress:tinylicious
     - test:copyresults
     checks:
-    - policy-check
-    - layer-check
     - syncpack:deps
     - syncpack:versions
     - prettier

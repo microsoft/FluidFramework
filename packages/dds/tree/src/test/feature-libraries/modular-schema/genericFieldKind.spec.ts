@@ -20,7 +20,7 @@ import {
 import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 

@@ -1002,6 +1002,12 @@ export class ContainerRuntime
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**
+	 * GUID to identify a document in telemetry
+	 * ! Note: should not be used for anything other than telemetry and is not considered a stable GUID
+	 */
+	private readonly telemetryDocumentId: string;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1073,6 +1079,8 @@ export class ContainerRuntime
 					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
 			}),
 		});
+
+		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
 
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
@@ -1226,8 +1234,6 @@ export class ContainerRuntime
 				}
 			},
 			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
-			(fromPath: string, toPath: string) =>
-				this.garbageCollector.addedOutboundReference(fromPath, toPath),
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
@@ -1428,6 +1434,7 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 			}),
+			telemetryDocumentId: this.telemetryDocumentId,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
@@ -1608,6 +1615,7 @@ export class ContainerRuntime
 			message:
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
+			telemetryDocumentId: this.telemetryDocumentId,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -2544,7 +2552,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree, refreshLatestAck, summaryLogger } = options;
+		const { fullTree = false, refreshLatestAck, summaryLogger } = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -2639,7 +2647,7 @@ export class ContainerRuntime
 			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree ?? forcedFullTree,
+					fullTree: fullTree || forcedFullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,

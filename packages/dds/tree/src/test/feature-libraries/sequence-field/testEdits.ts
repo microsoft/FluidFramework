@@ -9,7 +9,7 @@ import {
 	singleTextCursor,
 } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";

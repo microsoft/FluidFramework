@@ -23,6 +23,7 @@ import {
 } from "../summary";
 import {
 	disableTombstoneKey,
+	GCFeatureMatrix,
 	GCVersion,
 	IGCMetadata,
 	runSweepKey,
@@ -65,14 +66,19 @@ export function sendGCUnexpectedUsageEvent(
 }
 
 /**
+ * Indicates whether Tombstone Enforcement is allowed for this document based on the current/persisted
+ * TombstoneGeneration values
+ *
  * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
- * such that enforcing GC (Fail on Tombstone load/usage, GC Sweep) would cause legitimate data loss,
+ * such that enforcing GC Tombstone (Failing on Tombstone load/usage) would cause legitimate data loss,
  * the container author may increment the generation value for Tombstone such that containers created
  * with a different value will not be subjected to GC enforcement.
+ *
  * If no generation is provided at runtime, this defaults to return true to maintain expected default behavior
- * @param persistedGeneration - The persisted feature support value
- * @param currentGeneration - The current app-provided feature support value
- * @returns true if GC Enforcement (Fail on Tombstone load/usage) should be allowed
+ *
+ * @param persistedGeneration - The persisted tombstoneGeneration value
+ * @param currentGeneration - The current app-provided tombstoneGeneration value
+ * @returns true if GC Tombstone enforcement (Fail on Tombstone load/usage) should be allowed for this document
  */
 export function shouldAllowGcTombstoneEnforcement(
 	persistedGeneration: number | undefined,
@@ -83,6 +89,41 @@ export function shouldAllowGcTombstoneEnforcement(
 		return true;
 	}
 	return persistedGeneration === currentGeneration;
+}
+
+/**
+ * Indicates whether Sweep is allowed for this document based on the GC Feature Matrix and current SweepGeneration
+ *
+ * In order to protect old documents that were created at a time when known bugs exist that violate GC's invariants
+ * such that enforcing GC Sweep would cause legitimate data loss, the container author may increment the generation value for Sweep
+ * such that containers created with a different value will not be subjected to GC Sweep.
+ *
+ * If no generation is provided, Sweep will be disabled.
+ * Passing 0 is a special case: Sweep will be enabled for any document with gcSweepGeneration OR gcTombstoneGeneration as 0.
+ *
+ * @param persistedGenerations - The persisted sweep/tombstone generations from the GC Feature Matrix
+ * @param currentGeneration - The current app-provided sweepGeneration value
+ * @returns true if GC Sweep should be allowed for this document
+ */
+export function shouldAllowGcSweep(
+	persistedGenerations: Pick<GCFeatureMatrix, "sweepGeneration" | "tombstoneGeneration">,
+	currentGeneration: number | undefined,
+): boolean {
+	// If no Generation value is provided for this session, default to false
+	if (currentGeneration === undefined) {
+		return false;
+	}
+
+	// 0 is a special case: It matches both SweepGeneration and TombstoneGeneration
+	// This is an optimistic measure to maximize coverage of GC Sweep if no bumps to TombstoneGeneration are needed before enabling Sweep.
+	if (currentGeneration === 0) {
+		return (
+			persistedGenerations.sweepGeneration === 0 ||
+			persistedGenerations.tombstoneGeneration === 0
+		);
+	}
+
+	return persistedGenerations.sweepGeneration === currentGeneration;
 }
 
 /**
