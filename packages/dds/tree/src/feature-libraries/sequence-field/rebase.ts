@@ -83,7 +83,7 @@ export function rebase<TNodeChange>(
 ): Changeset<TNodeChange> {
 	const baseInfo =
 		base.revision === undefined ? undefined : revisionMetadata.getInfo(base.revision);
-	const baseIntention = baseInfo?.intention ?? base.revision;
+	const baseIntention = baseInfo?.rollbackOf ?? base.revision;
 	return rebaseMarkList(
 		change,
 		base.change,

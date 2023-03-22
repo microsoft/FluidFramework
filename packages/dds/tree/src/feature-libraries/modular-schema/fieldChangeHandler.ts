@@ -314,13 +314,10 @@ export interface RevisionInfo {
 	 */
 	readonly isRollback?: boolean;
 	/**
-	 * When populated, indicates the original intention that the changeset is based on.
-	 * When omitted, the `revision` field represents the intention.
-	 * This degree of freedom is used to accurately characterize made up inverse changesets that are generated during
-	 * sandwich rebasing. Those inverse changes have a unique `revision` but their `intention` is set to the `revision`
-	 * of the change being inverted.
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
 	 */
-	readonly intention?: RevisionTag;
+	readonly rollbackOf?: RevisionTag;
 }
 
 /**

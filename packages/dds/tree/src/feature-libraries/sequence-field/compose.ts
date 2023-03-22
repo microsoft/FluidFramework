@@ -937,7 +937,7 @@ function getIntention(
 	rev: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).intention ?? rev;
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
 }
 
 function areInverseRevisions(
@@ -950,5 +950,5 @@ function areInverseRevisions(
 	}
 	const info1 = revisionMetadata.getInfo(rev1);
 	const info2 = revisionMetadata.getInfo(rev2);
-	return rev1 === info2.intention || rev2 === info1.intention;
+	return rev1 === info2.rollbackOf || rev2 === info1.rollbackOf;
 }

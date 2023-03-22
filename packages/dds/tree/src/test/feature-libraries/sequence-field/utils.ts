@@ -60,7 +60,7 @@ function defaultRevisionMetadataFromChanges(
 		if (change.revision !== undefined) {
 			revInfos.push({
 				revision: change.revision,
-				intention: change.intention,
+				rollbackOf: change.rollbackOf,
 				isRollback: change.isRollback,
 			});
 		}

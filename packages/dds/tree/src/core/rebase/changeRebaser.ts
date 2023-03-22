@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Invariant, Mutable } from "../../util";
+import { Invariant } from "../../util";
 import { ReadonlyRepairDataStore } from "../repair";
 import { AnchorSet } from "../tree";
 import type { RevisionTag } from "./types";
@@ -104,38 +104,27 @@ export interface TaggedChange<TChangeset> {
 	 */
 	readonly isRollback?: boolean;
 	/**
-	 * When populated, indicates the original intention that the changeset is based on.
-	 * When omitted, the `revision` field represents the intention.
-	 * This degree of freedom is used to accurately characterize made up inverse changesets that are generated during
-	 * sandwich rebasing. Those inverse changes have a unique `revision` but their `intention` is set to the `revision`
-	 * of the change being inverted.
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
 	 */
-	readonly intention?: RevisionTag;
+	readonly rollbackOf?: RevisionTag;
 	readonly change: TChangeset;
 }
 
-export function tagChange<T>(
-	change: T,
-	tag: RevisionTag | undefined,
-	intention?: RevisionTag,
-): TaggedChange<T> {
-	const tagged: Mutable<TaggedChange<T>> = { revision: tag, change };
-	if (intention !== undefined) {
-		tagged.intention = intention;
-	}
-	return tagged;
+export function tagChange<T>(change: T, revision: RevisionTag | undefined): TaggedChange<T> {
+	return { revision, change };
 }
 
 export function tagRollbackInverse<T>(
 	inverseChange: T,
 	revision: RevisionTag | undefined,
-	intention: RevisionTag | undefined,
+	rollbackOf: RevisionTag | undefined,
 ): TaggedChange<T> {
 	return {
 		revision,
 		change: inverseChange,
 		isRollback: true,
-		intention,
+		rollbackOf,
 	};
 }
 

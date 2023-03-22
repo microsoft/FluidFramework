@@ -746,7 +746,7 @@ describe("ModularChangeFamily", () => {
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
 				{ revision: rev2 },
-				{ revision: rev3, isRollback: true, intention: rev0 },
+				{ revision: rev3, isRollback: true, rollbackOf: rev0 },
 				{ revision: rev4, isRollback: true },
 			];
 			assert.deepEqual(revsInfos, expected);
@@ -835,7 +835,7 @@ describe("ModularChangeFamily", () => {
 		const expectedComposeInfo: RevisionInfo[] = [
 			{ revision: rev1 },
 			{ revision: rev2 },
-			{ revision: rev3, isRollback: true, intention: rev0 },
+			{ revision: rev3, isRollback: true, rollbackOf: rev0 },
 			{ revision: rev4, isRollback: true },
 		];
 		assert.deepEqual(composed.revisions, expectedComposeInfo);
