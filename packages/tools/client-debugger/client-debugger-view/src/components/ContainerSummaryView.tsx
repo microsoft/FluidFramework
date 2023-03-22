@@ -141,7 +141,10 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		<Stack className="container-summary-view">
 			<StackItem>
 				<span>
-					<b>Container</b>: {containerState.nickname !== undefined ? `${containerState.nickname} (${containerState.id})` : containerState.id}
+					<b>Container</b>:{" "}
+					{containerState.nickname !== undefined
+						? `${containerState.nickname} (${containerState.id})`
+						: containerState.id}
 				</span>
 			</StackItem>
 			<StackItem>
@@ -169,7 +172,9 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			</StackItem>
 			<StackItem align="end">
 				<ActionsBar
-					isContainerConnected={containerState.connectionState === ConnectionState.Connected}
+					isContainerConnected={
+						containerState.connectionState === ConnectionState.Connected
+					}
 					tryConnect={tryConnect}
 					forceDisconnect={forceDisconnect}
 					closeContainer={closeContainer}
