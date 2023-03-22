@@ -555,7 +555,6 @@ export const shortCodeMap = {
 	"0x2d2": "Data store should be globally visible when its attached.",
 	"0x2d3": "Local channel must be globally visible when processing op",
 	"0x2d4": "Local channel must be globally visible when resubmitting op",
-	"0x2d5": "Invalid blob node id in unused routes.",
 	"0x2d7": "No data store with specified id",
 	"0x2d8": "Empty change event should not be emitted.",
 	"0x2da": "Unknown SharedMatrix 'op' type.",
@@ -985,7 +984,6 @@ export const shortCodeMap = {
 	"0x50c": "freshness map out of sync",
 	"0x50d": "local ID not available on reSubmit",
 	"0x50e": "local ID not present in blob attach message",
-	"0x50f": "Invalid blob node id in tombstoned routes.",
 	"0x510": "No data store with specified id",
 	"0x511": "Only lz4 compression is supported",
 	"0x512": "Expecting empty message",
@@ -1096,7 +1094,6 @@ export const shortCodeMap = {
 	"0x583": "unexpected field length",
 	"0x584": "response should contain epoch",
 	"0x585": "prefetched snapshot should have a valid epoch",
-	"0x586": "Invalid blob node id in deleted routes.",
 	"0x587": "Unreachable unless running under orderSequentially",
 	"0x588": "Local data store detected in attaching state during summarize",
 	"0x589": "Local data store detected in attaching state while running GC",
@@ -1148,5 +1145,8 @@ export const shortCodeMap = {
 	"0x5b7": "Should have parent for field",
 	"0x5b8": "Should have context for field",
 	"0x5b9": "Cannot exit inexistent transaction",
-	"0x5ba": "Must have distinct ID for each piece of the split mark"
+	"0x5ba": "Must have distinct ID for each piece of the split mark",
+	"0x5bb": "Must be attached to run GC",
+	"0x5bc": "Must be attached to run GC",
+	"0x5bd": "Invalid blob node path"
 };
