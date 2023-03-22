@@ -26,6 +26,28 @@ export enum Compatibility {
 	Compatible,
 }
 
+/**
+ * What kinds of updates to stored schema to permit.
+ *
+ * TODO:
+ * Currently this does not account for lazy schema updates, and/or use of adapters.
+ */
+export enum AllowedUpdateType {
+	/**
+	 * Do not update the stored schema to match view schema.
+	 */
+	None,
+	/**
+	 * Update the stored schema to match view schema if the current document contents meet the view schema.
+	 * TODO: support this option.
+	 */
+	// DataCompatible,
+	/**
+	 * Update the stored schema to match view schema if all possible documents based on the current stored schema would be compatible with the view schema.
+	 */
+	SchemaCompatible,
+}
+
 export interface TreeAdapter {
 	readonly output: TreeSchemaIdentifier;
 	readonly input: TreeSchemaIdentifier;
