@@ -33,9 +33,9 @@
 		"install:commitlint": "npm install --global @commitlint/config-conventional",
 		"lint": "lerna run lint --no-sort --stream",
 		"lint:fix": "lerna run lint:fix --no-sort --stream",
-		"policy-check": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json",
-		"policy-check:asserts": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
-		"policy-check:fix": "node packages/build-cli/bin/dev check policy --exclusions packages/build-tools/data/exclusions.json --excludeHandler assert-short-codes --fix",
+		"policy-check": "node packages/build-cli/bin/dev check policy",
+		"policy-check:asserts": "node packages/build-cli/bin/dev check policy --handler assert-short-codes --fix",
+		"policy-check:fix": "node packages/build-cli/bin/dev check policy --excludeHandler assert-short-codes --fix",
 		"prettier": "prettier --check . --ignore-path ../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../.prettierignore",
 		"test": "npm run test:mocha && npm run test:jest && npm run test:realsvc",
@@ -79,11 +79,11 @@
 		"@commitlint/config-conventional": "^17.1.0",
 		"@commitlint/cz-commitlint": "^17.1.2",
 		"@fluidframework/test-tools": "^0.2.3074",
-		"@microsoft/api-documenter": "^7.17.9",
-		"@microsoft/api-extractor": "^7.22.2",
+		"@microsoft/api-documenter": "^7.21.6",
+		"@microsoft/api-extractor": "^7.34.4",
 		"c8": "^7.7.1",
 		"commitizen": "^4.2.5",
-		"concurrently": "^6.2.0",
+		"concurrently": "^7.6.0",
 		"conventional-changelog-cli": "^2.2.2",
 		"conventional-changelog-conventionalcommits": "^5.0.0",
 		"copyfiles": "^2.4.1",
@@ -92,7 +92,7 @@
 		"inquirer": "^8.0.0",
 		"lerna": "^5.6.2",
 		"prettier": "~2.6.2",
-		"rimraf": "^2.6.2",
+		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
 		"typescript": "~4.5.5"
 	},
@@ -108,7 +108,8 @@
 		},
 		"overrides": {
 			"json5@<1.0.2": ">=1.0.2",
-			"json5@>=2.0.0 <2.2.2": ">=2.2.2"
+			"json5@>=2.0.0 <2.2.2": ">=2.2.2",
+			"qs": "^6.11.0"
 		}
 	}
 }

@@ -69,6 +69,7 @@ export {
 	SchemaDataAndPolicy,
 	ChangeEncoder,
 	ChangeFamily,
+	ChangeFamilyEditor,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
 	ChangeRebaser,
@@ -89,6 +90,8 @@ export {
 	anchorSlot,
 	UpPathDefault,
 	AnchorEvents,
+	AnchorSetRootEvents,
+	FieldKindSpecifier,
 } from "./core";
 
 export {
@@ -185,7 +188,6 @@ export {
 	typeSymbol,
 	typeNameSymbol,
 	valueSymbol,
-	indexSymbol,
 	proxyTargetSymbol,
 	getField,
 	createField,
@@ -210,33 +212,23 @@ export {
 	CursorAdapter,
 	CursorWithNode,
 	parentField,
+	HasFieldChanges,
+	EditableTreeEvents,
+	on,
+	ValueConstraint,
+	TypedSchema,
+	SchemaAware,
+	ArrayLikeMut,
+	FieldKinds,
 } from "./feature-libraries";
-
-// Export subset of FieldKinds in an API-Extractor compatible way:
-import { FieldKind, FieldKinds as FieldKindsOriginal } from "./feature-libraries";
-/**
- * @alpha
- */
-interface FieldKinds {
-	value: FieldKind;
-	optional: FieldKind;
-	sequence: FieldKind;
-}
-/**
- * @alpha
- */
-const FieldKinds: FieldKinds = FieldKindsOriginal;
-/**
- * @alpha
- */
-export { FieldKinds };
 
 export {
 	ISharedTree,
-	ISharedTreeCheckout,
-	ISharedTreeCheckoutFork,
+	ISharedTreeBranch,
+	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
+	BranchEvents,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";

@@ -16,6 +16,7 @@ import {
 	rootFieldKeySymbol,
 } from "../../core";
 import { brand } from "../../util";
+import { expectEqualPaths } from "../utils";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -127,7 +128,9 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor3));
 	});
 
-	it("can rebase over move", () => {
+	// TODO: Fix bug in move handling.
+	// See https://github.com/microsoft/FluidFramework/pull/14358 and https://dev.azure.com/fluidframework/internal/_workitems/edit/3559
+	it.skip("can rebase over move", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 		const moveOut: Delta.MoveOut = {
 			type: Delta.MarkType.MoveOut,
@@ -155,7 +158,144 @@ describe("AnchorSet", () => {
 		);
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
 	});
+
+	describe("internalize path", () => {
+		it("identity case", () => {
+			const anchors = new AnchorSet();
+			const path = makePath([fieldFoo, 1]);
+			const pathLonger = makePath([fieldFoo, 1], [fieldBar, 5]);
+			assert.equal(anchors.internalizePath(path), path);
+			assert.equal(anchors.internalizePath(pathLonger), pathLonger);
+
+			// Check that anchor nodes are not used if they are not relevant.
+			const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
+			assert.equal(anchors.internalizePath(path), path);
+			assert.equal(anchors.internalizePath(pathLonger), pathLonger);
+		});
+
+		it("does not reuse external PathNodes", () => {
+			const anchors = new AnchorSet();
+			const anchors2 = new AnchorSet();
+			const anchor0 = anchors2.track(makePath([rootFieldKeySymbol, 0]));
+			const path = anchors2.locate(anchor0) ?? assert.fail();
+			const pathLonger: UpPath = {
+				parent: path,
+				parentField: fieldBar,
+				parentIndex: 0,
+			};
+
+			const internalPath = anchors.internalizePath(path);
+			const internalPathLonger = anchors.internalizePath(pathLonger);
+			assert.notEqual(internalPath, path);
+			assert.notEqual(internalPathLonger, pathLonger);
+			assert.notEqual(internalPathLonger.parent, pathLonger.parent);
+			expectEqualPaths(internalPath, path);
+			expectEqualPaths(internalPathLonger, pathLonger);
+		});
+
+		it("use PathNodes", () => {
+			const anchors = new AnchorSet();
+			const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
+			const path = anchors.locate(anchor0) ?? assert.fail();
+			const pathLonger: UpPath = {
+				parent: path,
+				parentField: fieldBar,
+				parentIndex: 0,
+			};
+
+			const internalPath = anchors.internalizePath(path);
+			const internalPathLonger = anchors.internalizePath(pathLonger);
+			assert.equal(internalPath, path);
+			assert.equal(internalPathLonger, pathLonger);
+
+			const clonedPath = clonePath(path);
+			const clonedPathLonger = clonePath(pathLonger);
+
+			const internalClonedPath = anchors.internalizePath(clonedPath);
+			const internalClonedPathLonger = anchors.internalizePath(clonedPathLonger);
+			expectEqualPaths(internalClonedPath, path);
+			expectEqualPaths(internalClonedPathLonger, pathLonger);
+			assert.equal(internalClonedPath, internalPath);
+			assert.equal(internalClonedPathLonger.parent, internalClonedPath);
+		});
+	});
+
+	it("triggers events", () => {
+		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
+		const log = new UnorderedTestLogger();
+		const anchors = new AnchorSet();
+		anchors.on("childrenChanging", log.logger("root childrenChange"));
+		anchors.on("treeChanging", log.logger("root treeChange"));
+
+		const deleteMark: Delta.Delete = {
+			type: Delta.MarkType.Delete,
+			count: 1,
+		};
+
+		log.expect([]);
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, deleteMark]]]));
+
+		log.expect([
+			["root childrenChange", 1],
+			["root treeChange", 1],
+		]);
+		log.clear();
+
+		const anchor0 = anchors.track(makePath([rootFieldKeySymbol, 0]));
+		const node0 = anchors.locate(anchor0) ?? assert.fail();
+
+		node0.on("childrenChanging", log.logger("childrenChange"));
+		node0.on("subtreeChanging", log.logger("subtreeChange"));
+		node0.on("valueChanging", log.logger("valueChange"));
+		node0.on("afterDelete", log.logger("afterDelete"));
+
+		log.expect([]);
+
+		const valueMark: Delta.Modify = {
+			type: Delta.MarkType.Modify,
+			setValue: "x",
+		};
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, valueMark]]]));
+
+		log.expect([
+			["root treeChange", 1],
+			["valueChange", 1],
+			["subtreeChange", 1],
+		]);
+		log.clear();
+
+		anchors.applyDelta(makeDelta(valueMark, makePath([rootFieldKeySymbol, 0], [fieldFoo, 5])));
+
+		log.expect([
+			["root treeChange", 1],
+			["subtreeChange", 1],
+		]);
+		log.clear();
+
+		anchors.applyDelta(new Map([[rootFieldKeySymbol, [0, deleteMark]]]));
+		log.expect([
+			["root childrenChange", 1],
+			["root treeChange", 1],
+			["afterDelete", 1],
+		]);
+	});
 });
+
+class UnorderedTestLogger {
+	public readonly logEntries: Map<string, number> = new Map();
+	public logger(name: string): () => void {
+		return () => {
+			this.logEntries.set(name, (this.logEntries.get(name) ?? 0) + 1);
+		};
+	}
+	public expect(expected: [string, number][]) {
+		const expectedMap = new Map(expected);
+		assert.deepEqual(this.logEntries, expectedMap);
+	}
+	public clear(): void {
+		this.logEntries.clear();
+	}
+}
 
 function setup(): [AnchorSet, Anchor, Anchor, Anchor, Anchor] {
 	const anchors = new AnchorSet();

@@ -19,6 +19,14 @@ There are two main approaches to this problem:
 
 For this example, we will be demonstrating approach 2.
 
+### View
+
+There are a number of ways to handle rendering the view. In this example, we include a single view that is compatible with both versions of the model. Although this is a valid approach, it may not scale well as the number of versions increases. Some alternative approaches could be to:
+
+-   Include multiple views and render the appropriate one based on the schema version.
+-   Load the appropriate view after the model is instantiated.
+-   Only include the latest view and ensure that the model upgrades before rendering.
+
 <!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
 
 <!-- prettier-ignore-start -->

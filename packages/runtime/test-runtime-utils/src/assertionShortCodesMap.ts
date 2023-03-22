@@ -841,7 +841,6 @@ export const shortCodeMap = {
 	"0x456": "Index must be less than or equal to length.",
 	"0x457": "Index must be less than length.",
 	"0x458": "Count must be non-negative.",
-	"0x45a": "`transactionCheckout` is required to edit the EditableTree",
 	"0x45f": "Cursor must be current to be used",
 	"0x460": "Cursor must be current to be used",
 	"0x466": "entryPoint for AgentSchedulerRuntime should have been initialized by now",
@@ -860,7 +859,6 @@ export const shortCodeMap = {
 	"0x474": "clientId is undefined",
 	"0x475": "this.runtime.clientId should be defined",
 	"0x476": "number must be larger or equal to current minimumSequenceNumber.",
-	"0x479": "The repair data store should only ask for the current forest state",
 	"0x47a": "No repair data found",
 	"0x47b": "No repair data found",
 	"0x47c": "No repair data found",
@@ -1133,5 +1131,7 @@ export const shortCodeMap = {
 	"0x5a4": "Batch should not be empty",
 	"0x5a5": "Expected number of chunks",
 	"0x5a6": "Compression should not have happened if the loader does not support it",
-	"0x5a7": "ContainerRuntime entryPoint was not initialized"
+	"0x5a7": "ContainerRuntime entryPoint was not initialized",
+	"0x5a8": "app summary is already a combined tree!",
+	"0x5a9": "protocol summary is already a combined tree!"
 };

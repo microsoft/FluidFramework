@@ -5,7 +5,7 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import { renderDiceRoller } from "../src/modelVersion1";
+import { renderDiceRoller } from "../src/view";
 import {
 	DiceRollerContainerRuntimeFactory,
 	IDiceRollerAppModel,
@@ -40,7 +40,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	document.title = id;
 
 	// Render it
-	renderDiceRoller(model.diceRoller, element);
+	renderDiceRoller(model, element);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation

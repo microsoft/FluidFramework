@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
 import { NodeChangeset, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 
 const dummyMark: SF.Detach = { type: "Delete", count: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
