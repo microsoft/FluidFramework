@@ -9,7 +9,7 @@ import { ApiItemTransformationConfiguration } from "../configuration";
 import { createTableWithHeading } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for `Model` items.
+ * Default documentation transform for `Model` items.
  */
 export function transformApiModel(
 	apiModel: ApiModel,

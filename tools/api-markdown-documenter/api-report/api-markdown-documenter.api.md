@@ -141,12 +141,12 @@ export const defaultConsoleLogger: Logger;
 export namespace DefaultDocumentationSuiteOptions {
     const defaultDocumentBoundaries: ApiMemberKind[];
     const defaultHierarchyBoundaries: ApiMemberKind[];
-    export function defaultFileNamePolicy(apiItem: ApiItem): string;
-    export function defaultFrontMatterPolicy(): undefined;
-    export function defaultHeadingTitlePolicy(apiItem: ApiItem): string;
-    export function defaultLinkTextPolicy(apiItem: ApiItem): string;
-    export function defaultPackageFilterPolicy(): boolean;
-    export function defaultUriBaseOverridePolicy(): string | undefined;
+    export function defaultGenerateFrontMatter(): undefined;
+    export function defaultGetFileNameForItem(apiItem: ApiItem): string;
+    export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
+    export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
+    export function defaultGetUriBaseOverrideForItem(): string | undefined;
+    export function defaultSkipPackage(): boolean;
 }
 
 // @public

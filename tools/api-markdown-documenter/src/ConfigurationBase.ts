@@ -9,7 +9,7 @@ import { Logger } from "./Logging";
  */
 export interface ConfigurationBase {
 	/**
-	 * Optional policy for logging system events.
+	 * Optional receiver of system log data.
 	 *
 	 * @defaultValue {@link defaultConsoleLogger}
 	 *

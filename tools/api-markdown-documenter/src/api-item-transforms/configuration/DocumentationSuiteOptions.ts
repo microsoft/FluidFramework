@@ -126,15 +126,15 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @example
 	 *
-	 * We are given a class API item "Bar" in package "Foo".
-	 * This policy returns "foo".
-	 * The final file name might be something like "foo-bar-class".
+	 * We are given a class API item "Bar" in package "Foo", and this returns "foo".
+	 *
+	 * The final file name in this case might be something like "foo-bar-class".
 	 *
 	 * @param apiItem - The API item for which the pre-modification file name is being generated.
 	 *
 	 * @returns The pre-modification file name for the API item.
 	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultFileNamePolicy}
+	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetFileNameForItem}
 	 */
 	getFileNameForItem?: (apiItem: ApiItem) => string;
 
@@ -161,7 +161,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @returns The heading title for the API item.
 	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultHeadingTitlePolicy}
+	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem}
 	 */
 	getHeadingTextForItem?: (apiItem: ApiItem) => string;
 
@@ -172,7 +172,7 @@ export interface DocumentationSuiteOptions {
 	 *
 	 * @returns The text to use in the link to the API item.
 	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultLinkTextPolicy}
+	 * @defaultValue {@link DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem}
 	 */
 	getLinkTextForItem?: (apiItem: ApiItem) => string;
 
@@ -202,7 +202,7 @@ export interface DocumentationSuiteOptions {
 }
 
 /**
- * Contains a list of default transformation policies, used by {@link DocumentationSuiteOptions}.
+ * Contains a list of default documentation transformations, used by {@link DocumentationSuiteOptions}.
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultDocumentationSuiteOptions {
@@ -241,7 +241,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	 *
 	 * - Package: Uses the unscoped package name.
 	 */
-	export function defaultFileNamePolicy(apiItem: ApiItem): string {
+	export function defaultGetFileNameForItem(apiItem: ApiItem): string {
 		switch (apiItem.kind) {
 			case ApiItemKind.Model:
 				return "index";
@@ -259,7 +259,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	 *
 	 * Always uses default URI base.
 	 */
-	export function defaultUriBaseOverridePolicy(): string | undefined {
+	export function defaultGetUriBaseOverrideForItem(): string | undefined {
 		return undefined;
 	}
 
@@ -268,7 +268,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	 *
 	 * Uses the item's `displayName`, except for `Model` items, in which case the text "API Overview" is displayed.
 	 */
-	export function defaultHeadingTitlePolicy(apiItem: ApiItem): string {
+	export function defaultGetHeadingTextForItem(apiItem: ApiItem): string {
 		switch (apiItem.kind) {
 			case ApiItemKind.Model:
 				return "API Overview";
@@ -285,11 +285,11 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getHeadingTextForItem}.
+	 * Default {@link DocumentationSuiteOptions.getLinkTextForItem}.
 	 *
 	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
 	 */
-	export function defaultLinkTextPolicy(apiItem: ApiItem): string {
+	export function defaultGetLinkTextForItem(apiItem: ApiItem): string {
 		switch (apiItem.kind) {
 			case ApiItemKind.Model:
 				return "Packages";
@@ -310,7 +310,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	 *
 	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
 	 */
-	export function defaultPackageFilterPolicy(): boolean {
+	export function defaultSkipPackage(): boolean {
 		return false;
 	}
 
@@ -319,7 +319,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	 *
 	 * Unconditionally returns `undefined` (i.e. no front-matter will be generated).
 	 */
-	export function defaultFrontMatterPolicy(): undefined {
+	export function defaultGenerateFrontMatter(): undefined {
 		return undefined;
 	}
 }
@@ -332,12 +332,12 @@ const defaultDocumentationSuiteOptions: Required<DocumentationSuiteOptions> = {
 	includeBreadcrumb: true,
 	documentBoundaries: DefaultDocumentationSuiteOptions.defaultDocumentBoundaries,
 	hierarchyBoundaries: DefaultDocumentationSuiteOptions.defaultHierarchyBoundaries,
-	getFileNameForItem: DefaultDocumentationSuiteOptions.defaultFileNamePolicy,
-	getUriBaseOverrideForItem: DefaultDocumentationSuiteOptions.defaultUriBaseOverridePolicy,
-	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultHeadingTitlePolicy,
-	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultLinkTextPolicy,
-	skipPackage: DefaultDocumentationSuiteOptions.defaultPackageFilterPolicy,
-	generateFrontMatter: DefaultDocumentationSuiteOptions.defaultFrontMatterPolicy,
+	getFileNameForItem: DefaultDocumentationSuiteOptions.defaultGetFileNameForItem,
+	getUriBaseOverrideForItem: DefaultDocumentationSuiteOptions.defaultGetUriBaseOverrideForItem,
+	getHeadingTextForItem: DefaultDocumentationSuiteOptions.defaultGetHeadingTextForItem,
+	getLinkTextForItem: DefaultDocumentationSuiteOptions.defaultGetLinkTextForItem,
+	skipPackage: DefaultDocumentationSuiteOptions.defaultSkipPackage,
+	generateFrontMatter: DefaultDocumentationSuiteOptions.defaultGenerateFrontMatter,
 };
 
 /**

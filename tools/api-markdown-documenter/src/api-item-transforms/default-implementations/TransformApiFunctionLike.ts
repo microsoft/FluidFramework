@@ -8,8 +8,7 @@ import { ApiItemTransformationConfiguration } from "../configuration";
 import { createParametersSection, createReturnsSection } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for function-like API items
- * (constructors, functions, methods).
+ * Default documentation transform for function-like API items (constructors, functions, methods).
  */
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,

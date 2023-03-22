@@ -20,7 +20,7 @@ import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for module-like API items (packages, namespaces).
+ * Default documentation transform for module-like API items (packages, namespaces).
  *
  * @remarks Format:
  *

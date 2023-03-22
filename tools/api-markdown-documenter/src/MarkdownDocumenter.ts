@@ -65,7 +65,7 @@ export function transformApiModel(
 	);
 	if (filteredPackages.length > 0) {
 		// For each package, walk the child graph to find API items which should be rendered to their own document
-		// per provided policy.
+		// per provided document boundaries configuration.
 
 		for (const packageItem of filteredPackages) {
 			// Always render documents for packages under the model
@@ -110,7 +110,8 @@ export function transformApiModel(
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
  * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
  * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
- * @param customRenderers - Custom rendering policies. Specified per {@link DocumentationNode."type"}.
+ * @param customRenderers - Custom {@link DocumentationNode} Markdown renderers.
+ * Specified per {@link DocumentationNode."type"}.
  */
 export async function renderApiModelAsMarkdown(
 	transformConfig: ApiItemTransformationConfiguration,
@@ -144,19 +145,18 @@ export async function renderApiModelAsMarkdown(
  * Walks the provided API item's member tree and reports all API items that should be rendered to their own documents.
  *
  * @param apiItem - The API item in question.
- * @param documentBoundaryPolicy - The policy defining which items should be rendered to their own documents,
- * and which should be rendered to their parent's document.
+ * @param transformConfig - See {@link ApiItemTransformationConfiguration}
  */
 function getDocumentItems(
 	apiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	transformConfig: Required<ApiItemTransformationConfiguration>,
 ): ApiItem[] {
 	const result: ApiItem[] = [];
 	for (const childItem of apiItem.members) {
-		if (doesItemRequireOwnDocument(childItem, config.documentBoundaries)) {
+		if (doesItemRequireOwnDocument(childItem, transformConfig.documentBoundaries)) {
 			result.push(childItem);
 		}
-		result.push(...getDocumentItems(childItem, config));
+		result.push(...getDocumentItems(childItem, transformConfig));
 	}
 	return result;
 }

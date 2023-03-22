@@ -36,7 +36,7 @@ import {
 
 /**
  * Represents "member" API item kinds.
- * These are the kinds of items the system supports generally for rendering, file-system, etc. policies.
+ * These are the kinds of items the system supports generally for rendering, file-system configuration, etc.
  *
  * @remarks This type explicitly excludes the following API item kinds represented in API-Extractor models:
  *
@@ -469,10 +469,10 @@ export function getAncestralHierarchy(
  *
  * Namely...
  *
- * - `Model` and `Package` items are *always* rendered to their own documents, regardless of the specified policy.
+ * - `Model` and `Package` items are *always* rendered to their own documents, regardless of the specified boundaries.
  *
  * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
- * regardless of the specified policy.
+ * regardless of the specified boundaries.
  *
  * @param kind - The kind of API item.
  * @param documentBoundaries - See {@link DocumentBoundaries}
@@ -517,10 +517,10 @@ export function doesItemRequireOwnDocument(
  *
  * Namely...
  *
- * - `Package` items are *always* rendered to their own documents, regardless of the specified policy.
+ * - `Package` items are *always* rendered to their own documents, regardless of the specified boundaries.
  *
  * - `EntryPoint` items are *never* rendered to their own documents (as they are completely ignored by this system),
- * regardless of the specified policy.
+ * regardless of the specified boundaries.
  *
  * @param kind - The kind of API item.
  * @param hierarchyBoundaries - See {@link HierarchyBoundaries}

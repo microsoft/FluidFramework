@@ -9,7 +9,7 @@ import { ApiItemTransformationConfiguration } from "../configuration";
 import { transformApiModuleLike } from "./TransformApiModuleLike";
 
 /**
- * Default policy for rendering doc sections for `Namespace` items.
+ * Default documentation transform for `Namespace` items.
  */
 export function transformApiNamespace(
 	apiNamespace: ApiNamespace,

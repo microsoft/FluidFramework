@@ -28,10 +28,6 @@ import * as DefaultTransformationImplementations from "../default-implementation
 import { ApiItemTransformationConfiguration } from "./Configuration";
 
 /**
- * This module contains transformation-policy-related types that are consumed via the {@link ApiItemTransformationConfiguration}.
- */
-
-/**
  * Signature for a function which generates one or more {@link SectionNode}s describing an
  * API item that potentially has child items to be rendered as content under it.
  */
@@ -61,7 +57,7 @@ export type CreateChildContentSections = (
 ) => SectionNode[];
 
 /**
- * Policies for transforming different kinds of API content into {@link DocumentationNode} trees.
+ * Transformations for generating {@link DocumentationNode} trees from different kinds of API content.
  *
  * @remarks For any transformation not explicitly configured, a default will be used.
  */
@@ -155,7 +151,7 @@ export interface ApiItemTransformationOptions {
 	 *
 	 * @remarks
 	 *
-	 * This policy is used by the default policies of many of the other transformation policy options.
+	 * This method is used by the default transformation implementatios.
 	 * This can be used to adjust the layout of the child sections for API item kinds that have
 	 * without having to provide new transformation overrides for all of those content types.
 	 */

@@ -19,7 +19,7 @@ import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for `Class` items.
+ * Default documentation transform for `Class` items.
  *
  * @remarks Format:
  *

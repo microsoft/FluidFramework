@@ -19,7 +19,6 @@ import {
 } from "@microsoft/tsdoc";
 
 import { Link } from "../Link";
-import { Logger } from "../Logging";
 import {
 	CodeSpanNode,
 	DocumentationNode,
@@ -32,6 +31,7 @@ import {
 	SingleLineDocumentationNode,
 	SingleLineSpanNode,
 } from "../documentation-domain";
+import { ConfigurationBase } from "../ConfigurationBase";
 import { getDocNodeTransformationOptions } from "./Utilities";
 import { ApiItemTransformationConfiguration } from "./configuration";
 
@@ -64,7 +64,7 @@ export function transformDocNode(
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface DocNodeTransformOptions {
+export interface DocNodeTransformOptions extends ConfigurationBase {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -79,13 +79,6 @@ export interface DocNodeTransformOptions {
 	 * @returns The appropriate URL target if the reference can be resolved. Otherwise, `undefined`.
 	 */
 	readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
-
-	/**
-	 * Optional receiver for logging system information.
-	 *
-	 * @defaultValue {@link defaultConsoleLogger}
-	 */
-	readonly logger?: Logger;
 }
 
 /**

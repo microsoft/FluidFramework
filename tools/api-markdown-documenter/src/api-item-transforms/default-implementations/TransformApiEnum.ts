@@ -10,7 +10,7 @@ import { ApiItemTransformationConfiguration } from "../configuration";
 import { createMemberTables, wrapInSection } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for `Enum` items.
+ * Default documentation transform for `Enum` items.
  */
 export function transformApiEnum(
 	apiEnum: ApiEnum,

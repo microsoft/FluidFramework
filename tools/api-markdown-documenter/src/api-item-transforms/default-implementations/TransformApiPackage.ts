@@ -9,7 +9,7 @@ import { ApiItemTransformationConfiguration } from "../configuration";
 import { transformApiModuleLike } from "./TransformApiModuleLike";
 
 /**
- * Default policy for rendering doc sections for `Package` items.
+ * Default documentation transform for `Package` items.
  */
 export function transformApiPackage(
 	apiPackage: ApiPackage,

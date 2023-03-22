@@ -57,7 +57,7 @@ export type RenderDocumentationNode<
 > = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
 
 /**
- * Policies for rendering {@link DocumentationNode}s to `Markdown`, specified by {@link DocumentationNode."type"}.
+ * Configuration for rendering {@link DocumentationNode}s to `Markdown`, specified by {@link DocumentationNode."type"}.
  *
  * @remarks
  *
@@ -73,7 +73,7 @@ export interface MarkdownRenderers {
 }
 
 /**
- * Default Markdown rendering policies.
+ * Default Markdown rendering configuration.
  */
 const defaultMarkdownRenderers: MarkdownRenderers = {
 	[DocumentationNodeType.Alert]: (node, writer, context): void =>
