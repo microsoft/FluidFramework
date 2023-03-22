@@ -46,6 +46,17 @@ export interface FluidClientDebuggersProps {
 	renderOptions?: RenderOptions;
 }
 
+interface ContainerMenuSelection {
+	type: "containerMenuSelection";
+	containerId: string;
+}
+
+interface TelemetryMenuSelection {
+	type: "telemetryMenuSelection";
+}
+
+type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
+
 /**
  * Renders drop down to show more than 2 containers and manage the selected container in the debug view for an active
  * debugger session registered using {@link @fluid-tools/client-debugger#initializeFluidClientDebugger}.
@@ -53,10 +64,8 @@ export interface FluidClientDebuggersProps {
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
-	// eslint-disable-next-line unicorn/no-useless-undefined
-	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>(undefined);
-	const [menuSelection, setMenuSelection] = React.useState<string>("");
-	const [containerId, setContainerId] = React.useState<string>("");
+	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
+	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
 	const messageRelay: IMessageRelay = useMessageRelay();
 
@@ -91,18 +100,18 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	}, [setContainers, messageRelay]);
 
 	let innerView: React.ReactElement;
-	switch (menuSelection) {
-		case "telemetry":
+	switch (menuSelection?.type) {
+		case "telemetryMenuSelection":
 			innerView = <TelemetryView />;
 			break;
-		case "container":
+		case "containerMenuSelection":
 			// eslint-disable-next-line no-case-declarations
-			const container = containers?.find((x) => x.id === containerId);
+			const container = containers?.find((x) => x.id === menuSelection.containerId);
 			innerView =
 				container === undefined ? (
 					<div>Could not find a debugger for that container.</div>
 				) : (
-					<ContainerView containerId={containerId} />
+					<ContainerView containerId={menuSelection.containerId} />
 				);
 			break;
 		default:
@@ -138,12 +147,11 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	};
 
 	function onContainerClicked(id: string): void {
-		setMenuSelection("container");
-		setContainerId(id);
+		setMenuSelection({ type: "containerMenuSelection", containerId: id });
 	}
 
 	function onTelemetryClicked(): void {
-		setMenuSelection("telemetry");
+		setMenuSelection({ type: "telemetryMenuSelection" });
 	}
 
 	return (
