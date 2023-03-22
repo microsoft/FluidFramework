@@ -68,9 +68,11 @@ export function generateGCConfigs(
 			createParams.metadata?.sweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist this
 		persistedGcFeatureMatrix = createParams.metadata?.gcFeatureMatrix;
 	} else {
-		// Sweep should not be enabled without enabling GC mark phase. We could silently disable sweep in this
-		// scenario but explicitly failing makes it clearer and promotes correct usage.
-		if (createParams.gcOptions.sweepAllowed && createParams.gcOptions.gcAllowed === false) {
+		const tombstoneGeneration = createParams.gcOptions[gcTombstoneGenerationOptionName];
+		const sweepGeneration = createParams.gcOptions[gcSweepGenerationOptionName];
+
+		// Sweep should not be enabled (via sweepGeneration value) without enabling GC mark phase.
+		if (sweepGeneration !== undefined && createParams.gcOptions.gcAllowed === false) {
 			throw new UsageError("GC sweep phase cannot be enabled without enabling GC mark phase");
 		}
 
@@ -90,13 +92,10 @@ export function generateGCConfigs(
 		}
 		sweepTimeoutMs = testOverrideSweepTimeoutMs ?? computeSweepTimeout(sessionExpiryTimeoutMs);
 
-		if (
-			createParams.gcOptions[gcTombstoneGenerationOptionName] !== undefined ||
-			createParams.gcOptions[gcSweepGenerationOptionName] !== undefined
-		) {
+		if (tombstoneGeneration !== undefined || sweepGeneration !== undefined) {
 			persistedGcFeatureMatrix = {
-				tombstoneGeneration: createParams.gcOptions[gcTombstoneGenerationOptionName],
-				sweepGeneration: createParams.gcOptions[gcSweepGenerationOptionName],
+				tombstoneGeneration,
+				sweepGeneration,
 			};
 		}
 	}
