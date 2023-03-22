@@ -209,10 +209,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
 		private readonly blobRequested: (blobPath: string) => void,
-		// Called when a reference is added to a blob. For instance, when creating a localId / storageId to storageId
-		// mapping in the redirect table.
-		// Node path formats - `/<BlobManager.basePath>/<blobId>`.
-		private readonly addedBlobReference: (fromNodePath: string, toNodePath: string) => void,
 		// Called to check if a blob has been deleted by GC.
 		// blobPath's format - `/<BlobManager.basePath>/<blobId>`.
 		private readonly isBlobDeleted: (blobPath: string) => boolean,
@@ -292,15 +288,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * For a blobId, returns its path in GC's graph. The node path is of the format `/<BlobManager.basePath>/<blobId>`
-	 * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
-	 * referenced by storing these handles in a referenced DDS.
-	 */
-	private getBlobGCNodePath(blobId: string) {
-		return `/${BlobManager.basePath}/${blobId}`;
-	}
-
-	/**
 	 * Set of actual storage IDs (i.e., IDs that can be requested from storage). This will be empty if the container is
 	 * detached or there are no (non-pending) attachment blobs in the document
 	 */
@@ -344,7 +331,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 
 		// Let runtime know that the corresponding GC node was requested.
-		this.blobRequested(this.getBlobGCNodePath(blobId));
+		this.blobRequested(getGCNodePathFromBlobId(blobId));
 
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -422,11 +409,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private setRedirection(fromId: string, toId: string | undefined) {
 		this.redirectTable.set(fromId, toId);
-		// Notify runtime of a reference added if toId is not undefined. It can be undefined when a blob is uploaded in
-		// detached mode. In this case, the entry will be updated when the blob is updated.
-		if (toId !== undefined) {
-			this.addedBlobReference(this.getBlobGCNodePath(fromId), this.getBlobGCNodePath(toId));
-		}
 	}
 
 	private deleteAndEmitsIfEmpty(id: string) {
@@ -679,6 +661,33 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return table;
 	}
 
+	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
+		// if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
+		const blobIds =
+			this.storageIds.size > 0
+				? Array.from(this.storageIds)
+				: Array.from(this.redirectTable.keys());
+		const builder = new SummaryTreeBuilder();
+		blobIds.forEach((blobId) => {
+			builder.addAttachment(blobId);
+		});
+
+		// Any non-identity entries in the table need to be saved in the summary
+		if (this.redirectTable.size > blobIds.length) {
+			builder.addBlob(
+				BlobManager.redirectTableBlobName,
+				// filter out identity entries
+				JSON.stringify(
+					Array.from(this.redirectTable.entries()).filter(
+						([localId, storageId]) => localId !== storageId,
+					),
+				),
+			);
+		}
+
+		return builder.getSummaryTree();
+	}
+
 	/**
 	 * Generates data used for garbage collection. Each blob uploaded represents a node in the GC graph as it can be
 	 * individually referenced by storing its handle in a referenced DDS. Returns the list of blob ids as GC nodes.
@@ -689,32 +698,29 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const gcData: IGarbageCollectionData = { gcNodes: {} };
 		for (const [localId, storageId] of this.redirectTable) {
 			assert(!!storageId, 0x390 /* Must be attached to get GC data */);
-			gcData.gcNodes[this.getBlobGCNodePath(localId)] = [this.getBlobGCNodePath(storageId)];
+			// Only return local ids as GC nodes because a blob can only be referenced via its local id. The storage
+			// id entries have the same key and value, ignore them.
+			// The outbound routes are empty because a blob node cannot reference other nodes. It can only be referenced
+			// by adding its handle to a referenced DDS.
+			if (localId !== storageId) {
+				gcData.gcNodes[getGCNodePathFromBlobId(localId)] = [];
+			}
 		}
 		return gcData;
 	}
 
 	/**
 	 * This is called to update blobs whose routes are unused. The unused blobs are deleted.
-	 * @param unusedRoutes - The routes of the blob nodes that are unused.
+	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
 	 */
 	public updateUnusedRoutes(unusedRoutes: string[]): void {
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of unusedRoutes) {
-			const pathParts = route.split("/");
-			assert(
-				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-				0x2d5 /* "Invalid blob node id in unused routes." */,
-			);
-			const blobId = pathParts[2];
-			this.redirectTable.delete(blobId);
-		}
+		this.deleteBlobsFromRedirectTable(unusedRoutes);
 	}
 
 	/**
 	 * Delete attachment blobs that are sweep ready.
-	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted.
+	 * @param sweepReadyBlobRoutes - The routes of blobs that are sweep ready and should be deleted. These routes will
+	 * be based off of local ids.
 	 * @returns - The routes of blobs that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: string[]): string[] {
@@ -723,24 +729,59 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return [];
 		}
 
-		// The routes or blob node paths are in the same format as returned in getGCData -
-		// `/<BlobManager.basePath>/<blobId>`.
-		for (const route of sweepReadyBlobRoutes) {
-			const pathParts = route.split("/");
-			assert(
-				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-				0x586 /* Invalid blob node id in deleted routes. */,
-			);
-			const blobId = pathParts[2];
+		this.deleteBlobsFromRedirectTable(sweepReadyBlobRoutes);
+		return Array.from(sweepReadyBlobRoutes);
+	}
+
+	/**
+	 * Delete blobs with the given routes from the redirect table.
+	 * The routes are GC nodes paths of format -`/<BlobManager.basePath>/<blobId>`. The blob ids are all local ids.
+	 * Deleting the blobs involves 2 steps:
+	 * 1. The redirect table entry for the local ids are deleted.
+	 * 2. If the storage ids corresponding to the deleted local ids are not in-use anymore, the redirect table entries
+	 * for the storage ids are deleted as well.
+	 *
+	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
+	 * will remove them the next summary. The service would them delete them some time in the future.
+	 */
+	private deleteBlobsFromRedirectTable(blobRoutes: string[]) {
+		if (blobRoutes.length === 0) {
+			return;
+		}
+
+		// This tracks the storage ids of local ids that are deleted. After the local ids have been deleted, if any of
+		// these storage ids are unused, they will be deleted as well.
+		const maybeUnusedStorageIds: Set<string> = new Set();
+		for (const route of blobRoutes) {
+			const blobId = getBlobIdFromGCNodePath(route);
 			if (!this.redirectTable.has(blobId)) {
 				this.mc.logger.sendErrorEvent({
 					eventName: "DeletedAttachmentBlobNotFound",
 					blobId,
 				});
+				continue;
 			}
+			const storageId = this.redirectTable.get(blobId);
+			assert(!!storageId, "Must be attached to run GC");
+			maybeUnusedStorageIds.add(storageId);
 			this.redirectTable.delete(blobId);
 		}
-		return Array.from(sweepReadyBlobRoutes);
+
+		// Find out storage ids that are in-use and remove them from maybeUnusedStorageIds. A storage id is in-use if
+		// the redirect table has a local id -> storage id entry for it.
+		for (const [localId, storageId] of this.redirectTable.entries()) {
+			assert(!!storageId, "Must be attached to run GC");
+			// For every storage id, the redirect table has a id -> id entry. These do not make the storage id in-use.
+			if (maybeUnusedStorageIds.has(storageId) && localId !== storageId) {
+				maybeUnusedStorageIds.delete(storageId);
+			}
+		}
+
+		// For unused storage ids, delete their id -> id entries from the redirect table.
+		// This way they'll be absent from the next summary, and the service is free to delete them from storage.
+		for (const storageId of maybeUnusedStorageIds) {
+			this.redirectTable.delete(storageId);
+		}
 	}
 
 	/**
@@ -753,12 +794,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		// The routes or blob node paths are in the same format as returned in getGCData -
 		// `/<BlobManager.basePath>/<blobId>`.
 		for (const route of tombstonedRoutes) {
-			const pathParts = route.split("/");
-			assert(
-				pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
-				0x50f /* Invalid blob node id in tombstoned routes. */,
-			);
-			tombstonedBlobsSet.add(pathParts[2]);
+			const blobId = getBlobIdFromGCNodePath(route);
+			tombstonedBlobsSet.add(blobId);
 		}
 
 		// Remove blobs from the tombstone list that were tombstoned but aren't anymore as per the tombstoneRoutes.
@@ -786,7 +823,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		 * 3. "valid" - It has not been deleted or tombstoned.
 		 */
 		let state: "valid" | "tombstoned" | "deleted" = "valid";
-		if (this.isBlobDeleted(this.getBlobGCNodePath(blobId))) {
+		if (this.isBlobDeleted(getGCNodePathFromBlobId(blobId))) {
 			state = "deleted";
 		} else if (this.tombstonedBlobs.has(blobId)) {
 			state = "tombstoned";
@@ -827,33 +864,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public summarize(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
-		// if storageIds is empty, it means we are detached and have only local IDs, or that there are no blobs attached
-		const blobIds =
-			this.storageIds.size > 0
-				? Array.from(this.storageIds)
-				: Array.from(this.redirectTable.keys());
-		const builder = new SummaryTreeBuilder();
-		blobIds.forEach((blobId) => {
-			builder.addAttachment(blobId);
-		});
-
-		// Any non-identity entries in the table need to be saved in the summary
-		if (this.redirectTable.size > blobIds.length) {
-			builder.addBlob(
-				BlobManager.redirectTableBlobName,
-				// filter out identity entries
-				JSON.stringify(
-					Array.from(this.redirectTable.entries()).filter(
-						([localId, storageId]) => localId !== storageId,
-					),
-				),
-			);
-		}
-
-		return builder.getSummaryTree();
-	}
-
 	public setRedirectTable(table: Map<string, string>) {
 		assert(
 			this.runtime.attachState === AttachState.Detached,
@@ -881,4 +891,25 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 		return blobs;
 	}
+}
+
+/**
+ * For a blobId, returns its path in GC's graph. The node path is of the format `/<BlobManager.basePath>/<blobId>`.
+ * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
+ * referenced by storing these handles in a referenced DDS.
+ */
+function getGCNodePathFromBlobId(blobId: string) {
+	return `/${BlobManager.basePath}/${blobId}`;
+}
+
+/**
+ * For a given GC node path, return the blobId. The node path is of the format `/<BlobManager.basePath>/<blobId>`.
+ */
+function getBlobIdFromGCNodePath(nodePath: string) {
+	const pathParts = nodePath.split("/");
+	assert(
+		pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+		"Invalid blob node path",
+	);
+	return pathParts[2];
 }
