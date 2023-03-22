@@ -1,3 +1,173 @@
+# Fluid Framework build-tools v0.13
+
+The 0.13 build-tools release includes a new command, `flub exec`, and various bug fixes. These release notes
+cover the major changes in this release.
+
+## ✨ Features
+
+### `flub exec` runs shell commands in the context of repo projects
+
+[PR #14635](https://github.com/microsoft/FluidFramework/issues/14635)
+
+The `flub exec` command can be used to execute shell commands in the context of packages or release groups in the repo.
+
+The following example runs `pnpm -r remove @rushstack/eslint-config` on all independent packages and all release group root packages:
+
+```shell
+flub exec --all --releaseGroupRoots "pnpm -r remove @rushstack/eslint-config"
+```
+
+### `check policy` has a setting to ignore single-package pnpm workspaces
+
+[PR #14656](https://github.com/microsoft/FluidFramework/issues/14656)
+
+pnpm does not support nesting packages under a workspace that is not managed by the workspace. That is, if there's a pnpm-workspace.yaml file anywhere in the parent hierarchy, pnpm doesn't install the package individually like one might expect.
+
+Because we have the client release group at the root of the repo, there's a pnpm-workspace.yaml file in the hierarchy for our independent packages as well. We put a workspace file in each independent package so pnpm treats the project as a one-package workspace.
+
+However, for `check policy`, we need to be able to treat these single-package workspaces differently. In particular we
+don't want to enforce the preinstall script that we use in release group roots. There is now a setting that contains a list of packages that are single-package workspaces.
+
+## 🐛 Bug fixes
+
+This list only includes notable bug fixes. See [the changelog](./CHANGELOG.md#0130-2022-03-22) for a full list of fixes
+in this release.
+
+### `check policy` now uses the correct indentation when editing package.json files
+
+[PR #14481](https://github.com/microsoft/FluidFramework/issues/14481)
+
+Previously the indentation was changed to spaces when check policy was run. This has been corrected.
+
+---
+
+# Fluid Framework build-tools v0.12
+
+The 0.12 build-tools release includes improvements to `flub release` and `generate:typetests`. These release notes
+cover the major changes in this release.
+
+## ✨ Features
+
+### `flub release` tags asserts separately from policy-check
+
+[PR #14316](https://github.com/microsoft/FluidFramework/issues/14316)
+
+`flub release` now handles policy errors and assert handling separately, which makes releases easier to understand.
+
+### `generate typetests` is simpler and faster
+
+[PR #14334](https://github.com/microsoft/FluidFramework/issues/14334)
+
+The `generate typetests` command has been rewritten to be faster and simpler.
+
+## 🐛 Bug fixes
+
+See [the changelog](./CHANGELOG.md#0120-2023-03-08) for a full list of fixes in this release.
+
+### `flub release` installs dependencies if needed
+
+[PR #14348](https://github.com/microsoft/FluidFramework/issues/14348)
+
+`flub release` now correctly installs dependencies if needed during a release.
+
+---
+
+# Fluid Framework build-tools v0.11.0
+
+This version was not released due to internal build system problems.
+
+# Fluid Framework build-tools v0.10.0
+
+The 0.10 build-tools release includes improvements to `flub release`. These release notes
+cover the major changes in this release.
+
+## ✨ Features
+
+### `flub bump` supports interdependency bump types
+
+[PR #14161](https://github.com/microsoft/FluidFramework/issues/14161)
+
+When using `flub` to bump versions of packages in a release group, we sometimes want to control the type of dependency range that we use for dependencies on other packages in the release group.
+
+`flub bump` now supports an `--exactDepType` flag that can be set to `"^"`, `"~"`, or `""` (defaults to `"^"`). If set to `""`, inter-release-group dependencies will be pinned to the exact version.
+
+### `flub release` supports SSH remotes
+
+[PR #14145](https://github.com/microsoft/FluidFramework/issues/14145)
+
+`flub release` and other release-related commands now support SSH remotes. Previously only HTTPS remotes were supported.
+
+### Build tools configuration can be outside package.json
+
+[#14215](https://github.com/microsoft/FluidFramework/issues/14215)
+
+The configuration for build tools can now be stored in its own config file outside package.json.
+
+## 🐛 Bug fixes
+
+See [the changelog](./CHANGELOG.md#0100-2023-02-22) for a full list of fixes in this release.
+
+---
+
+## [0.9.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.9.0...build-tools_v0.9.0) (2023-02-08)
+
+## ✨ Features
+
+### `flub release` includes links to ADO pipelines
+
+[PR #13764](https://github.com/microsoft/FluidFramework/issues/13764)
+
+`flub release` now includes links to ADO pipelines, making it much easier to run release builds when needed.
+
+## 🐛 Bug fixes
+
+See [the changelog](./CHANGELOG.md#090-2023-02-08) for a full list of fixes in this release.
+
+---
+
+# Fluid Framework build-tools v0.9.0
+
+The 0.9 build-tools release includes improvements to `flub release`. These release notes
+cover the major changes in this release.
+
+## ✨ Features
+
+### `flub release` includes links to ADO pipelines
+
+[PR #13764](https://github.com/microsoft/FluidFramework/issues/13764)
+
+`flub release` now includes links to ADO pipelines, making it much easier to run release builds when needed.
+
+## 🐛 Bug fixes
+
+See [the changelog](./CHANGELOG.md#080-2023-01-24) for a full list of fixes in this release.
+
+---
+
+# Fluid Framework build-tools v0.8.0
+
+The 0.8 build-tools release is a maintenance release focused on bug fixes.
+
+## 🐛 Bug fixes
+
+See [the changelog](./CHANGELOG.md#080-2023-01-24) for a full list of fixes in this release.
+
+# Fluid Framework build-tools v0.7
+
+The 0.7 build-tools release includes improvements to `run:bundleStats` and bug fixes.
+
+## 💥 Breaking changes
+
+-   **run:bundleStats:** The `--dirname` argument has been removed. There is now
+    a `--dangerfile` argument that defaults to the built-in dangerfile but
+    can be customized if needed.
+
+## 🐛 Bug fixes
+
+See [the changelog](./CHANGELOG.md#070-2022-12-08) for a full list of fixes in this release.
+
+---
+
 # Fluid Framework build-tools v0.6
 
 The 0.6 build-tools release includes several improvements to fluid-build and type test generation. These release notes
