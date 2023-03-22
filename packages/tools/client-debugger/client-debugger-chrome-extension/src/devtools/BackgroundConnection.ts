@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-	IBaseDebuggerMessage,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
 	isDebuggerMessage,
@@ -99,8 +99,8 @@ export class BackgroundConnection
 	/**
 	 * Post message to Background Script.
 	 */
-	public postMessage(message: IBaseDebuggerMessage): void {
-		const sourcedMessage: IDebuggerMessage = {
+	public postMessage(message: IDebuggerMessage): void {
+		const sourcedMessage: ISourcedDebuggerMessage = {
 			...message,
 			source: this.messageSource,
 		};
@@ -113,9 +113,11 @@ export class BackgroundConnection
 
 	/**
 	 * Handler for incoming messages from {@link backgroundServiceConnection}.
-	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
+	 * Messages are forwarded on to subscribers for valid {@link ISourcedDebuggerMessage}s from the expected source.
 	 */
-	private readonly onBackgroundServiceMessage = (message: Partial<IDebuggerMessage>): boolean => {
+	private readonly onBackgroundServiceMessage = (
+		message: Partial<ISourcedDebuggerMessage>,
+	): boolean => {
 		if (!isDebuggerMessage(message)) {
 			return false;
 		}

@@ -4,12 +4,12 @@
 
 ```ts
 
-import { IBaseDebuggerMessage } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IDebuggerMessage } from '@fluid-tools/client-debugger';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ISourcedDebuggerMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
 
 // @public
@@ -47,7 +47,7 @@ export interface HasClientDebugger {
 export { IMessageRelay }
 
 // @public
-export const MessageRelayContext: React_2.Context<IMessageRelay<IBaseDebuggerMessage<unknown>, IDebuggerMessage<unknown>> | undefined>;
+export const MessageRelayContext: React_2.Context<IMessageRelay<IDebuggerMessage<unknown>, ISourcedDebuggerMessage<unknown>> | undefined>;
 
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;

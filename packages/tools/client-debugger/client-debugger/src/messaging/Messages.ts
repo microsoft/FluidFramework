@@ -4,20 +4,20 @@
  */
 
 /**
- * Message structure expected for window event listeners used by the Fluid Client Debugger.
+ * Structure of a message used for communication from/to the Fluid Client Debugger.
  *
  * @public
  */
-export interface IBaseDebuggerMessage<TData = unknown> {
+export interface IDebuggerMessage<TData = unknown> {
 	/**
 	 * The type of message being sent.
-	 * Informs the action that needs to be taken, and the form that the {@link IBaseDebuggerMessage.data} will take.
+	 * Informs the action that needs to be taken, and the form that the {@link IDebuggerMessage.data} will take.
 	 */
 	type: string;
 
 	/**
 	 * Message payload.
-	 * The type of data is informed by the {@link IBaseDebuggerMessage."type"}.
+	 * The type of data is informed by the {@link IDebuggerMessage."type"}.
 	 */
 	data: TData;
 }
@@ -27,7 +27,7 @@ export interface IBaseDebuggerMessage<TData = unknown> {
  *
  * @public
  */
-export interface IDebuggerMessage<TData = unknown> extends IBaseDebuggerMessage<TData> {
+export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessage<TData> {
 	/**
 	 * Identifies the source of the message.
 	 * Can be used to filter the messages being listened to / accepted.

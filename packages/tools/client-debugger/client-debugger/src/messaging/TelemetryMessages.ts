@@ -4,7 +4,7 @@
  */
 
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { IDebuggerMessage } from "./Messages";
+import { ISourcedDebuggerMessage } from "./Messages";
 
 // #region Outbound messages
 
@@ -26,7 +26,7 @@ export interface TelemetryEventMessageData {
  *
  * @public
  */
-export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
+export interface TelemetryEventMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
 	type: "TELEMETRY_EVENT";
 }
 

@@ -29,7 +29,7 @@ export {
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage, IBaseDebuggerMessage } from "./Messages";
+export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,

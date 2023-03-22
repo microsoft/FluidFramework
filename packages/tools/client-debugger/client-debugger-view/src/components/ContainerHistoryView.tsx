@@ -11,7 +11,7 @@ import {
 	ContainerStateHistoryMessage,
 	handleIncomingMessage,
 	HasContainerId,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
@@ -53,7 +53,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		/**
 		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: "ContainerHistoryView", // TODO: Fix
 			});

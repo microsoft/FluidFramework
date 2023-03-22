@@ -10,9 +10,9 @@ import {
 	IMessageRelay,
 	InboundHandlers,
 	RegistryChangeMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	handleIncomingMessage,
-	IBaseDebuggerMessage,
+	IDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
@@ -29,7 +29,7 @@ initializeFluentUiIcons();
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: IBaseDebuggerMessage = {
+const getContainerListMessage: IDebuggerMessage = {
 	type: "GET_CONTAINER_LIST",
 	data: undefined,
 };
@@ -75,7 +75,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});

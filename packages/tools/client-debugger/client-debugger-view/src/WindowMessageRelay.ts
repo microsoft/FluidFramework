@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-	IBaseDebuggerMessage,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
 	isDebuggerMessage,
@@ -41,17 +41,19 @@ export class WindowMessageRelay
 	/**
 	 * Post message to the FluidDebugger which lives in the same window we are.
 	 */
-	public postMessage(message: IBaseDebuggerMessage): void {
-		const sourcedMessage: IDebuggerMessage = message as IDebuggerMessage;
+	public postMessage(message: IDebuggerMessage): void {
+		const sourcedMessage: ISourcedDebuggerMessage = message as ISourcedDebuggerMessage;
 		sourcedMessage.source = this.messageSource;
 		globalThis.postMessage(sourcedMessage, "*"); // TODO: verify target is okay
 	}
 
 	/**
 	 * Handler for incoming messages from the window object.
-	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
+	 * Messages are forwarded on to subscribers for valid {@link ISourcedDebuggerMessage}s from the expected source.
 	 */
-	private readonly onWindowMessage = (event: MessageEvent<Partial<IDebuggerMessage>>): void => {
+	private readonly onWindowMessage = (
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+	): void => {
 		if (isDebuggerMessage(event.data)) {
 			// Forward incoming message onto subscribers.
 			// TODO: validate source

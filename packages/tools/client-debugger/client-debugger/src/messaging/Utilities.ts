@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDebuggerMessage } from "./Messages";
+import { ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).
@@ -16,7 +16,7 @@ import { IDebuggerMessage } from "./Messages";
  *
  * @internal
  */
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(
+export function postMessageToWindow<TMessage extends ISourcedDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
 	...messages: TMessage[]
 ): void {
@@ -33,16 +33,16 @@ export function postMessageToWindow<TMessage extends IDebuggerMessage>(
 }
 
 /**
- * Handlers for incoming {@link IDebuggerMessage}s.
+ * Handlers for incoming {@link ISourcedDebuggerMessage}s.
  *
  * @internal
  */
 export interface InboundHandlers {
 	/**
-	 * Mapping from {@link IBaseDebuggerMessage."type"}s to a handler callback for that message type.
+	 * Mapping from {@link IDebuggerMessage."type"}s to a handler callback for that message type.
 	 * @returns Whether or not the message was actually handled.
 	 */
-	[type: string]: (message: IDebuggerMessage) => boolean;
+	[type: string]: (message: ISourcedDebuggerMessage) => boolean;
 }
 
 /**
@@ -73,7 +73,7 @@ export interface MessageLoggingOptions {
  * @internal
  */
 export function handleIncomingWindowMessage(
-	event: MessageEvent<Partial<IDebuggerMessage>>,
+	event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
@@ -94,7 +94,7 @@ export function handleIncomingWindowMessage(
  * @internal
  */
 export function handleIncomingMessage(
-	message: Partial<IDebuggerMessage>,
+	message: Partial<ISourcedDebuggerMessage>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
@@ -118,10 +118,12 @@ export function handleIncomingMessage(
 }
 
 /**
- * Determines whether the provided event message data is an {@link IDebuggerMessage}.
+ * Determines whether the provided event message data is an {@link ISourcedDebuggerMessage}.
  *
  * @internal
  */
-export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage {
+export function isDebuggerMessage(
+	value: Partial<ISourcedDebuggerMessage>,
+): value is ISourcedDebuggerMessage {
 	return typeof value.source === "string" && value.type !== undefined;
 }
