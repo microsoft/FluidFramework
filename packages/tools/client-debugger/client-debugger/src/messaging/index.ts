@@ -41,7 +41,12 @@ export {
 	AudienceSummaryMessageData,
 	AudienceSummaryMessage,
 } from "./AudienceMessages";
-export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
+export {
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
+} from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
