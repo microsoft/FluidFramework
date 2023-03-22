@@ -83,15 +83,15 @@ steps:
   inputs:
     workingFile: ${{ parameters.pathToTelemetryGenerator }}/.npmrc
 
-# Install logger package
-- task: Npm@1
-  displayName: 'npm install aria logger'
+- task: Bash@3
+  displayName: 'pnpm install aria logger'
   retryCountOnTaskFailure: 1
   inputs:
-    workingDir: ${{ parameters.pathToTelemetryGenerator }}
-    command: 'custom'
-    customCommand: 'install @ff-internal/aria-logger'
-    customRegistry: 'useNpmrc'
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
+    script: |
+      set -eu -o pipefail
+      pnpm install @ff-internal/aria-logger;
 
 - task: Bash@3
   displayName: 'Prepare telemetry-generator'
@@ -101,5 +101,5 @@ steps:
     workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
     script: |
       set -eu -o pipefail
-      npm i;
+      pnpm i;
       npm run build:compile;
