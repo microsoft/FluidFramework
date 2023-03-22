@@ -350,6 +350,5 @@ jobs:
       - template: include-log-test-failures.yml
         parameters:
           buildDirectory: ${{ variables.testPackageDir }}
-          testCompleted: true
 
       - ${{ parameters.additionalSteps }}

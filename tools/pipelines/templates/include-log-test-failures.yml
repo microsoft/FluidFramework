@@ -4,8 +4,6 @@
 parameters:
 - name: buildDirectory
   type: string
-- name: testCompleted
-  type: boolean
 
 # Log test failures
 steps:
@@ -17,7 +15,7 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         test -d nyc && echo '##vso[task.setvariable variable=TestReportsExists;]true' || echo 'No nyc directory'
-      condition: ${{ parameters.testCompleted }}
+      condition: succeededOrFailed()
 
   # Console Log Failed Tests
   - task: Bash@3
