@@ -12,24 +12,24 @@ const { hideBin } = require("yargs/helpers");
 
 const config = require("./md-magic.config.cjs");
 
-const defaultMatchPattern = "**/*.md";
+const defaultMatchPattern = "./**/*.md";
 
 const argv = yargs(hideBin(process.argv))
 	.usage("Usage: $0 [options]")
-	.alias("f", "files")
-	.array("f")
-	.describe(
-		"f",
-		`Glob pattern(s) indicating the files to process. Default: "${defaultMatchPattern}".`,
-	)
+	.option("f", {
+		alias: "files",
+		type: "array",
+		description: `Glob pattern(s) indicating the files to process. Default: "${defaultMatchPattern}".`,
+	})
+	.option("w", {
+		alias: "workingDirectory",
+		type: "string",
+		description:
+			"The working directory in which to run the script. Default: the current Node.js working directory.",
+	})
 	.example(
 		"$0 -f docs/**/*.md !docs/README.md",
 		"Run on all Markdown files under 'docs', except 'README.md'.",
-	)
-	.alias("w", "workingDirectory")
-	.describe(
-		"w",
-		"The working directory in which to run the script. Default: the current Node.js working directory.",
 	)
 	.help("h")
 	.alias("h", "--help").argv;
