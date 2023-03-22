@@ -19,9 +19,9 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.3.4.0 Upcoming changes
 
-[IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
-[LoaderHeader.cache deprecated]
-(#LoaderHeader.cache-deprecated)
+-   [IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+
+-   [LoaderHeader.cache deprecated](#LoaderHeadercache-deprecated)
 
 ## IResolvedUrl will be equivalent to IFluidResolvedUrl
 
