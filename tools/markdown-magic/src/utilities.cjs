@@ -71,15 +71,6 @@ function getShortPackageName(scopedPackageName) {
 }
 
 /**
- * Gets the path (relative to the `docs` directory) to the package directory given the path to its `package.json` file.
- *
- * @param {string} packageJsonPath - Path to the package's `package.json` file.
- */
-function getPackageDirectoryPath(packageJsonPath) {
-	return path.dirname(packageJsonPath);
-}
-
-/**
  * Generates the appropriately formatted Markdown section contents for the provided section body.
  * If header text is provided, a level 2 heading (i.e. `##`) will be included with the provided text.
  * The section will be wrapped in leading and trailing newlines to ensure adequate spacing between generated contents.
@@ -128,7 +119,6 @@ module.exports = {
 	formattedSectionText,
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
-	getPackageDirectoryPath,
 	getPackageMetadata,
 	getShortPackageName,
 	resolveRelativePackageJsonPath,
