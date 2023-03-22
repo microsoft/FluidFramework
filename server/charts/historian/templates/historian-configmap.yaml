@@ -38,12 +38,33 @@ data:
         },
         "throttling": {
             "restCallsPerTenant": {
-                "maxRequestsPerMs": {{ .Values.historian.throttling.restCallsPerTenant.maxRequestsPerMs }},
-                "maxRequestBurst": {{ .Values.historian.throttling.restCallsPerTenant.maxRequestBurst }},
-                "minCooldownIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.minCooldownIntervalInMs }},
-                "minThrottleIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.minThrottleIntervalInMs }},
-                "maxInMemoryCacheSize": {{ .Values.historian.throttling.restCallsPerTenant.maxInMemoryCacheSize }},
-                "maxInMemoryCacheAgeInMs": {{ .Values.historian.throttling.restCallsPerTenant.maxInMemoryCacheAgeInMs }}
+                "generalRestCall": {
+                    "maxPerMs": {{ .Values.historian.throttling.restCallsPerTenant.maxPerMs }},
+                    "maxBurst": {{ .Values.historian.throttling.restCallsPerTenant.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.minThrottleIntervalInMs }},
+                    "maxInMemoryCacheSize": {{ .Values.historian.throttling.restCallsPerTenant.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.historian.throttling.restCallsPerTenant.maxInMemoryCacheAgeInMs }},
+                    "enableEnhancedTelemetry": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.enableEnhancedTelemetry }}
+                },
+                "getSummary": {
+                    "maxPerMs": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.maxPerMs }},
+                    "maxBurst": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.minThrottleIntervalInMs }},
+                    "maxInMemoryCacheSize": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.maxInMemoryCacheAgeInMs }},
+                    "enableEnhancedTelemetry": {{ .Values.historian.throttling.restCallsPerTenant.getSummary.enableEnhancedTelemetry }}
+                },
+                "createSummary": {
+                    "maxPerMs": {{ .Values.historian.throttling.restCallsPerTenant.createSummary.maxPerMs }},
+                    "maxBurst": {{ .Values.historian.throttling.restCallsPerTenant.createSummary.maxBurst }},
+                    "minCooldownIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.createSummary.minCooldownIntervalInMs }},
+                    "minThrottleIntervalInMs": {{ .Values.historian.throttling.restCallsPerTenant.createSummary.minThrottleIntervalInMs }},
+                    "maxInMemoryCacheSize": {{ .Values.historian.throttling.restCallsPerTenant.createSummary.maxInMemoryCacheSize }},
+                    "maxInMemoryCacheAgeInMs": {{ .Values.historian.throttling.restCallsPerTenant.createSummary.maxInMemoryCacheAgeInMs }},
+                    "enableEnhancedTelemetry": {{ .Values.historian.throttling.restCallsPerTenant.createSummary.enableEnhancedTelemetry }}
+                }
             },
             "restCallsPerCluster": {
                 "getSummary": {

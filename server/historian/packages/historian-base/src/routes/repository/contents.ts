@@ -20,7 +20,7 @@ import { Constants } from "../../utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	restTenantThrottler: IThrottler,
+    restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Router {
@@ -30,6 +30,7 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+    const restTenantGeneralThrottler = restTenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
 	async function getContent(
 		tenantId: string,
@@ -51,7 +52,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/contents/*",
 		utils.validateRequestParams("tenantId", 0),
-		throttle(restTenantThrottler, winston, tenantThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const contentP = getContent(
 				request.params.tenantId,

@@ -21,7 +21,7 @@ import { Constants } from "../../utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	restTenantThrottler: IThrottler,
+    restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Router {
@@ -31,6 +31,7 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+    const restTenantGeneralThrottler = restTenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
 	async function getHeader(
 		tenantId: string,
@@ -69,7 +70,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/headers/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(restTenantThrottler, winston, tenantThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getHeader(
@@ -85,7 +86,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/tree/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(restTenantThrottler, winston, tenantThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const headerP = getTree(

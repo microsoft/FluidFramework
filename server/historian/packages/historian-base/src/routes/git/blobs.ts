@@ -21,7 +21,7 @@ import { Constants } from "../../utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	restTenantThrottler: IThrottler,
+	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Router {
@@ -31,6 +31,7 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+    const restTenantGeneralThrottler = restTenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
 	async function createBlob(
 		tenantId: string,
@@ -70,7 +71,7 @@ export function create(
 	 */
 	router.get(
 		"/repos/ping",
-		throttle(restTenantThrottler, winston, {
+		throttle(restTenantGeneralThrottler, winston, {
 			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
@@ -82,7 +83,7 @@ export function create(
 	router.post(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		utils.validateRequestParams("tenantId"),
-		throttle(restTenantThrottler, winston, tenantThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const blobP = createBlob(
 				request.params.tenantId,
@@ -99,7 +100,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/blobs/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(restTenantThrottler, winston, tenantThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const blobP = getBlob(
@@ -118,7 +119,7 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(restTenantThrottler, winston, tenantThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 

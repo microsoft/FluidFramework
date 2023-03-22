@@ -19,7 +19,7 @@ export class HistorianResources implements core.IResources {
 		public readonly config: Provider,
 		public readonly port: string | number,
 		public readonly riddler: historianServices.ITenantService,
-		public readonly restTenantThrottler: core.IThrottler,
+		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
         public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
@@ -116,9 +116,22 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
         };
 
         // Rest API Throttler
-        const restApiTenantThrottleConfig: Partial<IThrottleConfig> =
-            config.get("throttling.restCallsPerTenant") ?? {};
-        const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
+        const restApiTenantGeneralThrottleConfig: Partial<IThrottleConfig> =
+            config.get("throttling.restCallsPerTenant.generalRestCall") ?? {};
+        const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
+
+        const restApiTenantGetSummaryThrottleConfig: Partial<IThrottleConfig> =
+            config.get("throttling.restCallsPerTenant.getSummary") ?? {};
+        const restTenantGetSummaryThrottler = configureThrottler(restApiTenantGetSummaryThrottleConfig);
+
+        const restApiTenantCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
+            config.get("throttling.restCallsPerTenant.createSummary") ?? {};
+        const restTenantCreateSummaryThrottler = configureThrottler(restApiTenantCreateSummaryThrottleConfig);
+
+        const restTenantThrottlers = new Map<string, core.IThrottler>();
+		restTenantThrottlers.set(Constants.createSummaryThrottleIdPrefix, restTenantCreateSummaryThrottler);
+		restTenantThrottlers.set(Constants.getSummaryThrottleIdPrefix, restTenantGetSummaryThrottler);
+        restTenantThrottlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantGeneralThrottler);
 
         const restApiClusterCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
             config.get("throttling.restCallsPerCluster.createSummary") ?? {};
@@ -139,7 +152,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
             config,
             port,
             riddler,
-            restTenantThrottler,
+            restTenantThrottlers,
             restClusterThrottlers,
             gitCache,
             asyncLocalStorage,
@@ -154,7 +167,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.config,
 			resources.port,
 			resources.riddler,
-			resources.restTenantThrottler,
+			resources.restTenantThrottlers,
             resources.restClusterThrottlers,
 			resources.cache,
 			resources.asyncLocalStorage,

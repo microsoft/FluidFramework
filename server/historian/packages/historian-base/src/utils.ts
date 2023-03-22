@@ -36,6 +36,7 @@ export const Constants = Object.freeze({
 	historianRestThrottleIdSuffix: "HistorianRest",
 	createSummaryThrottleIdPrefix: "createSummary",
 	getSummaryThrottleIdPrefix: "getSummary",
+    generalRestCallThrottleIdPrefix: "generalRestCall",
 });
 
 export function getTokenLifetimeInSec(token: string): number {

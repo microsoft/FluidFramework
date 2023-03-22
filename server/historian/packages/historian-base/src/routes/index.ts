@@ -39,30 +39,30 @@ export interface IRoutes {
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-    restTenantThrottler: IThrottler,
+    restTenantThrottlers: Map<string, IThrottler>,
     restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): IRoutes {
 	return {
 		git: {
-			blobs: blobs.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
-			commits: commits.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
-			refs: refs.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
-			tags: tags.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
-			trees: trees.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
+			blobs: blobs.create(config, tenantService, restTenantThrottlers, cache, asyncLocalStorage),
+			commits: commits.create(config, tenantService, restTenantThrottlers, cache, asyncLocalStorage),
+			refs: refs.create(config, tenantService, restTenantThrottlers, cache, asyncLocalStorage),
+			tags: tags.create(config, tenantService, restTenantThrottlers, cache, asyncLocalStorage),
+			trees: trees.create(config, tenantService, restTenantThrottlers, cache, asyncLocalStorage),
 		},
 		repository: {
 			commits: repositoryCommits.create(
 				config,
 				tenantService,
-				restTenantThrottler,
+				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
 			),
-			contents: contents.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
-			headers: headers.create(config, tenantService, restTenantThrottler, cache, asyncLocalStorage),
+			contents: contents.create(config, tenantService, restTenantThrottlers, cache, asyncLocalStorage),
+			headers: headers.create(config, tenantService, restTenantThrottlers, cache, asyncLocalStorage),
 		},
-		summaries: summaries.create(config, tenantService, restTenantThrottler, restClusterThrottlers, cache, asyncLocalStorage),
+		summaries: summaries.create(config, tenantService, restTenantThrottlers, restClusterThrottlers, cache, asyncLocalStorage),
 	};
 }
