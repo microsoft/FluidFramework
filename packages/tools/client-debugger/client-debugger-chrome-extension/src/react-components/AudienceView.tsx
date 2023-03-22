@@ -72,7 +72,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-
 		function messageHandler(message: Partial<IDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
