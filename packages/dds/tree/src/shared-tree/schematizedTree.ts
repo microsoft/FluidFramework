@@ -75,7 +75,10 @@ export function schematizeBranch(
 						"Existing stored schema permits trees which are incompatible with the view schema, so schema can not be updated",
 					);
 				}
-				tree.storedSchema.update(config.schema);
+				if (compatibility.write !== Compatibility.Compatible) {
+					tree.storedSchema.update(config.schema);
+				}
+
 				break;
 			}
 			default: {

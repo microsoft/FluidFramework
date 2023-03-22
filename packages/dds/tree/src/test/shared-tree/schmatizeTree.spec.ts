@@ -10,15 +10,20 @@ import { rootFieldKey, ValueSchema, AllowedUpdateType } from "../../core";
 
 const factory = new SharedTreeFactory();
 
+const root = TypedSchema.tree("root", { value: ValueSchema.Number });
+const schema = SchemaAware.typedSchemaData(
+	[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.optional)]],
+	root,
+);
+
+const schemaGeneralized = SchemaAware.typedSchemaData(
+	[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.optional)]],
+	TypedSchema.tree("root", { value: ValueSchema.Serializable }),
+);
+
 describe("schematizeBranch", () => {
 	it("initialize tree schema", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-
-		const root = TypedSchema.tree("root", { value: ValueSchema.Number });
-		const schema = SchemaAware.typedSchemaData(
-			[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.value)]],
-			root,
-		);
 
 		assert(!tree.storedSchema.globalFieldSchema.has(rootFieldKey));
 
@@ -33,61 +38,53 @@ describe("schematizeBranch", () => {
 		assert.equal(schematized.root, 10);
 	});
 
-	it("upgrade schema", () => {
+	it("noop upgrade", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-		const root1 = TypedSchema.tree("root", { value: ValueSchema.Number });
-		{
-			const schema = SchemaAware.typedSchemaData(
-				[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.value)]],
-				root1,
-			);
-			schematizeBranch(tree, {
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: 10,
-				schema,
-			});
-		}
-
-		assert.equal(tree.storedSchema.treeSchema.get(root1.name)?.value, ValueSchema.Number);
+		tree.storedSchema.update(schema);
 
 		// No op upgrade with AllowedUpdateType.None does not error
-		{
-			const root = TypedSchema.tree("root", { value: ValueSchema.Number });
-			const schema = SchemaAware.typedSchemaData(
-				[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.value)]],
-				root,
-			);
+		const schematized = schematizeBranch(tree, {
+			allowedSchemaModifications: AllowedUpdateType.None,
+			initialTree: 10,
+			schema,
+		});
+		// And does not add initial tree:
+		assert.equal(schematized.root, undefined);
+	});
+
+	it("upgrade schema errors when in AllowedUpdateType.None", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+		tree.storedSchema.update(schema);
+		assert.throws(() => {
 			schematizeBranch(tree, {
 				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: 10,
-				schema,
+				initialTree: "x",
+				schema: schemaGeneralized,
 			});
-		}
+		});
+	});
 
-		{
-			const root = TypedSchema.tree("root", { value: ValueSchema.Serializable });
-			const schema = SchemaAware.typedSchemaData(
-				[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.value)]],
-				root,
-			);
-			// Upgrade with AllowedUpdateType.None errors
-			assert.throws(() => {
-				schematizeBranch(tree, {
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: "x",
-					schema,
-				});
-			});
-			// Upgrade with AllowedUpdateType.SchemaCompatible works
-			const schematized = schematizeBranch(tree, {
-				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+	it("incompatible upgrade errors", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+		tree.storedSchema.update(schemaGeneralized);
+		assert.throws(() => {
+			schematizeBranch(tree, {
+				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: "x",
 				schema,
 			});
-			// Should still have initial tree from first schematize.
-			assert.equal(schematized.root, 10);
-		}
+		});
+	});
 
-		assert.equal(tree.storedSchema.treeSchema.get(root1.name)?.value, ValueSchema.Serializable);
+	it("upgrade schema", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+		tree.storedSchema.update(schema);
+		const schematized = schematizeBranch(tree, {
+			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+			initialTree: "x",
+			schema: schemaGeneralized,
+		});
+		// Initial tree should not be applied
+		assert.equal(schematized.root, undefined);
 	});
 });
