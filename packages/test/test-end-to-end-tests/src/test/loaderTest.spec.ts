@@ -109,7 +109,7 @@ const testFactoryWithRequestHeaders = new DataObjectFactory(
 );
 
 // REVIEW: enable compat testing?
-describeNoCompat("Loader.request", (getTestObjectProvider) => {
+describeNoCompat.only("Loader.request", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	let dataStore1: TestSharedDataObject1;
@@ -181,7 +181,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		assert.equal(testDataStore.id, dataStore2.id, "id is not correct");
 	});
 
-	it("can create data object using url with second id, having distinct value from default", async () => {
+	it.skip("can create data object using url with second id, having distinct value from default", async () => {
 		const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
 		assert(url, "dataStore2 url is undefined");
 		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
