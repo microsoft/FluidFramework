@@ -33,4 +33,4 @@ steps:
           echo "##[error] $failedTests"
         fi
       workingDirectory: scripts/report-parser
-    condition: and(eq(variables['TestReportsExists'], 'true'))
+    condition: eq(variables['TestReportsExists'], 'true')
