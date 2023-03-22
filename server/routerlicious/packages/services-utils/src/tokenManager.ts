@@ -25,14 +25,16 @@ export class WebSocketTracker implements IWebSocketTracker {
 	}
 
 	public addSocketForToken(compositeTokenId: string, webSocket: IWebSocket) {
-		if (this.tokenIdToSocketIdMap.has(compositeTokenId)) {
-			this.tokenIdToSocketIdMap.get(compositeTokenId)?.add(webSocket.id);
+		const socketIds = this.tokenIdToSocketIdMap.get(compositeTokenId);
+		if (socketIds) {
+			socketIds.add(webSocket.id);
 		} else {
 			this.tokenIdToSocketIdMap.set(compositeTokenId, new Set([webSocket.id]));
 		}
 
-		if (this.socketIdToTokenIdMap.has(webSocket.id)) {
-			this.socketIdToTokenIdMap.get(webSocket.id)?.add(compositeTokenId);
+		const tokenIds = this.socketIdToTokenIdMap.get(webSocket.id);
+		if (tokenIds) {
+			tokenIds.add(compositeTokenId);
 		} else {
 			this.socketIdToTokenIdMap.set(webSocket.id, new Set([compositeTokenId]));
 		}
