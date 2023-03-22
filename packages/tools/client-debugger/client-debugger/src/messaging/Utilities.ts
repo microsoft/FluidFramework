@@ -8,7 +8,7 @@ import { IDebuggerMessage } from "./Messages";
 /**
  * Posts the provided message to the window (globalThis).
  *
- * @param message - The list of message to be posted
+ * @param messages - The list of message to be posted
  * @param loggingOptions - Settings related to logging to console for troubleshooting.
  * If not passed, this function won't log to console before posting the message.
  *
@@ -16,18 +16,21 @@ import { IDebuggerMessage } from "./Messages";
  *
  * @internal
  */
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(
+export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
-	...message: TMessage[]
+	...messages: TMessage[]
 ): void {
 	// TODO: remove loggingOptions once things settle.
 	// If we need special logic for globalThis.postMessage maybe keep this function, but otherwise maybe remove it too.
 	if (loggingOptions !== undefined) {
 		const loggingPreamble =
 			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-		console.debug(`${loggingPreamble}Posting message to the window:`, message);
+		console.debug(`${loggingPreamble}Posting message to the window:`, messages);
 	}
-	globalThis.postMessage?.(message, "*"); // TODO: verify target is okay
+
+	for (const message of messages) {
+		globalThis.postMessage?.(message, "*");
+	}
 }
 
 /**

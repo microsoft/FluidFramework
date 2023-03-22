@@ -21,7 +21,7 @@ import {
 	IDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -219,7 +219,7 @@ export class FluidClientDebugger
 	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessageToWindow<IDebuggerMessage>(
+		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
 				source: debuggerMessageSource,
