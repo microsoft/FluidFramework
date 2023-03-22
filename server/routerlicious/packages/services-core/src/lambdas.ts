@@ -10,7 +10,8 @@ import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
 import { IQueuedMessage } from "./queue";
 
 export interface IPartitionLambdaPlugin {
-	create(config: Provider): Promise<IPartitionLambdaFactory>;
+	create(config: Provider, customization?: Record<string, any>): Promise<IPartitionLambdaFactory>;
+	customize?(config: Provider): Promise<Record<string, any>>;
 }
 
 /**

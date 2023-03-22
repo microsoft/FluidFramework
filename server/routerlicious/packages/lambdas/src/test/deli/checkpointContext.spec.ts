@@ -11,6 +11,7 @@ import {
 	ICheckpointParams,
 } from "../../deli/checkpointManager";
 import { CheckpointReason } from "../../utils";
+import Sinon from "sinon";
 
 describe("Routerlicious", () => {
 	describe("Deli", () => {
@@ -18,7 +19,7 @@ describe("Routerlicious", () => {
 			const testId = "test";
 			const testTenant = "test";
 			let testCheckpointContext: CheckpointContext;
-			let testCollection: testUtils.TestCollection;
+			let testDocumentRepository: testUtils.TestNonImplementDocumentRepository;
 			let testContext: testUtils.TestContext;
 
 			function createCheckpoint(
@@ -55,14 +56,12 @@ describe("Routerlicious", () => {
 
 			beforeEach(() => {
 				testContext = new testUtils.TestContext();
-				testCollection = new testUtils.TestCollection([
-					{ documentId: testId, tenantId: testTenant },
-				]);
-
+				testDocumentRepository = new testUtils.TestNonImplementDocumentRepository();
+				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake());
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					testTenant,
 					testId,
-					testCollection,
+					testDocumentRepository,
 				);
 				testCheckpointContext = new CheckpointContext(
 					testTenant,
