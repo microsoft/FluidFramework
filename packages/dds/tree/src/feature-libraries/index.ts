@@ -49,6 +49,7 @@ export {
 	ArrayLikeMut,
 	cursorFromContextualData,
 	cursorsFromContextualData,
+	ContextuallyTypedFieldData,
 } from "./contextuallyTyped";
 
 export { ForestIndex } from "./forestIndex";
@@ -113,6 +114,9 @@ export {
 	TypedSchema,
 	revisionMetadataSourceFromInfo,
 	ViewSchema,
+	ViewSchemaCollection,
+	FieldViewSchema,
+	TreeViewSchema,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

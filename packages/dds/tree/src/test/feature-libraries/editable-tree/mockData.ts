@@ -14,6 +14,7 @@ import {
 	ContextuallyTypedNodeDataObject,
 	jsonableTreeFromCursor,
 	cursorFromContextualData,
+	FieldViewSchema,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -24,7 +25,6 @@ import {
 	JsonableTree,
 	symbolFromKey,
 	GlobalFieldKeySymbol,
-	FieldSchema,
 	SchemaData,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
@@ -148,10 +148,10 @@ export const treeSchema = [
 ] as const;
 
 export const fullSchemaData = SchemaAware.typedSchemaData(
-	new Map<GlobalFieldKey, FieldSchema>([
+	[
 		[rootFieldKey, rootPersonSchema],
 		[globalFieldKeySequencePhones, globalFieldSchemaSequencePhones],
-	]),
+	],
 	...treeSchema,
 );
 
@@ -284,9 +284,14 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema(rootField: FieldSchema = rootPersonSchema): SchemaData {
+export function buildTestSchema(rootField: FieldViewSchema = rootPersonSchema): SchemaData {
 	return SchemaAware.typedSchemaData(
-		new Map([...fullSchemaData.globalFieldSchema.entries(), [rootFieldKey, rootField]]),
+		[
+			...(fullSchemaData.globalFieldSchema.entries() as Iterable<
+				[GlobalFieldKey, FieldViewSchema]
+			>),
+			[rootFieldKey, rootField],
+		],
 		...treeSchema,
 	);
 }

@@ -31,6 +31,7 @@ export enum Compatibility {
  *
  * TODO:
  * Currently this does not account for lazy schema updates, and/or use of adapters.
+ * @alpha
  */
 export enum AllowedUpdateType {
 	/**

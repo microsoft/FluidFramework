@@ -11,3 +11,5 @@ export {
 	SharedTreeFactory,
 	BranchEvents,
 } from "./sharedTree";
+
+export { SchematizeConfiguration, schematizeBranch } from "./schematizedTree";

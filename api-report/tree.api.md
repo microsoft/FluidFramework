@@ -13,6 +13,12 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @alpha
+export enum AllowedUpdateType {
+    None = 0,
+    SchemaCompatible = 1
+}
+
+// @alpha
 type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];
 
 // @alpha
@@ -210,14 +216,17 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 }[Mode];
 
 // @alpha
+export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
+
+// @alpha
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ContextuallyTypedNodeDataObject {
     readonly [typeNameSymbol]?: string;
     readonly [valueSymbol]?: Value;
-    [key: FieldKey]: ContextuallyTypedNodeData | undefined;
-    [key: string]: ContextuallyTypedNodeData | undefined;
+    [key: FieldKey]: ContextuallyTypedFieldData;
+    [key: string]: ContextuallyTypedFieldData;
 }
 
 // @alpha
@@ -566,6 +575,12 @@ export interface FieldUpPath {
 }
 
 // @alpha
+export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends FieldSchema {
+    // (undocumented)
+    readonly kind: Kind;
+}
+
+// @alpha
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
 }][_dummy];
@@ -778,7 +793,7 @@ export interface ISubscribable<E extends Events<E>> {
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
 
 // @alpha
-export function isWritableArrayLike(data: ContextuallyTypedNodeData | undefined): data is MarkedArrayLike<ContextuallyTypedNodeData>;
+export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ITreeCursor {
@@ -1294,6 +1309,19 @@ export interface SchemaPolicy {
     readonly defaultTreeSchema: TreeSchema;
 }
 
+// @alpha
+export function schematizeBranch(tree: ISharedTreeBranch, config: SchematizeConfiguration): ISharedTreeBranch;
+
+// @alpha
+export interface SchematizeConfiguration {
+    // (undocumented)
+    readonly allowedSchemaModifications: AllowedUpdateType;
+    // (undocumented)
+    readonly initialTree: ContextuallyTypedFieldData;
+    // (undocumented)
+    readonly schema: ViewSchemaCollection;
+}
+
 // @alpha (undocumented)
 export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
@@ -1461,6 +1489,10 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 export interface TreeValue extends Serializable {
 }
 
+// @alpha (undocumented)
+export interface TreeViewSchema extends TreeSchema {
+}
+
 // @alpha
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
     [key: string]: TypedSchema.FieldSchemaTypeInfo;
@@ -1523,7 +1555,7 @@ interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
 }
 
 // @alpha
-function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & {
+function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(globalFieldSchema: [GlobalFieldKey, FieldViewSchema][], ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & ViewSchemaCollection & {
     treeSchemaObject: {
         [schema in T[number] as schema["typeInfo"]["name"]]: schema;
     };
@@ -1654,6 +1686,14 @@ type ValuesOf<T> = T[keyof T];
 
 // @alpha
 export const valueSymbol: unique symbol;
+
+// @alpha
+export interface ViewSchemaCollection {
+    // (undocumented)
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
+}
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
