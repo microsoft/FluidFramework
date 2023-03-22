@@ -1,3 +1,40 @@
+## [0.13.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.12.0...build-tools_v0.13.0) (2023-03-22)
+
+### Features
+
+* **build-cli:** Add exec command ([#14635](https://github.com/microsoft/FluidFramework/issues/14635)) ([5898496](https://github.com/microsoft/FluidFramework/commit/5898496b743a58357bbaa0011d5754c3cce1758c))
+* **check:policy:** Add setting to ignore single-package pnpm workspaces ([#14656](https://github.com/microsoft/FluidFramework/issues/14656)) ([ad72865](https://github.com/microsoft/FluidFramework/commit/ad72865d909fc7e5bdc7fb89b4d87fd8938a3fe5))
+
+
+### Bug Fixes
+
+* **bump:** Fix invalid flag configuration ([#14475](https://github.com/microsoft/FluidFramework/issues/14475)) ([e8d0193](https://github.com/microsoft/FluidFramework/commit/e8d0193536a12c5890bdea6ab719e1effa3a9b65))
+* **policy-check:** Use correct package.json indentation ([#14481](https://github.com/microsoft/FluidFramework/issues/14481)) ([2ec5912](https://github.com/microsoft/FluidFramework/commit/2ec5912d0d2feac4237aa2418a60cb740ab9121a))
+* **release:** Handle released dependency bumps ([#14669](https://github.com/microsoft/FluidFramework/issues/14669)) ([d33bee7](https://github.com/microsoft/FluidFramework/commit/d33bee7c6510775a84fd268662362ae22a423e8c))
+
+
+## [0.12.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.10.0...build-tools_v0.12.0) (2023-03-08)
+
+### Features
+
+* **release:** Tag asserts separately from policy-check ([#14316](https://github.com/microsoft/FluidFramework/issues/14316)) ([eb5c849](https://github.com/microsoft/FluidFramework/commit/eb5c84979bb364220ab2969d36f5223ebe6cde74))
+
+### Bug Fixes
+
+* **generate:typetests:** Use cached baseline ([#14317](https://github.com/microsoft/FluidFramework/issues/14317)) ([5d90f7c](https://github.com/microsoft/FluidFramework/commit/5d90f7cdd66c71333e09f3e1232115b92218f3cd))
+* **release:** Install dependencies if needed ([#14348](https://github.com/microsoft/FluidFramework/issues/14348)) ([f3e30e5](https://github.com/microsoft/FluidFramework/commit/f3e30e5415df63604a66709b6a0e26f96809801b))
+
+### Build System
+
+* **build-tools:** Remove postinstall step ([#14275](https://github.com/microsoft/FluidFramework/issues/14275)) ([bbee6e9](https://github.com/microsoft/FluidFramework/commit/bbee6e95d1604a63fe55ac1aa3aa6869ffc2e1b2))
+
+### Code Refactoring
+
+* Add new simple type test generator ([#14334](https://github.com/microsoft/FluidFramework/issues/14334)) ([c58c54a](https://github.com/microsoft/FluidFramework/commit/c58c54afae39f91948917d30162350828eb57c17))
+
+
+## 0.11.0 (NOT RELEASED)
+
 ## [0.10.0](https://github.com/microsoft/FluidFramework/compare/build-tools_v0.10.0...build-tools_v0.10.0) (2023-02-22)
 
 
@@ -8,7 +45,7 @@
 ### Features
 
 * **build-cli:** Allow ssh git remotes ([#14145](https://github.com/microsoft/FluidFramework/issues/14145)) ([175a51b](https://github.com/microsoft/FluidFramework/commit/175a51baeaf65775b40d3dc2320fa8b3f03ee6b9))
-* **build:** Accepting monorepo path for build scope on fluid-build command line ([#14071](https://github.com/microsoft/FluidFramework/issues/14071)) ([29ab33c](https://github.com/microsoft/FluidFramework/commit/29ab33c04f55ab40eca45e1d702a157548769549))
+* **fluid-build:** Accepting monorepo path for build scope on fluid-build command line ([#14071](https://github.com/microsoft/FluidFramework/issues/14071)) ([29ab33c](https://github.com/microsoft/FluidFramework/commit/29ab33c04f55ab40eca45e1d702a157548769549))
 * **bump:** Support interdependency bump types ([#14161](https://github.com/microsoft/FluidFramework/issues/14161)) ([8cc5b1e](https://github.com/microsoft/FluidFramework/commit/8cc5b1e55820896bdb84825f9874ea55bc8a81f3))
 * **fluid-build:** Support external config ([#14215](https://github.com/microsoft/FluidFramework/issues/14215)) ([1fc3cbc](https://github.com/microsoft/FluidFramework/commit/1fc3cbc3e7cf1df5abf49da8665354c03236c929))
 * **generate:typetests:** Move typetest config to external file ([#14222](https://github.com/microsoft/FluidFramework/issues/14222)) ([15f0080](https://github.com/microsoft/FluidFramework/commit/15f0080afc7573380dacb368a36c1eb82c300ca3))
