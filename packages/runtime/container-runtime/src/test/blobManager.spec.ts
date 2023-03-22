@@ -18,8 +18,9 @@ import {
 } from "@fluidframework/protocol-definitions";
 import {
 	ConfigTypes,
-	loggerToMonitoringContext,
-	sessionStorageConfigProvider,
+	IConfigProviderBase,
+	mixinMonitoringContext,
+	MonitoringContext,
 	TelemetryNullLogger,
 } from "@fluidframework/telemetry-utils";
 
@@ -59,7 +60,11 @@ class MockRuntime
 	implements IBlobManagerRuntime
 {
 	public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
-	constructor(snapshot: IBlobManagerLoadInfo = {}, attached = false) {
+	constructor(
+		public mc: MonitoringContext,
+		snapshot: IBlobManagerLoadInfo = {},
+		attached = false,
+	) {
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.blobManager = new BlobManager(
@@ -133,7 +138,6 @@ class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public mc = loggerToMonitoringContext(new TelemetryNullLogger());
 	public logger = this.mc.logger;
 
 	private ops: any[] = [];
@@ -250,15 +254,15 @@ describe("BlobManager", () => {
 	let runtime: MockRuntime;
 	let createBlob: (blob: ArrayBufferLike) => Promise<void>;
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
-	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+	let mc: MonitoringContext;
 	let injectedSettings: Record<string, ConfigTypes> = {};
 
-	before(() => {
-		sessionStorageConfigProvider.value.getRawConfig = (name) => injectedSettings[name];
-	});
-
 	beforeEach(() => {
-		runtime = new MockRuntime();
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		mc = mixinMonitoringContext(new TelemetryNullLogger(), configProvider(injectedSettings));
+		runtime = new MockRuntime(mc);
 		handlePs.length = 0;
 
 		// ensures this blob will be processed next time runtime.processBlobs() is called
@@ -292,10 +296,6 @@ describe("BlobManager", () => {
 		await Promise.all(handlePs);
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
-	});
-
-	after(() => {
-		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
 	});
 
 	it("empty snapshot", () => {
@@ -525,7 +525,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.ids.length, 1);
 		assert.strictEqual(summaryData.redirectTable.size, 3);
 
-		const runtime2 = new MockRuntime(summaryData, true);
+		const runtime2 = new MockRuntime(mc, summaryData, true);
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable.size, 3);

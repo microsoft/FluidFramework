@@ -714,7 +714,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * @param unusedRoutes - The routes of the blob nodes that are unused. These routes will be based off of local ids.
 	 */
 	public updateUnusedRoutes(unusedRoutes: string[]): void {
-		this.deleteBlobs(unusedRoutes);
+		this.deleteBlobsFromRedirectTable(unusedRoutes);
 	}
 
 	/**
@@ -729,18 +729,22 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			return [];
 		}
 
-		this.deleteBlobs(sweepReadyBlobRoutes);
+		this.deleteBlobsFromRedirectTable(sweepReadyBlobRoutes);
 		return Array.from(sweepReadyBlobRoutes);
 	}
 
 	/**
-	 * Delete blobs with the given routes. The routes are GC nodes paths of format `/<BlobManager.basePath>/<blobId>`.
-	 * The blob ids are all local ids. Deleting the blobs involves 2 steps:
+	 * Delete blobs with the given routes from the redirect table.
+	 * The routes are GC nodes paths of format -`/<BlobManager.basePath>/<blobId>`. The blob ids are all local ids.
+	 * Deleting the blobs involves 2 steps:
 	 * 1. The redirect table entry for the local ids are deleted.
 	 * 2. If the storage ids corresponding to the deleted local ids are not in-use anymore, the redirect table entries
 	 * for the storage ids are deleted as well.
+	 *
+	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
+	 * will remove them the next summary. The service would them delete them some time in the future.
 	 */
-	private deleteBlobs(blobRoutes: string[]) {
+	private deleteBlobsFromRedirectTable(blobRoutes: string[]) {
 		if (blobRoutes.length === 0) {
 			return;
 		}
@@ -773,7 +777,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			}
 		}
 
-		// For unused storage ids, delete their entries from the redirect table.
+		// For unused storage ids, delete their id -> id entries from the redirect table.
+		// This way they'll be absent from the next summary, and the service is free to delete them from storage.
 		for (const storageId of maybeUnusedStorageIds) {
 			this.redirectTable.delete(storageId);
 		}
