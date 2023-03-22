@@ -521,7 +521,7 @@ export class ModularChangeFamily
 
 		assert(
 			constraintState.violationCount === constraintViolations,
-			"Should not change constraint violation count during amend pass",
+			0x5b4 /* Should not change constraint violation count during amend pass */,
 		);
 
 		if (maxId >= 0) {
@@ -552,7 +552,7 @@ export class ModularChangeFamily
 				newNode = crossFieldTable.baseMapToRebased.get(fieldContext.map);
 				assert(
 					newNode !== undefined,
-					"Should be a new HasFieldChanges associated with this base change",
+					0x5b5 /* Should be a new HasFieldChanges associated with this base change */,
 				);
 
 				baseChanges = fieldToAmend;
@@ -702,7 +702,7 @@ export class ModularChangeFamily
 					(child, baseChild) => {
 						assert(
 							baseChild === undefined,
-							"This field should not have any base changes",
+							0x5b6 /* This field should not have any base changes */,
 						);
 						return this.rebaseNodeChange(
 							child,
@@ -878,10 +878,10 @@ function getFieldsToAmend(
 		while (baseFieldContext !== undefined && !baseMapToRebased.has(baseFieldContext.map)) {
 			invalidatedEmptyFields.add(fieldChange);
 			const baseFieldTemp = baseMapToParentField.get(baseFieldContext.map);
-			assert(baseFieldTemp !== undefined, "Should have parent for field");
+			assert(baseFieldTemp !== undefined, 0x5b7 /* Should have parent for field */);
 			fieldChange = baseFieldTemp;
 			const contextTemp = baseChangeToContext.get(fieldChange);
-			assert(contextTemp !== undefined, "Should have context for field");
+			assert(contextTemp !== undefined, 0x5b8 /* Should have context for field */);
 			baseFieldContext = contextTemp;
 		}
 
@@ -1132,7 +1132,7 @@ export class ModularEditBuilder
 	}
 
 	public override exitTransaction(): void {
-		assert(this.transactionDepth > 0, "Cannot exit inexistent transaction");
+		assert(this.transactionDepth > 0, 0x5b9 /* Cannot exit inexistent transaction */);
 		this.transactionDepth -= 1;
 		if (this.transactionDepth === 0) {
 			this.idAllocator = idAllocatorFromMaxId();
