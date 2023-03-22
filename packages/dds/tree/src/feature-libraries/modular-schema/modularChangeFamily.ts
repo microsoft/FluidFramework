@@ -140,15 +140,7 @@ export class ModularChangeFamily
 		for (const taggedChange of changes) {
 			const change = taggedChange.change;
 			maxId = Math.max(change.maxId ?? -1, maxId);
-			if (change.revisions !== undefined) {
-				revInfos.push(...change.revisions);
-			} else if (taggedChange.revision !== undefined) {
-				const info: Mutable<RevisionInfo> = { tag: taggedChange.revision };
-				if (taggedChange.isRollback === true) {
-					info.isRollback = true;
-				}
-				revInfos.push(info);
-			}
+			revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
 		}
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
 		const genId: IdAllocator = () => brand(++maxId);
@@ -362,7 +354,7 @@ export class ModularChangeFamily
 			revInfo === undefined
 				? undefined
 				: (isRollback
-						? revInfo.map(({ tag }) => ({ tag, isRollback: true }))
+						? revInfo.map(({ revision }) => ({ revision, rollbackOf: revision }))
 						: Array.from(revInfo)
 				  ).reverse(),
 			change.change.constraintViolationCount,
@@ -482,9 +474,7 @@ export class ModularChangeFamily
 
 		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 		const revInfos: RevisionInfo[] = [];
-		if (over.change.revisions !== undefined) {
-			revInfos.push(...over.change.revisions);
-		}
+		revInfos.push(...revisionInfoFromTaggedChange(over));
 		if (change.revisions !== undefined) {
 			revInfos.push(...change.revisions);
 		}
@@ -901,14 +891,19 @@ function getFieldsToAmend(
 	return [fieldsToAmend, invalidatedEmptyFields];
 }
 
-function revisionMetadataSourceFromInfo(revInfos: readonly RevisionInfo[]): RevisionMetadataSource {
-	const getIndex = (tag: RevisionTag): number => {
-		const index = revInfos.findIndex((revInfo) => revInfo.tag === tag);
+/**
+ * @alpha
+ */
+export function revisionMetadataSourceFromInfo(
+	revInfos: readonly RevisionInfo[],
+): RevisionMetadataSource {
+	const getIndex = (revision: RevisionTag): number => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
 		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
 		return index;
 	};
-	const getInfo = (tag: RevisionTag): RevisionInfo => {
-		return revInfos[getIndex(tag)];
+	const getInfo = (revision: RevisionTag): RevisionInfo => {
+		return revInfos[getIndex(revision)];
 	};
 	return { getIndex, getInfo };
 }
@@ -1253,4 +1248,20 @@ export interface EditDescription {
 	field: FieldKey;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
+}
+
+function revisionInfoFromTaggedChange(
+	taggedChange: TaggedChange<ModularChangeset>,
+): RevisionInfo[] {
+	const revInfos: RevisionInfo[] = [];
+	if (taggedChange.change.revisions !== undefined) {
+		revInfos.push(...taggedChange.change.revisions);
+	} else if (taggedChange.revision !== undefined) {
+		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
+		if (taggedChange.rollbackOf !== undefined) {
+			info.rollbackOf = taggedChange.rollbackOf;
+		}
+		revInfos.push(info);
+	}
+	return revInfos;
 }
