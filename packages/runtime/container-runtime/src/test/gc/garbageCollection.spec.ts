@@ -28,7 +28,7 @@ import {
 	mixinMonitoringContext,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils";
-import { ReadAndParseBlob, RefreshSummaryResult } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
 	GarbageCollector,
@@ -43,7 +43,7 @@ import {
 	disableSweepLogKey,
 	GCVersion,
 } from "../../gc";
-import { dataStoreAttributesBlobName } from "../../summary";
+import { dataStoreAttributesBlobName, RefreshSummaryResult } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 
 export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
