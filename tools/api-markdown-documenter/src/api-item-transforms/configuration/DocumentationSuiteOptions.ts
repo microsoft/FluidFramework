@@ -215,7 +215,7 @@ export interface DocumentationSuiteOptions {
 	/**
 	 * See {@link FrontMatterPolicy}.
 	 *
-	 * @defaultValue `undefined`
+	 * @defaultValue No front matter is generated.
 	 */
 	frontMatterPolicy?: FrontMatterPolicy;
 }
