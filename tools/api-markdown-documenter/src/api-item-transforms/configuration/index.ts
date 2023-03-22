@@ -12,14 +12,8 @@ export {
 	type DefaultDocumentationSuiteOptions,
 	DocumentBoundaries,
 	DocumentationSuiteOptions,
-	FileNamePolicy,
-	FrontMatterPolicy,
 	getDocumentationSuiteOptionsWithDefaults,
-	HeadingTitlePolicy,
 	HierarchyBoundaries,
-	LinkTextPolicy,
-	PackageFilterPolicy,
-	UriBaseOverridePolicy,
 } from "./DocumentationSuiteOptions";
 export {
 	ApiItemTransformationOptions,

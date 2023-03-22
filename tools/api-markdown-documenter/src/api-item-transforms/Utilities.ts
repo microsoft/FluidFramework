@@ -25,11 +25,13 @@ export function createDocument(
 	// If a top-level heading was requested, we will wrap our document sections in a root section
 	// with the appropriate heading to ensure hierarchy is adjusted appropriately.
 	if (config.includeTopLevelDocumentHeading) {
-		contents = [wrapInSection(sections, { title: config.headingTitlePolicy(documentItem) })];
+		contents = [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })];
 	}
 
 	const frontMatter =
-		config.frontMatterPolicy === undefined ? undefined : config.frontMatterPolicy(documentItem);
+		config.generateFrontMatter === undefined
+			? undefined
+			: config.generateFrontMatter(documentItem);
 
 	return new DocumentNode({
 		children: contents,

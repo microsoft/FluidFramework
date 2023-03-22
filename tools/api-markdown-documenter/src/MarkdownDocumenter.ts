@@ -61,7 +61,7 @@ export function transformApiModel(
 	documents.push(apiModelToDocument(apiModel, config));
 
 	const filteredPackages = apiModel.packages.filter(
-		(apiPackage) => !config.packageFilterPolicy(apiPackage),
+		(apiPackage) => !config.skipPackage(apiPackage),
 	);
 	if (filteredPackages.length > 0) {
 		// For each package, walk the child graph to find API items which should be rendered to their own document

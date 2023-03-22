@@ -208,7 +208,7 @@ describe("api-markdown-documenter full-suite tests", () => {
 				includeTopLevelDocumentHeading: false,
 				documentBoundaries: [], // Render everything to package documents
 				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
-				frontMatterPolicy: (documentItem): string =>
+				generateFrontMatter: (documentItem): string =>
 					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
 			},
 			renderConfig: {

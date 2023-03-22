@@ -39,16 +39,10 @@ export {
 	type DefaultDocumentationSuiteOptions,
 	DocumentationSuiteOptions,
 	DocumentBoundaries,
-	FileNamePolicy,
-	FrontMatterPolicy,
 	getApiItemTransformationConfigurationWithDefaults,
-	HeadingTitlePolicy,
 	HierarchyBoundaries,
-	LinkTextPolicy,
-	PackageFilterPolicy,
 	TransformApiItemWithChildren,
 	TransformApiItemWithoutChildren,
-	UriBaseOverridePolicy,
 } from "./configuration";
 export { transformDocNode } from "./DocNodeTransforms";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem";

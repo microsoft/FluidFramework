@@ -201,15 +201,15 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteOptions {
     documentBoundaries?: DocumentBoundaries;
-    fileNamePolicy?: FileNamePolicy;
-    frontMatterPolicy?: FrontMatterPolicy;
-    headingTitlePolicy?: HeadingTitlePolicy;
+    generateFrontMatter?: (documentItem: ApiItem) => string | undefined;
+    getFileNameForItem?: (apiItem: ApiItem) => string;
+    getHeadingTextForItem?: (apiItem: ApiItem) => string;
+    getLinkTextForItem?: (apiItem: ApiItem) => string;
+    getUriBaseOverrideForItem?: (apiItem: ApiItem) => string | undefined;
     hierarchyBoundaries?: HierarchyBoundaries;
     includeBreadcrumb?: boolean;
     includeTopLevelDocumentHeading?: boolean;
-    linkTextPolicy?: LinkTextPolicy;
-    packageFilterPolicy?: PackageFilterPolicy;
-    uriBaseOverridePolicy?: UriBaseOverridePolicy;
+    skipPackage?: (apiPackage: ApiPackage) => boolean;
 }
 
 // @public
@@ -241,12 +241,6 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
     get singleLine(): false;
     readonly type = DocumentationNodeType.FencedCode;
 }
-
-// @public
-export type FileNamePolicy = (apiItem: ApiItem) => string;
-
-// @public
-export type FrontMatterPolicy = (documentItem: ApiItem) => string | undefined;
 
 // @public
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
@@ -305,9 +299,6 @@ export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumenta
 }
 
 // @public
-export type HeadingTitlePolicy = (apiItem: ApiItem) => string;
-
-// @public
 export type HierarchyBoundaries = ApiMemberKind[];
 
 // @public
@@ -353,9 +344,6 @@ export class LinkNode extends DocumentationParentNodeBase<SingleLineDocumentatio
     readonly target: UrlTarget;
     readonly type = DocumentationNodeType.Link;
 }
-
-// @public
-export type LinkTextPolicy = (apiItem: ApiItem) => string;
 
 // @public
 export function loadModel(reportsDirectoryPath: string, logger?: Logger): Promise<ApiModel>;
@@ -405,9 +393,6 @@ export class OrderedListNode extends DocumentationParentNodeBase<SingleLineDocum
     get singleLine(): false;
     readonly type = DocumentationNodeType.OrderedList;
 }
-
-// @public
-export type PackageFilterPolicy = (apiPackage: ApiPackage) => boolean;
 
 // @public
 export class ParagraphNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -563,9 +548,6 @@ export class UnorderedListNode extends DocumentationParentNodeBase<SingleLineDoc
     get singleLine(): false;
     readonly type = DocumentationNodeType.UnorderedList;
 }
-
-// @public
-export type UriBaseOverridePolicy = (apiItem: ApiItem) => string | undefined;
 
 // @public
 export type UrlTarget = string;

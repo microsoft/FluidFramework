@@ -28,8 +28,6 @@ export {
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
-	type FileNamePolicy,
-	type FrontMatterPolicy,
 	getApiItemTransformationConfigurationWithDefaults,
 	getDefaultValueBlock,
 	getDeprecatedBlock,
@@ -43,18 +41,14 @@ export {
 	getSeeBlocks,
 	getThrowsBlocks,
 	getUnscopedPackageName,
-	type HeadingTitlePolicy,
 	type HierarchyBoundaries,
 	isDeprecated,
 	isOptional,
 	isReadonly,
 	isStatic,
-	type LinkTextPolicy,
-	type PackageFilterPolicy,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformDocNode,
-	type UriBaseOverridePolicy,
 } from "./api-item-transforms";
 
 // We want to make sure the entirety of this domain is accessible.

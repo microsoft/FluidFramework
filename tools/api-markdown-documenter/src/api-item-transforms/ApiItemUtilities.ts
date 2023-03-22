@@ -167,7 +167,7 @@ export function getLinkForApiItem(
 	config: Required<ApiItemTransformationConfiguration>,
 	textOverride?: string,
 ): Link {
-	const text = textOverride ?? config.linkTextPolicy(apiItem);
+	const text = textOverride ?? config.getLinkTextForItem(apiItem);
 	const url = getLinkUrlForApiItem(apiItem, config);
 	return {
 		text,
@@ -189,7 +189,7 @@ export function getLinkUrlForApiItem(
 	apiItem: ApiItem,
 	config: Required<ApiItemTransformationConfiguration>,
 ): string {
-	const uriBase = config.uriBaseOverridePolicy(apiItem) ?? config.uriRoot;
+	const uriBase = config.getUriBaseOverrideForItem(apiItem) ?? config.uriRoot;
 	let documentPath = getApiItemPath(apiItem, config, /* includeExtension: */ false).join("/");
 
 	// Omit "index" file name from path generated in links.
@@ -261,7 +261,7 @@ function getApiItemPath(
 
 	return [
 		fileName,
-		...documentAncestry.map((hierarchyItem) => config.fileNamePolicy(hierarchyItem)),
+		...documentAncestry.map((hierarchyItem) => config.getFileNameForItem(hierarchyItem)),
 	].reverse();
 }
 
@@ -286,7 +286,7 @@ export function getFileNameForApiItem(
 ): string {
 	const targetDocumentItem = getFirstAncestorWithOwnDocument(apiItem, config.documentBoundaries);
 
-	let unscopedFileName = config.fileNamePolicy(targetDocumentItem);
+	let unscopedFileName = config.getFileNameForItem(targetDocumentItem);
 
 	// For items of kinds other than `Model` or `Package` (which are handled specially file-system-wise),
 	// append the item kind to disambiguate file names resulting from members whose names may conflict in a
@@ -316,7 +316,7 @@ export function getFileNameForApiItem(
 		hierarchyItem.kind !== ApiItemKind.Model &&
 		!doesItemGenerateHierarchy(hierarchyItem, config.hierarchyBoundaries)
 	) {
-		const segmentName = config.fileNamePolicy(hierarchyItem);
+		const segmentName = config.getFileNameForItem(hierarchyItem);
 		if (segmentName.length === 0) {
 			throw new Error("Segment name must be non-empty.");
 		}
@@ -353,7 +353,7 @@ export function getHeadingForApiItem(
 		: getHeadingIdForApiItem(apiItem, config);
 
 	return {
-		title: config.headingTitlePolicy(apiItem),
+		title: config.getHeadingTextForItem(apiItem),
 		id,
 		level: headingLevel,
 	};
