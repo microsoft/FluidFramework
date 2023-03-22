@@ -135,11 +135,17 @@ const testSchema: SchemaData = {
 const testTreeNode: JsonableTree = { value: 1, type: dataSchema.name };
 const replacementTestNode: JsonableTree = { value: 1.0, type: dataSchema.name };
 
+interface JSObjectTree {
+	type: string,
+	value: number,
+	fields?: {foo: JSObjectTree[]}
+}
+
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe.only("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: Jsonable;
+			let tree: JSObjectTree[];
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree as JS Object: reads with ${numberOfNodes} nodes`,
@@ -152,12 +158,12 @@ describe.only("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: Jsonable;
+			let tree: JSObjectTree[];
 			benchmark({
 				type: benchmarkType,
 				title: `Wide Tree as JS Object: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = getJSTestTreeWide(numberOfNodes);
+					tree = [getJSTestTreeWide(numberOfNodes)];
 				},
 				benchmarkFn: () => {
 					assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes);
@@ -184,8 +190,8 @@ describe.only("SharedTree benchmarks", () => {
 		}
 		describe(`Edit JS Object`, () => {
 			for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-				let tree: Jsonable;
-				let leafNode: Jsonable;
+				let tree: JSObjectTree[];
+				let leafNode: JSObjectTree;
 				benchmark({
 					type: benchmarkType,
 					title: `Update value at leaf of ${numberOfNodes} deep tree`,
@@ -562,37 +568,38 @@ function insertNodesToEditableTree(
 	}
 }
 
-function getJSTestTreeWide(numberOfNodes: number): Jsonable {
+function getJSTestTreeWide(numberOfNodes: number): JSObjectTree {
 	const nodes = [];
+	const node = { value: testTreeNode.value as number, type: dataSchema.name }
 	for (let i = 0; i < numberOfNodes - 1; i++) {
-		nodes.push(testTreeNode);
+		nodes.push(node);
 	}
 	const tree = {
 		type: dataSchema.name,
 		fields: {
 			foo: nodes,
 		},
-		value: testTreeNode.value,
+		value: testTreeNode.value as number,
 	};
 	return tree;
 }
 
-function getJSTestTreeDeep(numberOfNodes: number): Jsonable {
+function getJSTestTreeDeep(numberOfNodes: number): JSObjectTree[] {
 	if (numberOfNodes === 1) {
-		return [testTreeNode];
+		return [{ value: testTreeNode.value as number, type: dataSchema.name }];
 	}
 	const tree = {
 		type: dataSchema.name,
 		fields: {
-			foo: [getJSTestTreeDeep(numberOfNodes - 1)],
+			foo: getJSTestTreeDeep(numberOfNodes - 1),
 		},
-		value: testTreeNode.value,
+		value: testTreeNode.value as number,
 	};
 	return [tree];
 }
 
-function readTreeAsJSObject(tree: Jsonable, initialTotal: Jsonable): Jsonable {
-	let currentTotal = initialTotal as number;
+function readTreeAsJSObject(tree: Jsonable, initialTotal: number): number {
+	let currentTotal = initialTotal;
 	for (const key of Object.keys(tree)) {
 		if (typeof tree[key] === "object" && tree[key] !== null) {
 			currentTotal = readTreeAsJSObject(tree[key], currentTotal);
@@ -618,7 +625,7 @@ function manipulateTreeAsJSObject(tree: Jsonable, shape: TreeShape): void {
 			tree[0].value = replacementTestNode.value;
 			break;
 		case TreeShape.Wide:
-			nodesUnderRoot = tree.fields.foo.length;
+			nodesUnderRoot = tree.fields?.foo.length;
 			if (nodesUnderRoot === 0) {
 				tree.fields.value = replacementTestNode.value;
 			} else {
@@ -631,8 +638,11 @@ function manipulateTreeAsJSObject(tree: Jsonable, shape: TreeShape): void {
 }
 
 function getLeafNodeFromJSObject(tree: Jsonable): Jsonable {
+	const keys = Object.keys(tree);
 	for (const key of Object.keys(tree)) {
-		if (typeof tree[key] === "object" && tree[key] !== null) {
+		// const newKey = typeof tree === "object" ? key as keyof JSObjectTree : key as keyof JSObjectTree[];
+		const newKey = key as keyof JSObjectTree 
+		if (typeof tree[newKey] === "object" && tree[key] !== null) {
 			if (tree[key].type !== undefined && tree[key].fields === undefined) {
 				return tree;
 			}
