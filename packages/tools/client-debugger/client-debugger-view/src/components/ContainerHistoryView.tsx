@@ -67,7 +67,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, containerHistory, messageRelay, setContainerHistory]);
+	}, [containerId, messageRelay]);
 
 	if (containerHistory === undefined) {
 		return <Waiting label="Waiting for Container Summary data." />;
