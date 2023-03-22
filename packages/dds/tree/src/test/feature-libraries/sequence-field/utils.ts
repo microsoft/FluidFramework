@@ -7,12 +7,13 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	ChangesetLocalId,
 	IdAllocator,
+	idAllocatorFromMaxId,
 	RevisionMetadataSource,
 	SequenceField as SF,
 } from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -103,6 +104,7 @@ export function rebase(
 		rebasedChange = SF.amendRebase(
 			rebasedChange,
 			base,
+			(a, b) => a,
 			idAllocator,
 			moveEffects,
 			revisionMetadata ?? defaultRevisionMetadata,
@@ -203,11 +205,4 @@ export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
 			mark.id = newId!;
 		}
 	}
-}
-
-export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
-	let currId = maxId ?? -1;
-	return () => {
-		return brand(++currId);
-	};
 }

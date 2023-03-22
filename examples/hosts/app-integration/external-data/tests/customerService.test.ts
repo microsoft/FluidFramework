@@ -13,11 +13,13 @@ import { delay } from "@fluidframework/common-utils";
 
 import { initializeCustomerService } from "../src/mock-customer-service";
 import { customerServicePort } from "../src/mock-customer-service-interface";
-import { initializeExternalDataService } from "../src/mock-external-data-service";
+import { initializeExternalDataService, MockWebhook } from "../src/mock-external-data-service";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface";
+import { ITaskData } from "../src/model-interface";
 import { closeServer } from "./utilities";
 
 const localServicePort = 5002;
+const externalTaskListId = "task-list-1";
 /**
  * @remarks
  *
@@ -35,9 +37,18 @@ describe("mock-customer-service", () => {
 	 */
 	let customerService: Server | undefined;
 
+	/**
+	 * Datastore mapping of external resource id to its subscribers.
+	 *
+	 * @defaultValue A new new map will be initialized.
+	 */
+	let webhookCollection: Map<string, MockWebhook<ITaskData>>;
+
 	beforeEach(async () => {
+		webhookCollection = new Map<string, MockWebhook<ITaskData>>();
 		externalDataService = await initializeExternalDataService({
 			port: externalDataServicePort,
+			webhookCollection,
 		});
 		customerService = await initializeCustomerService({
 			port: customerServicePort,
@@ -77,9 +88,28 @@ describe("mock-customer-service", () => {
 		const localService: Server = localServiceApp.listen(localServicePort);
 
 		try {
+			// Register with the external service for notifications
+			const webhookRegistrationResponse = await fetch(
+				`http://localhost:${externalDataServicePort}/register-for-webhook`,
+				{
+					method: "POST",
+					headers: {
+						"Access-Control-Allow-Origin": "*",
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						url: `http://localhost:${localServicePort}/broadcast-signal?externalTaskListId=${externalTaskListId}`,
+					}),
+				},
+			);
+
+			if (!webhookRegistrationResponse.ok) {
+				fail(`Webhook registration failed. Code: ${webhookRegistrationResponse.status}.`);
+			}
+
 			// Update external data
 			const dataUpdateResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/set-tasks`,
+				`http://localhost:${externalDataServicePort}/set-tasks/${externalTaskListId}`,
 				{
 					method: "POST",
 					headers: {

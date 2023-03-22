@@ -6,42 +6,46 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
-import { benchmarkAll, createDocument } from "./DocumentCreator";
-import { DocumentMap } from "./DocumentMap";
+import { benchmarkAll, createDocument, IDocumentLoader } from "./DocumentCreator";
 
 const scenarioTitle = "Load Document";
 
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
-	let documentMap: DocumentMap;
+	let documentWrapper: IDocumentLoader;
 	let provider: ITestObjectProvider;
 	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
 
 	before(async () => {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
-		documentMap = createDocument({
+		documentWrapper = createDocument({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
 		});
-		await documentMap.initializeDocument();
+		await documentWrapper.initializeDocument();
 	});
-
-	class BenchmarkObj {
+	/**
+	 * The PerformanceTestWrapper class includes 2 functionalities:
+	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
+	 * 2) Stores the configuration properties that should be consumed by benchmarkAll to define its behavior:
+	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
+	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
+	 */
+	class PerformanceTestWrapper {
 		container: IContainer | undefined;
-		minSampleCount = 10;
+		minSampleCount = getDocumentInfo().minSampleCount;
 	}
 
-	const obj = new BenchmarkObj();
+	const obj = new PerformanceTestWrapper();
 
-	benchmarkAll<BenchmarkObj>(scenarioTitle, benchmarkType, {
+	benchmarkAll(scenarioTitle, obj, {
 		run: async () => {
-			obj.container = await documentMap.loadDocument();
+			obj.container = await documentWrapper.loadDocument();
 			assert(obj.container !== undefined, "container needs to be defined.");
 			obj.container.close();
 		},
-		obj,
 		beforeIteration: () => {
 			obj.container = undefined;
 		},

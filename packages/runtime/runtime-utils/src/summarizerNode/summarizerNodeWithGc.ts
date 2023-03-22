@@ -10,6 +10,7 @@ import {
 	getGCDataFromSnapshot,
 	runGarbageCollection,
 	unpackChildNodesGCDetails,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
@@ -24,6 +25,7 @@ import {
 	SummarizeInternalFn,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
+import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "../utils";
 import { SummarizerNode } from "./summarizerNode";
 import {
@@ -81,8 +83,13 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	// The base GC details of this node used to initialize the GC state.
 	private readonly baseGCDetailsP: LazyPromise<IGarbageCollectionDetailsBase>;
 
-	// Keeps track of whether we have loaded the base details to ensure that we on;y do it once.
+	// Keeps track of whether we have loaded the base details to ensure that we only do it once.
 	private baseGCDetailsLoaded: boolean = false;
+
+	// The base GC details for the child nodes. This is passed to child nodes when creating them.
+	private readonly childNodesBaseGCDetailsP: LazyPromise<
+		Map<string, IGarbageCollectionDetailsBase>
+	>;
 
 	private gcData: IGarbageCollectionData | undefined;
 
@@ -132,6 +139,11 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 
 		this.baseGCDetailsP = new LazyPromise(async () => {
 			return (await getBaseGCDetailsFn?.()) ?? { usedRoutes: [] };
+		});
+
+		this.childNodesBaseGCDetailsP = new LazyPromise(async () => {
+			const baseGCDetails = await this.baseGCDetailsP;
+			return unpackChildNodesGCDetails(baseGCDetails);
 		});
 	}
 
@@ -297,9 +309,28 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	): void {
 		// If GC is disabled, skip setting referenced used routes since we are not tracking GC state.
 		if (!this.gcDisabled) {
-			const summaryNode = this.pendingSummaries.get(proposalHandle) as SummaryNodeWithGC;
-			if (summaryNode?.serializedUsedRoutes !== undefined) {
-				this.referenceUsedRoutes = JSON.parse(summaryNode.serializedUsedRoutes);
+			const summaryNode = this.pendingSummaries.get(proposalHandle);
+			if (summaryNode !== undefined) {
+				// If a pending summary exists, it must have used routes since GC is enabled.
+				const summaryNodeWithGC = summaryNode as SummaryNodeWithGC;
+				if (summaryNodeWithGC.serializedUsedRoutes === undefined) {
+					const error = new LoggingError("MissingGCStateInPendingSummary", {
+						proposalHandle,
+						referenceSequenceNumber,
+						id: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: this.telemetryNodeId,
+						},
+					});
+					this.logger.sendErrorEvent(
+						{
+							eventName: error.message,
+						},
+						error,
+					);
+					throw error;
+				}
+				this.referenceUsedRoutes = JSON.parse(summaryNodeWithGC.serializedUsedRoutes);
 			}
 		}
 
@@ -434,23 +465,16 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 	): ISummarizerNodeWithGC {
 		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
-
 		/**
 		 * Update the child node's base GC details from this node's current GC details instead of updating from the base
 		 * GC details of this node. This will handle scenarios where the GC details was updated during refresh from
 		 * snapshot and the child node wasn't created then. If a child is created after that, its GC details should be
 		 * the one from the downloaded snapshot and not the base GC details.
 		 */
-		const getChildBaseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
-			// Ensure that the base GC details is loaded because a child can be created before GC runs which is when
-			// base GC details is usually loaded.
-			await this.loadBaseGCDetails();
-			const childBaseGCDetails = unpackChildNodesGCDetails({
-				gcData: this.gcData,
-				usedRoutes: this.usedRoutes,
-			});
-			return childBaseGCDetails.get(id) ?? {};
-		});
+		const getChildBaseGCDetailsFn = async () => {
+			const childNodesBaseGCDetails = await this.childNodesBaseGCDetailsP;
+			return childNodesBaseGCDetails.get(id) ?? {};
+		};
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
 		const child = new SummarizerNodeWithGC(
@@ -466,16 +490,51 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			createDetails.initialSummary,
 			this.wipSummaryLogger,
 			getGCDataFn,
-			async () => getChildBaseGCDetailsP,
+			getChildBaseGCDetailsFn,
 			createDetails.telemetryNodeId,
 		);
 
 		// There may be additional state that has to be updated in this child. For example, if a summary is being
 		// tracked, the child's summary tracking state needs to be updated too.
-		this.maybeUpdateChildState(child);
+		this.maybeUpdateChildState(child, id);
 
 		this.children.set(id, child);
 		return child;
+	}
+
+	/**
+	 * Updates the state of the child if required. For example, if a summary is currently being  tracked, the child's
+	 * summary tracking state needs to be updated too.
+	 * Also, in case a child node gets realized in between Summary Op and Summary Ack, let's initialize the child's
+	 * pending summary as well. Finally, if the pendingSummaries entries have serializedRoutes, replicate them to the
+	 * pendingSummaries from the child nodes.
+	 * @param child - The child node whose state is to be updated.
+	 * @param id - Initial id or path part of this node
+	 */
+	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string) {
+		super.maybeUpdateChildState(child, id);
+
+		// In case we have pending summaries on the parent, let's initialize it on the child.
+		if (child.latestSummary !== undefined) {
+			for (const [key, value] of this.pendingSummaries.entries()) {
+				const summaryNodeWithGC = value as SummaryNodeWithGC;
+				if (summaryNodeWithGC.serializedUsedRoutes !== undefined) {
+					const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
+						JSON.parse(summaryNodeWithGC.serializedUsedRoutes),
+					);
+					const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
+					const newLatestSummaryNode = new SummaryNodeWithGC(
+						JSON.stringify(newSerializedRoutes),
+						{
+							referenceSequenceNumber: value.referenceSequenceNumber,
+							basePath: value.basePath,
+							localPath: value.localPath,
+						},
+					);
+					child.addPendingSummary(key, newLatestSummaryNode);
+				}
+			}
+		}
 	}
 
 	/**

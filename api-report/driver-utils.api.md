@@ -114,8 +114,17 @@ export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDo
 // @public
 export const canRetryOnError: (error: any) => boolean;
 
-// @public
-export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): ISummaryTree;
+// @internal @deprecated
+export function combineAppAndProtocolSummary(appSummary: ISummaryTree, protocolSummary: ISummaryTree): CombinedAppAndProtocolSummary;
+
+// @internal
+export interface CombinedAppAndProtocolSummary extends ISummaryTree {
+    // (undocumented)
+    tree: {
+        [".app"]: ISummaryTree;
+        [".protocol"]: ISummaryTree;
+    };
+}
 
 // @public @deprecated
 export function configurableUrlResolver(resolversList: IUrlResolver[], request: IRequest): Promise<IResolvedUrl | undefined>;
@@ -184,7 +193,7 @@ export class EmptyDocumentDeltaStorageService implements IDocumentDeltaStorageSe
 // @public (undocumented)
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]>;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function ensureFluidResolvedUrl(resolved: IResolvedUrl | undefined): asserts resolved is IFluidResolvedUrl;
 
 // @public
@@ -240,7 +249,10 @@ export interface IProgress {
     onRetry?(delayInMs: number, error: any): void;
 }
 
-// @public (undocumented)
+// @internal
+export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined): summary is CombinedAppAndProtocolSummary;
+
+// @public @deprecated (undocumented)
 export const isFluidResolvedUrl: (resolved: IResolvedUrl | undefined) => resolved is IFluidResolvedUrl;
 
 // @public (undocumented)

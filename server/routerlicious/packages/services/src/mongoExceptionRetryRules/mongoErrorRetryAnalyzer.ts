@@ -30,12 +30,23 @@ export class MongoErrorRetryAnalyzer {
 
 	public shouldRetry(error: Error): boolean {
 		const rule = this.getRetryRule(error);
+		const sanitizedError = {
+			name: error.name,
+			message: error.message,
+			stack: error.stack,
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			code: error["code"],
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			codeName: error["codeName"],
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			errorLabels: error["errorLabels"],
+		};
 		if (!rule) {
 			// This should not happen.
 			Lumberjack.error(
 				"MongoErrorRetryAnalyzer.shouldRetry() didn't get a rule",
 				undefined,
-				error,
+				sanitizedError,
 			);
 			return false;
 		}
@@ -49,7 +60,7 @@ export class MongoErrorRetryAnalyzer {
 		Lumberjack.warning(
 			`Error rule used ${rule.ruleName}, shouldRetry: ${decision}`,
 			properties,
-			error,
+			sanitizedError,
 		);
 		return decision;
 	}
@@ -59,11 +70,7 @@ export class MongoErrorRetryAnalyzer {
 			return this.getRetryRuleFromSet(error, this.mongoNetworkErrorRetryRuleset);
 		}
 
-		if (error.name === "MongoError") {
-			return this.getRetryRuleFromSet(error, this.mongoErrorRetryRuleset);
-		}
-
-		return this.defaultRule;
+		return this.getRetryRuleFromSet(error, this.mongoErrorRetryRuleset);
 	}
 
 	private getRetryRuleFromSet(

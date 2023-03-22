@@ -139,7 +139,15 @@ async function orchestratorProcess(
 		: // If no testId is provided, (or) if testId is provided but createTestId is not false, then
 		  // create a file;
 		  // In case testId is provided, name of the file to be created is taken as the testId provided
-		  initialize(testDriver, seed, endpoint, profile, args.verbose === true, args.testId));
+		  initialize(
+				testDriver,
+				seed,
+				endpoint,
+				profile,
+				args.verbose === true,
+				args.profileName,
+				args.testId,
+		  ));
 
 	const estRunningTimeMin = Math.floor(
 		(2 * profile.totalSendCount) / (profile.opRatePerMin * profile.numClients),
