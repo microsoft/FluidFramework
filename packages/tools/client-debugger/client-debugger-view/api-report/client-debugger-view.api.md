@@ -4,15 +4,12 @@
 
 ```ts
 
-import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
-import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IBaseDebuggerMessage } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IDebuggerMessage } from '@fluid-tools/client-debugger';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { default as React_2 } from 'react';
 
 // @public
@@ -26,21 +23,6 @@ export interface AudienceMemberViewProps {
     audienceMember: AudienceMember;
     myClientConnection: IClient | undefined;
     myClientId: string | undefined;
-}
-
-// @public
-export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React_2.ReactElement;
-
-// @public
-export interface _ContainerHistoryViewProps {
-    containerHistory: readonly ConnectionStateChangeLogEntry[];
-}
-
-// @internal
-export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
-
-// @public
-export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {
 }
 
 // @public
@@ -60,13 +42,6 @@ export interface FluidClientDebuggersProps {
 // @public
 export interface HasClientDebugger {
     clientDebugger: IFluidClientDebugger;
-}
-
-// @public
-export interface IContainerActions {
-    closeContainer?: () => void;
-    forceDisconnect?: () => void;
-    tryConnect?: () => void;
 }
 
 export { IMessageRelay }
@@ -98,15 +73,6 @@ export interface SharedObjectRenderOptions {
 
 // @public
 export type SharedObjectType = string;
-
-// @internal
-export function _TelemetryView(props: _TelemetryViewProps): React_2.ReactElement;
-
-// @internal
-export interface _TelemetryViewProps {
-    // (undocumented)
-    telemetryEvents: ITelemetryBaseEvent[];
-}
 
 // @public
 export function useMessageRelay(): IMessageRelay;
