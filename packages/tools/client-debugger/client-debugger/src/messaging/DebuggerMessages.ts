@@ -72,6 +72,16 @@ export interface GetContainerStateMessage extends ISourcedDebuggerMessage<HasCon
 	type: "GET_CONTAINER_STATE";
 }
 
+/**
+ * Inbound event requesting the data in the Container with the specified ID.
+ * Will result in the {@link ContainerDataMessage} message being posted.
+ *
+ * @public
+ */
+export interface GetContainerDataMessage extends ISourcedDebuggerMessage<HasContainerId> {
+	type: "GET_CONTAINER_DATA";
+}
+
 // #endregion
 
 // #region Outbound messages
@@ -138,4 +148,26 @@ export interface ContainerStateHistoryMessage
 	extends ISourcedDebuggerMessage<ContainerStateHistoryMessageData> {
 	type: "CONTAINER_STATE_HISTORY";
 }
+
+/**
+ * Message data format used by {@link ContainerDataMessage}.
+ *
+ * @public
+ */
+export interface ContainerDataMessageData extends HasContainerId {
+	/**
+	 * Updated Container state metadata.
+	 */
+	containerData?: unknown;
+}
+
+/**
+ * Outbound event with the Container data.
+ *
+ * @public
+ */
+export interface ContainerDataMessage extends ISourcedDebuggerMessage<ContainerDataMessageData> {
+	type: "CONTAINER_DATA";
+}
+
 // #endregion

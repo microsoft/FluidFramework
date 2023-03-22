@@ -64,7 +64,6 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 			innerView = (
 				<DataObjectsView
 					containerId={containerId}
-					containerData={undefined}
 					renderOptions={renderOptions.sharedObjectRenderOptions}
 				/>
 			);

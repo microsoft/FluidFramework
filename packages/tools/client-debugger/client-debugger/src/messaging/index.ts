@@ -22,10 +22,13 @@ export {
 	DisconnectContainerMessageData,
 	CloseContainerMessage,
 	CloseContainerMessageData,
+	ContainerDataMessage,
+	ContainerDataMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	GetContainerDataMessage,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";

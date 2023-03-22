@@ -59,6 +59,17 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 }
 
 // @public
+export interface ContainerDataMessage extends ISourcedDebuggerMessage<ContainerDataMessageData> {
+    // (undocumented)
+    type: "CONTAINER_DATA";
+}
+
+// @public
+export interface ContainerDataMessageData extends HasContainerId {
+    containerData?: unknown;
+}
+
+// @public
 export interface ContainerMetadata {
     id: string;
     nickname?: string;
@@ -148,6 +159,12 @@ export class FluidDebuggerLogger extends TelemetryLogger {
     static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface GetContainerDataMessage extends ISourcedDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_CONTAINER_DATA";
 }
 
 // @public
