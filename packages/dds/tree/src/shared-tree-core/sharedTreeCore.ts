@@ -255,7 +255,10 @@ export class SharedTreeCore<
 			sessionId: this.editManager.localSessionId,
 		};
 		const delta = this.editManager.addLocalChange(commit.revision, change, false);
-		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(change),
+			commit.revision,
+		);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
