@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import path from "path";
 import {
 	AsyncGenerator,
 	makeRandom,
@@ -10,6 +11,7 @@ import {
 	performFuzzActionsAsync as performFuzzActionsBase,
 	takeAsync as take,
 	IRandom,
+	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
 import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
@@ -63,7 +65,7 @@ const testSchema: SchemaData = {
 export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
 	seed: number,
-	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
+	saveInfo?: SaveInfo,
 ): Promise<FuzzTestState> {
 	const random = makeRandom(seed);
 	const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
@@ -103,7 +105,7 @@ export async function performFuzzActions(
 export async function performFuzzActionsAbort(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
 	seed: number,
-	saveInfo?: { saveAt?: number; saveOnFailure: boolean; filepath: string },
+	saveInfo?: SaveInfo,
 ): Promise<FuzzTestState> {
 	const random = makeRandom(seed);
 	const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
@@ -212,6 +214,7 @@ function runBatch(
 	fuzzActions: (
 		generatorFactory: AsyncGenerator<Operation, FuzzTestState>,
 		seed: number,
+		saveInfo?: SaveInfo,
 	) => Promise<FuzzTestState>,
 	opsPerRun: number,
 	batchSize: number,
@@ -221,8 +224,13 @@ function runBatch(
 	for (let i = 0; i < batchSize; i++) {
 		const runSeed = seed + i;
 		const generatorFactory = () => take(opsPerRun, opGenerator());
+		const saveInfo: SaveInfo = {
+			saveOnFailure: false, // Change to true to save failing runs.
+			saveOnSuccess: false, // Change to true to save successful runs.
+			filepath: path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`),
+		};
 		it(`with seed ${runSeed}`, async () => {
-			await fuzzActions(generatorFactory(), runSeed);
+			await fuzzActions(generatorFactory(), runSeed, saveInfo);
 		}).timeout(20000);
 	}
 }
