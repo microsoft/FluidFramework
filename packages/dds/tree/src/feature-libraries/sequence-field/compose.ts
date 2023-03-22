@@ -805,7 +805,7 @@ export class ComposeQueue<T> {
 			} else if (
 				isDeleteMark(baseMark) &&
 				baseMark.revision !== undefined &&
-				this.revisionMetadata.getInfo(baseMark.revision).isRollback === true
+				this.revisionMetadata.getInfo(baseMark.revision).rollbackOf !== undefined
 			) {
 				// The base mark represents an insert being rolled back.
 				// That insert was concurrent to and sequenced after the attach performed by newNark so

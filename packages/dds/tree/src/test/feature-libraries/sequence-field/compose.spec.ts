@@ -789,8 +789,8 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("return ○ return", () => {
-		const return1 = tagChange(Change.return(0, 1, 3, tag2), tag3, tag1);
-		const return2 = tagChange(Change.return(3, 1, 0, tag3), tag4, tag1);
+		const return1 = tagChange(Change.return(0, 1, 3, tag2), tag3);
+		const return2 = tagChange(Change.return(3, 1, 0, tag3), tag4);
 		const actual = shallowCompose([return1, return2]);
 		assert.deepEqual(actual, []);
 	});

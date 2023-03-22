@@ -746,8 +746,8 @@ describe("ModularChangeFamily", () => {
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
 				{ revision: rev2 },
-				{ revision: rev3, isRollback: true, rollbackOf: rev0 },
-				{ revision: rev4, isRollback: true },
+				{ revision: rev3, rollbackOf: rev0 },
+				{ revision: rev4, rollbackOf: rev2 },
 			];
 			assert.deepEqual(revsInfos, expected);
 			composeWasTested = true;
@@ -770,7 +770,7 @@ describe("ModularChangeFamily", () => {
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
 				{ revision: rev2 },
-				{ revision: rev4, isRollback: true },
+				{ revision: rev4, rollbackOf: rev2 },
 			];
 			assert.deepEqual(revsInfos, expected);
 			rebaseWasTested = true;
@@ -825,7 +825,7 @@ describe("ModularChangeFamily", () => {
 					},
 				],
 			]),
-			revisions: [{ revision: rev4, isRollback: true }],
+			revisions: [{ revision: rev4, rollbackOf: rev2 }],
 		};
 		const composed = dummyFamily.compose([
 			makeAnonChange(changeA),
@@ -835,13 +835,13 @@ describe("ModularChangeFamily", () => {
 		const expectedComposeInfo: RevisionInfo[] = [
 			{ revision: rev1 },
 			{ revision: rev2 },
-			{ revision: rev3, isRollback: true, rollbackOf: rev0 },
-			{ revision: rev4, isRollback: true },
+			{ revision: rev3, rollbackOf: rev0 },
+			{ revision: rev4, rollbackOf: rev2 },
 		];
 		assert.deepEqual(composed.revisions, expectedComposeInfo);
 		assert(composeWasTested);
 		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
-		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, isRollback: true }];
+		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
 	});

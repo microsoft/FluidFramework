@@ -61,7 +61,6 @@ function defaultRevisionMetadataFromChanges(
 			revInfos.push({
 				revision: change.revision,
 				rollbackOf: change.rollbackOf,
-				isRollback: change.isRollback,
 			});
 		}
 	}

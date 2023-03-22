@@ -99,11 +99,6 @@ export interface ChangeRebaser<TChangeset> {
 export interface TaggedChange<TChangeset> {
 	readonly revision: RevisionTag | undefined;
 	/**
-	 * True when the changeset was produced as part of a rebase sandwich as opposed to for the purpose of undo.
-	 * Considered false if undefined.
-	 */
-	readonly isRollback?: boolean;
-	/**
 	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
 	 * The value corresponds to the `revision` of the original changeset being rolled back.
 	 */
@@ -123,7 +118,6 @@ export function tagRollbackInverse<T>(
 	return {
 		revision,
 		change: inverseChange,
-		isRollback: true,
 		rollbackOf,
 	};
 }

@@ -354,7 +354,7 @@ export class ModularChangeFamily
 			revInfo === undefined
 				? undefined
 				: (isRollback
-						? revInfo.map(({ revision }) => ({ revision, isRollback: true }))
+						? revInfo.map(({ revision }) => ({ revision, rollbackOf: revision }))
 						: Array.from(revInfo)
 				  ).reverse(),
 			change.change.constraintViolationCount,
@@ -1258,9 +1258,6 @@ function revisionInfoFromTaggedChange(
 		revInfos.push(...taggedChange.change.revisions);
 	} else if (taggedChange.revision !== undefined) {
 		const info: Mutable<RevisionInfo> = { revision: taggedChange.revision };
-		if (taggedChange.isRollback === true) {
-			info.isRollback = true;
-		}
 		if (taggedChange.rollbackOf !== undefined) {
 			info.rollbackOf = taggedChange.rollbackOf;
 		}
