@@ -81,7 +81,9 @@ export interface DocNodeTransformOptions {
 	readonly resolveApiReference: (codeDestination: DocDeclarationReference) => Link | undefined;
 
 	/**
-	 * Optional policy for logging system information.
+	 * Optional receiver for logging system information.
+	 *
+	 * @defaultValue {@link defaultConsoleLogger}
 	 */
 	readonly logger?: Logger;
 }
