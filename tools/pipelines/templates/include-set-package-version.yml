@@ -175,3 +175,13 @@ steps:
 
         # Format the package.json at the root of the release group/package
         npx --no-install prettier --write package.json
+
+# This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
+# help find and prevent bugs in the version bumping tools.
+- task: Bash@3
+  displayName: Check for caret dependencies on internal versions
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      ! grep -r "\^2.0.0-internal.\d*.\d*.\d*" ./**/package.json
