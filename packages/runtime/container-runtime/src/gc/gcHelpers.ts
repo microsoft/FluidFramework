@@ -287,7 +287,7 @@ export function concatGarbageCollectionStates(
 			) {
 				assert(
 					nodeData.unreferencedTimestampMs === combineNodeData.unreferencedTimestampMs,
-					0x2b2 /* "Two entries for the same GC node with different unreferenced timestamp" */,
+					"Two entries for the same GC node with different unreferenced timestamp",
 				);
 			}
 			combineNodeData = {
@@ -371,7 +371,7 @@ export async function getGCDataFromSnapshot(
 			continue;
 		}
 		const gcState = await readAndParseBlob<IGarbageCollectionState>(blobId);
-		assert(gcState !== undefined, 0x2ad /* "GC blob missing from snapshot" */);
+		assert(gcState !== undefined, "GC blob missing from snapshot");
 		// Merge the GC state of this blob into the root GC state.
 		rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
 	}
@@ -398,7 +398,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			continue;
 		}
 
-		assert(id.startsWith("/"), 0x2ae /* "node id should always be an absolute route" */);
+		assert(id.startsWith("/"), "node id should always be an absolute route");
 		const childId = id.split("/")[1];
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
@@ -412,10 +412,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			childGCDetails = { gcData: { gcNodes: {} }, usedRoutes: [] };
 		}
 		// gcData should not undefined as its always at least initialized as  empty above.
-		assert(
-			childGCDetails.gcData !== undefined,
-			0x2af /* "Child GC data should have been initialized" */,
-		);
+		assert(childGCDetails.gcData !== undefined, "Child GC data should have been initialized");
 		childGCDetails.gcData.gcNodes[childGCNodeId] = [...new Set(outboundRoutes)];
 		childGCDetailsMap.set(childId, childGCDetails);
 	}
@@ -427,14 +424,14 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	// Remove the node's self used route, if any, and generate the children used routes.
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
-		assert(route.startsWith("/"), 0x2b0 /* "Used route should always be an absolute route" */);
+		assert(route.startsWith("/"), "Used route should always be an absolute route");
 		const childId = route.split("/")[1];
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
 		assert(
 			childGCDetails?.usedRoutes !== undefined,
-			0x2b1 /* "This should have be initialized when generate GC nodes above" */,
+			"This should have be initialized when generate GC nodes above",
 		);
 
 		childGCDetails.usedRoutes.push(childUsedRoute);
