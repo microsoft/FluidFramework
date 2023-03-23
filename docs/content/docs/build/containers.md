@@ -5,9 +5,9 @@ author: skylerjokiel, rick-kirkham
 editor: tylerbutler
 ---
 
-The container is the primary unit of encapsulation in the Fluid Framework.  
-It enables a group of clients to access the same set of shared objects and co-author changes on those objects.  
-It is also a permission boundary ensuring visibility and access only to permitted clients.  
+The container is the primary unit of encapsulation in the Fluid Framework.
+It enables a group of clients to access the same set of shared objects and co-author changes on those objects.
+It is also a permission boundary ensuring visibility and access only to permitted clients.
 A container is represented by the [FluidContainer]({{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}) type and consists of a collection of shared objects and APIs to manage the life cycle of those objects.
 
 This article explains:
@@ -18,26 +18,26 @@ This article explains:
 
 {{< callout note >}}
 
-In this article the term "creating client" refers to the client on which a container is created.  
-When it is important to emphasize that a client is *not* the creating client, it is called a "subsequent client".  
-It is helpful to remember that "client" does not refer to a device or anything that persists between sessions with your application.  
-When a user closes your application, the client no longer exists: a new session is a new client.  
-So, when the creating client is closed, there is no longer any creating client.  
+In this article the term "creating client" refers to the client on which a container is created.
+When it is important to emphasize that a client is *not* the creating client, it is called a "subsequent client".
+It is helpful to remember that "client" does not refer to a device or anything that persists between sessions with your application.
+When a user closes your application, the client no longer exists: a new session is a new client.
+So, when the creating client is closed, there is no longer any creating client.
 The device is a subsequent client in all future sessions.
 
 {{< /callout >}}
 
 ## Creating & connecting
 
-Your code creates containers using APIs provided by a service-specific client library.  
-Each service-specific client library implements a common API for manipulating containers.  
-For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides [these APIs]({{< relref "docs/apis/tinylicious-client.md" >}}) for the Tinylicious Fluid service.  
-These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and to connect to the container once it is created.  
+Your code creates containers using APIs provided by a service-specific client library.
+Each service-specific client library implements a common API for manipulating containers.
+For example, the [Tinylicious library]({{< relref "Tinylicious" >}}) provides [these APIs]({{< relref "docs/apis/tinylicious-client.md" >}}) for the Tinylicious Fluid service.
+These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and to connect to the container once it is created.
 
 ### Container schema
 
-Your code must define a schema that represents the structure of the data within the container.  
-Only the data *values* are persisted in the Fluid service. The structure and data types are stored as a schema object on each client.  
+Your code must define a schema that represents the structure of the data within the container.
+Only the data *values* are persisted in the Fluid service. The structure and data types are stored as a schema object on each client.
 A schema can specify:
 
 -   Some initial shared objects that are created as soon as the container is created, and are immediately and always available to all connected clients.
@@ -91,7 +91,7 @@ In the Fluid APIs, the terms "attach", "attached" and "detached" mean publish, p
 
 Once published, the Fluid container becomes an entity on Fluid service and subsequent clients can connect to it.
 
-Invoking the container's `attach` method returns the unique identifier for the container.  
+Invoking the container's `attach` method returns the unique identifier for the container.
 Subsequent clients use this ID to connect to the container.
 
 Note that once published, a container cannot be unpublished. (But it can be deleted. See [Deleting a container from the service](./container-states-events/index.md#deleting-a-container-from-the-service).)
@@ -113,9 +113,9 @@ In addition to publishing the container, the `attach` method also connects the c
 
 ### Connecting to a container
 
-The creating client connects to a container when it calls the container's `attach` method.  
-A subsequent client connects to a published container by calling the client's `getContainer` method.  
-The call must pass the `id` of the container as well as the exact same schema definition used to create the container.  
+The creating client connects to a container when it calls the container's `attach` method.
+A subsequent client connects to a published container by calling the client's `getContainer` method.
+The call must pass the `id` of the container as well as the exact same schema definition used to create the container.
 The same container schema is required on all subsequent connections.
 
 ```typescript {linenos=inline}
@@ -185,13 +185,13 @@ Multiple Fluid containers can be loaded from an application or on a web page at 
 
 First, if your application loads two different experiences that have different underlying data structures. *Experience 1* may require a `SharedMap` and *Experience 2* may require a `SharedString`. To minimize the memory footprint of your application, your code can create two different container schemas and load only the schema that is needed. In this case your app has the capability of loading two different containers (two different schemas) but only loads one for a given user.
 
-A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.  
+A more complex scenario involves loading two containers at once. Containers serve as a permissions boundary, so if you have cases where multiple users with different permissions are collaborating together, you may use multiple containers to ensure users have access only to what they should.
 For example, consider an education application where multiple teachers collaborate with students. The students and teachers may have a shared view while the teachers may also have an additional private view on the side. In this scenario the students would be loading one container and the teachers would be loading two.
 
 ## Container services
 
-When you create or connect to a container with `createContainer` or `getContainer`, the Fluid service will also return a service-specific *services* object.  
-This object contains references to useful services you can use to build richer applications.  
+When you create or connect to a container with `createContainer` or `getContainer`, the Fluid service will also return a service-specific *services* object.
+This object contains references to useful services you can use to build richer applications.
 An example of a container service is the [Audience]({{< relref "audience.md" >}}), which provides user information for clients that are connected to the container. See [Working with the audience]({{< relref "audience.md#working-with-the-audience" >}}) for more information.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
