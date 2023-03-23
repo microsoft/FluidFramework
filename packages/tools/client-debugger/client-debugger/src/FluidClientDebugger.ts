@@ -18,7 +18,7 @@ import {
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
@@ -210,16 +210,16 @@ export class FluidClientDebugger
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
+	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessagesToWindow<IDebuggerMessage>(
+		postMessagesToWindow<ISourcedDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
 				source: debuggerMessageSource,
