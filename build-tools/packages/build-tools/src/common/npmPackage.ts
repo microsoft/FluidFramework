@@ -6,7 +6,7 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import * as fs from "fs";
-import { writeJsonSync } from "fs-extra";
+import { readFileSync, writeJson } from "fs-extra";
 import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
@@ -25,7 +25,6 @@ import {
 	readJsonSync,
 	rimrafWithErrorAsync,
 	unlinkAsync,
-	writeFileAsync,
 } from "./utils";
 
 const { info, verbose, errorLog: error } = defaultLogger;
@@ -110,13 +109,14 @@ export class Package {
 	private _markForBuild: boolean = false;
 
 	private _packageJson: PackageJson;
+	private _indent: string;
 	public readonly packageManager: PackageManager;
 	constructor(
 		private readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
 	) {
-		this._packageJson = readJsonSync(packageJsonFileName);
+		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
 		const yarnLockPath = path.join(this.directory, "yarn.lock");
 		this.packageManager = existsSync(pnpmWorkspacePath)
@@ -208,10 +208,7 @@ export class Package {
 	}
 
 	public async savePackageJson() {
-		return writeFileAsync(
-			this.packageJsonFileName,
-			`${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`,
-		);
+		writePackageJson(this.packageJsonFileName, this.packageJson, this._indent);
 	}
 
 	public reload() {
@@ -492,11 +489,28 @@ export function updatePackageJsonFile(
 	packageTransformer: (json: PackageJson) => void,
 ): void {
 	const packagePath = path.join(packageDir, "package.json");
-	const indentation = detectIndent(packagePath).indent || "\t";
-	const pkgJson: PackageJson = readJsonSync(packagePath);
+	const [pkgJson, indent] = readPackageJsonAndIndent(packagePath);
 
 	// Transform the package.json
 	packageTransformer(pkgJson);
 
-	writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indentation });
+	writePackageJson(packagePath, pkgJson, indent);
+}
+
+/**
+ * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
+ * indentation.
+ */
+function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson, indent: string] {
+	const contents = readFileSync(pathToJson).toString();
+	const indentation = detectIndent(contents).indent || "\t";
+	const pkgJson: PackageJson = JSON.parse(contents);
+	return [pkgJson, indentation];
+}
+
+/**
+ * Writes a PackageJson object to a file using the provided indentation.
+ */
+async function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
+	writeJson(packagePath, sortPackageJson(pkgJson), { spaces: indent });
 }
