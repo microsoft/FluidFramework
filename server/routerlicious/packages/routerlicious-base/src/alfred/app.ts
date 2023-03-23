@@ -12,6 +12,7 @@ import {
 	ICache,
 	ICollection,
 	IDocument,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -40,6 +41,7 @@ export function create(
 	deltaService: IDeltaService,
 	producer: IProducer,
 	documentsCollection: ICollection<IDocument>,
+	tokenManager?: ITokenRevocationManager,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -96,6 +98,7 @@ export function create(
 		producer,
 		appTenants,
 		documentsCollection,
+		tokenManager,
 	);
 
 	app.use(routes.api);
