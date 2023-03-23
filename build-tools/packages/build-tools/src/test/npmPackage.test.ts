@@ -23,14 +23,14 @@ const testTransformer = (json: PackageJson) => {
 
 describe("readPackageJsonAndIndent", () => {
 	it("detects spaces indentation", () => {
-		const testFile = path.resolve(testDataPath, "spaces/package.json");
+		const testFile = path.resolve(testDataPath, "spaces/_package.json");
 		const [, indent] = readPackageJsonAndIndent(testFile);
 		const expectedIndent = "  ";
 		assert.strictEqual(indent, expectedIndent);
 	});
 
 	it("detects tabs indentation", () => {
-		const testFile = path.resolve(testDataPath, "tabs/package.json");
+		const testFile = path.resolve(testDataPath, "tabs/_package.json");
 		const [, indent] = readPackageJsonAndIndent(testFile);
 		const expectedIndent = "\t";
 		assert.strictEqual(indent, expectedIndent);
@@ -39,7 +39,7 @@ describe("readPackageJsonAndIndent", () => {
 
 describe("updatePackageJsonFile", () => {
 	it("outputs file with spaces", () => {
-		const testFile = path.resolve(testDataPath, "spaces/package.json");
+		const testFile = path.resolve(testDataPath, "spaces/_package.json");
 		const expectedIndent = "  ";
 		updatePackageJsonFile(testFile, testTransformer);
 		const [, indent] = readPackageJsonAndIndent(testFile);
@@ -47,7 +47,7 @@ describe("updatePackageJsonFile", () => {
 	});
 
 	it("outputs file with tabs", () => {
-		const testFile = path.resolve(testDataPath, "tabs/package.json");
+		const testFile = path.resolve(testDataPath, "tabs/_package.json");
 		const expectedIndent = "\t";
 		updatePackageJsonFile(testFile, testTransformer);
 		const [, indent] = readPackageJsonAndIndent(testFile);
