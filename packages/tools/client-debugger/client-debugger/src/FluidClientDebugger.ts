@@ -117,7 +117,7 @@ export class FluidClientDebugger
 			clientId,
 		});
 		this.postContainerStateChange();
-    this.postAudienceStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisconnectedHandler = (): void => {
@@ -127,7 +127,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
-    this.postAudienceStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerClosedHandler = (): void => {
@@ -137,7 +137,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
-    this.postAudienceStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisposedHandler = (): void => {
