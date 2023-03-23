@@ -1,6 +1,6 @@
 ---
 title: User presence and audience
-menuPosition: 5
+menuPosition: 8
 editor: tylerbutler
 ---
 

@@ -12,6 +12,7 @@ import {
 	ICache,
 	ICollection,
 	IDocument,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -34,6 +35,7 @@ export function create(
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
 	documentsCollection: ICollection<IDocument>,
+	tokenManager?: ITokenRevocationManager,
 ) {
 	return {
 		api: api.create(
@@ -47,6 +49,7 @@ export function create(
 			producer,
 			appTenants,
 			documentsCollection,
+			tokenManager,
 		),
 	};
 }

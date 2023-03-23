@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -14,7 +13,8 @@ import {
 	ITestFluidObject,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { ConnectionState } from "@fluidframework/container-loader";
 
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
@@ -37,17 +37,17 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
-		const container1 = (await provider.makeTestContainer(testContainerConfig)) as Container;
+		const container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 
-		const container2 = (await provider.loadTestContainer(testContainerConfig)) as Container;
+		const container2 = await provider.loadTestContainer(testContainerConfig);
 		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
 
 		// need to be connected to send signals
-		if (!container1.connected) {
+		if (container1.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container1.once("connected", resolve));
 		}
-		if (!container2.connected) {
+		if (container2.connectionState !== ConnectionState.Connected) {
 			await new Promise((resolve) => container2.once("connected", resolve));
 		}
 	});

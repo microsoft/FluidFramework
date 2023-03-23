@@ -22,10 +22,10 @@ import {
 	ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import { doesItemRequireOwnDocument } from "../utilities";
+import { doesItemRequireOwnDocument } from "./ApiItemUtilities";
 import { createDocument } from "./Utilities";
+import { ApiItemTransformationConfiguration } from "./configuration";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
 
 /**
@@ -35,7 +35,7 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
  *
  * This should only be called for API item kinds that are intended to be rendered to their own document
  * (as opposed to being rendered to the same document as their parent) per the provided `config`
- * (see {@link PolicyOptions.documentBoundaries}).
+ * (see {@link DocumentationSuiteOptions.documentBoundaries}).
  *
  * Also note that this should not be called for the following item kinds, which must be handled specially:
  *
@@ -44,13 +44,13 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
  * - `EntryPoint`: No content is currently rendered for this type of content.
  *
  * @param apiItem - The API item to be rendered.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  *
  * @returns The rendered Markdown document.
  */
 export function apiItemToDocument(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
 	if (apiItem.kind === ApiItemKind.None) {
 		throw new Error(`Encountered API item with a kind of "None".`);
@@ -72,7 +72,7 @@ export function apiItemToDocument(
 
 	const logger = config.logger;
 
-	logger.verbose(`Rendering document for ${apiItem.displayName} (${apiItem.kind})...`);
+	logger.verbose(`Generating document for ${apiItem.displayName} (${apiItem.kind})...`);
 
 	const sections: SectionNode[] = [];
 
@@ -102,7 +102,7 @@ export function apiItemToDocument(
  */
 export function apiItemToSections(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] {
 	if (apiItem.kind === ApiItemKind.None) {
 		throw new Error(`Encountered API item with a kind of "None".`);

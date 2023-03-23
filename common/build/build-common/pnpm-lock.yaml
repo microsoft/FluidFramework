@@ -1,12 +1,10 @@
 lockfileVersion: 5.4
 
-importers:
+specifiers:
+  prettier: ~2.6.2
 
-  .:
-    specifiers:
-      prettier: ~2.6.2
-    devDependencies:
-      prettier: 2.6.2
+devDependencies:
+  prettier: 2.6.2
 
 packages:
 

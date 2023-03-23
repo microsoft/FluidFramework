@@ -1,6 +1,6 @@
 ---
 title: Data modeling
-menuPosition: 3
+menuPosition: 5
 author: skylerjokiel
 editor: tylerbutler
 ---

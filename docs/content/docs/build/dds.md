@@ -1,6 +1,6 @@
 ---
 title: Introducing distributed data structures
-menuPosition: 4
+menuPosition: 7
 aliases:
   - "/docs/concepts/dds/"
 author: tylerbutler

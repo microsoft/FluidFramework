@@ -64,7 +64,7 @@ export interface AnchorSetRootEvents {
     treeChanging(anchors: AnchorSet): void;
 }
 
-// @alpha (undocumented)
+// @alpha
 export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
 
 // @alpha
