@@ -369,7 +369,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		if (error) {
 			try {
 				Object.keys(error).forEach((key) => {
-					if (key == "_id" || /^\d+$/.test(key)) { // skip mongodb's ObjectId and array indexes
+					if (key === "_id" || /^\d+$/.test(key)) { // skip mongodb's ObjectId and array indexes
 						return;
 					} else if (typeof error[key] === "object") {
 						this.sanitizeError(error[key]);
