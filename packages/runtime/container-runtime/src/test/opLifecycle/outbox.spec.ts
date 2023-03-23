@@ -16,13 +16,19 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { PendingStateManager } from "../../pendingStateManager";
-import { BatchMessage, IBatch, OpCompressor, OpSplitter, Outbox } from "../../opLifecycle";
+import {
+	BatchMessage,
+	IBatch,
+	OpCompressor,
+	OpGroupingManager,
+	OpSplitter,
+	Outbox,
+} from "../../opLifecycle";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	ContainerRuntimeMessage,
 	ICompressionRuntimeOptions,
-	OpGroupingManager,
 } from "../../containerRuntime";
 
 describe("Outbox", () => {
@@ -182,14 +188,7 @@ describe("Outbox", () => {
 		new Outbox({
 			shouldSend: () => state.canSendOps,
 			pendingStateManager: getMockPendingStateManager() as PendingStateManager,
-			canCompressBatch: params.context.submitBatchFn !== undefined,
-			submitBatchFn: (batch: BatchMessage[], referenceSequenceNumber?: number) => {
-				new OpGroupingManager(false).submitBatch(
-					params.context,
-					batch,
-					referenceSequenceNumber,
-				);
-			},
+			containerContext: params.context,
 			compressor: getMockCompressor() as OpCompressor,
 			splitter: getMockSplitter(
 				params.enableChunking ?? false,
@@ -201,6 +200,7 @@ describe("Outbox", () => {
 				disablePartialFlush: params.disablePartialFlush ?? false,
 			},
 			logger: mockLogger,
+			groupingManager: new OpGroupingManager(false),
 		});
 
 	beforeEach(() => {

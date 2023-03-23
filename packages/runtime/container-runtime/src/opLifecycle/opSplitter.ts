@@ -5,6 +5,7 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { IBatchMessage } from "@fluidframework/container-definitions";
 import {
 	DataCorruptionError,
 	extractSafePropertiesFromMessage,
@@ -26,7 +27,7 @@ export class OpSplitter {
 	constructor(
 		chunks: [string, string[]][],
 		private readonly submitBatchFn:
-			| ((batch: BatchMessage[], referenceSequenceNumber?: number) => void)
+			| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
 			| undefined,
 		public readonly chunkSizeInBytes: number,
 		private readonly maxBatchSizeInBytes: number,

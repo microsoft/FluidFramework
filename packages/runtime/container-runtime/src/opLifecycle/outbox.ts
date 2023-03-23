@@ -5,7 +5,9 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { IContainerContext } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
+import { MessageType } from "@fluidframework/protocol-definitions";
 import {
 	ChildLogger,
 	loggerToMonitoringContext,
@@ -16,6 +18,7 @@ import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager, estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
+import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
@@ -28,12 +31,12 @@ export interface IOutboxConfig {
 export interface IOutboxParameters {
 	readonly shouldSend: () => boolean;
 	readonly pendingStateManager: PendingStateManager;
-	readonly canCompressBatch: boolean;
-	readonly submitBatchFn: (batch: BatchMessage[], referenceSequenceNumber?: number) => void;
+	readonly containerContext: IContainerContext;
 	readonly config: IOutboxConfig;
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryLogger;
+	readonly groupingManager: OpGroupingManager;
 }
 
 export class Outbox {
@@ -176,13 +179,15 @@ export class Outbox {
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
-			!this.params.canCompressBatch
+			this.params.containerContext.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return batch;
+			return this.params.groupingManager.groupBatch(batch);
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(batch);
+		const compressedBatch = this.params.groupingManager.groupBatch(
+			this.params.compressor.compressBatch(batch),
+		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes
@@ -229,7 +234,39 @@ export class Outbox {
 			});
 		}
 
-		this.params.submitBatchFn(batch.content, batch.referenceSequenceNumber);
+		if (this.params.containerContext.submitBatchFn === undefined) {
+			// Legacy path - supporting old loader versions. Can be removed only when LTS moves above
+			// version that has support for batches (submitBatchFn)
+			assert(
+				batch.content[0].compression === undefined,
+				0x5a6 /* Compression should not have happened if the loader does not support it */,
+			);
+
+			for (const message of batch.content) {
+				this.params.containerContext.submitFn(
+					MessageType.Operation,
+					message.deserializedContent,
+					true, // batch
+					message.metadata,
+				);
+			}
+
+			this.params.containerContext.deltaManager.flush();
+		} else {
+			assert(
+				batch.referenceSequenceNumber !== undefined,
+				0x58e /* Batch must not be empty */,
+			);
+			this.params.containerContext.submitBatchFn(
+				batch.content.map((message) => ({
+					contents: message.contents,
+					metadata: message.metadata,
+					compression: message.compression,
+					referenceSequenceNumber: message.referenceSequenceNumber,
+				})),
+				batch.referenceSequenceNumber,
+			);
+		}
 	}
 
 	private persistBatch(batch: BatchMessage[]) {
