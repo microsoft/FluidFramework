@@ -25,7 +25,7 @@ import {
 	readJsonSync,
 	rimrafWithErrorAsync,
 	unlinkAsync,
-  writeFileAsync,
+	writeFileAsync,
 } from "./utils";
 
 const { info, verbose, errorLog: error } = defaultLogger;
