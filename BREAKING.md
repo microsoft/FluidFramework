@@ -21,6 +21,8 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [bindToContext deprecated in IFluidDataStoreContext](#bindToContext-deprecated-in-IFluidDataStoreContext)
 -   [getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn](#getBaseGCDetails-deprecated-in-IFluidDataStoreContext-and-CreateChildSummarizerNodeFn)
+-   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
+-   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 
 ### bindToContext deprecated in IFluidDataStoreContext
 
@@ -29,6 +31,32 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 ### getBaseGCDetails deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn
 
 getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChildSummarizerNodeFn. The functionality to update the base GC details of nodes has been moved to summarizer nodes. These will be removed in 2.0.0-internal.5.0.0.
+
+### garbage-collector and related items deprecated
+
+The following functions, interfaces, and types currently available in `@fluidframework/garbage-collector` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+
+-   `runGarbageCollection`
+-   `trimLeadingAndTrailingSlashes`
+-   `trimLeadingSlashes`
+-   `trimTrailingSlashes`
+-   `cloneGCData`
+-   `unpackChildNodesGCDetails`
+-   `removeRouteFromAllNodes`
+-   `concatGarbageCollectionStates`
+-   `concatGarbageCollectionData`
+-   `GCDataBuilder`
+-   `getGCDataFromSnapshot`
+-   `IGCResult`
+
+### GC interfaces removed from runtime-definitions
+
+The following interfaces available in `@fluidframework/runtime-definitions` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+
+-   `IGarbageCollectionNodeData`
+-   `IGarbageCollectionState`
+-   `IGarbageCollectionSnapshotData`
+-   `IGarbageCollectionSummaryDetailsLegacy`
 
 ## 2.0.0-internal.4.0.0 Breaking changes
 
