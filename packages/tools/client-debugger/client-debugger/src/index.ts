@@ -65,6 +65,8 @@ export {
 	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
 	IDebuggerMessage,
 	GetContainerListMessage,
 	GetContainerStateMessage,
@@ -78,7 +80,7 @@ export {
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./messaging";
 export {
 	DebuggerRegistry,

@@ -24,6 +24,8 @@ export {
 	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";
@@ -40,5 +42,5 @@ export {
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./Utilities";

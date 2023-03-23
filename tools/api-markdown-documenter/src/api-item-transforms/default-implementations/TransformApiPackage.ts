@@ -4,16 +4,16 @@
  */
 import { ApiItem, ApiPackage } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { transformApiModuleLike } from "./TransformApiModuleLike";
 
 /**
- * Default policy for rendering doc sections for `Package` items.
+ * Default documentation transform for `Package` items.
  */
 export function transformApiPackage(
 	apiPackage: ApiPackage,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const entryPoints = apiPackage.entryPoints;

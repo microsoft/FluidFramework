@@ -391,9 +391,9 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 				setValue: 4242,
 				fields: new Map([[fooKey, [{ type: Delta.MarkType.Modify, setValue: 4343 }]]]),
 			};
@@ -425,9 +425,9 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 				fields: new Map([
 					[
 						fooKey,
@@ -469,17 +469,17 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 				fields: new Map([
 					[
 						fooKey,
 						[
 							1,
 							{
-								type: Delta.MarkType.InsertAndModify,
-								content: singleTextCursor({ type, value: 45 }),
+								type: Delta.MarkType.Insert,
+								content: [singleTextCursor({ type, value: 45 })],
 								setValue: 4545,
 							},
 						],
@@ -508,9 +508,9 @@ describe("toDelta", () => {
 					},
 				},
 			];
-			const mark: Delta.InsertAndModify = {
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(content[0]),
+			const mark: Delta.Insert = {
+				type: Delta.MarkType.Insert,
+				content: contentCursor,
 				fields: new Map([
 					[
 						fooKey,

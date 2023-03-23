@@ -51,15 +51,20 @@ export function isCombinedAppAndProtocolSummary(
  * @param appSummary - Summary of the app.
  * @param protocolSummary - Summary of the protocol.
  * @internal
+ *
+ * @deprecated 2.0.0-internal.3.4.0 - Not intended for public use.  Will be moved to container-loader and no longer exported in an upcoming release.
  */
 export function combineAppAndProtocolSummary(
 	appSummary: ISummaryTree,
 	protocolSummary: ISummaryTree,
 ): CombinedAppAndProtocolSummary {
-	assert(!isCombinedAppAndProtocolSummary(appSummary), "app summary is already a combined tree!");
+	assert(
+		!isCombinedAppAndProtocolSummary(appSummary),
+		0x5a8 /* app summary is already a combined tree! */,
+	);
 	assert(
 		!isCombinedAppAndProtocolSummary(protocolSummary),
-		"protocol summary is already a combined tree!",
+		0x5a9 /* protocol summary is already a combined tree! */,
 	);
 	const createNewSummary: CombinedAppAndProtocolSummary = {
 		type: SummaryType.Tree,

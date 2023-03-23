@@ -129,12 +129,6 @@ Whenever the snapshot format changes in the runtime, the existing snapshots in t
     npm run test:update
     ```
     This will save the current snapshots in the `src_snapshots\<current_snapshots_version>` directory. It will then update the current snapshots under the `current_snapshots` directory to the new format.
--   However, there is a chance that not all the snapshots will be updated. You will see this as a failure in the Azure build, which will indicate which files contain snapshots that were not updated. The failures might have to do with the same property/value and is likely present in all the files within that subdirectory. To solve this, do the following:
-    -   Note the files in which the snapshot tests were failing and manually update them to reflect the expected assertion.
-    -   Commit your changes in a new branch and push your changes.
-    -   Ensure the CI test stages in the Azure build pipeline passes.
-        -   To do this, temporarily change the branch in the `.gitmodules` file to point to the new branch in `FluidFrameworkTestData` you just pushed.
-        -   Navigate to the root folder of the FluidFramework repo and run `npm run ci:test`.
 -   Run the tests to validate that all the tests pass with the new snapshots.
     -   Don't forget to always stay updated with main and reinstall and build if necessary.
 -   Submit the changes by following the steps [here](#Submit-changes-to-test-content).

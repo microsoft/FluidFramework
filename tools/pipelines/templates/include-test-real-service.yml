@@ -163,9 +163,9 @@ jobs:
 
       # Install
       - task: UseNode@1
-        displayName: Use Node 14.x
+        displayName: Use Node 16.x
         inputs:
-          version: 14.x
+          version: 16.x
 
       # Download artifact
       - task: DownloadPipelineArtifact@2
@@ -345,5 +345,10 @@ jobs:
           searchFolder: ${{ variables.testPackageDir }}/nyc
           mergeTestResults: false
         condition: succeededOrFailed()
+
+      # Log Test Failures
+      - template: include-log-test-failures.yml
+        parameters:
+          buildDirectory: ${{ variables.testPackageDir }}
 
       - ${{ parameters.additionalSteps }}

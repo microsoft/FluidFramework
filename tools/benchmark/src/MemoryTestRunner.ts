@@ -7,7 +7,6 @@ import * as v8 from "v8";
 import { performance } from "perf_hooks";
 import { assert } from "chai";
 import { Test } from "mocha";
-import Benchmark from "benchmark";
 import {
 	isParentProcess,
 	isInPerformanceTestingMode,
@@ -18,7 +17,7 @@ import {
 	userCategoriesSplitter,
 	TestType,
 } from "./Configuration";
-import { getArrayStatistics } from "./ReporterUtilities";
+import { getArrayStatistics, Stats } from "./ReporterUtilities";
 
 /**
  * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was
@@ -39,7 +38,7 @@ export interface MemoryTestData {
 export interface MemoryBenchmarkStats {
 	runs: number;
 	samples: { before: MemoryTestData; after: MemoryTestData };
-	stats: Benchmark.Stats;
+	stats: Stats;
 	aborted: boolean;
 	error?: Error;
 	totalRunTimeMs: number;
@@ -288,12 +287,12 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				},
 			},
 			stats: {
-				moe: NaN,
-				rme: NaN,
-				sem: NaN,
-				deviation: NaN,
-				mean: NaN,
-				sample: [],
+				marginOfError: NaN,
+				marginOfErrorPercent: NaN,
+				standardErrorOfMean: NaN,
+				standardDeviation: NaN,
+				arithmeticMean: NaN,
+				samples: [],
 				variance: NaN,
 			},
 			aborted: false,
@@ -302,13 +301,13 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 
 		const startTime = performance.now();
 		try {
-			let heapUsedStats: Benchmark.Stats = {
-				moe: NaN,
-				rme: NaN,
-				sem: NaN,
-				deviation: NaN,
-				mean: NaN,
-				sample: [],
+			let heapUsedStats: Stats = {
+				marginOfError: NaN,
+				marginOfErrorPercent: NaN,
+				standardErrorOfMean: NaN,
+				standardDeviation: NaN,
+				arithmeticMean: NaN,
+				samples: [],
 				variance: NaN,
 			};
 			do {
@@ -349,7 +348,7 @@ export function benchmarkMemory(testObject: IMemoryTestObject): Test {
 				}
 			} while (
 				benchmarkStats.runs < options.minSampleCount ||
-				heapUsedStats.rme > options.maxRelativeMarginOfError
+				heapUsedStats.marginOfErrorPercent > options.maxRelativeMarginOfError
 			);
 			benchmarkStats.stats = heapUsedStats;
 		} catch (error) {
