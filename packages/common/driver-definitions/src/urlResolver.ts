@@ -26,7 +26,7 @@ export interface IResolvedUrlBase {
  */
 export interface IWebResolvedUrl extends IResolvedUrlBase {
 	/**
-	 * {@inheritDoc IResolvedUrlBase.type}
+	 * {@inheritDoc IResolvedUrlBase."type"}
 	 */
 	type: "web";
 	
@@ -38,7 +38,7 @@ export interface IWebResolvedUrl extends IResolvedUrlBase {
 
 export interface IFluidResolvedUrl extends IResolvedUrlBase {
 	/**
-	 * {@inheritDoc IResolvedUrlBase.type}
+	 * {@inheritDoc IResolvedUrlBase."type"}
 	 */
 	type: "fluid";
 	
