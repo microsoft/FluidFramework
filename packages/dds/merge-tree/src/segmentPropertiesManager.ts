@@ -184,4 +184,8 @@ export class PropertiesManager {
 	public hasPendingProperties() {
 		return this.pendingRewriteCount > 0 || Object.keys(this.pendingKeyUpdateCount!).length > 0;
 	}
+
+	public hasPendingProperty(key: string): boolean {
+		return (this.pendingKeyUpdateCount?.[key] ?? 0) > 0;
+	}
 }

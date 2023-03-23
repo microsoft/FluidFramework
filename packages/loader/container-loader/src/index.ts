@@ -5,7 +5,6 @@
 
 export { ConnectionState } from "./connectionState";
 export {
-	Container,
 	IContainerLoadOptions,
 	IContainerConfig,
 	IPendingContainerState,
@@ -19,7 +18,5 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
-	RelativeLoader,
-	requestResolvedObjectFromContainer,
 } from "./loader";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";

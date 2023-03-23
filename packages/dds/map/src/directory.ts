@@ -1242,7 +1242,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.runtime.clientId ?? "detached",
 		);
 		const subDir = this._subdirectories.get(subdirName);
-		assert(subDir !== undefined, "subdirectory should exist after creation");
+		assert(subDir !== undefined, 0x5aa /* subdirectory should exist after creation */);
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
@@ -2019,7 +2019,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				localOpMetadata.pendingMessageId,
 			);
 			const count = this.pendingDeleteSubDirectoriesCount.get(op.subdirName);
-			assert(count !== undefined && count > 0, "should have record for delete op");
+			assert(count !== undefined && count > 0, 0x5ab /* should have record for delete op */);
 			this.pendingDeleteSubDirectoriesCount.set(op.subdirName, count - 1);
 			if (count === 1) {
 				this.pendingDeleteSubDirectoriesCount.delete(op.subdirName);
@@ -2161,7 +2161,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				}
 				if (op.type === "deleteSubDirectory") {
 					const count = this.pendingDeleteSubDirectoriesCount.get(op.subdirName);
-					assert(count !== undefined && count > 0, "should have record for delete op");
+					assert(
+						count !== undefined && count > 0,
+						0x5ac /* should have record for delete op */,
+					);
 					this.pendingDeleteSubDirectoriesCount.set(op.subdirName, count - 1);
 					if (count === 1) {
 						this.pendingDeleteSubDirectoriesCount.delete(op.subdirName);

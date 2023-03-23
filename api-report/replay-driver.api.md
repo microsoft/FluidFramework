@@ -117,8 +117,6 @@ export class ReplayDocumentServiceFactory implements IDocumentServiceFactory {
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // @deprecated (undocumented)
-    readonly protocolName: any;
 }
 
 // @public (undocumented)
@@ -160,8 +158,6 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
     createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid-static-storage:";
     // (undocumented)
     protected readonly storage: IDocumentStorageService;
 }
