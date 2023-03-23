@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-// import { ContainerMessageType } from "..";
+import { ContainerRuntimeMessage } from "..";
 import { IBatch } from "./definitions";
 
 interface IGroupedMessage {
@@ -22,6 +22,16 @@ export class OpGroupingManager {
 		if (batch.content.length < 2 || !this.groupedBatchingEnabled) {
 			return batch;
 		}
+
+		const deserializedContent = {
+			type: OpGroupingManager.groupedBatchOp,
+			contents: batch.content.map((message) => ({
+				contents: message.contents,
+				metadata: message.metadata,
+				compression: message.compression,
+			})),
+		};
+
 		const groupedBatch: IBatch = {
 			...batch,
 			content: [
@@ -29,15 +39,8 @@ export class OpGroupingManager {
 					...batch.content[0],
 					metadata: undefined, // important to not keep reference to first op's batch metadata
 					compression: undefined,
-					// deserializedContent: ,
-					contents: JSON.stringify({
-						type: OpGroupingManager.groupedBatchOp,
-						contents: batch.content.map((message) => ({
-							contents: message.contents,
-							metadata: message.metadata,
-							compression: message.compression,
-						})),
-					}),
+					deserializedContent: deserializedContent as ContainerRuntimeMessage,
+					contents: JSON.stringify(deserializedContent),
 				},
 			],
 		};
