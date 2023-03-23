@@ -5,17 +5,21 @@
 
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
 import {
+	FluidHandleNode,
 	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	NodeKind,
+	ValueNode,
+	VisualParentNode,
+	VisualTreeNode,
 } from "./VisualTree";
 
 // Ideas:
@@ -149,16 +153,26 @@ export abstract class SharedObjectVisualizerNode<
 	 */
 	protected readonly sharedObject: TFluidObject;
 
+	private readonly registerHandle: (
+		handle: IFluidHandle,
+		label: string,
+	) => Promise<FluidObjectId>;
+
 	private readonly onOpHandler = (): boolean => {
 		this.emitVisualUpdate();
 		return true;
 	};
 
-	protected constructor(sharedObject: TFluidObject, label: string) {
+	protected constructor(
+		sharedObject: TFluidObject,
+		label: string,
+		registerHandle: (handle: IFluidHandle, label: string) => Promise<FluidObjectId>,
+	) {
 		super();
 
 		this.sharedObject = sharedObject;
 		this.label = label;
+		this.registerHandle = registerHandle;
 
 		this.sharedObject.on("op", this.onOpHandler);
 	}
@@ -171,7 +185,47 @@ export abstract class SharedObjectVisualizerNode<
 	/**
 	 * TODO
 	 */
-	protected abstract render(): FluidObjectNode;
+	public abstract render(): Promise<FluidObjectNode>;
+
+	private async renderData(data: unknown, label: string): Promise<VisualTreeNode> {
+		if (typeof data !== "object") {
+			// Render primitives and falsy types via their string representation
+			const result: ValueNode = {
+				label,
+				value: `${data}`,
+				typeMetadata: typeof data,
+				nodeType: NodeKind.ValueNode,
+			};
+			return result;
+		} else if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
+			// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
+			const handle = data as IFluidHandle;
+			const fluidObjectId = await this.registerHandle(handle, label);
+			const result: FluidHandleNode = {
+				label,
+				typeMetadata: "Fluid Handle",
+				fluidObjectId,
+				nodeType: NodeKind.FluidHandleNode,
+			};
+			return result;
+		} else {
+			// Assume any other data must be a record of some kind (since DDS contents must be serializable)
+			// and simply recurse over its keys.
+			const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
+
+			// eslint-disable-next-line @typescript-eslint/promise-function-async
+			const renderedChildren = await Promise.all(
+				childEntries.map(([key, value]) => this.renderData(value, key)),
+			);
+
+			const result: VisualParentNode = {
+				label,
+				children: renderedChildren,
+				nodeType: NodeKind.ParentNode,
+			};
+			return result;
+		}
+	}
 }
 
 /**

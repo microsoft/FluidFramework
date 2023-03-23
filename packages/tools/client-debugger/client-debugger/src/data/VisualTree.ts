@@ -23,7 +23,7 @@ export enum NodeKind {
 	FluidTreeNode,
 	FluidValueNode,
 	FluidHandleNode,
-	DataNode,
+	ValueNode,
 }
 
 /**
@@ -36,14 +36,14 @@ export interface VisualTreeNodeBase {
 	label: string;
 
 	/**
-	 * Metadata describing the type of the item, to be displayed inline.
+	 * (optional) Metadata describing the type of the item, to be displayed inline.
 	 */
-	typeMetadata: string;
+	typeMetadata?: string;
 
 	/**
 	 * (optional) Additional metadata to be displayed inline.
 	 */
-	metaData?: string; // information of the value
+	metaData?: string;
 
 	/**
 	 * {@inheritDoc NodeKind}
@@ -128,7 +128,7 @@ export interface FluidHandleNode extends VisualTreeNodeBase {
 /**
  * Terminal node containing a simple value to display.
  */
-interface ValueNode extends VisualTreeNodeBase {
+export interface ValueNode extends VisualTreeNodeBase {
 	/**
 	 * The value to display inline.
 	 */
@@ -137,7 +137,7 @@ interface ValueNode extends VisualTreeNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
-	nodeType: NodeKind.DataNode;
+	nodeType: NodeKind.ValueNode;
 }
 
 /**
