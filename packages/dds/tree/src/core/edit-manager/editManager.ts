@@ -367,7 +367,7 @@ export class EditManager<
 		const sourcePath: GraphCommit<TChangeset>[] = [];
 		const targetPath: GraphCommit<TChangeset>[] = [];
 		const ancestor = findCommonAncestor([from, sourcePath], [to, targetPath]);
-		assert(ancestor !== undefined, "branch A and branch B must be related");
+		assert(ancestor !== undefined, "branches must be related");
 		const inverseSrcChanges = sourcePath.map((commit) =>
 			tagRollbackInverse(
 				this.changeFamily.rebaser.invert(commit, true),

@@ -313,7 +313,6 @@ class SharedTree
 
 		const srcCommit = sourceBranch.headCommit;
 		const dstCommit = this.headCommit;
-		// TODO: make it possible to take this fast-path after a branch merge
 		if (srcCommit === dstCommit) {
 			return this.forest.anchors.track(srcPath);
 		}
@@ -469,7 +468,6 @@ class SharedTreeFork implements ISharedTreeFork {
 
 		const srcCommit = sourceBranch.headCommit;
 		const dstCommit = this.headCommit;
-		// TODO: make it possible to take this fast-path after a branch merge
 		if (srcCommit === dstCommit) {
 			return this.forest.anchors.track(srcPath);
 		}

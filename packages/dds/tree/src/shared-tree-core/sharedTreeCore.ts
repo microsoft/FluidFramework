@@ -336,7 +336,7 @@ export class SharedTreeCore<
 					0x598 /* Expected merging checkout branches to be related */,
 				);
 				for (const { change, revision } of changes) {
-					this.applyChange(change, revision); // Why not pass in the revision tag here so that the parent branch has the same tag?
+					this.applyChange(change, revision);
 					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				}
 				return changeToForked;
