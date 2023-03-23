@@ -371,7 +371,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 				Object.keys(error).forEach((key) => {
 					if (typeof error[key] === "object") {
 						this.sanitizeError(error[key]);
-					} else if (!errorResponseKeysAllowList.has(key)) {
+					} else if (!(/^\d+$/.test(key)) && !errorResponseKeysAllowList.has(key)) { // sanitize only if key is not a number(i.e. array index)
 						error[key] = errorSanitizationMessage;
 					}
 				});
