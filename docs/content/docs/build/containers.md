@@ -138,25 +138,25 @@ This section provides only basic information about the *most important* states t
 
 There are four types of states that a container can be in. Every container is in exactly one state of each of these types. The following shows the most important states within each type but are not complete lists.
 
-- **Publication status**:
+-   **Publication status**:
 
-    - unpublished
-    - published
+    -   unpublished
+    -   published
 
-- **Synchronization status**:
+-   **Synchronization status**:
 
-    - dirty (on a given client)
-    - saved
+    -   dirty (on a given client)
+    -   saved
 
-- **Connection status**:
+-   **Connection status**:
 
-    - disconnected (from the Fluid service)
-    - connected
+    -   disconnected (from the Fluid service)
+    -   connected
 
-- **Local readiness status**:
+-   **Local readiness status**:
 
-    - ready
-    - disposed (on the client)
+    -   ready
+    -   disposed (on the client)
 
 ### Ready for editing
 
