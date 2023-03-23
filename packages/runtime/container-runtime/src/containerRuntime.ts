@@ -1861,6 +1861,13 @@ export class ContainerRuntime
 			this.savedOps.push(messageArg);
 		}
 
+		// TODO: clean this up (try not to pass to remoteMessageProcessor)
+		const updateSummaryHeuristics = (message: ISequencedDocumentMessage) => {
+			if (this._summarizer !== undefined && this.groupedBatchingEnabled) {
+				this._summarizer.processOp?.(message);
+			}
+		};
+
 		// Whether or not the message is actually a runtime message.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
@@ -1868,7 +1875,10 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
+		for (const message of this.remoteMessageProcessor.process(
+			messageCopy,
+			updateSummaryHeuristics,
+		)) {
 			this.processCore(message, local, runtimeMessage);
 		}
 	}
@@ -1878,10 +1888,6 @@ export class ContainerRuntime
 		local: boolean,
 		runtimeMessage: boolean,
 	) {
-		if (this._summarizer !== undefined && this.groupedBatchingEnabled) {
-			this._summarizer.processOp?.(message);
-		}
-
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.

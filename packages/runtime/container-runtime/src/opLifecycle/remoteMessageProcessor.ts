@@ -24,10 +24,14 @@ export class RemoteMessageProcessor {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
-	public process(remoteMessage: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
+	public process(
+		remoteMessage: ISequencedDocumentMessage,
+		processUngroupedMessage?: (message: ISequencedDocumentMessage) => void,
+	): ISequencedDocumentMessage[] {
 		const result: ISequencedDocumentMessage[] = [];
 		// TODO: ungroup here
 		for (let ungroupedMessage of this.opGroupingManager.ungroupOp(copy(remoteMessage))) {
+			processUngroupedMessage?.(ungroupedMessage);
 			ungroupedMessage = this.opDecompressor.processMessage(ungroupedMessage).message;
 			unpackRuntimeMessage(ungroupedMessage);
 

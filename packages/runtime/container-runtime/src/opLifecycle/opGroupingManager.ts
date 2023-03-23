@@ -4,7 +4,14 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { BatchMessage, IBatch } from "./definitions";
+// import { ContainerMessageType } from "..";
+import { IBatch } from "./definitions";
+
+interface IGroupedMessage {
+	contents: string;
+	metadata: Record<string, unknown> | undefined;
+	compression: string;
+}
 
 export class OpGroupingManager {
 	static groupedBatchOp = "groupedBatch";
@@ -26,8 +33,9 @@ export class OpGroupingManager {
 					contents: JSON.stringify({
 						type: OpGroupingManager.groupedBatchOp,
 						contents: batch.content.map((message) => ({
-							...message,
-							contents: undefined, // So we don't duplicate content
+							contents: message.contents,
+							metadata: message.metadata,
+							compression: message.compression,
 						})),
 					}),
 				},
@@ -45,13 +53,13 @@ export class OpGroupingManager {
 			return [op];
 		}
 
-		const messages = op.contents.contents as BatchMessage[];
+		const messages = op.contents.contents as IGroupedMessage[];
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
-			contents: subMessage.deserializedContent.contents,
-			type: subMessage.deserializedContent.type,
+			contents:
+				subMessage.contents === undefined ? undefined : JSON.parse(subMessage.contents),
 			metadata: subMessage.metadata,
 			compression: subMessage.compression,
 		}));
