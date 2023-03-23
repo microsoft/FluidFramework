@@ -19,13 +19,13 @@ export interface AudienceClientMetaData {
 }
 
 /**
- * Inbound event requesting audience data from the Container with the specific ID.
+ * Inbound message requesting audience data from the Container with the specific ID.
  * Will result in the {@link AudienceEventMessage} message being posted.
  *
  * @public
  */
 export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
-	type: "GET_AUDIENCE_EVENT";
+	type: "GET_AUDIENCE";
 }
 
 /**
@@ -45,10 +45,12 @@ export interface AudienceEventMessageData extends HasContainerId {
 	/**
 	 * Connection history of members to the container
 	 */
-	audienceHistory: readonly AudienceChangeLogEntry[];
+	audienceHistory: AudienceChangeLogEntry[];
 }
 
 /**
+ * Audience event message which contains {@link AudienceEventMessageData} data
+ *
  * @public
  */
 export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMessageData> {

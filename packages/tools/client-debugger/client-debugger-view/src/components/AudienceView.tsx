@@ -42,7 +42,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
 		audience.getMembers(),
 	);
-	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
+	const [audienceHistory, setAudienceHistory] = React.useState<AudienceChangeLogEntry[]>(
 		clientDebugger.getAudienceHistory(),
 	);
 
@@ -77,7 +77,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 /**
  * audienceClientMetaData contains corresponding clientId and IClient object as element
- * AudienceEventMessageData object is message-passed to chrome extension and sent to the _AudienceView
  * TODO: Remove onRenderAudienceMember
  *
  * {@link _AudienceView} input props.
@@ -86,7 +85,7 @@ export interface _AudienceViewProps {
 	clientId: string | undefined;
 	audienceClientMetaData: AudienceClientMetaData[];
 	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
-	audienceHistory: readonly AudienceChangeLogEntry[];
+	audienceHistory: AudienceChangeLogEntry[];
 }
 
 /**
@@ -189,7 +188,7 @@ interface HistoryViewProps {
 	/**
 	 * History of audience changes tracked by the debugger.
 	 */
-	history: readonly AudienceChangeLogEntry[];
+	history: AudienceChangeLogEntry[];
 }
 
 /**

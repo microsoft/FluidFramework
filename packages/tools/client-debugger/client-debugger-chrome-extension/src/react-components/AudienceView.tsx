@@ -38,7 +38,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	// POST Request for Audience Data
 	const getAudienceMessage: IDebuggerMessage = {
-		type: "GET_AUDIENCE_EVENT",
+		type: "GET_AUDIENCE",
 		source: extensionMessageSource,
 		data: {
 			containerId,
@@ -49,9 +49,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	const [clientId, setClientId] = React.useState<string | undefined>("");
 	const [audienceState, setAudienceState] = React.useState<AudienceClientMetaData[]>([]);
-	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
-		[],
-	);
+	const [audienceHistory, setAudienceHistory] = React.useState<AudienceChangeLogEntry[]>([]);
 
 	React.useEffect(() => {
 		/**
@@ -78,7 +76,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			});
 		}
 
-		// Request state info for the newly specified containerId
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container using "AUDIENCE_EVENT" Message

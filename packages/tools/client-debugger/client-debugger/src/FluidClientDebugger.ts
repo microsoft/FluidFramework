@@ -213,7 +213,7 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
-		["GET_AUDIENCE_EVENT"]: (untypedMessage) => {
+		["GET_AUDIENCE"]: (untypedMessage) => {
 			const message = untypedMessage as GetAudienceMessage;
 			if (message.data.containerId === this.containerId) {
 				this.postAudienceStateChange();
@@ -341,7 +341,7 @@ export class FluidClientDebugger
 	/**
 	 * {@inheritDoc IFluidClientDebugger.getAudienceHistory}
 	 */
-	public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
+	public getAudienceHistory(): AudienceChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes
 		return this._audienceChangeLog.map((value) => value);
 	}

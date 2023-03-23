@@ -36,7 +36,7 @@ export interface _AudienceViewProps {
     // (undocumented)
     audienceClientMetaData: AudienceClientMetaData[];
     // (undocumented)
-    audienceHistory: readonly AudienceChangeLogEntry[];
+    audienceHistory: AudienceChangeLogEntry[];
     // (undocumented)
     clientId: string | undefined;
     // (undocumented)
