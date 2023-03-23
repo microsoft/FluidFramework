@@ -112,7 +112,7 @@ How you handle the **publishing** (`AttachState.Attaching`) state depends on the
 ```typescript
 // Code that runs only on a creating client.
 if ((container.attachState !== AttachState.Attached) 
-    || 
+    &&
     (container.attachState !== AttachState.Attaching)) {
     await container.attach();
 }
