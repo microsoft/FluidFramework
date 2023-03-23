@@ -139,7 +139,13 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		}
 		return this._externalTaskListId.getText();
 	}
-	private _errorFlagCount: number = 0;
+
+	/*
+	 * demoErrorFlagCount is an internal counter used to demonstrate how to handle in code and in the UI
+	 * in the case where writing to the external server fails. We simulate failing to write on every
+	 * third attempt to write to the external server.
+	 */
+	private _demoErrorFlagCount: number = 0;
 
 	public readonly addDraftTask = (id: string, name: string, priority: number): void => {
 		if (this.tasks.get(id) !== undefined) {
@@ -324,9 +330,9 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		// sync'ing perhaps this should only include ack'd changes (by spinning up a second local client same
 		// as what we do for summarization).
 
-		this._errorFlagCount++;
+		this._demoErrorFlagCount++;
 		// Force update failures every 3 calls to showcase retry logic.
-		if (this._errorFlagCount % 3 === 0) {
+		if (this._demoErrorFlagCount % 3 === 0) {
 			throw new Error("Simulated error to demonstrate failure writing to external service.");
 		}
 		const tasks = this.getDraftTasks();
