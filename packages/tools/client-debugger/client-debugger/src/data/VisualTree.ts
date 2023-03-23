@@ -9,8 +9,13 @@
  */
 
 /**
+ * A unique ID for a Fluid object.
+ */
+export type FluidObjectId = string;
+
+/**
  * The kind of {@link VisualTreeNodeBase}.
- * 
+ *
  * @remarks Can be used to type-switch on the particular kind of node being processed.
  */
 export enum NodeKind {
@@ -29,12 +34,12 @@ export interface VisualTreeNodeBase {
 	 * Label text used as the item name in the visual tree.
 	 */
 	label: string;
-	
+
 	/**
 	 * Metadata describing the type of the item, to be displayed inline.
 	 */
 	typeMetadata: string;
-	
+
 	/**
 	 * (optional) Additional metadata to be displayed inline.
 	 */
@@ -54,7 +59,7 @@ export interface VisualParentNode extends VisualTreeNodeBase {
 	 * Child items to be displayed beneath this node.
 	 */
 	children: VisualTreeNode[];
-	
+
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
@@ -68,7 +73,7 @@ export interface FluidObjectNode extends VisualTreeNodeBase {
 	/**
 	 * A unique ID for the Fluid object being displayed.
 	 */
-	fluidObjectId: string;
+	fluidObjectId: FluidObjectId;
 }
 
 /**
@@ -78,8 +83,8 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 	/**
 	 * Child items to be displayed beneath this node.
 	 */
-	children: VisualTreeNode[];	
-	
+	children: VisualTreeNode[];
+
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
@@ -95,7 +100,7 @@ export interface FluidObjectValueNode extends FluidObjectNode {
 	/**
 	 * The value of the Fluid object to be displayed inline.
 	 */
-	value: string;	
+	value: string;
 
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
@@ -109,11 +114,11 @@ export interface FluidObjectValueNode extends FluidObjectNode {
 export interface FluidHandleNode extends VisualTreeNodeBase {
 	/**
 	 * A unique ID for the Fluid object being referenced.
-	 * 
+	 *
 	 * @remarks Consumers will need to request a {@link FluidObjectTreeNode | visual tree} for this item separately.
 	 */
-	fluidObjectId: string;	
-	
+	fluidObjectId: string;
+
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
@@ -127,8 +132,8 @@ interface ValueNode extends VisualTreeNodeBase {
 	/**
 	 * The value to display inline.
 	 */
-	value: string;	
-	
+	value: string;
+
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
