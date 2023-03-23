@@ -93,7 +93,12 @@ export {
 	SegmentGroup,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
-export { Trackable, TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
+export {
+	Trackable,
+	TrackingGroup,
+	UnorderedTrackingGroup,
+	TrackingGroupCollection,
+} from "./mergeTreeTracking";
 export {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
