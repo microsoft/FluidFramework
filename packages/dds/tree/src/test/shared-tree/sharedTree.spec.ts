@@ -1127,6 +1127,25 @@ describe("SharedTree", () => {
 
 			// On a branch, insert node "baz" and get an anchor to it
 			const branch = main.fork();
+
+			// Check import from main to branch before either branch diverges
+			{
+				const barFromMain = getAnchorFromIndex(main, 0);
+				const barFromMainToBranch = branch.importAnchor(main, barFromMain);
+				const branchCursor = cursorFromAnchor(branch, barFromMainToBranch);
+				assert.equal(branchCursor.value, "bar");
+				branchCursor.free();
+			}
+
+			// Check import from branch to main before either branch diverges
+			{
+				const barFromBranch = getAnchorFromIndex(branch, 0);
+				const barFromBranchToMain = main.importAnchor(branch, barFromBranch);
+				const mainCursor = cursorFromAnchor(main, barFromBranchToMain);
+				assert.equal(mainCursor.value, "bar");
+				mainCursor.free();
+			}
+
 			branch.editor
 				.sequenceField(undefined, rootFieldKeySymbol)
 				.insert(1, singleTextCursor({ type: brand("Node"), value: "baz" }));
