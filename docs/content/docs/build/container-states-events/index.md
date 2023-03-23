@@ -118,7 +118,7 @@ if ((container.attachState !== AttachState.Attached)
 }
 ```
 
-On the other hand, in scenarios where you want to block users from editing shared data when the container is unpublished, you also want to block them when the container is in **publishing** (`AttachState.Attaching`) state, since at that point the container is not fully published. So in those scenario, treat publishing (`Attaching`) the same as unpublished (`Detached`). The following is an example.
+On the other hand, in scenarios where you want to block users from editing shared data when the container is unpublished, you also want to block them when the container is in **publishing** (`AttachState.Attaching`) state, since at that point the container is not fully published. So in those scenarios, treat publishing (`Attaching`) the same as unpublished (`Detached`). The following is an example.
 
 ```typescript
 // Code that runs only on a creating client.
