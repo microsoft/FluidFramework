@@ -234,6 +234,9 @@ export class SharedTreeCore<
 	/**
 	 * Update the state of the tree (including all indexes) according to the given change.
 	 * If there is not currently a transaction open, the change will be submitted to Fluid.
+	 * @param change - The change to apply.
+	 * @param revision - The revision to associate with the change.
+	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
 	protected applyChange(change: TChange, revision?: RevisionTag): void {
 		const commit = {
