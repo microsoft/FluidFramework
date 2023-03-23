@@ -6,7 +6,7 @@ import { queue } from "async";
 import * as chalk from "chalk";
 import detectIndent from "detect-indent";
 import * as fs from "fs";
-import { readFileSync, writeJson } from "fs-extra";
+import { readFileSync, writeJsonSync } from "fs-extra";
 import { sync as globSync, hasMagic } from "glob";
 import * as path from "path";
 import sortPackageJson from "sort-package-json";
@@ -511,6 +511,6 @@ function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson, inden
 /**
  * Writes a PackageJson object to a file using the provided indentation.
  */
-async function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
-	writeJson(packagePath, sortPackageJson(pkgJson), { spaces: indent });
+function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
+	return writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indent });
 }
