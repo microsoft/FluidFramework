@@ -301,18 +301,17 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 export interface IAttributionCollection<T> {
     // @internal (undocumented)
     append(other: IAttributionCollection<T>): void;
-    // (undocumented)
-    readonly channelNames: Iterable<string>;
     // @internal (undocumented)
     clone(): IAttributionCollection<T>;
     // @internal
-    getAll(): IAttributionCollectionSpec<T>;
-    getAtOffset(offset: number, channel?: string): AttributionKey | undefined;
+    getAll(): Iterable<{
+        offset: number;
+        key: T;
+    }>;
+    getAtOffset(offset: number): T;
     readonly length: number;
     // @internal (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
-    // @internal
-    update(name: string | undefined, channel: IAttributionCollection<T>): any;
 }
 
 // @internal @sealed (undocumented)
@@ -323,24 +322,6 @@ export interface IAttributionCollectionSerializer {
         attribution?: IAttributionCollection<AttributionKey>;
         cachedLength: number;
     }>): SerializedAttributionCollection;
-}
-
-// @internal (undocumented)
-export interface IAttributionCollectionSpec<T> {
-    // (undocumented)
-    channels?: {
-        [name: string]: Iterable<{
-            offset: number;
-            key: T | null;
-        }>;
-    };
-    // (undocumented)
-    length: number;
-    // (undocumented)
-    root: Iterable<{
-        offset: number;
-        key: T | null;
-    }>;
 }
 
 // @public (undocumented)
@@ -972,8 +953,6 @@ export class PropertiesManager {
     copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
     // (undocumented)
     hasPendingProperties(): boolean;
-    // (undocumented)
-    hasPendingProperty(key: string): boolean;
 }
 
 // @public (undocumented)
@@ -1216,20 +1195,12 @@ export class SegmentGroupCollection {
 }
 
 // @internal (undocumented)
-export interface SequenceOffsets {
-    // (undocumented)
-    posBreakpoints: number[];
-    seqs: (number | AttributionKey | null)[];
-}
-
-// @internal (undocumented)
-export interface SerializedAttributionCollection extends SequenceOffsets {
-    // (undocumented)
-    channels?: {
-        [name: string]: SequenceOffsets;
-    };
+export interface SerializedAttributionCollection {
     // (undocumented)
     length: number;
+    // (undocumented)
+    posBreakpoints: number[];
+    seqs: (number | AttributionKey)[];
 }
 
 // @internal (undocumented)

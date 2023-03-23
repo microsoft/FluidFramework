@@ -6,10 +6,7 @@
 import { strict as assert } from "assert";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
-import {
-	createInsertOnlyAttributionPolicy,
-	createPropertyTrackingAttributionPolicyFactory,
-} from "../attributionPolicy";
+import { createInsertOnlyAttributionPolicy } from "../attributionCollection";
 import { loadSnapshot, TestString } from "./snapshot.utils";
 
 function makeSnapshotSuite(options?: IMergeTreeOptions): void {
@@ -108,13 +105,6 @@ function makeSnapshotSuite(options?: IMergeTreeOptions): void {
 
 			await str.checkSnapshot();
 		});
-
-		it("recovers annotated segments", async () => {
-			str.append("123", false);
-			str.annotate(1, 2, { foo: 1 }, false);
-
-			await str.checkSnapshot();
-		});
 	});
 
 	describe("from a non-empty initial state", () => {
@@ -129,15 +119,6 @@ describe("snapshot", () => {
 	describe("with attribution", () => {
 		makeSnapshotSuite({
 			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
-		});
-	});
-
-	describe("with attribution and custom channels", () => {
-		makeSnapshotSuite({
-			attribution: {
-				track: true,
-				policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
-			},
 		});
 	});
 

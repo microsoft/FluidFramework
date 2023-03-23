@@ -256,7 +256,7 @@ export class SnapshotLoader {
 		flushBatch();
 	}
 
-	private extractAttribution(segments: ISegment[], chunk: MergeTreeChunkV1): void {
+	private extractAttribution(segments: Iterable<ISegment>, chunk: MergeTreeChunkV1): void {
 		this.mergeTree.options ??= {};
 		this.mergeTree.options.attribution ??= {};
 		if (chunk.attribution) {
