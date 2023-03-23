@@ -25,6 +25,7 @@ import {
 	readJsonSync,
 	rimrafWithErrorAsync,
 	unlinkAsync,
+  writeFileAsync,
 } from "./utils";
 
 const { info, verbose, errorLog: error } = defaultLogger;
@@ -207,9 +208,10 @@ export class Package {
 	}
 
 	public async savePackageJson() {
-		updatePackageJsonFile(this.directory, () => {
-			return;
-		});
+		return writeFileAsync(
+			this.packageJsonFileName,
+			`${JSON.stringify(sortPackageJson(this.packageJson), undefined, 2)}\n`,
+		);
 	}
 
 	public reload() {
