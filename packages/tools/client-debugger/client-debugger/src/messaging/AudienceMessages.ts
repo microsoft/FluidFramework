@@ -45,7 +45,7 @@ export interface AudienceEventMessageData extends HasContainerId {
 	/**
 	 * Connection history of members to the container
 	 */
-	audienceHistory: AudienceChangeLogEntry[];
+	audienceHistory: readonly AudienceChangeLogEntry[];
 }
 
 /**

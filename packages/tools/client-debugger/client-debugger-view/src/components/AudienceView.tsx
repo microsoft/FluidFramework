@@ -42,7 +42,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
 		audience.getMembers(),
 	);
-	const [audienceHistory, setAudienceHistory] = React.useState<AudienceChangeLogEntry[]>(
+	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
 		clientDebugger.getAudienceHistory(),
 	);
 
@@ -85,7 +85,7 @@ export interface _AudienceViewProps {
 	clientId: string | undefined;
 	audienceClientMetaData: AudienceClientMetaData[];
 	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
-	audienceHistory: AudienceChangeLogEntry[];
+	audienceHistory: readonly AudienceChangeLogEntry[];
 }
 
 /**
@@ -188,7 +188,7 @@ interface HistoryViewProps {
 	/**
 	 * History of audience changes tracked by the debugger.
 	 */
-	history: AudienceChangeLogEntry[];
+	history: readonly AudienceChangeLogEntry[];
 }
 
 /**

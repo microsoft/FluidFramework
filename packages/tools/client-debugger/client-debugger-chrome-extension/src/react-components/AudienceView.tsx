@@ -49,7 +49,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	const [clientId, setClientId] = React.useState<string | undefined>("");
 	const [audienceState, setAudienceState] = React.useState<AudienceClientMetaData[]>([]);
-	const [audienceHistory, setAudienceHistory] = React.useState<AudienceChangeLogEntry[]>([]);
+	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
+		[],
+	);
 
 	React.useEffect(() => {
 		/**

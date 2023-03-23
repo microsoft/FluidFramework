@@ -92,7 +92,7 @@ export interface IFluidClientDebugger
 	 * {@link IFluidClientDebugger.audience}'s `addMember` and `removeMember` events signal that this data has changed.
 	 * Consumers will need to re-call this to get the most up-to-date data.
 	 */
-	getAudienceHistory(): AudienceChangeLogEntry[];
+	getAudienceHistory(): readonly AudienceChangeLogEntry[];
 
 	/**
 	 * Disposes the debugger session.

@@ -43,7 +43,7 @@ export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMess
 // @public
 export interface AudienceEventMessageData extends HasContainerId {
     // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
-    audienceHistory: AudienceChangeLogEntry[];
+    audienceHistory: readonly AudienceChangeLogEntry[];
     audienceState: AudienceClientMetaData[];
     clientId: string | undefined;
 }
@@ -228,7 +228,7 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     readonly containerId: string;
     readonly containerNickname?: string;
     dispose(): void;
-    getAudienceHistory(): AudienceChangeLogEntry[];
+    getAudienceHistory(): readonly AudienceChangeLogEntry[];
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 }
 

@@ -341,7 +341,7 @@ export class FluidClientDebugger
 	/**
 	 * {@inheritDoc IFluidClientDebugger.getAudienceHistory}
 	 */
-	public getAudienceHistory(): AudienceChangeLogEntry[] {
+	public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes
 		return this._audienceChangeLog.map((value) => value);
 	}
