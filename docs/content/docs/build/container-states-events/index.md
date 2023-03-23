@@ -107,18 +107,18 @@ if (container.attachState !== AttachState.Attached) {
 }
 ```
 
-How you handle the **publishing** (`AttachState.Attaching`) state depends on the situation. This state implies that `container.attach` has already been called, so to prevent a recall treat publishing (`Attaching`) the same as published (`Attached`). The following is an example.
+How you handle the **publishing** (`AttachState.Attaching`) state depends on the situation. This state implies that `container.attach` has already been called, so to prevent an additional call treat publishing (`Attaching`) the same as published (`Attached`). The following is an example.
 
 ```typescript
 // Code that runs only on a creating client.
 if ((container.attachState !== AttachState.Attached) 
-    || 
+    &&
     (container.attachState !== AttachState.Attaching)) {
     await container.attach();
 }
 ```
 
-On the other hand, in scenarios where you want to block users from editing shared data when the container is unpublished, you also want to block them when the container is in **publishing** (`AttachState.Attaching`) state, since at that point the container is not fully published. So in those scenario, treat publishing (`Attaching`) the same as unpublished (`Detached`). The following is an example.
+On the other hand, in scenarios where you want to block users from editing shared data when the container is unpublished, you also want to block them when the container is in **publishing** (`AttachState.Attaching`) state, since at that point the container is not fully published. So in those scenarios, treat publishing (`Attaching`) the same as unpublished (`Detached`). The following is an example.
 
 ```typescript
 // Code that runs only on a creating client.
