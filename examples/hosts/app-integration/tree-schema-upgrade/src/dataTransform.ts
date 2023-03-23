@@ -71,31 +71,37 @@ export function parseStringDataVersionTwo(stringData: string) {
 	});
 }
 
-function parseStringData(stringData: string) {
-	const version = readVersion(stringData);
-	if (version === "one") {
-		return parseStringDataVersionOne(stringData);
-	} else if (version === "two") {
-		return parseStringDataVersionTwo(stringData);
-	} else {
-		throw new Error(`Don't know how to parse version ${version}`);
-	}
-}
+// function parseStringData(stringData: string) {
+// 	const version = readVersion(stringData);
+// 	if (version === "one") {
+// 		return parseStringDataVersionOne(stringData);
+// 	} else if (version === "two") {
+// 		return parseStringDataVersionTwo(stringData);
+// 	} else {
+// 		throw new Error(`Don't know how to parse version ${version}`);
+// 	}
+// }
 
 function transformToOne(stringData: string) {
-	const inventoryItems = parseStringData(stringData);
-	const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-		return `${inventoryItem.name}:${inventoryItem.quantity.toString()}`;
-	});
-	return `version:one\n${inventoryItemStrings.join("\n")}`;
+	// const inventoryItems = parseStringData(stringData);
+	// const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+	// 	return `${inventoryItem.name}:${inventoryItem.quantity.toString()}`;
+	// });
+	// return `version:one\n${inventoryItemStrings.join("\n")}`;
+	const treeData = stringData.split("\n");
+	treeData.shift(); // remove version line
+	return `version:one\n${treeData}`;
 }
 
 function transformToTwo(stringData: string) {
-	const inventoryItems = parseStringData(stringData);
-	const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-		return `${inventoryItem.name}\t${inventoryItem.quantity.toString()}`;
-	});
-	return `version:two\n${inventoryItemStrings.join("\n")}`;
+	// const inventoryItems = parseStringData(stringData);
+	// const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
+	// 	return `${inventoryItem.name}\t${inventoryItem.quantity.toString()}`;
+	// });
+	// return `version:two\n${inventoryItemStrings.join("\n")}`;
+	const treeData = stringData.split("\n");
+	treeData.shift(); // remove version line
+	return `version:two\n${treeData}`;
 }
 
 /**

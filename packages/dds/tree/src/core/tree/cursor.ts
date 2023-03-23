@@ -303,6 +303,7 @@ export interface ITreeCursorSynchronous extends ITreeCursor {
  * @returns array resulting from applying `f` to each field of the current node on `cursor`.
  * Returns an empty array if the node is empty or not present (which are considered the same).
  * Note that order is not specified for field iteration.
+ * @alpha
  */
 export function mapCursorFields<T, TCursor extends ITreeCursor = ITreeCursor>(
 	cursor: TCursor,

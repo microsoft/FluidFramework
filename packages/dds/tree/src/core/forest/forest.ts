@@ -112,6 +112,7 @@ export function rootAnchor(field: DetachedField = rootField): FieldAnchor {
 /**
  * @param field - defaults to {@link rootField}.
  * @returns anchor to `field`.
+ * @alpha
  */
 export function moveToDetachedField(
 	forest: IForestSubscription,

@@ -92,6 +92,8 @@ export {
 	AnchorEvents,
 	AnchorSetRootEvents,
 	FieldKindSpecifier,
+	moveToDetachedField,
+	mapCursorField,
 } from "./core";
 
 export {

@@ -914,6 +914,11 @@ export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 export interface MakeNominal {
 }
 
+// Warning: (ae-incompatible-release-tags) The symbol "mapCursorField" is marked as @public, but its signature references "ITreeCursor" which is marked as @alpha
+//
+// @public (undocumented)
+export function mapCursorField<T, TCursor extends ITreeCursor = ITreeCursor>(cursor: TCursor, f: (cursor: TCursor) => T): T[];
+
 // @alpha
 type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Delete<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
 
@@ -1016,6 +1021,9 @@ interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree> {
     // (undocumented)
     readonly type: typeof MarkType.MoveOut;
 }
+
+// @alpha (undocumented)
+export function moveToDetachedField(forest: IForestSubscription, cursorToMove: ITreeSubscriptionCursor, field?: DetachedField): void;
 
 // @alpha
 export enum Multiplicity {

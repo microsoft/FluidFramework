@@ -9,7 +9,12 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
+import { BuildNode, Change, NodeId, SharedTree, StablePlace, TraitLabel } from "@fluid-experimental/tree";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+import { transformTreeToJsonableString } from "./appModel";
+
+const treeKey = 'sharedTree-key';
 
 class InventoryItem extends EventEmitter implements IInventoryItem {
 	public get id() {
@@ -52,7 +57,36 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 export class InventoryList extends DataObject implements IInventoryList {
 	private readonly inventoryItems = new Map<string, InventoryItem>();
 
+	public tree: SharedTree | undefined;
+	public nodeIds: NodeId[] = [];
+	public readonly getTreeView = () => {
+		const jsonableTreeString = transformTreeToJsonableString(this.tree as SharedTree);
+		// console.log(jsonableTreeString.replace(',"fields":{}"', ""))
+		return jsonableTreeString.split(',"fields":{}').join("")
+	};
 	public readonly addItem = (name: string, quantity: number) => {
+		// Tree edit
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const nodeId = this.tree!.generateNodeId();
+		const node: BuildNode = {
+			definition: "Node",
+			identifier: nodeId,
+		};
+		const randomParentId = this.nodeIds[Math.floor(Math.random() * this.nodeIds.length)];
+		this.tree?.applyEdit(
+			Change.insertTree(
+				node,
+				StablePlace.atStartOf({
+					parent: randomParentId,
+					label: "foo" as TraitLabel,
+				}),
+			),
+		);
+		this.nodeIds.push(nodeId);
+
+		console.log(this.getTreeView())
+		
+		// sharedString Edit
 		const nameString = SharedString.create(this.runtime);
 		nameString.insertText(0, name);
 		const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
@@ -99,6 +133,12 @@ export class InventoryList extends DataObject implements IInventoryList {
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
 	protected async hasInitialized() {
+		const treeHandle = this.root.get<IFluidHandle<SharedTree>>(treeKey);
+		if (treeHandle === undefined) {
+			throw new Error("SharedTree missing");
+		}
+		this.tree = await treeHandle.get();
+		this.nodeIds.push(this.tree.currentView.root);
 		this.root.on("valueChanged", (changed) => {
 			if (changed.previousValue === undefined) {
 				// Must be from adding a new item
@@ -115,16 +155,21 @@ export class InventoryList extends DataObject implements IInventoryList {
 			}
 		});
 
-		for (const [id, itemData] of this.root) {
-			const [nameSharedString, quantitySharedCell] = await Promise.all([
-				itemData.name.get(),
-				itemData.quantity.get(),
-			]);
-			this.inventoryItems.set(
-				id,
-				new InventoryItem(id, nameSharedString, quantitySharedCell),
-			);
-		}
+		// for (const [id, itemData] of this.root) {
+		// 	const [nameSharedString, quantitySharedCell] = await Promise.all([
+		// 		itemData.name.get(),
+		// 		itemData.quantity.get(),
+		// 	]);
+		// 	this.inventoryItems.set(
+		// 		id,
+		// 		new InventoryItem(id, nameSharedString, quantitySharedCell),
+		// 	);
+		// }
+	}
+
+	protected async initializingFirstTime() {
+		const tree = SharedTree.create(this.runtime);
+		this.root.set(treeKey, tree.handle);
 	}
 }
 
@@ -136,6 +181,6 @@ export class InventoryList extends DataObject implements IInventoryList {
 export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
 	"inventory-list",
 	InventoryList,
-	[SharedCell.getFactory(), SharedString.getFactory()],
+	[SharedCell.getFactory(), SharedString.getFactory(), SharedTree.getFactory()],
 	{},
 );

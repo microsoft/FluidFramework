@@ -67,48 +67,35 @@ export const InventoryItemView: React.FC<IInventoryItemViewProps> = (
 
 interface IAddItemViewProps {
 	readonly addItem: (name: string, quantity: number) => void;
+	readonly addTree: () => string;
 }
 
 const AddItemView: React.FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
-	const { addItem } = props;
-	const nameRef = useRef<HTMLInputElement>(null);
-	const quantityRef = useRef<HTMLInputElement>(null);
+	const { addItem, addTree } = props;
+	// const nameRef = useRef<HTMLInputElement>(null);
+	// const quantityRef = useRef<HTMLInputElement>(null);
+	const tree = addTree()
 
 	const onAddItemButtonClick = () => {
-		if (nameRef.current === null || quantityRef.current === null) {
-			throw new Error("Couldn't get the new item info");
-		}
+		// if (nameRef.current === null || quantityRef.current === null) {
+		// 	throw new Error("Couldn't get the new item info");
+		// }
 
-		// Extract the values from the inputs and add the new item
-		const name = nameRef.current.value;
-		const quantityString = quantityRef.current.value;
-		const quantity = quantityString !== "" ? parseInt(quantityString, 10) : 0;
-		addItem(name, quantity);
+		// // Extract the values from the inputs and add the new item
+		// const name = nameRef.current.value;
+		// const quantityString = quantityRef.current.value;
+		// const quantity = quantityString !== "" ? parseInt(quantityString, 10) : 0;
+		addItem("name", 0);
 
-		// Clear the input form
-		nameRef.current.value = "";
-		quantityRef.current.value = "";
+		// // Clear the input form
+		// nameRef.current.value = "";
+		// quantityRef.current.value = "";
 	};
 
 	return (
 		<>
 			<tr style={{ borderTop: "3px solid black" }}>
-				<td>
-					<input
-						ref={nameRef}
-						type="text"
-						placeholder="New item"
-						style={{ width: "200px" }}
-					/>
-				</td>
-				<td>
-					<input
-						ref={quantityRef}
-						type="number"
-						placeholder="0"
-						style={{ width: "60px" }}
-					/>
-				</td>
+				<td>{tree}</td>
 			</tr>
 			<tr>
 				<td colSpan={2}>
@@ -147,17 +134,20 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (
 		};
 	}, [inventoryList]);
 
-	const inventoryItemViews = inventoryItems.map((inventoryItem) => {
-		const deleteItem = () => inventoryList.deleteItem(inventoryItem.id);
-		return (
-			<InventoryItemView
-				key={inventoryItem.id}
-				inventoryItem={inventoryItem}
-				deleteItem={deleteItem}
-				disabled={disabled}
-			/>
-		);
-	});
+	console.log(inventoryItems)
+	console.log(disabled)
+
+	// const inventoryItemViews = inventoryItems.map((inventoryItem) => {
+	// 	const deleteItem = () => inventoryList.deleteItem(inventoryItem.id);
+	// 	return (
+	// 		<InventoryItemView
+	// 			key={inventoryItem.id}
+	// 			inventoryItem={inventoryItem}
+	// 			deleteItem={deleteItem}
+	// 			disabled={disabled}
+	// 		/>
+	// 	);
+	// });
 
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
@@ -168,14 +158,7 @@ export const InventoryListView: React.FC<IInventoryListViewProps> = (
 				</tr>
 			</thead>
 			<tbody>
-				{inventoryItemViews.length > 0 ? (
-					inventoryItemViews
-				) : (
-					<tr>
-						<td colSpan={2}>No items in inventory</td>
-					</tr>
-				)}
-				<AddItemView addItem={inventoryList.addItem} />
+				<AddItemView addItem={inventoryList.addItem} addTree={inventoryList.getTreeView}/>
 			</tbody>
 		</table>
 	);

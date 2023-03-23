@@ -8,8 +8,46 @@ import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
-
+import {
+	brand,
+	defaultSchemaPolicy,
+	FieldKinds,
+	fieldSchema,
+	FieldSchema,
+	ISharedTree,
+	jsonableTreeFromCursor,
+	mapCursorField,
+	moveToDetachedField,
+	namedTreeSchema,
+	rootFieldKey,
+	runSynchronous,
+	SchemaDataAndPolicy,
+	SharedTreeFactory,
+	singleTextCursor,
+	TreeSchema,
+	TreeSchemaIdentifier,
+	ValueSchema,
+} from "@fluid-internal/tree";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+
+const omniSequence: FieldSchema = fieldSchema(FieldKinds.sequence);
+
+const omniNode: TreeSchema = namedTreeSchema({
+	name: brand("foo"),
+	extraLocalFields: omniSequence,
+	value: ValueSchema.Serializable,
+});
+
+const schemaTypes: TreeSchemaIdentifier[] = [brand("foo")];
+
+export const appSchemaData: SchemaDataAndPolicy = {
+	policy: defaultSchemaPolicy,
+	globalFieldSchema: new Map([[rootFieldKey, omniSequence]]),
+	treeSchema: new Map(schemaTypes.map((name) => [name, omniNode])),
+};
+
+const treeKey = "sharedTree-key";
 
 const quantityKey = "quantity";
 
@@ -53,8 +91,47 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
  */
 export class InventoryList extends DataObject implements IInventoryList {
 	private readonly inventoryItems = new Map<string, InventoryItem>();
+	static treeFactory = new SharedTreeFactory();
+	public tree: ISharedTree | undefined;
+	public nodeIds: string[] = [];
+
+	public readonly getTreeView = () => {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const readCursor = this.tree!.forest.allocateCursor();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		moveToDetachedField(this.tree!.forest, readCursor);
+		const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+		readCursor.free();
+		return JSON.stringify(actual);
+	};
 
 	public readonly addItem = (name: string, quantity: number) => {
+		this.tree?.storedSchema.update(appSchemaData);
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const cursor = this.tree!.forest.allocateCursor();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		moveToDetachedField(this.tree!.forest, cursor);
+		cursor.firstNode();
+		cursor.firstField();
+		cursor.firstNode();
+		const path = cursor.getPath();
+		cursor.free();
+
+		let value = Math.floor(Math.random()*10).toString();
+		while (this.nodeIds?.includes(value)){
+			value = Math.floor(Math.random()*10).toString();
+		}
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		runSynchronous(this.tree!, () => {
+			const writeCursors = singleTextCursor({ type: brand("Node"), value });
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const field = this.tree!.editor.sequenceField(path?.parent, path!.parentField);
+			field.insert(0, writeCursors);
+		});
+
+		console.log(this.getTreeView());
+
 		const nameString = SharedString.create(this.runtime);
 		nameString.insertText(0, name);
 		const quantityMap: SharedMap = SharedMap.create(this.runtime);
@@ -101,6 +178,11 @@ export class InventoryList extends DataObject implements IInventoryList {
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
 	protected async hasInitialized() {
+		const treeHandle = this.root.get<IFluidHandle<ISharedTree>>(treeKey);
+		if (treeHandle === undefined) {
+			throw new Error("SharedTree missing");
+		}
+		this.tree = await treeHandle.get();
 		this.root.on("valueChanged", (changed) => {
 			if (changed.previousValue === undefined) {
 				// Must be from adding a new item
@@ -117,13 +199,20 @@ export class InventoryList extends DataObject implements IInventoryList {
 			}
 		});
 
-		for (const [id, itemData] of this.root) {
-			const [nameSharedString, quantitySharedMap] = await Promise.all([
-				itemData.name.get(),
-				itemData.quantity.get(),
-			]);
-			this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedMap));
-		}
+		// for (const [id, itemData] of this.root) {
+		// 	const [nameSharedString, quantitySharedMap] = await Promise.all([
+		// 		itemData.name.get(),
+		// 		itemData.quantity.get(),
+		// 	]);
+		// 	this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedMap));
+		// }
+	}
+	protected async initializingFirstTime() {
+		const tree: ISharedTree = this.runtime.createChannel(
+			"schema-migration-sharedTree",
+			InventoryList.treeFactory.type,
+		) as ISharedTree;
+		this.root.set(treeKey, tree.handle);
 	}
 }
 
@@ -135,6 +224,6 @@ export class InventoryList extends DataObject implements IInventoryList {
 export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
 	"inventory-list",
 	InventoryList,
-	[SharedMap.getFactory(), SharedString.getFactory()],
+	[SharedMap.getFactory(), SharedString.getFactory(), new SharedTreeFactory()],
 	{},
 );

@@ -7,6 +7,8 @@ import { EventEmitter } from "events";
 import type { IMigratableModel, IMigratableModelEvents } from "@fluid-example/example-utils";
 import type { IEventProvider } from "@fluidframework/common-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { NodeId, SharedTree } from "@fluid-experimental/tree";
+import { ISharedTree } from "@fluid-internal/tree";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IInventoryListAppModelEvents extends IMigratableModelEvents {}
@@ -36,9 +38,13 @@ export interface IInventoryItem extends EventEmitter {
 export interface IInventoryList extends EventEmitter {
 	readonly addItem: (name: string, quantity: number) => void;
 	readonly deleteItem: (id: string) => void;
+	readonly getTreeView: () => string;
 
 	readonly getItems: () => IInventoryItem[];
 	readonly getItem: (id: string) => IInventoryItem | undefined;
+
+	tree: SharedTree | ISharedTree | undefined;
+	nodeIds: string[] | NodeId[];
 
 	/**
 	 * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
