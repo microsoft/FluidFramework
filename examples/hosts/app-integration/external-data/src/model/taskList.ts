@@ -133,8 +133,10 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		return this._draftData;
 	}
 
+	private readonly taskListIdKey: string = "externalTaskListId";
+
 	private get externalTaskListId(): string {
-		this._externalTaskListId = this.root.get("externalTaskListId");
+		this._externalTaskListId = this.root.get(this.taskListIdKey);
 		if (this._externalTaskListId === undefined) {
 			throw new Error("The externalTaskListId property has not yet been initialized.");
 		}
@@ -430,7 +432,7 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * DataObject, by registering an event listener for changes to the task list.
 	 */
 	protected async hasInitialized(): Promise<void> {
-		this._externalTaskListId = this.root.get("externalTaskListId");
+		this._externalTaskListId = this.root.get(this.taskListIdKey);
 		if (this._externalTaskListId === undefined) {
 			throw new Error("externalTaskListId was not initialized");
 		}
