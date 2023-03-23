@@ -8,7 +8,6 @@ import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	IGarbageCollectionData,
-	IGarbageCollectionState,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -23,6 +22,7 @@ import {
 	GCNodeType,
 	GCSummaryStateTracker,
 	IGarbageCollectionRuntime,
+	IGarbageCollectionState,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,

@@ -35,11 +35,23 @@ export {
 	UnreferencedState,
 } from "./gcDefinitions";
 export {
+	cloneGCData,
+	concatGarbageCollectionStates,
+	getGCDataFromSnapshot,
 	getSnapshotDataFromOldSnapshotFormat,
+	runGarbageCollection,
 	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
+	trimLeadingAndTrailingSlashes,
+	unpackChildNodesGCDetails,
 } from "./gcHelpers";
+export {
+	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
+} from "./gcSummaryDefinitions";
 export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
