@@ -151,8 +151,8 @@ The dotted arrow represents a boolean guard condition. It means that the contain
 
 When a new change is made to the data in a given client, the container moves to **dirty** state *in that client*. When all pending changes are acknowledged, it transitions to the **saved** state.
 
-Note that a container in the **saved** state is not necessarily perfectly synchronized with the service. 
-There may be changes made on other clients that have been saved to the service but have not yet been relayed to this client. 
+Note that a container in the **saved** state is not necessarily perfectly synchronized with the service.  
+There may be changes made on other clients that have been saved to the service but have not yet been relayed to this client.  
 Situations like this would normally last only fractions of a second.  
 But if the client is disconnected while in **saved** state, it remains **saved**, but unsynchronized, until it reconnects. See [Connection status states](#connection-status-states) for more about connection.
 
@@ -225,7 +225,7 @@ For more information, see [Managing connection and disconnection](#managing-conn
 
 #### Establishing connection
 
-In this state, the client is attempting to connect to the Fluid service, but has not yet received an acknowledgement. 
+In this state, the client is attempting to connect to the Fluid service, but has not yet received an acknowledgement.  
 A container moves into the **establishing connection** state in any of the following circumstances:
 
 -   On the creating client, your code calls the `container.attach` method. For more information, see [Publishing a container](./containers.md#publishing-a-container). This method publishes the container *and* connects the client to the service.
@@ -260,7 +260,7 @@ There are scenarios in which you need to control the connection status of the co
     -   `EstablishingConnection`: Your code should treat this state the same as it treats the disconnected state. See [Examples](#examples).
     -   `CatchingUp`: In most scenarios, your code should treat this state the same as it treats the connected state. See [Examples](#examples). An exception would be when it is important that users see the very latest changes from other clients before they are allowed to make their own edits. In that case, your code should treat **catching up** like it treats the **disconnected** state.
     -   `Connected`
-    
+
 -   A *disconnected* event, that fires if a network problem causes a disconnection or if the `container.disconnect` method is called.
 -   A *connected* event, that fires if the Fluid client runtime is able to reconnect (and any needed catching up is complete) or if the `container.connect` method is called.
 
