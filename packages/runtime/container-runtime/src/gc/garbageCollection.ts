@@ -314,6 +314,10 @@ export class GarbageCollector implements IGarbageCollector {
 			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
 		}
 
+		if (!this.shouldRunGC || this.summaryStateTracker.doesSummaryStateNeedReset()) {
+			return;
+		}
+
 		// If running in tombstone mode, initialize the tombstone state from the snapshot. Also, notify the runtime of
 		// tombstone routes.
 		if (this.configs.tombstoneMode && baseSnapshotData.tombstones !== undefined) {
@@ -335,6 +339,10 @@ export class GarbageCollector implements IGarbageCollector {
 		snapshotData: IGarbageCollectionSnapshotData | undefined,
 		currentReferenceTimestampMs: number,
 	) {
+		if (!this.shouldRunGC) {
+			return;
+		}
+
 		/**
 		 * Note: "newReferencesSinceLastRun" is not reset here. This is done because there may be references since the
 		 * snapshot that we are updating state from. For example, this client may have processed ops till seq#1000 and
@@ -353,7 +361,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.unreferencedNodesState.clear();
 
 		// If there is no snapshot data, unset the GC state.
-		if (snapshotData === undefined) {
+		if (snapshotData === undefined || this.summaryStateTracker.doesSummaryStateNeedReset()) {
 			this.gcDataFromLastRun = undefined;
 			return;
 		}
