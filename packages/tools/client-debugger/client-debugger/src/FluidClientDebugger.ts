@@ -215,7 +215,6 @@ export class FluidClientDebugger
 		},
 		["GET_AUDIENCE_EVENT"]: (untypedMessage) => {
 			const message = untypedMessage as GetAudienceMessage;
-			console.log("GET_AUDIENCE_EVENT_MESSAGE:", message);
 			if (message.data.containerId === this.containerId) {
 				this.postAudienceStateChange();
 				return true;
@@ -269,8 +268,6 @@ export class FluidClientDebugger
 		].map(([clientId, client]): AudienceClientMetaData => {
 			return { clientId, client };
 		});
-
-		console.log("ClientId", this.container.clientId);
 
 		postMessagesToWindow<AudienceEventMessage>(this.messageLoggingOptions, {
 			source: debuggerMessageSource,

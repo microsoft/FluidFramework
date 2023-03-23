@@ -87,7 +87,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setAudienceState, setAudienceHistory]);
+	}, [containerId, setClientId, setAudienceState, setAudienceHistory]);
 
 	return (
 		<_AudienceView
