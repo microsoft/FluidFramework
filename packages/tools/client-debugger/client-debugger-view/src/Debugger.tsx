@@ -174,6 +174,10 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 						{containers?.map((container) => (
 							<MenuItem
 								key={container.id}
+								isActive={
+									menuSelection?.type === "containerMenuSelection" &&
+									menuSelection.containerId === container.id
+								}
 								text={container.nickname ?? container.id}
 								onClick={(event): void => {
 									onContainerClicked(`${container.id}`);
@@ -182,7 +186,11 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 						))}
 					</MenuSection>
 					<MenuSection header="Telemetry">
-						<MenuItem text="See Telemetry" onClick={onTelemetryClicked} />
+						<MenuItem
+							isActive={menuSelection?.type === "telemetryMenuSelection"}
+							text="See Telemetry"
+							onClick={onTelemetryClicked}
+						/>
 					</MenuSection>
 				</Stack.Item>
 				<Stack.Item grow={5} styles={contentViewStyles}>

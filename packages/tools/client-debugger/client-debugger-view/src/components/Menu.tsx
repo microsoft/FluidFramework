@@ -37,6 +37,7 @@ export function MenuSection(props: MenuSectionProps): React.ReactElement {
 export interface MenuItemProps {
 	onClick: (event: unknown) => void;
 	text: string;
+	isActive: boolean;
 }
 
 /**
@@ -46,7 +47,10 @@ export interface MenuItemProps {
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
 	return (
-		<Stack.Item styles={menuSectionItemStyles} onClick={props.onClick}>
+		<Stack.Item
+			styles={menuSectionItemStyles(props.isActive)}
+			onClick={props.onClick}
+		>
 			{props.text}
 		</Stack.Item>
 	);
@@ -68,9 +72,17 @@ const menuSectionHeaderStyles: IStackStyles = {
 	},
 };
 
-const menuSectionItemStyles: IStackStyles = {
-	root: {
-		paddingLeft: "20px",
-		cursor: "pointer",
-	},
-};
+function menuSectionItemStyles(isActive: boolean): IStackStyles {
+	return {
+		root: {
+			"paddingLeft": "20px",
+			"cursor": "pointer",
+			background: isActive ? DefaultPalette.themeTertiary : DefaultPalette.themeLight,
+			fontWeight: isActive ? "bold" : "",
+			"&:hover": {
+				background: DefaultPalette.themeSecondary,
+				color: DefaultPalette.white
+			},
+		},
+	};
+}
