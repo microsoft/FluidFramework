@@ -14,13 +14,20 @@ import { IDebuggerMessage } from "./Messages";
  * @public
  */
 export interface AudienceClientMetaData {
+	/**
+	 * Local users's clientId.
+	 */
 	clientId: string;
+
+	/**
+	 * Metadata about the client that was added or removed.
+	 */
 	client: IClient;
 }
 
 /**
  * Inbound message requesting audience data from the Container with the specific ID.
- * Will result in the {@link AudienceEventMessage} message being posted.
+ * Will result in the {@link AudienceSummaryMessage } message being posted.
  *
  * @public
  */
@@ -29,7 +36,7 @@ export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
 }
 
 /**
- * Message data format used by {@link AudienceEventMessage}.
+ * Message data format used by {@link AudienceSummaryMessage }.
  *
  * @public
  */
@@ -49,10 +56,10 @@ export interface AudienceEventMessageData extends HasContainerId {
 }
 
 /**
- * Audience event message which contains {@link AudienceEventMessageData} data
+ * Audience event message which contains {@link AudienceEventMessageData} data.
  *
  * @public
  */
-export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMessageData> {
+export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceEventMessageData> {
 	type: "AUDIENCE_EVENT";
 }

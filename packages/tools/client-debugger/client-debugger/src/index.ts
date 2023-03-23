@@ -57,7 +57,7 @@ export {
 export {
 	AudienceClientMetaData,
 	AudienceEventMessageData,
-	AudienceEventMessage,
+	AudienceSummaryMessage,
 	GetAudienceMessage,
 	debuggerMessageSource,
 	HasContainerId,

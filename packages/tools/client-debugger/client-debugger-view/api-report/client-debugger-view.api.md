@@ -33,13 +33,10 @@ export function _AudienceView(props: _AudienceViewProps): React_2.ReactElement;
 
 // @public
 export interface _AudienceViewProps {
-    // (undocumented)
     audienceClientMetaData: AudienceClientMetaData[];
-    // (undocumented)
     audienceHistory: readonly AudienceChangeLogEntry[];
     // (undocumented)
     clientId: string | undefined;
-    // (undocumented)
     onRenderAudienceMember: (props: AudienceMemberViewProps) => React_2.ReactElement;
 }
 

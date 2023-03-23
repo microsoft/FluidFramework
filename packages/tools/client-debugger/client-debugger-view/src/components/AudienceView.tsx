@@ -76,15 +76,29 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 }
 
 /**
- * audienceClientMetaData contains corresponding clientId and IClient object as element
- * TODO: Remove onRenderAudienceMember
- *
  * {@link _AudienceView} input props.
+ *
+ * @privateRemarks TODO: Remove onRenderAudienceMember
  */
 export interface _AudienceViewProps {
+	/*
+	 * Local users's clientId.
+	 */
 	clientId: string | undefined;
+
+	/**
+	 * Metadata of audiences containing clientId and IClient.
+	 */
 	audienceClientMetaData: AudienceClientMetaData[];
+
+	/**
+	 * Callback to render data about an individual audience member.
+	 */
 	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
+
+	/**
+	 * History of audience connected or disconnected to the container.
+	 */
 	audienceHistory: readonly AudienceChangeLogEntry[];
 }
 

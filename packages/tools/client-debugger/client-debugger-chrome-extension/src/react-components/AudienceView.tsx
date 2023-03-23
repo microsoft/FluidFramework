@@ -9,7 +9,7 @@ import {
 	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
-	AudienceEventMessage,
+	AudienceSummaryMessage,
 	HasContainerId,
 } from "@fluid-tools/client-debugger";
 import { defaultRenderOptions, _AudienceView } from "@fluid-tools/client-debugger-view";
@@ -59,7 +59,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
-				const message: AudienceEventMessage = untypedMessage as AudienceEventMessage;
+				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
 
 				setClientId(message.data.clientId);
 				setAudienceState(message.data.audienceState);

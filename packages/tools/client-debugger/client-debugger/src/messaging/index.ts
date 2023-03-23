@@ -39,7 +39,7 @@ export {
 	GetAudienceMessage,
 	AudienceClientMetaData,
 	AudienceEventMessageData,
-	AudienceEventMessage,
+	AudienceSummaryMessage,
 } from "./AudienceMessages";
 export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
 export {

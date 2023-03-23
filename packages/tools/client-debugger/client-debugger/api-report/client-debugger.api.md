@@ -28,16 +28,8 @@ export interface AudienceChangeLogEntry extends LogEntry {
 
 // @public
 export interface AudienceClientMetaData {
-    // (undocumented)
     client: IClient;
-    // (undocumented)
     clientId: string;
-}
-
-// @public
-export interface AudienceEventMessage extends IDebuggerMessage<AudienceEventMessageData> {
-    // (undocumented)
-    type: "AUDIENCE_EVENT";
 }
 
 // @public
@@ -46,6 +38,12 @@ export interface AudienceEventMessageData extends HasContainerId {
     audienceHistory: readonly AudienceChangeLogEntry[];
     audienceState: AudienceClientMetaData[];
     clientId: string | undefined;
+}
+
+// @public
+export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceEventMessageData> {
+    // (undocumented)
+    type: "AUDIENCE_EVENT";
 }
 
 // @internal
