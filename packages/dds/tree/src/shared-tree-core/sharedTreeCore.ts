@@ -235,15 +235,17 @@ export class SharedTreeCore<
 	 * Update the state of the tree (including all indexes) according to the given change.
 	 * If there is not currently a transaction open, the change will be submitted to Fluid.
 	 */
-	protected applyChange(change: TChange): void {
-		const revision = mintRevisionTag();
+	protected applyChange(change: TChange, revision?: RevisionTag): void {
 		const commit = {
 			change,
-			revision,
+			revision: revision ?? mintRevisionTag(),
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(revision, change, false);
-		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		const delta = this.editManager.addLocalChange(commit.revision, change, false);
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(change),
+			commit.revision,
+		);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
@@ -320,8 +322,8 @@ export class SharedTreeCore<
 					ancestor === localBranchHead,
 					0x598 /* Expected merging checkout branches to be related */,
 				);
-				for (const { change } of changes) {
-					this.applyChange(change);
+				for (const { change, revision } of changes) {
+					this.applyChange(change, revision);
 					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				}
 				return changeToForked;
