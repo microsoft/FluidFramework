@@ -77,7 +77,7 @@ Notes:
 -   The `client` object is defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
 -   It is a good practice to destructure the object that is returned by `createContainer` into its two main parts; `container` and `services`. For more about the `services` object, see [Container services](#container-services).
 
-A newly created container is in an **unpublished** state. An unpublished container is stored on the local client only and therefore no data is shared with other clients yet. But the data in it can, and sometimes should be, edited while it is unpublished. See [Container states and events](./container-states-events/index.md).
+A newly created container is in an **unpublished** state. An unpublished container is stored on the local client only and therefore no data is shared with other clients yet. But the data in it can, and sometimes should be, edited while it is unpublished. See [Container states and events]({{< relref "container-states-events/index.md" >}}).
 
 ### Publishing a container
 
@@ -94,7 +94,7 @@ Once published, the Fluid container becomes an entity on Fluid service and subse
 Invoking the container's `attach` method returns the unique identifier for the container.
 Subsequent clients use this ID to connect to the container.
 
-Note that once published, a container cannot be unpublished. (But it can be deleted. See [Deleting a container from the service](./container-states-events/index.md#deleting-a-container-from-the-service).)
+Note that once published, a container cannot be unpublished. (But it can be deleted. See [Deleting a container from the service]({{< relref "container-states-events/index.md#deleting-a-container-from-the-service" >}}).)
 
 ```typescript {linenos=inline,hl_lines=[10]}
 const schema = {
@@ -109,7 +109,7 @@ const { container, services } =
 const containerId = await container.attach();
 ```
 
-In addition to publishing the container, the `attach` method also connects the creating client to the published container. See [Connecting to a container](#connecting-to-a-container) and [Connection status states](./container-states-events/index.md#connection-status-states).
+In addition to publishing the container, the `attach` method also connects the creating client to the published container. See [Connecting to a container](#connecting-to-a-container) and [Connection status states]({{< relref "container-states-events/index.md#connection-status-states" >}}).
 
 ### Connecting to a container
 
@@ -132,7 +132,7 @@ const { container, services } =
 
 {{< callout tip >}}
 
-This section provides only basic information about the *most important* states that a container can be in. Details about *all* container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events](./container-states-events/).
+This section provides only basic information about the *most important* states that a container can be in. Details about *all* container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events]({{< relref "container-states-events/index.md" >}}).
 
 {{< /callout >}}
 
