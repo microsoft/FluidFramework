@@ -20,6 +20,7 @@ export class OpGroupingManager {
 			content: [
 				{
 					...batch.content[0],
+					metadata: undefined, // important to not keep reference to first op's batch metadata
 					compression: undefined,
 					// deserializedContent: ,
 					contents: JSON.stringify({
