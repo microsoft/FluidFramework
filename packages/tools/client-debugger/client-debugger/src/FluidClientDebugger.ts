@@ -272,7 +272,7 @@ export class FluidClientDebugger
 
 		console.log("ClientId", this.container.clientId);
 
-		postMessageToWindow<AudienceEventMessage>(this.messageLoggingOptions, {
+		postMessagesToWindow<AudienceEventMessage>(this.messageLoggingOptions, {
 			source: debuggerMessageSource,
 			type: "AUDIENCE_EVENT",
 			data: {
