@@ -184,4 +184,5 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      # grep returns 0 if there are matches, but we want to return 1 if there are matches, so we negate the grep command result
       ! grep -r "\^2.0.0-internal.\d*.\d*.\d*" ./**/package.json
