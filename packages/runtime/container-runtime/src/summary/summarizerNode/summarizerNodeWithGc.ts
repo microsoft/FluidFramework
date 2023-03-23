@@ -23,8 +23,8 @@ import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils"
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	cloneGCData,
+	getBaseGCDetailsFromSnapshotData,
 	getGCDataFromSnapshot,
-	runGarbageCollection,
 	unpackChildNodesGCDetails,
 } from "../../gc";
 import { SummarizerNode } from "./summarizerNode";
@@ -401,14 +401,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			// If there is a GC tree in the snapshot, this is the root summarizer node. Read GC data from the tree
 			// process it as explained above.
 			const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
-
-			const gcNodes: { [id: string]: string[] } = {};
-			for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
-				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
-			}
-			// Run GC on the nodes in the snapshot to get the used routes for each node in the container.
-			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
-			gcDetails = { gcData: { gcNodes }, usedRoutes };
+			gcDetails = getBaseGCDetailsFromSnapshotData(gcSnapshotData);
 		} else {
 			// If there is a GC blob in the snapshot, it's a non-root summarizer nodes - The root summarizer node
 			// writes GC blob in the snapshot of child nodes. Get  GC data and used routes from the blob.

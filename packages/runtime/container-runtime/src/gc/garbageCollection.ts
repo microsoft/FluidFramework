@@ -201,8 +201,29 @@ export class GarbageCollector implements IGarbageCollector {
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
 					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+					let snapshotData: IGarbageCollectionSnapshotData | undefined;
 					if (gcSnapshotTree !== undefined) {
-						return getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
+						snapshotData = await getGCDataFromSnapshot(
+							gcSnapshotTree,
+							readAndParseBlob,
+						);
+					}
+
+					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
+					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
+					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
+					// brought back. The deletedNodes info is needed to identify when these nodes are used.
+					if (
+						this.configs.gcVersionInBaseSnapshot !==
+						this.summaryStateTracker.currentGCVersion
+					) {
+						return snapshotData
+							? {
+									gcState: undefined,
+									tombstones: undefined,
+									deletedNodes: snapshotData.deletedNodes,
+							  }
+							: undefined;
 					}
 
 					// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
@@ -265,20 +286,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// used to initialize the GC state of all the nodes in the container.
 		this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
 			const baseSnapshotData = await this.baseSnapshotDataP;
-			if (baseSnapshotData === undefined) {
-				return {};
-			}
-
-			const gcNodes: { [id: string]: string[] } = {};
-			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
-				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
-			}
-			// Run GC on the nodes in the base summary to get the routes used in each node in the container.
-			// This is an optimization for space (vs performance) wherein we don't need to store the used routes of
-			// each node in the summary.
-			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
-
-			return { gcData: { gcNodes }, usedRoutes };
+			return getBaseGCDetailsFromSnapshotData(baseSnapshotData);
 		});
 
 		// Log all the GC options and the state determined by the garbage collector. This is interesting only for the
@@ -298,23 +306,19 @@ export class GarbageCollector implements IGarbageCollector {
 	 */
 	public async initializeBaseState(): Promise<void> {
 		const baseSnapshotData = await this.baseSnapshotDataP;
+
+		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether sweep is enabled or not
+		// to identify deleted nodes' usage.
+		if (baseSnapshotData?.deletedNodes !== undefined) {
+			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
+		}
 		/**
 		 * The base snapshot data will not be present if the container is loaded from:
 		 * 1. The first summary created by the detached container.
 		 * 2. A summary that was generated with GC disabled.
 		 * 3. A summary that was generated before GC even existed.
 		 */
-		if (baseSnapshotData === undefined) {
-			return;
-		}
-
-		// Initialize the deleted nodes from the snapshot. This is done irrespective of whether sweep is enabled or not
-		// to identify deleted nodes' usage.
-		if (baseSnapshotData.deletedNodes !== undefined) {
-			this.deletedNodes = new Set(baseSnapshotData.deletedNodes);
-		}
-
-		if (!this.shouldRunGC || this.summaryStateTracker.doesSummaryStateNeedReset()) {
+		if (!this.shouldRunGC || baseSnapshotData === undefined) {
 			return;
 		}
 
@@ -362,9 +366,9 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// Don't update the GC state if:
 		// 1. The snapshot data is undefined. This can happen if the snapshot was generated with GC disabled.
-		// 2. If the summary state needs reset. This can happen if the snapshot was generated with a different GC
-		// version than this garbage collector.
-		if (snapshotData === undefined || this.summaryStateTracker.doesSummaryStateNeedReset()) {
+		// 2. The  GC state in snapshot data is undefined. This can happen if the snapshot was generated with a
+		// different GC version than the version currently in effect.
+		if (snapshotData?.gcState === undefined) {
 			this.gcDataFromLastRun = undefined;
 			return;
 		}
@@ -613,7 +617,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// If the latest summary was updated but it was not tracked by this client, our state needs to be updated from
 		// this snapshot data.
-		if (this.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
+		if (this.configs.shouldRunGC && result.latestSummaryUpdated && !result.wasSummaryTracked) {
 			// The current reference timestamp should be available if we are refreshing state from a snapshot. There has
 			// to be at least one op (summary op / ack, if nothing else) if a snapshot was taken.
 			const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();

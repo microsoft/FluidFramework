@@ -659,6 +659,7 @@ declare function get_current_InterfaceDeclaration_IGarbageCollectionSnapshotData
 declare function use_old_InterfaceDeclaration_IGarbageCollectionSnapshotData(
     use: TypeOnly<old.IGarbageCollectionSnapshotData>);
 use_old_InterfaceDeclaration_IGarbageCollectionSnapshotData(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IGarbageCollectionSnapshotData());
 
 /*

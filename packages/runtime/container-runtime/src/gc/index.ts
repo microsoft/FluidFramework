@@ -38,6 +38,7 @@ export {
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
+	getBaseGCDetailsFromSnapshotData,
 	getGCDataFromSnapshot,
 	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,

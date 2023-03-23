@@ -5,6 +5,7 @@
 
 import { ITelemetryGenericEvent } from "@fluidframework/common-definitions";
 import { assert } from "@fluidframework/common-utils";
+import { runGarbageCollection } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
@@ -13,6 +14,13 @@ import {
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
+<<<<<<< HEAD
+=======
+	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
+>>>>>>> 2385193fdd (Update deleted nodes only on GC version change)
 } from "@fluidframework/runtime-definitions";
 import { packagePathToTelemetryProperty, ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";
@@ -329,6 +337,30 @@ export async function getGCDataFromSnapshot(
 		rootGCState = concatGarbageCollectionStates(rootGCState, gcState);
 	}
 	return { gcState: rootGCState, tombstones, deletedNodes };
+}
+
+export function getBaseGCDetailsFromSnapshotData(
+	snapshotData: IGarbageCollectionSnapshotData | undefined,
+): IGarbageCollectionDetailsBase {
+	if (snapshotData === undefined) {
+		return {};
+	}
+
+	let gcData: IGarbageCollectionData | undefined;
+	if (snapshotData.gcState !== undefined) {
+		gcData = { gcNodes: {} };
+		for (const [nodeId, nodeData] of Object.entries(snapshotData.gcState.gcNodes)) {
+			gcData.gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+		}
+	}
+	// Run GC on the nodes in the base summary to get the routes used in each node in the container.
+	// This is an optimization for space (vs performance) wherein we don't need to store the used routes of
+	// each node in the summary.
+	const usedRoutes = gcData
+		? runGarbageCollection(gcData.gcNodes, ["/"]).referencedNodeIds
+		: undefined;
+
+	return { gcData, usedRoutes };
 }
 
 /**
