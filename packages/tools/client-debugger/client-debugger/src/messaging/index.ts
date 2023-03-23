@@ -48,5 +48,5 @@ export {
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./Utilities";

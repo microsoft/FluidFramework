@@ -17,42 +17,6 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 	return message.type === MessageType.Operation;
 }
 
-enum RuntimeMessage {
-	FluidDataStoreOp = "component",
-	Attach = "attach",
-	ChunkedOp = "chunkedOp",
-	BlobAttach = "blobAttach",
-	Rejoin = "rejoin",
-	Alias = "alias",
-	Operation = "op",
-}
-
-/**
- * Determines whether or not the message type is one of the following: (legacy)
- *
- * - "component"
- *
- * - "attach"
- *
- * - "chunkedOp"
- *
- * - "blobAttach"
- *
- * - "rejoin"
- *
- * - "alias"
- *
- * - "op"
- *
- * @deprecated This API should not be used.
- */
-export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): boolean {
-	if ((Object.values(RuntimeMessage) as string[]).includes(message.type)) {
-		return true;
-	}
-	return false;
-}
-
 // ADO #1385: staging code changes across layers.
 // Eventually to be replaced by MessageType.accept
 export enum MessageType2 {

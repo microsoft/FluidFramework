@@ -16,14 +16,15 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
+import { mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+// eslint-disable-next-line import/no-internal-modules
+import { IFetchSnapshotResult } from "../summary/summarizerNode";
 import {
 	createRootSummarizerNodeWithGC,
 	IRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../summarizerNode/summarizerNodeWithGc";
-import { mergeStats } from "../summaryUtils";
-import { IFetchSnapshotResult } from "../summarizerNode";
+} from "../summary/summarizerNode/summarizerNodeWithGc";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
