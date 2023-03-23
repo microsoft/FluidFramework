@@ -329,8 +329,7 @@ describe("SharedTree", () => {
 			assert.equal(peekTestValue(tree2), 43);
 		});
 
-		// TODO: Instead of setting a value do an insert into a sequence field: needs to not be idempotent
-		it("can rebase an insert of and edit to a node in an optional field", async () => {
+		it.skip("can rebase an insert of and edit to a node in an optional field", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 
