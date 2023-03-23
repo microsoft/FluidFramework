@@ -476,19 +476,24 @@ export class Packages {
  * Reads the contents of package.json, applies a transform function to it, then writes the results back to the source
  * file.
  *
- * @param packageDir - The path to the directory containing package.json.
+ * @param packagePath - A path to a package.json file or a folder containing one. If the path is a directory, the
+ * package.json from that directory will be used.
  * @param packageTransformer - A function that will be executed on the package.json contents before writing it
  * back to the file.
  *
  * @remarks
  *
  * The package.json is always sorted using sort-package-json.
+ *
+ * @internal
  */
 export function updatePackageJsonFile(
-	packageDir: string,
+	packagePath: string,
 	packageTransformer: (json: PackageJson) => void,
 ): void {
-	const packagePath = path.join(packageDir, "package.json");
+	packagePath = packagePath.endsWith("package.json")
+		? packagePath
+		: path.join(packagePath, "package.json");
 	const [pkgJson, indent] = readPackageJsonAndIndent(packagePath);
 
 	// Transform the package.json
@@ -500,8 +505,10 @@ export function updatePackageJsonFile(
 /**
  * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
  * indentation.
+ *
+ * @internal
  */
-function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson, indent: string] {
+export function readPackageJsonAndIndent(pathToJson: string): [json: PackageJson, indent: string] {
 	const contents = readFileSync(pathToJson).toString();
 	const indentation = detectIndent(contents).indent || "\t";
 	const pkgJson: PackageJson = JSON.parse(contents);
