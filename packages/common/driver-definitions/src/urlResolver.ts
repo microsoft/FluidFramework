@@ -36,6 +36,9 @@ export interface IWebResolvedUrl extends IResolvedUrlBase {
 	data: string;
 }
 
+/**
+ * TODO
+ */
 export interface IFluidResolvedUrl extends IResolvedUrlBase {
 	/**
 	 * {@inheritDoc IResolvedUrlBase."type"}
@@ -83,6 +86,9 @@ export interface IContainerPackageInfo {
 	name: string;
 }
 
+/**
+ * TODO
+ */
 export interface IUrlResolver {
 	/**
 	 * TODO
