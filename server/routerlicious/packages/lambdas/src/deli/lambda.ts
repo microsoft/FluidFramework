@@ -1842,6 +1842,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			return CheckpointReason.EveryMessage;
 		}
 
+        if (this.noActiveClients) {
+            return CheckpointReason.NoClients;
+        }
+
 		if (this.checkpointInfo.rawMessagesSinceCheckpoint >= checkpointHeuristics.maxMessages) {
 			// exceeded max messages since last checkpoint
 			return CheckpointReason.MaxMessages;
@@ -1856,10 +1860,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			// last instruction is for clearing the cache
 			// checkpoint now to ensure that happens
 			return CheckpointReason.ClearCache;
-		}
-
-		if (this.noActiveClients) {
-			return CheckpointReason.NoClients;
 		}
 
 		return undefined;
