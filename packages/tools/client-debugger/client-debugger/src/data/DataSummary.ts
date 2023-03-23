@@ -5,7 +5,9 @@
 
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { SharedCounter } from "@fluidframework/counter";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+
 import { FluidObjectNode } from "./VisualTree";
 
 /**
@@ -20,6 +22,14 @@ interface SharedObjectListenerEvents extends IEvent {
 
 // Ideas:
 // - Hold onto previous summary and only transmit diff?
+
+// TODOs:
+// - Needs to be disposable so we can unbind listeners when the thing is no longer referenced.
+// - We need a structure that manages the cross-DDS dependencies such that...
+//   - Callers can request data for a specific DDS by its ID
+//   - We know when a particular DDS is no longer reachable, so we can remove it from the map
+//     - Note: the same DDS can be referenced in multiple places, so we have to be careful here
+//   - We know when a new DDS is referenced, so we can add it to the map
 
 /**
  * TODO
@@ -56,6 +66,9 @@ export abstract class SharedObjectVisualizer<TFluidObject extends ISharedObject>
 	protected abstract generateVisualTree(): FluidObjectNode;
 }
 
+/**
+ * {@link SharedObjectVisualizer} for {@link @fluidframework/counter#SharedCounter}s.
+ */
 export class SharedCounterVisualizer extends SharedObjectVisualizer<SharedCounter> {
 	public constructor(sharedCounter: SharedCounter) {
 		super(sharedCounter);
@@ -63,7 +76,7 @@ export class SharedCounterVisualizer extends SharedObjectVisualizer<SharedCounte
 	
 	public generateVisualTree(): FluidObjectNode {
 		return {
-			
+			fluidObjectId: this.sharedObject.id,
 		}
 	}
 }
