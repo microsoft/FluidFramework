@@ -67,6 +67,15 @@ export class PartitionManager extends EventEmitter {
 					msgPartition: queuedMessage.partition,
 				});
 			});
+
+            this.consumer.on("checkpoint_error", (partitionId, queuedMessage) => {
+				Lumberjack.error(`Kafka checkpoint failed`, {
+					partitionId,
+					msgOffset: queuedMessage.offset,
+					topic: queuedMessage.topic,
+					msgPartition: queuedMessage.partition,
+				});
+			});
 		}
 	}
 
