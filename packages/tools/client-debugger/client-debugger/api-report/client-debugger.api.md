@@ -268,7 +268,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export function postMessageToWindow<TMessage extends ISourcedDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
+export function postMessagesToWindow<TMessage extends ISourcedDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
 export interface RegistryChangeMessage extends ISourcedDebuggerMessage<RegistryChangeMessageData> {

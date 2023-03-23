@@ -6,5 +6,6 @@
 	"docs/tutorials/.*\\.tsx?",
 	"azure/packages/azure-local-service/src/index.ts",
 	"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-	"experimental/PropertyDDS/services/property-query-service/test/get_config.js"
+	"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+	"tools/telemetry-generator/package-lock.json"
 ]

@@ -16,7 +16,7 @@ import { ISourcedDebuggerMessage } from "./Messages";
  *
  * @internal
  */
-export function postMessageToWindow<TMessage extends ISourcedDebuggerMessage>(
+export function postMessagesToWindow<TMessage extends ISourcedDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
 	...messages: TMessage[]
 ): void {

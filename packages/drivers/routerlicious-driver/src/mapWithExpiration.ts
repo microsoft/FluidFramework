@@ -8,16 +8,11 @@ import { assert } from "@fluidframework/common-utils";
 /**
  * An extension of Map that expires (deletes) entries after a period of inactivity.
  * The policy is based on the last time a key was written to.
- *
- * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
  */
 export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValue> {
 	/** Timestamps (as epoch ms numbers) of when each key was last refreshed */
 	private readonly lastRefreshedTimes = new Map<TKey, number>();
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	constructor(private readonly expiryMs: number) {
 		super();
 	}
@@ -52,58 +47,37 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
 		this.forEach(() => {});
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	get size(): number {
 		this.clearExpiredEntries();
 		return super.size;
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	has(key: TKey): boolean {
 		this.checkExpiry(key, true /* cleanUp */);
 		return super.has(key);
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	get(key: TKey): TValue | undefined {
 		this.checkExpiry(key, true /* cleanUp */);
 		return super.get(key);
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	set(key: TKey, value: TValue): this {
 		// Sliding window expiration policy (on write)
 		this.refresh(key);
 		return super.set(key, value);
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	delete(key: TKey): boolean {
 		this.lastRefreshedTimes.delete(key);
 		return super.delete(key);
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	clear(): void {
 		this.lastRefreshedTimes.clear();
 		super.clear();
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	forEach(
 		callbackfn: (value: TValue, key: TKey, map: Map<TKey, TValue>) => void,
 		thisArg?: any,
@@ -126,38 +100,23 @@ export class MapWithExpiration<TKey = any, TValue = any> extends Map<TKey, TValu
 		});
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	entries(): IterableIterator<[TKey, TValue]> {
 		this.clearExpiredEntries();
 		return super.entries();
 	}
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	keys(): IterableIterator<TKey> {
 		this.clearExpiredEntries();
 		return super.keys();
 	}
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	values(): IterableIterator<TValue> {
 		this.clearExpiredEntries();
 		return super.values();
 	}
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	[Symbol.iterator](): IterableIterator<[TKey, TValue]> {
 		this.clearExpiredEntries();
 		return super[Symbol.iterator]();
 	}
 
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 Not recommended for general purpose use.
-	 */
 	valueOf() {
 		this.clearExpiredEntries();
 		return super.valueOf();

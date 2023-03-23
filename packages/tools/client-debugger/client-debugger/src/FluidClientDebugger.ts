@@ -21,7 +21,7 @@ import {
 	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 	GetContainerDataMessage,
 	ContainerDataMessage,
 } from "./messaging";
@@ -229,7 +229,7 @@ export class FluidClientDebugger
 	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessageToWindow<ISourcedDebuggerMessage>(
+		postMessagesToWindow<ISourcedDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
 				source: debuggerMessageSource,
@@ -254,7 +254,7 @@ export class FluidClientDebugger
 	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerData = (): void => {
-		postMessageToWindow<ContainerDataMessage>(this.messageLoggingOptions, {
+		postMessagesToWindow<ContainerDataMessage>(this.messageLoggingOptions, {
 			source: debuggerMessageSource,
 			type: "CONTAINER_DATA",
 			data: {

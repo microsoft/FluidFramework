@@ -550,7 +550,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
 			if (parent === undefined && withRoot !== undefined) {
 				withRoot();
 			} else {
-				assert(parent !== undefined, "parent must exist");
+				assert(parent !== undefined, 0x5b0 /* parent must exist */);
 				// TODO:Perf:
 				// When traversing to a depth D when there are not anchors in that subtree, this goes O(D^2).
 				// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
