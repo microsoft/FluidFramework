@@ -360,7 +360,10 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 		this.unreferencedNodesState.clear();
 
-		// If there is no snapshot data, unset the GC state.
+		// Don't update the GC state if:
+		// 1. The snapshot data is undefined. This can happen if the snapshot was generated with GC disabled.
+		// 2. If the summary state needs reset. This can happen if the snapshot was generated with a different GC
+		// version than this garbage collector.
 		if (snapshotData === undefined || this.summaryStateTracker.doesSummaryStateNeedReset()) {
 			this.gcDataFromLastRun = undefined;
 			return;
