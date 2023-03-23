@@ -37,12 +37,6 @@ export class PartitionManager extends EventEmitter {
 	) {
 		super();
 
-        this.consumer.on("connected", (partitionId) => {
-            Lumberjack.info(`Connected successfully`, {
-                partitionId
-            });
-        });
-
 		// Place new Kafka messages into our processing queue
 		this.consumer.on("data", (message) => {
 			this.process(message);
