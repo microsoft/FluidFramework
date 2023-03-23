@@ -22,10 +22,8 @@ import {
 	AnchorNode,
 	IEditableForest,
 	GraphCommit,
-	EditManager,
-	ChangeFamily,
 	AnchorSetRootEvents,
-	ChangeFamilyEditor,
+	rebaseAnchors,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -293,7 +291,6 @@ class SharedTree
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
 		return new SharedTreeFork(
-			this.editManager,
 			this.createBranch(anchors),
 			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
@@ -318,7 +315,7 @@ class SharedTree
 		}
 		const newSet = new AnchorSet();
 		const tempAnchor = newSet.track(srcPath);
-		this.rebaseAnchors(newSet, srcCommit, dstCommit);
+		rebaseAnchors(newSet, srcCommit, dstCommit, defaultChangeFamily);
 		const dstPath = newSet.locate(tempAnchor);
 		// TODO: address at the same time as the assert above.
 		assert(
@@ -384,10 +381,6 @@ class SharedTreeFork implements ISharedTreeFork {
 	public readonly context: EditableTreeContext;
 
 	public constructor(
-		private readonly editManager: EditManager<
-			DefaultChangeset,
-			ChangeFamily<ChangeFamilyEditor, DefaultChangeset>
-		>,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
@@ -432,7 +425,6 @@ class SharedTreeFork implements ISharedTreeFork {
 		const storedSchema = this.storedSchema.clone();
 		const anchors = new AnchorSet();
 		return new SharedTreeFork(
-			this.editManager,
 			this.branch.fork(anchors),
 			this.changeFamily,
 			storedSchema,
@@ -473,7 +465,7 @@ class SharedTreeFork implements ISharedTreeFork {
 		}
 		const newSet = new AnchorSet();
 		const tempAnchor = newSet.track(srcPath);
-		this.editManager.rebaseAnchors(newSet, srcCommit, dstCommit);
+		rebaseAnchors(newSet, srcCommit, dstCommit, this.changeFamily);
 		const dstPath = newSet.locate(tempAnchor);
 		// TODO: address at the same time as the assert above.
 		assert(

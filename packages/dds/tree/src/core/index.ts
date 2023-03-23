@@ -157,6 +157,7 @@ export {
 	mintCommit,
 	mintRevisionTag,
 	Rebaser,
+	rebaseAnchors,
 } from "./rebase";
 
 export {

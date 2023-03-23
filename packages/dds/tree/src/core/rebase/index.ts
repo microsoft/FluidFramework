@@ -29,5 +29,5 @@ export {
 	verifyChangeRebaser,
 	Violation,
 } from "./verifyChangeRebaser";
-export { Rebaser } from "./rebaser";
+export { Rebaser, rebaseAnchors } from "./rebaser";
 export { findAncestor, findCommonAncestor } from "./utils";

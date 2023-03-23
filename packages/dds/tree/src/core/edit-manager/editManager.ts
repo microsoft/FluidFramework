@@ -30,7 +30,6 @@ import {
 	mintRevisionTag,
 	tagChange,
 	TaggedChange,
-	tagRollbackInverse,
 } from "../rebase";
 import { ReadonlyRepairDataStore } from "../repair";
 
@@ -356,28 +355,6 @@ export class EditManager<
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, composedInverse);
 		}
 		return this.changeFamily.intoDelta(composedInverse);
-	}
-
-	public rebaseAnchors(
-		anchors: AnchorSet,
-		from: GraphCommit<TChangeset>,
-		to: GraphCommit<TChangeset>,
-	) {
-		// Get both source and target as path arrays
-		const sourcePath: GraphCommit<TChangeset>[] = [];
-		const targetPath: GraphCommit<TChangeset>[] = [];
-		const ancestor = findCommonAncestor([from, sourcePath], [to, targetPath]);
-		assert(ancestor !== undefined, "branches must be related");
-		const inverseSrcChanges = sourcePath.map((commit) =>
-			tagRollbackInverse(
-				this.changeFamily.rebaser.invert(commit, true),
-				mintRevisionTag(),
-				commit.revision,
-			),
-		);
-		const netChanges = this.changeFamily.rebaser.compose([...inverseSrcChanges, ...targetPath]);
-		const delta = this.changeFamily.intoDelta(netChanges);
-		anchors.applyDelta(delta);
 	}
 
 	private findLocalCommit(

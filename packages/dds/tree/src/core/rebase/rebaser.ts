@@ -4,6 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
+import { AnchorSet } from "../tree";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
 import { GraphCommit, mintRevisionTag } from "./types";
 import { findCommonAncestor } from "./utils";
@@ -151,4 +153,23 @@ export class Rebaser<TChange> {
 			commit.revision,
 		);
 	}
+}
+
+export function rebaseAnchors<TChange>(
+	anchors: AnchorSet,
+	from: GraphCommit<TChange>,
+	to: GraphCommit<TChange>,
+	family: ChangeFamily<ChangeFamilyEditor, TChange>,
+) {
+	// Get both source and target as path arrays
+	const sourcePath: GraphCommit<TChange>[] = [];
+	const targetPath: GraphCommit<TChange>[] = [];
+	const ancestor = findCommonAncestor([from, sourcePath], [to, targetPath]);
+	assert(ancestor !== undefined, "branches must be related");
+	const inverseSrcChanges = sourcePath.map((commit) =>
+		tagRollbackInverse(family.rebaser.invert(commit, true), mintRevisionTag(), commit.revision),
+	);
+	const netChanges = family.rebaser.compose([...inverseSrcChanges, ...targetPath]);
+	const delta = family.intoDelta(netChanges);
+	anchors.applyDelta(delta);
 }

@@ -92,7 +92,7 @@ export class SharedTreeCore<
 	TChange,
 	TIndexes extends readonly Index[],
 > extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
-	protected readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
 
 	/**
 	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
@@ -347,14 +347,6 @@ export class SharedTreeCore<
 			anchors,
 		);
 		return branch;
-	}
-
-	protected rebaseAnchors(
-		anchors: AnchorSet,
-		from: GraphCommit<TChange>,
-		to: GraphCommit<TChange>,
-	) {
-		this.editManager.rebaseAnchors(anchors, from, to);
 	}
 
 	protected onDisconnect() {}
