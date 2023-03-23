@@ -8,7 +8,7 @@ The package exposes 2 primary entry-points:
 
 -   [renderClientDebuggerView](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#renderclientdebuggerview-function): A general-purpose function for rendering the debug view to a provided [DOM]() element.
 
--   [FluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#fluidclientdebugger-function): A [React Component](https://reactjs.org/docs/react-component.html) for embedding the debug view into your own React tree.
+-   [FluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#fluidclientdebugger-function): A [React Component](https://react.dev/reference/react/Component) for embedding the debug view into your own React tree.
 
 The library is intended to be extensible and customizable.
 
