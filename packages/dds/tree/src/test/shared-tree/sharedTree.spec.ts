@@ -1129,6 +1129,7 @@ describe("SharedTree", () => {
 			const branch = main.fork();
 
 			// Check import from main to branch before either branch diverges
+			// This import should be performed as part of the call to fork.
 			{
 				const barFromMain = getAnchorFromIndex(main, 0);
 				const barFromMainToBranch = branch.importAnchor(main, barFromMain);
@@ -1179,6 +1180,7 @@ describe("SharedTree", () => {
 			branch.merge();
 
 			// Check import from branch to main for a node introduced in the branch
+			// This import should be performed as part of the call to merge.
 			{
 				const bazFromBranchToMain = main.importAnchor(branch, bazFromBranch);
 				const mainCursor = cursorFromAnchor(main, bazFromBranchToMain);
