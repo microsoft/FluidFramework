@@ -165,6 +165,12 @@ data:
                 "send": "{{ .Values.kafka.topics.deltas }}"
             },
             "kafkaClientId": "{{ template "deli.fullname" . }}",
+            "checkpointHeuristics": {
+                "enable": {{ .Values.deli.checkpointHeuristics.enable }},
+                "idleTime": {{ .Values.deli.checkpointHeuristics.idleTime }},
+                "maxTime": {{ .Values.deli.checkpointHeuristics.maxTime }},
+                "maxMessages": {{ .Values.deli.checkpointHeuristics.maxMessages }}
+            },
             "groupId": "{{ template "deli.fullname" . }}",
             "checkpointBatchSize": 10,
             "checkpointTimeIntervalMsec": 1000,

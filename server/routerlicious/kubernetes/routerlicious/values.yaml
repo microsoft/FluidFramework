@@ -93,6 +93,11 @@ session:
 deli:
   name: deli
   replicas: 8
+  checkpointHeuristics:
+    enable: false
+    idleTime: 10000
+    maxTime: 60000
+    maxMessages: 500
   localCheckpointEnabled: true
 
 scriptorium:
