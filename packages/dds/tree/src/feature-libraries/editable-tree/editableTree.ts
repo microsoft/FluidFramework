@@ -516,7 +516,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		assert(
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,
-			"There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData",
+			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
 		);
 	}
 
@@ -553,7 +553,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	}
 
 	public set value(value: Value) {
-		assert(allowsValue(this.type.value, value), "Out of schema value can not be set on tree");
+		assert(
+			allowsValue(this.type.value, value),
+			0x5b2 /* Out of schema value can not be set on tree */,
+		);
 		this.context.setNodeValue(this.anchorNode, value);
 	}
 
@@ -711,7 +714,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
-		assert(eventName === "changing", "unexpected eventName");
+		assert(eventName === "changing", 0x5b3 /* unexpected eventName */);
 		const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () => listener());
 		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
 			listener(),

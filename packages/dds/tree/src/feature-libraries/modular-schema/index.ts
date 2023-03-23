@@ -55,7 +55,12 @@ export {
 	GenericChangeset,
 	genericFieldKind,
 } from "./genericFieldKind";
-export { ModularChangeFamily, ModularEditBuilder, EditDescription } from "./modularChangeFamily";
+export {
+	ModularChangeFamily,
+	ModularEditBuilder,
+	EditDescription,
+	revisionMetadataSourceFromInfo,
+} from "./modularChangeFamily";
 export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";
 
 // Split this up into separate import and export for compatibility with API-Extractor.

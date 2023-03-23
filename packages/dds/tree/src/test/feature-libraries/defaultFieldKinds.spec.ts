@@ -31,7 +31,7 @@ import {
 	ValueSchema,
 } from "../../core";
 import { JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual, fakeRepair } from "../utils";
+import { assertMarkListEqual, fakeTaggedRepair as fakeRepair } from "../utils";
 
 const nodeSchema = TypedSchema.tree("Node", {
 	value: ValueSchema.String,
@@ -74,7 +74,7 @@ const revisionIndexer = (tag: RevisionTag) => {
 
 const revisionMetadata: RevisionMetadataSource = {
 	getIndex: revisionIndexer,
-	getInfo: (tag: RevisionTag) => ({ tag }),
+	getInfo: (revision: RevisionTag) => ({ revision }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
