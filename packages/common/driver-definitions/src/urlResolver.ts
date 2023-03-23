@@ -11,6 +11,8 @@ export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
 /**
  * Shared base implementation for {@link IResolvedUrl}s.
+ * 
+ * @deprecated This interface is unused and will be removed in the next major release.
  */
 export interface IResolvedUrlBase {
 	/**
@@ -19,6 +21,9 @@ export interface IResolvedUrlBase {
 	type: string;
 }
 
+/**
+ * @deprecated This interface is unused and will be removed in the next major release.
+ */
 export interface IWebResolvedUrl extends IResolvedUrlBase {
 	/**
 	 * {@inheritDoc IResolvedUrlBase.type}

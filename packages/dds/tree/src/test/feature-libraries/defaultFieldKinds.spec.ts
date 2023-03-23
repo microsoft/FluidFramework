@@ -31,7 +31,7 @@ import {
 	ValueSchema,
 } from "../../core";
 import { JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual, fakeRepair } from "../utils";
+import { assertMarkListEqual, fakeTaggedRepair as fakeRepair } from "../utils";
 
 const nodeSchema = TypedSchema.tree("Node", {
 	value: ValueSchema.String,
@@ -74,7 +74,7 @@ const revisionIndexer = (tag: RevisionTag) => {
 
 const revisionMetadata: RevisionMetadataSource = {
 	getIndex: revisionIndexer,
-	getInfo: (tag: RevisionTag) => ({ tag }),
+	getInfo: (revision: RevisionTag) => ({ revision }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
@@ -208,8 +208,7 @@ describe("Value field changesets", () => {
 	});
 
 	it("can be rebased", () => {
-		const childRebaser = (_1: NodeChangeset, _2: NodeChangeset) =>
-			assert.fail("Should not be called");
+		const childRebaser = () => assert.fail("Should not be called");
 
 		assert.deepEqual(
 			fieldHandler.rebaser.rebase(
@@ -225,7 +224,10 @@ describe("Value field changesets", () => {
 	});
 
 	it("can rebase child changes", () => {
-		const childRebaser = (change: NodeChangeset, base: NodeChangeset) => {
+		const childRebaser = (
+			change: NodeChangeset | undefined,
+			base: NodeChangeset | undefined,
+		) => {
 			assert.deepEqual(change, nodeChange2);
 			assert.deepEqual(base, nodeChange1);
 			return nodeChange3;
@@ -251,8 +253,8 @@ describe("Value field changesets", () => {
 		const expected: Delta.MarkList = [
 			{ type: Delta.MarkType.Delete, count: 1 },
 			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
+				type: Delta.MarkType.Insert,
+				content: [singleTextCursor(tree1)],
 				setValue: "value3",
 			},
 		];
@@ -369,8 +371,10 @@ describe("Optional field changesets", () => {
 	});
 
 	it("can be rebased", () => {
-		const childRebaser = (_change: NodeChangeset, _base: NodeChangeset) =>
-			assert.fail("Should not be called");
+		const childRebaser = (
+			_change: NodeChangeset | undefined,
+			_base: NodeChangeset | undefined,
+		) => assert.fail("Should not be called");
 		assert.deepEqual(
 			fieldHandler.rebaser.rebase(
 				change3,
@@ -388,7 +392,10 @@ describe("Optional field changesets", () => {
 		const baseChange: FieldKinds.OptionalChangeset = { childChange: nodeChange1 };
 		const changeToRebase: FieldKinds.OptionalChangeset = { childChange: nodeChange2 };
 
-		const childRebaser = (change: NodeChangeset, base: NodeChangeset) => {
+		const childRebaser = (
+			change: NodeChangeset | undefined,
+			base: NodeChangeset | undefined,
+		): NodeChangeset | undefined => {
 			assert.deepEqual(change, nodeChange2);
 			assert.deepEqual(base, nodeChange1);
 			return nodeChange3;
@@ -412,8 +419,8 @@ describe("Optional field changesets", () => {
 	it("can be converted to a delta when field was empty", () => {
 		const expected: Delta.MarkList = [
 			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
+				type: Delta.MarkType.Insert,
+				content: [singleTextCursor(tree1)],
 				setValue: "value3",
 			},
 		];

@@ -108,11 +108,13 @@ export {
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
+	HasFieldChanges,
 	ValueConstraint,
 	TypedSchema,
+	revisionMetadataSourceFromInfo,
 } from "./modular-schema";
 
-export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
+export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
 export {
 	EditManagerIndex,
