@@ -329,6 +329,38 @@ describe("SharedTree", () => {
 			assert.equal(peekTestValue(tree2), 43);
 		});
 
+		// TODO: Instead of setting a value do an insert into a sequence field: needs to not be idempotent
+		it("can rebase an insert of and edit to a node in an optional field", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			// Cause a rebase of tree2's edits
+			runSynchronous(tree1, () => {
+				const field = tree1.editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(singleTextCursor({ type: brand("TestValue"), value: "41" }), true);
+			});
+
+			// TODO: Explain what's happening
+			runSynchronous(tree2, () => {
+				const field = tree1.editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(singleTextCursor({ type: brand("TestValue"), value: "42" }), true);
+			});
+
+			runSynchronous(tree2, () => {
+				tree1.editor.setValue(rootPath, "43");
+			});
+
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree1), "43");
+			assert.equal(peekTestValue(tree2), "43");
+		});
+
 		it("can edit a global field", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
