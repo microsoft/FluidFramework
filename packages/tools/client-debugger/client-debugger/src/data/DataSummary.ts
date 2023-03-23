@@ -3,20 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, IEvent } from "@fluidframework/common-definitions";
+import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { FluidObjectNode } from "./VisualTree";
-
-
-type GenerateVisualTree = (object: ISharedObject) => FluidObjectNode;
 
 /**
  * Events emitted by {@link SharedObjectListener}.
  */
 interface SharedObjectListenerEvents extends IEvent {
 	/**
-	 *
+	 * TODO
 	 */
 	(event: "update", listener: (visualTree: FluidObjectNode) => void);
 }
@@ -24,41 +21,49 @@ interface SharedObjectListenerEvents extends IEvent {
 // Ideas:
 // - Hold onto previous summary and only transmit diff?
 
-class SharedObjectListener
+/**
+ * TODO
+ */
+export abstract class SharedObjectVisualizer<TFluidObject extends ISharedObject>
 	extends TypedEventEmitter<SharedObjectListenerEvents>
-	implements IDisposable
 {
-	private readonly sharedObject: ISharedObject;
-	private readonly generateDebugSummary: GenerateVisualTree;
-	private _disposed: boolean;
+	/**
+	 * TODO
+	 */
+	protected readonly sharedObject: TFluidObject;
 
 	private readonly onOpHandler = (): boolean => {
-		this.emitDebugSummary();
+		this.emitVisualUpdate();
 		return true;
 	};
 
-	public constructor(sharedObject: ISharedObject, generateDebugSummary: GenerateVisualTree) {
+	protected constructor(sharedObject: TFluidObject) {
 		super();
 
 		this.sharedObject = sharedObject;
-		this.generateDebugSummary = generateDebugSummary;
 
 		this.sharedObject.on("op", this.onOpHandler);
-
-		this._disposed = false;
 	}
 
-	public emitDebugSummary(): void {
-		const debugSummary = this.generateDebugSummary(this.sharedObject);
-		this.emit("update", debugSummary);
+	private emitVisualUpdate(): void {
+		const visualTree = this.generateVisualTree();
+		this.emit("update", visualTree);
 	}
+	
+	/**
+	 * TODO
+	 */
+	protected abstract generateVisualTree(): FluidObjectNode;
+}
 
-	public get disposed(): boolean {
-		return this._disposed;
+export class SharedCounterVisualizer extends SharedObjectVisualizer<SharedCounter> {
+	public constructor(sharedCounter: SharedCounter) {
+		super(sharedCounter);
 	}
-
-	public dispose(): void {
-		this._disposed = true;
-		this.sharedObject.off("op", this.onOpHandler);
+	
+	public generateVisualTree(): FluidObjectNode {
+		return {
+			
+		}
 	}
 }
