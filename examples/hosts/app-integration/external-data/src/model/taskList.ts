@@ -112,14 +112,12 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * TODO: Update^ when the sync mechanism is appropriately defined.
 	 */
 	private _draftData: SharedMap | undefined;
-
-	private _errorFlagCount: number = 0;
-
-	private _externalTaskListId: string | undefined;
-
-	private get externalTaskListId(): string | undefined {
-		return this._externalTaskListId;
-	}
+	/*
+	 * externalTaskListId is a SharedString that holds id of the the TaskList. It is generated
+	 * by the External Server and used to identify the Fluid Task List in this example to make
+	 * it clear where this ID comes from and what it relates to externally.
+	 */
+	private _externalTaskListId: SharedString | undefined;
 
 	private get externalDataSnapshot(): SharedMap {
 		if (this._externalDataSnapshot === undefined) {
@@ -134,6 +132,14 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 		}
 		return this._draftData;
 	}
+
+	private get externalTaskListId(): string {
+		if (this._externalTaskListId === undefined) {
+			throw new Error("The externalTaskListId SharedString has not yet been initialized.");
+		}
+		return this._externalTaskListId.getText();
+	}
+	private _errorFlagCount: number = 0;
 
 	public readonly addDraftTask = (id: string, name: string, priority: number): void => {
 		if (this.tasks.get(id) !== undefined) {
@@ -358,7 +364,11 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 				"externalTaskListId not present in instantiation. Cannot instantiate task list",
 			);
 		}
-		this._externalTaskListId = externalTaskListId;
+		const externalTaskListIdHandle = SharedString.create(this.runtime);
+		externalTaskListIdHandle.insertText(0, externalTaskListId);
+		this._externalTaskListId = externalTaskListIdHandle;
+		this.root.set("externalTaskListId", this._externalTaskListId.handle);
+
 		// TODO: The check below is a hack for ensuring that the container is attached
 		// before creating and registering the task list, and importing the task list data
 		// form the external server. This is pretty anti-fluid, so we need a better way to
@@ -415,6 +425,13 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * DataObject, by registering an event listener for changes to the task list.
 	 */
 	protected async hasInitialized(): Promise<void> {
+		const externalTaskListIdHandle =
+			this.root.get<IFluidHandle<SharedString>>("externalTaskListId");
+		if (externalTaskListIdHandle === undefined) {
+			throw new Error("externalTaskListId was not initialized");
+		}
+		this._externalTaskListId = await externalTaskListIdHandle.get();
+
 		const externalDataSnapshot = this.root.get<IFluidHandle<SharedMap>>("externalDataSnapshot");
 		if (externalDataSnapshot === undefined) {
 			throw new Error("externalDataSnapshot was not initialized");
