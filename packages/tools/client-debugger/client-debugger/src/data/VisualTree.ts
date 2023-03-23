@@ -64,7 +64,7 @@ export interface VisualParentNode extends VisualTreeNodeBase {
 /**
  * Base interface for nodes referencing Fluid objects
  */
-export interface FluidObjectNodeBase extends VisualTreeNodeBase {
+export interface FluidObjectNode extends VisualTreeNodeBase {
 	/**
 	 * A unique ID for the Fluid object being displayed.
 	 */
@@ -74,7 +74,7 @@ export interface FluidObjectNodeBase extends VisualTreeNodeBase {
 /**
  * Node describing a Fluid object with visual children
  */
-export interface FluidObjectTreeNode extends FluidObjectNodeBase {
+export interface FluidObjectTreeNode extends FluidObjectNode {
 	/**
 	 * Child items to be displayed beneath this node.
 	 */
@@ -91,7 +91,7 @@ export interface FluidObjectTreeNode extends FluidObjectNodeBase {
  *
  * E.g.
  */
-export interface FluidObjectValueNode extends FluidObjectNodeBase {
+export interface FluidObjectValueNode extends FluidObjectNode {
 	/**
 	 * The value of the Fluid object to be displayed inline.
 	 */
