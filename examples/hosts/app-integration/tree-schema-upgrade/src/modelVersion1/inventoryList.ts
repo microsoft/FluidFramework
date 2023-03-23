@@ -9,12 +9,19 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedString } from "@fluidframework/sequence";
 
-import { BuildNode, Change, NodeId, SharedTree, StablePlace, TraitLabel } from "@fluid-experimental/tree";
+import {
+	BuildNode,
+	Change,
+	NodeId,
+	SharedTree,
+	StablePlace,
+	TraitLabel,
+} from "@fluid-experimental/tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 import { transformTreeToJsonableString } from "./appModel";
 
-const treeKey = 'sharedTree-key';
+const treeKey = "sharedTree-key";
 
 class InventoryItem extends EventEmitter implements IInventoryItem {
 	public get id() {
@@ -40,9 +47,6 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 		private readonly _quantity: SharedCell<number>,
 	) {
 		super();
-		// this._name.on("sequenceDelta", () =>{
-		//     this.emit("nameChanged");
-		// });
 		this._quantity.on("valueChanged", () => {
 			this.emit("quantityChanged");
 		});
@@ -61,11 +65,9 @@ export class InventoryList extends DataObject implements IInventoryList {
 	public nodeIds: NodeId[] = [];
 	public readonly getTreeView = () => {
 		const jsonableTreeString = transformTreeToJsonableString(this.tree as SharedTree);
-		// console.log(jsonableTreeString.replace(',"fields":{}"', ""))
-		return jsonableTreeString.split(',"fields":{}').join("")
+		return `[${jsonableTreeString.split(',"fields":{}').join("")}]`;
 	};
 	public readonly addItem = (name: string, quantity: number) => {
-		// Tree edit
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const nodeId = this.tree!.generateNodeId();
 		const node: BuildNode = {
@@ -83,20 +85,8 @@ export class InventoryList extends DataObject implements IInventoryList {
 			),
 		);
 		this.nodeIds.push(nodeId);
-
-		console.log(this.getTreeView())
-		
-		// sharedString Edit
-		const nameString = SharedString.create(this.runtime);
-		nameString.insertText(0, name);
-		const quantityCell: SharedCell<number> = SharedCell.create(this.runtime);
-		quantityCell.set(quantity);
 		const id = uuid();
-		this.root.set(id, { name: nameString.handle, quantity: quantityCell.handle });
-	};
-
-	public readonly deleteItem = (id: string) => {
-		this.root.delete(id);
+		this.root.set(id, 1);
 	};
 
 	public readonly getItems = () => {
@@ -108,24 +98,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 	};
 
 	private readonly handleItemAdded = async (id: string) => {
-		const itemData = this.root.get(id);
-		const [nameSharedString, quantitySharedCell] = await Promise.all([
-			itemData.name.get(),
-			itemData.quantity.get(),
-		]);
-		// It's possible the item was deleted while getting the name/quantity, in which case quietly exit.
-		if (this.root.get(id) === undefined) {
-			return;
-		}
-		const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedCell);
-		this.inventoryItems.set(id, newInventoryItem);
-		this.emit("itemAdded", newInventoryItem);
-	};
-
-	private readonly handleItemDeleted = (id: string) => {
-		const deletedItem = this.inventoryItems.get(id);
-		this.inventoryItems.delete(id);
-		this.emit("itemDeleted", deletedItem);
+		this.emit("itemAdded");
 	};
 
 	/**
@@ -145,26 +118,12 @@ export class InventoryList extends DataObject implements IInventoryList {
 				this.handleItemAdded(changed.key).catch((error) => {
 					console.error(error);
 				});
-			} else if (this.root.get(changed.key) === undefined) {
-				// Must be from a deletion
-				this.handleItemDeleted(changed.key);
 			} else {
 				// Since all data modifications happen within the SharedString or SharedCell, the root directory
 				// should never see anything except adds and deletes.
 				console.error("Unexpected modification to inventory list");
 			}
 		});
-
-		// for (const [id, itemData] of this.root) {
-		// 	const [nameSharedString, quantitySharedCell] = await Promise.all([
-		// 		itemData.name.get(),
-		// 		itemData.quantity.get(),
-		// 	]);
-		// 	this.inventoryItems.set(
-		// 		id,
-		// 		new InventoryItem(id, nameSharedString, quantitySharedCell),
-		// 	);
-		// }
 	}
 
 	protected async initializingFirstTime() {

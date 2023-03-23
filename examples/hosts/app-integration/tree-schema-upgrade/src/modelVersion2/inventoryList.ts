@@ -75,9 +75,6 @@ class InventoryItem extends EventEmitter implements IInventoryItem {
 		private readonly _quantity: SharedMap,
 	) {
 		super();
-		// this._name.on("sequenceDelta", () =>{
-		//     this.emit("nameChanged");
-		// });
 		this._quantity.on("valueChanged", () => {
 			this.emit("quantityChanged");
 		});
@@ -118,9 +115,9 @@ export class InventoryList extends DataObject implements IInventoryList {
 		const path = cursor.getPath();
 		cursor.free();
 
-		let value = Math.floor(Math.random()*10).toString();
-		while (this.nodeIds?.includes(value)){
-			value = Math.floor(Math.random()*10).toString();
+		let value = Math.floor(Math.random() * 1000000).toString();
+		while (this.nodeIds?.includes(value)) {
+			value = Math.floor(Math.random() * 1000000).toString();
 		}
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		runSynchronous(this.tree!, () => {
@@ -129,19 +126,8 @@ export class InventoryList extends DataObject implements IInventoryList {
 			const field = this.tree!.editor.sequenceField(path?.parent, path!.parentField);
 			field.insert(0, writeCursors);
 		});
-
-		console.log(this.getTreeView());
-
-		const nameString = SharedString.create(this.runtime);
-		nameString.insertText(0, name);
-		const quantityMap: SharedMap = SharedMap.create(this.runtime);
-		quantityMap.set(quantityKey, quantity);
 		const id = uuid();
-		this.root.set(id, { name: nameString.handle, quantity: quantityMap.handle });
-	};
-
-	public readonly deleteItem = (id: string) => {
-		this.root.delete(id);
+		this.root.set(id, 1);
 	};
 
 	public readonly getItems = () => {
@@ -153,24 +139,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 	};
 
 	private readonly handleItemAdded = async (id: string) => {
-		const itemData = this.root.get(id);
-		const [nameSharedString, quantitySharedMap] = await Promise.all([
-			itemData.name.get(),
-			itemData.quantity.get(),
-		]);
-		// It's possible the item was deleted while getting the name/quantity, in which case quietly exit.
-		if (this.root.get(id) === undefined) {
-			return;
-		}
-		const newInventoryItem = new InventoryItem(id, nameSharedString, quantitySharedMap);
-		this.inventoryItems.set(id, newInventoryItem);
-		this.emit("itemAdded", newInventoryItem);
-	};
-
-	private readonly handleItemDeleted = (id: string) => {
-		const deletedItem = this.inventoryItems.get(id);
-		this.inventoryItems.delete(id);
-		this.emit("itemDeleted", deletedItem);
+		this.emit("itemAdded");
 	};
 
 	/**
@@ -189,23 +158,12 @@ export class InventoryList extends DataObject implements IInventoryList {
 				this.handleItemAdded(changed.key).catch((error) => {
 					console.error(error);
 				});
-			} else if (this.root.get(changed.key) === undefined) {
-				// Must be from a deletion
-				this.handleItemDeleted(changed.key);
 			} else {
 				// Since all data modifications happen within the SharedString or SharedMap, the root directory
 				// should never see anything except adds and deletes.
 				console.error("Unexpected modification to inventory list");
 			}
 		});
-
-		// for (const [id, itemData] of this.root) {
-		// 	const [nameSharedString, quantitySharedMap] = await Promise.all([
-		// 		itemData.name.get(),
-		// 		itemData.quantity.get(),
-		// 	]);
-		// 	this.inventoryItems.set(id, new InventoryItem(id, nameSharedString, quantitySharedMap));
-		// }
 	}
 	protected async initializingFirstTime() {
 		const tree: ISharedTree = this.runtime.createChannel(

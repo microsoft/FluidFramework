@@ -37,7 +37,7 @@ export interface IInventoryItem extends EventEmitter {
  */
 export interface IInventoryList extends EventEmitter {
 	readonly addItem: (name: string, quantity: number) => void;
-	readonly deleteItem: (id: string) => void;
+	// readonly deleteItem: (id: string) => void;
 	readonly getTreeView: () => string;
 
 	readonly getItems: () => IInventoryItem[];

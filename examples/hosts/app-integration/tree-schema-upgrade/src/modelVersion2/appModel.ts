@@ -4,7 +4,16 @@
  */
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
-import { ISharedTree, JsonableTree, jsonableTreeFromCursor, mapCursorField, moveToDetachedField, rootFieldKeySymbol, runSynchronous, singleTextCursor } from "@fluid-internal/tree";
+import {
+	ISharedTree,
+	JsonableTree,
+	jsonableTreeFromCursor,
+	mapCursorField,
+	moveToDetachedField,
+	rootFieldKeySymbol,
+	runSynchronous,
+	singleTextCursor,
+} from "@fluid-internal/tree";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -65,7 +74,6 @@ export class InventoryListAppModel
 		const jsonableTree: JsonableTree = JSON.parse(treeData[0]);
 
 		tree.storedSchema.update(appSchemaData);
-		console.log(jsonableTree);
 		runSynchronous(tree, () => {
 			const writeCursors = singleTextCursor(jsonableTree);
 			const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
@@ -73,26 +81,13 @@ export class InventoryListAppModel
 		});
 
 		this.inventoryList.tree = tree;
-		console.log(this.inventoryList.getTreeView());
-		const nodeIds = []
-		getNodeIdList(jsonableTree, nodeIds)
-		console.log(nodeIds)
+		const nodeIds = [];
+		getNodeIdList(jsonableTree, nodeIds);
 
-		this.inventoryList.nodeIds = nodeIds
-		// // Applies string data in version:two format.
-		// const parsedInventoryItemData = parseStringDataVersionTwo(initialData);
-		// for (const { name, quantity } of parsedInventoryItemData) {
-		// 	this.inventoryList.addItem(name, quantity);
-		// }
+		this.inventoryList.nodeIds = nodeIds;
 	};
 
 	public readonly exportData = async (): Promise<InventoryListAppModelExportFormat2> => {
-		// Exports in version:two format (using tab delimiter between name/quantity)
-		// const inventoryItems = this.inventoryList.getItems();
-		// const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-		// 	return `${inventoryItem.name.getText()}\t${inventoryItem.quantity.toString()}`;
-		// });
-		// return `version:two\n${inventoryItemStrings.join("\n")}`;
 		const tree = this.inventoryList.tree as ISharedTree;
 		const stringifiedTree = transformTreeToString(tree);
 		return `version:two\n${stringifiedTree}`;
@@ -113,19 +108,17 @@ function transformTreeToString(tree: ISharedTree): string {
 	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
 	readCursor.free();
 	// we need to get a hashmap of each identifier in its corresponding parent identifier
-	console.log(actual)
 	return JSON.stringify(actual);
 }
 
-function getNodeIdList(tree:JsonableTree, nodeIds: string[]): void{
+function getNodeIdList(tree: JsonableTree, nodeIds: string[]): void {
 	for (const key of Object.keys(tree)) {
 		if (typeof tree[key] === "object" && tree[key] !== null) {
 			getNodeIdList(tree[key], nodeIds);
 		}
 		if (key === "value") {
-			// assert(tree[key] !== undefined);
 			if (typeof tree[key] !== "object") {
-				nodeIds.push(tree[key] as string)
+				nodeIds.push(tree[key] as string);
 			}
 		}
 	}

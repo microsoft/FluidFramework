@@ -4,8 +4,17 @@
  */
 
 import type { IMigrationTool } from "@fluid-example/example-utils";
-import { BuildNode, Change, NodeId, SharedTree, StableNodeId, StablePlace, TraitLabel, TreeViewNode } from "@fluid-experimental/tree";
-import { brand, JsonableTree } from "@fluid-internal/tree"
+import {
+	BuildNode,
+	Change,
+	NodeId,
+	SharedTree,
+	StableNodeId,
+	StablePlace,
+	TraitLabel,
+	TreeViewNode,
+} from "@fluid-experimental/tree";
+import { brand, JsonableTree } from "@fluid-internal/tree";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { AttachState, IContainer } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -59,14 +68,6 @@ export class InventoryListAppModel
 		if (!this.supportsDataFormat(initialData)) {
 			throw new Error("Data format not supported");
 		}
-
-		// Applies string data in version:one format.
-		// const parsedInventoryItemData = parseStringDataVersionOne(initialData);
-		// for (const { name, quantity } of parsedInventoryItemData) {
-		// 	this.inventoryList.addItem(name, quantity);
-		// }
-
-
 		const version = readVersion(initialData);
 		if (version !== "one") {
 			throw new Error(`Expected to parse version one, got version ${version}`);
@@ -77,21 +78,14 @@ export class InventoryListAppModel
 		const jsonableTree: JsonableTree = JSON.parse(treeData);
 		constructTreeFromTreeData(
 			this.inventoryList.tree as SharedTree,
+			this.inventoryList.nodeIds as NodeId[],
 			jsonableTree,
 			undefined,
 			true,
 		);
-		console.log(this.inventoryList.getTreeView());
 	};
 
 	public readonly exportData = async (): Promise<InventoryListAppModelExportFormat1> => {
-		// Exports in version:one format (using ':' delimiter between name/quantity)
-		// const inventoryItems = this.inventoryList.getItems();
-		// const inventoryItemStrings = inventoryItems.map((inventoryItem) => {
-		// 	return `${inventoryItem.name.getText()}:${inventoryItem.quantity.toString()}`;
-		// });
-		// return `version:one\n${inventoryItemStrings.join("\n")}`;
-
 		const tree = this.inventoryList.tree as SharedTree;
 		const stringifiedTree = transformTreeToJsonableString(tree);
 		return `version:one\n${stringifiedTree}`;
@@ -114,18 +108,20 @@ export class InventoryListAppModel
  */
 function constructTreeFromTreeData(
 	tree: SharedTree,
+	nodeIds: NodeId[],
 	treeData,
 	parentId: StableNodeId | undefined,
 	rootNode: boolean,
 ) {
-	console.log(treeData)
-	const currentParentId = parentId === undefined ? tree.currentView.root : tree.convertToNodeId(parentId);
+	const currentParentId =
+		parentId === undefined ? tree.currentView.root : tree.convertToNodeId(parentId);
 	for (const node of treeData) {
-		const currentNodeId = node.value as StableNodeId;
+		const currentStableNodeId = node.value as StableNodeId;
 		if (!rootNode) {
+			const currentNodeId = tree.generateNodeId(currentStableNodeId);
 			const currentNode: BuildNode = {
 				definition: "Node",
-				identifier: tree.generateNodeId(currentNodeId),
+				identifier: currentNodeId,
 			};
 			// apply the edit to the tree
 			tree.applyEdit(
@@ -137,9 +133,10 @@ function constructTreeFromTreeData(
 					}),
 				),
 			);
+			nodeIds.push(currentNodeId);
 		}
 		if (node.fields?.foo !== undefined) {
-			constructTreeFromTreeData(tree, node.fields.foo, currentNodeId, false);
+			constructTreeFromTreeData(tree, nodeIds, node.fields.foo, currentStableNodeId, false);
 		}
 	}
 }
@@ -164,7 +161,7 @@ export function transformTreeToJsonableString(tree: SharedTree): string {
 	const flat: experimentalTreeNode[] = [];
 	const testNodes: TreeViewNode[] = [];
 	for (const node of tree.currentView) {
-		const stableNodeId = tree.convertToStableNodeId(node.identifier) as string
+		const stableNodeId = tree.convertToStableNodeId(node.identifier) as string;
 		let stableParentNodeId;
 		if (node.parentage?.parent !== undefined) {
 			stableParentNodeId = tree.convertToStableNodeId(node.parentage?.parent) as string;
@@ -217,6 +214,5 @@ export function transformTreeToJsonableString(tree: SharedTree): string {
 		value: levelOrderedNodes[0].identifier,
 		fields: levelOrderedNodes[0].fields,
 	};
-	console.log(jsonableTree)
 	return JSON.stringify(jsonableTree);
 }
