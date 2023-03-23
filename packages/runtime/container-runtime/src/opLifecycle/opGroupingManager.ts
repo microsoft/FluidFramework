@@ -23,6 +23,7 @@ export class OpGroupingManager {
 			return batch;
 		}
 
+		// Need deserializedContent for back-compat
 		const deserializedContent = {
 			type: OpGroupingManager.groupedBatchOp,
 			contents: batch.content.map((message) => ({
