@@ -107,7 +107,7 @@ if (container.attachState !== AttachState.Attached) {
 }
 ```
 
-How you handle the **publishing** (`AttachState.Attaching`) state depends on the situation. This state implies that `container.attach` has already been called, so to prevent a recall treat publishing (`Attaching`) the same as published (`Attached`). The following is an example.
+How you handle the **publishing** (`AttachState.Attaching`) state depends on the situation. This state implies that `container.attach` has already been called, so to prevent an additional call treat publishing (`Attaching`) the same as published (`Attached`). The following is an example.
 
 ```typescript
 // Code that runs only on a creating client.
