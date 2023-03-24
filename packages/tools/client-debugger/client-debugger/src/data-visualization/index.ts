@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Fix
+// TODO: Fix before merging
 /* eslint-disable no-restricted-syntax */
 export * from "./DataVisualization";
 export * from "./DefaultVisualizers";
