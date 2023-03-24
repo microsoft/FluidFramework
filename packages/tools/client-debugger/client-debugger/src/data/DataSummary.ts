@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
+import { IDisposable, IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
@@ -155,7 +155,7 @@ export interface SharedObjectListenerEvents extends IEvent {
 /**
  * TODO
  */
-export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectListenerEvents> {
+export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectListenerEvents> implements IDisposable {
 	/**
 	 * TODO
 	 */
@@ -188,6 +188,11 @@ export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectLi
 		this.emitVisualUpdate();
 		return true;
 	};
+	
+	/**
+	 * Private {@link SharedObjectVisualizerNode.disposed} tracking.
+	 */
+	private _disposed: boolean;
 
 	public constructor(
 		sharedObject: ISharedObject,
@@ -203,6 +208,15 @@ export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectLi
 		this.registerHandle = registerHandle;
 
 		this.sharedObject.on("op", this.onOpHandler);
+		
+		this._disposed = false;
+	}
+	
+	/**
+	 * {@inheritDoc IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
 	}
 
 	private emitVisualUpdate(): void {
@@ -256,6 +270,13 @@ export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectLi
 				nodeType: NodeKind.ParentNode,
 			};
 			return result;
+		}
+	}
+	
+	public dispose(): void {
+		if (!this._disposed) {
+			this.sharedObject.off("op", this.onOpHandler);
+			this._disposed = true;
 		}
 	}
 }
