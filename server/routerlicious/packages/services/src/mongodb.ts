@@ -5,7 +5,7 @@
 
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
-import { AggregationCursor, Collection, MongoClient, MongoClientOptions } from "mongodb";
+import { AggregationCursor, Collection, FindOneOptions, MongoClient, MongoClientOptions } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -71,8 +71,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.requestWithRetry(req, "MongoCollection.find", query);
 	}
 
-	public async findOne(query: object): Promise<T> {
-		const req: () => Promise<T> = async () => this.collection.findOne(query);
+	public async findOne(query: object, options?: FindOneOptions): Promise<T> {
+		const req: () => Promise<T> = async () => this.collection.findOne(query, options);
 		return this.requestWithRetry(
 			req, // request
 			"MongoCollection.findOne", // callerName
@@ -88,10 +88,16 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		);
 	}
 
-	public async update(filter: object, set: any, addToSet: any): Promise<void> {
+	public async update(
+		filter: object,
+		set: any,
+		addToSet: any,
+		options: any = undefined,
+	): Promise<void> {
+		const mongoOptions = { ...options, upsert: false };
 		const req = async () => {
 			try {
-				await this.updateCore(filter, set, addToSet, false);
+				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -104,10 +110,16 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		);
 	}
 
-	public async updateMany(filter: object, set: any, addToSet: any): Promise<void> {
+	public async updateMany(
+		filter: object,
+		set: any,
+		addToSet: any,
+		options: any = undefined,
+	): Promise<void> {
+		const mongoOptions = { ...options, upsert: false }; // This is a backward compatible change when passing in options to give more flexibility
 		const req = async () => {
 			try {
-				await this.updateManyCore(filter, set, addToSet, false);
+				await this.updateManyCore(filter, set, addToSet, mongoOptions);
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -120,10 +132,16 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		);
 	}
 
-	public async upsert(filter: object, set: any, addToSet: any): Promise<void> {
+	public async upsert(
+		filter: object,
+		set: any,
+		addToSet: any,
+		options: any = undefined,
+	): Promise<void> {
+		const mongoOptions = { ...options, upsert: true };
 		const req = async () => {
 			try {
-				await this.updateCore(filter, set, addToSet, true);
+				await this.updateCore(filter, set, addToSet, mongoOptions);
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -167,6 +185,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		const req = async () => {
 			try {
 				const result = await this.collection.insertOne(value);
+				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
 				return result.insertedId;
 			} catch (error) {
 				this.sanitizeError(error);
@@ -229,7 +248,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		}
 	}
 
-	public async findOrCreate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
+	public async findOrCreate(
+		query: any,
+		value: T,
+		options = {
+			returnOriginal: true,
+			upsert: true,
+		},
+	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
 				const result = await this.collection.findOneAndUpdate(
@@ -237,10 +263,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					{
 						$setOnInsert: value,
 					},
-					{
-						returnOriginal: true,
-						upsert: true,
-					},
+					options,
 				);
 
 				return result.value
@@ -258,7 +281,13 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		);
 	}
 
-	public async findAndUpdate(query: any, value: T): Promise<{ value: T; existing: boolean }> {
+	public async findAndUpdate(
+		query: any,
+		value: T,
+		options = {
+			returnOriginal: true,
+		},
+	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
 				const result = await this.collection.findOneAndUpdate(
@@ -266,9 +295,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 					{
 						$set: value,
 					},
-					{
-						returnOriginal: true,
-					},
+					options,
 				);
 
 				return result.value
@@ -286,7 +313,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		);
 	}
 
-	private async updateCore(filter: any, set: any, addToSet: any, upsert: boolean): Promise<void> {
+	private async updateCore(filter: any, set: any, addToSet: any, options: any): Promise<void> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -296,17 +323,10 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			update.$addToSet = addToSet;
 		}
 
-		const options = { upsert };
-
-		await this.collection.updateOne(filter, update, options);
+		return this.collection.updateOne(filter, update, options);
 	}
 
-	private async updateManyCore(
-		filter: any,
-		set: any,
-		addToSet: any,
-		upsert: boolean,
-	): Promise<void> {
+	private async updateManyCore(filter: any, set: any, addToSet: any, options: any): Promise<void> {
 		const update: any = {};
 		if (set) {
 			update.$set = set;
@@ -316,9 +336,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			update.$addToSet = addToSet;
 		}
 
-		const options = { upsert };
-
-		await this.collection.updateMany(filter, update, options);
+		return this.collection.updateMany(filter, update, options);
 	}
 
 	private async requestWithRetry<TOut>(
@@ -369,7 +387,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		if (error) {
 			try {
 				Object.keys(error).forEach((key) => {
-					if (typeof error[key] === "object") {
+					if (key === "_id" || /^\d+$/.test(key)) { // skip mongodb's ObjectId and array indexes
+						return;
+					} else if (typeof error[key] === "object") {
 						this.sanitizeError(error[key]);
 					} else if (!errorResponseKeysAllowList.has(key)) {
 						error[key] = errorSanitizationMessage;
@@ -400,8 +420,8 @@ export class MongoDb implements core.IDb {
 		this.client.on(event, listener);
 	}
 
-	public collection<T>(name: string): core.ICollection<T> {
-		const collection = this.client.db("admin").collection<T>(name);
+	public collection<T>(name: string, dbName = "admin"): core.ICollection<T> {
+		const collection = this.client.db(dbName).collection<T>(name);
 		return new MongoCollection<T>(
 			collection,
 			this.retryEnabled,
@@ -410,8 +430,8 @@ export class MongoDb implements core.IDb {
 		);
 	}
 
-	public async dropCollection(name: string): Promise<boolean> {
-		return this.client.db("admin").dropCollection(name);
+	public async dropCollection(name: string, dbName = "admin"): Promise<boolean> {
+		return this.client.db(dbName).dropCollection(name);
 	}
 }
 

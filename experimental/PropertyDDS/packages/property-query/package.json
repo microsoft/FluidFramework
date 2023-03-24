@@ -23,6 +23,7 @@
 		"test:changeset": "cd ../property-changeset && mocha",
 		"test:common": "cd ../property-common && mocha",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"dependencies": {
@@ -45,6 +46,9 @@
 		"chai": "^4.2.0",
 		"cross-env": "^7.0.3",
 		"mocha": "^10.2.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
 		"nock": "^10.0.1",
 		"nyc": "^15.1.0",
 		"prettier": "~2.6.2",

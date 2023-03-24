@@ -22,9 +22,9 @@ import {
 	type TableNode,
 	type TableRowNode,
 	type UnorderedListNode,
-} from "../documentation-domain";
-import type { DocumentWriter } from "./DocumentWriter";
-import type { MarkdownRenderContext } from "./RenderContext";
+} from "../../documentation-domain";
+import type { DocumentWriter } from "../DocumentWriter";
+import type { MarkdownRenderContext } from "../RenderContext";
 import {
 	renderAlert,
 	renderBlockQuote,
@@ -43,7 +43,7 @@ import {
 	renderTableCell,
 	renderTableRow,
 	renderUnorderedList,
-} from "./default-renderers";
+} from "../default-renderers";
 
 /**
  * {@link DocumentationNode} renderer type-signature.
@@ -57,7 +57,7 @@ export type RenderDocumentationNode<
 > = (node: TDocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
 
 /**
- * Policies for rendering {@link DocumentationNode}s to `Markdown`, specified by {@link DocumentationNode."type"}.
+ * Configuration for rendering {@link DocumentationNode}s to `Markdown`, specified by {@link DocumentationNode."type"}.
  *
  * @remarks
  *
@@ -73,9 +73,9 @@ export interface MarkdownRenderers {
 }
 
 /**
- * Default Markdown rendering policies.
+ * Default Markdown rendering configuration.
  */
-export const defaultMarkdownRenderers: MarkdownRenderers = {
+const defaultMarkdownRenderers: MarkdownRenderers = {
 	[DocumentationNodeType.Alert]: (node, writer, context): void =>
 		renderAlert(node as AlertNode, writer, context),
 	[DocumentationNodeType.BlockQuote]: (node, writer, context): void =>
