@@ -139,7 +139,7 @@ At this point the `Container` has a pointer to the `ContainerRuntime` code, whic
 
 The important thing to note here is that up until this point the Hosting Application and Fluid know nothing of the Fluid
 `ContainerRuntime` or the `DataStore` code.
-That code is provided after the `Container` is established and stored in the op stream.
+That code is provided after the `Container` is established and is stored in the op stream.
 **This is powerful because it allows the Hosting Applications to load Containers without knowing the underlying code.**
 This is how Teams and Outlook can easily load the Fluid preview app `Container` and `DataStore`s.
 
