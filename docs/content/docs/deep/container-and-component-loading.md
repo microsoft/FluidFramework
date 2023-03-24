@@ -303,7 +303,7 @@ are meant to go.
 This flow works the same as the default `DataStore` above except that the loading `DataStore` has to be explicit about
 the id of the loaded `DataStore`.
 
-In the scenario below we have DataStore1 attempting to get DataStore2.
+In the scenario below we have `DataStore1` attempting to get `DataStore2`.
 
 Instead of calling the `Container`, DataStore1 will call its `DataStoreContext`
 `context.request({ url: "/dataStore-2-unique-id" });` **(8.3.1)**.
