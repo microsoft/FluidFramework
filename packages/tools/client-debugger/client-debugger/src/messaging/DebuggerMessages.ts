@@ -4,6 +4,7 @@
  */
 
 import { ContainerStateMetadata } from "../ContainerMetadata";
+import { FluidHandleNode, FluidObjectId, FluidObjectNode } from "../data-visualization";
 import { ConnectionStateChangeLogEntry } from "../Logs";
 import { IDebuggerMessage } from "./Messages";
 
@@ -18,6 +19,19 @@ export interface HasContainerId {
 	 * The ID of the Container whose metadata is being requested.
 	 */
 	containerId: string;
+}
+
+/**
+ * Base interface used in message data for events targeting a particular Fluid object (DDS) via
+ * a unique ID.
+ *
+ * @public
+ */
+export interface HasFluidObjectId {
+	/**
+	 * The ID of the Fluid object (DDS) whose data is being requested.
+	 */
+	fluidObjectId: FluidObjectId;
 }
 
 // #region Inbound messages
@@ -51,16 +65,18 @@ export type DisconnectContainerMessageData = HasContainerId;
 export type CloseContainerMessageData = HasContainerId;
 
 /**
- * Message data format used by {@link ContainerStateHistoryMessage}.
+ * Message data format used by {@link GetRootDataMessage}.
  *
  * @public
  */
-export interface ContainerStateHistoryMessageData extends HasContainerId {
-	/**
-	 * The Container's connection state history.
-	 */
-	history: ConnectionStateChangeLogEntry[];
-}
+export type GetRootDataMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link GetFluidDataMessage}.
+ *
+ * @public
+ */
+export type GetFluidDataMessageData = HasContainerId & HasFluidObjectId;
 
 /**
  * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
@@ -70,6 +86,26 @@ export interface ContainerStateHistoryMessageData extends HasContainerId {
  */
 export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
 	type: "GET_CONTAINER_STATE";
+}
+
+/**
+ * Inbound event requesting the root DDS data tracked by the debugger associated with the specified Container ID.
+ * Will result in the {@link RootDataMessage} message being posted.
+ *
+ * @public
+ */
+export interface GetRootDataMessage extends IDebuggerMessage<GetRootDataMessageData> {
+	type: "GET_ROOT_DATA";
+}
+
+/**
+ * Inbound event requesting the root DDS data tracked by the debugger associated with the specified Container ID.
+ * Will result in the {@link RootDataMessage} message being posted.
+ *
+ * @public
+ */
+export interface GetFluidDataMessage extends IDebuggerMessage<GetFluidDataMessageData> {
+	type: "GET_FLUID_DATA";
 }
 
 // #endregion
@@ -88,6 +124,45 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 	containerState: ContainerStateMetadata;
 
 	// TODO: change logs
+}
+
+/**
+ * Message data format used by {@link ContainerStateHistoryMessage}.
+ *
+ * @public
+ */
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+	/**
+	 * The Container's connection state history.
+	 */
+	history: ConnectionStateChangeLogEntry[];
+}
+
+/**
+ * Message data format used by {@link RootDataMessage}.
+ *
+ * @public
+ */
+export interface RootDataMessageData extends HasContainerId {
+	/**
+	 * List of root Fluid objects.
+	 */
+	handles: FluidHandleNode[];
+}
+
+/**
+ * Message data format used by {@link FluidDataMessage}.
+ *
+ * @public
+ */
+export interface FluidDataMessageData extends HasContainerId, HasFluidObjectId {
+	/**
+	 * A visual description tree for a particular DDS.
+	 *
+	 * Will be undefined only if the debugger has no data associated with the provided
+	 * {@link HasFluidObjectId.fluidObjectId | ID}.
+	 */
+	visualTree: FluidObjectNode | undefined;
 }
 
 /**
@@ -129,7 +204,7 @@ export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMe
 }
 
 /**
- * Outbound event indicating Container state history.
+ * Outbound event containing the associated Container's state history.
  *
  * @public
  */
@@ -137,4 +212,23 @@ export interface ContainerStateHistoryMessage
 	extends IDebuggerMessage<ContainerStateHistoryMessageData> {
 	type: "CONTAINER_STATE_HISTORY";
 }
+
+/**
+ * Outbound event indicating Container state history.
+ *
+ * @public
+ */
+export interface RootDataMessage extends IDebuggerMessage<RootDataMessageData> {
+	type: "ROOT_DATA";
+}
+
+/**
+ * Outbound event indicating Container state history.
+ *
+ * @public
+ */
+export interface FluidDataMessage extends IDebuggerMessage<FluidDataMessageData> {
+	type: "FLUID_DATA_VISUALIZATION";
+}
+
 // #endregion

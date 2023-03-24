@@ -163,6 +163,17 @@ export interface FluidClientDebuggerProps {
     containerNickname?: string;
 }
 
+// @public
+export interface FluidDataMessage extends IDebuggerMessage<FluidDataMessageData> {
+    // (undocumented)
+    type: "FLUID_DATA_VISUALIZATION";
+}
+
+// @public
+export interface FluidDataMessageData extends HasContainerId, HasFluidObjectId {
+    visualTree: FluidObjectNode | undefined;
+}
+
 // @internal @sealed
 export class FluidDebuggerLogger extends TelemetryLogger {
     static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
@@ -170,21 +181,21 @@ export class FluidDebuggerLogger extends TelemetryLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @internal
+// @public
 export interface FluidHandleNode extends VisualTreeNodeBase {
     fluidObjectId: string;
     nodeKind: NodeKind.FluidHandleNode;
 }
 
-// @internal
+// @public
 export type FluidObjectId = string;
 
-// @internal
+// @public
 export interface FluidObjectNode extends VisualTreeNodeBase {
     fluidObjectId: FluidObjectId;
 }
 
-// @internal
+// @public
 export interface FluidObjectTreeNode extends FluidObjectNode {
     children: VisualTreeNode[];
     nodeKind: NodeKind.FluidTreeNode;
@@ -220,6 +231,24 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
+// @public
+export interface GetFluidDataMessage extends IDebuggerMessage<GetFluidDataMessageData> {
+    // (undocumented)
+    type: "GET_FLUID_DATA";
+}
+
+// @public
+export type GetFluidDataMessageData = HasContainerId & HasFluidObjectId;
+
+// @public
+export interface GetRootDataMessage extends IDebuggerMessage<GetRootDataMessageData> {
+    // (undocumented)
+    type: "GET_ROOT_DATA";
+}
+
+// @public
+export type GetRootDataMessageData = HasContainerId;
+
 // @internal
 export function handleIncomingMessage(message: Partial<IDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
@@ -229,6 +258,11 @@ export function handleIncomingWindowMessage(event: MessageEvent<Partial<IDebugge
 // @public
 export interface HasContainerId {
     containerId: string;
+}
+
+// @public
+export interface HasFluidObjectId {
+    fluidObjectId: FluidObjectId;
 }
 
 // @public
@@ -282,7 +316,7 @@ export interface MessageLoggingOptions {
     context?: string;
 }
 
-// @internal
+// @public
 export enum NodeKind {
     // (undocumented)
     FluidHandleNode = 3,
@@ -310,6 +344,17 @@ export interface RegistryChangeMessageData {
     containers: ContainerMetadata[];
 }
 
+// @public
+export interface RootDataMessage extends IDebuggerMessage<RootDataMessageData> {
+    // (undocumented)
+    type: "ROOT_DATA";
+}
+
+// @public
+export interface RootDataMessageData extends HasContainerId {
+    handles: FluidHandleNode[];
+}
+
 // @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
@@ -326,22 +371,22 @@ export interface TelemetryEventMessageData {
     contents: ITelemetryBaseEvent;
 }
 
-// @internal
+// @public
 export interface ValueNode extends VisualTreeNodeBase {
     nodeKind: NodeKind.ValueNode;
     value: string;
 }
 
-// @internal
+// @public
 export interface VisualParentNode extends VisualTreeNodeBase {
     children: VisualTreeNode[];
     nodeKind: NodeKind.ParentNode;
 }
 
-// @internal
+// @public
 export type VisualTreeNode = VisualParentNode | ValueNode | FluidHandleNode;
 
-// @internal
+// @public
 export interface VisualTreeNodeBase {
     label: string;
     metadata?: string;

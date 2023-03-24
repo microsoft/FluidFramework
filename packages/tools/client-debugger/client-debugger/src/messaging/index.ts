@@ -16,6 +16,7 @@
 export { debuggerMessageSource } from "./Constants";
 export {
 	HasContainerId,
+	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
 	DisconnectContainerMessage,
@@ -26,8 +27,16 @@ export {
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	FluidDataMessage,
+	FluidDataMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
+	GetFluidDataMessage,
+	GetFluidDataMessageData,
+	GetRootDataMessage,
+	GetRootDataMessageData,
+	RootDataMessage,
+	RootDataMessageData,
 } from "./DebuggerMessages";
 export { IDebuggerMessage } from "./Messages";
 export {
