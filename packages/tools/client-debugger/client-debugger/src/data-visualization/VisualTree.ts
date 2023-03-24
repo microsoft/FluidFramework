@@ -94,7 +94,10 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 /**
  * Node describing a Fluid object with a simple value (no children)
  *
- * E.g.
+ * @example
+ *
+ * A DDS like {@link @fluid-framework/counter#SharedCounter}, which strictly stores a simple primitive value might use
+ * this to inline its value (rather than creating unnecessary visual nesting).
  */
 export interface FluidObjectValueNode extends FluidObjectNode {
 	/**
