@@ -158,4 +158,4 @@ If a change updates the summary by adding / updating state that is not the same 
 -   If an array or object is written in the summary, the snapshot comparison might fail if their elements are not in the same order.
 -   Container runtime's metadata blob writes `summaryNumber` which is the number of summaries have happened in the container. In the test, containers process up to a sequence number starting from summaries taken at different points in time. So, `summaryNumber` would be different for them.
 
-In such cases, these states have to normalized before the comparison happens in the test. Add handling of such state to the `getNormalizedSnapshot` function in [snapshotNormalizer.ts](../../utils/tool-utils/src/snapshotNormalizer.ts) normalizes such state in the summary.
+In such cases, these states have to normalized before the comparison happens in the test. Add handling of such state normalization to the `getNormalizedSnapshot` function in [snapshotNormalizer.ts](../../utils/tool-utils/src/snapshotNormalizer.ts).
