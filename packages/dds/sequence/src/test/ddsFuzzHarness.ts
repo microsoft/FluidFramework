@@ -87,13 +87,43 @@ function getSaveInfo(
 }
 
 /**
+ * Represents a generic fuzz model for testing eventual consistency of a DDS.
+ *
+ * Typical DDSes will parameterize this with their SharedObject factory and a serializable set
+ * of operations corresponding to valid edits in the DDS's public API.
  * @example
- * Typical
+ * A simplified SharedString data structure exposing the APIs `insertAt(index, contentString)` and `removeRange(start, end)`
+ * might represent their API with the following operations:
+ * ```typescript
+ * type InsertOperation = { type: "insert"; index: number; content: string }
+ * type RemoveOperation = { type: "remove"; start: number; end: number }
+ * type Operation = InsertOperation | RemoveOperation;
+ * ```
+ *
+ * It would then typically use utilities from \@fluid-internal/stochastic-test-utils to write a generator
+ * for inserting/removing content, and a reducer for interpreting the serializable operations in terms of
+ * SimpleSharedString's public API.
+ *
+ * See \@fluid-internal/stochastic-test-utils's README for more details on this step.
+ *
+ * Then, it could define a model like so:
+ * ```typescript
+ * const model: DDSFuzzModel<SimpleSharedStringFactory, Operation> = {
+ *     workloadName: "insert and delete",
+ *     factory: SimpleSharedStringFactory,
+ *     generatorFactory: myGeneratorFactory,
+ *     reducer: myReducer,
+ *     // A non-toy implementation would typically give a more informative assertion error (e.g. including
+ *     // the IDs for `a` and `b`).
+ *     validateConsistency: (a, b) => { assert.equal(a.getText(), b.getText()); }
+ * }
+ * ```
+ * This model can be used directly to create a suite of fuzz tests with {@link createDDSFuzzSuite}
  */
 export interface DDSFuzzModel<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory>,
+	TState extends DDSFuzzTestState<TChannelFactory> = DDSFuzzTestState<TChannelFactory>,
 > {
 	/**
 	 * Name for this model. This is used for test case naming, and should generally reflect properties
@@ -121,6 +151,7 @@ export interface DDSFuzzModel<
 	 * Reducer capable of updating the test state according to the operations generated.
 	 */
 	reducer: Reducer<TOperation, TState>;
+
 	/**
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
@@ -216,7 +247,6 @@ function mixinReconnect<
 	options: DDSFuzzSuiteOptions,
 ): DDSFuzzModel<TChannelFactory, TOperation | ChangeConnectionState, TState> {
 	const generatorFactory: () => Generator<TOperation | ChangeConnectionState, TState> = () => {
-		// TODO: think through if we should grab an element of generator here or not.
 		const baseGenerator = model.generatorFactory();
 		return (state) => {
 			const baseOp = baseGenerator(state);

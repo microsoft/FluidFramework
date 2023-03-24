@@ -172,6 +172,7 @@ export enum ExitBehavior {
  * interleave(gen1, gen2) // 1, a, 2, b, 3, c, ...
  * interleave(gen1, gen2, 2) // 1, 2, a, 3, 4, b, 5, 6, c, ...
  * interleave(take(2, gen1), gen2, 1, 1, ExitBehavior.OnEitherExhausted) // 1, a, 2, b
+ * interleave(gen1, take(2, gen2), 1, 1, ExitBehavior.OnEitherExhausted) // 1, a, 2, b, 3
  * interleave(gen1, take(3, gen2), 2, 3) // 1, 2, a, b, c, 3, 4
  * interleave(gen1, take(2, gen2), 2, 3) // 1, 2, a, b
  * ```
