@@ -1957,6 +1957,12 @@ export class ContainerRuntime
 	}
 
 	public processSignal(message: ISignalMessage, local: boolean) {
+		const shouldDisableSignalForSummarizer =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableSignalForSummarizer") !== true;
+
+		if (shouldDisableSignalForSummarizer && this.clientDetails.type === summarizerClientType) {
+			return;
+		}
 		const envelope = message.content as ISignalEnvelope;
 		const transformed: IInboundSignalMessage = {
 			clientId: message.clientId,
