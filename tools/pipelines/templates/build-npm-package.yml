@@ -360,6 +360,11 @@ stages:
               mergeTestResults: false
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
+          # Log Test Failures
+          - template: include-log-test-failures.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
