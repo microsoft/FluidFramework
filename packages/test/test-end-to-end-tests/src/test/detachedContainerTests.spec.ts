@@ -734,18 +734,18 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		await defPromise.promise;
 	});
 
-	// it.only("Load attached container from cache and check if they are same", async () => {
-	// 	const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
+	it.skip("Load attached container from cache and check if they are same", async () => {
+		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
-	// 	// Now attach the container and get the sub dataStore.
-	// 	await container.attach(request);
+		// Now attach the container and get the sub dataStore.
+		await container.attach(request);
 
-	// 	// Create a new request url from the resolvedUrl of the first container.
-	// 	assert(container.resolvedUrl);
-	// 	const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-	// 	const container2 = await loader.resolve({ url: requestUrl2 });
-	// 	assert.strictEqual(container, container2, "Both containers should be same");
-	// });
+		// Create a new request url from the resolvedUrl of the first container.
+		assert(container.resolvedUrl);
+		const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
+		const container2 = await loader.resolve({ url: requestUrl2 });
+		assert.strictEqual(container, container2, "Both containers should be same");
+	});
 });
 
 // Review: Run with Full Compat?
