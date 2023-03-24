@@ -396,7 +396,7 @@ function mixinSynchronization<
 }
 
 function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-	model: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>,
+	model: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: InternalOptions,
 	seed: number,
 	saveInfo: SaveInfo | undefined,
@@ -464,7 +464,7 @@ export function createDDSFuzzSuite<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
 >(
-	ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>,
+	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 	providedOptions?: Partial<DDSFuzzSuiteOptions>,
 ) {
 	const options = {
@@ -526,7 +526,7 @@ export function createDDSFuzzSuite<
 createDDSFuzzSuite.only =
 	(...seeds: number[]) =>
 	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-		ddsModel: DDSFuzzModel<TChannelFactory, TOperation, DDSFuzzTestState<TChannelFactory>>,
+		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 		providedOptions?: Partial<DDSFuzzSuiteOptions>,
 	) =>
 		createDDSFuzzSuite(ddsModel, {
