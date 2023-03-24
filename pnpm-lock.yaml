@@ -9669,6 +9669,7 @@ importers:
       '@fluidframework/shared-object-base': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/task-manager': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/chai': ^4.0.0
       '@types/events': ^3.0.0
@@ -9709,6 +9710,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.4
       '@types/chai': 4.3.4
       '@types/events': 3.0.0

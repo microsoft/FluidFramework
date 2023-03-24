@@ -82,6 +82,7 @@
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
+		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@types/chai": "^4.0.0",
 		"@types/events": "^3.0.0",
