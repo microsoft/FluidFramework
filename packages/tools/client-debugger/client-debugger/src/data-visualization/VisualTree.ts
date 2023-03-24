@@ -77,7 +77,12 @@ export interface FluidObjectNode extends VisualTreeNodeBase {
 }
 
 /**
- * Node describing a Fluid object with visual children
+ * Node describing a Fluid object with visual children.
+ *
+ * @example
+ *
+ * A DDS like {@link @fluidframework/map#SharedMap}, which stores a series of "child" entries might use this
+ * to display each of its entries nested under it.
  */
 export interface FluidObjectTreeNode extends FluidObjectNode {
 	/**
@@ -92,11 +97,11 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 }
 
 /**
- * Node describing a Fluid object with a simple value (no children)
+ * Node describing a Fluid object with a simple value (no children).
  *
  * @example
  *
- * A DDS like {@link @fluid-framework/counter#SharedCounter}, which strictly stores a simple primitive value might use
+ * A DDS like {@link @fluidframework/counter#SharedCounter}, which strictly stores a simple primitive value might use
  * this to inline its value (rather than creating unnecessary visual nesting).
  */
 export interface FluidObjectValueNode extends FluidObjectNode {
