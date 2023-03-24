@@ -67,7 +67,7 @@ export interface VisualParentNode extends VisualTreeNodeBase {
 }
 
 /**
- * Base interface for nodes referencing Fluid objects
+ * Base interface for nodes referencing Fluid objects.
  */
 export interface FluidObjectNode extends VisualTreeNodeBase {
 	/**
