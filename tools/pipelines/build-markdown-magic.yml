@@ -65,7 +65,7 @@ extends:
     packageManager: pnpm
     tagName: markdown-magic
     taskBuild: build
-    taskBuildDocs: true
+    taskBuildDocs: false
     taskLint: false
     taskTest:
     - test
