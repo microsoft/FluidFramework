@@ -249,7 +249,7 @@ But then how do `DataStore`s interact with each other?
 The same way `instantiateRuntime()` created the default `DataStore`, the default `DataStore` can use `createComponent()`
 on its `DataStoreContext` **(8.3.1)** to create a second `DataStore`.
 
-Calling `createComponent` causes the `ContainerRuntime` to look at its `DataStoreRegistry`, create a second
+Calling `createComponent` causes the `ContainerRuntime` to look at its `DataStoreRegistry` and create a second
 `DataStoreContext` **(7)**, which will call a new `instantiateComponent()` **(8.1)**, which will create a second
 `DataStoreRuntime` **(8.2)**, and second `DataStore` object **(8.3)**.
 
