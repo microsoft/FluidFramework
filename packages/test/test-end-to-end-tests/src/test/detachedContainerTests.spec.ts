@@ -734,7 +734,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		await defPromise.promise;
 	});
 
-	it.skip("Load attached container from cache and check if they are same", async () => {
+	it("Load attached container from cache and check if they are same", async () => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 		// Now attach the container and get the sub dataStore.
@@ -743,7 +743,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Create a new request url from the resolvedUrl of the first container.
 		assert(container.resolvedUrl);
 		const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-		const container2 = await loader.resolve({ url: requestUrl2 });
+		const container2 = await loader.resolve({ url: requestUrl2, headers: {"fluid-cache": true} });
 		assert.strictEqual(container, container2, "Both containers should be same");
 	});
 });
