@@ -45,3 +45,4 @@ export {
 } from "./interfaces";
 export { LocalValueMaker, ILocalValue } from "./localValues";
 export { MapFactory, SharedMap } from "./map";
+export { MapIncrementalFactory, SharedMapIncremental } from "./mapIncremental";

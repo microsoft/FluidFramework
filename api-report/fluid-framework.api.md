@@ -72,6 +72,7 @@ import { LoadableObjectCtor } from '@fluidframework/fluid-static';
 import { LoadableObjectRecord } from '@fluidframework/fluid-static';
 import { LocalValueMaker } from '@fluidframework/map';
 import { MapFactory } from '@fluidframework/map';
+import { MapIncrementalFactory } from '@fluidframework/map';
 import { MemberChangedListener } from '@fluidframework/fluid-static';
 import { RootDataObject } from '@fluidframework/fluid-static';
 import { RootDataObjectProps } from '@fluidframework/fluid-static';
@@ -228,6 +229,8 @@ export { LoadableObjectRecord }
 export { LocalValueMaker }
 
 export { MapFactory }
+
+export { MapIncrementalFactory }
 
 export { MemberChangedListener }
 

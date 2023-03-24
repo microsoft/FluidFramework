@@ -62,6 +62,7 @@ export {
 	ISummarizerNodeConfig,
 	ISummarizerNodeConfigWithGC,
 	ISummarizerNodeWithGC,
+	IIncrementalContext,
 	ISummaryStats,
 	ISummaryTreeWithStats,
 	ITelemetryContext,

@@ -15,6 +15,7 @@ import { IEventThisPlaceHolder } from '@fluidframework/common-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
+import { IIncrementalContext } from '@fluidframework/runtime-definitions';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
@@ -213,6 +214,22 @@ export class MapFactory implements IChannelFactory {
 }
 
 // @public @sealed
+export class MapIncrementalFactory implements IChannelFactory {
+    // (undocumented)
+    static readonly Attributes: IChannelAttributes;
+    // (undocumented)
+    get attributes(): IChannelAttributes;
+    // (undocumented)
+    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
+    // (undocumented)
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
+    // (undocumented)
+    static readonly Type = "https://graph.microsoft.com/types/map-incremental";
+    // (undocumented)
+    get type(): string;
+}
+
+// @public @sealed
 export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implements ISharedDirectory {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     [Symbol.toStringTag]: string;
@@ -293,6 +310,39 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     get size(): number;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    values(): IterableIterator<any>;
+}
+
+// @public
+export class SharedMapIncremental extends SharedObject<ISharedMapEvents> implements ISharedMap {
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    readonly [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // @internal (undocumented)
+    protected applyStashedOp(content: unknown): unknown;
+    clear(): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMapIncremental;
+    delete(key: string): boolean;
+    entries(): IterableIterator<[string, any]>;
+    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
+    get<T = any>(key: string): T | undefined;
+    static getFactory(): IChannelFactory;
+    has(key: string): boolean;
+    keys(): IterableIterator<string>;
+    // @internal (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // @internal (undocumented)
+    protected onDisconnect(): void;
+    // @internal (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
+    set(key: string, value: unknown): this;
+    get size(): number;
+    // @internal (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalContext?: IIncrementalContext): ISummaryTreeWithStats;
     values(): IterableIterator<any>;
 }
 

@@ -121,6 +121,7 @@ export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
+	incrementalContext?: IIncrementalContext,
 ) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
@@ -353,6 +354,12 @@ export interface ITelemetryContext {
 	 * Should be used when logging in telemetry events.
 	 */
 	serialize(): string;
+}
+
+export interface IIncrementalContext {
+	sequenceNumber: number;
+	previousSequenceNumber: number;
+	parentPath: string;
 }
 
 export const blobCountPropertyName = "BlobCount";

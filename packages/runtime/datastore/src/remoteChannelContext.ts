@@ -20,6 +20,7 @@ import {
 	CreateChildSummarizerNodeFn,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
+	IIncrementalContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
@@ -84,7 +85,8 @@ export class RemoteChannelContext implements IChannelContext {
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
-		) => this.summarizeInternal(fullTree, trackState, telemetryContext);
+			summaryContext?: IIncrementalContext,
+		) => this.summarizeInternal(fullTree, trackState, telemetryContext, summaryContext);
 
 		this.summarizerNode = createSummarizerNode(
 			thisSummarizeInternal,
@@ -167,13 +169,16 @@ export class RemoteChannelContext implements IChannelContext {
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
+		incrementalContext?: IIncrementalContext,
 	): Promise<ISummarizeInternalResult> {
+		console.log(`channel context summarize internal: ${incrementalContext}`);
 		const channel = await this.getChannel();
 		const summarizeResult = await summarizeChannelAsync(
 			channel,
 			fullTree,
 			trackState,
 			telemetryContext,
+			incrementalContext,
 		);
 		return { ...summarizeResult, id: this.id };
 	}

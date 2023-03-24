@@ -16,7 +16,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { Ink } from "@fluidframework/ink";
-import { SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedDirectory, SharedMap, SharedMapIncremental } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
@@ -95,6 +95,7 @@ const DataRuntimeApi = {
 		Ink,
 		SharedDirectory,
 		SharedMap,
+		SharedMapIncremental,
 		SharedMatrix,
 		ConsensusQueue,
 		ConsensusRegisterCollection,
@@ -159,6 +160,8 @@ export function getDataRuntimeApi(
 			Ink: loadPackage(modulePath, "@fluidframework/ink").Ink,
 			SharedDirectory: loadPackage(modulePath, "@fluidframework/map").SharedDirectory,
 			SharedMap: loadPackage(modulePath, "@fluidframework/map").SharedMap,
+			SharedMapIncremental: loadPackage(modulePath, "@fluidframework/map-incremental")
+				.SharedMapIncremental,
 			SharedMatrix: loadPackage(modulePath, "@fluidframework/matrix").SharedMatrix,
 			ConsensusQueue: loadPackage(modulePath, "@fluidframework/ordered-collection")
 				.ConsensusQueue,

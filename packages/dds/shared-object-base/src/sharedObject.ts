@@ -17,6 +17,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
+	IIncrementalContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	blobCountPropertyName,
@@ -656,8 +657,9 @@ export abstract class SharedObject<
 		fullTree: boolean = false,
 		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
+		incrementalContext?: IIncrementalContext,
 	): Promise<ISummaryTreeWithStats> {
-		const result = this.summarizeCore(this.serializer, telemetryContext);
+		const result = this.summarizeCore(this.serializer, telemetryContext, incrementalContext);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
 			result.stats.blobNodeCount,
@@ -722,6 +724,7 @@ export abstract class SharedObject<
 	protected abstract summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalContext?: IIncrementalContext,
 	): ISummaryTreeWithStats;
 
 	private incrementTelemetryMetric(

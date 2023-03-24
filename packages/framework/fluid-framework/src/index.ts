@@ -66,6 +66,7 @@ export {
 	IValueChanged,
 	LocalValueMaker,
 	MapFactory,
+	MapIncrementalFactory,
 	SharedDirectory,
 	SharedMap,
 } from "@fluidframework/map";

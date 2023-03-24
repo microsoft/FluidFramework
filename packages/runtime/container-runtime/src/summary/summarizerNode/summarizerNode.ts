@@ -12,6 +12,7 @@ import {
 	CreateSummarizerNodeSource,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	IIncrementalContext,
 } from "@fluidframework/runtime-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -159,7 +160,20 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		const result = await this.summarizeInternalFn(fullTree, true, telemetryContext);
+		const incrementalContext: IIncrementalContext = {
+			sequenceNumber: this.wipReferenceSequenceNumber ?? this._changeSequenceNumber,
+			previousSequenceNumber: this._latestSummary?.referenceSequenceNumber ?? 0,
+			parentPath: this._latestSummary?.fullPath.path ?? "",
+		};
+		console.log(JSON.stringify(incrementalContext));
+		console.log(JSON.stringify(incrementalContext));
+		const result = await this.summarizeInternalFn(
+			fullTree,
+			true,
+			telemetryContext,
+			incrementalContext,
+		);
+
 		this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
 		if (result.pathPartsForChildren !== undefined) {
 			this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(
