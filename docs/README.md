@@ -342,6 +342,8 @@ The following npm scripts are supported in this directory:
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
+| `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
+| `ci:start` | `http-server ./public --port 1313 --silent` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
@@ -349,10 +351,8 @@ The following npm scripts are supported in this directory:
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
 | `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
 | `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
-| `linkcheck:reflinks` | Checks the `public` folder for HTML files with broken MarkDown reference links. |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
-| `preinstall` | `node ../scripts/only-pnpm.cjs` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 
 <!-- prettier-ignore-end -->
