@@ -125,7 +125,7 @@ The `Container` thus ends up asking the `CodeLoader` for the `"code"`.  **(4)**
 
 The `CodeLoader` needs to get the code and return a pointer to it to the `Container`.
 In the browser, this pointer is usually an entry point to a JavaScript bundle that exists on the `window` object.
-The `CodeLoader` can dynamically pull this code from some source (CDN) or in some cases the code already exists on the
+The `CodeLoader` can dynamically pull this code from some source (for example a [CDN](https://learn.microsoft.com/en-us/azure/cdn/cdn-overview)) or in some cases the code already exists on the
 webpage.
 In Node.js, it's a pointer to a package.
 
