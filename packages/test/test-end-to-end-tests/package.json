@@ -77,7 +77,7 @@
 		"@fluid-internal/test-loader-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-internal/test-pairwise-generator": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluid-internal/test-version-utils": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
-		"@fluid-tools/benchmark": "^0.46.0",
+		"@fluid-tools/benchmark": "0.47.0-140906",
 		"@fluidframework/agent-scheduler": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/aqueduct": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/cell": ">=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0",
@@ -128,7 +128,7 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.0",
+		"@fluid-tools/build-cli": "^0.13.1",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/test-end-to-end-tests-previous": "npm:@fluidframework/test-end-to-end-tests@2.0.0-internal.3.2.0",

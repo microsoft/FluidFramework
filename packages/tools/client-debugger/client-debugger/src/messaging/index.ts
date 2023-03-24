@@ -35,6 +35,12 @@ export {
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
 } from "./RegistryMessages";
+export {
+	GetAudienceMessage,
+	AudienceClientMetaData,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+} from "./AudienceMessages";
 export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
 export {
 	handleIncomingMessage,

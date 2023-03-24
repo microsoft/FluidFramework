@@ -10,8 +10,7 @@ import {
 	ITenantManager,
 	IThrottler,
 	ICache,
-	ICollection,
-	IDocument,
+	IDocumentRepository,
 	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
@@ -40,7 +39,7 @@ export function create(
 	appTenants: IAlfredTenant[],
 	deltaService: IDeltaService,
 	producer: IProducer,
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 	tokenManager?: ITokenRevocationManager,
 ) {
 	// Maximum REST request size
@@ -97,7 +96,7 @@ export function create(
 		storage,
 		producer,
 		appTenants,
-		documentsCollection,
+		documentRepository,
 		tokenManager,
 	);
 

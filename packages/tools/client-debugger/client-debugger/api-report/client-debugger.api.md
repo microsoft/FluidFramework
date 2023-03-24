@@ -26,6 +26,26 @@ export interface AudienceChangeLogEntry extends LogEntry {
     clientId: string;
 }
 
+// @public
+export interface AudienceClientMetaData {
+    client: IClient;
+    clientId: string;
+}
+
+// @public
+export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
+    // (undocumented)
+    type: "AUDIENCE_EVENT";
+}
+
+// @public
+export interface AudienceSummaryMessageData extends HasContainerId {
+    // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
+    audienceHistory: readonly AudienceChangeLogEntry[];
+    audienceState: AudienceClientMetaData[];
+    clientId: string | undefined;
+}
+
 // @internal
 export function clearDebuggerRegistry(): void;
 
@@ -168,6 +188,12 @@ export interface FluidObjectNode extends VisualTreeNodeBase {
 export interface FluidObjectTreeNode extends FluidObjectNode {
     children: VisualTreeNode[];
     nodeKind: NodeKind.FluidTreeNode;
+}
+
+// @public
+export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_AUDIENCE";
 }
 
 // @public

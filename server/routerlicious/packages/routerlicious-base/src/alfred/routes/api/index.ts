@@ -5,9 +5,8 @@
 
 import {
 	ICache,
-	ICollection,
 	IDeltaService,
-	IDocument,
+	IDocumentRepository,
 	IDocumentStorage,
 	IProducer,
 	ITenantManager,
@@ -32,7 +31,7 @@ export function create(
 	deltaService: IDeltaService,
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
@@ -53,7 +52,7 @@ export function create(
 		singleUseTokenCache,
 		config,
 		tenantManager,
-		documentsCollection,
+		documentRepository,
 		tokenManager,
 	);
 	const apiRoute = api.create(
