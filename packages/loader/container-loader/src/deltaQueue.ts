@@ -58,7 +58,6 @@ export class DeltaQueue<T>
 
 	/**
 	 * @param worker - A callback to process a delta.
-	 * @param logger - For logging telemetry.
 	 */
 	constructor(private readonly worker: (delta: T) => void) {
 		super();
