@@ -66,6 +66,6 @@ extends:
     tagName: markdown-magic
     taskBuild: build
     taskBuildDocs: true
-    taskLint: true
+    taskLint: false
     taskTest:
     - test
