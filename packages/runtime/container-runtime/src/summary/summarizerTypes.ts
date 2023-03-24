@@ -10,7 +10,6 @@ import {
 	ITelemetryProperties,
 } from "@fluidframework/common-definitions";
 import { ITelemetryLoggerPropertyBag } from "@fluidframework/telemetry-utils";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ContainerWarning, IDeltaManager } from "@fluidframework/container-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -21,21 +20,6 @@ import { ISummaryStats } from "@fluidframework/runtime-definitions";
 import { ISummaryConfigurationHeuristics } from "../containerRuntime";
 import { ISummaryAckMessage, ISummaryNackMessage, ISummaryOpMessage } from "./summaryCollection";
 import { SummarizeReason } from "./summaryGenerator";
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export const ISummarizer: keyof IProvideSummarizer = "ISummarizer";
-
-/**
- * @deprecated This will be removed in a later release.
- */
-export interface IProvideSummarizer {
-	/**
-	 * @deprecated This will be removed in a later release.
-	 */
-	readonly ISummarizer: ISummarizer;
-}
 
 /**
  * Similar to AbortSignal, but using promise instead of events
@@ -84,7 +68,6 @@ export interface IConnectableRuntime {
 	readonly disposed: boolean;
 	readonly connected: boolean;
 	readonly clientId: string | undefined;
-	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
@@ -92,6 +75,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly logger: ITelemetryLogger;
 	/** clientId of parent (non-summarizing) container that owns summarizer container */
 	readonly summarizerClientId: string | undefined;
+	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	disposeFn?(): void;
 	closeFn(): void;
 }
@@ -320,10 +304,12 @@ export interface ISummarizerEvents extends IEvent {
 	(event: "summarizingError", listener: (error: ISummarizingWarning) => void);
 }
 
-export interface ISummarizer
-	extends IEventProvider<ISummarizerEvents>,
-		IFluidLoadable,
-		Partial<IProvideSummarizer> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
+	/**
+	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
+	 */
+	readonly ISummarizer?: ISummarizer;
+
 	/*
 	 * Asks summarizer to move to exit.
 	 * Summarizer will finish current processes, which may take a while.

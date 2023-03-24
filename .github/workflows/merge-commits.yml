@@ -116,7 +116,7 @@ jobs:
           token: ${{ secrets.BOT_MAIN_NEXT_WORKFLOW_PAT }}
           script: |
             const { Octokit } = require("@octokit/core");
-            const token = `${{ secrets.GITHUB_TOKEN }}`;
+            const token = `${{ secrets.FLUIDBOTPAT }}`;
             const sha = 'main-next-${{needs.dequeue.outputs.SHA}}';
             const author = '${{needs.dequeue.outputs.AUTHOR}}';
             const description = `
@@ -163,7 +163,6 @@ jobs:
               labels: [
                 'main-next-integrate',
                 'do-not-squash-merge',
-                'msftbot: merge-next'
               ]
             })
   remove-from-queue:
@@ -174,11 +173,6 @@ jobs:
     needs: [pull-request]
     if: needs.pull-request.result == 'success'
     steps:
-      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
-      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
-        with:
-          node-version: 14
-      - run: npm ci
       - run: npm install @azure/storage-queue
       - uses: actions/github-script@d556feaca394842dc55e4734bf3bb9f685482fa0 # ratchet:actions/github-script@v6
         with:

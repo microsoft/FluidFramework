@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { RevisionTag } from "../../core";
-import { clone, fail } from "../../util";
+import { fail } from "../../util";
 import { CrossFieldManager, CrossFieldTarget, IdAllocator } from "../modular-schema";
 import {
 	InputSpanningMark,
@@ -18,7 +18,7 @@ import {
 	ReturnTo,
 	Skip,
 } from "./format";
-import { getInputLength, getOutputLength, isSkipMark } from "./utils";
+import { cloneMark, getInputLength, getOutputLength, isSkipMark } from "./utils";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 
@@ -117,6 +117,7 @@ export function splitMove<T>(
 	count1: number,
 	count2: number,
 ): void {
+	assert(newId !== id, 0x5ba /* Must have distinct ID for each piece of the split mark */);
 	const effect = getOrAddEffect(effects, target, revision, id);
 	const newEffect = getOrAddEffect(effects, target, revision, newId);
 	newEffect.count = count2;
@@ -134,11 +135,12 @@ export function getOrAddEffect<T>(
 	revision: RevisionTag | undefined,
 	id: MoveId,
 	resetMerges: boolean = false,
+	invalidate: boolean = true,
 ): MoveEffect<T> {
 	if (resetMerges) {
 		clearMergeability(moveEffects, target, revision, id);
 	}
-	return moveEffects.getOrCreate(target, revision, id, {});
+	return moveEffects.getOrCreate(target, revision, id, {}, invalidate);
 }
 
 export function getMoveEffect<T>(
@@ -146,8 +148,9 @@ export function getMoveEffect<T>(
 	target: CrossFieldTarget,
 	revision: RevisionTag | undefined,
 	id: MoveId,
+	addDependency: boolean = true,
 ): MoveEffect<T> {
-	return moveEffects.get(target, revision, id) ?? {};
+	return moveEffects.get(target, revision, id, addDependency) ?? {};
 }
 
 export function clearMergeability<T>(
@@ -158,11 +161,13 @@ export function clearMergeability<T>(
 ): void {
 	const effect = getOrAddEffect(moveEffects, target, revision, id);
 	if (effect.mergeLeft !== undefined) {
-		delete getOrAddEffect(moveEffects, target, revision, effect.mergeLeft).mergeRight;
+		delete getOrAddEffect(moveEffects, target, revision, effect.mergeLeft, false, false)
+			.mergeRight;
 		delete effect.mergeLeft;
 	}
 	if (effect.mergeRight !== undefined) {
-		delete getOrAddEffect(moveEffects, target, revision, effect.mergeRight).mergeLeft;
+		delete getOrAddEffect(moveEffects, target, revision, effect.mergeRight, false, false)
+			.mergeLeft;
 		delete effect.mergeRight;
 	}
 }
@@ -174,8 +179,8 @@ export function makeMergeable<T>(
 	leftId: MoveId,
 	rightId: MoveId,
 ): void {
-	getOrAddEffect(moveEffects, target, revision, leftId).mergeRight = rightId;
-	getOrAddEffect(moveEffects, target, revision, rightId).mergeLeft = leftId;
+	getOrAddEffect(moveEffects, target, revision, leftId, false, false).mergeRight = rightId;
+	getOrAddEffect(moveEffects, target, revision, rightId, false, false).mergeLeft = leftId;
 }
 
 export type MoveMark<T> = MoveOut<T> | MoveIn | ReturnFrom<T> | ReturnTo;
@@ -210,23 +215,20 @@ function applyMoveEffectsToDest<T>(
 	const result: Mark<T>[] = [];
 
 	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
-	if (effect.mark !== undefined) {
-		result.push(effect.mark);
-	} else {
-		if (!effect.shouldRemove) {
-			const newMark: MoveIn | ReturnTo = {
-				...mark,
-				count: effect.count ?? mark.count,
-			};
-			if (effect.pairedMarkStatus !== undefined) {
-				if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
-					newMark.isSrcConflicted = true;
-				} else {
-					delete newMark.isSrcConflicted;
-				}
+
+	if (effect.shouldRemove !== true) {
+		const newMark: MoveIn | ReturnTo = {
+			...mark,
+			count: effect.count ?? mark.count,
+		};
+		if (effect.pairedMarkStatus !== undefined) {
+			if (effect.pairedMarkStatus === PairedMarkUpdate.Deactivated) {
+				newMark.isSrcConflicted = true;
+			} else {
+				delete newMark.isSrcConflicted;
 			}
-			result.push(newMark);
 		}
+		result.push(newMark);
 	}
 
 	if (effect.child !== undefined) {
@@ -256,7 +258,6 @@ function applyMoveEffectsToDest<T>(
 	}
 
 	if (consumeEffect) {
-		delete effect.mark;
 		delete effect.count;
 		delete effect.child;
 	}
@@ -270,17 +271,15 @@ function applyMoveEffectsToSource<T>(
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-	const effect = getOrAddEffect(
+	const effect = getMoveEffect(
 		effects,
 		CrossFieldTarget.Source,
 		mark.revision ?? revision,
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (effect.mark !== undefined) {
-		result.push(effect.mark);
-	} else if (!effect.shouldRemove) {
-		const newMark = clone(mark);
+	if (effect.shouldRemove !== true) {
+		const newMark = cloneMark(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {
 			assert(
@@ -334,7 +333,6 @@ function applyMoveEffectsToSource<T>(
 	}
 
 	if (consumeEffect) {
-		delete effect.mark;
 		delete effect.count;
 		delete effect.child;
 		delete effect.modifyAfter;
@@ -436,8 +434,13 @@ export function splitMarkOnInput<T, TMark extends InputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: mark.detachIndex + length },
+				{ ...markObj, content: mark.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: mark.content.slice(length),
+					count: remainder,
+					detachIndex: mark.detachIndex + length,
+				},
 			] as [TMark, TMark];
 		case "Delete":
 			return [
@@ -556,8 +559,13 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 		}
 		case "Revive":
 			return [
-				{ ...markObj, count: length },
-				{ ...markObj, count: remainder, detachIndex: markObj.detachIndex + length },
+				{ ...markObj, content: markObj.content.slice(0, length), count: length },
+				{
+					...markObj,
+					content: markObj.content.slice(length),
+					count: remainder,
+					detachIndex: markObj.detachIndex + length,
+				},
 			];
 		default:
 			unreachableCase(type);

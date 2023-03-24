@@ -18,7 +18,10 @@ import {
 	SummaryCollection,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import {
+	IContainerRuntime,
+	IDataStoreWithBindToContext_Deprecated,
+} from "@fluidframework/container-runtime-definitions";
 import { UsageError } from "@fluidframework/container-utils";
 import { IFluidRouter } from "@fluidframework/core-interfaces";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -33,7 +36,7 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 
 describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -442,7 +445,9 @@ describeNoCompat("Named root data stores", (getTestObjectProvider) => {
 			const aliasedDataStore1 = aliasedDataStoreResponse1.value as ITestFluidObject;
 			// Casting any to repro a race condition where bindToContext is called before summarization,
 			// but aliasing happens afterwards
-			(aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+			(
+				aliasableDataStore1 as IDataStoreWithBindToContext_Deprecated
+			).fluidDataStoreChannel?.bindToContext?.();
 			await provider.ensureSynchronized();
 
 			const containerRuntime2 = runtimeOf(dataObject2) as ContainerRuntime;

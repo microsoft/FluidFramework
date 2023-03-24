@@ -20,7 +20,7 @@ import {
 	UpPath,
 	Value,
 } from "../core";
-import { chunkTree, TreeChunk } from "./chunked-forest";
+import { chunkTree, TreeChunk, defaultChunkPolicy } from "./chunked-forest";
 
 interface RepairData {
 	value?: Map<RevisionTag, Value>;
@@ -44,7 +44,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 		const forest = this.forestProvider(revision);
 		const cursor = forest.allocateCursor();
 
-		const visitFields = (fields: Delta.FieldChangeMap, parent: RepairDataNode): void => {
+		const visitFieldMarks = (fields: Delta.FieldMarks, parent: RepairDataNode): void => {
 			for (const [key, field] of fields) {
 				if (parent !== this.root) {
 					cursor.enterField(key);
@@ -58,31 +58,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		};
 
-		function visitField(
-			delta: Delta.FieldChanges,
-			parent: RepairDataNode,
-			key: FieldKey,
-		): void {
-			if (delta.shallow !== undefined) {
-				visitFieldMarks(delta.shallow, parent, key);
-			}
-			// TODO: support storage of deleted content from inserted trees
-			if (delta.beforeShallow !== undefined) {
-				for (const nested of delta.beforeShallow) {
-					const index = nested.index;
-					cursor.enterNode(index);
-					const child = parent.getOrCreateChild(key, index, undefinedFactory);
-					visitModify(nested, child);
-					cursor.exitNode();
-				}
-			}
-		}
-
-		function visitFieldMarks(
-			delta: Delta.MarkList,
-			parent: RepairDataNode,
-			key: FieldKey,
-		): void {
+		function visitField(delta: Delta.MarkList, parent: RepairDataNode, key: FieldKey): void {
 			let index = 0;
 			for (const mark of delta) {
 				if (typeof mark === "number") {
@@ -94,8 +70,18 @@ export class ForestRepairDataStore implements RepairDataStore {
 					switch (type) {
 						case Delta.MarkType.MoveOut:
 						case Delta.MarkType.Delete: {
+							const child = parent.getOrCreateChild(key, index, repairDataFactory);
+							visitModify(mark, child);
 							onDelete(parent, key, index, mark.count);
 							index += mark.count;
+							break;
+						}
+						case Delta.MarkType.Modify: {
+							cursor.enterNode(index);
+							const child = parent.getOrCreateChild(key, index, undefinedFactory);
+							visitModify(mark, child);
+							cursor.exitNode();
+							index += 1;
 							break;
 						}
 						case Delta.MarkType.Insert:
@@ -108,11 +94,11 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
-		function visitModify(modify: ModifyLike, node: RepairDataNode): void {
-			// Note that the `in` operator return true for properties that are present on the object even if they
-			// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
-			// `undefined` as opposed to leaving the value untouched.
-			if ("setValue" in modify) {
+		function visitModify(modify: Delta.HasModifications, node: RepairDataNode): void {
+			// Note that the check below returns true for properties that are present on the object even if they
+			// are set to `undefined`. This is leveraged here to represent the fact that the value should be set to
+			// `undefined` as opposed to leaving the value unchanged.
+			if (Object.prototype.hasOwnProperty.call(modify, "setValue")) {
 				if (node.data === undefined) {
 					node.data = repairDataFactory();
 				}
@@ -123,7 +109,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 				node.data.value.set(revision, value);
 			}
 			if (modify.fields !== undefined) {
-				visitFields(modify.fields, node);
+				visitFieldMarks(modify.fields, node);
 			}
 		}
 
@@ -137,7 +123,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 				const fork = cursor.fork();
 				const index = startIndex + i;
 				fork.enterNode(index);
-				const nodeData = chunkTree(castCursorToSynchronous(fork));
+				const nodeData = chunkTree(castCursorToSynchronous(fork), defaultChunkPolicy);
 				fork.free();
 				const child = parent.getOrCreateChild(key, index, repairDataFactory);
 				if (child.data === undefined) {
@@ -150,7 +136,7 @@ export class ForestRepairDataStore implements RepairDataStore {
 			}
 		}
 
-		visitFields(change, this.root);
+		visitFieldMarks(change, this.root);
 		cursor.free();
 	}
 
@@ -191,9 +177,4 @@ export class ForestRepairDataStore implements RepairDataStore {
 		assert(valueMap?.has(revision) === true, 0x47e /* No repair data found */);
 		return valueMap.get(revision);
 	}
-}
-
-interface ModifyLike {
-	setValue?: Value;
-	fields?: Delta.FieldChangeMap;
 }

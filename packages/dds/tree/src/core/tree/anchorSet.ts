@@ -4,13 +4,15 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { brand, Brand, fail } from "../../util";
-import { FieldKey, EmptyKey, Delta, visitDelta } from "../tree";
+import { createEmitter, ISubscribable } from "../../events";
+import { brand, Brand, fail, Invariant, Opaque, ReferenceCountedBase } from "../../util";
+import { FieldKey, EmptyKey, Delta, visitDelta, DeltaVisitor } from "../tree";
 import { UpPath } from "./pathTree";
 import { Value } from "./types";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
+ * Associated with a ref count on the underlying {@link AnchorNode}.
  * @alpha
  */
 export type Anchor = Brand<number, "rebaser.Anchor">;
@@ -33,18 +35,190 @@ export interface AnchorLocator {
 	 * for now caller must rely on data in anchor + returned node location
 	 * (not ideal for anchors for places or ranges instead of nodes).
 	 */
-	locate(anchor: Anchor): UpPath | undefined;
+	locate(anchor: Anchor): AnchorNode | undefined;
 }
+
+/**
+ * @alpha
+ */
+export type AnchorKeyBrand = Brand<number, "AnchorSlot">;
+
+/**
+ * @alpha
+ */
+export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
+
+/**
+ * @alpha
+ */
+export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
+	unknown,
+	infer TContent
+>
+	? TContent
+	: never;
+
+/**
+ * Stores arbitrary, user-defined data on an {@link Anchor}.
+ * This data is preserved over the course of that anchor's lifetime.
+ * @see {@link anchorSlot} for creation and an example use case.
+ * @alpha
+ */
+export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
+
+/**
+ * A Map where the keys carry the types of values which they correspond to.
+ *
+ * @remarks
+ * These APIs are designed so that a Map can be used to implement this type.
+ *
+ * @alpha
+ */
+export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
+	get<K2 extends K>(key: K2): BrandedKeyContent<K2> | undefined;
+	has(key: K): boolean;
+	set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
+	delete(key: K): boolean;
+}
+
+/**
+ * Events for {@link AnchorNode}.
+ * These events are triggered while the internal data structures are being updated.
+ * Thus these events must not trigger reading of the anchorSet or forest.
+ *
+ * TODO:
+ * - Include sub-deltas in events.
+ * - Add more events.
+ *
+ * @alpha
+ */
+export interface AnchorEvents {
+	/**
+	 * When the anchor node will never get reused by its AnchorSet.
+	 * This means that the content it corresponds to has been deleted, and that if its undeleted it will be treated as a recreation.
+	 *
+	 * @remarks
+	 * When this happens depends entirely on how the anchorSet is used.
+	 * It's possible nodes removed from the tree will be kept indefinably, and thus never trigger this event, or they may be discarded immediately.
+	 */
+	afterDelete(anchor: AnchorNode): void;
+
+	/**
+	 * What children the node has is changing.
+	 *
+	 * @remarks
+	 * Does not include edits of child subtrees: instead only includes changes to which nodes are in this node's fields.
+	 */
+	childrenChanging(anchor: AnchorNode): void;
+
+	/**
+	 * Something in this tree is changing.
+	 * Called on every parent (transitively) when a change is occurring.
+	 * Includes changes to this node itself.
+	 */
+	subtreeChanging(anchor: AnchorNode): void;
+
+	/**
+	 * Value on this node is changing.
+	 */
+	valueChanging(anchor: AnchorNode, value: Value): void;
+}
+
+/**
+ * Events for {@link AnchorSet}.
+ * These events are triggered while the internal data structures are being updated.
+ * Thus these events must not trigger reading of the anchorSet or forest.
+ *
+ * TODO:
+ * - Design how events should be ordered.
+ * - Include sub-deltas in events.
+ * - Add more events.
+ *
+ * @alpha
+ */
+export interface AnchorSetRootEvents {
+	/**
+	 * What children are at the root is changing.
+	 */
+	childrenChanging(anchors: AnchorSet): void;
+
+	/**
+	 * Something in the tree is changing.
+	 */
+	treeChanging(anchors: AnchorSet): void;
+}
+
+/**
+ * Node in an tree of anchors.
+ * @alpha
+ */
+export interface AnchorNode extends UpPath<AnchorNode>, ISubscribable<AnchorEvents> {
+	/**
+	 * Allows access to data stored on the Anchor in "slots".
+	 * Use {@link anchorSlot} to create slots.
+	 */
+	readonly slots: BrandedMapSubset<AnchorSlot<any>>;
+
+	/**
+	 * Gets a child of this node.
+	 *
+	 * @remarks
+	 * This does not return an AnchorNode since there might not be one, and lazily creating one here would have messy lifetime management (See {@link AnchorNode#getOrCreateChildRef})
+	 * If an AnchorNode is requires, use the AnchorSet to track then locate the returned path.
+	 * TODO:
+	 * Revisit this API.
+	 * Perhaps if we use weak down pointers and remove ref counting, we can make this return a AnchorNode.
+	 *
+	 */
+	child(key: FieldKey, index: number): UpPath<AnchorNode>;
+
+	/**
+	 * Gets a child AnchorNode (creating it if needed), and a Anchor owning a ref to it.
+	 * Caller is responsible for freeing the returned Anchor, and must not use the AnchorNode after that.
+	 */
+	getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode];
+}
+
+/**
+ * Define a strongly typed slot on anchors in which data can be stored.
+ *
+ * @remarks
+ * This is mainly useful for caching data associated with a location in the tree.
+ *
+ * Example usage:
+ * ```typescript
+ * const counterSlot = anchorSlot<number>();
+ *
+ * function useSlot(anchor: AnchorNode): void {
+ * 	anchor.slots.set(counterSlot, 1 + anchor.slots.get(counterSlot) ?? 0);
+ * }
+ * ```
+ * @alpha
+ */
+export function anchorSlot<TContent>(): AnchorSlot<TContent> {
+	return brand(slotCounter++);
+}
+
+/**
+ * A counter used to allocate unique numbers (See {@link anchorSlot}) to each {@link AnchorSlot}.
+ * This allows the keys to be small integers, which are efficient to use as keys in maps.
+ */
+let slotCounter = 0;
 
 /**
  * Collection of Anchors at a specific revision.
  *
  * See `Rebaser` for how to update across revisions.
  *
+ * TODO: this should either not be package exported.
+ * If its needed outside the package an Interface should be used instead which can reduce its
+ * API surface to a small subset.
+ *
  * @sealed
  * @alpha
  */
-export class AnchorSet {
+export class AnchorSet implements ISubscribable<AnchorSetRootEvents> {
+	private readonly events = createEmitter<AnchorSetRootEvents>();
 	/**
 	 * Incrementing counter to give each anchor in this set a unique index for its identifier.
 	 * "0" is reserved for the `NeverAnchor`.
@@ -68,6 +242,13 @@ export class AnchorSet {
 	// For now use this more encapsulated approach with maps.
 	private readonly anchorToPath: Map<Anchor, PathNode> = new Map();
 
+	public on<K extends keyof AnchorSetRootEvents>(
+		eventName: K,
+		listener: AnchorSetRootEvents[K],
+	): () => void {
+		return this.events.on(eventName, listener);
+	}
+
 	/**
 	 * Check if there are currently no anchors tracked.
 	 * Mainly for testing anchor cleanup.
@@ -76,7 +257,7 @@ export class AnchorSet {
 		return this.root.children.size === 0;
 	}
 
-	public locate(anchor: Anchor): UpPath | undefined {
+	public locate(anchor: Anchor): AnchorNode | undefined {
 		if (anchor === NeverAnchor) {
 			return undefined;
 		}
@@ -133,7 +314,7 @@ export class AnchorSet {
 	}
 
 	/**
-	 * Finds a path node if it already exists
+	 * Finds a path node if it already exists.
 	 */
 	private find(path: UpPath): PathNode | undefined {
 		if (path instanceof PathNode) {
@@ -147,6 +328,61 @@ export class AnchorSet {
 	}
 
 	/**
+	 * Returns an equivalent path making as much of it with PathNodes as possible.
+	 * This allows future operations (like find, track, locate) on this path (and derived ones) to be faster.
+	 * Note that the returned path may use AnchorNodes from this AnchorSet,
+	 * but does not have a tracked reference to them, so this should not be held onto across anything that might free an AnchorNode.
+	 *
+	 * @remarks
+	 * Also ensures that any PathNode in the path is from this AnchorSet.
+	 */
+	public internalizePath(originalPath: UpPath): UpPath {
+		let path: UpPath | undefined = originalPath;
+		const stack: UpPath[] = [];
+		while (path !== undefined) {
+			if (path instanceof PathNode) {
+				if (path.anchorSet === this) {
+					break;
+				}
+			}
+			stack.push(path);
+			path = path.parent;
+		}
+
+		// Now `path` contains an internalized path.
+		// It just needs the paths from stackOut to wrap it.
+
+		let wrapWith: UpPath | undefined;
+		while ((wrapWith = stack.pop()) !== undefined) {
+			if (path === undefined || path instanceof PathNode) {
+				// If path already has an anchor, get an anchor for it's child if there is one:
+				const child = (path ?? this.root).tryGetChild(
+					wrapWith.parentField,
+					wrapWith.parentIndex,
+				);
+				if (child !== undefined) {
+					path = child;
+					continue;
+				}
+			}
+			// Replacing this if with a ternary makes the documentation harder to include and hurts readability.
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (path === wrapWith.parent && !(wrapWith instanceof PathNode)) {
+				// path is safe to reuse from input path, so use it to avoid allocating another object.
+				path = wrapWith;
+			} else {
+				path = {
+					parent: path,
+					parentField: wrapWith.parentField,
+					parentIndex: wrapWith.parentIndex,
+				};
+			}
+		}
+
+		return path ?? fail("internalize path must be a path");
+	}
+
+	/**
 	 * Recursively marks the given `nodes` and their descendants as disposed and pointing to a deleted node.
 	 * Node that this does NOT detach the nodes.
 	 */
@@ -157,6 +393,7 @@ export class AnchorSet {
 			const node = stack.pop()!;
 			assert(node.status === Status.Alive, 0x408 /* PathNode must be alive */);
 			node.status = Status.Dangling;
+			node.events.emit("afterDelete", node);
 			for (const children of node.children.values()) {
 				stack.push(...children);
 			}
@@ -174,13 +411,13 @@ export class AnchorSet {
 	 * Add an API to resurrect them? Store them in special detached fields? Store them in special non-detached fields?
 	 *
 	 * TODO:
-	 * Now should custom anchors work (ex: ones not just tied to a specific Node)?
+	 * How should custom anchors work (ex: ones not just tied to a specific Node)?
 	 * This design assumes they can be expressed in terms of a Node anchor + some extra stuff,
 	 * but we don't have an API for the extra stuff yet.
 	 *
 	 * TODO: tests
 	 */
-	public moveChildren(
+	private moveChildren(
 		count: number,
 		srcStart: UpPath | undefined,
 		dst: UpPath | undefined,
@@ -255,7 +492,7 @@ export class AnchorSet {
 			const offset = dst.parentIndex - srcStart!.parentIndex;
 			for (const moved of toMove) {
 				moved.parentIndex += offset;
-				moved.parentPath = dstPath;
+				moved.parentPath = dstPath ?? this.root;
 				moved.parentField = dst.parentField;
 			}
 		} else {
@@ -307,13 +544,41 @@ export class AnchorSet {
 		let parent: UpPath | undefined;
 		const moveTable = new Map<Delta.MoveId, UpPath>();
 
-		const visitor = {
+		// Run `withNode` on anchorNode for parent if there is such an anchorNode.
+		// If at root, run `withRoot` instead.
+		const maybeWithNode: (
+			withNode: (anchorNode: PathNode) => void,
+			withRoot?: () => void,
+		) => void = (withNode, withRoot) => {
+			if (parent === undefined && withRoot !== undefined) {
+				withRoot();
+			} else {
+				assert(parent !== undefined, 0x5b0 /* parent must exist */);
+				// TODO:Perf:
+				// When traversing to a depth D when there are not anchors in that subtree, this goes O(D^2).
+				// Delta traversal should early out in this case because no work is needed (and all move outs are known to not contain anchors).
+				parent = this.internalizePath(parent);
+				if (parent instanceof PathNode) {
+					withNode(parent);
+				}
+			}
+		};
+
+		const visitor: DeltaVisitor = {
 			onDelete: (start: number, count: number): void => {
 				assert(parentField !== undefined, 0x3a7 /* Must be in a field to delete */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				this.moveChildren(count, { parent, parentField, parentIndex: start }, undefined);
 			},
 			onInsert: (start: number, content: Delta.ProtoNode[]): void => {
 				assert(parentField !== undefined, 0x3a8 /* Must be in a field to insert */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				this.moveChildren(content.length, undefined, {
 					parent,
 					parentField,
@@ -322,19 +587,30 @@ export class AnchorSet {
 			},
 			onMoveOut: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3a9 /* Must be in a field to move out */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				moveTable.set(id, { parent, parentField, parentIndex: start });
 			},
 			onMoveIn: (start: number, count: number, id: Delta.MoveId): void => {
 				assert(parentField !== undefined, 0x3aa /* Must be in a field to move in */);
+				maybeWithNode(
+					(p) => p.events.emit("childrenChanging", p),
+					() => this.events.emit("childrenChanging", this),
+				);
 				const srcPath =
 					moveTable.get(id) ?? fail("Must visit a move in after its move out");
 				this.moveChildren(count, srcPath, { parent, parentField, parentIndex: start });
 			},
-			onSetValue: (value: Value): void => {},
+			onSetValue: (value: Value): void => {
+				maybeWithNode((p) => p.events.emit("valueChanging", p, value));
+			},
 			enterNode: (index: number): void => {
 				assert(parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
 				parent = { parent, parentField, parentIndex: index };
 				parentField = undefined;
+				maybeWithNode((p) => p.events.emit("subtreeChanging", p));
 			},
 			exitNode: (index: number): void => {
 				assert(parent !== undefined, 0x3ac /* Must have parent node */);
@@ -348,7 +624,7 @@ export class AnchorSet {
 				parentField = undefined;
 			},
 		};
-
+		this.events.emit("treeChanging", this);
 		visitDelta(delta, visitor);
 	}
 }
@@ -396,23 +672,26 @@ enum Status {
  *
  * - Not all forests will have node objects: some may use compressed binary formats with no objects to reference.
  *
- * - Anchors are need even when not using forests, and for nodes that are outside the currently loaded part of the
+ * - Anchors are needed even when not using forests, and for nodes that are outside the currently loaded part of the
  * forest.
  *
- * - Forest in general do not need to sport up pointers, but they are needed for anchors.
+ * - Forest in general do not need to support up pointers, but they are needed for anchors.
  *
  * Thus this can be thought of as a sparse copy of the subset of trees which are used as anchors,
  * plus the parent paths for them.
+ *
+ * ReferenceCountedBase tracks the number of references to this from external sources (`Anchors` via `AnchorSet`.).
+ * Kept alive as if any of the follow are true:
+ * 1. there are children.
+ * 2. refcount is non-zero.
+ * 3. events are registered.
  */
-class PathNode implements UpPath {
-	/**
-	 * Number of references to this from external sources (ex: `Anchors` via `AnchorSet`.).
-	 *
-	 * PathNodes are kept as long as they have children, OR their refcount is non-zero.
-	 */
-	private refCount = 1;
-
+class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorNode {
 	public status: Status = Status.Alive;
+	/**
+	 * Event emitter for this anchor.
+	 */
+	public readonly events = createEmitter<AnchorEvents>(() => this.considerDispose());
 
 	/**
 	 * PathNode arrays are kept sorted the PathNode's parentIndex for efficient search.
@@ -425,6 +704,8 @@ class PathNode implements UpPath {
 	 * but is possible to do.
 	 */
 	public readonly children: Map<FieldKey, PathNode[]> = new Map();
+
+	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
 
 	/**
 	 * Construct a PathNode with refcount 1.
@@ -447,7 +728,27 @@ class PathNode implements UpPath {
 		 * This consistency guarantee only applies to nodes that are `Alive`.
 		 */
 		public parentPath: PathNode | undefined,
-	) {}
+	) {
+		super(1);
+	}
+
+	public on<K extends keyof AnchorEvents>(eventName: K, listener: AnchorEvents[K]): () => void {
+		return this.events.on(eventName, listener);
+	}
+
+	public child(key: FieldKey, index: number): UpPath<AnchorNode> {
+		// Fast path: if child exists, return it.
+		return (
+			this.tryGetChild(key, index) ?? { parent: this, parentField: key, parentIndex: index }
+		);
+	}
+
+	public getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
+		const anchor = this.anchorSet.track(this.child(key, index));
+		const node =
+			this.anchorSet.locate(anchor) ?? fail("cannot reference child that does not exist");
+		return [anchor, node];
+	}
 
 	/**
 	 * @returns true iff this PathNode is the special root node that sits above all the detached fields.
@@ -459,7 +760,7 @@ class PathNode implements UpPath {
 		return this.parentPath === undefined;
 	}
 
-	public get parent(): UpPath | undefined {
+	public get parent(): PathNode | undefined {
 		assert(this.status !== Status.Disposed, 0x409 /* PathNode must not be disposed */);
 		assert(
 			this.parentPath !== undefined,
@@ -474,19 +775,18 @@ class PathNode implements UpPath {
 
 	public addRef(count = 1): void {
 		assert(this.status === Status.Alive, 0x40a /* PathNode must be alive */);
-		this.refCount += count;
+		this.referenceAdded(count);
 	}
 
 	public removeRef(count = 1): void {
 		assert(this.status !== Status.Disposed, 0x40b /* PathNode must not be disposed */);
-		this.refCount -= count;
-		if (this.refCount < 1) {
-			assert(this.refCount === 0, 0x358 /* PathNode Refcount should not be negative. */);
+		this.referenceRemoved(count);
+	}
 
-			if (this.children.size === 0) {
-				this.disposeThis();
-			}
-		}
+	// Called when refcount is set to 0.
+	// Node may be kept alive by children or events after this point.
+	protected dispose(): void {
+		this.considerDispose();
 	}
 
 	/**
@@ -554,23 +854,23 @@ class PathNode implements UpPath {
 	public afterEmptyField(key: FieldKey): void {
 		assert(this.status === Status.Alive, 0x40f /* PathNode must be alive */);
 		this.children.delete(key);
-		if (this.refCount === 0 && this.children.size === 0) {
-			this.disposeThis();
-		}
+		this.considerDispose();
 	}
 
 	/**
-	 * Removes this from parent if alive, and sets this to disposed.
-	 * Must only be called when this node is no longer needed (has no references and no children).
+	 * If node is no longer needed (has no references, no children and no events):
+	 * removes this from parent if alive, and sets this to disposed.
+	 * Must only be called when .
 	 *
 	 * Allowed when dangling (but not when disposed).
 	 */
-	private disposeThis(): void {
+	private considerDispose(): void {
 		assert(this.status !== Status.Disposed, 0x41d /* PathNode must not be disposed */);
-		if (this.status === Status.Alive) {
-			this.parentPath?.removeChild(this);
+		if (this.isUnreferenced() && this.children.size === 0 && !this.events.hasListeners()) {
+			if (this.status === Status.Alive) {
+				this.parentPath?.removeChild(this);
+			}
+			this.status = Status.Disposed;
 		}
-
-		this.status = Status.Disposed;
 	}
 }

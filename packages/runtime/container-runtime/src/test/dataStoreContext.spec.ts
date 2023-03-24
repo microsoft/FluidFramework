@@ -10,7 +10,6 @@ import { LazyPromise, stringToBuffer } from "@fluidframework/common-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import {
 	IBlob,
@@ -29,11 +28,7 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
-import {
-	createRootSummarizerNodeWithGC,
-	IRootSummarizerNodeWithGC,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
+import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	isFluidError,
 	MockLogger,
@@ -44,16 +39,19 @@ import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
-
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
+
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs";
 import {
+	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
+	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
 	summarizerClientType,
@@ -637,7 +635,7 @@ describe("Data Store Context Tests", () => {
 					attributes: ReadFluidDataStoreAttributes,
 				) {
 					const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
-					const blobCache = new Map<string, ArrayBufferLike>([
+					const attachBlobs = new Map<string, ArrayBufferLike>([
 						["fluidDataStoreAttributes", buffer],
 					]);
 					const snapshotTree: ISnapshotTree = {
@@ -656,9 +654,9 @@ describe("Data Store Context Tests", () => {
 						id: dataStoreId,
 						snapshotTree,
 						runtime: containerRuntime,
-						storage: new BlobCacheStorageService(
+						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
-							blobCache,
+							attachBlobs,
 						),
 						scope,
 						createSummarizerNodeFn,
@@ -770,7 +768,7 @@ describe("Data Store Context Tests", () => {
 					summaryFormatVersion: undefined,
 				};
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -784,9 +782,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -809,7 +807,7 @@ describe("Data Store Context Tests", () => {
 					JSON.stringify(dataStoreAttributes),
 					"utf8",
 				);
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -836,9 +834,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -861,7 +859,7 @@ describe("Data Store Context Tests", () => {
 					JSON.stringify(dataStoreAttributes),
 					"utf8",
 				);
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -888,9 +886,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -929,7 +927,7 @@ describe("Data Store Context Tests", () => {
 
 			function updateReferencedStateTest() {
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -942,9 +940,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -1004,7 +1002,7 @@ describe("Data Store Context Tests", () => {
 					isRootDataStore: false,
 				};
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -1017,9 +1015,9 @@ describe("Data Store Context Tests", () => {
 					id: dataStoreId,
 					snapshotTree,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,

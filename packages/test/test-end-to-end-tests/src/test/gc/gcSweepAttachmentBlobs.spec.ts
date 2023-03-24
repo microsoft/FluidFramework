@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -16,13 +15,16 @@ import {
 	mockConfigProvider,
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary";
-import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
+import {
+	driverSupportsBlobs,
+	getUrlFromDetachedBlobStorage,
+	MockDetachedBlobStorage,
+} from "../mockDetachedBlobStorage";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -343,7 +345,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		}
 
 		beforeEach(async function () {
-			if (provider.driver.type !== "odsp") {
+			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
 		});
@@ -406,10 +408,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should no longer have the blob.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -511,10 +510,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should not have the blob.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -632,10 +628,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should not have the blobs.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -708,7 +701,6 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				await new Promise<void>((resolve) =>
 					container.on("connected", () => resolveIfActive(resolve)),
 				);
-				(container as Container).off("connected", resolveIfActive);
 			}
 		};
 
@@ -944,7 +936,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				);
 
 				// Add the new handle and then remove all the handles to unreference the blob.
-				mainDataStore._root.set("blob3", blobHandle2);
+				mainDataStore._root.set("blob3", blobHandle3);
 				mainDataStore._root.delete("blob1");
 				mainDataStore._root.delete("blob2");
 				mainDataStore._root.delete("blob3");
@@ -1004,7 +996,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		function validateBlobStateInSummary(summaryTree: ISummaryTree, blobNodePath: string) {
 			// Validate that the blob tree should not be in the summary since there should be no attachment blobs.
 			const blobsTree = summaryTree.tree[blobsTreeName] as ISummaryTree;
-			assert(blobsTree === undefined, "Blobs tree should be present in the summary");
+			assert(blobsTree === undefined, "Blobs tree should not be present in the summary");
 
 			// Validate that the GC state does not contain an entry for the deleted blob.
 			const gcState = getGCStateFromSummary(summaryTree);

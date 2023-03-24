@@ -43,17 +43,45 @@
  * @packageDocumentation
  */
 
-export { MemberChangeKind } from "./Audience";
+export { MemberChangeKind } from "./AudienceMetadata";
+export { ContainerStateChangeKind } from "./Container";
+export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
-
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
 	LogEntry,
 	StateChangeLogEntry,
 } from "./Logs";
-
+export {
+	debuggerMessageSource,
+	HasContainerId,
+	ConnectContainerMessage,
+	ConnectContainerMessageData,
+	DisconnectContainerMessage,
+	DisconnectContainerMessageData,
+	CloseContainerMessage,
+	CloseContainerMessageData,
+	ContainerStateChangeMessage,
+	ContainerStateChangeMessageData,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
+	IDebuggerMessage,
+	GetContainerListMessage,
+	GetContainerStateMessage,
+	GetContainerStateMessageData,
+	RegistryChangeMessage,
+	RegistryChangeMessageData,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
+	handleIncomingMessage,
+	handleIncomingWindowMessage,
+	InboundHandlers,
+	isDebuggerMessage,
+	MessageLoggingOptions,
+	postMessagesToWindow,
+} from "./messaging";
 export {
 	DebuggerRegistry,
 	DebuggerRegistryEvents,
@@ -65,3 +93,4 @@ export {
 	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";
+export { FluidDebuggerLogger } from "./FluidDebuggerLogger";

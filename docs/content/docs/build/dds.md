@@ -1,6 +1,6 @@
 ---
 title: Introducing distributed data structures
-menuPosition: 4
+menuPosition: 7
 aliases:
   - "/docs/concepts/dds/"
 author: tylerbutler
@@ -55,7 +55,7 @@ generally fall into two broad categories: *optimistic* and *consensus-based*.
 
 {{% callout note "See also" %}}
 
-* [Fluid Framework architecture]({{< relref "architecture.md" >}})
+*   [Fluid Framework architecture]({{< relref "architecture.md" >}})
 
 {{% /callout %}}
 
@@ -69,7 +69,7 @@ The potential down-side to this approach is consistency; if another collaborator
 
 The DDSes will apply remote operations as they are made, and will always arrive at a consistent state.
 
-Many of the most commonly used DDSes are optimistic, including [SharedMap][], [SharedSequence][], and [SharedString][].
+Many of the most commonly used DDSes are optimistic, including [SharedMap][] and [SharedString][].
 
 ### Consensus-based data structures
 
@@ -134,8 +134,8 @@ Refer to later sections for more details about the events raised by each DDS.
 Because distributed data structures can be stored within each other, you can combine DDSes to create collaborative data
 models. The following two questions can help determine the best data structures to use for a collaborative data model.
 
-* What is the *granularity of collaboration* that my scenario needs?
-* How does the merge behavior of a distributed data structure affect this?
+*   What is the *granularity of collaboration* that my scenario needs?
+*   How does the merge behavior of a distributed data structure affect this?
 
 In your scenario, what do users need to individually edit? For example, imagine that your app is a collaborative editing tool and it is storing data about
 geometric shapes. The app might store the coordinates of the shape, its length, width, etc.
@@ -190,12 +190,12 @@ store the `SharedMaps` representing each shape within that parent `SharedMap` ob
 
 These DDSes are used for storing key-value data. They are all optimistic and use a last-writer-wins merge policy.
 
-* [SharedMap][] -- a basic key-value distributed data structure.
+*   [SharedMap][] -- a basic key-value distributed data structure.
 
 ### Specialized data structures
 
-* [SharedCounter][] -- a distributed counter.
-* [SharedString][] -- a specialized data structure for handling collaborative text.
+*   [SharedCounter][] -- a distributed counter.
+*   [SharedString][] -- a specialized data structure for handling collaborative text.
 
 <!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
 
@@ -207,13 +207,14 @@ These DDSes are used for storing key-value data. They are all optimistic and use
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 

@@ -17,9 +17,9 @@ Because building low-latency, collaborative experiences is hard!
 
 Fluid Framework offers:
 
-* Client-centric application model with data persistence requiring no custom server code.
-* Distributed data structures with familiar programming patterns.
-* Very low latency.
+*   Client-centric application model with data persistence requiring no custom server code.
+*   Distributed data structures with familiar programming patterns.
+*   Very low latency.
 
 The developers at Microsoft have built collaboration into many applications, but many required application specific
 server-side logic to manage the collaborative experience. The Fluid Framework is the result of Microsoft's investment
@@ -36,7 +36,7 @@ scenarios such as real-time typing across text editors. Client developers can fo
 letting Fluid do the work of keeping data in sync.
 
 Fluid Framework works with your application framework of choice.
-Whether you prefer plain JavaScript or a framework like [React](https://reactjs.org), [Angular](https://angular.io),
+Whether you prefer plain JavaScript or a framework like [React](https://react.dev), [Angular](https://angular.io),
 or [Vue](https://vuejs.org), Fluid Framework makes building collaborative experiences simple and flexible.
 
 ## How Fluid works

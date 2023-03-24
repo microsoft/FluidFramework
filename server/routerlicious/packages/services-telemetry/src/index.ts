@@ -6,7 +6,12 @@
 export { Lumber } from "./lumber";
 export { LumberEventName } from "./lumberEventNames";
 export { Lumberjack } from "./lumberjack";
-export { TestEngine1, TestEngine2, TestLumberjack, TestSchemaValidator } from "./lumberjackCommonTestUtils";
+export {
+	TestEngine1,
+	TestEngine2,
+	TestLumberjack,
+	TestSchemaValidator,
+} from "./lumberjackCommonTestUtils";
 export {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -22,4 +27,8 @@ export {
 	SessionState,
 	ThrottlingTelemetryProperties,
 } from "./resources";
-export { BaseLumberjackSchemaValidator, BasePropertiesValidator, LambdaSchemaValidator } from "./schema";
+export {
+	BaseLumberjackSchemaValidator,
+	BasePropertiesValidator,
+	LambdaSchemaValidator,
+} from "./schema";

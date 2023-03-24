@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { BatchManager } from "./batchManager";
+export { BatchManager, estimateSocketSize } from "./batchManager";
 export {
 	BatchMessage,
 	IBatch,

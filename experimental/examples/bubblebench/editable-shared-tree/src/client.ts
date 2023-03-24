@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluid-example/bubblebench-common";
-import { brand, EditableField, FieldKey } from "@fluid-internal/tree";
-import { Bubble } from "./bubble";
-import { ClientTreeProxy, BubbleTreeProxy } from "./schema";
+import { EditableField } from "@fluid-internal/tree";
+import { BubbleWrapper } from "./bubble";
+import { Client, FlexBubble } from "./schema";
 
-export class Client implements IClient {
-	static bubblesFieldKey: FieldKey = brand("bubbles");
-
-	constructor(public readonly clientTreeProxy: ClientTreeProxy) {}
+export class ClientWrapper implements IClient {
+	constructor(public readonly clientTreeProxy: Client) {}
 
 	public get clientId() {
 		return this.clientTreeProxy.clientId;
@@ -28,22 +26,21 @@ export class Client implements IClient {
 	}
 
 	public get bubbles() {
-		return [...this.clientTreeProxy.bubbles].map(
-			(bubbleTreeProxy) => new Bubble(bubbleTreeProxy),
+		return Array.from(
+			this.clientTreeProxy.bubbles,
+			(bubbleTreeProxy) => new BubbleWrapper(bubbleTreeProxy),
 		);
 	}
 
-	public increaseBubbles(bubble: { x: number; y: number; r: number; vx: number; vy: number }) {
-		const bubblesSequenceNode = this.clientTreeProxy.bubbles;
-		bubblesSequenceNode[bubblesSequenceNode.length] = bubble as BubbleTreeProxy;
+	public increaseBubbles(bubble: FlexBubble) {
+		const bubbles: EditableField = this.clientTreeProxy.bubbles;
+		bubbles[bubbles.length] = bubble;
 	}
 
 	public decreaseBubbles() {
-		if (this.clientTreeProxy.bubbles.length > 1) {
-			const bubblesSequenceNode = this.clientTreeProxy[
-				Client.bubblesFieldKey
-			] as EditableField;
-			bubblesSequenceNode.deleteNodes(this.clientTreeProxy.bubbles.length - 1);
+		const bubbles = this.clientTreeProxy.bubbles;
+		if (bubbles.length > 1) {
+			bubbles.deleteNodes(bubbles.length - 1);
 		}
 	}
 }

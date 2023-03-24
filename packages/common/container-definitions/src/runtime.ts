@@ -106,6 +106,17 @@ export interface IRuntime extends IDisposable {
 	 * stashed ops) after having processed it.
 	 */
 	notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
+
+	/**
+	 * Exposes the entryPoint for the container runtime.
+	 * Use this as the primary way of getting access to the user-defined logic within the container runtime.
+	 *
+	 * @see {@link IContainer.getEntryPoint}
+	 *
+	 * @remarks The plan is that eventually IRuntime will no longer have a request() method, this method will no
+	 * longer be optional, and it will become the only way to access the entryPoint for the runtime.
+	 */
+	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 /**
@@ -184,12 +195,22 @@ export interface IContainerContext extends IDisposable {
 	getLoadedFromVersion(): IVersion | undefined;
 
 	updateDirtyContainerState(dirty: boolean): void;
+
+	readonly supportedFeatures?: ReadonlyMap<string, unknown>;
+
 	/**
 	 * WARNING: this id is meant for telemetry usages ONLY, not recommended for other consumption
 	 * This id is not supposed to be exposed anywhere else. It is dependant on usage or drivers
 	 * and scenarios which can change in the future.
 	 */
 	readonly id: string;
+
+	/**
+	 * Proxy for {@link IRuntime.getEntryPoint}, the entryPoint defined in the container's runtime.
+	 *
+	 * @see {@link IContainer.getEntryPoint}
+	 */
+	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";

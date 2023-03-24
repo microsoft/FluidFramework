@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { generateToken, generateUser, validateTokenClaims, validateTokenClaimsExpiration } from "./auth";
+export {
+	generateToken,
+	generateUser,
+	validateTokenClaims,
+	validateTokenClaimsExpiration,
+} from "./auth";
 export { convertSortedNumberArrayToRanges } from "./array";
 export { CorrelationIdHeaderName, DriverVersionHeaderName, LatestSummaryId } from "./constants";
 export {
@@ -21,7 +26,7 @@ export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
 export { BasicRestWrapper, RestWrapper } from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
-export { canRead, canSummarize, canWrite } from "./scopes";
+export { canRead, canSummarize, canWrite, canRevokeToken } from "./scopes";
 export {
 	ICreateRefParamsExternal,
 	IGetRefParamsExternal,

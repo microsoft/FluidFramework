@@ -182,7 +182,7 @@ export class EpochTracker implements IPersistedFileCache {
 	}
 
 	public async validateEpoch(epoch: string | undefined, fetchType: FetchType) {
-		assert(epoch !== undefined, "response should contain epoch");
+		assert(epoch !== undefined, 0x584 /* response should contain epoch */);
 		try {
 			this.validateEpochFromResponse(epoch, fetchType);
 		} catch (error) {
@@ -424,7 +424,6 @@ export class EpochTracker implements IPersistedFileCache {
 			if (epochError !== undefined) {
 				epochError.addTelemetryProperties({
 					fromCache,
-					clientEpoch: this.fluidEpoch,
 					fetchType,
 				});
 				this.logger.sendErrorEvent({ eventName: "fileOverwrittenInStorage" }, epochError);
@@ -453,7 +452,7 @@ export class EpochTracker implements IPersistedFileCache {
 			return new NonRetryableError(
 				"Epoch mismatch",
 				DriverErrorType.fileOverwrittenInStorage,
-				{ driverVersion },
+				{ driverVersion, serverEpoch: epochFromResponse, clientEpoch: this.fluidEpoch },
 			);
 		}
 	}

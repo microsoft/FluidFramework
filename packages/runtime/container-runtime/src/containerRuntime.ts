@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
-	IFluidTokenProvider,
 	IContainerContext,
 	IDeltaManager,
 	IRuntime,
@@ -31,7 +30,13 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
-import { assert, Trace, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import {
+	assert,
+	LazyPromise,
+	Trace,
+	TypedEventEmitter,
+	unreachableCase,
+} from "@fluidframework/common-utils";
 import {
 	ChildLogger,
 	raiseConnectedEvent,
@@ -92,9 +97,6 @@ import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	addTreeToSummary,
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
@@ -117,10 +119,13 @@ import {
 	aliasBlobName,
 	blobsTreeName,
 	chunksBlobName,
+	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
+	IFetchSnapshotResult,
+	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
 	Summarizer,
@@ -147,8 +152,8 @@ import {
 	GarbageCollector,
 	GCNodeType,
 	gcTombstoneGenerationOptionName,
-	IGarbageCollectionRuntime,
 	IGarbageCollector,
+	IGCRuntimeOptions,
 	IGCStats,
 	shouldAllowGcTombstoneEnforcement,
 } from "./gc";
@@ -168,6 +173,7 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "./opLifecycle";
+import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
 
 export enum ContainerMessageType {
 	// An op to be delivered to store
@@ -312,54 +318,6 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	nonRuntimeHeuristicThreshold: 20,
 };
 
-export interface IGCRuntimeOptions {
-	/**
-	 * Flag that if true, will enable running garbage collection (GC) for a new container.
-	 *
-	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
-	 * and marked as such in the summary. This option enables the mark phase.
-	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled via the "sweepAllowed" option.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	gcAllowed?: boolean;
-
-	/**
-	 * Flag that if true, enables GC's sweep phase for a new container.
-	 *
-	 * This will allow GC to eventually delete unreferenced objects from the container.
-	 * This flag should only be set to true if "gcAllowed" is true.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sweepAllowed?: boolean;
-
-	/**
-	 * Flag that if true, will disable garbage collection for the session.
-	 * Can be used to disable running GC on containers where it is allowed via the gcAllowed option.
-	 */
-	disableGC?: boolean;
-
-	/**
-	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node
-	 * changed or not.
-	 */
-	runFullGC?: boolean;
-
-	/**
-	 * Maximum session duration for a new container. If not present, a default value will be used.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sessionExpiryTimeoutMs?: number;
-
-	/**
-	 * Allows additional GC options to be passed.
-	 */
-	[key: string]: any;
-}
-
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
 	summaryConfigOverrides?: ISummaryConfiguration;
@@ -433,7 +391,8 @@ export interface IContainerRuntimeOptions {
 	readonly maxBatchSizeInBytes?: number;
 	/**
 	 * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
-	 * how large the individual chunks will be. This is only supported when compression is enabled.
+	 * how large the individual chunks will be. This is only supported when compression is enabled. If after compression, the
+	 * batch size exceeds this value, it will be chunked into smaller ops of this size.
 	 *
 	 * If unspecified, if a batch exceeds `maxBatchSizeInBytes` after compression, the container will close with an instance
 	 * of `GenericError` with the `BatchTooLarge` message.
@@ -598,12 +557,7 @@ export function getDeviceSpec() {
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
-	implements
-		IContainerRuntime,
-		IGarbageCollectionRuntime,
-		IRuntime,
-		ISummarizerRuntime,
-		ISummarizerInternalsProvider
+	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	public get IContainerRuntime() {
 		return this;
@@ -651,13 +605,16 @@ export class ContainerRuntime
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param params - An object housing the runtime properties:
 	 * - context - Context of the container.
-	 * - registryEntries - Mapping to the stores.
-	 * - existing - When loading from an existing snapshot
-	 * - requestHandler - Request handlers for the container runtime
+	 * - registryEntries - Mapping from data store types to their corresponding factories.
+	 * - existing - Pass 'true' if loading from an existing snapshot.
+	 * - requestHandler - (optional) Request handler for the request() method of the container runtime.
+	 * Only relevant for back-compat while we remove the request() method and move fully to entryPoint as the main pattern.
 	 * - runtimeOptions - Additional options to be passed to the runtime
 	 * - containerScope - runtime services provided with context
 	 * - containerRuntimeCtor - Constructor to use to create the ContainerRuntime instance.
 	 * This allows mixin classes to leverage this method to define their own async initializer.
+	 * - initializeEntryPoint - Promise that resolves to an object which will act as entryPoint for the Container.
+	 * This object should provide all the functionality that the Container is expected to provide to the loader layer.
 	 */
 	public static async loadRuntime(params: {
 		context: IContainerContext;
@@ -667,6 +624,7 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions;
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
 		const {
 			context,
@@ -676,6 +634,7 @@ export class ContainerRuntime
 			runtimeOptions = {},
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
+			initializeEntryPoint,
 		} = params;
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
@@ -800,6 +759,8 @@ export class ContainerRuntime
 			blobManagerSnapshot,
 			storage,
 			requestHandler,
+			undefined, // summaryConfiguration
+			initializeEntryPoint,
 		);
 
 		if (pendingRuntimeState) {
@@ -824,10 +785,6 @@ export class ContainerRuntime
 
 	public get clientDetails(): IClientDetails {
 		return this.context.clientDetails;
-	}
-
-	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.context.deltaManager;
 	}
 
 	public get storage(): IDocumentStorageService {
@@ -877,6 +834,19 @@ export class ContainerRuntime
 		return this.handleContext;
 	}
 	private readonly handleContext: ContainerFluidHandleContext;
+
+	/**
+	 * This is a proxy to the delta manager provided by the container context (innerDeltaManager). It restricts certain
+	 * accesses such as sets "read-only" mode for the summarizer client. This is the default delta manager that should
+	 * be used unless the innerDeltaManager is required.
+	 */
+	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
+	/**
+	 * The delta manager provided by the container context. By default, using the default delta manager (proxy)
+	 * should be sufficient. This should be used only if necessary. For example, for validating and propagating connected
+	 * events which requires access to the actual real only info, this is needed.
+	 */
+	private readonly innerDeltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
@@ -976,7 +946,6 @@ export class ContainerRuntime
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly outbox: Outbox;
-
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly dataStores: DataStores;
@@ -1032,6 +1001,12 @@ export class ContainerRuntime
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**
+	 * GUID to identify a document in telemetry
+	 * ! Note: should not be used for anything other than telemetry and is not considered a stable GUID
+	 */
+	private readonly telemetryDocumentId: string;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1057,8 +1032,12 @@ export class ContainerRuntime
 			// the runtime configuration overrides
 			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
+		initializeEntryPoint?: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
 	) {
 		super();
+
+		this.innerDeltaManager = context.deltaManager;
+		this.deltaManager = new DeltaManagerSummarizerProxy(context.deltaManager);
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1100,6 +1079,8 @@ export class ContainerRuntime
 			}),
 		});
 
+		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
+
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
 		);
@@ -1113,7 +1094,10 @@ export class ContainerRuntime
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
 		);
-		this.remoteMessageProcessor = new RemoteMessageProcessor(opSplitter, new OpDecompressor());
+		this.remoteMessageProcessor = new RemoteMessageProcessor(
+			opSplitter,
+			new OpDecompressor(this.mc.logger),
+		);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
@@ -1138,7 +1122,16 @@ export class ContainerRuntime
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
 			this.defaultMaxConsecutiveReconnects;
 
-		this._flushMode = runtimeOptions.flushMode;
+		if (
+			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
+			context.supportedFeatures?.get("referenceSequenceNumbers") !== true
+		) {
+			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
+			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
+			this._flushMode = FlushMode.TurnBased;
+		} else {
+			this._flushMode = runtimeOptions.flushMode;
+		}
 
 		const pendingRuntimeState = context.pendingLocalState as IPendingRuntimeState | undefined;
 		const baseSnapshot: ISnapshotTree | undefined =
@@ -1168,7 +1161,9 @@ export class ContainerRuntime
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
 			getContainerDiagnosticId: () => this.context.id,
-			activeConnection: () => this.deltaManager.active,
+			// GC runs in summarizer client and needs access to the real (non-proxy) active information. The proxy
+			// delta manager would always return false for summarizer client.
+			activeConnection: () => this.innerDeltaManager.active,
 		});
 
 		const loadedFromSequenceNumber = this.deltaManager.initialSequenceNumber;
@@ -1238,8 +1233,6 @@ export class ContainerRuntime
 				}
 			},
 			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
-			(fromPath: string, toPath: string) =>
-				this.garbageCollector.addedOutboundReference(fromPath, toPath),
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
@@ -1329,15 +1322,25 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
+				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
+				// an initializeEntryPoint for that case.
+				assert(
+					initializeEntryPoint === undefined,
+					0x5be /* Summarizer clients cannot have a custom entryPoint */,
+				);
 				this._summarizer = new Summarizer(
-					"/_summarizer",
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
 					this.summaryCollection,
 					async (runtime: IConnectableRuntime) =>
-						RunWhileConnectedCoordinator.create(runtime),
+						RunWhileConnectedCoordinator.create(
+							runtime,
+							// Summarization runs in summarizer client and needs access to the real (non-proxy) active
+							// information. The proxy delta manager would always return false for summarizer client.
+							() => this.innerDeltaManager.active,
+						),
 				);
 			} else if (
 				SummarizerClientElection.clientDetailsPermitElection(this.context.clientDetails)
@@ -1387,8 +1390,9 @@ export class ContainerRuntime
 		this.deltaManager.on("readonly", (readonly: boolean) => {
 			// we accumulate ops while being in read-only state.
 			// once user gets write permissions and we have active connection, flush all pending ops.
+			// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
 			assert(
-				readonly === this.deltaManager.readOnlyInfo.readonly,
+				readonly === this.innerDeltaManager.readOnlyInfo.readonly,
 				0x124 /* "inconsistent readonly property/event state" */,
 			);
 
@@ -1434,10 +1438,22 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 			}),
+			telemetryDocumentId: this.telemetryDocumentId,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
+
+		this.entryPoint = new LazyPromise(async () => {
+			if (this.context.clientDetails.type === summarizerClientType) {
+				assert(
+					this._summarizer !== undefined,
+					0x5bf /* Summarizer object is undefined in a summarizer client */,
+				);
+				return this._summarizer;
+			}
+			return initializeEntryPoint?.(this);
+		});
 	}
 
 	/**
@@ -1473,19 +1489,6 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
-	}
-
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
-	 */
-	public get IFluidTokenProvider() {
-		if (this.options?.intelligence) {
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return {
-				intelligence: this.options.intelligence,
-			} as IFluidTokenProvider;
-		}
-		return undefined;
 	}
 
 	/**
@@ -1557,6 +1560,14 @@ export class ContainerRuntime
 		}
 	}
 
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IRuntime.getEntryPoint}
+	 */
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+		return this.entryPoint;
+	}
+	private readonly entryPoint: LazyPromise<FluidObject | undefined>;
+
 	private internalId(maybeAlias: string): string {
 		return this.dataStores.aliases.get(maybeAlias) ?? maybeAlias;
 	}
@@ -1604,6 +1615,7 @@ export class ContainerRuntime
 			message:
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
+			telemetryDocumentId: this.telemetryDocumentId,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -1748,8 +1760,9 @@ export class ContainerRuntime
 		// If attachment blobs were added while disconnected, we need to delay
 		// propagation of the "connected" event until we have uploaded them to
 		// ensure we don't submit ops referencing a blob that has not been uploaded
+		// Note that the inner (non-proxy) delta manager is needed here to get the readonly information.
 		const connecting =
-			connected && !this._connected && !this.deltaManager.readOnlyInfo.readonly;
+			connected && !this._connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 		if (connecting && this.blobManager.hasPendingOfflineUploads) {
 			assert(
 				!this.delayConnectClientId,
@@ -1881,7 +1894,23 @@ export class ContainerRuntime
 				case ContainerMessageType.Rejoin:
 					break;
 				default:
-					assert(!runtimeMessage, 0x3ce /* Runtime message of unknown type */);
+					if (runtimeMessage) {
+						const error = DataProcessingError.create(
+							// Former assert 0x3ce
+							"Runtime message of unknown type",
+							"OpProcessing",
+							message,
+							{
+								local,
+								type: message.type,
+								contentType: typeof message.contents,
+								batch: message.metadata?.batch,
+								compression: message.compression,
+							},
+						);
+						this.closeFn(error);
+						throw error;
+					}
 			}
 
 			// For back-compat, notify only about runtime messages for now.
@@ -2098,7 +2127,9 @@ export class ContainerRuntime
 	}
 
 	private canSendOps() {
-		return this.connected && !this.deltaManager.readOnlyInfo.readonly;
+		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
+		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
+		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 	}
 
 	/**
@@ -2330,10 +2361,10 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
 	 * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
 	 * the garbage collector of references detected since the last GC run. Most references are notified immediately
 	 * but there can be some for which async operation is required (such as detecting new root data stores).
+	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
 	 */
 	public async updateStateBeforeGC() {
 		return this.dataStores.updateStateBeforeGC();
@@ -2344,9 +2375,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::getGCData.
 	 * Generates and returns the GC data for this container.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
+	 * @see IGarbageCollectionRuntime.getGCData
 	 */
 	public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		const builder = new GCDataBuilder();
@@ -2359,9 +2390,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
 	 * After GC has run, called to notify this container's nodes of routes that are used in it.
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
+	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
 	public updateUsedRoutes(usedRoutes: string[]) {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before
@@ -2521,7 +2552,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree, refreshLatestAck, summaryLogger } = options;
+		const { fullTree = false, refreshLatestAck, summaryLogger } = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -2616,7 +2647,7 @@ export class ContainerRuntime
 			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree ?? forcedFullTree,
+					fullTree: fullTree || forcedFullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,
@@ -2825,7 +2856,9 @@ export class ContainerRuntime
 
 		const serializedContent = JSON.stringify({ type, contents });
 
-		if (this.deltaManager.readOnlyInfo.readonly) {
+		// Note that the real (non-proxy) delta manager is used here to get the readonly info. This is because
+		// container runtime's ability to submit ops depend on the actual readonly state of the delta manager.
+		if (this.innerDeltaManager.readOnlyInfo.readonly) {
 			this.logger.sendTelemetryEvent({
 				eventName: "SubmitOpInReadonly",
 				connected: this.connected,
@@ -2920,7 +2953,7 @@ export class ContainerRuntime
 			default:
 				assert(
 					this._orderSequentiallyCalls > 0,
-					"Unreachable unless running under orderSequentially",
+					0x587 /* Unreachable unless running under orderSequentially */,
 				);
 				break;
 		}

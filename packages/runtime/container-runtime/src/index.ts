@@ -6,7 +6,6 @@
 export {
 	ContainerMessageType,
 	ContainerRuntimeMessage,
-	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
 	ISummaryBaseConfiguration,
 	ISummaryConfigurationHeuristics,
@@ -27,13 +26,7 @@ export {
 	CompressionAlgorithms,
 } from "./containerRuntime";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { IGCStats } from "./gc";
-export {
-	IPendingFlush,
-	IPendingLocalState,
-	IPendingMessage,
-	IPendingState,
-} from "./pendingStateManager";
+export { IGCRuntimeOptions, IGCStats } from "./gc";
 export {
 	IAckedSummary,
 	ISummarizer,
@@ -54,7 +47,6 @@ export {
 	IGeneratedSummaryStats,
 	INackSummaryResult,
 	IOnDemandSummarizeOptions,
-	IProvideSummarizer,
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOpResult,
 	ISubmitSummaryOptions,

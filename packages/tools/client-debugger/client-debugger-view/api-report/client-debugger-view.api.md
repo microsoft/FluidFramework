@@ -4,9 +4,13 @@
 
 ```ts
 
+import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
+import { ContainerMetadata } from '@fluid-tools/client-debugger';
+import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { default as React_2 } from 'react';
 
 // @public
@@ -34,34 +38,84 @@ export interface ClientDebugViewProps extends HasClientDebugger {
 }
 
 // @public
+export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React_2.ReactElement;
+
+// @public
+export interface _ContainerHistoryViewProps {
+    containerHistory: readonly ConnectionStateChangeLogEntry[];
+}
+
+// @internal
+export function ContainerSelectionDropdown(props: ContainerSelectionDropdownProps): React_2.ReactElement;
+
+// @internal
+export interface ContainerSelectionDropdownProps {
+    initialSelection?: string;
+    onChangeSelection(containerId: string | undefined): void;
+    options: ContainerMetadata[];
+}
+
+// @public
+export function ContainerSummaryView(props: ContainerSummaryViewProps): React_2.ReactElement;
+
+// @internal
+export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
+
+// @public
+export type ContainerSummaryViewProps = HasClientDebugger;
+
+// @public
+export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {
+}
+
+// @public
 export const defaultRenderOptions: Required<RenderOptions>;
 
 // @public
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
 // @public
-export interface FluidClientDebuggerProps {
+export function FluidClientDebuggers(props: FluidClientDebuggersProps): React_2.ReactElement;
+
+// @public
+export interface FluidClientDebuggersProps {
     renderOptions?: RenderOptions;
 }
 
 // @public
-export function FluidClientDebuggers(props: FluidClientDebuggerProps): React_2.ReactElement;
-
-// @internal
 export interface HasClientDebugger {
     clientDebugger: IFluidClientDebugger;
 }
 
+// @public
+export interface IContainerActions {
+    closeContainer?: () => void;
+    forceDisconnect?: () => void;
+    tryConnect?: () => void;
+}
+
 // @internal
-export interface HasContainerId {
-    containerId: string;
+export enum PanelView {
+    Audience = "Audience",
+    ContainerData = "Data",
+    ContainerStateHistory = "States",
+    Telemetry = "Telemetry"
+}
+
+// @internal
+export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React_2.ReactElement;
+
+// @internal
+export interface PanelViewSelectionMenuProps {
+    currentSelection: PanelView;
+    updateSelection(newSelection: PanelView): void;
 }
 
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 
 // @public
-export function renderClientDebuggerView(targetElement: HTMLElement | null): Promise<boolean>;
+export function renderClientDebuggerView(targetElement: HTMLElement): Promise<void>;
 
 // @public
 export interface RenderOptions {
@@ -81,5 +135,14 @@ export interface SharedObjectRenderOptions {
 
 // @public
 export type SharedObjectType = string;
+
+// @internal
+export function _TelemetryView(props: _TelemetryViewProps): React_2.ReactElement;
+
+// @internal
+export interface _TelemetryViewProps {
+    // (undocumented)
+    telemetryEvents: ITelemetryBaseEvent[];
+}
 
 ```
