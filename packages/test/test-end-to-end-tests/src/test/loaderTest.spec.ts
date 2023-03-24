@@ -181,16 +181,18 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		assert.equal(testDataStore.id, dataStore2.id, "id is not correct");
 	});
 
-	it.skip("can create data object using url with second id, having distinct value from default", async () => {
+	it("can create data object using url with second id, having distinct value from default", async () => {
 		const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
 		assert(url, "dataStore2 url is undefined");
-		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
+
+		const container2 = await loader.resolve({ url });
+		container2.connect();
 
 		dataStore1._root.set("color", "purple");
 		dataStore2._root.set("color", "pink");
 
 		await provider.ensureSynchronized();
-
+		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 		assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
 		assert.equal(
 			testDataStore._root.get("color"),
@@ -313,7 +315,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
 		assert(url, "Container should return absolute url");
 
-		const headers = { wait: false, [RuntimeHeaders.viaHandle]: true };
+		const headers = { wait: true, [RuntimeHeaders.viaHandle]: true };
 		// Request to the newly created data store with headers.
 		const response = await loader.request({ url, headers });
 
