@@ -100,12 +100,35 @@ export class FluidDataVisualizer {
 		this.handles = new Map<FluidObjectId, IFluidHandle>();
 	}
 	
+	/**
+	 * Generates and returns visual descriptions ({@link FluidHandleNode}s) for each of the specified
+	 * {@link FluidDataVisualizer.rootData | root shared objects}.
+	 */
 	public async renderRootHandles(): Promise<FluidHandleNode[]> {
-		// TODO
+		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
+		// a list of handle nodes. Consumers can request data for each of these handles as needed.
+		const rootDataEntries = Object.entries(this.rootData);
+		return Promise.all(rootDataEntries.map(async ([key, value]) => {
+			const fluidObjectId = await this.registerVisualizerForHandle(value.handle, key);
+			return createHandleNode(fluidObjectId, key);
+		}));
 	}
 	
+	/**
+	 * Generates and returns a visual description of the specified Fluid object if it exists in the graph.
+	 * If no such object exists in the graph, returns `undefined`.
+	 */
 	public async render(fluidObjectId: FluidObjectId): Promise<FluidObjectNode | undefined> {
-		// TODO
+		if (!this.visualizerNodes.has(fluidObjectId)) {
+			// We don't have anything registered for the requested Fluid object.
+			// This could indicate a stale data request from an external consumer, or could indicate a bug.
+			return undefined;
+		}
+		
+		// Checked above.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const visualizerNode = this.visualizerNodes.get(fluidObjectId)!;
+		return visualizerNode.render();
 	}
 
 	private registerHandle(id: FluidObjectId, handle: IFluidHandle): void {
@@ -114,7 +137,7 @@ export class FluidDataVisualizer {
 		}
 	}
 
-	private createVisualizerForSharedObject(sharedObject: ISharedObject, label: string): void {
+	private registerVisualizerForSharedObject(sharedObject: ISharedObject, label: string): void {
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			const visualizer =
 				this.visualizerSchema[sharedObject.attributes.type] !== undefined
@@ -126,13 +149,13 @@ export class FluidDataVisualizer {
 					sharedObject,
 					label,
 					visualizer,
-					async (_handle, _label) => this.createVisualizerForHandle(_handle, _label),
+					async (_handle, _label) => this.registerVisualizerForHandle(_handle, _label),
 				),
 			);
 		}
 	}
 
-	private async createVisualizerForHandle(
+	private async registerVisualizerForHandle(
 		handle: IFluidHandle,
 		label: string,
 	): Promise<FluidObjectId> {
@@ -142,7 +165,7 @@ export class FluidDataVisualizer {
 		const sharedObject = resolvedObject as ISharedObject;
 		if (sharedObject?.id !== undefined) {
 			this.registerHandle(sharedObject.id, handle);
-			this.createVisualizerForSharedObject(sharedObject, label);
+			this.registerVisualizerForSharedObject(sharedObject, label);
 			return sharedObject.id;
 		} else {
 			// Unknown data.
@@ -256,13 +279,7 @@ export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectLi
 			// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 			const handle = data as IFluidHandle;
 			const fluidObjectId = await this.registerHandle(handle, label);
-			const result: FluidHandleNode = {
-				label,
-				typeMetadata: "Fluid Handle",
-				fluidObjectId,
-				nodeType: NodeKind.FluidHandleNode,
-			};
-			return result;
+			return createHandleNode(fluidObjectId, label);
 		} else {
 			// Assume any other data must be a record of some kind (since DDS contents must be serializable)
 			// and simply recurse over its keys.
@@ -287,5 +304,14 @@ export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectLi
 			this.sharedObject.off("op", this.onOpHandler);
 			this._disposed = true;
 		}
+	}
+}
+
+function createHandleNode(id: FluidObjectId, label: string): FluidHandleNode {
+	return {
+		label,
+		fluidObjectId: id,
+		typeMetadata: "Fluid Handle",
+		nodeType: NodeKind.FluidHandleNode,
 	}
 }
