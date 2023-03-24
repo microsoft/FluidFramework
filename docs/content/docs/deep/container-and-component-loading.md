@@ -100,7 +100,7 @@ This is the `"code"` proposal, for the code that contains the `ContainerRuntime`
 ::: tip
 
 The `Quorum` is a special key/value distributed data structure that requires all current members to agree on the value
-before the it is accepted.
+before the `op` is accepted.
 I don't go into further details about it here.
 
 The `ContainerRuntime` is code written by the author of the Container, with all the logic that drives the functionality
