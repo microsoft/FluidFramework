@@ -201,14 +201,17 @@ export class GarbageCollector implements IGarbageCollector {
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
 					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
-					let snapshotData: IGarbageCollectionSnapshotData | undefined;
-					if (gcSnapshotTree !== undefined) {
-						snapshotData = await getGCDataFromSnapshot(
-							gcSnapshotTree,
+					if (gcSnapshotTree === undefined) {
+						// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
+						return getSnapshotDataFromOldSnapshotFormat(
+							baseSnapshot,
+							createParams.metadata,
 							readAndParseBlob,
 						);
 					}
 
+					let snapshotData: IGarbageCollectionSnapshotData | undefined =
+						await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
 					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
@@ -217,7 +220,7 @@ export class GarbageCollector implements IGarbageCollector {
 						this.configs.gcVersionInBaseSnapshot !==
 						this.summaryStateTracker.currentGCVersion
 					) {
-						return snapshotData
+						snapshotData = snapshotData
 							? {
 									gcState: undefined,
 									tombstones: undefined,
@@ -225,13 +228,7 @@ export class GarbageCollector implements IGarbageCollector {
 							  }
 							: undefined;
 					}
-
-					// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
-					return getSnapshotDataFromOldSnapshotFormat(
-						baseSnapshot,
-						createParams.metadata,
-						readAndParseBlob,
-					);
+					return snapshotData;
 				} catch (error) {
 					const dpe = DataProcessingError.wrapIfUnrecognized(
 						error,
