@@ -42,7 +42,7 @@ import { FluidClientDebuggerProps } from "./Registry";
  * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to the container.
  * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect from the container.
  * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
- * - {@link AudienceSummaryMessage }: When received (if the container ID matches), the debugger will send the Audience data consisting of contaierId, current connected members, and history of audience members
+ * - {@link GetAudienceMessage}: When received (if the container ID matches), the debugger will broadcast {@link AudienceSummaryMessage}.
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
@@ -147,6 +147,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	// #endregion

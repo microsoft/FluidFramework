@@ -56,7 +56,7 @@ export {
 } from "./Logs";
 export {
 	AudienceClientMetaData,
-	AudienceEventMessageData,
+	AudienceSummaryMessageData,
 	AudienceSummaryMessage,
 	GetAudienceMessage,
 	debuggerMessageSource,

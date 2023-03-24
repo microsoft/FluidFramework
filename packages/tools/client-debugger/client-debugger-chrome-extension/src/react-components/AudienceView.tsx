@@ -4,17 +4,17 @@
  */
 import React from "react";
 import {
-	AudienceClientMetaData,
-	AudienceChangeLogEntry,
 	handleIncomingMessage,
 	IDebuggerMessage,
 	InboundHandlers,
 	AudienceSummaryMessage,
 	HasContainerId,
+	AudienceSummaryMessageData,
 } from "@fluid-tools/client-debugger";
 import { defaultRenderOptions, _AudienceView } from "@fluid-tools/client-debugger-view";
 import { extensionMessageSource } from "../messaging";
 import { useMessageRelay } from "./MessageRelayContext";
+import { Waiting } from "./Waiting";
 
 const loggingContext = "EXTENSION(AudienceView)";
 
@@ -47,11 +47,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	const messageRelay = useMessageRelay();
 
-	const [clientId, setClientId] = React.useState<string | undefined>("");
-	const [audienceState, setAudienceState] = React.useState<AudienceClientMetaData[]>([]);
-	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
-		[],
-	);
+	const [audienceData, setAudienceData] = React.useState<
+		AudienceSummaryMessageData | undefined
+	>();
 
 	React.useEffect(() => {
 		/**
@@ -61,9 +59,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			["AUDIENCE_EVENT"]: (untypedMessage) => {
 				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
 
-				setClientId(message.data.clientId);
-				setAudienceState(message.data.audienceState);
-				setAudienceHistory(message.data.audienceHistory);
+				setAudienceData(message.data);
 
 				return true;
 			},
@@ -86,14 +82,18 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, setClientId, setAudienceState, setAudienceHistory]);
+	}, [containerId, setAudienceData]);
+
+	if (audienceData === undefined) {
+		return <Waiting label="Waiting for Audience data." />;
+	}
 
 	return (
 		<_AudienceView
-			clientId={clientId}
-			audienceClientMetaData={audienceState}
+			clientId={audienceData.clientId}
+			audienceClientMetaData={audienceData.audienceState}
 			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
-			audienceHistory={audienceHistory}
+			audienceHistory={audienceData.audienceHistory}
 		/>
 	);
 }

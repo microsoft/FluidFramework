@@ -40,7 +40,7 @@ export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
  *
  * @public
  */
-export interface AudienceEventMessageData extends HasContainerId {
+export interface AudienceSummaryMessageData extends HasContainerId {
 	/**
 	 * Id of the client connected to the container
 	 */
@@ -56,10 +56,10 @@ export interface AudienceEventMessageData extends HasContainerId {
 }
 
 /**
- * Audience event message which contains {@link AudienceEventMessageData} data.
+ * Audience event message which contains {@link AudienceSummaryMessageData} data.
  *
  * @public
  */
-export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceEventMessageData> {
+export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
 	type: "AUDIENCE_EVENT";
 }
