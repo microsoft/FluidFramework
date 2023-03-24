@@ -307,12 +307,12 @@ export interface RevisionMetadataSource {
  * @alpha
  */
 export interface RevisionInfo {
-	readonly tag: RevisionTag;
+	readonly revision: RevisionTag;
 	/**
-	 * True when the changeset was produced as part of a rebase sandwich as opposed to for the purpose of undo.
-	 * Considered false if undefined.
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
 	 */
-	readonly isRollback?: boolean;
+	readonly rollbackOf?: RevisionTag;
 }
 
 /**
