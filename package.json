@@ -47,7 +47,7 @@
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
 		"lerna": "lerna",
-		"lint": "npm run prettier:root && npm run ci:lint",
+		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run ci:lint",
 		"lint:fix": "npm run prettier:root:fix && lerna run lint:fix --no-sort --stream",
 		"policy-check": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json",
 		"policy-check:asserts": "flub check policy --exclusions build-tools/packages/build-tools/data/exclusions.json --handler assert-short-codes --fix",
