@@ -16,7 +16,7 @@ import {
 } from "../data-visualization";
 
 describe("Data Visualization unit tests", () => {
-	it("Simple, single-DDS graph", async () => {
+	it("Simple, single-DDS graph (SharedCounter)", async () => {
 		const sharedCounter = new SharedCounter(
 			"test-counter",
 			new MockFluidDataStoreRuntime(),
