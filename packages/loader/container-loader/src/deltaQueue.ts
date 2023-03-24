@@ -20,8 +20,8 @@ export class DeltaQueue<T>
 	private readonly q = new Deque<T>();
 
 	/**
-	 * Tracks the number of pause requests for the queue
-	 * The DeltaQueue is create initially paused.
+	 * Tracks the number of pause requests for the queue.
+	 * The DeltaQueue is created initially paused.
 	 */
 	private pauseCount = 1;
 
