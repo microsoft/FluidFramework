@@ -408,6 +408,10 @@ function trimTrailingSlashes(str: string) {
 	return str.replace(/\/+$/g, "");
 }
 
+/**
+ * Helper class to build the garbage collection data of a node by combining the data from multiple nodes.
+ * @internal
+ */
 export class GCDataBuilder implements IGarbageCollectionData {
 	private readonly gcNodesSet: { [id: string]: Set<string> } = {};
 	public get gcNodes(): { [id: string]: string[] } {
