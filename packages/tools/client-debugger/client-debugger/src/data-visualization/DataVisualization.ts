@@ -300,6 +300,7 @@ export class SharedObjectVisualizerNode
 				label,
 				children: renderedChildren,
 				nodeType: NodeKind.ParentNode,
+				typeMetadata: "object",
 			};
 			return result;
 		}
