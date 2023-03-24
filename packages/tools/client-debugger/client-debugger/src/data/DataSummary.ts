@@ -84,9 +84,9 @@ export class FluidDataVisualizer {
 	 */
 	private readonly visualizerSchema: SharedObjectVisualizers;
 
-	// TODO
+	// TODO: weak ref + related cleanup
 	private readonly visualizerNodes: Map<FluidObjectId, SharedObjectVisualizerNode>;
-	private readonly handles: Map<FluidObjectId, IFluidHandle>; // TODO: weak ref + related cleanup?
+	private readonly handles: Map<FluidObjectId, IFluidHandle>;
 
 	public constructor(
 		rootData: Record<string, IFluidLoadable>,
@@ -95,8 +95,17 @@ export class FluidDataVisualizer {
 		this.rootData = rootData;
 		this.visualizerSchema = visualizerMap;
 
+		// TODO: populate with `rootData`, and remove that property (store list of IDs instead?)
 		this.visualizerNodes = new Map<FluidObjectId, SharedObjectVisualizerNode>();
 		this.handles = new Map<FluidObjectId, IFluidHandle>();
+	}
+	
+	public async renderRootHandles(): FluidHandleNode[] {
+		// TODO
+	}
+	
+	public async render(fluidObjectId: FluidObjectId): FluidObjectNode | undefined {
+		// TODO
 	}
 
 	private registerHandle(id: FluidObjectId, handle: IFluidHandle): void {
