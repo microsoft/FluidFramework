@@ -3,12 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
 import { NodeKind, VisualTreeNode } from "./VisualTree";
+
+/**
+ * Default {@link VisualizeSharedObject} for {@link SharedCell}.
+ */
+export const visualizeSharedCell: VisualizeSharedObject = async (
+	sharedObject: ISharedObject,
+	label: string,
+	visualizeChildData: VisualizeChildData,
+) => {
+	const sharedCell = sharedObject as SharedCell<unknown>;
+	const data = sharedCell.get();
+
+	const renderedData = await visualizeChildData(data, "data");
+
+	return {
+		fluidObjectId: sharedCell.id,
+		label,
+		children: [renderedData],
+		typeMetadata: "SharedCell",
+		nodeType: NodeKind.FluidTreeNode,
+	};
+};
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
@@ -72,6 +95,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
  * List of default visualizers included in the library.
  */
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
+	[SharedCell.getFactory().type]: visualizeSharedCell,
 	[SharedCounter.getFactory().type]: visualizeSharedCounter,
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	// TODO: the others
