@@ -21,6 +21,8 @@
  */
 
 export {
+	_AudienceView,
+	_AudienceViewProps,
 	_ContainerHistoryView,
 	_ContainerHistoryViewProps,
 	_ContainerSummaryView,
