@@ -9666,6 +9666,7 @@ importers:
       '@fluidframework/matrix': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/sequence': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/shared-object-base': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/task-manager': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.0.0 <2.0.0-internal.5.0.0'
@@ -9701,6 +9702,7 @@ importers:
       '@fluidframework/map': link:../../../dds/map
       '@fluidframework/matrix': link:../../../dds/matrix
       '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/sequence': link:../../../dds/sequence
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/task-manager': link:../../../dds/task-manager
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils

@@ -6,6 +6,7 @@
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
+import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
@@ -76,6 +77,25 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 };
 
 /**
+ * Default {@link VisualizeSharedObject} for {@link SharedString}.
+ */
+export const visualizeSharedString: VisualizeSharedObject = async (
+	sharedObject: ISharedObject,
+	label: string,
+) => {
+	const sharedString = sharedObject as SharedString;
+	const text = sharedString.getText();
+
+	return {
+		fluidObjectId: sharedString.id,
+		label,
+		value: text,
+		typeMetadata: "SharedString",
+		nodeType: NodeKind.FluidValueNode,
+	};
+};
+
+/**
  * {@link VisualizeSharedObject} for unrecognized {@link ISharedObject}s.
  */
 export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
@@ -98,5 +118,6 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,
 	[SharedCounter.getFactory().type]: visualizeSharedCounter,
 	[SharedMap.getFactory().type]: visualizeSharedMap,
+	[SharedString.getFactory().type]: visualizeSharedString,
 	// TODO: the others
 };
