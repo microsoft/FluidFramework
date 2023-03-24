@@ -184,15 +184,15 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 	it("can create data object using url with second id, having distinct value from default", async () => {
 		const url = await container.getAbsoluteUrl(dataStore2.handle.absolutePath);
 		assert(url, "dataStore2 url is undefined");
+		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
 
-		const container2 = await loader.resolve({ url });
-		container2.connect();
+		await loader.resolve({ url });
 
 		dataStore1._root.set("color", "purple");
 		dataStore2._root.set("color", "pink");
-
+		
 		await provider.ensureSynchronized();
-		const testDataStore = await requestFluidObject<TestSharedDataObject2>(loader, url);
+		
 		assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
 		assert.equal(
 			testDataStore._root.get("color"),
@@ -241,11 +241,14 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		);
 	});
 
-	it.skip("caches the loaded container across multiple requests as expected", async () => {
+	it("caches the loaded container across multiple requests as expected", async () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
 		// load the containers paused
-		const headers: IRequestHeader = { [LoaderHeader.loadMode]: { deltaConnection: "delayed" } };
+		const headers: IRequestHeader = { 
+			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },  
+			[LoaderHeader.cache]: true,
+		};
 		const container1 = await loader.resolve({ url, headers });
 		const container2 = await loader.resolve({ url, headers });
 
