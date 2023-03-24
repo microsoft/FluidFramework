@@ -1,76 +1,77 @@
 lockfileVersion: 5.4
 
-specifiers:
-  '@fluidframework/build-common': ^1.1.0
-  '@fluidframework/build-tools': 0.13.0
-  '@fluidframework/eslint-config-fluid': ^2.0.0
-  '@fluidframework/mocha-test-setup': ^1.2.5
-  '@fluidframework/test-utils': ^1.2.5
-  '@microsoft/api-documenter': 7.21.6
-  '@microsoft/api-extractor': ^7.34.4
-  '@microsoft/api-extractor-model': ^7.26.4
-  '@microsoft/tsdoc': ^0.14.2
-  '@rushstack/node-core-library': ^3.50.1
-  '@types/chai': ^4
-  '@types/fs-extra': ^9.0.13
-  '@types/mocha': ^9.1.1
-  '@types/node': ^14.18.38
-  '@types/unist': ^2.0.6
-  chai: ^4.2.0
-  chalk: ^2.4.2
-  concurrently: ^6.2.0
-  copyfiles: ^2.4.1
-  dir-compare: ^4.0.0
-  eslint: ~8.6.0
-  eslint-config-prettier: ~8.5.0
-  eslint-plugin-chai-expect: ^3.0.0
-  eslint-plugin-chai-friendly: ^0.7.2
-  fs-extra: ^10.1.0
-  mocha: ^10.0.0
-  mocha-json-output-reporter: ^2.0.1
-  mocha-multi-reporters: ^1.5.1
-  moment: ^2.21.0
-  nyc: ^15.0.0
-  prettier: ~2.6.2
-  rimraf: ^2.6.2
-  typescript: ~4.5.5
+importers:
 
-dependencies:
-  '@microsoft/api-documenter': 7.21.6_@types+node@14.18.38
-  '@microsoft/api-extractor-model': 7.26.4_@types+node@14.18.38
-  '@microsoft/tsdoc': 0.14.2
-  '@rushstack/node-core-library': 3.55.2_@types+node@14.18.38
-  chalk: 2.4.2
-
-devDependencies:
-  '@fluidframework/build-common': 1.1.0
-  '@fluidframework/build-tools': 0.13.0_@types+node@14.18.38
-  '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-  '@fluidframework/mocha-test-setup': 1.2.5
-  '@fluidframework/test-utils': 1.2.5
-  '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
-  '@types/chai': 4.3.1
-  '@types/fs-extra': 9.0.13
-  '@types/mocha': 9.1.1
-  '@types/node': 14.18.38
-  '@types/unist': 2.0.6
-  chai: 4.3.6
-  concurrently: 6.5.1
-  copyfiles: 2.4.1
-  dir-compare: 4.0.0
-  eslint: 8.6.0
-  eslint-config-prettier: 8.5.0_eslint@8.6.0
-  eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
-  eslint-plugin-chai-friendly: 0.7.2_eslint@8.6.0
-  fs-extra: 10.1.0
-  mocha: 10.0.0
-  mocha-json-output-reporter: 2.1.0_mocha@10.0.0+moment@2.29.4
-  mocha-multi-reporters: 1.5.1_mocha@10.0.0
-  moment: 2.29.4
-  nyc: 15.1.0
-  prettier: 2.6.2
-  rimraf: 2.7.1
-  typescript: 4.5.5
+  .:
+    specifiers:
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/mocha-test-setup': ^1.2.5
+      '@fluidframework/test-utils': ^1.2.5
+      '@microsoft/api-documenter': 7.21.6
+      '@microsoft/api-extractor': ^7.34.4
+      '@microsoft/api-extractor-model': ^7.26.4
+      '@microsoft/tsdoc': ^0.14.2
+      '@rushstack/node-core-library': ^3.50.1
+      '@types/chai': ^4
+      '@types/fs-extra': ^9.0.13
+      '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.38
+      '@types/unist': ^2.0.6
+      chai: ^4.2.0
+      chalk: ^2.4.2
+      concurrently: ^6.2.0
+      copyfiles: ^2.4.1
+      dir-compare: ^4.0.0
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-chai-expect: ^3.0.0
+      eslint-plugin-chai-friendly: ^0.7.2
+      fs-extra: ^10.1.0
+      mocha: ^10.0.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nyc: ^15.0.0
+      prettier: ~2.6.2
+      rimraf: ^2.6.2
+      typescript: ~4.5.5
+    dependencies:
+      '@microsoft/api-documenter': 7.21.6_@types+node@14.18.38
+      '@microsoft/api-extractor-model': 7.26.4_@types+node@14.18.38
+      '@microsoft/tsdoc': 0.14.2
+      '@rushstack/node-core-library': 3.55.2_@types+node@14.18.38
+      chalk: 2.4.2
+    devDependencies:
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.13.1_@types+node@14.18.38
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/mocha-test-setup': 1.2.5
+      '@fluidframework/test-utils': 1.2.5
+      '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
+      '@types/chai': 4.3.1
+      '@types/fs-extra': 9.0.13
+      '@types/mocha': 9.1.1
+      '@types/node': 14.18.38
+      '@types/unist': 2.0.6
+      chai: 4.3.6
+      concurrently: 6.5.1
+      copyfiles: 2.4.1
+      dir-compare: 4.0.0
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
+      eslint-plugin-chai-friendly: 0.7.2_eslint@8.6.0
+      fs-extra: 10.1.0
+      mocha: 10.0.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.0.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.0.0
+      moment: 2.29.4
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 2.7.1
+      typescript: 4.5.5
 
 packages:
 
@@ -309,8 +310,8 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/version-tools/0.13.0:
-    resolution: {integrity: sha512-NCYsMxTLViNwM8ArN4zElg6xSmWQE7REOFFgdhK7NaY/mT0YPEIZLZZWhQCn1IOJV9CoirMj7MxaG0pw/4ynaw==}
+  /@fluid-tools/version-tools/0.13.1:
+    resolution: {integrity: sha512-+uaXqLCEu5REPDUDg+UnxUcnofGDCyQppzfSRh3/uWatBaOgJg8pL1t4L4kdLMpMFjif6ygm7QEMJ3eFlezjuQ==}
     engines: {node: '>=14.0.0'}
     hasBin: true
     dependencies:
@@ -356,13 +357,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.13.0_@types+node@14.18.38:
-    resolution: {integrity: sha512-MNzkipdIXvH+LO5EBSCcnHOJx7CfEU4wqVZfyuMKrqy28wCBoeLf55e4qSkXQeecOqw/YiXWQsjWkVFyh39W4w==}
+  /@fluidframework/build-tools/0.13.1_@types+node@14.18.38:
+    resolution: {integrity: sha512-HmBgUfndshltHT0FiMNS+76wQ0o7F+tIFSE1i6xHpprM4n2vZdlydBuDJA4oxIe9K2LprpnPDLNVz9ON91k0Cw==}
     engines: {node: '>=14.13.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.13.0
-      '@fluidframework/bundle-size-tools': 0.13.0
+      '@fluid-tools/version-tools': 0.13.1
+      '@fluidframework/bundle-size-tools': 0.13.1
       '@octokit/core': 4.2.0
       '@rushstack/node-core-library': 3.55.2_@types+node@14.18.38
       async: 3.2.4
@@ -399,8 +400,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.13.0:
-    resolution: {integrity: sha512-fzFsqWQtb6NYi5vaxYNEGCKgPixT0YD+nSA8s1df95W+qKh505imbvVX57m/us2NVhKspgYc++2sWbyIWy8DfQ==}
+  /@fluidframework/bundle-size-tools/0.13.1:
+    resolution: {integrity: sha512-Q6tfbVskFzAOeKzCvfNOL7jMjqZTmY77/x427UeHQRUQpdh9siG+HEvfp13Eojf1hDrZS/uKgm0pE2u2x2Atig==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
