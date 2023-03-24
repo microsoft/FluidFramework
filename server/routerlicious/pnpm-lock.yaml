@@ -106,6 +106,7 @@ importers:
       '@types/nconf': ^0.10.2
       '@types/node': ^16.18.16
       '@types/semver': ^6.0.1
+      '@types/sinon': ^9.0.9
       '@types/uuid': ^8.3.0
       assert: ^2.0.0
       async: ^3.2.2
@@ -124,6 +125,7 @@ importers:
       rimraf: ^4.4.0
       semver: ^6.3.0
       sha.js: ^2.4.11
+      sinon: ^9.2.3
       source-map-loader: ^0.2.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -164,6 +166,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/nconf': 0.10.3
       '@types/node': 16.18.16
+      '@types/sinon': 9.0.11
       '@types/uuid': 8.3.4
       concurrently: 7.6.0
       eslint: 8.27.0
@@ -171,6 +174,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.0
+      sinon: 9.2.4
       source-map-loader: 0.2.4
       ts-loader: 9.4.2_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -247,6 +251,7 @@ importers:
       '@types/mocha': ^10.0.1
       '@types/nock': ^9.3.0
       '@types/node': ^16.18.16
+      '@types/sinon': ^9.0.9
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       debug: ^4.1.1
@@ -258,6 +263,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
+      sinon: ^9.2.3
       ts-loader: ^9.3.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -285,6 +291,7 @@ importers:
       '@types/mocha': 10.0.1
       '@types/nock': 9.3.1
       '@types/node': 16.18.16
+      '@types/sinon': 9.0.11
       concurrently: 7.6.0
       copyfiles: 2.4.1
       eslint: 8.27.0
@@ -293,6 +300,7 @@ importers:
       nyc: 15.1.0
       prettier: 2.6.2
       rimraf: 4.4.0
+      sinon: 9.2.4
       ts-loader: 9.4.2_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
       webpack: 5.76.2_webpack-cli@4.10.0
@@ -551,7 +559,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sillyname: ^0.1.0
-      sinon: ^9.2.1
+      sinon: ^9.2.3
       supertest: ^3.1.0
       typescript: ~4.5.5
       uuid: ^8.3.1
@@ -666,7 +674,7 @@ importers:
       prettier: ~2.6.2
       redis-commands: ^1.7.0
       rimraf: ^4.4.0
-      sinon: ^9.2.1
+      sinon: ^9.2.3
       socket.io: ^4.5.3
       telegrafjs: ^0.1.3
       typescript: ~4.5.5
@@ -858,7 +866,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sillyname: ^0.1.0
-      sinon: ^9.2.1
+      sinon: ^9.2.3
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/server-services-client': link:../services-client
@@ -914,7 +922,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       sillyname: ^0.1.0
-      sinon: ^9.2.1
+      sinon: ^9.2.3
       typescript: ~4.5.5
     dependencies:
       '@fluidframework/common-utils': 1.1.1
@@ -964,7 +972,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      sinon: ^9.2.1
+      sinon: ^9.2.3
       typescript: ~4.5.5
       zookeeper: ^5.3.2
     dependencies:
@@ -1101,7 +1109,7 @@ importers:
       prettier: ~2.6.2
       rimraf: ^4.4.0
       serialize-error: ^8.1.0
-      sinon: ^9.2.1
+      sinon: ^9.2.3
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -1245,7 +1253,7 @@ importers:
       nyc: ^15.1.0
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      sinon: ^9.2.1
+      sinon: ^9.2.3
       string-hash: ^1.1.3
       typescript: ~4.5.5
       uuid: ^8.3.1

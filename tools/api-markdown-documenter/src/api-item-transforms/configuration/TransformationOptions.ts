@@ -23,13 +23,9 @@ import {
 	ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
-import { SectionNode } from "../documentation-domain";
-import * as DefaultTransformationImplementations from "./default-implementations";
-
-/**
- * This module contains transformation-policy-related types that are consumed via the {@link MarkdownDocumenterConfiguration}.
- */
+import { SectionNode } from "../../documentation-domain";
+import * as DefaultTransformationImplementations from "../default-implementations";
+import { ApiItemTransformationConfiguration } from "./Configuration";
 
 /**
  * Signature for a function which generates one or more {@link SectionNode}s describing an
@@ -37,7 +33,7 @@ import * as DefaultTransformationImplementations from "./default-implementations
  */
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildSection: (apiItem: ApiItem) => SectionNode[],
 ) => SectionNode[];
 
@@ -47,7 +43,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
  */
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ) => SectionNode[];
 
 /**
@@ -57,106 +53,105 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 export type CreateChildContentSections = (
 	apiItem: ApiItem,
 	childSections: SectionNode[] | undefined,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ) => SectionNode[];
 
 /**
- * Policies for transforming different kinds of API content into {@link DocumentationNode} trees.
+ * Transformations for generating {@link DocumentationNode} trees from different kinds of API content.
  *
- * @remarks
- *
- * For any policies not explicitly provided, {@link defaultApiItemTransformations} will be used to
- * supply defaults.
+ * @remarks For any transformation not explicitly configured, a default will be used.
  */
-export interface ApiItemTransformationConfiguration {
+export interface ApiItemTransformationOptions {
 	/**
-	 * Policy for transforming a section describing a `Call Signature`.
+	 * Transformation to generate a {@link SectionNode} for a `Call Signature`.
 	 */
 	transformApiCallSignature?: TransformApiItemWithoutChildren<ApiCallSignature>;
 
 	/**
-	 * Policy for transforming a section describing a `Class`.
+	 * Transformation to generate a {@link SectionNode} for a `Class`.
 	 */
 	transformApiClass?: TransformApiItemWithChildren<ApiClass>;
 
 	/**
-	 * Policy for transforming a section describing a `Constructor`.
+	 * Transformation to generate a {@link SectionNode} for a `Constructor`.
 	 */
 	transformApiConstructor?: TransformApiItemWithoutChildren<
 		ApiConstructSignature | ApiConstructor
 	>;
 
 	/**
-	 * Policy for transforming a section describing an `Enum`.
+	 * Transformation to generate a {@link SectionNode} for an `Enum`.
 	 */
 	transformApiEnum?: TransformApiItemWithChildren<ApiEnum>;
 
 	/**
-	 * Policy for transforming a section describing an `Enum Member`.
+	 * Transformation to generate a {@link SectionNode} for an `Enum Member` (flag).
 	 */
 	transformApiEnumMember?: TransformApiItemWithoutChildren<ApiEnumMember>;
 
 	/**
-	 * Policy for transforming a section describing a `Function`.
+	 * Transformation to generate a {@link SectionNode} for a `Function`.
 	 */
 	transformApiFunction?: TransformApiItemWithoutChildren<ApiFunction>;
 
 	/**
-	 * Policy for transforming a section describing an `Index Signature`.
+	 * Transformation to generate a {@link SectionNode} for an `Index Signature`.
 	 */
 	transformApiIndexSignature?: TransformApiItemWithoutChildren<ApiIndexSignature>;
 
 	/**
-	 * Policy for transforming a section describing an `Interface`.
+	 * Transformation to generate a {@link SectionNode} for an `Interface`.
 	 */
 	transformApiInterface?: TransformApiItemWithChildren<ApiInterface>;
 
 	/**
-	 * Policy for transforming a section describing a `Method`.
+	 * Transformation to generate a {@link SectionNode} for a `Method`.
 	 */
 	transformApiMethod?: TransformApiItemWithoutChildren<ApiMethod | ApiMethodSignature>;
 
 	/**
-	 * Policy for transforming a section describing a `Model`.
+	 * Transformation to generate a {@link SectionNode} for an `ApiModel`.
 	 *
-	 * @remarks Note that this is a {@link TransformApiItemWithoutChildren} only because we handle `Model`
+	 * @remarks
+	 *
+	 * Note that this is a {@link TransformApiItemWithoutChildren} only because we handle `Model`
 	 * and `Package` items specially. We never render `Package` child details directly to the `Modal` document.
 	 * These are always rendered to seperate documents from each other.
 	 */
 	transformApiModel?: TransformApiItemWithoutChildren<ApiModel>;
 
 	/**
-	 * Policy for transforming a section describing a `Namespace`.
+	 * Transformation to generate a {@link SectionNode} for a `Namespace`.
 	 */
 	transformApiNamespace?: TransformApiItemWithChildren<ApiNamespace>;
 
 	/**
-	 * Policy for transforming a section describing a `Package`.
+	 * Transformation to generate a {@link SectionNode} for a `Package`.
 	 */
 	transformApiPackage?: TransformApiItemWithChildren<ApiPackage>;
 
 	/**
-	 * Policy for transforming a section describing a `Property`.
+	 * Transformation to generate a {@link SectionNode} for a `Property`.
 	 */
 	transformApiProperty?: TransformApiItemWithoutChildren<ApiPropertyItem>;
 
 	/**
-	 * Policy for transforming a section describing a `Type Alias`.
+	 * Transformation to generate a {@link SectionNode} for a `Type Alias`.
 	 */
 	transformApiTypeAlias?: TransformApiItemWithoutChildren<ApiTypeAlias>;
 
 	/**
-	 * Policy for transforming a section describing an `ApiVariable`.
+	 * Transformation to generate a {@link SectionNode} for an `Variable`.
 	 */
 	transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 
 	/**
-	 * Policy for generating child content sections within a section describing an API item that potentially
-	 * has children (see {@link TransformApiItemWithChildren}).
+	 * Shared transformation logic for generating child content sections within a section describing an API item
+	 * that potentially has child elements (see {@link TransformApiItemWithChildren}).
 	 *
 	 * @remarks
 	 *
-	 * This policy is used by the default policies of many of the other transformation policy options.
+	 * This method is used by the default transformation implementatios.
 	 * This can be used to adjust the layout of the child sections for API item kinds that have
 	 * without having to provide new transformation overrides for all of those content types.
 	 */
@@ -166,85 +161,35 @@ export interface ApiItemTransformationConfiguration {
 /**
  * The default {@link ApiItemTransformationConfiguration}.
  */
-export const defaultApiItemTransformations: Required<ApiItemTransformationConfiguration> = {
-	/**
-	 * Default policy for transforming `Call Signature`s.
-	 */
+const defaultApiItemTransformationOptions: Required<ApiItemTransformationOptions> = {
 	transformApiCallSignature: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-
-	/**
-	 * Default policy for transforming `Classes`.
-	 */
 	transformApiClass: DefaultTransformationImplementations.transformApiClass,
-
-	/**
-	 * Default policy for transforming `Constructors`.
-	 */
 	transformApiConstructor: DefaultTransformationImplementations.transformApiFunctionLike,
-
-	/**
-	 * Default policy for transforming `Enums`.
-	 */
 	transformApiEnum: DefaultTransformationImplementations.transformApiEnum,
-
-	/**
-	 * Default policy for transforming `Enum Members`.
-	 */
 	transformApiEnumMember: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-
-	/**
-	 * Default policy for transforming `Functions`.
-	 */
 	transformApiFunction: DefaultTransformationImplementations.transformApiFunctionLike,
-
-	/**
-	 * Default policy for transforming `Index Signatures`.
-	 */
 	transformApiIndexSignature:
 		DefaultTransformationImplementations.transformApiItemWithoutChildren,
-
-	/**
-	 * Default policy for transforming `Interfaces`.
-	 */
 	transformApiInterface: DefaultTransformationImplementations.transformApiInterface,
-
-	/**
-	 * Default policy for transforming `Methods`.
-	 */
 	transformApiMethod: DefaultTransformationImplementations.transformApiFunctionLike,
-
-	/**
-	 * Default policy for transforming `Models`.
-	 */
 	transformApiModel: DefaultTransformationImplementations.transformApiModel,
-
-	/**
-	 * Default policy for transforming `Namespaces`.
-	 */
 	transformApiNamespace: DefaultTransformationImplementations.transformApiNamespace,
-
-	/**
-	 * Default policy for transforming `Packages`.
-	 */
 	transformApiPackage: DefaultTransformationImplementations.transformApiPackage,
-
-	/**
-	 * Default policy for transforming `Properties`.
-	 */
 	transformApiProperty: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-
-	/**
-	 * Default policy for transforming `Type Aliases`.
-	 */
 	transformApiTypeAlias: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-
-	/**
-	 * Default policy for transforming `Variables`.
-	 */
 	transformApiVariable: DefaultTransformationImplementations.transformApiItemWithoutChildren,
-
-	/**
-	 * Default policy for transforming child content sections.
-	 */
 	createChildContentSections: DefaultTransformationImplementations.createSectionWithChildContent,
 };
+
+/**
+ * Gets a complete {@link ApiItemTransformationOptions} using the provided partial configuration, and filling
+ * in the remainder with the documented defaults.
+ */
+export function getApiItemTransformationOptionsWithDefaults(
+	inputOptions: ApiItemTransformationOptions,
+): Required<ApiItemTransformationOptions> {
+	return {
+		...defaultApiItemTransformationOptions,
+		...inputOptions,
+	};
+}

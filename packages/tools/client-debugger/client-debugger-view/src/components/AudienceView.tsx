@@ -2,15 +2,30 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Stack, StackItem } from "@fluentui/react";
+import { DefaultPalette, Icon, IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
-// import { IClient } from "@fluidframework/protocol-definitions";
+import { IClient } from "@fluidframework/protocol-definitions";
+import {
+	HasContainerId,
+	AudienceChangeLogEntry,
+	AudienceClientMetaData,
+	IDebuggerMessage,
+	handleIncomingMessage,
+	InboundHandlers,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+} from "@fluid-tools/client-debugger";
 
-import { HasContainerId } from "@fluid-tools/client-debugger";
-
-// import { combineMembersWithMultipleConnections } from "../Audience";
+import { useMessageRelay } from "../MessageRelayContext";
+import { defaultRenderOptions } from "../RendererOptions";
+import { combineMembersWithMultipleConnections } from "../Audience";
 import { AudienceMemberViewProps } from "./client-data-views";
+import { Waiting } from "./Waiting";
+
+// TODOs:
+// - Special annotation for the member elected as the summarizer
+const loggingContext = "EXTENSION(AudienceView)";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -28,13 +43,112 @@ export interface AudienceViewProps extends HasContainerId {
 
 /**
  * Displays information about the provided {@link @fluidframework/fluid-static#IServiceAudience | audience}.
- *
- * @param props - See {@link AudienceViewProps}.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-	// const { containerId, onRenderAudienceMember } = props;
+	const { containerId } = props;
 
-	// TODO: waiting for Ji's changes in https://github.com/microsoft/FluidFramework/pull/14507
+	const messageRelay = useMessageRelay();
+
+	const [audienceData, setAudienceData] = React.useState<
+		AudienceSummaryMessageData | undefined
+	>();
+
+	React.useEffect(() => {
+		// POST Request for Audience Data
+		const getAudienceMessage: IDebuggerMessage = {
+			type: "GET_AUDIENCE",
+			data: {
+				containerId,
+			},
+		};
+
+		/**
+		 * Handlers for inbound messages related to Audience
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			["AUDIENCE_EVENT"]: (untypedMessage) => {
+				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
+
+				setAudienceData(message.data);
+
+				return true;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the Message Relay
+		 */
+		function messageHandler(message: Partial<IDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: loggingContext,
+			});
+		}
+
+		messageRelay.on("message", messageHandler);
+
+		// Request the current Audience State of the Container using "AUDIENCE_EVENT" Message
+		messageRelay.postMessage(getAudienceMessage);
+
+		return (): void => {
+			messageRelay.off("message", messageHandler);
+		};
+	}, [containerId, setAudienceData, messageRelay]);
+
+	if (audienceData === undefined) {
+		return <Waiting label="Waiting for Audience data." />;
+	}
+
+	return (
+		<_AudienceView
+			clientId={audienceData.clientId}
+			audienceClientMetaData={audienceData.audienceState}
+			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
+			audienceHistory={audienceData.audienceHistory}
+		/>
+	);
+}
+
+/**
+ * {@link _AudienceView} input props.
+ *
+ * @privateRemarks TODO: Remove onRenderAudienceMember
+ */
+export interface _AudienceViewProps {
+	/*
+	 * Local users's clientId.
+	 */
+	clientId: string | undefined;
+
+	/**
+	 * Metadata of audiences containing clientId and IClient.
+	 */
+	audienceClientMetaData: AudienceClientMetaData[];
+
+	/**
+	 * Callback to render data about an individual audience member.
+	 */
+	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
+
+	/**
+	 * History of audience connected or disconnected to the container.
+	 */
+	audienceHistory: readonly AudienceChangeLogEntry[];
+}
+
+/**
+ * Audience View displaying current audience members and audience history
+ *
+ * @remarks Operates strictly on raw data, so it can be potentially re-used in contexts that don't have
+ * direct access to the Client Debugger.
+ *
+ * @internal
+ */
+export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
+	const { clientId, audienceClientMetaData, onRenderAudienceMember, audienceHistory } = props;
+
+	const myClientConnection = audienceClientMetaData.find(
+		(audience) => audience.clientId === clientId,
+	)?.client;
 
 	return (
 		<Stack
@@ -46,156 +160,154 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		>
 			<StackItem>
 				<div className="audience-view-members-list">
-					<h3>Audience members ({0})</h3>
+					<h3>Audience members ({audienceClientMetaData.length})</h3>
 				</div>
-				{/* <MembersView
-					audience={allAudienceMembers}
-					myClientId={myClientId}
+				<MembersView
+					audience={audienceClientMetaData}
+					myClientId={clientId}
 					myClientConnection={myClientConnection}
 					onRenderAudienceMember={onRenderAudienceMember}
-				/> */}
-				<div>Waiting for functionality</div>
+				/>
 			</StackItem>
 			<StackItem>
 				<div className="history-list">
 					<h3>History</h3>
 				</div>
-				{/* <HistoryView history={audienceHistory} /> */}
-				<div>Waiting for functionality</div>
+				<HistoryView history={audienceHistory} />
 			</StackItem>
 		</Stack>
 	);
 }
 
-// /**
-//  * {@link MembersView} input props.
-//  */
-// interface MembersViewProps {
-// 	/**
-// 	 * The current audience
-// 	 */
-// 	audience: Map<string, IClient>;
+/**
+ * {@link MembersView} input props.
+ */
+interface MembersViewProps {
+	/**
+	 * The current audience
+	 */
+	audience: AudienceClientMetaData[];
 
-// 	/**
-// 	 * My client ID, if the Container is connected.
-// 	 */
-// 	myClientId: string | undefined;
+	/**
+	 * My client ID, if the Container is connected.
+	 */
+	myClientId: string | undefined;
 
-// 	/**
-// 	 * My client connection data, if the Container is connected.
-// 	 */
-// 	myClientConnection: IClient | undefined;
+	/**
+	 * My client connection data, if the Container is connected.
+	 */
+	myClientConnection: IClient | undefined;
 
-// 	/**
-// 	 * Callback to render data about an individual audience member.
-// 	 */
-// 	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
-// }
+	/**
+	 * Callback to render data about an individual audience member.
+	 */
+	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
+}
 
-// /**
-//  * Displays a list of current audience members and their metadata.
-//  */
-// function MembersView(props: MembersViewProps): React.ReactElement {
-// 	const { audience, myClientId, myClientConnection, onRenderAudienceMember } = props;
+/**
+ * Displays a list of current audience members and their metadata.
+ */
+function MembersView(props: MembersViewProps): React.ReactElement {
+	const { audience, myClientId, myClientConnection, onRenderAudienceMember } = props;
 
-// 	const transformedAudience = combineMembersWithMultipleConnections(audience);
+	const transformedAudience = combineMembersWithMultipleConnections(audience);
 
-// 	const memberViews: React.ReactElement[] = [];
-// 	for (const member of transformedAudience.values()) {
-// 		memberViews.push(
-// 			<StackItem key={member.userId}>
-// 				{onRenderAudienceMember({
-// 					audienceMember: member,
-// 					myClientId,
-// 					myClientConnection,
-// 				})}
-// 			</StackItem>,
-// 		);
-// 	}
+	const memberViews: React.ReactElement[] = [];
+	for (const member of transformedAudience.values()) {
+		memberViews.push(
+			<StackItem key={member.userId}>
+				{onRenderAudienceMember({
+					audienceMember: member,
+					myClientId,
+					myClientConnection,
+				})}
+			</StackItem>,
+		);
+	}
 
-// 	return <Stack>{memberViews}</Stack>;
-// }
+	return <Stack>{memberViews}</Stack>;
+}
 
-// /**
-//  * {@link HistoryView} input props.
-//  */
-// interface HistoryViewProps {
-// 	/**
-// 	 * History of audience changes tracked by the debugger.
-// 	 */
-// 	history: readonly AudienceChangeLogEntry[];
-// }
+/**
+ * {@link HistoryView} input props.
+ */
+interface HistoryViewProps {
+	/**
+	 * History of audience changes tracked by the debugger.
+	 */
+	history: readonly AudienceChangeLogEntry[];
+}
 
-// /**
-//  * Displays a historical log of audience member changes.
-//  */
-// function HistoryView(props: HistoryViewProps): React.ReactElement {
-// 	const { history } = props;
+/**
+ * Displays a historical log of audience member changes.
+ */
+function HistoryView(props: HistoryViewProps): React.ReactElement {
+	const { history } = props;
 
-// 	const nowTimeStamp = new Date();
-// 	const historyViews: React.ReactElement[] = [];
+	const nowTimeStamp = new Date();
+	const historyViews: React.ReactElement[] = [];
 
-// 	// Reverse history such that newest events are displayed first
-// 	for (let i = history.length - 1; i >= 0; i--) {
-// 		const changeTimeStamp = new Date(history[i].timestamp);
-// 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
+	// Reverse history such that newest events are displayed first
+	for (let i = history.length - 1; i >= 0; i--) {
+		const changeTimeStamp = new Date(history[i].timestamp);
+		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
-// 		const accordianBackgroundColor: IStackItemStyles = {
-// 			root: {
-// 				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
-// 				borderStyle: "solid",
-// 				borderWidth: 1,
-// 				borderColor: DefaultPalette.neutralTertiary,
-// 				padding: 3,
-// 			},
-// 		};
+		const accordianBackgroundColor: IStackItemStyles = {
+			root: {
+				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
+				borderStyle: "solid",
+				borderWidth: 1,
+				borderColor: DefaultPalette.neutralTertiary,
+				padding: 3,
+			},
+		};
 
-// 		const iconStyle: IStackItemStyles = {
-// 			root: {
-// 				padding: 10,
-// 			},
-// 		};
+		const iconStyle: IStackItemStyles = {
+			root: {
+				padding: 10,
+			},
+		};
 
-// 		historyViews.push(
-// 			<div key={`audience-history-info-${i}`}>
-// 				<Stack horizontal={true} styles={accordianBackgroundColor}>
-// 					<StackItem styles={iconStyle}>
-// 						<Icon
-// 							iconName={
-// 								history[i].changeKind === "added" ? "AddFriend" : "UserRemove"
-// 							}
-// 							title={
-// 								history[i].changeKind === "added" ? "Member Joined" : "Member Left"
-// 							}
-// 						/>
-// 					</StackItem>
-// 					<StackItem>
-// 						<div key={`${history[i].clientId}-${history[i].changeKind}`}>
-// 							<b>Client ID: </b>
-// 							{history[i].clientId}
-// 							<br />
-// 							<b>Time: </b>{" "}
-// 							{wasChangeToday
-// 								? changeTimeStamp.toTimeString()
-// 								: changeTimeStamp.toDateString()}
-// 							<br />
-// 						</div>
-// 					</StackItem>
-// 				</Stack>
-// 			</div>,
-// 		);
-// 	}
+		historyViews.push(
+			<div key={`audience-history-info-${i}`}>
+				<Stack horizontal={true} styles={accordianBackgroundColor}>
+					<StackItem styles={iconStyle}>
+						<Icon
+							iconName={
+								history[i].changeKind === "added" ? "AddFriend" : "UserRemove"
+							}
+							title={
+								history[i].changeKind === "added" ? "Member Joined" : "Member Left"
+							}
+						/>
+					</StackItem>
+					<StackItem>
+						<div key={`${history[i].clientId}-${history[i].changeKind}`}>
+							<b>Client ID: </b>
+							{history[i].clientId}
+							<br />
+							<b>Time: </b>{" "}
+							{wasChangeToday
+								? changeTimeStamp.toTimeString()
+								: changeTimeStamp.toDateString()}
+							<br />
+						</div>
+					</StackItem>
+				</Stack>
+			</div>,
+		);
+	}
 
-// 	return (
-// 		<Stack
-// 			styles={{
-// 				root: {
-// 					overflowY: "auto",
-// 					height: "300px",
-// 				},
-// 			}}
-// 		>
-// 			<div style={{ overflowY: "scroll" }}>{historyViews}</div>
-// 		</Stack>
-// 	);
-// }
+	return (
+		<Stack
+			styles={{
+				root: {
+					overflowY: "auto",
+					height: "300px",
+				},
+			}}
+		>
+			<div style={{ overflowY: "scroll" }}>{historyViews}</div>
+		</Stack>
+	);
+}

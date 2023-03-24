@@ -47,10 +47,7 @@ export interface MenuItemProps {
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
 	return (
-		<Stack.Item
-			styles={menuSectionItemStyles(props.isActive)}
-			onClick={props.onClick}
-		>
+		<Stack.Item styles={menuSectionItemStyles(props.isActive)} onClick={props.onClick}>
 			{props.text}
 		</Stack.Item>
 	);
@@ -77,11 +74,11 @@ function menuSectionItemStyles(isActive: boolean): IStackStyles {
 		root: {
 			"paddingLeft": "20px",
 			"cursor": "pointer",
-			background: isActive ? DefaultPalette.themeTertiary : DefaultPalette.themeLight,
-			fontWeight: isActive ? "bold" : "",
+			"background": isActive ? DefaultPalette.themeTertiary : DefaultPalette.themeLight,
+			"fontWeight": isActive ? "bold" : "",
 			"&:hover": {
 				background: DefaultPalette.themeSecondary,
-				color: DefaultPalette.white
+				color: DefaultPalette.white,
 			},
 		},
 	};
