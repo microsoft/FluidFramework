@@ -67,7 +67,6 @@ import {
     gcTombstoneGenerationOptionName
 } from "./garbageCollectionConstants";
 import { sendGCTombstoneEvent } from "./garbageCollectionTombstoneUtils";
-import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import {
     getGCVersion,
     GCVersion,
@@ -498,9 +497,6 @@ export class GarbageCollector implements IGarbageCollector {
         };
     }
 
-    /** Handler to respond to when a SweepReady object is used */
-    private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
-
     protected constructor(createParams: IGarbageCollectorCreateParams) {
         this.runtime = createParams.runtime;
         this.isSummarizerClient = createParams.isSummarizerClient;
@@ -522,11 +518,6 @@ export class GarbageCollector implements IGarbageCollector {
         this.currentGCVersion =
             this.mc.config.getBoolean(gcVersionUpgradeToV2Key) === true ? currentGCVersion : stableGCVersion;
 
-        this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
-            createParams.getContainerDiagnosticId(),
-            this.mc,
-            this.runtime.closeFn,
-        );
 
         let prevSummaryGCVersion: number | undefined;
 
@@ -1722,13 +1713,6 @@ export class GarbageCollector implements IGarbageCollector {
                 } else {
                     this.mc.logger.sendErrorEvent(event);
                 }
-            }
-
-            // If SweepReady Usage Detection is enabled, the handler may close the interactive container.
-            // Once Sweep is fully implemented, this will be removed since the objects will be gone
-            // and errors will arise elsewhere in the runtime
-            if (state === UnreferencedState.SweepReady) {
-                this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({ ...propsToLog, usageType });
             }
         }
     }
