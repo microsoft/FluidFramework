@@ -10,6 +10,8 @@
 
 /**
  * A unique ID for a Fluid object.
+ *
+ * @internal
  */
 export type FluidObjectId = string;
 
@@ -17,6 +19,8 @@ export type FluidObjectId = string;
  * The kind of {@link VisualTreeNodeBase}.
  *
  * @remarks Can be used to type-switch on the particular kind of node being processed.
+ *
+ * @internal
  */
 export enum NodeKind {
 	ParentNode,
@@ -28,6 +32,8 @@ export enum NodeKind {
 
 /**
  * Base interface for all visual tree nodes.
+ *
+ * @internal
  */
 export interface VisualTreeNodeBase {
 	/**
@@ -53,6 +59,8 @@ export interface VisualTreeNodeBase {
 
 /**
  * Base interface for nodes that have children, which should be displayed beneath this item in the visual tree.
+ *
+ * @internal
  */
 export interface VisualParentNode extends VisualTreeNodeBase {
 	/**
@@ -61,13 +69,15 @@ export interface VisualParentNode extends VisualTreeNodeBase {
 	children: VisualTreeNode[];
 
 	/**
-	 * {@inheritDoc VisualNodeBase.nodeType}
+	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.ParentNode;
 }
 
 /**
  * Base interface for nodes referencing Fluid objects.
+ *
+ * @internal
  */
 export interface FluidObjectNode extends VisualTreeNodeBase {
 	/**
@@ -83,6 +93,8 @@ export interface FluidObjectNode extends VisualTreeNodeBase {
  *
  * A DDS like {@link @fluidframework/map#SharedMap}, which stores a series of "child" entries might use this
  * to display each of its entries nested under it.
+ *
+ * @internal
  */
 export interface FluidObjectTreeNode extends FluidObjectNode {
 	/**
@@ -91,7 +103,7 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 	children: VisualTreeNode[];
 
 	/**
-	 * {@inheritDoc VisualNodeBase.nodeType}
+	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.FluidTreeNode;
 }
@@ -103,6 +115,8 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
  *
  * A DDS like {@link @fluidframework/counter#SharedCounter}, which strictly stores a simple primitive value might use
  * this to inline its value (rather than creating unnecessary visual nesting).
+ *
+ * @internal
  */
 export interface FluidObjectValueNode extends FluidObjectNode {
 	/**
@@ -111,13 +125,15 @@ export interface FluidObjectValueNode extends FluidObjectNode {
 	value: string;
 
 	/**
-	 * {@inheritDoc VisualNodeBase.nodeType}
+	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.FluidValueNode;
 }
 
 /**
  * Node pointing to another Fluid object via a unique identifier.
+ *
+ * @internal
  */
 export interface FluidHandleNode extends VisualTreeNodeBase {
 	/**
@@ -128,13 +144,15 @@ export interface FluidHandleNode extends VisualTreeNodeBase {
 	fluidObjectId: string;
 
 	/**
-	 * {@inheritDoc VisualNodeBase.nodeType}
+	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.FluidHandleNode;
 }
 
 /**
  * Terminal node containing a simple value to display.
+ *
+ * @internal
  */
 export interface ValueNode extends VisualTreeNodeBase {
 	/**
@@ -143,13 +161,15 @@ export interface ValueNode extends VisualTreeNodeBase {
 	value: string;
 
 	/**
-	 * {@inheritDoc VisualNodeBase.nodeType}
+	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.ValueNode;
 }
 
 /**
  * Describes a visual tree to be displayed.
+ *
+ * @internal
  */
 export type VisualTreeNode = VisualParentNode | ValueNode | FluidHandleNode;
 

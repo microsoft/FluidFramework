@@ -46,8 +46,19 @@
 export { MemberChangeKind } from "./AudienceMetadata";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
-
+export {
+	FluidHandleNode,
+	FluidObjectId,
+	FluidObjectNode,
+	FluidObjectTreeNode,
+	NodeKind,
+	ValueNode,
+	VisualParentNode,
+	VisualTreeNode,
+	VisualTreeNodeBase,
+} from "./data-visualization";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
+export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -93,4 +104,3 @@ export {
 	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";
-export { FluidDebuggerLogger } from "./FluidDebuggerLogger";

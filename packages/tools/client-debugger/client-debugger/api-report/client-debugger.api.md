@@ -150,6 +150,26 @@ export class FluidDebuggerLogger extends TelemetryLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
+// @internal
+export interface FluidHandleNode extends VisualTreeNodeBase {
+    fluidObjectId: string;
+    nodeKind: NodeKind.FluidHandleNode;
+}
+
+// @internal
+export type FluidObjectId = string;
+
+// @internal
+export interface FluidObjectNode extends VisualTreeNodeBase {
+    fluidObjectId: FluidObjectId;
+}
+
+// @internal
+export interface FluidObjectTreeNode extends FluidObjectNode {
+    children: VisualTreeNode[];
+    nodeKind: NodeKind.FluidTreeNode;
+}
+
 // @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
     // (undocumented)
@@ -237,6 +257,20 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
+export enum NodeKind {
+    // (undocumented)
+    FluidHandleNode = 3,
+    // (undocumented)
+    FluidTreeNode = 1,
+    // (undocumented)
+    FluidValueNode = 2,
+    // (undocumented)
+    ParentNode = 0,
+    // (undocumented)
+    ValueNode = 4
+}
+
+// @internal
 export function postMessagesToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
@@ -264,6 +298,29 @@ export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMe
 // @public
 export interface TelemetryEventMessageData {
     contents: ITelemetryBaseEvent;
+}
+
+// @internal
+export interface ValueNode extends VisualTreeNodeBase {
+    nodeKind: NodeKind.ValueNode;
+    value: string;
+}
+
+// @internal
+export interface VisualParentNode extends VisualTreeNodeBase {
+    children: VisualTreeNode[];
+    nodeKind: NodeKind.ParentNode;
+}
+
+// @internal
+export type VisualTreeNode = VisualParentNode | ValueNode | FluidHandleNode;
+
+// @internal
+export interface VisualTreeNodeBase {
+    label: string;
+    metadata?: string;
+    nodeKind: NodeKind;
+    typeMetadata?: string;
 }
 
 ```
