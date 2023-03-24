@@ -8,7 +8,7 @@ importers:
   .:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
@@ -37,12 +37,12 @@ importers:
 
   packages/azure-client:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/aqueduct': ^1.4.0-121020
       '@fluidframework/azure-client-previous': npm:@fluidframework/azure-client@1.1.1
       '@fluidframework/azure-local-service': ^1.2.0
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': ^1.4.0-121020
@@ -151,10 +151,10 @@ importers:
 
   packages/azure-service-utils:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@1.1.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.0.0
       '@microsoft/api-extractor': ^7.34.4
@@ -356,7 +356,7 @@ importers:
 
   packages/test/scenario-runner:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/aqueduct': ^1.4.0-121020
       '@fluidframework/azure-client': ^1.2.0
       '@fluidframework/build-common': ^1.1.0

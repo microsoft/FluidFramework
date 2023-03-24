@@ -8,8 +8,8 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
-      '@fluidframework/build-tools': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
       concurrently: ^7.6.0
@@ -34,9 +34,9 @@ importers:
 
   packages/gitresources:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       concurrently: ^7.6.0
       eslint: ~8.27.0
@@ -56,9 +56,9 @@ importers:
 
   packages/kafka-orderer:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/server-services-core': ^0.1039.1000
@@ -85,9 +85,9 @@ importers:
 
   packages/lambdas:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -182,9 +182,9 @@ importers:
 
   packages/lambdas-driver:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-client': ^0.1039.1000
@@ -235,9 +235,9 @@ importers:
 
   packages/local-server:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
@@ -308,9 +308,9 @@ importers:
 
   packages/memory-orderer:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-base': ^0.1039.1000
@@ -379,9 +379,9 @@ importers:
 
   packages/protocol-base:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1039.1000
@@ -426,9 +426,9 @@ importers:
 
   packages/routerlicious:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1039.1000
@@ -501,9 +501,9 @@ importers:
 
   packages/routerlicious-base:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1039.1000
@@ -634,9 +634,9 @@ importers:
 
   packages/services:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
@@ -731,9 +731,9 @@ importers:
 
   packages/services-client:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1039.1000
@@ -800,9 +800,9 @@ importers:
 
   packages/services-core:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1039.1000
@@ -843,9 +843,9 @@ importers:
 
   packages/services-ordering-kafkanode:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-client': ^0.1039.1000
       '@fluidframework/server-services-core': ^0.1039.1000
@@ -898,9 +898,9 @@ importers:
 
   packages/services-ordering-rdkafka:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-client': ^0.1039.1000
@@ -955,9 +955,9 @@ importers:
 
   packages/services-ordering-zookeeper:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/server-services-core': ^0.1039.1000
       '@fluidframework/server-test-utils': ^0.1039.1000
@@ -1000,9 +1000,9 @@ importers:
 
   packages/services-shared:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1039.1000
@@ -1091,9 +1091,9 @@ importers:
 
   packages/services-telemetry:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@types/mocha': ^10.0.1
@@ -1138,9 +1138,9 @@ importers:
 
   packages/services-utils:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/server-services-client': ^0.1039.1000
@@ -1227,9 +1227,9 @@ importers:
 
   packages/test-utils:
     specifiers:
-      '@fluid-tools/build-cli': 0.13.1
+      '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
-      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': ^0.1039.1000
