@@ -67,3 +67,12 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 		nodeType: NodeKind.FluidValueNode,
 	};
 };
+
+/**
+ * List of default visualizers included in the library.
+ */
+export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
+	[SharedCounter.getFactory().type]: visualizeSharedCounter,
+	[SharedMap.getFactory().type]: visualizeSharedMap,
+	// TODO: the others
+};
