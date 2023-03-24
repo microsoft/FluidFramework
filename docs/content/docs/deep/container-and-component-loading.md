@@ -216,7 +216,7 @@ creation flow.
 
 **NOTE**: from here onward the discrepancies with the current state of affairs are more pronounced, tread with caution.
 
-The `DataStore`, and the `instantiateComponent`, are what a "Component Developer" writes and contain all the business
+The `DataStore`, and the `instantiateComponent`, are what a "Component Developer" writes. They contain all the business
 specific logic.
 In most cases the `instantiateComponent` call will provide the `DataStore` with references to the `DataStoreContext`
 **(8.3.1)**, and the `DataStoreRuntime` **(8.3.2)** it created.
