@@ -22,7 +22,6 @@
     "build:repo-docs": "npm run build:md-magic:code",
     "build:website": "npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo",
     "ci:build": "npm run download && npm run build",
-    "ci:start": "pm2 start serve.js",
     "clean": "rimraf public content/docs/apis _api-extractor-temp",
     "download": "npm run download:api && npm run build:api",
     "download:api": "download --extract --out ../_api-extractor-temp/doc-models/ https://fluidframework.blob.core.windows.net/api-extractor-json/latest.tar.gz",
@@ -63,7 +62,6 @@
     "markdownlint-rule-github-internal-links": "^0.1.0",
     "markdownlint-rule-helpers": "^0.18.0",
     "node-fetch": "^2.6.9",
-    "pm2": "^5.2.2",
     "replace-in-file": "^6.3.5",
     "rimraf": "^4.4.0",
     "run-script-os": "^1.1.6",
@@ -74,6 +72,12 @@
   "pnpm": {
     "overrides": {
       "qs": "^6.11.0"
+    },
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "eslint",
+        "typescript"
+      ]
     },
     "updateConfig": {
       "ignoreDependencies": [
