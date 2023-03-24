@@ -144,3 +144,15 @@ export interface ValueNode extends VisualTreeNodeBase {
  * Describes a visual tree to be displayed.
  */
 export type VisualTreeNode = VisualParentNode | ValueNode | FluidHandleNode;
+
+/**
+ * Creates a {@link FluidHandleNode} from the provided ID and label.
+ */
+export function createHandleNode(id: FluidObjectId, label: string): FluidHandleNode {
+	return {
+		label,
+		fluidObjectId: id,
+		typeMetadata: "Fluid Handle",
+		nodeType: NodeKind.FluidHandleNode,
+	};
+}
