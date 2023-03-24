@@ -4,6 +4,7 @@
  */
 import React from "react";
 import ReactDOM from "react-dom";
+import { Resizable } from "re-resizable";
 
 import { FluidClientDebuggers } from "./Debugger";
 import { WindowMessageRelay } from "./WindowMessageRelay";
@@ -42,7 +43,20 @@ function RootView(): React.ReactElement {
 	);
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>
-			<FluidClientDebuggers />
+			<Resizable
+				style={{
+					position: "absolute",
+					top: "0px",
+					right: "0px",
+					bottom: "0px",
+					zIndex: "2",
+					backgroundColor: "lightgray", // TODO: remove
+				}}
+				defaultSize={{ width: 400, height: "100%" }}
+				className={"debugger-panel"}
+			>
+				<FluidClientDebuggers />
+			</Resizable>
 		</MessageRelayContext.Provider>
 	);
 }

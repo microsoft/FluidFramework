@@ -13,7 +13,6 @@
 import { FluidClientDebuggers, MessageRelayContext } from "@fluid-tools/client-debugger-view";
 import React from "react";
 import ReactDOM from "react-dom";
-import { extensionMessageSource } from "../messaging";
 
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
@@ -22,29 +21,30 @@ import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 // - Wait for Background Script connection before rendering, to ensure messages are able to flow before we first
 //  request data from the registry / debuggers.
 
-const panelElement = document.createElement("div");
-panelElement.id = "fluid-devtools-root";
-panelElement.style.height = "100%";
-panelElement.style.width = "100%";
+document.body.style.margin = "0px";
+
+BackgroundConnection.Initialize()
+	.then((connection) => {
+		ReactDOM.render(<RootView backgroundConnection={connection} />, document.body, () => {
+			console.log(
+				formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"),
+			);
+		});
+	})
+	.catch((error: unknown) => {
+		console.error(`Error initializing the devtools root view.`, error);
+	});
 
 /**
  * Root component of our React tree.
  *
  * @remarks Sets up message-passing context and renders the debugger.
  */
-function RootView(): React.ReactElement {
-	const messageRelay = React.useMemo<BackgroundConnection>(
-		() => new BackgroundConnection(extensionMessageSource),
-		[],
-	);
+function RootView(props: { backgroundConnection: BackgroundConnection }): React.ReactElement {
+	const messageRelay = React.useMemo<BackgroundConnection>(() => props.backgroundConnection, []);
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>
 			<FluidClientDebuggers />
 		</MessageRelayContext.Provider>
 	);
 }
-
-ReactDOM.render(<RootView />, panelElement, () => {
-	document.body.append(panelElement);
-	console.log(formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"));
-});

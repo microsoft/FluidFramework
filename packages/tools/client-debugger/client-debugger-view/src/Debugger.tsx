@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { Resizable } from "re-resizable";
 import React from "react";
 
 import {
@@ -123,7 +122,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	const stackStyles: IStackStyles = {
 		root: {
 			background: DefaultPalette.themeTertiary,
-			height: 500,
+			height: "100%",
 		},
 	};
 	const contentViewStyles: IStackItemStyles = {
@@ -155,53 +154,40 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	}
 
 	return (
-		<Resizable
-			style={{
-				position: "absolute",
-				top: "0px",
-				right: "0px",
-				bottom: "0px",
-				zIndex: "2",
-				backgroundColor: "lightgray", // TODO: remove
-			}}
-			defaultSize={{ width: 400, height: "100%" }}
-			className={"debugger-panel"}
-		>
-			<Stack enableScopedSelectors horizontal styles={stackStyles}>
-				<Stack.Item grow={1} styles={menuStyles}>
-					{/* TODO: button to refresh list of containers */}
-					<MenuSection header="Containers">
-						{containers?.map((container) => (
-							<MenuItem
-								key={container.id}
-								isActive={
-									menuSelection?.type === "containerMenuSelection" &&
-									menuSelection.containerId === container.id
-								}
-								text={container.nickname ?? container.id}
-								onClick={(event): void => {
-									onContainerClicked(`${container.id}`);
-								}}
-							/>
-						))}
-					</MenuSection>
-					<MenuSection header="Telemetry">
+		<Stack enableScopedSelectors horizontal styles={stackStyles}>
+			<Stack.Item grow={1} styles={menuStyles}>
+				{/* TODO: button to refresh list of containers */}
+				<MenuSection header="Containers">
+					{containers?.map((container) => (
 						<MenuItem
-							isActive={menuSelection?.type === "telemetryMenuSelection"}
-							text="See Telemetry"
-							onClick={onTelemetryClicked}
+							key={container.id}
+							isActive={
+								menuSelection?.type === "containerMenuSelection" &&
+								menuSelection.containerId === container.id
+							}
+							text={container.nickname ?? container.id}
+							onClick={(event): void => {
+								onContainerClicked(`${container.id}`);
+							}}
 						/>
-					</MenuSection>
-				</Stack.Item>
-				<Stack.Item grow={5} styles={contentViewStyles}>
-					<div
-						id="debugger-view-content"
-						style={{ width: "100%", height: "100%", overflowY: "auto" }}
-					>
-						{innerView}
-					</div>
-				</Stack.Item>
-			</Stack>
-		</Resizable>
+					))}
+				</MenuSection>
+				<MenuSection header="Telemetry">
+					<MenuItem
+						isActive={menuSelection?.type === "telemetryMenuSelection"}
+						text="See Telemetry"
+						onClick={onTelemetryClicked}
+					/>
+				</MenuSection>
+			</Stack.Item>
+			<Stack.Item grow={5} styles={contentViewStyles}>
+				<div
+					id="debugger-view-content"
+					style={{ width: "100%", height: "100%", overflowY: "auto" }}
+				>
+					{innerView}
+				</div>
+			</Stack.Item>
+		</Stack>
 	);
 }

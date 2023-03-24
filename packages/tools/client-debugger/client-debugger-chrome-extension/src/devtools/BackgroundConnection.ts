@@ -59,13 +59,21 @@ export class BackgroundConnection
 	 */
 	private readonly backgroundServiceConnection: TypedPortConnection;
 
+	public static async Initialize(): Promise<BackgroundConnection> {
+		const connection = new BackgroundConnection(extensionMessageSource);
+		await new Promise((resolve) => {
+			connection.once("tabConnected", resolve);
+		});
+		return connection;
+	}
+
 	/**
 	 * Creates an instance of {@link BackgroundConnection}.
 	 *
 	 * @param messageSource - All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
 	 * method will get this value written to their 'source' property.
 	 */
-	public constructor(private readonly messageSource: string) {
+	private constructor(private readonly messageSource: string) {
 		super();
 
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
@@ -124,9 +132,9 @@ export class BackgroundConnection
 
 		if (message.type === devToolsInitAcknowledgementType) {
 			console.log(
-				formatDevtoolsScriptMessageForLogging("Background initialization acknowledged."),
+				formatDevtoolsScriptMessageForLogging("Background initialization complete."),
 			);
-			return true;
+			return this.emit("tabConnected");
 		} else {
 			// Forward incoming message onto subscribers.
 			// TODO: validate source
