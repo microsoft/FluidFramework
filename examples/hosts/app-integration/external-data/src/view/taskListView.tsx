@@ -6,9 +6,10 @@ import { CollaborativeInput } from "@fluid-experimental/react-inputs";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 
-import type { ExternalSnapshotTask, ITask, ITaskList } from "../model-interface";
+import type { ExternalSnapshotTask, IAppModel, ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
+	readonly model: IAppModel;
 	readonly task: ITask;
 	readonly deleteDraftTask: () => void;
 }
@@ -17,7 +18,7 @@ interface ITaskRowProps {
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-	const { task, deleteDraftTask } = props;
+	const { task, deleteDraftTask, model } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
 		task.externalDataSnapshot,
@@ -40,7 +41,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			task.off("draftPriorityChanged", updatePriorityFromFluid);
 			task.off("changesAvailable", updateExternalSnapshotData);
 		};
-	}, [task, priorityRef]);
+	}, [task, priorityRef, model]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
@@ -103,13 +104,18 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					{externalDataSnapshot.priority}
 				</td>
 			)}
-			<td>
-				<button
-					onClick={task.overwriteWithExternalData}
-					style={{ visibility: showAcceptButton }}
-				>
-					Accept change
-				</button>
+			<td style={{ visibility: showAcceptButton }}>
+				{model.leader === "Leader" ? (
+					<button onClick={task.overwriteWithExternalData}>Accept change</button>
+				) : (
+					<h3
+						onClick={(): void => {
+							console.log(model.leader);
+						}}
+					>
+						Changes in progress
+					</h3>
+				)}
 			</td>
 		</tr>
 	);
@@ -120,13 +126,14 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
  */
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
+	readonly model: IAppModel;
 }
 
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-	const { taskList } = props;
+	const { taskList, model } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
 	const [lastSaved, setLastSaved] = useState<number | undefined>();
@@ -144,6 +151,15 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				setFailedUpdate(true);
 			});
 	}, [taskList]);
+
+	/**
+	 * Set the current client to be the leader of the Fluid document.
+	 */
+	const setLeaderShip = useCallback(() => {
+		console.log("SETTING CLIENT AS LEADER");
+		model.leader = "Leader";
+	}, [model]);
+
 	useEffect(() => {
 		const updateTasks = (): void => {
 			setTasks(taskList.getDraftTasks());
@@ -155,10 +171,11 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			taskList.off("draftTaskAdded", updateTasks);
 			taskList.off("draftTaskDeleted", updateTasks);
 		};
-	}, [taskList]);
+	}, [taskList, model]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow
+			model={model}
 			key={task.id}
 			task={task}
 			deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)}
@@ -211,6 +228,9 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 				<tbody>{taskRows}</tbody>
 			</table>
 			<button onClick={handleSaveChanges}>Write to External Source</button>
+			<div style={{ margin: "10px 0" }}>
+				<button onClick={(): void => setLeaderShip()}>Claim Leadership</button>
+			</div>
 		</div>
 	);
 };

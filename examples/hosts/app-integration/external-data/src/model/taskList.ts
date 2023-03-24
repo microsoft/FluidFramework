@@ -415,6 +415,8 @@ export class TaskList extends DataObject<{ InitialState: IBaseDocumentInitialSta
 	 * DataObject, by registering an event listener for changes to the task list.
 	 */
 	protected async hasInitialized(): Promise<void> {
+		// Temp hack to ensure that external data changes get propagated to all users
+		this._externalTaskListId = "task-list-1";
 		const externalDataSnapshot = this.root.get<IFluidHandle<SharedMap>>("externalDataSnapshot");
 		if (externalDataSnapshot === undefined) {
 			throw new Error("externalDataSnapshot was not initialized");

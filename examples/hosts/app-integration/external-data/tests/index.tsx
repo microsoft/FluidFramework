@@ -66,7 +66,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	document.title = id;
 
 	// Render it
-	ReactDOM.render(<TaskListView taskList={taskList} />, element);
+	ReactDOM.render(<TaskListView taskList={taskList} model={model} />, element);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation

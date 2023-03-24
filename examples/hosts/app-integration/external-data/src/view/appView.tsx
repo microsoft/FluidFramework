@@ -25,7 +25,7 @@ export const AppView: React.FC<IAppViewProps> = (props: IAppViewProps) => {
 	const { model } = props;
 	const taskList = model.baseDocument.getTaskList("task-list-1");
 	return taskList !== undefined ? (
-		<TaskListView taskList={taskList} />
+		<TaskListView taskList={taskList} model={model} />
 	) : (
 		<div>Whomp whomp whomp</div>
 	);

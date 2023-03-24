@@ -17,6 +17,7 @@ import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interfa
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
 	public constructor(
 		public readonly baseDocument: IBaseDocument,
+		public readonly leader: string,
 		private readonly container: IContainer,
 		private readonly runtime: IContainerRuntime,
 	) {

@@ -32,6 +32,8 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 */
 	readonly baseDocument: IBaseDocument;
 
+	leader: string;
+
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
 	 * from alfred while that signal is in prototype state on the dev branch.
