@@ -17,16 +17,14 @@ parameters:
   type: string
   default: '@ff-internal/aria-logger'
 
-variables:
-- name: isTestBranch
-  value: $[ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') ]
-  readonly: true
-
 jobs:
   - job: runTests
     displayName: Run tests
     pool: ${{ parameters.poolBuild }}
     variables:
+    - name: isTestBranch
+      value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+      readonly: true
     - name: feed
       ${{ if eq(variables.isTestBranch, 'true') }}:
         value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/

@@ -72,11 +72,6 @@ parameters:
   type: stepList
   default: []
 
-variables:
-- name: isTestBranch
-  value: $[ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') ]
-  readonly: true
-
 jobs:
   - ${{ each variant in parameters.splitTestVariants }}:
     - job:
@@ -85,6 +80,9 @@ jobs:
       condition: ${{ parameters.condition }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
+      - name: isTestBranch
+        value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+        readonly: true
       # We use 'chalk' to colorize output, which auto-detects color support in the
       # running terminal.  The log output shown in Azure DevOps job runs only has
       # basic ANSI color support though, so force that in the pipeline
