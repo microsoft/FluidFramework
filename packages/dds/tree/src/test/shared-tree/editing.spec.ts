@@ -253,8 +253,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
 		});
 
-		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
-		it.skip("intra-field move", () => {
+		it("intra-field move", () => {
 			const sequencer = new Sequencer();
 			const tree1 = TestTree.fromJson(["a", "b"]);
 

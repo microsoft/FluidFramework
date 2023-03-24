@@ -88,29 +88,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		return `CUSTOMER SERVICE (${port}): ${message}`;
 	}
 
-	// Register with external data service for webhook notifications.
-	try {
-		await fetch(externalDataServiceWebhookRegistrationUrl, {
-			method: "POST",
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				// External data service will call our webhook echoer to notify our subscribers of the data changes.
-				url: `http://localhost:${port}/external-data-webhook`,
-			}),
-		});
-	} catch (error) {
-		console.error(
-			formatLogMessage(
-				`Registering for data update notifications webhook with the external data service failed due to an error.`,
-			),
-			error,
-		);
-		throw error;
-	}
-
 	const expressApp = express();
 	expressApp.use(express.json());
 	expressApp.use(cors());

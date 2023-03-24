@@ -39,7 +39,8 @@ export function create(
 	producer: core.IProducer,
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
-	tenantThrottlers: Map<string, core.IThrottler>,
+    tenantThrottlers: Map<string, core.IThrottler>,
+	tokenManager?: core.ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
@@ -83,6 +84,7 @@ export function create(
 				storage,
 				maxTokenLifetimeSec,
 				isTokenExpiryEnabled,
+				tokenManager,
 			);
 			handleResponse(
 				validP.then(() => undefined),
@@ -199,9 +201,16 @@ const verifyRequest = async (
 	storage: core.IDocumentStorage,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
+	tokenManager?: core.ITokenRevocationManager,
 ) =>
 	Promise.all([
-		verifyToken(request, tenantManager, maxTokenLifetimeSec, isTokenExpiryEnabled),
+		verifyToken(
+			request,
+			tenantManager,
+			maxTokenLifetimeSec,
+			isTokenExpiryEnabled,
+			tokenManager,
+		),
 		checkDocumentExistence(request, storage),
 	]);
 
@@ -210,6 +219,7 @@ async function verifyToken(
 	tenantManager: core.ITenantManager,
 	maxTokenLifetimeSec: number,
 	isTokenExpiryEnabled: boolean,
+	tokenManager?: core.ITokenRevocationManager,
 ): Promise<void> {
 	const token = request.headers["access-token"] as string;
 	if (!token) {
@@ -221,6 +231,14 @@ async function verifyToken(
 	if (isTokenExpiryEnabled) {
 		validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
 	}
+
+	if (tokenManager && claims.jti) {
+		const tokenRevoked = await tokenManager.isTokenRevoked(tenantId, documentId, claims.jti);
+		if (tokenRevoked) {
+			return Promise.reject(new Error("Permission denied. Token is revoked."));
+		}
+	}
+
 	return tenantManager.verifyToken(claims.tenantId, token);
 }
 

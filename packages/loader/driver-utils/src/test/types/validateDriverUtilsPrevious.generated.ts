@@ -40,50 +40,26 @@ use_old_ClassDeclaration_AuthorizationError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobAggregationStorage": {"forwardCompat": false}
+* "RemovedClassDeclaration_BlobAggregationStorage": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BlobAggregationStorage():
-    TypeOnly<old.BlobAggregationStorage>;
-declare function use_current_ClassDeclaration_BlobAggregationStorage(
-    use: TypeOnly<current.BlobAggregationStorage>);
-use_current_ClassDeclaration_BlobAggregationStorage(
-    get_old_ClassDeclaration_BlobAggregationStorage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobAggregationStorage": {"backCompat": false}
+* "RemovedClassDeclaration_BlobAggregationStorage": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BlobAggregationStorage():
-    TypeOnly<current.BlobAggregationStorage>;
-declare function use_old_ClassDeclaration_BlobAggregationStorage(
-    use: TypeOnly<old.BlobAggregationStorage>);
-use_old_ClassDeclaration_BlobAggregationStorage(
-    get_current_ClassDeclaration_BlobAggregationStorage());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobCacheStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_BlobCacheStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_BlobCacheStorageService():
-    TypeOnly<old.BlobCacheStorageService>;
-declare function use_current_ClassDeclaration_BlobCacheStorageService(
-    use: TypeOnly<current.BlobCacheStorageService>);
-use_current_ClassDeclaration_BlobCacheStorageService(
-    get_old_ClassDeclaration_BlobCacheStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_BlobCacheStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_BlobCacheStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_BlobCacheStorageService():
-    TypeOnly<current.BlobCacheStorageService>;
-declare function use_old_ClassDeclaration_BlobCacheStorageService(
-    use: TypeOnly<old.BlobCacheStorageService>);
-use_old_ClassDeclaration_BlobCacheStorageService(
-    get_current_ClassDeclaration_BlobCacheStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -160,26 +136,14 @@ use_old_TypeAliasDeclaration_DriverErrorTelemetryProps(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EmptyDocumentDeltaStorageService": {"forwardCompat": false}
+* "RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_EmptyDocumentDeltaStorageService():
-    TypeOnly<old.EmptyDocumentDeltaStorageService>;
-declare function use_current_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    use: TypeOnly<current.EmptyDocumentDeltaStorageService>);
-use_current_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    get_old_ClassDeclaration_EmptyDocumentDeltaStorageService());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_EmptyDocumentDeltaStorageService": {"backCompat": false}
+* "RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_EmptyDocumentDeltaStorageService():
-    TypeOnly<current.EmptyDocumentDeltaStorageService>;
-declare function use_old_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    use: TypeOnly<old.EmptyDocumentDeltaStorageService>);
-use_old_ClassDeclaration_EmptyDocumentDeltaStorageService(
-    get_current_ClassDeclaration_EmptyDocumentDeltaStorageService());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -232,26 +196,14 @@ use_old_ClassDeclaration_GenericNetworkError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAnyDriverError": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IAnyDriverError": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IAnyDriverError():
-    TypeOnly<old.IAnyDriverError>;
-declare function use_current_InterfaceDeclaration_IAnyDriverError(
-    use: TypeOnly<current.IAnyDriverError>);
-use_current_InterfaceDeclaration_IAnyDriverError(
-    get_old_InterfaceDeclaration_IAnyDriverError());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IAnyDriverError": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IAnyDriverError": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IAnyDriverError():
-    TypeOnly<current.IAnyDriverError>;
-declare function use_old_InterfaceDeclaration_IAnyDriverError(
-    use: TypeOnly<old.IAnyDriverError>);
-use_old_InterfaceDeclaration_IAnyDriverError(
-    get_current_InterfaceDeclaration_IAnyDriverError());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -280,26 +232,14 @@ use_old_InterfaceDeclaration_IProgress(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryTreeAssemblerProps": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ISummaryTreeAssemblerProps():
-    TypeOnly<old.ISummaryTreeAssemblerProps>;
-declare function use_current_InterfaceDeclaration_ISummaryTreeAssemblerProps(
-    use: TypeOnly<current.ISummaryTreeAssemblerProps>);
-use_current_InterfaceDeclaration_ISummaryTreeAssemblerProps(
-    get_old_InterfaceDeclaration_ISummaryTreeAssemblerProps());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ISummaryTreeAssemblerProps": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ISummaryTreeAssemblerProps():
-    TypeOnly<current.ISummaryTreeAssemblerProps>;
-declare function use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
-    use: TypeOnly<old.ISummaryTreeAssemblerProps>);
-use_old_InterfaceDeclaration_ISummaryTreeAssemblerProps(
-    get_current_InterfaceDeclaration_ISummaryTreeAssemblerProps());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -352,26 +292,14 @@ use_old_ClassDeclaration_LocationRedirectionError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MapWithExpiration": {"forwardCompat": false}
+* "RemovedClassDeclaration_MapWithExpiration": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MapWithExpiration():
-    TypeOnly<old.MapWithExpiration>;
-declare function use_current_ClassDeclaration_MapWithExpiration(
-    use: TypeOnly<current.MapWithExpiration>);
-use_current_ClassDeclaration_MapWithExpiration(
-    get_old_ClassDeclaration_MapWithExpiration());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MapWithExpiration": {"backCompat": false}
+* "RemovedClassDeclaration_MapWithExpiration": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MapWithExpiration():
-    TypeOnly<current.MapWithExpiration>;
-declare function use_old_ClassDeclaration_MapWithExpiration(
-    use: TypeOnly<old.MapWithExpiration>);
-use_old_ClassDeclaration_MapWithExpiration(
-    get_current_ClassDeclaration_MapWithExpiration());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -400,50 +328,26 @@ use_old_EnumDeclaration_MessageType2(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiDocumentServiceFactory": {"forwardCompat": false}
+* "RemovedClassDeclaration_MultiDocumentServiceFactory": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MultiDocumentServiceFactory():
-    TypeOnly<old.MultiDocumentServiceFactory>;
-declare function use_current_ClassDeclaration_MultiDocumentServiceFactory(
-    use: TypeOnly<current.MultiDocumentServiceFactory>);
-use_current_ClassDeclaration_MultiDocumentServiceFactory(
-    get_old_ClassDeclaration_MultiDocumentServiceFactory());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiDocumentServiceFactory": {"backCompat": false}
+* "RemovedClassDeclaration_MultiDocumentServiceFactory": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MultiDocumentServiceFactory():
-    TypeOnly<current.MultiDocumentServiceFactory>;
-declare function use_old_ClassDeclaration_MultiDocumentServiceFactory(
-    use: TypeOnly<old.MultiDocumentServiceFactory>);
-use_old_ClassDeclaration_MultiDocumentServiceFactory(
-    get_current_ClassDeclaration_MultiDocumentServiceFactory());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiUrlResolver": {"forwardCompat": false}
+* "RemovedClassDeclaration_MultiUrlResolver": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_MultiUrlResolver():
-    TypeOnly<old.MultiUrlResolver>;
-declare function use_current_ClassDeclaration_MultiUrlResolver(
-    use: TypeOnly<current.MultiUrlResolver>);
-use_current_ClassDeclaration_MultiUrlResolver(
-    get_old_ClassDeclaration_MultiUrlResolver());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_MultiUrlResolver": {"backCompat": false}
+* "RemovedClassDeclaration_MultiUrlResolver": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_MultiUrlResolver():
-    TypeOnly<current.MultiUrlResolver>;
-declare function use_old_ClassDeclaration_MultiUrlResolver(
-    use: TypeOnly<old.MultiUrlResolver>);
-use_old_ClassDeclaration_MultiUrlResolver(
-    get_current_ClassDeclaration_MultiUrlResolver());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -640,50 +544,26 @@ use_old_ClassDeclaration_RetryableError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SnapshotExtractor": {"forwardCompat": false}
+* "RemovedClassDeclaration_SnapshotExtractor": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SnapshotExtractor():
-    TypeOnly<old.SnapshotExtractor>;
-declare function use_current_ClassDeclaration_SnapshotExtractor(
-    use: TypeOnly<current.SnapshotExtractor>);
-use_current_ClassDeclaration_SnapshotExtractor(
-    get_old_ClassDeclaration_SnapshotExtractor());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SnapshotExtractor": {"backCompat": false}
+* "RemovedClassDeclaration_SnapshotExtractor": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SnapshotExtractor():
-    TypeOnly<current.SnapshotExtractor>;
-declare function use_old_ClassDeclaration_SnapshotExtractor(
-    use: TypeOnly<old.SnapshotExtractor>);
-use_old_ClassDeclaration_SnapshotExtractor(
-    get_current_ClassDeclaration_SnapshotExtractor());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SummaryTreeAssembler": {"forwardCompat": false}
+* "RemovedClassDeclaration_SummaryTreeAssembler": {"forwardCompat": false}
 */
-declare function get_old_ClassDeclaration_SummaryTreeAssembler():
-    TypeOnly<old.SummaryTreeAssembler>;
-declare function use_current_ClassDeclaration_SummaryTreeAssembler(
-    use: TypeOnly<current.SummaryTreeAssembler>);
-use_current_ClassDeclaration_SummaryTreeAssembler(
-    get_old_ClassDeclaration_SummaryTreeAssembler());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "ClassDeclaration_SummaryTreeAssembler": {"backCompat": false}
+* "RemovedClassDeclaration_SummaryTreeAssembler": {"backCompat": false}
 */
-declare function get_current_ClassDeclaration_SummaryTreeAssembler():
-    TypeOnly<current.SummaryTreeAssembler>;
-declare function use_old_ClassDeclaration_SummaryTreeAssembler(
-    use: TypeOnly<old.SummaryTreeAssembler>);
-use_old_ClassDeclaration_SummaryTreeAssembler(
-    get_current_ClassDeclaration_SummaryTreeAssembler());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -832,50 +712,26 @@ use_old_FunctionDeclaration_combineAppAndProtocolSummary(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_configurableUrlResolver": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_configurableUrlResolver": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_configurableUrlResolver():
-    TypeOnly<typeof old.configurableUrlResolver>;
-declare function use_current_FunctionDeclaration_configurableUrlResolver(
-    use: TypeOnly<typeof current.configurableUrlResolver>);
-use_current_FunctionDeclaration_configurableUrlResolver(
-    get_old_FunctionDeclaration_configurableUrlResolver());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_configurableUrlResolver": {"backCompat": false}
+* "RemovedFunctionDeclaration_configurableUrlResolver": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_configurableUrlResolver():
-    TypeOnly<typeof current.configurableUrlResolver>;
-declare function use_old_FunctionDeclaration_configurableUrlResolver(
-    use: TypeOnly<typeof old.configurableUrlResolver>);
-use_old_FunctionDeclaration_configurableUrlResolver(
-    get_current_FunctionDeclaration_configurableUrlResolver());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree():
-    TypeOnly<typeof old.convertSnapshotAndBlobsToSummaryTree>;
-declare function use_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    use: TypeOnly<typeof current.convertSnapshotAndBlobsToSummaryTree>);
-use_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    get_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"backCompat": false}
+* "RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree():
-    TypeOnly<typeof current.convertSnapshotAndBlobsToSummaryTree>;
-declare function use_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    use: TypeOnly<typeof old.convertSnapshotAndBlobsToSummaryTree>);
-use_old_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree(
-    get_current_FunctionDeclaration_convertSnapshotAndBlobsToSummaryTree());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1168,26 +1024,14 @@ use_old_FunctionDeclaration_isRuntimeMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isUnpackedRuntimeMessage": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_isUnpackedRuntimeMessage():
-    TypeOnly<typeof old.isUnpackedRuntimeMessage>;
-declare function use_current_FunctionDeclaration_isUnpackedRuntimeMessage(
-    use: TypeOnly<typeof current.isUnpackedRuntimeMessage>);
-use_current_FunctionDeclaration_isUnpackedRuntimeMessage(
-    get_old_FunctionDeclaration_isUnpackedRuntimeMessage());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_isUnpackedRuntimeMessage": {"backCompat": false}
+* "RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_isUnpackedRuntimeMessage():
-    TypeOnly<typeof current.isUnpackedRuntimeMessage>;
-declare function use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
-    use: TypeOnly<typeof old.isUnpackedRuntimeMessage>);
-use_old_FunctionDeclaration_isUnpackedRuntimeMessage(
-    get_current_FunctionDeclaration_isUnpackedRuntimeMessage());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1336,23 +1180,11 @@ use_old_FunctionDeclaration_streamObserver(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForConnectedState": {"forwardCompat": false}
+* "RemovedFunctionDeclaration_waitForConnectedState": {"forwardCompat": false}
 */
-declare function get_old_FunctionDeclaration_waitForConnectedState():
-    TypeOnly<typeof old.waitForConnectedState>;
-declare function use_current_FunctionDeclaration_waitForConnectedState(
-    use: TypeOnly<typeof current.waitForConnectedState>);
-use_current_FunctionDeclaration_waitForConnectedState(
-    get_old_FunctionDeclaration_waitForConnectedState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "FunctionDeclaration_waitForConnectedState": {"backCompat": false}
+* "RemovedFunctionDeclaration_waitForConnectedState": {"backCompat": false}
 */
-declare function get_current_FunctionDeclaration_waitForConnectedState():
-    TypeOnly<typeof current.waitForConnectedState>;
-declare function use_old_FunctionDeclaration_waitForConnectedState(
-    use: TypeOnly<typeof old.waitForConnectedState>);
-use_old_FunctionDeclaration_waitForConnectedState(
-    get_current_FunctionDeclaration_waitForConnectedState());

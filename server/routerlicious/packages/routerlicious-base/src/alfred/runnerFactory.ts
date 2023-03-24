@@ -99,10 +99,12 @@ export class AlfredResources implements core.IResources {
 		public port: any,
 		public documentsCollectionName: string,
 		public metricClientConfig: any,
-		public documentsCollection: core.ICollection<core.IDocument>,
+		public documentRepository: core.IDocumentRepository,
 		public throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 		public verifyMaxMessageSize?: boolean,
 		public redisCache?: core.ICache,
+		public socketTracker?: core.IWebSocketTracker,
+		public tokenManager?: core.ITokenRevocationManager,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
@@ -118,12 +120,16 @@ export class AlfredResources implements core.IResources {
 	public async dispose(): Promise<void> {
 		const producerClosedP = this.producer.close();
 		const mongoClosedP = this.mongoManager.close();
-		await Promise.all([producerClosedP, mongoClosedP]);
+		const tokenManagerP = this.tokenManager ? this.tokenManager.close() : Promise.resolve();
+		await Promise.all([producerClosedP, mongoClosedP, tokenManagerP]);
 	}
 }
 
 export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredResources> {
-	public async create(config: Provider): Promise<AlfredResources> {
+	public async create(
+		config: Provider,
+		customizations?: Record<string, any>,
+	): Promise<AlfredResources> {
 		// Producer used to publish messages
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
 		const kafkaLibrary = config.get("kafka:lib:name");
@@ -326,7 +332,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const submitSignalThrottleConfig: Partial<IThrottleConfig> =
 			config.get("alfred:throttling:submitSignals") ?? {};
 		const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
-
+		const documentRepository =
+			customizations?.documentRepository ??
+			new core.MongoDocumentRepository(documentsCollection);
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,
 			operationsDbMongoManager,
@@ -338,10 +346,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		);
 
 		const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
+		const opsCollection = await databaseManager.getDeltaCollection(undefined, undefined);
 		const storage = new services.DocumentStorage(
-			databaseManager,
+			documentRepository,
 			tenantManager,
 			enableWholeSummaryUpload,
+			opsCollection,
 		);
 
 		const maxSendMessageSize = bytes.parse(config.get("alfred:maxMessageSize"));
@@ -372,6 +382,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			address,
 			storage,
 			databaseManager,
+			documentRepository,
 			60000,
 			() => new NodeWebSocketServer(4000),
 			taskMessageSender,
@@ -405,6 +416,16 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		const deltaService = new DeltaService(operationsDbMongoManager, tenantManager);
 
+		// Set up token revocation if enabled
+		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+		let socketTracker: core.IWebSocketTracker | undefined;
+		let tokenManager: core.ITokenRevocationManager | undefined;
+		if (tokenRevocationEnabled) {
+			socketTracker = new utils.WebSocketTracker();
+			tokenManager = new utils.DummyTokenManager();
+			await tokenManager.initialize();
+		}
+
 		return new AlfredResources(
 			config,
 			producer,
@@ -427,10 +448,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			port,
 			documentsCollectionName,
 			metricClientConfig,
-			documentsCollection,
+			documentRepository,
 			redisThrottleAndUsageStorageManager,
 			verifyMaxMessageSize,
 			redisCache,
+			socketTracker,
+			tokenManager,
 		);
 	}
 }
@@ -456,10 +479,12 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.deltaService,
 			resources.producer,
 			resources.metricClientConfig,
-			resources.documentsCollection,
+			resources.documentRepository,
 			resources.throttleAndUsageStorageManager,
 			resources.verifyMaxMessageSize,
 			resources.redisCache,
+			resources.socketTracker,
+			resources.tokenManager,
 		);
 	}
 }

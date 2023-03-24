@@ -24,11 +24,7 @@ import {
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	packagePathToTelemetryProperty,
-	ReadAndParseBlob,
-	RefreshSummaryResult,
-} from "@fluidframework/runtime-utils";
+import { packagePathToTelemetryProperty, ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
 	generateStack,
@@ -39,7 +35,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 
 import { RuntimeHeaders } from "../containerRuntime";
-import { ICreateContainerMetadata } from "../summary";
+import { ICreateContainerMetadata, RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	disableSweepLogKey,
@@ -618,7 +614,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
-			sweepEnabled: this.configs.sweepEnabled,
+			sweepEnabled: false, // DEPRECATED - to be removed
 			sweepTimeoutMs: this.configs.sweepTimeoutMs,
 		};
 	}

@@ -365,5 +365,8 @@
 				"url": "http://localhost:3003"
 			}
 		}
-	]
+	],
+	"tokenRevocation": {
+		"enable": false
+	}
 }

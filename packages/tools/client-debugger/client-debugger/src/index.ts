@@ -55,6 +55,10 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
+	AudienceClientMetaData,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+	GetAudienceMessage,
 	debuggerMessageSource,
 	HasContainerId,
 	ConnectContainerMessage,
@@ -80,7 +84,7 @@ export {
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./messaging";
 export {
 	DebuggerRegistry,
