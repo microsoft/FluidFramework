@@ -293,7 +293,8 @@ The Hosting Application can now use Fluid's [feature detection mechanism](./comp
 to check if the `DataStore` it got back supports a view by checking `dataStore.IComponentHTMLView` and calling
 `render(...)` if `IComponentHTMLView` returns an object.
 
-That was a lot to unpack in a lot of text, and don't worry if it feels overwhelming.
+That was a lot to unpack in a lot of text.
+Don't worry if it feels overwhelming.
 The overall principle of the request pattern is that requests are delegated through the system to the place where they
 are meant to go.
 
