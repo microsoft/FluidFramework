@@ -22,7 +22,7 @@ export function create(
 	tenantManager: ITenantManager,
 	deltaService: IDeltaService,
 	appTenants: IAlfredTenant[],
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 ): Router {
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
@@ -33,6 +33,7 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+    const tenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
 	const getDeltasThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: Constants.getDeltasThrottleIdPrefix,

@@ -24,7 +24,7 @@ import * as documents from "./documents";
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
@@ -39,20 +39,20 @@ export function create(
 		tenantManager,
 		deltaService,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 	);
 	const documentsRoute = documents.create(
 		storage,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		config,
 		tenantManager,
 		documentsCollection,
 	);
-	const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottler);
+	const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottlers);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);

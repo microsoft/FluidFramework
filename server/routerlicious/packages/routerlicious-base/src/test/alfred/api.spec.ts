@@ -123,7 +123,23 @@ describe("Routerlicious", () => {
 				const limitCreateDoc = 5;
 				const limitGetDeltas = 5;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(limitTenant);
+                    const restTenantThrottler = new TestThrottler(limitTenant);
+					const restTenantGetDeltasThrottler = new TestThrottler(limitTenant);
+                    const restTenantCreateDocThrottler = new TestThrottler(limitTenant);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+                    restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+
 					const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
 					const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
@@ -138,7 +154,7 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,
@@ -293,7 +309,23 @@ describe("Routerlicious", () => {
 			describe("authorization", () => {
 				const maxThrottlerLimit = 10;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+                    restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+
 					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
@@ -308,7 +340,7 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,
@@ -380,7 +412,23 @@ describe("Routerlicious", () => {
 
 				const maxThrottlerLimit = 1000000;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+                    restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+
 					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
@@ -395,7 +443,7 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,
@@ -467,7 +515,23 @@ describe("Routerlicious", () => {
 			describe("single-use JWTs", () => {
 				const limit = 1000000;
 				beforeEach(() => {
-					const tenantThrottler = new TestThrottler(limit);
+                    const restTenantThrottler = new TestThrottler(limit);
+					const restTenantGetDeltasThrottler = new TestThrottler(limit);
+                    const restTenantCreateDocThrottler = new TestThrottler(limit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+                    restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
+
 					const restCreateDocThrottler = new TestThrottler(limit);
 					const restGetDeltasThrottler = new TestThrottler(limit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
@@ -482,7 +546,7 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						new TestCache(),
 						defaultStorage,
@@ -519,7 +583,22 @@ describe("Routerlicious", () => {
 
 				beforeEach(() => {
 					const maxThrottlerLimit = 1000000;
-					const tenantThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottlers = new Map<string, TestThrottler>();
+                    restTenantThrottlers.set(
+						Constants.generalRestCallThrottleIdPrefix,
+						restTenantThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.getDeltasThrottleIdPrefix,
+						restTenantGetDeltasThrottler,
+					);
+                    restTenantThrottlers.set(
+						Constants.createDocThrottleIdPrefix,
+						restTenantCreateDocThrottler,
+					);
 					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
@@ -537,7 +616,7 @@ describe("Routerlicious", () => {
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
-						tenantThrottler,
+						restTenantThrottlers,
 						restClusterThrottlers,
 						defaultSingleUseTokenCache,
 						defaultStorage,

@@ -32,7 +32,7 @@ import { Constants, getSession } from "../../../utils";
 export function create(
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	config: Provider,
@@ -55,6 +55,7 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+    const tenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
 	// Throttling logic for creating documents to provide per-cluster rate-limiting at the HTTP route level
 	const createDocThrottleOptions: Partial<IThrottleMiddlewareOptions> = {

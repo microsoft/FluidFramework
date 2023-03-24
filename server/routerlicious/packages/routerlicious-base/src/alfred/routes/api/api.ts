@@ -39,7 +39,7 @@ export function create(
 	producer: core.IProducer,
 	tenantManager: core.ITenantManager,
 	storage: core.IDocumentStorage,
-	throttler: core.IThrottler,
+	tenantThrottlers: Map<string, core.IThrottler>,
 ): Router {
 	const router: Router = Router();
 
@@ -47,6 +47,8 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+    const tenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+
 
 	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
 		const tenantId = getParam(request.params, "tenantId");
@@ -59,7 +61,7 @@ export function create(
 
 	router.get(
 		"/ping",
-		throttle(throttler, winston, {
+		throttle(tenantThrottler, winston, {
 			...tenantThrottleOptions,
 			throttleIdPrefix: "ping",
 		}),
@@ -71,7 +73,7 @@ export function create(
 	router.patch(
 		"/:tenantId/:id/root",
 		validateRequestParams("tenantId", "id"),
-		throttle(throttler, winston, tenantThrottleOptions),
+		throttle(tenantThrottler, winston, tenantThrottleOptions),
 		async (request, response) => {
 			const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec") as number;
 			const isTokenExpiryEnabled = config.get("auth:enableTokenExpiration") as boolean;
@@ -96,7 +98,7 @@ export function create(
 	router.post(
 		"/:tenantId/:id/blobs",
 		validateRequestParams("tenantId", "id"),
-		throttle(throttler, winston, tenantThrottleOptions),
+		throttle(tenantThrottler, winston, tenantThrottleOptions),
 		async (request, response) => {
 			const tenantId = getParam(request.params, "tenantId");
 			const blobData = request.body as IBlobData;

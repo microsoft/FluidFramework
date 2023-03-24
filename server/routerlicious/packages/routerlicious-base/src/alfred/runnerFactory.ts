@@ -85,7 +85,7 @@ export class AlfredResources implements core.IResources {
 		public webSocketLibrary: string,
 		public orderManager: core.IOrdererManager,
 		public tenantManager: core.ITenantManager,
-		public restTenantThrottler: core.IThrottler,
+		public restTenantThrottlers: Map<string, core.IThrottler>,
 		public restClusterThrottlers: Map<string, core.IThrottler>,
 		public socketConnectTenantThrottler: core.IThrottler,
 		public socketConnectClusterThrottler: core.IThrottler,
@@ -276,8 +276,21 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 
 		// Rest API Throttler
 		const restApiTenantThrottleConfig: Partial<IThrottleConfig> =
-			config.get("alfred:throttling:restCallsPerTenant") ?? {};
+			config.get("alfred:throttling:restCallsPerTenant:generalRestCall") ?? {};
 		const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
+
+        const restApiTenantCreateDocThrottleConfig: Partial<IThrottleConfig> =
+            config.get("alfred:throttling:restCallsPerTenant:createDoc") ?? {};
+        const restTenantCreateDocThrottler = configureThrottler(restApiTenantCreateDocThrottleConfig);
+
+        const restApiTenantGetDeltasThrottleConfig: Partial<IThrottleConfig> =
+            config.get("alfred:throttling:restCallsPerTenant:getDeltas") ?? {};
+        const restTenantGetDeltasThrottler = configureThrottler(restApiTenantGetDeltasThrottleConfig);
+
+        const restTenantThrottlers = new Map<string, core.IThrottler>();
+        restTenantThrottlers.set(Constants.createDocThrottleIdPrefix, restTenantCreateDocThrottler);
+        restTenantThrottlers.set(Constants.getDeltasThrottleIdPrefix, restTenantGetDeltasThrottler);
+        restTenantThrottlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantThrottler);
 
 		const restApiCreateDocThrottleConfig: Partial<IThrottleConfig> =
 			config.get("alfred:throttling:restCallsPerCluster:createDoc") ?? {};
@@ -400,7 +413,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			webSocketLibrary,
 			orderManager,
 			tenantManager,
-			restTenantThrottler,
+			restTenantThrottlers,
 			restClusterThrottlers,
 			socketConnectTenantThrottler,
 			socketConnectClusterThrottler,
@@ -430,7 +443,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.port,
 			resources.orderManager,
 			resources.tenantManager,
-			resources.restTenantThrottler,
+			resources.restTenantThrottlers,
 			resources.restClusterThrottlers,
 			resources.socketConnectTenantThrottler,
 			resources.socketConnectClusterThrottler,

@@ -51,7 +51,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
             webSocketLibrary,
             orderManager,
             tenantManager,
-            restTenantThrottler,
+            restTenantThrottlers,
             restClusterThrottler,
             socketConnectTenantThrottler,
             socketConnectClusterThrottler
