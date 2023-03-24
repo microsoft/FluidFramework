@@ -43,7 +43,7 @@ export interface VisualTreeNodeBase {
 	/**
 	 * (optional) Additional metadata to be displayed inline.
 	 */
-	metaData?: string;
+	metadata?: string;
 
 	/**
 	 * {@inheritDoc NodeKind}
