@@ -12,6 +12,7 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -60,9 +61,11 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: tools/markdown-magic
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     tagName: markdown-magic
     taskBuild: build
-    taskBuildDocs: true
-    taskLint: true
+    taskBuildDocs: false
+    taskLint: false
     taskTest:
     - test
