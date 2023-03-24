@@ -100,11 +100,11 @@ export class FluidDataVisualizer {
 		this.handles = new Map<FluidObjectId, IFluidHandle>();
 	}
 	
-	public async renderRootHandles(): FluidHandleNode[] {
+	public async renderRootHandles(): Promise<FluidHandleNode[]> {
 		// TODO
 	}
 	
-	public async render(fluidObjectId: FluidObjectId): FluidObjectNode | undefined {
+	public async render(fluidObjectId: FluidObjectId): Promise<FluidObjectNode | undefined> {
 		// TODO
 	}
 
