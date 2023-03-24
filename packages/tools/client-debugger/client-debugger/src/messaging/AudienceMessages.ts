@@ -50,7 +50,7 @@ export interface AudienceSummaryMessageData extends HasContainerId {
 	 * Metadata of the current Audience state.
 	 */
 	audienceState: AudienceClientMetaData[];
-	
+
 	/**
 	 * Connection history of members to the container
 	 */
