@@ -83,14 +83,12 @@ jobs:
           path: docs/public
       - name: Install dependencies
         run: "pnpm i --frozen-lockfile"
-      - name: Start server in background
-        run: pnpm ci:start
       - name: Check for broken links
         id: linkcheck
         continue-on-error: true
         run: |
           set -o pipefail
-          npm run linkcheck:full | tee ./results/linkcheck-output.txt
+          npm run ci:linkcheck | tee ./results/linkcheck-output.txt
 
       - name: Save PR number
         run: echo ${{ github.event.number }} > ./results/pr
