@@ -73,7 +73,7 @@ export interface SharedObjectVisualizers {
 /**
  * TODO
  */
-export class GraphBuilder {
+export class FluidDataVisualizer {
 	/**
 	 * TODO
 	 */
