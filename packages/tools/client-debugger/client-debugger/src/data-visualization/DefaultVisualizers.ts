@@ -30,7 +30,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		label,
 		children: [renderedData],
 		typeMetadata: "SharedCell",
-		nodeType: NodeKind.FluidTreeNode,
+		nodeKind: NodeKind.FluidTreeNode,
 	};
 };
 
@@ -47,7 +47,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 		label,
 		value: `${sharedCounter.value}`,
 		typeMetadata: "SharedCounter",
-		nodeType: NodeKind.FluidValueNode,
+		nodeKind: NodeKind.FluidValueNode,
 	};
 };
 
@@ -72,7 +72,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 		label,
 		children,
 		typeMetadata: "SharedMap",
-		nodeType: NodeKind.FluidTreeNode,
+		nodeKind: NodeKind.FluidTreeNode,
 	};
 };
 
@@ -91,7 +91,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 		label,
 		value: text,
 		typeMetadata: "SharedString",
-		nodeType: NodeKind.FluidValueNode,
+		nodeKind: NodeKind.FluidValueNode,
 	};
 };
 
@@ -107,7 +107,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 		label,
 		value: "Unrecognized Fluid data.",
 		typeMetadata: "Unknown",
-		nodeType: NodeKind.FluidValueNode,
+		nodeKind: NodeKind.FluidValueNode,
 	};
 };
 

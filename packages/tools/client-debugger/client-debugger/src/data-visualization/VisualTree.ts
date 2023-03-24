@@ -48,7 +48,7 @@ export interface VisualTreeNodeBase {
 	/**
 	 * {@inheritDoc NodeKind}
 	 */
-	nodeType: NodeKind;
+	nodeKind: NodeKind;
 }
 
 /**
@@ -63,7 +63,7 @@ export interface VisualParentNode extends VisualTreeNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
-	nodeType: NodeKind.ParentNode;
+	nodeKind: NodeKind.ParentNode;
 }
 
 /**
@@ -88,7 +88,7 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
-	nodeType: NodeKind.FluidTreeNode;
+	nodeKind: NodeKind.FluidTreeNode;
 }
 
 /**
@@ -105,7 +105,7 @@ export interface FluidObjectValueNode extends FluidObjectNode {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
-	nodeType: NodeKind.FluidValueNode;
+	nodeKind: NodeKind.FluidValueNode;
 }
 
 /**
@@ -122,7 +122,7 @@ export interface FluidHandleNode extends VisualTreeNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
-	nodeType: NodeKind.FluidHandleNode;
+	nodeKind: NodeKind.FluidHandleNode;
 }
 
 /**
@@ -137,7 +137,7 @@ export interface ValueNode extends VisualTreeNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeType}
 	 */
-	nodeType: NodeKind.ValueNode;
+	nodeKind: NodeKind.ValueNode;
 }
 
 /**
@@ -153,6 +153,6 @@ export function createHandleNode(id: FluidObjectId, label: string): FluidHandleN
 		label,
 		fluidObjectId: id,
 		typeMetadata: "Fluid Handle",
-		nodeType: NodeKind.FluidHandleNode,
+		nodeKind: NodeKind.FluidHandleNode,
 	};
 }

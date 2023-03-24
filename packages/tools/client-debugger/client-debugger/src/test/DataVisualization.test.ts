@@ -47,7 +47,7 @@ describe("Data Visualization unit tests", () => {
 			fluidObjectId: sharedCounter.id,
 			value: "0",
 			typeMetadata: "SharedCounter",
-			nodeType: NodeKind.FluidValueNode,
+			nodeKind: NodeKind.FluidValueNode,
 		};
 		expect(childTree).to.deep.equal(expectedChildTree);
 
@@ -61,7 +61,7 @@ describe("Data Visualization unit tests", () => {
 			fluidObjectId: sharedCounter.id,
 			value: "37",
 			typeMetadata: "SharedCounter",
-			nodeType: NodeKind.FluidValueNode,
+			nodeKind: NodeKind.FluidValueNode,
 		};
 		expect(childTreeAfterEdit).to.deep.equal(expectedChildTreeAfterEdit);
 	});
@@ -91,7 +91,7 @@ describe("Data Visualization unit tests", () => {
 			fluidObjectId: sharedMap.id,
 			children: [],
 			typeMetadata: "SharedMap",
-			nodeType: NodeKind.FluidTreeNode,
+			nodeKind: NodeKind.FluidTreeNode,
 		};
 		expect(childTree).to.deep.equal(expectedChildTree);
 
@@ -118,7 +118,7 @@ describe("Data Visualization unit tests", () => {
 					label: "test-string",
 					value: "Hello world",
 					typeMetadata: "string",
-					nodeType: NodeKind.ValueNode,
+					nodeKind: NodeKind.ValueNode,
 				},
 				{
 					label: "test-object",
@@ -127,33 +127,33 @@ describe("Data Visualization unit tests", () => {
 							label: "a",
 							value: "1",
 							typeMetadata: "number",
-							nodeType: NodeKind.ValueNode,
+							nodeKind: NodeKind.ValueNode,
 						},
 						{
 							label: "b",
 							value: "2",
 							typeMetadata: "string",
-							nodeType: NodeKind.ValueNode,
+							nodeKind: NodeKind.ValueNode,
 						},
 						{
 							label: "c",
 							value: "true",
 							typeMetadata: "boolean",
-							nodeType: NodeKind.ValueNode,
+							nodeKind: NodeKind.ValueNode,
 						},
 					],
 					typeMetadata: "object",
-					nodeType: NodeKind.ParentNode,
+					nodeKind: NodeKind.ParentNode,
 				},
 				{
 					label: "test-handle",
 					fluidObjectId: sharedCounter.id,
 					typeMetadata: "Fluid Handle",
-					nodeType: NodeKind.FluidHandleNode,
+					nodeKind: NodeKind.FluidHandleNode,
 				},
 			],
 			typeMetadata: "SharedMap",
-			nodeType: NodeKind.FluidTreeNode,
+			nodeKind: NodeKind.FluidTreeNode,
 		};
 		expect(childTreeAfterEdit).to.deep.equal(expectedChildTreeAfterEdit);
 	});
@@ -193,7 +193,7 @@ describe("Data Visualization unit tests", () => {
 			fluidObjectId: sharedCounter.id,
 			value: "42",
 			typeMetadata: "SharedCounter",
-			nodeType: NodeKind.FluidValueNode,
+			nodeKind: NodeKind.FluidValueNode,
 		};
 		expect(childCounterTree).to.deep.equal(expectedChildCounterTree);
 
@@ -206,11 +206,11 @@ describe("Data Visualization unit tests", () => {
 					label: "data",
 					value: "Hello world",
 					typeMetadata: "string",
-					nodeType: NodeKind.ValueNode,
+					nodeKind: NodeKind.ValueNode,
 				},
 			],
 			typeMetadata: "SharedCell",
-			nodeType: NodeKind.FluidTreeNode,
+			nodeKind: NodeKind.FluidTreeNode,
 		};
 		expect(childCellTree).to.deep.equal(expectedChildCellTree);
 	});

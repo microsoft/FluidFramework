@@ -278,7 +278,7 @@ export class SharedObjectVisualizerNode
 				label,
 				value: `${data}`,
 				typeMetadata: typeof data,
-				nodeType: NodeKind.ValueNode,
+				nodeKind: NodeKind.ValueNode,
 			};
 			return result;
 		} else if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
@@ -299,7 +299,7 @@ export class SharedObjectVisualizerNode
 			const result: VisualParentNode = {
 				label,
 				children: renderedChildren,
-				nodeType: NodeKind.ParentNode,
+				nodeKind: NodeKind.ParentNode,
 				typeMetadata: "object",
 			};
 			return result;
