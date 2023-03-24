@@ -18,7 +18,6 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { useMessageRelay } from "../MessageRelayContext";
-import { defaultRenderOptions } from "../RendererOptions";
 import { combineMembersWithMultipleConnections } from "../Audience";
 import { AudienceMemberViewProps } from "./client-data-views";
 import { Waiting } from "./Waiting";
@@ -29,7 +28,6 @@ const loggingContext = "EXTENSION(AudienceView)";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
-// - History of audience changes
 
 /**
  * {@link AudienceView} input props.
@@ -42,10 +40,10 @@ export interface AudienceViewProps extends HasContainerId {
 }
 
 /**
- * Displays information about the provided {@link @fluidframework/fluid-static#IServiceAudience | audience}.
+ * Displays information about a container's audience.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-	const { containerId } = props;
+	const { containerId, onRenderAudienceMember } = props;
 
 	const messageRelay = useMessageRelay();
 
@@ -54,14 +52,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	>();
 
 	React.useEffect(() => {
-		// POST Request for Audience Data
-		const getAudienceMessage: IDebuggerMessage = {
-			type: "GET_AUDIENCE",
-			data: {
-				containerId,
-			},
-		};
-
 		/**
 		 * Handlers for inbound messages related to Audience
 		 */
@@ -86,8 +76,13 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 		messageRelay.on("message", messageHandler);
 
-		// Request the current Audience State of the Container using "AUDIENCE_EVENT" Message
-		messageRelay.postMessage(getAudienceMessage);
+		// Request the current Audience State of the Container
+		messageRelay.postMessage({
+			type: "GET_AUDIENCE",
+			data: {
+				containerId,
+			},
+		});
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -98,56 +93,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		return <Waiting label="Waiting for Audience data." />;
 	}
 
-	return (
-		<_AudienceView
-			clientId={audienceData.clientId}
-			audienceClientMetaData={audienceData.audienceState}
-			onRenderAudienceMember={defaultRenderOptions.onRenderAudienceMember}
-			audienceHistory={audienceData.audienceHistory}
-		/>
-	);
-}
-
-/**
- * {@link _AudienceView} input props.
- *
- * @privateRemarks TODO: Remove onRenderAudienceMember
- */
-export interface _AudienceViewProps {
-	/*
-	 * Local users's clientId.
-	 */
-	clientId: string | undefined;
-
-	/**
-	 * Metadata of audiences containing clientId and IClient.
-	 */
-	audienceClientMetaData: AudienceClientMetaData[];
-
-	/**
-	 * Callback to render data about an individual audience member.
-	 */
-	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
-
-	/**
-	 * History of audience connected or disconnected to the container.
-	 */
-	audienceHistory: readonly AudienceChangeLogEntry[];
-}
-
-/**
- * Audience View displaying current audience members and audience history
- *
- * @remarks Operates strictly on raw data, so it can be potentially re-used in contexts that don't have
- * direct access to the Client Debugger.
- *
- * @internal
- */
-export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
-	const { clientId, audienceClientMetaData, onRenderAudienceMember, audienceHistory } = props;
-
-	const myClientConnection = audienceClientMetaData.find(
-		(audience) => audience.clientId === clientId,
+	const myClientMetadata = audienceData.audienceState.find(
+		(audience) => audience.clientId === audienceData.clientId,
 	)?.client;
 
 	return (
@@ -159,21 +106,17 @@ export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
 			}}
 		>
 			<StackItem>
-				<div className="audience-view-members-list">
-					<h3>Audience members ({audienceClientMetaData.length})</h3>
-				</div>
+				<h3>Audience members: ({audienceData.audienceState.length})</h3>
 				<MembersView
-					audience={audienceClientMetaData}
-					myClientId={clientId}
-					myClientConnection={myClientConnection}
+					audience={audienceData.audienceState}
+					myClientId={audienceData.clientId}
+					myClientConnection={myClientMetadata}
 					onRenderAudienceMember={onRenderAudienceMember}
 				/>
 			</StackItem>
 			<StackItem>
-				<div className="history-list">
-					<h3>History</h3>
-				</div>
-				<HistoryView history={audienceHistory} />
+				<h3>History</h3>
+				<HistoryView history={audienceData.audienceHistory} />
 			</StackItem>
 		</Stack>
 	);
