@@ -112,7 +112,7 @@ There are a few different ways that the `Container` will get this `"code"` value
 
 1. In the *Create New* flow this `"code"` value needs to be proposed by the Hosting Application.
    Once the value is accepted by everyone connected (in this case only you, the current client) the `Container` will
-   get the event and have the value.
+   get an event containing the agreed-upon value.
 1. In the *Create from Existing* flow there are two scenarios.
     1. In the *load from Summary flow* the `"code"` value is written into the Summary itself.
     1. In the *load from op stream* flow (no Summary) the `"code"` value will be played as an op.
