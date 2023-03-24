@@ -6,7 +6,7 @@
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { VisualizeChildData, VisualizeSharedObject } from "./DataSummary";
+import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
 import { NodeKind, VisualTreeNode } from "./VisualTree";
 
