@@ -6,16 +6,13 @@
 import { IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter";
-import { SharedMap } from "@fluidframework/map";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 
 import {
 	FluidHandleNode,
 	FluidObjectId,
 	FluidObjectNode,
-	FluidObjectTreeNode,
-	FluidObjectValueNode,
 	NodeKind,
 	ValueNode,
 	VisualParentNode,
@@ -43,6 +40,20 @@ import {
 export type SharedObjectType = string;
 
 /**
+ * TODO
+ */
+export type VisualizeSharedObject = (
+	sharedObject: ISharedObject,
+	label: string,
+	visualizeChildData: VisualizeChildData,
+) => Promise<FluidObjectNode>;
+
+/**
+ * TODO
+ */
+export type VisualizeChildData = (data: unknown, label: string) => Promise<VisualTreeNode>;
+
+/**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
  *
  * @remarks
@@ -54,12 +65,9 @@ export type SharedObjectType = string;
  */
 export interface SharedObjectVisualizers {
 	/**
-	 * Individual render policies, keyed by {@link SharedObjectType}.
+	 * Individual Fluid object visualizers, keyed by {@link SharedObjectType}.
 	 */
-	[k: SharedObjectType]: (
-		sharedObject: ISharedObject,
-		label: string,
-	) => SharedObjectVisualizerNode;
+	[k: SharedObjectType]: VisualizeSharedObject;
 }
 
 /**
@@ -101,13 +109,24 @@ export class GraphBuilder {
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			const visualizer =
 				this.visualizerSchema[sharedObject.attributes.type] !== undefined
-					? this.visualizerSchema[sharedObject.attributes.type](sharedObject, label)
-					: new UnknownDataTypeVisualizer(sharedObject, label);
-			this.visualizerNodes.set(sharedObject.id, visualizer);
+					? this.visualizerSchema[sharedObject.attributes.type]
+					: visualizeUnknownSharedObject;
+			this.visualizerNodes.set(
+				sharedObject.id,
+				new SharedObjectVisualizerNode(
+					sharedObject,
+					label,
+					visualizer,
+					async (_handle, _label) => this.createVisualizerForHandle(_handle, _label),
+				),
+			);
 		}
 	}
 
-	private async createVisualizerForHandle(handle: IFluidHandle, label: string): Promise<void> {
+	private async createVisualizerForHandle(
+		handle: IFluidHandle,
+		label: string,
+	): Promise<FluidObjectId> {
 		const resolvedObject = await handle.get();
 
 		// TODO: is this the right type check for this?
@@ -115,12 +134,10 @@ export class GraphBuilder {
 		if (sharedObject?.id !== undefined) {
 			this.registerHandle(sharedObject.id, handle);
 			this.createVisualizerForSharedObject(sharedObject, label);
+			return sharedObject.id;
 		} else {
 			// Unknown data.
-			console.warn(
-				`Encountered unrecognized kind of Fluid data under "${label}":`,
-				sharedObject,
-			);
+			throw new Error(`Encountered unrecognized kind of Fluid data under "${label}"`);
 		}
 	}
 }
@@ -138,9 +155,12 @@ export interface SharedObjectListenerEvents extends IEvent {
 /**
  * TODO
  */
-export abstract class SharedObjectVisualizerNode<
-	TFluidObject extends ISharedObject = ISharedObject,
-> extends TypedEventEmitter<SharedObjectListenerEvents> {
+export class SharedObjectVisualizerNode extends TypedEventEmitter<SharedObjectListenerEvents> {
+	/**
+	 * TODO
+	 */
+	public readonly sharedObject: ISharedObject;
+
 	/**
 	 * Label corresponding to the shared object.
 	 *
@@ -151,27 +171,35 @@ export abstract class SharedObjectVisualizerNode<
 	/**
 	 * TODO
 	 */
-	protected readonly sharedObject: TFluidObject;
+	private readonly visualizeSharedObject: VisualizeSharedObject;
 
+	/**
+	 * TODO
+	 */
 	private readonly registerHandle: (
 		handle: IFluidHandle,
 		label: string,
 	) => Promise<FluidObjectId>;
 
+	/**
+	 * TODO
+	 */
 	private readonly onOpHandler = (): boolean => {
 		this.emitVisualUpdate();
 		return true;
 	};
 
-	protected constructor(
-		sharedObject: TFluidObject,
+	public constructor(
+		sharedObject: ISharedObject,
 		label: string,
+		visualizeSharedObject: VisualizeSharedObject,
 		registerHandle: (handle: IFluidHandle, label: string) => Promise<FluidObjectId>,
 	) {
 		super();
 
 		this.sharedObject = sharedObject;
 		this.label = label;
+		this.visualizeSharedObject = visualizeSharedObject;
 		this.registerHandle = registerHandle;
 
 		this.sharedObject.on("op", this.onOpHandler);
@@ -185,7 +213,11 @@ export abstract class SharedObjectVisualizerNode<
 	/**
 	 * TODO
 	 */
-	public abstract render(): Promise<FluidObjectNode>;
+	public async render(): Promise<FluidObjectNode> {
+		return this.visualizeSharedObject(this.sharedObject, this.label, async (_data, _label) =>
+			this.renderData(_data, _label),
+		);
+	}
 
 	private async renderData(data: unknown, label: string): Promise<VisualTreeNode> {
 		if (typeof data !== "object") {
@@ -213,8 +245,8 @@ export abstract class SharedObjectVisualizerNode<
 			// and simply recurse over its keys.
 			const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
 
-			// eslint-disable-next-line @typescript-eslint/promise-function-async
 			const renderedChildren = await Promise.all(
+				// eslint-disable-next-line @typescript-eslint/promise-function-async
 				childEntries.map(([key, value]) => this.renderData(value, key)),
 			);
 
@@ -225,62 +257,5 @@ export abstract class SharedObjectVisualizerNode<
 			};
 			return result;
 		}
-	}
-}
-
-/**
- * {@link SharedObjectVisualizerNode} for {@link @fluidframework/counter#SharedCounter}s.
- */
-export class SharedCounterVisualizer extends SharedObjectVisualizerNode<SharedCounter> {
-	public constructor(sharedCounter: SharedCounter, label: string) {
-		super(sharedCounter, label);
-	}
-
-	public render(): FluidObjectValueNode {
-		return {
-			fluidObjectId: this.sharedObject.id,
-			label: this.label,
-			value: `${this.sharedObject.value}`,
-			typeMetadata: "SharedCounter",
-			nodeType: NodeKind.FluidValueNode,
-		};
-	}
-}
-
-/**
- * TODO
- */
-export class SharedMapVisualizer extends SharedObjectVisualizerNode<SharedMap> {
-	public constructor(sharedMap: SharedMap, label: string) {
-		super(sharedMap, label);
-	}
-
-	public render(): FluidObjectTreeNode {
-		// TODO: render children
-		const children = [];
-
-		return {
-			fluidObjectId: this.sharedObject.id,
-			label: this.label,
-			children,
-			typeMetadata: "SharedMap",
-			nodeType: NodeKind.FluidTreeNode,
-		};
-	}
-}
-
-class UnknownDataTypeVisualizer extends SharedObjectVisualizerNode {
-	public constructor(sharedObject: ISharedObject, label: string) {
-		super(sharedObject, label);
-	}
-
-	public render(): FluidObjectValueNode {
-		return {
-			fluidObjectId: this.sharedObject.id,
-			label: this.label,
-			value: "Unrecognized Fluid data.",
-			typeMetadata: "Unknown",
-			nodeType: NodeKind.FluidValueNode,
-		};
 	}
 }
