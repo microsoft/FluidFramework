@@ -190,9 +190,9 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 
 		dataStore1._root.set("color", "purple");
 		dataStore2._root.set("color", "pink");
-		
+
 		await provider.ensureSynchronized();
-		
+
 		assert.equal(dataStore1._root.get("color"), "purple", "datastore1 value incorrect");
 		assert.equal(
 			testDataStore._root.get("color"),
@@ -245,8 +245,8 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
 		// load the containers paused
-		const headers: IRequestHeader = { 
-			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },  
+		const headers: IRequestHeader = {
+			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
 			[LoaderHeader.cache]: true,
 		};
 		const container1 = await loader.resolve({ url, headers });

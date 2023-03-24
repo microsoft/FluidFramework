@@ -743,7 +743,10 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Create a new request url from the resolvedUrl of the first container.
 		assert(container.resolvedUrl);
 		const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
-		const container2 = await loader.resolve({ url: requestUrl2, headers: {"fluid-cache": true} });
+		const container2 = await loader.resolve({
+			url: requestUrl2,
+			headers: { "fluid-cache": true },
+		});
 		assert.strictEqual(container, container2, "Both containers should be same");
 	});
 });
