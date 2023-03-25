@@ -19,6 +19,7 @@ resources:
       - main
       - next
       - lts
+      - test/frs-tests
 
 variables:
 - group: prague-key-vault
