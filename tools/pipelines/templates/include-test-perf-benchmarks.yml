@@ -59,7 +59,7 @@ jobs:
 
           Pipeline Variables:
             isTestBranch=${{ variables.isTestBranch}}
-            toolAbsolutePath=${{ variables.toolAbsolutePath }}
+            toolAbsolutePath=$(toolAbsolutePath)
             artifactPipeline=${{ variables.artifactPipeline }}
             artifactBuildId=${{ variables.artifactBuildId }}
             feed=${{ variables.feed }}

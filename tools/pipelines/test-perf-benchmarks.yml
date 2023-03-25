@@ -49,10 +49,10 @@ variables:
     value: $(Pipeline.Workspace)/test
     readonly: true
   - name: artifactPipeline
-    value: $(resources.pipeline.client.pipelineName)
+    value: ${{ resources.pipeline.client.pipelineName }}
     readonly: true
   - name: artifactBuildId
-    value: $(resources.pipeline.client.runID)
+    value: ${{ resources.pipeline.client.runID }}
     readonly: true
   - name: toolAbsolutePath
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
