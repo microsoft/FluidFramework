@@ -65,21 +65,22 @@ export type DisconnectContainerMessageData = HasContainerId;
 export type CloseContainerMessageData = HasContainerId;
 
 /**
- * Message data format used by {@link GetRootDataMessage}.
+ * Message data format used by {@link GetRootDataVisualizationsMessage}.
  *
  * @public
  */
-export type GetRootDataMessageData = HasContainerId;
+export type GetRootDataVisualizationsMessageData = HasContainerId;
 
 /**
- * Message data format used by {@link GetFluidDataMessage}.
+ * Message data format used by {@link GetDataVisualizationMessage}.
  *
  * @public
  */
-export type GetFluidDataMessageData = HasContainerId & HasFluidObjectId;
+export type GetDataVisualizationMessageData = HasContainerId & HasFluidObjectId;
 
 /**
- * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
+ * Inbound message requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
+ *
  * Will result in the {@link ContainerStateChangeMessage} message being posted.
  *
  * @public
@@ -89,23 +90,28 @@ export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerI
 }
 
 /**
- * Inbound event requesting the root DDS data tracked by the debugger associated with the specified Container ID.
- * Will result in the {@link RootDataMessage} message being posted.
+ * Inbound message requesting visualizations for the root DDS data tracked by the
+ * debugger associated with the specified Container ID.
+ *
+ * Will result in the {@link RootDataVisualizationsMessage} message being posted.
  *
  * @public
  */
-export interface GetRootDataMessage extends IDebuggerMessage<GetRootDataMessageData> {
-	type: "GET_ROOT_DATA";
+export interface GetRootDataVisualizationsMessage
+	extends IDebuggerMessage<GetRootDataVisualizationsMessageData> {
+	type: "GET_ROOT_DATA_VISUALIZATIONS";
 }
 
 /**
- * Inbound event requesting the root DDS data tracked by the debugger associated with the specified Container ID.
- * Will result in the {@link RootDataMessage} message being posted.
+ * Inbound message requesting a visualization for a specific DDS via its associated {@link HasFluidObjectId.fluidObjectId}.
+ *
+ * Will result in the {@link DataVisualizationMessage} message being posted.
  *
  * @public
  */
-export interface GetFluidDataMessage extends IDebuggerMessage<GetFluidDataMessageData> {
-	type: "GET_FLUID_DATA";
+export interface GetDataVisualizationMessage
+	extends IDebuggerMessage<GetDataVisualizationMessageData> {
+	type: "GET_DATA_VISUALIZATION";
 }
 
 // #endregion
@@ -139,34 +145,36 @@ export interface ContainerStateHistoryMessageData extends HasContainerId {
 }
 
 /**
- * Message data format used by {@link RootDataMessage}.
+ * Message data format used by {@link RootDataVisualizationsMessage}.
  *
  * @public
  */
-export interface RootDataMessageData extends HasContainerId {
+export interface RootDataVisualizationsMessageData extends HasContainerId {
 	/**
 	 * List of root Fluid objects.
+	 *
+	 * @remarks Will be `undefined` iff the debugger has no data registered for visualization.
 	 */
-	handles: FluidHandleNode[];
+	visualizations: FluidHandleNode[] | undefined;
 }
 
 /**
- * Message data format used by {@link FluidDataMessage}.
+ * Message data format used by {@link DataVisualizationMessage}.
  *
  * @public
  */
-export interface FluidDataMessageData extends HasContainerId, HasFluidObjectId {
+export interface DataVisualizationMessageData extends HasContainerId, HasFluidObjectId {
 	/**
 	 * A visual description tree for a particular DDS.
 	 *
 	 * Will be undefined only if the debugger has no data associated with the provided
 	 * {@link HasFluidObjectId.fluidObjectId | ID}.
 	 */
-	visualTree: FluidObjectNode | undefined;
+	visualization: FluidObjectNode | undefined;
 }
 
 /**
- * Outbound event indicating a state change within a Container.
+ * Outbound message indicating a state change within a Container.
  *
  * @public
  */
@@ -176,7 +184,7 @@ export interface ContainerStateChangeMessage
 }
 
 /**
- * Inbound event indicating Container connected.
+ * Inbound message indicating Container connected.
  *
  * @public
  */
@@ -185,7 +193,7 @@ export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContain
 }
 
 /**
- * Inbound event indicating Container disconnected.
+ * Inbound message indicating Container disconnected.
  *
  * @public
  */
@@ -195,7 +203,7 @@ export interface DisconnectContainerMessage
 }
 
 /**
- * Inbound event indicating Container closed.
+ * Inbound message indicating Container closed.
  *
  * @public
  */
@@ -204,7 +212,7 @@ export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMe
 }
 
 /**
- * Outbound event containing the associated Container's state history.
+ * Outbound message containing the associated Container's state history.
  *
  * @public
  */
@@ -214,21 +222,23 @@ export interface ContainerStateHistoryMessage
 }
 
 /**
- * Outbound event indicating Container state history.
+ * Outbound message containing the visual descriptions of the root DDSs associated
+ * with the debugger.
  *
  * @public
  */
-export interface RootDataMessage extends IDebuggerMessage<RootDataMessageData> {
-	type: "ROOT_DATA";
+export interface RootDataVisualizationsMessage
+	extends IDebuggerMessage<RootDataVisualizationsMessageData> {
+	type: "ROOT_DATA_VISUALIZATIONS";
 }
 
 /**
- * Outbound event indicating Container state history.
+ * Outbound message containing a visual description of the DDS associated with {@link HasFluidObjectId.fluidObjectId}.
  *
  * @public
  */
-export interface FluidDataMessage extends IDebuggerMessage<FluidDataMessageData> {
-	type: "FLUID_DATA_VISUALIZATION";
+export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
+	type: "DATA_VISUALIZATION";
 }
 
 // #endregion

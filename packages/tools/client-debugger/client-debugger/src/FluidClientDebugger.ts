@@ -9,6 +9,13 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
+import {
+	defaultVisualizers,
+	FluidDataVisualizer,
+	FluidHandleNode,
+	FluidObjectId,
+	FluidObjectNode,
+} from "./data-visualization";
 
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
@@ -26,6 +33,8 @@ import {
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	GetDataVisualizationMessage,
+	GetRootDataVisualizationsMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -39,17 +48,37 @@ import { FluidClientDebuggerProps } from "./Registry";
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast {@link ContainerStateChangeMessage}.
- * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to the container.
- * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect from the container.
+ * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast
+ * {@link ContainerStateChangeMessage}.
+ *
+ * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to
+ * the container.
+ *
+ * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect
+ * from the container.
+ *
  * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
+ *
  * - {@link GetAudienceMessage}: When received (if the container ID matches), the debugger will broadcast {@link AudienceSummaryMessage}.
+ *
+ * - {@link GetRootDataVisualizationsMessage}: When received (if the container ID matches), the debugger will
+ * broadcast {@link RootDataVisualizationsMessage}.
+ *
+ * - {@link GetDataVisualizationMessage}: When received (if the container ID matches), the debugger will
+ * broadcast {@link DataVisualizationMessage}.
+ *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
  * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
  * or when requested (via {@link GetContainerStateMessage}).
+ *
+ * - {@link RootDataVisualizationsMessage}: Posted when requested via {@link GetRootDataVisualizationsMessage}.
+ *
+ * - {@link DataVisualizationMessage}: Posted when requested via {@link GetDataVisualizationMessage}, or when
+ * a change has occurred on the associated DDS, reachable from the visualization graph.
+ *
  * TODO: Document others as they are added.
  *
  * @sealed
@@ -79,7 +108,7 @@ export class FluidClientDebugger
 	/**
 	 * {@inheritDoc IFluidClientDebugger.containerData}
 	 */
-	public readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+	public readonly containerData?: Record<string, IFluidLoadable>;
 
 	/**
 	 * {@inheritDoc IFluidClientDebugger.containerNickname}
@@ -99,6 +128,13 @@ export class FluidClientDebugger
 	private readonly _audienceChangeLog: AudienceChangeLogEntry[];
 
 	// #endregion
+
+	/**
+	 * Manages state visualization for {@link FluidClientDebugger.containerData}, if any was provided.
+	 *
+	 * @remarks Will only be `undefined` if `containerData` was not provided.
+	 */
+	private readonly dataVisualizer: FluidDataVisualizer | undefined;
 
 	// #region Container-related event handlers
 
@@ -223,6 +259,26 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
+		["GET_ROOT_DATA_VISUALIZATIONS"]: (untypedMessage) => {
+			const message = untypedMessage as GetRootDataVisualizationsMessage;
+			if (message.data.containerId === this.containerId) {
+				this.getRootDataVisualizations().then((visualizations) => {
+					this.postRootDataVisualizations(visualizations);
+				}, console.error);
+				return true;
+			}
+			return false;
+		},
+		["GET_DATA_VISUALIZATION"]: (untypedMessage) => {
+			const message = untypedMessage as GetDataVisualizationMessage;
+			if (message.data.containerId === this.containerId) {
+				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
+					this.postDataVisualization(visualization);
+				}, console.error);
+				return true;
+			}
+			return false;
+		},
 	};
 
 	/**
@@ -283,6 +339,28 @@ export class FluidClientDebugger
 		});
 	};
 
+	private readonly postRootDataVisualizations = (
+		visualizations: FluidHandleNode[] | undefined,
+	): void => {
+		postMessagesToWindow(this.messageLoggingOptions, {
+			source: debuggerMessageSource,
+			type: "ROOT_DATA_VISUALIZATION",
+			data: {
+				visualizations,
+			},
+		});
+	};
+
+	private readonly postDataVisualization = (visualization: FluidObjectNode | undefined): void => {
+		postMessagesToWindow(this.messageLoggingOptions, {
+			source: debuggerMessageSource,
+			type: "DATA_VISUALIZATION",
+			data: {
+				visualization,
+			},
+		});
+	};
+
 	// #endregion
 
 	private readonly debuggerDisposedHandler = (): boolean => this.emit("disposed");
@@ -314,6 +392,12 @@ export class FluidClientDebugger
 		// TODO: would it be useful to log the states (and timestamps) at time of debugger initialize?
 		this._connectionStateLog = [];
 		this._audienceChangeLog = [];
+
+		// TODO: accept custom visualizers.
+		this.dataVisualizer =
+			props.containerData === undefined
+				? undefined
+				: new FluidDataVisualizer(props.containerData, defaultVisualizers);
 
 		// Bind Container events required for change-logging
 		this.container.on("attached", this.containerAttachedHandler);
@@ -393,5 +477,15 @@ export class FluidClientDebugger
 			audienceId:
 				clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
+	}
+
+	private async getRootDataVisualizations(): Promise<FluidHandleNode[] | undefined> {
+		return this.dataVisualizer?.renderRootHandles() ?? undefined;
+	}
+
+	private async getDataVisualization(
+		fluidObjectId: FluidObjectId,
+	): Promise<FluidObjectNode | undefined> {
+		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
 	}
 }

@@ -128,6 +128,17 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 }
 
 // @public
+export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
+    // (undocumented)
+    type: "DATA_VISUALIZATION";
+}
+
+// @public
+export interface DataVisualizationMessageData extends HasContainerId, HasFluidObjectId {
+    visualization: FluidObjectNode | undefined;
+}
+
+// @public
 export const debuggerMessageSource: string;
 
 // @internal
@@ -158,20 +169,9 @@ export type DisconnectContainerMessageData = HasContainerId;
 // @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
-    containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+    containerData?: Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
-}
-
-// @public
-export interface FluidDataMessage extends IDebuggerMessage<FluidDataMessageData> {
-    // (undocumented)
-    type: "FLUID_DATA_VISUALIZATION";
-}
-
-// @public
-export interface FluidDataMessageData extends HasContainerId, HasFluidObjectId {
-    visualTree: FluidObjectNode | undefined;
 }
 
 // @internal @sealed
@@ -222,6 +222,15 @@ export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerI
 // @public
 export type GetContainerStateMessageData = HasContainerId;
 
+// @public
+export interface GetDataVisualizationMessage extends IDebuggerMessage<GetDataVisualizationMessageData> {
+    // (undocumented)
+    type: "GET_DATA_VISUALIZATION";
+}
+
+// @public
+export type GetDataVisualizationMessageData = HasContainerId & HasFluidObjectId;
+
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
 
@@ -232,22 +241,13 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
 // @public
-export interface GetFluidDataMessage extends IDebuggerMessage<GetFluidDataMessageData> {
+export interface GetRootDataVisualizationsMessage extends IDebuggerMessage<GetRootDataVisualizationsMessageData> {
     // (undocumented)
-    type: "GET_FLUID_DATA";
+    type: "GET_ROOT_DATA_VISUALIZATIONS";
 }
 
 // @public
-export type GetFluidDataMessageData = HasContainerId & HasFluidObjectId;
-
-// @public
-export interface GetRootDataMessage extends IDebuggerMessage<GetRootDataMessageData> {
-    // (undocumented)
-    type: "GET_ROOT_DATA";
-}
-
-// @public
-export type GetRootDataMessageData = HasContainerId;
+export type GetRootDataVisualizationsMessageData = HasContainerId;
 
 // @internal
 export function handleIncomingMessage(message: Partial<IDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
@@ -345,14 +345,14 @@ export interface RegistryChangeMessageData {
 }
 
 // @public
-export interface RootDataMessage extends IDebuggerMessage<RootDataMessageData> {
+export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootDataVisualizationsMessageData> {
     // (undocumented)
-    type: "ROOT_DATA";
+    type: "ROOT_DATA_VISUALIZATIONS";
 }
 
 // @public
-export interface RootDataMessageData extends HasContainerId {
-    handles: FluidHandleNode[];
+export interface RootDataVisualizationsMessageData extends HasContainerId {
+    visualizations: FluidHandleNode[] | undefined;
 }
 
 // @internal
