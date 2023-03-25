@@ -89,6 +89,7 @@ export class FluidDataVisualizer {
 	private readonly visualizerNodes: Map<FluidObjectId, SharedObjectVisualizerNode>;
 	private readonly handles: Map<FluidObjectId, IFluidHandle>;
 
+	// TODO: take in a callback for emitting automatic updates, and wire that up to the individual visualizer nodes.
 	public constructor(
 		rootData: Record<string, IFluidLoadable>,
 		visualizerMap: SharedObjectVisualizers,
