@@ -96,7 +96,6 @@ export class FluidDataVisualizer {
 		this.rootData = rootData;
 		this.visualizerSchema = visualizerMap;
 
-		// TODO: populate with `rootData`, and remove that property (store list of IDs instead?)
 		this.visualizerNodes = new Map<FluidObjectId, SharedObjectVisualizerNode>();
 		this.handles = new Map<FluidObjectId, IFluidHandle>();
 	}
