@@ -52,21 +52,21 @@ jobs:
       inputs:
         targetType: 'inline'
         # Some of the variables
-        # Variables declared outside this template will only work with "macro syntax": $().
-        # Variables declared inside this template would work with "template expression syntax": ${{}}, but we use
-        # macro syntax for all variables for consistency.
+        # Variables declared outside this template will only work with "macro syntax": $(name).
+        # Variables declared inside this template would work with "template expression syntax": ${{ variables.name }},
+        # but we use macro syntax for all variables for consistency.
         script: |
           echo "
           Pipeline Parameters:
             poolBuild=${{ parameters.poolBuild }}
 
           Pipeline Variables:
-            isTestBranch=$(variables.isTestBranch)
+            isTestBranch=$(isTestBranch)
             toolAbsolutePath=$(toolAbsolutePath)
-            artifactPipeline=$(variables.artifactPipeline)
-            artifactBuildId=$(variables.artifactBuildId)
-            feed=$(variables.feed)
-            devFeed=$(variables.devFeed)
+            artifactPipeline=$(artifactPipeline)
+            artifactBuildId=$(artifactBuildId)
+            feed=$(feed)
+            devFeed=$(devFeed)
             testWorkspace=${{ parameters.testWorkspace }}
             loggerPackage=${{ parameters.loggerPackage }}
 
@@ -94,10 +94,10 @@ jobs:
           echo "registry=https://registry.npmjs.org" >> ./.npmrc
           echo "always-auth=false" >> ./.npmrc
 
-          echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ variables.feed }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+          echo "@fluidframework:registry=$(feed)" >> ./.npmrc
+          echo "@fluid-experimental:registry=$(feed)" >> ./.npmrc
+          echo "@fluid-tools:registry=$(feed)" >> ./.npmrc
+          echo "@fluid-internal:registry=$(devFeed)" >> ./.npmrc
           echo "@ff-internal:registry=https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/" >> ./.npmrc
           echo "@microsoft:registry=https://office.pkgs.visualstudio.com/_packaging/Office/npm/registry/" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc

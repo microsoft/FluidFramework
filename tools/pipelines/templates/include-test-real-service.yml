@@ -139,6 +139,8 @@ jobs:
               sudo update-ca-certificates
 
       # Print parameters/Vars
+      # Variables declared outside this template will only work with "macro syntax": $(name).
+      # Variables declared inside this template also work with "template expression syntax": ${{ variables.name }}.
       - task: Bash@3
         displayName: Print Parameters and Variables
         inputs:
