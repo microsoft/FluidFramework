@@ -39,17 +39,14 @@ import {
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
+	IGCMetadata,
 	defaultSessionExpiryDurationMs,
 	oneDayMs,
 	GCVersion,
 	stableGCVersion,
 	disableSweepLogKey,
 } from "../../gc";
-import {
-	dataStoreAttributesBlobName,
-	IContainerRuntimeMetadata,
-	RefreshSummaryResult,
-} from "../../summary";
+import { dataStoreAttributesBlobName, RefreshSummaryResult } from "../../summary";
 import { pkgVersion } from "../../packageVersion";
 
 export const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
@@ -102,6 +99,7 @@ describe("Garbage Collection Tests", () => {
 			string,
 			IGarbageCollectionState | IGarbageCollectionDetailsBase | string[]
 		> = new Map(),
+		gcMetadata: IGCMetadata = {},
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
 		isSummarizerClient: boolean = true,
 	) {
@@ -130,6 +128,19 @@ describe("Garbage Collection Tests", () => {
 			gcTombstoneEnforcementAllowed: true,
 		};
 
+		let metadata = createParams.metadata;
+		const existing = createParams.baseSnapshot !== undefined;
+		// For existing, add container runtime metadata which is required for GC to be enabled.
+		if (existing) {
+			metadata = {
+				...metadata,
+				...gcMetadata,
+				summaryFormatVersion: 1,
+				gcFeature: stableGCVersion,
+				message: undefined,
+			};
+		}
+
 		return GarbageCollector.create({
 			...createParams,
 			runtime: gcRuntime,
@@ -137,7 +148,7 @@ describe("Garbage Collection Tests", () => {
 			baseSnapshot: createParams.baseSnapshot,
 			baseLogger: mc.logger,
 			existing: createParams.baseSnapshot !== undefined /* existing */,
-			metadata: createParams.metadata,
+			metadata,
 			createContainerMetadata: {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
@@ -185,9 +196,14 @@ describe("Garbage Collection Tests", () => {
 			return closeCalled;
 		}
 
-		gc = createGarbageCollector({}, undefined /* gcBlobsMap */, () => {
-			closeCalled = true;
-		}) as GcWithPrivates;
+		gc = createGarbageCollector(
+			{},
+			undefined /* gcBlobsMap */,
+			undefined /* gcMetadata */,
+			() => {
+				closeCalled = true;
+			},
+		) as GcWithPrivates;
 		assert(
 			closeCalledAfterExactTicks(defaultSessionExpiryDurationMs),
 			"Close should have been called at exactly defaultSessionExpiryDurationMs",
@@ -243,16 +259,8 @@ describe("Garbage Collection Tests", () => {
 				baseSnapshot?: ISnapshotTree,
 				gcBlobsMap?: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase>,
 			) => {
-				let metadata: IContainerRuntimeMetadata | undefined;
-				if (baseSnapshot !== undefined) {
-					metadata = {
-						gcFeature: stableGCVersion,
-						sweepTimeoutMs: mode === "sweep" ? timeout : undefined,
-						summaryFormatVersion: 1,
-						message: undefined,
-					};
-				}
-				return createGarbageCollector({ baseSnapshot, metadata }, gcBlobsMap);
+				const sweepTimeoutMs = mode === "sweep" ? timeout : undefined;
+				return createGarbageCollector({ baseSnapshot }, gcBlobsMap, { sweepTimeoutMs });
 			};
 
 			it("doesn't generate events for referenced nodes", async () => {
@@ -798,11 +806,6 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	describe("Deleted blobs in GC summary tree", () => {
-		const metadata: IContainerRuntimeMetadata = {
-			gcFeature: stableGCVersion,
-			summaryFormatVersion: 1,
-			message: undefined,
-		};
 		it("correctly reads and write deleted blobs in summary", async () => {
 			// Set up the GC reference graph to have something to work with.
 			defaultGCData.gcNodes["/"] = [nodes[0]];
@@ -822,7 +825,7 @@ describe("Garbage Collection Tests", () => {
 			baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
 
 			// Create and initialize garbage collector.
-			const garbageCollector = createGarbageCollector({ baseSnapshot, metadata }, gcBlobsMap);
+			const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobsMap);
 			await garbageCollector.initializeBaseState();
 
 			// The nodes in deletedNodeIds should be marked as deleted.
@@ -876,7 +879,7 @@ describe("Garbage Collection Tests", () => {
 			baseSnapshot.trees[gcTreeKey] = gcSnapshotTree;
 
 			// Create and initialize garbage collector.
-			const garbageCollector = createGarbageCollector({ baseSnapshot, metadata }, gcBlobsMap);
+			const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobsMap);
 			await garbageCollector.initializeBaseState();
 
 			// Run GC and summarize. The summary should contain the deleted nodes.
