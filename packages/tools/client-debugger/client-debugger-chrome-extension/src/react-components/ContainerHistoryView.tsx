@@ -16,6 +16,7 @@ import {
 import { _ContainerHistoryView } from "@fluid-tools/client-debugger-view";
 import { Waiting } from "./Waiting";
 import { MessageRelayContext } from "./MessageRelayContext";
+import { extensionMessageSource } from "../messaging";
 
 const loggingContext = "EXTENSION(ContainerHistoryView)";
 
@@ -69,6 +70,15 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 
 		messageRelay.on("message", messageHandler);
 
+		// Request state info for the newly specified containerId
+		messageRelay.postMessage({
+			source: extensionMessageSource,
+			type: "GET_CONTAINER_STATE",
+			data: {
+				containerId,
+			},
+		});
+		
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
