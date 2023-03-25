@@ -152,7 +152,7 @@ jobs:
               testPackage=${{ parameters.testPackage }}
 
             Pipeline Variables:
-              isTestBranch=${{ variables.isTestBranch}}
+              isTestBranch=${{ variables.isTestBranch }}
               testWorkspace=${{ parameters.testWorkspace }}
               testPackageFilePattern=${{ variables.testPackageFilePattern }}
               feed=${{ variables.feed }}

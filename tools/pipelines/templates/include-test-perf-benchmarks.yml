@@ -52,18 +52,21 @@ jobs:
       inputs:
         targetType: 'inline'
         # Some of the variables
+        # Variables declared outside this template will only work with "macro syntax": $().
+        # Variables declared inside this template would work with "template expression syntax": ${{}}, but we use
+        # macro syntax for all variables for consistency.
         script: |
           echo "
           Pipeline Parameters:
             poolBuild=${{ parameters.poolBuild }}
 
           Pipeline Variables:
-            isTestBranch=${{ variables.isTestBranch}}
+            isTestBranch=$(variables.isTestBranch)
             toolAbsolutePath=$(toolAbsolutePath)
-            artifactPipeline=${{ variables.artifactPipeline }}
-            artifactBuildId=${{ variables.artifactBuildId }}
-            feed=${{ variables.feed }}
-            devFeed=${{ variables.devFeed }}
+            artifactPipeline=$(variables.artifactPipeline)
+            artifactBuildId=$(variables.artifactBuildId)
+            feed=$(variables.feed)
+            devFeed=$(variables.devFeed)
             testWorkspace=${{ parameters.testWorkspace }}
             loggerPackage=${{ parameters.loggerPackage }}
 
