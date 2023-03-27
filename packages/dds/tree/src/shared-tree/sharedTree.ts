@@ -21,6 +21,7 @@ import {
 	AnchorNode,
 	IEditableForest,
 	AnchorSetRootEvents,
+	symbolFromKey,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -41,9 +42,11 @@ import {
 	ModularChangeset,
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
+	EditableTree,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { TransactionResult } from "../util";
+import { brand, compareFiniteNumbers, TransactionResult } from "../util";
+import { IdentifierIndex } from "../feature-libraries/identifierIndex";
 
 /**
  * Events for {@link ISharedTreeBranch}.
@@ -167,6 +170,9 @@ export interface ISharedTreeBranch extends AnchorLocator {
 	 * Events about the root of the tree on this branch.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	// TODO: doc
+	readonly identifiedNodes: ReadonlyMap<number, EditableTree>;
 }
 
 /**
@@ -205,12 +211,18 @@ export interface ISharedTreeFork extends ISharedTreeBranch {
 export interface ISharedTree extends ISharedObject, ISharedTreeBranch {}
 
 /**
+ * TODO doc
+ * @alpha
+ */
+export const identifierKey = symbolFromKey(brand("identifier"));
+
+/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
  */
-class SharedTree
+export class SharedTree
 	extends SharedTreeCore<
 		DefaultEditBuilder,
 		DefaultChangeset,
@@ -221,6 +233,7 @@ class SharedTree
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKey>;
 	public readonly transaction: ISharedTreeBranch["transaction"];
 
 	public readonly events: ISubscribable<BranchEvents> & IEmitter<BranchEvents>;
@@ -267,6 +280,12 @@ class SharedTree
 		};
 
 		this.context = getEditableTreeContext(forest, this.editor);
+		this.identifiedNodes = new IdentifierIndex(
+			this.context,
+			identifierKey,
+			(x: unknown | number): x is number => typeof x === "number",
+			compareFiniteNumbers,
+		);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -287,7 +306,8 @@ class SharedTree
 			this.createBranch(anchors),
 			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, anchors),
+			this.forest.clone(this.storedSchema, anchors), // TODO I think this is using the wrong schema
+			this.identifiedNodes,
 		);
 	}
 
@@ -345,14 +365,17 @@ export class SharedTreeFactory implements IChannelFactory {
 class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<BranchEvents>();
 	public readonly context: EditableTreeContext;
+	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKey>;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
+		identifiedNodes: IdentifierIndex<number, typeof identifierKey>, // TODO: this is cloned _during_ construction, whereas forest/schema are cloned _before_. Make consistent. Probably pull out a separate clone function
 	) {
 		this.context = getEditableTreeContext(forest, this.editor);
+		this.identifiedNodes = identifiedNodes.clone(this.context);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
@@ -391,6 +414,7 @@ class SharedTreeFork implements ISharedTreeFork {
 			this.changeFamily,
 			storedSchema,
 			this.forest.clone(storedSchema, anchors),
+			this.identifiedNodes,
 		);
 	}
 

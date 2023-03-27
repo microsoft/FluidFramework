@@ -4,10 +4,12 @@
  */
 
 export {
+	identifierKey,
 	ISharedTree,
 	ISharedTreeBranch,
 	ISharedTreeFork,
 	runSynchronous,
+	SharedTree,
 	SharedTreeFactory,
 	BranchEvents,
 } from "./sharedTree";

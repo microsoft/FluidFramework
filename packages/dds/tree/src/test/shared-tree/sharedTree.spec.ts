@@ -15,7 +15,7 @@ import {
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree, ISharedTreeBranch, runSynchronous } from "../../shared-tree";
+import { identifierKey, ISharedTree, ISharedTreeBranch, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -1597,6 +1597,29 @@ describe("SharedTree", () => {
 			);
 			const [tree] = provider.trees;
 			validateRootField(tree, ["A", "B", "C"].reverse());
+		});
+	});
+
+	describe("Node Identifiers", () => {
+		it("can be looked up", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const id = 3;
+			const initialTreeState: JsonableTree = {
+				type: brand("IdentifiedNode"),
+				fields: {
+					foo: [{ type: brand("Foo"), value: "foo" }],
+				},
+				globalFields: {
+					identifierKey: [{ type: brand("Identifier"), value: id }],
+				},
+			};
+
+			initializeTestTree(tree, initialTreeState);
+			const node = tree.identifiedNodes.get(3);
+			assert(node !== undefined, `Expected to find node with identifier ${id}`);
+			assert.equal(node[identifierKey], id);
+			assert.equal(node.foo, "foo");
 		});
 	});
 

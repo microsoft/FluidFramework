@@ -61,6 +61,15 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 }
 
 /**
+ * A numeric comparator used for sorting in ascending order.
+ *
+ * Handles +/-0 like Map: -0 is equal to +0.
+ */
+export function compareFiniteNumbers<T extends number>(a: T, b: T): number {
+	return a - b;
+}
+
+/**
  * Compares two sets using callbacks.
  * Early returns on first false comparison.
  *
