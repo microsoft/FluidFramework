@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { SharedCell } from "@fluidframework/cell";
 import { Deferred } from "@fluidframework/common-utils";
-import { AttachState, IContainer } from "@fluidframework/container-definitions";
+import { AttachState, IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { ConnectionState, Loader } from "@fluidframework/container-loader";
 import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
@@ -745,7 +745,7 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		const requestUrl2 = await provider.urlResolver.getAbsoluteUrl(container.resolvedUrl, "");
 		const container2 = await loader.resolve({
 			url: requestUrl2,
-			headers: { "fluid-cache": true },
+			headers: { [LoaderHeader.cache]: true },
 		});
 		assert.strictEqual(container, container2, "Both containers should be same");
 	});
