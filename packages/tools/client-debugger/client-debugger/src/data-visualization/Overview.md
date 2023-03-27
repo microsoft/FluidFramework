@@ -37,6 +37,9 @@ Consumer-->>Debugger: "GET_DATA_VISUALIZATION" (id)
 Debugger->>Consumer: "DATA_VISUALIZATION" (visualization)
 ```
 
+Additionally, once a given DDS has been "rendered" for the first time, it will continue to broadcast automatic updates each time its contents change (i.e. each time the "op" event is fired on the DDS object).
+Consumers can simply continue to listen for the `DATA_VISUALIZATION` message in order to receive updates as changes are made in the application.
+
 The visual tree for a given DDS will always contain the unique DDS ID (so message consumers can correlate them correctly).
 Their data format is likely best described by the code, so we won't go into it in too much depth here.
 See `./VisualTree` for a type-wise breakdown.
@@ -83,3 +86,31 @@ loop renderTree
 	Debugger->>Consumer: DATA_VISUALIZATION (counterVisualTree)
 end
 ```
+
+## Laziness
+
+The system has designed to be lazy.
+Visualizer nodes will only be generated for a given DDS Handle once they have been reached by rendering some "parent" DDS.
+
+But once it has been reached, the system will ensure that messages are posted for all subsequent changes to that DDS.
+
+## Incrementality
+
+The above flow examples illustrate the granularity at which consumers can observe DDS visualizations; namely, per DDS.
+For now, this is the most granular level of updates the system supports.
+
+For small / simple DDSs like `SharedCounter`, this is likely fine.
+For larger DDSs like `SharedTree`, this may become a performance issue.
+We may wish to consider broadcasting visual tree _diffs_ for changes after the initial "render", rather than broadcasting the entire state.
+
+## Dependency Tracking
+
+The system is designed to walk the input list of DDSs like trees.
+When a Fluid Handle is encountered while walking one of these trees, a corresponding "visualizer" node is generated and stored to generate visual trees for its DDS on demand.
+
+For the time being, the system does not do any dependency tracking.
+That is, if a DDS that was at one point reachable by walking one of the input trees becomes unreachable, the system will continue to store the associated visualizer.
+This is a potential memory leak that will want to be addressed before we publish our MVP.
+
+Follow up: investigate existing dependency tracking libraries we can take advantage of.
+Otherwise, just storing weak references to the DDSs/Handles + interval-based state cleanup will probably be sufficient.
