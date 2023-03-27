@@ -121,10 +121,12 @@ describe("Routerlicious", () => {
 				const limitTenant = 10;
 				const limitCreateDoc = 5;
 				const limitGetDeltas = 5;
+                const limitGetSession = 5;
 				beforeEach(() => {
                     const restTenantThrottler = new TestThrottler(limitTenant);
 					const restTenantGetDeltasThrottler = new TestThrottler(limitTenant);
                     const restTenantCreateDocThrottler = new TestThrottler(limitTenant);
+                    const restTenantGetSessionThrottler = new TestThrottler(limitTenant);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
                     restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -138,9 +140,14 @@ describe("Routerlicious", () => {
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
+                    restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
 
 					const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
 					const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
+                    const restGetSessionThrottler = new TestThrottler(limitGetSession);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -149,6 +156,10 @@ describe("Routerlicious", () => {
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottler,
+					);
+                    restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restGetSessionThrottler,
 					);
 					app = alfredApp.create(
 						defaultProvider,
@@ -311,6 +322,7 @@ describe("Routerlicious", () => {
                     const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
                     const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
                     restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -324,18 +336,28 @@ describe("Routerlicious", () => {
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
+                    restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
 
-					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
 					);
+                    restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
+					);
+
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -414,6 +436,7 @@ describe("Routerlicious", () => {
                     const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
                     const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
                     restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -427,18 +450,28 @@ describe("Routerlicious", () => {
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
+                    restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
 
-					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
 					);
+                    restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
+					);
+
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -517,6 +550,7 @@ describe("Routerlicious", () => {
                     const restTenantThrottler = new TestThrottler(limit);
 					const restTenantGetDeltasThrottler = new TestThrottler(limit);
                     const restTenantCreateDocThrottler = new TestThrottler(limit);
+                    const restTenantGetSessionThrottler = new TestThrottler(limit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
                     restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -530,17 +564,26 @@ describe("Routerlicious", () => {
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
+                    restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
 
-					const restCreateDocThrottler = new TestThrottler(limit);
-					const restGetDeltasThrottler = new TestThrottler(limit);
+					const restClusterCreateDocThrottler = new TestThrottler(limit);
+					const restClusterGetDeltasThrottler = new TestThrottler(limit);
+                    const restClusterGetSessionThrottler = new TestThrottler(limit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
+					);
+                    restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
 					);
 					app = alfredApp.create(
 						defaultProvider,
@@ -585,6 +628,7 @@ describe("Routerlicious", () => {
                     const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
                     const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
                     restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
@@ -598,16 +642,26 @@ describe("Routerlicious", () => {
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
-					const restCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    restTenantThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restTenantGetSessionThrottler,
+					);
+
+					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
+                    const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
-						restCreateDocThrottler,
+						restClusterCreateDocThrottler,
 					);
 					restClusterThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
-						restGetDeltasThrottler,
+						restClusterGetDeltasThrottler,
+					);
+                    restClusterThrottlers.set(
+						Constants.getSessionThrottleIdPrefix,
+						restClusterGetSessionThrottler,
 					);
 
 					spyGetSession = Sinon.spy(SessionHelper, "getSession");

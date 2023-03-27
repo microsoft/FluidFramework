@@ -41,7 +41,12 @@ export function create(
 	};
     const tenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
-	const getDeltasThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+    const getDeltasTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
+		throttleIdSuffix: Constants.getDeltasThrottleIdPrefix,
+	};
+
+	const getDeltasClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: Constants.getDeltasThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
@@ -109,12 +114,8 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
-		throttle(
-			clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix),
-			winston,
-			getDeltasThrottleOptions,
-		),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix), winston, getDeltasClusterThrottleOptions),
+		throttle(tenantThrottlers.get(Constants.getDeltasThrottleIdPrefix), winston, getDeltasTenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, tokenManager),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);

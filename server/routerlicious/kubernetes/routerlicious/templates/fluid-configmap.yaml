@@ -96,6 +96,15 @@ data:
                         "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxInMemoryCacheSize }},
                         "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxInMemoryCacheAgeInMs }},
                         "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.enableEnhancedTelemetry }}
+                    },
+                    "getSession": {
+                        "maxPerMs": {{ .Values.alfred.throttling.restCallsPerTenant.getSession.maxPerMs }},
+                        "maxBurst": {{ .Values.alfred.throttling.restCallsPerTenant.getSession.maxBurst }},
+                        "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCallsPerTenant.getSession.minCooldownIntervalInMs }},
+                        "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCallsPerTenant.getSession.minThrottleIntervalInMs }},
+                        "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsPerTenant.getSession.maxInMemoryCacheSize }},
+                        "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsPerTenant.getSession.maxInMemoryCacheAgeInMs }},
+                        "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsPerTenant.getSession.enableEnhancedTelemetry }}
                     }
                 },
                 "restCallsPerCluster": {
@@ -116,6 +125,15 @@ data:
                         "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxInMemoryCacheSize }},
                         "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.maxInMemoryCacheAgeInMs }},
                         "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsPerCluster.getDeltas.enableEnhancedTelemetry }}
+                    },
+                    "getSession": {
+                        "maxPerMs": {{ .Values.alfred.throttling.restCallsPerCluster.getSession.maxPerMs }},
+                        "maxBurst": {{ .Values.alfred.throttling.restCallsPerCluster.getSession.maxBurst }},
+                        "minCooldownIntervalInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getSession.minCooldownIntervalInMs }},
+                        "minThrottleIntervalInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getSession.minThrottleIntervalInMs }},
+                        "maxInMemoryCacheSize": {{ .Values.alfred.throttling.restCallsPerCluster.getSession.maxInMemoryCacheSize }},
+                        "maxInMemoryCacheAgeInMs": {{ .Values.alfred.throttling.restCallsPerCluster.getSession.maxInMemoryCacheAgeInMs }},
+                        "enableEnhancedTelemetry": {{ .Values.alfred.throttling.restCallsPerCluster.getSession.enableEnhancedTelemetry }}
                     }
                 },
                 "socketConnectionsPerTenant": {
