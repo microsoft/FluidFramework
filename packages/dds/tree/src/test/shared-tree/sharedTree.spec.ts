@@ -670,7 +670,7 @@ describe("SharedTree", () => {
 			validateRootField(tree2, expected);
 		});
 
-		it.skip("can rebase delete over cross-field move", async () => {
+		it("can rebase delete over cross-field move", async () => {
 			const provider = await TestTreeProvider.create(2);
 			const [tree1, tree2] = provider.trees;
 
@@ -706,6 +706,61 @@ describe("SharedTree", () => {
 			runSynchronous(tree2, () => {
 				const field = tree2.editor.sequenceField(rootPath, brand("foo"));
 				field.delete(2, 1);
+			});
+
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "e" },
+					],
+				},
+			};
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+		});
+
+		it.skip("can rebase cross-field move over delete", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Node"), value: "a" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
+					],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "e" },
+					],
+				},
+			};
+			initializeTestTree(tree1, initialState);
+			await provider.ensureSynchronized();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			// Delete c
+			runSynchronous(tree1, () => {
+				const field = tree1.editor.sequenceField(rootPath, brand("foo"));
+				field.delete(2, 1);
+			});
+
+			// Move bc between d and e.
+			runSynchronous(tree2, () => {
+				tree2.editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
 			});
 
 			await provider.ensureSynchronized();

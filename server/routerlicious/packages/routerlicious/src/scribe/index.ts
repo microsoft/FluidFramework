@@ -21,11 +21,15 @@ import {
 	IPartitionLambdaFactory,
 	ISequencedOperationMessage,
 	IServiceConfiguration,
+	MongoDocumentRepository,
 	MongoManager,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 
-export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function scribeCreate(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<IPartitionLambdaFactory> {
 	// Access config values
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 	const documentsCollectionName = config.get("mongo:collectionNames:documents");
@@ -75,11 +79,14 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
 	const documentsCollectionDb: IDb = globalDbEnabled ? globalDb : operationsDb;
 
-	const [collection, scribeDeltas, localCollection] = await Promise.all([
-		documentsCollectionDb.collection<IDocument>(documentsCollectionName),
-		operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName),
-		operationsDb.collection<ICheckpoint>(checkpointsCollectionName),
-	]);
+	const scribeDeltas =
+		operationsDb.collection<ISequencedOperationMessage>(messagesCollectionName);
+	const documentRepository =
+		customizations?.documentRepository ??
+		new MongoDocumentRepository(
+			documentsCollectionDb.collection<IDocument>(documentsCollectionName),
+		);
+    const localCollection = operationsDb.collection<ICheckpoint>(checkpointsCollectionName);
 
 	if (createCosmosDBIndexes) {
 		await scribeDeltas.createIndex({ documentId: 1 }, false);
@@ -125,8 +132,8 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 
 	return new ScribeLambdaFactory(
 		operationsDbManager,
-		collection,
-		localCollection,
+		documentRepository,
+        localCollection,
 		scribeDeltas,
 		producer,
 		deltaManager,
@@ -138,8 +145,11 @@ export async function scribeCreate(config: Provider): Promise<IPartitionLambdaFa
 	);
 }
 
-export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function create(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<IPartitionLambdaFactory> {
 	// Nconf has problems with prototype methods which prevents us from storing this as a class
 	config.set("documentLambda", { create: scribeCreate });
-	return createDocumentRouter(config);
+	return createDocumentRouter(config, customizations);
 }

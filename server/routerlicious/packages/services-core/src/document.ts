@@ -119,6 +119,9 @@ export interface IScribe {
 
 	// Sequence number of the last operation that was part of latest summary
 	lastSummarySequenceNumber: number | undefined;
+
+	// Refs of the service summaries generated since the last client generated summary.
+	validParentSummaries: string[] | undefined;
 }
 
 export interface IDocument {

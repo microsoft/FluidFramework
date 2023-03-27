@@ -17,7 +17,10 @@ import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
-export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
+export async function deliCreate(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<core.IPartitionLambdaFactory> {
 	const kafkaEndpoint = config.get("kafka:lib:endpoint");
 	const kafkaLibrary = config.get("kafka:lib:name");
 	const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -32,7 +35,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	const forwardSendTopic = config.get("deli:topics:send");
 	const reverseSendTopic = config.get("alfred:topic");
 
-	const documentsCollectionName = config.get("mongo:collectionNames:documents");
+    const documentsCollectionName = config.get("mongo:collectionNames:documents");
 	const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 
 	const localCheckpointEnabled = config.get("deli:localCheckpointEnabled");
@@ -42,7 +45,6 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
-
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
@@ -64,14 +66,15 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	const operationsDbManager = new core.MongoManager(factory, false);
 	const operationsDb = await operationsDbManager.getDatabase();
 
-	const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+    const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
 
-	// eslint-disable-next-line @typescript-eslint/await-thenable
-	const collection = await db.collection<core.IDocument>(documentsCollectionName);
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+    const collection = await db.collection<core.IDocument>(documentsCollectionName);
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const localCollection = await operationsDb.collection<core.ICheckpoint>(
 		checkpointsCollectionName,
 	);
+	const documentRepository = customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
 
 	const forwardProducer = services.createProducer(
 		kafkaLibrary,
@@ -140,8 +143,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
 	return new DeliLambdaFactory(
 		operationsDbManager,
-		collection,
-		localCollection,
+		documentRepository,
+        localCollection,
 		tenantManager,
 		undefined,
 		combinedProducer,
@@ -152,8 +155,11 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	);
 }
 
-export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
+export async function create(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<core.IPartitionLambdaFactory> {
 	// Nconf has problems with prototype methods which prevents us from storing this as a class
 	config.set("documentLambda", { create: deliCreate });
-	return createDocumentRouter(config);
+	return createDocumentRouter(config, customizations);
 }

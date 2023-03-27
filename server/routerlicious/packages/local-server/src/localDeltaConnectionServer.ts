@@ -17,6 +17,7 @@ import {
 	DefaultMetricClient,
 	EmptyTaskMessageSender,
 	IDatabaseManager,
+	IDocumentRepository,
 	IDocumentStorage,
 	ILogger,
 	IServiceConfiguration,
@@ -66,6 +67,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 	public static create(
 		testDbFactory: ITestDbFactory = new TestDbFactory({}),
 		serviceConfiguration?: Partial<IServiceConfiguration>,
+		documentRepository?: IDocumentRepository,
 	): ILocalDeltaConnectionServer {
 		if (!Lumberjack.isSetupCompleted()) {
 			Lumberjack.setup([new TestEngine1()]);
@@ -112,6 +114,7 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			logger,
 			serviceConfiguration,
 			pubsub,
+			documentRepository,
 		);
 
 		configureWebSocketServices(

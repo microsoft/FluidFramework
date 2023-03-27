@@ -51,6 +51,7 @@ import {
 	DebugLogger,
 	TestThrottler,
 	TestThrottleAndUsageStorageManager,
+	TestNotImplementedDocumentRepository,
 } from "@fluidframework/server-test-utils";
 import { OrdererManager } from "../../alfred";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
@@ -79,7 +80,7 @@ describe("Routerlicious", () => {
 				const throttleLimitTenant = 7;
 				const throttleLimitConnectDoc = 4;
 
-				beforeEach(() => {
+				beforeEach(async () => {
 					const collectionNames = "test";
 					const testData: { [key: string]: any[] } = {};
 
@@ -89,7 +90,9 @@ describe("Routerlicious", () => {
 					testClientManager = new TestClientManager();
 					const testDbFactory = new TestDbFactory(testData);
 					const mongoManager = new MongoManager(testDbFactory);
+					const testDocumentRepository = new TestNotImplementedDocumentRepository();
 					const globalDbEnabled = false;
+
 					const databaseManager = new MongoDatabaseManager(
 						globalDbEnabled,
 						mongoManager,
@@ -101,9 +104,10 @@ describe("Routerlicious", () => {
 						collectionNames,
 					);
 					const testStorage = new services.DocumentStorage(
-						databaseManager,
+						testDocumentRepository,
 						testTenantManager,
 						false,
+						await databaseManager.getDeltaCollection(undefined, undefined),
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -534,7 +538,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				const minThrottleCheckInterval = 100;
 				const testThrottleAndUsageStorageManager = new TestThrottleAndUsageStorageManager();
 
-				beforeEach(() => {
+				beforeEach(async () => {
 					// use fake timers to have full control over the passage of time
 					Sinon.useFakeTimers(Date.now());
 
@@ -558,10 +562,12 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						collectionNames,
 						collectionNames,
 					);
+					const testDocumentRepository = new TestNotImplementedDocumentRepository();
 					const testStorage = new services.DocumentStorage(
-						databaseManager,
+						testDocumentRepository,
 						testTenantManager,
 						false,
+						await databaseManager.getDeltaCollection(undefined, undefined),
 					);
 					const kafkaOrderer = new KafkaOrdererFactory(
 						producer,
@@ -761,7 +767,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 
 		let testTenantManager: TestTenantManager;
 		let testStorage: services.DocumentStorage;
-		beforeEach(() => {
+		beforeEach(async () => {
 			const collectionNames = "test";
 			const testData: { [key: string]: any[] } = {};
 
@@ -769,6 +775,12 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 			const testDbFactory = new TestDbFactory(testData);
 			const mongoManager = new MongoManager(testDbFactory);
 			const globalDbEnabled = false;
+			const testDocumentRepository = new TestNotImplementedDocumentRepository();
+			const stub = Sinon.stub(testDocumentRepository, "findOneOrCreate");
+			stub.callsFake(async (filter: any, value: any, option: any) => {
+				return { value, existing: false };
+			});
+
 			const databaseManager = new MongoDatabaseManager(
 				globalDbEnabled,
 				mongoManager,
@@ -779,7 +791,12 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 				collectionNames,
 				collectionNames,
 			);
-			testStorage = new services.DocumentStorage(databaseManager, testTenantManager, false);
+			testStorage = new services.DocumentStorage(
+				testDocumentRepository,
+				testTenantManager,
+				false,
+				await databaseManager.getDeltaCollection(undefined, undefined),
+			);
 		});
 
 		it("create document with summary", async () => {

@@ -124,7 +124,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			return;
 		}
 
-		let metric: Lumber<LumberEventName.ScriptoriumProcessBatch>;
+		let metric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
 		if (this.telemetryEnabled && this.pendingMetric) {
 			metric = this.pendingMetric;
 			this.pendingMetric = undefined;
@@ -144,7 +144,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 		// Process all the batches + checkpoint
 		for (const [, messages] of this.current) {
-			const processP = this.processMongoCore(messages);
+			const processP = this.processMongoCore(messages, metric?.id);
 			allProcessed.push(processP);
 		}
 
@@ -208,11 +208,11 @@ export class ScriptoriumLambda implements IPartitionLambda {
 		}
 	}
 
-	private async processMongoCore(messages: ISequencedOperationMessage[]): Promise<void> {
-		return this.insertOp(messages);
+	private async processMongoCore(messages: ISequencedOperationMessage[], scriptoriumMetricId: string | undefined): Promise<void> {
+		return this.insertOp(messages, scriptoriumMetricId);
 	}
 
-	private async insertOp(messages: ISequencedOperationMessage[]) {
+	private async insertOp(messages: ISequencedOperationMessage[], scriptoriumMetricId: string | undefined) {
 		const dbOps = messages.map((message) => ({
 			...message,
 			mongoTimestamp: new Date(message.operation.timestamp),
@@ -232,7 +232,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			1000 /* retryAfterMs */,
 			{
 				...getLumberBaseProperties(documentId, tenantId),
-				...{ sequenceNumberRanges, insertBatchSize },
+				...{ sequenceNumberRanges, insertBatchSize, scriptoriumMetricId },
 			},
 			(error) => error.code === 11000,
 			(error) => !this.clientFacadeRetryEnabled /* shouldRetry */,

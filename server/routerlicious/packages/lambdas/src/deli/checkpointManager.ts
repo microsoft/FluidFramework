@@ -7,7 +7,7 @@ import {
 	ICheckpoint,
 	ICollection,
 	IDeliState,
-	IDocument,
+	IDocumentRepository,
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
 import { CheckpointReason } from "../utils";
@@ -51,11 +51,12 @@ export interface ICheckpointParams {
 export function createDeliCheckpointManagerFromCollection(
 	tenantId: string,
 	documentId: string,
-	collection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
 	localCollection: ICollection<ICheckpoint>,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return isLocal
 				? localCollection.upsert(
 						{
@@ -68,7 +69,7 @@ export function createDeliCheckpointManagerFromCollection(
 						},
 						null,
 				  )
-				: collection.update(
+				: documentRepository.updateOne(
 						{
 							documentId,
 							tenantId,
@@ -76,10 +77,10 @@ export function createDeliCheckpointManagerFromCollection(
 						{
 							deli: JSON.stringify(checkpoint),
 						},
-						null,
 				  );
 		},
 		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return isLocal
 				? localCollection.upsert(
 						{
@@ -92,7 +93,7 @@ export function createDeliCheckpointManagerFromCollection(
 						},
 						null,
 				  )
-				: collection.update(
+				: documentRepository.updateOne(
 						{
 							documentId,
 							tenantId,
@@ -100,7 +101,6 @@ export function createDeliCheckpointManagerFromCollection(
 						{
 							deli: "",
 						},
-						null,
 				  );
 		},
 	};

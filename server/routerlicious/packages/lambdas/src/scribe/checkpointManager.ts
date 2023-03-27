@@ -7,13 +7,13 @@ import { delay } from "@fluidframework/common-utils";
 import {
 	ICollection,
 	IContext,
-	IDocument,
 	ICheckpoint,
 	isRetryEnabled,
 	IScribe,
 	ISequencedOperationMessage,
 	runWithRetry,
 	IDeltaService,
+	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
@@ -27,7 +27,7 @@ export class CheckpointManager implements ICheckpointManager {
 		protected readonly context: IContext,
 		private readonly tenantId: string,
 		private readonly documentId: string,
-		private readonly documentCollection: ICollection<IDocument>,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
@@ -210,8 +210,8 @@ export class CheckpointManager implements ICheckpointManager {
 							error,
 						);
 					})
-			: this.documentCollection
-					.upsert(checkpointFilter, checkpointData, null)
+			: this.documentRepository
+					.updateOne(checkpointFilter, checkpointData, null)
 					.catch((error) => {
 						Lumberjack.error(
 							`Error removing checkpoint data from the global database.`,
@@ -226,7 +226,7 @@ export class CheckpointManager implements ICheckpointManager {
 	 */
 	public async delete(sequenceNumber: number, lte: boolean) {
 		// Clears the checkpoint information from mongodb.
-		await this.documentCollection.update(
+		await this.documentRepository.updateOne(
 			{
 				documentId: this.documentId,
 				tenantId: this.tenantId,

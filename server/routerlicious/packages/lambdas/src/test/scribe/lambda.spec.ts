@@ -10,7 +10,6 @@ import {
 	DefaultServiceConfiguration,
 	ICheckpoint,
 	ICollection,
-	IDocument,
 	IProducer,
 	ITenantManager,
 	MongoManager,
@@ -22,11 +21,13 @@ import {
 	TestContext,
 	TestDbFactory,
 	TestDeltaManager,
+	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
+import Sinon from "sinon";
 import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
 
@@ -36,10 +37,9 @@ describe("Routerlicious", () => {
 			const testClientId = "test";
 			const testTenantId = "test";
 			const testDocumentId = "test";
-
-			let testMongoManager: MongoManager;
+            let testMongoManager: MongoManager;
 			let testLocalMongoManager: MongoManager;
-			let testDocumentCollection: ICollection<IDocument>;
+			let testDocumentRepository: TestNotImplementedDocumentRepository;
 			let testCheckpointCollection: ICollection<ICheckpoint>;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
@@ -87,9 +87,15 @@ describe("Routerlicious", () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				testMongoManager = new MongoManager(dbFactory);
 				testLocalMongoManager = new MongoManager(dbFactory);
-				const database = await testMongoManager.getDatabase();
 				const localDatabase = await testLocalMongoManager.getDatabase();
-				testDocumentCollection = database.collection("documents");
+				testCheckpointCollection = localDatabase.collection("checkpoints");
+				testDocumentRepository = new TestNotImplementedDocumentRepository();
+				Sinon.replace(
+					testDocumentRepository,
+					"readOne",
+					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+				);
+				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake.resolves(undefined));
 				testCheckpointCollection = localDatabase.collection("checkpoints");
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
@@ -109,8 +115,8 @@ describe("Routerlicious", () => {
 
 				let factory = new ScribeLambdaFactory(
 					testMongoManager,
-					testDocumentCollection,
-					testCheckpointCollection,
+					testDocumentRepository,
+                    testCheckpointCollection,
 					testMessageCollection,
 					testProducer,
 					testDeltaManager,

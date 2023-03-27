@@ -14,6 +14,7 @@ import {
 	IContext,
 	IDeliState,
 	IDocument,
+	IDocumentRepository,
 	ILogger,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
@@ -62,7 +63,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
 export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
-		private readonly collection: ICollection<IDocument>,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
@@ -104,7 +105,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		try {
 			// Lookup the last sequence number stored
 			// TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-			document = await this.collection.findOne({ documentId, tenantId });
+			document = await this.documentRepository.readOne({ documentId, tenantId });
 
 			// Check if the document was deleted prior.
 			if (!isDocumentValid(document)) {
@@ -268,7 +269,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		const checkpointManager = createDeliCheckpointManagerFromCollection(
 			tenantId,
 			documentId,
-			this.collection,
+			this.documentRepository,
 			this.localCheckpointCollection,
 		);
 
@@ -296,13 +297,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					closeType === LambdaCloseType.ActivityTimeout ||
 					closeType === LambdaCloseType.Error
 				) {
-					const query = { documentId, tenantId, session: { $exists: true } };
+					const filter = { documentId, tenantId, session: { $exists: true } };
 					const data = {
 						"session.isSessionAlive": false,
 						"session.isSessionActive": false,
 						"lastAccessTime": Date.now(),
 					};
-					await this.collection.update(query, data, null);
+					await this.documentRepository.updateOne(filter, data, undefined);
 					const message = `Marked session alive and active as false for closeType:
                         ${JSON.stringify(closeType)}`;
 					context.log?.info(message, { messageMetaData });
@@ -321,14 +322,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		context.log?.info(`Deli Lambda is marking session as alive and active as true.`, {
 			messageMetaData,
 		});
-		this.collection
-			.update(
-				{ documentId, tenantId },
+		this.documentRepository
+			.updateOne(
+				{ tenantId, documentId },
 				{
 					"session.isSessionAlive": true,
 					"session.isSessionActive": true,
 				},
-				null,
 			)
 			.catch((error) => {
 				const errMsg = "Deli Lambda failed to mark session as active.";

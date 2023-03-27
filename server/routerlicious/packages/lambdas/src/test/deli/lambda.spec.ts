@@ -22,11 +22,13 @@ import {
 	MessageFactory,
 	TestContext,
 	TestDbFactory,
+	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import * as _ from "lodash";
+import Sinon from "sinon";
 import { DeliLambdaFactory } from "../../deli/lambdaFactory";
 
 const MinSequenceNumberWindow = 2000;
@@ -118,8 +120,13 @@ describe("Routerlicious", () => {
 			beforeEach(async () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				const mongoManager = new MongoManager(dbFactory);
-				const database = await mongoManager.getDatabase();
-				testCollection = database.collection("documents");
+				const documentRepository = new TestNotImplementedDocumentRepository();
+				Sinon.replace(
+					documentRepository,
+					"readOne",
+					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+				);
+				Sinon.replace(documentRepository, "updateOne", Sinon.fake.resolves(undefined));
 
 				testKafka = new TestKafka();
 				testForwardProducer = testKafka.createProducer();
@@ -133,7 +140,7 @@ describe("Routerlicious", () => {
 
 				factory = new DeliLambdaFactory(
 					mongoManager,
-					testCollection,
+					documentRepository,
 					testCollection,
 					testTenantManager,
 					undefined,
@@ -153,8 +160,8 @@ describe("Routerlicious", () => {
 
 				factoryWithSignals = new DeliLambdaFactory(
 					mongoManager,
-					testCollection,
-					testCollection,
+					documentRepository,
+                    testCollection,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -176,7 +183,7 @@ describe("Routerlicious", () => {
 
 				factoryWithBatching = new DeliLambdaFactory(
 					mongoManager,
-					testCollection,
+					documentRepository,
 					testCollection,
 					testTenantManager,
 					undefined,
