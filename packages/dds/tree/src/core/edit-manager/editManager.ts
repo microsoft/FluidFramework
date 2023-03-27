@@ -353,7 +353,7 @@ export class EditManager<
 		}
 	}
 
-	private findLocalCommit(
+	public findLocalCommit(
 		revision: RevisionTag,
 	): [commit: GraphCommit<TChangeset>, commitsAfter: GraphCommit<TChangeset>[]] {
 		const commits: GraphCommit<TChangeset>[] = [];

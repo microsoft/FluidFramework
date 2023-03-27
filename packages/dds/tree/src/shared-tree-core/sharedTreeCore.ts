@@ -352,25 +352,17 @@ export class SharedTreeCore<
 		}
 	}
 
-	protected applyStashedOp(content: any): unknown {
-		// throw new Error("Method not implemented.");\
-		// TODO: Will need to change changeset to following form
-		// {
-		// 	changes: [
-		// 		rootFieldKey: {
-		// 			fieldKind: Sequence,
-		// 			change: [
-		// 				{
-		// 					type: insert,
-		// 					content: [{type: testvalue.....}]
-		// 				}
-		// 			]
-		// 		}
-		// 	]
-		// }
+	protected override reSubmitCore(content: any, localOpMetadata: unknown) {
+		const [commit, commitsAfter] = this.editManager.findLocalCommit(content.revision);
+		console.log(commitsAfter);
+		this.submitCommit(commit);
+	}
 
-		this.editManager.addLocalChange(content.revision, content.changeset)
-		return {};
+	protected applyStashedOp(content: any): undefined {
+		const { revision, changeset } = content as Message;
+		const decodedChangeset = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
+		this.editManager.addLocalChange(revision, decodedChangeset);
+		return;
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
