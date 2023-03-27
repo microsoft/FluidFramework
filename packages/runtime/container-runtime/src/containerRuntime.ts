@@ -963,8 +963,6 @@ export class ContainerRuntime
 	private readonly dataStores: DataStores;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
 
-	private readonly opGroupingManager: OpGroupingManager;
-
 	/** The last message processed at the time of the last summary. */
 	private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
@@ -1102,7 +1100,7 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.DisableCompressionChunking",
 		);
 
-		this.opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
+		const opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
 
 		const opSplitter = new OpSplitter(
 			chunks,
@@ -1115,7 +1113,7 @@ export class ContainerRuntime
 		this.remoteMessageProcessor = new RemoteMessageProcessor(
 			opSplitter,
 			new OpDecompressor(this.mc.logger),
-			this.opGroupingManager,
+			opGroupingManager,
 		);
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
@@ -1304,7 +1302,7 @@ export class ContainerRuntime
 				disablePartialFlush: disablePartialFlush === true,
 			},
 			logger: this.mc.logger,
-			groupingManager: this.opGroupingManager,
+			groupingManager: opGroupingManager,
 		});
 
 		this.context.quorum.on("removeMember", (clientId: string) => {
@@ -1872,22 +1870,24 @@ export class ContainerRuntime
 			this.savedOps.push(messageArg);
 		}
 
+		const updateSummaryHeuristics = (message: ISequencedDocumentMessage) => {
+			if (this._summarizer !== undefined && this.groupedBatchingEnabled) {
+				this._summarizer.processOp?.(message);
+			}
+		};
+
 		// Whether or not the message is actually a runtime message.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
 		const runtimeMessage = messageArg.type === MessageType.Operation;
 
-		// Ungroup the message (we ungroup before sending to remoteMessageProcessor so we can record for summarizer heuristics)
-		for (const ungroupedMessage of this.opGroupingManager.ungroupOp(messageArg)) {
-			if (this._summarizer !== undefined && this.groupedBatchingEnabled) {
-				this._summarizer.processOp?.(ungroupedMessage);
-			}
-
-			// Do shallow copy of message, as the processing flow will modify it.
-			const messageCopy = { ...ungroupedMessage };
-			for (const message of this.remoteMessageProcessor.process(messageCopy)) {
-				this.processCore(message, local, runtimeMessage);
-			}
+		// Do shallow copy of message, as the processing flow will modify it.
+		const messageCopy = { ...messageArg };
+		for (const message of this.remoteMessageProcessor.process(
+			messageCopy,
+			updateSummaryHeuristics,
+		)) {
+			this.processCore(message, local, runtimeMessage);
 		}
 	}
 
