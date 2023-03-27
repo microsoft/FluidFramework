@@ -83,7 +83,7 @@ Consumer-->>Debugger: "GET_DATA_VISUALIZATION" (rootMapID)
 Debugger->>Consumer: "DATA_VISUALIZATION" (rootMapVisualTree)
 loop renderTree
 	Consumer-->>Debugger: "GET_DATA_VISUALIZATION" (childCounterId)
-	Debugger->>Consumer: DATA_VISUALIZATION (counterVisualTree)
+	Debugger->>Consumer: "DATA_VISUALIZATION" (counterVisualTree)
 end
 ```
 
