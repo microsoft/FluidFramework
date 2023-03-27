@@ -319,6 +319,9 @@ export class SharedObjectVisualizerNode
 		}
 	}
 
+	/**
+	 * {@inheritDoc IDisposable.dispose}
+	 */
 	public dispose(): void {
 		if (!this._disposed) {
 			this.sharedObject.off("op", this.onOpHandler);
