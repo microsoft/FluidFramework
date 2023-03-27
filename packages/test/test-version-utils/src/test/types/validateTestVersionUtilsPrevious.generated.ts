@@ -16,6 +16,30 @@ type TypeOnly<T> = {
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_BenchmarkType": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_BenchmarkType():
+    TypeOnly<old.BenchmarkType>;
+declare function use_current_TypeAliasDeclaration_BenchmarkType(
+    use: TypeOnly<current.BenchmarkType>);
+use_current_TypeAliasDeclaration_BenchmarkType(
+    get_old_TypeAliasDeclaration_BenchmarkType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_BenchmarkType": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_BenchmarkType():
+    TypeOnly<current.BenchmarkType>;
+declare function use_old_TypeAliasDeclaration_BenchmarkType(
+    use: TypeOnly<old.BenchmarkType>);
+use_old_TypeAliasDeclaration_BenchmarkType(
+    get_current_TypeAliasDeclaration_BenchmarkType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_DescribeCompat": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_DescribeCompat():
@@ -60,6 +84,54 @@ declare function use_old_TypeAliasDeclaration_DescribeCompatSuite(
     use: TypeOnly<old.DescribeCompatSuite>);
 use_old_TypeAliasDeclaration_DescribeCompatSuite(
     get_current_TypeAliasDeclaration_DescribeCompatSuite());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DescribeE2EDocInfo": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_DescribeE2EDocInfo():
+    TypeOnly<old.DescribeE2EDocInfo>;
+declare function use_current_InterfaceDeclaration_DescribeE2EDocInfo(
+    use: TypeOnly<current.DescribeE2EDocInfo>);
+use_current_InterfaceDeclaration_DescribeE2EDocInfo(
+    get_old_InterfaceDeclaration_DescribeE2EDocInfo());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_DescribeE2EDocInfo": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_DescribeE2EDocInfo():
+    TypeOnly<current.DescribeE2EDocInfo>;
+declare function use_old_InterfaceDeclaration_DescribeE2EDocInfo(
+    use: TypeOnly<old.DescribeE2EDocInfo>);
+use_old_InterfaceDeclaration_DescribeE2EDocInfo(
+    get_current_InterfaceDeclaration_DescribeE2EDocInfo());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DocumentType": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_DocumentType():
+    TypeOnly<old.DocumentType>;
+declare function use_current_TypeAliasDeclaration_DocumentType(
+    use: TypeOnly<current.DocumentType>);
+use_current_TypeAliasDeclaration_DocumentType(
+    get_old_TypeAliasDeclaration_DocumentType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_DocumentType": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_DocumentType():
+    TypeOnly<current.DocumentType>;
+declare function use_old_TypeAliasDeclaration_DocumentType(
+    use: TypeOnly<old.DocumentType>);
+use_old_TypeAliasDeclaration_DocumentType(
+    get_current_TypeAliasDeclaration_DocumentType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -180,6 +252,102 @@ declare function use_old_VariableDeclaration_TestDataObjectType(
     use: TypeOnly<typeof old.TestDataObjectType>);
 use_old_VariableDeclaration_TestDataObjectType(
     get_current_VariableDeclaration_TestDataObjectType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocRun": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_describeE2EDocRun():
+    TypeOnly<typeof old.describeE2EDocRun>;
+declare function use_current_VariableDeclaration_describeE2EDocRun(
+    use: TypeOnly<typeof current.describeE2EDocRun>);
+use_current_VariableDeclaration_describeE2EDocRun(
+    get_old_VariableDeclaration_describeE2EDocRun());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocRun": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_describeE2EDocRun():
+    TypeOnly<typeof current.describeE2EDocRun>;
+declare function use_old_VariableDeclaration_describeE2EDocRun(
+    use: TypeOnly<typeof old.describeE2EDocRun>);
+use_old_VariableDeclaration_describeE2EDocRun(
+    get_current_VariableDeclaration_describeE2EDocRun());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocs": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_describeE2EDocs():
+    TypeOnly<typeof old.describeE2EDocs>;
+declare function use_current_VariableDeclaration_describeE2EDocs(
+    use: TypeOnly<typeof current.describeE2EDocs>);
+use_current_VariableDeclaration_describeE2EDocs(
+    get_old_VariableDeclaration_describeE2EDocs());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocs": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_describeE2EDocs():
+    TypeOnly<typeof current.describeE2EDocs>;
+declare function use_old_VariableDeclaration_describeE2EDocs(
+    use: TypeOnly<typeof old.describeE2EDocs>);
+use_old_VariableDeclaration_describeE2EDocs(
+    get_current_VariableDeclaration_describeE2EDocs());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocsMemory": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_describeE2EDocsMemory():
+    TypeOnly<typeof old.describeE2EDocsMemory>;
+declare function use_current_VariableDeclaration_describeE2EDocsMemory(
+    use: TypeOnly<typeof current.describeE2EDocsMemory>);
+use_current_VariableDeclaration_describeE2EDocsMemory(
+    get_old_VariableDeclaration_describeE2EDocsMemory());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocsMemory": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_describeE2EDocsMemory():
+    TypeOnly<typeof current.describeE2EDocsMemory>;
+declare function use_old_VariableDeclaration_describeE2EDocsMemory(
+    use: TypeOnly<typeof old.describeE2EDocsMemory>);
+use_old_VariableDeclaration_describeE2EDocsMemory(
+    get_current_VariableDeclaration_describeE2EDocsMemory());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocsRuntime": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_describeE2EDocsRuntime():
+    TypeOnly<typeof old.describeE2EDocsRuntime>;
+declare function use_current_VariableDeclaration_describeE2EDocsRuntime(
+    use: TypeOnly<typeof current.describeE2EDocsRuntime>);
+use_current_VariableDeclaration_describeE2EDocsRuntime(
+    get_old_VariableDeclaration_describeE2EDocsRuntime());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_describeE2EDocsRuntime": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_describeE2EDocsRuntime():
+    TypeOnly<typeof current.describeE2EDocsRuntime>;
+declare function use_old_VariableDeclaration_describeE2EDocsRuntime(
+    use: TypeOnly<typeof old.describeE2EDocsRuntime>);
+use_old_VariableDeclaration_describeE2EDocsRuntime(
+    get_current_VariableDeclaration_describeE2EDocsRuntime());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -324,6 +492,30 @@ declare function use_old_FunctionDeclaration_getContainerRuntimeApi(
     use: TypeOnly<typeof old.getContainerRuntimeApi>);
 use_old_FunctionDeclaration_getContainerRuntimeApi(
     get_current_FunctionDeclaration_getContainerRuntimeApi());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_getCurrentBenchmarkType": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_getCurrentBenchmarkType():
+    TypeOnly<typeof old.getCurrentBenchmarkType>;
+declare function use_current_VariableDeclaration_getCurrentBenchmarkType(
+    use: TypeOnly<typeof current.getCurrentBenchmarkType>);
+use_current_VariableDeclaration_getCurrentBenchmarkType(
+    get_old_VariableDeclaration_getCurrentBenchmarkType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_getCurrentBenchmarkType": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_getCurrentBenchmarkType():
+    TypeOnly<typeof current.getCurrentBenchmarkType>;
+declare function use_old_VariableDeclaration_getCurrentBenchmarkType(
+    use: TypeOnly<typeof old.getCurrentBenchmarkType>);
+use_old_VariableDeclaration_getCurrentBenchmarkType(
+    get_current_VariableDeclaration_getCurrentBenchmarkType());
 
 /*
 * Validate forward compat by using old type in place of current type

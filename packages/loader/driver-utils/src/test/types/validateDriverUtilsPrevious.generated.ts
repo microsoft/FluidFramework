@@ -88,6 +88,30 @@ use_old_ClassDeclaration_BlobCacheStorageService(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_CombinedAppAndProtocolSummary": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_CombinedAppAndProtocolSummary():
+    TypeOnly<old.CombinedAppAndProtocolSummary>;
+declare function use_current_InterfaceDeclaration_CombinedAppAndProtocolSummary(
+    use: TypeOnly<current.CombinedAppAndProtocolSummary>);
+use_current_InterfaceDeclaration_CombinedAppAndProtocolSummary(
+    get_old_InterfaceDeclaration_CombinedAppAndProtocolSummary());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_CombinedAppAndProtocolSummary": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_CombinedAppAndProtocolSummary():
+    TypeOnly<current.CombinedAppAndProtocolSummary>;
+declare function use_old_InterfaceDeclaration_CombinedAppAndProtocolSummary(
+    use: TypeOnly<old.CombinedAppAndProtocolSummary>);
+use_old_InterfaceDeclaration_CombinedAppAndProtocolSummary(
+    get_current_InterfaceDeclaration_CombinedAppAndProtocolSummary());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_DeltaStreamConnectionForbiddenError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_DeltaStreamConnectionForbiddenError():
@@ -1092,6 +1116,30 @@ declare function use_old_VariableDeclaration_getRetryDelaySecondsFromError(
     use: TypeOnly<typeof old.getRetryDelaySecondsFromError>);
 use_old_VariableDeclaration_getRetryDelaySecondsFromError(
     get_current_VariableDeclaration_getRetryDelaySecondsFromError());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isCombinedAppAndProtocolSummary": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_isCombinedAppAndProtocolSummary():
+    TypeOnly<typeof old.isCombinedAppAndProtocolSummary>;
+declare function use_current_FunctionDeclaration_isCombinedAppAndProtocolSummary(
+    use: TypeOnly<typeof current.isCombinedAppAndProtocolSummary>);
+use_current_FunctionDeclaration_isCombinedAppAndProtocolSummary(
+    get_old_FunctionDeclaration_isCombinedAppAndProtocolSummary());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_isCombinedAppAndProtocolSummary": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_isCombinedAppAndProtocolSummary():
+    TypeOnly<typeof current.isCombinedAppAndProtocolSummary>;
+declare function use_old_FunctionDeclaration_isCombinedAppAndProtocolSummary(
+    use: TypeOnly<typeof old.isCombinedAppAndProtocolSummary>);
+use_old_FunctionDeclaration_isCombinedAppAndProtocolSummary(
+    get_current_FunctionDeclaration_isCombinedAppAndProtocolSummary());
 
 /*
 * Validate forward compat by using old type in place of current type
