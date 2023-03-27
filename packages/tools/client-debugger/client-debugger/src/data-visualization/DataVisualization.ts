@@ -194,20 +194,30 @@ export class DataVisualizerGraph {
  */
 export interface SharedObjectListenerEvents extends IEvent {
 	/**
-	 * TODO
+	 * Emitted whenever the associated {@link @fluidframework/shared-object-base#ISharedObject}'s data is updated.
+	 *
+	 * @param visualTree - The updated visual tree representing the shared object's state.
 	 */
 	(event: "update", listener: (visualTree: FluidObjectNode) => void);
 }
 
 /**
- * TODO
+ * Wraps a {@link @fluidframework/shared-object-base#ISharedObject} and encapsulates policy for
+ * generating visual tree representations of its data.
+ *
+ * @remarks
+ *
+ * A visual representation can be requested via {@link SharedObjectVisualizerNode.render}.
+ *
+ * Additionally, whenever the associated `ISharedObject` is updated (i.e. whenever its "op" event is emitted),
+ * an updated visual tree will be emitted via this object's {@link SharedObjectListenerEvents | "update" event}.
  */
 export class SharedObjectVisualizerNode
 	extends TypedEventEmitter<SharedObjectListenerEvents>
 	implements IDisposable
 {
 	/**
-	 * TODO
+	 * The Fluid object whose data will be emitted in visualized form when requested / whenever its data is updated.
 	 */
 	public readonly sharedObject: ISharedObject;
 
@@ -219,12 +229,19 @@ export class SharedObjectVisualizerNode
 	public readonly label: string;
 
 	/**
-	 * TODO
+	 * Callback for visualizing {@link SharedObjectVisualizerNode.sharedObject}.
+	 * Encapsulates the policies for rendering different kinds of DDSs.
 	 */
 	private readonly visualizeSharedObject: VisualizeSharedObject;
 
 	/**
-	 * TODO
+	 * Registers some child handle to a Fluid object for future rendering.
+	 *
+	 * @remarks
+	 *
+	 * Called during {@link SharedObjectVisualizerNode.render} whenever a Fluid handle is encountered.
+	 * Ensures that the consumer of this object's visual tree will be able to request a rendering of the handle's
+	 * corresponding DDS as needed.
 	 */
 	private readonly registerHandle: (
 		handle: IFluidHandle,
