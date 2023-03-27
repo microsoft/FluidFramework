@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-internal/test-drivers";
 import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerRuntimeBase,
@@ -20,8 +21,7 @@ import {
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { FluidTestDriverConfig, createFluidTestDriver } from "@fluidframework/test-drivers";
-import { mixinAttributor } from "@fluidframework/attributor";
+import { mixinAttributor } from "@fluid-experimental/attributor";
 import { pkgVersion } from "./packageVersion";
 import { getLoaderApi, getContainerRuntimeApi, getDataRuntimeApi, getDriverApi } from "./testApi";
 

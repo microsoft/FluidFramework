@@ -144,13 +144,15 @@ describe("SequenceField - toDelta", () => {
 		const fieldChanges = new Map([[fooField, [{ type: Delta.MarkType.Insert, content: [] }]]]);
 		const deltaFromChild = (child: NodeChangeset): Delta.Modify => {
 			assert.deepEqual(child, nodeChange);
-			return { type: Delta.MarkType.Modify, fields: fieldChanges };
+			return { type: Delta.MarkType.Modify, fields: fieldChanges, setValue: 42 };
 		};
 		const actual = SF.sequenceFieldToDelta(changeset, deltaFromChild);
 		const expected: Delta.MarkList = [
 			{
 				type: Delta.MarkType.Insert,
 				content: contentCursor,
+				fields: fieldChanges,
+				setValue: 42,
 			},
 		];
 		assertMarkListEqual(actual, expected);
@@ -220,14 +222,16 @@ describe("SequenceField - toDelta", () => {
 		assert.deepStrictEqual(actual, expected);
 	});
 
-	it("insert and modify => InsertAndModify", () => {
+	it("insert and modify => insert", () => {
 		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
-		const mark: Delta.InsertAndModify = {
-			type: Delta.MarkType.InsertAndModify,
-			content: singleTextCursor({
-				type,
-				value: 0,
-			}),
+		const mark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [
+				singleTextCursor({
+					type,
+					value: 0,
+				}),
+			],
 			setValue: "1",
 		};
 		const expected: Delta.MarkList = [mark];
@@ -236,18 +240,33 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("modify and delete => delete", () => {
-		const changeset = composeAnonChanges([Change.modify(0, childChange1), Change.delete(0, 1)]);
+		const changeset: TestChangeset = [{ type: "Delete", count: 1, changes: childChange1 }];
 		const mark: Delta.Delete = {
 			type: Delta.MarkType.Delete,
 			count: 1,
+			setValue: "1",
 		};
 		const expected: Delta.MarkList = [mark];
 		const actual = toDelta(changeset);
 		assertMarkListEqual(actual, expected);
 	});
 
-	// This test requires more support for MoveIn
-	it.skip("Insert and modify w/ move-in => Insert and modify", () => {
+	it("modify and move-out => move-out", () => {
+		const changeset: TestChangeset = [
+			{ type: "MoveOut", count: 1, id: moveId, changes: childChange1 },
+		];
+		const mark: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			moveId: deltaMoveId,
+			count: 1,
+			setValue: "1",
+		};
+		const expected: Delta.MarkList = [mark];
+		const actual = toDelta(changeset);
+		assertMarkListEqual(actual, expected);
+	});
+
+	it("insert and modify w/ move-in => insert", () => {
 		const nestedChange: FieldChange = {
 			fieldKind: FieldKinds.sequence.identifier,
 			change: brand({
@@ -269,9 +288,9 @@ describe("SequenceField - toDelta", () => {
 		const nestedMoveDelta = new Map([
 			[fooField, [{ type: Delta.MarkType.MoveIn, moveId: deltaMoveId, count: 42 }]],
 		]);
-		const mark: Delta.InsertAndModify = {
-			type: Delta.MarkType.InsertAndModify,
-			content: contentCursor[0],
+		const mark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: contentCursor,
 			fields: nestedMoveDelta,
 		};
 		const expected: Delta.MarkList = [mark];

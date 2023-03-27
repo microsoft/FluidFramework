@@ -55,22 +55,36 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
+	AudienceClientMetaData,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+	GetAudienceMessage,
 	debuggerMessageSource,
 	HasContainerId,
+	ConnectContainerMessage,
+	ConnectContainerMessageData,
+	DisconnectContainerMessage,
+	DisconnectContainerMessageData,
+	CloseContainerMessage,
+	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
 	IDebuggerMessage,
 	GetContainerListMessage,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./messaging";
 export {
 	DebuggerRegistry,
@@ -83,3 +97,4 @@ export {
 	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";
+export { FluidDebuggerLogger } from "./FluidDebuggerLogger";

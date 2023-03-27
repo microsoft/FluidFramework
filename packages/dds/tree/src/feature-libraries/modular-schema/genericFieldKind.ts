@@ -17,7 +17,7 @@ import {
 	NodeChangeRebaser,
 	IdAllocator,
 	isolatedFieldChangeRebaser,
-	RevisionIndexer,
+	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -120,18 +120,31 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			while (iChange < change.length && iOver < over.length) {
 				const a = change[iChange];
 				const b = over[iOver];
+				let nodeChangeA: NodeChangeset | undefined;
+				let nodeChangeB: NodeChangeset | undefined;
+				let index: number;
 				if (a.index === b.index) {
-					rebased.push({
-						index: a.index,
-						nodeChange: rebaseChild(a.nodeChange, b.nodeChange),
-					});
+					index = a.index;
+					nodeChangeA = a.nodeChange;
+					nodeChangeB = b.nodeChange;
 					iChange += 1;
 					iOver += 1;
 				} else if (a.index < b.index) {
-					rebased.push(a);
+					index = a.index;
+					nodeChangeA = a.nodeChange;
 					iChange += 1;
 				} else {
+					index = b.index;
+					nodeChangeB = b.nodeChange;
 					iOver += 1;
+				}
+
+				const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
+				if (nodeChange !== undefined) {
+					rebased.push({
+						index,
+						nodeChange,
+					});
 				}
 			}
 			rebased.push(...change.slice(iChange));
@@ -182,6 +195,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return delta;
 	},
+	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
 /**
@@ -207,7 +221,7 @@ export function convertGenericChange<TChange>(
 	target: FieldChangeHandler<TChange>,
 	composeChild: NodeChangeComposer,
 	genId: IdAllocator,
-	revisionIndexer: RevisionIndexer,
+	revisionMetadata: RevisionMetadataSource,
 ): TChange {
 	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
@@ -218,7 +232,7 @@ export function convertGenericChange<TChange>(
 		composeChild,
 		genId,
 		invalidCrossFieldManager,
-		revisionIndexer,
+		revisionMetadata,
 	);
 }
 
@@ -227,3 +241,7 @@ const invalidCrossFieldManager: CrossFieldManager = {
 	getOrCreate: invalidFunc,
 	get: invalidFunc,
 };
+
+export function newGenericChangeset(): GenericChangeset {
+	return [];
+}

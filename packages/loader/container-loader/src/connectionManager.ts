@@ -13,11 +13,12 @@ import { assert, performance, TypedEventEmitter } from "@fluidframework/common-u
 import {
 	IDeltaQueue,
 	ReadOnlyInfo,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
 import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
+	DriverErrorType,
 	IAnyDriverError,
 	IDocumentService,
 	IDocumentDeltaConnection,
@@ -28,7 +29,6 @@ import {
 	createWriteError,
 	createGenericNetworkError,
 	getRetryDelayFromError,
-	DeltaStreamConnectionForbiddenError,
 	logNetworkFailure,
 	isRuntimeMessage,
 } from "@fluidframework/driver-utils";
@@ -314,11 +314,12 @@ export class ConnectionManager implements IConnectionManager {
 		return { readonly: this._readonlyPermissions };
 	}
 
-	private static detailsFromConnection(connection: IDocumentDeltaConnection): IConnectionDetails {
+	private static detailsFromConnection(
+		connection: IDocumentDeltaConnection,
+	): IConnectionDetailsInternal {
 		return {
 			claims: connection.claims,
 			clientId: connection.clientId,
-			existing: connection.existing,
 			checkpointSequenceNumber: connection.checkpointSequenceNumber,
 			get initialClients() {
 				return connection.initialClients;
@@ -552,7 +553,7 @@ export class ConnectionManager implements IConnectionManager {
 				if (
 					typeof origError === "object" &&
 					origError !== null &&
-					origError?.errorType === DeltaStreamConnectionForbiddenError.errorType
+					origError?.errorType === DriverErrorType.deltaStreamConnectionForbidden
 				) {
 					connection = new NoDeltaStream();
 					requestedMode = "read";

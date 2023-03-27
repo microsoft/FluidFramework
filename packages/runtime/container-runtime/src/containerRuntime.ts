@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
-	IFluidTokenProvider,
 	IContainerContext,
 	IDeltaManager,
 	IRuntime,
@@ -97,9 +96,6 @@ import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	addTreeToSummary,
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
@@ -122,10 +118,13 @@ import {
 	aliasBlobName,
 	blobsTreeName,
 	chunksBlobName,
+	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
+	IFetchSnapshotResult,
+	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
 	Summarizer,
@@ -152,7 +151,6 @@ import {
 	GarbageCollector,
 	GCNodeType,
 	gcTombstoneGenerationOptionName,
-	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
@@ -535,12 +533,7 @@ export function getDeviceSpec() {
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
-	implements
-		IContainerRuntime,
-		IGarbageCollectionRuntime,
-		IRuntime,
-		ISummarizerRuntime,
-		ISummarizerInternalsProvider
+	implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	public get IContainerRuntime() {
 		return this;
@@ -971,6 +964,12 @@ export class ContainerRuntime
 	public readonly gcTombstoneEnforcementAllowed: boolean;
 
 	/**
+	 * GUID to identify a document in telemetry
+	 * ! Note: should not be used for anything other than telemetry and is not considered a stable GUID
+	 */
+	private readonly telemetryDocumentId: string;
+
+	/**
 	 * @internal
 	 */
 	protected constructor(
@@ -1042,6 +1041,8 @@ export class ContainerRuntime
 					this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName],
 			}),
 		});
+
+		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
 
 		this.disableAttachReorder = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
@@ -1193,8 +1194,6 @@ export class ContainerRuntime
 				}
 			},
 			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
-			(fromPath: string, toPath: string) =>
-				this.garbageCollector.addedOutboundReference(fromPath, toPath),
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
@@ -1284,8 +1283,13 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
+				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
+				// an initializeEntryPoint for that case.
+				assert(
+					initializeEntryPoint === undefined,
+					0x5be /* Summarizer clients cannot have a custom entryPoint */,
+				);
 				this._summarizer = new Summarizer(
-					"/_summarizer",
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
@@ -1395,12 +1399,22 @@ export class ContainerRuntime
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 			}),
+			telemetryDocumentId: this.telemetryDocumentId,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
-		this.entryPoint = new LazyPromise(async () => initializeEntryPoint?.(this));
+		this.entryPoint = new LazyPromise(async () => {
+			if (this.context.clientDetails.type === summarizerClientType) {
+				assert(
+					this._summarizer !== undefined,
+					0x5bf /* Summarizer object is undefined in a summarizer client */,
+				);
+				return this._summarizer;
+			}
+			return initializeEntryPoint?.(this);
+		});
 	}
 
 	/**
@@ -1435,19 +1449,6 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
-	}
-
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
-	 */
-	public get IFluidTokenProvider() {
-		if (this.options?.intelligence) {
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return {
-				intelligence: this.options.intelligence,
-			} as IFluidTokenProvider;
-		}
-		return undefined;
 	}
 
 	/**
@@ -1574,6 +1575,7 @@ export class ContainerRuntime
 			message:
 				extractSummaryMetadataMessage(this.deltaManager.lastMessage) ??
 				this.messageAtLastSummary,
+			telemetryDocumentId: this.telemetryDocumentId,
 		};
 		addBlobToSummary(summaryTree, metadataBlobName, JSON.stringify(metadata));
 	}
@@ -2316,10 +2318,10 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateStateBeforeGC.
 	 * Before GC runs, called by the garbage collector to update any pending GC state. This is mainly used to notify
 	 * the garbage collector of references detected since the last GC run. Most references are notified immediately
 	 * but there can be some for which async operation is required (such as detecting new root data stores).
+	 * @see IGarbageCollectionRuntime.updateStateBeforeGC
 	 */
 	public async updateStateBeforeGC() {
 		return this.dataStores.updateStateBeforeGC();
@@ -2330,9 +2332,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::getGCData.
 	 * Generates and returns the GC data for this container.
 	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
+	 * @see IGarbageCollectionRuntime.getGCData
 	 */
 	public async getGCData(fullGC?: boolean): Promise<IGarbageCollectionData> {
 		const builder = new GCDataBuilder();
@@ -2345,9 +2347,9 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Implementation of IGarbageCollectionRuntime::updateUsedRoutes.
 	 * After GC has run, called to notify this container's nodes of routes that are used in it.
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
+	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
 	public updateUsedRoutes(usedRoutes: string[]) {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before
@@ -2507,7 +2509,7 @@ export class ContainerRuntime
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
-		const { fullTree, refreshLatestAck, summaryLogger } = options;
+		const { fullTree = false, refreshLatestAck, summaryLogger } = options;
 		// The summary number for this summary. This will be updated during the summary process, so get it now and
 		// use it for all events logged during this summary.
 		const summaryNumber = this.nextSummaryNumber;
@@ -2602,7 +2604,7 @@ export class ContainerRuntime
 			const forcedFullTree = this.garbageCollector.summaryStateNeedsReset;
 			try {
 				summarizeResult = await this.summarize({
-					fullTree: fullTree ?? forcedFullTree,
+					fullTree: fullTree || forcedFullTree,
 					trackState: true,
 					summaryLogger: summaryNumberLogger,
 					runGC: this.garbageCollector.shouldRunGC,

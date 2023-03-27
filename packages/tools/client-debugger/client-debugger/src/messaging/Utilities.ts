@@ -8,18 +8,29 @@ import { IDebuggerMessage } from "./Messages";
 /**
  * Posts the provided message to the window (globalThis).
  *
+ * @param messages - The messages to be posted.
+ * @param loggingOptions - Settings related to logging to console for troubleshooting.
+ * If not passed, this function won't log to console before posting the message.
+ *
  * @remarks Thin wrapper to provide some message-wise type-safety.
  *
  * @internal
  */
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(
-	message: TMessage,
+export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
+	...messages: TMessage[]
 ): void {
-	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-	console.log(`${loggingPreamble}Posting message to the window:`, message); // TODO: console.debug
-	globalThis.postMessage?.(message, "*"); // TODO: verify target is okay
+	// TODO: remove loggingOptions once things settle.
+	// If we need special logic for globalThis.postMessage maybe keep this function, but otherwise maybe remove it too.
+	if (loggingOptions !== undefined) {
+		const loggingPreamble =
+			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
+		console.debug(`${loggingPreamble}Posting message to the window:`, messages);
+	}
+
+	for (const message of messages) {
+		globalThis.postMessage?.(message, "*");
+	}
 }
 
 /**
@@ -57,6 +68,8 @@ export interface MessageLoggingOptions {
  * @param handlers - List of handlers for particular event types.
  * If the incoming event's message type has a corresponding handler callback, that callback will be invoked.
  * Otherwise, this function will no-op.
+ * @param loggingOptions - Settings related to logging to console for troubleshooting.
+ * If not passed, this function won't log to console after the message has been handled.
  *
  * @internal
  */
@@ -65,6 +78,7 @@ export function handleIncomingWindowMessage(
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
+	// TODO: remove loggingOptions once things settle.
 	return handleIncomingMessage(event.data, handlers, loggingOptions);
 }
 
@@ -75,6 +89,8 @@ export function handleIncomingWindowMessage(
  * @param handlers - List of handlers for particular event types.
  * If the incoming event's message type has a corresponding handler callback, that callback will be invoked.
  * Otherwise, this function will no-op.
+ * @param loggingOptions - Settings related to logging to console for troubleshooting.
+ * If not passed, this function won't log to console after the message has been handled.
  *
  * @internal
  */
@@ -83,6 +99,8 @@ export function handleIncomingMessage(
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
+	// TODO: remove loggingOptions once things settle.
+
 	if (message === undefined || !isDebuggerMessage(message)) {
 		return;
 	}
@@ -95,10 +113,10 @@ export function handleIncomingMessage(
 	const handled = handlers[message.type](message);
 
 	// Only log if the message was actually handled by the recipient.
-	if (handled) {
+	if (handled && loggingOptions !== undefined) {
 		const loggingPreamble =
 			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-		console.log(`${loggingPreamble} message handled:`, message); // TODO: console.debug
+		console.debug(`${loggingPreamble} message handled:`, message);
 	}
 }
 

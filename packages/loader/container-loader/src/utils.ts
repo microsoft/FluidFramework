@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/common-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
+import { isCombinedAppAndProtocolSummary } from "@fluidframework/driver-utils";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -128,12 +129,12 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
 export const getSnapshotTreeFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
 ): ISnapshotTreeWithBlobContents => {
-	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"] as ISummaryTree;
-	const appSummaryTree = detachedContainerSnapshot.tree[".app"] as ISummaryTree;
 	assert(
-		protocolSummaryTree !== undefined && appSummaryTree !== undefined,
+		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		0x1e0 /* "Protocol and App summary trees should be present" */,
 	);
+	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
+	const appSummaryTree = detachedContainerSnapshot.tree[".app"];
 	const snapshotTreeWithBlobContents = convertProtocolAndAppSummaryToSnapshotTree(
 		protocolSummaryTree,
 		appSummaryTree,

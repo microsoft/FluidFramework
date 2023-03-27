@@ -10,7 +10,7 @@ import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	IdAllocator,
-	RevisionIndexer,
+	RevisionMetadataSource,
 } from "../modular-schema";
 import {
 	Changeset,
@@ -43,6 +43,8 @@ import {
 	getOffsetAtRevision,
 	isObjMark,
 	cloneMark,
+	isDeleteMark,
+	isModify,
 } from "./utils";
 
 /**
@@ -67,7 +69,7 @@ export function compose<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	manager: CrossFieldManager,
-	revisionIndexer: RevisionIndexer,
+	revisionMetadata: RevisionMetadataSource,
 ): Changeset<TNodeChange> {
 	let composed: Changeset<TNodeChange> = [];
 	for (const change of changes) {
@@ -78,7 +80,7 @@ export function compose<TNodeChange>(
 			composeChild,
 			genId,
 			manager as MoveEffectTable<TNodeChange>,
-			revisionIndexer,
+			revisionMetadata,
 		);
 	}
 	return composed;
@@ -91,7 +93,7 @@ function composeMarkLists<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
-	revisionIndexer: RevisionIndexer,
+	revisionMetadata: RevisionMetadataSource,
 ): MarkList<TNodeChange> {
 	const factory = new MarkListFactory<TNodeChange>(undefined, moveEffects);
 	const queue = new ComposeQueue(
@@ -101,12 +103,12 @@ function composeMarkLists<TNodeChange>(
 		newMarkList,
 		genId,
 		moveEffects,
-		revisionIndexer,
+		revisionMetadata,
 		(a, b) => composeChildChanges(a, b, newRev, composeChild),
 	);
 	while (!queue.isEmpty()) {
 		const popped = queue.pop();
-		if (popped.areInverses) {
+		if (popped.areInverses === true) {
 			factory.pushOffset(getInputLength(popped.baseMark));
 			continue;
 		}
@@ -134,6 +136,7 @@ function composeMarkLists<TNodeChange>(
 				composeChild,
 				genId,
 				moveEffects,
+				revisionMetadata,
 			);
 			factory.push(composedMark);
 		}
@@ -158,6 +161,7 @@ function composeMarks<TNodeChange>(
 	composeChild: NodeChangeComposer<TNodeChange>,
 	genId: IdAllocator,
 	moveEffects: MoveEffectTable<TNodeChange>,
+	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
 	if (isSkipMark(baseMark)) {
 		return composeMark(newMark, newRev, composeChild);
@@ -176,6 +180,12 @@ function composeMarks<TNodeChange>(
 		// In the long run we want to preserve them.
 		fail("TODO: support modifications to deleted subtree");
 	}
+
+	const newMarkRevision = isModify(newMark) ? newRev : newMark.revision ?? newRev;
+	const newIntention = getIntention(newMarkRevision, revisionMetadata);
+	const baseMarkRevision = isModify(baseMark) ? undefined : baseMark.revision;
+	const baseIntention = getIntention(baseMarkRevision, revisionMetadata);
+
 	switch (baseType) {
 		case "Insert":
 		case "Revive":
@@ -268,7 +278,7 @@ function composeMarks<TNodeChange>(
 					return 0;
 				}
 				case "ReturnFrom": {
-					if (newMark.detachedBy === baseMark.revision) {
+					if (newMark.detachedBy === baseIntention) {
 						getOrAddEffect(
 							moveEffects,
 							CrossFieldTarget.Source,
@@ -329,7 +339,7 @@ function composeMarks<TNodeChange>(
 					return 0;
 				}
 				case "MoveOut": {
-					if (baseMark.detachedBy === (newMark.revision ?? newRev)) {
+					if (baseMark.detachedBy === newIntention) {
 						getOrAddEffect(
 							moveEffects,
 							CrossFieldTarget.Source,
@@ -365,8 +375,8 @@ function composeMarks<TNodeChange>(
 				}
 				case "ReturnFrom": {
 					if (
-						baseMark.detachedBy === (newMark.revision ?? newRev) ||
-						newMark.detachedBy === baseMark.revision
+						baseMark.detachedBy === newIntention ||
+						newMark.detachedBy === baseIntention
 					) {
 						getOrAddEffect(
 							moveEffects,
@@ -578,6 +588,7 @@ export class ComposeQueue<T> {
 	private readonly newMarks: MarkQueue<T>;
 	private readonly baseIndex: IndexTracker;
 	private readonly baseGap: GapTracker;
+	private readonly cancelledInserts: Set<RevisionTag> = new Set();
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,
@@ -586,11 +597,11 @@ export class ComposeQueue<T> {
 		newMarks: Changeset<T>,
 		genId: IdAllocator,
 		private readonly moveEffects: MoveEffectTable<T>,
-		revisionIndexer: RevisionIndexer,
+		private readonly revisionMetadata: RevisionMetadataSource,
 		composeChanges?: (a: T | undefined, b: T | undefined) => T | undefined,
 	) {
-		this.baseIndex = new IndexTracker(revisionIndexer);
-		this.baseGap = new GapTracker(revisionIndexer);
+		this.baseIndex = new IndexTracker(revisionMetadata.getIndex);
+		this.baseGap = new GapTracker(revisionMetadata.getIndex);
 		this.baseMarks = new MarkQueue(
 			baseMarks,
 			baseRevision,
@@ -607,6 +618,27 @@ export class ComposeQueue<T> {
 			genId,
 			composeChanges,
 		);
+
+		// Detect all inserts in the new marks that will be cancelled by deletes in the base marks
+		const deletes = new Set<RevisionTag>();
+		for (const mark of baseMarks) {
+			if (isDeleteMark(mark)) {
+				const baseIntention = getIntention(mark.revision, revisionMetadata);
+				if (baseIntention !== undefined) {
+					deletes.add(baseIntention);
+				}
+			}
+		}
+		for (const mark of newMarks) {
+			if (isObjMark(mark) && mark.type === "Insert") {
+				const newRev = mark.revision ?? this.newRevision;
+				const newIntention = getIntention(newRev, revisionMetadata);
+				if (newIntention !== undefined && deletes.has(newIntention)) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					this.cancelledInserts.add(newRev!);
+				}
+			}
+		}
 	}
 
 	public isEmpty(): boolean {
@@ -635,16 +667,50 @@ export class ComposeQueue<T> {
 			const length = getOutputLength(baseMark);
 			return this.dequeueBase(length);
 		} else if (isAttach(newMark)) {
-			if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
-				const newRev = newMark.revision ?? this.newRevision;
+			const newRev = newMark.revision ?? this.newRevision;
+			if (
+				isDetachMark(baseMark) &&
+				areInverseRevisions(
+					newRev,
+					baseMark.revision ?? this.baseMarks.revision,
+					this.revisionMetadata,
+				)
+			) {
+				const baseMarkLength = getInputLength(baseMark);
+				const newMarkLength = getOutputLength(newMark);
+				// There is some change foo that is being cancelled out as part of a rebase sandwich.
+				// The marks that make up this change (and its inverse) may be broken up differently between the base
+				// changeset and the new changeset because either changeset may have been composed with other changes
+				// whose marks may now be interleaved with the marks that represent foo/its inverse.
+				// This means that the base and new marks may not be of the same length.
+				// We do however know that the all of the marks for foo will appear in the base changeset and all of the
+				// marks for the inverse of foo will appear in the new changeset, so we can be confident that whenever
+				// we encounter such pairs of marks, they do line up such that they describe changes to the same first
+				// cell. This means we can safely treat them as inverses of one another.
+				if (newMarkLength < baseMarkLength) {
+					baseMark = this.baseMarks.dequeueInput(newMarkLength);
+					newMark = this.newMarks.dequeue();
+				} else if (newMarkLength > baseMarkLength) {
+					baseMark = this.baseMarks.dequeue();
+					newMark = this.newMarks.dequeueOutput(baseMarkLength, true);
+				} else {
+					baseMark = this.baseMarks.dequeue();
+					newMark = this.newMarks.dequeue();
+				}
+				return {
+					baseMark,
+					newMark,
+					areInverses: true,
+				};
+			} else if (isActiveReattach(newMark) && isDetachMark(baseMark)) {
 				const baseRev = baseMark.revision ?? this.baseMarks.revision;
 				assert(
 					baseRev !== undefined,
 					0x4df /* Compose base mark should carry revision info */,
 				);
 				const areInverses =
-					// The same RevisionTag implies the two changesets are inverses in a rebase sandwich
-					(newRev !== undefined && baseRev === newRev) ||
+					// The two changesets are inverses in a rebase sandwich
+					areInverseRevisions(newRev, baseRev, this.revisionMetadata) ||
 					// The new mark is an undo of the base one
 					newMark.detachedBy === baseRev;
 				if (areInverses) {
@@ -728,6 +794,26 @@ export class ComposeQueue<T> {
 				areRelatedReattaches(baseMark, newMark)
 			) {
 				return dequeueRelatedReattaches(this.newMarks, this.baseMarks);
+			} else if (
+				newMark.type === "Insert" &&
+				newRev !== undefined &&
+				this.cancelledInserts.has(newRev)
+			) {
+				// We know the new insert is getting cancelled out so we need to delay returning it.
+				// The base mark that cancels the insert must appear later in the base marks.
+				return { baseMark: this.baseMarks.dequeue() };
+			} else if (
+				isDeleteMark(baseMark) &&
+				baseMark.revision !== undefined &&
+				this.revisionMetadata.getInfo(baseMark.revision).rollbackOf !== undefined
+			) {
+				// The base mark represents an insert being rolled back.
+				// That insert was concurrent to and sequenced after the attach performed by newNark so
+				// the delete should be ordered as the later insert would have been had the changes applied in
+				// sequencing order. This means the delete should come first since right now we only support
+				// the merge-left tiebreak policy.
+				// TODO: support merge-right tiebreak policy.
+				return { baseMark: this.baseMarks.dequeue() };
 			}
 			return this.dequeueNew();
 		} else if (isDetachMark(baseMark) || isBlockedReattach(baseMark)) {
@@ -842,5 +928,27 @@ type ComposeMarks<T> =
  * Only valid in the context of a compose (i.e., the output context of `baseMarks` is the input context of `newMark`).
  */
 function areRelatedReattaches<T>(baseMark: Reattach<T>, newMark: Reattach<T>): boolean {
-	return newMark.detachedBy === baseMark.detachedBy;
+	const newEither = newMark.lastDetachedBy ?? newMark.detachedBy;
+	const baseEither = baseMark.lastDetachedBy ?? baseMark.detachedBy;
+	return newEither === baseEither;
+}
+
+function getIntention(
+	rev: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): RevisionTag | undefined {
+	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
+}
+
+function areInverseRevisions(
+	rev1: RevisionTag | undefined,
+	rev2: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): boolean {
+	if (rev1 === undefined || rev2 === undefined) {
+		return false;
+	}
+	const info1 = revisionMetadata.getInfo(rev1);
+	const info2 = revisionMetadata.getInfo(rev2);
+	return rev1 === info2.rollbackOf || rev2 === info1.rollbackOf;
 }

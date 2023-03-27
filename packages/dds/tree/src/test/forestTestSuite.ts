@@ -580,9 +580,9 @@ export function testForest(config: ForestTestConfiguration): void {
 				];
 				initializeForest(forest, content.map(singleTextCursor));
 
-				const mark: Delta.InsertAndModify = {
-					type: Delta.MarkType.InsertAndModify,
-					content: singleTextCursor({ type: jsonNumber.name, value: 3 }),
+				const mark: Delta.Insert = {
+					type: Delta.MarkType.Insert,
+					content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
 					fields: new Map([
 						[
 							brand("newField"),
@@ -621,8 +621,9 @@ export function testForest(config: ForestTestConfiguration): void {
 				initializeForest(forest, nestedContent.map(singleTextCursor));
 
 				const moveId = brandOpaque<Delta.MoveId>(0);
-				const mark: Delta.ModifyAndDelete = {
-					type: Delta.MarkType.ModifyAndDelete,
+				const mark: Delta.Delete = {
+					type: Delta.MarkType.Delete,
+					count: 1,
 					fields: new Map([
 						[xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
 					]),
@@ -651,7 +652,8 @@ export function testForest(config: ForestTestConfiguration): void {
 							xField,
 							[
 								{
-									type: Delta.MarkType.ModifyAndMoveOut,
+									type: Delta.MarkType.MoveOut,
+									count: 1,
 									setValue: 2,
 									moveId,
 								},
@@ -673,61 +675,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert(reader.firstNode());
 				assert.equal(reader.value, 2);
 				assert.equal(reader.nextNode(), true);
-			});
-
-			// TODO: Unskip once MoveInAndModify is properly supported.
-			// MoveInAndModify should support inner deltas e.g. Insert, MoveOut, etc.
-			it.skip("move in and modify", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(defaultSchemaPolicy));
-				initializeForest(forest, nestedContent.map(singleTextCursor));
-
-				const moveId = brandOpaque<Delta.MoveId>(0);
-				const newField: FieldKey = brand("newField");
-				const mark: Delta.Modify = {
-					type: Delta.MarkType.Modify,
-					fields: new Map([
-						[xField, [{ type: Delta.MarkType.MoveOut, count: 1, moveId }]],
-						[
-							yField,
-							[
-								{
-									type: Delta.MarkType.MoveInAndModify,
-									moveId,
-									fields: new Map([
-										[
-											newField,
-											[
-												{
-													type: Delta.MarkType.Insert,
-													content: [
-														{ type: jsonNumber.name, value: 2 },
-													].map(singleTextCursor),
-												},
-											],
-										],
-									]),
-								},
-							],
-						],
-					]),
-				};
-				const delta: Delta.Root = new Map([[rootFieldKeySymbol, [mark]]]);
-				forest.applyDelta(delta);
-
-				const reader = forest.allocateCursor();
-				moveToDetachedField(forest, reader);
-				assert(reader.firstNode());
-				reader.enterField(xField);
-				assert.equal(reader.getFieldLength(), 0);
-				reader.exitField();
-				reader.enterField(yField);
-				assert.equal(reader.getFieldLength(), 2);
-				assert(reader.firstNode());
-				assert.equal(reader.value, 0);
-				reader.enterField(newField);
-				assert.equal(reader.getFieldLength(), 1);
-				assert(reader.firstNode());
-				assert.equal(reader.value, 2);
 			});
 		});
 

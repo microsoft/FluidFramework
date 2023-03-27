@@ -5,32 +5,55 @@
 
 import { strict as assert } from "assert";
 import {
+	ContextuallyTypedNodeDataObject,
+	FieldChangeEncoder,
 	FieldChangeHandler,
-	FieldKinds,
 	IdAllocator,
 	NodeChangeset,
 	NodeReviver,
+	RevisionMetadataSource,
+	SchemaAware,
+	TypedSchema,
+	jsonableTreeFromCursor,
 	singleTextCursor,
+	valueSymbol,
+	cursorFromContextualData,
 } from "../../feature-libraries";
+// Allow import from file being tested.
+// eslint-disable-next-line import/no-internal-modules
+import * as FieldKinds from "../../feature-libraries/defaultFieldKinds";
 import {
 	makeAnonChange,
 	RevisionTag,
 	TaggedChange,
-	TreeSchemaIdentifier,
 	Delta,
 	mintRevisionTag,
+	ValueSchema,
 } from "../../core";
-import { brand, JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual, fakeRepair } from "../utils";
+import { JsonCompatibleReadOnly } from "../../util";
+import { assertMarkListEqual, fakeTaggedRepair as fakeRepair } from "../utils";
 
-const nodeType: TreeSchemaIdentifier = brand("Node");
-const tree1 = {
-	type: nodeType,
-	value: "value1",
-	fields: { foo: [{ type: nodeType, value: "value3" }] },
+const nodeSchema = TypedSchema.tree("Node", {
+	value: ValueSchema.String,
+	local: { foo: TypedSchema.field(FieldKinds.value, "Node") },
+});
+
+const schemaData = SchemaAware.typedSchemaData(new Map(), nodeSchema);
+
+const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
+	[valueSymbol]: "value1",
+	foo: "value3",
 };
-const tree2 = { type: nodeType, value: "value2" };
-const tree3 = { type: nodeType, value: "value3" };
+
+// TODO: This file is mainly working with in memory representations.
+// Therefore it should not be using JsonableTrees.
+// The usages of this (and other JsonableTrees) such as ValueChangeset should be changed to use
+// a tree format intended for in memory use, such as Cursor or MapTree.
+const tree1 = jsonableTreeFromCursor(
+	cursorFromContextualData(schemaData, new Set([nodeSchema.name]), tree1ContextuallyTyped),
+);
+
+const tree2 = { type: nodeSchema.name, value: "value2" };
 const nodeChange1: NodeChangeset = { valueChange: { value: "value3" } };
 const nodeChange2: NodeChangeset = { valueChange: { value: "value4" } };
 const nodeChange3: NodeChangeset = { valueChange: { value: "value5" } };
@@ -47,6 +70,11 @@ const crossFieldManager = {
 
 const revisionIndexer = (tag: RevisionTag) => {
 	assert.fail("Unexpected revision index query");
+};
+
+const revisionMetadata: RevisionMetadataSource = {
+	getIndex: revisionIndexer,
+	getInfo: (revision: RevisionTag) => ({ revision }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {
@@ -95,7 +123,6 @@ describe("Value field changesets", () => {
 	const change1 = fieldHandler.editor.set(singleTextCursor(tree1));
 	const change2 = fieldHandler.editor.set(singleTextCursor(tree2));
 
-	const detachedBy: RevisionTag = mintRevisionTag();
 	const revertChange2: FieldKinds.ValueChangeset = {
 		value: { revert: singleTextCursor(tree1) },
 	};
@@ -116,7 +143,7 @@ describe("Value field changesets", () => {
 			simpleChildComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionIndexer,
+			revisionMetadata,
 		);
 
 		assert.deepEqual(composed, change2);
@@ -129,7 +156,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change1WithChildChange,
 		);
@@ -146,7 +173,7 @@ describe("Value field changesets", () => {
 				simpleChildComposer,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change1,
 		);
@@ -157,7 +184,7 @@ describe("Value field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			childChange3,
 		);
@@ -181,8 +208,7 @@ describe("Value field changesets", () => {
 	});
 
 	it("can be rebased", () => {
-		const childRebaser = (_1: NodeChangeset, _2: NodeChangeset) =>
-			assert.fail("Should not be called");
+		const childRebaser = () => assert.fail("Should not be called");
 
 		assert.deepEqual(
 			fieldHandler.rebaser.rebase(
@@ -191,14 +217,17 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change2,
 		);
 	});
 
 	it("can rebase child changes", () => {
-		const childRebaser = (change: NodeChangeset, base: NodeChangeset) => {
+		const childRebaser = (
+			change: NodeChangeset | undefined,
+			base: NodeChangeset | undefined,
+		) => {
 			assert.deepEqual(change, nodeChange2);
 			assert.deepEqual(base, nodeChange1);
 			return nodeChange3;
@@ -214,7 +243,7 @@ describe("Value field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			childChange3,
 		);
@@ -224,8 +253,8 @@ describe("Value field changesets", () => {
 		const expected: Delta.MarkList = [
 			{ type: Delta.MarkType.Delete, count: 1 },
 			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
+				type: Delta.MarkType.Insert,
+				content: [singleTextCursor(tree1)],
 				setValue: "value3",
 			},
 		];
@@ -244,20 +273,12 @@ describe("Value field changesets", () => {
 		assertMarkListEqual(actual, expected);
 	});
 
-	it("can be encoded in JSON", () => {
-		const version = 0;
+	const encodingTestData: [string, FieldKinds.ValueChangeset][] = [
+		["with child change", change1WithChildChange],
+		["with repair data", revertChange2],
+	];
 
-		const encoded = JSON.stringify(
-			fieldHandler.encoder.encodeForJson(version, change1WithChildChange, childEncoder1),
-		);
-
-		const decoded = fieldHandler.encoder.decodeJson(
-			version,
-			JSON.parse(encoded),
-			childDecoder1,
-		);
-		assert.deepEqual(decoded, change1WithChildChange);
-	});
+	runEncodingTests(fieldHandler.encoder, encodingTestData);
 });
 
 describe("Optional field changesets", () => {
@@ -296,7 +317,7 @@ describe("Optional field changesets", () => {
 			childComposer,
 			idAllocator,
 			crossFieldManager,
-			revisionIndexer,
+			revisionMetadata,
 		);
 		assert.deepEqual(composed, change3);
 	});
@@ -313,7 +334,7 @@ describe("Optional field changesets", () => {
 				childComposer1_2,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			expected,
 		);
@@ -350,8 +371,10 @@ describe("Optional field changesets", () => {
 	});
 
 	it("can be rebased", () => {
-		const childRebaser = (_change: NodeChangeset, _base: NodeChangeset) =>
-			assert.fail("Should not be called");
+		const childRebaser = (
+			_change: NodeChangeset | undefined,
+			_base: NodeChangeset | undefined,
+		) => assert.fail("Should not be called");
 		assert.deepEqual(
 			fieldHandler.rebaser.rebase(
 				change3,
@@ -359,7 +382,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			change2,
 		);
@@ -369,7 +392,10 @@ describe("Optional field changesets", () => {
 		const baseChange: FieldKinds.OptionalChangeset = { childChange: nodeChange1 };
 		const changeToRebase: FieldKinds.OptionalChangeset = { childChange: nodeChange2 };
 
-		const childRebaser = (change: NodeChangeset, base: NodeChangeset) => {
+		const childRebaser = (
+			change: NodeChangeset | undefined,
+			base: NodeChangeset | undefined,
+		): NodeChangeset | undefined => {
 			assert.deepEqual(change, nodeChange2);
 			assert.deepEqual(base, nodeChange1);
 			return nodeChange3;
@@ -384,7 +410,7 @@ describe("Optional field changesets", () => {
 				childRebaser,
 				idAllocator,
 				crossFieldManager,
-				revisionIndexer,
+				revisionMetadata,
 			),
 			expected,
 		);
@@ -393,8 +419,8 @@ describe("Optional field changesets", () => {
 	it("can be converted to a delta when field was empty", () => {
 		const expected: Delta.MarkList = [
 			{
-				type: Delta.MarkType.InsertAndModify,
-				content: singleTextCursor(tree1),
+				type: Delta.MarkType.Insert,
+				content: [singleTextCursor(tree1)],
 				setValue: "value3",
 			},
 		];
@@ -427,18 +453,37 @@ describe("Optional field changesets", () => {
 		assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2), expected);
 	});
 
-	it("can be encoded in JSON", () => {
+	const encodingTestData: [string, FieldKinds.OptionalChangeset][] = [
+		["change", change1],
+		["with repair data", revertChange2],
+	];
+
+	runEncodingTests(fieldHandler.encoder, encodingTestData);
+});
+
+function runEncodingTests<TChangeset>(
+	encoder: FieldChangeEncoder<TChangeset>,
+	encodingTestData: [string, TChangeset][],
+) {
+	describe("encoding", () => {
 		const version = 0;
 
-		const encoded = JSON.stringify(
-			fieldHandler.encoder.encodeForJson(version, change1, childEncoder1),
-		);
+		for (const [name, data] of encodingTestData) {
+			describe(name, () => {
+				it("roundtrip", () => {
+					const encoded = encoder.encodeForJson(version, data, childEncoder1);
+					const decoded = encoder.decodeJson(version, encoded, childDecoder1);
+					assert.deepEqual(decoded, data);
+				});
 
-		const decoded = fieldHandler.encoder.decodeJson(
-			version,
-			JSON.parse(encoded),
-			childDecoder1,
-		);
-		assert.deepEqual(decoded, change1);
+				it("json roundtrip", () => {
+					const encoded = JSON.stringify(
+						encoder.encodeForJson(version, data, childEncoder1),
+					);
+					const decoded = encoder.decodeJson(version, JSON.parse(encoded), childDecoder1);
+					assert.deepEqual(decoded, data);
+				});
+			});
+		}
 	});
-});
+}

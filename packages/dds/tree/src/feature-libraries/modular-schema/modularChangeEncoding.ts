@@ -20,6 +20,7 @@ import {
 	NodeChangeset,
 	RevisionInfo,
 	ValueChange,
+	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { getChangeHandler } from "./modularChangeFamily";
@@ -30,6 +31,7 @@ import { getChangeHandler } from "./modularChangeFamily";
 interface EncodedNodeChangeset {
 	valueChange?: ValueChange;
 	fieldChanges?: EncodedFieldChangeMap;
+	valueConstraint?: ValueConstraint;
 }
 
 interface EncodedModularChangeset {
@@ -65,7 +67,7 @@ export function encodeForJsonFormat0(
 	return {
 		maxId: change.maxId,
 		revisions: change.revisions as readonly RevisionInfo[] & JsonCompatibleReadOnly,
-		changes: encodeFieldChangesForJson(fieldKinds, change.changes),
+		changes: encodeFieldChangesForJson(fieldKinds, change.fieldChanges),
 	};
 }
 
@@ -111,6 +113,10 @@ function encodeNodeChangesForJson(
 		encodedChange.fieldChanges = encodedFieldChanges as unknown as EncodedFieldChangeMap;
 	}
 
+	if (change.valueConstraint !== undefined) {
+		encodedChange.valueConstraint = change.valueConstraint;
+	}
+
 	return encodedChange;
 }
 
@@ -120,7 +126,7 @@ export function decodeJsonFormat0(
 ): ModularChangeset {
 	const encodedChange = change as unknown as EncodedModularChangeset;
 	const decoded: Mutable<ModularChangeset> = {
-		changes: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
+		fieldChanges: decodeFieldChangesFromJson(fieldKinds, encodedChange.changes),
 	};
 	if (encodedChange.revisions !== undefined) {
 		decoded.revisions = encodedChange.revisions;
@@ -171,6 +177,10 @@ function decodeNodeChangesetFromJson(
 			fieldKinds,
 			encodedChange.fieldChanges,
 		);
+	}
+
+	if (encodedChange.valueConstraint !== undefined) {
+		decodedChange.valueConstraint = encodedChange.valueConstraint;
 	}
 
 	return decodedChange;

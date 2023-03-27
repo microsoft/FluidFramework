@@ -6,6 +6,7 @@
 import { expect } from "chai";
 import { benchmark } from "../Runner";
 import { BenchmarkType, isParentProcess } from "../Configuration";
+import { runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
 
 describe("`benchmark` function", () => {
 	describe("uses `before` and `after`", () => {
@@ -46,12 +47,70 @@ describe("`benchmark` function", () => {
 		});
 	});
 
+	it("runBenchmark sync", async () => {
+		await runBenchmark({
+			maxBenchmarkDurationSeconds: 0.1,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
+			benchmarkFn: () => {
+				// This is a benchmark.
+			},
+		});
+	});
+
+	it("runBenchmarkSync", async () => {
+		runBenchmarkSync({
+			maxBenchmarkDurationSeconds: 0.1,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
+			benchmarkFn: () => {
+				// This is a benchmark.
+			},
+		});
+	});
+
+	it("runBenchmark async", async () => {
+		await runBenchmark({
+			maxBenchmarkDurationSeconds: 0.1,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
+			benchmarkFnAsync: async () => {
+				// This is a benchmark.
+				await delay(0);
+			},
+		});
+	});
+
+	it("runBenchmarkAsync", async () => {
+		await runBenchmarkAsync({
+			maxBenchmarkDurationSeconds: 0.1,
+			minBatchCount: 1,
+			minBatchDurationSeconds: 0,
+			benchmarkFnAsync: async () => {
+				// This is a benchmark.
+				await delay(0);
+			},
+		});
+	});
+
 	function doLoop(upperLimit: number): void {
 		let i = 0;
 		while (i < upperLimit) {
 			i += 1;
 		}
 	}
+
+	benchmark({
+		title: `minimal`,
+		benchmarkFn: () => 0,
+		type: BenchmarkType.OwnCorrectness,
+	});
+
+	benchmark({
+		title: `async`,
+		benchmarkFn: async () => nextTick(() => 0),
+		type: BenchmarkType.OwnCorrectness,
+	});
 
 	for (const loopSize of [1e6]) {
 		benchmark({
