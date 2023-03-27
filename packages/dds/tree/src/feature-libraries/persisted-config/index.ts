@@ -7,7 +7,7 @@ export {
 	createPersistedConfigStore,
 	ConfigUpgradeType,
 	IPersistedConfigStore,
-	PersistedConfig,
+	PersistedFormatConfig,
 	PersistedConfigSchema,
 	Version,
 } from "./persistedConfig";
