@@ -9254,7 +9254,7 @@ importers:
       '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluid-internal/test-end-to-end-tests-previous': npm:@fluid-internal/test-end-to-end-tests@2.0.0-internal.3.2.0
+      '@fluidframework/test-end-to-end-tests-previous': npm:@fluidframework/test-end-to-end-tests@2.0.0-internal.3.2.0
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/undo-redo': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -9333,7 +9333,7 @@ importers:
       '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluid-internal/test-end-to-end-tests-previous': /@fluid-internal/test-end-to-end-tests/2.0.0-internal.3.2.0
+      '@fluidframework/test-end-to-end-tests-previous': /@fluidframework/test-end-to-end-tests/2.0.0-internal.3.2.0
       '@types/mocha': 9.1.1
       '@types/nock': 9.3.1
       '@types/node': 14.18.38
@@ -15638,7 +15638,7 @@ packages:
       - utf-8-validate
     dev: true
 
-  /@fluid-internal/test-end-to-end-tests/2.0.0-internal.3.2.0:
+  /@fluidframework/test-end-to-end-tests/2.0.0-internal.3.2.0:
     resolution: {integrity: sha512-/Altf290r34gFVvGkO+foP1KuhaMiO5T+CXdkDNskyqTEAoUM72Tb5RMkbX1z/bqO7egEFCZ1efe5Y8oI2PwOw==}
     dependencies:
       '@fluid-experimental/sequence-deprecated': 2.0.0-internal.3.3.1
