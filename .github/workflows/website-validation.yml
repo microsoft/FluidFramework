@@ -37,6 +37,26 @@ jobs:
           path: docs/public
           retention-days: 3
 
+  lint:
+    runs-on: ubuntu-latest
+    name: pnpm lint
+    steps:
+      - uses: actions/checkout@ac593985615ec2ede58e132d2e21d2b1cbd6127c # ratchet:actions/checkout@v3
+        with:
+          submodules: false
+      - uses: pnpm/action-setup@v2
+        with:
+          version: "^7"
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version: "14"
+          cache: "pnpm"
+          cache-dependency-path: docs/pnpm-lock.yaml
+      - name: pnpm lint
+        run: |
+          pnpm i --frozen-lockfile
+          pnpm lint
+
   broken_link_check:
     runs-on: ubuntu-latest
     name: 🔗 Broken Link Check

@@ -229,6 +229,7 @@ export function configureWebSocketServices(
 	submitSignalThrottler?: core.IThrottler,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
+	socketTracker?: core.IWebSocketTracker,
 ) {
 	webSocketServer.on("connection", (socket: core.IWebSocket) => {
 		// Map from client IDs on this connection to the object ID and user info.
@@ -265,28 +266,27 @@ export function configureWebSocketServices(
 			}, mSecUntilExpiration);
 		}
 
-		async function connectDocument(message: IConnect): Promise<IConnectedClient> {
-			const throttleErrorPerCluster = checkThrottleAndUsage(
-				connectThrottlerPerCluster,
-				getSocketConnectThrottleId("connectDoc"),
-				message.tenantId,
-				logger,
-			);
-			if (throttleErrorPerCluster) {
-				return Promise.reject(throttleErrorPerCluster);
-			}
-			const throttleErrorPerTenant = checkThrottleAndUsage(
-				connectThrottlerPerTenant,
-				getSocketConnectThrottleId(message.tenantId),
-				message.tenantId,
-				logger,
-			);
-			if (throttleErrorPerTenant) {
-				return Promise.reject(throttleErrorPerTenant);
-			}
-			if (!message.token) {
-				throw new NetworkError(403, "Must provide an authorization token");
-			}
+        async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            const startTime = Date.now();
+            const throttleErrorPerCluster = checkThrottleAndUsage(
+                connectThrottlerPerCluster,
+                getSocketConnectThrottleId("connectDoc"),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerCluster) {
+                return Promise.reject(throttleErrorPerCluster);
+            }
+            const throttleErrorPerTenant = checkThrottleAndUsage(
+                connectThrottlerPerTenant,
+                getSocketConnectThrottleId(message.tenantId),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerTenant) {
+                return Promise.reject(throttleErrorPerTenant);
+            }
+            if (!message.token) {
+                throw new NetworkError(403, "Must provide an authorization token");
+            }
 
 			// Validate token signature and claims
 			const token = message.token;
@@ -511,20 +511,27 @@ export function configureWebSocketServices(
 					socket.disconnect(true);
 				});
 
-				connection.connect().catch(async (err) => {
-					const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(
-						err,
-						undefined,
-						2,
-					)}`;
-					connectDocumentOrdererConnectionMetric.error(
-						"Failed to establish orderer connection",
-						err,
-					);
-					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-				});
+                let clientJoinMessageServerMetadata: any;
+                if (core.DefaultServiceConfiguration.enableTraces &&
+                    sampleMessages(numberOfMessagesPerTrace)) {
+                        clientJoinMessageServerMetadata = {
+                            connectDocumentStartTime: startTime
+                        };
+                    }
+                connection.connect(clientJoinMessageServerMetadata)
+                    .catch(async (err) => {
+                        const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(err, undefined, 2)}`;
+                        connectDocumentOrdererConnectionMetric.error("Failed to establish orderer connection", err);
+                        return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+                    });
 
 				connectionsMap.set(clientId, connection);
+				if (connectionsMap.size > 1) {
+					Lumberjack.info(
+						`Same socket is having multiple connections, connection number=${connectionsMap.size}`,
+						getLumberBaseProperties(connection.documentId, connection.tenantId),
+					);
+				}
 
 				connectDocumentOrdererConnectionMetric.success(
 					"Successfully established orderer connection",
@@ -568,6 +575,14 @@ export function configureWebSocketServices(
 			// back-compat: remove cast to any once new definition of IConnected comes through.
 			(connectedMessage as any).timestamp = connectedTimestamp;
 
+			// Track socket and tokens for this connection
+			if (socketTracker && claims.jti) {
+				socketTracker.addSocketForToken(
+					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
+					socket,
+				);
+			}
+
 			return {
 				connection: connectedMessage,
 				connectVersions,
@@ -608,7 +623,7 @@ export function configureWebSocketServices(
 				},
 				(error) => {
 					socket.emit("connect_document_error", error);
-					if (isNetworkError(error)) {
+					if (error?.code !== undefined) {
 						connectMetric.setProperty(CommonProperties.errorCode, error.code);
 					}
 					connectMetric.error(`Connect document failed`, error);
@@ -860,6 +875,10 @@ export function configureWebSocketServices(
 					clientManager.removeClient(room.tenantId, room.documentId, clientId),
 				);
 				socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
+			}
+			// Clear socket tracker upon disconnection
+			if (socketTracker) {
+				socketTracker.removeSocket(socket.id);
 			}
 			await Promise.all(removeAndStoreP);
 		});

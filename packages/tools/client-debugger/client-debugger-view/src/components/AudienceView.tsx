@@ -7,11 +7,11 @@ import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
 
-import { AudienceChangeLogEntry } from "@fluid-tools/client-debugger";
+import { AudienceChangeLogEntry, AudienceClientMetaData } from "@fluid-tools/client-debugger";
 
 import { combineMembersWithMultipleConnections } from "../Audience";
 import { HasClientDebugger } from "../CommonProps";
-import { useMyClientConnection, useMyClientId } from "../ReactHooks";
+import { useMyClientId } from "../ReactHooks";
 import { AudienceMemberViewProps } from "./client-data-views";
 
 // TODOs:
@@ -38,7 +38,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { audience } = clientDebugger;
 
 	const myClientId = useMyClientId(clientDebugger);
-	const myClientConnection = useMyClientConnection(clientDebugger);
 
 	const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
 		audience.getMembers(),
@@ -62,6 +61,62 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		};
 	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
 
+	const audienceClientMetaData: AudienceClientMetaData[] = [...allAudienceMembers.entries()].map(
+		([clientId, client]): AudienceClientMetaData => ({ clientId, client }),
+	);
+
+	return (
+		<_AudienceView
+			clientId={myClientId}
+			audienceClientMetaData={audienceClientMetaData}
+			onRenderAudienceMember={onRenderAudienceMember}
+			audienceHistory={audienceHistory}
+		/>
+	);
+}
+
+/**
+ * {@link _AudienceView} input props.
+ *
+ * @privateRemarks TODO: Remove onRenderAudienceMember
+ */
+export interface _AudienceViewProps {
+	/*
+	 * Local users's clientId.
+	 */
+	clientId: string | undefined;
+
+	/**
+	 * Metadata of audiences containing clientId and IClient.
+	 */
+	audienceClientMetaData: AudienceClientMetaData[];
+
+	/**
+	 * Callback to render data about an individual audience member.
+	 */
+	onRenderAudienceMember: (props: AudienceMemberViewProps) => React.ReactElement;
+
+	/**
+	 * History of audience connected or disconnected to the container.
+	 */
+	audienceHistory: readonly AudienceChangeLogEntry[];
+}
+
+/**
+ * Audience View displaying current audience members and audience history
+ *
+ * @remarks Operates strictly on raw data, so it can be potentially re-used in contexts that don't have
+ * direct access to the Client Debugger.
+ *
+ * @internal
+ */
+export function _AudienceView(props: _AudienceViewProps): React.ReactElement {
+	const { clientId, audienceClientMetaData, onRenderAudienceMember, audienceHistory } = props;
+
+	const myClientConnection = audienceClientMetaData.find(
+		(audience) => audience.clientId === clientId,
+	)?.client;
+
 	return (
 		<Stack
 			styles={{
@@ -72,11 +127,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		>
 			<StackItem>
 				<div className="audience-view-members-list">
-					<h3>Audience members ({allAudienceMembers.size})</h3>
+					<h3>Audience members ({audienceClientMetaData.length})</h3>
 				</div>
 				<MembersView
-					audience={allAudienceMembers}
-					myClientId={myClientId}
+					audience={audienceClientMetaData}
+					myClientId={clientId}
 					myClientConnection={myClientConnection}
 					onRenderAudienceMember={onRenderAudienceMember}
 				/>
@@ -98,7 +153,7 @@ interface MembersViewProps {
 	/**
 	 * The current audience
 	 */
-	audience: Map<string, IClient>;
+	audience: AudienceClientMetaData[];
 
 	/**
 	 * My client ID, if the Container is connected.
@@ -157,19 +212,16 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 	const { history } = props;
 
 	const nowTimeStamp = new Date();
-
-	// Reverse history such that newest events are displayed first
-	const reversedHistoryLog = [...history].reverse();
-
 	const historyViews: React.ReactElement[] = [];
 
-	for (const changeEntry of reversedHistoryLog) {
-		const changeTimeStamp = new Date(changeEntry.timestamp);
+	// Reverse history such that newest events are displayed first
+	for (let i = history.length - 1; i >= 0; i--) {
+		const changeTimeStamp = new Date(history[i].timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
 		const accordianBackgroundColor: IStackItemStyles = {
 			root: {
-				background: changeEntry.changeKind === "added" ? "#90ee90" : "#FF7377",
+				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
 				borderStyle: "solid",
 				borderWidth: 1,
 				borderColor: DefaultPalette.neutralTertiary,
@@ -184,22 +236,22 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 		};
 
 		historyViews.push(
-			<div>
+			<div key={`audience-history-info-${i}`}>
 				<Stack horizontal={true} styles={accordianBackgroundColor}>
 					<StackItem styles={iconStyle}>
 						<Icon
 							iconName={
-								changeEntry.changeKind === "added" ? "AddFriend" : "UserRemove"
+								history[i].changeKind === "added" ? "AddFriend" : "UserRemove"
 							}
 							title={
-								changeEntry.changeKind === "added" ? "Member Joined" : "Member Left"
+								history[i].changeKind === "added" ? "Member Joined" : "Member Left"
 							}
 						/>
 					</StackItem>
 					<StackItem>
-						<div key={`${changeEntry.clientId}-${changeEntry.changeKind}`}>
+						<div key={`${history[i].clientId}-${history[i].changeKind}`}>
 							<b>Client ID: </b>
-							{changeEntry.clientId}
+							{history[i].clientId}
 							<br />
 							<b>Time: </b>{" "}
 							{wasChangeToday

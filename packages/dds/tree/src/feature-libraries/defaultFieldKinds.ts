@@ -16,7 +16,7 @@ import {
 	TreeSchemaIdentifier,
 	FieldSchema,
 } from "../core";
-import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -38,7 +38,7 @@ import {
 	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
-import { chunkTree, defaultChunkPolicy } from "./chunked-forest";
+import { populateChildModifications } from "./deltaUtils";
 
 type BrandedFieldKind<
 	TName extends string,
@@ -187,6 +187,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	encoder: new UnitEncoder(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
+	isEmpty: (change: 0) => true,
 };
 
 /**
@@ -211,6 +212,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 			setValue: change,
 		},
 	],
+	isEmpty: (change: number) => change === 0,
 };
 
 /**
@@ -405,30 +407,16 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 
 	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
 		if (change.value !== undefined) {
-			let mark: Delta.Mark;
 			const newValue: ITreeCursorSynchronous =
 				"revert" in change.value ? change.value.revert : singleTextCursor(change.value.set);
-			if (change.changes === undefined) {
-				mark = {
-					type: Delta.MarkType.Insert,
-					content: [newValue],
-				};
-			} else {
-				const modify = deltaFromChild(change.changes);
-				const cursor = chunkTree(newValue, defaultChunkPolicy).cursor();
-				cursor.firstNode();
-				mark = {
-					...modify,
-					type: Delta.MarkType.InsertAndModify,
-					content: cursor,
-				};
-			}
-
-			return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
+			const insertDelta = deltaFromInsertAndChange(newValue, change.changes, deltaFromChild);
+			return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
 		}
 
 		return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
 	},
+
+	isEmpty: (change: ValueChangeset) => change.changes === undefined && change.value === undefined,
 };
 
 /**
@@ -680,24 +668,15 @@ function deltaFromInsertAndChange(
 	deltaFromNode: ToDelta,
 ): Delta.Mark[] {
 	if (insertedContent !== undefined) {
-		const content = chunkTree(insertedContent, defaultChunkPolicy).cursor();
-		content.firstNode();
+		const insert: Mutable<Delta.Insert> = {
+			type: Delta.MarkType.Insert,
+			content: [insertedContent],
+		};
 		if (nodeChange !== undefined) {
 			const nodeDelta = deltaFromNode(nodeChange);
-			return [
-				{
-					...nodeDelta,
-					type: Delta.MarkType.InsertAndModify,
-					content,
-				},
-			];
+			populateChildModifications(nodeDelta, insert);
 		}
-		return [
-			{
-				type: Delta.MarkType.Insert,
-				content: [content],
-			},
-		];
+		return [insert];
 	}
 
 	if (nodeChange !== undefined) {
@@ -740,6 +719,9 @@ export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = n
 
 			return insertDelta;
 		},
+
+		isEmpty: (change: OptionalChangeset) =>
+			change.childChange === undefined && change.fieldChange === undefined,
 	},
 	(types, other) =>
 		(other.kind.identifier === sequence.identifier ||

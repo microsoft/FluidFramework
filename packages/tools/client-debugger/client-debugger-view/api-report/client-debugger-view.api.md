@@ -4,6 +4,9 @@
 
 ```ts
 
+import { AudienceChangeLogEntry } from '@fluid-tools/client-debugger';
+import { AudienceClientMetaData } from '@fluid-tools/client-debugger';
+import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
 import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
@@ -26,6 +29,18 @@ export interface AudienceMemberViewProps {
 }
 
 // @internal
+export function _AudienceView(props: _AudienceViewProps): React_2.ReactElement;
+
+// @public
+export interface _AudienceViewProps {
+    audienceClientMetaData: AudienceClientMetaData[];
+    audienceHistory: readonly AudienceChangeLogEntry[];
+    // (undocumented)
+    clientId: string | undefined;
+    onRenderAudienceMember: (props: AudienceMemberViewProps) => React_2.ReactElement;
+}
+
+// @internal
 export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
 
 // @internal
@@ -34,6 +49,14 @@ export const clientDebugViewClassName = "fluid-client-debugger-view";
 // @internal
 export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
+}
+
+// @public
+export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React_2.ReactElement;
+
+// @public
+export interface _ContainerHistoryViewProps {
+    containerHistory: readonly ConnectionStateChangeLogEntry[];
 }
 
 // @internal
@@ -89,6 +112,7 @@ export interface IContainerActions {
 export enum PanelView {
     Audience = "Audience",
     ContainerData = "Data",
+    ContainerStateHistory = "States",
     Telemetry = "Telemetry"
 }
 

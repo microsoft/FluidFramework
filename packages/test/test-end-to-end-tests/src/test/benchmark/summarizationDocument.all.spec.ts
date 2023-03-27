@@ -4,84 +4,67 @@
  */
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
-import { ISummarizer } from "@fluidframework/container-runtime";
-import { createSummarizer, ITestObjectProvider, summarizeNow } from "@fluidframework/test-utils";
-import { SharedMap } from "@fluidframework/map";
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
-import { benchmarkAll, createDocument } from "./DocumentCreator";
-import { DocumentMap } from "./DocumentMap";
+import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
+import {
+	benchmarkAll,
+	createDocument,
+	IBenchmarkParameters,
+	IDocumentLoaderAndSummarizer,
+	ISummarizeResult,
+} from "./DocumentCreator";
 
 const scenarioTitle = "Summarize Document";
 describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
-	let documentMap: DocumentMap;
+	let documentWrapper: IDocumentLoaderAndSummarizer;
 	let provider: ITestObjectProvider;
 	let summaryVersion: string;
 	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
 
-	async function waitForSummary(summarizer: ISummarizer): Promise<string> {
-		// Wait for all pending ops to be processed by all clients.
-		await provider.ensureSynchronized();
-		const summaryResult = await summarizeNow(summarizer);
-		return summaryResult.summaryVersion;
-	}
-
 	before(async () => {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
-		documentMap = createDocument({
+		documentWrapper = createDocument({
 			testName: `${scenarioTitle} - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
 		});
-		await documentMap.initializeDocument();
-		assert(documentMap.mainContainer !== undefined, "mainContainer needs to be defined.");
-		const { summarizer: summarizerClient } = await createSummarizer(
-			provider,
-			documentMap.mainContainer,
-			undefined,
-			undefined,
-			undefined,
-			documentMap.logger,
-		);
-		await provider.ensureSynchronized();
-		summaryVersion = await waitForSummary(summarizerClient);
-		assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
-		summarizerClient.close();
+		await documentWrapper.initializeDocument();
+		// Summarize the first time.
+		await documentWrapper.summarize();
 	});
 
-	class BenchmarkObj {
-		dataObject2map: SharedMap | undefined;
-		container: IContainer | undefined;
-		summarizerClient: { container: IContainer; summarizer: ISummarizer } | undefined;
-		minSampleCount = 10;
-	}
+	/**
+	 * The PerformanceTestWrapper class includes 2 functionalities:
+	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
+	 * 2) Stores the configuration properties that should be consumed by benchmarkAll to define its behavior:
+	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
+	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
+	 */
 
-	const obj = new BenchmarkObj();
+	benchmarkAll(
+		scenarioTitle,
+		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+			container: IContainer | undefined;
+			summarizerClient: ISummarizeResult | undefined;
+			minSampleCount = getDocumentInfo().minSampleCount;
+			async run(): Promise<void> {
+				this.container = await documentWrapper.loadDocument();
+				assert(this.container !== undefined, "container needs to be defined.");
+				await provider.ensureSynchronized();
 
-	benchmarkAll<BenchmarkObj>(scenarioTitle, benchmarkType, {
-		run: async () => {
-			obj.container = await documentMap.loadDocument();
-			assert(obj.container !== undefined, "container needs to be defined.");
-			await provider.ensureSynchronized();
-
-			obj.summarizerClient = await createSummarizer(
-				provider,
-				obj.container,
-				summaryVersion,
-				undefined,
-				undefined,
-				documentMap.logger,
-			);
-			summaryVersion = await waitForSummary(obj.summarizerClient.summarizer);
-			assert(summaryVersion !== undefined, "summaryVersion needs to be defined.");
-			obj.summarizerClient.summarizer.close();
-		},
-		obj,
-		beforeIteration: () => {
-			obj.dataObject2map = undefined;
-			obj.container = undefined;
-			obj.summarizerClient = undefined;
-		},
-	});
+				this.summarizerClient = await documentWrapper.summarize(summaryVersion);
+				assert(
+					this.summarizerClient.summaryVersion !== undefined,
+					"summaryVersion needs to be defined.",
+				);
+				summaryVersion = this.summarizerClient.summaryVersion;
+			}
+			beforeIteration(): void {
+				this.container = undefined;
+				this.summarizerClient = undefined;
+			}
+		})(),
+	);
 });

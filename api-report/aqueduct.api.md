@@ -54,18 +54,6 @@ export class BaseContainerRuntimeFactory extends RuntimeFactoryHelper implements
     preInitialize(context: IContainerContext, existing: boolean): Promise<ContainerRuntime>;
 }
 
-// @public @deprecated
-export abstract class BaseContainerService implements IFluidRouter {
-    // @deprecated
-    constructor(runtime: IContainerRuntime);
-    // @deprecated (undocumented)
-    get IFluidRouter(): this;
-    // @deprecated (undocumented)
-    request(request: IRequest): Promise<IResponse>;
-    // (undocumented)
-    protected readonly runtime: IContainerRuntime;
-}
-
 // @public
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
     constructor(defaultFactory: IFluidDataStoreFactory, registryEntries: NamedFluidDataStoreRegistryEntries, dependencyContainer?: IFluidDependencySynthesizer, requestHandlers?: RuntimeRequestHandler[], runtimeOptions?: IContainerRuntimeOptions, initializeEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>);
@@ -75,12 +63,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
     // (undocumented)
     protected readonly defaultFactory: IFluidDataStoreFactory;
 }
-
-// @public @deprecated (undocumented)
-export type ContainerServiceRegistryEntries = Iterable<[
-string,
-(runtime: IContainerRuntime) => Promise<FluidObject>
-]>;
 
 // @public
 export abstract class DataObject<I extends DataObjectTypes = DataObjectTypes> extends PureDataObject<I> {
@@ -107,9 +89,6 @@ export function defaultFluidObjectRequestHandler(fluidObject: FluidObject, reque
 
 // @public
 export const defaultRouteRequestHandler: (defaultRootId: string) => (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse | undefined>;
-
-// @public @deprecated
-export const generateContainerServicesRequestHandler: (serviceRegistry: ContainerServiceRegistryEntries) => RuntimeRequestHandler;
 
 // @public
 export function getDefaultObjectFromContainer<T = FluidObject>(container: IContainer): Promise<T>;
@@ -152,8 +131,6 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     // (undocumented)
     static getDataObject(runtime: IFluidDataStoreRuntime): Promise<PureDataObject<DataObjectTypes>>;
     getFluidObjectFromDirectory<T extends IFluidLoadable>(key: string, directory: IDirectory, getObjectFromDirectory?: (id: string, directory: IDirectory) => IFluidHandle | undefined): Promise<T | undefined>;
-    // @deprecated
-    protected getService<T extends FluidObject>(id: string): Promise<T>;
     get handle(): IFluidHandle<this>;
     protected hasInitialized(): Promise<void>;
     // (undocumented)
@@ -197,11 +174,5 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     // (undocumented)
     readonly type: string;
 }
-
-// @public @deprecated (undocumented)
-export const serviceRoutePathRoot = "_services";
-
-// @public @deprecated (undocumented)
-export function waitForAttach(dataStoreRuntime: IFluidDataStoreRuntime): Promise<void>;
 
 ```

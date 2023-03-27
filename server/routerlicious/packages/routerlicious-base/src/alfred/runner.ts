@@ -7,9 +7,7 @@ import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
-	ICollection,
 	IDeltaService,
-	IDocument,
 	IDocumentStorage,
 	IOrdererManager,
 	IProducer,
@@ -19,6 +17,9 @@ import {
 	IThrottleAndUsageStorageManager,
 	IWebServer,
 	IWebServerFactory,
+	IDocumentRepository,
+	ITokenRevocationManager,
+	IWebSocketTracker,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -51,10 +52,12 @@ export class AlfredRunner implements IRunner {
 		private readonly deltaService: IDeltaService,
 		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
-		private readonly documentsCollection: ICollection<IDocument>,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
+		private readonly socketTracker?: IWebSocketTracker,
+		private readonly tokenManager?: ITokenRevocationManager,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -72,7 +75,8 @@ export class AlfredRunner implements IRunner {
 			this.appTenants,
 			this.deltaService,
 			this.producer,
-			this.documentsCollection,
+			this.documentRepository,
+			this.tokenManager,
 		);
 		alfred.set("port", this.port);
 
@@ -113,12 +117,20 @@ export class AlfredRunner implements IRunner {
 			this.socketSubmitSignalThrottler,
 			this.throttleAndUsageStorageManager,
 			this.verifyMaxMessageSize,
+			this.socketTracker,
 		);
 
 		// Listen on provided port, on all network interfaces.
 		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
+
+		// Start token manager
+		if (this.tokenManager) {
+			this.tokenManager.start().catch((error) => {
+				this.runningDeferred.reject(error);
+			});
+		}
 
 		return this.runningDeferred.promise;
 	}
