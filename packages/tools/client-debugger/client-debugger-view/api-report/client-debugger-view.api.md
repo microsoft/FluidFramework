@@ -4,6 +4,8 @@
 
 ```ts
 
+import { AudienceChangeLogEntry } from '@fluid-tools/client-debugger';
+import { AudienceClientMetaData } from '@fluid-tools/client-debugger';
 import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
 import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
@@ -24,6 +26,18 @@ export interface AudienceMemberViewProps {
     audienceMember: AudienceMember;
     myClientConnection: IClient | undefined;
     myClientId: string | undefined;
+}
+
+// @internal
+export function _AudienceView(props: _AudienceViewProps): React_2.ReactElement;
+
+// @public
+export interface _AudienceViewProps {
+    audienceClientMetaData: AudienceClientMetaData[];
+    audienceHistory: readonly AudienceChangeLogEntry[];
+    // (undocumented)
+    clientId: string | undefined;
+    onRenderAudienceMember: (props: AudienceMemberViewProps) => React_2.ReactElement;
 }
 
 // @internal

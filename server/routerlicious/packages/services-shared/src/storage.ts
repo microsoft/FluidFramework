@@ -20,7 +20,6 @@ import {
 import {
 	ICollection,
 	IDeliState,
-	IDatabaseManager,
 	IDocumentDetails,
 	IDocumentStorage,
 	IScribe,
@@ -28,6 +27,7 @@ import {
 	SequencedOperationType,
 	IDocument,
 	ISequencedOperationMessage,
+	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import * as winston from "winston";
 import { toUtf8 } from "@fluidframework/common-utils";
@@ -39,17 +39,17 @@ import {
 
 export class DocumentStorage implements IDocumentStorage {
 	constructor(
-		private readonly databaseManager: IDatabaseManager,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly tenantManager: ITenantManager,
 		private readonly enableWholeSummaryUpload: boolean,
+		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
 	) {}
 
 	/**
 	 * Retrieves database details for the given document
 	 */
 	public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
-		const collection = await this.databaseManager.getDocumentCollection();
-		return collection.findOne({ documentId, tenantId });
+		return this.documentRepository.readOne({ tenantId, documentId });
 	}
 
 	public async getOrCreateDocument(
@@ -153,6 +153,7 @@ export class DocumentStorage implements IDocumentStorage {
 			LumberEventName.CreateDocInitialSummaryWrite,
 			lumberjackProperties,
 		);
+		let initialSummaryVersionId: string;
 		try {
 			const handle = await uploadManager.writeSummaryTree(
 				fullTree /* summaryTree */,
@@ -180,6 +181,11 @@ export class DocumentStorage implements IDocumentStorage {
 				initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(
 					commit.sha,
 				)}`;
+				// In the case of ShreddedSummary Upload, summary version is always the commit sha.
+				initialSummaryVersionId = commit.sha;
+			} else {
+				// In the case of WholeSummary Upload, summary tree handle is actually commit sha or version id.
+				initialSummaryVersionId = handle;
 			}
 			initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
 		} catch (error: any) {
@@ -214,7 +220,12 @@ export class DocumentStorage implements IDocumentStorage {
 			sequenceNumber,
 			lastClientSummaryHead: undefined,
 			lastSummarySequenceNumber: 0,
-			validParentSummaries: undefined,
+			// Add initialSummaryVersionId as a valid parent summary. There is no summaryAck for initial summary,
+			// and it is possible for a sumarizer to load from the initial summary, while a service summary is being written.
+			// If the summarizer then proposes the initial summary as a parent summary after the service summary is written,
+			// the initial summary would not be accepted as a valid parent because lastClientSummaryHead is undefined and latest
+			// summary is a service summary. However, initial summary _is_ a valid parent in this scenario.
+			validParentSummaries: [initialSummaryVersionId],
 		};
 
 		const session: ISession = {
@@ -230,14 +241,13 @@ export class DocumentStorage implements IDocumentStorage {
 			lumberjackProperties,
 		);
 
-		const updateDocumentCollectionMetric = Lumberjack.newLumberMetric(
+		const createDocumentCollectionMetric = Lumberjack.newLumberMetric(
 			LumberEventName.CreateDocumentUpdateDocumentCollection,
 			lumberjackProperties,
 		);
 
 		try {
-			const collection = await this.databaseManager.getDocumentCollection();
-			const result = await collection.findOrCreate(
+			const result = await this.documentRepository.findOneOrCreate(
 				{
 					documentId,
 					tenantId,
@@ -252,10 +262,10 @@ export class DocumentStorage implements IDocumentStorage {
 					version: "0.1",
 				},
 			);
-			updateDocumentCollectionMetric.success("Successfully updated document collection");
+			createDocumentCollectionMetric.success("Successfully created document");
 			return result;
 		} catch (error: any) {
-			updateDocumentCollectionMetric.error("Error updating document collection", error);
+			createDocumentCollectionMetric.error("Error create document", error);
 			throw error;
 		}
 	}
@@ -348,7 +358,6 @@ export class DocumentStorage implements IDocumentStorage {
 	}
 
 	private async createObject(
-		collection: ICollection<IDocument>,
 		tenantId: string,
 		documentId: string,
 		deli?: string,
@@ -364,7 +373,7 @@ export class DocumentStorage implements IDocumentStorage {
 			tenantId,
 			version: "0.1",
 		};
-		await collection.insertOne(value);
+		await this.documentRepository.create(value);
 		return value;
 	}
 
@@ -373,8 +382,7 @@ export class DocumentStorage implements IDocumentStorage {
 		tenantId: string,
 		documentId: string,
 	): Promise<IDocumentDetails> {
-		const collection = await this.databaseManager.getDocumentCollection();
-		const document = await collection.findOne({ documentId, tenantId });
+		const document = await this.documentRepository.readOne({ documentId, tenantId });
 		if (document === null) {
 			// Guard against storage failure. Returns false if storage is unresponsive.
 			const foundInSummaryP = this.readFromSummary(tenantId, documentId).then(
@@ -397,8 +405,8 @@ export class DocumentStorage implements IDocumentStorage {
 
 			// Setting an empty string to deli and scribe denotes that the checkpoints should be loaded from summary.
 			const value = inSummary
-				? await this.createObject(collection, tenantId, documentId, "", "")
-				: await this.createObject(collection, tenantId, documentId);
+				? await this.createObject(tenantId, documentId, "", "")
+				: await this.createObject(tenantId, documentId);
 
 			return {
 				value,
@@ -437,11 +445,7 @@ export class DocumentStorage implements IDocumentStorage {
 					mongoTimestamp: new Date(op.timestamp),
 				};
 			});
-			const opsCollection = await this.databaseManager.getDeltaCollection(
-				tenantId,
-				documentId,
-			);
-			await opsCollection.insertMany(dbOps, false).catch(async (error) => {
+			await this.opsCollection.insertMany(dbOps, false).catch(async (error) => {
 				// Duplicate key errors are ignored
 				if (error.code !== 11000) {
 					// Needs to be a full rejection here

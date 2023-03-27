@@ -15,6 +15,7 @@ import {
 	TestDbFactory,
 	TestProducer,
 	TestKafka,
+	TestNotImplementedDocumentRepository,
 } from "@fluidframework/server-test-utils";
 import {
 	IDocument,
@@ -112,10 +113,8 @@ describe("Routerlicious", () => {
 				scopes,
 			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
-			const defaultDb = await defaultMongoManager.getDatabase();
 			const defaultDeltaService = new DeltaService(defaultMongoManager, defaultTenantManager);
-			const defaultDocumentsCollection =
-				defaultDb.collection<IDocument>(documentsCollectionName);
+			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			describe("throttling", () => {
@@ -145,7 +144,7 @@ describe("Routerlicious", () => {
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
 					);
 					supertest = request(app);
 				});
@@ -315,7 +314,7 @@ describe("Routerlicious", () => {
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
 					);
 					supertest = request(app);
 				});
@@ -402,7 +401,7 @@ describe("Routerlicious", () => {
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
 					);
 					supertest = request(app);
 				});
@@ -489,7 +488,7 @@ describe("Routerlicious", () => {
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
 					);
 					supertest = request(app);
 				});
@@ -544,7 +543,7 @@ describe("Routerlicious", () => {
 						defaultAppTenants,
 						defaultDeltaService,
 						defaultProducer,
-						defaultDocumentsCollection,
+						defaultDocumentRepository,
 					);
 					supertest = request(app);
 				});
@@ -556,8 +555,10 @@ describe("Routerlicious", () => {
 				describe("documents", () => {
 					it("/:tenantId/session/:id", async () => {
 						// Create a new session
-						Sinon.stub(defaultDocumentsCollection, "upsert").returns(Promise.resolve());
-						Sinon.stub(defaultDocumentsCollection, "findOne")
+						Sinon.stub(defaultDocumentRepository, "updateOne").returns(
+							Promise.resolve(),
+						);
+						Sinon.stub(defaultDocumentRepository, "readOne")
 							.onFirstCall()
 							.returns(Promise.resolve({} as IDocument))
 							.onSecondCall()
