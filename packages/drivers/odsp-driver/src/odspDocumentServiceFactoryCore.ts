@@ -11,7 +11,10 @@ import {
 } from "@fluidframework/driver-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { getDocAttributesFromProtocolSummary } from "@fluidframework/driver-utils";
+import {
+	getDocAttributesFromProtocolSummary,
+	isCombinedAppAndProtocolSummary,
+} from "@fluidframework/driver-utils";
 import {
 	TokenFetchOptions,
 	OdspResourceTokenFetchOptions,
@@ -96,10 +99,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 			throw new Error("A new or existing file must be specified to create container!");
 		}
 
-		const protocolSummary = createNewSummary?.tree[".protocol"];
-		if (protocolSummary) {
+		if (isCombinedAppAndProtocolSummary(createNewSummary)) {
 			const documentAttributes = getDocAttributesFromProtocolSummary(
-				protocolSummary as ISummaryTree,
+				createNewSummary.tree[".protocol"],
 			);
 			if (documentAttributes?.sequenceNumber !== 0) {
 				throw new Error("Seq number in detached ODSP container should be 0");

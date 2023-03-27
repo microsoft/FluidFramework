@@ -42,9 +42,11 @@ getBaseGCDetails() has been deprecated in IFluidDataStoreContext and CreateChild
 -   [web-code-loader and ICodeAllowList removed](#web-code-loader-and-ICodeAllowList-removed)
 -   [Container and IContainer no longer raise events when a new listener is registered](#Container-and-IContainer-no-longer-raise-events-when-a-new-listener-is-registered)
 -   [Remove deprecated PendingStateManager interfaces](#Remove-deprecated-PendingStateManager-interfaces)
+-   [Aqueduct members removed](#Aqueduct-members-removed)
 -   [driver-utils members removed](#driver-utils-members-removed)
 -   [Remove IConnectableRuntime.deltaManager](#remove-iconnectableruntimedeltamanager)
 -   [IDocumentServiceFactory.protocolName removed](#IDocumentServiceFactory.protocolName-removed)
+-   [Changes to Summarizer's public API](#changes-to-summarizers-public-api)
 
 ### Container and RelativeLoader no longer exported
 
@@ -125,6 +127,10 @@ The following interfaces used by the `PendingStateManager` are no longer exporte
 -   `IPendingState`
 -   `IPendingLocalState`
 
+### Aqueduct members removed
+
+`ContainerServices` in `@fluidframework/aqueduct` and `waitForAttach()` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
 ### driver-utils members removed
 
 The following members of the `@fluidframework/driver-utils` package were deprecated in 2.0.0-internal.3.0.0 or earlier, and are now removed:
@@ -151,6 +157,35 @@ Note: `IConnectableRuntime` is only to be implemented internally, so removing th
 ## IDocumentServiceFactory.protocolName removed
 
 `IDocumentServiceFactory.protocolName` was deprecated in 2.0.0-internal.3.0.0 and has now been removed.
+
+### Changes to Summarizer's public API
+
+The following interfaces and exports in `@fluidframework/container-runtime` [deprecated since 0.14.0](https://github.com/microsoft/FluidFramework/pull/8299)
+have been removed and have no replacement:
+
+-   `IProvideSummarizer` interface
+-   `ISummarizer` const (**note:** the `ISummarizer` _interface_ still exists and is used)
+
+Additionally, the `ISummarizer` interface no longer extends `IFluidLoadable` nor `Partial<IProvideSummarizer>`.
+This means it no longer has readonly properties `IFluidLoadable` and `handle`.
+
+# 2.0.0-internal.3.4.0
+
+## 2.0.0-internal.3.4.0 Upcoming changes
+
+-   [IResolvedUrl will be equivalent to IFluidResolvedUrl](#IResolvedUrl-will-be-equivalent-to-IFluidResolvedUrl)
+-   [LoaderHeader.cache deprecated](#LoaderHeadercache-deprecated)
+
+## IResolvedUrl will be equivalent to IFluidResolvedUrl
+
+In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl are deprecated as they are not used.
+This will make IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls will now be FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
+ensureFluidResolvedUrl will be deprecated and removed due to this.
+
+## LoaderHeader.cache deprecated
+
+In `@fluidframework/container-definitions`, the `cache` value from the `LoaderHeader` enum has been deprecated.
+Therefore, the `[LoaderHeader.cache]` property from `ILoaderHeader` is also deprecated. They will both be removed in the next major release, as well as all caching functionality of containers. Cache support will be removed soon, please try not to rely on caching, and inform us if you cannot do so.
 
 # 2.0.0-internal.3.3.0
 

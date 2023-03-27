@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKey,
-	FieldKindIdentifier,
 	fieldSchema,
 	GlobalFieldKey,
 	JsonableTree,
@@ -30,18 +29,18 @@ import {
 	valueSymbol,
 	replaceField,
 	typeNameSymbol,
-	namedTreeSchema,
 	isWritableArrayLike,
 	isContextuallyTypedNodeDataObject,
 	EditableField,
 	getPrimaryField,
+	SchemaAware,
+	TypedSchema,
+	FieldKind,
 } from "../../../feature-libraries";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
 import {
 	fullSchemaData,
-	personData,
 	Person,
-	schemaMap,
 	stringSchema,
 	Int32,
 	getPerson,
@@ -54,6 +53,7 @@ import {
 	Phones,
 	phonesSchema,
 	decimalSchema,
+	personJsonableTree,
 } from "./mockData";
 
 const globalFieldKey: GlobalFieldKey = brand("foo");
@@ -62,25 +62,27 @@ const globalFieldSymbol = symbolFromKey(globalFieldKey);
 const localFieldKey: LocalFieldKey = brand("foo");
 const rootSchemaName: TreeSchemaIdentifier = brand("Test");
 
-function getTestSchema(fieldKind: { identifier: FieldKindIdentifier }): SchemaData {
-	const rootNodeSchema = namedTreeSchema({
-		name: rootSchemaName,
-		localFields: {
-			[localFieldKey]: fieldSchema(fieldKind, [stringSchema.name]),
+function getTestSchema(fieldKind: FieldKind): SchemaData {
+	const rootNodeSchema = TypedSchema.tree("Test", {
+		local: {
+			[localFieldKey]: TypedSchema.field(fieldKind, stringSchema),
 		},
 		globalFields: [globalFieldKey],
 		value: ValueSchema.Serializable,
 	});
-	schemaMap.set(rootSchemaName, rootNodeSchema);
-	return {
-		treeSchema: schemaMap,
-		globalFieldSchema: new Map([
+	return SchemaAware.typedSchemaData(
+		new Map([
 			[rootFieldKey, fieldSchema(FieldKinds.optional, [rootSchemaName])],
 			[globalFieldKey, fieldSchema(fieldKind, [stringSchema.name])],
 		]),
-	};
+		stringSchema,
+		rootNodeSchema,
+	);
 }
 
+// TODO: There are two kinds of users of this in this file. Both should be changed:
+// Tests which are testing collaboration between multiple trees should be adjusted to not do that, or moved elsewhere (merge/collaboration is not the focus of this file).
+// Tests which are using a single tree should just use a MockFluidDataStoreRuntime instead of all the complexity of TestTreeProvider.
 async function createSharedTrees(
 	schemaData: SchemaData,
 	data?: JsonableTree[],
@@ -105,7 +107,7 @@ const testCases: (readonly [string, FieldKey])[] = [
 
 describe("editable-tree: editing", () => {
 	it("edit using contextually typed API", async () => {
-		const [, trees] = await createSharedTrees(fullSchemaData, [personData]);
+		const [, trees] = await createSharedTrees(fullSchemaData, [personJsonableTree()]);
 		assert.equal((trees[0].root as Person).name, "Adam");
 		// delete optional root
 		trees[0].root = undefined;
@@ -362,20 +364,24 @@ describe("editable-tree: editing", () => {
 	});
 
 	it("validates schema of values", async () => {
-		const schemaData: SchemaData = {
-			treeSchema: schemaMap,
-			globalFieldSchema: new Map([[rootFieldKey, fieldSchema(FieldKinds.value)]]),
-		};
-
+		const schemaData = SchemaAware.typedSchemaData(
+			new Map([[rootFieldKey, TypedSchema.field(FieldKinds.value, stringSchema)]]),
+			stringSchema,
+		);
 		const [, trees] = await createSharedTrees(schemaData, [
 			{ type: stringSchema.name, value: "x" },
 		]);
-
 		const root = trees[0].context.root.getNode(0);
+		// Confirm stetting value to a string does not error
 		root[valueSymbol] = "hi";
+		// Conform setting value to something out of schema does error
 		assert.throws(() => (root[valueSymbol] = { kate: "kate" }));
 		assert.throws(() => (root[valueSymbol] = 5));
 		assert.throws(() => (root[valueSymbol] = true));
+		assert.throws(() => (root[valueSymbol] = undefined));
+		// This is not dynamic delete: valueSymbol is a constant symbol.
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		assert.throws(() => delete root[valueSymbol]);
 		trees[0].context.free();
 	});
 

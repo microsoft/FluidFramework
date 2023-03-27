@@ -82,7 +82,7 @@ export class TinyliciousClient {
 			const request = createTinyliciousCreateNewRequest();
 			await container.attach(request);
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return container.resolvedUr!.id;
+			return container.resolvedUrl!.id;
 		};
 
 		const fluidContainer = new FluidContainer(container, rootDataObject);
