@@ -164,6 +164,10 @@ export class DataVisualizerGraph {
 		return visualizerNode.render();
 	}
 
+	/**
+	 * Adds a visualizer node to the collection for the specified
+	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
+	 */
 	private registerVisualizerForSharedObject(
 		sharedObject: ISharedObject,
 		label: string,
