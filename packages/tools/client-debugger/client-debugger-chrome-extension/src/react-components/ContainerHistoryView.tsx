@@ -78,7 +78,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 				containerId,
 			},
 		});
-		
+
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
