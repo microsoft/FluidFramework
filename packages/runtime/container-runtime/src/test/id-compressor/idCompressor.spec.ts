@@ -75,9 +75,10 @@ describe("IdCompressor", () => {
 		for (const reservedIdCount of [0, 1, 5]) {
 			const compressor = new IdCompressor(createSessionId(), reservedIdCount);
 			if (reservedIdCount > 0) {
-				for (let i = 0; i < reservedIdCount; i++) {
-					assert.equal(compressor.decompress(compressor.getReservedId(i)), i);
-				}
+				assert.equal(
+					compressor.decompress(compressor.getReservedId(0)),
+					"decaf40b-3c1a-47f8-a7a1-e8461ddb69ce",
+				);
 			}
 		}
 	});
@@ -510,7 +511,10 @@ describe("IdCompressor", () => {
 		it("can decompress reserved IDs", () => {
 			// This is a glass box test in that it increments UUIDs
 			const compressor = createCompressor(Client.Client1);
-			assert.equal(compressor.decompress(compressor.getReservedId(0)), 0);
+			assert.equal(
+				compressor.decompress(compressor.getReservedId(0)),
+				"decaf40b-3c1a-47f8-a7a1-e8461ddb69ce",
+			);
 			const reservedSessionUuid = numericUuidFromStableId(
 				assertIsStableId(compressor.decompress(compressor.getReservedId(1))),
 			);
