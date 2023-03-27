@@ -24,12 +24,9 @@ import {
 // - Hold onto previous summary and only transmit diff?
 
 // TODOs:
-// - Needs to be disposable so we can unbind listeners when the thing is no longer referenced.
-// - We need a structure that manages the cross-DDS dependencies such that...
-//   - Callers can request data for a specific DDS by its ID
-//   - We know when a particular DDS is no longer reachable, so we can remove it from the map
-//     - Note: the same DDS can be referenced in multiple places, so we have to be careful here
-//   - We know when a new DDS is referenced, so we can add it to the map
+// - Dependency tracking
+//   - When a particular DDS is no longer reachable via the input data, we need to remove it from the map and stop
+//     emitting updates.
 
 /**
  * The type of a shared object.
