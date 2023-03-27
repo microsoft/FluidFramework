@@ -15,7 +15,6 @@ import {
 	AttachState,
 	ILoaderOptions,
 	IRuntimeFactory,
-	IProvideRuntimeFactory,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IProvideFluidCodeDetailsComparer,
@@ -384,9 +383,11 @@ export class ContainerContext implements IContainerContext {
 	// #region private
 
 	private async getRuntimeFactory(): Promise<IRuntimeFactory> {
-		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined = (
-			await this._fluidModuleP
-		).module?.fluidExport;
+		const something = await this._fluidModuleP;
+		// eslint-disable-next-line @typescript-eslint/await-thenable
+		const module = await something.module;
+		const fluidExport = module.fluidExport;
+
 		const runtimeFactory = fluidExport?.IRuntimeFactory;
 		if (runtimeFactory === undefined) {
 			throw new Error(PackageNotFactoryError);

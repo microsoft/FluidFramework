@@ -30,6 +30,7 @@ import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions";
+import { add } from "@fluid-experimental/fluid-experimental-wasm-add";
 import {
 	assert,
 	LazyPromise,
@@ -735,8 +736,7 @@ export class ContainerRuntime
 			}
 		}
 
-		const wasm = await import("@fluid-experimental/fluid-experimental-wasm-add");
-		console.log("WASM_ASYNC_ADD", wasm.add(1, 2));
+		console.log("WASM_ASYNC_ADD_SOMETHING", add(1, 2));
 
 		const runtime = new containerRuntimeCtor(
 			context,
