@@ -21,7 +21,7 @@ export class AlfredResources implements core.IResources {
         public webSocketLibrary: string,
         public orderManager: core.IOrdererManager,
         public tenantManager: core.ITenantManager,
-        public restTenantThrottler: core.IThrottler,
+        public restTenantThrottlers: Map<string, core.IThrottler>,
         public restClusterThrottlers: Map<string, core.IThrottler>,
         public socketConnectTenantThrottler: core.IThrottler,
         public socketConnectClusterThrottler: core.IThrottler,
