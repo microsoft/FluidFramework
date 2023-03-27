@@ -232,7 +232,9 @@ export class SharedObjectVisualizerNode
 	) => Promise<FluidObjectId>;
 
 	/**
-	 * TODO
+	 * Handler for {@link SharedObjectVisualizerNode.sharedObject}'s "op" event.
+	 * Will broadcast an updated visual tree representation of the DDS's data via the
+	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
 	private readonly onOpHandler = (): boolean => {
 		this.emitVisualUpdate();
@@ -269,6 +271,11 @@ export class SharedObjectVisualizerNode
 		return this._disposed;
 	}
 
+	/**
+	 * Emits a {@link SharedObjectVisualizerNode.render | visual tree representation} of
+	 * {@link SharedObjectVisualizerNode.sharedObject}'s current state as an
+	 * {@link SharedObjectListenerEvents | "update"} event.
+	 */
 	private emitVisualUpdate(): void {
 		const visualTree = this.render();
 		this.emit("update", visualTree);
