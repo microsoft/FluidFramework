@@ -112,5 +112,5 @@ For the time being, the system does not do any dependency tracking.
 That is, if a DDS that was at one point reachable by walking one of the input trees becomes unreachable, the system will continue to store the associated visualizer.
 This is a potential memory leak that will want to be addressed before we publish our MVP.
 
-Follow up: investigate existing dependency tracking libraries we can take advantage of.
+**TODO**: investigate existing dependency tracking libraries we can take advantage of.
 Otherwise, just storing weak references to the DDSs/Handles + interval-based state cleanup will probably be sufficient.
