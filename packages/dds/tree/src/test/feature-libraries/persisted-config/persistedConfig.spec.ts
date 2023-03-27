@@ -94,7 +94,7 @@ describe.only("PersistedConfigStore", () => {
 
 	describe("using a schema without config flags", () => {
 		const schema: PersistedConfigSchema = {
-			version: (current: Version, previous: Version) => {
+			formatVersion: (current: Version, previous: Version) => {
 				// For this toy example, say any major change requires resubmission of ops
 				const { major: currentMajor } = parseVersion(current);
 				const { major: previousMajor } = parseVersion(previous);
@@ -106,20 +106,20 @@ describe.only("PersistedConfigStore", () => {
 		};
 		let store: IPersistedConfigStore;
 		const initialConfig: PersistedConfig = {
-			protocolIteration: 10,
-			version: "1.0.0",
+			configVersion: 10,
+			formatVersion: "1.0.0",
 			flags: {},
 		};
 
 		const newerConfig: PersistedConfig = {
-			version: "1.0.1",
-			protocolIteration: 11,
+			formatVersion: "1.0.1",
+			configVersion: 11,
 			flags: {},
 		};
 
 		const olderConfig: PersistedConfig = {
-			version: "0.9.0",
-			protocolIteration: 5,
+			formatVersion: "0.9.0",
+			configVersion: 5,
 			flags: {},
 		};
 
@@ -212,8 +212,8 @@ describe.only("PersistedConfigStore", () => {
 			it("is not invoked for config changes which don't demand it", () => {
 				store.loadCore({
 					config: {
-						version: initialConfig.version,
-						protocolIteration: initialConfig.protocolIteration - 1,
+						formatVersion: initialConfig.formatVersion,
+						configVersion: initialConfig.configVersion - 1,
 					},
 				});
 				store.submit({ dummy: 0 }, undefined);
@@ -280,22 +280,24 @@ describe.only("PersistedConfigStore", () => {
 				describe("with a config at the same protocolIteration but not equivalent", () => {
 					it("throws a reasonable error", () => {
 						assert.throws(() =>
-							store.loadCore({ config: { version: "1.0.1", protocolIteration: 10 } }),
+							store.loadCore({
+								config: { formatVersion: "1.0.1", configVersion: 10 },
+							}),
 						);
 					});
 				});
 
 				describe("with a newer config", () => {
 					it("uses the newer config upon summary load", () => {
-						store.loadCore({ config: { version: "1.0.1", protocolIteration: 11 } });
-						assert.equal(store.getConfigForNextSubmission().version, "1.0.1");
+						store.loadCore({ config: { formatVersion: "1.0.1", configVersion: 11 } });
+						assert.equal(store.getConfigForNextSubmission().formatVersion, "1.0.1");
 					});
 				});
 
 				describe("with an older config", () => {
 					const olderConfig: PersistedConfig = {
-						version: "0.9.0",
-						protocolIteration: 5,
+						formatVersion: "0.9.0",
+						configVersion: 5,
 						flags: {},
 					};
 					beforeEach(() => {
@@ -414,7 +416,7 @@ describe.only("PersistedConfigStore", () => {
 
 	describe("using a schema with 2 config flags", () => {
 		const schema: PersistedConfigSchema = {
-			version: (current: Version, previous: Version) => {
+			formatVersion: (current: Version, previous: Version) => {
 				// For this toy example, say any major change requires resubmission of ops
 				const { major: currentMajor } = parseVersion(current);
 				const { major: previousMajor } = parseVersion(previous);
@@ -429,11 +431,11 @@ describe.only("PersistedConfigStore", () => {
 		};
 		let store: IPersistedConfigStore;
 		const initialConfig: PersistedConfig = {
-			protocolIteration: 10,
-			version: "1.0.0",
+			configVersion: 10,
+			formatVersion: "1.0.0",
 			flags: {
-				breakingFeature: false,
-				nonbreakingFeature: false,
+				breakingFeature: "1.0.0",
+				nonbreakingFeature: "1.0.0",
 			},
 		};
 
@@ -452,11 +454,11 @@ describe.only("PersistedConfigStore", () => {
 				assert.throws(() =>
 					store.loadCore({
 						config: {
-							protocolIteration: 10,
-							version: "1.0.0",
+							configVersion: 10,
+							formatVersion: "1.0.0",
 							flags: {
-								breakingFeature: false,
-								nonbreakingFeature: true,
+								breakingFeature: "1.0.0",
+								nonbreakingFeature: "2.0.0",
 							},
 						},
 					}),
@@ -467,8 +469,8 @@ describe.only("PersistedConfigStore", () => {
 				assert.throws(() =>
 					store.loadCore({
 						config: {
-							protocolIteration: 10,
-							version: "1.0.0",
+							configVersion: 10,
+							formatVersion: "1.0.0",
 							flags: {},
 						},
 					}),
@@ -480,11 +482,11 @@ describe.only("PersistedConfigStore", () => {
 			it("requires resubmission for changes to flags marked as such", () => {
 				store.loadCore({
 					config: {
-						protocolIteration: 9,
-						version: "1.0.0",
+						configVersion: 9,
+						formatVersion: "1.0.0",
 						flags: {
-							breakingFeature: true,
-							nonbreakingFeature: false,
+							breakingFeature: "2.0.0",
+							nonbreakingFeature: "1.0.0",
 						},
 					},
 				});
@@ -504,11 +506,11 @@ describe.only("PersistedConfigStore", () => {
 			it("doesn't require resubmission for changes to flags not marked as such", () => {
 				store.loadCore({
 					config: {
-						protocolIteration: 9,
-						version: "1.0.0",
+						configVersion: 9,
+						formatVersion: "1.0.0",
 						flags: {
-							breakingFeature: false,
-							nonbreakingFeature: true,
+							breakingFeature: "1.0.0",
+							nonbreakingFeature: "2.0.0",
 						},
 					},
 				});

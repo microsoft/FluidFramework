@@ -6,20 +6,60 @@
 import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
-// TODO: Document, decide if semver-like even provides value here (over e.g. plain-old number).
+// Biggest TODOs:
+// - Decide version scheme and how to ensure internal versions don't end up in production documents
+// - Implement reconnect/offline support
+// - Consider supporting config specification behavior of "use this config for new documents, but don't try to upgrade loaded docs"
+// - fix impl to track current persisted format for each client in collab window
+// - Add fuzz testing with toy dds
+
+/**
+ * Version identifier for a feature or format in a {@link PersistedFormatConfig}.
+ *
+ * Internal versions (those ending in -internal) have no backwards compatibility guarantees.
+ * They are intended to be used while iterating on a "next generation" format, and not in
+ * production applications.
+ */
 export type Version = `${number}.${number}.${number}${"-internal" | ""}`;
 
-export interface PersistedConfig {
-	version: Version;
-	// Strictly increasing number which identifies the iteration of the proposed protocol. It's suggested
-	// that applications are able to modify this using the same mechanisms with which they can modify a DDS's
-	// configuration, which enables safe rollback policies.
-	// Example: application enables feature flag 1 in iteration 2, then realizes there is a problem with it.
-	// application then disables feature flag 1 in iteration 3.
-	// Using a single version number and monotonic increase on it isn't sufficient: DDSes may support configuration
-	// which impacts their serialization format with independent semantics (ex: attribution, policies to include history)
-	protocolIteration: number;
-	flags: Record<string, boolean>; // TODO: consider making this generic
+/**
+ * Configuration which impacts the persisted format of a document.
+ *
+ * @remarks - The current implementation is scoped to the DDS level, but its concepts are applicable to larger scopes.
+ */
+export interface PersistedFormatConfig {
+	/**
+	 * Format version for the document contents at whatever scope this configuration applies to.
+	 *
+	 * In DDS usage, this typically aligns with the DDS's op/summary format.
+	 */
+	formatVersion: Version;
+
+	/**
+	 * number that strictly increases over time which identifies the version of this configuration.
+	 * Applications should always bump this number when making any kind of configuration change.
+	 * As such, this number should align with the number of configuration changes an application
+	 * has made over the course of its lifetime.
+	 *
+	 * It's suggested that applications are able to modify this using the same mechanisms with which
+	 * they can modify a DDS's configuration in order to enable safe rollback policies.
+	 *
+	 * Decoupling this field from `formatVersion` and any configuration flags ensures that clients can reason
+	 * about which configuration is newer and act accordingly when clients with initially different configurations
+	 * collaborate.
+	 *
+	 * @example
+	 * An application first rolls out using `{ formatVersion: 1, configVersion: 1 }`.
+	 *
+	 * Later, the DDS they're using releases formatVersion 2, which has improved memory footprint they wish to leverage.
+	 * After a version of their application which understands formatVersion 2 saturates, they ship the configuration
+	 * `{ formatVersion: 2, configVersion: 2 }`.
+	 *
+	 * Unfortunately, after monitoring telemetry, they discover an issue exposed to formatVersion 2 and wish to rollback.
+	 * They now ship the configuration `{ formatVersion: 1, configVersion: 3 }`.
+	 */
+	configVersion: number;
+	flags: Record<string, Version>; // TODO: consider making this generic
 }
 
 export enum ConfigUpgradeType {
@@ -31,12 +71,12 @@ export enum ConfigUpgradeType {
 // for in progress upgrades.
 // TODO: document process for adding flags
 export interface PersistedConfigSchema {
-	version: (current: Version, previous: Version) => ConfigUpgradeType;
-	flags: Record<string, (current: boolean, previous: boolean) => ConfigUpgradeType>;
+	formatVersion: (current: Version, previous: Version) => ConfigUpgradeType;
+	flags: Record<string, (current: Version, previous: Version) => ConfigUpgradeType>;
 }
 
 interface VersionControllerSummary {
-	config: Omit<PersistedConfig, "flags"> & Partial<Pick<PersistedConfig, "flags">>;
+	config: Omit<PersistedFormatConfig, "flags"> & Partial<Pick<PersistedFormatConfig, "flags">>;
 	mostRecentResubmissionSeq?: number;
 }
 
@@ -73,7 +113,7 @@ export interface IPersistedConfigStore {
 
 	loadCore(snapshot: VersionControllerSummary): void;
 
-	getConfigForNextSubmission(): PersistedConfig;
+	getConfigForNextSubmission(): PersistedFormatConfig;
 	// DDS should compose over one of these things, which controls the op format that DDS uses and the summary tree
 	// it generates. It needs access to summary save/load process as well as op submission/processing.
 	// SharedTree architecture needs to be able to transmit information to the indexes on what format they should write in.
@@ -85,42 +125,40 @@ const upgradeKey = "upgrade" as const;
 
 interface UpgradeOp {
 	type: typeof upgradeKey;
-	config: PersistedConfig;
+	config: PersistedFormatConfig;
 }
 
 function isUpgradeOp(contents: any): contents is UpgradeOp {
 	return contents.type === upgradeKey;
 }
 
-// TODO: Test and validate this against reconnect & offline flows (will probably require minor api/implementation tweaks)
 class PersistedConfigStore implements IPersistedConfigStore {
-	// Stores the config that clients have implicitly agreed upon (i.e. the acked config with the highest protocolIteration)
-	private config: PersistedConfig;
-	// When initialized with a config that has a higher protocol iteration than the loaded document,
-	// this field holds that proposed newer protocol version.
+	// Stores the config that clients have implicitly agreed upon (i.e. the acked config with the highest configVersion)
+	private config: PersistedFormatConfig;
+	// When initialized with a config that has a higher config version than the loaded document,
+	// this field holds that proposed newer config.
 	// However, to avoid issues with readonly clients or affecting document's last edit time, actually submitting that
 	// upgrade request is performed lazily upon first edit.
 	// Once the proposed upgrade is submitted, this field should be cleared to avoid duplicate proposed submissions (which
 	// won't cause correctness issues, but have network overhead)
-	private configAwaitingSubmission: PersistedConfig | undefined;
+	private configAwaitingSubmission: PersistedFormatConfig | undefined;
 
-	// TODO: this tracking is arguably not necessary. the DDS should know if it has pending ops.
 	private pendingOpCount: number;
 
-	// Protocol iteration for the most recent upgrade which required op resubmission.
+	// Sequence number for the most recent upgrade which required op resubmission.
 	// This is tracked so it can be stored in the summary, so that clients joining the session while an upgrade op is in the
 	// collab window know to ignore concurrent ops. Undefined signifies that no upgrade ops were submitted in the collab window.
 	private mostRecentResubmissionSeq: number | undefined;
 
 	constructor(
 		private readonly schema: PersistedConfigSchema,
-		initialConfig: PersistedConfig, // should be provided at DDS construction time, generally will be specified by the application
+		initialConfig: PersistedFormatConfig, // should be provided at DDS construction time, generally will be specified by the application
 		private readonly submitLocalMessage: (content: any, localOpMetadata: unknown) => void,
 		private readonly onProtocolChange: (
-			current: PersistedConfig,
-			previous: PersistedConfig,
+			current: PersistedFormatConfig,
+			previous: PersistedFormatConfig,
 		) => void,
-		private readonly reSubmitPendingOps: (config: PersistedConfig) => void,
+		private readonly reSubmitPendingOps: (config: PersistedFormatConfig) => void,
 	) {
 		this.config = initialConfig;
 		this.pendingOpCount = 0;
@@ -137,7 +175,7 @@ class PersistedConfigStore implements IPersistedConfigStore {
 		}
 		const { contents } = message;
 		if (isUpgradeOp(contents)) {
-			if (contents.config.protocolIteration > this.config.protocolIteration) {
+			if (contents.config.configVersion > this.config.configVersion) {
 				// TODO: validate proposed config is understood by this version of the code, fail if not.
 				if (this.requiresOpResubmission(contents.config, this.config)) {
 					this.mostRecentResubmissionSeq = message.sequenceNumber;
@@ -151,22 +189,21 @@ class PersistedConfigStore implements IPersistedConfigStore {
 					}
 				}
 				this.updateConfig(contents.config);
-			} else if (contents.config.protocolIteration === this.config.protocolIteration) {
+			} else if (contents.config.configVersion === this.config.configVersion) {
 				if (!areEquivalentConfigs(contents.config, this.config)) {
 					throw new Error("TODO: determine error policy here");
 				}
 			}
-			// otherwise, proposed protocol should be ignored. this could happen with a client submitting a concurrent upgrade
+			// otherwise, proposed config should be ignored. this could happen with a client submitting a concurrent upgrade
 			// request
 
 			if (
-				contents.config.protocolIteration >=
-				(this.configAwaitingSubmission?.protocolIteration ?? 0)
+				contents.config.configVersion >= (this.configAwaitingSubmission?.configVersion ?? 0)
 			) {
-				// TODO: Could consider validating deep equality of the config in the case of protocol equality.
+				// TODO: Could consider validating deep equality of the config in the case of config equality.
 				// This avoids sending duplicate upgrade ops in most cases (they can still happen due to concurrency).
-				// Since clients should process duplicate upgrade ops as no-ops (or ignore them, if upgrading to an older
-				// protocol iteration), this step is technically unnecessary. But it avoids some network traffic.
+				// Since clients should process duplicate upgrade ops as no-ops (or ignore them, if "upgrading" to an older
+				// configVersion), this step is technically unnecessary. But it avoids some network traffic.
 				this.configAwaitingSubmission = undefined;
 			}
 
@@ -187,7 +224,7 @@ class PersistedConfigStore implements IPersistedConfigStore {
 		return false;
 	}
 
-	public getConfigForNextSubmission(): PersistedConfig {
+	public getConfigForNextSubmission(): PersistedFormatConfig {
 		return this.config;
 	}
 
@@ -211,8 +248,8 @@ class PersistedConfigStore implements IPersistedConfigStore {
 	public summarize(): VersionControllerSummary {
 		return {
 			config: {
-				protocolIteration: this.config.protocolIteration,
-				version: this.config.version,
+				configVersion: this.config.configVersion,
+				formatVersion: this.config.formatVersion,
 				flags: Object.keys(this.config.flags).length === 0 ? undefined : this.config.flags,
 			},
 			mostRecentResubmissionSeq: this.mostRecentResubmissionSeq,
@@ -227,33 +264,33 @@ class PersistedConfigStore implements IPersistedConfigStore {
 			...configSnapshot,
 		};
 		this.mostRecentResubmissionSeq = mostRecentResubmissionSeq;
-		if (config.protocolIteration > this.config.protocolIteration) {
+		if (config.configVersion > this.config.configVersion) {
 			// TODO: validate proposed config is understood by this version of the code, fail if not.
 			// some policy decisions must be made here.
 			this.updateConfig(config);
-		} else if (config.protocolIteration === this.config.protocolIteration) {
+		} else if (config.configVersion === this.config.configVersion) {
 			if (!areEquivalentConfigs(config, this.config)) {
-				// failing fast is arguably the correct thing to do--this indicates misconfigured protocol iteration,
+				// failing fast is arguably the correct thing to do--this indicates misconfigured configVersion,
 				// i.e. application has mistakenly rolled out two configurations with the same priority.
 				// Could always be resolved by rolling out a new one with higher priority.
 				throw new Error("TODO: determine error policy here");
 			}
 		} else {
-			// Downgrade to use the doc's current agreed-upon protocol, and set up local state to send a message
+			// Downgrade to use the doc's current agreed-upon config, and set up local state to send a message
 			// requesting an upgrade after the first op.
 			this.configAwaitingSubmission = this.config;
 			this.updateConfig(config);
 		}
 	}
 
-	// whether or not ops with protocolIteration below the upgrade require resubmission
+	// whether or not ops with configVersion below the upgrade require resubmission
 	private requiresOpResubmission(
-		proposedConfig: PersistedConfig,
-		currentConfig: PersistedConfig,
+		proposedConfig: PersistedFormatConfig,
+		currentConfig: PersistedFormatConfig,
 	): boolean {
 		if (
-			proposedConfig.version !== currentConfig.version &&
-			this.schema.version(proposedConfig.version, currentConfig.version) ===
+			proposedConfig.formatVersion !== currentConfig.formatVersion &&
+			this.schema.formatVersion(proposedConfig.formatVersion, currentConfig.formatVersion) ===
 				ConfigUpgradeType.ConcurrentOpsInvalid
 		) {
 			return true;
@@ -285,21 +322,21 @@ class PersistedConfigStore implements IPersistedConfigStore {
 			this.mostRecentResubmissionSeq !== undefined &&
 			this.mostRecentResubmissionSeq < message.minimumSequenceNumber
 		) {
-			// All clients have seen the protocol change, so concurrent ops that should be discarded
+			// All clients have seen the config change, so concurrent ops that should be discarded
 			// can no longer be acked.
 			this.mostRecentResubmissionSeq = undefined;
 		}
 	}
 
-	private updateConfig(config: PersistedConfig): void {
+	private updateConfig(config: PersistedFormatConfig): void {
 		const oldConfig = this.config;
 		this.config = config;
 		this.onProtocolChange(config, oldConfig);
 	}
 }
 
-function areEquivalentConfigs(a: PersistedConfig, b: PersistedConfig): boolean {
-	if (a.version !== b.version) {
+function areEquivalentConfigs(a: PersistedFormatConfig, b: PersistedFormatConfig): boolean {
+	if (a.formatVersion !== b.formatVersion) {
 		return false;
 	}
 
@@ -320,11 +357,11 @@ function areEquivalentConfigs(a: PersistedConfig, b: PersistedConfig): boolean {
 
 export function createPersistedConfigStore(
 	schema: PersistedConfigSchema,
-	initialConfig: PersistedConfig, // should be provided at DDS construction time, generally will be specified by the application
+	initialConfig: PersistedFormatConfig, // should be provided at DDS construction time, generally will be specified by the application
 	submitLocalMessage: (content: any, localOpMetadata: unknown) => void,
 	// consider making this an event.
-	onProtocolChange: (current: PersistedConfig, previous: PersistedConfig) => void,
-	reSubmitPendingOps: (config: PersistedConfig) => void,
+	onProtocolChange: (current: PersistedFormatConfig, previous: PersistedFormatConfig) => void,
+	reSubmitPendingOps: (config: PersistedFormatConfig) => void,
 ): IPersistedConfigStore {
 	return new PersistedConfigStore(
 		schema,
