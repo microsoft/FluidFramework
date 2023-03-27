@@ -105,9 +105,9 @@ export class DataVisualizerGraph {
 	private readonly rootData: Record<string, IFluidLoadable>;
 
 	/**
-	 * TODO
+	 * Policy object for visualizing different kinds of shared objects.
 	 */
-	private readonly visualizerSchema: SharedObjectVisualizers;
+	private readonly visualizers: SharedObjectVisualizers;
 
 	// TODO: weak ref + related cleanup
 	private readonly visualizerNodes: Map<FluidObjectId, SharedObjectVisualizerNode>;
@@ -119,7 +119,7 @@ export class DataVisualizerGraph {
 		visualizerMap: SharedObjectVisualizers,
 	) {
 		this.rootData = rootData;
-		this.visualizerSchema = visualizerMap;
+		this.visualizers = visualizerMap;
 
 		this.visualizerNodes = new Map<FluidObjectId, SharedObjectVisualizerNode>();
 		this.handles = new Map<FluidObjectId, IFluidHandle>();
@@ -167,8 +167,8 @@ export class DataVisualizerGraph {
 	private registerVisualizerForSharedObject(sharedObject: ISharedObject, label: string): void {
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			const visualizer =
-				this.visualizerSchema[sharedObject.attributes.type] !== undefined
-					? this.visualizerSchema[sharedObject.attributes.type]
+				this.visualizers[sharedObject.attributes.type] !== undefined
+					? this.visualizers[sharedObject.attributes.type]
 					: visualizeUnknownSharedObject;
 			this.visualizerNodes.set(
 				sharedObject.id,
