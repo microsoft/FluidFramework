@@ -104,8 +104,10 @@ export class ModelLoader<ModelType> implements IModelLoader<ModelType> {
 		// to stamp it on something that would rather not know it (e.g. the model).
 		const attach = async () => {
 			await container.attach(this.generateCreateNewRequest());
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return container.resolvedUrl!.id;
+			if (!container.resolvedUrl) {
+				throw new Error("Resolved Url not available on attached container");
+			}
+			return container.resolvedUrl.id;
 		};
 		return { model, attach };
 	}

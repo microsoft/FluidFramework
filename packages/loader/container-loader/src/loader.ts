@@ -36,6 +36,7 @@ import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
 	IFluidResolvedUrl,
+	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -52,6 +53,13 @@ function canUseCache(request: IRequest): boolean {
 	return request.headers[LoaderHeader.cache] !== false;
 }
 
+function ensureFluidResolvedUrl(
+	resolved: IResolvedUrl | undefined,
+): asserts resolved is IFluidResolvedUrl {
+	if (!resolved) {
+		throw new Error(`resolved is not a Fluid url.`);
+	}
+}
 /**
  * @deprecated - In the next release RelativeLoader will no longer be exported. It is an internal class that should not be used directly.
  */
@@ -70,12 +78,11 @@ export class RelativeLoader implements ILoader {
 			if (canUseCache(request)) {
 				return this.container;
 			} else {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const resolvedUrl = this.container.resolvedUrl!;
+				ensureFluidResolvedUrl(this.container.resolvedUrl);
 				const container = await Container.load(this.loader as Loader, {
 					canReconnect: request.headers?.[LoaderHeader.reconnect],
 					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
-					resolvedUrl: { ...resolvedUrl },
+					resolvedUrl: { ...this.container.resolvedUrl },
 					version: request.headers?.[LoaderHeader.version] ?? undefined,
 					loadMode: request.headers?.[LoaderHeader.loadMode],
 				});
@@ -265,12 +272,13 @@ export async function requestResolvedObjectFromContainer(
 	container: IContainer,
 	headers?: IRequestHeader,
 ): Promise<IResponse> {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	const parsedUrl = parseUrl(container.resolvedUrl!.url);
+	if (container.resolvedUrl == undefined) {
+		throw new Error("");
+	}
+	const parsedUrl = parseUrl(container.resolvedUrl.url);
 
 	if (parsedUrl === undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		throw new Error(`Invalid URL ${container.resolvedUrl!.url}`);
+		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
 	}
 
 	return container.request({
@@ -332,7 +340,8 @@ export class Loader implements IHostLoader {
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
-				const parsedUrl = parseUrl(container.resolvedUrl?.url ?? "");
+				ensureFluidResolvedUrl(container.resolvedUrl);
+				const parsedUrl = parseUrl(container.resolvedUrl.url);
 				if (parsedUrl !== undefined) {
 					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
 				}
@@ -400,12 +409,10 @@ export class Loader implements IHostLoader {
 		pendingLocalState?: IPendingContainerState,
 	): Promise<{ container: Container; parsed: IParsedUrl }> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
-		if (resolvedAsFluid === undefined) {
-			throw new Error();
-		}
+		ensureFluidResolvedUrl(resolvedAsFluid);
 
 		// Parse URL into data stores
-		const parsed = parseUrl(resolvedAsFluid.url ?? "");
+		const parsed = parseUrl(resolvedAsFluid.url);
 		if (parsed === undefined) {
 			throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
 		}
