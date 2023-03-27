@@ -31,7 +31,7 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		...BaseCommand.flags,
 	};
 
-  static enableJsonFlag: boolean = true;
+	static enableJsonFlag: boolean = true;
 
 	async run(): Promise<PackageVersionList> {
 		const flags = this.flags;
@@ -49,16 +49,16 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 		const tableData: (string | MonoRepoKind | undefined)[][] = [
 			["Release group", "Name", "Private", "Version"],
 		];
-    const jsonData: PackageVersionList = {};
+		const jsonData: PackageVersionList = {};
 		for (const pkg of packages) {
-      const version = pkg.monoRepo ? pkg.monoRepo.version : pkg.version;
+			const version = pkg.monoRepo ? pkg.monoRepo.version : pkg.version;
 			tableData.push([
 				pkg.monoRepo?.kind ?? "n/a",
 				pkg.name,
 				pkg.packageJson.private ? "-private-" : "",
 				version,
 			]);
-      jsonData[pkg.name] = version;
+			jsonData[pkg.name] = version;
 		}
 
 		const output = table(tableData, {
@@ -68,6 +68,6 @@ export default class InfoCommand extends BaseCommand<typeof InfoCommand> {
 
 		this.log(`\n${output}`);
 		this.log(`Total package count: ${packages.length}`);
-    return jsonData;
+		return jsonData;
 	}
 }
