@@ -153,6 +153,7 @@ export class DocumentStorage implements IDocumentStorage {
 			LumberEventName.CreateDocInitialSummaryWrite,
 			lumberjackProperties,
 		);
+		let initialSummaryVersionId: string;
 		try {
 			const handle = await uploadManager.writeSummaryTree(
 				fullTree /* summaryTree */,
@@ -180,6 +181,11 @@ export class DocumentStorage implements IDocumentStorage {
 				initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(
 					commit.sha,
 				)}`;
+				// In the case of ShreddedSummary Upload, summary version is always the commit sha.
+				initialSummaryVersionId = commit.sha;
+			} else {
+				// In the case of WholeSummary Upload, summary tree handle is actually commit sha or version id.
+				initialSummaryVersionId = handle;
 			}
 			initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
 		} catch (error: any) {
@@ -214,7 +220,12 @@ export class DocumentStorage implements IDocumentStorage {
 			sequenceNumber,
 			lastClientSummaryHead: undefined,
 			lastSummarySequenceNumber: 0,
-			validParentSummaries: undefined,
+			// Add initialSummaryVersionId as a valid parent summary. There is no summaryAck for initial summary,
+			// and it is possible for a sumarizer to load from the initial summary, while a service summary is being written.
+			// If the summarizer then proposes the initial summary as a parent summary after the service summary is written,
+			// the initial summary would not be accepted as a valid parent because lastClientSummaryHead is undefined and latest
+			// summary is a service summary. However, initial summary _is_ a valid parent in this scenario.
+			validParentSummaries: [initialSummaryVersionId],
 		};
 
 		const session: ISession = {

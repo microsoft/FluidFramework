@@ -6,10 +6,10 @@
 export {
 	identifierKey,
 	ISharedTree,
-	ISharedTreeBranch,
+	ISharedTreeView,
 	ISharedTreeFork,
 	runSynchronous,
 	SharedTree,
 	SharedTreeFactory,
-	BranchEvents,
+	ViewEvents,
 } from "./sharedTree";

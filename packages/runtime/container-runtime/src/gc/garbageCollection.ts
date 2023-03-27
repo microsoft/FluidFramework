@@ -50,7 +50,6 @@ import {
 } from "./gcDefinitions";
 import { getSnapshotDataFromOldSnapshotFormat, sendGCUnexpectedUsageEvent } from "./gcHelpers";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
-import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
 /** The event that is logged when unreferenced node is used after a certain time. */
@@ -152,9 +151,6 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.summaryStateTracker.doesSummaryStateNeedReset;
 	}
 
-	/** Handler to respond to when a SweepReady object is used */
-	private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
-
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
@@ -170,12 +166,6 @@ export class GarbageCollector implements IGarbageCollector {
 			ChildLogger.create(createParams.baseLogger, "GarbageCollector", {
 				all: { completedGCRuns: () => this.completedRuns },
 			}),
-		);
-
-		this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
-			createParams.getContainerDiagnosticId(),
-			this.mc,
-			this.runtime.closeFn,
 		);
 
 		this.configs = generateGCConfigs(this.mc, createParams);
@@ -1198,16 +1188,6 @@ export class GarbageCollector implements IGarbageCollector {
 				} else {
 					this.mc.logger.sendErrorEvent(event);
 				}
-			}
-
-			// If SweepReady Usage Detection is enabled, the handler may close the interactive container.
-			// Once Sweep is fully implemented, this will be removed since the objects will be gone
-			// and errors will arise elsewhere in the runtime
-			if (state === UnreferencedState.SweepReady) {
-				this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({
-					...propsToLog,
-					usageType,
-				});
 			}
 		}
 	}

@@ -101,11 +101,6 @@ type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<T ex
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
 
 // @alpha
-export interface BranchEvents {
-    afterBatch(): void;
-}
-
-// @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @alpha
@@ -731,14 +726,21 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeBranch {
+export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
 // @alpha
-export interface ISharedTreeBranch extends AnchorLocator {
+export interface ISharedTreeFork extends ISharedTreeView {
+    isMerged(): boolean;
+    merge(): void;
+    pull(): void;
+}
+
+// @alpha
+export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
-    readonly events: ISubscribable<BranchEvents>;
+    readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
     get root(): UnwrappedEditableField;
@@ -751,13 +753,6 @@ export interface ISharedTreeBranch extends AnchorLocator {
         abort(): TransactionResult.Abort;
         inProgress(): boolean;
     };
-}
-
-// @alpha
-export interface ISharedTreeFork extends ISharedTreeBranch {
-    isMerged(): boolean;
-    merge(): void;
-    pull(): void;
 }
 
 // @alpha (undocumented)
@@ -1256,7 +1251,7 @@ export const rootFieldKey: GlobalFieldKey;
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
-export function runSynchronous(branch: ISharedTreeBranch, transaction: (branch: ISharedTreeBranch) => TransactionResult | void): TransactionResult;
+export function runSynchronous(view: ISharedTreeView, transaction: (view: ISharedTreeView) => TransactionResult | void): TransactionResult;
 
 declare namespace SchemaAware {
     export {
@@ -1654,6 +1649,11 @@ type ValuesOf<T> = T[keyof T];
 
 // @alpha
 export const valueSymbol: unique symbol;
+
+// @alpha
+export interface ViewEvents {
+    afterBatch(): void;
+}
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
