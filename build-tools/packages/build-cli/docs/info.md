@@ -19,6 +19,9 @@ FLAGS
   -p, --[no-]private           Include private packages (default true).
   -v, --verbose                Verbose logging.
 
+GLOBAL FLAGS
+  --json  Format output as json.
+
 DESCRIPTION
   Get info about the repo, release groups, and packages.
 ```
