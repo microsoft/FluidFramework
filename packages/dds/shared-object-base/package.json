@@ -106,13 +106,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_SharedObject": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedObjectCore": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

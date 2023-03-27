@@ -96,10 +96,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_Ink": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

@@ -96,10 +96,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_SharedCounter": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

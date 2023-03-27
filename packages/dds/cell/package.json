@@ -97,10 +97,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_SharedCell": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

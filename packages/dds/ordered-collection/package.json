@@ -98,13 +98,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_ConsensusOrderedCollection": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_ConsensusQueue": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

@@ -255,23 +255,25 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 
 		const pendingOps = await getPendingOps(provider, false, async (c, d) => {
 			const map = await d.getSharedObject<SharedMap>(mapId);
-			assert(map.idCompressor !== undefined);
-			mapCompressedId = map.idCompressor.generateCompressedId();
-			mapDecompressedId = map.idCompressor.decompress(mapCompressedId);
+			assert((map as any).runtime.idCompressor !== undefined);
+			mapCompressedId = (map as any).runtime.idCompressor.generateCompressedId();
+			mapDecompressedId = (map as any).runtime.idCompressor.decompress(mapCompressedId);
 			map.set(mapDecompressedId, testValue);
 			const cell = await d.getSharedObject<SharedCell>(cellId);
-			assert(cell.idCompressor !== undefined);
-			cellCompressedId = cell.idCompressor.generateCompressedId();
-			cellDecompressedId = cell.idCompressor.decompress(cellCompressedId);
+			assert((cell as any).runtime.idCompressor !== undefined);
+			cellCompressedId = (cell as any).runtime.idCompressor.generateCompressedId();
+			cellDecompressedId = (cell as any).runtime.idCompressor.decompress(cellCompressedId);
 			cell.set(cellDecompressedId);
 			const directory = await d.getSharedObject<SharedDirectory>(directoryId);
-			assert(directory.idCompressor !== undefined);
-			directoryCompressedId = directory.idCompressor.generateCompressedId();
-			directoryDecompressedId = directory.idCompressor.decompress(directoryCompressedId);
+			assert((directory as any).runtime.idCompressor !== undefined);
+			directoryCompressedId = (directory as any).runtime.idCompressor.generateCompressedId();
+			directoryDecompressedId = (directory as any).runtime.idCompressor.decompress(
+				directoryCompressedId,
+			);
 			directory.set(directoryDecompressedId, testValue);
 
 			// All will have the same sessionId, it doesn't matter which DDS I use
-			sessionId = map.idCompressor.localSessionId;
+			sessionId = (map as any).runtime.idCompressor.localSessionId;
 		});
 
 		// load container with pending ops, which should resend the op not sent by previous container
@@ -280,20 +282,26 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 		const cell2 = await dataStore2.getSharedObject<SharedCell>(cellId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
-		assert(map2.idCompressor !== undefined);
-		assert(cell2.idCompressor !== undefined);
-		assert(directory2.idCompressor !== undefined);
+		assert((map2 as any).runtime.idCompressor !== undefined);
+		assert((cell2 as any).runtime.idCompressor !== undefined);
+		assert((directory2 as any).runtime.idCompressor !== undefined);
 		await waitForContainerConnection(container2, true);
 		await provider.ensureSynchronized();
 
 		// Loaded container should reassume the state of the stashed compressor - so same sessionId as before
-		assert.strictEqual(sessionId, map2.idCompressor.localSessionId);
-		assert.strictEqual(sessionId, cell2.idCompressor.localSessionId);
-		assert.strictEqual(sessionId, directory2.idCompressor.localSessionId);
-		assert.strictEqual(map2.idCompressor.recompress(mapDecompressedId), mapCompressedId);
-		assert.strictEqual(cell2.idCompressor.recompress(cellDecompressedId), cellCompressedId);
+		assert.strictEqual(sessionId, (map2 as any).runtime.idCompressor.localSessionId);
+		assert.strictEqual(sessionId, (cell2 as any).runtime.idCompressor.localSessionId);
+		assert.strictEqual(sessionId, (directory2 as any).runtime.idCompressor.localSessionId);
 		assert.strictEqual(
-			directory2.idCompressor.recompress(directoryDecompressedId),
+			(map2 as any).runtime.idCompressor.recompress(mapDecompressedId),
+			mapCompressedId,
+		);
+		assert.strictEqual(
+			(cell2 as any).runtime.idCompressor.recompress(cellDecompressedId),
+			cellCompressedId,
+		);
+		assert.strictEqual(
+			(directory2 as any).runtime.idCompressor.recompress(directoryDecompressedId),
 			directoryCompressedId,
 		);
 

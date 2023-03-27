@@ -56,7 +56,6 @@ import {
 	VisibilityState,
 	ITelemetryContext,
 	IIdCompressor,
-	IIdCompressorCore,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -201,7 +200,7 @@ export class FluidDataStoreRuntime
 	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
-	public readonly idCompressor?: IIdCompressorCore & IIdCompressor;
+	public readonly idCompressor?: IIdCompressor;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLogger {
 		return this.mc.logger;

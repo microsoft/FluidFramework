@@ -21,7 +21,6 @@ import {
 	ITelemetryContext,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
-	IIdCompressor,
 } from "@fluidframework/runtime-definitions";
 import {
 	ChildLogger,
@@ -88,10 +87,6 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	public get connected(): boolean {
 		return this._connected;
-	}
-
-	public get idCompressor(): IIdCompressor | undefined {
-		return this.runtime.idCompressor;
 	}
 
 	/**

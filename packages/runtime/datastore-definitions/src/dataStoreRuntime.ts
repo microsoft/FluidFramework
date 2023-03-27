@@ -27,7 +27,6 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/protocol-definitions";
 import {
-	IIdCompressorCore,
 	IIdCompressor,
 	IInboundSignalMessage,
 	IProvideFluidDataStoreRegistry,
@@ -72,7 +71,7 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
-	readonly idCompressor?: IIdCompressorCore & IIdCompressor;
+	readonly idCompressor?: IIdCompressor;
 
 	/**
 	 * Returns the channel with the given id

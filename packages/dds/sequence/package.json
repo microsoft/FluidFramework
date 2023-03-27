@@ -118,31 +118,16 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_ISharedString": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedIntervalCollection": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedSegmentSequence": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedSequence": {
-				"forwardCompat": false
-			},
-			"ClassDeclaration_SharedString": {
+			"InterfaceDeclaration_ISerializableInterval": {
 				"forwardCompat": false
 			},
 			"ClassDeclaration_Interval": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_SequenceInterval": {
-				"forwardCompat": false
-			},
-			"InterfaceDeclaration_ISerializableInterval": {
-				"forwardCompat": false
-			},
 			"InterfaceDeclaration_IntervalLocator": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_SequenceInterval": {
 				"forwardCompat": false
 			}
 		}
