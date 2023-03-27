@@ -51,7 +51,6 @@ export function clearDebuggerRegistry(): void;
 
 // @public
 export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
-    // (undocumented)
     type: "CLOSE_CONTAINER";
 }
 
@@ -63,7 +62,6 @@ export function closeFluidClientDebugger(containerId: string): void;
 
 // @public
 export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
-    // (undocumented)
     type: "CONNECT_CONTAINER";
 }
 
@@ -95,7 +93,6 @@ export enum ContainerStateChangeKind {
 
 // @public
 export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
-    // (undocumented)
     type: "CONTAINER_STATE_CHANGE";
 }
 
@@ -106,7 +103,6 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 
 // @public
 export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
-    // (undocumented)
     type: "CONTAINER_STATE_HISTORY";
 }
 
@@ -129,7 +125,6 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 
 // @public
 export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
-    // (undocumented)
     type: "DATA_VISUALIZATION";
 }
 
@@ -159,7 +154,6 @@ export interface DebuggerRegistryEvents extends IEvent {
 
 // @public
 export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
-    // (undocumented)
     type: "DISCONNECT_CONTAINER";
 }
 
@@ -224,7 +218,6 @@ export type GetContainerStateMessageData = HasContainerId;
 
 // @public
 export interface GetDataVisualizationMessage extends IDebuggerMessage<GetDataVisualizationMessageData> {
-    // (undocumented)
     type: "GET_DATA_VISUALIZATION";
 }
 
@@ -346,7 +339,6 @@ export interface RegistryChangeMessageData {
 
 // @public
 export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootDataVisualizationsMessageData> {
-    // (undocumented)
     type: "ROOT_DATA_VISUALIZATIONS";
 }
 
