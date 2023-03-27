@@ -39,7 +39,7 @@ export enum AllowedUpdateType {
 	 */
 	None,
 	/**
-	 * Update the stored schema to match view schema if the current document contents meet the view schema.
+	 * Update the stored schema to match the view schema if the current document contents are compatible with the view schema.
 	 * TODO: support this option.
 	 */
 	// DataCompatible,
