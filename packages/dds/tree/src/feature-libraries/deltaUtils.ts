@@ -64,68 +64,63 @@ export function mapMark<TIn, TOut>(
 	}
 	const type = mark.type;
 	switch (type) {
-		case Delta.MarkType.Modify: {
-			if (mark.fields === undefined && mark.setValue === undefined) {
-				return { type: Delta.MarkType.Modify };
-			}
-			return mark.fields === undefined
-				? {
-						type: Delta.MarkType.Modify,
-						setValue: mark.setValue,
-				  }
-				: {
-						...mark,
-						fields: mapFieldMarks(mark.fields, func),
-				  };
-		}
-		case Delta.MarkType.ModifyAndMoveOut: {
-			if (mark.fields === undefined && mark.setValue === undefined) {
-				return {
-					type: Delta.MarkType.ModifyAndMoveOut,
-					moveId: mark.moveId,
-				};
-			}
-			return mark.fields === undefined
-				? {
-						type: Delta.MarkType.ModifyAndMoveOut,
-						moveId: mark.moveId,
-						setValue: mark.setValue,
-				  }
-				: {
-						...mark,
-						fields: mapFieldMarks(mark.fields, func),
-				  };
-		}
-		case Delta.MarkType.ModifyAndDelete: {
-			return {
-				...mark,
-				fields: mapFieldMarks(mark.fields, func),
-			};
-		}
 		case Delta.MarkType.Insert: {
 			return {
 				type: Delta.MarkType.Insert,
+				...mapModifications(mark, func),
 				content: mark.content.map(func),
 			};
 		}
-		case Delta.MarkType.InsertAndModify: {
-			const out: Mutable<Delta.InsertAndModify<TOut>> = {
-				type: Delta.MarkType.InsertAndModify,
-				content: func(mark.content),
+		case Delta.MarkType.Modify: {
+			return {
+				type: Delta.MarkType.Modify,
+				...mapModifications(mark, func),
 			};
-			if (mark.fields !== undefined) {
-				out.fields = mapFieldMarks(mark.fields, func);
-			}
-			if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
-				out.setValue = mark.setValue;
-			}
-			return out;
 		}
-		case Delta.MarkType.Delete:
+		case Delta.MarkType.MoveOut: {
+			return {
+				type: Delta.MarkType.MoveOut,
+				count: mark.count,
+				moveId: mark.moveId,
+				...mapModifications(mark, func),
+			};
+		}
+		case Delta.MarkType.Delete: {
+			return {
+				type: Delta.MarkType.Delete,
+				count: mark.count,
+				...mapModifications(mark, func),
+			};
+		}
 		case Delta.MarkType.MoveIn:
-		case Delta.MarkType.MoveOut:
 			return mark;
 		default:
 			unreachableCase(type);
+	}
+}
+
+function mapModifications<TIn, TOut>(
+	mark: Delta.HasModifications<TIn>,
+	func: (tree: TIn) => TOut,
+): Delta.HasModifications<TOut> {
+	const out: Mutable<Delta.HasModifications<TOut>> = {};
+	if (mark.fields !== undefined) {
+		out.fields = mapFieldMarks(mark.fields, func);
+	}
+	if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
+		out.setValue = mark.setValue;
+	}
+	return out;
+}
+
+export function populateChildModifications(
+	modifications: Delta.HasModifications,
+	deltaMark: Mutable<Delta.HasModifications>,
+): void {
+	if (Object.prototype.hasOwnProperty.call(modifications, "setValue")) {
+		deltaMark.setValue = modifications.setValue;
+	}
+	if (modifications.fields !== undefined) {
+		deltaMark.fields = modifications.fields;
 	}
 }

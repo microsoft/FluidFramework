@@ -9,6 +9,7 @@ import { HasClientDebugger } from "../CommonProps";
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
+import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
 import { TelemetryView } from "./TelemetryView";
@@ -52,70 +53,50 @@ export interface ClientDebugViewProps extends HasClientDebugger {
  */
 export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
 	const { clientDebugger, renderOptions: userRenderOptions } = props;
-	const { container } = clientDebugger;
-
 	const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
-
-	const [isContainerClosed, setIsContainerClosed] = React.useState<boolean>(container.closed);
-
-	React.useEffect(() => {
-		function onContainerClose(): void {
-			setIsContainerClosed(true);
-		}
-
-		container.on("closed", onContainerClose);
-
-		setIsContainerClosed(container.closed);
-
-		return (): void => {
-			container.off("closed", onContainerClose);
-		};
-	}, [container, setIsContainerClosed]);
 
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
 		PanelView.ContainerData,
 	);
-
-	let view: React.ReactElement;
-	if (isContainerClosed) {
-		view = <div>The Container has been closed.</div>;
-	} else {
-		let innerView: React.ReactElement;
-		switch (innerViewSelection) {
-			case PanelView.ContainerData:
-				innerView = (
-					<DataObjectsView
-						clientDebugger={clientDebugger}
-						renderOptions={renderOptions.sharedObjectRenderOptions}
-					/>
-				);
-				break;
-			case PanelView.Audience:
-				innerView = (
-					<AudienceView
-						clientDebugger={clientDebugger}
-						onRenderAudienceMember={renderOptions.onRenderAudienceMember}
-					/>
-				);
-				break;
-			case PanelView.Telemetry:
-				innerView = <TelemetryView />;
-				break;
-			// TODO: add the Telemetry view here, without ReactContext
-			default:
-				throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
-		}
-		view = (
-			<Stack tokens={{ childrenGap: 10 }}>
-				<PanelViewSelectionMenu
-					currentSelection={innerViewSelection}
-					updateSelection={setInnerViewSelection}
+	let innerView: React.ReactElement;
+	switch (innerViewSelection) {
+		case PanelView.ContainerData:
+			innerView = (
+				<DataObjectsView
+					clientDebugger={clientDebugger}
+					renderOptions={renderOptions.sharedObjectRenderOptions}
 				/>
-				{innerView}
-			</Stack>
-		);
+			);
+			break;
+		case PanelView.Audience:
+			innerView = (
+				<AudienceView
+					clientDebugger={clientDebugger}
+					onRenderAudienceMember={renderOptions.onRenderAudienceMember}
+				/>
+			);
+			break;
+		case PanelView.Telemetry:
+			innerView = <TelemetryView />;
+			break;
+		// TODO: add the Telemetry view here, without ReactContext
+
+		case PanelView.ContainerStateHistory:
+			innerView = <ContainerHistoryView clientDebugger={clientDebugger} />;
+			break;
+		default:
+			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 	}
+	const view = (
+		<Stack tokens={{ childrenGap: 10 }}>
+			<PanelViewSelectionMenu
+				currentSelection={innerViewSelection}
+				updateSelection={setInnerViewSelection}
+			/>
+			{innerView}
+		</Stack>
+	);
 
 	return (
 		<Stack
@@ -153,12 +134,16 @@ export enum PanelView {
 	Audience = "Audience",
 
 	/**
-	 * Display view of Telemetry events
+	 * Display view of Telemetry events.
 	 */
 	Telemetry = "Telemetry",
 
+	/**
+	 * Display view of Container state history.
+	 */
+	ContainerStateHistory = "States",
+
 	// TODOs:
-	// - Container state history
 	// - Network stats
 	// - Ops/message latency stats
 }

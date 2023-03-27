@@ -4,9 +4,11 @@
  */
 
 import { Runner, Suite, Test } from "mocha";
+import chalk from "chalk";
 import { isChildProcess, ReporterOptions } from "./Configuration";
-import { BenchmarkData, BenchmarkReporter, failedData } from "./Reporter";
-import { red, getName, getSuiteName } from "./ReporterUtilities";
+import { BenchmarkReporter } from "./Reporter";
+import { getName, getSuiteName } from "./ReporterUtilities";
+import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
@@ -37,7 +39,9 @@ module.exports = class {
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-				console.error(red(`Test ${test.fullTitle()} failed with error: '${err.message}'`));
+				console.error(
+					chalk.red(`Test ${test.fullTitle()} failed with error: '${err.message}'`),
+				);
 			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
 				// Type signature for `Test.state` indicates it will never be 'pending',
@@ -48,27 +52,21 @@ module.exports = class {
 				}
 
 				const suite = test.parent ? getSuiteName(test.parent) : "root suite";
-				const benchmark = data.get(test);
+				let benchmark: BenchmarkResult | undefined = data.get(test);
 				if (benchmark === undefined) {
 					// Mocha test complected with out reporting data.
 					// This is an error, so report it as such.
-					console.error(
-						red(
-							`Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`,
-						),
-					);
-					benchmarkReporter.recordTestResult(suite, getName(test.title), failedData);
+					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`;
+					console.error(chalk.red(error));
+					benchmarkReporter.recordTestResult(suite, getName(test.title), { error });
 					return;
 				}
 				if (test.state !== "passed") {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
-					console.error(
-						red(
-							`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`,
-						),
-					);
-					benchmark.aborted = true;
+					const error = `Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`;
+					console.error(chalk.red(error));
+					benchmark = { error };
 				}
 
 				if (isChildProcess) {

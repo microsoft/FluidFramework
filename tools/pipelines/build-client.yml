@@ -93,6 +93,8 @@ extends:
     poolBuild: Large
     checkoutSubmodules: true
     taskBundleAnalysis: true
+    taskLint: true
+    taskLintName: ci:lint
     taskTest:
     - ci:test:mocha
     - ci:test:jest
@@ -101,7 +103,6 @@ extends:
     - ci:test:stress:tinylicious
     - test:copyresults
     checks:
-    - policy-check
-    - layer-check
     - syncpack:deps
     - syncpack:versions
+    - prettier

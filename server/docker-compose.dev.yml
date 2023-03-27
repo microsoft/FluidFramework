@@ -23,9 +23,7 @@ services:
       - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules/zookeeper
-      - /usr/src/server/node_modules/node-rdkafka
-      - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+      - /usr/src/server/node_modules
     restart: on-failure
   deli:
     build:
@@ -38,9 +36,7 @@ services:
       - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules/zookeeper
-      - /usr/src/server/node_modules/node-rdkafka
-      - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+      - /usr/src/server/node_modules
     restart: on-failure
   scriptorium:
     build:
@@ -53,9 +49,7 @@ services:
       - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules/zookeeper
-      - /usr/src/server/node_modules/node-rdkafka
-      - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+      - /usr/src/server/node_modules
     restart: on-failure
   copier:
     build:
@@ -68,9 +62,7 @@ services:
       - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules/zookeeper
-      - /usr/src/server/node_modules/node-rdkafka
-      - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+      - /usr/src/server/node_modules
     restart: on-failure
   scribe:
     build:
@@ -83,9 +75,7 @@ services:
       - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules/zookeeper
-      - /usr/src/server/node_modules/node-rdkafka
-      - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+      - /usr/src/server/node_modules
     restart: on-failure
   foreman:
     build:
@@ -98,9 +88,7 @@ services:
       - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules/zookeeper
-      - /usr/src/server/node_modules/node-rdkafka
-      - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+      - /usr/src/server/node_modules
     restart: on-failure
   riddler:
     build:
@@ -117,9 +105,7 @@ services:
       - IS_FLUID_SERVER=true
     volumes:
       - ./routerlicious:/usr/src/server
-      - /usr/src/server/node_modules/zookeeper
-      - /usr/src/server/node_modules/node-rdkafka
-      - /usr/src/server/packages/routerlicious/node_modules/node-rdkafka/
+      - /usr/src/server/node_modules
     restart: on-failure
   historian:
     build:
@@ -145,7 +131,7 @@ services:
     volumes:
       - git:/home/node/documents
       - ./gitrest:/home/node/server
-      - /home/node/server/node_modules/nodegit
+      - /home/node/server/node_modules
     restart: on-failure
   git:
     image: mcr.microsoft.com/fluidframework/routerlicious/gitssh:latest

@@ -35,6 +35,10 @@ export enum QueuedMessageProperties {
 	topic = "topic",
 	partition = "partition",
 	offset = "offset",
+
+	// use offsetStart and offsetEnd to log the range of kafka offsets being processed
+	offsetStart = "offsetStart",
+	offsetEnd = "offsetEnd",
 }
 
 export enum HttpProperties {
@@ -82,6 +86,7 @@ export enum CommonProperties {
 	restart = "restart",
 	serviceName = "serviceName",
 	telemetryGroupName = "telemetryGroupName",
+	totalBatchSize = "totalBatchSize",
 }
 
 export enum ThrottlingTelemetryProperties {

@@ -179,6 +179,7 @@ declare function get_current_ClassDeclaration_ReplayDocumentServiceFactory():
 declare function use_old_ClassDeclaration_ReplayDocumentServiceFactory(
     use: TypeOnly<old.ReplayDocumentServiceFactory>);
 use_old_ClassDeclaration_ReplayDocumentServiceFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ReplayDocumentServiceFactory());
 
 /*
@@ -251,4 +252,5 @@ declare function get_current_ClassDeclaration_StaticStorageDocumentServiceFactor
 declare function use_old_ClassDeclaration_StaticStorageDocumentServiceFactory(
     use: TypeOnly<old.StaticStorageDocumentServiceFactory>);
 use_old_ClassDeclaration_StaticStorageDocumentServiceFactory(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_StaticStorageDocumentServiceFactory());

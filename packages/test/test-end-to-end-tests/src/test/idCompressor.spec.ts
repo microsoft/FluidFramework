@@ -12,7 +12,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { SharedCell } from "@fluidframework/cell";
 import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 

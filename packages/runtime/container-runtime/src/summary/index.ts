@@ -24,8 +24,15 @@ export {
 	SummarizerClientElection,
 	summarizerClientType,
 } from "./summarizerClientElection";
-export { SummarizerHandle } from "./summarizerHandle";
 export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHeuristics";
+export {
+	createRootSummarizerNode,
+	createRootSummarizerNodeWithGC,
+	IFetchSnapshotResult,
+	IRootSummarizerNode,
+	IRootSummarizerNodeWithGC,
+	RefreshSummaryResult,
+} from "./summarizerNode";
 export {
 	IConnectableRuntime,
 	IGeneratedSummaryStats,
@@ -50,7 +57,6 @@ export {
 	IGenerateSummaryTreeResult,
 	INackSummaryResult,
 	IOnDemandSummarizeOptions,
-	IProvideSummarizer,
 	ISubmitSummaryOpResult,
 	ISummarizeOptions,
 	ISummarizingWarning,

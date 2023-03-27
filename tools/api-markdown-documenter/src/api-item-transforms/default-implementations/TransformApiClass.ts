@@ -13,13 +13,13 @@ import {
 	ApiProperty,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import { SectionNode } from "../../documentation-domain";
-import { ApiModifier, filterByKind, isStatic } from "../../utilities";
+import { ApiModifier, filterByKind, isStatic } from "../ApiItemUtilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
 /**
- * Default policy for rendering doc sections for `Class` items.
+ * Default documentation transform for `Class` items.
  *
  * @remarks Format:
  *
@@ -43,7 +43,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  *
  * - index-signatures
  *
- * Details (for any types not rendered to their own documents - see {@link PolicyOptions.documentBoundaries})
+ * Details (for any types not rendered to their own documents - see {@link DocumentationSuiteOptions.documentBoundaries})
  *
  * - constructors
  *
@@ -59,7 +59,7 @@ import { createChildDetailsSection, createMemberTables } from "../helpers";
  */
 export function transformApiClass(
 	apiClass: ApiClass,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
