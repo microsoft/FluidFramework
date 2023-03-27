@@ -10,7 +10,7 @@ parameters:
 
 - name: testPackage
   type: string
-  default: "@fluidframework/test-end-to-end-tests"
+  default: "@fluid-internal/test-end-to-end-tests"
 
 - name: testWorkspace
   type: string
