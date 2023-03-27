@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -14,13 +14,15 @@ import {
 	waitForContainerConnection,
 	mockConfigProvider,
 	ITestContainerConfig,
-	createSummarizerWithContainer,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject, itExpects } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
 import { delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions";
-import { getUrlFromItemId, MockDetachedBlobStorage } from "../mockDetachedBlobStorage";
+import {
+	driverSupportsBlobs,
+	getUrlFromDetachedBlobStorage,
+	MockDetachedBlobStorage,
+} from "../mockDetachedBlobStorage";
 
 /**
  * These tests validate that SweepReady attachment blobs are correctly marked as tombstones. Tombstones should be added
@@ -57,9 +59,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 			// Send an op to transition the container to write mode.
 			dataStore._root.set("transition to write", "true");
-			await waitForContainerConnection(container, true);
+			await waitForContainerConnection(container);
 
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				container,
 				undefined /* summaryVersion */,
@@ -118,8 +120,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// Summarize so that the tombstoned blobs are now part of the summary.
 				const summary2 = await summarizeNow(summarizer);
 				const container2 = await loadContainer(summary2.summaryVersion);
-				const absoluteUrl = await container2.getAbsoluteUrl("");
-				assert(absoluteUrl !== undefined, "Should be able to retrieve the absolute url");
 
 				// Retrieving the blob should fail. Note that the blob is requested via its url since this container does
 				// not have access to the blob's handle since it loaded after the blob was tombstoned.
@@ -133,9 +133,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				assert(container2.closed !== true, "Container should not have closed");
 
 				// But the summarizing container should succeed (logging and error)
-				const { container: summarizingContainer } = await createSummarizerWithContainer(
+				const { container: summarizingContainer } = await createSummarizer(
 					provider,
-					absoluteUrl,
+					container2,
 					summary2.summaryVersion,
 					gcOptions,
 					mockConfigProvider(settings),
@@ -400,8 +400,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			const container3BlobHandle = await container3MainDataStore._runtime.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
 			);
-			// Ideally, this should not reject but currently it will because of a bug with how blob de-dup interacts
-			// with GC.
 			await assert.doesNotReject(
 				container3BlobHandle.get(),
 				"Container3 should be able to get the blob",
@@ -435,7 +433,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			if (provider.driver.type !== "odsp") {
+			if (!driverSupportsBlobs(provider.driver)) {
 				this.skip();
 			}
 
@@ -468,9 +466,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
@@ -496,10 +494,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should have the blob tombstoned.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -543,7 +538,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
 				// Upload the same blob. This will get de-duped and we will get back another local handle. Both the these
 				// localIds should be mapped to the same storageId.
@@ -561,7 +556,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				mainDataStore._root.delete("local1");
 				mainDataStore._root.delete("local2");
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
@@ -584,10 +579,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should have the blob tombstoned.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -653,9 +645,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 
 				// Send an op to transition the container to write mode.
 				mainDataStore._root.set("transition to write", "true");
-				await waitForContainerConnection(mainContainer, true);
+				await waitForContainerConnection(mainContainer);
 
-				const summarizer = await createSummarizer(
+				const { summarizer } = await createSummarizer(
 					provider,
 					mainContainer,
 					undefined /* summaryVersion */,
@@ -699,10 +691,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				const summary2 = await summarizeNow(summarizer);
 
 				// Load a new container from the above summary which should have the blobs tombstoned.
-				const url = getUrlFromItemId(
-					(mainContainer.resolvedUrl as IOdspResolvedUrl).itemId,
-					provider,
-				);
+				const url = await getUrlFromDetachedBlobStorage(mainContainer, provider);
 				const container2 = await provider.makeTestLoader(testContainerConfig).resolve({
 					url,
 					headers: { [LoaderHeader.version]: summary2.summaryVersion },
@@ -753,7 +742,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		async function createContainerAndDataStore() {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
 			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
-			await waitForContainerConnection(mainContainer, true);
+			await waitForContainerConnection(mainContainer);
 			return { mainContainer, mainDataStore };
 		}
 
@@ -763,7 +752,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 		 * GC data to validate references against and ensure that gcUnknownOutboundReferences error is not logged.
 		 */
 		async function createSummarizerWithInitialSummary(container: IContainer) {
-			const summarizer = await createSummarizer(
+			const { summarizer } = await createSummarizer(
 				provider,
 				container,
 				undefined /* summaryVersion */,
@@ -785,7 +774,6 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				await new Promise<void>((resolve) =>
 					container.on("connected", () => resolveIfActive(resolve)),
 				);
-				(container as Container).off("connected", resolveIfActive);
 			}
 		};
 
@@ -993,7 +981,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				);
 
 				// Add the new local handle and then remove all the local handles to unreference the blob.
-				mainDataStore._root.set("local3", localHandle2);
+				mainDataStore._root.set("local3", localHandle3);
 				mainDataStore._root.delete("local1");
 				mainDataStore._root.delete("local2");
 				mainDataStore._root.delete("local3");

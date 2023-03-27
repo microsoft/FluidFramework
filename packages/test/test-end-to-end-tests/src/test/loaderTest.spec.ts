@@ -11,11 +11,11 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
 import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 
@@ -227,7 +227,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		} catch (e) {}
 		assert(success, "Loader pause flags doesn't pause container op processing");
 
-		(container2 as Container).connect();
+		container2.connect();
 
 		// Flush all the ops
 		await provider.ensureSynchronized();
@@ -260,7 +260,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		// this binds newDataStore to dataStore1
 		dataStore1._root.set("key", newDataStore.handle);
 
-		(container1 as Container).connect();
+		container1.connect();
 
 		// Flush all the ops
 		await provider.ensureSynchronized();
@@ -313,7 +313,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
 		assert(url, "Container should return absolute url");
 
-		const headers = { wait: false, [RuntimeHeaders.externalRequest]: true };
+		const headers = { wait: false, [RuntimeHeaders.viaHandle]: true };
 		// Request to the newly created data store with headers.
 		const response = await loader.request({ url, headers });
 

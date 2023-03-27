@@ -19,15 +19,6 @@ export { getNormalizedObjectStoragePathParts, listBlobsAtTreePath } from "./obje
 export { RequestParser } from "./requestParser";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper";
 export {
-	createRootSummarizerNode,
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNode,
-	IRootSummarizerNodeWithGC,
-	ISummarizerNodeRootContract,
-	RefreshSummaryResult,
-} from "./summarizerNode";
-export {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	addTreeToSummary,

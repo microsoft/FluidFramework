@@ -20,5 +20,5 @@ grabbed and unweaved into individual messages that are a that point in total Kaf
 
 The primary use case for copier is to use the unsequenced deltas to test the Fluid system for potential bugs. For example:
 
-* An Alfred route **localhost:3003/deltas/raw/{tenantId, etc..}** is provided for viewing the raw deltas as they come in.
-* You can run the unsequenced deltas through Deli again to see if the your expected changes occur in a given document.
+-   An Alfred route **localhost:3003/deltas/raw/{tenantId, etc..}** is provided for viewing the raw deltas as they come in.
+-   You can run the unsequenced deltas through Deli again to see if the your expected changes occur in a given document.

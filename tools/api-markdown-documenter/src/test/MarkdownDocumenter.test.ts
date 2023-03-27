@@ -4,20 +4,24 @@
  */
 import * as Path from "node:path";
 
-import { ApiItem, ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
+import { ApiItemKind, ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 import { Suite } from "mocha";
 
+import { renderApiModelAsMarkdown, transformApiModel } from "../MarkdownDocumenter";
 import {
-	MarkdownDocumenterConfiguration,
-	markdownDocumenterConfigurationWithDefaults,
-} from "../Configuration";
-import { MarkdownDocument } from "../MarkdownDocument";
-import { renderDocuments, renderFiles } from "../MarkdownDocumenter";
-import { MarkdownEmitter } from "../MarkdownEmitter";
-import { renderModelDocument, renderPackageDocument } from "../rendering";
+	ApiItemTransformationConfiguration,
+	apiModelToDocument,
+	apiPackageToDocument,
+	getApiItemTransformationConfigurationWithDefaults,
+} from "../api-item-transforms";
+import { DocumentNode } from "../documentation-domain";
+import {
+	MarkdownRenderConfiguration,
+	getMarkdownRenderConfigurationWithDefaults,
+} from "../markdown-renderer";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
@@ -36,12 +40,11 @@ const snapshotsDirPath = Path.resolve(__dirname, "..", "..", "src", "test", "sna
  * @param relativeSnapshotDirectoryPath - Path to the test output (relative to the test directory).
  * Used when outputting raw contents, and when copying those contents to update generate / update snapshots.
  * @param config - See {@link MarkdownDocumenterConfiguration}.
- * @param generateFrontMatter - See {@link MarkdownEmitter.generateFrontMatter}.
  */
 async function snapshotTest(
 	relativeSnapshotDirectoryPath: string,
-	config: MarkdownDocumenterConfiguration,
-	generateFrontMatter?: (contextApiItem: ApiItem) => string,
+	transformConfig: ApiItemTransformationConfiguration,
+	renderConfig: MarkdownRenderConfiguration,
 ): Promise<void> {
 	const outputDirPath = Path.resolve(testTempDirPath, relativeSnapshotDirectoryPath);
 	const snapshotDirPath = Path.resolve(snapshotsDirPath, relativeSnapshotDirectoryPath);
@@ -53,11 +56,8 @@ async function snapshotTest(
 	// Clear any existing test_temp data
 	await FileSystem.ensureEmptyFolderAsync(outputDirPath);
 
-	await renderFiles(
-		config,
-		outputDirPath,
-		new MarkdownEmitter(config.apiModel, generateFrontMatter),
-	);
+	// Run transformation and rendering logic
+	await renderApiModelAsMarkdown(transformConfig, renderConfig, outputDirPath);
 
 	// Verify against expected contents
 	const result = await compare(outputDirPath, snapshotDirPath, {
@@ -74,9 +74,6 @@ async function snapshotTest(
 
 	// If this fails, then the docs build has generated new content.
 	// View the diff in git and determine if the changes are appropriate or not.
-
-	// False positive
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	expect(result.same).to.be.true;
 }
 
@@ -90,14 +87,14 @@ interface ConfigTestProps {
 	configName: string;
 
 	/**
-	 * The config to use, except the `apiModel`, which will be instantiated in test set-up.
+	 * The API Item transform config to use, except the `apiModel`, which will be instantiated in test set-up.
 	 */
-	configLessApiModel: Omit<MarkdownDocumenterConfiguration, "apiModel">;
+	transformConfigLessApiModel: Omit<ApiItemTransformationConfiguration, "apiModel">;
 
 	/**
-	 * {@inheritDoc MarkdownEmitter.generateFrontMatter}
+	 * The Markdown rendering config to use.
 	 */
-	generateFrontMatter?: (contextApiItem: ApiItem) => string;
+	renderConfig: MarkdownRenderConfiguration;
 }
 
 /**
@@ -121,51 +118,54 @@ function apiTestSuite(
 		for (const configProps of configs) {
 			describe(configProps.configName, () => {
 				/**
-				 * Complete config generated in `before` hook.
+				 * Complete transform config used in tests. Generated in `before` hook.
 				 */
-				let markdownDocumenterConfig: Required<MarkdownDocumenterConfiguration>;
+				let transformConfig: Required<ApiItemTransformationConfiguration>;
 
-				before(() => {
+				/**
+				 * Complete Markdown render config used in tests. Generated in `before` hook.
+				 */
+				let renderConfig: Required<MarkdownRenderConfiguration>;
+
+				before(async () => {
 					const apiModel = new ApiModel();
 					for (const apiReportFilePath of apiReportFilePaths) {
 						apiModel.loadPackage(apiReportFilePath);
 					}
 
-					markdownDocumenterConfig = markdownDocumenterConfigurationWithDefaults({
-						...configProps.configLessApiModel,
+					transformConfig = getApiItemTransformationConfigurationWithDefaults({
+						...configProps.transformConfigLessApiModel,
 						apiModel,
 					});
+
+					renderConfig = getMarkdownRenderConfigurationWithDefaults(
+						configProps.renderConfig,
+					);
 				});
 
 				it("Render Model document (smoke test)", () => {
-					const result = renderModelDocument(
-						markdownDocumenterConfig.apiModel,
-						markdownDocumenterConfig,
-					);
-					expect(result.path).to.equal("index.md");
+					const result = apiModelToDocument(transformConfig.apiModel, transformConfig);
+					expect(result.filePath).to.equal("index.md");
 				});
 
 				it("Render Package document (smoke test)", () => {
-					const packageItem = markdownDocumenterConfig.apiModel.packages[0];
+					const packageItem = transformConfig.apiModel.packages[0];
 
-					const result = renderPackageDocument(packageItem, markdownDocumenterConfig);
-					expect(result.path).to.equal(`${modelName}.md`);
+					const result = apiPackageToDocument(packageItem, transformConfig);
+					expect(result.filePath).to.equal(`${modelName}.md`);
 				});
 
 				it("Ensure no duplicate file paths", () => {
-					const documents = renderDocuments(markdownDocumenterConfig);
+					const documents = transformApiModel(transformConfig);
 
-					const pathMap = new Map<string, MarkdownDocument>();
+					const pathMap = new Map<string, DocumentNode>();
 					for (const document of documents) {
-						const existingEntry = pathMap.get(document.path);
-						if (existingEntry !== undefined) {
+						if (pathMap.has(document.filePath)) {
 							expect.fail(
-								`Rendering generated multiple documents to be rendered to the same file path: ` +
-									`"${document.path}". Requested by the following items: ` +
-									`"${document.apiItem.displayName}" & "${existingEntry.apiItem.displayName}".`,
+								`Rendering generated multiple documents to be rendered to the same file path.`,
 							);
 						} else {
-							pathMap.set(document.path, document);
+							pathMap.set(document.filePath, document);
 						}
 					}
 				});
@@ -173,8 +173,8 @@ function apiTestSuite(
 				it("Snapshot test", async () => {
 					await snapshotTest(
 						Path.join(modelName, configProps.configName),
-						markdownDocumenterConfig,
-						configProps.generateFrontMatter,
+						transformConfig,
+						renderConfig,
 					);
 				});
 			});
@@ -183,72 +183,72 @@ function apiTestSuite(
 }
 
 describe("api-markdown-documenter full-suite tests", () => {
-	/**
-	 * Sample "default" configuration.
-	 */
-	const defaultConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
-		uriRoot: ".",
-		newlineKind: NewlineKind.Lf,
-	};
-
-	/**
-	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
-	 */
-	const flatConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
-		uriRoot: "docs",
-		newlineKind: NewlineKind.Lf,
-		includeBreadcrumb: true,
-		includeTopLevelDocumentHeading: false,
-		documentBoundaries: [], // Render everything to package documents
-		hierarchyBoundaries: [], // No additional hierarchy beyond the package level
-		emptyTableCellText: "---",
-	};
-
-	/**
-	 * A sample "sparse" configuration, which renders every item kind to its own document.
-	 */
-	const sparseConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
-		uriRoot: "docs",
-		newlineKind: NewlineKind.Lf,
-		includeBreadcrumb: false,
-		includeTopLevelDocumentHeading: true,
-		// Render everything to its own document
-		documentBoundaries: [
-			ApiItemKind.CallSignature,
-			ApiItemKind.Class,
-			ApiItemKind.ConstructSignature,
-			ApiItemKind.Constructor,
-			ApiItemKind.Enum,
-			ApiItemKind.EnumMember,
-			ApiItemKind.Function,
-			ApiItemKind.IndexSignature,
-			ApiItemKind.Interface,
-			ApiItemKind.Method,
-			ApiItemKind.MethodSignature,
-			ApiItemKind.Namespace,
-			ApiItemKind.Property,
-			ApiItemKind.PropertySignature,
-			ApiItemKind.TypeAlias,
-			ApiItemKind.Variable,
-		],
-		hierarchyBoundaries: [], // No additional hierarchy beyond the package level
-		emptyTableCellText: "📝",
-	};
-
 	const configs: ConfigTestProps[] = [
+		/**
+		 * Sample "default" configuration.
+		 */
 		{
 			configName: "default-config",
-			configLessApiModel: defaultConfig,
+			transformConfigLessApiModel: {
+				uriRoot: ".",
+			},
+			renderConfig: {
+				newlineKind: NewlineKind.Lf,
+			},
 		},
+
+		/**
+		 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
+		 */
 		{
 			configName: "flat-config",
-			configLessApiModel: flatConfig,
-			generateFrontMatter: (apiItem): string =>
-				`<!--- This is sample front-matter for API item "${apiItem.displayName}" -->`,
+			transformConfigLessApiModel: {
+				uriRoot: "docs",
+				includeBreadcrumb: true,
+				includeTopLevelDocumentHeading: false,
+				documentBoundaries: [], // Render everything to package documents
+				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+				generateFrontMatter: (documentItem): string =>
+					`<!--- This is sample front-matter for API item "${documentItem.displayName}" -->`,
+			},
+			renderConfig: {
+				newlineKind: NewlineKind.Lf,
+			},
 		},
+
+		/**
+		 * A sample "sparse" configuration, which renders every item kind to its own document.
+		 */
 		{
 			configName: "sparse-config",
-			configLessApiModel: sparseConfig,
+			transformConfigLessApiModel: {
+				uriRoot: "docs",
+				includeBreadcrumb: false,
+				includeTopLevelDocumentHeading: true,
+				// Render everything to its own document
+				documentBoundaries: [
+					ApiItemKind.CallSignature,
+					ApiItemKind.Class,
+					ApiItemKind.ConstructSignature,
+					ApiItemKind.Constructor,
+					ApiItemKind.Enum,
+					ApiItemKind.EnumMember,
+					ApiItemKind.Function,
+					ApiItemKind.IndexSignature,
+					ApiItemKind.Interface,
+					ApiItemKind.Method,
+					ApiItemKind.MethodSignature,
+					ApiItemKind.Namespace,
+					ApiItemKind.Property,
+					ApiItemKind.PropertySignature,
+					ApiItemKind.TypeAlias,
+					ApiItemKind.Variable,
+				],
+				hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+			},
+			renderConfig: {
+				newlineKind: NewlineKind.Lf,
+			},
 		},
 	];
 

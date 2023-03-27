@@ -11,6 +11,7 @@ import {
 	TaggedChange,
 	AnchorSet,
 	Delta,
+	ChangeFamilyEditor,
 } from "../core";
 import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
@@ -110,7 +111,18 @@ function invert(change: TestChange): TestChange {
 	return emptyChange;
 }
 
-function rebase(change: TestChange, over: TestChange): TestChange {
+function rebase(
+	change: TestChange | undefined,
+	over: TestChange | undefined,
+): TestChange | undefined {
+	if (change === undefined) {
+		return undefined;
+	}
+
+	if (over === undefined) {
+		return change;
+	}
+
 	if (isNonEmptyChange(change)) {
 		if (isNonEmptyChange(over)) {
 			// Rebasing should only occur between two changes with the same input context
@@ -166,13 +178,14 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.NodeChanges | undefined {
+function toDelta(change: TestChange): Delta.Modify {
 	if (change.intentions.length > 0) {
 		return {
+			type: Delta.MarkType.Modify,
 			setValue: change.intentions.map(String).join("|"),
 		};
 	}
-	return undefined;
+	return { type: Delta.MarkType.Modify };
 }
 
 export interface AnchorRebaseData {
@@ -216,7 +229,7 @@ export class TestChangeRebaser implements ChangeRebaser<TestChange> {
 	}
 
 	public rebase(change: TestChange, over: TaggedChange<TestChange>): TestChange {
-		return rebase(change, over.change);
+		return rebase(change, over.change) ?? { intentions: [] };
 	}
 
 	public rebaseAnchors(anchors: AnchorSet, over: TestChange): void {
@@ -251,4 +264,4 @@ export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
 	public intentions: number[] = [];
 }
 
-export type TestChangeFamily = ChangeFamily<unknown, TestChange>;
+export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;

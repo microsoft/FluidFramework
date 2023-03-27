@@ -5,11 +5,16 @@
 
 import crypto from "crypto";
 import fs from "fs";
-import random from "random-js";
+import {
+	createFluidTestDriver,
+	generateOdspHostStoragePolicy,
+	OdspTestDriver,
+} from "@fluid-internal/test-drivers";
+import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -20,11 +25,6 @@ import {
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import {
-	createFluidTestDriver,
-	generateOdspHostStoragePolicy,
-	OdspTestDriver,
-} from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
@@ -52,7 +52,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	public static async createLogger(dimensions: {
 		driverType: string;
 		driverEndpointName: string | undefined;
-		profile: string | undefined;
+		profile: string;
 		runId: number | undefined;
 	}) {
 		return ChildLogger.create(await this.loggerP, undefined, {
@@ -160,22 +160,18 @@ export async function initialize(
 	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
+	profileName: string,
 	testIdn?: string,
-	profileName?: string,
 ) {
-	const randEng = random.engines.mt19937();
-	randEng.seed(seed);
+	const random = makeRandom(seed);
 	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
 	const loaderOptions = random.pick(
-		randEng,
 		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
 	);
 	const containerOptions = random.pick(
-		randEng,
 		generateRuntimeOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.container),
 	);
 	const configurations = random.pick(
-		randEng,
 		generateConfigurations(
 			seed,
 			testConfig?.optionOverrides?.[optionsOverride]?.configurations,
@@ -205,18 +201,13 @@ export async function initialize(
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
-	(container as Container).on("error", (error) => {
-		console.log(error);
-		process.exit(-1);
-	});
-
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",
 			"attachment blobs in detached container not supported on this service",
 		);
 		const ds = await requestFluidObject<ILoadTest>(container, "/");
-		const dsm = await ds.detached({ testConfig, verbose, randEng, logger });
+		const dsm = await ds.detached({ testConfig, verbose, random, logger });
 		await Promise.all(
 			[...Array(testConfig.detachedBlobCount).keys()].map(async (i) => dsm.writeBlob(i)),
 		);

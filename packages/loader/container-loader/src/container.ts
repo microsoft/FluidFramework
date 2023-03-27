@@ -7,7 +7,6 @@
 import merge from "lodash/merge";
 import { v4 as uuid } from "uuid";
 import {
-	ITelemetryBaseLogger,
 	ITelemetryLogger,
 	ITelemetryProperties,
 	TelemetryEventCategory,
@@ -16,7 +15,7 @@ import { assert, performance, unreachableCase } from "@fluidframework/common-uti
 import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
-	IConnectionDetails,
+	IConnectionDetailsInternal,
 	IContainer,
 	IContainerEvents,
 	IDeltaManager,
@@ -45,6 +44,7 @@ import {
 	combineAppAndProtocolSummary,
 	runWithRetry,
 	isFluidResolvedUrl,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -75,7 +75,6 @@ import {
 	raiseConnectedEvent,
 	TelemetryLogger,
 	connectedEventName,
-	disconnectedEventName,
 	normalizeError,
 	MonitoringContext,
 	loggerToMonitoringContext,
@@ -124,15 +123,6 @@ export interface IContainerLoadOptions {
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
 	loadMode?: IContainerLoadMode;
-	/**
-	 * A logger that the container will use for logging operations. If not provided, the container will
-	 * use the loader's logger, `Loader.services.subLogger`.
-	 */
-	baseLogger?: ITelemetryBaseLogger;
-	/**
-	 * A scope object to replace the one provided on the Loader.
-	 */
-	scopeOverride?: FluidObject;
 }
 
 export interface IContainerConfig {
@@ -146,15 +136,6 @@ export interface IContainerConfig {
 	 * Serialized state from a previous instance of this container
 	 */
 	serializedContainerState?: IPendingContainerState;
-	/**
-	 * A logger that the container will use for logging operations. If not provided, the container will
-	 * use the loader's logger, `Loader.services.subLogger`.
-	 */
-	baseLogger?: ITelemetryBaseLogger;
-	/**
-	 * A scope object to replace the one provided on the Loader.
-	 */
-	scopeOverride?: FluidObject;
 }
 
 /**
@@ -310,8 +291,6 @@ export class Container
 				resolvedUrl: loadOptions.resolvedUrl,
 				canReconnect: loadOptions.canReconnect,
 				serializedContainerState: pendingLocalState,
-				baseLogger: loadOptions.baseLogger,
-				scopeOverride: loadOptions.scopeOverride,
 			},
 			protocolHandlerBuilder,
 		);
@@ -458,13 +437,12 @@ export class Container
 
 	private _attachState = AttachState.Detached;
 
-	private readonly storageService: ContainerStorageAdapter;
+	private readonly storageAdapter: ContainerStorageAdapter;
 	public get storage(): IDocumentStorageService {
-		return this.storageService;
+		return this.storageAdapter;
 	}
 
 	private readonly clientDetailsOverride: IClientDetails | undefined;
-	private readonly _scopeOverride: FluidObject | undefined;
 	private readonly _deltaManager: DeltaManager<ConnectionManager>;
 	private service: IDocumentService | undefined;
 
@@ -615,10 +593,45 @@ export class Container
 	}
 	public readonly options: ILoaderOptions;
 	private get scope() {
-		return this._scopeOverride ?? this.loader.services.scope;
+		return this.loader.services.scope;
 	}
 	private get codeLoader() {
 		return this.loader.services.codeLoader;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.entryPoint}
+	 */
+	public async getEntryPoint?(): Promise<FluidObject | undefined> {
+		// Only the disposing/disposed lifecycle states should prevent access to the entryPoint; closing/closed should still
+		// allow it since they mean a kind of read-only state for the Container.
+		// Note that all 4 are lifecycle states but only 'closed' and 'disposed' are emitted as events.
+		if (this._lifecycleState === "disposing" || this._lifecycleState === "disposed") {
+			throw new UsageError("The container is disposing or disposed");
+		}
+		while (this._context === undefined) {
+			await new Promise<void>((resolve, reject) => {
+				const contextChangedHandler = () => {
+					resolve();
+					this.off("disposed", disposedHandler);
+				};
+				const disposedHandler = (error) => {
+					reject(error ?? "The Container is disposed");
+					this.off("contextChanged", contextChangedHandler);
+				};
+				this.once("contextChanged", contextChangedHandler);
+				this.once("disposed", disposedHandler);
+			});
+			// The Promise above should only resolve (vs reject) if the 'contextChanged' event was emitted and that
+			// should have set this._context; making sure.
+			assert(
+				this._context !== undefined,
+				0x5a2 /* Context still not defined after contextChanged event */,
+			);
+		}
+		// Disable lint rule for the sake of more complete stack traces
+		// eslint-disable-next-line no-return-await
+		return await this._context.getEntryPoint?.();
 	}
 
 	constructor(
@@ -637,7 +650,6 @@ export class Container
 		});
 
 		this.clientDetailsOverride = config.clientDetailsOverride;
-		this._scopeOverride = config.scopeOverride;
 		this._resolvedUrl = config.resolvedUrl;
 		if (config.canReconnect !== undefined) {
 			this._canReconnect = config.canReconnect;
@@ -651,52 +663,42 @@ export class Container
 		}`;
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
-		this.subLogger = ChildLogger.create(
-			// If a baseLogger was provided, use it; otherwise use the loader's logger.
-			config.baseLogger ?? loader.services.subLogger,
-			undefined,
-			{
-				all: {
-					clientType, // Differentiating summarizer container from main container
-					containerId: uuid(),
-					docId: () => this._resolvedUrl?.id ?? undefined,
-					containerAttachState: () => this._attachState,
-					containerLifecycleState: () => this._lifecycleState,
-					containerConnectionState: () => ConnectionState[this.connectionState],
-					serializedContainer: config.serializedContainerState !== undefined,
-				},
-				// we need to be judicious with our logging here to avoid generating too much data
-				// all data logged here should be broadly applicable, and not specific to a
-				// specific error or class of errors
-				error: {
-					// load information to associate errors with the specific load point
-					dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
-					dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
-					dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
-					containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
-					containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
-					// message information to associate errors with the specific execution state
-					// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
-					dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
-					dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
-					dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
-					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
-					connectionStateDuration: () =>
-						performance.now() - this.connectionTransitionTimes[this.connectionState],
-				},
+		this.subLogger = ChildLogger.create(loader.services.subLogger, undefined, {
+			all: {
+				clientType, // Differentiating summarizer container from main container
+				containerId: uuid(),
+				docId: () => this._resolvedUrl?.id ?? undefined,
+				containerAttachState: () => this._attachState,
+				containerLifecycleState: () => this._lifecycleState,
+				containerConnectionState: () => ConnectionState[this.connectionState],
+				serializedContainer: config.serializedContainerState !== undefined,
 			},
-		);
+			// we need to be judicious with our logging here to avoid generating too much data
+			// all data logged here should be broadly applicable, and not specific to a
+			// specific error or class of errors
+			error: {
+				// load information to associate errors with the specific load point
+				dmInitialSeqNumber: () => this._deltaManager?.initialSequenceNumber,
+				dmLastProcessedSeqNumber: () => this._deltaManager?.lastSequenceNumber,
+				dmLastKnownSeqNumber: () => this._deltaManager?.lastKnownSeqNumber,
+				containerLoadedFromVersionId: () => this.loadedFromVersion?.id,
+				containerLoadedFromVersionDate: () => this.loadedFromVersion?.date,
+				// message information to associate errors with the specific execution state
+				// dmLastMsqSeqNumber: if present, same as dmLastProcessedSeqNumber
+				dmLastMsqSeqNumber: () => this.deltaManager?.lastMessage?.sequenceNumber,
+				dmLastMsqSeqTimestamp: () => this.deltaManager?.lastMessage?.timestamp,
+				dmLastMsqSeqClientId: () => this.deltaManager?.lastMessage?.clientId,
+				dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
+				connectionStateDuration: () =>
+					performance.now() - this.connectionTransitionTimes[this.connectionState],
+			},
+		});
 
 		// Prefix all events in this file with container-loader
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.subLogger, "Container"));
 
-		const summarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			this.loader.services.options.summarizeProtocolTree;
-
 		this.options = {
 			...this.loader.services.options,
-			summarizeProtocolTree,
 		};
 
 		this._deltaManager = this.createDeltaManager();
@@ -764,12 +766,25 @@ export class Container
 			this.connectionStateHandler.containerSaved();
 		});
 
-		this.storageService = new ContainerStorageAdapter(
+		// We expose our storage publicly, so it's possible others may call uploadSummaryWithContext() with a
+		// non-combined summary tree (in particular, ContainerRuntime.submitSummary).  We'll intercept those calls
+		// using this callback and fix them up.
+		const addProtocolSummaryIfMissing = (summaryTree: ISummaryTree) =>
+			isCombinedAppAndProtocolSummary(summaryTree) === true
+				? summaryTree
+				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
+
+		// Whether the combined summary tree has been forced on by either the loader option or the monitoring context.
+		// Even if not forced on via this flag, combined summaries may still be enabled by service policy.
+		const forceEnableSummarizeProtocolTree =
+			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
+			this.loader.services.options.summarizeProtocolTree;
+
+		this.storageAdapter = new ContainerStorageAdapter(
 			this.loader.services.detachedBlobStorage,
 			this.mc.logger,
-			this.options.summarizeProtocolTree === true
-				? () => this.captureProtocolSummary()
-				: undefined,
+			addProtocolSummaryIfMissing,
+			forceEnableSummarizeProtocolTree,
 		);
 
 		const isDomAvailable =
@@ -792,43 +807,6 @@ export class Container
 			};
 			document.addEventListener("visibilitychange", this.visibilityEventHandler);
 		}
-
-		// We observed that most users of platform do not check Container.connected event on load, causing bugs.
-		// As such, we are raising events when new listener pops up.
-		// Note that we can raise both "disconnected" & "connect" events at the same time,
-		// if we are in connecting stage.
-		this.on("newListener", (event: string, listener: (...args: any[]) => void) => {
-			// Fire events on the end of JS turn, giving a chance for caller to be in consistent state.
-			Promise.resolve()
-				.then(() => {
-					switch (event) {
-						case dirtyContainerEvent:
-							if (this._dirtyContainer) {
-								listener();
-							}
-							break;
-						case savedContainerEvent:
-							if (!this._dirtyContainer) {
-								listener();
-							}
-							break;
-						case connectedEventName:
-							if (this.connected) {
-								listener(this.clientId);
-							}
-							break;
-						case disconnectedEventName:
-							if (!this.connected) {
-								listener();
-							}
-							break;
-						default:
-					}
-				})
-				.catch((error) => {
-					this.mc.logger.sendErrorEvent({ eventName: "RaiseConnectedEventError" }, error);
-				});
-		});
 	}
 
 	/**
@@ -872,10 +850,15 @@ export class Container
 			try {
 				// Raise event first, to ensure we capture _lifecycleState before transition.
 				// This gives us a chance to know what errors happened on open vs. on fully loaded container.
+				// Log generic events instead of error events if container is in loading state, as most errors are not really FF errors
+				// which can pollute telemetry for real bugs
 				this.mc.logger.sendTelemetryEvent(
 					{
 						eventName: "ContainerClose",
-						category: error === undefined ? "generic" : "error",
+						category:
+							this._lifecycleState !== "loading" && error !== undefined
+								? "error"
+								: "generic",
 					},
 					error,
 				);
@@ -888,7 +871,7 @@ export class Container
 
 				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-				this.storageService.dispose();
+				this.storageAdapter.dispose();
 
 				// Notify storage about critical errors. They may be due to disconnect between client & server knowledge
 				// about file, like file being overwritten in storage, but client having stale local cache.
@@ -937,7 +920,7 @@ export class Container
 
 				this._context?.dispose(error !== undefined ? new Error(error.message) : undefined);
 
-				this.storageService.dispose();
+				this.storageAdapter.dispose();
 
 				// Notify storage about critical errors. They may be due to disconnect between client & server knowledge
 				// about file, like file being overwritten in storage, but client having stale local cache.
@@ -1094,7 +1077,7 @@ export class Container
 					const resolvedUrl = this.service.resolvedUrl;
 					ensureFluidResolvedUrl(resolvedUrl);
 					this._resolvedUrl = resolvedUrl;
-					await this.storageService.connectToService(this.service);
+					await this.storageAdapter.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
@@ -1114,7 +1097,7 @@ export class Container
 							for (const id of newIds) {
 								const blob =
 									await this.loader.services.detachedBlobStorage.readBlob(id);
-								const response = await this.storageService.createBlob(blob);
+								const response = await this.storageAdapter.createBlob(blob);
 								redirectTable.set(id, response.id);
 							}
 						}
@@ -1129,7 +1112,7 @@ export class Container
 							getSnapshotTreeFromSerializedContainer(summary),
 						);
 
-						await this.storageService.uploadSummaryWithContext(summary, {
+						await this.storageAdapter.uploadSummaryWithContext(summary, {
 							referenceSequenceNumber: 0,
 							ackHandle: undefined,
 							proposalHandle: undefined,
@@ -1304,7 +1287,7 @@ export class Container
 	}
 
 	private async getVersion(version: string | null): Promise<IVersion | undefined> {
-		const versions = await this.storageService.getVersions(version, 1);
+		const versions = await this.storageAdapter.getVersions(version, 1);
 		return versions[0];
 	}
 
@@ -1366,10 +1349,10 @@ export class Container
 		}
 
 		if (!pendingLocalState) {
-			await this.storageService.connectToService(this.service);
+			await this.storageAdapter.connectToService(this.service);
 		} else {
 			// if we have pendingLocalState we can load without storage; don't wait for connection
-			this.storageService.connectToService(this.service).catch((error) => {
+			this.storageAdapter.connectToService(this.service).catch((error) => {
 				this.close(error);
 				this.dispose?.(error);
 			});
@@ -1389,7 +1372,7 @@ export class Container
 
 		const attributes: IDocumentAttributes =
 			pendingLocalState === undefined
-				? await this.getDocumentAttributes(this.storageService, snapshot)
+				? await this.getDocumentAttributes(this.storageAdapter, snapshot)
 				: {
 						sequenceNumber: pendingLocalState.protocol.sequenceNumber,
 						minimumSequenceNumber: pendingLocalState.protocol.minimumSequenceNumber,
@@ -1424,7 +1407,7 @@ export class Container
 		if (pendingLocalState === undefined) {
 			await this.initializeProtocolStateFromSnapshot(
 				attributes,
-				this.storageService,
+				this.storageAdapter,
 				snapshot,
 			);
 		} else {
@@ -1544,15 +1527,15 @@ export class Container
 		}
 
 		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
-		this.storageService.loadSnapshotForRehydratingContainer(snapshotTree);
-		const attributes = await this.getDocumentAttributes(this.storageService, snapshotTree);
+		this.storageAdapter.loadSnapshotForRehydratingContainer(snapshotTree);
+		const attributes = await this.getDocumentAttributes(this.storageAdapter, snapshotTree);
 
 		await this.attachDeltaManagerOpHandler(attributes);
 
 		// Initialize the protocol handler
 		const baseTree = getProtocolSnapshotTree(snapshotTree);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
-			this.storageService,
+			this.storageAdapter,
 			baseTree.blobs.quorumValues,
 		);
 		const codeDetails = getCodeDetailsFromQuorumValues(qValues);
@@ -1776,7 +1759,7 @@ export class Container
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		deltaManager.inboundSignal.pause();
 
-		deltaManager.on("connect", (details: IConnectionDetails, _opsBehind?: number) => {
+		deltaManager.on("connect", (details: IConnectionDetailsInternal, _opsBehind?: number) => {
 			assert(this.connectionMode === details.mode, 0x4b7 /* mismatch */);
 			this.connectionStateHandler.receivedConnectEvent(details);
 		});
@@ -1955,7 +1938,7 @@ export class Container
 	}
 
 	/** @returns clientSequenceNumber of last message in a batch */
-	private submitBatch(batch: IBatchMessage[]): number {
+	private submitBatch(batch: IBatchMessage[], referenceSequenceNumber?: number): number {
 		let clientSequenceNumber = -1;
 		for (const message of batch) {
 			clientSequenceNumber = this.submitMessage(
@@ -1964,13 +1947,14 @@ export class Container
 				true, // batch
 				message.metadata,
 				message.compression,
+				referenceSequenceNumber,
 			);
 		}
 		this._deltaManager.flush();
 		return clientSequenceNumber;
 	}
 
-	private submitSummaryMessage(summary: ISummaryContent) {
+	private submitSummaryMessage(summary: ISummaryContent, referenceSequenceNumber?: number) {
 		// github #6451: this is only needed for staging so the server
 		// know when the protocol tree is included
 		// this can be removed once all clients send
@@ -1978,11 +1962,14 @@ export class Container
 		if (summary.details === undefined) {
 			summary.details = {};
 		}
-		summary.details.includesProtocolTree = this.options.summarizeProtocolTree === true;
+		summary.details.includesProtocolTree = this.storageAdapter.summarizeProtocolTree;
 		return this.submitMessage(
 			MessageType.Summarize,
 			JSON.stringify(summary),
 			false /* batch */,
+			undefined /* metadata */,
+			undefined /* compression */,
+			referenceSequenceNumber,
 		);
 	}
 
@@ -1992,6 +1979,7 @@ export class Container
 		batch?: boolean,
 		metadata?: any,
 		compression?: string,
+		referenceSequenceNumber?: number,
 	): number {
 		if (this.connectionState !== ConnectionState.Connected) {
 			this.mc.logger.sendErrorEvent({ eventName: "SubmitMessageWithNoConnection", type });
@@ -2000,7 +1988,14 @@ export class Container
 
 		this.messageCountAfterDisconnection += 1;
 		this.collabWindowTracker?.stopSequenceNumberUpdate();
-		return this._deltaManager.submit(type, contents, batch, metadata, compression);
+		return this._deltaManager.submit(
+			type,
+			contents,
+			batch,
+			metadata,
+			compression,
+			referenceSequenceNumber,
+		);
 	}
 
 	private processRemoteMessage(message: ISequencedDocumentMessage) {
@@ -2076,7 +2071,7 @@ export class Container
 			});
 		}
 		this._loadedFromVersion = version;
-		const snapshot = (await this.storageService.getSnapshotTree(version)) ?? undefined;
+		const snapshot = (await this.storageAdapter.getSnapshotTree(version)) ?? undefined;
 
 		if (snapshot === undefined && version !== undefined) {
 			this.mc.logger.sendErrorEvent({ eventName: "getSnapshotTreeFailed", id: version.id });
@@ -2115,8 +2110,10 @@ export class Container
 			loader,
 			(type, contents, batch, metadata) =>
 				this.submitContainerMessage(type, contents, batch, metadata),
-			(summaryOp: ISummaryContent) => this.submitSummaryMessage(summaryOp),
-			(batch: IBatchMessage[]) => this.submitBatch(batch),
+			(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
+			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+				this.submitBatch(batch, referenceSequenceNumber),
 			(message) => this.submitSignal(message),
 			(error?: ICriticalContainerError) => this.dispose?.(error),
 			(error?: ICriticalContainerError) => this.close(error),

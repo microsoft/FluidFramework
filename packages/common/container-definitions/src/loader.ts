@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, IResponse, IFluidRouter } from "@fluidframework/core-interfaces";
+import { IRequest, IResponse, IFluidRouter, FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IClientDetails,
 	IDocumentMessage,
@@ -87,8 +87,13 @@ export interface IFluidCodeResolver {
 
 /**
  * Code AllowListing Interface
+ *
+ * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
  */
 export interface ICodeAllowList {
+	/**
+	 * @deprecated 2.0.0-internal.3.2.0 Fluid does not prescribe a particular code validation approach. Will be removed in an upcoming release.
+	 */
 	testSource(source: IResolvedFluidCodeDetails): Promise<boolean>;
 }
 
@@ -456,6 +461,19 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * @alpha
 	 */
 	forceReadonly?(readonly: boolean);
+
+	/**
+	 * Exposes the entryPoint for the container.
+	 * Use this as the primary way of getting access to the user-defined logic within the container.
+	 * If the method is undefined or the returned promise returns undefined (meaning that exposing the entryPoint
+	 * hasn't been implemented in a particular scenario) fall back to the current approach of requesting the default
+	 * object of the container through the request pattern.
+	 *
+	 * @remarks The plan is that eventually IContainer will no longer implement IFluidRouter (and thus won't have a
+	 * request() method), this method will no longer be optional, and it will become the only way to access
+	 * the entryPoint for the container.
+	 */
+	getEntryPoint?(): Promise<FluidObject | undefined>;
 }
 
 /**
@@ -524,6 +542,7 @@ export type ILoaderOptions = {
  */
 export enum LoaderHeader {
 	/**
+	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
 	 * Override the Loader's default caching behavior for this container.
 	 */
 	cache = "fluid-cache",
@@ -544,12 +563,6 @@ export enum LoaderHeader {
 	 * otherwise, version sha to load snapshot
 	 */
 	version = "version",
-
-	// TODO #AB3350: This is a breaking change; it will be enabled in the "next" branch
-	// baseLogger = "fluid-base-logger",
-
-	// TODO #AB???: This is a breaking change; it will be enabled in the "next" branch
-	// scopeOverride = "fluid-scope-override",
 }
 
 export interface IContainerLoadMode {
@@ -597,6 +610,9 @@ export interface IContainerLoadMode {
  * Set of Request Headers that the Loader understands and may inspect or modify
  */
 export interface ILoaderHeader {
+	/**
+	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 */
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;

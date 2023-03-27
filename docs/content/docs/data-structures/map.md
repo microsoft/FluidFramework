@@ -12,12 +12,12 @@ For example, in a traditional `Map`, setting a key would only set it on the loca
 
 {{% callout tip "Differences between Map and SharedMap" %}}
 
-- SharedMaps *must* use string keys.
-- You must only store the following as values in a `SharedMap`:
-  - *Plain objects* -- those that are safely JSON-serializable.
+-   SharedMaps *must* use string keys.
+-   You must only store the following as values in a `SharedMap`:
+    -   *Plain objects* -- those that are safely JSON-serializable.
     If you store class instances, for example, then data synchronization will not work as expected.
-  - [Handles]({{< relref "handles.md" >}}) to other Fluid DDSes
-- When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole. This means that individual changes to the properties of an object are not merged during synchronization. If you need this behavior you should store individual properties in the SharedMap instead of full objects. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
+    -   [Handles]({{< relref "handles.md" >}}) to other Fluid DDSes
+-   When storing objects as values in a SharedMap, changes to the object will be synchronized whole-for-whole. This means that individual changes to the properties of an object are not merged during synchronization. If you need this behavior you should store individual properties in the SharedMap instead of full objects. See [Picking the right data structure]({{< relref "dds.md#picking-the-right-data-structure" >}}) for more information.
 {{% /callout %}}
 
 For additional background on DDSes and a general overview of their design, see [Introducing distributed data structures]({{< relref "dds.md" >}}).
@@ -39,8 +39,8 @@ npm install fluid-framework
 The `FluidContainer` provides a container schema for defining which DDSes you would like to load from it.
 It provides two separate fields for establishing an initial roster of objects and dynamically creating new ones.
 
-- For general guidance on using the `ContainerSchema`, please see [Data modeling]({{< relref "data-modeling.md" >}}).
-- For guidance on how to create/load a container using a service-specific client, please see [Containers - Creating and loading]({{< relref "containers.md#creating--loading" >}}).
+-   For general guidance on using the `ContainerSchema`, please see [Data modeling]({{< relref "data-modeling.md" >}}).
+-   For guidance on how to create/load a container using a service-specific client, please see [Containers - Creating and loading]({{< relref "containers.md#creating--connecting" >}}).
 
 Let's take a look at how you would specifically use the `ContainerSchema` for `SharedMap`.
 
@@ -96,20 +96,20 @@ As stated earlier, these are intended to match the `Map` API.
 However, the keys used in `SharedMap` must be strings.
 Each edit will also trigger a `valueChanged` event which will be discussed in the [Events]({{< relref "#events" >}}) section below.
 
-- `set(key, value)` -- Updates the value stored at `key` with the new provided value
-- `get(key)` -- Returns the latest value stored on the key, or `undefined` if the key does not exist
-- `has(key)` -- Returns whether or not the key is exists in the SharedMap
-- `keys()` -- Returns an iterator for all the keys that have been set in the map
-- `entries()` -- Returns an iterator for all key/value pairs stored in the map
-- `delete(key)` -- Removes the key/value pair from the map
-- `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map.
+-   `set(key, value)` -- Updates the value stored at `key` with the new provided value
+-   `get(key)` -- Returns the latest value stored on the key, or `undefined` if the key does not exist
+-   `has(key)` -- Returns whether or not the key is exists in the SharedMap
+-   `keys()` -- Returns an iterator for all the keys that have been set in the map
+-   `entries()` -- Returns an iterator for all key/value pairs stored in the map
+-   `delete(key)` -- Removes the key/value pair from the map
+-   `forEach(callbackFn: (value, key, map) => void)` -- Applies the provided function to each entry in the map.
   For example, the following will print out all of the key/value pairs in the map
 
     ```javascript
     this.map.forEach((value, key) => console.log(`${key}-${value}`));
     ```
 
-- `clear()` -- Removes all data from the map, deleting all of the keys and values stored within it
+-   `clear()` -- Removes all data from the map, deleting all of the keys and values stored within it
 
 ### Events
 
@@ -117,13 +117,13 @@ The `SharedMap` object will emit events on changes from local and remote clients
 
 #### `valueChanged`
 
-- Signature: `(event: "valueChanged", listener: (changed, local) => void)`
-- Description: This event is sent anytime the map is modified due to a key being added, updated, or removed. It takes in as parameters a `changed` object which provides the `key` that was updated and what the `previousValue` was, and a `local` boolean that indicates if the current client was the one that initiated the change
+-   Signature: `(event: "valueChanged", listener: (changed, local) => void)`
+-   Description: This event is sent anytime the map is modified due to a key being added, updated, or removed. It takes in as parameters a `changed` object which provides the `key` that was updated and what the `previousValue` was, and a `local` boolean that indicates if the current client was the one that initiated the change
 
 #### `clear`
 
-- Signature: `(event: "clear", listener: (local) => void)`
-- Description: This event is sent when `clear()` is called to alert clients that all data from the map has been removed. The `local` boolean parameter indicates if the current client is the one that made the function call.
+-   Signature: `(event: "clear", listener: (local) => void)`
+-   Description: This event is sent when `clear()` is called to alert clients that all data from the map has been removed. The `local` boolean parameter indicates if the current client is the one that made the function call.
 
 If client A and client B are both updating the same `SharedMap`, and client B triggers a `set` call to update a value, both client A's and B's local `SharedMap` objects will fire the `valueChanged` event.
 You can use these events in order to keep your application state in sync with all changes various clients are making to the map.

@@ -6,6 +6,7 @@
 import _ from "lodash";
 
 import { expect } from "chai";
+import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import {
 	IContainer,
 	IHostLoader,
@@ -40,7 +41,6 @@ import {
 	ArrayProperty,
 } from "@fluid-experimental/property-properties";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
-import { LocalServerTestDriver } from "@fluidframework/test-drivers";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 import { PropertyTreeFactory } from "../propertyTreeFactory";
@@ -80,8 +80,7 @@ describe("PropertyDDS summarizer", () => {
 	};
 
 	const getSummarizer = async (container) => {
-		const summarizer = await createSummarizer(objProvider, container);
-		return summarizer;
+		return createSummarizer(objProvider, container);
 	};
 
 	const createUserNode = (name: string) => {
@@ -182,7 +181,7 @@ describe("PropertyDDS summarizer", () => {
 		});
 
 		// Summarize
-		await summarizeNow(summarizer);
+		await summarizeNow(summarizer.summarizer);
 
 		await objProvider.ensureSynchronized();
 

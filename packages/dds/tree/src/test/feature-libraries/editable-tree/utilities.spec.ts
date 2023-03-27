@@ -5,7 +5,15 @@
 
 import { fail, strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { defaultSchemaPolicy, FieldKinds, Multiplicity } from "../../../feature-libraries";
+import {
+	defaultSchemaPolicy,
+	FieldKinds,
+	Multiplicity,
+	isPrimitiveValue,
+	getPrimaryField,
+	getFieldKind,
+	getFieldSchema,
+} from "../../../feature-libraries";
 import {
 	fieldSchema,
 	LocalFieldKey,
@@ -18,21 +26,17 @@ import {
 } from "../../../core";
 import { brand } from "../../../util";
 import {
-	isPrimitiveValue,
 	isPrimitive,
-	getPrimaryField,
 	getOwnArrayKeys,
-	getFieldKind,
-	getFieldSchema,
 	keyIsValidIndex,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
 import {
 	arraySchema,
+	buildTestSchema,
 	int32Schema,
 	mapStringSchema,
 	optionalChildSchema,
-	schemaMap,
 	stringSchema,
 } from "./mockData";
 
@@ -66,11 +70,7 @@ describe("editable-tree utilities", () => {
 		};
 
 		const rootSchema = fieldSchema(FieldKinds.value, [arraySchema.name]);
-
-		const fullSchemaData: SchemaData = {
-			treeSchema: schemaMap,
-			globalFieldSchema: new Map([[rootFieldKey, rootSchema]]),
-		};
+		const fullSchemaData: SchemaData = buildTestSchema(rootSchema);
 		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
 		assert.deepEqual(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), rootSchema);
 		assert.throws(

@@ -10,6 +10,7 @@ import {
 	SchemaPolicy,
 	fieldSchema,
 	SchemaData,
+	FieldKindSpecifier,
 } from "../../core";
 import { isNeverField } from "./comparison";
 import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
@@ -26,10 +27,13 @@ import { FieldChangeHandler, FieldEditor } from "./fieldChangeHandler";
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
  *
- * @sealed
- * @alpha
+ * @sealed @alpha
  */
-export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
+export class FieldKind<
+	TEditor extends FieldEditor<any> = FieldEditor<any>,
+	TMultiplicity extends Multiplicity = Multiplicity,
+> implements FieldKindSpecifier
+{
 	/**
 	 * @param identifier - Globally scoped identifier.
 	 * @param multiplicity - bound on the number of children that fields of this kind may have.
@@ -47,7 +51,7 @@ export class FieldKind<TEditor extends FieldEditor<any> = FieldEditor<any>> {
 	 */
 	public constructor(
 		public readonly identifier: FieldKindIdentifier,
-		public readonly multiplicity: Multiplicity,
+		public readonly multiplicity: TMultiplicity,
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
 			originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,

@@ -12,8 +12,6 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
-import { IGarbageCollectionDetailsBase } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
@@ -22,19 +20,13 @@ import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions';
-import { ISummarizerNode } from '@fluidframework/runtime-definitions';
-import { ISummarizerNodeConfig } from '@fluidframework/runtime-definitions';
-import { ISummarizerNodeConfigWithGC } from '@fluidframework/runtime-definitions';
-import { ISummarizerNodeWithGC } from '@fluidframework/runtime-definitions';
 import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
 import { ISummaryTree } from '@fluidframework/protocol-definitions';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { ITaggedTelemetryPropertyType } from '@fluidframework/common-definitions';
 import { ITelemetryContext } from '@fluidframework/runtime-definitions';
-import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { ITree } from '@fluidframework/protocol-definitions';
-import { SummarizeInternalFn } from '@fluidframework/runtime-definitions';
 import { SummaryObject } from '@fluidframework/protocol-definitions';
 import { SummaryType } from '@fluidframework/protocol-definitions';
 import { TelemetryEventPropertyType } from '@fluidframework/common-definitions';
@@ -74,12 +66,6 @@ export function createResponseError(status: number, value: string, request: IReq
     [key: string]: any;
 }): IResponse;
 
-// @public
-export const createRootSummarizerNode: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfig) => IRootSummarizerNode;
-
-// @public
-export const createRootSummarizerNodeWithGC: (logger: ITelemetryLogger, summarizeInternalFn: SummarizeInternalFn, changeSequenceNumber: number, referenceSequenceNumber: number | undefined, config?: ISummarizerNodeConfigWithGC, getGCDataFn?: ((fullGC?: boolean | undefined) => Promise<IGarbageCollectionData>) | undefined, getBaseGCDetailsFn?: (() => Promise<IGarbageCollectionDetailsBase>) | undefined) => IRootSummarizerNodeWithGC;
-
 // @public (undocumented)
 export function exceptionToResponse(err: any): IResponse;
 
@@ -94,34 +80,6 @@ export function getBlobSize(content: ISummaryBlob["content"]): number;
 
 // @public (undocumented)
 export function getNormalizedObjectStoragePathParts(path: string): string[];
-
-// @public
-export interface IFetchSnapshotResult {
-    // (undocumented)
-    snapshotRefSeq: number;
-    // (undocumented)
-    snapshotTree: ISnapshotTree;
-}
-
-// @public (undocumented)
-export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {
-}
-
-// @public (undocumented)
-export interface IRootSummarizerNodeWithGC extends ISummarizerNodeWithGC, ISummarizerNodeRootContract {
-}
-
-// @public (undocumented)
-export interface ISummarizerNodeRootContract {
-    // (undocumented)
-    clearSummary(): void;
-    // (undocumented)
-    completeSummary(proposalHandle: string): void;
-    // (undocumented)
-    refreshLatestSummary(proposalHandle: string | undefined, summaryRefSeq: number, fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>, readAndParseBlob: ReadAndParseBlob, correlatedSummaryLogger: ITelemetryLogger): Promise<RefreshSummaryResult>;
-    // (undocumented)
-    startSummary(referenceSequenceNumber: number, summaryLogger: ITelemetryLogger): void;
-}
 
 // @public (undocumented)
 export function listBlobsAtTreePath(inputTree: ITree | undefined, path: string): Promise<string[]>;
@@ -145,20 +103,6 @@ export function packagePathToTelemetryProperty(packagePath: readonly string[] | 
 
 // @public
 export type ReadAndParseBlob = <T>(id: string) => Promise<T>;
-
-// @public
-export type RefreshSummaryResult = {
-    latestSummaryUpdated: false;
-} | {
-    latestSummaryUpdated: true;
-    wasSummaryTracked: true;
-    summaryRefSeq: number;
-} | {
-    latestSummaryUpdated: true;
-    wasSummaryTracked: false;
-    snapshotTree: ISnapshotTree;
-    summaryRefSeq: number;
-};
 
 // @public (undocumented)
 export function requestFluidObject<T = FluidObject>(router: IFluidRouter, url: string | IRequest): Promise<T>;
@@ -230,7 +174,7 @@ export class TelemetryContext implements ITelemetryContext {
     // (undocumented)
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     // (undocumented)
-    setAll(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public (undocumented)

@@ -4,14 +4,14 @@
  */
 
 import {
-    ICache,
-    ICollection,
-    IDeltaService,
-    IDocument,
-    IDocumentStorage,
-    IProducer,
-    ITenantManager,
-    IThrottler,
+	ICache,
+	IDeltaService,
+	IDocumentRepository,
+	IDocumentStorage,
+	IProducer,
+	ITenantManager,
+	IThrottler,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import cors from "cors";
 import { Router } from "express";
@@ -22,33 +22,52 @@ import * as deltas from "./deltas";
 import * as documents from "./documents";
 
 export function create(
-    config: Provider,
-    tenantManager: ITenantManager,
-    tenantThrottler: IThrottler,
-    clusterThrottlers: Map<string, IThrottler>,
-    singleUseTokenCache: ICache,
-    storage: IDocumentStorage,
-    deltaService: IDeltaService,
-    producer: IProducer,
-    appTenants: IAlfredTenant[],
-    documentsCollection: ICollection<IDocument>): Router {
-    const router: Router = Router();
-    const deltasRoute = deltas.create(config, tenantManager, deltaService, appTenants, tenantThrottler, clusterThrottlers);
-    const documentsRoute = documents.create(
-        storage,
-        appTenants,
-        tenantThrottler,
-        clusterThrottlers,
-        singleUseTokenCache,
-        config,
-        tenantManager,
-        documentsCollection);
-    const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottler);
+	config: Provider,
+	tenantManager: ITenantManager,
+	tenantThrottler: IThrottler,
+	clusterThrottlers: Map<string, IThrottler>,
+	singleUseTokenCache: ICache,
+	storage: IDocumentStorage,
+	deltaService: IDeltaService,
+	producer: IProducer,
+	appTenants: IAlfredTenant[],
+	documentRepository: IDocumentRepository,
+	tokenManager?: ITokenRevocationManager,
+): Router {
+	const router: Router = Router();
+	const deltasRoute = deltas.create(
+		config,
+		tenantManager,
+		deltaService,
+		appTenants,
+		tenantThrottler,
+		clusterThrottlers,
+		tokenManager,
+	);
+	const documentsRoute = documents.create(
+		storage,
+		appTenants,
+		tenantThrottler,
+		clusterThrottlers,
+		singleUseTokenCache,
+		config,
+		tenantManager,
+		documentRepository,
+		tokenManager,
+	);
+	const apiRoute = api.create(
+		config,
+		producer,
+		tenantManager,
+		storage,
+		tenantThrottler,
+		tokenManager,
+	);
 
-    router.use(cors());
-    router.use("/deltas", deltasRoute);
-    router.use("/documents", documentsRoute);
-    router.use("/api/v1", apiRoute);
+	router.use(cors());
+	router.use("/deltas", deltasRoute);
+	router.use("/documents", documentsRoute);
+	router.use("/api/v1", apiRoute);
 
-    return router;
+	return router;
 }

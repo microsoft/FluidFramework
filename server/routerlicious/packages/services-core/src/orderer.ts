@@ -11,62 +11,59 @@ import { IWebSocket } from "./http";
  * Identifier for an ordering node in the system
  */
 export interface INode {
-    // Unique identifier for the node
-    _id: string;
+	// Unique identifier for the node
+	_id: string;
 
-    // Address that the node can be reached at
-    address: string;
+	// Address that the node can be reached at
+	address: string;
 
-    // Time when the node is set to expire
-    expiration: number;
+	// Time when the node is set to expire
+	expiration: number;
 }
 
 export interface IOrdererSocket {
-    send(topic: string, op: string, id: string, data: any[]);
+	send(topic: string, op: string, id: string, data: any[]);
 }
 
 export interface IOrdererConnection {
-    readonly clientId: string;
+	readonly clientId: string;
 
-    readonly tenantId: string;
+	readonly tenantId: string;
 
-    readonly documentId: string;
+	readonly documentId: string;
 
-    readonly maxMessageSize: number;
+	readonly maxMessageSize: number;
 
-    readonly serviceConfiguration: IServiceConfiguration;
+	readonly serviceConfiguration: IServiceConfiguration;
 
-    /**
-     * Sends the client join op for this connection
-     */
-    connect(clientJoinMessageServerMetadata?: any): Promise<void>;
+	/**
+	 * Sends the client join op for this connection
+	 */
+	connect(clientJoinMessageServerMetadata?: any): Promise<void>;
 
-    /**
-     * Orders the provided list of messages. The messages in the array are guaranteed to be ordered sequentially
-     * so long as their total size fits under the maxMessageSize.
-     */
-    order(message: IDocumentMessage[]): Promise<void>;
+	/**
+	 * Orders the provided list of messages. The messages in the array are guaranteed to be ordered sequentially
+	 * so long as their total size fits under the maxMessageSize.
+	 */
+	order(message: IDocumentMessage[]): Promise<void>;
 
-    /**
-     * Error event Handler.
-     */
-    once(event: "error", listener: (...args: any[]) => void): void;
+	/**
+	 * Error event Handler.
+	 */
+	once(event: "error", listener: (...args: any[]) => void): void;
 
-    /**
-     * Sends the client leave op for this connection
-     */
-    disconnect(clientLeaveMessageServerMetadata?: any): Promise<void>;
+	/**
+	 * Sends the client leave op for this connection
+	 */
+	disconnect(clientLeaveMessageServerMetadata?: any): Promise<void>;
 }
 
 export interface IOrderer {
-    connect(
-        socket: IWebSocket,
-        clientId: string,
-        client: IClient): Promise<IOrdererConnection>;
+	connect(socket: IWebSocket, clientId: string, client: IClient): Promise<IOrdererConnection>;
 
-    close(): Promise<void>;
+	close(): Promise<void>;
 }
 
 export interface IOrdererManager {
-    getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
+	getOrderer(tenantId: string, documentId: string): Promise<IOrderer>;
 }

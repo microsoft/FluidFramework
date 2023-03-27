@@ -8,9 +8,8 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/container-runtime";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
@@ -36,7 +35,6 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
-
 	before(async () => {
 		provider = getTestObjectProvider();
 		const loader = provider.makeTestLoader(testContainerConfig);
@@ -61,7 +59,6 @@ describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) =
 					runGC: false,
 					fullTree: false,
 					trackState: false,
-					summaryLogger: new TelemetryNullLogger(),
 				});
 
 				// Validate stats

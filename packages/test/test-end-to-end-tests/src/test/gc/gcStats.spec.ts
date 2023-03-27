@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { stringToBuffer } from "@fluidframework/common-utils";
-import { Container } from "@fluidframework/container-loader";
+
 import { ContainerRuntime, IGCStats } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
@@ -16,10 +16,11 @@ import {
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
 
-const ensureContainerConnectedWriteMode = async (container: Container) => {
+const ensureContainerConnectedWriteMode = async (container: IContainer) => {
 	const resolveIfActive = (res: () => void) => {
 		if (container.deltaManager.active) {
 			res();
@@ -29,7 +30,6 @@ const ensureContainerConnectedWriteMode = async (container: Container) => {
 		await new Promise<void>((resolve) =>
 			container.on("connected", () => resolveIfActive(resolve)),
 		);
-		container.off("connected", resolveIfActive);
 	}
 };
 
@@ -39,7 +39,7 @@ const ensureContainerConnectedWriteMode = async (container: Container) => {
  */
 describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	let container: Container;
+	let container: IContainer;
 	let containerRuntime: ContainerRuntime;
 	let mainDataStore: ITestDataObject;
 
@@ -78,10 +78,10 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		container = (await provider.makeTestContainer(defaultGCConfig)) as Container;
+		container = await provider.makeTestContainer(defaultGCConfig);
 		mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
-		await waitForContainerConnection(container, true);
+		await waitForContainerConnection(container);
 	});
 
 	/**
@@ -101,15 +101,15 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			"",
 		);
 		const expectedGCStats: IGCStats = {
-			nodeCount: 11,
+			nodeCount: 9,
 			unrefNodeCount: 0,
-			updatedNodeCount: 11,
+			updatedNodeCount: 9,
 			dataStoreCount: 3,
 			unrefDataStoreCount: 0,
 			updatedDataStoreCount: 3,
-			attachmentBlobCount: 4,
+			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
-			updatedAttachmentBlobCount: 4,
+			updatedAttachmentBlobCount: 2,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -154,15 +154,15 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			"",
 		);
 		const expectedGCStats: IGCStats = {
-			nodeCount: 11,
+			nodeCount: 9,
 			unrefNodeCount: 0,
-			updatedNodeCount: 11,
+			updatedNodeCount: 9,
 			dataStoreCount: 3,
 			unrefDataStoreCount: 0,
 			updatedDataStoreCount: 3,
-			attachmentBlobCount: 4,
+			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
-			updatedAttachmentBlobCount: 4,
+			updatedAttachmentBlobCount: 2,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.
@@ -195,12 +195,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 
 		// dataStore1, its DDS and blob1 should be now unreferenced. Also, their reference state updated from referenced
 		// to unreferenced.
-		expectedGCStats.unrefNodeCount = 4;
-		expectedGCStats.updatedNodeCount = 4;
+		expectedGCStats.unrefNodeCount = 3;
+		expectedGCStats.updatedNodeCount = 3;
 		expectedGCStats.unrefDataStoreCount = 1;
 		expectedGCStats.updatedDataStoreCount = 1;
-		expectedGCStats.unrefAttachmentBlobCount = 2;
-		expectedGCStats.updatedAttachmentBlobCount = 2;
+		expectedGCStats.unrefAttachmentBlobCount = 1;
+		expectedGCStats.updatedAttachmentBlobCount = 1;
 
 		gcStats = await containerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
@@ -220,14 +220,14 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 		mainDataStore._root.delete("blob2");
 		await provider.ensureSynchronized();
 
-		// dataStore1, dataStore2, their DDS and blob2 should be now unreferenced. Also, dataStore2, its DDS and blob2's
-		// reference state updated from referenced to unreferenced.
-		expectedGCStats.unrefNodeCount = 8;
-		expectedGCStats.updatedNodeCount = 4;
+		// dataStore1, dataStore2, their DDS, blob1 and blob2 should be now unreferenced. Also, dataStore2, its DDS
+		// and blob2's reference state updated from referenced to unreferenced.
+		expectedGCStats.unrefNodeCount = 6;
+		expectedGCStats.updatedNodeCount = 3;
 		expectedGCStats.unrefDataStoreCount = 2;
 		expectedGCStats.updatedDataStoreCount = 1;
-		expectedGCStats.unrefAttachmentBlobCount = 4;
-		expectedGCStats.updatedAttachmentBlobCount = 2;
+		expectedGCStats.unrefAttachmentBlobCount = 2;
+		expectedGCStats.updatedAttachmentBlobCount = 1;
 
 		gcStats = await containerRuntime.collectGarbage({});
 		assert.deepStrictEqual(gcStats, expectedGCStats, "GC stats is not as expected");
@@ -254,15 +254,15 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			"",
 		);
 		const expectedGCStats: IGCStats = {
-			nodeCount: 11,
+			nodeCount: 9,
 			unrefNodeCount: 0,
-			updatedNodeCount: 11,
+			updatedNodeCount: 9,
 			dataStoreCount: 3,
 			unrefDataStoreCount: 0,
 			updatedDataStoreCount: 3,
-			attachmentBlobCount: 4,
+			attachmentBlobCount: 2,
 			unrefAttachmentBlobCount: 0,
-			updatedAttachmentBlobCount: 4,
+			updatedAttachmentBlobCount: 2,
 		};
 
 		// Add both data store handles in default data store to mark them referenced.

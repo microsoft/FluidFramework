@@ -8,7 +8,7 @@ import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { emptyField, FieldKinds, namedTreeSchema, singleTextCursor } from "../../feature-libraries";
 import { ISharedTree } from "../../shared-tree";
-import { brand } from "../../util";
+import { brand, getOrAddEmptyToMap } from "../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../utils";
 import {
 	FieldKey,
@@ -18,7 +18,6 @@ import {
 	rootFieldKey,
 	rootFieldKeySymbol,
 	SchemaData,
-	TransactionResult,
 	Value,
 	ValueSchema,
 } from "../../core";
@@ -70,12 +69,9 @@ const childrenFieldKey: FieldKey = brand("children");
 function initializeTestTree(tree: ISharedTree, state: JsonableTree = initialTestJsonTree) {
 	tree.storedSchema.update(fullSchemaData);
 	// inserts a node with the initial AppState as the root of the tree
-	tree.runTransaction((forest, editor) => {
-		const writeCursor = singleTextCursor(state);
-		const field = editor.sequenceField(undefined, rootFieldKeySymbol);
-		field.insert(0, writeCursor);
-		return TransactionResult.Apply;
-	});
+	const writeCursor = singleTextCursor(state);
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, writeCursor);
 }
 
 const getJsonNode = (desiredByteSize: number): JsonableTree => {
@@ -154,17 +150,16 @@ const insertNodesWithIndividualTransactions = async (
 	count: number,
 ) => {
 	for (let i = 0; i < count; i++) {
-		tree.runTransaction((f, editor) => {
-			const path = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-			const writeCursor = singleTextCursor(jsonNode);
-			const field = editor.sequenceField(path, childrenFieldKey);
-			field.insert(0, writeCursor);
-			return TransactionResult.Apply;
-		});
+		tree.transaction.start();
+		const path = {
+			parent: undefined,
+			parentField: rootFieldKeySymbol,
+			parentIndex: 0,
+		};
+		const writeCursor = singleTextCursor(jsonNode);
+		const field = tree.editor.sequenceField(path, childrenFieldKey);
+		field.insert(0, writeCursor);
+		tree.transaction.commit();
 	}
 	await provider.ensureSynchronized();
 };
@@ -175,18 +170,17 @@ const insertNodesWithSingleTransaction = async (
 	jsonNode: JsonableTree,
 	count: number,
 ) => {
-	tree.runTransaction((f, editor) => {
-		const path = {
-			parent: undefined,
-			parentField: rootFieldKeySymbol,
-			parentIndex: 0,
-		};
-		const field = editor.sequenceField(path, childrenFieldKey);
-		for (let i = 0; i < count; i++) {
-			field.insert(0, singleTextCursor(jsonNode));
-		}
-		return TransactionResult.Apply;
-	});
+	tree.transaction.start();
+	const path = {
+		parent: undefined,
+		parentField: rootFieldKeySymbol,
+		parentIndex: 0,
+	};
+	const field = tree.editor.sequenceField(path, childrenFieldKey);
+	for (let i = 0; i < count; i++) {
+		field.insert(0, singleTextCursor(jsonNode));
+	}
+	tree.transaction.commit();
 	await provider.ensureSynchronized();
 };
 
@@ -197,16 +191,15 @@ const deleteNodesWithIndividualTransactions = async (
 	deletesPerTransaction: number,
 ) => {
 	for (let i = 0; i < numDeletes; i++) {
-		tree.runTransaction((f, editor) => {
-			const path = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-			const field = editor.sequenceField(path, childrenFieldKey);
-			field.delete(getChildrenlength(tree) - 1, deletesPerTransaction);
-			return TransactionResult.Apply;
-		});
+		tree.transaction.start();
+		const path = {
+			parent: undefined,
+			parentField: rootFieldKeySymbol,
+			parentIndex: 0,
+		};
+		const field = tree.editor.sequenceField(path, childrenFieldKey);
+		field.delete(getChildrenlength(tree) - 1, deletesPerTransaction);
+		tree.transaction.commit();
 		await provider.ensureSynchronized();
 	}
 };
@@ -216,16 +209,15 @@ const deleteNodesWithSingleTransaction = async (
 	provider: ITestTreeProvider,
 	numDeletes: number,
 ) => {
-	tree.runTransaction((f, editor) => {
-		const path = {
-			parent: undefined,
-			parentField: rootFieldKeySymbol,
-			parentIndex: 0,
-		};
-		const field = editor.sequenceField(path, childrenFieldKey);
-		field.delete(0, numDeletes);
-		return TransactionResult.Apply;
-	});
+	tree.transaction.start();
+	const path = {
+		parent: undefined,
+		parentField: rootFieldKeySymbol,
+		parentIndex: 0,
+	};
+	const field = tree.editor.sequenceField(path, childrenFieldKey);
+	field.delete(0, numDeletes);
+	tree.transaction.commit();
 	await provider.ensureSynchronized();
 };
 
@@ -249,15 +241,14 @@ const editNodesWithIndividualTransactions = async (
 		parentIndex: 0,
 	};
 	for (let i = 0; i < numChildrenToEdit; i++) {
-		tree.runTransaction((f, editor) => {
-			const childPath = {
-				parent: rootPath,
-				parentField: childrenFieldKey,
-				parentIndex: i,
-			};
-			editor.setValue(childPath, editPayload);
-			return TransactionResult.Apply;
-		});
+		tree.transaction.start();
+		const childPath = {
+			parent: rootPath,
+			parentField: childrenFieldKey,
+			parentIndex: i,
+		};
+		tree.editor.setValue(childPath, editPayload);
+		tree.transaction.commit();
 		await provider.ensureSynchronized();
 	}
 };
@@ -273,17 +264,16 @@ const editNodesWithSingleTransaction = async (
 		parentField: rootFieldKeySymbol,
 		parentIndex: 0,
 	};
-	tree.runTransaction((f, editor) => {
-		for (let i = 0; i < numChildrenToEdit; i++) {
-			const childPath = {
-				parent: rootPath,
-				parentField: childrenFieldKey,
-				parentIndex: i,
-			};
-			editor.setValue(childPath, editPayload);
-		}
-		return TransactionResult.Apply;
-	});
+	tree.transaction.start();
+	for (let i = 0; i < numChildrenToEdit; i++) {
+		const childPath = {
+			parent: rootPath,
+			parentField: childrenFieldKey,
+			parentIndex: i,
+		};
+		tree.editor.setValue(childPath, editPayload);
+	}
+	tree.transaction.commit();
 	await provider.ensureSynchronized();
 };
 
@@ -349,7 +339,7 @@ const getSuccessfulOpByteSize = (
 const BENCHMARK_NODE_COUNT = 100;
 
 describe("SharedTree Op Size Benchmarks", () => {
-	const opsByBenchmarkName: Record<string, ISequencedDocumentMessage[]> = {};
+	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
@@ -412,10 +402,9 @@ describe("SharedTree Op Size Benchmarks", () => {
 	};
 
 	const saveAndResetCurrentOps = () => {
-		if (!opsByBenchmarkName[currentBenchmarkName]) {
-			opsByBenchmarkName[currentBenchmarkName] = [];
-		}
-		currentTestOps.forEach((op) => opsByBenchmarkName[currentBenchmarkName].push(op));
+		currentTestOps.forEach((op) =>
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
+		);
 		currentTestOps.length = 0;
 	};
 
@@ -424,22 +413,20 @@ describe("SharedTree Op Size Benchmarks", () => {
 	};
 
 	afterEach(() => {
-		if (!opsByBenchmarkName[currentBenchmarkName]) {
-			opsByBenchmarkName[currentBenchmarkName] = [];
-		}
-		currentTestOps.forEach((op) => opsByBenchmarkName[currentBenchmarkName].push(op));
+		currentTestOps.forEach((op) =>
+			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
+		);
 		currentTestOps.length = 0;
 	});
 
 	after(() => {
 		const allBenchmarkOpStats: any[] = [];
-		Object.entries(opsByBenchmarkName).forEach((entry) => {
-			const [benchmarkName, ops] = entry;
+		for (const [benchmarkName, ops] of opsByBenchmarkName) {
 			allBenchmarkOpStats.push({
 				"Test name": benchmarkName,
 				...getOperationsStats(ops),
 			});
-		});
+		}
 		const table = new Table();
 		allBenchmarkOpStats.forEach((data) => {
 			Object.keys(data).forEach((key) => table.cell(key, data[key]));

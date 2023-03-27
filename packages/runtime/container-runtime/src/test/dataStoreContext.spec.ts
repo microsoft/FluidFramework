@@ -10,7 +10,6 @@ import { LazyPromise, stringToBuffer } from "@fluidframework/common-utils";
 import { AttachState, ContainerErrorType } from "@fluidframework/container-definitions";
 import { FluidObject, IFluidHandleContext } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { BlobCacheStorageService } from "@fluidframework/driver-utils";
 import { GCDataBuilder } from "@fluidframework/garbage-collector";
 import {
 	IBlob,
@@ -29,29 +28,34 @@ import {
 	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions";
+import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
-	createRootSummarizerNodeWithGC,
-	IRootSummarizerNodeWithGC,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
-import { isFluidError, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+	isFluidError,
+	MockLogger,
+	TelemetryDataTag,
+	TelemetryNullLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	MockFluidDataStoreRuntime,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
+import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore";
 
-import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs";
 import {
+	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
+	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
-} from "../summaryFormat";
+	summarizerClientType,
+} from "../summary";
 
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
@@ -65,6 +69,35 @@ describe("Data Store Context Tests", () => {
 		const makeLocallyVisibleFn = () => {};
 		let containerRuntime: ContainerRuntime;
 		let summarizerNode: IRootSummarizerNodeWithGC;
+
+		function createContainerRuntime(
+			logger = new TelemetryNullLogger(),
+			clientDetails = {},
+			submitDataStoreOp = (id: string, contents: any, localOpMetadata: unknown) => {},
+		): ContainerRuntime {
+			const factory: IFluidDataStoreFactory = {
+				type: "store-type",
+				get IFluidDataStoreFactory() {
+					return factory;
+				},
+				instantiateDataStore: async (context: IFluidDataStoreContext) =>
+					new MockFluidDataStoreRuntime(),
+			};
+			const registry: IFluidDataStoreRegistry = {
+				get IFluidDataStoreRegistry() {
+					return registry;
+				},
+				get: async (pkg) => (pkg === "BOGUS" ? undefined : factory),
+			};
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			return {
+				IFluidDataStoreRegistry: registry,
+				on: (event, listener) => {},
+				logger,
+				clientDetails,
+				submitDataStoreOp,
+			} as ContainerRuntime;
+		}
 
 		beforeEach(async () => {
 			summarizerNode = createRootSummarizerNodeWithGC(
@@ -87,28 +120,7 @@ describe("Data Store Context Tests", () => {
 					{ throwOnFailure: true },
 					getGCDataFn,
 				);
-
-			const factory: IFluidDataStoreFactory = {
-				type: "store-type",
-				get IFluidDataStoreFactory() {
-					return factory;
-				},
-				instantiateDataStore: async (context: IFluidDataStoreContext) =>
-					new MockFluidDataStoreRuntime(),
-			};
-			const registry: IFluidDataStoreRegistry = {
-				get IFluidDataStoreRegistry() {
-					return registry;
-				},
-				get: async (pkg) => (pkg === "BOGUS" ? undefined : factory),
-			};
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			containerRuntime = {
-				IFluidDataStoreRegistry: registry,
-				on: (event, listener) => {},
-				logger: new TelemetryNullLogger(),
-				clientDetails: {},
-			} as ContainerRuntime;
+			containerRuntime = createContainerRuntime();
 		});
 
 		describe("Initialization", () => {
@@ -354,6 +366,122 @@ describe("Data Store Context Tests", () => {
 			});
 		});
 
+		describe("Local data stores in summarizer client", () => {
+			let mockLogger: MockLogger;
+			const packageName = ["TestDataStore1"];
+			beforeEach(async () => {
+				// Change the container runtime's logger to MockLogger and its type to be a summarizer client.
+				mockLogger = new MockLogger();
+				const clientDetails = {
+					capabilities: {
+						interactive: false,
+					},
+					type: summarizerClientType,
+				};
+				containerRuntime = createContainerRuntime(mockLogger, clientDetails);
+			});
+
+			it("logs when local data store is created in summarizer", async () => {
+				localDataStoreContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: packageName,
+					runtime: containerRuntime,
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+					isRootDataStore: false,
+				});
+
+				const expectedEvents = [
+					{
+						eventName: "FluidDataStoreContext:DataStoreCreatedInSummarizer",
+						packageName: packagePathToTelemetryProperty(packageName),
+						fluidDataStoreId: {
+							value: dataStoreId,
+							tag: TelemetryDataTag.CodeArtifact,
+						},
+					},
+				];
+				mockLogger.assertMatch(
+					expectedEvents,
+					"data store create event not generated as expected",
+				);
+			});
+
+			it("logs when local data store sends op in summarizer", async () => {
+				localDataStoreContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: packageName,
+					runtime: containerRuntime,
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+					isRootDataStore: false,
+				});
+				await localDataStoreContext.realize();
+
+				localDataStoreContext.submitMessage(
+					DataStoreMessageType.ChannelOp,
+					"summarizer message",
+					{},
+				);
+
+				const expectedEvents = [
+					{
+						eventName: "FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer",
+						packageName: packagePathToTelemetryProperty(packageName),
+						fluidDataStoreId: {
+							value: dataStoreId,
+							tag: TelemetryDataTag.CodeArtifact,
+						},
+						type: DataStoreMessageType.ChannelOp,
+					},
+				];
+				mockLogger.assertMatch(
+					expectedEvents,
+					"data store message submitted event not generated as expected",
+				);
+			});
+
+			it("logs maximum of 10 local summarizer events per data store", async () => {
+				localDataStoreContext = new LocalFluidDataStoreContext({
+					id: dataStoreId,
+					pkg: packageName,
+					runtime: containerRuntime,
+					storage,
+					scope,
+					createSummarizerNodeFn,
+					makeLocallyVisibleFn,
+					snapshotTree: undefined,
+					isRootDataStore: false,
+				});
+				await localDataStoreContext.realize();
+
+				let eventCount = 0;
+				for (let i = 0; i < 15; i++) {
+					localDataStoreContext.submitMessage(
+						DataStoreMessageType.ChannelOp,
+						`summarizer message ${i}`,
+						{},
+					);
+				}
+				for (const event of mockLogger.events) {
+					if (
+						event.eventName ===
+							"FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer" ||
+						event.eventName === "FluidDataStoreContext:DataStoreCreatedInSummarizer"
+					) {
+						eventCount++;
+					}
+				}
+				assert.strictEqual(eventCount, 10, "There should be only 10 events per data store");
+			});
+		});
+
 		describe("Garbage Collection", () => {
 			it("can generate correct GC data", async () => {
 				localDataStoreContext = new LocalFluidDataStoreContext({
@@ -507,7 +635,7 @@ describe("Data Store Context Tests", () => {
 					attributes: ReadFluidDataStoreAttributes,
 				) {
 					const buffer = stringToBuffer(JSON.stringify(attributes), "utf8");
-					const blobCache = new Map<string, ArrayBufferLike>([
+					const attachBlobs = new Map<string, ArrayBufferLike>([
 						["fluidDataStoreAttributes", buffer],
 					]);
 					const snapshotTree: ISnapshotTree = {
@@ -525,11 +653,10 @@ describe("Data Store Context Tests", () => {
 					remoteDataStoreContext = new RemoteFluidDataStoreContext({
 						id: dataStoreId,
 						snapshotTree,
-						getBaseGCDetails: async () => undefined,
 						runtime: containerRuntime,
-						storage: new BlobCacheStorageService(
+						storage: new StorageServiceWithAttachBlobs(
 							storage as IDocumentStorageService,
-							blobCache,
+							attachBlobs,
 						),
 						scope,
 						createSummarizerNodeFn,
@@ -580,8 +707,6 @@ describe("Data Store Context Tests", () => {
 						scope,
 						createSummarizerNodeFn,
 						snapshotTree: undefined,
-						getBaseGCDetails: async () =>
-							undefined as unknown as IGarbageCollectionDetailsBase,
 					});
 
 				assert.throws(codeBlock, (e: Error) =>
@@ -643,7 +768,7 @@ describe("Data Store Context Tests", () => {
 					summaryFormatVersion: undefined,
 				};
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -656,11 +781,10 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -683,7 +807,7 @@ describe("Data Store Context Tests", () => {
 					JSON.stringify(dataStoreAttributes),
 					"utf8",
 				);
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -709,11 +833,10 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -736,7 +859,7 @@ describe("Data Store Context Tests", () => {
 					JSON.stringify(dataStoreAttributes),
 					"utf8",
 				);
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", attributesBuffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -762,11 +885,10 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -805,7 +927,7 @@ describe("Data Store Context Tests", () => {
 
 			function updateReferencedStateTest() {
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -817,11 +939,10 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
@@ -881,7 +1002,7 @@ describe("Data Store Context Tests", () => {
 					isRootDataStore: false,
 				};
 				const buffer = stringToBuffer(JSON.stringify(dataStoreAttributes), "utf8");
-				const blobCache = new Map<string, ArrayBufferLike>([
+				const attachBlobs = new Map<string, ArrayBufferLike>([
 					["fluidDataStoreAttributes", buffer],
 				]);
 				const snapshotTree: ISnapshotTree = {
@@ -893,11 +1014,10 @@ describe("Data Store Context Tests", () => {
 				remoteDataStoreContext = new RemoteFluidDataStoreContext({
 					id: dataStoreId,
 					snapshotTree,
-					getBaseGCDetails: async () => undefined,
 					runtime: containerRuntime,
-					storage: new BlobCacheStorageService(
+					storage: new StorageServiceWithAttachBlobs(
 						storage as IDocumentStorageService,
-						blobCache,
+						attachBlobs,
 					),
 					scope,
 					createSummarizerNodeFn,
