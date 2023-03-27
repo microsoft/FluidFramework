@@ -56,6 +56,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
+		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluid-internal/test-loader-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluid-internal/test-pairwise-generator": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/aqueduct": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
@@ -80,7 +81,6 @@
 		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/matrix": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/merge-tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/ordered-collection": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",

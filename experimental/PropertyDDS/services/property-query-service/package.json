@@ -75,9 +75,9 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/property-dds": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/local-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/server-local-server": "^0.1038.4000",
 		"@fluidframework/test-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
