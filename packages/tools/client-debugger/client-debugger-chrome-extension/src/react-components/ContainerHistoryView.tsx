@@ -14,9 +14,9 @@ import {
 	ConnectionStateChangeLogEntry,
 } from "@fluid-tools/client-debugger";
 import { _ContainerHistoryView } from "@fluid-tools/client-debugger-view";
+import { extensionMessageSource } from "../messaging";
 import { Waiting } from "./Waiting";
 import { MessageRelayContext } from "./MessageRelayContext";
-import { extensionMessageSource } from "../messaging";
 
 const loggingContext = "EXTENSION(ContainerHistoryView)";
 
