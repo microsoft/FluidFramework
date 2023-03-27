@@ -111,6 +111,9 @@ export interface GetRootDataVisualizationsMessage
  */
 export interface GetDataVisualizationMessage
 	extends IDebuggerMessage<GetDataVisualizationMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "GET_DATA_VISUALIZATION";
 }
 
@@ -180,6 +183,9 @@ export interface DataVisualizationMessageData extends HasContainerId, HasFluidOb
  */
 export interface ContainerStateChangeMessage
 	extends IDebuggerMessage<ContainerStateChangeMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "CONTAINER_STATE_CHANGE";
 }
 
@@ -189,6 +195,9 @@ export interface ContainerStateChangeMessage
  * @public
  */
 export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "CONNECT_CONTAINER";
 }
 
@@ -199,6 +208,9 @@ export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContain
  */
 export interface DisconnectContainerMessage
 	extends IDebuggerMessage<DisconnectContainerMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "DISCONNECT_CONTAINER";
 }
 
@@ -208,6 +220,9 @@ export interface DisconnectContainerMessage
  * @public
  */
 export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "CLOSE_CONTAINER";
 }
 
@@ -218,6 +233,9 @@ export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMe
  */
 export interface ContainerStateHistoryMessage
 	extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "CONTAINER_STATE_HISTORY";
 }
 
@@ -229,6 +247,9 @@ export interface ContainerStateHistoryMessage
  */
 export interface RootDataVisualizationsMessage
 	extends IDebuggerMessage<RootDataVisualizationsMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "ROOT_DATA_VISUALIZATIONS";
 }
 
@@ -238,6 +259,9 @@ export interface RootDataVisualizationsMessage
  * @public
  */
 export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "DATA_VISUALIZATION";
 }
 
