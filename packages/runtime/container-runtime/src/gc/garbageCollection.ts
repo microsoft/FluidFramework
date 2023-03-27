@@ -149,7 +149,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly activeConnection: () => boolean;
 
 	public get summaryStateNeedsReset(): boolean {
-		return this.summaryStateTracker.doesSummaryStateNeedReset();
+		return this.summaryStateTracker.doesSummaryStateNeedReset;
 	}
 
 	/** Handler to respond to when a SweepReady object is used */
@@ -197,11 +197,8 @@ export class GarbageCollector implements IGarbageCollector {
 		}
 
 		this.summaryStateTracker = new GCSummaryStateTracker(
-			this.shouldRunGC,
-			this.configs.tombstoneMode,
-			this.mc,
+			this.configs,
 			baseSnapshot?.trees[gcTreeKey] !== undefined /* wasGCRunInBaseSnapshot */,
-			this.configs.gcVersionInBaseSnapshot,
 		);
 
 		// Get the GC data from the base snapshot. Use LazyPromise because we only want to do this once since it
@@ -465,8 +462,7 @@ export class GarbageCollector implements IGarbageCollector {
 	): Promise<IGCStats | undefined> {
 		const fullGC =
 			options.fullGC ??
-			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.doesSummaryStateNeedReset());
+			(this.configs.runFullGC === true || this.summaryStateTracker.doesSummaryStateNeedReset);
 		const logger = options.logger
 			? ChildLogger.create(options.logger, undefined, {
 					all: { completedGCRuns: () => this.completedRuns },
@@ -618,7 +614,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
-			sweepEnabled: this.configs.sweepEnabled,
+			sweepEnabled: false, // DEPRECATED - to be removed
 			sweepTimeoutMs: this.configs.sweepTimeoutMs,
 		};
 	}

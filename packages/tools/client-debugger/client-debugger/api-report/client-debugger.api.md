@@ -13,6 +13,10 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
+import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
+import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @internal
@@ -26,9 +30,30 @@ export interface AudienceChangeLogEntry extends LogEntry {
 export function clearDebuggerRegistry(): void;
 
 // @public
+export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+    // (undocumented)
+    type: "CLOSE_CONTAINER";
+}
+
+// @public
+export type CloseContainerMessageData = HasContainerId;
+
+// @public
 export function closeFluidClientDebugger(containerId: string): void;
 
-// @internal
+// @public
+export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+    // (undocumented)
+    type: "CONNECT_CONTAINER";
+}
+
+// @public
+export type ConnectContainerMessageData = HasContainerId;
+
+// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "StateChangeLogEntry" which is marked as @internal
+// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "ContainerStateChangeKind" which is marked as @internal
+//
+// @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
 }
@@ -57,6 +82,17 @@ export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerS
 // @public
 export interface ContainerStateChangeMessageData extends HasContainerId {
     containerState: ContainerStateMetadata;
+}
+
+// @public
+export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+    // (undocumented)
+    type: "CONTAINER_STATE_HISTORY";
+}
+
+// @public
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+    history: ConnectionStateChangeLogEntry[];
 }
 
 // @public
@@ -91,11 +127,27 @@ export interface DebuggerRegistryEvents extends IEvent {
 }
 
 // @public
+export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
+    // (undocumented)
+    type: "DISCONNECT_CONTAINER";
+}
+
+// @public
+export type DisconnectContainerMessageData = HasContainerId;
+
+// @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
     containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
+}
+
+// @internal @sealed
+export class FluidDebuggerLogger extends TelemetryLogger {
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    send(event: ITelemetryBaseEvent): void;
 }
 
 // @public
@@ -185,7 +237,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(message: TMessage, loggingOptions?: MessageLoggingOptions): void;
+export function postMessageToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...message: TMessage[]): void;
 
 // @public
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
@@ -201,6 +253,17 @@ export interface RegistryChangeMessageData {
 // @internal
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
+}
+
+// @public
+export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
+    // (undocumented)
+    type: "TELEMETRY_EVENT";
+}
+
+// @public
+export interface TelemetryEventMessageData {
+    contents: ITelemetryBaseEvent;
 }
 
 ```

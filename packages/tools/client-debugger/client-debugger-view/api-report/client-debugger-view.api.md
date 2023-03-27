@@ -4,11 +4,13 @@
 
 ```ts
 
+import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
 import { ContainerMetadata } from '@fluid-tools/client-debugger';
 import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { default as React_2 } from 'react';
 
 // @public
@@ -33,6 +35,14 @@ export const clientDebugViewClassName = "fluid-client-debugger-view";
 // @internal
 export interface ClientDebugViewProps extends HasClientDebugger {
     renderOptions?: RenderOptions;
+}
+
+// @public
+export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React_2.ReactElement;
+
+// @public
+export interface _ContainerHistoryViewProps {
+    containerHistory: readonly ConnectionStateChangeLogEntry[];
 }
 
 // @internal
@@ -87,7 +97,9 @@ export interface IContainerActions {
 // @internal
 export enum PanelView {
     Audience = "Audience",
-    ContainerData = "Data"
+    ContainerData = "Data",
+    ContainerStateHistory = "States",
+    Telemetry = "Telemetry"
 }
 
 // @internal
@@ -123,5 +135,14 @@ export interface SharedObjectRenderOptions {
 
 // @public
 export type SharedObjectType = string;
+
+// @internal
+export function _TelemetryView(props: _TelemetryViewProps): React_2.ReactElement;
+
+// @internal
+export interface _TelemetryViewProps {
+    // (undocumented)
+    telemetryEvents: ITelemetryBaseEvent[];
+}
 
 ```

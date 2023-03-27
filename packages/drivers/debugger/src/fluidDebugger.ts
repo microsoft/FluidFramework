@@ -28,7 +28,7 @@ export namespace FluidDebugger {
 
 	export async function createFromServiceFactory(
 		documentServiceFactory: IDocumentServiceFactory,
-	) {
+	): Promise<IDocumentServiceFactory> {
 		const controller = createFluidDebugger();
 		if (!controller) {
 			return documentServiceFactory;

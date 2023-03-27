@@ -21,6 +21,12 @@ export interface FieldChangeHandler<
 	encoder: FieldChangeEncoder<TChangeset>;
 	editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
+
+	/**
+	 * Returns whether this change is empty, meaning that it represents no modifications to the field
+	 * and could be removed from the ModularChangeset tree without changing its behavior.
+	 */
+	isEmpty(change: TChangeset): boolean;
 }
 
 /**
@@ -40,7 +46,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -51,7 +57,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -87,7 +93,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -96,9 +102,10 @@ export interface FieldChangeRebaser<TChangeset> {
 	amendRebase(
 		rebasedChange: TChangeset,
 		over: TaggedChange<TChangeset>,
+		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
-		revisionIndexer: RevisionIndexer,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 }
 
@@ -191,7 +198,10 @@ export type NodeChangeInverter = (
 /**
  * @alpha
  */
-export type NodeChangeRebaser = (change: NodeChangeset, baseChange: NodeChangeset) => NodeChangeset;
+export type NodeChangeRebaser = (
+	change: NodeChangeset | undefined,
+	baseChange: NodeChangeset | undefined,
+) => NodeChangeset | undefined;
 
 /**
  * @alpha
@@ -217,9 +227,24 @@ export type IdAllocator = () => ChangesetLocalId;
  * Changeset for a subtree rooted at a specific node.
  * @alpha
  */
-export interface NodeChangeset {
-	fieldChanges?: FieldChangeMap;
+export interface NodeChangeset extends HasFieldChanges {
 	valueChange?: ValueChange;
+	valueConstraint?: ValueConstraint;
+}
+
+/**
+ * @alpha
+ */
+export interface ValueConstraint {
+	value: Value;
+	violated: boolean;
+}
+
+/**
+ * @alpha
+ */
+export interface HasFieldChanges {
+	fieldChanges?: FieldChangeMap;
 }
 
 /**
@@ -241,7 +266,7 @@ export interface ValueChange {
 /**
  * @alpha
  */
-export interface ModularChangeset {
+export interface ModularChangeset extends HasFieldChanges {
 	/**
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
 	 * If undefined then this changeset contains no IDs.
@@ -253,7 +278,8 @@ export interface ModularChangeset {
 	 * Should never be empty.
 	 */
 	readonly revisions?: readonly RevisionInfo[];
-	changes: FieldChangeMap;
+	fieldChanges: FieldChangeMap;
+	constraintViolationCount?: number;
 }
 
 /**
@@ -272,8 +298,21 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 /**
  * @alpha
  */
+export interface RevisionMetadataSource {
+	readonly getIndex: RevisionIndexer;
+	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+}
+
+/**
+ * @alpha
+ */
 export interface RevisionInfo {
-	readonly tag: RevisionTag;
+	readonly revision: RevisionTag;
+	/**
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
+	 */
+	readonly rollbackOf?: RevisionTag;
 }
 
 /**

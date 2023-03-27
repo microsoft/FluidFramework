@@ -9,8 +9,8 @@ import {
 	MockDocumentService,
 } from "@fluid-internal/test-loader-utils";
 import { Deferred } from "@fluidframework/common-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IAnyDriverError, NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
+import { DriverErrorType, IAnyDriverError } from "@fluidframework/driver-definitions";
+import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils";
 import { IClient, INack, NackErrorType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { ConnectionManager } from "../connectionManager";

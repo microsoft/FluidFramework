@@ -5,8 +5,8 @@
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../../feature-libraries";
 import { jsonString } from "../../domains";
+import { moveToDetachedField, rootFieldKeySymbol, UpPath } from "../../core";
 import { brand, JsonCompatible } from "../../util";
-import { rootFieldKeySymbol, UpPath } from "../../core";
 import { fakeRepair } from "../utils";
 import { Sequencer, TestTree, TestTreeEdit } from "./testTree";
 
@@ -69,12 +69,30 @@ describe("Editing", () => {
 
 			const ac = insert(tree2, 1, "a", "c");
 			const b = insert(tree2, 2, "b");
+			expectJsonTree(tree2, ["y", "a", "b", "c"]);
+
+			// Get an anchor to node b
+			const cursor = tree2.forest.allocateCursor();
+			moveToDetachedField(tree2.forest, cursor);
+			cursor.enterNode(2);
+			assert.equal(cursor.value, "b");
+			const anchor = cursor.buildAnchor();
+			cursor.free();
 
 			const sequenced = sequencer.sequence([x, ac, b]);
 			tree1.receive(sequenced);
 			tree2.receive(sequenced);
 
 			expectJsonTree([tree1, tree2], ["x", "y", "a", "b", "c"]);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const { parent, parentField, parentIndex } = tree2.forest.anchors.locate(anchor)!;
+			const expectedPath: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 3,
+			};
+			assert.deepEqual({ parent, parentField, parentIndex }, expectedPath);
 		});
 
 		it("can rebase a local delete", () => {
@@ -235,8 +253,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
 		});
 
-		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
-		it.skip("intra-field move", () => {
+		it("intra-field move", () => {
 			const sequencer = new Sequencer();
 			const tree1 = TestTree.fromJson(["a", "b"]);
 

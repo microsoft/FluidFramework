@@ -17,10 +17,11 @@ import {
 	emptyDelta,
 	mintRevisionTag,
 	SeqNumber,
+	ChangeFamilyEditor,
+	makeAnonChange,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
-	AnchorRebaseData,
 	TestAnchorSet,
 	TestChangeEncoder,
 	TestChangeFamily,
@@ -29,6 +30,7 @@ import {
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
 } from "../testChange";
+import { assertDeltaEqual } from "../utils";
 
 const rootKey: FieldKey = brand("root");
 
@@ -46,7 +48,7 @@ function asDelta(intentions: number[]): Delta.Root {
 
 function changeFamilyFactory(
 	rebaser?: ChangeRebaser<TestChange>,
-): ChangeFamily<unknown, TestChange> {
+): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		encoder: new TestChangeEncoder(),
@@ -61,16 +63,17 @@ function editManagerFactory(options: {
 	sessionId?: SessionId;
 }): {
 	manager: TestEditManager;
-	anchors: AnchorRebaseData;
+	anchors: TestAnchorSet;
+	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
 	const family = changeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(
+	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
 		options.sessionId ?? localSessionId,
 		anchors,
 	);
-	return { manager, anchors };
+	return { manager, anchors, family };
 }
 
 const localSessionId: SessionId = "0";
@@ -279,6 +282,55 @@ describe("EditManager", () => {
 			assert.equal(manager.getTrunk().length, 10);
 			manager.advanceMinimumSequenceNumber(brand(5));
 			assert(manager.getTrunk().length < 10);
+		});
+
+		it("Rebases anchors over local changes", () => {
+			const { manager, anchors } = editManagerFactory({});
+			const change = TestChange.mint([], 1);
+			manager.addLocalChange(mintRevisionTag(), change, true);
+			assert.deepEqual(anchors.rebases, [change]);
+			assert.deepEqual(anchors.intentions, change.intentions);
+		});
+
+		it("Rebases anchors over sequenced changes", () => {
+			const { manager, anchors } = editManagerFactory({});
+			const change = TestChange.mint([], 1);
+			manager.addSequencedChange(
+				{
+					change,
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(1),
+				brand(0),
+			);
+			assert.deepEqual(anchors.rebases, [change]);
+			assert.deepEqual(anchors.intentions, change.intentions);
+		});
+
+		it("Can rollback changes", () => {
+			const { manager, anchors, family } = editManagerFactory({});
+			const startingRevision = manager.getLocalBranchHead().revision;
+			const changes = [
+				TestChange.mint([], 1),
+				TestChange.mint([1], 2),
+				TestChange.mint([1, 2], -2),
+				TestChange.mint([1], 3),
+			];
+			for (const change of changes) {
+				manager.addLocalChange(mintRevisionTag(), change, true);
+			}
+			assert.deepEqual(anchors.rebases, changes);
+			assert.deepEqual(anchors.intentions, [1, 3]);
+
+			const inverseChanges = changes.map(TestChange.invert).reverse();
+			const composedInverse = TestChange.compose(inverseChanges.map(makeAnonChange));
+			const inverseDelta = family.intoDelta(composedInverse);
+			const delta = manager.rollbackLocalChanges(startingRevision);
+			assertDeltaEqual(delta, inverseDelta);
+			const totalRebases = [...changes, composedInverse];
+			assert.deepEqual(anchors.rebases, totalRebases);
+			assert.deepEqual(anchors.intentions, []);
 		});
 
 		it("Updates local branch when loading from summary", () => {

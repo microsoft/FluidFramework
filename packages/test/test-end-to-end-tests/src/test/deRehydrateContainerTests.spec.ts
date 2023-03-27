@@ -80,14 +80,6 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 	return {
 		type: SummaryType.Tree,
 		tree: {
-			".metadata": {
-				type: 2,
-				content: "{}",
-			},
-			".electedSummarizer": {
-				type: 2,
-				content: JSON.stringify(summarizer),
-			},
 			".protocol": {
 				type: 1,
 				tree: {
@@ -115,6 +107,14 @@ function buildSummaryTree(attr, quorumVal, summarizer): ISummaryTree {
 					[".channels"]: {
 						type: SummaryType.Tree,
 						tree: {},
+					},
+					".metadata": {
+						type: 2,
+						content: "{}",
+					},
+					".electedSummarizer": {
+						type: 2,
+						content: JSON.stringify(summarizer),
 					},
 				},
 			},

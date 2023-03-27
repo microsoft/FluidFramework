@@ -2,44 +2,42 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { EditableField, fail, ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
+import { fail, ISharedTree, SharedTreeFactory } from "@fluid-internal/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppState } from "./appState";
-import { appSchemaData, ClientTreeProxy } from "./schema";
+import { appSchemaData, ClientsField } from "./schema";
+
+// Key used to store/retrieve the SharedTree instance within the root SharedMap.
+const treeKey = "treeKey";
 
 export class Bubblebench extends DataObject {
 	public static get Name() {
 		return "@fluid-example/bubblebench-sharedtree";
 	}
-	private maybeTree?: ISharedTree = undefined;
-	private maybeAppState?: AppState = undefined;
-	static treeFactory = new SharedTreeFactory();
+
+	private _tree: ISharedTree | undefined;
+	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
-		this.maybeTree = this.runtime.createChannel(
-			"unique-bubblebench-key-1337",
-			Bubblebench.treeFactory.type,
+		this._tree = this.runtime.createChannel(
+			/* id: */ undefined,
+			new SharedTreeFactory().type,
 		) as ISharedTree;
 
-		this.initializeTree(this.maybeTree);
+		this.initializeTree(this.tree);
 
-		this.root.set("unique-bubblebench-key-1337", this.maybeTree.handle);
+		this.root.set(treeKey, this.tree.handle);
 	}
 
 	protected async initializingFromExisting() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.maybeTree = await this.root
-			.get<IFluidHandle<ISharedTree>>("unique-bubblebench-key-1337")!
-			.get();
+		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
 	}
 
 	protected async hasInitialized() {
-		if (this.tree === undefined) {
-			throw new Error("hasInitialized called but tree is still undefined");
-		}
-		this.maybeAppState = new AppState(
-			this.tree.root as ClientTreeProxy[] & EditableField,
+		this._appState = new AppState(
+			this.tree.root as ClientsField,
 			/* stageWidth: */ 640,
 			/* stageHeight: */ 480,
 			/* numBubbles: */ 1,
@@ -78,7 +76,7 @@ export class Bubblebench extends DataObject {
 	 * Cannot be accessed until after initialization has complected.
 	 */
 	private get tree(): ISharedTree {
-		return this.maybeTree ?? fail("not initialized");
+		return this._tree ?? fail("not initialized");
 	}
 
 	/**
@@ -86,7 +84,7 @@ export class Bubblebench extends DataObject {
 	 * Cannot be accessed until after initialization has complected.
 	 */
 	public get appState(): AppState {
-		return this.maybeAppState ?? fail("not initialized");
+		return this._appState ?? fail("not initialized");
 	}
 }
 

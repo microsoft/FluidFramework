@@ -21,6 +21,7 @@ import {
 import {
 	DriverErrorType,
 	FiveDaysMs,
+	IAnyDriverError,
 	IDocumentServiceFactory,
 	IFluidResolvedUrl,
 } from "@fluidframework/driver-definitions";
@@ -34,7 +35,7 @@ import {
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl, IAnyDriverError } from "@fluidframework/driver-utils";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	getDataStoreFactory,
