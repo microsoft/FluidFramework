@@ -14,6 +14,7 @@ import { TelemetryLogger, PerformanceEvent } from "@fluidframework/telemetry-uti
 import {
 	getDocAttributesFromProtocolSummary,
 	ensureFluidResolvedUrl,
+	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
 import {
 	TokenFetchOptions,
@@ -49,11 +50,6 @@ import {
  * to leverage code splitting as a means to keep bundles as small as possible.
  */
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-	/**
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	public readonly protocolName = "fluid-odsp:";
-
 	private readonly nonPersistentCache: INonPersistentCache = new NonPersistentCache();
 	private readonly socketReferenceKeyPrefix?: string;
 
@@ -106,10 +102,9 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
 			throw new Error("A new or existing file must be specified to create container!");
 		}
 
-		const protocolSummary = createNewSummary?.tree[".protocol"];
-		if (protocolSummary) {
+		if (isCombinedAppAndProtocolSummary(createNewSummary)) {
 			const documentAttributes = getDocAttributesFromProtocolSummary(
-				protocolSummary as ISummaryTree,
+				createNewSummary.tree[".protocol"],
 			);
 			if (documentAttributes?.sequenceNumber !== 0) {
 				throw new Error("Seq number in detached ODSP container should be 0");

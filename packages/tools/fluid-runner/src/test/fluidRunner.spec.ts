@@ -37,7 +37,8 @@ describe("fluid-runner from command line", () => {
 					`--inputFile=${snapshot}`,
 					`--outputFile=${outputFilePath}`,
 					`--telemetryFile=${telemetryFile}`,
-					`--telemetryFormat=CSV`,
+					"--telemetryFormat=CSV",
+					"--eventsPerFlush=-2",
 				],
 				{ encoding: "utf-8" },
 			);

@@ -17,7 +17,7 @@ import {
 	describeInstallVersions,
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode, IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -28,7 +28,7 @@ describeInstallVersions(
 	{
 		requestAbsoluteVersions: [versionWithChunking],
 	},
-	/* timeoutMs */ 50000,
+	/* timeoutMs: 3 minutes */ 180000,
 )("Legacy chunking", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let oldMap: SharedMap;

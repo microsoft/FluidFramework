@@ -8,7 +8,7 @@ The package exposes 2 primary entry-points:
 
 -   [renderClientDebuggerView](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#renderclientdebuggerview-function): A general-purpose function for rendering the debug view to a provided [DOM]() element.
 
--   [FluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#fluidclientdebugger-function): A [React Component](https://reactjs.org/docs/react-component.html) for embedding the debug view into your own React tree.
+-   [FluidClientDebugger](https://fluidframework.com/docs/apis/client-debugger-view/docs/apis/client-debugger-view#fluidclientdebugger-function): A [React Component](https://react.dev/reference/react/Component) for embedding the debug view into your own React tree.
 
 The library is intended to be extensible and customizable.
 
@@ -17,8 +17,7 @@ Visualizers for new or custom forms of Fluid data (in particular, [DDS](https://
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Installation
 
@@ -110,8 +109,7 @@ API documentation for **@fluid-tools/client-debugger-view** is available at <htt
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Trademark
 

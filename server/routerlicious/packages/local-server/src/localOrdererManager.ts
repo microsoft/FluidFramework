@@ -7,6 +7,7 @@ import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
 import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
 	IDatabaseManager,
+	IDocumentRepository,
 	IDocumentStorage,
 	ILogger,
 	IOrderer,
@@ -14,6 +15,7 @@ import {
 	IServiceConfiguration,
 	ITaskMessageSender,
 	ITenantManager,
+	MongoDocumentRepository,
 	TokenGenerator,
 } from "@fluidframework/server-services-core";
 
@@ -34,6 +36,7 @@ export class LocalOrdererManager implements IOrdererManager {
 		private readonly logger: ILogger,
 		private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
 		private readonly pubsub?: IPubSub,
+		private readonly documentRepository?: IDocumentRepository,
 	) {}
 
 	/**
@@ -76,6 +79,9 @@ export class LocalOrdererManager implements IOrdererManager {
 	private async createLocalOrderer(tenantId: string, documentId: string): Promise<IOrderer> {
 		const historian = await this.createHistorian(tenantId);
 		const gitManager = new GitManager(historian);
+		const documentRepository =
+			this.documentRepository ??
+			new MongoDocumentRepository(await this.databaseManager.getDocumentCollection());
 
 		const orderer = await LocalOrderer.load(
 			this.storage,
@@ -87,6 +93,7 @@ export class LocalOrdererManager implements IOrdererManager {
 			this.permission,
 			this.tokenGenerator,
 			this.logger,
+			documentRepository,
 			gitManager,
 			undefined /* ILocalOrdererSetup */,
 			this.pubsub,

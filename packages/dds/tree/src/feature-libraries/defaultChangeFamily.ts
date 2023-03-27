@@ -16,6 +16,7 @@ import {
 	Value,
 	ITreeCursor,
 	RevisionTag,
+	ChangeFamilyEditor,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -111,6 +112,8 @@ export interface IDefaultEditBuilder {
 		destField: FieldKey,
 		destIndex: number,
 	): void;
+
+	addValueConstraint(path: UpPath, value: Value): void;
 }
 
 /**
@@ -123,11 +126,18 @@ export class DefaultEditBuilder
 	private readonly modularBuilder: ModularEditBuilder;
 
 	public constructor(
-		family: ChangeFamily<unknown, DefaultChangeset>,
+		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchors: AnchorSet,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+	}
+
+	public enterTransaction(): void {
+		this.modularBuilder.enterTransaction();
+	}
+	public exitTransaction(): void {
+		this.modularBuilder.exitTransaction();
 	}
 
 	public apply(change: DefaultChangeset): void {
@@ -136,6 +146,10 @@ export class DefaultEditBuilder
 
 	public setValue(path: UpPath, value: Value): void {
 		this.modularBuilder.setValue(path, value);
+	}
+
+	public addValueConstraint(path: UpPath, value: Value): void {
+		this.modularBuilder.addValueConstraint(path, value);
 	}
 
 	public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
@@ -169,7 +183,12 @@ export class DefaultEditBuilder
 		destField: FieldKey,
 		destIndex: number,
 	): void {
-		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex);
+		const changes = sequence.changeHandler.editor.move(
+			sourceIndex,
+			count,
+			destIndex,
+			this.modularBuilder.generateId(),
+		);
 		this.modularBuilder.submitChanges(
 			[
 				{
@@ -204,14 +223,28 @@ export class DefaultEditBuilder
 				this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.move(sourceIndex, count, destIndex),
+				const moves = sequence.changeHandler.editor.move(
+					sourceIndex,
+					count,
+					destIndex,
+					this.modularBuilder.generateId(),
 				);
-				this.modularBuilder.submitChange(
-					parent,
-					field,
-					sequence.identifier,
-					change,
+
+				this.modularBuilder.submitChanges(
+					[
+						{
+							path: parent,
+							field,
+							fieldKind: sequence.identifier,
+							change: brand(moves[0]),
+						},
+						{
+							path: parent,
+							field,
+							fieldKind: sequence.identifier,
+							change: brand(moves[1]),
+						},
+					],
 					brand(0),
 				);
 			},
