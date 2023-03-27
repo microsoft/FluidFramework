@@ -85,6 +85,7 @@ module.exports = {
 			"@fluidframework/eslint-config-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
+      "tinylicious",
 		],
 	},
 
