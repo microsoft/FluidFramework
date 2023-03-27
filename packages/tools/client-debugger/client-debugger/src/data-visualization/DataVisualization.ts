@@ -187,8 +187,8 @@ export class DataVisualizerGraph {
 	}
 
 	/**
-	 * Adds a visualizer node to the collection for the specified `handle` if one does not
-	 * already exist.
+	 * Adds a visualizer node to the collection for the specified {@link @fluidframework/core-interfaces#IFluidHandle}
+	 * if one does not already exist.
 	 *
 	 * @throws This method will throw if the provided `handle` does not resolve to an
 	 * {@link @fluidframework/shared-object-base#ISharedObject}.
