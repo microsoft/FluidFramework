@@ -73,7 +73,7 @@ export function exceptionToResponse(err: any): IResponse;
 // @public (undocumented)
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
-// @public (undocumented)
+// @internal
 export class GCDataBuilder implements IGarbageCollectionData {
     // (undocumented)
     addNode(id: string, outboundRoutes: string[]): void;
