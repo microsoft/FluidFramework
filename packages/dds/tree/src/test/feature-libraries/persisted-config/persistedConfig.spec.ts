@@ -6,7 +6,7 @@ import {
 	PersistedConfigSchema,
 	Version,
 	ConfigUpgradeType,
-	PersistedConfig,
+	PersistedFormatConfig,
 } from "../../../feature-libraries/persisted-config";
 
 function parseVersion(version: Version): Semver {
@@ -79,10 +79,11 @@ class TestServer {
 	}
 }
 
-describe.only("PersistedConfigStore", () => {
+describe.only("PersistedFormatConfigStore", () => {
 	let submitLocalMessage = mockFn<[content: any, localOpMetadata: unknown]>();
-	let onProtocolChange = mockFn<[current: PersistedConfig, previous: PersistedConfig]>();
-	let resubmitPendingOps = mockFn<[config: PersistedConfig]>();
+	let onProtocolChange =
+		mockFn<[current: PersistedFormatConfig, previous: PersistedFormatConfig]>();
+	let resubmitPendingOps = mockFn<[config: PersistedFormatConfig]>();
 
 	beforeEach(() => {
 		submitLocalMessage = mockFn();
@@ -105,19 +106,19 @@ describe.only("PersistedConfigStore", () => {
 			flags: {},
 		};
 		let store: IPersistedConfigStore;
-		const initialConfig: PersistedConfig = {
+		const initialConfig: PersistedFormatConfig = {
 			configVersion: 10,
 			formatVersion: "1.0.0",
 			flags: {},
 		};
 
-		const newerConfig: PersistedConfig = {
+		const newerConfig: PersistedFormatConfig = {
 			formatVersion: "1.0.1",
 			configVersion: 11,
 			flags: {},
 		};
 
-		const olderConfig: PersistedConfig = {
+		const olderConfig: PersistedFormatConfig = {
 			formatVersion: "0.9.0",
 			configVersion: 5,
 			flags: {},
@@ -295,7 +296,7 @@ describe.only("PersistedConfigStore", () => {
 				});
 
 				describe("with an older config", () => {
-					const olderConfig: PersistedConfig = {
+					const olderConfig: PersistedFormatConfig = {
 						formatVersion: "0.9.0",
 						configVersion: 5,
 						flags: {},
@@ -430,7 +431,7 @@ describe.only("PersistedConfigStore", () => {
 			},
 		};
 		let store: IPersistedConfigStore;
-		const initialConfig: PersistedConfig = {
+		const initialConfig: PersistedFormatConfig = {
 			configVersion: 10,
 			formatVersion: "1.0.0",
 			flags: {
