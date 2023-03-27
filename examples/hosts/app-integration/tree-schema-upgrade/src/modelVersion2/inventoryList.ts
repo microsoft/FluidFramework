@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { EventEmitter } from "events";
 import { v4 as uuid } from "uuid";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -26,6 +25,7 @@ import {
 	singleTextCursor,
 	TreeSchema,
 	TreeSchemaIdentifier,
+	UpPath,
 	ValueSchema,
 } from "@fluid-internal/tree";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -104,17 +104,8 @@ export class InventoryList extends DataObject implements IInventoryList {
 
 	public readonly addItem = (name: string, quantity: number) => {
 		this.tree?.storedSchema.update(appSchemaData);
-
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const cursor = this.tree!.forest.allocateCursor();
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		moveToDetachedField(this.tree!.forest, cursor);
-		cursor.firstNode();
-		cursor.firstField();
-		cursor.firstNode();
-		const path = cursor.getPath();
-		cursor.free();
-
+		const path = getExistingRandomNodePosition(this.tree!);
 		let value = Math.floor(Math.random() * 1000000).toString();
 		while (this.nodeIds?.includes(value)) {
 			value = Math.floor(Math.random() * 1000000).toString();
@@ -123,7 +114,7 @@ export class InventoryList extends DataObject implements IInventoryList {
 		runSynchronous(this.tree!, () => {
 			const writeCursors = singleTextCursor({ type: brand("Node"), value });
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const field = this.tree!.editor.sequenceField(path?.parent, path!.parentField);
+			const field = this.tree!.editor.sequenceField(path?.parent, path.parentField);
 			field.insert(0, writeCursors);
 		});
 		const id = uuid();
@@ -185,3 +176,67 @@ export const InventoryListInstantiationFactory = new DataObjectFactory<Inventory
 	[SharedMap.getFactory(), SharedString.getFactory(), new SharedTreeFactory()],
 	{},
 );
+
+const moves = {
+	field: ["enterNode", "nextField"],
+	nodes: ["stop", "firstField"],
+};
+
+function getExistingRandomNodePosition(tree: ISharedTree): UpPath {
+	const cursor = tree.forest.allocateCursor();
+	moveToDetachedField(tree.forest, cursor);
+	cursor.firstNode();
+	cursor.firstField();
+	cursor.firstNode();
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const firstPath = cursor.getPath()!;
+	let path: UpPath = firstPath;
+	const firstField = cursor.firstField();
+	if (!firstField) {
+		// no fields, return the rootnode
+		cursor.free();
+		return path;
+	}
+	let fieldNodes: number = cursor.getFieldLength();
+	let nodeIndex: number = 0;
+
+	let currentMove = moves.field[Math.floor(Math.random() * moves.field.length)];
+
+	while (currentMove !== "stop") {
+		switch (currentMove) {
+			case "enterNode":
+				if (fieldNodes > 0) {
+					nodeIndex = Math.floor(Math.random() * (fieldNodes - 1));
+					cursor.enterNode(nodeIndex);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					path = cursor.getPath()!;
+					currentMove = moves.nodes[Math.floor(Math.random() * moves.nodes.length)];
+				} else {
+					// if the node does not exist, return the most recently entered node
+					cursor.free();
+					return path;
+				}
+				break;
+			case "firstField":
+				if (cursor.firstField()) {
+					currentMove = moves.field[Math.floor(Math.random() * moves.field.length)];
+					fieldNodes = cursor.getFieldLength();
+				} else {
+					currentMove = "stop";
+				}
+				break;
+			case "nextField":
+				if (cursor.nextField()) {
+					currentMove = moves.field[Math.floor(Math.random() * moves.field.length)];
+					fieldNodes = cursor.getFieldLength();
+				} else {
+					currentMove = "stop";
+				}
+				break;
+			default:
+				fail(`Unexpected move ${currentMove}`);
+		}
+	}
+	cursor.free();
+	return path;
+}
