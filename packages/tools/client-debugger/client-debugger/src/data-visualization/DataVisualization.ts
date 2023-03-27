@@ -38,7 +38,15 @@ import {
 export type SharedObjectType = string;
 
 /**
- * TODO
+ * Generates a visual description of the provided {@link @fluidframework/shared-object-base#ISharedObject}'s
+ * current state.
+ *
+ * @param sharedObject - The object whose data will be rendered.
+ * @param label - Some label to associate with the root of the visual tree.
+ * This will usually be some corresponding property name or key.
+ * @param visualizeChildData - Callback to render child content of the shared object.
+ *
+ * @returns A visual tree representation of the provided `sharedObject`.
  */
 export type VisualizeSharedObject = (
 	sharedObject: ISharedObject,
@@ -47,7 +55,21 @@ export type VisualizeSharedObject = (
 ) => Promise<FluidObjectNode>;
 
 /**
- * TODO
+ * Recursively renders child contents of a {@link @fluidframework/shared-object-base#ISharedObject}.
+ *
+ * @param data - The child data to render.
+ * Since this is child data of a DDS (and must be serializable), we know that it must be one of the following:
+ *
+ * - Primitive data
+ *
+ * - A serializable Record
+ *
+ * - A handle to another Fluid object
+ *
+ * @param label - The corresponding label (e.g. property name) to associate with the visual tree
+ * generated for `data`.
+ *
+ * @returns A visual tree representation of the input `data`.
  */
 export type VisualizeChildData = (data: unknown, label: string) => Promise<VisualTreeNode>;
 
@@ -303,6 +325,8 @@ export class SharedObjectVisualizerNode
 	 *
 	 * Will recursively render child contents of {@link SharedObjectVisualizerNode.sharedObject}, terminating at
 	 * primitive data and handles to other Fluid objects.
+	 *
+	 * @returns A visual tree representation of {@link SharedObjectVisualizerNode.sharedObject}.
 	 */
 	public async render(): Promise<FluidObjectNode> {
 		return this.visualizeSharedObject(this.sharedObject, this.label, async (_data, _label) =>
@@ -311,21 +335,7 @@ export class SharedObjectVisualizerNode
 	}
 
 	/**
-	 * Recursively renders child contents of {@link SharedObjectVisualizerNode.sharedObject}.
-	 *
-	 * @param data - The child data to render.
-	 * Since this is child data of a DDS (and must be serializable), we know that it must be one of the following:
-	 *
-	 * - Primitive data
-	 *
-	 * - A serializable Record
-	 *
-	 * - A handle to another Fluid object
-	 *
-	 * @param label - The corresponding label (e.g. property name) to associate with the visual tree
-	 * generated for `data`.
-	 *
-	 * @returns A visual tree representation of the input `data`.
+	 * {@inheritDoc VisualizeChildData}
 	 */
 	private async renderChildData(data: unknown, label: string): Promise<VisualTreeNode> {
 		if (typeof data !== "object") {
