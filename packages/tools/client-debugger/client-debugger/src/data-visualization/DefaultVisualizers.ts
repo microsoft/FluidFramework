@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * This module contains default {@link VisualizeSharedObject | visualization}
+ * implementations for our DDSs.
+ */
+
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
