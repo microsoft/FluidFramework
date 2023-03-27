@@ -123,10 +123,10 @@ export class DataVisualizerGraph {
 	// TODO: take in a callback for emitting automatic updates, and wire that up to the individual visualizer nodes.
 	public constructor(
 		rootData: Record<string, IFluidLoadable>,
-		visualizerMap: SharedObjectVisualizers,
+		visualizers: SharedObjectVisualizers,
 	) {
 		this.rootData = rootData;
-		this.visualizers = visualizerMap;
+		this.visualizers = visualizers;
 
 		this.visualizerNodes = new Map<FluidObjectId, SharedObjectVisualizerNode>();
 	}
