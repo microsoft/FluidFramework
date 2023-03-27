@@ -360,10 +360,6 @@ export interface IIdCompressor {
     // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "FinalCompressedId" which is marked as @alpha
     // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     normalizeToSessionSpace(id: FinalCompressedId): SessionSpaceCompressedId;
-    // Warning: (ae-incompatible-release-tags) The symbol "normalizeToSessionSpace" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
-    //
-    // (undocumented)
-    normalizeToSessionSpace(id: OpSpaceCompressedId, sessionIdIfLocal?: SessionId): SessionSpaceCompressedId;
     // Warning: (ae-incompatible-release-tags) The symbol "recompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
     recompress(uncompressed: string): SessionSpaceCompressedId;
     // Warning: (ae-incompatible-release-tags) The symbol "tryDecompress" is marked as @public, but its signature references "SessionSpaceCompressedId" which is marked as @alpha
@@ -373,14 +369,13 @@ export interface IIdCompressor {
     tryRecompress(uncompressed: string): SessionSpaceCompressedId | undefined;
 }
 
-// @public
+// @public (undocumented)
 export interface IIdCompressorCore {
+    // (undocumented)
+    clusterCapacity: number;
     finalizeCreationRange(range: IdCreationRange): void;
-    serialize(withSession: boolean): SerializedIdCompressorWithOngoingSession | SerializedIdCompressorWithNoSession;
     serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
     serialize(withSession: false): SerializedIdCompressorWithNoSession;
-    // (undocumented)
-    serialize(withSession: boolean): SerializedIdCompressor;
     takeNextCreationRange(): IdCreationRange;
 }
 

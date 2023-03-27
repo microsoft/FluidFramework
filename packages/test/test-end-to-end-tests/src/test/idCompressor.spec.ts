@@ -149,9 +149,27 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		assert(opSpaceId2 >= 0);
 		assert(opSpaceId3 >= 0 && opSpaceId3 === finalId3);
 
-		assert.strictEqual(sharedMap1.idCompressor.normalizeToSessionSpace(opSpaceId1), localId1);
-		assert.strictEqual(sharedMap1.idCompressor.normalizeToSessionSpace(opSpaceId2), localId2);
-		assert.strictEqual(sharedMap1.idCompressor.normalizeToSessionSpace(opSpaceId3), finalId3);
+		assert.strictEqual(
+			sharedMap1.idCompressor.normalizeToSessionSpace(
+				opSpaceId1,
+				sharedMap1.idCompressor.localSessionId,
+			),
+			localId1,
+		);
+		assert.strictEqual(
+			sharedMap1.idCompressor.normalizeToSessionSpace(
+				opSpaceId2,
+				sharedMap1.idCompressor.localSessionId,
+			),
+			localId2,
+		);
+		assert.strictEqual(
+			sharedMap1.idCompressor.normalizeToSessionSpace(
+				opSpaceId3,
+				sharedMap1.idCompressor.localSessionId,
+			),
+			finalId3,
+		);
 	});
 
 	it("eagerly allocates IDs across DDSs using the same compressor", async () => {
@@ -186,10 +204,34 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		assert(opSpaceId3 >= 0 && opSpaceId3 === finalId3);
 		assert(opSpaceId4 >= 0 && opSpaceId4 === finalId4);
 
-		assert.equal(sharedMap1.idCompressor.normalizeToSessionSpace(opSpaceId1), localId1);
-		assert.equal(sharedCell1.idCompressor.normalizeToSessionSpace(opSpaceId2), localId2);
-		assert.equal(sharedMap1.idCompressor.normalizeToSessionSpace(opSpaceId3), finalId3);
-		assert.equal(sharedCell1.idCompressor.normalizeToSessionSpace(opSpaceId4), finalId4);
+		assert.equal(
+			sharedMap1.idCompressor.normalizeToSessionSpace(
+				opSpaceId1,
+				sharedMap1.idCompressor.localSessionId,
+			),
+			localId1,
+		);
+		assert.equal(
+			sharedCell1.idCompressor.normalizeToSessionSpace(
+				opSpaceId2,
+				sharedCell1.idCompressor.localSessionId,
+			),
+			localId2,
+		);
+		assert.equal(
+			sharedMap1.idCompressor.normalizeToSessionSpace(
+				opSpaceId3,
+				sharedMap1.idCompressor.localSessionId,
+			),
+			finalId3,
+		);
+		assert.equal(
+			sharedCell1.idCompressor.normalizeToSessionSpace(
+				opSpaceId4,
+				sharedCell1.idCompressor.localSessionId,
+			),
+			finalId4,
+		);
 	});
 
 	it("produces Id spaces correctly", async () => {

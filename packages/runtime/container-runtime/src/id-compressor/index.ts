@@ -13,7 +13,6 @@ export {
 	IdCompressor,
 	isFinalId,
 	isLocalId,
-	legacySharedTreeInitialTreeId,
 } from "./idCompressor";
 export { getIds } from "./idRange";
 export {

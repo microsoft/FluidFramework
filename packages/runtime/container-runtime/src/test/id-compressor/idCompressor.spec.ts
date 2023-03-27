@@ -23,7 +23,6 @@ import {
 	isFinalId,
 	isLocalId,
 	hasOngoingSession,
-	legacySharedTreeInitialTreeId,
 	createSessionId,
 	incrementUuid,
 	numericUuidFromStableId,
@@ -76,10 +75,9 @@ describe("IdCompressor", () => {
 		for (const reservedIdCount of [0, 1, 5]) {
 			const compressor = new IdCompressor(createSessionId(), reservedIdCount);
 			if (reservedIdCount > 0) {
-				assert.equal(
-					compressor.decompress(compressor.getReservedId(0)),
-					legacySharedTreeInitialTreeId,
-				);
+				for (let i = 0; i < reservedIdCount; i++) {
+					assert.equal(compressor.decompress(compressor.getReservedId(i)), i);
+				}
 			}
 		}
 	});
@@ -153,24 +151,6 @@ describe("IdCompressor", () => {
 
 		it("unifies overrides with sequential local IDs", () => {
 			const compressor = createCompressor(Client.Client1, 3);
-
-			// Client1 compresses a uuid
-			compressor.generateCompressedId();
-			const localId2 = compressor.generateCompressedId();
-			const stableId2 = assertIsStableId(compressor.decompress(localId2));
-			const localId3 = compressor.generateCompressedId(stableId2);
-			assert.equal(
-				localId3,
-				localId2,
-				"only one local ID should be allocated for the same sequential uuid",
-			);
-		});
-
-		it("unifies overrides with sequential local IDs that sort before the reserved session UUID", () => {
-			// This is a regression test for an issue where passing a sequential UUID that sorted before the reserved UUID
-			// as an override created duplicate overrides in the compressor.
-			const newSession = `0${legacySharedTreeInitialTreeId.slice(1)}` as SessionId;
-			const compressor = new IdCompressor(newSession, 1 /* just needs to be > 0 */);
 
 			// Client1 compresses a uuid
 			compressor.generateCompressedId();
@@ -530,10 +510,7 @@ describe("IdCompressor", () => {
 		it("can decompress reserved IDs", () => {
 			// This is a glass box test in that it increments UUIDs
 			const compressor = createCompressor(Client.Client1);
-			assert.equal(
-				compressor.decompress(compressor.getReservedId(0)),
-				legacySharedTreeInitialTreeId,
-			);
+			assert.equal(compressor.decompress(compressor.getReservedId(0)), 0);
 			const reservedSessionUuid = numericUuidFromStableId(
 				assertIsStableId(compressor.decompress(compressor.getReservedId(1))),
 			);
