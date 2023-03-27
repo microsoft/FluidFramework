@@ -97,6 +97,10 @@ export interface SharedObjectVisualizers {
  * @remarks
  *
  * {@link SharedObjectVisualizerNode}s are initialized lazily.
+ *
+ * Consumers can begin tree visualization by calling {@link DataVisualizerGraph.renderRootHandles}.
+ * The returned handle nodes provide the IDs required to make subsequent calls to {@link DataVisualizerGraph.render}
+ * to visualize subtrees as needed.
  */
 export class DataVisualizerGraph {
 	/**
@@ -109,9 +113,12 @@ export class DataVisualizerGraph {
 	 */
 	private readonly visualizers: SharedObjectVisualizers;
 
-	// TODO: weak ref + related cleanup
+	/**
+	 * Map of registered {@link SharedObjectVisualizerNode}s, keyed by their corresponding {@link FluidObjectId}.
+	 *
+	 * @privateRemarks TODO: Dependency tracking so we don't leak memory.
+	 */
 	private readonly visualizerNodes: Map<FluidObjectId, SharedObjectVisualizerNode>;
-	private readonly handles: Map<FluidObjectId, IFluidHandle>;
 
 	// TODO: take in a callback for emitting automatic updates, and wire that up to the individual visualizer nodes.
 	public constructor(
@@ -122,7 +129,6 @@ export class DataVisualizerGraph {
 		this.visualizers = visualizerMap;
 
 		this.visualizerNodes = new Map<FluidObjectId, SharedObjectVisualizerNode>();
-		this.handles = new Map<FluidObjectId, IFluidHandle>();
 	}
 
 	/**
@@ -158,13 +164,10 @@ export class DataVisualizerGraph {
 		return visualizerNode.render();
 	}
 
-	private registerHandle(id: FluidObjectId, handle: IFluidHandle): void {
-		if (!this.handles.has(id)) {
-			this.handles.set(id, handle);
-		}
-	}
-
-	private registerVisualizerForSharedObject(sharedObject: ISharedObject, label: string): void {
+	private registerVisualizerForSharedObject(
+		sharedObject: ISharedObject,
+		label: string,
+	): FluidObjectId {
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			const visualizer =
 				this.visualizers[sharedObject.attributes.type] !== undefined
@@ -180,6 +183,7 @@ export class DataVisualizerGraph {
 				),
 			);
 		}
+		return sharedObject.id;
 	}
 
 	/**
@@ -198,12 +202,10 @@ export class DataVisualizerGraph {
 		// TODO: is this the right type check for this?
 		const sharedObject = resolvedObject as ISharedObject;
 		if (sharedObject?.id !== undefined) {
-			this.registerHandle(sharedObject.id, handle);
-			this.registerVisualizerForSharedObject(sharedObject, label);
-			return sharedObject.id;
+			return this.registerVisualizerForSharedObject(sharedObject, label);
 		} else {
 			// Unknown data.
-			throw new Error(`Encountered unrecognized kind of Fluid data under "${label}"`);
+			throw new Error(`Encountered unrecognized kind of Fluid data under "${label}".`);
 		}
 	}
 }
