@@ -280,11 +280,28 @@ export class SharedObjectVisualizerNode
 	 */
 	public async render(): Promise<FluidObjectNode> {
 		return this.visualizeSharedObject(this.sharedObject, this.label, async (_data, _label) =>
-			this.renderData(_data, _label),
+			this.renderChildData(_data, _label),
 		);
 	}
 
-	private async renderData(data: unknown, label: string): Promise<VisualTreeNode> {
+	/**
+	 * Recursively renders child contents of {@link SharedObjectVisualizerNode.sharedObject}.
+	 *
+	 * @param data - The child data to render.
+	 * Since this is child data of a DDS (and must be serializable), we know that it must be one of the following:
+	 *
+	 * - Primitive data
+	 *
+	 * - A serializable Record
+	 *
+	 * - A handle to another Fluid object
+	 *
+	 * @param label - The corresponding label (e.g. property name) to associate with the visual tree
+	 * generated for `data`.
+	 *
+	 * @returns A visual tree representation of the input `data`.
+	 */
+	private async renderChildData(data: unknown, label: string): Promise<VisualTreeNode> {
 		if (typeof data !== "object") {
 			// Render primitives and falsy types via their string representation
 			const result: ValueNode = {
@@ -306,7 +323,7 @@ export class SharedObjectVisualizerNode
 
 			const renderedChildren = await Promise.all(
 				// eslint-disable-next-line @typescript-eslint/promise-function-async
-				childEntries.map(([key, value]) => this.renderData(value, key)),
+				childEntries.map(([key, value]) => this.renderChildData(value, key)),
 			);
 
 			const result: VisualParentNode = {
