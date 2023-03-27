@@ -277,6 +277,11 @@ export class SharedObjectVisualizerNode
 	/**
 	 * Generates a visual description of the associated {@link SharedObjectVisualizerNode.sharedObject}'s
 	 * current state.
+	 *
+	 * @remarks
+	 *
+	 * Will recursively render child contents of {@link SharedObjectVisualizerNode.sharedObject}, terminating at
+	 * primitive data and handles to other Fluid objects.
 	 */
 	public async render(): Promise<FluidObjectNode> {
 		return this.visualizeSharedObject(this.sharedObject, this.label, async (_data, _label) =>
