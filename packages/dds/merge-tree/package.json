@@ -110,6 +110,58 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_BaseSegment": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IAttributionCollection": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IHierBlock": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_SerializedAttributionCollection": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_IMergeBlock": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_IMergeNode": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IMergeNodeCommon": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_IncrementalMapState": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_InsertContext": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISegmentChanges": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_Marker": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MergeBlock": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MergeNode": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_PropertiesManager": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IConsensusInfo": {
+				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_SortedSegmentSetItem": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TextSegment": {
+				"forwardCompat": false
+			}
+		}
 	}
 }
