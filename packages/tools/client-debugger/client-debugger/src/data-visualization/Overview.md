@@ -121,17 +121,12 @@ These follow-up items were noted above, but we will enumerate them here for comp
 
 1.  Dependency tracking to avoid memory leaks
 1.  Broadcast data _diffs_ instead of complete summaries.
-
--   GraphQL might give us some nice options here.
+    -   GraphQL might give us some nice options here.
 
 Other follow-up items:
 
 1.  Update batching
-
-
     -   For DDSs receiving rapid updates, we may not wish to broadcast updates on every single edit ("op" event).
         It would likely be worth introducing some simple, minimal time threshold in which we will post updates.
-
 1.  Verify that the proposed flow is fast enough to prevent visual delays on the consumer side.
-
--   I.e. we don't want the devtools extension to be displaying lots of spinners while it and the debugger chat back and forth.
+    -   I.e. we don't want the devtools extension to be displaying lots of spinners while it and the debugger chat back and forth.
