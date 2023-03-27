@@ -37,9 +37,9 @@ export class OpGroupingManager {
 			...batch,
 			content: [
 				{
-					...batch.content[0],
-					metadata: undefined, // important to not keep reference to first op's batch metadata
-					compression: undefined,
+					localOpMetadata: undefined,
+					metadata: undefined,
+					referenceSequenceNumber: batch.content[0].referenceSequenceNumber,
 					deserializedContent: deserializedContent as ContainerRuntimeMessage,
 					contents: JSON.stringify(deserializedContent),
 				},
@@ -49,11 +49,7 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (
-			!op.contents ||
-			typeof op.contents !== "object" ||
-			op.contents.type !== OpGroupingManager.groupedBatchOp
-		) {
+		if (op.contents?.type !== OpGroupingManager.groupedBatchOp) {
 			return [op];
 		}
 

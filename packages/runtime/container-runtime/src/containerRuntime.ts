@@ -1460,6 +1460,7 @@ export class ContainerRuntime
 				disablePartialFlush,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
+			groupedBatchingEnabled: this.groupedBatchingEnabled,
 		});
 
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
