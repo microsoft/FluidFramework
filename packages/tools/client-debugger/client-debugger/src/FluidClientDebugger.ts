@@ -11,7 +11,7 @@ import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
 	defaultVisualizers,
-	FluidDataVisualizer,
+	DataVisualizerGraph,
 	FluidHandleNode,
 	FluidObjectId,
 	FluidObjectNode,
@@ -134,7 +134,7 @@ export class FluidClientDebugger
 	 *
 	 * @remarks Will only be `undefined` if `containerData` was not provided.
 	 */
-	private readonly dataVisualizer: FluidDataVisualizer | undefined;
+	private readonly dataVisualizer: DataVisualizerGraph | undefined;
 
 	// #region Container-related event handlers
 
@@ -397,7 +397,7 @@ export class FluidClientDebugger
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new FluidDataVisualizer(props.containerData, defaultVisualizers);
+				: new DataVisualizerGraph(props.containerData, defaultVisualizers);
 
 		// Bind Container events required for change-logging
 		this.container.on("attached", this.containerAttachedHandler);

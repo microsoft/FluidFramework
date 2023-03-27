@@ -72,11 +72,16 @@ export interface SharedObjectVisualizers {
 }
 
 /**
- * TODO
+ * Manages {@link SharedObjectVisualizerNode | visualizers} for shared objects reachable by
+ * the provided {@link DataVisualizerGraph.rootData}.
+ *
+ * @remarks
+ *
+ * {@link SharedObjectVisualizerNode}s are initialized lazily.
  */
-export class FluidDataVisualizer {
+export class DataVisualizerGraph {
 	/**
-	 * TODO
+	 * {@inheritDoc IFluidClientDebugger.containerData}
 	 */
 	private readonly rootData: Record<string, IFluidLoadable>;
 
@@ -103,7 +108,7 @@ export class FluidDataVisualizer {
 
 	/**
 	 * Generates and returns visual descriptions ({@link FluidHandleNode}s) for each of the specified
-	 * {@link FluidDataVisualizer.rootData | root shared objects}.
+	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
 	public async renderRootHandles(): Promise<FluidHandleNode[]> {
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
@@ -158,6 +163,13 @@ export class FluidDataVisualizer {
 		}
 	}
 
+	/**
+	 * Adds a visualizer node to the collection for the specified `handle` if one does not
+	 * already exist.
+	 *
+	 * @throws This method will throw if the provided `handle` does not resolve to an
+	 * {@link @fluidframework/shared-object-base#ISharedObject}.
+	 */
 	private async registerVisualizerForHandle(
 		handle: IFluidHandle,
 		label: string,
@@ -263,7 +275,8 @@ export class SharedObjectVisualizerNode
 	}
 
 	/**
-	 * TODO
+	 * Generates a visual description of the associated {@link SharedObjectVisualizerNode.sharedObject}'s
+	 * current state.
 	 */
 	public async render(): Promise<FluidObjectNode> {
 		return this.visualizeSharedObject(this.sharedObject, this.label, async (_data, _label) =>

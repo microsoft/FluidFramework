@@ -13,7 +13,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	createHandleNode,
 	defaultVisualizers,
-	FluidDataVisualizer,
+	DataVisualizerGraph,
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	NodeKind,
@@ -28,7 +28,7 @@ describe("Data Visualization unit tests", () => {
 			SharedCounter.getFactory().attributes,
 		);
 
-		const visualizer = new FluidDataVisualizer(
+		const visualizer = new DataVisualizerGraph(
 			{
 				counter: sharedCounter,
 			},
@@ -72,7 +72,7 @@ describe("Data Visualization unit tests", () => {
 		// Create SharedMap
 		const sharedMap = new SharedMap("test-map", runtime, SharedMap.getFactory().attributes);
 
-		const visualizer = new FluidDataVisualizer(
+		const visualizer = new DataVisualizerGraph(
 			{
 				map: sharedMap,
 			},
@@ -170,7 +170,7 @@ describe("Data Visualization unit tests", () => {
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
 		sharedCell.set("Hello world");
 
-		const visualizer = new FluidDataVisualizer(
+		const visualizer = new DataVisualizerGraph(
 			{
 				counter: sharedCounter,
 				cell: sharedCell,
