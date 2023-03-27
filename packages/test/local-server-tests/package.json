@@ -31,7 +31,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "cross-env FLUID_TEST_COVERAGE=1 npm run test:mocha",
-		"test:mocha": "mocha dist/test -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict --exit",
+		"test:mocha": "mocha dist/test -r node_modules/@fluid-internal/mocha-test-setup --unhandled-rejections=strict --exit",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
@@ -80,7 +80,7 @@
 		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/matrix": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/merge-tree": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/odsp-doclib-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/ordered-collection": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/protocol-definitions": "^1.1.0",

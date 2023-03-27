@@ -89,7 +89,7 @@ export class FluidPackageCheck {
 				pkg.monoRepo?.kind === MonoRepoKind.Azure;
 			const hasConfig = testScript.includes(" --config ");
 			if (shouldHaveConfig) {
-				const pkgstring = "@fluidframework/mocha-test-setup";
+				const pkgstring = "@fluid-internal/mocha-test-setup";
 				if (this.ensureTestDevDependency(pkg, fix, pkgstring)) {
 					fixed = true;
 				}
