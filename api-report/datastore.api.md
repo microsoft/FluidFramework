@@ -20,7 +20,6 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
-import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { IInboundSignalMessage } from '@fluidframework/runtime-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -87,7 +86,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    readonly idCompressor?: IIdCompressorCore & IIdCompressor;
+    readonly idCompressor?: IIdCompressor;
     // (undocumented)
     get IFluidHandleContext(): this;
     // (undocumented)

@@ -253,7 +253,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    readonly idCompressor?: IIdCompressorCore & IIdCompressor;
+    readonly idCompressor?: IIdCompressor;
     readonly isLocalDataStore: boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
