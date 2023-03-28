@@ -52,7 +52,6 @@ describe("Garbage Collection Tests", () => {
 			});
 
 			it("Persisted > Current: Do Need Reset", () => {
-				// Set value to true for gcVersionUpgradeToV2Key
 				const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker(
 					{
 						shouldRunGC: true,

@@ -5,7 +5,7 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
-import { DocumentType, BenchmarkType } from "@fluidframework/test-version-utils";
+import { DocumentType, BenchmarkType } from "@fluid-internal/test-version-utils";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {

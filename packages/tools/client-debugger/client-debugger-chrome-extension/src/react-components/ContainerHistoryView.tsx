@@ -7,13 +7,14 @@ import React from "react";
 
 import {
 	ContainerStateHistoryMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	handleIncomingMessage,
 	HasContainerId,
 	ConnectionStateChangeLogEntry,
 } from "@fluid-tools/client-debugger";
 import { _ContainerHistoryView } from "@fluid-tools/client-debugger-view";
+import { extensionMessageSource } from "../messaging";
 import { Waiting } from "./Waiting";
 import { MessageRelayContext } from "./MessageRelayContext";
 
@@ -61,13 +62,22 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		/**
 		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
 		}
 
 		messageRelay.on("message", messageHandler);
+
+		// Request state info for the newly specified containerId
+		messageRelay.postMessage({
+			source: extensionMessageSource,
+			type: "GET_CONTAINER_STATE",
+			data: {
+				containerId,
+			},
+		});
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);

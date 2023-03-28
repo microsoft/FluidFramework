@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
 import {
 	benchmarkAll,
 	createDocument,
@@ -60,7 +60,7 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 					"summaryVersion needs to be defined.",
 				);
 				summaryVersion = this.summarizerClient.summaryVersion;
-			};
+			}
 			beforeIteration(): void {
 				this.container = undefined;
 				this.summarizerClient = undefined;

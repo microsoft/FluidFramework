@@ -6,6 +6,7 @@
 import _ from "lodash";
 
 import { expect } from "chai";
+import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import {
 	IContainer,
 	IHostLoader,
@@ -40,7 +41,6 @@ import {
 	ArrayProperty,
 } from "@fluid-experimental/property-properties";
 import { Loader as ContainerLoader } from "@fluidframework/container-loader";
-import { LocalServerTestDriver } from "@fluidframework/test-drivers";
 import { DeflatedPropertyTree, LZ4PropertyTree } from "../propertyTreeExt";
 import { SharedPropertyTree } from "../propertyTree";
 import { PropertyTreeFactory } from "../propertyTreeFactory";
