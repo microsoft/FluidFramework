@@ -17,7 +17,7 @@ import {
 	FieldSchema,
 	RevisionTag,
 } from "../core";
-import { brand, clone, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -496,6 +496,9 @@ export interface OptionalChangeset {
 	/**
 	 * The revision the node `childChange` is referring to was deleted in.
 	 * If undefined, `childChange` refers to the node currently in this field.
+	 *
+	 * This representation is sufficient for representing changes to the node present before this changeset and
+	 * after this changeset, but not for changes to nodes that existed only transiently in a transaction.
 	 */
 	deletedBy?: RevisionTag;
 }
@@ -524,7 +527,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 				}
 
 				if (change.fieldChange.newContent !== undefined) {
-					fieldChange.newContent = clone(change.fieldChange.newContent);
+					fieldChange.newContent = { ...change.fieldChange.newContent };
 				} else {
 					delete fieldChange.newContent;
 				}
@@ -578,17 +581,21 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0], revision };
 				if (change.childChange !== undefined) {
-					assert(change.deletedBy === undefined, "Unhandled scenario");
-					inverse.fieldChange.newContent.changes = invertChild(change.childChange, 0);
+					if (change.deletedBy === undefined) {
+						inverse.fieldChange.newContent.changes = invertChild(change.childChange, 0);
+					} else {
+						// We currently drop the muted changes in the inverse.
+						// TODO: produce muted inverse changes so that a retroactive undo of revision
+						// `change.deletedBy` would be able to pick up and unmute those changes.
+					}
 				}
 			}
 		} else {
-			if (change.childChange !== undefined) {
+			if (change.childChange !== undefined && change.deletedBy === undefined) {
 				inverse.childChange = invertChild(change.childChange, 0);
-			}
-
-			if (change.deletedBy !== undefined) {
-				inverse.deletedBy = change.deletedBy;
+			} else {
+				// Drop the muted changes if deletedBy is set to avoid
+				// applying muted changes on undo
 			}
 		}
 
@@ -605,7 +612,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 			if (over.fieldChange !== undefined) {
 				const wasEmpty = over.fieldChange.newContent === undefined;
 
-				// TODO: Handle rebasing child changes.
+				// TODO: Handle rebasing child changes over `over.childChange`.
 				return {
 					...change,
 					fieldChange: { ...change.fieldChange, wasEmpty },
@@ -630,7 +637,10 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 				if (change.deletedBy === undefined) {
 					// `change.childChange` refers to the node being deleted by `over`.
 					return {
-						childChange: rebaseChild(change.childChange, over.childChange),
+						childChange: rebaseChild(
+							change.childChange,
+							over.deletedBy === undefined ? undefined : over.childChange,
+						),
 						deletedBy: overTagged.revision,
 					};
 				} else if (
@@ -651,8 +661,14 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 
 		{
 			const rebasedChange = { ...change };
-			const overChildChange =
-				change.deletedBy === over.deletedBy ? over.childChange : undefined;
+
+			let overChildChange: NodeChangeset | undefined;
+			if (change.deletedBy === undefined && over.deletedBy === undefined) {
+				if (change.deletedBy === over.deletedBy) {
+					overChildChange = over.childChange;
+				}
+			}
+
 			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
 			if (rebasedChildChange !== undefined) {
 				rebasedChange.childChange = rebasedChildChange;
@@ -823,10 +839,9 @@ export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = n
 				return [];
 			}
 
-			assert(change.deletedBy === undefined, "Unhandled");
 			const deleteDelta = deltaForDelete(
 				!change.fieldChange.wasEmpty,
-				change.childChange,
+				change.deletedBy === undefined ? change.childChange : undefined,
 				deltaFromChild,
 			);
 
