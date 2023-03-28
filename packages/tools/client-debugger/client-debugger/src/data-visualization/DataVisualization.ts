@@ -91,6 +91,18 @@ export interface SharedObjectVisualizers {
 }
 
 /**
+ * Data visualization update events.
+ */
+export interface DataVisualizerEvents extends IEvent {
+	/**
+	 * Emitted whenever the associated {@link @fluidframework/shared-object-base#ISharedObject}'s data is updated.
+	 *
+	 * @param visualTree - The updated visual tree representing the shared object's state.
+	 */
+	(event: "update", listener: (visualTree: FluidObjectNode) => void);
+}
+
+/**
  * Manages {@link SharedObjectVisualizerNode | visualizers} for shared objects reachable by
  * the provided {@link DataVisualizerGraph.rootData}.
  *
@@ -102,7 +114,10 @@ export interface SharedObjectVisualizers {
  * The returned handle nodes provide the IDs required to make subsequent calls to {@link DataVisualizerGraph.render}
  * to visualize subtrees as needed.
  */
-export class DataVisualizerGraph {
+export class DataVisualizerGraph
+	extends TypedEventEmitter<DataVisualizerEvents>
+	implements IDisposable
+{
 	/**
 	 * {@inheritDoc IFluidClientDebugger.containerData}
 	 */
@@ -120,15 +135,46 @@ export class DataVisualizerGraph {
 	 */
 	private readonly visualizerNodes: Map<FluidObjectId, SharedObjectVisualizerNode>;
 
-	// TODO: take in a callback for emitting automatic updates, and wire that up to the individual visualizer nodes.
+	/**
+	 * Private {@link SharedObjectVisualizerNode.disposed} tracking.
+	 */
+	private _disposed: boolean;
+
+	/**
+	 * Handler for a visualizer node's "update" event.
+	 * Bubbles up the event to graph subscribers.
+	 */
+	private readonly onVisualUpdateHandler = (visualTree: FluidObjectNode): boolean => {
+		this.emitVisualUpdate(visualTree);
+		return true;
+	};
+
 	public constructor(
 		rootData: Record<string, IFluidLoadable>,
 		visualizers: SharedObjectVisualizers,
 	) {
+		super();
+
 		this.rootData = rootData;
 		this.visualizers = visualizers;
 
 		this.visualizerNodes = new Map<FluidObjectId, SharedObjectVisualizerNode>();
+
+		this._disposed = false;
+	}
+
+	/**
+	 * {@inheritDoc IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	/**
+	 * Emits a visual tree update from one of the registered visualizer nodes.
+	 */
+	private emitVisualUpdate(visualTree: FluidObjectNode): void {
+		this.emit("update", visualTree);
 	}
 
 	/**
@@ -173,19 +219,23 @@ export class DataVisualizerGraph {
 		label: string,
 	): FluidObjectId {
 		if (!this.visualizerNodes.has(sharedObject.id)) {
-			const visualizer =
+			// Create visualizer node for the shared object
+			const visualizationFunction =
 				this.visualizers[sharedObject.attributes.type] !== undefined
 					? this.visualizers[sharedObject.attributes.type]
 					: visualizeUnknownSharedObject;
-			this.visualizerNodes.set(
-				sharedObject.id,
-				new SharedObjectVisualizerNode(
-					sharedObject,
-					label,
-					visualizer,
-					async (_handle, _label) => this.registerVisualizerForHandle(_handle, _label),
-				),
+			const visualizerNode = new SharedObjectVisualizerNode(
+				sharedObject,
+				label,
+				visualizationFunction,
+				async (_handle, _label) => this.registerVisualizerForHandle(_handle, _label),
 			);
+
+			// Register event handler so we can bubble up update events
+			visualizerNode.on("update", this.onVisualUpdateHandler);
+
+			// Add the visualizer node to our collection
+			this.visualizerNodes.set(sharedObject.id, visualizerNode);
 		}
 		return sharedObject.id;
 	}
@@ -212,18 +262,21 @@ export class DataVisualizerGraph {
 			throw new Error(`Encountered unrecognized kind of Fluid data under "${label}".`);
 		}
 	}
-}
 
-/**
- * Events emitted by {@link SharedObjectListener}.
- */
-export interface SharedObjectListenerEvents extends IEvent {
 	/**
-	 * Emitted whenever the associated {@link @fluidframework/shared-object-base#ISharedObject}'s data is updated.
-	 *
-	 * @param visualTree - The updated visual tree representing the shared object's state.
+	 * {@inheritDoc IDisposable.dispose}
 	 */
-	(event: "update", listener: (visualTree: FluidObjectNode) => void);
+	public dispose(): void {
+		if (!this._disposed) {
+			// Dispose visualizer nodes.
+			for (const visualizerNode of this.visualizerNodes.values()) {
+				visualizerNode.dispose();
+			}
+			this.visualizerNodes.clear();
+
+			this._disposed = true;
+		}
+	}
 }
 
 /**
@@ -238,7 +291,7 @@ export interface SharedObjectListenerEvents extends IEvent {
  * an updated visual tree will be emitted via this object's {@link SharedObjectListenerEvents | "update" event}.
  */
 export class SharedObjectVisualizerNode
-	extends TypedEventEmitter<SharedObjectListenerEvents>
+	extends TypedEventEmitter<DataVisualizerEvents>
 	implements IDisposable
 {
 	/**

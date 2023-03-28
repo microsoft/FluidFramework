@@ -132,9 +132,9 @@ export class FluidClientDebugger
 	/**
 	 * Manages state visualization for {@link FluidClientDebugger.containerData}, if any was provided.
 	 *
-	 * @remarks Will only be `undefined` if `containerData` was not provided.
+	 * @remarks Will only be `undefined` if `containerData` was not provided, or if the debugger has been disposed.
 	 */
-	private readonly dataVisualizer: DataVisualizerGraph | undefined;
+	private dataVisualizer: DataVisualizerGraph | undefined;
 
 	// #region Container-related event handlers
 
@@ -209,6 +209,14 @@ export class FluidClientDebugger
 			timestamp: Date.now(),
 		});
 		this.postAudienceStateChange();
+	};
+
+	// #endregion
+
+	// #region Data-related event handlers
+
+	private readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
+		this.postDataVisualization(visualization);
 	};
 
 	// #endregion
@@ -398,6 +406,7 @@ export class FluidClientDebugger
 			props.containerData === undefined
 				? undefined
 				: new DataVisualizerGraph(props.containerData, defaultVisualizers);
+		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging
 		this.container.on("attached", this.containerAttachedHandler);
@@ -449,6 +458,11 @@ export class FluidClientDebugger
 
 		// Unbind window event listener
 		globalThis.removeEventListener?.("message", this.windowMessageHandler);
+
+		// Dispose of data visualization graph
+		// Note: no need to unbind associated event handler, since we're disposing the object altogether.
+		this.dataVisualizer?.dispose();
+		this.dataVisualizer = undefined;
 
 		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 
