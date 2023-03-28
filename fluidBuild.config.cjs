@@ -87,6 +87,7 @@ module.exports = {
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
+			"tinylicious",
 		],
 	},
 
