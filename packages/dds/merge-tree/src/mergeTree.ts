@@ -102,73 +102,13 @@ function wasRemovedAfter(seg: ISegment, seq: number): boolean {
 	);
 }
 
-function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo, onInsert: boolean): void {
+function markSegmentMoved(seg: ISegment, moveInfo: IMoveInfo): void {
 	seg.moveDst = moveInfo.moveDst;
 	seg.movedClientIds = moveInfo.movedClientIds.slice();
 	seg.movedSeqs = [moveInfo.movedSeq];
 	seg.movedSeq = moveInfo.movedSeq;
 	seg.localMovedSeq = moveInfo.localMovedSeq;
-	seg.wasMovedOnInsert = onInsert;
-}
-
-function findMinMovedSeq(
-	aMoveSeqs: number[],
-	bMoveSeqs: number[],
-	bIds: number[],
-	offset: number,
-): [number, number | undefined] | undefined {
-	const aMoved = new Set(aMoveSeqs);
-
-	let min = Number.POSITIVE_INFINITY;
-
-	for (const movedSeq of bMoveSeqs) {
-		if (!aMoved.has(movedSeq) || movedSeq === -1) {
-			continue;
-		}
-
-		min = Math.min(movedSeq, min);
-	}
-
-	const minIndex = bMoveSeqs.indexOf(min);
-
-	const clientId = bIds[minIndex];
-
-	if (min === Number.POSITIVE_INFINITY) {
-		return undefined;
-	}
-
-	return [min, clientId];
-}
-
-function minMoveDist(a: IMoveInfo | undefined, b: IMoveInfo | undefined): IMoveInfo | undefined {
-	if (!a) {
-		return b;
-	}
-	if (!b) {
-		return a;
-	}
-
-	const min = findMinMovedSeq(a.movedSeqs, b.movedSeqs, b.movedClientIds, 0);
-	let minLocal;
-
-	if (
-		a.localMovedSeq !== undefined &&
-		b.localMovedSeq !== undefined &&
-		a.localMovedSeq === b.localMovedSeq
-	) {
-		const idx = b.movedSeqs.indexOf(-1);
-
-		minLocal = [b.localMovedSeq, b.movedClientIds[idx]];
-	}
-
-	return {
-		movedClientIds:
-			min?.[1] !== undefined ? [min[1]] : minLocal?.[1] !== undefined ? [minLocal[1]] : [],
-		movedSeq: min?.[0] ?? -1,
-		movedSeqs: min !== undefined ? [min[0]] : [],
-		localMovedSeq: min?.[0] !== undefined ? undefined : minLocal?.[0],
-		wasMovedOnInsert: false,
-	};
+	seg.wasMovedOnInsert = moveInfo.wasMovedOnInsert;
 }
 
 function isMoved(segment: ISegment): boolean {
@@ -1928,11 +1868,12 @@ export class MergeTree {
 					continue;
 				}
 
-				let leftMovedSegment: ISegment | undefined = undefined as any;
-				let rightMovedSegment: ISegment | undefined = undefined as any;
-
 				const leftAckedSegments: Record<number, ISegment> = {};
 				const leftLocalSegments: Record<number, ISegment> = {};
+
+				let _localMovedSeq: number | undefined;
+				let _movedSeq: number | undefined;
+				let movedClientIds: number[] | undefined;
 
 				const findLeftMovedSegment = (seg: ISegment) => {
 					const movedSeqs = seg.movedSeqs?.filter((movedSeq) => movedSeq >= refSeq) ?? [];
@@ -1967,8 +1908,11 @@ export class MergeTree {
 					for (const movedSeq of movedSeqs) {
 						const left = leftAckedSegments[movedSeq];
 						if (left) {
-							leftMovedSegment = left;
-							rightMovedSegment = seg;
+							_movedSeq = movedSeq;
+							const clientIdIdx = left.movedSeqs?.indexOf(movedSeq) ?? -1;
+							const movedClientId = left.movedClientIds?.[clientIdIdx];
+							assert(movedClientId !== undefined, "expected client id to exist");
+							movedClientIds = [movedClientId];
 							return false;
 						}
 					}
@@ -1976,8 +1920,12 @@ export class MergeTree {
 					for (const localMovedSeq of localMovedSeqs) {
 						const left = leftLocalSegments[localMovedSeq];
 						if (left) {
-							leftMovedSegment = left;
-							rightMovedSegment = seg;
+							_localMovedSeq = localMovedSeq;
+							const clientIdIdx =
+								left.movedSeqs?.indexOf(UnassignedSequenceNumber) ?? -1;
+							const movedClientId = left.movedClientIds?.[clientIdIdx];
+							assert(movedClientId !== undefined, "expected client id to exist");
+							movedClientIds = [movedClientId];
 							return false;
 						}
 					}
@@ -2001,35 +1949,34 @@ export class MergeTree {
 				moveUpperBound = Number.POSITIVE_INFINITY;
 				forwardExcursion(newSegment, findRightMovedSegment);
 
-				if (leftMovedSegment && rightMovedSegment) {
-					const nearMoveInfo = toMoveInfo(leftMovedSegment);
-					const farMoveInfo = toMoveInfo(rightMovedSegment);
-					// The inserted segment could potentially be adjacent to two different moved regions.
-					// We mark it as moved using the info from the earlier such operation.
-					const moveInfo = minMoveDist(nearMoveInfo, farMoveInfo);
-					if (moveInfo) {
-						markSegmentMoved(
-							newSegment,
-							moveInfo,
-							moveInfo.movedSeq !== UnassignedSequenceNumber,
+				if (_localMovedSeq !== undefined || _movedSeq !== undefined) {
+					assert(
+						movedClientIds !== undefined,
+						"movedClientIds should be set if local/moved seq is set",
+					);
+					const moveInfo = {
+						movedClientIds,
+						movedSeq: _movedSeq ?? UnassignedSequenceNumber,
+						movedSeqs:
+							_movedSeq === undefined ? [UnassignedSequenceNumber] : [_movedSeq],
+						localMovedSeq: _localMovedSeq,
+						wasMovedOnInsert: (_movedSeq ?? -1) !== UnassignedSequenceNumber,
+					};
+
+					markSegmentMoved(newSegment, moveInfo);
+
+					if (moveInfo.localMovedSeq !== undefined) {
+						const movedSegmentGroup = this.locallyMovedSegments.get(
+							moveInfo.localMovedSeq,
 						);
 
-						if (moveInfo.localMovedSeq !== undefined) {
-							const movedSegmentGroup = this.locallyMovedSegments.get(
-								moveInfo.localMovedSeq,
-							);
+						assert(movedSegmentGroup !== undefined, "expected segment group to exist");
 
-							assert(
-								movedSegmentGroup !== undefined,
-								"expected segment group to exist",
-							);
+						this.addToPendingList(newSegment, movedSegmentGroup, localSeq);
+					}
 
-							this.addToPendingList(newSegment, movedSegmentGroup, localSeq);
-						}
-
-						if (newSegment.parent) {
-							this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
-						}
+					if (newSegment.parent) {
+						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
 					}
 				}
 			}
