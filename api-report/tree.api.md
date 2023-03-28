@@ -1305,9 +1305,6 @@ export interface SchemaPolicy {
 }
 
 // @alpha
-export function schematizeBranch(tree: ISharedTreeBranch, config: SchematizeConfiguration): ISharedTreeBranch;
-
-// @alpha
 export interface SchematizeConfiguration {
     // (undocumented)
     readonly allowedSchemaModifications: AllowedUpdateType;
@@ -1316,6 +1313,9 @@ export interface SchematizeConfiguration {
     // (undocumented)
     readonly schema: ViewSchemaCollection;
 }
+
+// @alpha
+export function schematizeView(tree: ISharedTreeView, config: SchematizeConfiguration): ISharedTreeView;
 
 // @alpha (undocumented)
 export interface SequenceFieldEditBuilder {
@@ -1685,6 +1685,14 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
+}
+
+// @alpha
+export interface ViewSchemaCollection {
+    // (undocumented)
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
 }
 
 // @alpha

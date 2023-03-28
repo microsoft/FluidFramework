@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { FieldKinds, TypedSchema, SchemaAware } from "../../feature-libraries";
-import { SharedTreeFactory, schematizeBranch } from "../../shared-tree";
+import { SharedTreeFactory, schematizeView } from "../../shared-tree";
 import { rootFieldKey, ValueSchema, AllowedUpdateType } from "../../core";
 
 const factory = new SharedTreeFactory();
@@ -21,13 +21,13 @@ const schemaGeneralized = SchemaAware.typedSchemaData(
 	TypedSchema.tree("root", { value: ValueSchema.Serializable }),
 );
 
-describe("schematizeBranch", () => {
+describe("schematizeView", () => {
 	it("initialize tree schema", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
 		assert(!tree.storedSchema.globalFieldSchema.has(rootFieldKey));
 
-		const schematized = schematizeBranch(tree, {
+		const schematized = schematizeView(tree, {
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: 10,
 			schema,
@@ -43,7 +43,7 @@ describe("schematizeBranch", () => {
 		tree.storedSchema.update(schema);
 
 		// No op upgrade with AllowedUpdateType.None does not error
-		const schematized = schematizeBranch(tree, {
+		const schematized = schematizeView(tree, {
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: 10,
 			schema,
@@ -56,7 +56,7 @@ describe("schematizeBranch", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		tree.storedSchema.update(schema);
 		assert.throws(() => {
-			schematizeBranch(tree, {
+			schematizeView(tree, {
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: "x",
 				schema: schemaGeneralized,
@@ -68,7 +68,7 @@ describe("schematizeBranch", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		tree.storedSchema.update(schemaGeneralized);
 		assert.throws(() => {
-			schematizeBranch(tree, {
+			schematizeView(tree, {
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: "x",
 				schema,
@@ -79,7 +79,7 @@ describe("schematizeBranch", () => {
 	it("upgrade schema", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		tree.storedSchema.update(schema);
-		const schematized = schematizeBranch(tree, {
+		const schematized = schematizeView(tree, {
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: "x",
 			schema: schemaGeneralized,

@@ -12,4 +12,4 @@ export {
 	ViewEvents,
 } from "./sharedTree";
 
-export { SchematizeConfiguration, schematizeBranch } from "./schematizedTree";
+export { SchematizeConfiguration, schematizeView } from "./schematizedTree";

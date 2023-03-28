@@ -17,7 +17,7 @@ import {
 	ContextuallyTypedFieldData,
 } from "../feature-libraries";
 import { fail } from "../util";
-import { ISharedTreeBranch } from "./sharedTree";
+import { ISharedTreeView } from "./sharedTree";
 
 /**
  * Takes in a tree and returns a view of it that conforms to the view schema.
@@ -50,15 +50,21 @@ import { ISharedTreeBranch } from "./sharedTree";
  * - Improve discoverability of this by either integrating it into the factory or main SharedTree interfaces as a method.
  * @alpha
  */
-export function schematizeBranch(
-	tree: ISharedTreeBranch,
+export function schematizeView(
+	tree: ISharedTreeView,
 	config: SchematizeConfiguration,
-): ISharedTreeBranch {
+): ISharedTreeView {
 	// Check for empty.
 	// When this becomes a more proper out of schema adapter, it should be made lazy.
 	{
 		if (tree.context.root.length === 0 && schemaDataIsEmpty(tree.storedSchema)) {
 			tree.transaction.start();
+			// TODO: This schema update can cause the document to be out of schema until the initialTree is applied on the next line.
+			// This is technically invalid and should be done some other way.
+			// An better approach would be to:
+			// 1. Set the schema to an adjusted version of `config.schema` which permits an empty tree (force the root to be optional or sequence),
+			// 2. Set the contents of the tree.
+			// 3. Set the schema to the desired final schema.
 			tree.storedSchema.update(config.schema);
 			tree.root = config.initialTree;
 			tree.transaction.commit();
