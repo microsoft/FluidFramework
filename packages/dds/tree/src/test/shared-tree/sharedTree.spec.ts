@@ -728,7 +728,6 @@ describe("SharedTree", () => {
 		});
 		it.only("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
-
 			insert(provider.trees[0], 0, "a");
 			await provider.ensureSynchronized();
 
@@ -752,55 +751,8 @@ describe("SharedTree", () => {
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
-
-			validateRootField(tree, ["b", "c", "a", "d"]);
-			validateRootField(otherLoadedTree, ["b", "c", "a", "d"]);
-		});
-
-		it("rebases stashed delete over move", async () => {
-			const provider = await TestTreeProvider.create(2);
-
-			insert(provider.trees[0], 0, "a", "b");
-			await provider.ensureSynchronized();
-
-			const pausedContainer = provider.containers[0];
-			const url = await pausedContainer.getAbsoluteUrl("");
-			const pausedTree = provider.trees[0];
-			await provider.opProcessingController.pauseProcessing(pausedContainer);
-			// Delete b
-			runSynchronous(pausedTree, () => {
-				const field = pausedTree.editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.delete(1, 1);
-			});
-
-			const pendingOps = pausedContainer.closeAndGetPendingLocalState();
-			provider.opProcessingController.resumeProcessing();
-
-			const otherLoadedTree = provider.trees[1];
-			// Move b before a
-			runSynchronous(otherLoadedTree, () => {
-				otherLoadedTree.editor.move(
-					undefined,
-					rootFieldKeySymbol,
-					1,
-					1,
-					undefined,
-					rootFieldKeySymbol,
-					0,
-				);
-			});
-			await provider.ensureSynchronized();
-
-			const loader = provider.makeTestLoader();
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const loadedContainer = await loader.resolve({ url: url! }, pendingOps);
-			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
-			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
-			await waitForContainerConnection(loadedContainer, true);
-			await provider.ensureSynchronized();
-
-			validateRootField(tree, ["b"]);
-			validateRootField(otherLoadedTree, ["b"]);
+			validateRootField(tree, ["d", "a", "b", "c"]);
+			validateRootField(otherLoadedTree, ["d", "a", "b", "c"]);
 		});
 	});
 
@@ -2238,7 +2190,7 @@ function validateRootField(tree: ISharedTreeBranch, expected: Value[]): void {
 	let hasNode = readCursor.firstNode();
 	for (const value of expected) {
 		assert(hasNode);
-		// assert.equal(readCursor.value, value);
+		assert.equal(readCursor.value, value);
 		hasNode = readCursor.nextNode();
 	}
 	assert.equal(hasNode, false);

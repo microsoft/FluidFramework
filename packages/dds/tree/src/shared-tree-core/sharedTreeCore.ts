@@ -44,6 +44,7 @@ import {
 } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
+import { StableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 
@@ -246,6 +247,13 @@ export class SharedTreeCore<
 	 */
 	protected applyChange(change: TChange): void {
 		const revision = mintRevisionTag();
+		const commit = this.applyChangeWithRevisionTag(change, revision);
+		if (this.transactions.size === 0) {
+			this.submitCommit(commit);
+		}
+	}
+
+	private applyChangeWithRevisionTag(change: TChange, revision: StableId): Commit<TChange> {
 		const commit = {
 			change,
 			revision,
@@ -253,12 +261,9 @@ export class SharedTreeCore<
 		};
 		const delta = this.editManager.addLocalChange(revision, change, false);
 		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
-		if (this.transactions.size === 0) {
-			this.submitCommit(commit);
-		}
-
 		this.indexEventEmitter.emit("newLocalChange", change);
 		this.indexEventEmitter.emit("newLocalState", delta);
+		return commit;
 	}
 
 	protected processCore(
@@ -361,7 +366,7 @@ export class SharedTreeCore<
 	protected applyStashedOp(content: any): undefined {
 		const { revision, changeset } = content as Message;
 		const decodedChangeset = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
-		this.editManager.addLocalChange(revision, decodedChangeset);
+		this.applyChangeWithRevisionTag(decodedChangeset, revision);
 		return;
 	}
 
