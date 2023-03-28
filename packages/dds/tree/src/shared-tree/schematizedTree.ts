@@ -28,9 +28,24 @@ import { ISharedTreeBranch } from "./sharedTree";
  * it is initialized to the config's initial tree and the provided schema are stored.
  * This is done even if `AllowedUpdateType.None`.
  *
+ * @remarks
+ * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
+ * Other approach tend to have leave easy to make mistakes.
+ * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
+ * or call it unconditionally leaving an app that can only create new documents.
+ * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
+ * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
+ * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
+ * on the create code-path (for example how a schematized factory might do it),
+ * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
+ * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
+ * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+ *
  * TODO:
  * - Implement schema-aware API for return type.
  * - Support adapters for handling out of schema data.
+ * - Handle initialization via an adapter.
+ * - Support per adapter update policy.
  * - Support lazy schema updates.
  * - Improve discoverability of this by either integrating it into the factory or main SharedTree interfaces as a method.
  * @alpha
@@ -40,13 +55,13 @@ export function schematizeBranch(
 	config: SchematizeConfiguration,
 ): ISharedTreeBranch {
 	// Check for empty.
-	// This case could be better handled by making a schematized factory (so it runs only in the "create" case),
-	// but handling it here works well enough, and can be considered a special case of an out of schema handler.
-	// Note that if this becomes a more proper out of schema handler, it should be made lazy.
+	// When this becomes a more proper out of schema adapter, it should be made lazy.
 	{
 		if (tree.context.root.length === 0 && schemaDataIsEmpty(tree.storedSchema)) {
+			tree.transaction.start();
 			tree.storedSchema.update(config.schema);
 			tree.root = config.initialTree;
+			tree.transaction.commit();
 		}
 	}
 
