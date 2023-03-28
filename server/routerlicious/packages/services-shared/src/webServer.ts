@@ -18,7 +18,6 @@ export class HttpServer implements core.IHttpServer {
 	constructor(private readonly server: http.Server) {}
 
 	public async close(): Promise<void> {
-		console.log("yunho: httpServer close called");
 		await util.promisify(((callback) => this.server.close(callback)) as any)();
 	}
 
