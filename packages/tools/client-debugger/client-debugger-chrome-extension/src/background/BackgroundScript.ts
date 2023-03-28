@@ -111,6 +111,24 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 						devtoolsPort.disconnect();
 						tabConnection = undefined;
 					});
+
+					console.log(
+						formatBackgroundScriptMessageForLogging(
+							"Informing DevTools script that tab connection is ready.",
+						),
+					);
+
+					// Send acknowledgement to Devtools Script
+					const ackMessage: DevToolsInitAcknowledgement = {
+						source: extensionMessageSource,
+						type: devToolsInitAcknowledgementType,
+						data: undefined,
+					};
+					postMessageToPort(
+						ackMessage,
+						devtoolsPort,
+						backgroundScriptMessageLoggingOptions,
+					);
 				},
 				(error) => {
 					console.error(
@@ -129,20 +147,12 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 				);
 				tabConnection?.disconnect();
 			});
-
-			// Send acknowledgement to Devtools Script
-			const ackMessage: DevToolsInitAcknowledgement = {
-				source: extensionMessageSource,
-				type: devToolsInitAcknowledgementType,
-				data: undefined,
-			};
-			postMessageToPort(ackMessage, devtoolsPort, backgroundScriptMessageLoggingOptions);
 		} else {
 			// Relay message from the Devtools Script to the tab (Content script)
 			if (tabConnection === undefined) {
-				console.warn(
+				console.error(
 					formatBackgroundScriptMessageForLogging(
-						`Tab connection has not been initialized. Cannot relay message:`,
+						`Message received from DevTools port before tab connection has finished initializing. Message won't be relayed:`,
 					),
 					message,
 				);
