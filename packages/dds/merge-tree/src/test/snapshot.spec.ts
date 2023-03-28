@@ -3,208 +3,175 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import { strict as assert } from "assert";
-import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { IMergeTreeOp } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
-import { TestSerializer } from "./testSerializer";
-import { TestClient } from ".";
+import { IMergeTreeOptions } from "../mergeTree";
+import {
+	createInsertOnlyAttributionPolicy,
+	createPropertyTrackingAttributionPolicyFactory,
+} from "../attributionPolicy";
+import { loadSnapshot, TestString } from "./snapshot.utils";
 
-// Reconstitutes a MergeTree client from a summary
-async function loadSnapshot(summary: ISummaryTree) {
-    const services = MockStorage.createFromSummary(summary);
-    const client2 = new TestClient(undefined);
-    const runtime: Partial<IFluidDataStoreRuntime> = {
-        logger: client2.logger,
-        clientId: "1",
-    };
+function makeSnapshotSuite(options?: IMergeTreeOptions): void {
+	describe("from an empty initial state", () => {
+		let str: TestString;
+		beforeEach(() => {
+			str = new TestString("fakeId", options);
+		});
 
-    const { catchupOpsP } = await client2.load(runtime as IFluidDataStoreRuntime, services, new TestSerializer());
-    await catchupOpsP;
-    return client2;
-}
+		afterEach(async () => {
+			// Paranoid check that ensures `str` roundtrips through snapshot/load.  This helps to catch
+			// bugs that might be missed if the test case forgets to call/await `str.expect()`.
+			await str.checkSnapshot({
+				attribution: { policyFactory: createInsertOnlyAttributionPolicy },
+			});
+		});
 
-// Wrapper around MergeTree client that provides a convenient SharedString-like API for tests.
-class TestString {
-    private client = new TestClient();
-    private readonly pending: ISequencedDocumentMessage[] = [];
-    private seq = 0;
-    private minSeq = 0;
+		it("excludes un-acked segments", async () => {
+			str.append("0", /* increaseMsn: */ false);
 
-    constructor(id: string) {
-        this.client.startOrUpdateCollaboration(id);
-    }
+			// Invoke `load/getSnapshot()` directly instead of `str.expect()` to avoid ACKing the
+			// pending insert op.
+			const client2 = await loadSnapshot(str.getSummary(), options);
 
-    public insert(pos: number, text: string, increaseMsn: boolean) {
-        this.queue(this.client.insertTextLocal(pos, text, { segment: this.pending.length })!, increaseMsn);
-    }
+			// Original client has inserted text, but the one loaded from the snapshot should be empty.
+			// This is because un-ACKed ops are not included in snapshots.  Instead, these ops are
+			// retransmitted and applied after the snapshot has loaded.
+			assert.equal(str.getText(), "0");
+			assert.equal(client2.getText(), "");
+		});
 
-    public append(text: string, increaseMsn: boolean) {
-        this.insert(this.client.getLength(), text, increaseMsn);
-    }
+		it("includes segments below MSN", async () => {
+			str.append("0", /* increaseMsn: */ true);
+			await str.expect("0");
+		});
 
-    public removeRange(start: number, end: number, increaseMsn: boolean) {
-        this.queue(this.client.removeRangeLocal(start, end)!, increaseMsn);
-    }
+		it("includes ACKed segments above the MSN", async () => {
+			str.append("0", /* increaseMsn: */ false);
+			await str.expect("0");
+		});
 
-    // Ensures the client's text matches the `expected` string and round-trips through a snapshot
-    // into a new client.  The current client is then replaced with the loaded client in the hope
-    // that it will help detect corruption bugs as further ops are applied.
-    public async expect(expected: string) {
-        assert.equal(this.client.getText(), expected,
-            "MergeTree must contain the expected text prior to applying ops.");
+		it("includes removals of segments above the MSN", async () => {
+			str.append("0x", /* increaseMsn: */ false);
+			str.removeRange(1, 2, /* increaseMsn: */ false);
+			await str.expect("0");
+		});
 
-        await this.checkSnapshot();
-    }
+		it("includes removals above the MSN of segments below the MSN", async () => {
+			str.append("0x", /* increaseMsn: */ true);
+			str.removeRange(1, 2, /* increaseMsn: */ false);
+			await str.expect("0");
+		});
 
-    // Ensures the MergeTree client's contents successfully roundtrip through a snapshot.
-    public async checkSnapshot() {
-        this.applyPending();
-        const tree = this.getSummary();
-        const client2 = await loadSnapshot(tree);
+		it("can insert segments after loading removed segment", async () => {
+			str.append("0x", /* increaseMsn: */ true);
+			str.removeRange(1, 2, /* increaseMsn: */ false);
+			await str.expect("0");
+			str.append("1", /* increaseMsn: */ false);
+			await str.expect("01");
+		});
 
-        assert.equal(this.client.getText(), client2.getText(),
-            "Snapshot must produce a MergeTree with the same text as the original");
+		it("can insert segments relative to removed segment", async () => {
+			str.append("0x", /* increaseMsn: */ false);
+			str.append("2", /* increaseMsn: */ false);
+			str.removeRange(1, 2, /* increaseMsn: */ false);
+			str.insert(1, "1", /* increaseMsn: */ false);
+			str.append("3", /* increaseMsn: */ false);
+			await str.expect("0123");
+		});
 
-        // Also check the length as weak test for non-TextSegments.
-        assert.equal(this.client.getLength(), client2.getLength(),
-            "Snapshot must produce a MergeTree with the same length as the original");
+		it("can insert segments relative to removed segment loaded from snapshot", async () => {
+			str.append("0x", /* increaseMsn: */ false);
+			str.append("2", /* increaseMsn: */ false);
+			str.removeRange(1, 2, /* increaseMsn: */ false);
 
-        // Replace our client with the one loaded by the snapshot.
-        this.client = client2;
-    }
+			// Note that calling str.expect() switches the underlying client to the one loaded from the snapshot.
+			await str.expect("02");
 
-    public getSummary() {
-        const snapshot = new SnapshotV1(
-            this.client.mergeTree,
-            this.client.logger,
-            (id) => this.client.getLongClientId(id));
+			str.insert(1, "1", /* increaseMsn: */ false);
+			str.append("3", /* increaseMsn: */ false);
+			await str.expect("0123");
+		});
 
-        snapshot.extractSync();
-        return snapshot.emit(TestClient.serializer, undefined!).summary;
-    }
+		it("includes ACKed segments below MSN in body", async () => {
+			for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
+				str.append(`${i % 10}`, /* increaseMsn: */ true);
+			}
 
-    public getText() { return this.client.getText(); }
+			await str.checkSnapshot();
+		});
 
-    private applyPending() {
-        for (const msg of this.pending) {
-            this.client.applyMsg(msg);
-        }
-        this.pending.splice(0, this.pending.length);
-    }
+		it("includes ACKed segments above MSN in body", async () => {
+			for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
+				str.append(`${i % 10}`, /* increaseMsn: */ false);
+			}
 
-    private queue(op: IMergeTreeOp, increaseMsn: boolean) {
-        const refSeq = this.seq;
-        const seq = ++this.seq;
+			await str.checkSnapshot();
+		});
 
-        this.pending.push(
-            this.client.makeOpMessage(
-                op,
-                seq,
-                refSeq,
-                this.client.longClientId,
-                this.minSeq = increaseMsn
-                    ? seq
-                    : this.minSeq));
-    }
+		it("recovers annotated segments", async () => {
+			str.append("123", false);
+			str.annotate(1, 2, { foo: 1 }, false);
+
+			await str.checkSnapshot();
+		});
+	});
+
+	describe("from a non-empty initial state", () => {
+		it("includes segments submitted while detached", async () => {
+			const str = new TestString("A", options, "starting text");
+			await str.expect("starting text");
+		});
+	});
 }
 
 describe("snapshot", () => {
-    let str: TestString;
+	describe("with attribution", () => {
+		makeSnapshotSuite({
+			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+	});
 
-    beforeEach(() => {
-        str = new TestString("fakeId");
-    });
+	describe("with attribution and custom channels", () => {
+		makeSnapshotSuite({
+			attribution: {
+				track: true,
+				policyFactory: createPropertyTrackingAttributionPolicyFactory("foo"),
+			},
+		});
+	});
 
-    afterEach(async () => {
-        // Paranoid check that ensures `str` roundtrips through snapshot/load.  This helps to catch
-        // bugs that might be missed if the test case forgets to call/await `str.expect()`.
-        await str.checkSnapshot();
-    });
+	describe("without attribution", () => {
+		makeSnapshotSuite({ attribution: { track: false } });
+	});
 
-    it("excludes un-acked segments", async () => {
-        str.append("0", /* increaseMsn: */ false);
+	it("presence of attribution overrides merge-tree initialization value", async () => {
+		const str = new TestString("id", {
+			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+		str.append("hello world", /* increaseMsn: */ true);
+		await str.checkSnapshot({
+			attribution: { track: false, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+		str.insert(0, "should have attribution", false);
+		str.applyPendingOps();
+		assert(
+			str.getSegment(0).attribution !== undefined,
+			"Attribution should be created on new segments",
+		);
+	});
 
-        // Invoke `load/getSnapshot()` directly instead of `str.expect()` to avoid ACKing the
-        // pending insert op.
-        const client2 = await loadSnapshot(str.getSummary());
-
-        // Original client has inserted text, but the one loaded from the snapshot should be empty.
-        // This is because un-ACKed ops are not included in snapshots.  Instead, these ops are
-        // retransmitted and applied after the snapshot has loaded.
-        assert.equal(str.getText(), "0");
-        assert.equal(client2.getText(), "");
-    });
-
-    it("includes segments below MSN", async () => {
-        str.append("0", /* increaseMsn: */ true);
-        await str.expect("0");
-    });
-
-    it("includes ACKed segments above the MSN", async () => {
-        str.append("0", /* increaseMsn: */ false);
-        await str.expect("0");
-    });
-
-    it("includes removals of segments above the MSN", async () => {
-        str.append("0x", /* increaseMsn: */ false);
-        str.removeRange(1, 2, /* increaseMsn: */ false);
-        await str.expect("0");
-    });
-
-    it("includes removals above the MSN of segments below the MSN", async () => {
-        str.append("0x", /* increaseMsn: */ true);
-        str.removeRange(1, 2, /* increaseMsn: */ false);
-        await str.expect("0");
-    });
-
-    it("can insert segments after loading removed segment", async () => {
-        str.append("0x", /* increaseMsn: */ true);
-        str.removeRange(1, 2, /* increaseMsn: */ false);
-        await str.expect("0");
-        str.append("1", /* increaseMsn: */ false);
-        await str.expect("01");
-    });
-
-    it("can insert segments relative to removed segment", async () => {
-        str.append("0x", /* increaseMsn: */ false);
-        str.append("2", /* increaseMsn: */ false);
-        str.removeRange(1, 2, /* increaseMsn: */ false);
-        str.insert(1, "1", /* increaseMsn: */ false);
-        str.append("3", /* increaseMsn: */ false);
-        await str.expect("0123");
-    });
-
-    it("can insert segments relative to removed segment loaded from snapshot", async () => {
-        str.append("0x", /* increaseMsn: */ false);
-        str.append("2", /* increaseMsn: */ false);
-        str.removeRange(1, 2, /* increaseMsn: */ false);
-
-        // Note that calling str.expect() switches the underlying client to the one loaded from the snapshot.
-        await str.expect("02");
-
-        str.insert(1, "1", /* increaseMsn: */ false);
-        str.append("3", /* increaseMsn: */ false);
-        await str.expect("0123");
-    });
-
-    it("includes ACKed segments below MSN in body", async () => {
-        for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
-            str.append(`${i % 10}`, /* increaseMsn: */ true);
-        }
-
-        await str.checkSnapshot();
-    });
-
-    it("includes ACKed segments above MSN in body", async () => {
-        for (let i = 0; i < SnapshotV1.chunkSize + 10; i++) {
-            str.append(`${i % 10}`, /* increaseMsn: */ false);
-        }
-
-        await str.checkSnapshot();
-    });
+	it("lack of attribution overrides merge-tree initialization", async () => {
+		const str = new TestString("id", { attribution: { track: false } });
+		str.append("hello world", /* increaseMsn: */ true);
+		await str.checkSnapshot({
+			attribution: { track: true, policyFactory: createInsertOnlyAttributionPolicy },
+		});
+		str.insert(0, "should not have attribution", false);
+		str.applyPendingOps();
+		assert(
+			str.getSegment(0).attribution === undefined,
+			"No attribution should be created on new segments",
+		);
+	});
 });

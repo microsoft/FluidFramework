@@ -31,11 +31,11 @@ Choosing the correct data structure for your scenario can improve the performanc
 
 DDSes vary from each other by three characteristics:
 
-- **Basic data structure:** For example, key-value pair, a sequence, or a queue.
-- **Client autonomy vs. Consensus:** An *optimistic* DDS enables any client to unilaterally change a value and the new
+-   **Basic data structure:** For example, key-value pair, a sequence, or a queue.
+-   **Client autonomy vs. Consensus:** An *optimistic* DDS enables any client to unilaterally change a value and the new
   value is relayed to all other clients, while a *consensus-based* DDS will only allow a change if it is accepted by other clients via a
   consensus process.
-- **Merge policy:** The policy that determines how conflicting changes from clients are resolved.
+-   **Merge policy:** The policy that determines how conflicting changes from clients are resolved.
 
 Below we've enumerated the data structures and described when they may be most useful.
 
@@ -44,33 +44,33 @@ Below we've enumerated the data structures and described when they may be most u
 These DDSes are used for storing key-value data. They are optimistic and use a last-writer-wins merge policy. Although
 the value of a pair can be a complex object, the value of any given pair can only be changed whole-for-whole.
 
-- [SharedMap][] -- a basic key-value data structure.
+-   [SharedMap][] -- a basic key-value data structure.
 
 ### Key Value Scenarios
 
 Key-value data structures are the most common choice for many scenarios.
 
-- User preference data.
-- Current state of a survey.
-- The configuration of a view.
+-   User preference data.
+-   Current state of a survey.
+-   The configuration of a view.
 
 ### Common issues and best practices for key-value DDSes
 
-- Storing a counter in a map will have unexpected behavior. Use the [SharedCounter][] instead.
-- Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
+-   Storing a counter in a map will have unexpected behavior. Use the [SharedCounter][] instead.
+-   Storing arrays, lists, or logs in a key-value entry may lead to unexpected behavior because users can't
   collaboratively modify parts of one entry. Try storing the array or list data in a SharedSequence or SharedInk.
-- Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
+-   Storing a lot of data in one key-value entry may cause performance or merge issues. Each update will update the entire
   value rather than merging two updates. Try splitting the data across multiple keys.
 
 ### Sequence scenarios
 
-- Tabular data
-- Timelines
-- Lists
+-   Tabular data
+-   Timelines
+-   Lists
 
 ### Common issues and best practices for sequence DDSes
 
-- Store only immutable data as an item in a sequence. The only way to change the value of an item is to first remove it
+-   Store only immutable data as an item in a sequence. The only way to change the value of an item is to first remove it
   from the sequence and then insert a new value at the position where the old value was. But because other clients can
   insert and remove, there's no reliable way of getting the new value into the the desired position.
 
@@ -78,16 +78,16 @@ Key-value data structures are the most common choice for many scenarios.
 
 The SharedString DDS is used for unstructured text data that can be collaboratively edited. It is optimistic.
 
-- [SharedString][] -- a data structure for handling collaborative text.
+-   [SharedString][] -- a data structure for handling collaborative text.
 
 ### String scenarios
 
-- Text editor
+-   Text editor
 
 ## Specialized data structures
 
-- [SharedCounter][] -- a counter.
-  - `SharedCounter` is useful to keep track of increments/decrements of integer values.
+-   [SharedCounter][] -- a counter.
+    -   `SharedCounter` is useful to keep track of increments/decrements of integer values.
     While a key-value data structure appears like a good fit, two clients simultaneously setting the same key can [cause issues]({{< relref "counter.md/#why-a-specialized-dds" >}}).
     By contrast, clients can increase or decrease the `SharedCounter` value by a specified amount, but they can't set it to a specified value.
     It is optimistic.
@@ -96,23 +96,52 @@ The SharedString DDS is used for unstructured text data that can be collaborativ
 
 Consensus data structures have one or both of these characteristics:
 
-- Only one client can perform a particular action on a particular data item, such as pull an item off of a queue.
-- An action, such as changing a value, can occur only when all clients consent to it.
+-   Only one client can perform a particular action on a particular data item, such as pull an item off of a queue.
+-   An action, such as changing a value, can occur only when all clients consent to it.
 
 These DDSes are **not** optimistic. Before a change to a consensus data structure is confirmed, the connected clients
 must acknowledge the change.
 
-- [TaskManager][] -- Tracks queues of clients that want to exclusively run a task.
+-   TaskManager (experimental) -- Tracks queues of clients that want to exclusively run a task.
 
 ### Consensus scenarios
 
 Typical scenarios require the connected clients to "agree" on some course of action.
 
-- Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
-- Upgrade a data schema. (All clients agree to simultaneously make the change.)
+-   Import data from an external source. (Multiple clients doing this could lead to duplicate data.)
+-   Upgrade a data schema. (All clients agree to simultaneously make the change.)
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated by embedding the referenced file contents. Do not update these generated contents directly. -->
 
 <!-- Links -->
-[SharedCounter]: {{< relref "counter.md" >}}
-[SharedMap]: {{< relref "map.md" >}}
-[SharedString]: {{< relref "string.md" >}}
-[TaskManager]: {{< relref "task-manager.md" >}}
+
+<!-- Concepts -->
+
+[Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
+
+<!-- Distributed Data Structures -->
+
+[SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
+[SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
+[SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
+
+<!-- API links -->
+
+[fluid-framework]: {{< relref "/docs/apis/fluid-framework.md" >}}
+[@fluidframework/azure-client]: {{< relref "/docs/apis/azure-client.md" >}}
+[@fluidframework/tinylicious-client]: {{< relref "/docs/apis/tinylicious-client.md" >}}
+
+[AzureClient]: {{< relref "/docs/apis/azure-client/AzureClient-class.md" >}}
+[TinyliciousClient]: {{< relref "/docs/apis/tinylicious-client/TinyliciousClient-class.md" >}}
+
+[FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
+[IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->

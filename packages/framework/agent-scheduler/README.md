@@ -6,7 +6,7 @@ The `AgentScheduler` is a data object that can be used to assign tasks to unique
 
 ### Creation
 
-To create an `AgentScheduler` as a child instance of your data object, add the factory to your registry and call the static `createChildInstance` function on the factory.  You can then retrieve and store its handle to access it later:
+To create an `AgentScheduler` as a child instance of your data object, add the factory to your registry and call the static `createChildInstance` function on the factory. You can then retrieve and store its handle to access it later:
 
 ```typescript
 // In your Data Object

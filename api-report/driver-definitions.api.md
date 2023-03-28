@@ -32,6 +32,8 @@ export enum DriverErrorType {
     authorizationError = "authorizationError",
     deltaStreamConnectionForbidden = "deltaStreamConnectionForbidden",
     fetchFailure = "fetchFailure",
+    fetchTokenError = "fetchTokenError",
+    fileIsLocked = "fileIsLocked",
     fileNotFoundOrAccessDeniedError = "fileNotFoundOrAccessDeniedError",
     fileOverwrittenInStorage = "fileOverwrittenInStorage",
     fluidInvalidSchema = "fluidInvalidSchema",
@@ -159,12 +161,12 @@ export interface IDocumentService {
 export interface IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    protocolName: string;
 }
 
 // @public (undocumented)
 export interface IDocumentServicePolicies {
     readonly storageOnly?: boolean;
+    readonly summarizeProtocolTree?: boolean;
 }
 
 // @public
@@ -180,9 +182,8 @@ export interface IDocumentStorageService extends Partial<IDisposable> {
     uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
-// @public (undocumented)
+// @public
 export interface IDocumentStorageServicePolicies {
-    // (undocumented)
     readonly caching?: LoaderCachingPolicy;
     readonly maximumCacheDurationMs?: FiveDaysMs;
     readonly minBlobSize?: number;
@@ -191,7 +192,7 @@ export interface IDocumentStorageServicePolicies {
 // @public
 export interface IDriverBasicError extends IDriverErrorBase {
     // (undocumented)
-    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError;
+    readonly errorType: DriverErrorType.genericError | DriverErrorType.fileNotFoundOrAccessDeniedError | DriverErrorType.offlineError | DriverErrorType.unsupportedClientProtocolVersion | DriverErrorType.writeError | DriverErrorType.fetchFailure | DriverErrorType.fetchTokenError | DriverErrorType.incorrectServerResponse | DriverErrorType.fileOverwrittenInStorage | DriverErrorType.fluidInvalidSchema | DriverErrorType.usageError | DriverErrorType.fileIsLocked;
     // (undocumented)
     readonly statusCode?: number;
 }
@@ -248,7 +249,7 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 // @public (undocumented)
 export type IResolvedUrl = IWebResolvedUrl | IFluidResolvedUrl;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IResolvedUrlBase {
     // (undocumented)
     type: string;
@@ -291,7 +292,7 @@ export interface IUrlResolver {
     resolve(request: IRequest): Promise<IResolvedUrl | undefined>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IWebResolvedUrl extends IResolvedUrlBase {
     // (undocumented)
     data: string;

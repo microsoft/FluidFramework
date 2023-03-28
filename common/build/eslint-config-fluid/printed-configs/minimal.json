@@ -8,7 +8,9 @@
         "Atomics": "readonly",
         "SharedArrayBuffer": "readonly"
     },
-    "ignorePatterns": [],
+    "ignorePatterns": [
+        "**/packageVersion.ts"
+    ],
     "parserOptions": {
         "ecmaFeatures": {
             "jsx": true
@@ -21,7 +23,6 @@
         "eslint-comments",
         "import",
         "unicorn",
-        "react",
         "unused-imports",
         "tsdoc",
         "promise",
@@ -550,7 +551,12 @@
             1
         ],
         "import/no-nodejs-modules": [
-            "warn"
+            "error",
+            {
+                "allow": [
+                    "events"
+                ]
+            }
         ],
         "import/no-unassigned-import": [
             "error"
@@ -1177,6 +1183,9 @@
                     "pascalCase": true
                 }
             }
+        ],
+        "unicorn/no-for-loop": [
+            "off"
         ],
         "unicorn/no-nested-ternary": [
             "off"

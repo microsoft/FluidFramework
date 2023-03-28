@@ -4,7 +4,6 @@
  */
 
 export {
-	BaseGitRestTelemetryProperties,
 	Constants,
 	GitObjectType,
 	IExternalWriterConfig,
@@ -18,6 +17,10 @@ export {
 	IStorageDirectoryConfig,
 	IStorageRoutingId,
 } from "./definitions";
+export {
+	BaseGitRestTelemetryProperties,
+	GitRestLumberEventName,
+} from "./gitrestTelemetryDefinitions";
 export {
 	GitWholeSummaryManager,
 	isChannelSummary,
@@ -41,7 +44,11 @@ export {
 	retrieveLatestFullSummaryFromStorage,
 	validateBlobContent,
 	validateBlobEncoding,
+	executeApiWithMetric,
 } from "./helpers";
-export { IsomorphicGitManagerFactory, IsomorphicGitRepositoryManager } from "./isomorphicgitManager";
-export { NodeFsManagerFactory } from "./nodeFsManagerFactory";
+export {
+	IsomorphicGitManagerFactory,
+	IsomorphicGitRepositoryManager,
+} from "./isomorphicgitManager";
+export { NodeFsManagerFactory, MemFsManagerFactory } from "./filesystems";
 export { NodegitRepositoryManager, NodegitRepositoryManagerFactory } from "./nodegitManager";

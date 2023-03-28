@@ -7,7 +7,6 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate packageJson`](#flub-generate-packagejson)
 * [`flub generate readme`](#flub-generate-readme)
-* [`flub generate typetests`](#flub-generate-typetests)
 
 ## `flub generate buildVersion`
 
@@ -15,8 +14,8 @@ This command is used to compute the version number of Fluid packages. The releas
 
 ```
 USAGE
-  $ flub generate buildVersion --build <value> [--testBuild <value>] [--release release|prerelease|none] [--patch <value>]
-    [--base <value>] [--tag <value>] [-i <value>] [-v]
+  $ flub generate buildVersion --build <value> [-v] [--testBuild <value>] [--release release|prerelease|none] [--patch
+    <value>] [--base <value>] [--tag <value>] [-i <value>]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
@@ -45,7 +44,7 @@ Find all bundle analysis artifacts and copy them into a central location to uplo
 
 ```
 USAGE
-  $ flub generate bundleStats [--smallestAssetSize <value>] [-v]
+  $ flub generate bundleStats [-v] [--smallestAssetSize <value>]
 
 FLAGS
   -v, --verbose                Verbose logging.
@@ -93,84 +92,11 @@ DESCRIPTION
   The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
 
   # Usage
-
   <!-- usage -->
-
   # Commands
-
   <!-- commands -->
-
   # Table of contents
-
   <!-- toc -->
 
   Customize the code URL prefix by setting oclif.repositoryPrefix in package.json.
-```
-
-## `flub generate typetests`
-
-Generates type tests based on the individual package settings in package.json.
-
-```
-USAGE
-  $ flub generate typetests [-d <value> | --packages | -g client|server|azure|build-tools] [--prepare | --generate]
-    (--exact <value> |  | -s
-    ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|previousMinor|baseMinor|baseMajor)
-    [--reset | ] [--generateInName] [-v]
-
-FLAGS
-  -d, --dir=<value>                 Run on the package in this directory.
-  -g, --releaseGroup=<option>       Run on all packages within this release group.
-                                    <options: client|server|azure|build-tools>
-  -s, --versionConstraint=<option>  (required) The type of version constraint to use for previous versions. Only applies
-                                    to the prepare phase.
-                                    <options: ^previousMajor|^previousMinor|~previousMajor|~previousMinor|previousMajor|
-                                    previousMinor|baseMinor|baseMajor>
-  -v, --verbose                     Verbose logging.
-  --exact=<value>                   An exact string to use as the previous version constraint. The string will be used
-                                    as-is. Only applies to the prepare phase.
-  --generate                        Generates tests only. Doesn't prepare the package.json.
-  --[no-]generateInName             Includes .generated in the generated type test filenames.
-  --packages                        Run on all independent packages in the repo.
-  --prepare                         Prepares the package.json only. Doesn't generate tests. Note that npm install may
-                                    need to be run after preparation.
-  --reset                           Resets the broken type test settings in package.json. Only applies to the prepare
-                                    phase.
-
-DESCRIPTION
-  Generates type tests based on the individual package settings in package.json.
-
-  Generating type tests has two parts: preparing package.json and generating test modules. By default, both steps are
-  run for each package. You can run only one part at a time using the --prepare and --generate flags.
-
-  Preparing package.json determines the baseline previous version to use, then sets that version in package.json. If the
-  previous version changes after running preparation, then npm install must be run before the generate step will run
-  correctly.
-
-  Optionally, any type tests that are marked "broken" in package.json can be reset using the --reset flag during
-  preparation. This is useful when resetting the type tests to a clean state, such as after a major release.
-
-  Generating test modules takes the type test information from package.json, most notably any known broken type tests,
-  and generates an appropriate
-
-EXAMPLES
-  Prepare the package.json for all packages in the client release group.
-
-    $ flub generate typetests --prepare -g client
-
-  Reset all broken type tests across the client release group.
-
-    $ flub generate typetests --prepare -g client --reset
-
-  Pin the type tests to the previous major version.
-
-    $ flub generate typetests --prepare -s previousMajor
-
-  Pin the type tests to the current base major version.
-
-    $ flub generate typetests --prepare -s baseMajor
-
-  Regenerate type tests for the client release group.
-
-    $ flub generate typetests --generate -g client
 ```

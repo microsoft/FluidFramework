@@ -10,84 +10,82 @@ import { FluidObject } from "@fluidframework/core-interfaces";
 import { MountableView } from "@fluidframework/view-adapters";
 
 export class ComponentView implements NodeView {
-    public dom: HTMLElement;
-    public innerView;
+	public dom: HTMLElement;
+	public innerView;
 
-    private visual: MountableView | undefined;
+	private visual: MountableView | undefined;
 
-    constructor(
-        public node: Node,
-        public outerView: EditorView,
-        public getPos: (() => number) | boolean,
-        public loader: ILoader,
-    ) {
-        // The node's representation in the editor (empty, for now)
-        this.dom = document.createElement("fluid");
-        const src = node.attrs.src;
-        this.load(src);
-    }
+	constructor(
+		public node: Node,
+		public outerView: EditorView,
+		public getPos: (() => number) | boolean,
+		public loader: ILoader,
+	) {
+		// The node's representation in the editor (empty, for now)
+		this.dom = document.createElement("fluid");
+		const src = node.attrs.src;
+		this.load(src);
+	}
 
-    selectNode() {
-        this.dom.classList.add("ProseMirror-selectednode");
-    }
+	selectNode() {
+		this.dom.classList.add("ProseMirror-selectednode");
+	}
 
-    deselectNode() {
-        this.dom.classList.remove("ProseMirror-selectednode");
-    }
+	deselectNode() {
+		this.dom.classList.remove("ProseMirror-selectednode");
+	}
 
-    dispatchInner(tr) {
-    }
+	dispatchInner(tr) {}
 
-    update(node) {
-        return true;
-    }
+	update(node) {
+		return true;
+	}
 
-    destroy() {
-    }
+	destroy() {}
 
-    private load(url: string) {
-        this.attach(url);
-        const containerP = this.loader.resolve({ url });
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        containerP.then((container) => {
-            container.on("contextChanged", (value) => {
-                this.attach(url);
-            });
-        });
-    }
+	private load(url: string) {
+		this.attach(url);
+		const containerP = this.loader.resolve({ url });
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		containerP.then((container) => {
+			container.on("contextChanged", (value) => {
+				this.attach(url);
+			});
+		});
+	}
 
-    private attach(url: string) {
-        const loadP = this.loader.request({ url });
-        const componentP = loadP.then(
-            (result) => {
-                if (result.mimeType !== "fluid/object") {
-                    throw new Error("Can't insert a non-fluid component");
-                }
+	private attach(url: string) {
+		const loadP = this.loader.request({ url });
+		const componentP = loadP.then((result) => {
+			if (result.mimeType !== "fluid/object") {
+				throw new Error("Can't insert a non-fluid component");
+			}
 
-                const component: FluidObject = result.value;
-                if (!MountableView.canMount(component)) {
-                    throw new Error("Don't know how to render this component");
-                }
+			const component: FluidObject = result.value;
+			if (!MountableView.canMount(component)) {
+				throw new Error("Don't know how to render this component");
+			}
 
-                return component;
-            });
+			return component;
+		});
 
-        componentP.then(
-            (component) => {
-                // Remove the previous view
-                if (this.visual) {
-                    this.visual.unmount();
-                }
+		componentP.then(
+			(component) => {
+				// Remove the previous view
+				if (this.visual) {
+					this.visual.unmount();
+				}
 
-                // Clear any previous content
-                this.dom.innerHTML = "";
+				// Clear any previous content
+				this.dom.innerHTML = "";
 
-                this.visual = new MountableView(component);
-                this.visual.mount(this.dom);
-            },
-            (error) => {
-                // Fall back to URL if can't load
-                this.dom.innerHTML = `<a href="${url}">${url}</a>`;
-            });
-    }
+				this.visual = new MountableView(component);
+				this.visual.mount(this.dom);
+			},
+			(error) => {
+				// Fall back to URL if can't load
+				this.dom.innerHTML = `<a href="${url}">${url}</a>`;
+			},
+		);
+	}
 }

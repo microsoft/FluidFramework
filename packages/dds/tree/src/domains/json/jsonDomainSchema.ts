@@ -3,77 +3,77 @@
  * Licensed under the MIT License.
  */
 
+import { FieldKinds, TypedSchema, SchemaAware } from "../../feature-libraries";
+import { ValueSchema, FieldSchema, SchemaData, EmptyKey } from "../../core";
+
 /**
- * Example schema for a json domain.
- *
- * Note this is written using the "Example internal schema representation types":
- * this is not intended to show what authoring a schema would look like,
- * but rather just show what data a schema needs to capture.
+ * Types allowed as roots of Json content.
+ * Since the Json domain is recursive, this set is declared,
+ * then used in the schema, then populated below.
  */
+const jsonTypes = [
+	"Json.Object",
+	"Json.Array",
+	"Json.Number",
+	"Json.String",
+	"Json.Null",
+	"Json.Boolean",
+] as const;
 
-import { emptyField, FieldKinds } from "../../feature-libraries";
-import {
-    ValueSchema,
-    FieldSchema,
-    TreeSchemaIdentifier,
-    NamedTreeSchema,
-    fieldSchema,
-    namedTreeSchema,
-    SchemaData,
-    EmptyKey,
-} from "../../core";
-import { brand } from "../../util";
-
-const jsonTypeSchema: Map<TreeSchemaIdentifier, NamedTreeSchema> = new Map();
-
-export const jsonSchemaData: SchemaData = {
-    treeSchema: jsonTypeSchema,
-    globalFieldSchema: new Map(),
-};
-
-const jsonTypes: Set<TreeSchemaIdentifier> = new Set();
-
-const json: NamedTreeSchema[] = [];
-
-export const jsonObject: NamedTreeSchema = namedTreeSchema({
-    name: brand("Json.Object"),
-    extraLocalFields: emptyField,
+/**
+ * @alpha
+ */
+export const jsonObject = TypedSchema.tree("Json.Object", {
+	extraLocalFields: TypedSchema.field(FieldKinds.optional, ...jsonTypes),
 });
 
-export const jsonArray: NamedTreeSchema = namedTreeSchema({
-    name: brand("Json.Array"),
-    extraLocalFields: emptyField,
-    localFields: { [EmptyKey]: fieldSchema(FieldKinds.sequence, jsonTypes) },
+/**
+ * @alpha
+ */
+export const jsonArray = TypedSchema.tree("Json.Array", {
+	local: { [EmptyKey]: TypedSchema.field(FieldKinds.sequence, ...jsonTypes) },
 });
 
-export const jsonNumber: NamedTreeSchema = namedTreeSchema({
-    name: brand("Json.Number"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.Number,
+/**
+ * @alpha
+ */
+export const jsonNumber = TypedSchema.tree("Json.Number", {
+	value: ValueSchema.Number,
 });
 
-export const jsonString: NamedTreeSchema = namedTreeSchema({
-    name: brand("Json.String"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.String,
+/**
+ * @alpha
+ */
+export const jsonString = TypedSchema.tree("Json.String", {
+	value: ValueSchema.String,
 });
 
-export const jsonNull: NamedTreeSchema = namedTreeSchema({
-    name: brand("Json.Null"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.Nothing,
+/**
+ * @alpha
+ */
+export const jsonNull = TypedSchema.tree("Json.Null", {});
+
+/**
+ * @alpha
+ */
+export const jsonBoolean = TypedSchema.tree("Json.Boolean", {
+	value: ValueSchema.Boolean,
 });
 
-export const jsonBoolean: NamedTreeSchema = namedTreeSchema({
-    name: brand("Json.Boolean"),
-    extraLocalFields: emptyField,
-    value: ValueSchema.Boolean,
-});
+/**
+ * @alpha
+ */
+export const jsonSchemaData: SchemaData = SchemaAware.typedSchemaData(
+	new Map(),
+	jsonObject,
+	jsonArray,
+	jsonNumber,
+	jsonString,
+	jsonNull,
+	jsonBoolean,
+);
 
-json.push(jsonObject, jsonArray, jsonNumber, jsonString, jsonNull, jsonBoolean);
-for (const named of json) {
-    jsonTypes.add(named.name);
-    jsonTypeSchema.set(named.name, named);
-}
-
-export const jsonRoot: FieldSchema = fieldSchema(FieldKinds.value, jsonTypes);
+/**
+ * @alpha
+ */
+export const jsonRoot: FieldSchema = TypedSchema.field(FieldKinds.value, ...jsonTypes);

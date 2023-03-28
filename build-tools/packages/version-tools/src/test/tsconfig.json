@@ -1,18 +1,18 @@
 {
-  "extends": "@fluidframework/build-common/ts-common-config.json",
-  "compilerOptions": {
-    "declaration": true,
-    "importHelpers": true,
-    "declarationMap": false,
-    "rootDir": "./",
-    "outDir": "../../lib/test",
-    "types": ["node", "mocha", "chai"],
-    "skipLibCheck": true,
-  },
-  "include": ["./**/*"],
-  "references": [
-    {
-      "path": "../..",
-    },
-  ],
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"declaration": true,
+		"importHelpers": true,
+		"declarationMap": false,
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["node", "mocha", "chai"],
+		"skipLibCheck": true,
+	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
 }

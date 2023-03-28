@@ -586,14 +586,13 @@ export class IdCompressor {
 				const lastKnownFinal =
 					this.sessionIdNormalizer.getLastFinalId() ??
 					fail('Cluster exists but normalizer does not have an entry for it.');
-				const lastFinalInCluster = (currentBaseFinalId +
+				const lastAlignedFinalInCluster = (currentBaseFinalId +
 					Math.min(currentCluster.count + finalizeCount, currentCluster.capacity) -
 					1) as FinalCompressedId;
-				if (lastFinalInCluster > lastKnownFinal) {
-					eagerFinalIdCount = lastFinalInCluster - (lastKnownFinal + 1);
+				if (lastAlignedFinalInCluster > lastKnownFinal) {
 					this.sessionIdNormalizer.addFinalIds(
 						(lastKnownFinal + 1) as FinalCompressedId,
-						lastFinalInCluster,
+						lastAlignedFinalInCluster,
 						currentCluster
 					);
 				}
@@ -604,6 +603,7 @@ export class IdCompressor {
 			const hasRoom = overflow <= 0;
 			if (hasRoom || currentBaseFinalId === this.finalIdToCluster.maxKey()) {
 				currentCluster.count += remainingCount;
+				eagerFinalIdCount = remainingCount;
 				remainingCount = 0;
 				// The common case is that there is room in the cluster, and the new final IDs can simply be added to it
 				if (!hasRoom) {
@@ -636,25 +636,15 @@ export class IdCompressor {
 							session.lastFinalizedLocalId !== undefined,
 							'Cluster already exists for session but there is no finalized local ID'
 						);
-						const newLastFinalizedLocal = session.lastFinalizedLocalId - finalizeCount;
-						const lastLocal = -this.localIdCount;
-						// Calculate the last final in the cluster that aligns with an existing local. If there are more unfinalized locals
-						// than fit in the expanded cluster, this will be the last final in the cluster
-						const newLastFinal = (newLastFinalizedFinal +
-							Math.min(newLastFinalizedLocal - lastLocal, this.newClusterCapacity)) as FinalCompressedId;
-						assert(
-							newLastFinal >= newLastFinalizedFinal,
-							'The number of unfinalized locals should only be positive'
-						);
 						const finalPivot = (newLastFinalizedFinal - overflow + 1) as FinalCompressedId;
 						// Inform the normalizer of all IDs that we now know will end up being finalized into this cluster, including the ones
 						// that were given out as locals (non-eager) because they exceeded the bounds of the current cluster before it was expanded.
 						// It is safe to associate the unfinalized locals with their future final IDs even before the ranges for those locals are
 						// actually finalized, because total order broadcast guarantees that any usage of those final IDs will be observed after
 						// the finalization of the ranges.
-						this.sessionIdNormalizer.addFinalIds(finalPivot, newLastFinal, currentCluster);
+						this.sessionIdNormalizer.registerFinalIdBlock(finalPivot, expansionAmount, currentCluster);
 						this.logger?.sendTelemetryEvent({
-							eventName: 'IdCompressor:ClusterExpansion',
+							eventName: 'SharedTreeIdCompressor:ClusterExpansion',
 							sessionId: this.localSessionId,
 							previousCapacity,
 							newCapacity: currentCluster.capacity,
@@ -667,19 +657,22 @@ export class IdCompressor {
 				// form a new one by incrementing the previous baseUuid
 				newBaseUuid = incrementUuid(currentCluster.baseUuid, currentCluster.capacity);
 				currentCluster.count += remainingCapacity;
+				eagerFinalIdCount = remainingCapacity;
 				remainingCount -= remainingCapacity;
 				this.logger?.sendTelemetryEvent({
-					eventName: 'IdCompressor:OverfilledCluster',
+					eventName: 'SharedTreeIdCompressor:OverfilledCluster',
 					sessionId: this.localSessionId,
 				});
 			}
 		} else {
 			// Session has never made a cluster, form a new one with the session UUID as the baseUuid
 			newBaseUuid = session.sessionUuid;
-			this.logger?.sendTelemetryEvent({
-				eventName: 'IdCompressor:FirstCluster',
-				sessionId: this.localSessionId,
-			});
+			if (isLocal) {
+				this.logger?.sendTelemetryEvent({
+					eventName: 'SharedTreeIdCompressor:FirstCluster',
+					sessionId: this.localSessionId,
+				});
+			}
 		}
 
 		// Finalizing a range results in one of three cases:
@@ -716,13 +709,12 @@ export class IdCompressor {
 
 			if (isLocal) {
 				this.logger?.sendTelemetryEvent({
-					eventName: 'IdCompressor:NewCluster',
+					eventName: 'SharedTreeIdCompressor:NewCluster',
 					sessionId: this.localSessionId,
 					clusterCapacity: newCapacity,
 					clusterCount: remainingCount,
 				});
-				const lastFinalizedFinal = (newBaseFinalId + newCluster.count - 1) as FinalCompressedId;
-				this.sessionIdNormalizer.addFinalIds(newBaseFinalId, lastFinalizedFinal, newCluster);
+				this.sessionIdNormalizer.registerFinalIdBlock(newBaseFinalId, newCluster.capacity, newCluster);
 			}
 
 			this.checkClusterForCollision(newCluster);
@@ -839,9 +831,9 @@ export class IdCompressor {
 
 		if (isLocal) {
 			this.logger?.sendTelemetryEvent({
-				eventName: 'IdCompressor:IdCompressorStatus',
-				eagerFinalIdCount,
-				localIdCount: remainingCount,
+				eventName: 'SharedTreeIdCompressor:IdCompressorStatus',
+				eagerFinalIdCount: eagerFinalIdCount - (overrides?.length ?? 0),
+				localIdCount: remainingCount + (overrides?.length ?? 0),
 				overridesCount: overrides?.length ?? 0,
 				sessionId: this.localSessionId,
 			});
@@ -1006,10 +998,12 @@ export class IdCompressor {
 		let eagerFinalId: (FinalCompressedId & SessionSpaceCompressedId) | undefined;
 		let cluster: IdCluster | undefined;
 		if (currentClusterDetails !== undefined) {
-			const { clusterBase } = currentClusterDetails;
 			cluster = currentClusterDetails.cluster;
 			const lastFinalKnown = sessionIdNormalizer.getLastFinalId();
-			if (lastFinalKnown !== undefined && lastFinalKnown - clusterBase + 1 < cluster.capacity) {
+			if (
+				lastFinalKnown !== undefined &&
+				lastFinalKnown - currentClusterDetails.clusterBase + 1 < cluster.capacity
+			) {
 				eagerFinalId = (lastFinalKnown + 1) as FinalCompressedId & SessionSpaceCompressedId;
 			}
 		}
@@ -1186,15 +1180,14 @@ export class IdCompressor {
 				const inversionKey = IdCompressor.createInversionKey(override);
 				const compressionMapping =
 					this.clustersAndOverridesInversion.get(inversionKey) ?? fail('Bimap is malformed.');
-				if (
-					!IdCompressor.isClusterInfo(compressionMapping) &&
+				return !IdCompressor.isClusterInfo(compressionMapping) &&
 					!IdCompressor.isUnfinalizedOverride(compressionMapping) &&
 					compressionMapping.associatedLocalId === id
-				) {
-					return compressionMapping.originalOverridingFinal;
-				}
+					? compressionMapping.originalOverridingFinal
+					: (id as OpSpaceCompressedId);
 			}
-			return id as OpSpaceCompressedId;
+			const possibleFinal = this.sessionIdNormalizer.getFinalId(id);
+			return possibleFinal?.[0] ?? (id as OpSpaceCompressedId);
 		}
 		const [correspondingFinal, cluster] =
 			this.sessionIdNormalizer.getFinalId(id) ??
@@ -1620,6 +1613,13 @@ export class IdCompressor {
 
 			return serializedWithSession;
 		}
+
+		this.logger?.sendTelemetryEvent({
+			eventName: 'SharedTreeIdCompressor:SerializedIdCompressorSize',
+			size: JSON.stringify(serializedIdCompressor).length,
+			clusterCount: serializedIdCompressor.clusters.length,
+			sessionCount: serializedIdCompressor.sessions.length,
+		});
 
 		return serializedIdCompressor as SerializedIdCompressor;
 	}

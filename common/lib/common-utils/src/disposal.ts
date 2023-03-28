@@ -12,14 +12,14 @@ import { IDisposable } from "@fluidframework/common-definitions";
  * @throws Will throw an error if the item has already been disposed.
  */
 export function doIfNotDisposed<T>(
-    disposable: IDisposable,
-    f: (...args: any[]) => T,
+	disposable: IDisposable,
+	f: (...args: any[]) => T,
 ): (...args: any[]) => T {
-    return (...args: any[]): T => {
-        if (disposable.disposed) {
-            throw new Error("Already disposed");
-        } else {
-            return f(...args);
-        }
-    };
+	return (...args: any[]): T => {
+		if (disposable.disposed) {
+			throw new Error("Already disposed");
+		} else {
+			return f(...args);
+		}
+	};
 }

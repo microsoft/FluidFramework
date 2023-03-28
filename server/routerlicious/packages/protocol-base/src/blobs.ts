@@ -5,14 +5,14 @@
 
 import * as git from "@fluidframework/gitresources";
 import {
-    FileMode,
-    IBlob,
-    IAttachment,
-    ISnapshotTreeEx,
-    ITree,
-    TreeEntry,
-    SummaryType,
-    SummaryObject,
+	FileMode,
+	IBlob,
+	IAttachment,
+	ISnapshotTreeEx,
+	ITree,
+	TreeEntry,
+	SummaryType,
+	SummaryObject,
 } from "@fluidframework/protocol-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 /**
@@ -22,16 +22,16 @@ import { unreachableCase } from "@fluidframework/common-utils";
  * @returns the git mode of summary object
  */
 export function getGitMode(value: SummaryObject): string {
-    const type = value.type === SummaryType.Handle ? value.handleType : value.type;
-    switch (type) {
-        case SummaryType.Blob:
-        case SummaryType.Attachment:
-            return FileMode.File;
-        case SummaryType.Tree:
-            return FileMode.Directory;
-        default:
-            unreachableCase(type, `Unknown type: ${type}`);
-    }
+	const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+	switch (type) {
+		case SummaryType.Blob:
+		case SummaryType.Attachment:
+			return FileMode.File;
+		case SummaryType.Tree:
+			return FileMode.Directory;
+		default:
+			unreachableCase(type, `Unknown type: ${type}`);
+	}
 }
 
 /**
@@ -41,17 +41,17 @@ export function getGitMode(value: SummaryObject): string {
  * @returns the type of summary object
  */
 export function getGitType(value: SummaryObject): "blob" | "tree" {
-    const type = value.type === SummaryType.Handle ? value.handleType : value.type;
+	const type = value.type === SummaryType.Handle ? value.handleType : value.type;
 
-    switch (type) {
-        case SummaryType.Blob:
-        case SummaryType.Attachment:
-            return "blob";
-        case SummaryType.Tree:
-            return "tree";
-        default:
-            unreachableCase(type, `Unknown type: ${type}`);
-    }
+	switch (type) {
+		case SummaryType.Blob:
+		case SummaryType.Attachment:
+			return "blob";
+		case SummaryType.Tree:
+			return "tree";
+		default:
+			unreachableCase(type, `Unknown type: ${type}`);
+	}
 }
 
 /**
@@ -63,100 +63,103 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
  * @returns the hierarchical tree
  */
 export function buildHierarchy(
-    flatTree: git.ITree,
-    blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
-    removeAppTreePrefix = false): ISnapshotTreeEx {
-    const lookup: { [path: string]: ISnapshotTreeEx; } = {};
-    const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, trees: {} };
-    lookup[""] = root;
+	flatTree: git.ITree,
+	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
+	removeAppTreePrefix = false,
+): ISnapshotTreeEx {
+	const lookup: { [path: string]: ISnapshotTreeEx } = {};
+	const root: ISnapshotTreeEx = { id: flatTree.sha, blobs: {}, trees: {} };
+	lookup[""] = root;
 
-    for (const entry of flatTree.tree) {
-        const entryPath = removeAppTreePrefix ? entry.path.replace(/^\.app\//, "") : entry.path;
-        const lastIndex = entryPath.lastIndexOf("/");
-        const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
-        const entryPathBase = entryPath.slice(lastIndex + 1);
+	for (const entry of flatTree.tree) {
+		const entryPath = removeAppTreePrefix ? entry.path.replace(/^\.app\//, "") : entry.path;
+		const lastIndex = entryPath.lastIndexOf("/");
+		const entryPathDir = entryPath.slice(0, Math.max(0, lastIndex));
+		const entryPathBase = entryPath.slice(lastIndex + 1);
 
-        // The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-        const node = lookup[entryPathDir];
+		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
+		const node = lookup[entryPathDir];
 
-        // Add in either the blob or tree
-        if (entry.type === "tree") {
-            const newTree = { id: entry.sha, blobs: {}, commits: {}, trees: {} };
-            node.trees[decodeURIComponent(entryPathBase)] = newTree;
-            lookup[entryPath] = newTree;
-        } else if (entry.type === "blob") {
-            node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
-            blobsShaToPathCache.set(entry.sha, `/${entryPath}`);
-        } else {
-            throw new Error("Unknown entry type!!");
-        }
-    }
+		// Add in either the blob or tree
+		if (entry.type === "tree") {
+			const newTree = { id: entry.sha, blobs: {}, commits: {}, trees: {} };
+			node.trees[decodeURIComponent(entryPathBase)] = newTree;
+			lookup[entryPath] = newTree;
+		} else if (entry.type === "blob") {
+			node.blobs[decodeURIComponent(entryPathBase)] = entry.sha;
+			blobsShaToPathCache.set(entry.sha, `/${entryPath}`);
+		} else {
+			throw new Error("Unknown entry type!!");
+		}
+	}
 
-    return root;
+	return root;
 }
 
 /**
  * Basic implementation of a blob ITreeEntry
  */
 export class BlobTreeEntry {
-    public readonly mode = FileMode.File;
-    public readonly type = TreeEntry.Blob;
-    public readonly value: IBlob;
+	public readonly mode = FileMode.File;
+	public readonly type = TreeEntry.Blob;
+	public readonly value: IBlob;
 
-    /**
-     * Creates a blob ITreeEntry
-     * @param path - path of entry
-     * @param contents - blob contents
-     * @param encoding - encoding of contents; defaults to utf-8
-     */
-    constructor(public readonly path: string, contents: string, encoding: "utf-8" | "base64" = "utf-8") {
-        this.value = { contents, encoding };
-    }
+	/**
+	 * Creates a blob ITreeEntry
+	 * @param path - path of entry
+	 * @param contents - blob contents
+	 * @param encoding - encoding of contents; defaults to utf-8
+	 */
+	constructor(
+		public readonly path: string,
+		contents: string,
+		encoding: "utf-8" | "base64" = "utf-8",
+	) {
+		this.value = { contents, encoding };
+	}
 }
 
 /**
  * Basic implementation of a tree ITreeEntry
  */
 export class TreeTreeEntry {
-    public readonly mode = FileMode.Directory;
-    public readonly type = TreeEntry.Tree;
+	public readonly mode = FileMode.Directory;
+	public readonly type = TreeEntry.Tree;
 
-    /**
-     * Creates a tree ITreeEntry
-     * @param path - path of entry
-     * @param value - subtree
-     */
-    constructor(public readonly path: string, public readonly value: ITree) { }
+	/**
+	 * Creates a tree ITreeEntry
+	 * @param path - path of entry
+	 * @param value - subtree
+	 */
+	constructor(public readonly path: string, public readonly value: ITree) {}
 }
 
 /**
  * Basic implementation of an attachment ITreeEntry
  */
 export class AttachmentTreeEntry {
-    public readonly mode = FileMode.File;
-    public readonly type = TreeEntry.Attachment;
-    public readonly value: IAttachment;
+	public readonly mode = FileMode.File;
+	public readonly type = TreeEntry.Attachment;
+	public readonly value: IAttachment;
 
-    /**
-     * Creates an attachment ITreeEntry
-     * @param path - path of entry
-     * @param id - id of external blob attachment
-     */
-    constructor(public readonly path: string, public readonly id: string) {
-        this.value = { id };
-    }
+	/**
+	 * Creates an attachment ITreeEntry
+	 * @param path - path of entry
+	 * @param id - id of external blob attachment
+	 */
+	constructor(public readonly path: string, public readonly id: string) {
+		this.value = { id };
+	}
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export function addBlobToTree(tree: ITree, blobName: string, content: object) {
-    tree.entries.push(
-        {
-            mode: FileMode.File,
-            path: blobName,
-            type: TreeEntry.Blob,
-            value: {
-                contents: JSON.stringify(content),
-                encoding: "utf-8",
-            },
-        });
+	tree.entries.push({
+		mode: FileMode.File,
+		path: blobName,
+		type: TreeEntry.Blob,
+		value: {
+			contents: JSON.stringify(content),
+			encoding: "utf-8",
+		},
+	});
 }

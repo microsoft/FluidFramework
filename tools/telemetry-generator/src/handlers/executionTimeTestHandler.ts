@@ -4,15 +4,22 @@
  */
 
 module.exports = function handler(fileData, logger) {
-    fileData.benchmarks.forEach((testData) => {
-        logger.send({
-            category: "performance",
-            eventName: "Benchmark",
-            benchmarkType: "ExecutionTime",
-            suiteName: fileData.suiteName,
-            benchmarkName: testData.benchmarkName,
-            arithmeticMean: testData.stats.arithmeticMean,
-            marginOfError: testData.stats.marginOfError,
-        });
-    });
+	if (process.env.FLUID_ENDPOINTNAME !== undefined) {
+		console.log("ENDPOINTNAME", process.env.FLUID_ENDPOINTNAME);
+	} else {
+		console.log("ENDPOINTNAME not defined using local as default.");
+	}
+
+	fileData.benchmarks.forEach((testData) => {
+		logger.send({
+			category: "performance",
+			eventName: "Benchmark",
+			benchmarkType: "ExecutionTime",
+			suiteName: fileData.suiteName,
+			benchmarkName: testData.benchmarkName,
+			arithmeticMean: testData.stats.arithmeticMean,
+			marginOfError: testData.stats.marginOfError,
+			driverEndpointName: process.env.FLUID_ENDPOINTNAME ?? "",
+		});
+	});
 };

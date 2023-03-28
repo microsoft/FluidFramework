@@ -17,7 +17,7 @@
 	"forwardPorts": [3000],
 
 	// Mount socket for access to docker daemon within the container
-	"mounts": [ "source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind" ],
+	"mounts": ["source=/var/run/docker.sock,target=/var/run/docker-host.sock,type=bind"],
 
 	// Set *default* container specific settings.json values on container create.
 	"settings": { "terminal.integrated.shell.linux": "/bin/bash" },
@@ -32,6 +32,6 @@
 		"ms-azuretools.vscode-docker",
 		"ms-vsliveshare.vsliveshare",
 		// "ms-vscode-remote.remote-containers",	// Runs locally only, disabled in dev container
-		"streetsidesoftware.code-spell-checker",
+		"streetsidesoftware.code-spell-checker"
 	]
 }

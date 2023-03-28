@@ -130,11 +130,11 @@ export function runPendingLocalStateTests(
 
 			const stableEdit = stabilizeEdit(stashingTree, edit as unknown as Edit<ChangeInternal>);
 			expect(
-				stabilizeEdit(observerTree, (await getEditLogInternal(observerTree).tryGetEdit(edit.id)) ?? fail())
+				stabilizeEdit(observerTree, getEditLogInternal(observerTree).tryGetEditFromId(edit.id) ?? fail())
 			).to.deep.equal(stableEdit);
 
 			expect(
-				stabilizeEdit(stashingTree2, (await getEditLogInternal(stashingTree2).tryGetEdit(edit.id)) ?? fail())
+				stabilizeEdit(stashingTree2, getEditLogInternal(stashingTree2).tryGetEditFromId(edit.id) ?? fail())
 			).to.deep.equal(stableEdit);
 
 			expect(observerTree.edits.length).to.equal(initialEditLogLength + 1);

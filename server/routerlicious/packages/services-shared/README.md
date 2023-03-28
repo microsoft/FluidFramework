@@ -1,6 +1,6 @@
 # @fluidframework/server-services-shared
 
-Fluid server packages containing shared service implementations.  Implements service interfaces that are shared between 
+Fluid server packages containing shared service implementations. Implements service interfaces that are shared between
 Routerlicious and Tinylicious. Includes DocumentStorage and HttpServer.
 
 These implementations are only expected to be run on the server and may not browserify.

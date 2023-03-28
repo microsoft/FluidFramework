@@ -3,3 +3,5 @@
 /lib
 _api-extractor-temp/
 nyc/
+# Generated type-tests
+**/*.generated.ts

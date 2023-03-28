@@ -1,0 +1,5 @@
+nyc
+*.log
+**/*.tsbuildinfo
+dist/tests
+**/_api-extractor-temp/**

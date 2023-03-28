@@ -10,64 +10,66 @@ import { Field } from "./Field";
 import { IEditableValueCellProps } from "./InspectorTableTypes";
 import { TooltipedField } from "./TooltipedField";
 
-const styles = () => createStyles({
-  container: {
-    alignItems: "center",
-    display: "flex",
-    flexGrow: 1,
-    height: "100%",
-    width: "100%",
-  },
-  info: {
-    color: "#3C3C3C",
-    fontFamily: "ArtifaktElement, Helvetica, Arial",
-    fontSize: "11px",
-    fontStyle: "normal",
-    fontWeight: "normal",
-    lineHeight: "13px",
-  },
-  input: {
-    flexShrink: 0,
-    height: iconWidth,
-    marginLeft: `${iconMarginRight}${unit}`,
-    marginRight: `${iconMarginRight}${unit}`,
-    width: iconWidth,
-  },
-  textField: {
-    width: "100%",
-  },
-  tooltip: {
-    "background-color": "black",
-  },
-});
+const styles = () =>
+	createStyles({
+		container: {
+			alignItems: "center",
+			display: "flex",
+			flexGrow: 1,
+			height: "100%",
+			width: "100%",
+		},
+		info: {
+			color: "#3C3C3C",
+			fontFamily: "ArtifaktElement, Helvetica, Arial",
+			fontSize: "11px",
+			fontStyle: "normal",
+			fontWeight: "normal",
+			lineHeight: "13px",
+		},
+		input: {
+			flexShrink: 0,
+			height: iconWidth,
+			marginLeft: `${iconMarginRight}${unit}`,
+			marginRight: `${iconMarginRight}${unit}`,
+			width: iconWidth,
+		},
+		textField: {
+			width: "100%",
+		},
+		tooltip: {
+			"background-color": "black",
+		},
+	});
 
 /**
  * Inspector table value column cell, which allows viewing and editing the value of the property for which
  * the row represents.
  */
-const EditableValueCell: React.FunctionComponent<WithStyles<typeof styles> & IEditableValueCellProps> = (props) => {
-  const {
-    classes,
-    className,
-    followReferences,
-    rowData,
-    iconRenderer,
-    ...restProps // tslint:disable-line
-  } = props;
+const EditableValueCell: React.FunctionComponent<
+	WithStyles<typeof styles> & IEditableValueCellProps
+> = (props) => {
+	const {
+		classes,
+		className,
+		followReferences,
+		rowData,
+		iconRenderer,
+		...restProps // tslint:disable-line
+	} = props;
 
-  return (
-    <div className={classNames(className, classes.container)} {...restProps}>
-      {
-        rowData.isConstant || rowData.parentIsConstant
-          ? <TooltipedField
-            message={InspectorMessages.CONSTANT_PROPERTY}
-            {...props}
-          />
-          : <Field {...props} />
-      }
-    </div>
-  );
+	return (
+		<div className={classNames(className, classes.container)} {...restProps}>
+			{rowData.isConstant || rowData.parentIsConstant ? (
+				<TooltipedField message={InspectorMessages.CONSTANT_PROPERTY} {...props} />
+			) : (
+				<Field {...props} />
+			)}
+		</div>
+	);
 };
 
-const StyledEditableValueCell = withStyles(styles, { name: "EditableValueCell" })(EditableValueCell);
+const StyledEditableValueCell = withStyles(styles, { name: "EditableValueCell" })(
+	EditableValueCell,
+);
 export { StyledEditableValueCell as EditableValueCell };

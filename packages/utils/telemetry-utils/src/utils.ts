@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 import {
-    ITelemetryBaseEvent,
-    ITelemetryBaseLogger,
-    ITelemetryGenericEvent,
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+	ITelemetryGenericEvent,
 } from "@fluidframework/common-definitions";
 
 /**
@@ -16,17 +16,17 @@ import {
  * @returns - The outcome of the condition
  */
 export function logIfFalse(
-    condition: any,
-    logger: ITelemetryBaseLogger,
-    event: string | ITelemetryGenericEvent,
+	condition: any,
+	logger: ITelemetryBaseLogger,
+	event: string | ITelemetryGenericEvent,
 ): condition is true {
-    if (condition) {
-        return true;
-    }
-    const newEvent: ITelemetryBaseEvent =
-        typeof event === "string"
-        ? { eventName: event, category: "error" }
-        : { category: "error", ...event };
-    logger.send(newEvent);
-    return false;
+	if (condition) {
+		return true;
+	}
+	const newEvent: ITelemetryBaseEvent =
+		typeof event === "string"
+			? { eventName: event, category: "error" }
+			: { category: "error", ...event };
+	logger.send(newEvent);
+	return false;
 }

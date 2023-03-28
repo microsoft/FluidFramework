@@ -4,6 +4,6 @@
  */
 
 import { jsonableTreeFromCursor, singleTextCursor } from "../../feature-libraries";
-import { testJsonableTreeCursor } from "../cursorTestSuite";
+import { testGeneralPurposeTreeCursor } from "../cursorTestSuite";
 
-testJsonableTreeCursor("textTreeFormat", singleTextCursor, jsonableTreeFromCursor);
+testGeneralPurposeTreeCursor("textTreeFormat", singleTextCursor, jsonableTreeFromCursor);

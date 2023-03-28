@@ -4,10 +4,17 @@
  */
 
 export {
+	AttributionInfo,
+	AttributionKey,
+	DetachedAttributionKey,
+	LocalAttributionKey,
+	OpAttributionKey,
+} from "./attribution";
+export {
 	AliasResult,
-	BindState,
 	CreateChildSummarizerNodeFn,
 	FlushMode,
+	FlushModeExperimental,
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 	IDataStore,
@@ -25,15 +32,30 @@ export {
 	NamedFluidDataStoreRegistryEntries,
 	NamedFluidDataStoreRegistryEntry,
 } from "./dataStoreRegistry";
-export { gcBlobKey, IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbageCollection";
-export { IAttachMessage, IEnvelope, IInboundSignalMessage, InboundAttachMessage, ISignalEnvelope } from "./protocol";
+export {
+	gcBlobPrefix,
+	gcDeletedBlobKey,
+	gcTombstoneBlobKey,
+	gcTreeKey,
+	IGarbageCollectionData,
+	IGarbageCollectionDetailsBase,
+} from "./garbageCollection";
+export {
+	IAttachMessage,
+	IEnvelope,
+	IInboundSignalMessage,
+	InboundAttachMessage,
+	ISignalEnvelope,
+} from "./protocol";
 export {
 	blobCountPropertyName,
 	channelsTreeName,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
 	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,

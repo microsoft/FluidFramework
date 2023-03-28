@@ -232,7 +232,7 @@ export function runSharedTreeOperationsTests(
 					Change.insert(detachedSequenceId, StablePlace.before(testTree.left))
 				);
 				const logViewer = sharedTree.logViewer as CachingLogViewer;
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
+				expect(logViewer.getEditResultInMemory(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
 				sharedTree.currentView.assertConsistent();
@@ -256,7 +256,7 @@ export function runSharedTreeOperationsTests(
 					Change.insert(detachedRightNodeSequenceId, StablePlace.before(testTree.left))
 				);
 				const logViewer = sharedTree.logViewer as CachingLogViewer;
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(id)).status).equals(
+				expect(logViewer.getEditResultInMemory(logViewer.log.getIndexOfId(id)).status).equals(
 					EditStatus.Invalid
 				);
 				sharedTree.currentView.assertConsistent();
@@ -586,10 +586,10 @@ export function runSharedTreeOperationsTests(
 
 				containerRuntimeFactory.processAllMessages();
 				const logViewer = sharedTree1.logViewer as CachingLogViewer;
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit1.id)).status).equals(
+				expect(logViewer.getEditResultInMemory(logViewer.log.getIndexOfId(edit1.id)).status).equals(
 					EditStatus.Applied
 				);
-				expect(logViewer.getEditResultInSession(logViewer.log.getIndexOfId(edit2.id)).status).equals(
+				expect(logViewer.getEditResultInMemory(logViewer.log.getIndexOfId(edit2.id)).status).equals(
 					EditStatus.Invalid
 				);
 				sharedTree1.currentView.assertConsistent();
@@ -857,7 +857,7 @@ export function runSharedTreeOperationsTests(
 					expect(editLog.length).to.equal(2);
 
 					// The first operation to be sequenced is the tree init
-					const treeInitEdit = await editLog.getEditAtIndex(1);
+					const treeInitEdit = editLog.tryGetEditAtIndex(1) ?? fail('edit not found');
 					expect(treeInitEdit.changes.length).to.equal(2);
 					expect(treeInitEdit.changes[0].type).to.equal(ChangeType.Build);
 					expect(treeInitEdit.changes[1].type).to.equal(ChangeType.Insert);
@@ -954,7 +954,7 @@ export function runSharedTreeOperationsTests(
 				// The history should have been dropped by the default handling behavior.
 				// It will contain a single entry setting the tree to equal the head revision.
 				expect(sharedTree2.edits.length).to.equal(1);
-				expect(await sharedTree2.edits.tryGetEdit(id)).to.be.undefined;
+				expect(sharedTree2.edits.tryGetEditFromId(id)).to.be.undefined;
 			});
 
 			it('correctly handles payloads at the root', () => {
@@ -1036,7 +1036,7 @@ export function runSharedTreeOperationsTests(
 					);
 					containerRuntimeFactory.processAllMessages();
 					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					sharedTree.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 					expect(logger.events.length).is.greaterThan(0);
 					logger.events.forEach((event) => {
 						expect(isSharedTreeEvent(event)).is.true;
@@ -1064,7 +1064,7 @@ export function runSharedTreeOperationsTests(
 					expect(logger.events.length).equals(0);
 					containerRuntimeFactory.processAllMessages();
 					// Force demand, which will cause a telemetry event for the invalid edit to be emitted
-					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					sharedTree.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 					expect(logger.events.length).equals(1);
 					expect(logger.events[0].category).equals('generic');
 					expect(logger.events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
@@ -1088,7 +1088,7 @@ export function runSharedTreeOperationsTests(
 					);
 					expect(logger.events.length).equals(0);
 					containerRuntimeFactory.processAllMessages();
-					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					sharedTree.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 					expect(logger.events.length).equals(1);
 					expect(logger.events[0].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
 
@@ -1101,7 +1101,7 @@ export function runSharedTreeOperationsTests(
 						)
 					);
 					containerRuntimeFactory.processAllMessages();
-					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					sharedTree.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 					expect(logger.events.length).equals(1);
 
 					useFailedSequencedEditTelemetry(sharedTree);
@@ -1113,7 +1113,7 @@ export function runSharedTreeOperationsTests(
 						)
 					);
 					containerRuntimeFactory.processAllMessages();
-					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					sharedTree.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 
 					expect(logger.events.length).equals(2);
 					expect(logger.events[1].eventName).equals('SharedTree:SequencedEditApplied:InvalidSharedTreeEdit');
@@ -1128,7 +1128,7 @@ export function runSharedTreeOperationsTests(
 
 					sharedTree.applyEdit(...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left)));
 					containerRuntimeFactory.processAllMessages();
-					await sharedTree.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					sharedTree.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 					expect(logger.events.length).equals(0);
 				});
 
@@ -1155,7 +1155,7 @@ export function runSharedTreeOperationsTests(
 						)
 					);
 					containerRuntimeFactory.processAllMessages();
-					await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+					sharedTree1.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 					expect(logger.events.length).equals(0);
 				});
 			});
@@ -1208,7 +1208,7 @@ export function runSharedTreeOperationsTests(
 				});
 
 				containerRuntimeFactory.processAllMessages();
-				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				sharedTree1.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 
 				const eventArgs: SequencedEditAppliedEventArguments[] = [];
 				sharedTree1.on(SharedTreeEvent.SequencedEditApplied, (args: SequencedEditAppliedEventArguments) =>
@@ -1219,7 +1219,7 @@ export function runSharedTreeOperationsTests(
 				const change = Change.setPayload(testTree.generateNodeId(), 42);
 				const invalidEdit = sharedTree1.applyEdit(change);
 				containerRuntimeFactory.processAllMessages();
-				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				sharedTree1.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 
 				expect(eventArgs.length).equals(1);
 				expect(eventArgs[0].edit.id).equals(invalidEdit.id);
@@ -1240,7 +1240,7 @@ export function runSharedTreeOperationsTests(
 					...Change.insertTree(testTree.buildLeaf(), StablePlace.after(testTree.left))
 				);
 				containerRuntimeFactory.processAllMessages();
-				await sharedTree1.logViewer.getRevisionView(Number.POSITIVE_INFINITY);
+				sharedTree1.logViewer.getRevisionViewInMemory(Number.POSITIVE_INFINITY);
 
 				expect(eventArgs.length).equals(3);
 				expect(eventArgs[1].edit.id).equals(validEdit1.id);
@@ -1308,10 +1308,10 @@ export function runSharedTreeOperationsTests(
 
 					const log = getEditLogInternal(tree);
 					const log2 = getEditLogInternal(secondTree);
-					const insertEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(1));
-					const moveEdit = normalizeEdit(tree, log.getEditInSessionAtIndex(2));
-					const insertEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(1));
-					const moveEdit2 = normalizeEdit(secondTree, log2.getEditInSessionAtIndex(2));
+					const insertEdit = normalizeEdit(tree, log.tryGetEditAtIndex(1) ?? fail('edit not found'));
+					const moveEdit = normalizeEdit(tree, log.tryGetEditAtIndex(2) ?? fail('edit not found'));
+					const insertEdit2 = normalizeEdit(secondTree, log2.tryGetEditAtIndex(1) ?? fail('edit not found'));
+					const moveEdit2 = normalizeEdit(secondTree, log2.tryGetEditAtIndex(2) ?? fail('edit not found'));
 					expect(insertEdit).to.deep.equal(insertEdit2);
 					expect(moveEdit).to.deep.equal(moveEdit2);
 					expect(tree.equals(secondTree)).to.be.true;
@@ -1369,7 +1369,7 @@ export function runSharedTreeOperationsTests(
 					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
 				);
 				const preEditRootHandle = getTestTreeRootHandle(sharedTree2, testTree2);
-				const edits = [0, 1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
+				const edits = [0, 1, 2].map((i) => sharedTree.edits.tryGetEditAtIndex(i) ?? fail('edit not found'));
 				// Since the TestTree setup edit is a `setTrait`, this should wipe `testTree2` state.
 				sharedTree2.mergeEditsFrom(sharedTree, edits);
 				expect(sharedTree2.edits.length).to.equal(4);
@@ -1398,7 +1398,7 @@ export function runSharedTreeOperationsTests(
 				sharedTree.applyEdit(
 					Change.delete(StableRange.all({ parent: testTree.identifier, label: testTree.right.traitLabel }))
 				);
-				const edits = [1, 2].map((i) => sharedTree.edits.getEditInSessionAtIndex(i));
+				const edits = [1, 2].map((i) => sharedTree.edits.tryGetEditAtIndex(i) ?? fail('edit not found'));
 				sharedTree2.mergeEditsFrom(sharedTree, edits, (id) => translationMap.get(id) ?? id);
 
 				const root = getTestTreeRootHandle(sharedTree, testTree);

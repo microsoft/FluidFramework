@@ -18,16 +18,12 @@ import { IFluidSerializer } from "./serializer";
  * @returns Result of strigifying an object
  */
 export function serializeHandles(
-    value: any,
-    serializer: IFluidSerializer,
-    bind: IFluidHandle,
+	value: any,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
 ): string | undefined {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return value !== undefined
-        ? serializer.stringify(
-            value,
-            bind)
-        : value;
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return value !== undefined ? serializer.stringify(value, bind) : value;
 }
 
 /**
@@ -43,14 +39,12 @@ export function serializeHandles(
  * @returns The fully-plain object
  */
 export function makeHandlesSerializable(
-    value: any,
-    serializer: IFluidSerializer,
-    bind: IFluidHandle,
+	value: any,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
 ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return serializer.encode(
-        value,
-        bind);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return serializer.encode(value, bind);
 }
 
 /**
@@ -61,12 +55,9 @@ export function makeHandlesSerializable(
  * @param context - The handle context for the container
  * @returns The mostly-plain object with handle objects within
  */
-export function parseHandles(
-    value: any,
-    serializer: IFluidSerializer,
-) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return value !== undefined ? serializer.parse(JSON.stringify(value)) : value;
+export function parseHandles(value: any, serializer: IFluidSerializer) {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return value !== undefined ? serializer.parse(JSON.stringify(value)) : value;
 }
 
 /**
@@ -75,8 +66,11 @@ export function parseHandles(
  * @param content - blob content
  * @returns The summary containing the blob
  */
-export function createSingleBlobSummary(key: string, content: string | Uint8Array): ISummaryTreeWithStats {
-    const builder = new SummaryTreeBuilder();
-    builder.addBlob(key, content);
-    return builder.getSummaryTree();
+export function createSingleBlobSummary(
+	key: string,
+	content: string | Uint8Array,
+): ISummaryTreeWithStats {
+	const builder = new SummaryTreeBuilder();
+	builder.addBlob(key, content);
+	return builder.getSummaryTree();
 }

@@ -5,17 +5,23 @@
 import * as Path from "node:path";
 
 import { ApiItem } from "@microsoft/api-extractor-model";
-import { StringBuilder } from "@microsoft/tsdoc";
 import { FileSystem } from "@rushstack/node-core-library";
 
 import {
-    MarkdownDocumenterConfiguration,
-    markdownDocumenterConfigurationWithDefaults,
-} from "./Configuration";
-import { MarkdownDocument } from "./MarkdownDocument";
-import { MarkdownEmitter } from "./MarkdownEmitter";
-import { renderApiItemDocument, renderModelDocument, renderPackageDocument } from "./rendering";
-import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
+	ApiItemTransformationConfiguration,
+	apiItemToDocument,
+	apiModelToDocument,
+	apiPackageToDocument,
+	doesItemRequireOwnDocument,
+	getApiItemTransformationConfigurationWithDefaults,
+} from "./api-item-transforms";
+import { DocumentNode } from "./documentation-domain";
+import {
+	MarkdownRenderConfiguration,
+	MarkdownRenderers,
+	getMarkdownRenderConfigurationWithDefaults,
+	renderDocumentAsMarkdown,
+} from "./markdown-renderer";
 
 /**
  * This module contains the primary rendering entrypoints to the system.
@@ -30,59 +36,61 @@ import { doesItemRequireOwnDocument, getLinkUrlForApiItem } from "./utilities";
  */
 
 /**
- * Renders the provided model and its contents to a series of {@link MarkdownDocument}s.
+ * Renders the provided model and its contents to a series of {@link DocumentNode}s.
  *
  * @remarks
  * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link PolicyOptions.documentBoundaries}.
+ * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
- * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
- * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
+ * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
+ * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
  */
-export function renderDocuments(
-    partialConfig: MarkdownDocumenterConfiguration,
-): MarkdownDocument[] {
-    const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
-    const apiModel = config.apiModel;
+export function transformApiModel(
+	transformConfig: ApiItemTransformationConfiguration,
+): DocumentNode[] {
+	const config = getApiItemTransformationConfigurationWithDefaults(transformConfig);
+	const apiModel = config.apiModel;
 
-    console.log(`Rendering markdown documentation for API Model ${apiModel.displayName}...`);
+	config.logger.info(
+		`Generating Markdown documentation for API Model ${apiModel.displayName}...`,
+	);
 
-    const documents: MarkdownDocument[] = [];
+	const documents: DocumentNode[] = [];
 
-    // Always render Model document
-    documents.push(renderModelDocument(apiModel, config));
+	// Always render Model document
+	documents.push(apiModelToDocument(apiModel, config));
 
-    const filteredPackages = apiModel.packages.filter(
-        (apiPackage) => !config.packageFilterPolicy(apiPackage),
-    );
-    if (filteredPackages.length > 0) {
-        // For each package, walk the child graph to find API items which should be rendered to their own document
-        // per provided policy.
+	const filteredPackages = apiModel.packages.filter(
+		(apiPackage) => !config.skipPackage(apiPackage),
+	);
+	if (filteredPackages.length > 0) {
+		// For each package, walk the child graph to find API items which should be rendered to their own document
+		// per provided document boundaries configuration.
 
-        for (const packageItem of filteredPackages) {
-            // Always render documents for packages under the model
-            documents.push(renderPackageDocument(packageItem, config));
+		for (const packageItem of filteredPackages) {
+			// Always render documents for packages under the model
+			documents.push(apiPackageToDocument(packageItem, config));
 
-            const packageEntryPoints = packageItem.entryPoints;
-            if (packageEntryPoints.length !== 1) {
-                throw new Error(
-                    `Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
-                        "API-Extractor only supports single-entry packages, so this should not be possible.",
-                );
-            }
+			const packageEntryPoints = packageItem.entryPoints;
+			if (packageEntryPoints.length !== 1) {
+				throw new Error(
+					`Encountered multiple EntryPoint items under package "${packageItem.name}". ` +
+						"API-Extractor only supports single-entry packages, so this should not be possible.",
+				);
+			}
 
-            const packageEntryPointItem = packageEntryPoints[0];
+			const packageEntryPointItem = packageEntryPoints[0];
 
-            const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
-            for (const apiItem of packageDocumentItems) {
-                documents.push(renderApiItemDocument(apiItem, config));
-            }
-        }
-    }
+			const packageDocumentItems = getDocumentItems(packageEntryPointItem, config);
+			for (const apiItem of packageDocumentItems) {
+				documents.push(apiItemToDocument(apiItem, config));
+			}
+		}
+	}
 
-    console.log("Documents rendered.");
+	config.logger.success("Documents generated!");
 
-    return documents;
+	return documents;
 }
 
 /**
@@ -90,71 +98,65 @@ export function renderDocuments(
  *
  * @remarks
  * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link PolicyOptions.documentBoundaries}.
+ * determined by {@link DocumentationSuiteOptions.documentBoundaries}.
  *
  * The file paths under which the files will be saved is determined by the provided output path and the
  * following configuration properties:
  *
- * - {@link PolicyOptions.documentBoundaries}
- * - {@link PolicyOptions.hierarchyBoundaries}
+ * - {@link DocumentationSuiteOptions.documentBoundaries}
+ * - {@link DocumentationSuiteOptions.hierarchyBoundaries}
  *
  * @param apiModel - The API model being processed.
  * This is the output of {@link https://api-extractor.com/ | API-Extractor}.
- * @param partialConfig - A partial {@link MarkdownDocumenterConfiguration}.
- * Missing values will be filled in with defaults defined by {@link markdownDocumenterConfigurationWithDefaults}.
- * @param markdownEmitter - The emitter to use for generating Markdown output.
- * If not provided, a {@link MarkdownEmitter | default implementation} will be used.
+ * @param transformConfig - A partial {@link ApiItemTransformationConfiguration}.
+ * Missing values will be filled in with defaults via {@link getApiItemTransformationConfigurationWithDefaults}.
+ * @param customRenderers - Custom {@link DocumentationNode} Markdown renderers.
+ * Specified per {@link DocumentationNode."type"}.
  */
-export async function renderFiles(
-    partialConfig: MarkdownDocumenterConfiguration,
-    outputDirectoryPath: string,
-    markdownEmitter?: MarkdownEmitter,
+export async function renderApiModelAsMarkdown(
+	transformConfig: ApiItemTransformationConfiguration,
+	renderConfig: MarkdownRenderConfiguration,
+	outputDirectoryPath: string,
+	customRenderers?: MarkdownRenderers,
 ): Promise<void> {
-    const config = markdownDocumenterConfigurationWithDefaults(partialConfig);
+	const completeTransformConfig =
+		getApiItemTransformationConfigurationWithDefaults(transformConfig);
+	const completeRenderConfig = getMarkdownRenderConfigurationWithDefaults(renderConfig);
 
-    await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
-    const resolvedMarkdownEmitter = markdownEmitter ?? new MarkdownEmitter(config.apiModel);
+	await FileSystem.ensureEmptyFolderAsync(outputDirectoryPath);
 
-    const documents = renderDocuments(config);
+	const documents = transformApiModel(completeTransformConfig);
 
-    await Promise.all(
-        documents.map(async (document) => {
-            const emittedDocumentContents = resolvedMarkdownEmitter.emit(
-                new StringBuilder(),
-                document.contents,
-                {
-                    contextApiItem: document.apiItem,
-                    getLinkUrlApiItem: (_apiItem) => getLinkUrlForApiItem(_apiItem, config),
-                },
-            );
+	await Promise.all(
+		documents.map(async (document) => {
+			const renderedDocument = renderDocumentAsMarkdown(document, customRenderers);
 
-            const filePath = Path.join(outputDirectoryPath, document.path);
-            await FileSystem.writeFileAsync(filePath, emittedDocumentContents, {
-                convertLineEndings: config.newlineKind,
-                ensureFolderExists: true,
-            });
-        }),
-    );
-    console.log("Documents written to disk.");
+			const filePath = Path.join(outputDirectoryPath, document.filePath);
+			await FileSystem.writeFileAsync(filePath, renderedDocument, {
+				convertLineEndings: completeRenderConfig.newlineKind,
+				ensureFolderExists: true,
+			});
+		}),
+	);
+	console.log("Documents written to disk.");
 }
 
 /**
  * Walks the provided API item's member tree and reports all API items that should be rendered to their own documents.
  *
  * @param apiItem - The API item in question.
- * @param documentBoundaryPolicy - The policy defining which items should be rendered to their own documents,
- * and which should be rendered to their parent's document.
+ * @param transformConfig - See {@link ApiItemTransformationConfiguration}
  */
-export function getDocumentItems(
-    apiItem: ApiItem,
-    config: Required<MarkdownDocumenterConfiguration>,
+function getDocumentItems(
+	apiItem: ApiItem,
+	transformConfig: Required<ApiItemTransformationConfiguration>,
 ): ApiItem[] {
-    const result: ApiItem[] = [];
-    for (const childItem of apiItem.members) {
-        if (doesItemRequireOwnDocument(childItem, config.documentBoundaries)) {
-            result.push(childItem);
-        }
-        result.push(...getDocumentItems(childItem, config));
-    }
-    return result;
+	const result: ApiItem[] = [];
+	for (const childItem of apiItem.members) {
+		if (doesItemRequireOwnDocument(childItem, transformConfig.documentBoundaries)) {
+			result.push(childItem);
+		}
+		result.push(...getDocumentItems(childItem, transformConfig));
+	}
+	return result;
 }

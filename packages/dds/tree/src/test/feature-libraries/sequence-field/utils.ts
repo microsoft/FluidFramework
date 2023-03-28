@@ -3,97 +3,214 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { TreeSchemaIdentifier } from "../../../schema-stored";
+import { assert } from "@fluidframework/common-utils";
+import {
+	ChangesetLocalId,
+	IdAllocator,
+	idAllocatorFromMaxId,
+	RevisionInfo,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	SequenceField as SF,
+} from "../../../feature-libraries";
+import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { TaggedChange } from "../../../core";
-import { deepFreeze } from "../../utils";
-import { tagChange } from "../../../rebase";
+import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
+import { brand, fail } from "../../../util";
+import { TestChangeset } from "./testEdits";
 
-const type: TreeSchemaIdentifier = brand("Node");
-const tomb = "Dummy Changeset Tag";
-
-export type TestChangeset = SF.Changeset<TestChange>;
-
-export const cases: {
-    no_change: TestChangeset;
-    insert: TestChangeset;
-    modify: TestChangeset;
-    modify_insert: TestChangeset;
-    delete: TestChangeset;
-    revive: TestChangeset;
-} = {
-    no_change: [],
-    insert: [
-        1,
-        {
-            type: "Insert",
-            id: 1,
-            content: [
-                { type, value: 1 },
-                { type, value: 2 },
-            ],
-        },
-    ],
-    modify: [{ type: "Modify", changes: TestChange.mint([], 1) }],
-    modify_insert: [
-        1,
-        {
-            type: "MInsert",
-            id: 1,
-            content: { type, value: 1 },
-            changes: TestChange.mint([], 2),
-        },
-    ],
-    delete: [1, { type: "Delete", id: 1, count: 3 }],
-    revive: [2, { type: "Revive", id: 1, count: 2, tomb }],
-};
-
-export function createInsertChangeset(index: number, size: number): TestChangeset {
-    const content = [];
-    while (content.length < size) {
-        content.push({ type, value: content.length });
-    }
-
-    const insertMark: SF.Insert = {
-        type: "Insert",
-        id: 0,
-        content,
-    };
-
-    const factory = new SF.MarkListFactory<TestChange>();
-    factory.pushOffset(index);
-    factory.pushContent(insertMark);
-    return factory.list;
+export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
+	return compose(changes.map(makeAnonChange));
 }
 
-export function createDeleteChangeset(startIndex: number, size: number): TestChangeset {
-    const deleteMark: SF.Detach = {
-        type: "Delete",
-        id: 0,
-        count: size,
-    };
+export function composeNoVerify(
+	changes: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
+): TestChangeset {
+	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
+}
 
-    const factory = new SF.MarkListFactory<TestChange>();
-    factory.pushOffset(startIndex);
-    factory.pushContent(deleteMark);
-    return factory.list;
+export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
+	return composeI(changes, TestChange.compose);
+}
+
+export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
+	return shallowCompose(changes.map(makeAnonChange));
+}
+
+export function shallowCompose<T>(
+	changes: TaggedChange<SF.Changeset<T>>[],
+	revInfos?: RevisionInfo[],
+): SF.Changeset<T> {
+	return composeI(
+		changes,
+		(children) => {
+			assert(children.length === 1, "Should only have one child to compose");
+			return children[0].change;
+		},
+		revInfos,
+	);
+}
+
+function defaultRevisionMetadataFromChanges(
+	changes: readonly TaggedChange<SF.Changeset<unknown>>[],
+): RevisionMetadataSource {
+	const revInfos: RevisionInfo[] = [];
+	for (const change of changes) {
+		if (change.revision !== undefined) {
+			revInfos.push({
+				revision: change.revision,
+				rollbackOf: change.rollbackOf,
+			});
+		}
+	}
+	return revisionMetadataSourceFromInfo(revInfos);
+}
+
+function composeI<T>(
+	changes: TaggedChange<SF.Changeset<T>>[],
+	composer: (childChanges: TaggedChange<T>[]) => T,
+	revInfos?: RevisionInfo[],
+): SF.Changeset<T> {
+	const moveEffects = SF.newCrossFieldTable();
+	const idAllocator = continuingAllocator(changes);
+	const composed = SF.compose(
+		changes,
+		composer,
+		idAllocator,
+		moveEffects,
+		revInfos !== undefined
+			? revisionMetadataSourceFromInfo(revInfos)
+			: defaultRevisionMetadataFromChanges(changes),
+	);
+
+	if (moveEffects.isInvalidated) {
+		resetCrossFieldTable(moveEffects);
+		SF.amendCompose(composed, composer, idAllocator, moveEffects);
+		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
+	}
+	return composed;
+}
+
+export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+	deepFreeze(change);
+	deepFreeze(base);
+
+	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const moveEffects = SF.newCrossFieldTable();
+	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
+	let rebasedChange = SF.rebase(
+		change,
+		base,
+		TestChange.rebase,
+		idAllocator,
+		moveEffects,
+		metadata,
+	);
+	if (moveEffects.isInvalidated) {
+		moveEffects.reset();
+		rebasedChange = SF.amendRebase(
+			rebasedChange,
+			base,
+			(a, b) => a,
+			idAllocator,
+			moveEffects,
+			metadata,
+		);
+		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
+	}
+	return rebasedChange;
 }
 
 export function rebaseTagged(
-    change: TaggedChange<TestChangeset>,
-    ...base: TaggedChange<TestChangeset>[]
+	change: TaggedChange<TestChangeset>,
+	...baseChanges: TaggedChange<TestChangeset>[]
 ): TaggedChange<TestChangeset> {
-    deepFreeze(change);
-    deepFreeze(base);
+	let currChange = change;
+	for (const base of baseChanges) {
+		currChange = tagChange(rebase(currChange.change, base), currChange.revision);
+	}
 
-    let currChange = change;
-    for (const baseChange of base) {
-        currChange = tagChange(
-            SF.rebase(currChange.change, baseChange, TestChange.rebase),
-            change.revision,
-        );
-    }
-    return currChange;
+	return currChange;
+}
+
+function resetCrossFieldTable(table: SF.CrossFieldTable) {
+	table.isInvalidated = false;
+	table.srcQueries.clear();
+	table.dstQueries.clear();
+}
+
+export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
+	const table = SF.newCrossFieldTable();
+	let inverted = SF.invert(
+		change,
+		TestChange.invert,
+		fakeRepair,
+		() => fail("Sequence fields should not generate IDs during invert"),
+		table,
+	);
+
+	if (table.isInvalidated) {
+		table.isInvalidated = false;
+		table.srcQueries.clear();
+		table.dstQueries.clear();
+		inverted = SF.amendInvert(
+			inverted,
+			change.revision,
+			fakeRepair,
+			() => fail("Sequence fields should not generate IDs during invert"),
+			table,
+		);
+		assert(!table.isInvalidated, "Invert should not need more than one amend pass");
+	}
+
+	return inverted;
+}
+
+export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
+	assertMarkListEqual(toDelta(actual), toDelta(expected));
+}
+
+export function toDelta(change: TestChangeset): Delta.MarkList {
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+}
+
+export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
+	let max: ChangesetLocalId | undefined;
+	for (const change of changes) {
+		for (const mark of change) {
+			if (SF.isMoveMark(mark)) {
+				max = max === undefined ? mark.id : brand(Math.max(max, mark.id));
+			}
+		}
+	}
+
+	return max;
+}
+
+export function getMaxIdTagged(
+	changes: TaggedChange<SF.Changeset<unknown>>[],
+): ChangesetLocalId | undefined {
+	return getMaxId(...changes.map((c) => c.change));
+}
+
+export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>[]): IdAllocator {
+	return idAllocatorFromMaxId(getMaxIdTagged(changes));
+}
+
+export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
+	let nextId = 0;
+	const mappings = new Map<SF.MoveId, SF.MoveId>();
+	for (const mark of change) {
+		if (SF.isMoveMark(mark)) {
+			let newId = mappings.get(mark.id);
+			if (newId === undefined) {
+				newId = brand(nextId++);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				mappings.set(mark.id, newId!);
+			}
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			mark.id = newId!;
+		}
+	}
 }

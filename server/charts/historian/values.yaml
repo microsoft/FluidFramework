@@ -44,6 +44,10 @@ gitrest:
       name: nodegit
     persistLatestFullSummary: false
     repoPerDocEnabled: false
+    enableRepositoryManagerMetrics: false
+    enableLowIoWrite: false
+    enableOptimizedInitialSummary: false
+    enableSlimGitInit: false
 
 gitssh:
   name: gitssh
