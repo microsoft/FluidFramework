@@ -1325,7 +1325,7 @@ export class ContainerRuntime
 				// an initializeEntryPoint for that case.
 				assert(
 					initializeEntryPoint === undefined,
-					"Summarizer clients cannot have a custom entryPoint",
+					0x5be /* Summarizer clients cannot have a custom entryPoint */,
 				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
@@ -1447,7 +1447,7 @@ export class ContainerRuntime
 			if (this.context.clientDetails.type === summarizerClientType) {
 				assert(
 					this._summarizer !== undefined,
-					"Summarizer object is undefined in a summarizer client",
+					0x5bf /* Summarizer object is undefined in a summarizer client */,
 				);
 				return this._summarizer;
 			}

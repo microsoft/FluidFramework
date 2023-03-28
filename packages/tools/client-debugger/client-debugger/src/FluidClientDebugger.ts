@@ -21,7 +21,7 @@ import {
 	IDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -98,48 +98,48 @@ export class FluidClientDebugger
 	// #region Container-related event handlers
 
 	private readonly containerAttachedHandler = (): void => {
-		this.postContainerStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Attached,
 			timestamp: Date.now(),
 			clientId: undefined,
 		});
+		this.postContainerStateChange();
 	};
 
 	private readonly containerConnectedHandler = (clientId: string): void => {
-		this.postContainerStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Connected,
 			timestamp: Date.now(),
 			clientId,
 		});
+		this.postContainerStateChange();
 	};
 
 	private readonly containerDisconnectedHandler = (): void => {
-		this.postContainerStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Disconnected,
 			timestamp: Date.now(),
 			clientId: undefined,
 		});
+		this.postContainerStateChange();
 	};
 
 	private readonly containerClosedHandler = (): void => {
-		this.postContainerStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Closed,
 			timestamp: Date.now(),
 			clientId: undefined,
 		});
+		this.postContainerStateChange();
 	};
 
 	private readonly containerDisposedHandler = (): void => {
-		this.postContainerStateChange();
 		this._connectionStateLog.push({
 			newState: ContainerStateChangeKind.Disposed,
 			timestamp: Date.now(),
 			clientId: undefined,
 		});
+		this.postContainerStateChange();
 	};
 
 	// #endregion
@@ -219,7 +219,7 @@ export class FluidClientDebugger
 	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessageToWindow<IDebuggerMessage>(
+		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
 				source: debuggerMessageSource,
