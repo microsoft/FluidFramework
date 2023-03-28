@@ -13,14 +13,15 @@ import { FluidCacheErrorEvent } from "./fluidCacheTelemetry";
 export const FluidDriverCacheDBName = "fluidDriverCache";
 
 // The name of the object store within the indexed db instance that the driver will use to cache Fluid content.
-export const FluidDriverObjectStoreName = "driverStorage.V3";
+export const FluidDriverObjectStoreName = "driverStorage.V4";
 
-export const CurrentCacheVersion = 3;
+export const CurrentCacheVersion = 4;
 
 // Note that V1 and V2 were misspelled as "diver", and we need to keep using the misspelling here.
 export const oldVersionNameMapping: Partial<{ [key: number]: string }> = {
 	1: "diverStorage",
 	2: "diverStorage.V2",
+	3: "driverStorage.V3",
 };
 
 export function getKeyForCacheEntry(entry: ICacheEntry) {
@@ -56,7 +57,6 @@ export function getFluidCacheIndexedDbInstance(
 
 				const cacheObjectStore = db.createObjectStore(FluidDriverObjectStoreName);
 				cacheObjectStore.createIndex("createdTimeMs", "createdTimeMs");
-				cacheObjectStore.createIndex("lastAccessTimeMs", "lastAccessTimeMs");
 				cacheObjectStore.createIndex("partitionKey", "partitionKey");
 				cacheObjectStore.createIndex("fileId", "fileId");
 			},
@@ -123,18 +123,11 @@ export interface FluidCacheDBSchema extends DBSchema {
 			 * The time when the cache entry was put into the cache
 			 */
 			createdTimeMs: number;
-
-			/**
-			 * The last time the cache entry was used.
-			 * This is initially set to the time the cache entry was created Measured as ms since unix epoch.
-			 */
-			lastAccessTimeMs: number;
 		};
 
 		indexes: {
 			createdTimeMs: number;
 			partitionKey: string;
-			lastAccessTimeMs: number;
 			fileId: string;
 		};
 	};

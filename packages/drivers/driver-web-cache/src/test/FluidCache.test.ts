@@ -204,38 +204,9 @@ describe("Fluid Cache tests", () => {
 			},
 			createdTimeMs: 100,
 			fileId: "myDocument",
-			lastAccessTimeMs: 100,
 			type: "snapshot",
 			partitionKey: "FAKEPARTITIONKEY",
 		});
-
-		clearDateMock();
-	});
-
-	it("updates the last accessed time when reading a value from storage", async () => {
-		// We need to mock out the Date API to make this test work
-		const clearDateMock = setupDateMock(100);
-		const fluidCache = getFluidCache();
-
-		const cacheEntry = getMockCacheEntry("shouldUpdateLastAccessedTime");
-		const cachedItem = { dateToStore: "foo" };
-
-		await fluidCache.put(cacheEntry, cachedItem);
-
-		const db = await getFluidCacheIndexedDbInstance();
-
-		expect(
-			(await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry)))
-				?.lastAccessTimeMs,
-		).toBe(100);
-
-		DateMock.mockTimeMs = 800;
-		await fluidCache.get(cacheEntry);
-
-		expect(
-			(await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry)))
-				?.lastAccessTimeMs,
-		).toEqual(800);
 
 		clearDateMock();
 	});
