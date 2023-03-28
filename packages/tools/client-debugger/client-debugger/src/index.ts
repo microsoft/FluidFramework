@@ -93,6 +93,7 @@ export {
 	GetRootDataVisualizationsMessage,
 	GetRootDataVisualizationsMessageData,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
 	RootDataVisualizationsMessage,

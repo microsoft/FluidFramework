@@ -38,7 +38,7 @@ export {
 	RootDataVisualizationsMessage,
 	RootDataVisualizationsMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage } from "./Messages";
+export { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 export {
 	GetContainerListMessage,
 	RegistryChangeMessage,

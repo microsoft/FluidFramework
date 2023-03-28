@@ -6,7 +6,7 @@
 import { ContainerStateMetadata } from "../ContainerMetadata";
 import { FluidHandleNode, FluidObjectId, FluidObjectNode } from "../data-visualization";
 import { ConnectionStateChangeLogEntry } from "../Logs";
-import { IDebuggerMessage } from "./Messages";
+import { ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Base interface used in message data for events targeting a particular debugger instance via
@@ -85,7 +85,10 @@ export type GetDataVisualizationMessageData = HasContainerId & HasFluidObjectId;
  *
  * @public
  */
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+export interface GetContainerStateMessage extends ISourcedDebuggerMessage<HasContainerId> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "GET_CONTAINER_STATE";
 }
 
@@ -98,7 +101,10 @@ export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerI
  * @public
  */
 export interface GetRootDataVisualizationsMessage
-	extends IDebuggerMessage<GetRootDataVisualizationsMessageData> {
+	extends ISourcedDebuggerMessage<GetRootDataVisualizationsMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "GET_ROOT_DATA_VISUALIZATIONS";
 }
 
@@ -110,7 +116,7 @@ export interface GetRootDataVisualizationsMessage
  * @public
  */
 export interface GetDataVisualizationMessage
-	extends IDebuggerMessage<GetDataVisualizationMessageData> {
+	extends ISourcedDebuggerMessage<GetDataVisualizationMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -182,7 +188,7 @@ export interface DataVisualizationMessageData extends HasContainerId, HasFluidOb
  * @public
  */
 export interface ContainerStateChangeMessage
-	extends IDebuggerMessage<ContainerStateChangeMessageData> {
+	extends ISourcedDebuggerMessage<ContainerStateChangeMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -194,7 +200,8 @@ export interface ContainerStateChangeMessage
  *
  * @public
  */
-export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+export interface ConnectContainerMessage
+	extends ISourcedDebuggerMessage<ConnectContainerMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -207,7 +214,7 @@ export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContain
  * @public
  */
 export interface DisconnectContainerMessage
-	extends IDebuggerMessage<DisconnectContainerMessageData> {
+	extends ISourcedDebuggerMessage<DisconnectContainerMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -219,7 +226,7 @@ export interface DisconnectContainerMessage
  *
  * @public
  */
-export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+export interface CloseContainerMessage extends ISourcedDebuggerMessage<CloseContainerMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -232,7 +239,7 @@ export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMe
  * @public
  */
 export interface ContainerStateHistoryMessage
-	extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+	extends ISourcedDebuggerMessage<ContainerStateHistoryMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -246,7 +253,7 @@ export interface ContainerStateHistoryMessage
  * @public
  */
 export interface RootDataVisualizationsMessage
-	extends IDebuggerMessage<RootDataVisualizationsMessageData> {
+	extends ISourcedDebuggerMessage<RootDataVisualizationsMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -258,7 +265,8 @@ export interface RootDataVisualizationsMessage
  *
  * @public
  */
-export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
+export interface DataVisualizationMessage
+	extends ISourcedDebuggerMessage<DataVisualizationMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
