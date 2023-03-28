@@ -20,13 +20,13 @@ import {
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
+	IDebuggerMessage,
 	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	GetContainerDataMessage,
 	ContainerDataMessage,
-	IDebuggerMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 

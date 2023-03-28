@@ -80,6 +80,9 @@ jobs:
       condition: ${{ parameters.condition }}
       timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
       variables:
+      - name: isTestBranch
+        value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
+        readonly: true
       # We use 'chalk' to colorize output, which auto-detects color support in the
       # running terminal.  The log output shown in Azure DevOps job runs only has
       # basic ANSI color support though, so force that in the pipeline
@@ -93,23 +96,20 @@ jobs:
         value: $(Pipeline.Workspace)/client/pack/scoped/${{ variables.testPackageFilePattern }}
       - name: skipComponentGovernanceDetection
         value: true
-      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-        - name: feed
+      - name: feed
+        ${{ if eq(variables.isTestBranch, 'true') }}:
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
-      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
-        - name: feed
+        ${{ else }}:
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/build/npm/registry/
-      - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-        - name: devFeed
+      - name: devFeed
+        ${{ if eq(variables.isTestBranch, 'true') }}:
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/internal/npm/registry/
-      - ${{ if not(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}:
-        - name: devFeed
+        ${{ else }}:
           value: https://pkgs.dev.azure.com/fluidframework/internal/_packaging/dev/npm/registry/
-      - ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
-        - name: artifactPipeline
+      - name: artifactPipeline
+        ${{ if eq(parameters.downloadAzureTestArtifacts, true) }}:
           value: Build - azure
-      - ${{ else }}:
-        - name: artifactPipeline
+        ${{ else }}:
           value: Build - client packages
 
       steps:
@@ -139,6 +139,8 @@ jobs:
               sudo update-ca-certificates
 
       # Print parameters/Vars
+      # Variables declared outside this template will only work with "macro syntax": $(name).
+      # Variables declared inside this template also work with "template expression syntax": ${{ variables.name }}.
       - task: Bash@3
         displayName: Print Parameters and Variables
         inputs:
@@ -152,13 +154,17 @@ jobs:
               testPackage=${{ parameters.testPackage }}
 
             Pipeline Variables:
+              isTestBranch=${{ variables.isTestBranch }}
               testWorkspace=${{ parameters.testWorkspace }}
               testPackageFilePattern=${{ variables.testPackageFilePattern }}
               feed=${{ variables.feed }}
+              devFeed=${{ variables.devFeed }}
               testCommand=${{ parameters.testCommand }}
               continueOnError=${{ parameters.continueOnError }}
               variant.flag=${{ variant.flags }}
               testFileTarName=${{ parameters.testFileTarName }}
+              artifactPipeline=${{ variables.artifactPipeline }}
+              artifactBuildId=${{ parameters.artifactBuildId }}
             "
 
       # Install

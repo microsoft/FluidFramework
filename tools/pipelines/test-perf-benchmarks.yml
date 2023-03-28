@@ -73,7 +73,6 @@ stages:
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
-        artifactPipeline: ${{ variables.artifactPipeline }}
         customSteps:
 
         # Download artifact with test files
@@ -232,7 +231,6 @@ stages:
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
-        artifactPipeline: ${{ variables.artifactPipeline }}
         customSteps:
 
         # Download Artifact - Test Files
@@ -401,7 +399,6 @@ stages:
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
-        artifactPipeline: ${{ variables.artifactPipeline }}
         customSteps:
 
         # Download test package

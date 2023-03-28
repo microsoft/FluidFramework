@@ -17,10 +17,6 @@ import ReactDOM from "react-dom";
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
-// TODOs:
-// - Wait for Background Script connection before rendering, to ensure messages are able to flow before we first
-//  request data from the registry / debuggers.
-
 document.body.style.margin = "0px";
 
 BackgroundConnection.Initialize()
