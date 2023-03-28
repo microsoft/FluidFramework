@@ -10,18 +10,19 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 	constructor(private readonly collection: ICollection<ICheckpoint>) {}
 
 	async readOne(filter: any): Promise<ICheckpoint> {
-		return this.collection.findOne(filter);
+		return this.collection.findOne(this.composePointReadFilter(filter));
 	}
 
 	async deleteOne(filter: any): Promise<any> {
-		return this.collection.deleteOne(filter);
+		return this.collection.deleteOne(this.composePointReadFilter(filter));
 	}
 
 	async updateOne(filter: any, update: any, options: any): Promise<void> {
 		const addToSet = undefined; // AddToSet is not used anywhere. Change the behavior in the future if things changed.
+		const pointReadFilter = this.composePointReadFilter(filter);
 		await (options?.upsert
-			? this.collection.upsert(filter, update, addToSet, options)
-			: this.collection.update(filter, update, addToSet, options));
+			? this.collection.upsert(pointReadFilter, update, addToSet, options)
+			: this.collection.update(pointReadFilter, update, addToSet, options));
 	}
 
 	async findOneOrCreate(
@@ -29,7 +30,7 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 		value: any,
 		options: any = undefined,
 	): Promise<{ value: ICheckpoint; existing: boolean }> {
-		return this.collection.findOrCreate(filter, value, options);
+		return this.collection.findOrCreate(this.composePointReadFilter(filter), value, options);
 	}
 
 	async findOneAndUpdate(
@@ -37,7 +38,7 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 		value: any,
 		options: any = undefined,
 	): Promise<{ value: ICheckpoint; existing: boolean }> {
-		return this.collection.findAndUpdate(filter, value, options);
+		return this.collection.findAndUpdate(this.composePointReadFilter(filter), value, options);
 	}
 
 	async create(checkpoint: ICheckpoint): Promise<any> {
@@ -48,5 +49,10 @@ export class MongoCheckpointRepository implements ICheckpointRepository {
 		return this.collection
 			.findOne(filter, { projection: { _id: 1 } })
 			.then((checkpoint) => !!checkpoint);
+	}
+
+	private composePointReadFilter(filter: any): { _id: string; documentId: string } & any {
+		const documentId = filter.documentId;
+		return { ...filter, _id: documentId };
 	}
 }
