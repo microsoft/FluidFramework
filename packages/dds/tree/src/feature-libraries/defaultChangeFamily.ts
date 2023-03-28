@@ -15,8 +15,8 @@ import {
 	UpPath,
 	Value,
 	ITreeCursor,
-	ReadonlyRepairDataStore,
 	RevisionTag,
+	ChangeFamilyEditor,
 } from "../core";
 import { brand } from "../util";
 import {
@@ -25,6 +25,7 @@ import {
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
+	NodeReviver,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
 
@@ -46,19 +47,19 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		this.modularFamily = new ModularChangeFamily(defaultFieldKinds);
 	}
 
-	get rebaser(): ChangeRebaser<DefaultChangeset> {
+	public get rebaser(): ChangeRebaser<DefaultChangeset> {
 		return this.modularFamily.rebaser;
 	}
 
-	get encoder(): ChangeEncoder<DefaultChangeset> {
+	public get encoder(): ChangeEncoder<DefaultChangeset> {
 		return this.modularFamily.encoder;
 	}
 
-	intoDelta(change: DefaultChangeset, repairStore?: ReadonlyRepairDataStore): Delta.Root {
-		return this.modularFamily.intoDelta(change, repairStore);
+	public intoDelta(change: DefaultChangeset): Delta.Root {
+		return this.modularFamily.intoDelta(change);
 	}
 
-	buildEditor(
+	public buildEditor(
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchorSet: AnchorSet,
 	): DefaultEditBuilder {
@@ -111,6 +112,8 @@ export interface IDefaultEditBuilder {
 		destField: FieldKey,
 		destIndex: number,
 	): void;
+
+	addValueConstraint(path: UpPath, value: Value): void;
 }
 
 /**
@@ -122,12 +125,19 @@ export class DefaultEditBuilder
 {
 	private readonly modularBuilder: ModularEditBuilder;
 
-	constructor(
-		family: ChangeFamily<unknown, DefaultChangeset>,
+	public constructor(
+		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
 		changeReceiver: (change: DefaultChangeset) => void,
 		anchors: AnchorSet,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, changeReceiver, anchors);
+	}
+
+	public enterTransaction(): void {
+		this.modularBuilder.enterTransaction();
+	}
+	public exitTransaction(): void {
+		this.modularBuilder.exitTransaction();
 	}
 
 	public apply(change: DefaultChangeset): void {
@@ -136,6 +146,10 @@ export class DefaultEditBuilder
 
 	public setValue(path: UpPath, value: Value): void {
 		this.modularBuilder.setValue(path, value);
+	}
+
+	public addValueConstraint(path: UpPath, value: Value): void {
+		this.modularBuilder.addValueConstraint(path, value);
 	}
 
 	public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
@@ -169,7 +183,12 @@ export class DefaultEditBuilder
 		destField: FieldKey,
 		destIndex: number,
 	): void {
-		const changes = sequence.changeHandler.editor.move(sourceIndex, count, destIndex);
+		const changes = sequence.changeHandler.editor.move(
+			sourceIndex,
+			count,
+			destIndex,
+			this.modularBuilder.generateId(),
+		);
 		this.modularBuilder.submitChanges(
 			[
 				{
@@ -204,14 +223,28 @@ export class DefaultEditBuilder
 				this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
 			},
 			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.move(sourceIndex, count, destIndex),
+				const moves = sequence.changeHandler.editor.move(
+					sourceIndex,
+					count,
+					destIndex,
+					this.modularBuilder.generateId(),
 				);
-				this.modularBuilder.submitChange(
-					parent,
-					field,
-					sequence.identifier,
-					change,
+
+				this.modularBuilder.submitChanges(
+					[
+						{
+							path: parent,
+							field,
+							fieldKind: sequence.identifier,
+							change: brand(moves[0]),
+						},
+						{
+							path: parent,
+							field,
+							fieldKind: sequence.identifier,
+							change: brand(moves[1]),
+						},
+					],
 					brand(0),
 				);
 			},
@@ -219,6 +252,7 @@ export class DefaultEditBuilder
 				index: number,
 				count: number,
 				detachedBy: RevisionTag,
+				reviver: NodeReviver,
 				detachIndex: number,
 				isIntention?: true,
 			): void => {
@@ -227,6 +261,7 @@ export class DefaultEditBuilder
 						index,
 						count,
 						detachedBy,
+						reviver,
 						detachIndex,
 						isIntention,
 					),
@@ -298,6 +333,7 @@ export interface SequenceFieldEditBuilder {
 	 * @param index - The index at which to revive the node (this will become the index of the first revived node).
 	 * @param count - The number of nodes to revive.
 	 * @param detachedBy - The revision of the edit that deleted the nodes.
+	 * @param reviver - The NodeReviver used to retrieve repair data.
 	 * @param detachIndex - The index of the first node to revive in the input context of edit `detachedBy`.
 	 * @param isIntention - If true, the node will be revived even if edit `detachedBy` did not ultimately
 	 * delete them. If false, only those nodes that were deleted by `detachedBy` (and not revived) will be revived.
@@ -306,6 +342,7 @@ export interface SequenceFieldEditBuilder {
 		index: number,
 		count: number,
 		detachedBy: RevisionTag,
+		reviver: NodeReviver,
 		detachIndex: number,
 		isIntention?: true,
 	): void;

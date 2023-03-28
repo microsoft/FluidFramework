@@ -4,7 +4,8 @@
  */
 
 import { RevisionTag } from "../../core";
-import { Brand, NestedSet } from "../../util";
+import { brand, Brand, NestedSet } from "../../util";
+import { IdAllocator } from "./fieldChangeHandler";
 
 export type CrossFieldQuerySet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 
@@ -24,18 +25,19 @@ export enum CrossFieldTarget {
 export interface CrossFieldManager<T = unknown> {
 	/**
 	 * Returns the data associated with triplet key of `target`, `revision`, and `id`.
-	 * Calling this records a dependency for the current field on this key.
+	 * Calling this records a dependency for the current field on this key if `addDependency` is true.
 	 */
 	get(
 		target: CrossFieldTarget,
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
+		addDependency: boolean,
 	): T | undefined;
 
 	/**
 	 * If there is no data for this key, sets the value to `newValue`.
 	 * Then returns the data for this key.
-	 * All fields which took a dependency on this key will be considered invalidated
+	 * If `invalidateDependents` is true, all fields which took a dependency on this key will be considered invalidated
 	 * and will be given a chance to address the new data in `amendRebase`, `amendInvert`, or `amendCompose`,
 	 * as appropriate.
 	 */
@@ -44,6 +46,7 @@ export interface CrossFieldManager<T = unknown> {
 		revision: RevisionTag | undefined,
 		id: ChangesetLocalId,
 		newValue: T,
+		invalidateDependents: boolean,
 	): T;
 }
 
@@ -54,3 +57,13 @@ export interface CrossFieldManager<T = unknown> {
  * @alpha
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
+/**
+ * @alpha
+ */
+export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
+	let currId = maxId ?? -1;
+	return () => {
+		return brand(++currId);
+	};
+}

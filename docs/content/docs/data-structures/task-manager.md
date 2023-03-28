@@ -13,9 +13,11 @@ A task is simply code that should only be executed by **one** client at a time. 
 {{% /callout %}}
 
 ### Task Queue
+
 TaskManager's main role is to maintain a queue of clients for each unique task. The client at the top of the queue is assigned the task, and is given permission to exclusively execute the task. All other clients will remain in queue until they leave, disconnect (unexpectedly), or the task is completed by the assigned client. It's important to note that TaskManager maintains the consensus state of the task queue. This means that locally submitted operations will not affect the queue until the operation is accepted by all other clients. To learn more about conensus based data structures, click [here]({{< relref "./overview.md#consensus-data-structures" >}}).
 
 ### Consensus Based DDS
+
 An important note about TaskManager is that it is a consensus based DDS. This essentially means that operations are not accepted until every client acknowledge and accepts the operation. This differs from an "optimistic" DDS (i.e. [SharedMap]({{< relref "./map.md" >}})) which immediately accept ops and then relays them to other clients. For more information regarding different types of DDSes, click [here]({{< relref "./overview.md" >}}).
 
 ## Usage
@@ -25,13 +27,13 @@ An important note about TaskManager is that it is a consensus based DDS. This es
 The `TaskManager` object provides a number of methods to manage the execution of tasks. Please note: each API requires an input of `taskId` which is type `string`.
 
 
-- `volunteerForTask(taskId)` -- Adds the client to the task queue **once**. It returns a promise that resolves `true` if the client is assigned the task and `false` if the task was completed by another client. It will throw an error if the client disconnects while in queue.
-- `subscribeToTask(taskId)` -- Will continuously add the client to the task queue. Does not return a value, and will therefore require listening to [events](#events) to determine if the task is assigned, lost, or completed.
-- `subscribed(taskId)` -- Returns a boolean to indicate if the client is subscribed to the task.
-- `complete(taskId)` -- Will release all clients from the task queue, including the currently assigned client.
-- `abandon(taskId)` -- Exits the queue and releasing the task if currently assigned. Will also unsubscribe from the task (if subscribed).
-- `queued(taskId)` -- Returns a boolean to indicate if the client is in the task queue (being assigned a task is still considered queued).
-- `assigned(taskId)` -- Returns a boolean to indicate if the client is assigned the task.
+-   `volunteerForTask(taskId)` -- Adds the client to the task queue **once**. It returns a promise that resolves `true` if the client is assigned the task and `false` if the task was completed by another client. It will throw an error if the client disconnects while in queue.
+-   `subscribeToTask(taskId)` -- Will continuously add the client to the task queue. Does not return a value, and will therefore require listening to [events](#events) to determine if the task is assigned, lost, or completed.
+-   `subscribed(taskId)` -- Returns a boolean to indicate if the client is subscribed to the task.
+-   `complete(taskId)` -- Will release all clients from the task queue, including the currently assigned client.
+-   `abandon(taskId)` -- Exits the queue and releasing the task if currently assigned. Will also unsubscribe from the task (if subscribed).
+-   `queued(taskId)` -- Returns a boolean to indicate if the client is in the task queue (being assigned a task is still considered queued).
+-   `assigned(taskId)` -- Returns a boolean to indicate if the client is assigned the task.
 
 
 ### `volunteerForTask()` vs `subscribeToTask()`
@@ -44,15 +46,16 @@ Due to these differences, `volunteerForTask()` is better suited for one-time tas
 
 `TaskManager` is an `EventEmitter`, and will emit events when a task is assigned to the client or released. Each of the following events fires with an event listener that contains a callback argument `taskId`. This represents the task for which the event was fired.
 
-- `assigned` -- Fires when the client reaches the top of the task queue and is assigned the task.
-- `lost` -- Fires when the client disconnects after having been assigned the task.
-- `completed` -- Fires on all connected clients when the assigned client calls `complete()`.
+-   `assigned` -- Fires when the client reaches the top of the task queue and is assigned the task.
+-   `lost` -- Fires when the client disconnects after having been assigned the task.
+-   `completed` -- Fires on all connected clients when the assigned client calls `complete()`.
 
 ### Creation
 
 To create a `TaskManager`, call the static create method below. Note:
-  - `this.runtime` is a `IFluidDataStoreRuntime` object that represents the data store that the new task queue belongs to.
-  - `"my-task-manager"` is the name for the new task queue (this is an optional argument).
+
+-   `this.runtime` is a `IFluidDataStoreRuntime` object that represents the data store that the new task queue belongs to.
+-   `"my-task-manager"` is the name for the new task queue (this is an optional argument).
 
 ```typescript
 const taskManager = TaskManager.create(this.runtime, "my-task-manager");
@@ -145,6 +148,6 @@ taskManager.subscribeToTask(myTaskId);
 
 ### External Examples
 
-- [Schema Upgrade](https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/schema-upgrade) -- Experimental application to outline an approach for migrating data from an existing Fluid container into a new Fluid container which may have a different schema or code running on it. TaskManager is used to ensure only a single client performs the migration.
-- [Task Selection](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/task-selection) -- Simple application to demonstrate TaskManager with a rolling die. TaskManager is used to have only a single client "rolling" the die while other clients observe.
+-   [Schema Upgrade](https://github.com/microsoft/FluidFramework/tree/main/examples/hosts/app-integration/schema-upgrade) -- Experimental application to outline an approach for migrating data from an existing Fluid container into a new Fluid container which may have a different schema or code running on it. TaskManager is used to ensure only a single client performs the migration.
+-   [Task Selection](https://github.com/microsoft/FluidFramework/tree/main/examples/data-objects/task-selection) -- Simple application to demonstrate TaskManager with a rolling die. TaskManager is used to have only a single client "rolling" the die while other clients observe.
 

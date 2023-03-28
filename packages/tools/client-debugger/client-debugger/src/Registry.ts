@@ -9,6 +9,25 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
+import {
+	debuggerMessageSource,
+	handleIncomingWindowMessage,
+	ISourcedDebuggerMessage,
+	InboundHandlers,
+	MessageLoggingOptions,
+	postMessagesToWindow,
+	RegistryChangeMessage,
+} from "./messaging";
+
+// TODOs:
+// - Clear registry on `window.beforeunload`, to ensure we do not hold onto stale resources.
+
+/**
+ * Message logging options used by the registry.
+ */
+const registryMessageLoggingOptions: MessageLoggingOptions = {
+	context: "DEBUGGER REGISTRY",
+};
 
 /**
  * Properties for configuring a {@link IFluidClientDebugger}.
@@ -69,13 +88,83 @@ export interface DebuggerRegistryEvents extends IEvent {
 
 /**
  * Contract for maintaining a global client debugger registry to store all registered client debugger.
+ *
+ * @remarks
+ *
+ * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
+ * state changes and when requested.
+ *
+ * **Messages it listens for:**
+ *
+ * - {@link GetContainerListMessage}: When received, the registry will post {@link RegistryChangeMessage}.
+ *
+ * TODO: Document others as they are added.
+ *
+ * **Messages it posts:**
+ *
+ * - {@link RegistryChangeMessage}: The registry will post this whenever the list of registered
+ * debuggers changes, or when requested (via {@link GetContainerListMessage}).
+ *
+ * TODO: Document others as they are added.
+ *
  * @internal
  */
 export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
 	private readonly registeredDebuggers: Map<string, FluidClientDebugger> = new Map();
 
+	// #region Event handlers
+
+	/**
+	 * Handlers for inbound messages related to the registry.
+	 */
+	private readonly inboundMessageHandlers: InboundHandlers = {
+		["GET_CONTAINER_LIST"]: () => {
+			this.postRegistryChange();
+			return true;
+		},
+	};
+
+	/**
+	 * Event handler for messages coming from the window (globalThis).
+	 */
+	private readonly windowMessageHandler = (
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+	): void => {
+		handleIncomingWindowMessage(
+			event,
+			this.inboundMessageHandlers,
+			registryMessageLoggingOptions,
+		);
+	};
+
+	/**
+	 * Posts a {@link RegistryChangeMessage} to the window (globalThis).
+	 */
+	private readonly postRegistryChange = (): void => {
+		postMessagesToWindow<RegistryChangeMessage>(registryMessageLoggingOptions, {
+			source: debuggerMessageSource,
+			type: "REGISTRY_CHANGE",
+			data: {
+				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				})),
+			},
+		});
+	};
+
+	// #endregion
+
 	public constructor() {
 		super();
+
+		// Register listener for inbound messages from the window (globalThis)
+		globalThis.addEventListener?.("message", this.windowMessageHandler);
+
+		// Initiate message posting of registry updates.
+		// TODO: Only do this after some external request?
+		this.on("debuggerRegistered", this.postRegistryChange);
+		this.on("debuggerClosed", this.postRegistryChange);
 	}
 
 	/**

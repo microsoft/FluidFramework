@@ -42,19 +42,20 @@ import * as Delta from "./delta";
  *
  * Current implementation:
  *
- * - Performs inserts in the first pass
+ * - First pass: performs inserts top-down and move-outs bottom-up (it also performs value updates)
  *
- * - Does not perform move-ins in the first pass
+ * - Second pass: performs move-ins top-down and deletes bottom-up
  *
- * - Skips the second pass if no move-outs were encountered in the first pass
- *
- * - Does not leverage the move table
+ * - Skips the second pass if no moves or deletes were encountered in the first pass
  *
  * Future work:
  *
  * - Allow the visitor to ignore changes to regions of the tree that are not of interest to it (for partial checkouts).
  *
- * - Leverage move table when it gets added to Delta
+ * - Avoid moving the visitor through parts of the document that do not need changing in the current pass.
+ * This could be done by assigning IDs to nodes of interest and asking the visitor to jump to these nodes in order to edit them.
+ *
+ * - Leverage the move table if one ever gets added to Delta
  */
 
 /**
@@ -66,9 +67,18 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
-	const containsMoves = visitFieldMarks(delta, visitor, firstPass);
-	if (containsMoves) {
-		visitFieldMarks(delta, visitor, secondPass);
+	const modsToMovedTrees = new Map<Delta.MoveId, Delta.HasModifications>();
+	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
+		func: firstPass,
+		applyValueChanges: true,
+		modsToMovedTrees,
+	});
+	if (containsMovesOrDeletes) {
+		visitFieldMarks(delta, visitor, {
+			func: secondPass,
+			applyValueChanges: false,
+			modsToMovedTrees,
+		});
 	}
 }
 
@@ -88,147 +98,123 @@ export interface DeltaVisitor {
 	exitField(key: FieldKey): void;
 }
 
-type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor) => boolean;
-
-interface ModifyLike {
-	setValue?: Value;
-	fields?: Delta.FieldChangeMap;
+interface PassConfig {
+	readonly func: Pass;
+	readonly applyValueChanges: boolean;
+	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.HasModifications>;
 }
 
-function visitFieldMarks(fields: Delta.FieldChangeMap, visitor: DeltaVisitor, func: Pass): boolean {
-	let containsMoves = false;
+type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => boolean;
+
+function visitFieldMarks(
+	fields: Delta.FieldMarks,
+	visitor: DeltaVisitor,
+	config: PassConfig,
+): boolean {
+	let containsMovesOrDeletes = false;
 	for (const [key, field] of fields) {
 		visitor.enterField(key);
-		const result = func(field, visitor);
-		containsMoves ||= result;
+		const result = config.func(field, visitor, config);
+		containsMovesOrDeletes ||= result;
 		visitor.exitField(key);
 	}
-	return containsMoves;
+	return containsMovesOrDeletes;
 }
 
 function visitModify(
 	index: number,
-	modify: ModifyLike,
+	modify: Delta.HasModifications,
 	visitor: DeltaVisitor,
-	func: Pass,
+	config: PassConfig,
 ): boolean {
-	let containsMoves = false;
-	visitor.enterNode(index);
-	// Note that the `in` operator return true for properties that are present on the object even if they
+	let containsMovesOrDeletes = false;
+	// Note that `hasOwnProperty` returns true for properties that are present on the object even if they
 	// are set to `undefined. This is leveraged here to represent the fact that the value should be set to
 	// `undefined` as opposed to leaving the value untouched.
-	if ("setValue" in modify) {
-		visitor.onSetValue(modify.setValue);
+	const hasValueChange =
+		config.applyValueChanges && Object.prototype.hasOwnProperty.call(modify, "setValue");
+
+	if (hasValueChange || modify.fields !== undefined) {
+		visitor.enterNode(index);
+		if (hasValueChange) {
+			visitor.onSetValue(modify.setValue);
+		}
+		if (modify.fields !== undefined) {
+			const result = visitFieldMarks(modify.fields, visitor, config);
+			containsMovesOrDeletes ||= result;
+		}
+		visitor.exitNode(index);
 	}
-	if (modify.fields !== undefined) {
-		const result = visitFieldMarks(modify.fields, visitor, func);
-		containsMoves ||= result;
-	}
-	visitor.exitNode(index);
-	return containsMoves;
+	return containsMovesOrDeletes;
 }
 
-function firstPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
+function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
 	let containsMoves = false;
-
-	for (const nodeChange of delta.beforeShallow ?? []) {
-		const result = visitModify(nodeChange.index, nodeChange, visitor, firstPass);
-		containsMoves ||= result;
-	}
-
-	const moveInGaps: { readonly index: number; readonly cumulCount: number }[] = [];
-	const shallow = delta.shallow ?? [];
 	let index = 0;
-	for (const mark of shallow) {
+	for (const mark of delta) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
 		} else {
+			let result = false;
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
 				case Delta.MarkType.Delete:
-					visitor.onDelete(index, mark.count);
+					// Handled in the second pass
+					visitModify(index, mark, visitor, config);
+					index += mark.count;
+					result = true;
 					break;
 				case Delta.MarkType.MoveOut:
+					result = visitModify(index, mark, visitor, config);
+					if (result) {
+						config.modsToMovedTrees.set(mark.moveId, mark);
+					}
 					visitor.onMoveOut(index, mark.count, mark.moveId);
+					break;
+				case Delta.MarkType.Modify:
+					result = visitModify(index, mark, visitor, config);
+					index += 1;
 					break;
 				case Delta.MarkType.Insert:
 					visitor.onInsert(index, mark.content);
+					result = visitModify(index, mark, visitor, config);
 					index += mark.content.length;
 					break;
-				case Delta.MarkType.MoveIn: {
+				case Delta.MarkType.MoveIn:
 					// Handled in the second pass
-					containsMoves = true;
-					const prevCount =
-						moveInGaps.length === 0 ? 0 : moveInGaps[moveInGaps.length - 1].cumulCount;
-					moveInGaps.push({
-						index: index + prevCount,
-						cumulCount: prevCount + mark.count,
-					});
+					result = true;
 					break;
-				}
 				default:
 					unreachableCase(type);
 			}
+			containsMoves ||= result;
 		}
-	}
-
-	// While processing the `afterShallow` we have to translate each `NestedChange.index` into the corresponding
-	// index for the visitor. Those are not the same because the first pass doesn't apply move-in shallow changes.
-	// While processing the shallow changes, the `moveInGaps` array gets populated with the relevant offsets for us
-	// to make this index adjustment below.
-	let iMoveInGap = 0;
-	let missingMoveIns = 0;
-	for (const nodeChange of delta.afterShallow ?? []) {
-		while (iMoveInGap < moveInGaps.length && nodeChange.index > moveInGaps[iMoveInGap].index) {
-			missingMoveIns = moveInGaps[iMoveInGap].cumulCount;
-			iMoveInGap += 1;
-		}
-		const result = visitModify(
-			nodeChange.index - missingMoveIns,
-			nodeChange,
-			visitor,
-			firstPass,
-		);
-		containsMoves ||= result;
 	}
 	return containsMoves;
 }
 
-function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
-	const processBeforeChanges = (() => {
-		const before: readonly Delta.NestedChange[] = delta.beforeShallow ?? [];
-		let iNested = 0;
-		return (visit: boolean, maxIndex: number): void => {
-			while (iNested < before.length && before[iNested].index < maxIndex) {
-				if (visit) {
-					const adjustedIndex = index - (inputContextIndex - before[iNested].index);
-					visitModify(adjustedIndex, before[iNested], visitor, secondPass);
-				}
-				iNested += 1;
-			}
-		};
-	})();
-	const after: readonly Delta.NestedChange[] = delta.afterShallow ?? [];
-	let inputContextIndex = 0;
+function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig): boolean {
 	let index = 0;
-	const shallow = delta.shallow ?? [];
-	for (const mark of shallow) {
+	for (const mark of delta) {
 		if (typeof mark === "number") {
 			// Untouched nodes
 			index += mark;
-			inputContextIndex += mark;
-			processBeforeChanges(true, inputContextIndex);
 		} else {
 			// Inline into the `switch(...)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
 				case Delta.MarkType.Delete:
+					visitModify(index, mark, visitor, config);
+					visitor.onDelete(index, mark.count);
+					break;
 				case Delta.MarkType.MoveOut:
 					// Handled in the first pass
-					inputContextIndex += mark.count;
-					processBeforeChanges(false, inputContextIndex);
+					break;
+				case Delta.MarkType.Modify:
+					visitModify(index, mark, visitor, config);
+					index += 1;
 					break;
 				case Delta.MarkType.Insert:
 					// Handled in the first pass
@@ -236,6 +222,12 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 					break;
 				case Delta.MarkType.MoveIn: {
 					visitor.onMoveIn(index, mark.count, mark.moveId);
+					if (mark.count === 1) {
+						const modify = config.modsToMovedTrees.get(mark.moveId);
+						if (modify !== undefined) {
+							visitModify(index, modify, visitor, config);
+						}
+					}
 					index += mark.count;
 					break;
 				}
@@ -243,10 +235,6 @@ function secondPass(delta: Delta.FieldChanges, visitor: DeltaVisitor): boolean {
 					unreachableCase(type);
 			}
 		}
-	}
-	processBeforeChanges(true, Number.POSITIVE_INFINITY);
-	for (const nodeChange of after) {
-		visitModify(nodeChange.index, nodeChange, visitor, secondPass);
 	}
 	return false;
 }

@@ -4,10 +4,18 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangesetLocalId, IdAllocator, SequenceField as SF } from "../../../feature-libraries";
+import {
+	ChangesetLocalId,
+	IdAllocator,
+	idAllocatorFromMaxId,
+	RevisionInfo,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
+	SequenceField as SF,
+} from "../../../feature-libraries";
 import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertFieldChangesEqual, deepFreeze, fakeRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -15,8 +23,11 @@ export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
 	return compose(changes.map(makeAnonChange));
 }
 
-export function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false));
+export function composeNoVerify(
+	changes: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
+): TestChangeset {
+	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
 }
 
 export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
@@ -27,25 +38,56 @@ export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Cha
 	return shallowCompose(changes.map(makeAnonChange));
 }
 
-export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
-	return composeI(changes, (children) => {
-		assert(children.length === 1, "Should only have one child to compose");
-		return children[0].change;
-	});
+export function shallowCompose<T>(
+	changes: TaggedChange<SF.Changeset<T>>[],
+	revInfos?: RevisionInfo[],
+): SF.Changeset<T> {
+	return composeI(
+		changes,
+		(children) => {
+			assert(children.length === 1, "Should only have one child to compose");
+			return children[0].change;
+		},
+		revInfos,
+	);
+}
+
+function defaultRevisionMetadataFromChanges(
+	changes: readonly TaggedChange<SF.Changeset<unknown>>[],
+): RevisionMetadataSource {
+	const revInfos: RevisionInfo[] = [];
+	for (const change of changes) {
+		if (change.revision !== undefined) {
+			revInfos.push({
+				revision: change.revision,
+				rollbackOf: change.rollbackOf,
+			});
+		}
+	}
+	return revisionMetadataSourceFromInfo(revInfos);
 }
 
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
+	revInfos?: RevisionInfo[],
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
-	const composed = SF.compose(changes, composer, idAllocator, moveEffects);
+	const composed = SF.compose(
+		changes,
+		composer,
+		idAllocator,
+		moveEffects,
+		revInfos !== undefined
+			? revisionMetadataSourceFromInfo(revInfos)
+			: defaultRevisionMetadataFromChanges(changes),
+	);
 
 	if (moveEffects.isInvalidated) {
 		resetCrossFieldTable(moveEffects);
 		SF.amendCompose(composed, composer, idAllocator, moveEffects);
-		// assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
+		assert(!moveEffects.isInvalidated, "Compose should not need more than one amend pass");
 	}
 	return composed;
 }
@@ -54,13 +96,28 @@ export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>)
 	deepFreeze(change);
 	deepFreeze(base);
 
+	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
-	let rebasedChange = SF.rebase(change, base, TestChange.rebase, idAllocator, moveEffects);
+	let rebasedChange = SF.rebase(
+		change,
+		base,
+		TestChange.rebase,
+		idAllocator,
+		moveEffects,
+		metadata,
+	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
-		rebasedChange = SF.amendRebase(rebasedChange, base, idAllocator, moveEffects);
-		// assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
+		rebasedChange = SF.amendRebase(
+			rebasedChange,
+			base,
+			(a, b) => a,
+			idAllocator,
+			moveEffects,
+			metadata,
+		);
+		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
 	return rebasedChange;
 }
@@ -88,6 +145,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
+		fakeRepair,
 		() => fail("Sequence fields should not generate IDs during invert"),
 		table,
 	);
@@ -99,6 +157,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
+			fakeRepair,
 			() => fail("Sequence fields should not generate IDs during invert"),
 			table,
 		);
@@ -109,11 +168,11 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
+	assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset): Delta.FieldChanges {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta, fakeRepair);
+export function toDelta(change: TestChangeset): Delta.MarkList {
+	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
@@ -154,11 +213,4 @@ export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
 			mark.id = newId!;
 		}
 	}
-}
-
-export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
-	let currId = maxId ?? -1;
-	return () => {
-		return brand(++currId);
-	};
 }

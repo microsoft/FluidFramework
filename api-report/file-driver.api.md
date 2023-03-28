@@ -40,7 +40,7 @@ export class FileDeltaStorageService implements IDocumentDeltaStorageService {
     getFromWebSocket(from: number, to: number): api.ISequencedDocumentMessage[];
     // (undocumented)
     get ops(): readonly Readonly<api.ISequencedDocumentMessage>[];
-    }
+}
 
 // @public
 export class FileDocumentService implements api_2.IDocumentService {
@@ -54,7 +54,7 @@ export class FileDocumentService implements api_2.IDocumentService {
     dispose(): void;
     // (undocumented)
     get resolvedUrl(): api_2.IResolvedUrl;
-    }
+}
 
 // @public
 export class FileDocumentServiceFactory implements IDocumentServiceFactory {
@@ -62,9 +62,7 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // (undocumented)
-    readonly protocolName = "fluid-file:";
-    }
+}
 
 // @public (undocumented)
 export const FileSnapshotWriterClassFactory: <TBase extends ReaderConstructor>(Base: TBase) => {
@@ -100,7 +98,7 @@ export class FluidFetchReader extends ReadDocumentStorageServiceBase implements 
     getVersions(versionId: string | null, count: number): Promise<api.IVersion[]>;
     // (undocumented)
     readBlob(sha: string): Promise<ArrayBufferLike>;
-    }
+}
 
 // @public (undocumented)
 export const FluidFetchReaderFileSnapshotWriter: {
@@ -183,7 +181,6 @@ export class ReplayFileDeltaConnection extends TypedEventEmitter<IDocumentDeltaC
     // (undocumented)
     get version(): string;
 }
-
 
 // (No @packageDocumentation comment for this package)
 

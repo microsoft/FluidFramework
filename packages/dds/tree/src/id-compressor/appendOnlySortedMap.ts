@@ -359,7 +359,7 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 		super(keyComparator);
 	}
 
-	public append(key: K, value: V): void {
+	public override append(key: K, value: V): void {
 		if (
 			this.elements.length !== 0 &&
 			this.valueComparator(
@@ -408,7 +408,7 @@ export class AppendOnlyDoublySortedMap<K, V, S> extends AppendOnlySortedMap<K, V
 	/**
 	 * Test-only expensive assertions to check the internal validity of the data structure.
 	 */
-	public assertValid(): void {
+	public override assertValid(): void {
 		super.assertValid();
 		let prev: readonly [unknown, V] | undefined;
 		for (const kv of this.entries()) {

@@ -43,6 +43,7 @@ import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
+	VisibilityState,
 } from "@fluidframework/runtime-definitions";
 import { v4 as uuid } from "uuid";
 import { MockDeltaManager } from "./mockDeltas";
@@ -113,8 +114,14 @@ export class MockContainerRuntime {
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
+		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		this.deltaManager = new MockDeltaManager();
+		const msn = overrides?.minimumSequenceNumber;
+		if (msn !== undefined) {
+			this.deltaManager.lastSequenceNumber = msn;
+			this.deltaManager.minimumSequenceNumber = msn;
+		}
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
 		this.dataStoreRuntime.deltaManager = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;
@@ -466,6 +473,10 @@ export class MockFluidDataStoreRuntime
 
 	public get attachState(): AttachState {
 		return this.local ? AttachState.Detached : AttachState.Attached;
+	}
+
+	public get visibilityState(): VisibilityState {
+		return this.local ? VisibilityState.NotVisible : VisibilityState.GloballyVisible;
 	}
 
 	public bindChannel(channel: IChannel): void {

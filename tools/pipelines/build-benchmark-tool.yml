@@ -12,6 +12,7 @@ parameters:
   default: none
   values:
     - none
+    - prerelease
     - release
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
@@ -64,6 +65,8 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: tools/benchmark
     tagName: benchmark
     taskBuild: build
@@ -71,4 +74,3 @@ extends:
     taskLint: true
     taskTest:
     - test
-    buildNumberInPatch: true

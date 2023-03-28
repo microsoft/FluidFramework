@@ -4,37 +4,35 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import { brandOpaque, fail, Mutable, OffsetListFactory } from "../../util";
+import { brandOpaque, Mutable, OffsetListFactory } from "../../util";
 import { Delta } from "../../core";
+import { populateChildModifications } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { NodeReviver } from "../modular-schema";
 import { MarkList } from "./format";
-import { getInputLength, getOutputLength, isSkipMark } from "./utils";
+import { isSkipMark } from "./utils";
 
-export type ToDelta<TNodeChange> = (
-	child: TNodeChange,
-	index: number | undefined,
-) => Delta.NodeChanges | undefined;
+export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.Modify;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	marks: MarkList<TNodeChange>,
 	deltaFromChild: ToDelta<TNodeChange>,
-	reviver: NodeReviver,
-): Delta.FieldChanges {
-	const markList = new OffsetListFactory<Delta.Mark>();
+): Delta.MarkList {
+	const out = new OffsetListFactory<Delta.Mark>();
 	for (const mark of marks) {
 		if (isSkipMark(mark)) {
-			markList.pushOffset(mark);
+			out.pushOffset(mark);
 		} else {
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			const type = mark.type;
 			switch (type) {
 				case "Insert": {
-					const insertMark: Delta.Mark = {
+					const cursors = mark.content.map(singleTextCursor);
+					const insertMark: Mutable<Delta.Insert> = {
 						type: Delta.MarkType.Insert,
-						content: mark.content.map(singleTextCursor),
+						content: cursors,
 					};
-					markList.pushContent(insertMark);
+					populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
+					out.pushContent(insertMark);
 					break;
 				}
 				case "MoveIn":
@@ -44,47 +42,51 @@ export function sequenceFieldToDelta<TNodeChange>(
 						count: mark.count,
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 					};
-					markList.pushContent(moveMark);
+					out.pushContent(moveMark);
 					break;
 				}
 				case "Modify": {
+					const modify = deltaFromChild(mark.changes);
+					if (
+						Object.prototype.hasOwnProperty.call(modify, "setValue") ||
+						modify.fields !== undefined
+					) {
+						out.pushContent(modify);
+					} else {
+						out.pushOffset(1);
+					}
 					break;
 				}
 				case "Delete": {
-					const deleteMark: Delta.Delete = {
+					const deleteMark: Mutable<Delta.Delete> = {
 						type: Delta.MarkType.Delete,
 						count: mark.count,
 					};
-					markList.pushContent(deleteMark);
+					populateChildModificationsIfAny(mark.changes, deleteMark, deltaFromChild);
+					out.pushContent(deleteMark);
 					break;
 				}
 				case "MoveOut":
 				case "ReturnFrom": {
-					const moveMark: Delta.MoveOut = {
+					const moveMark: Mutable<Delta.MoveOut> = {
 						type: Delta.MarkType.MoveOut,
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 						count: mark.count,
 					};
-					markList.pushContent(moveMark);
+					populateChildModificationsIfAny(mark.changes, moveMark, deltaFromChild);
+					out.pushContent(moveMark);
 					break;
 				}
 				case "Revive": {
 					if (mark.conflictsWith === undefined) {
-						const insertMark: Delta.Insert = {
+						const insertMark: Mutable<Delta.Insert> = {
 							type: Delta.MarkType.Insert,
-							content: reviver(
-								mark.detachedBy ??
-									mark.lastDetachedBy ??
-									fail(
-										"Unable to get convert revive mark to delta due to missing revision tag",
-									),
-								mark.detachIndex,
-								mark.count,
-							),
+							content: mark.content,
 						};
-						markList.pushContent(insertMark);
+						populateChildModificationsIfAny(mark.changes, insertMark, deltaFromChild);
+						out.pushContent(insertMark);
 					} else if (mark.lastDetachedBy === undefined) {
-						markList.pushOffset(mark.count);
+						out.pushOffset(mark.count);
 					}
 					break;
 				}
@@ -93,58 +95,16 @@ export function sequenceFieldToDelta<TNodeChange>(
 			}
 		}
 	}
+	return out.list;
+}
 
-	const beforeShallow: Delta.NestedChange[] = [];
-	const afterShallow: Delta.NestedChange[] = [];
-	let inputIndex = 0;
-	let outputIndex = 0;
-	for (const mark of marks) {
-		if (!isSkipMark(mark)) {
-			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
-			const type = mark.type;
-			switch (type) {
-				case "Modify":
-				case "Delete":
-				case "MoveOut":
-				case "ReturnFrom": {
-					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, inputIndex);
-						if (childDelta !== undefined) {
-							beforeShallow.push({ index: inputIndex, ...childDelta });
-						}
-					}
-					break;
-				}
-				case "Revive":
-				case "Insert": {
-					if (mark.changes !== undefined) {
-						const childDelta = deltaFromChild(mark.changes, undefined);
-						if (childDelta !== undefined) {
-							afterShallow.push({ index: outputIndex, ...childDelta });
-						}
-					}
-					break;
-				}
-				case "MoveIn":
-				case "ReturnTo":
-					break;
-				default:
-					unreachableCase(type);
-			}
-		}
-		outputIndex += getOutputLength(mark);
-		inputIndex += getInputLength(mark);
+function populateChildModificationsIfAny<TNodeChange>(
+	changes: TNodeChange | undefined,
+	deltaMark: Mutable<Delta.HasModifications>,
+	deltaFromChild: ToDelta<TNodeChange>,
+): void {
+	if (changes !== undefined) {
+		const modify = deltaFromChild(changes);
+		populateChildModifications(modify, deltaMark);
 	}
-
-	const fieldChanges: Mutable<Delta.FieldChanges> = {};
-	if (beforeShallow.length > 0) {
-		fieldChanges.beforeShallow = beforeShallow;
-	}
-	if (markList.list.length > 0) {
-		fieldChanges.shallow = markList.list;
-	}
-	if (afterShallow.length > 0) {
-		fieldChanges.afterShallow = afterShallow;
-	}
-	return fieldChanges;
 }

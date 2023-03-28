@@ -6,7 +6,6 @@
 
 import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
-import { IConnected } from '@fluidframework/protocol-definitions';
 import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
@@ -127,8 +126,10 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
+    // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    readonly protocolName = "fluid-odsp:";
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
 // @public @deprecated (undocumented)
@@ -177,7 +178,7 @@ export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITeleme
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //
 // @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {

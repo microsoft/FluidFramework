@@ -302,30 +302,30 @@ flowchart
         direction TB
         subgraph core ["core libraries"]
             direction TB
-            checkout-->forest
             forest-->schema-stored
             change-family-->repair
             edit-manager-->change-family
-            repair-->rebase
+            rebase-->repair
             rebase-->tree
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
-            transaction-->change-family
-            transaction-->checkout
             dependency-tracking
             forest-->tree
         end
         core-->events-->util
-        id-compressor-->util
+        core-->id-compressor-->util
         feature-->shared-tree-core
         shared-tree-core-->core
         shared-tree-->feature
         subgraph feature ["feature-libraries"]
             direction TB
-            editable-tree-->defaultFieldKinds
+            editable-tree-->contextuallyTyped
             defaultRebaser
+            contextuallyTyped-->defaultFieldKinds
             defaultSchema-->defaultFieldKinds-->modular-schema
             forestIndex-->treeTextCursor
+            schema-aware-->defaultSchema
+            schema-aware-->contextuallyTyped
             modular-schema
             object-forest-->mapTreeCursor-->treeCursorUtils
             chunked-forest-->treeCursorUtils

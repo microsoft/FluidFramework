@@ -6,7 +6,10 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import {
+	IContainerRuntime,
+	IDataStoreWithBindToContext_Deprecated,
+} from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	createSummarizer,
@@ -19,7 +22,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
@@ -55,7 +58,9 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 		);
 		const ds1 = await requestFluidObject<ITestDataObject>(aliasableDataStore1, "");
 
-		(aliasableDataStore1 as any).fluidDataStoreChannel.bindToContext();
+		(
+			aliasableDataStore1 as IDataStoreWithBindToContext_Deprecated
+		).fluidDataStoreChannel?.bindToContext?.();
 		await provider.ensureSynchronized();
 
 		// We run the summary so await this.getInitialSnapshotDetails() is called before the datastore is aliased

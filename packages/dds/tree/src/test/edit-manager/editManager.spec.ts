@@ -15,10 +15,13 @@ import {
 	FieldKey,
 	TaggedChange,
 	emptyDelta,
+	mintRevisionTag,
+	SeqNumber,
+	ChangeFamilyEditor,
+	makeAnonChange,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
-	AnchorRebaseData,
 	TestAnchorSet,
 	TestChangeEncoder,
 	TestChangeFamily,
@@ -27,6 +30,7 @@ import {
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
 } from "../testChange";
+import { assertDeltaEqual } from "../utils";
 
 const rootKey: FieldKey = brand("root");
 
@@ -39,12 +43,12 @@ type TestEditManager = EditManager<TestChange, TestChangeFamily>;
  * `ChangeFamily.intoDelta` with the expected change.
  */
 function asDelta(intentions: number[]): Delta.Root {
-	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, { shallow: intentions }]]);
+	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
 }
 
 function changeFamilyFactory(
 	rebaser?: ChangeRebaser<TestChange>,
-): ChangeFamily<unknown, TestChange> {
+): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		encoder: new TestChangeEncoder(),
@@ -59,13 +63,17 @@ function editManagerFactory(options: {
 	sessionId?: SessionId;
 }): {
 	manager: TestEditManager;
-	anchors: AnchorRebaseData;
+	anchors: TestAnchorSet;
+	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
 	const family = changeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
-	const manager = new EditManager<TestChange, ChangeFamily<unknown, TestChange>>(family, anchors);
-	manager.initSessionId(options.sessionId ?? localSessionId);
-	return { manager, anchors };
+	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
+		family,
+		options.sessionId ?? localSessionId,
+		anchors,
+	);
+	return { manager, anchors, family };
 }
 
 const localSessionId: SessionId = "0";
@@ -76,7 +84,10 @@ const NUM_STEPS = 5;
 const NUM_PEERS = 2;
 const peers: SessionId[] = makeArray(NUM_PEERS, (i) => String(i + 1));
 
-type TestCommit = Commit<TestChange>;
+type TestCommit = Commit<TestChange> & {
+	seqNumber: SeqNumber;
+	refNumber: SeqNumber;
+};
 
 /**
  * Represents the minting and sending of a new local change.
@@ -247,19 +258,108 @@ describe("EditManager", () => {
 			{ seq: 12, type: "Pull", ref: 1, from: peer2 },
 		]);
 
+		runUnitTestScenario("Can rebase changes from a peer that catches up", [
+			{ seq: 1, type: "Push" },
+			{ seq: 4, type: "Push" },
+			{ seq: 1, type: "Ack" },
+			{ seq: 2, type: "Pull", ref: 0, from: peer1 },
+			{ seq: 3, type: "Pull", ref: 2, from: peer1 },
+		]);
+
 		it("Bounds memory growth when provided with a minimumSequenceNumber", () => {
 			const { manager } = editManagerFactory({});
 			for (let i = 0; i < 10; ++i) {
-				manager.addSequencedChange({
-					changeset: TestChange.mint([], []),
-					refNumber: brand(0),
-					seqNumber: brand(i),
-					sessionId: peer1,
-				});
+				manager.addSequencedChange(
+					{
+						change: TestChange.mint([], []),
+						revision: mintRevisionTag(),
+						sessionId: peer1,
+					},
+					brand(i),
+					brand(0),
+				);
 			}
 			assert.equal(manager.getTrunk().length, 10);
-			manager.advanceMinimumSequenceNumber(5);
+			manager.advanceMinimumSequenceNumber(brand(5));
 			assert(manager.getTrunk().length < 10);
+		});
+
+		it("Rebases anchors over local changes", () => {
+			const { manager, anchors } = editManagerFactory({});
+			const change = TestChange.mint([], 1);
+			manager.addLocalChange(mintRevisionTag(), change, true);
+			assert.deepEqual(anchors.rebases, [change]);
+			assert.deepEqual(anchors.intentions, change.intentions);
+		});
+
+		it("Rebases anchors over sequenced changes", () => {
+			const { manager, anchors } = editManagerFactory({});
+			const change = TestChange.mint([], 1);
+			manager.addSequencedChange(
+				{
+					change,
+					revision: mintRevisionTag(),
+					sessionId: peer1,
+				},
+				brand(1),
+				brand(0),
+			);
+			assert.deepEqual(anchors.rebases, [change]);
+			assert.deepEqual(anchors.intentions, change.intentions);
+		});
+
+		it("Can rollback changes", () => {
+			const { manager, anchors, family } = editManagerFactory({});
+			const startingRevision = manager.getLocalBranchHead().revision;
+			const changes = [
+				TestChange.mint([], 1),
+				TestChange.mint([1], 2),
+				TestChange.mint([1, 2], -2),
+				TestChange.mint([1], 3),
+			];
+			for (const change of changes) {
+				manager.addLocalChange(mintRevisionTag(), change, true);
+			}
+			assert.deepEqual(anchors.rebases, changes);
+			assert.deepEqual(anchors.intentions, [1, 3]);
+
+			const inverseChanges = changes.map(TestChange.invert).reverse();
+			const composedInverse = TestChange.compose(inverseChanges.map(makeAnonChange));
+			const inverseDelta = family.intoDelta(composedInverse);
+			const delta = manager.rollbackLocalChanges(startingRevision);
+			assertDeltaEqual(delta, inverseDelta);
+			const totalRebases = [...changes, composedInverse];
+			assert.deepEqual(anchors.rebases, totalRebases);
+			assert.deepEqual(anchors.intentions, []);
+		});
+
+		it("Updates local branch when loading from summary", () => {
+			// This regression tests ensures that the local branch is rebased to the head of the trunk
+			// when the trunk is modified by a summary load
+			const { manager } = editManagerFactory({});
+			const revision = mintRevisionTag();
+			manager.loadSummaryData({
+				trunk: [
+					{
+						change: TestChange.mint([0], [1]),
+						revision,
+						sessionId: "0",
+						sequenceNumber: brand(1),
+					},
+				],
+				branches: new Map(),
+			});
+			const delta = manager.addSequencedChange(
+				{
+					change: TestChange.mint([0, 1], [2]),
+					revision: mintRevisionTag(),
+					sessionId: "1",
+				},
+				brand(2),
+				brand(1),
+			);
+			// TODO: This is probably not the best way to assert that the change was rebased properly
+			assert.equal(delta.get("root" as FieldKey)?.length, 1);
 		});
 	});
 
@@ -335,15 +435,15 @@ describe("EditManager", () => {
 			// Uncomment the code below to log the titles of generated scenarios.
 			// This is helpful for creating a unit test out of a generated scenario that fails.
 			// const title = scenario
-			//     .map((s) => {
-			//         if (s.type === "Pull") {
-			//             return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
-			//         } else if (s.type === "Ack") {
-			//             return `Ack(${s.seq})`;
-			//         }
-			//         return `Push(${s.seq})`;
-			//     })
-			//     .join("|");
+			// 	.map((s) => {
+			// 		if (s.type === "Pull") {
+			// 			return `Pull(${s.seq}) from:${s.from} ref:${s.ref}`;
+			// 		} else if (s.type === "Ack") {
+			// 			return `Ack(${s.seq})`;
+			// 		}
+			// 		return `Push(${s.seq})`;
+			// 	})
+			// 	.join("|");
 			// console.debug(title);
 			runUnitTestScenario(undefined, scenario);
 		}
@@ -440,9 +540,9 @@ function runUnitTestScenario(
 		 */
 		const recordSequencedEdit = (commit: TestCommit): void => {
 			trunk.push(commit.seqNumber);
-			summarizer.addSequencedChange(commit);
+			summarizer.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
 			for (const j of joiners) {
-				j.addSequencedChange(commit);
+				j.addSequencedChange(commit, commit.seqNumber, commit.refNumber);
 			}
 		};
 		/**
@@ -487,15 +587,17 @@ function runUnitTestScenario(
 					}
 					iNextAck += 1;
 					const changeset = TestChange.mint(knownToLocal, seq);
+					const revision = mintRevisionTag();
 					localCommits.push({
+						revision,
 						sessionId: localSessionId,
 						seqNumber: brand(seq),
 						refNumber: brand(localRef),
-						changeset,
+						change: changeset,
 					});
 					knownToLocal.push(seq);
 					// Local changes should always lead to a delta that is equivalent to the local change.
-					assert.deepEqual(manager.addLocalChange(changeset), asDelta([seq]));
+					assert.deepEqual(manager.addLocalChange(revision, changeset), asDelta([seq]));
 					break;
 				}
 				case "Ack": {
@@ -510,7 +612,10 @@ function runUnitTestScenario(
 						);
 					}
 					// Acknowledged (i.e., sequenced) local changes should always lead to an empty delta.
-					assert.deepEqual(manager.addSequencedChange(commit), emptyDelta);
+					assert.deepEqual(
+						manager.addSequencedChange(commit, commit.seqNumber, commit.refNumber),
+						emptyDelta,
+					);
 					localRef = seq;
 					recordSequencedEdit(commit);
 					break;
@@ -538,10 +643,11 @@ function runUnitTestScenario(
 						...steps.filter(peerLocalChangesFilter),
 					].map((s) => s.seq ?? fail("Sequenced changes must all have a seq number"));
 					const commit: TestCommit = {
+						revision: mintRevisionTag(),
 						sessionId: step.from,
 						seqNumber: brand(seq),
 						refNumber: brand(step.ref),
-						changeset: TestChange.mint(knownToPeer, seq),
+						change: TestChange.mint(knownToPeer, seq),
 					};
 					/**
 					 * Ordered list of intentions for local changes
@@ -555,7 +661,10 @@ function runUnitTestScenario(
 						seq,
 						...localIntentions,
 					];
-					assert.deepEqual(manager.addSequencedChange(commit), asDelta(expected));
+					assert.deepEqual(
+						manager.addSequencedChange(commit, commit.seqNumber, commit.refNumber),
+						asDelta(expected),
+					);
 					if (step.expectedDelta !== undefined) {
 						// Verify that the test case was annotated with the right expectations.
 						assert.deepEqual(step.expectedDelta, expected);
@@ -582,12 +691,7 @@ function runUnitTestScenario(
 					sessionId: `Join${joiners.length}`,
 				}).manager;
 				const summary = clone(summarizer.getSummaryData());
-				joiner.loadSummaryData((data) => {
-					data.trunk.push(...summary.trunk);
-					for (const [k, v] of summary.branches) {
-						data.branches.set(k, v);
-					}
-				});
+				joiner.loadSummaryData(summary);
 				joiners.push(joiner);
 			}
 
@@ -611,6 +715,6 @@ function checkChangeList(manager: TestEditManager, intentions: number[]): void {
 function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestChange>[] {
 	return manager
 		.getTrunk()
-		.map((c) => c.changeset)
+		.map((c) => c.change)
 		.concat(manager.getLocalChanges());
 }

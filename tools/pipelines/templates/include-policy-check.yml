@@ -1,0 +1,59 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-policy-check
+#
+# This template can be included in pipelines that run check scripts as part of their pipeline. The check scripts are
+# executed serially in a separate stage from the main build.
+#
+# IMPORTANT: This template only works with pnpm. Don't use in any pipelines that use another package manager.
+
+parameters:
+- name: buildDirectory
+  type: string
+
+# A list of scripts that execute checks of the repo, e.g. policy-check, layer-check, etc. These will be run serially in
+# a pipeline stage separate from the build stage.
+- name: checks
+  type: object
+  default:
+  - policy-check
+  - layer-check
+
+stages:
+- stage: run_checks
+  dependsOn: [] # Has no prereqs
+  displayName: Policy checks
+  pool: Small
+  jobs:
+  - job:
+    displayName: Run checks
+    steps:
+    - task: UseNode@1
+      displayName: Use Node 16.x
+      inputs:
+        version: 16.x
+
+    - task: Bash@3
+      displayName: Install root dependencies
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          # Install pnpm globally
+          npm i -g pnpm@7.30.5
+          pnpm -v
+
+          # We only want to install the root package deps, so we set recursive-install to false
+          pnpm config set recursive-install false
+          pnpm install --frozen-lockfile
+
+    - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+      - ${{ each check in parameters.checks }}:
+        - task: Npm@1
+          displayName: npm run ${{ check }}
+          inputs:
+            command: 'custom'
+            workingDir: ${{ parameters.buildDirectory }}
+            customCommand: 'run ${{ check }}'
+          condition: succeededOrFailed()

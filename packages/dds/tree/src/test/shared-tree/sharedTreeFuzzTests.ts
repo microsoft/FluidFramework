@@ -11,32 +11,26 @@ import {
 	takeAsync as take,
 	IRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import {
-	FieldKinds,
-	singleTextCursor,
-	namedTreeSchema,
-	jsonableTreeFromCursor,
-} from "../../feature-libraries";
-import { brand, fail } from "../../util";
+import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
+import { brand, fail, TransactionResult } from "../../util";
 import {
 	initializeTestTree,
 	ITestTreeProvider,
 	SummarizeType,
 	TestTreeProvider,
+	toJsonableTree,
 	validateTree,
 } from "../utils";
-import { ISharedTree } from "../../shared-tree";
+import { ISharedTree, runSynchronous } from "../../shared-tree";
 import {
 	JsonableTree,
 	rootFieldKey,
 	rootFieldKeySymbol,
 	moveToDetachedField,
-	TransactionResult,
 	fieldSchema,
 	SchemaData,
 	UpPath,
 	compareUpPaths,
-	mapCursorField,
 } from "../../core";
 import { FuzzChange, FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerator";
 
@@ -89,7 +83,7 @@ export async function performFuzzActions(
 			edit: async (state, operation) => {
 				const { index, contents } = operation;
 				const tree = state.testTreeProvider.trees[index];
-				applyFuzzChange(tree, contents, TransactionResult.Apply);
+				applyFuzzChange(tree, contents, TransactionResult.Commit);
 				return state;
 			},
 			synchronize: async (state) => {
@@ -138,7 +132,7 @@ export async function performFuzzActionsAbort(
 		generator,
 		{
 			edit: async (state, operation) => {
-				const { index, contents } = operation;
+				const { contents } = operation;
 				applyFuzzChange(tree, contents, TransactionResult.Abort);
 				return state;
 			},
@@ -167,13 +161,12 @@ export async function performFuzzActionsAbort(
 }
 
 export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
-	const tree0 = provider.trees[0];
-	const readCursor = tree0.forest.allocateCursor();
-	moveToDetachedField(tree0.forest, readCursor);
-	const tree0Jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
-	readCursor.free();
-	for (let i = 1; i < 4; i++) {
-		validateTree(provider.trees[i], tree0Jsonable);
+	const lastTree = toJsonableTree(provider.trees[provider.trees.length - 1]);
+	for (let i = 0; i < provider.trees.length - 1; i++) {
+		const actual = toJsonableTree(provider.trees[i]);
+		// Uncomment to get a merged view of the trees
+		// const mergedView = merge(actual, lastTree);
+		assert.deepEqual(actual, lastTree);
 	}
 }
 
@@ -184,8 +177,8 @@ function applyFuzzChange(
 ): void {
 	switch (contents.fuzzType) {
 		case "insert":
-			tree.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(contents.parent, contents.field);
+			runSynchronous(tree, () => {
+				const field = tree.editor.sequenceField(contents.parent, contents.field);
 				field.insert(
 					contents.index,
 					singleTextCursor({ type: brand("Test"), value: contents.value }),
@@ -194,18 +187,18 @@ function applyFuzzChange(
 			});
 			break;
 		case "delete":
-			tree.runTransaction((forest, editor) => {
-				const field = editor.sequenceField(
-					contents.path?.parent,
-					contents.path?.parentField,
+			runSynchronous(tree, () => {
+				const field = tree.editor.sequenceField(
+					contents.firstNode?.parent,
+					contents.firstNode?.parentField,
 				);
-				field.delete(contents.path?.parentIndex, 1);
+				field.delete(contents.firstNode?.parentIndex, contents.count);
 				return transactionResult;
 			});
 			break;
 		case "setPayload":
-			tree.runTransaction((forest, editor) => {
-				editor.setValue(contents.path, contents.value);
+			runSynchronous(tree, () => {
+				tree.editor.setValue(contents.path, contents.value);
 				return transactionResult;
 			});
 			break;
