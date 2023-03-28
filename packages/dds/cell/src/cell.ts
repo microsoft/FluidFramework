@@ -186,7 +186,7 @@ export class SharedCell<T = any>
 	/**
 	 * Set the attribution through the SequencedDocumentMessage
 	 */
-	private setAttribution(message: ISequencedDocumentMessage, type?: string): void {
+	private setAttribution(message: ISequencedDocumentMessage): void {
 		if (this.options?.attribution?.track ?? false) {
 			this.attribution = { type: "op", seq: message.sequenceNumber };
 		}
@@ -207,7 +207,10 @@ export class SharedCell<T = any>
 	 * @returns The summary of the current state of the Cell.
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const content: ICellValue = { value: this.data, attribution: this.attribution };
+		const content: ICellValue =
+			this.attribution?.type === "local"
+				? { value: this.data, attribution: undefined }
+				: { value: this.data, attribution: this.attribution };
 		return createSingleBlobSummary(
 			snapshotFileName,
 			serializer.stringify(content, this.handle),

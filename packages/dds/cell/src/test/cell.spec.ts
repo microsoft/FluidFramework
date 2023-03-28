@@ -178,7 +178,7 @@ describe("Cell", () => {
 				assert.equal(
 					key?.type,
 					"local",
-					"the first cell does not have valid local attribution",
+					"the first cell should have valid local attribution",
 				);
 
 				// load a cell from the snapshot
@@ -195,9 +195,9 @@ describe("Cell", () => {
 				key = cell2.getAttribution();
 
 				assert.equal(
-					key?.type,
-					"local",
-					"the second cell does not have valid local attribution",
+					key,
+					undefined,
+					"the second cell should not load the local attribution from the first cell",
 				);
 			});
 		});
