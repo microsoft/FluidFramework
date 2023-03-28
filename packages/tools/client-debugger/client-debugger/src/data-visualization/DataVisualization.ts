@@ -398,7 +398,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 			// Render primitives and falsy types via their string representation
 			const result: ValueNode = {
 				label,
-				value: `${data}`,
+				value: data,
 				typeMetadata: typeof data,
 				nodeKind: NodeKind.ValueNode,
 			};

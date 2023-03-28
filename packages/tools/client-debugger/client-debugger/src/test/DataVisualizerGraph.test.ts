@@ -19,7 +19,7 @@ import {
 	NodeKind,
 } from "../data-visualization";
 
-describe("Data Visualization unit tests", () => {
+describe("DataVisualizerGraph unit tests", () => {
 	it("Single root DDS (SharedCounter)", async () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const sharedCounter = new SharedCounter(
@@ -45,7 +45,7 @@ describe("Data Visualization unit tests", () => {
 		const expectedChildTree: FluidObjectValueNode = {
 			label: "counter",
 			fluidObjectId: sharedCounter.id,
-			value: "0",
+			value: 0,
 			typeMetadata: "SharedCounter",
 			nodeKind: NodeKind.FluidValueNode,
 		};
@@ -59,7 +59,7 @@ describe("Data Visualization unit tests", () => {
 		const expectedChildTreeAfterEdit: FluidObjectValueNode = {
 			label: "counter",
 			fluidObjectId: sharedCounter.id,
-			value: "37",
+			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: NodeKind.FluidValueNode,
 		};
@@ -125,7 +125,7 @@ describe("Data Visualization unit tests", () => {
 					children: [
 						{
 							label: "a",
-							value: "1",
+							value: 1,
 							typeMetadata: "number",
 							nodeKind: NodeKind.ValueNode,
 						},
@@ -137,7 +137,7 @@ describe("Data Visualization unit tests", () => {
 						},
 						{
 							label: "c",
-							value: "true",
+							value: true,
 							typeMetadata: "boolean",
 							nodeKind: NodeKind.ValueNode,
 						},
@@ -191,7 +191,7 @@ describe("Data Visualization unit tests", () => {
 		const expectedChildCounterTree: FluidObjectValueNode = {
 			label: "counter",
 			fluidObjectId: sharedCounter.id,
-			value: "42",
+			value: 42,
 			typeMetadata: "SharedCounter",
 			nodeKind: NodeKind.FluidValueNode,
 		};

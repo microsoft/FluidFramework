@@ -50,7 +50,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 	return {
 		fluidObjectId: sharedCounter.id,
 		label,
-		value: `${sharedCounter.value}`,
+		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: NodeKind.FluidValueNode,
 	};

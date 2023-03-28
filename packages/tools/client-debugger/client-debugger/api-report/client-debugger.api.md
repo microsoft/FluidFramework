@@ -375,9 +375,13 @@ export interface TelemetryHistoryMessage extends ISourcedDebuggerMessage<Telemet
 }
 
 // @public
-export interface ValueNode extends VisualNodeBase {
+export interface ValueNode extends ValueNodeBase {
     nodeKind: NodeKind.ValueNode;
-    value: string;
+}
+
+// @public
+export interface ValueNodeBase extends VisualNodeBase {
+    value: unknown;
 }
 
 // @public

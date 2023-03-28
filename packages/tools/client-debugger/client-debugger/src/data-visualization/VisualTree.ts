@@ -58,7 +58,19 @@ export interface VisualNodeBase {
 }
 
 /**
- * Base interface for nodes that have children, which should be displayed beneath this item in the visual tree.
+ * Base interface for visual leaf nodes containing an inline value.
+ *
+ * @public
+ */
+export interface ValueNodeBase extends VisualNodeBase {
+	/**
+	 * The value to display inline. Will always be primitive data.
+	 */
+	value: unknown;
+}
+
+/**
+ * A visual tree with children, which should be displayed beneath this item in the visual tree.
  *
  * @public
  */
@@ -118,12 +130,7 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
  *
  * @public
  */
-export interface FluidObjectValueNode extends FluidObjectNode {
-	/**
-	 * The value of the Fluid object to be displayed inline.
-	 */
-	value: string;
-
+export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNode {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
@@ -154,12 +161,7 @@ export interface FluidHandleNode extends VisualNodeBase {
  *
  * @public
  */
-export interface ValueNode extends VisualNodeBase {
-	/**
-	 * The value to display inline.
-	 */
-	value: string;
-
+export interface ValueNode extends ValueNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */

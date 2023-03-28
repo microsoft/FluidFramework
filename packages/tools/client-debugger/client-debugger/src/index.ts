@@ -53,6 +53,7 @@ export {
 	FluidObjectTreeNode,
 	NodeKind,
 	ValueNode,
+	ValueNodeBase,
 	VisualTreeNode,
 	VisualNode,
 	VisualNodeBase,
