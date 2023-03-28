@@ -42,10 +42,13 @@ const TreeSchemaIdentifier = brandedString<TreeSchemaIdentifier>();
 const LocalFieldKey = brandedString<LocalFieldKey>();
 const GlobalFieldKey = brandedString<GlobalFieldKey>();
 
-const FieldSchemaFormat = Type.Object({
-	kind: FieldKindIdentifier,
-	types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
-});
+const FieldSchemaFormat = Type.Object(
+	{
+		kind: FieldKindIdentifier,
+		types: Type.Optional(Type.Array(TreeSchemaIdentifier)),
+	},
+	{ additionalProperties: false },
+);
 
 const NamedLocalFieldSchemaFormat = Type.Intersect([
 	FieldSchemaFormat,
@@ -61,15 +64,18 @@ const NamedGlobalFieldSchemaFormat = Type.Intersect([
 	}),
 ]);
 
-const TreeSchemaFormat = Type.Object({
-	name: TreeSchemaIdentifier,
-	localFields: Type.Array(NamedLocalFieldSchemaFormat),
-	globalFields: Type.Array(GlobalFieldKey),
-	extraLocalFields: FieldSchemaFormat,
-	extraGlobalFields: Type.Boolean(),
-	// TODO: don't use external type here.
-	value: Type.Enum(ValueSchema),
-});
+const TreeSchemaFormat = Type.Object(
+	{
+		name: TreeSchemaIdentifier,
+		localFields: Type.Array(NamedLocalFieldSchemaFormat),
+		globalFields: Type.Array(GlobalFieldKey),
+		extraLocalFields: FieldSchemaFormat,
+		extraGlobalFields: Type.Boolean(),
+		// TODO: don't use external type here.
+		value: Type.Enum(ValueSchema),
+	},
+	{ additionalProperties: false },
+);
 
 /**
  * Format for encoding as json.
@@ -80,11 +86,14 @@ const TreeSchemaFormat = Type.Object({
  * this choice is somewhat arbitrary, but avoids user data being used as object keys,
  * which can sometimes be an issue (for example handling that for "__proto__" can require care).
  */
-const Format = Type.Object({
-	version: Type.Literal(version),
-	treeSchema: Type.Array(TreeSchemaFormat),
-	globalFieldSchema: Type.Array(NamedGlobalFieldSchemaFormat),
-});
+const Format = Type.Object(
+	{
+		version: Type.Literal(version),
+		treeSchema: Type.Array(TreeSchemaFormat),
+		globalFieldSchema: Type.Array(NamedGlobalFieldSchemaFormat),
+	},
+	{ additionalProperties: false },
+);
 
 type Format = Static<typeof Format>;
 type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;

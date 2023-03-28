@@ -47,8 +47,7 @@ describe("SchemaIndex", () => {
 			'{"version": "1.0.0"}',
 			'{"version": "2.0.0"}',
 			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [{}]}',
-			// TODO: schema seems to accept extra fields. Is this intended? Can it be prevented?
-			// '{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [], "extraField": 0}',
+			'{"version": "1.0.0", "treeSchema": [], "globalFieldSchema": [], "extraField": 0}',
 		];
 		for (const data of badCases) {
 			assert.throws(() => parseSchemaString(data));
