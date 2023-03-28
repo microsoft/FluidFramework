@@ -203,7 +203,6 @@ declare function get_current_InterfaceDeclaration_ITestObjectProvider():
 declare function use_old_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<old.ITestObjectProvider>);
 use_old_InterfaceDeclaration_ITestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -372,7 +371,6 @@ declare function get_current_ClassDeclaration_TestObjectProvider():
 declare function use_old_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<old.TestObjectProvider>);
 use_old_ClassDeclaration_TestObjectProvider(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TestObjectProvider());
 
 /*
@@ -590,18 +588,6 @@ declare function use_old_VariableDeclaration_defaultTimeoutDurationMs(
     use: TypeOnly<typeof old.defaultTimeoutDurationMs>);
 use_old_VariableDeclaration_defaultTimeoutDurationMs(
     get_current_VariableDeclaration_defaultTimeoutDurationMs());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ensureContainerConnected": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedFunctionDeclaration_ensureContainerConnected": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

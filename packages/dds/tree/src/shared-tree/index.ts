@@ -5,11 +5,11 @@
 
 export {
 	ISharedTree,
-	ISharedTreeBranch,
+	ISharedTreeView,
 	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
-	BranchEvents,
+	ViewEvents,
 } from "./sharedTree";
 
 export { SchematizeConfiguration, schematizeBranch } from "./schematizedTree";

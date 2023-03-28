@@ -11,25 +11,17 @@ import {
 	rootFieldKey,
 	symbolFromKey,
 	FieldKey,
-	IEditableForest,
-	initializeForest,
 	SchemaData,
-	InMemoryStoredSchemaRepository,
-	SchemaDataAndPolicy,
 	GlobalFieldKey,
 	ValueSchema,
 	LocalFieldKey,
 	rootFieldKeySymbol,
-	lookupGlobalFieldSchema,
 	JsonableTree,
 } from "../../../core";
 import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
 import {
-	defaultSchemaPolicy,
-	getEditableTreeContext,
 	EditableTree,
 	EditableField,
-	buildForest,
 	typeSymbol,
 	typeNameSymbol,
 	UnwrappedEditableField,
@@ -45,25 +37,19 @@ import {
 	ContextuallyTypedNodeData,
 	ContextuallyTypedNodeDataObject,
 	MarkedArrayLike,
-	EditableTreeContext,
-	DefaultEditBuilder,
 	SchemaAware,
-	cursorsFromContextualData,
 	TypedSchema,
-	FieldViewSchema,
+	parentField,
 } from "../../../feature-libraries";
 
 import {
-	FieldProxyTarget,
 	NodeProxyTarget,
-	parentField,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTree";
 
 import {
 	fullSchemaData,
-	Person,
 	personSchema,
 	addressSchema,
 	ComplexPhone,
@@ -74,46 +60,13 @@ import {
 	int32Schema,
 	personData,
 	personJsonableTree,
-	rootPersonSchema,
 	buildTestSchema,
+	buildTestPerson,
+	buildTestTree,
+	getReadonlyEditableTreeContext,
+	setupForest,
 } from "./mockData";
 import { expectFieldEquals, expectTreeEquals, expectTreeSequence } from "./utils";
-
-function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
-	// This will error if someone tries to call mutation methods on it
-	const dummyEditor = {} as unknown as DefaultEditBuilder;
-	return getEditableTreeContext(forest, dummyEditor);
-}
-
-function setupForest(
-	schema: SchemaData,
-	data: ContextuallyTypedNodeData | undefined,
-): IEditableForest {
-	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
-	const forest = buildForest(schemaRepo);
-	const root = cursorsFromContextualData(
-		schemaRepo,
-		lookupGlobalFieldSchema(schemaRepo, rootFieldKey),
-		data,
-	);
-	initializeForest(forest, root);
-	return forest;
-}
-
-function buildTestTree(
-	data: ContextuallyTypedNodeData | undefined,
-	rootField: FieldViewSchema = rootPersonSchema,
-): EditableTreeContext {
-	const schema: SchemaData = buildTestSchema(rootField);
-	const forest = setupForest(schema, data);
-	const context = getReadonlyEditableTreeContext(forest);
-	return context;
-}
-
-function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
-	const context = buildTestTree(personData);
-	return [context.schema, context.unwrappedRoot as Person];
-}
 
 const emptyNode: JsonableTree = { type: optionalChildSchema.name };
 
@@ -248,36 +201,6 @@ describe("editable-tree: read-only", () => {
 
 		{
 			const descriptor = Object.getOwnPropertyDescriptor(nameNode, Symbol.iterator);
-			assert(typeof descriptor?.value === "function");
-			delete descriptor.value;
-			const expected = {
-				configurable: true,
-				enumerable: false,
-				writable: false,
-			};
-			assert.deepEqual(descriptor, expected);
-		}
-	});
-
-	it("can use `getOwnPropertyDescriptor` for symbols of EditableField", () => {
-		const [, proxy] = buildTestPerson();
-		assert(isUnwrappedNode(proxy));
-		const nameField = proxy[getField](brand("name"));
-
-		{
-			const descriptor = Object.getOwnPropertyDescriptor(nameField, proxyTargetSymbol);
-			assert(descriptor?.value instanceof FieldProxyTarget);
-			const expected = {
-				configurable: true,
-				enumerable: false,
-				value: Reflect.get(nameField, proxyTargetSymbol),
-				writable: false,
-			};
-			assert.deepEqual(descriptor, expected);
-		}
-
-		{
-			const descriptor = Object.getOwnPropertyDescriptor(nameField, Symbol.iterator);
 			assert(typeof descriptor?.value === "function");
 			delete descriptor.value;
 			const expected = {
