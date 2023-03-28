@@ -16,17 +16,17 @@
 export type FluidObjectId = string;
 
 /**
- * The kind of {@link VisualTreeNodeBase}.
+ * The kind of {@link VisualNodeBase}.
  *
  * @remarks Can be used to type-switch on the particular kind of node being processed.
  *
  * @public
  */
 export enum NodeKind {
-	ParentNode,
 	FluidTreeNode,
 	FluidValueNode,
 	FluidHandleNode,
+	TreeNode,
 	ValueNode,
 }
 
@@ -35,7 +35,7 @@ export enum NodeKind {
  *
  * @public
  */
-export interface VisualTreeNodeBase {
+export interface VisualNodeBase {
 	/**
 	 * Label text used as the item name in the visual tree.
 	 */
@@ -62,16 +62,16 @@ export interface VisualTreeNodeBase {
  *
  * @public
  */
-export interface VisualParentNode extends VisualTreeNodeBase {
+export interface VisualTreeNode extends VisualNodeBase {
 	/**
 	 * Child items to be displayed beneath this node.
 	 */
-	children: VisualTreeNode[];
+	children: VisualNode[];
 
 	/**
-	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
+	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: NodeKind.ParentNode;
+	nodeKind: NodeKind.TreeNode;
 }
 
 /**
@@ -79,7 +79,7 @@ export interface VisualParentNode extends VisualTreeNodeBase {
  *
  * @public
  */
-export interface FluidObjectNode extends VisualTreeNodeBase {
+export interface FluidObjectNode extends VisualNodeBase {
 	/**
 	 * A unique ID for the Fluid object being displayed.
 	 */
@@ -100,10 +100,10 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 	/**
 	 * Child items to be displayed beneath this node.
 	 */
-	children: VisualTreeNode[];
+	children: VisualNode[];
 
 	/**
-	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
+	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.FluidTreeNode;
 }
@@ -125,7 +125,7 @@ export interface FluidObjectValueNode extends FluidObjectNode {
 	value: string;
 
 	/**
-	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
+	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.FluidValueNode;
 }
@@ -135,7 +135,7 @@ export interface FluidObjectValueNode extends FluidObjectNode {
  *
  * @public
  */
-export interface FluidHandleNode extends VisualTreeNodeBase {
+export interface FluidHandleNode extends VisualNodeBase {
 	/**
 	 * A unique ID for the Fluid object being referenced.
 	 *
@@ -144,7 +144,7 @@ export interface FluidHandleNode extends VisualTreeNodeBase {
 	fluidObjectId: string;
 
 	/**
-	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
+	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.FluidHandleNode;
 }
@@ -154,14 +154,14 @@ export interface FluidHandleNode extends VisualTreeNodeBase {
  *
  * @public
  */
-export interface ValueNode extends VisualTreeNodeBase {
+export interface ValueNode extends VisualNodeBase {
 	/**
 	 * The value to display inline.
 	 */
 	value: string;
 
 	/**
-	 * {@inheritDoc VisualTreeNodeBase.nodeKind}
+	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.ValueNode;
 }
@@ -171,7 +171,7 @@ export interface ValueNode extends VisualTreeNodeBase {
  *
  * @public
  */
-export type VisualTreeNode = VisualParentNode | ValueNode | FluidHandleNode;
+export type VisualNode = VisualTreeNode | ValueNode | FluidHandleNode;
 
 /**
  * Creates a {@link FluidHandleNode} from the provided ID and label.

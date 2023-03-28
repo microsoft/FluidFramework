@@ -176,7 +176,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 }
 
 // @public
-export interface FluidHandleNode extends VisualTreeNodeBase {
+export interface FluidHandleNode extends VisualNodeBase {
     fluidObjectId: string;
     nodeKind: NodeKind.FluidHandleNode;
 }
@@ -185,13 +185,13 @@ export interface FluidHandleNode extends VisualTreeNodeBase {
 export type FluidObjectId = string;
 
 // @public
-export interface FluidObjectNode extends VisualTreeNodeBase {
+export interface FluidObjectNode extends VisualNodeBase {
     fluidObjectId: FluidObjectId;
 }
 
 // @public
 export interface FluidObjectTreeNode extends FluidObjectNode {
-    children: VisualTreeNode[];
+    children: VisualNode[];
     nodeKind: NodeKind.FluidTreeNode;
 }
 
@@ -319,13 +319,13 @@ export interface MessageLoggingOptions {
 // @public
 export enum NodeKind {
     // (undocumented)
-    FluidHandleNode = 3,
+    FluidHandleNode = 2,
     // (undocumented)
-    FluidTreeNode = 1,
+    FluidTreeNode = 0,
     // (undocumented)
-    FluidValueNode = 2,
+    FluidValueNode = 1,
     // (undocumented)
-    ParentNode = 0,
+    TreeNode = 3,
     // (undocumented)
     ValueNode = 4
 }
@@ -375,26 +375,26 @@ export interface TelemetryHistoryMessage extends ISourcedDebuggerMessage<Telemet
 }
 
 // @public
-export interface ValueNode extends VisualTreeNodeBase {
+export interface ValueNode extends VisualNodeBase {
     nodeKind: NodeKind.ValueNode;
     value: string;
 }
 
 // @public
-export interface VisualParentNode extends VisualTreeNodeBase {
-    children: VisualTreeNode[];
-    nodeKind: NodeKind.ParentNode;
-}
+export type VisualNode = VisualTreeNode | ValueNode | FluidHandleNode;
 
 // @public
-export type VisualTreeNode = VisualParentNode | ValueNode | FluidHandleNode;
-
-// @public
-export interface VisualTreeNodeBase {
+export interface VisualNodeBase {
     label: string;
     metadata?: string;
     nodeKind: NodeKind;
     typeMetadata?: string;
+}
+
+// @public
+export interface VisualTreeNode extends VisualNodeBase {
+    children: VisualNode[];
+    nodeKind: NodeKind.TreeNode;
 }
 
 ```

@@ -53,9 +53,9 @@ export {
 	FluidObjectTreeNode,
 	NodeKind,
 	ValueNode,
-	VisualParentNode,
 	VisualTreeNode,
-	VisualTreeNodeBase,
+	VisualNode,
+	VisualNodeBase,
 } from "./data-visualization";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";

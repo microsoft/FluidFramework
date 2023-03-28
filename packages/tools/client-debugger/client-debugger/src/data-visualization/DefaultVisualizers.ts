@@ -15,7 +15,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
-import { NodeKind, VisualTreeNode } from "./VisualTree";
+import { NodeKind, VisualNode } from "./VisualTree";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -66,7 +66,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 ) => {
 	const sharedMap = sharedObject as SharedMap;
 
-	const children: VisualTreeNode[] = [];
+	const children: VisualNode[] = [];
 	for (const [key, value] of sharedMap) {
 		const renderedChild = await visualizeChildData(value, key);
 		children.push(renderedChild);

@@ -16,8 +16,8 @@ import {
 	FluidObjectNode,
 	NodeKind,
 	ValueNode,
-	VisualParentNode,
 	VisualTreeNode,
+	VisualNode,
 } from "./VisualTree";
 
 // Ideas:
@@ -71,7 +71,7 @@ export type VisualizeSharedObject = (
  *
  * @returns A visual tree representation of the input `data`.
  */
-export type VisualizeChildData = (data: unknown, label: string) => Promise<VisualTreeNode>;
+export type VisualizeChildData = (data: unknown, label: string) => Promise<VisualNode>;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -393,7 +393,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	/**
 	 * {@inheritDoc VisualizeChildData}
 	 */
-	private async renderChildData(data: unknown, label: string): Promise<VisualTreeNode> {
+	private async renderChildData(data: unknown, label: string): Promise<VisualNode> {
 		if (typeof data !== "object") {
 			// Render primitives and falsy types via their string representation
 			const result: ValueNode = {
@@ -418,10 +418,10 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 				childEntries.map(([key, value]) => this.renderChildData(value, key)),
 			);
 
-			const result: VisualParentNode = {
+			const result: VisualTreeNode = {
 				label,
 				children: renderedChildren,
-				nodeKind: NodeKind.ParentNode,
+				nodeKind: NodeKind.TreeNode,
 				typeMetadata: "object",
 			};
 			return result;

@@ -143,7 +143,7 @@ describe("Data Visualization unit tests", () => {
 						},
 					],
 					typeMetadata: "object",
-					nodeKind: NodeKind.ParentNode,
+					nodeKind: NodeKind.TreeNode,
 				},
 				{
 					label: "test-handle",
