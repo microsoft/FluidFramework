@@ -20,7 +20,7 @@ import {
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions";
+import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const cellId = "sharedCellKey";
@@ -136,6 +136,42 @@ describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 
 		assertAttributionMatches(sharedCell1, attributor, {
 			user: container2.audience.getMember(container1.clientId)?.user,
+		});
+	});
+
+	it("attributes content created in a detached state", async () => {
+		const attributor = createRuntimeAttributor();
+		const loader = provider.makeTestLoader(getTestConfig(attributor));
+		const defaultCodeDetails: IFluidCodeDetails = {
+			package: "defaultTestPackage",
+			config: {},
+		};
+		const container1 = await loader.createDetachedContainer(defaultCodeDetails);
+		const sharedCell1 = await sharedCellFromContainer(container1);
+
+		sharedCell1.set(1);
+		assertAttributionMatches(sharedCell1, attributor, "detached");
+
+		await container1.attach(provider.driver.createCreateNewRequest("doc id"));
+		await provider.ensureSynchronized();
+
+		const url = await container1.getAbsoluteUrl("");
+		assert(url !== undefined);
+		const loader2 = provider.makeTestLoader(getTestConfig());
+		const container2 = await loader2.resolve({ url });
+
+		const sharedCell2 = await sharedCellFromContainer(container2);
+		sharedCell2.set(2);
+
+		await provider.ensureSynchronized();
+
+		assert(
+			container1.clientId !== undefined && container2.clientId !== undefined,
+			"Both containers should have client ids.",
+		);
+
+		assertAttributionMatches(sharedCell1, attributor, {
+			user: container1.audience.getMember(container2.clientId)?.user,
 		});
 	});
 });

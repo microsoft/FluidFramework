@@ -135,7 +135,7 @@ export class SharedCell<T = any>
 
 		// Set the value locally.
 		const previousValue = this.setCore(value);
-		this.setLocalAttribution();
+		this.setAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -155,7 +155,7 @@ export class SharedCell<T = any>
 	public delete(): void {
 		// Delete the value locally.
 		const previousValue = this.deleteCore();
-		this.setLocalAttribution();
+		this.setAttribution();
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -184,20 +184,16 @@ export class SharedCell<T = any>
 	}
 
 	/**
-	 * Set the attribution through the SequencedDocumentMessage
+	 * Set the Op-based attribution through the SequencedDocumentMessage,
+	 * or set the local/detached attribution.
 	 */
-	private setAttribution(message: ISequencedDocumentMessage): void {
+	private setAttribution(message?: ISequencedDocumentMessage): void {
 		if (this.options?.attribution?.track ?? false) {
-			this.attribution = { type: "op", seq: message.sequenceNumber };
-		}
-	}
-
-	/**
-	 * Set the attribution due to the local operation
-	 */
-	private setLocalAttribution(): void {
-		if (this.options?.attribution?.track ?? false) {
-			this.attribution = { type: "local" };
+			this.attribution = message
+				? { type: "op", seq: message.sequenceNumber }
+				: this.isAttached()
+				? { type: "local" }
+				: { type: "detached", id: 0 };
 		}
 	}
 
