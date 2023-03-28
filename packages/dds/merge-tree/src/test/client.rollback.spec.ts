@@ -434,7 +434,10 @@ describe("client.rollback", () => {
 		client.insertTextLocal(4, "xyz");
 		client.removeRangeLocal(2, 5);
 		client.removeRangeLocal(3, 7);
+		client.removeRangeLocal(2, 4);
 
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abye");
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "abyz23de");
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
@@ -455,6 +458,14 @@ describe("client.rollback", () => {
 		assert.equal(client.getText(), "abc123defg");
 
 		client.annotateRangeLocal(2, 8, { foo: "bar" }, undefined);
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			if (i >= 2 && i < 8) {
+				assert.equal(props?.foo, "bar");
+			} else {
+				assert(props === undefined || props.foo === undefined);
+			}
+		}
 
 		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
 		for (let i = 0; i < client.getText().length; i++) {
