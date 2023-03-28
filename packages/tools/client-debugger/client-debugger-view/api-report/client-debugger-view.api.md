@@ -74,7 +74,4 @@ export interface SharedObjectRenderOptions {
 // @public
 export type SharedObjectType = string;
 
-// @public
-export function useMessageRelay(): IMessageRelay;
-
 ```

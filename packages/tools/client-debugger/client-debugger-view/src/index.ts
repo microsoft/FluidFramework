@@ -24,7 +24,7 @@ export { AudienceMember } from "./Audience";
 export { AudienceMemberViewProps } from "./components";
 export { HasClientDebugger } from "./CommonProps";
 export { FluidClientDebuggers, FluidClientDebuggersProps } from "./Debugger";
-export { useMessageRelay, MessageRelayContext } from "./MessageRelayContext";
+export { MessageRelayContext } from "./MessageRelayContext";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
 	defaultRenderOptions,
