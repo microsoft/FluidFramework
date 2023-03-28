@@ -135,11 +135,23 @@ export function schematizeView(
 }
 
 /**
- * Options used to schematize a `SharedTree`
+ * Options used to schematize a `SharedTree`.
+ * See {@link schematizeView}.
+ *
  * @alpha
  */
 export interface SchematizeConfiguration {
+	/**
+	 * The schema which the application wants to view the tree with.
+	 */
 	readonly schema: ViewSchemaCollection;
+	/**
+	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
+	 */
 	readonly allowedSchemaModifications: AllowedUpdateType;
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 */
 	readonly initialTree: ContextuallyTypedFieldData;
 }

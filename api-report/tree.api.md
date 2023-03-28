@@ -1306,11 +1306,8 @@ export interface SchemaPolicy {
 
 // @alpha
 export interface SchematizeConfiguration {
-    // (undocumented)
     readonly allowedSchemaModifications: AllowedUpdateType;
-    // (undocumented)
     readonly initialTree: ContextuallyTypedFieldData;
-    // (undocumented)
     readonly schema: ViewSchemaCollection;
 }
 
