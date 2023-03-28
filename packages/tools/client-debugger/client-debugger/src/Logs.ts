@@ -34,7 +34,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 /**
  * Represents a {@link @fluidframework/container-loader#ConnectionState} change.
  *
- * @internal
+ * @public
  */
 export interface ConnectionStateChangeLogEntry
 	extends StateChangeLogEntry<ContainerStateChangeKind> {
@@ -64,7 +64,7 @@ export interface AudienceChangeLogEntry extends LogEntry {
 	clientId: string;
 
 	/**
-	 * Metadata abou the client that was added or removed.
+	 * Metadata about the client that was added or removed.
 	 */
 	client: IClient;
 

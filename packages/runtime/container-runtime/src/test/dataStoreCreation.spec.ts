@@ -16,12 +16,12 @@ import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
 } from "@fluidframework/runtime-definitions";
-import { createRootSummarizerNodeWithGC } from "@fluidframework/runtime-utils";
 import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { LocalFluidDataStoreContext } from "../dataStoreContext";
 import { ContainerRuntime } from "../containerRuntime";
+import { createRootSummarizerNodeWithGC } from "../summary";
 
 describe("Data Store Creation Tests", () => {
 	describe("Store creation via local context creation and realize", () => {

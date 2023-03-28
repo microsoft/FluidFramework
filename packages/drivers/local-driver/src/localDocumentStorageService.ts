@@ -7,6 +7,7 @@ import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IResolvedUrl,
 	ISummaryContext,
 } from "@fluidframework/driver-definitions";
 import {
@@ -22,6 +23,9 @@ import {
 	ISummaryUploadManager,
 	SummaryTreeUploadManager,
 } from "@fluidframework/server-services-client";
+import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
+import { createDocument } from "./localCreateDocument";
 
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
@@ -37,6 +41,8 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		private readonly id: string,
 		private readonly manager: GitManager,
 		public readonly policies: IDocumentStorageServicePolicies,
+		private readonly localDeltaConnectionServer?: ILocalDeltaConnectionServer,
+		private readonly resolvedUrl?: IResolvedUrl,
 	) {
 		this.summaryTreeUploadManager = new SummaryTreeUploadManager(
 			manager,
@@ -82,6 +88,17 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		summary: ISummaryTree,
 		context: ISummaryContext,
 	): Promise<string> {
+		if (context.referenceSequenceNumber === 0) {
+			if (this.localDeltaConnectionServer === undefined || this.resolvedUrl === undefined) {
+				throw new Error(
+					"Insufficient constructor parameters. An ILocalDeltaConnectionServer and IResolvedUrl required",
+				);
+			}
+			ensureFluidResolvedUrl(this.resolvedUrl);
+			await createDocument(this.localDeltaConnectionServer, this.resolvedUrl, summary);
+			const version = await this.getVersions(this.id, 1);
+			return version[0].id;
+		}
 		return this.summaryTreeUploadManager.writeSummaryTree(
 			summary,
 			context.ackHandle ?? "",

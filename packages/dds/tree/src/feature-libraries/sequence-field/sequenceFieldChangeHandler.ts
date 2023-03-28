@@ -4,7 +4,7 @@
  */
 
 import { FieldChangeHandler } from "../modular-schema";
-import { Changeset } from "./format";
+import { Changeset, isEmpty } from "./format";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
 import { sequenceFieldChangeEncoder } from "./sequenceFieldChangeEncoder";
 import { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
@@ -17,4 +17,5 @@ export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	encoder: sequenceFieldChangeEncoder,
 	editor: sequenceFieldEditor,
 	intoDelta: sequenceFieldToDelta,
+	isEmpty,
 };

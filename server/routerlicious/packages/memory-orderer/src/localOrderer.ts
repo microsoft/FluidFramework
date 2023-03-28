@@ -38,6 +38,7 @@ import {
 	IWebSocket,
 	ILogger,
 	TokenGenerator,
+	IDocumentRepository,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -54,6 +55,7 @@ const DefaultScribe: IScribe = {
 	protocolState: undefined,
 	sequenceNumber: -1,
 	lastSummarySequenceNumber: 0,
+	validParentSummaries: undefined,
 };
 
 const DefaultDeli: IDeliState = {
@@ -101,12 +103,14 @@ export class LocalOrderer implements IOrderer {
 		permission: any,
 		tokenGenerator: TokenGenerator,
 		logger: ILogger,
+		documentRepository: IDocumentRepository,
 		gitManager?: IGitManager,
 		setup: ILocalOrdererSetup = new LocalOrdererSetup(
 			tenantId,
 			documentId,
 			storage,
 			databaseManager,
+			documentRepository,
 			gitManager,
 		),
 		pubSub: IPubSub = new PubSub(),
@@ -293,12 +297,12 @@ export class LocalOrderer implements IOrderer {
 			this.setup,
 			this.deliContext,
 			async (lambdaSetup, context) => {
-				const documentCollection = await lambdaSetup.documentCollectionP();
+				const documentRepository = await lambdaSetup.documentRepositoryP();
 				const lastCheckpoint = JSON.parse(this.dbObject.deli);
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					this.tenantId,
 					this.documentId,
-					documentCollection,
+					documentRepository,
 				);
 				return new DeliLambda(
 					context,
@@ -335,9 +339,9 @@ export class LocalOrderer implements IOrderer {
 
 	private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
 		// Scribe lambda
-		const [documentCollection, scribeMessagesCollection, protocolHead, scribeMessages] =
+		const [documentRepository, scribeMessagesCollection, protocolHead, scribeMessages] =
 			await Promise.all([
-				setup.documentCollectionP(),
+				setup.documentRepositoryP(),
 				setup.scribeDeltaCollectionP(),
 				setup.protocolHeadP(),
 				setup.scribeMessagesP(),
@@ -379,7 +383,7 @@ export class LocalOrderer implements IOrderer {
 			context,
 			this.tenantId,
 			this.documentId,
-			documentCollection,
+			documentRepository,
 			scribeMessagesCollection,
 			null /* deltaService */,
 			false /* getDeltasViaAlfred */,

@@ -26,13 +26,54 @@ export interface AudienceChangeLogEntry extends LogEntry {
     clientId: string;
 }
 
+// @public
+export interface AudienceClientMetaData {
+    client: IClient;
+    clientId: string;
+}
+
+// @public
+export interface AudienceSummaryMessage extends ISourcedDebuggerMessage<AudienceSummaryMessageData> {
+    // (undocumented)
+    type: "AUDIENCE_EVENT";
+}
+
+// @public
+export interface AudienceSummaryMessageData extends HasContainerId {
+    // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
+    audienceHistory: readonly AudienceChangeLogEntry[];
+    audienceState: AudienceClientMetaData[];
+    clientId: string | undefined;
+}
+
 // @internal
 export function clearDebuggerRegistry(): void;
 
 // @public
+export interface CloseContainerMessage extends ISourcedDebuggerMessage<CloseContainerMessageData> {
+    // (undocumented)
+    type: "CLOSE_CONTAINER";
+}
+
+// @public
+export type CloseContainerMessageData = HasContainerId;
+
+// @public
 export function closeFluidClientDebugger(containerId: string): void;
 
-// @internal
+// @public
+export interface ConnectContainerMessage extends ISourcedDebuggerMessage<ConnectContainerMessageData> {
+    // (undocumented)
+    type: "CONNECT_CONTAINER";
+}
+
+// @public
+export type ConnectContainerMessageData = HasContainerId;
+
+// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "StateChangeLogEntry" which is marked as @internal
+// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "ContainerStateChangeKind" which is marked as @internal
+//
+// @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
 }
@@ -53,7 +94,7 @@ export enum ContainerStateChangeKind {
 }
 
 // @public
-export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
+export interface ContainerStateChangeMessage extends ISourcedDebuggerMessage<ContainerStateChangeMessageData> {
     // (undocumented)
     type: "CONTAINER_STATE_CHANGE";
 }
@@ -61,6 +102,17 @@ export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerS
 // @public
 export interface ContainerStateChangeMessageData extends HasContainerId {
     containerState: ContainerStateMetadata;
+}
+
+// @public
+export interface ContainerStateHistoryMessage extends ISourcedDebuggerMessage<ContainerStateHistoryMessageData> {
+    // (undocumented)
+    type: "CONTAINER_STATE_HISTORY";
+}
+
+// @public
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+    history: ConnectionStateChangeLogEntry[];
 }
 
 // @public
@@ -95,6 +147,15 @@ export interface DebuggerRegistryEvents extends IEvent {
 }
 
 // @public
+export interface DisconnectContainerMessage extends ISourcedDebuggerMessage<DisconnectContainerMessageData> {
+    // (undocumented)
+    type: "DISCONNECT_CONTAINER";
+}
+
+// @public
+export type DisconnectContainerMessageData = HasContainerId;
+
+// @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
     containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
@@ -110,13 +171,19 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 }
 
 // @public
-export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
+export interface GetAudienceMessage extends ISourcedDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_AUDIENCE";
+}
+
+// @public
+export interface GetContainerListMessage extends ISourcedDebuggerMessage<undefined> {
     // (undocumented)
     type: "GET_CONTAINER_LIST";
 }
 
 // @public
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+export interface GetContainerStateMessage extends ISourcedDebuggerMessage<HasContainerId> {
     // (undocumented)
     type: "GET_CONTAINER_STATE";
 }
@@ -133,11 +200,16 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
-// @internal
-export function handleIncomingMessage(message: Partial<IDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+// @public
+export interface GetTelemetryHistoryMessage extends ISourcedDebuggerMessage {
+    type: "GET_TELEMETRY_HISTORY";
+}
 
 // @internal
-export function handleIncomingWindowMessage(event: MessageEvent<Partial<IDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+export function handleIncomingMessage(message: Partial<ISourcedDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+
+// @internal
+export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
 // @public
 export interface HasContainerId {
@@ -147,7 +219,6 @@ export interface HasContainerId {
 // @public
 export interface IDebuggerMessage<TData = unknown> {
     data: TData;
-    source: string;
     type: string;
 }
 
@@ -170,14 +241,19 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 
 // @internal
 export interface InboundHandlers {
-    [type: string]: (message: IDebuggerMessage) => boolean;
+    [type: string]: (message: ISourcedDebuggerMessage) => boolean;
 }
 
 // @public
 export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
 
 // @internal
-export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage;
+export function isDebuggerMessage(value: Partial<ISourcedDebuggerMessage>): value is ISourcedDebuggerMessage;
+
+// @public
+export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessage<TData> {
+    source: string;
+}
 
 // @internal
 export interface LogEntry {
@@ -196,10 +272,10 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(message: TMessage, loggingOptions?: MessageLoggingOptions): void;
+export function postMessagesToWindow<TMessage extends ISourcedDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
-export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
+export interface RegistryChangeMessage extends ISourcedDebuggerMessage<RegistryChangeMessageData> {
     // (undocumented)
     type: "REGISTRY_CHANGE";
 }
@@ -215,14 +291,18 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 }
 
 // @public
-export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
-    // (undocumented)
+export interface TelemetryEventMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
     type: "TELEMETRY_EVENT";
 }
 
 // @public
 export interface TelemetryEventMessageData {
-    contents: ITelemetryBaseEvent;
+    contents: ITelemetryBaseEvent[];
+}
+
+// @public
+export interface TelemetryHistoryMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+    type: "TELEMETRY_HISTORY";
 }
 
 ```

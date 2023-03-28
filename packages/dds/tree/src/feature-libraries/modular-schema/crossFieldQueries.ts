@@ -4,7 +4,8 @@
  */
 
 import { RevisionTag } from "../../core";
-import { Brand, NestedSet } from "../../util";
+import { brand, Brand, NestedSet } from "../../util";
+import { IdAllocator } from "./fieldChangeHandler";
 
 export type CrossFieldQuerySet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 
@@ -56,3 +57,13 @@ export interface CrossFieldManager<T = unknown> {
  * @alpha
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
+
+/**
+ * @alpha
+ */
+export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
+	let currId = maxId ?? -1;
+	return () => {
+		return brand(++currId);
+	};
+}

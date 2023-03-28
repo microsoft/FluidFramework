@@ -12,10 +12,10 @@ import { IFluidClientDebugger } from "./IFluidClientDebugger";
 import {
 	debuggerMessageSource,
 	handleIncomingWindowMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 	RegistryChangeMessage,
 } from "./messaging";
 
@@ -128,7 +128,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(
 			event,
@@ -141,19 +141,16 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 * Posts a {@link RegistryChangeMessage} to the window (globalThis).
 	 */
 	private readonly postRegistryChange = (): void => {
-		postMessageToWindow<RegistryChangeMessage>(
-			{
-				source: debuggerMessageSource,
-				type: "REGISTRY_CHANGE",
-				data: {
-					containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
-						id: clientDebugger.containerId,
-						nickname: clientDebugger.containerNickname,
-					})),
-				},
+		postMessagesToWindow<RegistryChangeMessage>(registryMessageLoggingOptions, {
+			source: debuggerMessageSource,
+			type: "REGISTRY_CHANGE",
+			data: {
+				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				})),
 			},
-			registryMessageLoggingOptions,
-		);
+		});
 	};
 
 	// #endregion

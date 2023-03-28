@@ -4,7 +4,8 @@
  */
 
 import { ContainerStateMetadata } from "../ContainerMetadata";
-import { IDebuggerMessage } from "./Messages";
+import { ConnectionStateChangeLogEntry } from "../Logs";
+import { ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Base interface used in message data for events targeting a particular debugger instance via
@@ -29,12 +30,45 @@ export interface HasContainerId {
 export type GetContainerStateMessageData = HasContainerId;
 
 /**
+ * Message data format used by {@link ConnectContainerMessage}.
+ *
+ * @public
+ */
+export type ConnectContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link DisconnectContainerMessage}.
+ *
+ * @public
+ */
+export type DisconnectContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link CloseContainerMessage}.
+ *
+ * @public
+ */
+export type CloseContainerMessageData = HasContainerId;
+
+/**
+ * Message data format used by {@link ContainerStateHistoryMessage}.
+ *
+ * @public
+ */
+export interface ContainerStateHistoryMessageData extends HasContainerId {
+	/**
+	 * The Container's connection state history.
+	 */
+	history: ConnectionStateChangeLogEntry[];
+}
+
+/**
  * Inbound event requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
  * Will result in the {@link ContainerStateChangeMessage} message being posted.
  *
  * @public
  */
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+export interface GetContainerStateMessage extends ISourcedDebuggerMessage<HasContainerId> {
 	type: "GET_CONTAINER_STATE";
 }
 
@@ -62,8 +96,46 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
  * @public
  */
 export interface ContainerStateChangeMessage
-	extends IDebuggerMessage<ContainerStateChangeMessageData> {
+	extends ISourcedDebuggerMessage<ContainerStateChangeMessageData> {
 	type: "CONTAINER_STATE_CHANGE";
 }
 
+/**
+ * Inbound event indicating Container connected.
+ *
+ * @public
+ */
+export interface ConnectContainerMessage
+	extends ISourcedDebuggerMessage<ConnectContainerMessageData> {
+	type: "CONNECT_CONTAINER";
+}
+
+/**
+ * Inbound event indicating Container disconnected.
+ *
+ * @public
+ */
+export interface DisconnectContainerMessage
+	extends ISourcedDebuggerMessage<DisconnectContainerMessageData> {
+	type: "DISCONNECT_CONTAINER";
+}
+
+/**
+ * Inbound event indicating Container closed.
+ *
+ * @public
+ */
+export interface CloseContainerMessage extends ISourcedDebuggerMessage<CloseContainerMessageData> {
+	type: "CLOSE_CONTAINER";
+}
+
+/**
+ * Outbound event indicating Container state history.
+ *
+ * @public
+ */
+export interface ContainerStateHistoryMessage
+	extends ISourcedDebuggerMessage<ContainerStateHistoryMessageData> {
+	type: "CONTAINER_STATE_HISTORY";
+}
 // #endregion

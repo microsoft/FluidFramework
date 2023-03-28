@@ -18,7 +18,7 @@ import {
 	describeFullCompat,
 	describeInstallVersions,
 	getVersionedTestObjectProvider,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime";
 import { pkgVersion } from "../packageVersion";
 
@@ -98,7 +98,7 @@ describeInstallVersions(
 	{
 		requestAbsoluteVersions: [loaderWithoutCompressionField],
 	},
-	/* timeoutMs */ 50000,
+	/* timeoutMs: 3 minutes */ 180000,
 )("Op Compression self-healing with old loader", (getProvider) =>
 	compressionSuite(async () => {
 		const provider = getProvider();
