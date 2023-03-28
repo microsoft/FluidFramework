@@ -12,7 +12,7 @@ import { IFluidClientDebugger } from "./IFluidClientDebugger";
 import {
 	debuggerMessageSource,
 	handleIncomingWindowMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
@@ -128,7 +128,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(
 			event,

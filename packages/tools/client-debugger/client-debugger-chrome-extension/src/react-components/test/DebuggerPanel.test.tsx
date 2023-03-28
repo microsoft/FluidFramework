@@ -9,7 +9,7 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import React from "react";
 
-import { ContainerMetadata, IDebuggerMessage } from "@fluid-tools/client-debugger";
+import { ContainerMetadata, ISourcedDebuggerMessage } from "@fluid-tools/client-debugger";
 
 import { DebuggerPanel } from "../DebuggerPanel";
 import { MessageRelayContext } from "../MessageRelayContext";
@@ -34,7 +34,7 @@ const containers = new Map<string, ContainerMetadata>([
 	],
 ]);
 
-const messageHandlers = (message: IDebuggerMessage): IDebuggerMessage | undefined => {
+const messageHandlers = (message: ISourcedDebuggerMessage): ISourcedDebuggerMessage | undefined => {
 	switch (message.type) {
 		case "GET_CONTAINER_LIST": {
 			return {

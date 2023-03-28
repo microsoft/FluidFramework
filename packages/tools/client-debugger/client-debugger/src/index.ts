@@ -55,6 +55,10 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
+	AudienceClientMetaData,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+	GetAudienceMessage,
 	debuggerMessageSource,
 	HasContainerId,
 	ConnectContainerMessage,
@@ -68,6 +72,7 @@ export {
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	GetContainerListMessage,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
@@ -75,6 +80,8 @@ export {
 	RegistryChangeMessageData,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,

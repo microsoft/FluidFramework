@@ -5,7 +5,7 @@
 
 import { ContainerStateMetadata } from "../ContainerMetadata";
 import { ConnectionStateChangeLogEntry } from "../Logs";
-import { IDebuggerMessage } from "./Messages";
+import { ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Base interface used in message data for events targeting a particular debugger instance via
@@ -68,7 +68,7 @@ export interface ContainerStateHistoryMessageData extends HasContainerId {
  *
  * @public
  */
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
+export interface GetContainerStateMessage extends ISourcedDebuggerMessage<HasContainerId> {
 	type: "GET_CONTAINER_STATE";
 }
 
@@ -96,7 +96,7 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
  * @public
  */
 export interface ContainerStateChangeMessage
-	extends IDebuggerMessage<ContainerStateChangeMessageData> {
+	extends ISourcedDebuggerMessage<ContainerStateChangeMessageData> {
 	type: "CONTAINER_STATE_CHANGE";
 }
 
@@ -105,7 +105,8 @@ export interface ContainerStateChangeMessage
  *
  * @public
  */
-export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
+export interface ConnectContainerMessage
+	extends ISourcedDebuggerMessage<ConnectContainerMessageData> {
 	type: "CONNECT_CONTAINER";
 }
 
@@ -115,7 +116,7 @@ export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContain
  * @public
  */
 export interface DisconnectContainerMessage
-	extends IDebuggerMessage<DisconnectContainerMessageData> {
+	extends ISourcedDebuggerMessage<DisconnectContainerMessageData> {
 	type: "DISCONNECT_CONTAINER";
 }
 
@@ -124,7 +125,7 @@ export interface DisconnectContainerMessage
  *
  * @public
  */
-export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
+export interface CloseContainerMessage extends ISourcedDebuggerMessage<CloseContainerMessageData> {
 	type: "CLOSE_CONTAINER";
 }
 
@@ -134,7 +135,7 @@ export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMe
  * @public
  */
 export interface ContainerStateHistoryMessage
-	extends IDebuggerMessage<ContainerStateHistoryMessageData> {
+	extends ISourcedDebuggerMessage<ContainerStateHistoryMessageData> {
 	type: "CONTAINER_STATE_HISTORY";
 }
 // #endregion

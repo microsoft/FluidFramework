@@ -11,18 +11,14 @@ import {
 	takeAsync as take,
 	IRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import {
-	FieldKinds,
-	singleTextCursor,
-	namedTreeSchema,
-	jsonableTreeFromCursor,
-} from "../../feature-libraries";
+import { FieldKinds, singleTextCursor, namedTreeSchema } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
 	initializeTestTree,
 	ITestTreeProvider,
 	SummarizeType,
 	TestTreeProvider,
+	toJsonableTree,
 	validateTree,
 } from "../utils";
 import { ISharedTree, runSynchronous } from "../../shared-tree";
@@ -35,7 +31,6 @@ import {
 	SchemaData,
 	UpPath,
 	compareUpPaths,
-	mapCursorField,
 } from "../../core";
 import { FuzzChange, FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerator";
 
@@ -166,13 +161,12 @@ export async function performFuzzActionsAbort(
 }
 
 export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
-	const tree0 = provider.trees[0];
-	const readCursor = tree0.forest.allocateCursor();
-	moveToDetachedField(tree0.forest, readCursor);
-	const tree0Jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
-	readCursor.free();
-	for (let i = 1; i < 4; i++) {
-		validateTree(provider.trees[i], tree0Jsonable);
+	const lastTree = toJsonableTree(provider.trees[provider.trees.length - 1]);
+	for (let i = 0; i < provider.trees.length - 1; i++) {
+		const actual = toJsonableTree(provider.trees[i]);
+		// Uncomment to get a merged view of the trees
+		// const mergedView = merge(actual, lastTree);
+		assert.deepEqual(actual, lastTree);
 	}
 }
 
