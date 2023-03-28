@@ -1,10 +1,10 @@
 ---
-"@fluidframework/runtime-definitions": major
-"@fluidframework/test-end-to-end-tests": major
-"@fluidframework/container-runtime": major
-"@fluidframework/garbage-collector": major
-"@fluidframework/runtime-utils": major
-"@fluidframework/datastore": major
+"@fluidframework/runtime-definitions": minor
+"@fluidframework/test-end-to-end-tests": minor
+"@fluidframework/container-runtime": minor
+"@fluidframework/garbage-collector": minor
+"@fluidframework/runtime-utils": minor
+"@fluidframework/datastore": minor
 ---
 
 garbage-collector and related items deprecated

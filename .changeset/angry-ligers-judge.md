@@ -1,10 +1,10 @@
 ---
-"@fluidframework/container-runtime": major
-"@fluidframework/datastore": major
-"@fluidframework/garbage-collector": major
-"@fluidframework/runtime-definitions": major
-"@fluidframework/runtime-utils": major
-"@fluidframework/test-end-to-end-tests": major
+"@fluidframework/container-runtime": minor
+"@fluidframework/datastore": minor
+"@fluidframework/garbage-collector": minor
+"@fluidframework/runtime-definitions": minor
+"@fluidframework/runtime-utils": minor
+"@fluidframework/test-end-to-end-tests": minor
 ---
 
 GC interfaces removed from runtime-definitions
