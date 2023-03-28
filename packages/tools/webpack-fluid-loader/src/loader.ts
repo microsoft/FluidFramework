@@ -417,8 +417,8 @@ async function attachContainer(
 	shouldUseContainerId: boolean,
 ) {
 	// This is called once loading is complete to replace the url in the address bar with the new `url`.
-	const replaceUrl = (container: IContainer) => {
-		if (container.resolvedUrl === undefined) {
+	const replaceUrl = (attachedContainer: IContainer) => {
+		if (attachedContainer.resolvedUrl === undefined) {
 			throw new Error("Container does not have resolved url");
 		}
 		let [docUrl, title] = [url, documentId];
@@ -428,8 +428,8 @@ async function attachContainer(
 			// as opposed to the ID requested on the client prior to attaching the container.
 			// NOTE: in case of an odsp container, the ID in the resolved URL cannot be used for
 			// referring/opening the attached container.
-			docUrl = url.replace(documentId, container.resolvedUrl.id);
-			title = container.resolvedUrl.id;
+			docUrl = url.replace(documentId, attachedContainer.resolvedUrl.id);
+			title = attachedContainer.resolvedUrl.id;
 		}
 		window.history.replaceState({}, "", docUrl);
 		document.title = title;

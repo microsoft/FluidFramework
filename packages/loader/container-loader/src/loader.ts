@@ -272,9 +272,7 @@ export async function requestResolvedObjectFromContainer(
 	container: IContainer,
 	headers?: IRequestHeader,
 ): Promise<IResponse> {
-	if (container.resolvedUrl == undefined) {
-		throw new Error("");
-	}
+	ensureFluidResolvedUrl(container.resolvedUrl);
 	const parsedUrl = parseUrl(container.resolvedUrl.url);
 
 	if (parsedUrl === undefined) {
