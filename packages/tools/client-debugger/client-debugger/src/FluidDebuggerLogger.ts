@@ -11,7 +11,6 @@ import {
 	ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils";
 import {
-	debuggerMessageSource,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
 	InboundHandlers,
@@ -78,7 +77,6 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	 */
 	private readonly postLogHistory = (): void => {
 		postMessagesToWindow<TelemetryHistoryMessage>(this.messageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "TELEMETRY_HISTORY",
 			data: {
 				contents: this._telemetryLog,
@@ -153,7 +151,6 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 
 		const newEvent: ITelemetryBaseEvent = this.prepareEvent(event);
 		const newMessage: TelemetryEventMessage = {
-			source: debuggerMessageSource,
 			type: "TELEMETRY_EVENT",
 			data: {
 				contents: [newEvent],

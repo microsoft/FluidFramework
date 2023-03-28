@@ -7,7 +7,6 @@ import React from "react";
 
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import {
-	debuggerMessageSource,
 	InboundHandlers,
 	TelemetryHistoryMessage,
 	GetTelemetryHistoryMessage,
@@ -49,7 +48,6 @@ export function TelemetryView(): React.ReactElement {
 
 		// Request all log history
 		postMessagesToWindow<GetTelemetryHistoryMessage>(undefined, {
-			source: debuggerMessageSource,
 			type: "GET_TELEMETRY_HISTORY",
 			data: undefined,
 		});

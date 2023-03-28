@@ -4,7 +4,11 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISourcedDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import {
+	ISourcedDebuggerMessage,
+	isDebuggerMessage,
+	debuggerMessageSource,
+} from "@fluid-tools/client-debugger";
 
 import {
 	devToolsInitAcknowledgementType,
@@ -87,7 +91,7 @@ export class BackgroundConnection
 	}
 
 	/**
-	 * Post message to Background Script.
+	 * Post a message for the debugger to the Background Script.
 	 */
 	public postMessage(message: ISourcedDebuggerMessage): void {
 		postMessageToPort(
@@ -108,6 +112,14 @@ export class BackgroundConnection
 			return false;
 		}
 
+		// Ignore messages from unexpected sources.
+		// We receive at least one message directly from the Background script so we need to include
+		// extensionMessageSource as a valid source.
+		if (message.source !== extensionMessageSource && message.source !== debuggerMessageSource) {
+			return false;
+		}
+
+		// Handle init-acknowledgment message from background service
 		if (message.type === devToolsInitAcknowledgementType) {
 			console.log(
 				formatDevtoolsScriptMessageForLogging("Background initialization acknowledged."),

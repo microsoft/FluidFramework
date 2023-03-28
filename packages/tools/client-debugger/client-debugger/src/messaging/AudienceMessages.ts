@@ -5,7 +5,7 @@
 import { IClient } from "@fluidframework/protocol-definitions";
 import { AudienceChangeLogEntry } from "../Logs";
 import { HasContainerId } from "./DebuggerMessages";
-import { ISourcedDebuggerMessage } from "./Messages";
+import { IDebuggerMessage } from "./Messages";
 
 /**
  * Metadata of clients within the Audience.
@@ -30,7 +30,7 @@ export interface AudienceClientMetaData {
  *
  * @public
  */
-export interface GetAudienceMessage extends ISourcedDebuggerMessage<HasContainerId> {
+export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
 	type: "GET_AUDIENCE";
 }
 
@@ -61,7 +61,6 @@ export interface AudienceSummaryMessageData extends HasContainerId {
  *
  * @public
  */
-export interface AudienceSummaryMessage
-	extends ISourcedDebuggerMessage<AudienceSummaryMessageData> {
+export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
 	type: "AUDIENCE_EVENT";
 }
