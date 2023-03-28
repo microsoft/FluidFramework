@@ -4,18 +4,31 @@
 
 ```ts
 
-import { IClient } from '@fluidframework/protocol-definitions';
-import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
+import { ApplicationInsights } from '@microsoft/applicationinsights-web';
+import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { ITelemetryBufferedLogger } from '@fluidframework/test-driver-definitions';
 
-// @public
-export interface AudienceMember {
-    	clients: Map<string, IClient>;
-    	userId: string;
+// @public (undocumented)
+export class AppInsightsLogger implements ITelemetryBufferedLogger {
+    constructor(config: AppInsightsLoggerConfig);
+    // (undocumented)
+    protected readonly baseLoggingClient: ApplicationInsights;
+    // (undocumented)
+    flush(): Promise<void>;
+    // (undocumented)
+    getBaseLoggingClient(): ApplicationInsights;
+    // (undocumented)
+    send(event: ITelemetryBaseEvent): void;
 }
 
-// @public
-export interface HasClientDebugger {
-    	clientDebugger: IFluidClientDebugger;
+// @public (undocumented)
+export interface AppInsightsLoggerConfig {
+    // (undocumented)
+    appInsightsClient?: ApplicationInsights;
+    // (undocumented)
+    connectionString?: string;
 }
+
+// (No @packageDocumentation comment for this package)
 
 ```

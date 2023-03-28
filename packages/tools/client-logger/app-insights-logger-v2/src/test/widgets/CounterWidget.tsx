@@ -107,7 +107,8 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 						onClick={incrementCounter}
 						menuIconProps={{ iconName: "CalculatorAddition" }}
 						aria-describedby={incrementButtonTooltipId}
-					/>
+						value={"Increment"}
+					></IconButton>
 				</TooltipHost>
 			</StackItem>
 		</Stack>

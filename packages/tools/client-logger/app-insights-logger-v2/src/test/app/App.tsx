@@ -19,19 +19,13 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-// import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
 
 import {
 	ContainerInfo,
 	createFluidContainer,
-	// initializeFluidClientDebugger,
 	loadExistingFluidContainer,
 } from "../ClientUtilities";
 import { CounterWidget } from "../widgets";
-import { initializeFluentUiIcons } from "../../InitializeIcons";
-
-// Ensure FluentUI icons are initialized.
-initializeFluentUiIcons();
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.
@@ -229,39 +223,12 @@ export function App(): React.ReactElement {
 				if (getContainerIdFromLocation(window.location) !== data.containerId) {
 					window.location.hash = data.containerId;
 				}
-
-				// initializeFluidClientDebugger(data);
 				setSharedContainerInfo(data);
 			},
 			(error) => {
 				console.error(error);
 			},
 		);
-
-		// async function getPrivateContainerData(): Promise<ContainerInfo> {
-		// 	// Always create a new container for the private view.
-		// 	// This isn't shared with other collaborators.
-		// 	return createFluidContainer(containerSchema, populateRootMap, "Private Container");
-		// }
-
-		// getPrivateContainerData().then(
-		// 	(data) => {
-		// 		initializeFluidClientDebugger(data);
-		// 		setPrivateContainerInfo(data);
-		// 	},
-		// 	(error) => {
-		// 		console.error(error);
-		// 	},
-		// );
-
-		// return (): void => {
-		// 	if (sharedContainerInfo !== undefined) {
-		// 		closeFluidClientDebugger(sharedContainerInfo.containerId);
-		// 	}
-		// if (privateContainerInfo !== undefined) {
-		// 	closeFluidClientDebugger(privateContainerInfo.containerId);
-		// }
-		// };
 	}, []);
 
 	const view = (

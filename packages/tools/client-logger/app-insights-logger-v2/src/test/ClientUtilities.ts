@@ -12,6 +12,7 @@ import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
+import { AppInsightsLogger } from "../appInsightsLogger";
 
 // import {
 // 	FluidDebuggerLogger,
@@ -53,7 +54,9 @@ export interface ContainerInfo {
 function initializeTinyliciousClient(): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
 	return new TinyliciousClient({
-		// logger: FluidDebuggerLogger.create(),
+		logger: new AppInsightsLogger({
+			connectionString: ""
+		}),
 	});
 }
 
