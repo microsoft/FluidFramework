@@ -44,9 +44,9 @@ import {
 	concatGarbageCollectionData,
 	getGCDataFromSnapshot,
 	getSnapshotDataFromOldSnapshotFormat,
-	runGarbageCollection,
 	sendGCUnexpectedUsageEvent,
 } from "./gcHelpers";
+import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";

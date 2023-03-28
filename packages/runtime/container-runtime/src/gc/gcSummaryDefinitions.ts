@@ -32,8 +32,11 @@ export interface IGarbageCollectionState {
  * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
  */
 export interface IGarbageCollectionSnapshotData {
+	/** The garbage collection state. It is a list of nodes in the container and their GC data. */
 	gcState: IGarbageCollectionState;
+	/** A list of nodes that have been tombstoned by GC. */
 	tombstones: string[] | undefined;
+	/** A list of nodes that have been deleted by GC. */
 	deletedNodes: string[] | undefined;
 }
 

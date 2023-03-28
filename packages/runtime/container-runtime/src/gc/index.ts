@@ -21,6 +21,7 @@ export {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCResult,
 	IGCRuntimeOptions,
 	IGCStats,
 	oneDayMs,
@@ -39,13 +40,13 @@ export {
 	concatGarbageCollectionStates,
 	getGCDataFromSnapshot,
 	getSnapshotDataFromOldSnapshotFormat,
-	runGarbageCollection,
 	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
 } from "./gcHelpers";
+export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 export {
 	IGarbageCollectionNodeData,
 	IGarbageCollectionSnapshotData,
