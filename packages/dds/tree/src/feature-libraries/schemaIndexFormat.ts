@@ -4,6 +4,12 @@
  */
 
 import { Static, TUnsafe, Type } from "@sinclair/typebox";
+// TODO:
+// It is unclear if we would want to use the TypeBox compiler
+// (which generates code at runtime for maximum validation perf).
+// This might be an issue with security policies (ex: no eval) and/or more bundle size that we want.
+// We could disable validation or pull in a different validator (like ajv).
+// Only using its validation when testing is another option.
 // typebox documents using this internal module, so it should be ok to access.
 // eslint-disable-next-line import/no-internal-modules
 import { TypeCompiler } from "@sinclair/typebox/compiler";
