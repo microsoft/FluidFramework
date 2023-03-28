@@ -34,7 +34,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		count: number,
 		destIndex: number,
 		id: ChangesetLocalId,
-	): [Changeset<never>, Changeset<never>];
+	): [moveOut: Changeset<never>, moveIn: Changeset<never>];
 	return(
 		sourceIndex: number,
 		count: number,
@@ -87,7 +87,7 @@ export const sequenceFieldEditor = {
 		count: number,
 		destIndex: number,
 		id: ChangesetLocalId,
-	): [Changeset<never>, Changeset<never>] {
+	): [moveOut: Changeset<never>, moveIn: Changeset<never>] {
 		const moveOut: Mark<never> = {
 			type: "MoveOut",
 			id,

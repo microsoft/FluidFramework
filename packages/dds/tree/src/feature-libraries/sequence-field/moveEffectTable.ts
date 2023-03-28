@@ -117,7 +117,7 @@ export function splitMove<T>(
 	count1: number,
 	count2: number,
 ): void {
-	assert(newId !== id, "Must have distinct ID for each piece of the split mark");
+	assert(newId !== id, 0x5ba /* Must have distinct ID for each piece of the split mark */);
 	const effect = getOrAddEffect(effects, target, revision, id);
 	const newEffect = getOrAddEffect(effects, target, revision, newId);
 	newEffect.count = count2;

@@ -15,7 +15,11 @@ import {
 	validateTokenClaimsExpiration,
 	canRevokeToken,
 } from "@fluidframework/server-services-client";
-import type { ICache, ITenantManager } from "@fluidframework/server-services-core";
+import type {
+	ICache,
+	ITenantManager,
+	ITokenRevocationManager,
+} from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -142,6 +146,7 @@ function getTokenFromRequest(request: Request): string {
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
 	config: Provider,
+	tokenManager: ITokenRevocationManager | undefined,
 	options: IVerifyTokenOptions = {
 		requireDocumentId: true,
 		ensureSingleUseToken: false,
@@ -173,6 +178,19 @@ export function verifyStorageToken(
 			claims = validateTokenClaims(token, documentId, tenantId, options.requireDocumentId);
 			if (isTokenExpiryEnabled) {
 				tokenLifetimeMs = validateTokenClaimsExpiration(claims, maxTokenLifetimeSec);
+			}
+			if (tokenManager && claims.jti) {
+				const tokenRevoked = await tokenManager.isTokenRevoked(
+					tenantId,
+					documentId,
+					claims.jti,
+				);
+				if (tokenRevoked) {
+					return respondWithNetworkError(
+						res,
+						new NetworkError(403, "Permission denied. Token has been revoked."),
+					);
+				}
 			}
 			await tenantManager.verifyToken(claims.tenantId, token);
 		} catch (error) {

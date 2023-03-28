@@ -39,6 +39,12 @@ export class DirectoryFactory implements IChannelFactory {
 }
 
 // @public
+export interface ICreateInfo {
+    ccIds: string[];
+    csn: number;
+}
+
+// @public
 export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
@@ -67,6 +73,7 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 // @public
 export interface IDirectoryDataObject {
+    ci?: ICreateInfo;
     storage?: {
         [key: string]: ISerializableValue;
     };
