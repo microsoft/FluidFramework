@@ -10,10 +10,7 @@ import {
 	ISourcedDebuggerMessage,
 	InboundHandlers,
 	TelemetryHistoryMessage,
-	GetTelemetryHistoryMessage,
 	TelemetryEventMessage,
-	debuggerMessageSource,
-	postMessagesToWindow,
 } from "@fluid-tools/client-debugger";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { useMessageRelay } from "../MessageRelayContext";
@@ -72,8 +69,7 @@ export function TelemetryView(): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request all log history
-		postMessagesToWindow<GetTelemetryHistoryMessage>(undefined, {
-			source: debuggerMessageSource,
+		messageRelay.postMessage({
 			type: "GET_TELEMETRY_HISTORY",
 			data: undefined,
 		});
