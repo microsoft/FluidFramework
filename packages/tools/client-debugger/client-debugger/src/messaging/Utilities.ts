@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISourcedDebuggerMessage } from "./Messages";
+import { debuggerMessageSource } from "./Constants";
+import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).
@@ -16,18 +17,23 @@ import { ISourcedDebuggerMessage } from "./Messages";
  *
  * @internal
  */
-export function postMessagesToWindow<TMessage extends ISourcedDebuggerMessage>(
+export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
 	...messages: TMessage[]
 ): void {
+	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((m) => ({
+		...m,
+		source: debuggerMessageSource,
+	}));
+
 	// TODO: remove loggingOptions once things settle.
 	// If we need special logic for globalThis.postMessage maybe keep this function, but otherwise maybe remove it too.
 	if (loggingOptions !== undefined) {
 		const loggingPreamble =
 			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-		console.debug(`${loggingPreamble}Posting messages to the window:`, messages);
+		console.debug(`${loggingPreamble}Posting messages to the window:`, messagesWithSource);
 	}
-	for (const message of messages) {
+	for (const message of messagesWithSource) {
 		globalThis.postMessage?.(message, "*"); // TODO: verify target is okay
 	}
 }

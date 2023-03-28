@@ -17,7 +17,6 @@ import {
 	GetAudienceMessage,
 	CloseContainerMessage,
 	ConnectContainerMessage,
-	debuggerMessageSource,
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
@@ -27,6 +26,7 @@ import {
 	postMessagesToWindow,
 	GetContainerDataMessage,
 	ContainerDataMessage,
+	IDebuggerMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -247,10 +247,9 @@ export class FluidClientDebugger
 	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessagesToWindow<ISourcedDebuggerMessage>(
+		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_CHANGE",
 				data: {
 					containerId: this.containerId,
@@ -258,7 +257,6 @@ export class FluidClientDebugger
 				},
 			},
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_HISTORY",
 				data: {
 					containerId: this.containerId,
@@ -273,7 +271,6 @@ export class FluidClientDebugger
 	 */
 	private readonly postContainerData = (): void => {
 		postMessagesToWindow<ContainerDataMessage>(this.messageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "CONTAINER_DATA",
 			data: {
 				containerId: this.containerId,
@@ -297,7 +294,6 @@ export class FluidClientDebugger
 		});
 
 		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "AUDIENCE_EVENT",
 			data: {
 				containerId: this.containerId,

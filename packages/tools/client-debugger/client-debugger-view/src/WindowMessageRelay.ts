@@ -10,6 +10,7 @@ import {
 	IMessageRelay,
 	IMessageRelayEvents,
 	isDebuggerMessage,
+	debuggerMessageSource,
 } from "@fluid-tools/client-debugger";
 
 /**
@@ -42,8 +43,10 @@ export class WindowMessageRelay
 	 * Post message to the FluidDebugger which lives in the same window we are.
 	 */
 	public postMessage(message: IDebuggerMessage): void {
-		const sourcedMessage: ISourcedDebuggerMessage = message as ISourcedDebuggerMessage;
-		sourcedMessage.source = this.messageSource;
+		const sourcedMessage: ISourcedDebuggerMessage = {
+			...message,
+			source: this.messageSource,
+		};
 		globalThis.postMessage(sourcedMessage, "*"); // TODO: verify target is okay
 	}
 
@@ -54,10 +57,10 @@ export class WindowMessageRelay
 	private readonly onWindowMessage = (
 		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
-		if (isDebuggerMessage(event.data)) {
+		const message = event.data;
+		if (isDebuggerMessage(message) && message.source === debuggerMessageSource) {
 			// Forward incoming message onto subscribers.
-			// TODO: validate source
-			this.emit("message", event.data);
+			this.emit("message", message);
 		}
 	};
 }

@@ -10,6 +10,7 @@ import {
 	IMessageRelay,
 	IMessageRelayEvents,
 	isDebuggerMessage,
+	debuggerMessageSource,
 } from "@fluid-tools/client-debugger";
 
 import {
@@ -85,7 +86,7 @@ export class BackgroundConnection
 
 		// Relay the tab ID to the background service worker.
 		const initMessage: DevToolsInitMessage = {
-			source: extensionMessageSource,
+			source: this.messageSource,
 			type: devToolsInitMessageType,
 			data: {
 				tabId: chrome.devtools.inspectedWindow.tabId,
@@ -105,7 +106,7 @@ export class BackgroundConnection
 	}
 
 	/**
-	 * Post message to Background Script.
+	 * Post a message for the debugger to the Background Script.
 	 */
 	public postMessage(message: IDebuggerMessage): void {
 		const sourcedMessage: ISourcedDebuggerMessage = {
@@ -130,20 +131,27 @@ export class BackgroundConnection
 			return false;
 		}
 
+		// Ignore messages from unexpected sources.
+		// We receive at least one message directly from the Background script so we need to include
+		// extensionMessageSource as a valid source.
+		if (message.source !== extensionMessageSource && message.source !== debuggerMessageSource) {
+			return false;
+		}
+
+		// Handle init-acknowledgment message from background service
 		if (message.type === devToolsInitAcknowledgementType) {
 			console.log(
 				formatDevtoolsScriptMessageForLogging("Background initialization complete."),
 			);
 			return this.emit("tabConnected");
-		} else {
-			// Forward incoming message onto subscribers.
-			// TODO: validate source
-			console.log(
-				formatDevtoolsScriptMessageForLogging(`Relaying message from Background Service:`),
-				message,
-			);
-			return this.emit("message", message);
 		}
+
+		// Forward incoming message onto subscribers.
+		console.log(
+			formatDevtoolsScriptMessageForLogging(`Relaying message from Background Service:`),
+			message,
+		);
+		return this.emit("message", message);
 	};
 
 	/**
