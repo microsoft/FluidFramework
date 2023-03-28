@@ -399,7 +399,6 @@ describe("client.rollback", () => {
 
 		assert.equal(segment.parent, undefined);
 	});
-	// similar to an existing test - is it worth checking that we can rollback to empty?
 	it("Should rollback multiple overlapping edits", () => {
 		client.insertTextLocal(0, "abcdefg");
 		client.insertTextLocal(3, "123");
