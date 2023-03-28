@@ -59,7 +59,15 @@ export class BackgroundConnection
 	 */
 	private readonly backgroundServiceConnection: TypedPortConnection;
 
-	public constructor() {
+	public static async Initialize(): Promise<BackgroundConnection> {
+		const connection = new BackgroundConnection();
+		await new Promise((resolve) => {
+			connection.once("tabConnected", resolve);
+		});
+		return connection;
+	}
+
+	private constructor() {
 		super();
 
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
@@ -122,9 +130,9 @@ export class BackgroundConnection
 		// Handle init-acknowledgment message from background service
 		if (message.type === devToolsInitAcknowledgementType) {
 			console.log(
-				formatDevtoolsScriptMessageForLogging("Background initialization acknowledged."),
+				formatDevtoolsScriptMessageForLogging("Background initialization complete."),
 			);
-			return true;
+			return this.emit("tabConnected");
 		} else {
 			// Forward incoming message onto subscribers.
 			// TODO: validate source
