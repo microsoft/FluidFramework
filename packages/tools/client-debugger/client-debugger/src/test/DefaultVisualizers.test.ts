@@ -7,6 +7,7 @@ import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
+import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
@@ -18,6 +19,7 @@ import {
 	visualizeSharedCell,
 	FluidObjectTreeNode,
 	visualizeSharedString,
+	visualizeSharedMap,
 } from "../data-visualization";
 
 /**
@@ -76,6 +78,45 @@ describe("DefaultVisualizers unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: NodeKind.FluidValueNode,
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedMap", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const sharedMap = new SharedMap("test-map", runtime, SharedMap.getFactory().attributes);
+		sharedMap.set("foo", 42);
+		sharedMap.set("bar", true);
+		sharedMap.set("baz", {
+			a: "Hello",
+			b: "World",
+		});
+
+		const result = await visualizeSharedMap(sharedMap, "test-label", visualizeChildData);
+
+		const expected: FluidObjectTreeNode = {
+			label: "test-label",
+			fluidObjectId: sharedMap.id,
+			children: [
+				{
+					label: "foo",
+					value: "test",
+					nodeKind: NodeKind.ValueNode,
+				},
+				{
+					label: "bar",
+					value: "test",
+					nodeKind: NodeKind.ValueNode,
+				},
+				{
+					label: "baz",
+					value: "test",
+					nodeKind: NodeKind.ValueNode,
+				},
+			],
+			typeMetadata: "SharedMap",
+			nodeKind: NodeKind.FluidTreeNode,
 		};
 
 		expect(result).to.deep.equal(expected);
