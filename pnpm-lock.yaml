@@ -6143,6 +6143,7 @@ importers:
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
+      '@sinclair/typebox': ^0.25.21
       '@types/diff': ^3.5.1
       '@types/easy-table': ^0.0.32
       '@types/mocha': ^9.1.1
