@@ -18,6 +18,7 @@ export class HttpServer implements core.IHttpServer {
 	constructor(private readonly server: http.Server) {}
 
 	public async close(): Promise<void> {
+		console.log("yunho: httpServer close called");
 		await util.promisify(((callback) => this.server.close(callback)) as any)();
 	}
 
@@ -41,10 +42,9 @@ export class WebServer implements core.IWebServer {
 	 * Closes the web server
 	 */
 	public async close(): Promise<void> {
-		await Promise.all([
-			this.httpServer.close(),
-			this.webSocketServer ? this.webSocketServer.close() : Promise.resolve(),
-		]);
+		// Since httpServer is reused in webSocketServer, only need to shutdown webSocketServer.
+		await (this.webSocketServer ? this.webSocketServer.close() : this.httpServer.close());
+
 	}
 }
 
