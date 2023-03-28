@@ -25,8 +25,8 @@ import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-    restTenantThrottlers: Map<string, IThrottler>,
-    restClusterThrottlers: Map<string, IThrottler>,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ) {
@@ -72,7 +72,14 @@ export function create(
 	app.use(cors());
 	app.use(bindCorrelationId(asyncLocalStorage));
 
-	const apiRoutes = routes.create(config, tenantService, restTenantThrottlers, restClusterThrottlers, cache, asyncLocalStorage);
+	const apiRoutes = routes.create(
+		config,
+		tenantService,
+		restTenantThrottlers,
+		restClusterThrottlers,
+		cache,
+		asyncLocalStorage,
+	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
 	app.use(apiRoutes.git.tags);

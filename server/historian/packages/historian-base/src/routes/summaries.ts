@@ -25,8 +25,8 @@ import * as utils from "./utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-    restTenantThrottlers: Map<string, IThrottler>,
-    restClusterThrottlers: Map<string, IThrottler>,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Router {
@@ -36,35 +36,45 @@ export function create(
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
-    const restTenantGeneralThrottler = restTenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
-    // Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
-    const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-        throttleIdSuffix: Constants.createSummaryThrottleIdPrefix,
-    };
-    const restTenantCreateSummaryThrottler = restTenantThrottlers.get(Constants.createSummaryThrottleIdPrefix);
+	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
+	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.createSummaryThrottleIdPrefix,
+	};
+	const restTenantCreateSummaryThrottler = restTenantThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
 
-    // Throttling logic for getting summary to provide per-tenant rate-limiting at the HTTP route level
-    const getSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-        throttleIdSuffix: Constants.getSummaryThrottleIdPrefix,
-    };
-    const restTenantGetSummaryThrottler = restTenantThrottlers.get(Constants.getSummaryThrottleIdPrefix);
+	// Throttling logic for getting summary to provide per-tenant rate-limiting at the HTTP route level
+	const getSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.getSummaryThrottleIdPrefix,
+	};
+	const restTenantGetSummaryThrottler = restTenantThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
 
-    // Throttling logic for creating summary to provide per-cluster rate-limiting at the HTTP route level
-    const createSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: Constants.createSummaryThrottleIdPrefix,
-        throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
-    };
-    const restClusterCreateSummaryThrottler = restClusterThrottlers.get(Constants.createSummaryThrottleIdPrefix);
+	// Throttling logic for creating summary to provide per-cluster rate-limiting at the HTTP route level
+	const createSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.createSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterCreateSummaryThrottler = restClusterThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
 
-    // Throttling logic for getting summary to provide per-cluster rate-limiting at the HTTP route level
-    const getSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
-        throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
-    };
-    const restClusterGetSummaryThrottler = restTenantThrottlers.get(Constants.getSummaryThrottleIdPrefix);
+	// Throttling logic for getting summary to provide per-cluster rate-limiting at the HTTP route level
+	const getSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterGetSummaryThrottler = restTenantThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
 
 	async function getSummary(
 		tenantId: string,
@@ -125,7 +135,7 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/summaries/:sha",
-        throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
+		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
@@ -147,7 +157,11 @@ export function create(
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/summaries",
-        throttle(restClusterCreateSummaryThrottler, winston, createSummaryPerClusterThrottleOptions),
+		throttle(
+			restClusterCreateSummaryThrottler,
+			winston,
+			createSummaryPerClusterThrottleOptions,
+		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }

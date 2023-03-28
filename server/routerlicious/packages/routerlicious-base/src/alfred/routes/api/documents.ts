@@ -52,18 +52,18 @@ export function create(
 	const enforceServerGeneratedDocumentId: boolean =
 		config.get("alfred:enforceServerGeneratedDocumentId") ?? false;
 
-    // Throttling logic for per-tenant rate-limiting at the HTTP route level
+	// Throttling logic for per-tenant rate-limiting at the HTTP route level
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-    const tenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
+	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
 
-    const createDocTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const createDocTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.createDocThrottleIdPrefix,
 	};
-    const getSessionTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const getSessionTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
@@ -73,7 +73,7 @@ export function create(
 		throttleIdPrefix: Constants.createDocThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
-    const getSessionClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const getSessionClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: Constants.getSessionThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
@@ -82,7 +82,7 @@ export function create(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		(request, response, next) => {
 			const documentP = storage.getDocument(
 				getParam(request.params, "tenantId") || appTenants[0].id,
@@ -113,8 +113,16 @@ export function create(
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
 		}),
-		throttle(clusterThrottlers.get(Constants.createDocThrottleIdPrefix), winston, createDocClusterThrottleOptions),
-		throttle(tenantThrottlers.get(Constants.createDocThrottleIdPrefix), winston, createDocTenantThrottleOptions),
+		throttle(
+			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
+			winston,
+			createDocClusterThrottleOptions,
+		),
+		throttle(
+			tenantThrottlers.get(Constants.createDocThrottleIdPrefix),
+			winston,
+			createDocTenantThrottleOptions,
+		),
 		async (request, response, next) => {
 			// Tenant and document
 			const tenantId = getParam(request.params, "tenantId");
@@ -196,8 +204,16 @@ export function create(
 	router.get(
 		"/:tenantId/session/:id",
 		verifyStorageToken(tenantManager, config, tokenManager),
-        throttle(clusterThrottlers.get(Constants.getSessionThrottleIdPrefix), winston, getSessionClusterThrottleOptions),
-		throttle(tenantThrottlers.get(Constants.getSessionThrottleIdPrefix), winston, getSessionTenantThrottleOptions),
+		throttle(
+			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
+			winston,
+			getSessionClusterThrottleOptions,
+		),
+		throttle(
+			tenantThrottlers.get(Constants.getSessionThrottleIdPrefix),
+			winston,
+			getSessionTenantThrottleOptions,
+		),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");
@@ -222,7 +238,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		validateTokenRevocationClaims(),
 		verifyStorageToken(tenantManager, config, tokenManager),
-		throttle(tenantThrottler, winston, tenantThrottleOptions),
+		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		async (request, response, next) => {
 			const documentId = getParam(request.params, "id");
 			const tenantId = getParam(request.params, "tenantId");

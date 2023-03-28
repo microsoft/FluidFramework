@@ -121,33 +121,33 @@ describe("Routerlicious", () => {
 				const limitTenant = 10;
 				const limitCreateDoc = 5;
 				const limitGetDeltas = 5;
-                const limitGetSession = 5;
+				const limitGetSession = 5;
 				beforeEach(() => {
-                    const restTenantThrottler = new TestThrottler(limitTenant);
+					const restTenantThrottler = new TestThrottler(limitTenant);
 					const restTenantGetDeltasThrottler = new TestThrottler(limitTenant);
-                    const restTenantCreateDocThrottler = new TestThrottler(limitTenant);
-                    const restTenantGetSessionThrottler = new TestThrottler(limitTenant);
+					const restTenantCreateDocThrottler = new TestThrottler(limitTenant);
+					const restTenantGetSessionThrottler = new TestThrottler(limitTenant);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restTenantGetDeltasThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
 
 					const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
 					const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
-                    const restGetSessionThrottler = new TestThrottler(limitGetSession);
+					const restGetSessionThrottler = new TestThrottler(limitGetSession);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -157,7 +157,7 @@ describe("Routerlicious", () => {
 						Constants.getDeltasThrottleIdPrefix,
 						restGetDeltasThrottler,
 					);
-                    restClusterThrottlers.set(
+					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restGetSessionThrottler,
 					);
@@ -319,31 +319,31 @@ describe("Routerlicious", () => {
 			describe("authorization", () => {
 				const maxThrottlerLimit = 10;
 				beforeEach(() => {
-                    const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restTenantGetDeltasThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
 
 					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -353,7 +353,7 @@ describe("Routerlicious", () => {
 						Constants.getDeltasThrottleIdPrefix,
 						restClusterGetDeltasThrottler,
 					);
-                    restClusterThrottlers.set(
+					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restClusterGetSessionThrottler,
 					);
@@ -433,31 +433,31 @@ describe("Routerlicious", () => {
 
 				const maxThrottlerLimit = 1000000;
 				beforeEach(() => {
-                    const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restTenantGetDeltasThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
 
 					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -467,7 +467,7 @@ describe("Routerlicious", () => {
 						Constants.getDeltasThrottleIdPrefix,
 						restClusterGetDeltasThrottler,
 					);
-                    restClusterThrottlers.set(
+					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restClusterGetSessionThrottler,
 					);
@@ -547,31 +547,31 @@ describe("Routerlicious", () => {
 			describe("single-use JWTs", () => {
 				const limit = 1000000;
 				beforeEach(() => {
-                    const restTenantThrottler = new TestThrottler(limit);
+					const restTenantThrottler = new TestThrottler(limit);
 					const restTenantGetDeltasThrottler = new TestThrottler(limit);
-                    const restTenantCreateDocThrottler = new TestThrottler(limit);
-                    const restTenantGetSessionThrottler = new TestThrottler(limit);
+					const restTenantCreateDocThrottler = new TestThrottler(limit);
+					const restTenantGetSessionThrottler = new TestThrottler(limit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restTenantGetDeltasThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
 
 					const restClusterCreateDocThrottler = new TestThrottler(limit);
 					const restClusterGetDeltasThrottler = new TestThrottler(limit);
-                    const restClusterGetSessionThrottler = new TestThrottler(limit);
+					const restClusterGetSessionThrottler = new TestThrottler(limit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -581,7 +581,7 @@ describe("Routerlicious", () => {
 						Constants.getDeltasThrottleIdPrefix,
 						restClusterGetDeltasThrottler,
 					);
-                    restClusterThrottlers.set(
+					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restClusterGetSessionThrottler,
 					);
@@ -625,31 +625,31 @@ describe("Routerlicious", () => {
 
 				beforeEach(() => {
 					const maxThrottlerLimit = 1000000;
-                    const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
+					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getDeltasThrottleIdPrefix,
 						restTenantGetDeltasThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
 						restTenantCreateDocThrottler,
 					);
-                    restTenantThrottlers.set(
+					restTenantThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restTenantGetSessionThrottler,
 					);
 
 					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-                    const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
+					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restClusterThrottlers = new Map<string, TestThrottler>();
 					restClusterThrottlers.set(
 						Constants.createDocThrottleIdPrefix,
@@ -659,7 +659,7 @@ describe("Routerlicious", () => {
 						Constants.getDeltasThrottleIdPrefix,
 						restClusterGetDeltasThrottler,
 					);
-                    restClusterThrottlers.set(
+					restClusterThrottlers.set(
 						Constants.getSessionThrottleIdPrefix,
 						restClusterGetSessionThrottler,
 					);

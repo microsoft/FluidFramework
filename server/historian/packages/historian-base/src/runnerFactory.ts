@@ -20,7 +20,7 @@ export class HistorianResources implements core.IResources {
 		public readonly port: string | number,
 		public readonly riddler: historianServices.ITenantService,
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
-        public readonly restClusterThrottlers: Map<string, core.IThrottler>,
+		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 	) {
@@ -84,80 +84,103 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 				| undefined,
 		};
 
-		const redisThrottleAndUsageStorageManager = new services.RedisThrottleAndUsageStorageManager(
-			redisClientForThrottling,
-			redisParamsForThrottling,
+		const redisThrottleAndUsageStorageManager =
+			new services.RedisThrottleAndUsageStorageManager(
+				redisClientForThrottling,
+				redisParamsForThrottling,
+			);
+
+		interface IThrottleConfig {
+			maxPerMs: number;
+			maxBurst: number;
+			minCooldownIntervalInMs: number;
+			minThrottleIntervalInMs: number;
+			maxInMemoryCacheSize: number;
+			maxInMemoryCacheAgeInMs: number;
+			enableEnhancedTelemetry?: boolean;
+		}
+		const configureThrottler = (throttleConfig: Partial<IThrottleConfig>): core.IThrottler => {
+			const throttlerHelper = new services.ThrottlerHelper(
+				redisThrottleAndUsageStorageManager,
+				throttleConfig.maxPerMs,
+				throttleConfig.maxBurst,
+				throttleConfig.minCooldownIntervalInMs,
+			);
+			return new services.Throttler(
+				throttlerHelper,
+				throttleConfig.minThrottleIntervalInMs,
+				winston,
+				throttleConfig.maxInMemoryCacheSize,
+				throttleConfig.maxInMemoryCacheAgeInMs,
+				throttleConfig.enableEnhancedTelemetry,
+			);
+		};
+
+		// Rest API Throttler
+		const restApiTenantGeneralThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling.restCallsPerTenant.generalRestCall") ?? {};
+		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
+
+		const restApiTenantGetSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling.restCallsPerTenant.getSummary") ?? {};
+		const restTenantGetSummaryThrottler = configureThrottler(
+			restApiTenantGetSummaryThrottleConfig,
 		);
 
-        interface IThrottleConfig {
-            maxPerMs: number;
-            maxBurst: number;
-            minCooldownIntervalInMs: number;
-            minThrottleIntervalInMs: number;
-            maxInMemoryCacheSize: number;
-            maxInMemoryCacheAgeInMs: number;
-            enableEnhancedTelemetry?: boolean;
-        }
-        const configureThrottler = (throttleConfig: Partial<IThrottleConfig>): core.IThrottler => {
-            const throttlerHelper = new services.ThrottlerHelper(
-                redisThrottleAndUsageStorageManager,
-                throttleConfig.maxPerMs,
-                throttleConfig.maxBurst,
-                throttleConfig.minCooldownIntervalInMs,
-            );
-            return new services.Throttler(
-                throttlerHelper,
-                throttleConfig.minThrottleIntervalInMs,
-                winston,
-                throttleConfig.maxInMemoryCacheSize,
-                throttleConfig.maxInMemoryCacheAgeInMs,
-                throttleConfig.enableEnhancedTelemetry,
-            );
-        };
+		const restApiTenantCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling.restCallsPerTenant.createSummary") ?? {};
+		const restTenantCreateSummaryThrottler = configureThrottler(
+			restApiTenantCreateSummaryThrottleConfig,
+		);
 
-        // Rest API Throttler
-        const restApiTenantGeneralThrottleConfig: Partial<IThrottleConfig> =
-            config.get("throttling.restCallsPerTenant.generalRestCall") ?? {};
-        const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
+		const restTenantThrottlers = new Map<string, core.IThrottler>();
+		restTenantThrottlers.set(
+			Constants.createSummaryThrottleIdPrefix,
+			restTenantCreateSummaryThrottler,
+		);
+		restTenantThrottlers.set(
+			Constants.getSummaryThrottleIdPrefix,
+			restTenantGetSummaryThrottler,
+		);
+		restTenantThrottlers.set(
+			Constants.generalRestCallThrottleIdPrefix,
+			restTenantGeneralThrottler,
+		);
 
-        const restApiTenantGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-            config.get("throttling.restCallsPerTenant.getSummary") ?? {};
-        const restTenantGetSummaryThrottler = configureThrottler(restApiTenantGetSummaryThrottleConfig);
+		const restApiClusterCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling.restCallsPerCluster.createSummary") ?? {};
+		const throttlerCreateSummaryPerCluster = configureThrottler(
+			restApiClusterCreateSummaryThrottleConfig,
+		);
 
-        const restApiTenantCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-            config.get("throttling.restCallsPerTenant.createSummary") ?? {};
-        const restTenantCreateSummaryThrottler = configureThrottler(restApiTenantCreateSummaryThrottleConfig);
+		const restApiClusterGetSummaryThrottleConfig: Partial<IThrottleConfig> =
+			config.get("throttling.restCallsPerCluster.getSummary") ?? {};
+		const throttlerGetSummaryPerCluster = configureThrottler(
+			restApiClusterGetSummaryThrottleConfig,
+		);
 
-        const restTenantThrottlers = new Map<string, core.IThrottler>();
-		restTenantThrottlers.set(Constants.createSummaryThrottleIdPrefix, restTenantCreateSummaryThrottler);
-		restTenantThrottlers.set(Constants.getSummaryThrottleIdPrefix, restTenantGetSummaryThrottler);
-        restTenantThrottlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantGeneralThrottler);
-
-        const restApiClusterCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-            config.get("throttling.restCallsPerCluster.createSummary") ?? {};
-        const throttlerCreateSummaryPerCluster = configureThrottler(restApiClusterCreateSummaryThrottleConfig);
-
-        const restApiClusterGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-            config.get("throttling.restCallsPerCluster.getSummary") ?? {};
-        const throttlerGetSummaryPerCluster = configureThrottler(restApiClusterGetSummaryThrottleConfig);
-
-        const restClusterThrottlers = new Map<string, core.IThrottler>();
-		restClusterThrottlers.set(Constants.createSummaryThrottleIdPrefix, throttlerCreateSummaryPerCluster);
-		restClusterThrottlers.set(Constants.getSummaryThrottleIdPrefix, throttlerGetSummaryPerCluster);
-
+		const restClusterThrottlers = new Map<string, core.IThrottler>();
+		restClusterThrottlers.set(
+			Constants.createSummaryThrottleIdPrefix,
+			throttlerCreateSummaryPerCluster,
+		);
+		restClusterThrottlers.set(
+			Constants.getSummaryThrottleIdPrefix,
+			throttlerGetSummaryPerCluster,
+		);
 
 		const port = normalizePort(process.env.PORT || "3000");
 
-        return new HistorianResources(
-            config,
-            port,
-            riddler,
-            restTenantThrottlers,
-            restClusterThrottlers,
-            gitCache,
-            asyncLocalStorage,
-        );
-    }
+		return new HistorianResources(
+			config,
+			port,
+			riddler,
+			restTenantThrottlers,
+			restClusterThrottlers,
+			gitCache,
+			asyncLocalStorage,
+		);
+	}
 }
 
 export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianResources> {
@@ -168,7 +191,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.port,
 			resources.riddler,
 			resources.restTenantThrottlers,
-            resources.restClusterThrottlers,
+			resources.restClusterThrottlers,
 			resources.cache,
 			resources.asyncLocalStorage,
 		);

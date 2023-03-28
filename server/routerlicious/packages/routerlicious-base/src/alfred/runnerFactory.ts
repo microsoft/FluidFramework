@@ -285,23 +285,32 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			config.get("alfred:throttling:restCallsPerTenant:generalRestCall") ?? {};
 		const restTenantThrottler = configureThrottler(restApiTenantThrottleConfig);
 
-        const restApiTenantCreateDocThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restCallsPerTenant:createDoc") ?? {};
-        const restTenantCreateDocThrottler = configureThrottler(restApiTenantCreateDocThrottleConfig);
+		const restApiTenantCreateDocThrottleConfig: Partial<IThrottleConfig> =
+			config.get("alfred:throttling:restCallsPerTenant:createDoc") ?? {};
+		const restTenantCreateDocThrottler = configureThrottler(
+			restApiTenantCreateDocThrottleConfig,
+		);
 
-        const restApiTenantGetDeltasThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restCallsPerTenant:getDeltas") ?? {};
-        const restTenantGetDeltasThrottler = configureThrottler(restApiTenantGetDeltasThrottleConfig);
+		const restApiTenantGetDeltasThrottleConfig: Partial<IThrottleConfig> =
+			config.get("alfred:throttling:restCallsPerTenant:getDeltas") ?? {};
+		const restTenantGetDeltasThrottler = configureThrottler(
+			restApiTenantGetDeltasThrottleConfig,
+		);
 
-        const restApiTenantGetSessionThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restCallsPerTenant:getSession") ?? {};
-        const restTenantGetSessionThrottler = configureThrottler(restApiTenantGetSessionThrottleConfig);
+		const restApiTenantGetSessionThrottleConfig: Partial<IThrottleConfig> =
+			config.get("alfred:throttling:restCallsPerTenant:getSession") ?? {};
+		const restTenantGetSessionThrottler = configureThrottler(
+			restApiTenantGetSessionThrottleConfig,
+		);
 
-        const restTenantThrottlers = new Map<string, core.IThrottler>();
-        restTenantThrottlers.set(Constants.createDocThrottleIdPrefix, restTenantCreateDocThrottler);
-        restTenantThrottlers.set(Constants.getDeltasThrottleIdPrefix, restTenantGetDeltasThrottler);
-        restTenantThrottlers.set(Constants.getSessionThrottleIdPrefix, restTenantGetSessionThrottler);
-        restTenantThrottlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantThrottler);
+		const restTenantThrottlers = new Map<string, core.IThrottler>();
+		restTenantThrottlers.set(Constants.createDocThrottleIdPrefix, restTenantCreateDocThrottler);
+		restTenantThrottlers.set(Constants.getDeltasThrottleIdPrefix, restTenantGetDeltasThrottler);
+		restTenantThrottlers.set(
+			Constants.getSessionThrottleIdPrefix,
+			restTenantGetSessionThrottler,
+		);
+		restTenantThrottlers.set(Constants.generalRestCallThrottleIdPrefix, restTenantThrottler);
 
 		const restApiCreateDocThrottleConfig: Partial<IThrottleConfig> =
 			config.get("alfred:throttling:restCallsPerCluster:createDoc") ?? {};
@@ -311,14 +320,14 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			config.get("alfred:throttling:restCallsPerCluster:getDeltas") ?? {};
 		const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
 
-        const restApiGetSessionThrottleConfig: Partial<IThrottleConfig> =
-            config.get("alfred:throttling:restCallsPerTenant:getSession") ?? {};
-        const restGetSessionThrottler = configureThrottler(restApiGetSessionThrottleConfig);
+		const restApiGetSessionThrottleConfig: Partial<IThrottleConfig> =
+			config.get("alfred:throttling:restCallsPerTenant:getSession") ?? {};
+		const restGetSessionThrottler = configureThrottler(restApiGetSessionThrottleConfig);
 
 		const restClusterThrottlers = new Map<string, core.IThrottler>();
 		restClusterThrottlers.set(Constants.createDocThrottleIdPrefix, restCreateDocThrottler);
 		restClusterThrottlers.set(Constants.getDeltasThrottleIdPrefix, restGetDeltasThrottler);
-        restClusterThrottlers.set(Constants.getSessionThrottleIdPrefix, restGetSessionThrottler);
+		restClusterThrottlers.set(Constants.getSessionThrottleIdPrefix, restGetSessionThrottler);
 
 		// Socket Connection Throttler
 		const socketConnectionThrottleConfigPerTenant: Partial<IThrottleConfig> =
