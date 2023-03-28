@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKey,
-	fieldSchema,
 	GlobalFieldKey,
 	JsonableTree,
 	LocalFieldKey,
@@ -71,10 +70,10 @@ function getTestSchema(fieldKind: FieldKind): SchemaData {
 		value: ValueSchema.Serializable,
 	});
 	return SchemaAware.typedSchemaData(
-		new Map([
-			[rootFieldKey, fieldSchema(FieldKinds.optional, [rootSchemaName])],
-			[globalFieldKey, fieldSchema(fieldKind, [stringSchema.name])],
-		]),
+		[
+			[rootFieldKey, TypedSchema.field(FieldKinds.optional, rootNodeSchema)],
+			[globalFieldKey, TypedSchema.field(fieldKind, stringSchema)],
+		],
 		stringSchema,
 		rootNodeSchema,
 	);
@@ -365,7 +364,7 @@ describe("editable-tree: editing", () => {
 
 	it("validates schema of values", async () => {
 		const schemaData = SchemaAware.typedSchemaData(
-			new Map([[rootFieldKey, TypedSchema.field(FieldKinds.value, stringSchema)]]),
+			[[rootFieldKey, TypedSchema.field(FieldKinds.value, stringSchema)]],
 			stringSchema,
 		);
 		const [, trees] = await createSharedTrees(schemaData, [
