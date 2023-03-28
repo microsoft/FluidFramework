@@ -150,6 +150,9 @@ describe("DefaultVisualizers unit tests", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		const unknownObject = {
 			id: "test-object-id",
+			attributes: {
+				type: "UnknownSharedObjectType",
+			},
 		} as ISharedObject;
 
 		const result = await visualizeUnknownSharedObject(
@@ -161,8 +164,8 @@ describe("DefaultVisualizers unit tests", () => {
 		const expected: FluidObjectValueNode = {
 			fluidObjectId: "test-object-id",
 			label: "test-label",
-			value: "Unrecognized Fluid data.",
-			typeMetadata: "Unknown",
+			value: "Unrecognized kind of Fluid Object.",
+			typeMetadata: "UnknownSharedObjectType",
 			nodeKind: NodeKind.FluidValueNode,
 		};
 

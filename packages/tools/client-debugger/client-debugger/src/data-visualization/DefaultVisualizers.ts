@@ -110,8 +110,8 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 	return {
 		fluidObjectId: sharedObject.id,
 		label,
-		value: "Unrecognized Fluid data.",
-		typeMetadata: "Unknown",
+		value: "Unrecognized kind of Fluid Object.",
+		typeMetadata: sharedObject.attributes.type,
 		nodeKind: NodeKind.FluidValueNode,
 	};
 };
