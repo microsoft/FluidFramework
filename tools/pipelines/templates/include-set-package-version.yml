@@ -44,7 +44,7 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
-        npm i -g pnpm
+        npm i -g pnpm@7
         pnpm config set store-dir $(pnpmStorePath)
         pnpm i
         pnpm build:compile

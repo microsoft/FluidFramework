@@ -84,7 +84,7 @@ jobs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
-          npm i -g pnpm
+          npm i -g pnpm@7
           pnpm config set store-dir $(pnpmStorePath)
 
     - task: Bash@3
