@@ -45,6 +45,7 @@ steps:
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
         npm i -g pnpm
+        pnpm -v
         pnpm config set store-dir $(pnpmStorePath)
         pnpm i
         pnpm build:compile

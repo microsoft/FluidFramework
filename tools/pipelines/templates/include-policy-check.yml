@@ -42,6 +42,7 @@ stages:
         script: |
           # Install pnpm globally
           npm i -g pnpm
+          pnpm -v
 
           # We only want to install the root package deps, so we set recursive-install to false
           pnpm config set recursive-install false

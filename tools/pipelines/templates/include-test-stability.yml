@@ -85,6 +85,7 @@ jobs:
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           npm i -g pnpm
+          pnpm -v
           pnpm config set store-dir $(pnpmStorePath)
 
     - task: Bash@3
