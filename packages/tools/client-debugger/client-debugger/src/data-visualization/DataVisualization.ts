@@ -81,7 +81,7 @@ export type VisualizeChildData = (data: unknown, label: string) => Promise<Visua
  * - `key`: The type of Shared object ({@link @fluidframework/datastore-definitions#IChannelFactory.Type}).
  *
  * - `value`: A renderer that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
- * specified type and generates a corresponding {@link SharedObjectVisualizerNode} for it.
+ * specified type and generates a corresponding {@link VisualizerNode} for it.
  */
 export interface SharedObjectVisualizers {
 	/**
@@ -103,12 +103,12 @@ export interface DataVisualizerEvents extends IEvent {
 }
 
 /**
- * Manages {@link SharedObjectVisualizerNode | visualizers} for shared objects reachable by
+ * Manages {@link VisualizerNode | visualizers} for shared objects reachable by
  * the provided {@link DataVisualizerGraph.rootData}.
  *
  * @remarks
  *
- * {@link SharedObjectVisualizerNode}s are initialized lazily.
+ * {@link VisualizerNode}s are initialized lazily.
  *
  * Consumers can begin tree visualization by calling {@link DataVisualizerGraph.renderRootHandles}.
  * The returned handle nodes provide the IDs required to make subsequent calls to {@link DataVisualizerGraph.render}
@@ -129,14 +129,14 @@ export class DataVisualizerGraph
 	private readonly visualizers: SharedObjectVisualizers;
 
 	/**
-	 * Map of registered {@link SharedObjectVisualizerNode}s, keyed by their corresponding {@link FluidObjectId}.
+	 * Map of registered {@link VisualizerNode}s, keyed by their corresponding {@link FluidObjectId}.
 	 *
 	 * @privateRemarks TODO: Dependency tracking so we don't leak memory.
 	 */
-	private readonly visualizerNodes: Map<FluidObjectId, SharedObjectVisualizerNode>;
+	private readonly visualizerNodes: Map<FluidObjectId, VisualizerNode>;
 
 	/**
-	 * Private {@link SharedObjectVisualizerNode.disposed} tracking.
+	 * Private {@link VisualizerNode.disposed} tracking.
 	 */
 	private _disposed: boolean;
 
@@ -158,7 +158,7 @@ export class DataVisualizerGraph
 		this.rootData = rootData;
 		this.visualizers = visualizers;
 
-		this.visualizerNodes = new Map<FluidObjectId, SharedObjectVisualizerNode>();
+		this.visualizerNodes = new Map<FluidObjectId, VisualizerNode>();
 
 		this._disposed = false;
 	}
@@ -224,7 +224,7 @@ export class DataVisualizerGraph
 				this.visualizers[sharedObject.attributes.type] !== undefined
 					? this.visualizers[sharedObject.attributes.type]
 					: visualizeUnknownSharedObject;
-			const visualizerNode = new SharedObjectVisualizerNode(
+			const visualizerNode = new VisualizerNode(
 				sharedObject,
 				label,
 				visualizationFunction,
@@ -285,15 +285,12 @@ export class DataVisualizerGraph
  *
  * @remarks
  *
- * A visual representation can be requested via {@link SharedObjectVisualizerNode.render}.
+ * A visual representation can be requested via {@link VisualizerNode.render}.
  *
  * Additionally, whenever the associated `ISharedObject` is updated (i.e. whenever its "op" event is emitted),
  * an updated visual tree will be emitted via this object's {@link SharedObjectListenerEvents | "update" event}.
  */
-export class SharedObjectVisualizerNode
-	extends TypedEventEmitter<DataVisualizerEvents>
-	implements IDisposable
-{
+export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> implements IDisposable {
 	/**
 	 * The Fluid object whose data will be emitted in visualized form when requested / whenever its data is updated.
 	 */
@@ -307,7 +304,7 @@ export class SharedObjectVisualizerNode
 	public readonly label: string;
 
 	/**
-	 * Callback for visualizing {@link SharedObjectVisualizerNode.sharedObject}.
+	 * Callback for visualizing {@link VisualizerNode.sharedObject}.
 	 * Encapsulates the policies for rendering different kinds of DDSs.
 	 */
 	private readonly visualizeSharedObject: VisualizeSharedObject;
@@ -317,7 +314,7 @@ export class SharedObjectVisualizerNode
 	 *
 	 * @remarks
 	 *
-	 * Called during {@link SharedObjectVisualizerNode.render} whenever a Fluid handle is encountered.
+	 * Called during {@link VisualizerNode.render} whenever a Fluid handle is encountered.
 	 * Ensures that the consumer of this object's visual tree will be able to request a rendering of the handle's
 	 * corresponding DDS as needed.
 	 */
@@ -327,7 +324,7 @@ export class SharedObjectVisualizerNode
 	) => Promise<FluidObjectId>;
 
 	/**
-	 * Handler for {@link SharedObjectVisualizerNode.sharedObject}'s "op" event.
+	 * Handler for {@link VisualizerNode.sharedObject}'s "op" event.
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
@@ -337,7 +334,7 @@ export class SharedObjectVisualizerNode
 	};
 
 	/**
-	 * Private {@link SharedObjectVisualizerNode.disposed} tracking.
+	 * Private {@link VisualizerNode.disposed} tracking.
 	 */
 	private _disposed: boolean;
 
@@ -367,8 +364,8 @@ export class SharedObjectVisualizerNode
 	}
 
 	/**
-	 * Emits a {@link SharedObjectVisualizerNode.render | visual tree representation} of
-	 * {@link SharedObjectVisualizerNode.sharedObject}'s current state as an
+	 * Emits a {@link VisualizerNode.render | visual tree representation} of
+	 * {@link VisualizerNode.sharedObject}'s current state as an
 	 * {@link SharedObjectListenerEvents | "update"} event.
 	 */
 	private emitVisualUpdate(): void {
@@ -377,15 +374,15 @@ export class SharedObjectVisualizerNode
 	}
 
 	/**
-	 * Generates a visual description of the associated {@link SharedObjectVisualizerNode.sharedObject}'s
+	 * Generates a visual description of the associated {@link VisualizerNode.sharedObject}'s
 	 * current state.
 	 *
 	 * @remarks
 	 *
-	 * Will recursively render child contents of {@link SharedObjectVisualizerNode.sharedObject}, terminating at
+	 * Will recursively render child contents of {@link VisualizerNode.sharedObject}, terminating at
 	 * primitive data and handles to other Fluid objects.
 	 *
-	 * @returns A visual tree representation of {@link SharedObjectVisualizerNode.sharedObject}.
+	 * @returns A visual tree representation of {@link VisualizerNode.sharedObject}.
 	 */
 	public async render(): Promise<FluidObjectNode> {
 		return this.visualizeSharedObject(this.sharedObject, this.label, async (_data, _label) =>
