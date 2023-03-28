@@ -9,17 +9,19 @@ import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
+import { ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import {
-	NodeKind,
-	visualizeSharedCounter,
-	ValueNode,
-	FluidObjectValueNode,
-	visualizeSharedCell,
 	FluidObjectTreeNode,
-	visualizeSharedString,
+	FluidObjectValueNode,
+	NodeKind,
+	ValueNode,
+	visualizeSharedCell,
+	visualizeSharedCounter,
 	visualizeSharedMap,
+	visualizeSharedString,
+	visualizeUnknownSharedObject,
 } from "../data-visualization";
 
 /**
@@ -138,6 +140,29 @@ describe("DefaultVisualizers unit tests", () => {
 			fluidObjectId: sharedString.id,
 			value: "Hello World!",
 			typeMetadata: "SharedString",
+			nodeKind: NodeKind.FluidValueNode,
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("Unknown SharedObject", async () => {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		const unknownObject = {
+			id: "test-object-id",
+		} as ISharedObject;
+
+		const result = await visualizeUnknownSharedObject(
+			unknownObject,
+			"test-label",
+			visualizeChildData,
+		);
+
+		const expected: FluidObjectValueNode = {
+			fluidObjectId: "test-object-id",
+			label: "test-label",
+			value: "Unrecognized Fluid data.",
+			typeMetadata: "Unknown",
 			nodeKind: NodeKind.FluidValueNode,
 		};
 
