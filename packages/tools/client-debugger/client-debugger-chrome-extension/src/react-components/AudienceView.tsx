@@ -10,6 +10,7 @@ import {
 	AudienceSummaryMessage,
 	HasContainerId,
 	AudienceSummaryMessageData,
+	ISourcedDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 import { defaultRenderOptions, _AudienceView } from "@fluid-tools/client-debugger-view";
 import { extensionMessageSource } from "../messaging";
@@ -37,7 +38,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { containerId } = props;
 
 	// POST Request for Audience Data
-	const getAudienceMessage: IDebuggerMessage = {
+	const getAudienceMessage: ISourcedDebuggerMessage = {
 		type: "GET_AUDIENCE",
 		source: extensionMessageSource,
 		data: {
