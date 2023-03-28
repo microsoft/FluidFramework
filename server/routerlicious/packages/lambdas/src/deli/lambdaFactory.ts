@@ -8,9 +8,8 @@ import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
 import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
-	ICheckpoint,
+	ICheckpointRepository,
 	IClientManager,
-	ICollection,
 	IContext,
 	IDeliState,
 	IDocument,
@@ -64,7 +63,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
-		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
+		private readonly checkpointRepository: ICheckpointRepository,
 		private readonly tenantManager: ITenantManager,
 		private readonly clientManager: IClientManager | undefined,
 		private readonly forwardProducer: IProducer,
@@ -192,15 +191,13 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 				);
 				let checkpointSource = "defaultGlobalCollection";
 
-				if (
-					this.localCheckpointEnabled &&
-					this.localCheckpointCollection !== null &&
-					this.localCheckpointCollection !== undefined
-				) {
-					// Search local db for checkpoint
-					checkpoint = await this.localCheckpointCollection
-						.findOne({
-							_id: documentId,
+				if (!this.localCheckpointEnabled || !this.checkpointRepository) {
+					// If we cannot checkpoint locally, use document
+					lastCheckpoint = JSON.parse(document.deli);
+				} else {
+					// Search checkpoints collection for checkpoint
+					checkpoint = await this.checkpointRepository
+						.readOne({
 							documentId,
 							tenantId,
 						})
@@ -217,10 +214,10 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 						checkpointSource = "foundInLocalCollection";
 						isLocalCheckpoint = true;
 					} else {
+						// If checkpoint does not exist, use document
+						checkpointSource = "notFoundInLocalCollection";
 						lastCheckpoint = JSON.parse(document.deli);
 					}
-				} else {
-					lastCheckpoint = JSON.parse(document.deli);
 				}
 
 				restoreFromCheckpointMetric.setProperties({
@@ -270,7 +267,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			tenantId,
 			documentId,
 			this.documentRepository,
-			this.localCheckpointCollection,
+			this.checkpointRepository,
 		);
 
 		// Should the lambda reaize that term has flipped to send a no-op message at the beginning?

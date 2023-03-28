@@ -7,13 +7,13 @@ import { delay } from "@fluidframework/common-utils";
 import {
 	ICollection,
 	IContext,
-	ICheckpoint,
 	isRetryEnabled,
 	IScribe,
 	ISequencedOperationMessage,
 	runWithRetry,
 	IDeltaService,
 	IDocumentRepository,
+	ICheckpointRepository,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ICheckpointManager } from "./interfaces";
@@ -28,7 +28,7 @@ export class CheckpointManager implements ICheckpointManager {
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		private readonly documentRepository: IDocumentRepository,
-		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
+		private readonly checkpointRepository: ICheckpointRepository,
 		private readonly opCollection: ICollection<ISequencedOperationMessage>,
 		private readonly deltaService: IDeltaService,
 		private readonly getDeltasViaAlfred: boolean,
@@ -143,49 +143,29 @@ export class CheckpointManager implements ICheckpointManager {
 	private async writeScribeCheckpointState(checkpoint: IScribe, noActiveClients: boolean) {
 		const lumberProperties = getLumberBaseProperties(this.documentId, this.tenantId);
 
-		if (this.localCheckpointEnabled) {
-			if (
-				this.localCheckpointCollection !== null &&
-				this.localCheckpointCollection !== undefined
-			) {
-				if (!noActiveClients) {
-					// If there are active clients, we write to the local collection
-					Lumberjack.info(`Writing checkpoint to local database`, lumberProperties);
-					// Use upsert in case document does not exist in the local database
-					await this.writeScribeCheckpointToCollection(checkpoint, true);
-				} else {
-					// No active clients, delete from local collection, write to global collection
-					Lumberjack.info(
-						`Removing checkpoint data from the local database. No active clients.`,
-						lumberProperties,
-					);
-					await Promise.all([
-						this.localCheckpointCollection
-							.deleteOne({
-								documentId: this.documentId,
-								tenantId: this.tenantId,
-							})
-							.catch((error) => {
-								Lumberjack.error(
-									`Error removing checkpoint data from the local database.`,
-									lumberProperties,
-									error,
-								);
-							}),
-						await this.writeScribeCheckpointToCollection(checkpoint, false),
-					]);
-				}
-			} else {
-				Lumberjack.info(
-					`No local collection found. Writing checkpoint to global database.`,
-					lumberProperties,
-				);
-				await this.writeScribeCheckpointToCollection(checkpoint, false);
-			}
-		} else {
-			Lumberjack.info(`Local checkpoints disabled. Writing checkpoint to global database.`);
+		if (!this.localCheckpointEnabled || !this.checkpointRepository) {
+			// Write to global collection when local checkpoints are disabled or there is no checkpoint repository
 			await this.writeScribeCheckpointToCollection(checkpoint, false);
+			return;
 		}
+
+		await (!noActiveClients
+			? this.writeScribeCheckpointToCollection(checkpoint, true)
+			: Promise.all([
+					this.checkpointRepository
+						.deleteOne({
+							documentId: this.documentId,
+							tenantId: this.tenantId,
+						})
+						.catch((error) => {
+							Lumberjack.error(
+								`Error removing checkpoint data from the local database.`,
+								lumberProperties,
+								error,
+							);
+						}),
+					await this.writeScribeCheckpointToCollection(checkpoint, false),
+			  ]));
 	}
 
 	private async writeScribeCheckpointToCollection(checkpoint: IScribe, isLocal: boolean = false) {
@@ -201,8 +181,8 @@ export class CheckpointManager implements ICheckpointManager {
 		};
 
 		await (isLocal
-			? this.localCheckpointCollection
-					.upsert(checkpointFilter, checkpointData, null)
+			? this.checkpointRepository
+					.updateOne(checkpointFilter, checkpointData, { upsert: true })
 					.catch((error) => {
 						Lumberjack.error(
 							`Error writing checkpoint to local database`,

@@ -209,6 +209,18 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const deltasCollectionName = config.get("mongo:collectionNames:deltas");
 		const scribeCollectionName = config.get("mongo:collectionNames:scribeDeltas");
 
+		// Setup for checkpoint collection
+		const operationsDb = await operationsDbMongoManager.getDatabase();
+		const checkpointsCollection =
+			operationsDb.collection<core.ICheckpoint>(checkpointsCollectionName);
+		await checkpointsCollection.createIndex(
+			{
+				documentId: 1,
+				tenantId: 1,
+			},
+			true,
+		);
+
 		// Foreman agent uploader does not run locally.
 		// TODO: Make agent uploader run locally.
 		const foremanConfig = config.get("foreman");
@@ -323,6 +335,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const documentRepository =
 			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);
+		const checkpointRepository =
+			customizations?.checkpointRepository ??
+			new core.MongoCheckpointRepository(checkpointsCollection);
+
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,
 			operationsDbMongoManager,
@@ -372,6 +388,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			storage,
 			databaseManager,
 			documentRepository,
+			checkpointRepository,
 			60000,
 			() => new NodeWebSocketServer(4000),
 			taskMessageSender,

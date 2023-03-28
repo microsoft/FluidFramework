@@ -7,7 +7,7 @@ import { EventEmitter } from "events";
 import { inspect } from "util";
 import {
 	ControlMessageType,
-	ICheckpoint,
+	ICheckpointRepository,
 	ICollection,
 	IContext,
 	IControlMessage,
@@ -66,7 +66,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 	constructor(
 		private readonly mongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
-		private readonly localCheckpointCollection: ICollection<ICheckpoint>,
+		private readonly checkpointRepository: ICheckpointRepository,
 		private readonly messageCollection: ICollection<ISequencedOperationMessage>,
 		private readonly producer: IProducer,
 		private readonly deltaManager: IDeltaService,
@@ -183,15 +183,14 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			let checkpoint;
 			let isLocalCheckpoint = false;
 
-			if (
-				this.localCheckpointEnabled &&
-				(this.localCheckpointCollection !== undefined ||
-					this.localCheckpointCollection !== null)
-			) {
+			if (!this.localCheckpointEnabled || !this.checkpointRepository) {
+				// No local checkpoints, use document
+				lastCheckpoint = JSON.parse(document.scribe);
+			} else {
 				// Search local database for checkpoint
 				Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
-				checkpoint = await this.localCheckpointCollection
-					.findOne({ documentId, tenantId })
+				checkpoint = await this.checkpointRepository
+					.readOne({ documentId, tenantId })
 					.catch((error) => {
 						Lumberjack.error(
 							`Error retrieving checkpoint from local DB.`,
@@ -199,21 +198,14 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 							error,
 						);
 					});
-
 				if (checkpoint?.scribe) {
+					// If the checkpoint exists, get the value from the checkpoint
 					lastCheckpoint = JSON.parse(checkpoint.scribe);
 					isLocalCheckpoint = true;
 				} else {
+					// If the checkpoint doesn't exist, get the value from the document
 					lastCheckpoint = JSON.parse(document.scribe);
 				}
-			} else {
-				if (this.localCheckpointEnabled && !this.localCheckpointCollection) {
-					Lumberjack.info(
-						`Unable to find local checkpoint collection. Using global collection.`,
-						lumberProperties,
-					);
-				}
-				lastCheckpoint = JSON.parse(document.scribe);
 			}
 
 			const lumberjackProperties = {
@@ -277,7 +269,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			tenantId,
 			documentId,
 			this.documentRepository,
-			this.localCheckpointCollection,
+			this.checkpointRepository,
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,

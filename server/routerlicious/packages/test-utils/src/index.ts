@@ -8,6 +8,7 @@ export { KafkaMessageFactory, MessageFactory } from "./messageFactory";
 export { TestCache } from "./testCache";
 export { TestDeltaManager } from "./testDeltaManager";
 export { TestNotImplementedDocumentRepository } from "./testNotImplementedDocumentRepository";
+export { TestNotImplementedCheckpointRepository } from "./testNotImplementedCheckpointRepository";
 export { TestClientManager } from "./testClientManager";
 export { ITestDbFactory, TestCollection, TestDb, TestDbFactory } from "./testCollection";
 export { TestContext } from "./testContext";

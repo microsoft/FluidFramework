@@ -39,6 +39,7 @@ import {
 	ILogger,
 	TokenGenerator,
 	IDocumentRepository,
+	ICheckpointRepository,
 } from "@fluidframework/server-services-core";
 import { ILocalOrdererSetup } from "./interfaces";
 import { LocalContext } from "./localContext";
@@ -104,6 +105,7 @@ export class LocalOrderer implements IOrderer {
 		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 		documentRepository: IDocumentRepository,
+		checkpointRepository: ICheckpointRepository,
 		gitManager?: IGitManager,
 		setup: ILocalOrdererSetup = new LocalOrdererSetup(
 			tenantId,
@@ -111,6 +113,7 @@ export class LocalOrderer implements IOrderer {
 			storage,
 			databaseManager,
 			documentRepository,
+			checkpointRepository,
 			gitManager,
 		),
 		pubSub: IPubSub = new PubSub(),
@@ -298,13 +301,13 @@ export class LocalOrderer implements IOrderer {
 			this.deliContext,
 			async (lambdaSetup, context) => {
 				const documentRepository = await lambdaSetup.documentRepositoryP();
-                const localCheckpointCollection = await lambdaSetup.localCheckpointCollectionP();
+				const checkpointRepository = await lambdaSetup.checkpointRepositoryP();
 				const lastCheckpoint = JSON.parse(this.dbObject.deli);
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					this.tenantId,
 					this.documentId,
 					documentRepository,
-					localCheckpointCollection,
+					checkpointRepository,
 				);
 				return new DeliLambda(
 					context,
@@ -342,14 +345,19 @@ export class LocalOrderer implements IOrderer {
 
 	private async startScribeLambda(setup: ILocalOrdererSetup, context: IContext) {
 		// Scribe lambda
-		const [documentRepository, localCheckpointCollection, scribeMessagesCollection, protocolHead, scribeMessages] =
-			await Promise.all([
-				setup.documentRepositoryP(),
-                setup.localCheckpointCollectionP(),
-				setup.scribeDeltaCollectionP(),
-				setup.protocolHeadP(),
-				setup.scribeMessagesP(),
-			]);
+		const [
+			documentRepository,
+			localCheckpointCollection,
+			scribeMessagesCollection,
+			protocolHead,
+			scribeMessages,
+		] = await Promise.all([
+			setup.documentRepositoryP(),
+			setup.checkpointRepositoryP(),
+			setup.scribeDeltaCollectionP(),
+			setup.protocolHeadP(),
+			setup.scribeMessagesP(),
+		]);
 
 		const scribe = this.getScribeState();
 		const lastState = scribe.protocolState

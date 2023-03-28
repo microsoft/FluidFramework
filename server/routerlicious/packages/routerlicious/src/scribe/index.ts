@@ -86,7 +86,12 @@ export async function scribeCreate(
 		new MongoDocumentRepository(
 			documentsCollectionDb.collection<IDocument>(documentsCollectionName),
 		);
-    const localCollection = operationsDb.collection<ICheckpoint>(checkpointsCollectionName);
+
+	const checkpointRepository =
+		customizations?.checkpointRepository ??
+		new core.MongoCheckpointRepository(
+			operationsDb.collection<ICheckpoint>(checkpointsCollectionName),
+		);
 
 	if (createCosmosDBIndexes) {
 		await scribeDeltas.createIndex({ documentId: 1 }, false);
@@ -133,7 +138,7 @@ export async function scribeCreate(
 	return new ScribeLambdaFactory(
 		operationsDbManager,
 		documentRepository,
-        localCollection,
+		checkpointRepository,
 		scribeDeltas,
 		producer,
 		deltaManager,

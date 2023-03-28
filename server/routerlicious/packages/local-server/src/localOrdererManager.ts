@@ -6,6 +6,7 @@
 import { IPubSub, LocalOrderer } from "@fluidframework/server-memory-orderer";
 import { GitManager, IHistorian } from "@fluidframework/server-services-client";
 import {
+	ICheckpointRepository,
 	IDatabaseManager,
 	IDocumentRepository,
 	IDocumentStorage,
@@ -15,6 +16,7 @@ import {
 	IServiceConfiguration,
 	ITaskMessageSender,
 	ITenantManager,
+	MongoCheckpointRepository,
 	MongoDocumentRepository,
 	TokenGenerator,
 } from "@fluidframework/server-services-core";
@@ -37,6 +39,7 @@ export class LocalOrdererManager implements IOrdererManager {
 		private readonly serviceConfiguration?: Partial<IServiceConfiguration>,
 		private readonly pubsub?: IPubSub,
 		private readonly documentRepository?: IDocumentRepository,
+		private readonly checkpointRepository?: ICheckpointRepository,
 	) {}
 
 	/**
@@ -82,6 +85,9 @@ export class LocalOrdererManager implements IOrdererManager {
 		const documentRepository =
 			this.documentRepository ??
 			new MongoDocumentRepository(await this.databaseManager.getDocumentCollection());
+		const checkpointRepository =
+			this.checkpointRepository ??
+			new MongoCheckpointRepository(await this.databaseManager.getCheckpointCollection());
 
 		const orderer = await LocalOrderer.load(
 			this.storage,
@@ -94,6 +100,7 @@ export class LocalOrdererManager implements IOrdererManager {
 			this.tokenGenerator,
 			this.logger,
 			documentRepository,
+			checkpointRepository,
 			gitManager,
 			undefined /* ILocalOrdererSetup */,
 			this.pubsub,

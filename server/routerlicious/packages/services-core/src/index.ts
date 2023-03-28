@@ -23,6 +23,7 @@ export {
 	IServiceConfiguration,
 } from "./configuration";
 export {
+	ICheckpointRepository,
 	ICollection,
 	IDatabaseManager,
 	IDb,
@@ -97,6 +98,7 @@ export { DefaultMetricClient, IMetricClient } from "./metricClient";
 export { MongoManager } from "./mongo";
 export { MongoDatabaseManager } from "./mongoDatabaseManager";
 export { MongoDocumentRepository } from "./mongoDocumentRepository";
+export { MongoCheckpointRepository } from "./mongoCheckpointRepository";
 export { INode, IOrderer, IOrdererConnection, IOrdererManager, IOrdererSocket } from "./orderer";
 export { MaxBatchSize, PendingBoxcar } from "./pendingBoxcar";
 export { IMessageBatch, IPublisher, ITopic } from "./publisher";

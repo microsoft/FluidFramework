@@ -35,7 +35,7 @@ export async function deliCreate(
 	const forwardSendTopic = config.get("deli:topics:send");
 	const reverseSendTopic = config.get("alfred:topic");
 
-    const documentsCollectionName = config.get("mongo:collectionNames:documents");
+	const documentsCollectionName = config.get("mongo:collectionNames:documents");
 	const checkpointsCollectionName = config.get("mongo:collectionNames:checkpoints");
 
 	const localCheckpointEnabled = config.get("deli:localCheckpointEnabled");
@@ -66,15 +66,18 @@ export async function deliCreate(
 	const operationsDbManager = new core.MongoManager(factory, false);
 	const operationsDb = await operationsDbManager.getDatabase();
 
-    const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
+	const db: core.IDb = globalDbEnabled ? globalDb : operationsDb;
 
-    // eslint-disable-next-line @typescript-eslint/await-thenable
-    const collection = await db.collection<core.IDocument>(documentsCollectionName);
+	// eslint-disable-next-line @typescript-eslint/await-thenable
+	const collection = await db.collection<core.IDocument>(documentsCollectionName);
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const localCollection = await operationsDb.collection<core.ICheckpoint>(
 		checkpointsCollectionName,
 	);
-	const documentRepository = customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
+	const documentRepository =
+		customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
+	const checkpointRepository =
+		customizations?.documentRepository ?? new core.MongoCheckpointRepository(localCollection);
 
 	const forwardProducer = services.createProducer(
 		kafkaLibrary,
@@ -144,7 +147,7 @@ export async function deliCreate(
 	return new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
-        localCollection,
+		checkpointRepository,
 		tenantManager,
 		undefined,
 		combinedProducer,

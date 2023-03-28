@@ -7,7 +7,6 @@ import { MessageType } from "@fluidframework/protocol-definitions";
 import { defaultHash, getNextHash } from "@fluidframework/server-services-client";
 import {
 	DefaultServiceConfiguration,
-	ICollection,
 	IPartitionLambda,
 	IProducer,
 	ISequencedOperationMessage,
@@ -25,6 +24,7 @@ import {
 	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
+	TestNotImplementedCheckpointRepository,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import * as _ from "lodash";
@@ -48,7 +48,6 @@ describe("Routerlicious", () => {
 				},
 			];
 
-			let testCollection: ICollection<any>;
 			let testTenantManager: TestTenantManager;
 			let testKafka: TestKafka;
 			let testForwardProducer: IProducer;
@@ -121,12 +120,20 @@ describe("Routerlicious", () => {
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				const mongoManager = new MongoManager(dbFactory);
 				const documentRepository = new TestNotImplementedDocumentRepository();
+				const checkpointRepository = new TestNotImplementedCheckpointRepository();
 				Sinon.replace(
 					documentRepository,
 					"readOne",
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
 				Sinon.replace(documentRepository, "updateOne", Sinon.fake.resolves(undefined));
+
+				Sinon.replace(
+					checkpointRepository,
+					"readOne",
+					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+				);
+				Sinon.replace(checkpointRepository, "updateOne", Sinon.fake.resolves(undefined));
 
 				testKafka = new TestKafka();
 				testForwardProducer = testKafka.createProducer();
@@ -141,7 +148,7 @@ describe("Routerlicious", () => {
 				factory = new DeliLambdaFactory(
 					mongoManager,
 					documentRepository,
-					testCollection,
+					checkpointRepository,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -161,7 +168,7 @@ describe("Routerlicious", () => {
 				factoryWithSignals = new DeliLambdaFactory(
 					mongoManager,
 					documentRepository,
-                    testCollection,
+					checkpointRepository,
 					testTenantManager,
 					undefined,
 					testForwardProducer,
@@ -184,7 +191,7 @@ describe("Routerlicious", () => {
 				factoryWithBatching = new DeliLambdaFactory(
 					mongoManager,
 					documentRepository,
-					testCollection,
+					checkpointRepository,
 					testTenantManager,
 					undefined,
 					testForwardProducer,

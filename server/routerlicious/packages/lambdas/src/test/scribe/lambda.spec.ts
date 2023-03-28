@@ -8,8 +8,6 @@ import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitr
 import { GitManager } from "@fluidframework/server-services-client";
 import {
 	DefaultServiceConfiguration,
-	ICheckpoint,
-	ICollection,
 	IProducer,
 	ITenantManager,
 	MongoManager,
@@ -24,6 +22,7 @@ import {
 	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
+	TestNotImplementedCheckpointRepository,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
@@ -37,10 +36,9 @@ describe("Routerlicious", () => {
 			const testClientId = "test";
 			const testTenantId = "test";
 			const testDocumentId = "test";
-            let testMongoManager: MongoManager;
-			let testLocalMongoManager: MongoManager;
+			let testMongoManager: MongoManager;
 			let testDocumentRepository: TestNotImplementedDocumentRepository;
-			let testCheckpointCollection: ICollection<ICheckpoint>;
+			let testCheckpointRepository: TestNotImplementedCheckpointRepository;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -86,9 +84,6 @@ describe("Routerlicious", () => {
 				];
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				testMongoManager = new MongoManager(dbFactory);
-				testLocalMongoManager = new MongoManager(dbFactory);
-				const localDatabase = await testLocalMongoManager.getDatabase();
-				testCheckpointCollection = localDatabase.collection("checkpoints");
 				testDocumentRepository = new TestNotImplementedDocumentRepository();
 				Sinon.replace(
 					testDocumentRepository,
@@ -96,7 +91,18 @@ describe("Routerlicious", () => {
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
 				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake.resolves(undefined));
-				testCheckpointCollection = localDatabase.collection("checkpoints");
+
+				testCheckpointRepository = new TestNotImplementedCheckpointRepository();
+				Sinon.replace(
+					testCheckpointRepository,
+					"readOne",
+					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+				);
+				Sinon.replace(
+					testCheckpointRepository,
+					"updateOne",
+					Sinon.fake.resolves(undefined),
+				);
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
 				testProducer = testKafka.createProducer();
@@ -116,7 +122,7 @@ describe("Routerlicious", () => {
 				let factory = new ScribeLambdaFactory(
 					testMongoManager,
 					testDocumentRepository,
-                    testCheckpointCollection,
+					testCheckpointRepository,
 					testMessageCollection,
 					testProducer,
 					testDeltaManager,

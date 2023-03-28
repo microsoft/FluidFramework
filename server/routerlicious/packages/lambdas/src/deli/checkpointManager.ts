@@ -4,8 +4,7 @@
  */
 
 import {
-	ICheckpoint,
-	ICollection,
+	ICheckpointRepository,
 	IDeliState,
 	IDocumentRepository,
 	IQueuedMessage,
@@ -52,22 +51,21 @@ export function createDeliCheckpointManagerFromCollection(
 	tenantId: string,
 	documentId: string,
 	documentRepository: IDocumentRepository,
-	localCollection: ICollection<ICheckpoint>,
+	checkpointRepository: ICheckpointRepository,
 ): IDeliCheckpointManager {
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return isLocal
-				? localCollection.upsert(
+				? checkpointRepository.updateOne(
 						{
-							_id: documentId,
 							documentId,
 							tenantId,
 						},
 						{
 							deli: JSON.stringify(checkpoint),
 						},
-						null,
+						{ upsert: true },
 				  )
 				: documentRepository.updateOne(
 						{
@@ -82,9 +80,8 @@ export function createDeliCheckpointManagerFromCollection(
 		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return isLocal
-				? localCollection.upsert(
+				? checkpointRepository.updateOne(
 						{
-							_id: documentId,
 							documentId,
 							tenantId,
 						},

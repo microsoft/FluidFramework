@@ -12,6 +12,7 @@ import {
 	ILogger,
 	TokenGenerator,
 	IDocumentRepository,
+	ICheckpointRepository,
 } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import { IConcreteNodeFactory } from "./interfaces";
@@ -24,6 +25,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
 		private readonly documentRepository: IDocumentRepository,
+		private readonly checkpointRepository: ICheckpointRepository,
 		private readonly timeoutLength: number,
 		private readonly webSocketServerFactory: () => IWebSocketServer,
 		private readonly taskMessageSender: ITaskMessageSender,
@@ -41,6 +43,7 @@ export class LocalNodeFactory implements IConcreteNodeFactory {
 			this.storage,
 			this.databaseManager,
 			this.documentRepository,
+			this.checkpointRepository,
 			this.timeoutLength,
 			this.webSocketServerFactory,
 			this.taskMessageSender,
