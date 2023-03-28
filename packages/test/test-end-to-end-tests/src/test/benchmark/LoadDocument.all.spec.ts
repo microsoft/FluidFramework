@@ -6,7 +6,12 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
-import { benchmarkAll, createDocument, IDocumentLoader } from "./DocumentCreator";
+import {
+	benchmarkAll,
+	createDocument,
+	IBenchmarkParameters,
+	IDocumentLoader,
+} from "./DocumentCreator";
 
 const scenarioTitle = "Load Document";
 
@@ -33,21 +38,19 @@ describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
 	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
 	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
 	 */
-	class PerformanceTestWrapper {
-		container: IContainer | undefined;
-		minSampleCount = getDocumentInfo().minSampleCount;
-	}
-
-	const obj = new PerformanceTestWrapper();
-
-	benchmarkAll(scenarioTitle, obj, {
-		run: async () => {
-			obj.container = await documentWrapper.loadDocument();
-			assert(obj.container !== undefined, "container needs to be defined.");
-			obj.container.close();
-		},
-		beforeIteration: () => {
-			obj.container = undefined;
-		},
-	});
+	benchmarkAll(
+		scenarioTitle,
+		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+			container: IContainer | undefined;
+			minSampleCount = getDocumentInfo().minSampleCount;
+			async run(): Promise<void> {
+				this.container = await documentWrapper.loadDocument();
+				assert(this.container !== undefined, "container needs to be defined.");
+				this.container.close();
+			}
+			beforeIteration(): void {
+				this.container = undefined;
+			}
+		})(),
+	);
 });

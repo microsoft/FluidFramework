@@ -99,6 +99,8 @@ export {
 	RootDataVisualizationsMessageData,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
