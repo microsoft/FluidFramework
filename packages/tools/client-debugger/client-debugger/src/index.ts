@@ -85,6 +85,8 @@ export {
 	RegistryChangeMessageData,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,

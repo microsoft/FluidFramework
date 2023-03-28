@@ -40,18 +40,6 @@ use_old_EnumDeclaration_ConnectionState(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Container": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_Container": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_ICodeDetailsLoader": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_ICodeDetailsLoader():
@@ -215,7 +203,6 @@ declare function get_current_InterfaceDeclaration_ILoaderProps():
 declare function use_old_InterfaceDeclaration_ILoaderProps(
     use: TypeOnly<old.ILoaderProps>);
 use_old_InterfaceDeclaration_ILoaderProps(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderProps());
 
 /*
@@ -240,7 +227,6 @@ declare function get_current_InterfaceDeclaration_ILoaderServices():
 declare function use_old_InterfaceDeclaration_ILoaderServices(
     use: TypeOnly<old.ILoaderServices>);
 use_old_InterfaceDeclaration_ILoaderServices(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ILoaderServices());
 
 /*
@@ -313,7 +299,6 @@ declare function get_current_ClassDeclaration_Loader():
 declare function use_old_ClassDeclaration_Loader(
     use: TypeOnly<old.Loader>);
 use_old_ClassDeclaration_Loader(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Loader());
 
 /*
@@ -339,18 +324,6 @@ declare function use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
     use: TypeOnly<old.ProtocolHandlerBuilder>);
 use_old_TypeAliasDeclaration_ProtocolHandlerBuilder(
     get_current_TypeAliasDeclaration_ProtocolHandlerBuilder());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_RelativeLoader": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedClassDeclaration_RelativeLoader": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

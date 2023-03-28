@@ -179,7 +179,6 @@ declare function get_current_ClassDeclaration_OdspDocumentServiceFactory():
 declare function use_old_ClassDeclaration_OdspDocumentServiceFactory(
     use: TypeOnly<old.OdspDocumentServiceFactory>);
 use_old_ClassDeclaration_OdspDocumentServiceFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_OdspDocumentServiceFactory());
 
 /*
@@ -204,7 +203,6 @@ declare function get_current_ClassDeclaration_OdspDocumentServiceFactoryCore():
 declare function use_old_ClassDeclaration_OdspDocumentServiceFactoryCore(
     use: TypeOnly<old.OdspDocumentServiceFactoryCore>);
 use_old_ClassDeclaration_OdspDocumentServiceFactoryCore(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_OdspDocumentServiceFactoryCore());
 
 /*
@@ -229,7 +227,6 @@ declare function get_current_ClassDeclaration_OdspDocumentServiceFactoryWithCode
 declare function use_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
     use: TypeOnly<old.OdspDocumentServiceFactoryWithCodeSplit>);
 use_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit());
 
 /*

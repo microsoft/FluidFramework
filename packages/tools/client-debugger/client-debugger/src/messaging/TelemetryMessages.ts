@@ -15,9 +15,9 @@ import { ISourcedDebuggerMessage } from "./Messages";
  */
 export interface TelemetryEventMessageData {
 	/**
-	 * Contents of the telemetry event
+	 * Contents of the telemetry event. This can be a single latest event or all the history events.
 	 */
-	contents: ITelemetryBaseEvent;
+	contents: ITelemetryBaseEvent[];
 }
 
 /**
@@ -27,7 +27,34 @@ export interface TelemetryEventMessageData {
  * @public
  */
 export interface TelemetryEventMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "TELEMETRY_EVENT";
 }
 
+/**
+ * Outbound message including the entire history of telemetry events.
+ *
+ * @public
+ */
+export interface TelemetryHistoryMessage
+	extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
+	type: "TELEMETRY_HISTORY";
+}
+
+/**
+ * Inbound message requesting a complete history of telemetry events.
+ *
+ * @public
+ */
+export interface GetTelemetryHistoryMessage extends ISourcedDebuggerMessage {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
+	type: "GET_TELEMETRY_HISTORY";
+}
 // #endregion

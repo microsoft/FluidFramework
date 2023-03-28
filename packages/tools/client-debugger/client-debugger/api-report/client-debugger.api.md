@@ -182,7 +182,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 }
 
 // @public
-export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
+export interface GetAudienceMessage extends ISourcedDebuggerMessage<HasContainerId> {
     // (undocumented)
     type: "GET_AUDIENCE";
 }
@@ -216,6 +216,11 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
+
+// @public
+export interface GetTelemetryHistoryMessage extends ISourcedDebuggerMessage {
+    type: "GET_TELEMETRY_HISTORY";
+}
 
 // @internal
 export function handleIncomingMessage(message: Partial<ISourcedDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
@@ -314,13 +319,17 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 
 // @public
 export interface TelemetryEventMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
-    // (undocumented)
     type: "TELEMETRY_EVENT";
 }
 
 // @public
 export interface TelemetryEventMessageData {
-    contents: ITelemetryBaseEvent;
+    contents: ITelemetryBaseEvent[];
+}
+
+// @public
+export interface TelemetryHistoryMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+    type: "TELEMETRY_HISTORY";
 }
 
 ```
