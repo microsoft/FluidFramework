@@ -255,7 +255,8 @@ stages:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
-                npm i -g pnpm
+                npm i -g pnpm@7.30.5
+                pnpm -v
                 pnpm config set store-dir $(pnpmStorePath)
 
         - task: Bash@3
@@ -359,6 +360,11 @@ stages:
               searchFolder: ${{ parameters.buildDirectory }}/nyc
               mergeTestResults: false
             condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+
+          # Log Test Failures
+          - template: include-log-test-failures.yml
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:

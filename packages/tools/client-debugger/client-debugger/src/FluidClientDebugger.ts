@@ -12,13 +12,16 @@ import { ContainerStateMetadata } from "./ContainerMetadata";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
+	AudienceClientMetaData,
+	AudienceSummaryMessage,
+	GetAudienceMessage,
 	CloseContainerMessage,
 	ConnectContainerMessage,
-	debuggerMessageSource,
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
@@ -39,6 +42,7 @@ import { FluidClientDebuggerProps } from "./Registry";
  * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to the container.
  * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect from the container.
  * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
+ * - {@link GetAudienceMessage}: When received (if the container ID matches), the debugger will broadcast {@link AudienceSummaryMessage}.
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
@@ -113,6 +117,7 @@ export class FluidClientDebugger
 			clientId,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisconnectedHandler = (): void => {
@@ -122,6 +127,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerClosedHandler = (): void => {
@@ -131,6 +137,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisposedHandler = (): void => {
@@ -140,6 +147,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	// #endregion
@@ -153,6 +161,7 @@ export class FluidClientDebugger
 			changeKind: "added",
 			timestamp: Date.now(),
 		});
+		this.postAudienceStateChange();
 	};
 
 	private readonly audienceMemberRemovedHandler = (clientId: string, client: IClient): void => {
@@ -162,6 +171,7 @@ export class FluidClientDebugger
 			changeKind: "removed",
 			timestamp: Date.now(),
 		});
+		this.postAudienceStateChange();
 	};
 
 	// #endregion
@@ -204,25 +214,32 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
+		["GET_AUDIENCE"]: (untypedMessage) => {
+			const message = untypedMessage as GetAudienceMessage;
+			if (message.data.containerId === this.containerId) {
+				this.postAudienceStateChange();
+				return true;
+			}
+			return false;
+		},
 	};
 
 	/**
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
+	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
 		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_CHANGE",
 				data: {
 					containerId: this.containerId,
@@ -230,7 +247,6 @@ export class FluidClientDebugger
 				},
 			},
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_HISTORY",
 				data: {
 					containerId: this.containerId,
@@ -238,6 +254,29 @@ export class FluidClientDebugger
 				},
 			},
 		);
+	};
+
+	/**
+	 * Posts a {@link AudienceSummaryMessage} to the window (globalThis).
+	 */
+	private readonly postAudienceStateChange = (): void => {
+		const allAudienceMembers = this.container.audience.getMembers();
+
+		const audienceClientMetaData: AudienceClientMetaData[] = [
+			...allAudienceMembers.entries(),
+		].map(([clientId, client]): AudienceClientMetaData => {
+			return { clientId, client };
+		});
+
+		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
+			type: "AUDIENCE_EVENT",
+			data: {
+				containerId: this.containerId,
+				clientId: this.container.clientId,
+				audienceState: audienceClientMetaData,
+				audienceHistory: this.getAudienceHistory(),
+			},
+		});
 	};
 
 	// #endregion
@@ -268,7 +307,7 @@ export class FluidClientDebugger
 		this.container = props.container;
 		this.containerNickname = props.containerNickname;
 
-		// TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
+		// TODO: would it be useful to log the states (and timestamps) at time of debugger initialize?
 		this._connectionStateLog = [];
 		this._audienceChangeLog = [];
 
@@ -298,7 +337,7 @@ export class FluidClientDebugger
 	}
 
 	/**
-	 * {@inheritDoc IFluidClientDebugger.getAuidienceHistory}
+	 * {@inheritDoc IFluidClientDebugger.getAudienceHistory}
 	 */
 	public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes

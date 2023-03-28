@@ -25,7 +25,7 @@ export type GCVersion = number;
 /** The stable version of garbage collection in production. */
 export const stableGCVersion: GCVersion = 1;
 /** The current version of garbage collection. */
-export const currentGCVersion: GCVersion = 2;
+export const currentGCVersion: GCVersion = 3;
 
 /**
  * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value
@@ -60,7 +60,7 @@ export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstone
 // Feature gate to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops).
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 // Feature gate to enable GC version upgrade.
-export const gcVersionUpgradeToV2Key = "Fluid.GarbageCollection.GCVersionUpgradeToV2";
+export const gcVersionUpgradeToV3Key = "Fluid.GarbageCollection.GCVersionUpgradeToV3";
 // Feature gate to enable GC sweep for datastores.
 // TODO: Remove Test from the flag when we are confident to turn on sweep
 export const sweepDatastoresKey = "Fluid.GarbageCollection.Test.SweepDataStores";

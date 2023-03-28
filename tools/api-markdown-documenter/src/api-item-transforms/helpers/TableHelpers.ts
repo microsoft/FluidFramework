@@ -16,7 +16,6 @@ import {
 	TypeParameter,
 } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../../Configuration";
 import {
 	CodeSpanNode,
 	DocumentationNode,
@@ -38,9 +37,10 @@ import {
 	getLinkForApiItem,
 	getModifiers,
 	isDeprecated,
-} from "../../utilities";
+} from "../ApiItemUtilities";
 import { transformDocSection } from "../DocNodeTransforms";
 import { getDocNodeTransformationOptions } from "../Utilities";
+import { ApiItemTransformationConfiguration } from "../configuration";
 import { createExcerptSpanWithHyperlinks } from "./Helpers";
 
 /**
@@ -85,11 +85,11 @@ export interface TableCreationOptions {
  * item, organized by kind.
  *
  * @param memberTableProperties - List of table configurations.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createMemberTables(
 	memberTableProperties: readonly MemberTableProperties[],
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode[] | undefined {
 	const sections: SectionNode[] = [];
 
@@ -107,11 +107,11 @@ export function createMemberTables(
  * Creates a simple section containing a heading and a table, based on the provided properties.
  *
  * @param memberTableProperties - The table configuration.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): SectionNode | undefined {
 	const table = createSummaryTable(
 		memberTableProperties.items,
@@ -136,13 +136,13 @@ export function createTableWithHeading(
  *
  * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
  * @param itemKind - The kind of items being displayed in the table. Used to determine the semantic shape of the table.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
 export function createSummaryTable(
 	apiItems: readonly ApiItem[],
 	itemKind: ApiItemKind,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
@@ -192,13 +192,13 @@ export function createSummaryTable(
  *
  * @param apiItems - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
  * @param itemKind - The kind of items being displayed in the table. Used to determine the semantic shape of the table.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
 export function createDefaultSummaryTable(
 	apiItems: readonly ApiItem[],
 	itemKind: ApiItemKind,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (apiItems.length === 0) {
@@ -248,12 +248,12 @@ export function createDefaultSummaryTable(
  *
  * @param apiParameters - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
  * @param contextApiItem - The API item with which the parameter is associated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createParametersSummaryTable(
 	apiParameters: readonly Parameter[],
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableNode {
 	// Only display "Modifiers" column if there are any optional parameters present.
 	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
@@ -295,12 +295,12 @@ export function createParametersSummaryTable(
  *
  * @param apiTypeParameters - The items to be displayed. All of these items must be of the kind specified via `itemKind`.
  * @param contextApiItem - The API item with which the parameter is associated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createTypeParametersSummaryTable(
 	apiTypeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableNode {
 	// Only display "Modifiers" column if there are any optional parameters present.
 	const hasOptionalParameters = apiTypeParameters.some(
@@ -344,13 +344,13 @@ export function createTypeParametersSummaryTable(
  *
  * @param apiItems - The function-like items to be displayed.
  * @param itemKind - The kind of items being rendered in the table. Used to determine the semantic shape of the table.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
 export function createFunctionLikeSummaryTable(
 	apiItems: readonly ApiFunctionLike[],
 	itemKind: ApiItemKind,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (apiItems.length === 0) {
@@ -406,12 +406,12 @@ export function createFunctionLikeSummaryTable(
  * Displays each property's name, modifiers, type, and description (summary) comment.
  *
  * @param apiProperties - The `Property` items to be displayed.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  * @param options - Table content / formatting options.
  */
 export function createPropertiesTable(
 	apiProperties: readonly ApiPropertyItem[],
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 	options?: TableCreationOptions,
 ): TableNode | undefined {
 	if (apiProperties.length === 0) {
@@ -472,11 +472,11 @@ export function createPropertiesTable(
  * ({@link https://tsdoc.org/pages/tags/packagedocumentation/ | @packageDocumentation}) comment.
  *
  * @param apiPackages - The package items to be displayed.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createPackagesTable(
 	apiPackages: readonly ApiPackage[],
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableNode | undefined {
 	if (apiPackages.length === 0) {
 		return undefined;
@@ -513,11 +513,11 @@ export function createPackagesTable(
  * If the item has an `@beta` release tag, the comment will be annotated as being beta content.
  *
  * @param apiItem - The API item whose comment will be rendered in the cell.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createApiSummaryCell(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	const contents: DocumentationNode[] = [];
 
@@ -552,11 +552,11 @@ export function createApiSummaryCell(
  * API suite (model).
  *
  * @param apiItem - The API item whose return type will be displayed in the cell.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createReturnTypeCell(
 	apiItem: ApiFunctionLike,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	return ApiReturnTypeMixin.isBaseClassOf(apiItem)
 		? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
@@ -570,11 +570,11 @@ export function createReturnTypeCell(
  *
  * @param apiItem - The API item whose name will be displayed in the cell, and to whose content the generate link
  * will point.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createApiTitleCell(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	const itemLink = getLinkForApiItem(apiItem, config);
 	return new TableBodyCellNode([LinkNode.createFromPlainTextLink(itemLink)]);
@@ -609,11 +609,11 @@ export function createModifiersCell(
  * Creates a table cell containing the `@defaultValue` comment of the API item if it has one.
  *
  * @param apiItem - The API item whose `@defaultValue` comment will be displayed in the cell.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createDefaultValueCell(
 	apiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	const docNodeTransformOptions = getDocNodeTransformationOptions(apiItem, config);
 
@@ -635,7 +635,7 @@ export function createDefaultValueCell(
  * Will use an empty table cell otherwise.
  *
  * @param apiItem - The API item for which the deprecation notice will be displayed if appropriate.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createDeprecatedCell(apiItem: ApiItem): TableBodyCellNode {
 	return isDeprecated(apiItem)
@@ -650,11 +650,11 @@ export function createDeprecatedCell(apiItem: ApiItem): TableBodyCellNode {
  * API suite (model).
  *
  * @param apiProperty - The property whose type information will be displayed in the cell.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createPropertyTypeCell(
 	apiProperty: ApiPropertyItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	return createTypeExcerptCell(apiProperty.propertyTypeExcerpt, config);
 }
@@ -675,11 +675,11 @@ export function createParameterTitleCell(apiParameter: Parameter): TableBodyCell
  * API suite (model).
  *
  * @param apiProperty - The parameter whose type information will be displayed in the cell.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createParameterTypeCell(
 	apiParameter: Parameter,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
@@ -691,12 +691,12 @@ export function createParameterTypeCell(
  *
  * @param apiParameter - The parameter whose comment will be displayed in the cell.
  * @param contextApiItem - The API item with which the parameter is associated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createParameterSummaryCell(
 	apiParameter: Parameter,
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	if (apiParameter.tsdocParamBlock === undefined) {
 		return TableBodyCellNode.Empty;
@@ -721,12 +721,12 @@ export function createParameterSummaryCell(
  *
  * @param apiTypeParameter - The type parameter whose comment will be displayed in the cell.
  * @param contextApiItem - The API item with which the parameter is associated.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createTypeParameterSummaryCell(
 	apiTypeParameter: TypeParameter,
 	contextApiItem: ApiItem,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	if (apiTypeParameter.tsdocTypeParamBlock === undefined) {
 		return TableBodyCellNode.Empty;
@@ -750,11 +750,11 @@ export function createTypeParameterSummaryCell(
  * API suite (model).
  *
  * @param typeExcerpty - An excerpt describing the type to be displayed in the cell.
- * @param config - See {@link MarkdownDocumenterConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): TableBodyCellNode {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
 	return excerptSpan === undefined

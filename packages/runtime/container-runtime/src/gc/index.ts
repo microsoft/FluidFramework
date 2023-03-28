@@ -15,7 +15,7 @@ export {
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
-	gcVersionUpgradeToV2Key,
+	gcVersionUpgradeToV3Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
