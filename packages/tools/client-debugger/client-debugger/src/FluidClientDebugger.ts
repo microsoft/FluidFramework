@@ -25,10 +25,10 @@ import {
 	GetAudienceMessage,
 	CloseContainerMessage,
 	ConnectContainerMessage,
-	debuggerMessageSource,
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
+	IDebuggerMessage,
 	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
@@ -302,10 +302,9 @@ export class FluidClientDebugger
 	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessagesToWindow<ISourcedDebuggerMessage>(
+		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_CHANGE",
 				data: {
 					containerId: this.containerId,
@@ -313,7 +312,6 @@ export class FluidClientDebugger
 				},
 			},
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_HISTORY",
 				data: {
 					containerId: this.containerId,
@@ -336,7 +334,6 @@ export class FluidClientDebugger
 		});
 
 		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "AUDIENCE_EVENT",
 			data: {
 				containerId: this.containerId,
@@ -351,7 +348,6 @@ export class FluidClientDebugger
 		visualizations: FluidHandleNode[] | undefined,
 	): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "ROOT_DATA_VISUALIZATION",
 			data: {
 				visualizations,
@@ -361,7 +357,6 @@ export class FluidClientDebugger
 
 	private readonly postDataVisualization = (visualization: FluidObjectNode | undefined): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "DATA_VISUALIZATION",
 			data: {
 				visualization,

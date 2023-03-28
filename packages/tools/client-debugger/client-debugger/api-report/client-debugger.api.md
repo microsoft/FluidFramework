@@ -33,7 +33,7 @@ export interface AudienceClientMetaData {
 }
 
 // @public
-export interface AudienceSummaryMessage extends ISourcedDebuggerMessage<AudienceSummaryMessageData> {
+export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
     // (undocumented)
     type: "AUDIENCE_EVENT";
 }
@@ -50,7 +50,7 @@ export interface AudienceSummaryMessageData extends HasContainerId {
 export function clearDebuggerRegistry(): void;
 
 // @public
-export interface CloseContainerMessage extends ISourcedDebuggerMessage<CloseContainerMessageData> {
+export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
     type: "CLOSE_CONTAINER";
 }
 
@@ -61,7 +61,7 @@ export type CloseContainerMessageData = HasContainerId;
 export function closeFluidClientDebugger(containerId: string): void;
 
 // @public
-export interface ConnectContainerMessage extends ISourcedDebuggerMessage<ConnectContainerMessageData> {
+export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
     type: "CONNECT_CONTAINER";
 }
 
@@ -92,7 +92,7 @@ export enum ContainerStateChangeKind {
 }
 
 // @public
-export interface ContainerStateChangeMessage extends ISourcedDebuggerMessage<ContainerStateChangeMessageData> {
+export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
     type: "CONTAINER_STATE_CHANGE";
 }
 
@@ -102,7 +102,7 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 }
 
 // @public
-export interface ContainerStateHistoryMessage extends ISourcedDebuggerMessage<ContainerStateHistoryMessageData> {
+export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
     type: "CONTAINER_STATE_HISTORY";
 }
 
@@ -124,7 +124,7 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 }
 
 // @public
-export interface DataVisualizationMessage extends ISourcedDebuggerMessage<DataVisualizationMessageData> {
+export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
     type: "DATA_VISUALIZATION";
 }
 
@@ -153,7 +153,7 @@ export interface DebuggerRegistryEvents extends IEvent {
 }
 
 // @public
-export interface DisconnectContainerMessage extends ISourcedDebuggerMessage<DisconnectContainerMessageData> {
+export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
     type: "DISCONNECT_CONTAINER";
 }
 
@@ -196,19 +196,19 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 }
 
 // @public
-export interface GetAudienceMessage extends ISourcedDebuggerMessage<HasContainerId> {
+export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
     // (undocumented)
     type: "GET_AUDIENCE";
 }
 
 // @public
-export interface GetContainerListMessage extends ISourcedDebuggerMessage<undefined> {
+export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
     // (undocumented)
     type: "GET_CONTAINER_LIST";
 }
 
 // @public
-export interface GetContainerStateMessage extends ISourcedDebuggerMessage<HasContainerId> {
+export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
     type: "GET_CONTAINER_STATE";
 }
 
@@ -216,7 +216,7 @@ export interface GetContainerStateMessage extends ISourcedDebuggerMessage<HasCon
 export type GetContainerStateMessageData = HasContainerId;
 
 // @public
-export interface GetDataVisualizationMessage extends ISourcedDebuggerMessage<GetDataVisualizationMessageData> {
+export interface GetDataVisualizationMessage extends IDebuggerMessage<GetDataVisualizationMessageData> {
     type: "GET_DATA_VISUALIZATION";
 }
 
@@ -233,7 +233,7 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
 // @public
-export interface GetRootDataVisualizationsMessage extends ISourcedDebuggerMessage<GetRootDataVisualizationsMessageData> {
+export interface GetRootDataVisualizationsMessage extends IDebuggerMessage<GetRootDataVisualizationsMessageData> {
     type: "GET_ROOT_DATA_VISUALIZATIONS";
 }
 
@@ -241,7 +241,7 @@ export interface GetRootDataVisualizationsMessage extends ISourcedDebuggerMessag
 export type GetRootDataVisualizationsMessageData = HasContainerId;
 
 // @public
-export interface GetTelemetryHistoryMessage extends ISourcedDebuggerMessage {
+export interface GetTelemetryHistoryMessage extends IDebuggerMessage {
     type: "GET_TELEMETRY_HISTORY";
 }
 
@@ -331,10 +331,10 @@ export enum NodeKind {
 }
 
 // @internal
-export function postMessagesToWindow<TMessage extends ISourcedDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
+export function postMessagesToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
-export interface RegistryChangeMessage extends ISourcedDebuggerMessage<RegistryChangeMessageData> {
+export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
     // (undocumented)
     type: "REGISTRY_CHANGE";
 }
@@ -345,7 +345,7 @@ export interface RegistryChangeMessageData {
 }
 
 // @public
-export interface RootDataVisualizationsMessage extends ISourcedDebuggerMessage<RootDataVisualizationsMessageData> {
+export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootDataVisualizationsMessageData> {
     type: "ROOT_DATA_VISUALIZATIONS";
 }
 
@@ -360,7 +360,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 }
 
 // @public
-export interface TelemetryEventMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
     type: "TELEMETRY_EVENT";
 }
 
@@ -370,7 +370,7 @@ export interface TelemetryEventMessageData {
 }
 
 // @public
-export interface TelemetryHistoryMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
     type: "TELEMETRY_HISTORY";
 }
 
