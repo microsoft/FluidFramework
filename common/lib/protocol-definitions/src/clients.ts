@@ -15,7 +15,8 @@ export type ConnectionMode = "write" | "read";
  */
 export interface ICapabilities {
 	/**
-	 * TODO
+	 * Indicates if the client represents a potentially interactive session with a user (if 'true') or if it's a "system entity" (if 'false').
+	 * The only "system entity" scenario at the moment is the summarizer client.
 	 */
 	interactive: boolean;
 }
