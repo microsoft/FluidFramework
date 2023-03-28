@@ -8,8 +8,6 @@ import { ICreateTreeEntry, ICreateTreeParams, ITree } from "@fluidframework/gitr
 import { GitManager } from "@fluidframework/server-services-client";
 import {
 	DefaultServiceConfiguration,
-	ICollection,
-	IDocument,
 	IProducer,
 	ITenantManager,
 	MongoManager,
@@ -21,11 +19,13 @@ import {
 	TestContext,
 	TestDbFactory,
 	TestDeltaManager,
+	TestNotImplementedDocumentRepository,
 	TestKafka,
 	TestTenantManager,
 } from "@fluidframework/server-test-utils";
 import { strict as assert } from "assert";
 import _ from "lodash";
+import Sinon from "sinon";
 import { ScribeLambda } from "../../scribe/lambda";
 import { ScribeLambdaFactory } from "../../scribe/lambdaFactory";
 
@@ -37,7 +37,7 @@ describe("Routerlicious", () => {
 			const testDocumentId = "test";
 
 			let testMongoManager: MongoManager;
-			let testDocumentCollection: ICollection<IDocument>;
+			let testDocumentRepository: TestNotImplementedDocumentRepository;
 			let testMessageCollection: TestCollection;
 			let testProducer: IProducer;
 			let testContext: TestContext;
@@ -83,8 +83,13 @@ describe("Routerlicious", () => {
 				];
 				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
 				testMongoManager = new MongoManager(dbFactory);
-				const database = await testMongoManager.getDatabase();
-				testDocumentCollection = database.collection("documents");
+				testDocumentRepository = new TestNotImplementedDocumentRepository();
+				Sinon.replace(
+					testDocumentRepository,
+					"readOne",
+					Sinon.fake.resolves(_.cloneDeep(testData[0])),
+				);
+				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake.resolves(undefined));
 				testMessageCollection = new TestCollection([]);
 				testKafka = new TestKafka();
 				testProducer = testKafka.createProducer();
@@ -103,7 +108,7 @@ describe("Routerlicious", () => {
 
 				let factory = new ScribeLambdaFactory(
 					testMongoManager,
-					testDocumentCollection,
+					testDocumentRepository,
 					testMessageCollection,
 					testProducer,
 					testDeltaManager,

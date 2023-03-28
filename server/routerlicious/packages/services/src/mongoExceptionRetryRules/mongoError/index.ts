@@ -267,6 +267,23 @@ class UnauthorizedRule extends BaseMongoExceptionRetryRule {
 	}
 }
 
+// handles transient connection closed errors, eg: connection 1 to <mongo-name>.mongo.cosmos.azure.com:<port> closed
+// this is also handled by MongoNetworkError retry rule but this handles the case when errorName is MongoError instead of MongoNetworkError
+class ConnectionClosedMongoErrorRule extends BaseMongoExceptionRetryRule {
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("ConnectionClosedMongoErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.message &&
+			/^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
+		);
+	}
+}
+
 // Maintain the list from more strick faster comparison to less strict slower comparison
 export function createMongoErrorRetryRuleset(
 	retryRuleOverride: Map<string, boolean>,
@@ -293,6 +310,9 @@ export function createMongoErrorRetryRuleset(
 
 		// The rules are using string contains
 		new ServiceUnavailableRule(retryRuleOverride),
+
+		// The rules are using regex
+		new ConnectionClosedMongoErrorRule(retryRuleOverride),
 	];
 	return mongoErrorRetryRuleset;
 }

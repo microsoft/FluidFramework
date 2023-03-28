@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import type { TextFormatting } from "../documentation-domain";
-import { MarkdownRenderers, getRenderersWithDefaults } from "./RenderConfiguration";
+import { MarkdownRenderers, getRenderersWithDefaults } from "./configuration";
 
 /**
  * Context passed down during recursive {@link DocumentationNode} rendering.
@@ -57,9 +57,12 @@ export interface MarkdownRenderContext extends TextFormatting {
 	headingLevel: number;
 
 	/**
-	 * Policies for rendering different kinds of {@link DocumentationNode}s.
+	 * Configuration for rendering different kinds of {@link DocumentationNode}s.
 	 *
-	 * @remarks Will include default renderers for all {@link DocumentationNode} types enumerated in {@link DocumentationNodeType}.
+	 * @remarks
+	 *
+	 * Will include default renderers for all {@link DocumentationNode} types enumerated in
+	 * {@link DocumentationNodeType}.
 	 */
 	renderers: MarkdownRenderers;
 }

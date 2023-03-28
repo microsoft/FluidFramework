@@ -21,13 +21,23 @@ export type AsyncGenerator<TOut, TState> = (state: TState) => Promise<TOut | typ
 
 /**
  * Given a starting state and an operation to apply to that state, returns a new state.
+ * Reducers can also opt to mutate the input state, in which case they should have a void return.
+ *
+ * @remarks - Opting to use impure reducers may be more ergonomic for workflows which are unlikely
+ * to benefit from the advantages of pure ones (ex: state is not serializable or is deeply mutated,
+ * which makes things like history tracking less practical)
  */
-export type Reducer<TOp, TState> = (state: TState, operation: TOp) => TState;
+export type Reducer<TOp, TState> = (state: TState, operation: TOp) => TState | void;
 
 /**
  * Given a starting state and an operation to apply to that state, asynchronously returns a new state.
+ * Reducers can also opt to mutate the input state, in which case they should have a void return.
+ *
+ * @remarks - Opting to use impure reducers may be more ergonomic for workflows which are unlikely
+ * to benefit from the advantages of pure ones (ex: state is not serializable or is deeply mutated,
+ * which makes things like history tracking less practical)
  */
-export type AsyncReducer<TOp, TState> = (state: TState, operation: TOp) => Promise<TState>;
+export type AsyncReducer<TOp, TState> = (state: TState, operation: TOp) => Promise<TState | void>;
 
 export type AcceptanceCondition<TState> = (state: TState) => boolean;
 
