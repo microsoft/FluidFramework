@@ -321,7 +321,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const restGetDeltasThrottler = configureThrottler(restApiGetDeltasThrottleConfig);
 
 		const restApiGetSessionThrottleConfig: Partial<IThrottleConfig> =
-			config.get("alfred:throttling:restCallsPerTenant:getSession") ?? {};
+			config.get("alfred:throttling:restCallsPerCluster:getSession") ?? {};
 		const restGetSessionThrottler = configureThrottler(restApiGetSessionThrottleConfig);
 
 		const restClusterThrottlers = new Map<string, core.IThrottler>();

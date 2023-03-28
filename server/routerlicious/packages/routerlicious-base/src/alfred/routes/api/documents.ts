@@ -65,7 +65,7 @@ export function create(
 	};
 	const getSessionTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId") || appTenants[0].id,
-		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
+		throttleIdSuffix: Constants.getSessionThrottleIdPrefix,
 	};
 
 	// Throttling logic for per-cluster rate-limiting at the HTTP route level
