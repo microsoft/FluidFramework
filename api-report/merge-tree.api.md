@@ -538,10 +538,8 @@ export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
     pos1?: number;
     // (undocumented)
     pos2?: number;
-    // (undocumented)
-    relativePos1?: IRelativePosition;
-    // (undocumented)
-    relativePos2?: IRelativePosition;
+    relativePos1?: never;
+    relativePos2?: never;
     // (undocumented)
     type: typeof MergeTreeDeltaType.OBLITERATE;
 }

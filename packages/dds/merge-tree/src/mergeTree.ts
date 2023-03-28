@@ -665,6 +665,15 @@ export class MergeTree {
 	 */
 	private readonly localMoveSeqs: Set<number> = new Set();
 
+	/**
+	 * Groups of segments moved by local moves/obliterates
+	 *
+	 * When a local obliterate is acked, we must also ack segments that were
+	 * concurrently obliterated on insert. We check this segment group to find
+	 * such segments
+	 */
+	private readonly locallyMovedSegments: Map<number, SegmentGroup> = new Map();
+
 	public constructor(public options?: IMergeTreeOptions) {
 		if (options?.mergeTreeEnableObliterate && !options.mergeTreeUseNewLengthCalculations) {
 			throw new UsageError(
@@ -1484,59 +1493,23 @@ export class MergeTree {
 					opArgs.op.type === MergeTreeDeltaType.OBLITERATE &&
 					localMovedSeq !== undefined
 				) {
-					forwardExcursion(pendingSegment, (seg) => {
-						const moveInfo = toMoveInfo(seg);
-						const removalInfo = toRemovalInfo(seg);
+					const locallyMovedSegments = this.locallyMovedSegments.get(localMovedSeq);
 
-						// if the segment has been removed, skip over it
-						if (removalInfo && !moveInfo) {
-							return true;
+					if (locallyMovedSegments) {
+						for (const segment of locallyMovedSegments.segments) {
+							segment.localMovedSeq = undefined;
+
+							if (!nodesToUpdate.includes(segment.parent!)) {
+								nodesToUpdate.push(segment.parent!);
+							}
+
+							if (segment.movedSeq === UnassignedSequenceNumber) {
+								segment.movedSeq = seq;
+							}
 						}
 
-						// if the segment has been obliterated, but _not_ by this
-						// seq, skip over it
-						if (
-							moveInfo &&
-							localMovedSeq &&
-							moveInfo.localMovedSeq !== localMovedSeq &&
-							(moveInfo.movedSeq !== UnassignedSequenceNumber ||
-								(moveInfo.localMovedSeq && moveInfo.localMovedSeq < localMovedSeq))
-						) {
-							return true;
-						}
-
-						// if the segment wasn't obliterated by this seq, end
-						// traversal
-						if (
-							!moveInfo ||
-							(localMovedSeq !== undefined &&
-								moveInfo.localMovedSeq !== localMovedSeq) ||
-							(moveInfo.movedSeq !== UnassignedSequenceNumber &&
-								moveInfo.localMovedSeq === undefined)
-						) {
-							return false;
-						}
-
-						// if we are going to visit this segment anyway, exit
-						// traversal early to avoid removing local move seq
-						// information from this segment
-						if (pendingSegmentGroup.segments.includes(seg)) {
-							return false;
-						}
-
-						moveInfo.localMovedSeq = undefined;
-
-						if (!nodesToUpdate.includes(seg.parent!)) {
-							nodesToUpdate.push(seg.parent!);
-						}
-
-						if (moveInfo.movedSeq === UnassignedSequenceNumber) {
-							moveInfo.movedSeq = seq;
-							return true;
-						}
-
-						return true;
-					});
+						this.locallyMovedSegments.delete(localMovedSeq);
+					}
 				}
 
 				overwrite = overlappingRemove || overwrite;
@@ -1976,7 +1949,7 @@ export class MergeTree {
 						return true;
 					}
 
-					if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
+					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
 						moveUpperBound = Math.min(
 							moveUpperBound,
 							seg.seq ?? Number.POSITIVE_INFINITY,
@@ -2013,7 +1986,7 @@ export class MergeTree {
 						return true;
 					}
 
-					if (!isRemovedAndAcked(seg) || wasRemovedAfter(seg, moveUpperBound)) {
+					if (!isRemoved(seg) || wasRemovedAfter(seg, moveUpperBound)) {
 						moveUpperBound = Math.min(
 							moveUpperBound,
 							seg.seq ?? Number.POSITIVE_INFINITY,
@@ -2040,6 +2013,19 @@ export class MergeTree {
 							moveInfo,
 							moveInfo.movedSeq !== UnassignedSequenceNumber,
 						);
+
+						if (moveInfo.localMovedSeq !== undefined) {
+							const movedSegmentGroup = this.locallyMovedSegments.get(
+								moveInfo.localMovedSeq,
+							);
+
+							assert(
+								movedSegmentGroup !== undefined,
+								"expected segment group to exist",
+							);
+
+							this.addToPendingList(newSegment, movedSegmentGroup, localSeq);
+						}
 
 						if (newSegment.parent) {
 							this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
@@ -2467,6 +2453,10 @@ export class MergeTree {
 				operation: MergeTreeDeltaType.OBLITERATE,
 				deltaSegments: movedSegments,
 			});
+		}
+
+		if (segmentGroup! && localSeq !== undefined) {
+			this.locallyMovedSegments.set(localSeq, segmentGroup);
 		}
 
 		if (!this.collabWindow.collaborating || clientId !== this.collabWindow.clientId) {

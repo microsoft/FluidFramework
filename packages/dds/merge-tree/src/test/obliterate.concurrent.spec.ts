@@ -1706,6 +1706,52 @@ for (const incremental of [true, false]) {
 				helper.logger.validate();
 			});
 
+			it("segment inside locally obliterated segment group is split", () => {
+				const helper = new ReconnectTestHelper();
+
+				// CDEF-AB
+				// [C]-DE-(F-(G)-H-A)-B
+				// [C]-DE-(F-(G)-H-A)-(B)
+
+				helper.insertText("B", 0, "AB");
+				helper.insertText("B", 0, "CDEF");
+				helper.processAllOps();
+				helper.logger.validate();
+				helper.removeRange("C", 0, 1);
+				helper.insertText("C", 3, "GH");
+				helper.obliterateRange("C", 3, 4);
+				helper.obliterateRange("A", 3, 5);
+				helper.processAllOps();
+				helper.logger.validate();
+				helper.obliterateRange("B", 2, 3);
+				helper.processAllOps();
+
+				assert.equal(helper.clients.A.getText(), "DE");
+
+				helper.logger.validate();
+			});
+
+			it("continues traversal past locally removed segment inserted before first obliterate", () => {
+				const helper = new ReconnectTestHelper();
+
+				// ABC
+				// (E-D-(A)-[B]-C)
+
+				helper.insertText("A", 0, "ABC");
+				helper.processAllOps();
+				helper.logger.validate();
+				helper.obliterateRange("C", 0, 1);
+				helper.insertText("B", 0, "D");
+				helper.removeRange("C", 0, 1);
+				helper.insertText("C", 0, "E");
+				helper.obliterateRange("C", 0, 2);
+				helper.processAllOps();
+
+				assert.equal(helper.clients.A.getText(), "");
+
+				helper.logger.validate();
+			});
+
 			it("keeps track of remote obliterated length when hier node contains hier nodes", () => {
 				const helper = new ReconnectTestHelper();
 
