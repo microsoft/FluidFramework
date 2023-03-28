@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import { ISourcedDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
 
 import {
 	devToolsInitAcknowledgementType,
@@ -89,7 +89,7 @@ export class BackgroundConnection
 	/**
 	 * Post message to Background Script.
 	 */
-	public postMessage(message: IDebuggerMessage): void {
+	public postMessage(message: ISourcedDebuggerMessage): void {
 		postMessageToPort(
 			message,
 			this.backgroundServiceConnection,
@@ -99,9 +99,11 @@ export class BackgroundConnection
 
 	/**
 	 * Handler for incoming messages from {@link backgroundServiceConnection}.
-	 * Messages are forwarded on to subscribers for valid {@link IDebuggerMessage}s from the expected source.
+	 * Messages are forwarded on to subscribers for valid {@link ISourcedDebuggerMessage}s from the expected source.
 	 */
-	private readonly onBackgroundServiceMessage = (message: Partial<IDebuggerMessage>): boolean => {
+	private readonly onBackgroundServiceMessage = (
+		message: Partial<ISourcedDebuggerMessage>,
+	): boolean => {
 		if (!isDebuggerMessage(message)) {
 			return false;
 		}

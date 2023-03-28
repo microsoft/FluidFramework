@@ -12,7 +12,7 @@ import {
 	TelemetryHistoryMessage,
 	GetTelemetryHistoryMessage,
 	TelemetryEventMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	handleIncomingMessage,
 	postMessagesToWindow,
 } from "@fluid-tools/client-debugger";
@@ -41,7 +41,7 @@ export function TelemetryView(): React.ReactElement {
 		};
 
 		// Event handler for messages coming from the Message Relay
-		function messageHandler(event: MessageEvent<Partial<IDebuggerMessage>>): void {
+		function messageHandler(event: MessageEvent<Partial<ISourcedDebuggerMessage>>): void {
 			handleIncomingMessage(event.data, inboundMessageHandlers);
 		}
 
