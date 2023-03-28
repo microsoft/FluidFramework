@@ -42,6 +42,7 @@ chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
 		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void {
 		const message = event.data;
+
 		// Only relay message if it is one of ours, and if the source is the window's debugger
 		// (and not a message originating from the extension).
 		if (isDebuggerMessage(message) && message.source === debuggerMessageSource) {

@@ -21,8 +21,8 @@ export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
 	...messages: TMessage[]
 ): void {
-	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((m) => ({
-		...m,
+	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((message) => ({
+		...message,
 		source: debuggerMessageSource,
 	}));
 
@@ -34,7 +34,7 @@ export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 		console.debug(`${loggingPreamble}Posting messages to the window:`, messagesWithSource);
 	}
 	for (const message of messagesWithSource) {
-		globalThis.postMessage?.(message, "*"); // TODO: verify target is okay
+		globalThis.postMessage?.(message, "*");
 	}
 }
 
