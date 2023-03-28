@@ -27,7 +27,7 @@ initializeFluentUiIcons();
  *
  * @internal
  */
-const clientDebugViewClassName = `fluid-client-debugger-view`;
+const containerViewClassName = `fluid-client-debugger-view`;
 
 /**
  * {@link ContainerView} input props.
@@ -103,7 +103,7 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 					height: "100%",
 				},
 			}}
-			className={clientDebugViewClassName}
+			className={containerViewClassName}
 			key={containerId}
 		>
 			<ContainerSummaryView containerId={containerId} />
