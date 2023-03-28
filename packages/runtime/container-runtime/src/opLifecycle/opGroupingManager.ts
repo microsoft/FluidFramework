@@ -8,9 +8,9 @@ import { ContainerRuntimeMessage } from "..";
 import { IBatch } from "./definitions";
 
 interface IGroupedMessage {
-	contents: string;
-	metadata: Record<string, unknown> | undefined;
-	compression: string;
+	contents?: any;
+	metadata?: Record<string, unknown>;
+	compression?: string;
 }
 
 export class OpGroupingManager {
@@ -26,8 +26,8 @@ export class OpGroupingManager {
 		// Need deserializedContent for back-compat
 		const deserializedContent = {
 			type: OpGroupingManager.groupedBatchOp,
-			contents: batch.content.map((message) => ({
-				contents: message.contents,
+			contents: batch.content.map<IGroupedMessage>((message) => ({
+				contents: message.contents === undefined ? undefined : JSON.parse(message.contents),
 				metadata: message.metadata,
 				compression: message.compression,
 			})),
@@ -58,8 +58,7 @@ export class OpGroupingManager {
 		return messages.map((subMessage) => ({
 			...op,
 			clientSequenceNumber: fakeCsn++,
-			contents:
-				subMessage.contents === undefined ? undefined : JSON.parse(subMessage.contents),
+			contents: subMessage.contents,
 			metadata: subMessage.metadata,
 			compression: subMessage.compression,
 		}));
