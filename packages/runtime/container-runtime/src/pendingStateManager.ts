@@ -13,7 +13,7 @@ import { ContainerMessageType } from "./containerRuntime";
 import { pkgVersion } from "./packageVersion";
 
 /**
- * ! TODO: Remove this interface in "2.0.0-internal.6.0.0" once we only read IPendingMessageNew
+ * ! TODO: Remove this interface in "2.0.0-internal.7.0.0" once we only read IPendingMessageNew
  */
 export interface IPendingMessageOld {
 	type: "message";
@@ -39,19 +39,9 @@ export interface IPendingMessageNew {
 }
 
 /**
- * This represents an explicit flush call and is added to the pending queue when flush is called on the ContainerRuntime
- * to flush pending messages.
- * ! TODO: Remove in "2.0.0-internal.5.0.0" AB#2496
+ * ! TODO: Remove this type in "2.0.0-internal.7.0.0"
  */
-export interface IPendingFlush {
-	type: "flush";
-}
-
-/**
- * ! TODO: Remove IPendingFlush in "2.0.0-internal.5.0.0" AB#2496
- * ! TODO: Remove this type in "2.0.0-internal.6.0.0"
- */
-export type IPendingState = IPendingMessageOld | IPendingMessageNew | IPendingFlush;
+export type IPendingState = IPendingMessageOld | IPendingMessageNew;
 
 export interface IPendingLocalState {
 	/**
@@ -119,7 +109,7 @@ export class PendingStateManager implements IDisposable {
 		if (!this.pendingMessages.isEmpty()) {
 			return {
 				pendingStates: this.pendingMessages.toArray().map((message) => {
-					// ! TODO: Remove conversion to IPendingMessageOld in "2.0.0-internal.5.0.0"
+					// ! TODO: Remove conversion to IPendingMessageOld in "2.0.0-internal.6.0.0" AB#3826
 					const content = JSON.parse(message.content);
 					return {
 						...message,
@@ -139,50 +129,27 @@ export class PendingStateManager implements IDisposable {
 		initialLocalState: IPendingLocalState | undefined,
 	) {
 		/**
-		 * Convert old local state format to the new format
-		 * The old format contained "flush" messages as the indicator of batch ends
-		 * The new format instead uses batch metadata on the last message to indicate batch ends
-		 * ! TODO: Remove this conversion in "2.0.0-internal.5.0.0" as version from "2.0.0-internal.4.0.0" will be new format
-		 * AB#2496 tracks removal
+		 * Convert old local state format to the new format (IPendingMessageOld to IPendingMessageNew)
+		 * ! TODO: Remove this conversion in "2.0.0-internal.7.0.0"
 		 */
 		if (initialLocalState?.pendingStates) {
-			const pendingStates = initialLocalState?.pendingStates;
-			let currentlyBatching = false;
-			for (let i = 0; i < pendingStates.length; i++) {
-				const initialState = pendingStates[i];
-
-				// Skip over "flush" messages
-				if (initialState.type === "message") {
-					// ! TODO: Remove in "2.0.0-internal.6.0.0"
-					let messageContent = initialState.content;
-					if (
-						(initialState as IPendingMessageOld).messageType !== undefined &&
-						typeof initialState.content !== "string"
-					) {
-						// Convert IPendingMessageOld to IPendingMessageNew
-						messageContent = JSON.stringify({
-							type: (initialState as IPendingMessageOld).messageType,
-							contents: initialState.content,
-						});
-					}
-					if (initialState.opMetadata?.batch) {
-						currentlyBatching = true;
-					} else if (initialState.opMetadata?.batch === false) {
-						currentlyBatching = false;
-					} else if (
-						// End of batch if we are currently batching and this is last message or next message is flush
-						currentlyBatching &&
-						(i === pendingStates.length - 1 || pendingStates[i + 1].type === "flush")
-					) {
-						currentlyBatching = false;
-						initialState.opMetadata = { ...initialState.opMetadata, batch: false };
-					}
-					// Note: this object may contain "messageType" prop, but it should not be easily accesible due to interface being used
-					this.initialMessages.push({
-						...initialState,
-						content: messageContent,
+			for (const initialState of initialLocalState.pendingStates) {
+				let messageContent = initialState.content;
+				if (
+					(initialState as IPendingMessageOld).messageType !== undefined &&
+					typeof initialState.content !== "string"
+				) {
+					// Convert IPendingMessageOld to IPendingMessageNew
+					messageContent = JSON.stringify({
+						type: (initialState as IPendingMessageOld).messageType,
+						contents: initialState.content,
 					});
 				}
+				// Note: this object may contain "messageType" prop, but it should not be easily accesible due to interface being used
+				this.initialMessages.push({
+					...initialState,
+					content: messageContent,
+				});
 			}
 		}
 	}
