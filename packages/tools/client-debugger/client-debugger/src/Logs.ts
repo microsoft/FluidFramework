@@ -8,7 +8,7 @@ import { ContainerStateChangeKind } from "./Container";
 /**
  * Base interface for data logs, associating data with a timestamp at which the data was recorded by the debugger.
  *
- * @internal
+ * @public
  */
 export interface LogEntry {
 	/**
@@ -22,7 +22,7 @@ export interface LogEntry {
  *
  * @typeParam TState - The type of state being tracked.
  *
- * @internal
+ * @public
  */
 export interface StateChangeLogEntry<TState> extends LogEntry {
 	/**
@@ -55,7 +55,7 @@ export interface ConnectionStateChangeLogEntry
  * TODOs:
  * - Annotate when the client is me, even though "me" can change. This is useful context when viewing the history.
  *
- * @internal
+ * @public
  */
 export interface AudienceChangeLogEntry extends LogEntry {
 	/**
