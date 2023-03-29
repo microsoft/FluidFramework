@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "assert";
 import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ReferenceType } from "../ops";
@@ -11,8 +12,38 @@ import {
 	MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles";
+import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking";
 import { createRevertDriver } from "./testClient";
 import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger";
+
+/**
+ * Run a custom "spy function" every time the given method is invoked.
+ * @param methodClass - the class that has the method
+ * @param methodName - the name of the method
+ * @param spy - the spy function to run alongside the method
+ * @returns a function which will remove the spy function when invoked. Should be called exactly once
+ * after the spy is no longer needed.
+ */
+export function spyOnMethod(
+	// eslint-disable-next-line @typescript-eslint/ban-types
+	methodClass: Function,
+	methodName: string,
+	spy: () => void,
+): () => void {
+	const { prototype } = methodClass;
+	const method = prototype[methodName];
+	assert(typeof method === "function", `Method does not exist: ${methodName}`);
+
+	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
+		spy();
+		return method.call(this, ...args);
+	};
+	prototype[methodName] = methodSpy;
+
+	return () => {
+		prototype[methodName] = method;
+	};
+}
 
 describe("MergeTree.Revertibles", () => {
 	it("revert insert", () => {
@@ -42,6 +73,78 @@ describe("MergeTree.Revertibles", () => {
 
 		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
 		logger.validate({ baseText: "123" });
+	});
+
+	it("has reasonable asymptotics in face of remove", () => {
+		const length = 100;
+
+		// track the amount of tracking group linking that occurs
+		let linkCount = 0;
+		let unlinkCount = 0;
+
+		const unspy1 = spyOnMethod(TrackingGroup, "link", () => (linkCount += 1));
+		const unspy2 = spyOnMethod(TrackingGroup, "unlink", () => (unlinkCount += 1));
+		const unspy3 = spyOnMethod(UnorderedTrackingGroup, "link", () => (linkCount += 1));
+		const unspy4 = spyOnMethod(UnorderedTrackingGroup, "unlink", () => (unlinkCount += 1));
+
+		const clients = createClientsAtInitialState(
+			{
+				initialState: "",
+				options: { mergeTreeUseNewLengthCalculations: true },
+			},
+			"A",
+		);
+
+		for (let i = 1; i <= length; i++) {
+			const insertOp = clients.A.insertTextLocal(i - 1, "a");
+			clients.A.applyMsg(
+				clients.A.makeOpMessage(
+					insertOp,
+					/* seq */ i + 1,
+					/* refSeq */ i,
+					clients.A.longClientId,
+					/* minSeq */ 1,
+				),
+			);
+		}
+
+		const driver = createRevertDriver(clients.A);
+
+		const revertibles: MergeTreeDeltaRevertible[] = [];
+		clients.A.on("delta", (_op, delta) => {
+			appendToMergeTreeDeltaRevertibles(driver, delta, revertibles);
+		});
+
+		const op = clients.A.removeRangeLocal(0, length - 1);
+
+		clients.A.applyMsg(
+			clients.A.makeOpMessage(
+				op,
+				/* seq */ length + 1,
+				/* refSeq */ length,
+				clients.A.longClientId,
+				/* minSeq */ length,
+			),
+		);
+
+		// the below checks act as a proxy for the asymptotics of undo-redo
+		// linking. they are perhaps a bit more strict than necessary. if these
+		// tests are failing and the number of calls is still within a sane limit,
+		// it should be fine to update these checks to allow a larger number of
+		// calls
+		assert(
+			linkCount <= length * 2,
+			`expected tracking group link to occur at most twice per segment. found ${linkCount}`,
+		);
+		assert(
+			unlinkCount <= length,
+			`expected tracking group unlink to occur at most once per segment. found ${unlinkCount}`,
+		);
+
+		unspy1();
+		unspy2();
+		unspy3();
+		unspy4();
 	});
 
 	it("revert remove", () => {
