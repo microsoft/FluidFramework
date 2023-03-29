@@ -12,6 +12,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 // - Consider supporting config specification behavior of "use this config for new documents, but don't try to upgrade loaded docs"
 // - fix impl to track current persisted format for each client in collab window
 // - Add fuzz testing with toy dds
+// - consider working this into IChannelAttributes API
 
 /**
  * Version identifier for a feature or format in a {@link PersistedFormatConfig}.
@@ -27,7 +28,7 @@ export type Version = `${number}.${number}.${number}${"-internal" | ""}`;
  *
  * @remarks - The current implementation is scoped to the DDS level, but its concepts are applicable to larger scopes.
  */
-export interface PersistedFormatConfig {
+export interface PersistedFormatConfig<FlagNames extends string = string> {
 	/**
 	 * Format version for the document contents at whatever scope this configuration applies to.
 	 *
@@ -59,7 +60,11 @@ export interface PersistedFormatConfig {
 	 * They now ship the configuration `{ formatVersion: 1, configVersion: 3 }`.
 	 */
 	configVersion: number;
-	flags: Record<string, Version>; // TODO: consider making this generic
+
+	/**
+	 * Configuration flags which
+	 */
+	flags: Record<FlagNames, Version>; // TODO: consider making this generic
 }
 
 export enum ConfigUpgradeType {
@@ -70,12 +75,12 @@ export enum ConfigUpgradeType {
 // note: would be great to lock this down. changing this for flags that have been added can have nasty side effects
 // for in progress upgrades.
 // TODO: document process for adding flags
-export interface PersistedConfigSchema {
+export interface PersistedConfigSchema<FlagsType extends string = string> {
 	formatVersion: (current: Version, previous: Version) => ConfigUpgradeType;
-	flags: Record<string, (current: Version, previous: Version) => ConfigUpgradeType>;
+	flags: Record<FlagsType, (current: Version, previous: Version) => ConfigUpgradeType>;
 }
 
-interface VersionControllerSummary {
+export interface PersistedConfigSummary {
 	config: Omit<PersistedFormatConfig, "flags"> & Partial<Pick<PersistedFormatConfig, "flags">>;
 	mostRecentResubmissionSeq?: number;
 }
@@ -94,7 +99,7 @@ interface VersionControllerSummary {
  *
  * Note: may want to provide simpler API for users which don't need synchronization points, which means op resubmission is never required.
  */
-export interface IPersistedConfigStore {
+export interface IPersistedConfigStore<FlagsType extends string = string> {
 	// Contract: all users should first defer their op processing to this object. If it returns true,
 	// they should not attempt to process the op further.
 	tryProcessOp(
@@ -105,15 +110,17 @@ export interface IPersistedConfigStore {
 
 	// Submits an op to the server. This should be used in place of standard DDS `submitLocalMessage` API if composing this
 	// object from within a DDS.
-	submit(content: any, localOpMetadata: unknown): void;
+	submit(content: any, localOpMetadata?: unknown): void;
 
 	// TODO: is it correct to make these more lightweight than DDS summarize methods? this avoids storage details
 	// and makes DDSes not need to create a separate blob if their config is simple.
-	summarize(): VersionControllerSummary;
+	summarize(): PersistedConfigSummary;
 
-	loadCore(snapshot: VersionControllerSummary): void;
+	loadCore(snapshot: PersistedConfigSummary): void;
 
-	getConfigForNextSubmission(): PersistedFormatConfig;
+	getConfigForNextSubmission(): PersistedFormatConfig<FlagsType>;
+
+	getConfigForMessage(message: ISequencedDocumentMessage): PersistedFormatConfig<FlagsType>;
 	// DDS should compose over one of these things, which controls the op format that DDS uses and the summary tree
 	// it generates. It needs access to summary save/load process as well as op submission/processing.
 	// SharedTree architecture needs to be able to transmit information to the indexes on what format they should write in.
@@ -132,18 +139,48 @@ function isUpgradeOp(contents: any): contents is UpgradeOp {
 	return contents.type === upgradeKey;
 }
 
-class PersistedConfigStore implements IPersistedConfigStore {
+/**
+ * Stores information about which persisted configuration each client in the collaboration window should be using.
+ *
+ * TODO: expose api so dds can get this information for an op coming in.
+ *
+ * Impl strategy:
+ * - Retain config that clients have implicitly agreed upon (always)
+ * - If there are upgrade ops within the collab window...
+ * 		- Retain config at MSN
+ * 		- Retain each upgrade op within the collab window (TODO: remove some data from these; not all are necessary)
+ * - When receiving an op from a client, consider the set of all upgrade ops which were either before op.referenceSequenceNumber
+ * OR submitted by the same client.
+ * - When receiving an ack from a locally sent op, it's similar but also need to account for our own pending upgrade op in flight.
+ * Config of that client's op will be the largest configVersion amongst all of those upgrades.
+ */
+class PersistedConfigStore<FlagsType extends string = string>
+	implements IPersistedConfigStore<FlagsType>
+{
 	// Stores the config that clients have implicitly agreed upon (i.e. the acked config with the highest configVersion)
-	private config: PersistedFormatConfig;
+	private config: PersistedFormatConfig<FlagsType>;
 	// When initialized with a config that has a higher config version than the loaded document,
 	// this field holds that proposed newer config.
 	// However, to avoid issues with readonly clients or affecting document's last edit time, actually submitting that
 	// upgrade request is performed lazily upon first edit.
 	// Once the proposed upgrade is submitted, this field should be cleared to avoid duplicate proposed submissions (which
 	// won't cause correctness issues, but have network overhead)
-	private configAwaitingSubmission: PersistedFormatConfig | undefined;
+	private configAwaitingSubmission: PersistedFormatConfig<FlagsType> | undefined;
+
+	// private configAwaitingAck: PersistedFormatConfig | undefined;
 
 	private pendingOpCount: number;
+
+	private recentUpgrades: ISequencedDocumentMessage[] = [];
+	// defined iff recentUpgrades.length > 0
+	private msnConfig?: PersistedFormatConfig<FlagsType>;
+
+	// TODO: Submissions which require a synchronization point might go poorly with this scheme due to temp downgrade
+	// need to work out whether it's possible for use cases of this to either resubmit local ops on ack of the upgrade
+	// or for all clients to accept them as valid (as they're not concurrent)
+	// Plan for now: don't try and be super advanced. Use case for this is pretty slim anyway (shared-tree scheme is
+	// pretty advanced, we likely won't do that kind of thing very often. we don't even like *regular* format changes
+	// which don't have anywhere near the complexity). Thus: any config change at
 
 	// Sequence number for the most recent upgrade which required op resubmission.
 	// This is tracked so it can be stored in the summary, so that clients joining the session while an upgrade op is in the
@@ -151,14 +188,14 @@ class PersistedConfigStore implements IPersistedConfigStore {
 	private mostRecentResubmissionSeq: number | undefined;
 
 	constructor(
-		private readonly schema: PersistedConfigSchema,
-		initialConfig: PersistedFormatConfig, // should be provided at DDS construction time, generally will be specified by the application
+		private readonly schema: PersistedConfigSchema<FlagsType>,
+		initialConfig: PersistedFormatConfig<FlagsType>, // should be provided at DDS construction time, generally will be specified by the application
 		private readonly submitLocalMessage: (content: any, localOpMetadata: unknown) => void,
 		private readonly onProtocolChange: (
-			current: PersistedFormatConfig,
-			previous: PersistedFormatConfig,
+			current: PersistedFormatConfig<FlagsType>,
+			previous: PersistedFormatConfig<FlagsType>,
 		) => void,
-		private readonly reSubmitPendingOps: (config: PersistedFormatConfig) => void,
+		private readonly reSubmitPendingOps: (config: PersistedFormatConfig<FlagsType>) => void,
 	) {
 		this.config = initialConfig;
 		this.pendingOpCount = 0;
@@ -175,6 +212,10 @@ class PersistedConfigStore implements IPersistedConfigStore {
 		}
 		const { contents } = message;
 		if (isUpgradeOp(contents)) {
+			if (this.recentUpgrades.length === 0) {
+				this.msnConfig = this.config;
+			}
+			this.recentUpgrades.push(message);
 			if (contents.config.configVersion > this.config.configVersion) {
 				// TODO: validate proposed config is understood by this version of the code, fail if not.
 				if (this.requiresOpResubmission(contents.config, this.config)) {
@@ -224,8 +265,36 @@ class PersistedConfigStore implements IPersistedConfigStore {
 		return false;
 	}
 
-	public getConfigForNextSubmission(): PersistedFormatConfig {
+	public getConfigForNextSubmission(): PersistedFormatConfig<FlagsType> {
 		return this.config;
+	}
+
+	public getConfigForMessage(
+		message: ISequencedDocumentMessage,
+	): PersistedFormatConfig<FlagsType> {
+		if (this.recentUpgrades.length === 0) {
+			return this.config;
+		}
+
+		const refSeq = message.referenceSequenceNumber;
+		assert(
+			this.msnConfig !== undefined,
+			"config at MSN should be saved if upgrade ops are within the collab window.",
+		);
+		let config = this.msnConfig;
+		for (
+			let i = 0;
+			i < this.recentUpgrades.length && this.recentUpgrades[i].sequenceNumber <= refSeq;
+			i++
+		) {
+			const upgradeConfig: PersistedFormatConfig<FlagsType> =
+				this.recentUpgrades[i].contents.config;
+			if (upgradeConfig.configVersion > config!.configVersion) {
+				config = upgradeConfig;
+			}
+		}
+
+		return config;
 	}
 
 	public submit(content: any, localOpMetadata: unknown): void {
@@ -245,7 +314,7 @@ class PersistedConfigStore implements IPersistedConfigStore {
 		}
 	}
 
-	public summarize(): VersionControllerSummary {
+	public summarize(): PersistedConfigSummary {
 		return {
 			config: {
 				configVersion: this.config.configVersion,
@@ -256,7 +325,7 @@ class PersistedConfigStore implements IPersistedConfigStore {
 		};
 	}
 
-	public loadCore(snapshot: VersionControllerSummary): void {
+	public loadCore(snapshot: PersistedConfigSummary): void {
 		const { config: configSnapshot, mostRecentResubmissionSeq } = snapshot;
 		// we omit flags from snapshot to save space when there are none.
 		const config = {
@@ -285,8 +354,8 @@ class PersistedConfigStore implements IPersistedConfigStore {
 
 	// whether or not ops with configVersion below the upgrade require resubmission
 	private requiresOpResubmission(
-		proposedConfig: PersistedFormatConfig,
-		currentConfig: PersistedFormatConfig,
+		proposedConfig: PersistedFormatConfig<FlagsType>,
+		currentConfig: PersistedFormatConfig<FlagsType>,
 	): boolean {
 		if (
 			proposedConfig.formatVersion !== currentConfig.formatVersion &&
@@ -296,7 +365,10 @@ class PersistedConfigStore implements IPersistedConfigStore {
 			return true;
 		}
 
-		for (const flagName of Object.keys(proposedConfig.flags)) {
+		const readFlags = (config: PersistedFormatConfig<FlagsType>): Iterable<FlagsType> =>
+			Object.keys(config.flags) as FlagsType[];
+
+		for (const flagName of readFlags(proposedConfig)) {
 			const upgradeStrategyResolver = this.schema.flags[flagName];
 			// TODO: This should probably be a usage error. Apps which attempt rollouts that are too eager could hit it.
 			assert(
@@ -318,13 +390,39 @@ class PersistedConfigStore implements IPersistedConfigStore {
 	}
 
 	private processMinSeq(message: ISequencedDocumentMessage) {
-		if (
-			this.mostRecentResubmissionSeq !== undefined &&
-			this.mostRecentResubmissionSeq < message.minimumSequenceNumber
-		) {
+		const msn = message.minimumSequenceNumber;
+		if (this.mostRecentResubmissionSeq !== undefined && this.mostRecentResubmissionSeq < msn) {
 			// All clients have seen the config change, so concurrent ops that should be discarded
 			// can no longer be acked.
 			this.mostRecentResubmissionSeq = undefined;
+		}
+
+		// Remove upgrade ops pushed below the collab window
+		const i = this.recentUpgrades.findIndex(
+			(upgradeMessage) => upgradeMessage.sequenceNumber > msn,
+		);
+		if (i > 0) {
+			const removedUpgradeOps = this.recentUpgrades.splice(0, i);
+			if (this.recentUpgrades.length === 0) {
+				// No more upgrade ops are within the collab window: all clients will send all ops
+				// using the currently agreed-upon config.
+				this.msnConfig = undefined;
+			} else {
+				let msnConfig = this.msnConfig;
+				assert(
+					msnConfig !== undefined,
+					"msnConfig should always be defined when upgrade ops are within collab window",
+				);
+				for (const {
+					contents: { config },
+				} of removedUpgradeOps) {
+					// TODO: fix up nonnull assertion
+					if (config.configVersion > msnConfig!.configVersion) {
+						msnConfig = config;
+					}
+				}
+				this.msnConfig = msnConfig;
+			}
 		}
 	}
 
@@ -355,14 +453,14 @@ function areEquivalentConfigs(a: PersistedFormatConfig, b: PersistedFormatConfig
 	return true;
 }
 
-export function createPersistedConfigStore(
-	schema: PersistedConfigSchema,
-	initialConfig: PersistedFormatConfig, // should be provided at DDS construction time, generally will be specified by the application
+export function createPersistedConfigStore<FlagsType extends string = string>(
+	schema: PersistedConfigSchema<FlagsType>,
+	initialConfig: PersistedFormatConfig<FlagsType>, // should be provided at DDS construction time, generally will be specified by the application
 	submitLocalMessage: (content: any, localOpMetadata: unknown) => void,
 	// consider making this an event.
 	onProtocolChange: (current: PersistedFormatConfig, previous: PersistedFormatConfig) => void,
 	reSubmitPendingOps: (config: PersistedFormatConfig) => void,
-): IPersistedConfigStore {
+): IPersistedConfigStore<FlagsType> {
 	return new PersistedConfigStore(
 		schema,
 		initialConfig,

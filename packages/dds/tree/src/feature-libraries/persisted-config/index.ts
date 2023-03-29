@@ -9,5 +9,6 @@ export {
 	IPersistedConfigStore,
 	PersistedFormatConfig,
 	PersistedConfigSchema,
+	PersistedConfigSummary,
 	Version,
 } from "./persistedConfig";
