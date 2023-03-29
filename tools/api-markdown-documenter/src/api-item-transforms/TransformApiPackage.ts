@@ -4,10 +4,10 @@
  */
 import { ApiPackage } from "@microsoft/api-extractor-model";
 
-import { MarkdownDocumenterConfiguration } from "../Configuration";
 import { DocumentNode, SectionNode } from "../documentation-domain";
 import { apiItemToSections } from "./TransformApiItem";
 import { createDocument } from "./Utilities";
+import { ApiItemTransformationConfiguration } from "./configuration";
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
 
 /**
@@ -20,11 +20,11 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers";
  */
 export function apiPackageToDocument(
 	apiPackage: ApiPackage,
-	config: Required<MarkdownDocumenterConfiguration>,
+	config: Required<ApiItemTransformationConfiguration>,
 ): DocumentNode {
 	const logger = config.logger;
 
-	logger.verbose(`Rendering ${apiPackage.name} package document...`);
+	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
 	const sections: SectionNode[] = [];
 

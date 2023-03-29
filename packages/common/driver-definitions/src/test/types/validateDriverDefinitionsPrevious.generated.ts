@@ -397,7 +397,6 @@ declare function get_current_InterfaceDeclaration_IDocumentServiceFactory():
 declare function use_old_InterfaceDeclaration_IDocumentServiceFactory(
     use: TypeOnly<old.IDocumentServiceFactory>);
 use_old_InterfaceDeclaration_IDocumentServiceFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentServiceFactory());
 
 /*

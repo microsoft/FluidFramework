@@ -108,7 +108,6 @@ declare function get_current_ClassDeclaration_LocalDocumentServiceFactory():
 declare function use_old_ClassDeclaration_LocalDocumentServiceFactory(
     use: TypeOnly<old.LocalDocumentServiceFactory>);
 use_old_ClassDeclaration_LocalDocumentServiceFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalDocumentServiceFactory());
 
 /*

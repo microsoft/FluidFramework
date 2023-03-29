@@ -7,7 +7,7 @@ import React from "react";
 import {
 	ContainerStateMetadata,
 	ContainerStateChangeMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	handleIncomingMessage,
 	HasContainerId,
@@ -57,7 +57,7 @@ export function ContainerSummaryView(props: ContainerStateViewProps): React.Reac
 		/**
 		 * Event handler for messages coming from the webpage.
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
