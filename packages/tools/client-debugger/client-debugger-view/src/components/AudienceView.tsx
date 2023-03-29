@@ -24,10 +24,8 @@ import { Waiting } from "./Waiting";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
-const loggingContext = "EXTENSION(AudienceView)";
 
-// TODOs:
-// - Special annotation for the member elected as the summarizer
+const loggingContext = "EXTENSION(AudienceView)";
 
 /**
  * {@link AudienceView} input props.

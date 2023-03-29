@@ -45,15 +45,39 @@ export interface FluidClientDebuggersProps {
 	renderOptions?: RenderOptions;
 }
 
+/**
+ * Indicates that the currently selected menu option is a particular Container.
+ * @see {@link MenuSection} for other possible options.
+ */
 interface ContainerMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
 	type: "containerMenuSelection";
+
+	/**
+	 * The containerId for the selected menu option that this object represents.
+	 */
 	containerId: string;
 }
 
+/**
+ * Indicates that the currently selected menu option is the Telemetry view.
+ * @see {@link MenuSection} for other possible options.
+ */
 interface TelemetryMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
 	type: "telemetryMenuSelection";
 }
 
+/**
+ * Discriminated union type for all the selectable options in the menu.
+ * Each specific type should contain any additional information it requires.
+ * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
+ * is selected, and has a 'containerId' property to indicate which Container.
+ */
 type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
 
 /**

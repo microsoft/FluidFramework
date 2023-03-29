@@ -32,8 +32,8 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 	const messageRelay = useMessageRelay();
 
 	const [containerHistory, setContainerHistory] = React.useState<
-		readonly ConnectionStateChangeLogEntry[]
-	>([]);
+		readonly ConnectionStateChangeLogEntry[] | undefined
+	>();
 
 	React.useEffect(() => {
 		/**
@@ -61,10 +61,24 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 
 		messageRelay.on("message", messageHandler);
 
+		// Reset state with Container data, to ensure we aren't displaying stale data (for the wrong container) while we
+		// wait for a response to the message sent below. Especially relevant for the Container-related views because this
+		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
+		// eslint-disable-next-line unicorn/no-useless-undefined
+		setContainerHistory(undefined);
+
+		// Request state info for the newly specified containerId
+		messageRelay.postMessage({
+			type: "GET_CONTAINER_STATE",
+			data: {
+				containerId,
+			},
+		});
+
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, messageRelay]);
+	}, [containerId, messageRelay, setContainerHistory]);
 
 	if (containerHistory === undefined) {
 		return <Waiting label="Waiting for Container Summary data." />;

@@ -14,6 +14,7 @@ import {
 } from "@fluid-tools/client-debugger";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { useMessageRelay } from "../MessageRelayContext";
+import { Waiting } from "./Waiting";
 
 function mapEventCategoryToBackgroundColor(eventCategory: string): string {
 	switch (eventCategory) {
@@ -28,8 +29,16 @@ function mapEventCategoryToBackgroundColor(eventCategory: string): string {
 	}
 }
 
-function replacer(key, value): unknown {
-	// Filtering out properties
+/**
+ * Function to transform the results when JSON-serializing telemetry events for display.
+ * We already extract some of their properties to a different place in the UI, so it seems best to remove them from the
+ * rendered JSON payload for a bit less bloat there.
+ * @param key - The name of the property that's being serialized.
+ * @param value - The value of the property that's being serialized.
+ * @returns An updated value for the given key, or 'undefined' to remove the key from the serialized output.
+ */
+function jsonSerializationTransformer(key, value): unknown {
+	// Filter out properties we display somewhere else in the UI
 	if (key === "eventName" || key === "category") {
 		return undefined;
 	}
@@ -42,7 +51,9 @@ function replacer(key, value): unknown {
 export function TelemetryView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
 
-	const [telemetryEvents, setTelemetryEvents] = React.useState<ITelemetryBaseEvent[]>([]);
+	const [telemetryEvents, setTelemetryEvents] = React.useState<
+		ITelemetryBaseEvent[] | undefined
+	>();
 
 	React.useEffect(() => {
 		/**
@@ -51,7 +62,10 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			["TELEMETRY_EVENT"]: (untypedMessage) => {
 				const message: TelemetryEventMessage = untypedMessage as TelemetryEventMessage;
-				setTelemetryEvents((currentEvents) => [...message.data.contents, ...currentEvents]);
+				setTelemetryEvents((currentEvents) => [
+					...message.data.contents,
+					...(currentEvents ?? []),
+				]);
 				return true;
 			},
 			["TELEMETRY_HISTORY"]: (untypedMessage) => {
@@ -79,8 +93,8 @@ export function TelemetryView(): React.ReactElement {
 		};
 	}, [messageRelay, setTelemetryEvents]);
 
-	return (
-		<div>
+	return telemetryEvents !== undefined ? (
+		<>
 			<h3>Telemetry events (newest first):</h3>
 			<ul>
 				{telemetryEvents.map((message, index) => (
@@ -101,10 +115,12 @@ export function TelemetryView(): React.ReactElement {
 							<br />
 							DocumentId: {message.docId}
 						</h4>
-						<p>{JSON.stringify(message, replacer, "  ")}</p>
+						<p>{JSON.stringify(message, jsonSerializationTransformer, "  ")}</p>
 					</div>
 				))}
 			</ul>
-		</div>
+		</>
+	) : (
+		<Waiting label={"Waiting for Telemetry events"} />
 	);
 }

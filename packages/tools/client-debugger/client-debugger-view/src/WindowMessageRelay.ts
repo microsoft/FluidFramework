@@ -30,7 +30,14 @@ export class WindowMessageRelay
 	extends TypedEventEmitter<IMessageRelayEvents>
 	implements IMessageRelay
 {
-	public constructor(private readonly messageSource: string) {
+	public constructor(
+		/**
+		 * All messages sent through the returned instance's {@link WindowMessageRelay.postMessage}
+		 * method will get this value written to their 'source' property.
+		 * @see {@link @fluid-tools/client-debugger#ISourcedDebuggerMessage}
+		 */
+		private readonly messageSource: string,
+	) {
 		super();
 
 		console.log("Instantiating MessageRelay...");
@@ -47,7 +54,7 @@ export class WindowMessageRelay
 			...message,
 			source: this.messageSource,
 		};
-		globalThis.postMessage(sourcedMessage, "*"); // TODO: verify target is okay
+		globalThis.postMessage(sourcedMessage, "*");
 	}
 
 	/**

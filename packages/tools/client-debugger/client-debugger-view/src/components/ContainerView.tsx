@@ -104,7 +104,6 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 				},
 			}}
 			className={containerViewClassName}
-			key={containerId}
 		>
 			<ContainerSummaryView containerId={containerId} />
 			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>

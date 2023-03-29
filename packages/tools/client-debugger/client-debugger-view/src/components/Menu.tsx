@@ -47,7 +47,7 @@ export interface MenuItemProps {
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
 	return (
-		<Stack.Item styles={menuSectionItemStyles(props.isActive)} onClick={props.onClick}>
+		<Stack.Item styles={getMenuSectionItemStyles(props.isActive)} onClick={props.onClick}>
 			{props.text}
 		</Stack.Item>
 	);
@@ -69,7 +69,7 @@ const menuSectionHeaderStyles: IStackStyles = {
 	},
 };
 
-function menuSectionItemStyles(isActive: boolean): IStackStyles {
+function getMenuSectionItemStyles(isActive: boolean): IStackStyles {
 	return {
 		root: {
 			"paddingLeft": "20px",

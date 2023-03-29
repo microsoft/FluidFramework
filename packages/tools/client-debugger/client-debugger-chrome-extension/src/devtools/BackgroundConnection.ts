@@ -70,11 +70,15 @@ export class BackgroundConnection
 
 	/**
 	 * Creates an instance of {@link BackgroundConnection}.
-	 *
-	 * @param messageSource - All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
-	 * method will get this value written to their 'source' property.
 	 */
-	private constructor(private readonly messageSource: string) {
+	private constructor(
+		/**
+		 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
+		 * method will get this value written to their 'source' property.
+		 * @see {@link @fluid-tools/client-debugger#ISourcedDebuggerMessage}
+		 */
+		private readonly messageSource: string,
+	) {
 		super();
 
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
@@ -107,7 +111,8 @@ export class BackgroundConnection
 
 	/**
 	 * Post a message to the Background Script.
-	 * These messages are mostly for the debugger, but some are for the Background Script itself (for initialization).
+	 *
+	 * @remarks These messages are mostly for the debugger, but some are for the Background Script itself (for initialization).
 	 */
 	public postMessage(message: IDebuggerMessage): void {
 		const sourcedMessage: ISourcedDebuggerMessage = {
