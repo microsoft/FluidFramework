@@ -234,6 +234,7 @@ const editableFieldPropertySetWithoutLength = new Set<string>([
 	"fieldSchema",
 	"primaryType",
 	"parent",
+	"context",
 ]);
 /**
  * The set of `EditableField` properties exposed by `fieldProxyHandler`.

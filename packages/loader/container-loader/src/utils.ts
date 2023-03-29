@@ -126,7 +126,9 @@ export function convertProtocolAndAppSummaryToSnapshotTree(
 
 // This function converts the snapshot taken in detached container(by serialize api) to snapshotTree with which
 // a detached container can be rehydrated.
-export const getSnapshotTreeFromSerializedContainer = (detachedContainerSnapshot: ISummaryTree) => {
+export const getSnapshotTreeFromSerializedContainer = (
+	detachedContainerSnapshot: ISummaryTree,
+): ISnapshotTreeWithBlobContents => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		0x1e0 /* "Protocol and App summary trees should be present" */,

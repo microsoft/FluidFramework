@@ -4,7 +4,7 @@
  */
 
 import { ContainerMetadata } from "../ContainerMetadata";
-import { ISourcedDebuggerMessage } from "./Messages";
+import { IDebuggerMessage } from "./Messages";
 
 // #region Inbound messages
 
@@ -14,7 +14,7 @@ import { ISourcedDebuggerMessage } from "./Messages";
  *
  * @public
  */
-export interface GetContainerListMessage extends ISourcedDebuggerMessage<undefined> {
+export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
 	type: "GET_CONTAINER_LIST";
 }
 
@@ -40,7 +40,7 @@ export interface RegistryChangeMessageData {
  *
  * @public
  */
-export interface RegistryChangeMessage extends ISourcedDebuggerMessage<RegistryChangeMessageData> {
+export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
 	type: "REGISTRY_CHANGE";
 }
 
