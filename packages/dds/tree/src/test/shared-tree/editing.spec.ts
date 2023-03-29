@@ -294,7 +294,7 @@ describe("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
-		it.skip("can rebase an insert of and edit to a node", async () => {
+		it.skip("can rebase an insert of and edit to a node", () => {
 			const sequencer = new Sequencer();
 			const tree1 = TestTree.fromJson([]);
 			const tree2 = tree1.fork();

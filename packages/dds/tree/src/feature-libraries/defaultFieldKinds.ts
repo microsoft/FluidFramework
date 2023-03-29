@@ -648,7 +648,9 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 					"revert" in over.fieldChange.newContent &&
 					over.fieldChange.newContent.revision === change.deletedBy
 				) {
-					// Remove deletedBy because we revived the node that childChange refers to
+					// Over is reviving the node that change.childChange is referring to.
+					// Rebase change.childChange and remove deletedBy
+					// because we revived the node that childChange refers to
 					return {
 						childChange: rebaseChild(
 							change.childChange,
@@ -664,9 +666,7 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 
 			let overChildChange: NodeChangeset | undefined;
 			if (change.deletedBy === undefined && over.deletedBy === undefined) {
-				if (change.deletedBy === over.deletedBy) {
-					overChildChange = over.childChange;
-				}
+				overChildChange = over.childChange;
 			}
 
 			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
