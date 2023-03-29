@@ -44,20 +44,20 @@ jobs:
 
       # If a changeset is present, label it changeset-present
       - uses: actions-ecosystem/action-add-labels@v1.1.0
-        if: steps.changeset_label.outcome == "success"
+        if: steps.changeset_label.outcome == 'success'
         with:
           labels: changeset-present
       - uses: actions-ecosystem/action-remove-labels@v1.3.0
-        if: steps.changeset_label.outcome == "success"
+        if: steps.changeset_label.outcome == 'success'
         with:
           labels: changeset-missing
 
       # If a changeset is missing, label it changeset-present
       - uses: actions-ecosystem/action-add-labels@v1.1.0
-        if: steps.changeset-status.outcome == "failure"
+        if: steps.changeset-status.outcome == 'failure'
         with:
           labels: changeset-missing
       - uses: actions-ecosystem/action-remove-labels@v1.3.0
-        if: steps.changeset-status.outcome == "failure"
+        if: steps.changeset-status.outcome == 'failure'
         with:
           labels: changeset-present
