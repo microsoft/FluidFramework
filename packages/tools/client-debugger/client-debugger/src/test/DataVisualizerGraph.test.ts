@@ -90,6 +90,7 @@ describe("DataVisualizerGraph unit tests", () => {
 			label: "map",
 			fluidObjectId: sharedMap.id,
 			children: [],
+			metadata: { size: 0 },
 			typeMetadata: "SharedMap",
 			nodeKind: NodeKind.FluidTreeNode,
 		};
@@ -152,6 +153,7 @@ describe("DataVisualizerGraph unit tests", () => {
 					nodeKind: NodeKind.FluidHandleNode,
 				},
 			],
+			metadata: { size: 3 },
 			typeMetadata: "SharedMap",
 			nodeKind: NodeKind.FluidTreeNode,
 		};

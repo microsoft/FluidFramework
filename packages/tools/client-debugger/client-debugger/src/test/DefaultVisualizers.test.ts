@@ -118,6 +118,9 @@ describe("DefaultVisualizers unit tests", () => {
 					nodeKind: NodeKind.ValueNode,
 				},
 			],
+			metadata: {
+				size: 3,
+			},
 			typeMetadata: "SharedMap",
 			nodeKind: NodeKind.FluidTreeNode,
 		};

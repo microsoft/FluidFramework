@@ -82,6 +82,9 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 		fluidObjectId: sharedMap.id,
 		label,
 		children,
+		metadata: {
+			size: sharedMap.size,
+		},
 		typeMetadata: "SharedMap",
 		nodeKind: NodeKind.FluidTreeNode,
 	};
