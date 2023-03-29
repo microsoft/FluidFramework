@@ -10,37 +10,32 @@
  * {@link @fluid-tools/client-debugger-view#MessageRelayContext} used by our internal React components.
  */
 
-import { FluidClientDebuggers, MessageRelayContext } from "@fluid-tools/client-debugger-view";
-import React from "react";
-import ReactDOM from "react-dom";
+import { renderClientDebuggerView } from "@fluid-tools/client-debugger-view";
 
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
 document.body.style.margin = "0px";
 
+const container = document.createElement("debugger");
+container.style.position = "absolute";
+container.style.height = "100%";
+document.body.append(container);
+
 BackgroundConnection.Initialize()
 	.then((connection) => {
-		ReactDOM.render(<RootView backgroundConnection={connection} />, document.body, () => {
-			console.log(
-				formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"),
-			);
-		});
+		renderClientDebuggerView(container, () => connection)
+			.then(() => {
+				console.log(
+					formatDevtoolsScriptMessageForLogging(
+						"Rendered debug view in devtools window!",
+					),
+				);
+			})
+			.catch((error: unknown) => {
+				console.error(`Error initializing the devtools root view.`, error);
+			});
 	})
 	.catch((error: unknown) => {
-		console.error(`Error initializing the devtools root view.`, error);
+		console.error(`Error initializing the BackgroundConnection.`, error);
 	});
-
-/**
- * Root component of our React tree.
- *
- * @remarks Sets up message-passing context and renders the debugger.
- */
-function RootView(props: { backgroundConnection: BackgroundConnection }): React.ReactElement {
-	const messageRelay = React.useMemo<BackgroundConnection>(() => props.backgroundConnection, []);
-	return (
-		<MessageRelayContext.Provider value={messageRelay}>
-			<FluidClientDebuggers />
-		</MessageRelayContext.Provider>
-	);
-}

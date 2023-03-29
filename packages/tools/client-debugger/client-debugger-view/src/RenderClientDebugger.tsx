@@ -4,7 +4,6 @@
  */
 import React from "react";
 import ReactDOM from "react-dom";
-import { Resizable } from "re-resizable";
 
 import { IMessageRelay } from "@fluid-tools/client-debugger";
 
@@ -51,20 +50,7 @@ function RootView(props: { messageRelayFactory: () => IMessageRelay }): React.Re
 	const messageRelay: IMessageRelay = props.messageRelayFactory();
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>
-			<Resizable
-				style={{
-					position: "absolute",
-					top: "0px",
-					right: "0px",
-					bottom: "0px",
-					zIndex: "2",
-					backgroundColor: "lightgray", // TODO: remove
-				}}
-				defaultSize={{ width: 400, height: "100%" }}
-				className={"debugger-panel"}
-			>
-				<FluidClientDebuggers />
-			</Resizable>
+			<FluidClientDebuggers />
 		</MessageRelayContext.Provider>
 	);
 }
