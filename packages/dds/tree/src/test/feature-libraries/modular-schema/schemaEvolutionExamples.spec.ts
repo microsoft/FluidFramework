@@ -13,6 +13,7 @@ import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
 	ViewSchema,
+	TypedSchema,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema";
@@ -128,9 +129,9 @@ describe("Schema Evolution Examples", () => {
 		extraLocalFields: emptyField,
 	});
 
-	const root: FieldTypeView = new FieldTypeView(FieldKinds.value, [canvasIdentifier]);
+	const root: FieldTypeView = TypedSchema.field(FieldKinds.value, canvasIdentifier);
 
-	const tolerantRoot = new FieldTypeView(FieldKinds.optional, [canvasIdentifier]);
+	const tolerantRoot = TypedSchema.field(FieldKinds.optional, canvasIdentifier);
 
 	const treeViewSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema> = new Map([
 		[canvasIdentifier, canvas],
