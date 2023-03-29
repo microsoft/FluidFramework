@@ -454,7 +454,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
-	public async ensureSynchronized(): Promise<void> {
+	public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
 		return this._loaderContainerTracker.ensureSynchronized();
 	}
 
