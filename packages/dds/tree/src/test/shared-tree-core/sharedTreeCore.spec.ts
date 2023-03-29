@@ -18,10 +18,9 @@ import {
 } from "@fluidframework/test-runtime-utils";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
 import {
-	Index,
-	IndexEvents,
+	ChangeEvents,
 	SharedTreeCore,
-	SummaryElement,
+	IndexSummarizer,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
@@ -37,17 +36,40 @@ import { ISubscribable } from "../../events";
 
 describe("SharedTreeCore", () => {
 	describe("emits", () => {
-		function countTreeEvent(event: keyof IndexEvents<DefaultChangeset>): {
+		/** Implementation of SharedTreeCore which exposes change events */
+		class ChangeEventSharedTree extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+			public constructor() {
+				const runtime = new MockFluidDataStoreRuntime();
+				const attributes: IChannelAttributes = {
+					type: "ChangeEventSharedTree",
+					snapshotFormatVersion: "0.0.0",
+					packageVersion: "0.0.0",
+				};
+				super(
+					[],
+					defaultChangeFamily,
+					new AnchorSet(),
+					"ChangeEventSharedTree",
+					runtime,
+					attributes,
+					"",
+				);
+			}
+
+			public get events(): ISubscribable<ChangeEvents<DefaultChangeset>> {
+				return this.changeEvents;
+			}
+		}
+
+		function countTreeEvent(event: keyof ChangeEvents<DefaultChangeset>): {
 			tree: ReturnType<typeof createTree>;
 			counter: { count: number };
 		} {
 			const counter = {
 				count: 0,
 			};
-			const tree = createTree((events) => {
-				events.on(event, () => (counter.count += 1));
-				return [new MockIndex()];
-			});
+			const tree = new ChangeEventSharedTree();
+			tree.events.on(event, () => (counter.count += 1));
 			return { tree, counter };
 		}
 
@@ -116,7 +138,7 @@ describe("SharedTreeCore", () => {
 
 	describe("indexes", () => {
 		it("are loaded", async () => {
-			const index = new MockIndex();
+			const index = new MockIndexSummarizer();
 			let loaded = false;
 			index.on("loaded", () => (loaded = true));
 			const indexes = [index] as const;
@@ -126,10 +148,10 @@ describe("SharedTreeCore", () => {
 		});
 
 		it("load blobs", async () => {
-			const index = new MockIndex();
+			const index = new MockIndexSummarizer();
 			let loadedBlob = false;
 			index.on("loaded", (blobContents) => {
-				if (blobContents === MockIndex.blobContents) {
+				if (blobContents === MockIndexSummarizer.blobContents) {
 					loadedBlob = true;
 				}
 			});
@@ -141,10 +163,10 @@ describe("SharedTreeCore", () => {
 		});
 
 		it("summarize synchronously", () => {
-			const indexA = new MockIndex("Index A");
+			const indexA = new MockIndexSummarizer("Index A");
 			let summarizedIndexA = false;
 			indexA.on("summarizeAttached", () => (summarizedIndexA = true));
-			const indexB = new MockIndex("Index B");
+			const indexB = new MockIndexSummarizer("Index B");
 			let summarizedIndexB = false;
 			indexB.on("summarizeAttached", () => (summarizedIndexB = true));
 			const indexes = [indexA, indexB] as const;
@@ -172,10 +194,10 @@ describe("SharedTreeCore", () => {
 
 		// TODO: Enable once SharedTreeCore properly implements async summaries
 		it.skip("summarize asynchronously", async () => {
-			const indexA = new MockIndex("Index A");
+			const indexA = new MockIndexSummarizer("Index A");
 			let summarizedIndexA = false;
 			indexA.on("summarizeAsync", () => (summarizedIndexA = true));
-			const indexB = new MockIndex("Index B");
+			const indexB = new MockIndexSummarizer("Index B");
 			let summarizedIndexB = false;
 			indexB.on("summarizeAsync", () => (summarizedIndexB = true));
 			const indexes = [indexA, indexB];
@@ -202,7 +224,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		it("are asked for GC", () => {
-			const index = new MockIndex("Index");
+			const index = new MockIndexSummarizer("Index");
 			let requestedGC = false;
 			index.on("gcRequested", () => (requestedGC = true));
 			const indexes = [index] as const;
@@ -216,9 +238,9 @@ describe("SharedTreeCore", () => {
 		return summaryObject.type === SummaryType.Tree;
 	}
 
-	function createTree<TIndexes extends readonly Index[]>(
-		indexes: TIndexes | ((events: ISubscribable<IndexEvents<DefaultChangeset>>) => TIndexes),
-	): SharedTreeCore<DefaultEditBuilder, DefaultChangeset, TIndexes> {
+	function createTree<TIndexes extends readonly IndexSummarizer[]>(
+		indexes: TIndexes,
+	): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 		const runtime = new MockFluidDataStoreRuntime();
 		const attributes: IChannelAttributes = {
 			type: "TestSharedTree",
@@ -236,18 +258,19 @@ describe("SharedTreeCore", () => {
 		);
 	}
 
-	interface TestIndexEvents extends IEvent {
+	interface MockIndexSummarizerEvents extends IEvent {
 		(event: "loaded", listener: (blobContents?: string) => void): void;
 		(event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
 	}
 
-	class MockIndex extends TypedEventEmitter<TestIndexEvents> implements Index, SummaryElement {
+	class MockIndexSummarizer
+		extends TypedEventEmitter<MockIndexSummarizerEvents>
+		implements IndexSummarizer
+	{
 		public static readonly blobKey = "MockIndexBlobKey";
 		public static readonly blobContents = "MockIndexBlobContent";
 
-		public summaryElement: SummaryElement = this;
-
-		public constructor(public readonly key = "MockIndex") {
+		public constructor(public readonly key = "MockIndexSummarizer") {
 			super();
 		}
 
@@ -255,8 +278,8 @@ describe("SharedTreeCore", () => {
 			services: IChannelStorageService,
 			parse: SummaryElementParser,
 		): Promise<void> {
-			if (await services.contains(MockIndex.blobKey)) {
-				const blob = await services.readBlob(MockIndex.blobKey);
+			if (await services.contains(MockIndexSummarizer.blobKey)) {
+				const blob = await services.readBlob(MockIndexSummarizer.blobKey);
 				const blobContents = parse(IsoBuffer.from(blob).toString());
 				this.emit("loaded", blobContents);
 			} else {
@@ -286,7 +309,10 @@ describe("SharedTreeCore", () => {
 
 		private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
 			this.emit("summarize");
-			return createSingleBlobSummary(MockIndex.blobKey, stringify(MockIndex.blobContents));
+			return createSingleBlobSummary(
+				MockIndexSummarizer.blobKey,
+				stringify(MockIndexSummarizer.blobContents),
+			);
 		}
 
 		public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
@@ -297,8 +323,8 @@ describe("SharedTreeCore", () => {
 });
 
 /** Makes an arbitrary change to the given tree */
-function changeTree<TChange, TEditor extends DefaultEditBuilder, TIndexes extends readonly Index[]>(
-	tree: SharedTreeCore<TEditor, TChange, TIndexes>,
+function changeTree<TChange, TEditor extends DefaultEditBuilder>(
+	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
 	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));

@@ -4,13 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-
-// Allow importing from this specific file which is being tested:
-import { loadSummary, encodeSummary } from "../../feature-libraries";
-
 import { mintRevisionTag, SummaryData } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
+import { encodeSummary, loadSummary } from "../../shared-tree-core";
 
 describe("EditManagerIndex", () => {
 	it("roundtrip", () => {

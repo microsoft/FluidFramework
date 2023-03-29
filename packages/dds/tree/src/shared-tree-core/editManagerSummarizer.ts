@@ -30,12 +30,7 @@ import {
 	ChangeEncoder,
 	ChangeFamilyEditor,
 } from "../core";
-import {
-	Index,
-	SummaryElement,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "../shared-tree-core";
+import { IndexSummarizer, SummaryElementParser, SummaryElementStringifier } from ".";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -45,13 +40,9 @@ const blobKey = "Blob";
 const stringKey = "String";
 
 /**
- * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
- * which were based on a given session's branch, to the document history
+ * Provides methods for summarizing and loading an `EditManager`
  */
-// TODO: Remove commits when they are no longer in the collab window
-// TODO: Move logic into Rebaser if possible
-export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
-	public readonly summaryElement?: SummaryElement = this;
+export class EditManagerSummarizer<TChangeset> implements IndexSummarizer {
 	public readonly key = "EditManager";
 
 	private readonly editDataBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;

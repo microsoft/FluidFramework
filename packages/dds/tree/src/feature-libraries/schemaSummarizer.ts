@@ -22,7 +22,6 @@ import {
 	Dependent,
 	ICachedValue,
 	recordDependency,
-	Delta,
 	FieldSchema,
 	GlobalFieldKey,
 	SchemaData,
@@ -34,14 +33,11 @@ import {
 	SchemaEvents,
 } from "../core";
 import {
-	Index,
-	IndexEvents,
-	SummaryElement,
+	IndexSummarizer,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../shared-tree-core";
 import { isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { ISubscribable } from "../events";
 import { getSchemaString, parseSchemaString } from "./schemaIndexFormat";
 
 /**
@@ -52,22 +48,15 @@ const schemaBlobKey = "SchemaBlob";
 const schemaStringKey = "SchemaString";
 
 /**
- * Index which tracks stored schema for the current state for the document.
- *
- * Maintains the schema in memory.
- *
- * Used to capture snapshots of schema for summaries, as well as for anything else needing access to stored schema.
+ * Provides methods for summarizing and loading a schema repository.
  */
-export class SchemaIndex implements Index, SummaryElement {
+export class SchemaSummarizer implements IndexSummarizer {
 	public readonly key = "Schema";
-
-	public readonly summaryElement?: SummaryElement = this;
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		events: ISubscribable<IndexEvents<unknown>>,
 		private readonly schema: StoredSchemaRepository,
 	) {
 		this.schemaBlob = cachedValue(async (observer) => {
@@ -77,16 +66,6 @@ export class SchemaIndex implements Index, SummaryElement {
 			// For now we are not chunking the the schema, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
 		});
-		events.on("newLocalState", (changeDelta) => {
-			// TODO: apply schema changes.
-			// Extend delta to include them, or maybe have some higher level edit type that includes them and deltas?
-			// Implement same behavior in `SharedTreeCheckout`.
-		});
-	}
-
-	public newLocalState(changeDelta: Delta.Root): void {
-		// TODO: apply schema changes.
-		// Extend delta to include them, or maybe have some higher level edit type that includes them and deltas?
 	}
 
 	public getAttachSummary(
@@ -164,7 +143,7 @@ interface SchemaOp {
 /**
  * Wraps a StoredSchemaRepository, adjusting its "update" function to hook into Fluid Ops.
  *
- * TODO: this should be more integrated with both SchemaIndex and transactions.
+ * TODO: this should be more integrated with transactions.
  */
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository

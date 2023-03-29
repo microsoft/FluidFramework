@@ -5,13 +5,19 @@
 export { SharedTreeBranch, SharedTreeBranchEvents } from "./branch";
 
 export {
-	Index,
-	IndexEvents,
+	ChangeEvents,
 	ISharedTreeCoreEvents,
 	SharedTreeCore,
-	SummaryElement,
+	IndexSummarizer,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "./sharedTreeCore";
 
 export { TransactionStack } from "./transactionStack";
+
+export {
+	EditManagerSummarizer,
+	CommitEncoder,
+	parseSummary as loadSummary,
+	stringifySummary as encodeSummary,
+} from "./editManagerSummarizer";

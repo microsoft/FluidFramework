@@ -38,10 +38,11 @@ import {
 	RepairDataStore,
 	ChangeFamilyEditor,
 } from "../core";
-import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } from "../util";
-import { createEmitter, ISubscribable, TransformEvents } from "../events";
+import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { createEmitter, TransformEvents } from "../events";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
+import { EditManagerSummarizer } from "./editManagerSummarizer";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -57,7 +58,11 @@ const formatVersion = 0;
 // TODO: Organize this to be adjacent to persisted types.
 const indexesTreeKey = "indexes";
 
-export interface IndexEvents<TChangeset> {
+/**
+ * Events which result from the state of the tree changing.
+ * These are for internal use by the tree.
+ */
+export interface ChangeEvents<TChangeset> {
 	/**
 	 * @param change - change that was just sequenced.
 	 * @param derivedFromLocal - iff provided, change was a local change (from this session)
@@ -85,17 +90,11 @@ export interface IndexEvents<TChangeset> {
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<
-	TEditor extends ChangeFamilyEditor,
-	TChange,
-	TIndexes extends readonly Index[],
-> extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
+export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject<
+	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
+> {
 	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
-
-	/**
-	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
-	 */
-	private readonly summaryElements: SummaryElement[];
+	private readonly indexSummarizers: readonly IndexSummarizer[];
 
 	/**
 	 * The sequence number that this instance is at.
@@ -105,15 +104,9 @@ export class SharedTreeCore<
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
 
 	/**
-	 * The indexes available to this tree.
-	 * These are declared at construction time.
+	 * Provides internal events that result from changes to the tree
 	 */
-	protected readonly indexes: TIndexes;
-
-	/**
-	 * Provides events that indexes can subscribe to
-	 */
-	private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
+	protected readonly changeEvents = createEmitter<ChangeEvents<TChange>>();
 
 	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
@@ -123,7 +116,7 @@ export class SharedTreeCore<
 	private readonly transactions = new TransactionStack();
 
 	/**
-	 * @param indexes - A list of indexes, either as an array or as a factory function
+	 * @param indexSummarizers - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
 	 * @param anchors - The anchor set
@@ -133,12 +126,7 @@ export class SharedTreeCore<
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		indexes:
-			| TIndexes
-			| ((
-					events: ISubscribable<IndexEvents<TChange>>,
-					editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>,
-			  ) => TIndexes),
+		indexSummarizers: readonly IndexSummarizer[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
 
@@ -157,14 +145,12 @@ export class SharedTreeCore<
 		 */
 		const localSessionId = uuid();
 		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
-		this.indexes = isReadonlyArray(indexes)
-			? indexes
-			: indexes(this.indexEventEmitter, this.editManager);
-		this.summaryElements = this.indexes
-			.map((i) => i.summaryElement)
-			.filter((e): e is SummaryElement => e !== undefined);
+		this.indexSummarizers = [
+			new EditManagerSummarizer(runtime, this.editManager),
+			...indexSummarizers,
+		];
 		assert(
-			new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
+			new Set(this.indexSummarizers.map((e) => e.key)).size === this.indexSummarizers.length,
 			0x350 /* Index summary element keys must be unique */,
 		);
 
@@ -188,7 +174,7 @@ export class SharedTreeCore<
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		// Merge the summaries of all indexes together under a single ISummaryTree
-		for (const summaryElement of this.summaryElements) {
+		for (const summaryElement of this.indexSummarizers) {
 			builder.addWithStats(
 				summaryElement.key,
 				summaryElement.getAttachSummary(
@@ -204,7 +190,7 @@ export class SharedTreeCore<
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		const loadIndexes = this.summaryElements.map(async (summaryElement) =>
+		const loadIndexes = this.indexSummarizers.map(async (summaryElement) =>
 			summaryElement.load(
 				scopeStorageService(services, indexesTreeKey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
@@ -253,8 +239,8 @@ export class SharedTreeCore<
 			this.submitCommit(commit);
 		}
 
-		this.indexEventEmitter.emit("newLocalChange", change);
-		this.indexEventEmitter.emit("newLocalState", delta);
+		this.changeEvents.emit("newLocalChange", change);
+		this.changeEvents.emit("newLocalState", delta);
 	}
 
 	protected processCore(
@@ -276,8 +262,8 @@ export class SharedTreeCore<
 			brand(message.referenceSequenceNumber),
 		);
 		const sequencedChange = this.editManager.getLastSequencedChange();
-		this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
-		this.indexEventEmitter.emit("newLocalState", delta);
+		this.changeEvents.emit("newSequencedChange", sequencedChange);
+		this.changeEvents.emit("newLocalState", delta);
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
@@ -298,7 +284,7 @@ export class SharedTreeCore<
 		const { startRevision, repairStore } = this.transactions.pop();
 		this.editor.exitTransaction();
 		const delta = this.editManager.rollbackLocalChanges(startRevision, repairStore);
-		this.indexEventEmitter.emit("newLocalState", delta);
+		this.changeEvents.emit("newLocalState", delta);
 		return TransactionResult.Abort;
 	}
 
@@ -353,7 +339,7 @@ export class SharedTreeCore<
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
 		const gcNodes: IGarbageCollectionData["gcNodes"] = {};
-		for (const summaryElement of this.summaryElements) {
+		for (const summaryElement of this.indexSummarizers) {
 			for (const [id, routes] of Object.entries(summaryElement.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
@@ -387,19 +373,9 @@ interface Message {
 }
 
 /**
- * Observes Changesets (after rebase), after writes data into summaries when requested.
- */
-export interface Index {
-	/**
-	 * If provided, records data into summaries.
-	 */
-	readonly summaryElement?: SummaryElement;
-}
-
-/**
  * Specifies the behavior of an {@link Index} that puts data in a summary.
  */
-export interface SummaryElement {
+export interface IndexSummarizer {
 	/**
 	 * Field name in summary json under which this element stores its data.
 	 *
