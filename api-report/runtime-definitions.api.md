@@ -284,7 +284,7 @@ export interface IGarbageCollectionSnapshotData {
     // (undocumented)
     deletedNodes: string[] | undefined;
     // (undocumented)
-    gcState: IGarbageCollectionState | undefined;
+    gcState: IGarbageCollectionState;
     // (undocumented)
     tombstones: string[] | undefined;
 }

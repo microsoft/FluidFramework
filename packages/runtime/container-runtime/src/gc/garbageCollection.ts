@@ -42,6 +42,7 @@ import {
 import {
 	cloneGCData,
 	concatGarbageCollectionData,
+	getBaseGCDetailsFromSnapshotData,
 	getGCDataFromSnapshot,
 	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,

@@ -14,13 +14,6 @@ import {
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-<<<<<<< HEAD
-=======
-	IGarbageCollectionNodeData,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
-	IGarbageCollectionSummaryDetailsLegacy,
->>>>>>> 2385193fdd (Update deleted nodes only on GC version change)
 } from "@fluidframework/runtime-definitions";
 import { packagePathToTelemetryProperty, ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { MonitoringContext } from "@fluidframework/telemetry-utils";

@@ -118,7 +118,7 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
  * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export interface IGarbageCollectionSnapshotData {
-	gcState: IGarbageCollectionState | undefined;
+	gcState: IGarbageCollectionState;
 	tombstones: string[] | undefined;
 	deletedNodes: string[] | undefined;
 }
