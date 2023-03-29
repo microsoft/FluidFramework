@@ -127,6 +127,7 @@ export interface Insert<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange> {
 	type: "Insert";
 	content: ProtoNode[];
+	id: ChangesetLocalId;
 }
 
 export interface MoveIn extends HasMoveId, HasPlaceFields, HasRevisionTag, CanConflict {
