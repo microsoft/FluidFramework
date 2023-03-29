@@ -9,17 +9,13 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
@@ -58,6 +54,8 @@ export interface ISharedTreeCoreEvents {
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
+// TODO: Organize this to be adjacent to persisted types.
+const indexesTreeKey = "indexes";
 
 export interface IndexEvents<TChangeset> {
 	/**
@@ -179,43 +177,36 @@ export class SharedTreeCore<
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		let stats = mergeStats();
-		const summary: ISummaryTree = {
-			type: SummaryType.Tree,
-			tree: {},
-		};
-		stats.treeNodeCount += 1;
+		const builder = new SummaryTreeBuilder();
+		builder.addWithStats(indexesTreeKey, this.summarizeIndexes(serializer, telemetryContext));
+		return builder.getSummaryTree();
+	}
 
+	private summarizeIndexes(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
+		const builder = new SummaryTreeBuilder();
 		// Merge the summaries of all indexes together under a single ISummaryTree
-		const indexSummaryTree: ISummaryTree["tree"] = {};
 		for (const summaryElement of this.summaryElements) {
-			const { stats: elementStats, summary: elementSummary } =
+			builder.addWithStats(
+				summaryElement.key,
 				summaryElement.getAttachSummary(
 					(contents) => serializer.stringify(contents, this.handle),
 					undefined,
 					undefined,
 					telemetryContext,
-				);
-			indexSummaryTree[summaryElement.key] = elementSummary;
-			stats = mergeStats(stats, elementStats);
+				),
+			);
 		}
 
-		summary.tree.indexes = {
-			type: SummaryType.Tree,
-			tree: indexSummaryTree,
-		};
-		stats.treeNodeCount += 1;
-
-		return {
-			stats,
-			summary,
-		};
+		return builder.getSummaryTree();
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		const loadIndexes = this.summaryElements.map(async (summaryElement) =>
 			summaryElement.load(
-				scopeStorageService(services, "indexes", summaryElement.key),
+				scopeStorageService(services, indexesTreeKey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
 			),
 		);
@@ -243,16 +234,21 @@ export class SharedTreeCore<
 	/**
 	 * Update the state of the tree (including all indexes) according to the given change.
 	 * If there is not currently a transaction open, the change will be submitted to Fluid.
+	 * @param change - The change to apply.
+	 * @param revision - The revision to associate with the change.
+	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
-	protected applyChange(change: TChange): void {
-		const revision = mintRevisionTag();
+	protected applyChange(change: TChange, revision?: RevisionTag): void {
 		const commit = {
 			change,
-			revision,
+			revision: revision ?? mintRevisionTag(),
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(revision, change, false);
-		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		const delta = this.editManager.addLocalChange(commit.revision, change, false);
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(change),
+			commit.revision,
+		);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
@@ -301,9 +297,8 @@ export class SharedTreeCore<
 	public abortTransaction(): TransactionResult.Abort {
 		const { startRevision, repairStore } = this.transactions.pop();
 		this.editor.exitTransaction();
-		for (const delta of this.editManager.rollbackLocalChanges(startRevision, repairStore)) {
-			this.indexEventEmitter.emit("newLocalState", delta);
-		}
+		const delta = this.editManager.rollbackLocalChanges(startRevision, repairStore);
+		this.indexEventEmitter.emit("newLocalState", delta);
 		return TransactionResult.Abort;
 	}
 
@@ -330,8 +325,8 @@ export class SharedTreeCore<
 					ancestor === localBranchHead,
 					0x598 /* Expected merging checkout branches to be related */,
 				);
-				for (const { change } of changes) {
-					this.applyChange(change);
+				for (const { change, revision } of changes) {
+					this.applyChange(change, revision);
 					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				}
 				return changeToForked;

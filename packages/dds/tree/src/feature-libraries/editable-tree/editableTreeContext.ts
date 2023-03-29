@@ -22,13 +22,9 @@ import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "../contextuallyTyped";
-import {
-	ProxyTarget,
-	EditableField,
-	unwrappedField,
-	UnwrappedEditableField,
-	makeField,
-} from "./editableTree";
+import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
+import { makeField, unwrappedField } from "./editableField";
+import { ProxyTarget } from "./ProxyTarget";
 
 /**
  * A common context of a "forest" of EditableTrees.

@@ -53,10 +53,12 @@ async function createSummarizerCore(
 	const summarizerContainer = await loader.resolve(request);
 	await waitForContainerConnection(summarizerContainer);
 
-	const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(summarizerContainer, {
-		url: "_summarizer",
-	});
-	if (fluidObject.ISummarizer === undefined) {
+	const fluidObject: FluidObject<ISummarizer> | undefined = summarizerContainer.getEntryPoint
+		? await summarizerContainer.getEntryPoint?.()
+		: await requestFluidObject<FluidObject<ISummarizer>>(summarizerContainer, {
+				url: "_summarizer",
+		  });
+	if (fluidObject?.ISummarizer === undefined) {
 		throw new Error("Fluid object does not implement ISummarizer");
 	}
 

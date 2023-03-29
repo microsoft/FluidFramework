@@ -230,10 +230,20 @@ export type ContextuallyTypedNodeData =
 	| MarkedArrayLike<ContextuallyTypedNodeData>;
 
 /**
+ * Content of a field which needs external schema information to interpret.
+ *
+ * This format is intended for concise authoring of tree literals when the schema is statically known.
+ *
+ * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
+ * @alpha
+ */
+export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
+
+/**
  * Checks the type of a `ContextuallyTypedNodeData`.
  */
 export function isArrayLike(
-	data: ContextuallyTypedNodeData | undefined,
+	data: ContextuallyTypedFieldData,
 ): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData> {
 	return isWritableArrayLike(data) || Array.isArray(data);
 }
@@ -243,7 +253,7 @@ export function isArrayLike(
  * @alpha
  */
 export function isWritableArrayLike(
-	data: ContextuallyTypedNodeData | undefined,
+	data: ContextuallyTypedFieldData,
 ): data is MarkedArrayLike<ContextuallyTypedNodeData> {
 	if (typeof data !== "object") {
 		return false;
@@ -286,14 +296,14 @@ export interface ContextuallyTypedNodeDataObject {
 	 * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
 	 */
 	// TODO: make sure explicit undefined is actually handled correctly.
-	[key: FieldKey]: ContextuallyTypedNodeData | undefined;
+	[key: FieldKey]: ContextuallyTypedFieldData;
 
 	/**
 	 * Fields of this node, indexed by their field keys as strings.
 	 *
 	 * Allow unbranded local field keys and a convenience for literals.
 	 */
-	[key: string]: ContextuallyTypedNodeData | undefined;
+	[key: string]: ContextuallyTypedFieldData;
 }
 
 /**
@@ -431,7 +441,7 @@ export function applyTypesFromContext(
 export function applyFieldTypesFromContext(
 	schemaData: SchemaDataAndPolicy,
 	field: FieldSchema,
-	data: ContextuallyTypedNodeData | undefined,
+	data: ContextuallyTypedFieldData,
 ): MapTree[] {
 	const multiplicity = getFieldKind(field).multiplicity;
 	if (data === undefined) {
