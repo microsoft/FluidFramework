@@ -1079,11 +1079,11 @@ describe("Runtime", () => {
 				loadSequenceNumberVerification: "close",
 				flushMode: FlushMode.TurnBased,
 				compressionOptions: {
-					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					minimumBatchSizeInBytes: 614400,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
-				maxBatchSizeInBytes: 950 * 1024,
-				chunkSizeInBytes: Number.POSITIVE_INFINITY,
+				maxBatchSizeInBytes: 700 * 1024,
+				chunkSizeInBytes: 204800,
 				enableOpReentryCheck: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
