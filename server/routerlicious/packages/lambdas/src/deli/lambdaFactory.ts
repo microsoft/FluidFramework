@@ -97,9 +97,9 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		let gitManager: IGitManager;
 		let document: IDocument;
 
-        try {
-            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-            gitManager = tenant.gitManager;
+		try {
+			const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+			gitManager = tenant.gitManager;
 
 			// Check if the document was deleted prior.
 			if (!isDocumentValid(document)) {

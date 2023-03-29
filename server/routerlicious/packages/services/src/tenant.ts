@@ -4,11 +4,11 @@
  */
 
 import {
-    GitManager,
-    Historian,
-    ICredentials,
-    BasicRestWrapper,
-    getAuthorizationTokenFromCredentials,
+	GitManager,
+	Historian,
+	ICredentials,
+	BasicRestWrapper,
+	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
 import { generateToken, getCorrelationId } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
@@ -19,9 +19,9 @@ export class Tenant implements core.ITenant {
 		return this.config.id;
 	}
 
-    public get gitManager(): GitManager {
-        return this.manager;
-    }
+	public get gitManager(): GitManager {
+		return this.manager;
+	}
 
 	public get storage(): core.ITenantStorage {
 		return this.config.storage;
@@ -31,8 +31,10 @@ export class Tenant implements core.ITenant {
 		return this.config.orderer;
 	}
 
-    constructor(private readonly config: core.ITenantConfig, private readonly manager: GitManager) {
-    }
+	constructor(
+		private readonly config: core.ITenantConfig,
+		private readonly manager: GitManager,
+	) {}
 }
 
 /**
@@ -50,47 +52,55 @@ export class TenantManager implements core.ITenantManager {
 		return result;
 	}
 
-    public async getTenant(tenantId: string, documentId: string, includeDisabledTenant = false): Promise<core.ITenant> {
-        const restWrapper = new BasicRestWrapper();
-        const [details, key] = await Promise.all([
-            restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`,
-            { includeDisabledTenant }),
-            this.getKey(tenantId, includeDisabledTenant)]);
+	public async getTenant(
+		tenantId: string,
+		documentId: string,
+		includeDisabledTenant = false,
+	): Promise<core.ITenant> {
+		const restWrapper = new BasicRestWrapper();
+		const [details, key] = await Promise.all([
+			restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, {
+				includeDisabledTenant,
+			}),
+			this.getKey(tenantId, includeDisabledTenant),
+		]);
 
-        const defaultQueryString = {
-            token: fromUtf8ToBase64(`${tenantId}`),
-        };
-        const getDefaultHeaders = () => {
-            const credentials: ICredentials = {
-                password: generateToken(tenantId, documentId, key, null),
-                user: tenantId,
-            };
-            return ({
-                Authorization: getAuthorizationTokenFromCredentials(credentials),
-            });
-        };
-        const defaultHeaders = getDefaultHeaders();
-        const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
-        const tenantRestWrapper = new BasicRestWrapper(
-            baseUrl,
-            defaultQueryString,
-            undefined,
-            undefined,
-            defaultHeaders,
-            undefined,
-            undefined,
-            getDefaultHeaders,
-            getCorrelationId);
-        const historian = new Historian(
-            `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
-            true,
-            false,
-            tenantRestWrapper);
-        const gitManager = new GitManager(historian);
-        const tenant = new Tenant(details, gitManager);
+		const defaultQueryString = {
+			token: fromUtf8ToBase64(`${tenantId}`),
+		};
+		const getDefaultHeaders = () => {
+			const credentials: ICredentials = {
+				password: generateToken(tenantId, documentId, key, null),
+				user: tenantId,
+			};
+			return {
+				Authorization: getAuthorizationTokenFromCredentials(credentials),
+			};
+		};
+		const defaultHeaders = getDefaultHeaders();
+		const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+		const tenantRestWrapper = new BasicRestWrapper(
+			baseUrl,
+			defaultQueryString,
+			undefined,
+			undefined,
+			defaultHeaders,
+			undefined,
+			undefined,
+			getDefaultHeaders,
+			getCorrelationId,
+		);
+		const historian = new Historian(
+			`${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
+			true,
+			false,
+			tenantRestWrapper,
+		);
+		const gitManager = new GitManager(historian);
+		const tenant = new Tenant(details, gitManager);
 
-        return tenant;
-    }
+		return tenant;
+	}
 
 	public async verifyToken(tenantId: string, token: string): Promise<void> {
 		const restWrapper = new BasicRestWrapper();

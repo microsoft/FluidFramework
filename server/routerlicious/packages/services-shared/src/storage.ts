@@ -116,21 +116,21 @@ export class DocumentStorage implements IDocumentStorage {
 			  };
 	}
 
-    public async createDocument(
-        tenantId: string,
-        documentId: string,
-        appTree: ISummaryTree,
-        sequenceNumber: number,
-        term: number,
-        initialHash: string,
-        ordererUrl: string,
-        historianUrl: string,
-        deltaStreamUrl: string,
-        values: [string, ICommittedProposal][],
-        enableDiscovery: boolean = false,
-    ): Promise<IDocumentDetails> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+	public async createDocument(
+		tenantId: string,
+		documentId: string,
+		appTree: ISummaryTree,
+		sequenceNumber: number,
+		term: number,
+		initialHash: string,
+		ordererUrl: string,
+		historianUrl: string,
+		deltaStreamUrl: string,
+		values: [string, ICommittedProposal][],
+		enableDiscovery: boolean = false,
+	): Promise<IDocumentDetails> {
+		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		const gitManager = tenant.gitManager;
 
 		const lumberjackProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
@@ -279,31 +279,43 @@ export class DocumentStorage implements IDocumentStorage {
 		};
 	}
 
-    public async getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+	public async getVersions(
+		tenantId: string,
+		documentId: string,
+		count: number,
+	): Promise<ICommitDetails[]> {
+		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		const gitManager = tenant.gitManager;
 
 		return gitManager.getCommits(documentId, count);
 	}
 
-    public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+	public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
+		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		const gitManager = tenant.gitManager;
 
 		return gitManager.getCommit(sha);
 	}
 
-    public async getFullTree(tenantId: string, documentId: string): Promise<{ cache: IGitCache; code: string; }> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const versions = await tenant.gitManager.getCommits(documentId, 1);
-        if (versions.length === 0) {
-            return {
-                cache: { blobs: [], commits: [], refs: { [documentId]: (null as unknown) as string }, trees: [] },
-                code: (null as unknown) as string,
-            };
-        }
+	public async getFullTree(
+		tenantId: string,
+		documentId: string,
+	): Promise<{ cache: IGitCache; code: string }> {
+		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		const versions = await tenant.gitManager.getCommits(documentId, 1);
+		if (versions.length === 0) {
+			return {
+				cache: {
+					blobs: [],
+					commits: [],
+					refs: { [documentId]: null as unknown as string },
+					trees: [],
+				},
+				code: null as unknown as string,
+			};
+		}
 
-        const fullTree = await tenant.gitManager.getFullTree(versions[0].sha);
+		const fullTree = await tenant.gitManager.getFullTree(versions[0].sha);
 
 		let code: string = null as unknown as string;
 		if (fullTree.quorumValues) {
@@ -403,48 +415,52 @@ export class DocumentStorage implements IDocumentStorage {
 		}
 	}
 
-    private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
-        const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
-        if (existingRef) {
-            // Fetch ops from logTail and insert into deltas collection.
-            // TODO: Make the rest endpoint handle this case.
-            const opsContent = await gitManager.getContent(existingRef.object.sha, ".logTail/logTail");
-            const ops = JSON.parse(
-                Buffer.from(
-                    opsContent.content,
-                    Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
-                ).toString(),
-            ) as ISequencedDocumentMessage[];
-            const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
-                return {
-                    documentId,
-                    operation: op,
-                    tenantId,
-                    type: SequencedOperationType,
-                    mongoTimestamp: new Date(op.timestamp),
-                };
-            });
-            const opsCollection = await this.databaseManager.getDeltaCollection(tenantId, documentId);
-            await opsCollection
-                .insertMany(dbOps, false)
-                .catch(async (error) => {
-                    // Duplicate key errors are ignored
-                    if (error.code !== 11000) {
-                        // Needs to be a full rejection here
-                        return Promise.reject(error);
-                    }
-                });
-            winston.info(`Inserted ${dbOps.length} ops into deltas DB`);
-            const lumberjackProperties = {
-                [BaseTelemetryProperties.tenantId]: tenantId,
-                [BaseTelemetryProperties.documentId]: documentId,
-            };
-            Lumberjack.info(`Inserted ${dbOps.length} ops into deltas DB`, lumberjackProperties);
-            return true;
-        } else {
-            return false;
-        }
-    }
+	private async readFromSummary(tenantId: string, documentId: string): Promise<boolean> {
+		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		const gitManager = tenant.gitManager;
+		const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
+		if (existingRef) {
+			// Fetch ops from logTail and insert into deltas collection.
+			// TODO: Make the rest endpoint handle this case.
+			const opsContent = await gitManager.getContent(
+				existingRef.object.sha,
+				".logTail/logTail",
+			);
+			const ops = JSON.parse(
+				Buffer.from(
+					opsContent.content,
+					Buffer.isEncoding(opsContent.encoding) ? opsContent.encoding : undefined,
+				).toString(),
+			) as ISequencedDocumentMessage[];
+			const dbOps: ISequencedOperationMessage[] = ops.map((op: ISequencedDocumentMessage) => {
+				return {
+					documentId,
+					operation: op,
+					tenantId,
+					type: SequencedOperationType,
+					mongoTimestamp: new Date(op.timestamp),
+				};
+			});
+			const opsCollection = await this.databaseManager.getDeltaCollection(
+				tenantId,
+				documentId,
+			);
+			await opsCollection.insertMany(dbOps, false).catch(async (error) => {
+				// Duplicate key errors are ignored
+				if (error.code !== 11000) {
+					// Needs to be a full rejection here
+					return Promise.reject(error);
+				}
+			});
+			winston.info(`Inserted ${dbOps.length} ops into deltas DB`);
+			const lumberjackProperties = {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				[BaseTelemetryProperties.documentId]: documentId,
+			};
+			Lumberjack.info(`Inserted ${dbOps.length} ops into deltas DB`, lumberjackProperties);
+			return true;
+		} else {
+			return false;
+		}
+	}
 }

@@ -86,10 +86,10 @@ export interface ITenantManager {
 	 */
 	getTenant(tenantId: string, documentId: string): Promise<ITenant>;
 
-    /**
-     * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.
-     */
-    verifyToken(tenantId: string, token: string): Promise<void>;
+	/**
+	 * Verifies that the given auth token is valid. A rejected promise indicates an invalid token.
+	 */
+	verifyToken(tenantId: string, token: string): Promise<void>;
 
 	/**
 	 * Retrieves the key for the given tenant. This is a privileged op and should be used with care.

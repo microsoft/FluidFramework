@@ -71,7 +71,7 @@ export class TestTenantManager implements ITenantManager {
 		return this.tenant;
 	}
 
-    public async getKey(tenantId: string): Promise<string> {
-        return "test";
-    }
+	public async getKey(tenantId: string): Promise<string> {
+		return "test";
+	}
 }

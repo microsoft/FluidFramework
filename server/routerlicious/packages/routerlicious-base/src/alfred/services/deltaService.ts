@@ -79,14 +79,15 @@ export class DeltaService implements IDeltaService {
 		return dbDeltas.map((delta) => delta.operation);
 	}
 
-    public async getDeltasFromSummaryAndStorage(
-        collectionName: string,
-        tenantId: string,
-        documentId: string,
-        from?: number,
-        to?: number) {
-        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
-        const gitManager = tenant.gitManager;
+	public async getDeltasFromSummaryAndStorage(
+		collectionName: string,
+		tenantId: string,
+		documentId: string,
+		from?: number,
+		to?: number,
+	) {
+		const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+		const gitManager = tenant.gitManager;
 
 		const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
 		if (!existingRef) {
