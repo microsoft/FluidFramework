@@ -40,8 +40,8 @@ It is recommended to also change the `maxBatchSizeInBytes` property in `IContain
 
 If the features are enabled using the configs, they can be disabled at runtime via feature gates as following:
 
--   `Fluid.ContainerRuntime.DisableCompression` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
--   `Fluid.ContainerRuntime.DisableCompressionChunking` - if set to true, will disable chunking for compression.
+-   `Fluid.ContainerRuntime.CompressionDisabled` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
+-   `Fluid.ContainerRuntime.CompressionChunkingDisabled` - if set to true, will disable chunking for compression.
 
 ## Example configs
 

@@ -1108,9 +1108,9 @@ describe("Runtime", () => {
 
 			it("Container load stats with feature gate overrides", async () => {
 				const featureGates = {
-					"Fluid.ContainerRuntime.DisableCompression": true,
+					"Fluid.ContainerRuntime.CompressionDisabled": true,
+					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
-					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,
