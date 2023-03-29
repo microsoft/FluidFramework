@@ -54,7 +54,6 @@ import {
 	IdAllocator,
 	RevisionInfo,
 	RevisionMetadataSource,
-	NodeExistsConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import { convertGenericChange, GenericChangeset, genericFieldKind } from "./genericFieldKind";
@@ -261,7 +260,6 @@ export class ModularChangeFamily
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
 		let valueConstraint: Value | undefined;
-		let nodeExistsConstraint: NodeExistsConstraint | undefined;
 		for (const change of changes) {
 			// Use the first defined value constraint before any value changes.
 			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
@@ -278,9 +276,6 @@ export class ModularChangeFamily
 			}
 			if (change.change.fieldChanges !== undefined) {
 				fieldChanges.push(tagChange(change.change.fieldChanges, change.revision));
-			}
-			if (change.change.nodeExistsConstraint !== undefined) {
-				nodeExistsConstraint = { ...change.change.nodeExistsConstraint };
 			}
 		}
 
@@ -301,10 +296,6 @@ export class ModularChangeFamily
 
 		if (valueConstraint !== undefined) {
 			composedNodeChange.valueConstraint = valueConstraint;
-		}
-
-		if (nodeExistsConstraint !== undefined) {
-			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
 		return composedNodeChange;
@@ -995,22 +986,6 @@ export class ModularEditBuilder
 	public addValueConstraint(path: UpPath, currentValue: Value): void {
 		const nodeChange: NodeChangeset = {
 			valueConstraint: { value: currentValue, violated: false },
-		};
-		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
-			path.parentIndex,
-			nodeChange,
-		);
-		this.submitChange(
-			path.parent,
-			path.parentField,
-			genericFieldKind.identifier,
-			brand(fieldChange),
-		);
-	}
-
-	public addNodeExistsConstraint(path: UpPath): void {
-		const nodeChange: NodeChangeset = {
-			nodeExistsConstraint: { value: path },
 		};
 		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
 			path.parentIndex,
