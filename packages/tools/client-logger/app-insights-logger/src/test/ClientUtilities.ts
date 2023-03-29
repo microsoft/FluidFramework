@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 import { ConnectionState } from "@fluidframework/container-loader";
-import {
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
