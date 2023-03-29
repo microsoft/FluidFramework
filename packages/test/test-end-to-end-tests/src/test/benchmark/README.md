@@ -1,17 +1,15 @@
 # @fluidframework/test-end-to-end-tests/test/src/test/benchmark
 
-There are 2 different types of end-to-end benchmark tests that will collect both time and memory data from a single test file:
+There are 2 different types of end-to-end benchmark tests for collecting both memory and time data:
 
 ## Example1
 
 Take a look at the [SimpleTest.all.spec.ts](src/test/benchmark/SimpleTest.all.spec.ts) for a basic example
 of how to write an end-to-end test that will collect performance data for both time and memory.
 
-That same [directory](src/test) contains more complex examples too.
-
 ## Example2
 
-The tests that contain `describeE2EDocRun` will automatically run against a predetermined number of documents.
+The tests that make use of `describeE2EDocRun` will automatically run against a predetermined number of documents.
 To illustrate, take a look at [LoadDocument.all.spec.ts](src/test/benchmark/LoadDocument.all.spec.ts).
 In this particular test, it will execute the load of dynamically generated containers, defined by
 classes that implement the `IDocumentLoaderAndSummarizer` interface.
