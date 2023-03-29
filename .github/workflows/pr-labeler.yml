@@ -44,11 +44,13 @@ jobs:
 
       # If a changeset is present, label it changeset-present
       - uses: actions-ecosystem/action-add-labels@v1.1.0
+        name: Add changeset-present
         if: steps.changeset-status.outcome == 'success'
         with:
           labels: changeset-present
           github_token: ${{ github.token }}
       - uses: actions-ecosystem/action-remove-labels@v1.3.0
+        name: Remove changeset-missing
         if: steps.changeset-status.outcome == 'success'
         with:
           labels: changeset-missing
@@ -56,11 +58,13 @@ jobs:
 
       # If a changeset is missing, label it changeset-present
       - uses: actions-ecosystem/action-add-labels@v1.1.0
+        name: Add changeset-missing
         if: steps.changeset-status.outcome == 'failure'
         with:
           labels: changeset-missing
           github_token: ${{ github.token }}
       - uses: actions-ecosystem/action-remove-labels@v1.3.0
+        name: Remove changeset-present
         if: steps.changeset-status.outcome == 'failure'
         with:
           labels: changeset-present
