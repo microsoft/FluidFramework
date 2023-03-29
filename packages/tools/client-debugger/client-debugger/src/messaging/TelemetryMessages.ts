@@ -19,7 +19,7 @@ export interface ITimestampedTelemetryEvent {
 	logContent: ITelemetryBaseEvent;
 
 	/**
-	 * The timestamp of the telemetry event.
+	 * The timestamp at which the event was logged. {@link Date#now}. i.e. MM/DD/YYYY, HH:MM:SS AM/PM.
 	 */
 	timestamp: number;
 }

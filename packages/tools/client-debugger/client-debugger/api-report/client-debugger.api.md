@@ -299,6 +299,9 @@ export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMe
 
 // @public
 export interface TelemetryEventMessageData {
+    /**
+	 * Contents of the telemetry event. This can be a single latest event or all the history events.
+	 */
     contents: ITimestampedTelemetryEvent[];
 }
 
