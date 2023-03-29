@@ -337,6 +337,9 @@ export enum NodeKind {
 export function postMessagesToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
+export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
+
+// @public
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
     // (undocumented)
     type: "REGISTRY_CHANGE";
@@ -384,7 +387,7 @@ export interface ValueNode extends ValueNodeBase {
 
 // @public
 export interface ValueNodeBase extends VisualNodeBase {
-    value: unknown;
+    value: Primitive;
 }
 
 // @public
@@ -393,7 +396,7 @@ export type VisualNode = VisualTreeNode | ValueNode | FluidHandleNode;
 // @public
 export interface VisualNodeBase {
     label: string;
-    metadata?: string;
+    metadata?: Record<string, Primitive>;
     nodeKind: NodeKind;
     typeMetadata?: string;
 }

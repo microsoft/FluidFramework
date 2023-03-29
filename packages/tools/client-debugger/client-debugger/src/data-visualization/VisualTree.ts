@@ -35,6 +35,8 @@ export enum NodeKind {
  * Type union representing TypeScript primitives.
  *
  * @remarks Used for data / metadata in {@link VisualNodeBase}s.
+ *
+ * @public
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
