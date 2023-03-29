@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ContainerRuntimeMessage } from "..";
 import { IBatch } from "./definitions";
@@ -21,6 +22,14 @@ export class OpGroupingManager {
 	public groupBatch(batch: IBatch): IBatch {
 		if (batch.content.length < 2 || !this.groupedBatchingEnabled) {
 			return batch;
+		}
+
+		for (const message of batch.content) {
+			if (message.metadata) {
+				const keys = Object.keys(message.metadata);
+				assert(keys.length < 2, "cannot group ops with metadata");
+				assert(keys.length === 0 || keys[0] === "batch", "unexpected op metadata");
+			}
 		}
 
 		// Need deserializedContent for back-compat

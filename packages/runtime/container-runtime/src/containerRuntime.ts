@@ -1243,9 +1243,15 @@ export class ContainerRuntime
 			() => this.storage,
 			(localId: string, blobId?: string) => {
 				if (!this.disposed) {
-					this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
-						localId,
-						blobId,
+					// eslint-disable-next-line @typescript-eslint/no-floating-promises
+					Promise.resolve().then(() => {
+						// Blob attaches need to be in their own batch (grouped batching would hide metadata)
+						this.flush();
+						this.submit(ContainerMessageType.BlobAttach, undefined, undefined, {
+							localId,
+							blobId,
+						});
+						this.flush();
 					});
 				}
 			},
