@@ -21,6 +21,7 @@ export {
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCResult,
 	IGCRuntimeOptions,
 	IGCStats,
 	oneDayMs,
@@ -35,11 +36,23 @@ export {
 	UnreferencedState,
 } from "./gcDefinitions";
 export {
+	cloneGCData,
+	concatGarbageCollectionStates,
+	getGCDataFromSnapshot,
 	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
+	trimLeadingAndTrailingSlashes,
+	unpackChildNodesGCDetails,
 } from "./gcHelpers";
+export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
+export {
+	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
+} from "./gcSummaryDefinitions";
 export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
