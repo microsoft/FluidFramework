@@ -56,15 +56,22 @@ By default, the runtime is configured with the following values related to compr
     }
 ```
 
-To enable only compression:
+To use compression but disable chunking:
+
+```
+    const runtimeOptions: IContainerRuntimeOptions = {
+        chunkSizeInBytes: Number.POSITIVE_INFINITY,
+    }
+```
+
+To disable compression (will also disable chunking, as chunking works only for compressed batches):
 
 ```
     const runtimeOptions: IContainerRuntimeOptions = {
         compressionOptions: {
-            minimumBatchSizeInBytes: 614400,
+            minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
             compressionAlgorithm: CompressionAlgorithms.lz4,
         },
-        maxBatchSizeInBytes: 716800,
     }
 ```
 
