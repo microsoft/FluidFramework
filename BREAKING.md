@@ -21,6 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [Op compression is enabled by default](#op-compression-is-enabled-by-default)
 
 ### garbage-collector and related items deprecated
 
@@ -47,6 +48,10 @@ The following interfaces available in `@fluidframework/runtime-definitions` are 
 -   `IGarbageCollectionState`
 -   `IGarbageCollectionSnapshotData`
 -   `IGarbageCollectionSummaryDetailsLegacy`
+
+### Op compression is enabled by default
+
+If the size of a batch is larger than 614kb, the ops will be compressed. After upgrading to this version, if batches exceed the size threshold, the runtime will produce a new type of op with the compression properties. To be able to open a document which contains this type of op, the runtime version needs to be at least `client_v2.0.0-internal.2.3.0`. Older clients will close with assert `0x3ce` and will not be able to open the documents until they upgrade.
 
 # 2.0.0-internal.4.0.0
 

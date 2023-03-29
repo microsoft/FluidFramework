@@ -303,11 +303,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 	const chunkingBatchesConfig: ITestContainerConfig = {
 		...testContainerConfig,
 		runtimeOptions: {
-			compressionOptions: {
-				minimumBatchSizeInBytes: compressionSizeThreshold,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			chunkSizeInBytes: 800 * 1024,
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 		},
 	};
