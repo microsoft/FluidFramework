@@ -141,7 +141,7 @@ interface JSObjectTree {
 }
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
-describe.only("SharedTree benchmarks", () => {
+describe("SharedTree benchmarks", () => {
 	describe("Direct JS Object", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
 			let tree: JSObjectTree[];
