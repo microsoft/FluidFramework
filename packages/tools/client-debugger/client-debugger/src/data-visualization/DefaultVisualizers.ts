@@ -19,8 +19,8 @@ import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
-	NodeKind,
-	VisualNode,
+	VisualNodeKind,
+	FluidObjectChildNode,
 } from "./VisualTree";
 
 /**
@@ -41,7 +41,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		label,
 		children: [renderedData],
 		typeMetadata: "SharedCell",
-		nodeKind: NodeKind.FluidTreeNode,
+		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
 
@@ -58,7 +58,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 		label,
 		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
-		nodeKind: NodeKind.FluidValueNode,
+		nodeKind: VisualNodeKind.FluidValueNode,
 	};
 };
 
@@ -72,7 +72,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 ): Promise<FluidObjectTreeNode> => {
 	const sharedMap = sharedObject as SharedMap;
 
-	const children: VisualNode[] = [];
+	const children: FluidObjectChildNode[] = [];
 	for (const [key, value] of sharedMap) {
 		const renderedChild = await visualizeChildData(value, key);
 		children.push(renderedChild);
@@ -86,7 +86,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 			size: sharedMap.size,
 		},
 		typeMetadata: "SharedMap",
-		nodeKind: NodeKind.FluidTreeNode,
+		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
 
@@ -105,7 +105,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 		label,
 		value: text,
 		typeMetadata: "SharedString",
-		nodeKind: NodeKind.FluidValueNode,
+		nodeKind: VisualNodeKind.FluidValueNode,
 	};
 };
 
@@ -120,7 +120,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 		fluidObjectId: sharedObject.id,
 		label,
 		typeMetadata: sharedObject.attributes.type,
-		nodeKind: NodeKind.FluidUnknownNode,
+		nodeKind: VisualNodeKind.FluidUnknownNode,
 	};
 };
 

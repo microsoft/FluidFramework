@@ -16,23 +16,23 @@ import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
-	NodeKind,
-	ValueNode,
 	visualizeSharedCell,
 	visualizeSharedCounter,
 	visualizeSharedMap,
 	visualizeSharedString,
 	visualizeUnknownSharedObject,
+	VisualNodeKind,
+	VisualValueNode,
 } from "../data-visualization";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests
  */
-async function visualizeChildData(child: unknown, label: string): Promise<ValueNode> {
+async function visualizeChildData(child: unknown, label: string): Promise<VisualValueNode> {
 	return {
 		label,
 		value: "test",
-		nodeKind: NodeKind.ValueNode,
+		nodeKind: VisualNodeKind.ValueNode,
 	};
 }
 
@@ -50,11 +50,11 @@ describe("DefaultVisualizers unit tests", () => {
 				{
 					label: "data",
 					value: "test",
-					nodeKind: NodeKind.ValueNode,
+					nodeKind: VisualNodeKind.ValueNode,
 				},
 			],
 			typeMetadata: "SharedCell",
-			nodeKind: NodeKind.FluidTreeNode,
+			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -80,7 +80,7 @@ describe("DefaultVisualizers unit tests", () => {
 			fluidObjectId: sharedCounter.id,
 			value: 37,
 			typeMetadata: "SharedCounter",
-			nodeKind: NodeKind.FluidValueNode,
+			nodeKind: VisualNodeKind.FluidValueNode,
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -105,24 +105,24 @@ describe("DefaultVisualizers unit tests", () => {
 				{
 					label: "foo",
 					value: "test",
-					nodeKind: NodeKind.ValueNode,
+					nodeKind: VisualNodeKind.ValueNode,
 				},
 				{
 					label: "bar",
 					value: "test",
-					nodeKind: NodeKind.ValueNode,
+					nodeKind: VisualNodeKind.ValueNode,
 				},
 				{
 					label: "baz",
 					value: "test",
-					nodeKind: NodeKind.ValueNode,
+					nodeKind: VisualNodeKind.ValueNode,
 				},
 			],
 			metadata: {
 				size: 3,
 			},
 			typeMetadata: "SharedMap",
-			nodeKind: NodeKind.FluidTreeNode,
+			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -144,7 +144,7 @@ describe("DefaultVisualizers unit tests", () => {
 			fluidObjectId: sharedString.id,
 			value: "Hello World!",
 			typeMetadata: "SharedString",
-			nodeKind: NodeKind.FluidValueNode,
+			nodeKind: VisualNodeKind.FluidValueNode,
 		};
 
 		expect(result).to.deep.equal(expected);
@@ -169,7 +169,7 @@ describe("DefaultVisualizers unit tests", () => {
 			fluidObjectId: "test-object-id",
 			label: "test-label",
 			typeMetadata: "UnknownSharedObjectType",
-			nodeKind: NodeKind.FluidUnknownNode,
+			nodeKind: VisualNodeKind.FluidUnknownNode,
 		};
 
 		expect(result).to.deep.equal(expected);

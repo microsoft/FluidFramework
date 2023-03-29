@@ -126,7 +126,7 @@ export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualiza
 
 // @public
 export interface DataVisualizationMessageData extends HasContainerId, HasFluidObjectId {
-    visualization: FluidObjectNode | undefined;
+    visualization: FluidObjectNodeBase | undefined;
 }
 
 // @public
@@ -174,26 +174,37 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 // @public
 export interface FluidHandleNode extends VisualNodeBase {
     fluidObjectId: string;
-    nodeKind: NodeKind.FluidHandleNode;
+    nodeKind: VisualNodeKind.FluidHandleNode;
 }
+
+// @public
+export type FluidObjectChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode;
 
 // @public
 export type FluidObjectId = string;
 
 // @public
-export interface FluidObjectNode extends VisualNodeBase {
+export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode;
+
+// @public
+export interface FluidObjectNodeBase extends VisualNodeBase {
     fluidObjectId: FluidObjectId;
 }
 
 // @public
-export interface FluidObjectTreeNode extends FluidObjectNode {
-    children: VisualNode[];
-    nodeKind: NodeKind.FluidTreeNode;
+export interface FluidObjectTreeNode extends FluidObjectNodeBase {
+    children: FluidObjectChildNode[];
+    nodeKind: VisualNodeKind.FluidTreeNode;
 }
 
 // @public
-export interface FluidUnknownObjectNode extends FluidObjectNode {
-    nodeKind: NodeKind.FluidUnknownNode;
+export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
+    nodeKind: VisualNodeKind.FluidValueNode;
+}
+
+// @public
+export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
+    nodeKind: VisualNodeKind.FluidUnknownNode;
 }
 
 // @public
@@ -317,22 +328,6 @@ export interface MessageLoggingOptions {
     context?: string;
 }
 
-// @public
-export enum NodeKind {
-    // (undocumented)
-    FluidHandleNode = 2,
-    // (undocumented)
-    FluidTreeNode = 0,
-    // (undocumented)
-    FluidUnknownNode = 3,
-    // (undocumented)
-    FluidValueNode = 1,
-    // (undocumented)
-    TreeNode = 4,
-    // (undocumented)
-    ValueNode = 5
-}
-
 // @internal
 export function postMessagesToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
@@ -381,30 +376,46 @@ export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEvent
 }
 
 // @public
-export interface ValueNode extends ValueNodeBase {
-    nodeKind: NodeKind.ValueNode;
-}
-
-// @public
 export interface ValueNodeBase extends VisualNodeBase {
     value: Primitive;
 }
 
 // @public
-export type VisualNode = VisualTreeNode | ValueNode | FluidHandleNode;
+export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
 
 // @public
 export interface VisualNodeBase {
     label: string;
     metadata?: Record<string, Primitive>;
-    nodeKind: NodeKind;
+    nodeKind: VisualNodeKind;
     typeMetadata?: string;
 }
 
 // @public
+export enum VisualNodeKind {
+    // (undocumented)
+    FluidHandleNode = 2,
+    // (undocumented)
+    FluidTreeNode = 0,
+    // (undocumented)
+    FluidUnknownNode = 3,
+    // (undocumented)
+    FluidValueNode = 1,
+    // (undocumented)
+    TreeNode = 4,
+    // (undocumented)
+    ValueNode = 5
+}
+
+// @public
 export interface VisualTreeNode extends VisualNodeBase {
-    children: VisualNode[];
-    nodeKind: NodeKind.TreeNode;
+    children: FluidObjectChildNode[];
+    nodeKind: VisualNodeKind.TreeNode;
+}
+
+// @public
+export interface VisualValueNode extends ValueNodeBase {
+    nodeKind: VisualNodeKind.ValueNode;
 }
 
 ```

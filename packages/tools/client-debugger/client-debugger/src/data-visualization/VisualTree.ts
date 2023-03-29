@@ -22,7 +22,7 @@ export type FluidObjectId = string;
  *
  * @public
  */
-export enum NodeKind {
+export enum VisualNodeKind {
 	FluidTreeNode,
 	FluidValueNode,
 	FluidHandleNode,
@@ -42,7 +42,7 @@ export enum NodeKind {
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
 
 /**
- * Base interface for all visual tree nodes.
+ * Base interface for all {@link VisualNode}s.
  *
  * @public
  */
@@ -63,9 +63,9 @@ export interface VisualNodeBase {
 	metadata?: Record<string, Primitive>;
 
 	/**
-	 * {@inheritDoc NodeKind}
+	 * {@inheritDoc VisualNodeKind}
 	 */
-	nodeKind: NodeKind;
+	nodeKind: VisualNodeKind;
 }
 
 /**
@@ -89,12 +89,24 @@ export interface VisualTreeNode extends VisualNodeBase {
 	/**
 	 * Child items to be displayed beneath this node.
 	 */
-	children: VisualNode[];
+	children: FluidObjectChildNode[];
 
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: NodeKind.TreeNode;
+	nodeKind: VisualNodeKind.TreeNode;
+}
+
+/**
+ * Terminal node containing a simple value to display.
+ *
+ * @public
+ */
+export interface VisualValueNode extends ValueNodeBase {
+	/**
+	 * {@inheritDoc VisualNodeBase.nodeKind}
+	 */
+	nodeKind: VisualNodeKind.ValueNode;
 }
 
 /**
@@ -102,7 +114,7 @@ export interface VisualTreeNode extends VisualNodeBase {
  *
  * @public
  */
-export interface FluidObjectNode extends VisualNodeBase {
+export interface FluidObjectNodeBase extends VisualNodeBase {
 	/**
 	 * A unique ID for the Fluid object being displayed.
 	 */
@@ -119,16 +131,16 @@ export interface FluidObjectNode extends VisualNodeBase {
  *
  * @public
  */
-export interface FluidObjectTreeNode extends FluidObjectNode {
+export interface FluidObjectTreeNode extends FluidObjectNodeBase {
 	/**
 	 * Child items to be displayed beneath this node.
 	 */
-	children: VisualNode[];
+	children: FluidObjectChildNode[];
 
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: NodeKind.FluidTreeNode;
+	nodeKind: VisualNodeKind.FluidTreeNode;
 }
 
 /**
@@ -141,11 +153,11 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
  *
  * @public
  */
-export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNode {
+export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: NodeKind.FluidValueNode;
+	nodeKind: VisualNodeKind.FluidValueNode;
 }
 
 /**
@@ -155,11 +167,11 @@ export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNode {
  *
  * @public
  */
-export interface FluidUnknownObjectNode extends FluidObjectNode {
+export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: NodeKind.FluidUnknownNode;
+	nodeKind: VisualNodeKind.FluidUnknownNode;
 }
 
 /**
@@ -178,27 +190,35 @@ export interface FluidHandleNode extends VisualNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: NodeKind.FluidHandleNode;
+	nodeKind: VisualNodeKind.FluidHandleNode;
 }
 
 /**
- * Terminal node containing a simple value to display.
+ * A node in a visual metadata tree.
  *
  * @public
  */
-export interface ValueNode extends ValueNodeBase {
-	/**
-	 * {@inheritDoc VisualNodeBase.nodeKind}
-	 */
-	nodeKind: NodeKind.ValueNode;
-}
+export type VisualNode =
+	| VisualTreeNode
+	| VisualValueNode
+	| FluidHandleNode
+	| FluidObjectTreeNode
+	| FluidObjectValueNode
+	| FluidUnknownObjectNode;
 
 /**
- * Describes a visual tree to be displayed.
+ * A visual tree describing a Fluid object.
  *
  * @public
  */
-export type VisualNode = VisualTreeNode | ValueNode | FluidHandleNode;
+export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
+
+/**
+ * A visual tree that can be the child of a {@link FluidObjectNodeBase}.
+ *
+ * @public
+ */
+export type FluidObjectChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode;
 
 /**
  * Creates a {@link FluidHandleNode} from the provided ID and label.
@@ -208,6 +228,6 @@ export function createHandleNode(id: FluidObjectId, label: string): FluidHandleN
 		label,
 		fluidObjectId: id,
 		typeMetadata: "Fluid Handle",
-		nodeKind: NodeKind.FluidHandleNode,
+		nodeKind: VisualNodeKind.FluidHandleNode,
 	};
 }

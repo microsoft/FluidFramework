@@ -14,10 +14,10 @@ import {
 	FluidHandleNode,
 	FluidObjectId,
 	FluidObjectNode,
-	NodeKind,
-	ValueNode,
+	VisualNodeKind,
+	VisualValueNode,
 	VisualTreeNode,
-	VisualNode,
+	FluidObjectChildNode,
 	Primitive,
 } from "./VisualTree";
 
@@ -75,7 +75,7 @@ export type VisualizeSharedObject = (
  *
  * @returns A visual tree representation of the input `data`.
  */
-export type VisualizeChildData = (data: unknown, label: string) => Promise<VisualNode>;
+export type VisualizeChildData = (data: unknown, label: string) => Promise<FluidObjectChildNode>;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -397,14 +397,14 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	/**
 	 * {@inheritDoc VisualizeChildData}
 	 */
-	private async renderChildData(data: unknown, label: string): Promise<VisualNode> {
+	private async renderChildData(data: unknown, label: string): Promise<FluidObjectChildNode> {
 		if (typeof data !== "object" && typeof data !== "function") {
 			// Render primitives and falsy types via their string representation
-			const result: ValueNode = {
+			const result: VisualValueNode = {
 				label,
 				value: data as Primitive,
 				typeMetadata: typeof data,
-				nodeKind: NodeKind.ValueNode,
+				nodeKind: VisualNodeKind.ValueNode,
 			};
 			return result;
 		} else if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
@@ -425,7 +425,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 			const result: VisualTreeNode = {
 				label,
 				children: renderedChildren,
-				nodeKind: NodeKind.TreeNode,
+				nodeKind: VisualNodeKind.TreeNode,
 				typeMetadata: "object",
 			};
 			return result;

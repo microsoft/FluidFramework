@@ -48,17 +48,20 @@ export { ContainerStateChangeKind } from "./Container";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
+	FluidObjectChildNode,
 	FluidObjectId,
 	FluidObjectNode,
+	FluidObjectNodeBase,
 	FluidObjectTreeNode,
+	FluidObjectValueNode,
 	FluidUnknownObjectNode,
-	NodeKind,
 	Primitive,
-	ValueNode,
+	VisualValueNode,
 	ValueNodeBase,
-	VisualTreeNode,
 	VisualNode,
 	VisualNodeBase,
+	VisualNodeKind,
+	VisualTreeNode,
 } from "./data-visualization";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";

@@ -14,7 +14,7 @@ import {
 	DataVisualizerGraph,
 	FluidHandleNode,
 	FluidObjectId,
-	FluidObjectNode,
+	FluidObjectNodeBase,
 } from "./data-visualization";
 
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
@@ -215,7 +215,7 @@ export class FluidClientDebugger
 
 	// #region Data-related event handlers
 
-	private readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
+	private readonly dataUpdateHandler = (visualization: FluidObjectNodeBase): void => {
 		this.postDataVisualization(visualization);
 	};
 
@@ -355,7 +355,9 @@ export class FluidClientDebugger
 		});
 	};
 
-	private readonly postDataVisualization = (visualization: FluidObjectNode | undefined): void => {
+	private readonly postDataVisualization = (
+		visualization: FluidObjectNodeBase | undefined,
+	): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
 			type: "DATA_VISUALIZATION",
 			data: {
@@ -494,7 +496,7 @@ export class FluidClientDebugger
 
 	private async getDataVisualization(
 		fluidObjectId: FluidObjectId,
-	): Promise<FluidObjectNode | undefined> {
+	): Promise<FluidObjectNodeBase | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
 	}
 }
