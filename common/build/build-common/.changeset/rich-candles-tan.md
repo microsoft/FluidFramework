@@ -1,5 +1,5 @@
 ---
-"@fluidframework/build-common": minor
+"@fluidframework/build-common": major
 ---
 
 Strict API-Extractor config now fails on incompatible release tags
