@@ -210,25 +210,27 @@ export class GarbageCollector implements IGarbageCollector {
 						);
 					}
 
-					let snapshotData: IGarbageCollectionSnapshotData | undefined =
-						await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
+					const snapshotData = await getGCDataFromSnapshot(
+						gcSnapshotTree,
+						readAndParseBlob,
+					);
+
+					if (
+						this.configs.gcVersionInBaseSnapshot ===
+						this.summaryStateTracker.currentGCVersion
+					) {
+						return snapshotData;
+					}
+
 					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
 					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
 					// brought back. The deletedNodes info is needed to identify when these nodes are used.
-					if (
-						this.configs.gcVersionInBaseSnapshot !==
-						this.summaryStateTracker.currentGCVersion
-					) {
-						snapshotData = snapshotData
-							? {
-									gcState: undefined,
-									tombstones: undefined,
-									deletedNodes: snapshotData.deletedNodes,
-							  }
-							: undefined;
-					}
-					return snapshotData;
+					return {
+						gcState: undefined,
+						tombstones: undefined,
+						deletedNodes: snapshotData.deletedNodes,
+					};
 				} catch (error) {
 					const dpe = DataProcessingError.wrapIfUnrecognized(
 						error,
