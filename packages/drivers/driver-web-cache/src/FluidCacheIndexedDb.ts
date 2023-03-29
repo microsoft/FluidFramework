@@ -127,6 +127,8 @@ export interface FluidCacheDBSchema extends DBSchema {
 			/**
 			 * The last time the cache entry was used.
 			 * This is initially set to the time the cache entry was created Measured as ms since unix epoch.
+			 * With the recent change, this won't be updated on read as it will not be used anywhere. Only keeping
+			 * so as to not upgrade the schema version.
 			 */
 			lastAccessTimeMs: number;
 		};
