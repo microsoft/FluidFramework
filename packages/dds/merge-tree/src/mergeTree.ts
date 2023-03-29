@@ -1332,14 +1332,6 @@ export class MergeTree {
 					segment: pendingSegment,
 				});
 			});
-			if (opArgs.op.type === MergeTreeDeltaType.REMOVE) {
-				// Do this after acking all removals so that slide destination is final
-				// (doing it as we go will move references to each intermediate segment for a removal
-				// that removes multiple segments)
-				pendingSegmentGroup.segments.map((pendingSegment) => {
-					this.slideAckedRemovedSegmentReferences(pendingSegment);
-				});
-			}
 			this.mergeTreeMaintenanceCallback?.(
 				{
 					deltaSegments,
