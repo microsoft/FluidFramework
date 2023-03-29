@@ -30,6 +30,7 @@ import {
 import { fieldKinds } from "./defaultFieldKinds";
 import { FieldKind, Multiplicity } from "./modular-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
+import { isPrimitive } from "./editable-tree";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -334,6 +335,15 @@ function shallowCompatibilityTest(
 	}
 	// For now, consider all not explicitly typed objects shallow compatible.
 	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
+
+	// Special case primative schema to to not be compatible with data with local fields.
+	// TODO: maybe generalize this to global fields
+	if (isPrimitive(schema)) {
+		if (Object.getOwnPropertyNames(data).length > 0) {
+			return false;
+		}
+	}
+
 	return true;
 }
 
