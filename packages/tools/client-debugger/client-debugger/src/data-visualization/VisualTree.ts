@@ -32,6 +32,14 @@ export enum NodeKind {
 }
 
 /**
+ * Type union representing TypeScript primitives.
+ *
+ * @remarks Used for data / metadata in {@link VisualNodeBase}s.
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
+
+/**
  * Base interface for all visual tree nodes.
  *
  * @public
@@ -50,7 +58,7 @@ export interface VisualNodeBase {
 	/**
 	 * (optional) Additional metadata to be displayed inline.
 	 */
-	metadata?: string;
+	metadata?: Record<string, Primitive>;
 
 	/**
 	 * {@inheritDoc NodeKind}
@@ -65,9 +73,9 @@ export interface VisualNodeBase {
  */
 export interface ValueNodeBase extends VisualNodeBase {
 	/**
-	 * The value to display inline. Will always be primitive data.
+	 * The value to display inline.
 	 */
-	value: unknown;
+	value: Primitive;
 }
 
 /**
