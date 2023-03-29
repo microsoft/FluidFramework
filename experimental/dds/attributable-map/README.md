@@ -1,5 +1,9 @@
 # @fluid-experimental/attributable-map
 
+## Overview
+
+This experimental DDS is a fork of the SharedMap which implements attribution, the plan is to remove it and integrate those APIs into SharedMap.
+
 ## SharedMap
 
 The SharedMap distributed data structure can be used to store key-value pairs. It provides the same API for setting and

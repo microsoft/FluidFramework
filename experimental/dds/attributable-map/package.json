@@ -41,9 +41,7 @@
 		"test:mocha": "mocha --unhandled-rejections=strict --recursive 'dist/test/mocha/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup --exit",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
+		"tsc": "tsc"
 	},
 	"nyc": {
 		"all": true,
@@ -105,8 +103,5 @@
 		"prettier": "~2.6.2",
 		"rimraf": "^4.4.0",
 		"typescript": "~4.5.5"
-	},
-	"typeValidation": {
-		"broken": {}
 	}
 }

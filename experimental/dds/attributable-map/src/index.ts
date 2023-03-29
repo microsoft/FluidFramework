@@ -10,8 +10,6 @@
  *
  * - {@link SharedMap}
  *
- * - {@link SharedDirectory}
- *
  * @packageDocumentation
  */
 
