@@ -11,7 +11,7 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
 import { ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
-import { TrackingGroup } from "./mergeTreeTracking";
+import { ITrackingGroup, TrackingGroup, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { matchProperties, PropertySet } from "./properties";
 import { DetachedReferencePosition } from "./referencePositions";
@@ -26,15 +26,15 @@ import { DetachedReferencePosition } from "./referencePositions";
 export type MergeTreeDeltaRevertible =
 	| {
 			operation: typeof MergeTreeDeltaType.INSERT;
-			trackingGroup: TrackingGroup;
+			trackingGroup: ITrackingGroup;
 	  }
 	| {
 			operation: typeof MergeTreeDeltaType.REMOVE;
-			trackingGroup: TrackingGroup;
+			trackingGroup: ITrackingGroup;
 	  }
 	| {
 			operation: typeof MergeTreeDeltaType.ANNOTATE;
-			trackingGroup: TrackingGroup;
+			trackingGroup: ITrackingGroup;
 			propertyDeltas: PropertySet;
 	  };
 
@@ -96,7 +96,7 @@ function appendLocalInsertToRevertibles(
 	if (revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.INSERT) {
 		revertibles.push({
 			operation: MergeTreeDeltaType.INSERT,
-			trackingGroup: new TrackingGroup(),
+			trackingGroup: new UnorderedTrackingGroup(),
 		});
 	}
 	const last = revertibles[revertibles.length - 1];
@@ -113,7 +113,7 @@ function appendLocalRemoveToRevertibles(
 	if (revertibles[revertibles.length - 1]?.operation !== MergeTreeDeltaType.REMOVE) {
 		revertibles.push({
 			operation: MergeTreeDeltaType.REMOVE,
-			trackingGroup: new TrackingGroup(),
+			trackingGroup: new UnorderedTrackingGroup(),
 		});
 	}
 	const last = revertibles[revertibles.length - 1];
@@ -169,7 +169,7 @@ function appendLocalAnnotateToRevertibles(
 				last = {
 					operation: MergeTreeDeltaType.ANNOTATE,
 					propertyDeltas,
-					trackingGroup: new TrackingGroup(),
+					trackingGroup: new UnorderedTrackingGroup(),
 				};
 				last.trackingGroup.link(ds.segment);
 				revertibles.push(last);
@@ -217,7 +217,7 @@ export function appendToMergeTreeDeltaRevertibles(
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
 	revertibles.forEach((r) => {
 		r.trackingGroup.tracked.forEach((t) => {
-			t.trackingCollection.unlink(r.trackingGroup);
+			t.trackingCollection.unlink(r.trackingGroup as any as TrackingGroup);
 			// remove untracked local references
 			if (t.trackingCollection.empty && !t.isLeaf()) {
 				t.getSegment()?.localRefs?.removeLocalRef(t);
@@ -233,7 +233,7 @@ function revertLocalInsert(
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
 		assert(
-			tracked.trackingCollection.unlink(revertible.trackingGroup),
+			tracked.trackingCollection.unlink(revertible.trackingGroup as any as TrackingGroup),
 			0x3f1 /* tracking group removed */,
 		);
 		assert(tracked.isLeaf(), 0x3f2 /* inserts must track segments */);
@@ -252,7 +252,7 @@ function revertLocalRemove(
 		const tracked = revertible.trackingGroup.tracked[0];
 
 		assert(
-			tracked.trackingCollection.unlink(revertible.trackingGroup),
+			tracked.trackingCollection.unlink(revertible.trackingGroup as any as TrackingGroup),
 			0x3f3 /* tracking group removed */,
 		);
 
@@ -348,7 +348,9 @@ function revertLocalAnnotate(
 ) {
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
-		const unlinked = tracked.trackingCollection.unlink(revertible.trackingGroup);
+		const unlinked = tracked.trackingCollection.unlink(
+			revertible.trackingGroup as any as TrackingGroup,
+		);
 		assert(unlinked && tracked.isLeaf(), 0x3f7 /* annotates must track segments */);
 		if (toRemovalInfo(tracked) === undefined) {
 			const start = driver.getPosition(tracked);
