@@ -1,30 +1,26 @@
-import { ApplicationInsights } from "@microsoft/applicationinsights-web";
+import { ApplicationInsights, Snippet } from "@microsoft/applicationinsights-web";
 
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
 export interface AppInsightsLoggerConfig {
 	appInsightsClient?: ApplicationInsights;
-	connectionString?: string;
+	appInsightsConfig?: Snippet;
 }
 
 export class AppInsightsLogger implements ITelemetryBufferedLogger {
 	protected readonly baseLoggingClient: ApplicationInsights;
 
-	public constructor(config: AppInsightsLoggerConfig) {
-		if (config.appInsightsClient) {
-			this.baseLoggingClient = config.appInsightsClient;
+	public constructor(loggerConfig: AppInsightsLoggerConfig) {
+		if (loggerConfig.appInsightsClient) {
+			this.baseLoggingClient = loggerConfig.appInsightsClient;
 		} else {
-			if (config.connectionString === undefined) {
+			if (loggerConfig.appInsightsConfig === undefined) {
 				throw Error(
-					"Cannot initialize default AppInsights Client without a connection string.",
+					"Cannot initialize default AppInsights Client without a configuration object.",
 				);
 			}
-			this.baseLoggingClient = new ApplicationInsights({
-				config: {
-					connectionString: config.connectionString,
-				},
-			});
+			this.baseLoggingClient = new ApplicationInsights(loggerConfig.appInsightsConfig);
 			this.baseLoggingClient.loadAppInsights();
 		}
 	}

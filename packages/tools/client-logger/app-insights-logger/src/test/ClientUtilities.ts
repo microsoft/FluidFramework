@@ -48,7 +48,11 @@ function initializeTinyliciousClient(): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
 	return new TinyliciousClient({
 		// logger: new AppInsightsLogger({
-		// 	connectionString: "insert your app insights string here"
+		// 	appInsightsConfig: {
+		// 		config: {
+		// 			connectionString: "insert your app insights string here"
+		// 		}
+		// 	}
 		// }),
 	});
 }
