@@ -34,7 +34,7 @@ import {
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 } from "../containerRuntime";
-import { PendingStateManager, IPendingMessage } from "../pendingStateManager";
+import { IPendingMessage, PendingStateManager } from "../pendingStateManager";
 import { DataStores } from "../dataStores";
 
 describe("Runtime", () => {
@@ -1078,7 +1078,6 @@ describe("Runtime", () => {
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
 				flushMode: FlushMode.TurnBased,
-				enableOfflineLoad: false,
 				compressionOptions: {
 					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 					compressionAlgorithm: CompressionAlgorithms.lz4,

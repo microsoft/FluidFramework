@@ -29,12 +29,6 @@ export {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 } from "./container-runtime-factories";
 export {
-	BaseContainerService,
-	ContainerServiceRegistryEntries,
-	generateContainerServicesRequestHandler,
-	serviceRoutePathRoot,
-} from "./container-services";
-export {
 	defaultFluidObjectRequestHandler,
 	defaultRouteRequestHandler,
 	mountableViewRequestHandler,
@@ -43,5 +37,4 @@ export {
 	getDefaultObjectFromContainer,
 	getObjectFromContainer,
 	getObjectWithIdFromContainer,
-	waitForAttach,
 } from "./utils";

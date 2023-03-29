@@ -92,6 +92,7 @@ export {
 	AnchorEvents,
 	AnchorSetRootEvents,
 	FieldKindSpecifier,
+	AllowedUpdateType,
 } from "./core";
 
 export {
@@ -220,15 +221,21 @@ export {
 	SchemaAware,
 	ArrayLikeMut,
 	FieldKinds,
+	ViewSchemaCollection,
+	ContextuallyTypedFieldData,
+	TreeViewSchema,
+	FieldViewSchema,
 } from "./feature-libraries";
 
 export {
 	ISharedTree,
-	ISharedTreeBranch,
+	ISharedTreeView,
 	ISharedTreeFork,
 	runSynchronous,
 	SharedTreeFactory,
-	BranchEvents,
+	ViewEvents,
+	SchematizeConfiguration,
+	schematizeView,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";
