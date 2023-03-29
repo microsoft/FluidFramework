@@ -3,9 +3,36 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Fix before merging
-/* eslint-disable no-restricted-syntax */
-export * from "./DataVisualization";
-export * from "./DefaultVisualizers";
-export * from "./VisualTree";
-/* eslint-enable no-restricted-syntax */
+export {
+	SharedObjectType,
+	VisualizeSharedObject,
+	VisualizeChildData,
+	SharedObjectVisualizers,
+	DataVisualizerEvents,
+	DataVisualizerGraph,
+	VisualizerNode,
+} from "./DataVisualization";
+export {
+	defaultVisualizers,
+	visualizeSharedCell,
+	visualizeSharedCounter,
+	visualizeSharedMap,
+	visualizeSharedString,
+	visualizeUnknownSharedObject,
+} from "./DefaultVisualizers";
+export {
+	createHandleNode,
+	FluidHandleNode,
+	FluidObjectId,
+	FluidObjectNode,
+	FluidObjectTreeNode,
+	FluidObjectValueNode,
+	FluidUnknownObjectNode,
+	NodeKind,
+	Primitive,
+	ValueNode,
+	ValueNodeBase,
+	VisualNode,
+	VisualNodeBase,
+	VisualTreeNode,
+} from "./VisualTree";
