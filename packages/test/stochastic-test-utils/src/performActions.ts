@@ -4,7 +4,6 @@
  */
 
 import { promises as fs, writeFileSync } from "fs";
-import { assert } from "@fluidframework/common-utils";
 import {
 	AsyncGenerator,
 	AsyncReducer,
@@ -14,6 +13,7 @@ import {
 	Reducer,
 	SaveInfo,
 } from "./types";
+import { combineReducers, combineReducersAsync } from "./combineReducers";
 
 /**
  * Performs random actions on a set of clients.
@@ -92,18 +92,12 @@ export async function performFuzzActionsAsync<
 ): Promise<TState> {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
-	const applyOperation: (operation: TOperation) => Promise<TState> =
+	const reducer =
 		typeof reducerOrMap === "function"
-			? async (op) => reducerOrMap(state, op)
-			: async (op) => {
-					const childReducer = reducerOrMap[op.type];
-					assert(
-						childReducer !== undefined,
-						`Expected to find child reducer for operation type: ${op.type}`,
-					);
-					const newState: TState = await childReducer(state, op);
-					return newState;
-			  };
+			? reducerOrMap
+			: combineReducersAsync<TOperation, TState>(reducerOrMap);
+	const applyOperation: (operation: TOperation) => Promise<TState> = async (op) =>
+		(await reducer(state, op)) ?? state;
 
 	for (
 		let operation = await generator(state);
@@ -116,7 +110,7 @@ export async function performFuzzActionsAsync<
 		}
 
 		try {
-			state = await applyOperation(operation);
+			state = (await applyOperation(operation)) ?? state;
 		} catch (err) {
 			console.log(`Error encountered on operation number ${operations.length}`);
 			if (saveInfo?.saveOnFailure === true) {
@@ -204,18 +198,11 @@ export function performFuzzActions<
 ): TState {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;
-	const applyOperation: (operation: TOperation) => TState =
+	const reducer =
 		typeof reducerOrMap === "function"
-			? (op) => reducerOrMap(state, op)
-			: (op) => {
-					const childReducer = reducerOrMap[op.type];
-					assert(
-						childReducer !== undefined,
-						`Expected to find child reducer for operation type: ${op.type}`,
-					);
-					const newState: TState = childReducer(state, op);
-					return newState;
-			  };
+			? reducerOrMap
+			: combineReducers<TOperation, TState>(reducerOrMap);
+	const applyOperation: (operation: TOperation) => TState = (op) => reducer(state, op) ?? state;
 
 	for (let operation = generator(state); operation !== done; operation = generator(state)) {
 		operations.push(operation);

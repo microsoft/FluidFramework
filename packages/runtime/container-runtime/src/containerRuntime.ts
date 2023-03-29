@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
-	IFluidTokenProvider,
 	IContainerContext,
 	IDeltaManager,
 	IRuntime,
@@ -98,19 +97,16 @@ import {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
 	addTreeToSummary,
-	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
-	IRootSummarizerNodeWithGC,
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
+	GCDataBuilder,
 	requestFluidObject,
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
-import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -123,10 +119,13 @@ import {
 	aliasBlobName,
 	blobsTreeName,
 	chunksBlobName,
+	createRootSummarizerNodeWithGC,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
+	IFetchSnapshotResult,
+	IRootSummarizerNodeWithGC,
 	ISummaryMetadataMessage,
 	metadataBlobName,
 	Summarizer,
@@ -157,6 +156,7 @@ import {
 	IGCRuntimeOptions,
 	IGCStats,
 	shouldAllowGcTombstoneEnforcement,
+	trimLeadingAndTrailingSlashes,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
@@ -1234,8 +1234,6 @@ export class ContainerRuntime
 				}
 			},
 			(blobPath: string) => this.garbageCollector.nodeUpdated(blobPath, "Loaded"),
-			(fromPath: string, toPath: string) =>
-				this.garbageCollector.addedOutboundReference(fromPath, toPath),
 			(blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			this,
 			pendingRuntimeState?.pendingAttachmentBlobs,
@@ -1325,8 +1323,13 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
+				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
+				// an initializeEntryPoint for that case.
+				assert(
+					initializeEntryPoint === undefined,
+					0x5be /* Summarizer clients cannot have a custom entryPoint */,
+				);
 				this._summarizer = new Summarizer(
-					"/_summarizer",
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
@@ -1442,7 +1445,16 @@ export class ContainerRuntime
 		ReportOpPerfTelemetry(this.context.clientId, this.deltaManager, this.logger);
 		BindBatchTracker(this, this.logger);
 
-		this.entryPoint = new LazyPromise(async () => initializeEntryPoint?.(this));
+		this.entryPoint = new LazyPromise(async () => {
+			if (this.context.clientDetails.type === summarizerClientType) {
+				assert(
+					this._summarizer !== undefined,
+					0x5bf /* Summarizer object is undefined in a summarizer client */,
+				);
+				return this._summarizer;
+			}
+			return initializeEntryPoint?.(this);
+		});
 	}
 
 	/**
@@ -1478,19 +1490,6 @@ export class ContainerRuntime
 		this.pendingStateManager.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
-	}
-
-	/**
-	 * @deprecated 2.0.0-internal.3.2.0 ContainerRuntime is not an IFluidTokenProvider.  Token providers should be accessed using normal provider patterns.
-	 */
-	public get IFluidTokenProvider() {
-		if (this.options?.intelligence) {
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return {
-				intelligence: this.options.intelligence,
-			} as IFluidTokenProvider;
-		}
-		return undefined;
 	}
 
 	/**

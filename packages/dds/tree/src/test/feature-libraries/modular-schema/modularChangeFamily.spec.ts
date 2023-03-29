@@ -521,7 +521,7 @@ describe("ModularChangeFamily", () => {
 						},
 					],
 				]),
-				revisions: [{ tag: tag1 }, { tag: tag2 }],
+				revisions: [{ revision: tag1 }, { revision: tag2 }],
 			};
 
 			assert.deepEqual(composed, expected);
@@ -724,7 +724,8 @@ describe("ModularChangeFamily", () => {
 		assert.deepEqual(changes, [nodeValueOverwrite]);
 	});
 
-	it("concatenates and indexes revisions", () => {
+	it("Revision metadata", () => {
+		const rev0 = mintRevisionTag();
 		const rev1 = mintRevisionTag();
 		const rev2 = mintRevisionTag();
 		const rev3 = mintRevisionTag();
@@ -742,12 +743,13 @@ describe("ModularChangeFamily", () => {
 			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
 			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
 			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
-			assert.deepEqual(revsInfos, [
-				{ tag: rev1 },
-				{ tag: rev2 },
-				{ tag: rev3, isRollback: true },
-				{ tag: rev4, isRollback: true },
-			]);
+			const expected: RevisionInfo[] = [
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev3, rollbackOf: rev0 },
+				{ revision: rev4, rollbackOf: rev2 },
+			];
+			assert.deepEqual(revsInfos, expected);
 			composeWasTested = true;
 			return [];
 		};
@@ -765,11 +767,12 @@ describe("ModularChangeFamily", () => {
 			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
 			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
 			assert.deepEqual(revsIndices, [0, 1, 2]);
-			assert.deepEqual(revsInfos, [
-				{ tag: rev1 },
-				{ tag: rev2 },
-				{ tag: rev4, isRollback: true },
-			]);
+			const expected: RevisionInfo[] = [
+				{ revision: rev1 },
+				{ revision: rev2 },
+				{ revision: rev4, rollbackOf: rev2 },
+			];
+			assert.deepEqual(revsInfos, expected);
 			rebaseWasTested = true;
 			return change;
 		};
@@ -799,7 +802,7 @@ describe("ModularChangeFamily", () => {
 					},
 				],
 			]),
-			revisions: [{ tag: rev1 }, { tag: rev2 }],
+			revisions: [{ revision: rev1 }, { revision: rev2 }],
 		};
 		const changeB: ModularChangeset = {
 			fieldChanges: new Map([
@@ -822,22 +825,24 @@ describe("ModularChangeFamily", () => {
 					},
 				],
 			]),
-			revisions: [{ tag: rev4, isRollback: true }],
+			revisions: [{ revision: rev4, rollbackOf: rev2 }],
 		};
 		const composed = dummyFamily.compose([
 			makeAnonChange(changeA),
-			tagRollbackInverse(changeB, rev3),
+			tagRollbackInverse(changeB, rev3, rev0),
 			makeAnonChange(changeC),
 		]);
-		assert.deepEqual(composed.revisions, [
-			{ tag: rev1 },
-			{ tag: rev2 },
-			{ tag: rev3, isRollback: true },
-			{ tag: rev4, isRollback: true },
-		]);
+		const expectedComposeInfo: RevisionInfo[] = [
+			{ revision: rev1 },
+			{ revision: rev2 },
+			{ revision: rev3, rollbackOf: rev0 },
+			{ revision: rev4, rollbackOf: rev2 },
+		];
+		assert.deepEqual(composed.revisions, expectedComposeInfo);
 		assert(composeWasTested);
 		const rebased = dummyFamily.rebase(changeC, makeAnonChange(changeA));
-		assert.deepEqual(rebased.revisions, [{ tag: rev4, isRollback: true }]);
+		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
+		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
 	});
 });

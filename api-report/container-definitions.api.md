@@ -110,15 +110,17 @@ export interface IConnectionDetails {
     claims: ITokenClaims;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
-    existing: boolean;
-    // @deprecated (undocumented)
-    initialClients: ISignalClient[];
-    // @deprecated (undocumented)
-    mode: ConnectionMode;
     // (undocumented)
     serviceConfiguration: IClientConfiguration;
-    // @deprecated (undocumented)
+}
+
+// @public
+export interface IConnectionDetailsInternal extends IConnectionDetails {
+    // (undocumented)
+    initialClients: ISignalClient[];
+    // (undocumented)
+    mode: ConnectionMode;
+    // (undocumented)
     version: string;
 }
 
@@ -389,17 +391,6 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @public @deprecated (undocumented)
-export const IFluidTokenProvider: keyof IProvideFluidTokenProvider;
-
-// @public @deprecated (undocumented)
-export interface IFluidTokenProvider extends IProvideFluidTokenProvider {
-    // (undocumented)
-    intelligence: {
-        [service: string]: any;
-    };
-}
-
 // @public
 export interface IGenericError extends IErrorBase {
     // (undocumented)
@@ -421,7 +412,7 @@ export interface ILoader extends IFluidRouter, Partial<IProvideLoader> {
 
 // @public
 export interface ILoaderHeader {
-    // (undocumented)
+    // @deprecated (undocumented)
     [LoaderHeader.cache]: boolean;
     // (undocumented)
     [LoaderHeader.clientDetails]: IClientDetails;
@@ -456,12 +447,6 @@ export interface IPendingLocalState {
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
-}
-
-// @public @deprecated (undocumented)
-export interface IProvideFluidTokenProvider {
-    // (undocumented)
-    readonly IFluidTokenProvider: IFluidTokenProvider;
 }
 
 // @public (undocumented)
@@ -542,6 +527,7 @@ export interface IUsageError extends IErrorBase {
 
 // @public
 export enum LoaderHeader {
+    // @deprecated (undocumented)
     cache = "fluid-cache",
     // (undocumented)
     clientDetails = "fluid-client-details",

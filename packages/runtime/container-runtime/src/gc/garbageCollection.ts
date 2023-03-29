@@ -8,27 +8,13 @@ import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	cloneGCData,
-	concatGarbageCollectionData,
-	getGCDataFromSnapshot,
-	IGCResult,
-	runGarbageCollection,
-	trimLeadingSlashes,
-} from "@fluidframework/garbage-collector";
-import {
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
-import {
-	packagePathToTelemetryProperty,
-	ReadAndParseBlob,
-	RefreshSummaryResult,
-} from "@fluidframework/runtime-utils";
+import { packagePathToTelemetryProperty, ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import {
 	ChildLogger,
 	generateStack,
@@ -39,7 +25,7 @@ import {
 } from "@fluidframework/telemetry-utils";
 
 import { RuntimeHeaders } from "../containerRuntime";
-import { ICreateContainerMetadata } from "../summary";
+import { ICreateContainerMetadata, RefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
 import {
 	disableSweepLogKey,
@@ -47,14 +33,22 @@ import {
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
 	IGarbageCollectionRuntime,
+	IGCResult,
 	IGCStats,
 	UnreferencedState,
 	IGCMetadata,
 	IGarbageCollectorConfigs,
 } from "./gcDefinitions";
-import { getSnapshotDataFromOldSnapshotFormat, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import {
+	cloneGCData,
+	concatGarbageCollectionData,
+	getGCDataFromSnapshot,
+	getSnapshotDataFromOldSnapshotFormat,
+	sendGCUnexpectedUsageEvent,
+} from "./gcHelpers";
+import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
-import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
 /** The event that is logged when unreferenced node is used after a certain time. */
@@ -156,9 +150,6 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.summaryStateTracker.doesSummaryStateNeedReset;
 	}
 
-	/** Handler to respond to when a SweepReady object is used */
-	private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
-
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
@@ -174,12 +165,6 @@ export class GarbageCollector implements IGarbageCollector {
 			ChildLogger.create(createParams.baseLogger, "GarbageCollector", {
 				all: { completedGCRuns: () => this.completedRuns },
 			}),
-		);
-
-		this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
-			createParams.getContainerDiagnosticId(),
-			this.mc,
-			this.runtime.closeFn,
 		);
 
 		this.configs = generateGCConfigs(this.mc, createParams);
@@ -618,7 +603,7 @@ export class GarbageCollector implements IGarbageCollector {
 			gcFeature: this.configs.gcEnabled ? this.summaryStateTracker.currentGCVersion : 0,
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
-			sweepEnabled: this.configs.sweepEnabled,
+			sweepEnabled: false, // DEPRECATED - to be removed
 			sweepTimeoutMs: this.configs.sweepTimeoutMs,
 		};
 	}
@@ -737,7 +722,7 @@ export class GarbageCollector implements IGarbageCollector {
 				{
 					eventName,
 					category: "generic",
-					url: trimLeadingSlashes(toNodePath),
+					url: toNodePath,
 					nodeType,
 					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},
@@ -1202,16 +1187,6 @@ export class GarbageCollector implements IGarbageCollector {
 				} else {
 					this.mc.logger.sendErrorEvent(event);
 				}
-			}
-
-			// If SweepReady Usage Detection is enabled, the handler may close the interactive container.
-			// Once Sweep is fully implemented, this will be removed since the objects will be gone
-			// and errors will arise elsewhere in the runtime
-			if (state === UnreferencedState.SweepReady) {
-				this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({
-					...propsToLog,
-					usageType,
-				});
 			}
 		}
 	}

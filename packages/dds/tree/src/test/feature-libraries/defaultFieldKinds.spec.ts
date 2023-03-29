@@ -38,7 +38,7 @@ const nodeSchema = TypedSchema.tree("Node", {
 	local: { foo: TypedSchema.field(FieldKinds.value, "Node") },
 });
 
-const schemaData = SchemaAware.typedSchemaData(new Map(), nodeSchema);
+const schemaData = SchemaAware.typedSchemaData([], nodeSchema);
 
 const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 	[valueSymbol]: "value1",
@@ -74,7 +74,7 @@ const revisionIndexer = (tag: RevisionTag) => {
 
 const revisionMetadata: RevisionMetadataSource = {
 	getIndex: revisionIndexer,
-	getInfo: (tag: RevisionTag) => ({ tag }),
+	getInfo: (revision: RevisionTag) => ({ revision }),
 };
 
 const deltaFromChild1 = (child: NodeChangeset): Delta.Modify => {

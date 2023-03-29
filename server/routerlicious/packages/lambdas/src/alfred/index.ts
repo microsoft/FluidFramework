@@ -231,6 +231,7 @@ export function configureWebSocketServices(
 	submitSignalThrottler?: core.IThrottler,
 	throttleAndUsageStorageManager?: core.IThrottleAndUsageStorageManager,
 	verifyMaxMessageSize?: boolean,
+	socketTracker?: core.IWebSocketTracker,
 	httpServer?: core.IHttpServer,
 	eventEmitter?: EventEmitter,
 ) {
@@ -529,6 +530,12 @@ export function configureWebSocketServices(
                     });
 
 				connectionsMap.set(clientId, connection);
+				if (connectionsMap.size > 1) {
+					Lumberjack.info(
+						`Same socket is having multiple connections, connection number=${connectionsMap.size}`,
+						getLumberBaseProperties(connection.documentId, connection.tenantId),
+					);
+				}
 
 				connectDocumentOrdererConnectionMetric.success(
 					"Successfully established orderer connection",
@@ -571,6 +578,14 @@ export function configureWebSocketServices(
 
 			// back-compat: remove cast to any once new definition of IConnected comes through.
 			(connectedMessage as any).timestamp = connectedTimestamp;
+
+			// Track socket and tokens for this connection
+			if (socketTracker && claims.jti) {
+				socketTracker.addSocketForToken(
+					core.createCompositeTokenId(message.tenantId, message.id, claims.jti),
+					socket,
+				);
+			}
 
 			return {
 				connection: connectedMessage,
@@ -892,6 +907,10 @@ export function configureWebSocketServices(
 					clientManager.removeClient(room.tenantId, room.documentId, clientId),
 				);
 				socket.emitToRoom(getRoomId(room), "signal", createRoomLeaveMessage(clientId));
+			}
+			// Clear socket tracker upon disconnection
+			if (socketTracker) {
+				socketTracker.removeSocket(socket.id);
 			}
 			await Promise.all(removeAndStoreP);
 		});

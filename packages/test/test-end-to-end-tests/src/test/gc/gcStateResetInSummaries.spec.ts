@@ -19,7 +19,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { defaultGCConfig } from "./gcTestConfigs";
 import { getGCStateFromSummary } from "./gcTestSummaryUtils";
 
