@@ -9,6 +9,7 @@ import {
 	IDocumentRepository,
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
+import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { CheckpointReason } from "../utils";
 
 export interface IDeliCheckpointManager {
@@ -102,4 +103,35 @@ export function createDeliCheckpointManagerFromCollection(
 		},
 	};
 	return checkpointManager;
+}
+
+export async function getLatestCheckpoint(
+	tenantId: string,
+	documentId: string,
+	documentRepository: IDocumentRepository,
+	checkpointRepository: ICheckpointRepository,
+	localCheckpointEnabled?: boolean,
+	activeClients?: boolean,
+): Promise<any> {
+	if (localCheckpointEnabled === false) {
+		// Not using checkpointRepository, use document repository
+		return documentRepository.readOne({ documentId, tenantId });
+	}
+
+	if (activeClients === false) {
+		// Local checkpoints are enabled, but no active clients, use document repository
+		return documentRepository.readOne({ documentId, tenantId });
+	}
+
+	const checkpoint = await checkpointRepository
+		.readOne({ documentId, tenantId })
+		.catch((error) => {
+			Lumberjack.error(
+				`Error reading checkpoint from checkpoint collection.`,
+				getLumberBaseProperties(documentId, tenantId),
+				error,
+			);
+		});
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return checkpoint ? checkpoint : documentRepository.readOne({ documentId, tenantId });
 }
