@@ -117,7 +117,6 @@ export function getSharedObjectRendererOptionsWithDefaults(
 	};
 }
 
-// TODO: do we need this exported?
 /**
  * Customizable rendering policies.
  */
