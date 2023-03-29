@@ -509,6 +509,10 @@ export class PartialSequenceLengths {
 			segmentLen,
 		);
 
+		// if this segment was obliterated by the client that inserted it,
+		// and if it overlaps with the obliterate of another client, we need to
+		// take into account whether it was obliterated on insert by the other
+		// client
 		if (clientIds.length !== nonInsertingClientIds.length) {
 			PartialSequenceLengths.accumulateMoveClientOverlap(
 				firstGte,

@@ -172,6 +172,10 @@ export interface IMoveInfo {
 	 * a segment inserted by a remote client is moved on insertion by a local
 	 * and unacked obliterate, we do not consider it as having been moved
 	 * on insert
+	 *
+	 * If a segment is moved on insertion, its length is only ever visible to
+	 * the client that inserted the segment. This is relevant in partial length
+	 * calculations
 	 */
 	wasMovedOnInsert: boolean;
 }
