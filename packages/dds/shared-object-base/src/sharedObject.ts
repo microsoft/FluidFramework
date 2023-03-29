@@ -659,10 +659,6 @@ export abstract class SharedObject<
 		telemetryContext?: ITelemetryContext,
 		incrementalContext?: IIncrementalContext,
 	): Promise<ISummaryTreeWithStats> {
-		assert(
-			incrementalContext !== undefined,
-			"SummarizerNode should always be passing incrementalContext to channel",
-		);
 		const result = this.summarizeCore(this.serializer, telemetryContext, incrementalContext);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
