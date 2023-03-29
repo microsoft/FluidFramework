@@ -66,6 +66,6 @@ describe("EditManagerSummarizer", () => {
 		assert.equal(s1, s2);
 	});
 
-	// TODO: testing EditManagerIndex class itself, specifically for attachment and normal summaries.
+	// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 	// TODO: format compatibility tests to detect breaking of existing documents.
 });

@@ -30,7 +30,7 @@ import {
 	ChangeEncoder,
 	ChangeFamilyEditor,
 } from "../core";
-import { Summarizable, SummaryElementParser, SummaryElementStringifier } from ".";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "./sharedTreeCore";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
