@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
     steps:
-      - name: Required and missing
-        if: contains(github.event.pull_request.labels.*.name, 'changeset-missing')
+      - name: Required but missing
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'changeset-present') }}
         uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # ratchet:marocchino/sticky-pull-request-comment@v2.3.1
         with:
           header: changeset
