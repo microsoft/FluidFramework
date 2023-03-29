@@ -13,13 +13,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import {
-	FieldSchema,
-	GlobalFieldKey,
-	TreeSchema,
-	TreeSchemaIdentifier,
-	ValueSchema,
-} from "../../../core";
+import { GlobalFieldKey, TreeSchema, TreeSchemaIdentifier, ValueSchema } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -28,6 +22,7 @@ import {
 	typeNameSymbol,
 	TypedSchema,
 	ContextuallyTypedNodeDataObject,
+	FieldViewSchema,
 } from "../../../feature-libraries";
 import {
 	FlattenKeys,
@@ -74,11 +69,11 @@ const boxSchema = tree("box", {
 });
 
 type x = typeof numberSchema.typeInfo.name;
-const schemaData = typedSchemaData(new Map(), numberSchema, ballSchema, boxSchema);
+const schemaData = typedSchemaData([], numberSchema, ballSchema, boxSchema);
 
 const schemaData2 = {
 	policy: defaultSchemaPolicy,
-	globalFieldSchema: new Map() as ReadonlyMap<GlobalFieldKey, FieldSchema>,
+	globalFieldSchema: new Map() as ReadonlyMap<GlobalFieldKey, FieldViewSchema>,
 	treeSchema: new Map<TreeSchemaIdentifier, TreeSchema>([
 		[numberSchema.name, numberSchema],
 		[ballSchema.name, ballSchema],

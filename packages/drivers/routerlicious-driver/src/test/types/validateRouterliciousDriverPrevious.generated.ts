@@ -179,7 +179,6 @@ declare function get_current_ClassDeclaration_RouterliciousDocumentServiceFactor
 declare function use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
     use: TypeOnly<old.RouterliciousDocumentServiceFactory>);
 use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_RouterliciousDocumentServiceFactory());
 
 /*

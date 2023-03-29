@@ -399,4 +399,106 @@ describe("client.rollback", () => {
 
 		assert.equal(segment.parent, undefined);
 	});
+	it("Should rollback multiple overlapping edits", () => {
+		client.insertTextLocal(0, "abcdefg");
+		client.insertTextLocal(3, "123");
+		client.annotateRangeLocal(2, 5, { foo: "bar" }, undefined);
+		client.removeRangeLocal(3, 7);
+
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abc123defg");
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			if (i >= 2 && i < 5) {
+				assert.equal(props?.foo, "bar");
+			} else {
+				assert(props === undefined || props.foo === undefined);
+			}
+		}
+
+		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			assert(props === undefined || props.foo === undefined);
+		}
+
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abcdefg");
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "");
+	});
+	it("Should rollback multiple removes across split segments", () => {
+		client.insertTextLocal(0, "abcde");
+		client.insertTextLocal(3, "123");
+		client.insertTextLocal(4, "xyz");
+		client.removeRangeLocal(2, 5);
+		client.removeRangeLocal(3, 7);
+		client.removeRangeLocal(2, 4);
+
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abye");
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abyz23de");
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abc1xyz23de");
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abc123de");
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abcde");
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "");
+	});
+	it("Should annotate a previously removed range", () => {
+		client.insertTextLocal(0, "abcdefg");
+		client.insertTextLocal(3, "123");
+		client.removeRangeLocal(2, 8);
+
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abc123defg");
+
+		client.annotateRangeLocal(2, 8, { foo: "bar" }, undefined);
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			if (i >= 2 && i < 8) {
+				assert.equal(props?.foo, "bar");
+			} else {
+				assert(props === undefined || props.foo === undefined);
+			}
+		}
+
+		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			assert(props === undefined || props.foo === undefined);
+		}
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "abcdefg");
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "");
+	});
+	it("Should rollback overlapping annotates and remove", () => {
+		client.insertTextLocal(0, "abc123defg");
+		client.annotateRangeLocal(0, 6, { foo: "one" }, undefined);
+		client.annotateRangeLocal(5, 10, { foo: "two" }, undefined);
+		client.removeRangeLocal(4, 8);
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+		assert.equal(client.getPropertiesAtPosition(4)?.foo, "one");
+		assert.equal(client.getPropertiesAtPosition(5)?.foo, "two");
+		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			if (i >= 0 && i < 6) {
+				assert.equal(props?.foo, "one");
+			} else {
+				assert(props === undefined || props.foo === undefined);
+			}
+		}
+		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, client.peekPendingSegmentGroups());
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			assert(props === undefined || props.foo === undefined);
+		}
+		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
+		assert.equal(client.getText(), "");
+	});
 });

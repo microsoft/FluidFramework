@@ -27,6 +27,7 @@ export {
 	convertSummaryTreeToITree,
 	convertToSummaryTree,
 	convertToSummaryTreeWithStats,
+	GCDataBuilder,
 	getBlobSize,
 	mergeStats,
 	SummaryTreeBuilder,
