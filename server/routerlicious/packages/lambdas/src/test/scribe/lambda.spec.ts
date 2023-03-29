@@ -73,33 +73,24 @@ describe("Routerlicious", () => {
 				messageFactory = new MessageFactory(testDocumentId, testClientId, testTenantId);
 				kafkaMessageFactory = new KafkaMessageFactory();
 
-				const testData = [
-					{
-						documentId: testDocumentId,
-						tenantId: testTenantId,
-						sequenceNumber: 0,
-						logOffset: undefined,
-					},
-				];
-				const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
-				testMongoManager = new MongoManager(dbFactory);
-				const database = await testMongoManager.getDatabase();
-				testDocumentCollection = database.collection("documents");
-				testMessageCollection = new TestCollection([]);
-				testKafka = new TestKafka();
-				testProducer = testKafka.createProducer();
-				testTenantManager = new TestTenantManager();
-				testGitManager = (await testTenantManager.getTenantGitManager(
-					testTenantId,
-					testDocumentId,
-				)) as GitManager;
-				const createTreeEntry: ICreateTreeEntry[] = [];
-				const requestBody: ICreateTreeParams = {
-					tree: createTreeEntry,
-				};
-				tree = await testGitManager.createGitTree(requestBody);
-				testGitManager.addTree(tree);
-				const testDeltaManager = new TestDeltaManager();
+                const testData = [{ documentId: testDocumentId, tenantId: testTenantId, sequenceNumber: 0, logOffset: undefined }];
+                const dbFactory = new TestDbFactory(_.cloneDeep({ documents: testData }));
+                testMongoManager = new MongoManager(dbFactory);
+                const database = await testMongoManager.getDatabase();
+                testDocumentCollection = database.collection("documents");
+                testMessageCollection = new TestCollection([]);
+                testKafka = new TestKafka();
+                testProducer = testKafka.createProducer();
+                testTenantManager = new TestTenantManager();
+                const tenant = await testTenantManager.getTenant(testTenantId, testDocumentId);
+                testGitManager = tenant.gitManager as GitManager;
+                const createTreeEntry: ICreateTreeEntry[] = [];
+                const requestBody: ICreateTreeParams = {
+                    tree: createTreeEntry,
+                };
+                tree = await testGitManager.createGitTree(requestBody);
+                testGitManager.addTree(tree);
+                const testDeltaManager = new TestDeltaManager();
 
 				let factory = new ScribeLambdaFactory(
 					testMongoManager,

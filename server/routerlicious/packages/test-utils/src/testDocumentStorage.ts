@@ -60,20 +60,21 @@ export class TestDocumentStorage implements IDocumentStorage {
 		return getOrCreateP;
 	}
 
-	public async createDocument(
-		tenantId: string,
-		documentId: string,
-		summary: ISummaryTree,
-		sequenceNumber: number,
-		term: number,
-		initialHash: string,
-		ordererUrl: string,
-		historianUrl: string,
-		deltaStreamUrl: string,
-		values: [string, ICommittedProposal][],
-		enableDiscovery: boolean = false,
-	): Promise<IDocumentDetails> {
-		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+    public async createDocument(
+        tenantId: string,
+        documentId: string,
+        summary: ISummaryTree,
+        sequenceNumber: number,
+        term: number,
+        initialHash: string,
+        ordererUrl: string,
+        historianUrl: string,
+        deltaStreamUrl: string,
+        values: [string, ICommittedProposal][],
+        enableDiscovery: boolean = false,
+    ): Promise<IDocumentDetails> {
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+        const gitManager = tenant.gitManager;
 
 		const blobsShaCache = new Set<string>();
 		const handle = await writeSummaryTree(gitManager, summary, blobsShaCache, undefined);
@@ -193,18 +194,16 @@ export class TestDocumentStorage implements IDocumentStorage {
 		};
 	}
 
-	public async getVersions(
-		tenantId: string,
-		documentId: string,
-		count: number,
-	): Promise<ICommitDetails[]> {
-		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+    public async getVersions(tenantId: string, documentId: string, count: number): Promise<ICommitDetails[]> {
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+        const gitManager = tenant.gitManager;
 
 		return gitManager.getCommits(documentId, count);
 	}
 
-	public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
-		const gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
+    public async getVersion(tenantId: string, documentId: string, sha: string): Promise<ICommit> {
+        const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+        const gitManager = tenant.gitManager;
 
 		return gitManager.getCommit(sha);
 	}

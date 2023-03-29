@@ -99,8 +99,9 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			this.serviceConfiguration,
 		);
 
-		try {
-			document = await this.documentCollection.findOne({ documentId, tenantId });
+        try {
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+            gitManager = tenant.gitManager;
 
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.

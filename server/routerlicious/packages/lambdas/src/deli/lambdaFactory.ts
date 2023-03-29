@@ -97,10 +97,9 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		let gitManager: IGitManager;
 		let document: IDocument;
 
-		try {
-			// Lookup the last sequence number stored
-			// TODO - is this storage specific to the orderer in place? Or can I generalize the output context?
-			document = await this.collection.findOne({ documentId, tenantId });
+        try {
+            const tenant = await this.tenantManager.getTenant(tenantId, documentId);
+            gitManager = tenant.gitManager;
 
 			// Check if the document was deleted prior.
 			if (!isDocumentValid(document)) {
