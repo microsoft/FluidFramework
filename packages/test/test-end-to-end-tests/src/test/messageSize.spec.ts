@@ -99,6 +99,51 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		}
 	};
 
+	const containerError = async (container: IContainer) =>
+		new Promise<IErrorBase | undefined>((resolve) =>
+			container.once("closed", (error) => {
+				resolve(error);
+			}),
+		);
+
+	itExpects(
+		"A large op will close the container when compression is disabled",
+		[
+			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
+		],
+		async () => {
+			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
+			await setupContainers({
+				...testContainerConfig,
+				runtimeOptions: {
+					compressionOptions: {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+				},
+			}); // Compression is enabled by default
+
+			const errorEvent = containerError(localContainer);
+
+			const largeString = generateStringOfSize(maxMessageSizeInBytes + 1);
+			const messageCount = 1;
+			try {
+				setMapKeys(localMap, messageCount, largeString);
+				assert(false, "should throw");
+			} catch {}
+
+			const error = await errorEvent;
+			assert.ok(error instanceof GenericError);
+			assert.ok(error.getTelemetryProperties().opSize ?? 0 > maxMessageSizeInBytes);
+
+			// Limit has to be around 1Mb, but we should not assume here precise number.
+			const limit = error.getTelemetryProperties().limit as number;
+			assert(limit > maxMessageSizeInBytes / 2);
+			assert(limit < maxMessageSizeInBytes * 2);
+		},
+	);
+
 	it("Small ops will pass", async () => {
 		const totalMessageSizeInBytes = 800 * 1024; // slightly below 1Mb
 		await setupContainers(testContainerConfig);
@@ -198,12 +243,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers(
-				testContainerConfig,
-				{
-					"Fluid.ContainerRuntime.CompressionDisabled": true,
-				},
-			);
+			await setupContainers(testContainerConfig, {
+				"Fluid.ContainerRuntime.CompressionDisabled": true,
+			});
 
 			const largeString = generateStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 10;
