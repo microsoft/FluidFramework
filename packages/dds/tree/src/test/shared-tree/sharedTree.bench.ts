@@ -4,7 +4,6 @@
  */
 import { strict as assert } from "assert";
 import { benchmark, BenchmarkType } from "@fluid-tools/benchmark";
-import { Jsonable } from "@fluidframework/datastore-definitions";
 import { unreachableCase } from "@fluidframework/common-utils";
 import {
 	createField,
@@ -136,9 +135,9 @@ const testTreeNode: JsonableTree = { value: 1, type: dataSchema.name };
 const replacementTestNode: JsonableTree = { value: 1.0, type: dataSchema.name };
 
 interface JSObjectTree {
-	type: string,
-	value: number,
-	fields?: {foo: JSObjectTree[]}
+	type: string;
+	value: number;
+	fields?: { foo: JSObjectTree[] };
 }
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
@@ -150,10 +149,10 @@ describe.only("SharedTree benchmarks", () => {
 				type: benchmarkType,
 				title: `Deep Tree as JS Object: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = getJSTestTreeDeep(numberOfNodes)
+					tree = getJSTestTreeDeep(numberOfNodes);
 				},
 				benchmarkFn: () => {
-					assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes);
+					assert.equal(readDeepTreeAsJSObject(tree, 0), numberOfNodes);
 				},
 			});
 		}
@@ -166,7 +165,7 @@ describe.only("SharedTree benchmarks", () => {
 					tree = [getJSTestTreeWide(numberOfNodes)];
 				},
 				benchmarkFn: () => {
-					assert.equal(readTreeAsJSObject(tree, 0), numberOfNodes);
+					assert.equal(readWideTreeAsJSObject(tree, 0), numberOfNodes);
 				},
 			});
 		}
@@ -197,7 +196,7 @@ describe.only("SharedTree benchmarks", () => {
 					title: `Update value at leaf of ${numberOfNodes} deep tree`,
 					before: () => {
 						tree = getJSTestTreeDeep(numberOfNodes);
-						leafNode = getLeafNodeFromJSObject(tree);
+						leafNode = getLeafFromJSObject(tree);
 					},
 					benchmarkFn: () => {
 						manipulateTreeAsJSObject(leafNode, TreeShape.Deep);
@@ -205,7 +204,7 @@ describe.only("SharedTree benchmarks", () => {
 				});
 			}
 			for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-				let tree: Jsonable;
+				let tree: JSObjectTree;
 				benchmark({
 					type: benchmarkType,
 					title: `Update value at leaf of ${numberOfNodes} Wide tree`,
@@ -530,7 +529,6 @@ async function setNodesWide(
 	for (let j = 0; j < numberOfNodes; j++) {
 		const field = tree.editor.sequenceField(path, localFieldKey);
 		field.insert(j, singleTextCursor(testTreeNode));
-
 	}
 	await provider.ensureSynchronized();
 }
@@ -570,7 +568,7 @@ function insertNodesToEditableTree(
 
 function getJSTestTreeWide(numberOfNodes: number): JSObjectTree {
 	const nodes = [];
-	const node = { value: testTreeNode.value as number, type: dataSchema.name }
+	const node = { value: testTreeNode.value as number, type: dataSchema.name };
 	for (let i = 0; i < numberOfNodes - 1; i++) {
 		nodes.push(node);
 	}
@@ -598,17 +596,26 @@ function getJSTestTreeDeep(numberOfNodes: number): JSObjectTree[] {
 	return [tree];
 }
 
-function readTreeAsJSObject(tree: Jsonable, initialTotal: number): number {
+function readDeepTreeAsJSObject(tree: JSObjectTree[], initialTotal: number): number {
 	let currentTotal = initialTotal;
-	for (const key of Object.keys(tree)) {
-		if (typeof tree[key] === "object" && tree[key] !== null) {
-			currentTotal = readTreeAsJSObject(tree[key], currentTotal);
+	let currentNode: JSObjectTree | undefined = tree[0];
+	while (currentNode !== undefined) {
+		if (currentNode.value !== undefined) {
+			currentTotal += currentNode.value;
 		}
-		if (key === "value") {
-			assert(tree[key] !== undefined);
-			const value = tree[key] as number;
-			currentTotal += value;
-		}
+		currentNode = currentNode.fields?.foo[0];
+	}
+	return currentTotal;
+}
+
+function readWideTreeAsJSObject(tree: JSObjectTree[], initialTotal: number): number {
+	let currentTotal = initialTotal;
+	const currentNode: JSObjectTree | undefined = tree[0];
+	currentTotal += currentNode.value;
+	const nodes = currentNode.fields?.foo;
+	assert(nodes !== undefined);
+	for (const node of nodes) {
+		currentTotal += node.value;
 	}
 	return currentTotal;
 }
@@ -618,18 +625,20 @@ function readTreeAsJSObject(tree: Jsonable, initialTotal: number): number {
  * @param tree - tree in form of a Jsonable object
  * @param shape - shape of the tree (wide vs deep)
  */
-function manipulateTreeAsJSObject(tree: Jsonable, shape: TreeShape): void {
+function manipulateTreeAsJSObject(tree: JSObjectTree, shape: TreeShape): void {
 	let nodesUnderRoot;
 	switch (shape) {
 		case TreeShape.Deep:
-			tree[0].value = replacementTestNode.value;
+			tree.value = replacementTestNode.value as number;
 			break;
 		case TreeShape.Wide:
 			nodesUnderRoot = tree.fields?.foo.length;
+			assert(nodesUnderRoot !== undefined);
 			if (nodesUnderRoot === 0) {
-				tree.fields.value = replacementTestNode.value;
+				tree.value = replacementTestNode.value as number;
 			} else {
-				tree.fields.foo[nodesUnderRoot - 1].value = replacementTestNode.value;
+				assert(tree.fields !== undefined);
+				tree.fields.foo[nodesUnderRoot - 1].value = replacementTestNode.value as number;
 			}
 			break;
 		default:
@@ -637,18 +646,17 @@ function manipulateTreeAsJSObject(tree: Jsonable, shape: TreeShape): void {
 	}
 }
 
-function getLeafNodeFromJSObject(tree: Jsonable): Jsonable {
-	const keys = Object.keys(tree);
-	for (const key of Object.keys(tree)) {
-		// const newKey = typeof tree === "object" ? key as keyof JSObjectTree : key as keyof JSObjectTree[];
-		const newKey = key as keyof JSObjectTree 
-		if (typeof tree[newKey] === "object" && tree[key] !== null) {
-			if (tree[key].type !== undefined && tree[key].fields === undefined) {
-				return tree;
-			}
-			return getLeafNodeFromJSObject(tree[key]);
+function getLeafFromJSObject(tree: JSObjectTree[]): JSObjectTree {
+	let currentNode: JSObjectTree | undefined = tree[0];
+	while (currentNode !== undefined) {
+		const currentField = currentNode.fields?.foo;
+		if (currentField === undefined) {
+			break;
 		}
+		currentNode = currentNode.fields?.foo[0];
 	}
+	assert(currentNode);
+	return currentNode;
 }
 
 function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shape: TreeShape) {
@@ -690,7 +698,6 @@ function readCursorTree(forest: IForestSubscription, numberOfNodes: number, shap
 function manipulateCursorTree(tree: ISharedTree, path: UpPath) {
 	const value = 2; // arbitrary different value
 	tree.editor.setValue(path, replacementTestNode);
-
 }
 
 function getCursorLeafNode(numberOfNodes: number, shape: TreeShape): UpPath {
