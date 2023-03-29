@@ -51,11 +51,11 @@ A trivial proof of this is a Supported User could compute a checksum of the pack
 Such a User would be broken by any possible package change.
 
 Another simple approach would be to define Supported Patterns as TypeScript code which uses the package APIs in such a way that it compiles.
-Unfortunately doesn't solve the problem: nearly everything is still incompatible change since TypeScript lets you traverse modules objects, inspect the code implementing functions etc.
+Unfortunately, this doesn't solve the problem: nearly everything is still incompatible change since TypeScript lets you traverse modules objects, inspect the code implementing functions etc.
 It's possible to write programs which break for pretty much any change.
 
-A more reasonable but simple supported pattern would be all code that only uses assumes the APIs behave as they are documented.
-This is more on the right track, but it has issues with ambiguity which tends to lead to one of:
+A more reasonable but simple supported pattern would be code that only assumes documented behavior about the APIs.
+This is more on the right track, but it has issues with ambiguity which tend to lead to one of:
 
 1. User and Package Developer not interpreting the documentation the same, and thus disagreeing on which changes are compatible.
 2. A broad interpretation of what behavior is supported, resulting in most changing being Incompatible.
@@ -129,8 +129,8 @@ In general, unless the supported patterns for using an interface is restricted t
 There are a few approaches that can be taken to resolve this:
 
 1. Restrict the Supported Patterns for the interface. Depending on how its used there are two main choices:
-   1. "out": Disallow implementing and extending the interface and modifying instances. This means the package can add members, remove optionality and make members have more specific types. This means that the old interface must be assignable to the new interface. Uses also should not assume that enumerating members of objects that meet the interface won't return unexpected entries (this is true in general, but extra important for interfaces using these rules). This restricts the instances of the interface to being produced by the package making it logically an "output" of the package.
-   2. "in": Disallow reading members of the interface (except via `{added: value, ...existingInstance}` pattern). This means the package can remove members, add optionality and make members have more general types. This means that the new interface must be assignable to the old interface. This restricts the instances of the interface to being build but not consumed by user code making it logically an "input" of the package.
+   1. "out": Disallow implementing and extending the interface and modifying instances. This means the package can add members, remove optionality and make members have more specific types. This means that the new interface must be assignable to the old interface. Uses also should not assume that enumerating members of objects that meet the interface won't return unexpected entries (this is true in general, but extra important for interfaces using these rules). This restricts the instances of the interface to being produced by the package making it logically an "output" of the package.
+   2. "in": Disallow reading members of the interface (except via `{added: value, ...existingInstance}` pattern). This means the package can remove members, add optionality and make members have more general types. This means that the old interface must be assignable to the new interface. This restricts the instances of the interface to being build but not consumed by user code making it logically an "input" of the package.
 2. "Invariant": Create a new interface instead of modifying the existing one. Probably pick one of the above options to apply to the new interface to avoid having to make even more of them.
 
 Interestingly these three cases correspond to [covariant, contravariant and invariant from type systems](<https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)>), including in TypeScript which added [explicit use of them in 4.7](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-7.html#optional-variance-annotations-for-type-parameters).
