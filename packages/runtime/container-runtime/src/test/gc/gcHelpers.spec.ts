@@ -6,14 +6,12 @@
 import { strict as assert } from "assert";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionSummaryDetailsLegacy,
-} from "@fluidframework/runtime-definitions";
-import {
 	getSnapshotDataFromOldSnapshotFormat,
 	shouldAllowGcTombstoneEnforcement,
 	GCFeatureMatrix,
 	shouldAllowGcSweep,
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionSummaryDetailsLegacy,
 } from "../../gc";
 import { IContainerRuntimeMetadata, ReadFluidDataStoreAttributes } from "../../summary";
 
