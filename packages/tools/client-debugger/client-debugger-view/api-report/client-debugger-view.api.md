@@ -50,7 +50,7 @@ export const MessageRelayContext: React_2.Context<IMessageRelay<IDebuggerMessage
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
 
 // @public
-export function renderClientDebuggerView(targetElement: HTMLElement): Promise<void>;
+export function renderClientDebuggerView(targetElement: Element, messageRelayFactory: () => IMessageRelay): Promise<void>;
 
 // @public
 export interface RenderOptions {

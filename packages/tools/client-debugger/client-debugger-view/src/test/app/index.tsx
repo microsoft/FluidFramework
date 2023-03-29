@@ -6,6 +6,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { renderClientDebuggerView } from "../../RenderClientDebugger";
+import { WindowMessageRelay } from "../../WindowMessageRelay";
 import { App } from "./App";
 
 console.log("Rendering app...");
@@ -22,7 +23,7 @@ ReactDOM.render(
 
 const debuggerElement = document.createElement("debugger");
 document.body.append(debuggerElement);
-renderClientDebuggerView(debuggerElement).then(
+renderClientDebuggerView(debuggerElement, () => new WindowMessageRelay("fluid-client-debugger-inline")).then(
 	() => {
 		console.log("Debug panel rendered!");
 	},
