@@ -7,12 +7,11 @@ import React from "react";
 
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import {
-	debuggerMessageSource,
 	InboundHandlers,
 	TelemetryHistoryMessage,
 	GetTelemetryHistoryMessage,
 	TelemetryEventMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	handleIncomingMessage,
 	postMessagesToWindow,
 } from "@fluid-tools/client-debugger";
@@ -41,7 +40,7 @@ export function TelemetryView(): React.ReactElement {
 		};
 
 		// Event handler for messages coming from the Message Relay
-		function messageHandler(event: MessageEvent<Partial<IDebuggerMessage>>): void {
+		function messageHandler(event: MessageEvent<Partial<ISourcedDebuggerMessage>>): void {
 			handleIncomingMessage(event.data, inboundMessageHandlers);
 		}
 
@@ -49,7 +48,6 @@ export function TelemetryView(): React.ReactElement {
 
 		// Request all log history
 		postMessagesToWindow<GetTelemetryHistoryMessage>(undefined, {
-			source: debuggerMessageSource,
 			type: "GET_TELEMETRY_HISTORY",
 			data: undefined,
 		});

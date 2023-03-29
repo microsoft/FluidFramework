@@ -5,7 +5,6 @@
 import { IClient } from "@fluidframework/protocol-definitions";
 import { AudienceChangeLogEntry } from "../Logs";
 import { HasContainerId } from "./DebuggerMessages";
-
 import { IDebuggerMessage } from "./Messages";
 
 /**

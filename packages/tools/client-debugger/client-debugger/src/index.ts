@@ -72,6 +72,7 @@ export {
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	GetContainerListMessage,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,

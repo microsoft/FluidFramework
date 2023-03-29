@@ -8,19 +8,9 @@ import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	cloneGCData,
-	concatGarbageCollectionData,
-	getGCDataFromSnapshot,
-	IGCResult,
-	runGarbageCollection,
-	trimLeadingSlashes,
-} from "@fluidframework/garbage-collector";
-import {
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
@@ -43,12 +33,21 @@ import {
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
 	IGarbageCollectionRuntime,
+	IGCResult,
 	IGCStats,
 	UnreferencedState,
 	IGCMetadata,
 	IGarbageCollectorConfigs,
 } from "./gcDefinitions";
-import { getSnapshotDataFromOldSnapshotFormat, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import {
+	cloneGCData,
+	concatGarbageCollectionData,
+	getGCDataFromSnapshot,
+	getSnapshotDataFromOldSnapshotFormat,
+	sendGCUnexpectedUsageEvent,
+} from "./gcHelpers";
+import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
@@ -723,7 +722,7 @@ export class GarbageCollector implements IGarbageCollector {
 				{
 					eventName,
 					category: "generic",
-					url: trimLeadingSlashes(toNodePath),
+					url: toNodePath,
 					nodeType,
 					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},

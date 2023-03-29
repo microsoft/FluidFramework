@@ -38,7 +38,7 @@ const nodeSchema = TypedSchema.tree("Node", {
 	local: { foo: TypedSchema.field(FieldKinds.value, "Node") },
 });
 
-const schemaData = SchemaAware.typedSchemaData(new Map(), nodeSchema);
+const schemaData = SchemaAware.typedSchemaData([], nodeSchema);
 
 const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 	[valueSymbol]: "value1",
