@@ -21,6 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
 
 ### garbage-collector and related items deprecated
 
@@ -47,6 +48,12 @@ The following interfaces available in `@fluidframework/runtime-definitions` are 
 -   `IGarbageCollectionState`
 -   `IGarbageCollectionSnapshotData`
 -   `IGarbageCollectionSummaryDetailsLegacy`
+
+### Some test packages no longer published
+
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-end-to-end-tests`
 
 # 2.0.0-internal.4.0.0
 
@@ -111,7 +118,6 @@ These packages were previously published under the `@fluidframework` scope:
 -   `@fluidframework/test-pairwise-generator`
 -   `@fluidframework/test-version-utils`
 -   `@fluidframework/test-loader-utils`
--   `@fluidframework/test-end-to-end-tests`
 
 These have been moved to the `@fluid-internal` scope and are no longer published.
 
