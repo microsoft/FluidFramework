@@ -27,7 +27,6 @@ export { FluidClientDebuggers, FluidClientDebuggersProps } from "./Debugger";
 export { MessageRelayContext } from "./MessageRelayContext";
 export { renderClientDebuggerView } from "./RenderClientDebugger";
 export {
-	defaultRenderOptions,
 	defaultSharedObjectRenderers,
 	RenderChild,
 	RenderOptions,

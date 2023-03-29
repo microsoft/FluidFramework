@@ -26,9 +26,6 @@ export interface AudienceMemberViewProps {
 }
 
 // @public
-export const defaultRenderOptions: Required<RenderOptions>;
-
-// @public
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
 // @public
