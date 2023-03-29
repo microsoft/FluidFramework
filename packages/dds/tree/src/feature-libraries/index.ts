@@ -31,6 +31,7 @@ export {
 	parentField,
 	EditableTreeEvents,
 	on,
+	contextSymbol,
 } from "./editable-tree";
 
 export {
