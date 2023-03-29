@@ -6,7 +6,6 @@
 
 import { IClient } from '@fluidframework/protocol-definitions';
 import { IDebuggerMessage } from '@fluid-tools/client-debugger';
-import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
 import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ISourcedDebuggerMessage } from '@fluid-tools/client-debugger';
@@ -34,11 +33,6 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React_2.
 // @public
 export interface FluidClientDebuggersProps {
     renderOptions?: RenderOptions;
-}
-
-// @public
-export interface HasClientDebugger {
-    clientDebugger: IFluidClientDebugger;
 }
 
 export { IMessageRelay }
