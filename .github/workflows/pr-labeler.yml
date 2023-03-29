@@ -20,3 +20,44 @@ jobs:
       - uses: srvaroa/labeler@953347905ec8e4884e85c9957d24508e24119fc3 # ratchet:srvaroa/labeler@v1.3
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+  changeset_label:
+    name: Changeset check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: pnpm/action-setup@c3b53f6a16e57305370b4ae5a540c2077a1d50dd # ratchet:pnpm/action-setup@v2
+        with:
+          version: "^7"
+      - uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c # ratchet:actions/setup-node@v3
+        with:
+          node-version: "16"
+      - name: Install tools
+        run: |
+          pnpm add -g @changesets/cli@2.26.0 changesets-format-with-issue-links@0.3.0
+
+      # Check whether a changeset was added. If this fails, the workflow fails. If it succeeds, then the following step
+      - id: changeset-status
+        name: Changeset status
+        continue-on-error: true
+        run: |
+          changeset status --since=${{ env.GITHUB_REF_NAME }}
+
+      # If a changeset is present, label it changeset-present
+      - uses: actions-ecosystem/action-add-labels@v1.1.0
+        if: steps.changeset_label.outcome == "success"
+        with:
+          labels: changeset-present
+      - uses: actions-ecosystem/action-remove-labels@v1.3.0
+        if: steps.changeset_label.outcome == "success"
+        with:
+          labels: changeset-missing
+
+      # If a changeset is missing, label it changeset-present
+      - uses: actions-ecosystem/action-add-labels@v1.1.0
+        if: steps.changeset-status.outcome == "failure"
+        with:
+          labels: changeset-missing
+      - uses: actions-ecosystem/action-remove-labels@v1.3.0
+        if: steps.changeset-status.outcome == "failure"
+        with:
+          labels: changeset-present
