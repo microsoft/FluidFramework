@@ -78,6 +78,7 @@ export {
 	GetContainerStateMessageData,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
+	TelemetryLogEvent,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
 	TelemetryHistoryMessage,

@@ -9,6 +9,22 @@ import { IDebuggerMessage } from "./Messages";
 // #region Outbound messages
 
 /**
+ * Base interface for telemetry log events.
+ * @public
+ */
+export interface TelemetryLogEvent {
+	/**
+	 * The contents of the telemetry event.
+	 */
+	logContent: ITelemetryBaseEvent;
+
+	/**
+	 * The timestamp of the telemetry event.
+	 */
+	timestamp: number;
+}
+
+/**
  * Message data format used by {@link TelemetryEventMessage}.
  *
  * @public
@@ -17,7 +33,7 @@ export interface TelemetryEventMessageData {
 	/**
 	 * Contents of the telemetry event. This can be a single latest event or all the history events.
 	 */
-	contents: ITelemetryBaseEvent[];
+	contents: TelemetryLogEvent[];
 }
 
 /**

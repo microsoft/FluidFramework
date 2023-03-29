@@ -42,6 +42,7 @@ export {
 	AudienceSummaryMessage,
 } from "./AudienceMessages";
 export {
+	TelemetryLogEvent,
 	TelemetryHistoryMessage,
 	GetTelemetryHistoryMessage,
 	TelemetryEventMessage,

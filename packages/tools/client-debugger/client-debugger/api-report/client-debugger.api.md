@@ -293,12 +293,18 @@ export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMe
 
 // @public
 export interface TelemetryEventMessageData {
-    contents: ITelemetryBaseEvent[];
+    contents: TelemetryLogEvent[];
 }
 
 // @public
 export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
     type: "TELEMETRY_HISTORY";
+}
+
+// @public
+export interface TelemetryLogEvent {
+    logContent: ITelemetryBaseEvent;
+    timestamp: number;
 }
 
 ```
