@@ -2,7 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { AsyncGenerator, takeAsync as take, IRandom } from "@fluid-internal/stochastic-test-utils";
+import path from "path";
+import {
+	AsyncGenerator,
+	takeAsync as take,
+	IRandom,
+	SaveInfo,
+} from "@fluid-internal/stochastic-test-utils";
 import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
 import { FieldKinds, namedTreeSchema } from "../../../feature-libraries";
 import { brand } from "../../../util";
@@ -13,6 +19,7 @@ export function runFuzzBatch(
 	fuzzActions: (
 		generatorFactory: AsyncGenerator<Operation, FuzzTestState>,
 		seed: number,
+		saveInfo?: SaveInfo,
 	) => Promise<FuzzTestState>,
 	opsPerRun: number,
 	runsPerBatch: number,
@@ -22,8 +29,13 @@ export function runFuzzBatch(
 	for (let i = 0; i < runsPerBatch; i++) {
 		const runSeed = seed + i;
 		const generatorFactory = () => take(opsPerRun, opGenerator());
+		const saveInfo: SaveInfo = {
+			saveOnFailure: false, // Change to true to save failing runs.
+			saveOnSuccess: false, // Change to true to save successful runs.
+			filepath: path.join(__dirname, `fuzz-tests-saved-ops/ops_with_seed_${runSeed}`),
+		};
 		it(`with seed ${runSeed}`, async () => {
-			await fuzzActions(generatorFactory(), runSeed);
+			await fuzzActions(generatorFactory(), runSeed, saveInfo);
 		}).timeout(20000);
 	}
 }

@@ -3,22 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { getGCDataFromSnapshot } from "@fluidframework/garbage-collector";
 import { SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
 	gcTreeKey,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats, ReadAndParseBlob, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeMetadata, metadataBlobName, RefreshSummaryResult } from "../summary";
 import { GCVersion } from "./gcDefinitions";
-import { generateSortedGCState, getGCVersion } from "./gcHelpers";
+import { getGCDataFromSnapshot, generateSortedGCState, getGCVersion } from "./gcHelpers";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { IGarbageCollectorConfigs } from ".";
 
 /**
