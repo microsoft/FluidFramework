@@ -4,7 +4,11 @@
  */
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ISourcedDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import {
+	ISourcedDebuggerMessage,
+	isDebuggerMessage,
+	debuggerMessageSource,
+} from "@fluid-tools/client-debugger";
 
 import {
 	devToolsInitAcknowledgementType,
@@ -34,10 +38,10 @@ import {
  *
  * TODO: This implementation is brittle in a number of ways, which should be addressed before we publish the extension:
  *
- * 1. After establishing the connection with the background service, we send the initialization message that informs
- * the background script of the devtools extension / tab relationship. If that message fails to be processed for any
- * reason, subsequent messages sent from the devtools script will not be correctly forwarded. We should utilize a proper
- * handshake mechanism for the initialization process, and any other critical messages.
+ * 1. There's no timeout or fallback logic if the initial handshake with the Background Service does not succeed; the
+ * call to BackgroundConnection.Initialize() will just hang forever. This at least ensures that the DevTools script
+ * won't be able to send messages that would fail to be relayed to the Content Script, but results in bad UX in the case
+ * where the Background Service fails to connect with the application tab for some reason.
  *
  * 2. We don't currently recover if the background service is disconnected for any reason. Generally speaking, the
  * background script's lifetime should outlive the devtools script, but there may be cases where the connection is
@@ -55,7 +59,15 @@ export class BackgroundConnection
 	 */
 	private readonly backgroundServiceConnection: TypedPortConnection;
 
-	public constructor() {
+	public static async Initialize(): Promise<BackgroundConnection> {
+		const connection = new BackgroundConnection();
+		await new Promise((resolve) => {
+			connection.once("tabConnected", resolve);
+		});
+		return connection;
+	}
+
+	private constructor() {
 		super();
 
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
@@ -87,7 +99,7 @@ export class BackgroundConnection
 	}
 
 	/**
-	 * Post message to Background Script.
+	 * Post a message for the debugger to the Background Script.
 	 */
 	public postMessage(message: ISourcedDebuggerMessage): void {
 		postMessageToPort(
@@ -108,11 +120,19 @@ export class BackgroundConnection
 			return false;
 		}
 
+		// Ignore messages from unexpected sources.
+		// We receive at least one message directly from the Background script so we need to include
+		// extensionMessageSource as a valid source.
+		if (message.source !== extensionMessageSource && message.source !== debuggerMessageSource) {
+			return false;
+		}
+
+		// Handle init-acknowledgment message from background service
 		if (message.type === devToolsInitAcknowledgementType) {
 			console.log(
-				formatDevtoolsScriptMessageForLogging("Background initialization acknowledged."),
+				formatDevtoolsScriptMessageForLogging("Background initialization complete."),
 			);
-			return true;
+			return this.emit("tabConnected");
 		} else {
 			// Forward incoming message onto subscribers.
 			// TODO: validate source

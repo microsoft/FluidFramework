@@ -10,7 +10,6 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
 import {
-	debuggerMessageSource,
 	handleIncomingWindowMessage,
 	ISourcedDebuggerMessage,
 	InboundHandlers,
@@ -142,7 +141,6 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 */
 	private readonly postRegistryChange = (): void => {
 		postMessagesToWindow<RegistryChangeMessage>(registryMessageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "REGISTRY_CHANGE",
 			data: {
 				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
