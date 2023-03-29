@@ -10,22 +10,22 @@ import { ITelemetryBufferedLogger } from '@fluidframework/test-driver-definition
 
 // @public (undocumented)
 export class AppInsightsLogger implements ITelemetryBufferedLogger {
-    constructor(config: AppInsightsLoggerConfig);
-    // (undocumented)
+    	constructor(config: AppInsightsLoggerConfig);
+    	// (undocumented)
     protected readonly baseLoggingClient: ApplicationInsights;
-    // (undocumented)
+    	// (undocumented)
     flush(): Promise<void>;
-    // (undocumented)
+    	// (undocumented)
     getBaseLoggingClient(): ApplicationInsights;
-    // (undocumented)
+    	// (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
 
 // @public (undocumented)
 export interface AppInsightsLoggerConfig {
-    // (undocumented)
+    	// (undocumented)
     appInsightsClient?: ApplicationInsights;
-    // (undocumented)
+    	// (undocumented)
     connectionString?: string;
 }
 

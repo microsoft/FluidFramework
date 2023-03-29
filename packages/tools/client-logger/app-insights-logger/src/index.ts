@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { AppInsightsLogger } from "./appInsightsLogger";
+export { AppInsightsLogger, AppInsightsLoggerConfig } from "./appInsightsLogger";

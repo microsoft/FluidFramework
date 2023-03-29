@@ -1,10 +1,12 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
-	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"rootDir": "./src",
-		"outDir": "./dist",
-		"types": ["mocha"],
+		"rootDir": "src",
+		"outDir": "dist",
+		"composite": true,
+		"target": "es6",
+		"jsx": "react",
+		"types": ["jest"],
 	},
 	"include": ["src/**/*"],
 }

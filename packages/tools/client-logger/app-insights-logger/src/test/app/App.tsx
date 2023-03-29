@@ -84,80 +84,6 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
 	});
 }
 
-/**
- * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
- * the URL to enable collaboration, and a private container that is only exposed to the local user.
- */
-// function useContainerInfo(): {
-// 	privateContainer: ContainerInfo | undefined;
-// 	sharedContainer: ContainerInfo | undefined;
-// } {
-// 	const [sharedContainerInfo, setSharedContainerInfo] = React.useState<
-// 		ContainerInfo | undefined
-// 	>();
-// 	const [privateContainerInfo, setPrivateContainerInfo] = React.useState<
-// 		ContainerInfo | undefined
-// 	>();
-
-// 	// Get the Fluid Data data on app startup and store in the state
-// 	React.useEffect(
-// 		() => {
-// 			async function getSharedFluidData(): Promise<ContainerInfo> {
-// 				const containerNickname = "Shared Container";
-
-// 				const containerId = getContainerIdFromLocation(window.location);
-// 				return containerId.length === 0
-// 					? createFluidContainer(containerSchema, populateRootMap, containerNickname)
-// 					: loadExistingFluidContainer(containerId, containerSchema, containerNickname);
-// 			}
-
-// 			getSharedFluidData().then(
-// 				(data) => {
-// 					if (getContainerIdFromLocation(window.location) !== data.containerId) {
-// 						window.location.hash = data.containerId;
-// 					}
-
-// 					initializeFluidClientDebugger(data);
-// 					setSharedContainerInfo(data);
-// 				},
-// 				(error) => {
-// 					console.error(error);
-// 				},
-// 			);
-
-// 			async function getPrivateContainerData(): Promise<ContainerInfo> {
-// 				// Always create a new container for the private view.
-// 				// This isn't shared with other collaborators.
-// 				return createFluidContainer(containerSchema, populateRootMap, "Private Container");
-// 			}
-
-// 			getPrivateContainerData().then(
-// 				(data) => {
-// 					initializeFluidClientDebugger(data);
-// 					setPrivateContainerInfo(data);
-// 				},
-// 				(error) => {
-// 					console.error(error);
-// 				},
-// 			);
-
-// 			return (): void => {
-// 				if (sharedContainerInfo !== undefined) {
-// 					closeFluidClientDebugger(sharedContainerInfo.containerId);
-// 				}
-// 				if (privateContainerInfo !== undefined) {
-// 					closeFluidClientDebugger(privateContainerInfo.containerId);
-// 				}
-// 			};
-// 		},
-// 		// This app never changes the containers after initialization, so we just want to run this effect once.
-// 		// eslint-disable-next-line react-hooks/exhaustive-deps
-// 		[],
-// 	);
-
-// 	return { sharedContainer: sharedContainerInfo, privateContainer: privateContainerInfo };
-// }
-
 const appTheme = createTheme({
 	palette: {
 		themePrimary: "#0078d4",
@@ -243,16 +169,6 @@ export function App(): React.ReactElement {
 					<AppView containerInfo={sharedContainerInfo} />
 				)}
 			</StackItem>
-			{/* <StackItem>
-				{privateContainer === undefined ? (
-					<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-						<Spinner />
-						<div>Loading Private container...</div>
-					</Stack>
-				) : (
-					<AppView containerInfo={privateContainer} />
-				)}
-			</StackItem> */}
 		</Stack>
 	);
 

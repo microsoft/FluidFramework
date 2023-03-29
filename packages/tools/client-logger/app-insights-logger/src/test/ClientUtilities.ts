@@ -5,19 +5,12 @@
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	ContainerSchema,
-	// FluidContainer,
 	IFluidContainer,
 } from "@fluidframework/fluid-static";
 import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
-import { AppInsightsLogger } from "../appInsightsLogger";
-
-// import {
-// 	FluidDebuggerLogger,
-// 	initializeFluidClientDebugger as initializeFluidClientDebuggerBase,
-// } from "@fluid-tools/client-debugger";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -54,9 +47,9 @@ export interface ContainerInfo {
 function initializeTinyliciousClient(): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
 	return new TinyliciousClient({
-		logger: new AppInsightsLogger({
-			connectionString: ""
-		}),
+		// logger: new AppInsightsLogger({
+		// 	connectionString: "insert your app insights string here"
+		// }),
 	});
 }
 

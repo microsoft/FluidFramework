@@ -5,11 +5,12 @@
 import {
 	IStackItemStyles,
 	IStackStyles,
-	IconButton,
 	Stack,
 	StackItem,
 	TooltipHost,
+	BaseButton,
 } from "@fluentui/react";
+
 import React from "react";
 
 import { SharedCounter } from "@fluidframework/counter";
@@ -90,12 +91,13 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 					content="Decrement counter by 1 (min 0)."
 					id={decrementButtonTooltipId}
 				>
-					<IconButton
+					<BaseButton
 						onClick={decrementCounter}
 						disabled={counterValue === 0}
-						menuIconProps={{ iconName: "CalculatorSubtract" }}
 						aria-describedby={decrementButtonTooltipId}
-					/>
+					>
+						Decrement
+					</BaseButton>
 				</TooltipHost>
 			</StackItem>
 			<StackItem styles={stackItemStyles}>
@@ -103,12 +105,12 @@ export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
 			</StackItem>
 			<StackItem styles={stackItemStyles}>
 				<TooltipHost content="Increment counter by 1." id={incrementButtonTooltipId}>
-					<IconButton
+					<BaseButton
 						onClick={incrementCounter}
-						menuIconProps={{ iconName: "CalculatorAddition" }}
 						aria-describedby={incrementButtonTooltipId}
-						value={"Increment"}
-					></IconButton>
+					>
+						Increment
+					</BaseButton>
 				</TooltipHost>
 			</StackItem>
 		</Stack>
