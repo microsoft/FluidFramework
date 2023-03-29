@@ -42,7 +42,7 @@ export {
 	AudienceSummaryMessage,
 } from "./AudienceMessages";
 export {
-	TelemetryLogEvent,
+	ITimestampedTelemetryEvent,
 	TelemetryHistoryMessage,
 	GetTelemetryHistoryMessage,
 	TelemetryEventMessage,

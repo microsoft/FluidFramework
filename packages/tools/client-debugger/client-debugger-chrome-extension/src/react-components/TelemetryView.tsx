@@ -9,7 +9,7 @@ import {
 	handleIncomingMessage,
 	ISourcedDebuggerMessage,
 	InboundHandlers,
-	TelemetryLogEvent,
+	ITimestampedTelemetryEvent,
 	TelemetryHistoryMessage,
 	TelemetryEventMessage,
 } from "@fluid-tools/client-debugger";
@@ -27,7 +27,7 @@ const loggingContext = "EXTENSION(DebuggerPanel:Telemetry)";
 export function TelemetryView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
 
-	const [telemetryEvents, setTelemetryEvents] = React.useState<TelemetryLogEvent[]>([]);
+	const [telemetryEvents, setTelemetryEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 
 	React.useEffect(() => {
 		/**

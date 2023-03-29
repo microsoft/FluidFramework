@@ -252,6 +252,12 @@ export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessa
 }
 
 // @public
+export interface ITimestampedTelemetryEvent {
+    logContent: ITelemetryBaseEvent;
+    timestamp: number;
+}
+
+// @public
 export interface LogEntry {
     timestamp: number;
 }
@@ -293,18 +299,12 @@ export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMe
 
 // @public
 export interface TelemetryEventMessageData {
-    contents: TelemetryLogEvent[];
+    contents: ITimestampedTelemetryEvent[];
 }
 
 // @public
 export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
     type: "TELEMETRY_HISTORY";
-}
-
-// @public
-export interface TelemetryLogEvent {
-    logContent: ITelemetryBaseEvent;
-    timestamp: number;
 }
 
 ```

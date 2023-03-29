@@ -9,10 +9,10 @@ import { IDebuggerMessage } from "./Messages";
 // #region Outbound messages
 
 /**
- * Base interface for telemetry log events.
+ * Interface for telemetry events with a timestamp. Specific to the Fluid Debugger.
  * @public
  */
-export interface TelemetryLogEvent {
+export interface ITimestampedTelemetryEvent {
 	/**
 	 * The contents of the telemetry event.
 	 */
@@ -33,7 +33,7 @@ export interface TelemetryEventMessageData {
 	/**
 	 * Contents of the telemetry event. This can be a single latest event or all the history events.
 	 */
-	contents: TelemetryLogEvent[];
+	contents: ITimestampedTelemetryEvent[];
 }
 
 /**
