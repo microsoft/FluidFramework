@@ -8,6 +8,7 @@ import {
 	TinyliciousClient,
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
+// import { AppInsightsLogger } from "../appInsightsLogger";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -47,9 +48,9 @@ function initializeTinyliciousClient(): TinyliciousClient {
 		// logger: new AppInsightsLogger({
 		// 	appInsightsConfig: {
 		// 		config: {
-		// 			connectionString: "insert your app insights string here"
-		// 		}
-		// 	}
+		// 			connectionString: "insert your app insights string here",
+		// 		},
+		// 	},
 		// }),
 	});
 }

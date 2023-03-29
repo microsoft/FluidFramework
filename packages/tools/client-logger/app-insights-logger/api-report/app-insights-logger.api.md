@@ -11,22 +11,22 @@ import { Snippet } from '@microsoft/applicationinsights-web';
 
 // @public (undocumented)
 export class AppInsightsLogger implements ITelemetryBufferedLogger {
-    constructor(loggerConfig: AppInsightsLoggerConfig);
-    // (undocumented)
+    	constructor(loggerConfig: AppInsightsLoggerConfig);
+    	// (undocumented)
     protected readonly baseLoggingClient: ApplicationInsights;
-    // (undocumented)
+    	// (undocumented)
     flush(): Promise<void>;
-    // (undocumented)
+    	// (undocumented)
     getBaseLoggingClient(): ApplicationInsights;
-    // (undocumented)
+    	// (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
 
 // @public (undocumented)
 export interface AppInsightsLoggerConfig {
-    // (undocumented)
+    	// (undocumented)
     appInsightsClient?: ApplicationInsights;
-    // (undocumented)
+    	// (undocumented)
     appInsightsConfig?: Snippet;
 }
 
