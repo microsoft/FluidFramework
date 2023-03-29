@@ -8,7 +8,7 @@ export {
 	ChangeEvents,
 	ISharedTreeCoreEvents,
 	SharedTreeCore,
-	IndexSummarizer,
+	Summarizable,
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "./sharedTreeCore";
@@ -18,6 +18,6 @@ export { TransactionStack } from "./transactionStack";
 export {
 	EditManagerSummarizer,
 	CommitEncoder,
-	parseSummary as loadSummary,
-	stringifySummary as encodeSummary,
+	parseSummary,
+	stringifySummary,
 } from "./editManagerSummarizer";

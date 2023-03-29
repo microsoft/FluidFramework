@@ -30,7 +30,7 @@ import {
 	ChangeEncoder,
 	ChangeFamilyEditor,
 } from "../core";
-import { IndexSummarizer, SummaryElementParser, SummaryElementStringifier } from ".";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from ".";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -42,7 +42,7 @@ const stringKey = "String";
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */
-export class EditManagerSummarizer<TChangeset> implements IndexSummarizer {
+export class EditManagerSummarizer<TChangeset> implements Summarizable {
 	public readonly key = "EditManager";
 
 	private readonly editDataBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;

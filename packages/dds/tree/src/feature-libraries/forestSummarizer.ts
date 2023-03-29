@@ -26,11 +26,7 @@ import {
 	mapCursorField,
 	moveToDetachedField,
 } from "../core";
-import {
-	IndexSummarizer,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "../shared-tree-core";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
@@ -41,7 +37,7 @@ const treeBlobKey = "ForestTree";
 /**
  * Provides methods for summarizing and loading a forest.
  */
-export class ForestSummarizer implements IndexSummarizer {
+export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
 	private readonly cursor: ITreeSubscriptionCursor;

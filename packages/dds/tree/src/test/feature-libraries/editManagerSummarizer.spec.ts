@@ -7,9 +7,9 @@ import { strict as assert } from "assert";
 import { mintRevisionTag, SummaryData } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
-import { encodeSummary, loadSummary } from "../../shared-tree-core";
+import { parseSummary, stringifySummary } from "../../shared-tree-core";
 
-describe("EditManagerIndex", () => {
+describe("EditManagerSummarizer", () => {
 	it("roundtrip", () => {
 		const tag1 = mintRevisionTag();
 		const tag2 = mintRevisionTag();
@@ -59,10 +59,10 @@ describe("EditManagerIndex", () => {
 				],
 			]),
 		};
-		const s1 = encodeSummary(input, TestChange.encoder);
-		const output = loadSummary(s1, TestChange.encoder);
+		const s1 = stringifySummary(input, TestChange.encoder);
+		const output = parseSummary(s1, TestChange.encoder);
 		assert.deepEqual(output, input);
-		const s2 = encodeSummary(output, TestChange.encoder);
+		const s2 = stringifySummary(output, TestChange.encoder);
 		assert.equal(s1, s2);
 	});
 

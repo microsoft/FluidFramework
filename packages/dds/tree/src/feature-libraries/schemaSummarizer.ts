@@ -32,11 +32,7 @@ import {
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "../core";
-import {
-	IndexSummarizer,
-	SummaryElementParser,
-	SummaryElementStringifier,
-} from "../shared-tree-core";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { isJsonObject, JsonCompatibleReadOnly } from "../util";
 import { getSchemaString, parseSchemaString } from "./schemaIndexFormat";
 
@@ -50,7 +46,7 @@ const schemaStringKey = "SchemaString";
 /**
  * Provides methods for summarizing and loading a schema repository.
  */
-export class SchemaSummarizer implements IndexSummarizer {
+export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;

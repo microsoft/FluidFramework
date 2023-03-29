@@ -56,7 +56,7 @@ export interface ISharedTreeCoreEvents {
 // TODO: How should the format version be determined?
 const formatVersion = 0;
 // TODO: Organize this to be adjacent to persisted types.
-const indexesTreeKey = "indexes";
+const summarizablesTreekey = "indexes";
 
 /**
  * Events which result from the state of the tree changing.
@@ -94,7 +94,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
 > {
 	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly indexSummarizers: readonly IndexSummarizer[];
+	private readonly summarizables: readonly Summarizable[];
 
 	/**
 	 * The sequence number that this instance is at.
@@ -116,7 +116,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly transactions = new TransactionStack();
 
 	/**
-	 * @param indexSummarizers - Summarizers for all indexes used by this tree
+	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
 	 * @param anchors - The anchor set
@@ -126,7 +126,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		indexSummarizers: readonly IndexSummarizer[],
+		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
 
@@ -145,12 +145,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = uuid();
 		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
-		this.indexSummarizers = [
+		this.summarizables = [
 			new EditManagerSummarizer(runtime, this.editManager),
-			...indexSummarizers,
+			...summarizables,
 		];
 		assert(
-			new Set(this.indexSummarizers.map((e) => e.key)).size === this.indexSummarizers.length,
+			new Set(this.summarizables.map((e) => e.key)).size === this.summarizables.length,
 			0x350 /* Index summary element keys must be unique */,
 		);
 
@@ -164,20 +164,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
-		builder.addWithStats(indexesTreeKey, this.summarizeIndexes(serializer, telemetryContext));
-		return builder.getSummaryTree();
-	}
-
-	private summarizeIndexes(
-		serializer: IFluidSerializer,
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats {
-		const builder = new SummaryTreeBuilder();
-		// Merge the summaries of all indexes together under a single ISummaryTree
-		for (const summaryElement of this.indexSummarizers) {
-			builder.addWithStats(
-				summaryElement.key,
-				summaryElement.getAttachSummary(
+		const summarizableBuilder = new SummaryTreeBuilder();
+		// Merge the summaries of all summarizables together under a single ISummaryTree
+		for (const s of this.summarizables) {
+			summarizableBuilder.addWithStats(
+				s.key,
+				s.getAttachSummary(
 					(contents) => serializer.stringify(contents, this.handle),
 					undefined,
 					undefined,
@@ -186,18 +178,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			);
 		}
 
+		builder.addWithStats(summarizablesTreekey, summarizableBuilder.getSummaryTree());
 		return builder.getSummaryTree();
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		const loadIndexes = this.indexSummarizers.map(async (summaryElement) =>
+		const loadSummaries = this.summarizables.map(async (summaryElement) =>
 			summaryElement.load(
-				scopeStorageService(services, indexesTreeKey, summaryElement.key),
+				scopeStorageService(services, summarizablesTreekey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
 			),
 		);
 
-		await Promise.all(loadIndexes);
+		await Promise.all(loadSummaries);
 	}
 
 	private submitCommit(commit: Commit<TChange>): void {
@@ -339,8 +332,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
 		const gcNodes: IGarbageCollectionData["gcNodes"] = {};
-		for (const summaryElement of this.indexSummarizers) {
-			for (const [id, routes] of Object.entries(summaryElement.getGCData(fullGC).gcNodes)) {
+		for (const s of this.summarizables) {
+			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
 					gcNodes[id].push(route);
@@ -373,19 +366,17 @@ interface Message {
 }
 
 /**
- * Specifies the behavior of an {@link Index} that puts data in a summary.
+ * Specifies the behavior of a component that puts data in a summary.
  */
-export interface IndexSummarizer {
+export interface Summarizable {
 	/**
 	 * Field name in summary json under which this element stores its data.
-	 *
-	 * TODO: define how this is used (ex: how does user of index consume this before calling loadCore).
 	 */
 	readonly key: string;
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+	 * @param stringify - Serializes the contents of the component (including {@link IFluidHandle}s) for storage.
 	 */
 	getAttachSummary(
 		stringify: SummaryElementStringifier,
@@ -396,7 +387,7 @@ export interface IndexSummarizer {
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
-	 * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+	 * @param stringify - Serializes the contents of the component (including {@link IFluidHandle}s) for storage.
 	 */
 	summarize(
 		stringify: SummaryElementStringifier,
@@ -413,10 +404,10 @@ export interface IndexSummarizer {
 	getGCData(fullGC?: boolean): IGarbageCollectionData;
 
 	/**
-	 * Allows the index to perform custom loading. The storage service is scoped to this index and therefore
-	 * paths in this index will not collide with those in other indexes, even if they are the same string.
-	 * @param service - Storage used by the index
-	 * @param parse - Parses serialized data from storage into runtime objects for the index
+	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore
+	 * paths in this component will not collide with those in other components, even if they are the same string.
+	 * @param service - Storage used by the component
+	 * @param parse - Parses serialized data from storage into runtime objects for the component
 	 */
 	load(service: IChannelStorageService, parse: SummaryElementParser): Promise<void>;
 }
