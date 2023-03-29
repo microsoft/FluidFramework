@@ -106,6 +106,16 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			}),
 		);
 
+	const disableCompressionConfig = {
+		...testContainerConfig,
+		runtimeOptions: {
+			compressionOptions: {
+				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+				compressionAlgorithm: CompressionAlgorithms.lz4,
+			},
+		},
+	}; // Compression is enabled by default
+
 	itExpects(
 		"A large op will close the container when compression is disabled",
 		[
@@ -114,15 +124,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		],
 		async () => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-				},
-			}); // Compression is enabled by default
+			await setupContainers(disableCompressionConfig);
 
 			const errorEvent = containerError(localContainer);
 
@@ -154,6 +156,32 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 
 		assertMapValues(remoteMap, messageCount, largeString);
 	});
+
+	itExpects(
+		"Small batches pass while disconnected, fail when the container connects and compression is disabled",
+		[
+			{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" },
+			{ eventName: "fluid:telemetry:Container:ContainerDispose", error: "BatchTooLarge" },
+		],
+		async () => {
+			const maxMessageSizeInBytes = 600 * 1024;
+			await setupContainers(disableCompressionConfig);
+			const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
+			const messageCount = 10;
+			localContainer.disconnect();
+			for (let i = 0; i < 3; i++) {
+				setMapKeys(localMap, messageCount, largeString);
+				await new Promise<void>((resolve) => setTimeout(resolve));
+				// Individual small batches will pass, as the container is disconnected and
+				// batches will be stored as pending
+				assert.equal(localContainer.closed, false);
+			}
+
+			// On reconnect, all small batches will be sent at once
+			localContainer.connect();
+			await provider.ensureSynchronized();
+		},
+	);
 
 	it("Batched small ops pass when batch is larger than max op size", async function () {
 		// flush mode is not applicable for the local driver
@@ -218,15 +246,7 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 		],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-				},
-			}); // Compression is enabled by default
+			await setupContainers(disableCompressionConfig);
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
