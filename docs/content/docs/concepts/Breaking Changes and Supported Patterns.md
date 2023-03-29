@@ -123,7 +123,7 @@ interface Name {
 
 ### The Rule
 
-As shown in the example above, even when only consider if the code builds, its impossible to add or remove fields, optional or otherwise, or adjust the optionality of any field on an interface as a backwards compatible change if all three of these patterns are supported.
+As shown in the example above, even when only consider if the code builds, it's impossible to add or remove fields, optional or otherwise, or adjust the optionality of any field on an interface as a backwards compatible change if all three of these patterns are supported.
 In general, unless the supported patterns for using an interface is restricted to not permit these kinds of usage, modifying it in a compatible way is impossible.
 
 There are a few approaches that can be taken to resolve this:
