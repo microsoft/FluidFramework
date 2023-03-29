@@ -151,6 +151,8 @@ export class FluidCache implements IPersistedCache {
 			cacheHit: cachedItem !== undefined,
 			type: cacheEntry.type,
 			duration: performance.now() - startTime,
+			dbOpenPerf: cachedItem?.dbOpenPerf,
+			dbClosePerf: cachedItem?.dbClosePerf,
 		});
 
 		// Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
@@ -163,8 +165,9 @@ export class FluidCache implements IPersistedCache {
 		try {
 			const key = getKeyForCacheEntry(cacheEntry);
 
+			const dbOpenStartTime = performance.now();
 			db = await getFluidCacheIndexedDbInstance(this.logger);
-
+			const dbOpenPerf = performance.now() - dbOpenStartTime;
 			const value = await db.get(FluidDriverObjectStoreName, key);
 
 			if (!value) {
@@ -191,7 +194,10 @@ export class FluidCache implements IPersistedCache {
 				return undefined;
 			}
 
-			return value;
+			const dbCloseStartTime = performance.now();
+			db.close();
+			const dbClosePerf = performance.now() - dbCloseStartTime;
+			return { ...value, dbOpenPerf, dbClosePerf };
 		} catch (error: any) {
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us. Return undefined in this case
@@ -199,9 +205,8 @@ export class FluidCache implements IPersistedCache {
 				{ eventName: FluidCacheErrorEvent.FluidCacheGetError },
 				error,
 			);
-			return undefined;
-		} finally {
 			db?.close();
+			return undefined;
 		}
 	}
 
