@@ -347,7 +347,6 @@ export class FluidClientDebugger
 		this.audience.on("addMember", this.audienceMemberAddedHandler);
 		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
 
-		console.log("setting up globalthis listener");
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
