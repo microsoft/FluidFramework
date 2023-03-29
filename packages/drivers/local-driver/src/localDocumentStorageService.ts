@@ -110,7 +110,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		const uint8ArrayFile = new Uint8Array(file);
 		return this.manager
 			.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
-			.then((r) => ({ id: r.sha, url: r.url }));
+			.then((r) => ({ id: r.sha, url: r.url, minTTLInSeconds: 86700 }));
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
