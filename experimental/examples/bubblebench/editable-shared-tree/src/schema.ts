@@ -41,7 +41,7 @@ export const clientSchema = tree("BubbleBenchAppStateClient-1.0.0", {
 export const rootAppStateSchema = field(sequence, clientSchema);
 
 export const appSchemaData = SchemaAware.typedSchemaData(
-	new Map([[rootFieldKey, rootAppStateSchema]]),
+	[[rootFieldKey, rootAppStateSchema]],
 	stringSchema,
 	numberSchema,
 	bubbleSchema,

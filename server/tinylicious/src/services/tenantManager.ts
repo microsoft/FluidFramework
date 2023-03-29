@@ -48,8 +48,9 @@ export class TinyliciousTenant implements ITenant {
 export class TenantManager implements ITenantManager {
 	constructor(private readonly url: string) {}
 
-	public async getTenantGitManager(tenantId: string, documentId: string): Promise<IGitManager> {
-		throw new Error("Method not implemented.");
+	public async getTenantGitManager(tenantId: string, _documentId: string): Promise<IGitManager> {
+		const tenant = await this.getTenant(tenantId);
+		return tenant.gitManager;
 	}
 
 	public async createTenant(tenantId?: string): Promise<ITenantConfig & { key: string }> {
