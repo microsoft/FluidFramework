@@ -226,6 +226,7 @@ export class FluidCache implements IPersistedCache {
 					cacheItemId: entry.key,
 					partitionKey: this.partitionKey,
 					createdTimeMs: currentTime,
+					lastAccessTimeMs: currentTime,
 				},
 				getKeyForCacheEntry(entry),
 			);

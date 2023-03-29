@@ -204,6 +204,7 @@ describe("Fluid Cache tests", () => {
 			},
 			createdTimeMs: 100,
 			fileId: "myDocument",
+			lastAccessTimeMs: 100,
 			type: "snapshot",
 			partitionKey: "FAKEPARTITIONKEY",
 		});
