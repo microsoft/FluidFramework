@@ -74,7 +74,7 @@ export function createSummarizer(provider: ITestObjectProvider, container: ICont
 }>;
 
 // @public
-export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries): Promise<{
+export function createSummarizerFromFactory(provider: ITestObjectProvider, container: IContainer, dataStoreFactory: IFluidDataStoreFactory, summaryVersion?: string, containerRuntimeFactoryType?: typeof ContainerRuntimeFactoryWithDefaultDataStore, registryEntries?: NamedFluidDataStoreRegistryEntries, logger?: ITelemetryBaseLogger): Promise<{
     container: IContainer;
     summarizer: ISummarizer;
 }>;
@@ -105,9 +105,6 @@ export enum DataObjectFactoryType {
 
 // @public (undocumented)
 export const defaultTimeoutDurationMs = 250;
-
-// @public @deprecated
-export function ensureContainerConnected(container: IContainer): Promise<void>;
 
 // @public
 export class EventAndErrorTrackingLogger extends TelemetryLogger {

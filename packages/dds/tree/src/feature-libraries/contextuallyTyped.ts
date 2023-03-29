@@ -22,12 +22,14 @@ import {
 	TreeTypeSet,
 	MapTree,
 	symbolIsFieldKey,
+	ITreeCursorSynchronous,
 } from "../core";
 // TODO:
 // This module currently is assuming use of defaultFieldKinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
 import { fieldKinds } from "./defaultFieldKinds";
 import { FieldKind, Multiplicity } from "./modular-schema";
+import { singleMapTreeCursor } from "./mapTreeCursor";
 
 /**
  * This library defines a tree data format that can infer its types from context.
@@ -228,10 +230,20 @@ export type ContextuallyTypedNodeData =
 	| MarkedArrayLike<ContextuallyTypedNodeData>;
 
 /**
+ * Content of a field which needs external schema information to interpret.
+ *
+ * This format is intended for concise authoring of tree literals when the schema is statically known.
+ *
+ * Once schema aware APIs are implemented, they can be used to provide schema specific subsets of this type.
+ * @alpha
+ */
+export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
+
+/**
  * Checks the type of a `ContextuallyTypedNodeData`.
  */
 export function isArrayLike(
-	data: ContextuallyTypedNodeData | undefined,
+	data: ContextuallyTypedFieldData,
 ): data is readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData> {
 	return isWritableArrayLike(data) || Array.isArray(data);
 }
@@ -241,7 +253,7 @@ export function isArrayLike(
  * @alpha
  */
 export function isWritableArrayLike(
-	data: ContextuallyTypedNodeData | undefined,
+	data: ContextuallyTypedFieldData,
 ): data is MarkedArrayLike<ContextuallyTypedNodeData> {
 	if (typeof data !== "object") {
 		return false;
@@ -284,14 +296,14 @@ export interface ContextuallyTypedNodeDataObject {
 	 * Allow explicit undefined for compatibility with EditableTree, and type-safety on read.
 	 */
 	// TODO: make sure explicit undefined is actually handled correctly.
-	[key: FieldKey]: ContextuallyTypedNodeData | undefined;
+	[key: FieldKey]: ContextuallyTypedFieldData;
 
 	/**
 	 * Fields of this node, indexed by their field keys as strings.
 	 *
 	 * Allow unbranded local field keys and a convenience for literals.
 	 */
-	[key: string]: ContextuallyTypedNodeData | undefined;
+	[key: string]: ContextuallyTypedFieldData;
 }
 
 /**
@@ -326,9 +338,43 @@ function shallowCompatibilityTest(
 }
 
 /**
+ * Construct a tree from ContextuallyTypedNodeData.
+ *
+ * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ */
+export function cursorFromContextualData(
+	schemaData: SchemaDataAndPolicy,
+	typeSet: TreeTypeSet,
+	data: ContextuallyTypedNodeData,
+): ITreeCursorSynchronous {
+	const mapTree = applyTypesFromContext(schemaData, typeSet, data);
+	return singleMapTreeCursor(mapTree);
+}
+
+/**
+ * Construct a tree from ContextuallyTypedNodeData.
+ *
+ * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ * TODO: migrate APIs which take arrays of cursors to take cursors in fields mode.
+ */
+export function cursorsFromContextualData(
+	schemaData: SchemaDataAndPolicy,
+	field: FieldSchema,
+	data: ContextuallyTypedNodeData | undefined,
+): ITreeCursorSynchronous[] {
+	const mapTrees = applyFieldTypesFromContext(schemaData, field, data);
+	return mapTrees.map(singleMapTreeCursor);
+}
+
+/**
  * Construct a MapTree from ContextuallyTypedNodeData.
  *
- * TODO: this should probably be refactors into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ * TODO: this should probably be refactored into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ * TODO: test suite.
+ *
+ * @remarks
+ * This version is only exported as a more testable entry point than `cursorFromContextualData` which keeps the use of `MapTree` as an implementation detail.
+ * This should not be reexported from the parent module.
  */
 export function applyTypesFromContext(
 	schemaData: SchemaDataAndPolicy,
@@ -385,12 +431,17 @@ export function applyTypesFromContext(
 /**
  * Construct a MapTree from ContextuallyTypedNodeData.
  *
- * TODO: this should probably be refactors into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ * TODO: this should probably be refactored into a `try` function which either returns a MapTree or a SchemaError with a path to the error.
+ * TODO: test suite.
+ *
+ * @remarks
+ * This version is only exported as a more testable entry point than `cursorsFromContextualData` which keeps the use of `MapTree` as an implementation detail.
+ * This should not be reexported from the parent module.
  */
 export function applyFieldTypesFromContext(
 	schemaData: SchemaDataAndPolicy,
 	field: FieldSchema,
-	data: ContextuallyTypedNodeData | undefined,
+	data: ContextuallyTypedFieldData,
 ): MapTree[] {
 	const multiplicity = getFieldKind(field).multiplicity;
 	if (data === undefined) {

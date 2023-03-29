@@ -29,7 +29,7 @@ export const listTaskSchema = tree("ListTask", {
 export const rootFieldSchema = field(value, stringTaskSchema, listTaskSchema);
 
 export const appSchemaData = SchemaAware.typedSchemaData(
-	new Map([[rootFieldKey, rootFieldSchema]]),
+	[[rootFieldKey, rootFieldSchema]],
 	stringTaskSchema,
 	listTaskSchema,
 );

@@ -12,6 +12,7 @@ import {
 	IControlMessage,
 	IDeltaService,
 	IDocument,
+	IDocumentRepository,
 	ILambdaStartControlMessageContents,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
@@ -57,12 +58,13 @@ const DefaultScribe: IScribe = {
 	},
 	sequenceNumber: 0,
 	lastSummarySequenceNumber: 0,
+	validParentSummaries: undefined,
 };
 
 export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
 	constructor(
 		private readonly mongoManager: MongoManager,
-		private readonly documentCollection: ICollection<IDocument>,
+		private readonly documentRepository: IDocumentRepository,
 		private readonly messageCollection: ICollection<ISequencedOperationMessage>,
 		private readonly producer: IProducer,
 		private readonly deltaManager: IDeltaService,
@@ -99,7 +101,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 		);
 
 		try {
-			document = await this.documentCollection.findOne({ documentId, tenantId });
+			document = await this.documentRepository.readOne({ documentId, tenantId });
 
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
@@ -250,7 +252,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			context,
 			tenantId,
 			documentId,
-			this.documentCollection,
+			this.documentRepository,
 			this.messageCollection,
 			this.deltaManager,
 			this.getDeltasViaAlfred,

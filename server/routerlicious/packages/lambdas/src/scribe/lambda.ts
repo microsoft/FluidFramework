@@ -76,6 +76,9 @@ export class ScribeLambda implements IPartitionLambda {
 	// Seqeunce number of the last summarised op
 	private lastSummarySequenceNumber: number | undefined;
 
+	// Refs of the service summaries generated since the last client generated summary.
+	private validParentSummaries: string[] | undefined;
+
 	// Indicates whether cache needs to be cleaned after processing a message
 	private clearCache: boolean = false;
 
@@ -367,6 +370,9 @@ export class ScribeLambda implements IPartitionLambda {
 									this.serviceConfiguration.scribe.clearCacheAfterServiceSummary,
 								);
 								this.updateLastSummarySequenceNumber(operation.sequenceNumber);
+								// Add service summary handle to validParentSummaries so that SummaryWriter knows it is a valid
+								// alternate parent summary handle. Otherwise only lastClientSummaryHead and latest service summary are accepted.
+								this.updateValidParentSummaries(summaryResponse);
 								const summaryResult = `Service summary success @${operation.sequenceNumber}`;
 								this.context.log?.info(summaryResult, {
 									messageMetaData: {
@@ -407,6 +413,10 @@ export class ScribeLambda implements IPartitionLambda {
 						? JSON.parse(operation.data)
 						: operation.contents;
 					this.lastClientSummaryHead = content.handle;
+					// Similar to lastClientSummaryHead, only reset validParentSummaries to undefined
+					// once a new official client summary ack is receieved.
+					// It will be updated to an array if/when summary handles are added.
+					this.validParentSummaries = undefined;
 					// An external summary writer can only update the protocolHead when the ack is sequenced
 					// back to the stream.
 					if (this.summaryWriter.isExternal) {
@@ -548,6 +558,7 @@ export class ScribeLambda implements IPartitionLambda {
 			minimumSequenceNumber: this.minSequenceNumber,
 			protocolState,
 			sequenceNumber: this.sequenceNumber,
+			validParentSummaries: this.validParentSummaries,
 		};
 		return checkpoint;
 	}
@@ -630,6 +641,17 @@ export class ScribeLambda implements IPartitionLambda {
 		this.lastSummarySequenceNumber = summarySequenceNumber;
 	}
 
+	/**
+	 * validParentSummaries tracks summary handles for service summaries that have been written since the latest client summary.
+	 * @param summaryHandle - The handle for a service summary that occurred after latest client summary.
+	 */
+	private updateValidParentSummaries(summaryHandle: string) {
+		if (this.validParentSummaries === undefined) {
+			this.validParentSummaries = [];
+		}
+		this.validParentSummaries.push(summaryHandle);
+	}
+
 	private async sendSummaryAck(contents: ISummaryAck) {
 		const operation: IDocumentSystemMessage = {
 			clientSequenceNumber: -1,
@@ -691,6 +713,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.minSequenceNumber = scribe.minimumSequenceNumber;
 		this.lastClientSummaryHead = scribe.lastClientSummaryHead;
 		this.lastSummarySequenceNumber = scribe.lastSummarySequenceNumber;
+		this.validParentSummaries = scribe.validParentSummaries;
 	}
 
 	private updateCheckpointMessages(message: IQueuedMessage) {

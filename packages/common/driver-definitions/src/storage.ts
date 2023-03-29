@@ -350,13 +350,6 @@ export interface IDocumentService {
 
 export interface IDocumentServiceFactory {
 	/**
-	 * Name of the protocol used by factory
-	 *
-	 * @deprecated 2.0.0-internal.3.3.0 Document service factories should not be distinguished by unique non-standard protocols. To be removed in an upcoming release.
-	 */
-	protocolName: string;
-
-	/**
 	 * Creates the document service after extracting different endpoints URLs from a resolved URL.
 	 *
 	 * @param resolvedUrl - Endpoint URL data. See {@link IResolvedUrl}.
