@@ -2335,7 +2335,6 @@ export class MergeTree {
 			for (const group of trackingCollection.trackingGroups) {
 				trackingCollection.unlink(group);
 			}
-			// TODO: this should probably also be updating tracked refs..
 		}
 
 		for (let i = 0; i < newOrder.length; i++) {
