@@ -15,7 +15,13 @@ import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
-import { FluidUnknownObjectNode, NodeKind, VisualNode } from "./VisualTree";
+import {
+	FluidObjectTreeNode,
+	FluidObjectValueNode,
+	FluidUnknownObjectNode,
+	NodeKind,
+	VisualNode,
+} from "./VisualTree";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -24,7 +30,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	label: string,
 	visualizeChildData: VisualizeChildData,
-) => {
+): Promise<FluidObjectTreeNode> => {
 	const sharedCell = sharedObject as SharedCell<unknown>;
 	const data = sharedCell.get();
 
@@ -45,7 +51,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 export const visualizeSharedCounter: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	label: string,
-) => {
+): Promise<FluidObjectValueNode> => {
 	const sharedCounter = sharedObject as SharedCounter;
 	return {
 		fluidObjectId: sharedCounter.id,
@@ -63,7 +69,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	label: string,
 	visualizeChildData: VisualizeChildData,
-) => {
+): Promise<FluidObjectTreeNode> => {
 	const sharedMap = sharedObject as SharedMap;
 
 	const children: VisualNode[] = [];
@@ -87,7 +93,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 export const visualizeSharedString: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	label: string,
-) => {
+): Promise<FluidObjectValueNode> => {
 	const sharedString = sharedObject as SharedString;
 	const text = sharedString.getText();
 
