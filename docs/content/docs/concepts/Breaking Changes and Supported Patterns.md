@@ -18,7 +18,7 @@ Terminology:
 - Break: The act of causing a previously non-existing issue.
   Can be a compiler error, runtime error, or causing previously Supported User Code to become unsupported.
   For example a Change could break user code by making it not compile, crash, no longer be Supported User Code, return incorrect results etc.
-- Backwards Compatible Change: A change to The Package which cannot not Break any possible Supported User Code.
+- Backwards Compatible Change: A change to The Package which does not Break any possible Supported User Code.
 - Incompatible Change: A Change to The Package which could break a Supported User.
 
 The goal of this document is to justify having "Supported Patterns" as defined above, and to suggest some such patterns and explain their motivations.
