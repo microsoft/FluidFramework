@@ -6,7 +6,7 @@
 import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
 class InternalErrorRule extends BaseMongoExceptionRetryRule {
 	private static readonly codeName = "InternalError";
-	protected defaultRetryDecision: boolean = false;
+	protected defaultRetryDecision: boolean = true;
 
 	constructor(retryRuleOverride: Map<string, boolean>) {
 		super("InternalErrorRule", retryRuleOverride);
@@ -17,6 +17,23 @@ class InternalErrorRule extends BaseMongoExceptionRetryRule {
 			error.code === 1 &&
 			error.codeName &&
 			(error.codeName as string) === InternalErrorRule.codeName
+		);
+	}
+}
+
+class InternalBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorName = "BulkWriteError";
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("InternalBulkWriteErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.code === 1 &&
+			error.name &&
+			(error.name as string) === InternalBulkWriteErrorRule.errorName
 		);
 	}
 }
@@ -74,7 +91,6 @@ class PoolDestroyedRule extends BaseMongoExceptionRetryRule {
 
 	public match(error: any): boolean {
 		return (
-			error.code === 16 &&
 			error.message &&
 			((error.message as string) === PoolDestroyedRule.message1 ||
 				(error.message as string) === PoolDestroyedRule.message2)
@@ -178,6 +194,23 @@ class RequestTimedOutWithRateLimitFalse extends BaseMongoExceptionRetryRule {
 	}
 }
 
+class RequestTimedOutBulkWriteErrorRule extends BaseMongoExceptionRetryRule {
+	private static readonly errorName = "BulkWriteError";
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("RequestTimedOutBulkWriteErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.code === 50 &&
+			error.name &&
+			(error.name as string) === RequestTimedOutBulkWriteErrorRule.errorName
+		);
+	}
+}
+
 // This handles server side temporary 503 issue
 class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 	private static readonly errorDetails =
@@ -191,8 +224,10 @@ class ServiceUnavailableRule extends BaseMongoExceptionRetryRule {
 	public match(error: any): boolean {
 		return (
 			error.code === 1 &&
-			error.errorDetails &&
-			(error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails)
+			(error.errorDetails &&
+			(error.errorDetails as string).includes(ServiceUnavailableRule.errorDetails)) ||
+			(error.errmsg &&
+			(error.errmsg as string).includes(ServiceUnavailableRule.errorDetails))
 		);
 	}
 }
@@ -232,6 +267,23 @@ class UnauthorizedRule extends BaseMongoExceptionRetryRule {
 	}
 }
 
+// handles transient connection closed errors, eg: connection 1 to <mongo-name>.mongo.cosmos.azure.com:<port> closed
+// this is also handled by MongoNetworkError retry rule but this handles the case when errorName is MongoError instead of MongoNetworkError
+class ConnectionClosedMongoErrorRule extends BaseMongoExceptionRetryRule {
+	protected defaultRetryDecision: boolean = true;
+
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("ConnectionClosedMongoErrorRule", retryRuleOverride);
+	}
+
+	public match(error: any): boolean {
+		return (
+			error.message &&
+			/^connection .+ closed$/.test(error.message as string) === true // matches any message of format "connection <some-info> closed"
+		);
+	}
+}
+
 // Maintain the list from more strick faster comparison to less strict slower comparison
 export function createMongoErrorRetryRuleset(
 	retryRuleOverride: Map<string, boolean>,
@@ -239,10 +291,12 @@ export function createMongoErrorRetryRuleset(
 	const mongoErrorRetryRuleset: IMongoExceptionRetryRule[] = [
 		// The rules are using exactly equal
 		new InternalErrorRule(retryRuleOverride),
+		new InternalBulkWriteErrorRule(retryRuleOverride),
 		new NoPrimaryInReplicasetRule(retryRuleOverride),
 		new RequestTimedNoRateLimitInfo(retryRuleOverride),
 		new RequestTimedOutWithRateLimitTrue(retryRuleOverride),
 		new RequestTimedOutWithRateLimitFalse(retryRuleOverride),
+		new RequestTimedOutBulkWriteErrorRule(retryRuleOverride),
 		new TopologyDestroyed(retryRuleOverride),
 		new UnauthorizedRule(retryRuleOverride),
 
@@ -256,6 +310,9 @@ export function createMongoErrorRetryRuleset(
 
 		// The rules are using string contains
 		new ServiceUnavailableRule(retryRuleOverride),
+
+		// The rules are using regex
+		new ConnectionClosedMongoErrorRule(retryRuleOverride),
 	];
 	return mongoErrorRetryRuleset;
 }

@@ -114,8 +114,14 @@ export class MockContainerRuntime {
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
+		protected readonly overrides?: { minimumSequenceNumber?: number },
 	) {
 		this.deltaManager = new MockDeltaManager();
+		const msn = overrides?.minimumSequenceNumber;
+		if (msn !== undefined) {
+			this.deltaManager.lastSequenceNumber = msn;
+			this.deltaManager.minimumSequenceNumber = msn;
+		}
 		// Set FluidDataStoreRuntime's deltaManager to ours so that they are in sync.
 		this.dataStoreRuntime.deltaManager = this.deltaManager;
 		this.dataStoreRuntime.quorum = factory.quorum;

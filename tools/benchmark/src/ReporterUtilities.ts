@@ -47,31 +47,6 @@ export function getName(name: string): string {
 }
 
 /**
- * @returns a red version of the input string
- */
-export const red = (s: string): string => `\u001b[31m${s}\u001b[0m`;
-
-/**
- * @returns a green version of the input string
- */
-export const green = (s: string): string => `\u001b[32m${s}\u001b[0m`;
-
-/**
- * @returns a yellow version of the input string
- */
-export const yellow = (s: string): string => `\u001b[33m${s}\u001b[0m`;
-
-/**
- * @returns an italicized version of the input string
- */
-export const italicize = (s: string): string => `\x1b[3m${s}\x1b[23m`;
-
-/**
- * @returns a bolded version of the input string
- */
-export const bold = (s: string): string => `\x1B[1m${s}\x1B[22m`;
-
-/**
  * @param num - Number of characters to pad
  * @param chr - Character to use for padding (space by default)
  * @returns a padding string consisting of `num` copies of `chr`
