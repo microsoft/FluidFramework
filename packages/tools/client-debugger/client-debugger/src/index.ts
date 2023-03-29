@@ -51,6 +51,7 @@ export {
 	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectTreeNode,
+	FluidUnknownObjectNode,
 	NodeKind,
 	ValueNode,
 	ValueNodeBase,

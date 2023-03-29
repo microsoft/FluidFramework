@@ -192,6 +192,11 @@ export interface FluidObjectTreeNode extends FluidObjectNode {
 }
 
 // @public
+export interface FluidUnknownObjectNode extends FluidObjectNode {
+    nodeKind: NodeKind.FluidUnknownNode;
+}
+
+// @public
 export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
     // (undocumented)
     type: "GET_AUDIENCE";
@@ -319,11 +324,13 @@ export enum NodeKind {
     // (undocumented)
     FluidTreeNode = 0,
     // (undocumented)
+    FluidUnknownNode = 3,
+    // (undocumented)
     FluidValueNode = 1,
     // (undocumented)
-    TreeNode = 3,
+    TreeNode = 4,
     // (undocumented)
-    ValueNode = 4
+    ValueNode = 5
 }
 
 // @internal

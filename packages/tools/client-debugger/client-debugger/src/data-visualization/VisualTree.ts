@@ -26,6 +26,7 @@ export enum NodeKind {
 	FluidTreeNode,
 	FluidValueNode,
 	FluidHandleNode,
+	FluidUnknownNode,
 	TreeNode,
 	ValueNode,
 }
@@ -135,6 +136,20 @@ export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNode {
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
 	nodeKind: NodeKind.FluidValueNode;
+}
+
+/**
+ * A special node, which indicates that the associated Fluid object is of a type we don't recognize and cannot render.
+ *
+ * @remarks Allows consumers to add special handling for unknown data.
+ *
+ * @public
+ */
+export interface FluidUnknownObjectNode extends FluidObjectNode {
+	/**
+	 * {@inheritDoc VisualNodeBase.nodeKind}
+	 */
+	nodeKind: NodeKind.FluidUnknownNode;
 }
 
 /**

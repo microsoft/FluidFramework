@@ -15,7 +15,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
 
-import { NodeKind, VisualNode } from "./VisualTree";
+import { FluidUnknownObjectNode, NodeKind, VisualNode } from "./VisualTree";
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedCell}.
@@ -106,13 +106,12 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	label: string,
-) => {
+): Promise<FluidUnknownObjectNode> => {
 	return {
 		fluidObjectId: sharedObject.id,
 		label,
-		value: "Unrecognized kind of Fluid Object.",
 		typeMetadata: sharedObject.attributes.type,
-		nodeKind: NodeKind.FluidValueNode,
+		nodeKind: NodeKind.FluidUnknownNode,
 	};
 };
 

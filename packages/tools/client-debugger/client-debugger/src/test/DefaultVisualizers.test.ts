@@ -15,6 +15,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
+	FluidUnknownObjectNode,
 	NodeKind,
 	ValueNode,
 	visualizeSharedCell,
@@ -161,12 +162,11 @@ describe("DefaultVisualizers unit tests", () => {
 			visualizeChildData,
 		);
 
-		const expected: FluidObjectValueNode = {
+		const expected: FluidUnknownObjectNode = {
 			fluidObjectId: "test-object-id",
 			label: "test-label",
-			value: "Unrecognized kind of Fluid Object.",
 			typeMetadata: "UnknownSharedObjectType",
-			nodeKind: NodeKind.FluidValueNode,
+			nodeKind: NodeKind.FluidUnknownNode,
 		};
 
 		expect(result).to.deep.equal(expected);
