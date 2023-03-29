@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/view-interfaces",
-	"version": "2.0.0-internal.4.0.1",
+	"version": "2.0.0-internal.4.0.2",
 	"description": "View interfaces for rendering views",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,7 +38,7 @@
 		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"dependencies": {
-		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.0.1 <2.0.0-internal.5.0.0"
+		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.0.2 <2.0.0-internal.5.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.13.0",
