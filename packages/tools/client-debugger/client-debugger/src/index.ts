@@ -46,7 +46,7 @@
 export { MemberChangeKind } from "./AudienceMetadata";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
-
+export { DebuggerFeature, DebuggerFeatures } from "./Features";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 export {
 	AudienceChangeLogEntry,
