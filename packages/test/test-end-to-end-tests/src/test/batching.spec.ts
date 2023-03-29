@@ -45,7 +45,7 @@ const testContainerConfig: ITestContainerConfig = {
 		configProvider: configProvider({
 			"Fluid.Container.enableOfflineLoad": true,
 		}),
-	}
+	},
 };
 
 // Function to yield a turn in the Javascript event loop.
