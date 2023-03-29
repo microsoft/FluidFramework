@@ -740,7 +740,6 @@ export class Container
 
 		this._deltaManager = this.createDeltaManager();
 
-		this._clientId = config.serializedContainerState?.clientId;
 		this.connectionStateHandler = createConnectionStateHandler(
 			{
 				logger: this.mc.logger,
@@ -796,7 +795,7 @@ export class Container
 				},
 			},
 			this.deltaManager,
-			this._clientId,
+            config.serializedContainerState?.clientId,
 		);
 
 		this.on(savedContainerEvent, () => {
@@ -1092,8 +1091,8 @@ export class Container
 						// Also, this should only be fired in detached container.
 						this._attachState = AttachState.Attaching;
 						this.emit("attaching");
-						const snapshot = getSnapshotTreeFromSerializedContainer(summary);
 						if (this.offlineLoadEnabled) {
+                            const snapshot = getSnapshotTreeFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
 							this.baseSnapshotBlobs =
 								getBlobContentsFromTreeWithBlobContents(snapshot);
@@ -1158,8 +1157,8 @@ export class Container
 
 						this._attachState = AttachState.Attaching;
 						this.emit("attaching");
-						const snapshot = getSnapshotTreeFromSerializedContainer(summary);
 						if (this.offlineLoadEnabled) {
+                            const snapshot = getSnapshotTreeFromSerializedContainer(summary);
 							this.baseSnapshot = snapshot;
 							this.baseSnapshotBlobs =
 								getBlobContentsFromTreeWithBlobContents(snapshot);
@@ -1478,21 +1477,19 @@ export class Container
 		);
 
 		// replay saved ops
-		if (pendingLocalState?.savedOps) {
-			for (const message of pendingLocalState.savedOps) {
-				// Process each saved op as if it were a remote message. runtime would not expect
-				// replayed ops to be local, since it did not actually submit them.
-				this.savedOps.push(message);
-				this.protocolHandler.processMessage(message, false);
-				this.context.process(message, false);
+        if (pendingLocalState) {
+            for (const message of pendingLocalState.savedOps) {
+                this.processRemoteMessage(message);
 
-				// allow runtime to apply stashed ops at this op's sequence number
-				await this.context.notifyOpReplay(message);
+                // allow runtime to apply stashed ops at this op's sequence number
+                await this.context.notifyOpReplay(message);
+            }
+            pendingLocalState.savedOps = [];
 
-				this.emit("op", message);
-			}
-			pendingLocalState.savedOps = [];
-		}
+            // now set clientId to stashed clientId so live ops are correctly processed as local
+            assert(this.clientId === undefined, "Unexpected clientId when setting stashed clientId");
+            this._clientId = pendingLocalState?.clientId;
+        }
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
 		// do not start op processing in such case - static version of Container.load() will handle it correctly.
