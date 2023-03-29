@@ -542,6 +542,13 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 		return this.taskListCollection.get(id);
 	};
 
+	public readonly getLeader = (): string | undefined => {
+		return this.root.get("leader");
+	};
+	public readonly setLeader = (newLeader: string): void => {
+		this.root.set("leader", newLeader);
+	};
+
 	protected async hasInitialized(): Promise<void> {
 		for (const [id, taskListHandle] of this.root) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call

@@ -82,6 +82,6 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 				taskList.importExternalData().catch(console.error);
 			}
 		});
-		return new AppModel(taskListCollection, "follower", container, runtime);
+		return new AppModel(taskListCollection, container, runtime);
 	}
 }

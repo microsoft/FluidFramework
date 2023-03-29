@@ -17,7 +17,6 @@ import type { IAppModel, IAppModelEvents, IBaseDocument } from "../model-interfa
 export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IAppModel {
 	public constructor(
 		public readonly baseDocument: IBaseDocument,
-		public readonly leader: string,
 		private readonly container: IContainer,
 		private readonly runtime: IContainerRuntime,
 	) {
@@ -34,6 +33,20 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 		});
 	};
 
+	public getClientID(): string | undefined {
+		return this.runtime.clientId;
+	}
+
+	/**
+	 * {@inheritDoc IAppModel.handleClaimLeadership}
+	 */
+	public handleClaimLeadership(): void {
+		const clientID = this.runtime.clientId;
+		console.log(`Setting leader to ${clientID}`);
+		if (clientID !== undefined) {
+			this.baseDocument.setLeader(clientID);
+		}
+	}
 	/**
 	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
 	 */

@@ -75,7 +75,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	}
 
 	return (
-		<tr>
+		<tr style={{ margin: 0 }}>
 			<td>{task.id}</td>
 			<td>
 				<CollaborativeInput
@@ -96,26 +96,27 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 					❌
 				</button>
 			</td>
-			{showNameDiff && (
+			{showNameDiff ? (
 				<td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>
+			) : (
+				<td />
 			)}
-			{showPriorityDiff && (
+			{showPriorityDiff ? (
 				<td style={{ backgroundColor: diffColor, width: "30px" }}>
 					{externalDataSnapshot.priority}
 				</td>
+			) : (
+				<td />
 			)}
-			<td style={{ visibility: showAcceptButton }}>
-				{model.leader === "Leader" ? (
-					<button onClick={task.overwriteWithExternalData}>Accept change</button>
-				) : (
-					<h3
-						onClick={(): void => {
-							console.log(model.leader);
-						}}
-					>
-						Changes in progress
-					</h3>
-				)}
+			<td>
+				<div style={{ visibility: showAcceptButton }}>
+					{model.getClientID() !== undefined &&
+					model.getClientID() === model.baseDocument.getLeader() ? (
+						<button onClick={task.overwriteWithExternalData}>Accept change</button>
+					) : (
+						<h4 style={{ margin: 0 }}>Changes in progress</h4>
+					)}
+				</div>
 			</td>
 		</tr>
 	);
@@ -136,6 +137,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	const { taskList, model } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
+	const [leader, setLeader] = useState(model.baseDocument.getLeader());
 	const [lastSaved, setLastSaved] = useState<number | undefined>();
 	const [failedUpdate, setFailedUpdate] = useState(false);
 	const handleSaveChanges = useCallback(() => {
@@ -156,8 +158,8 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	 * Set the current client to be the leader of the Fluid document.
 	 */
 	const setLeaderShip = useCallback(() => {
-		console.log("SETTING CLIENT AS LEADER");
-		model.leader = "Leader";
+		model.handleClaimLeadership();
+		setLeader(model.getClientID());
 	}, [model]);
 
 	useEffect(() => {
@@ -171,7 +173,7 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			taskList.off("draftTaskAdded", updateTasks);
 			taskList.off("draftTaskDeleted", updateTasks);
 		};
-	}, [taskList, model]);
+	}, [taskList, leader]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow

@@ -32,7 +32,16 @@ export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	 */
 	readonly baseDocument: IBaseDocument;
 
-	leader: string;
+	/**
+	 * Sets the current leader of the document to the clientID that claimed leadership.
+	 */
+	readonly handleClaimLeadership: () => void;
+
+	/**
+	 *
+	 * @returns string with current user's clientID.
+	 */
+	readonly getClientID: () => string | undefined;
 
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
@@ -195,6 +204,10 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	 * Get the task list with the specified ID.
 	 */
 	readonly getTaskList: (id: string) => ITaskList | undefined;
+
+	readonly getLeader: () => string | undefined;
+
+	readonly setLeader: (newLeader: string) => void;
 }
 
 export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData";
