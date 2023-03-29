@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 import { AsyncGenerator, takeAsync as take, IRandom } from "@fluid-internal/stochastic-test-utils";
+import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
+import { FieldKinds, namedTreeSchema } from "../../../feature-libraries";
+import { brand } from "../../../util";
 import { FuzzTestState, Operation } from "./fuzzEditGenerators";
 
 export function runFuzzBatch(
@@ -24,3 +27,30 @@ export function runFuzzBatch(
 		}).timeout(20000);
 	}
 }
+
+export const initialTreeState: JsonableTree = {
+	type: brand("Node"),
+	fields: {
+		foo: [
+			{ type: brand("Number"), value: 0 },
+			{ type: brand("Number"), value: 1 },
+			{ type: brand("Number"), value: 2 },
+		],
+		foo2: [
+			{ type: brand("Number"), value: 3 },
+			{ type: brand("Number"), value: 4 },
+			{ type: brand("Number"), value: 5 },
+		],
+	},
+};
+
+const rootFieldSchema = fieldSchema(FieldKinds.value);
+const rootNodeSchema = namedTreeSchema({
+	name: brand("TestValue"),
+	extraLocalFields: fieldSchema(FieldKinds.sequence),
+});
+
+export const testSchema: SchemaData = {
+	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
+	globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
+};

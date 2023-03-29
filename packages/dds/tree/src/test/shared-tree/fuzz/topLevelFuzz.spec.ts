@@ -8,39 +8,10 @@ import {
 	performFuzzActionsAsync,
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
-import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
-import { FieldKinds, namedTreeSchema } from "../../../feature-libraries";
-import { brand } from "../../../util";
 import { TestTreeProvider, SummarizeType, initializeTestTree } from "../../utils";
 import { FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerators";
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers";
-import { runFuzzBatch } from "./fuzzUtils";
-
-const initialTreeState: JsonableTree = {
-	type: brand("Node"),
-	fields: {
-		foo: [
-			{ type: brand("Number"), value: 0 },
-			{ type: brand("Number"), value: 1 },
-			{ type: brand("Number"), value: 2 },
-		],
-		foo2: [
-			{ type: brand("Number"), value: 0 },
-			{ type: brand("Number"), value: 1 },
-			{ type: brand("Number"), value: 2 },
-		],
-	},
-};
-
-const rootFieldSchema = fieldSchema(FieldKinds.value);
-const rootNodeSchema = namedTreeSchema({
-	name: brand("TestValue"),
-	extraLocalFields: fieldSchema(FieldKinds.sequence),
-});
-const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
-};
+import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
 
 export async function performFuzzActions(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
