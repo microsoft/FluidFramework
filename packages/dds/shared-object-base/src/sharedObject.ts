@@ -21,6 +21,7 @@ import {
 	ITelemetryContext,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
+	IIncrementalContext,
 } from "@fluidframework/runtime-definitions";
 import {
 	ChildLogger,
@@ -656,8 +657,13 @@ export abstract class SharedObject<
 		fullTree: boolean = false,
 		trackState: boolean = false,
 		telemetryContext?: ITelemetryContext,
+		incrementalContext?: IIncrementalContext,
 	): Promise<ISummaryTreeWithStats> {
-		const result = this.summarizeCore(this.serializer, telemetryContext);
+		assert(
+			incrementalContext !== undefined,
+			"SummarizerNode should always be passing incrementalContext to channel",
+		);
+		const result = this.summarizeCore(this.serializer, telemetryContext, incrementalContext);
 		this.incrementTelemetryMetric(
 			blobCountPropertyName,
 			result.stats.blobNodeCount,
@@ -722,6 +728,7 @@ export abstract class SharedObject<
 	protected abstract summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
+		incrementalContext?: IIncrementalContext,
 	): ISummaryTreeWithStats;
 
 	private incrementTelemetryMetric(

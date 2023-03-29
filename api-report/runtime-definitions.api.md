@@ -311,6 +311,16 @@ export interface IInboundSignalMessage extends ISignalMessage {
 }
 
 // @public
+export interface IIncrementalContext {
+    // (undocumented)
+    parentPath: string;
+    // (undocumented)
+    previousSequenceNumber: number;
+    // (undocumented)
+    sequenceNumber: number;
+}
+
+// @public
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
@@ -445,7 +455,7 @@ export interface OpAttributionKey {
 }
 
 // @public (undocumented)
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalContext?: IIncrementalContext) => Promise<ISummarizeInternalResult>;
 
 // @public (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";

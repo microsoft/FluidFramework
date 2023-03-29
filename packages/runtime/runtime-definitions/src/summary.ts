@@ -123,10 +123,20 @@ export interface IGarbageCollectionSnapshotData {
 	deletedNodes: string[] | undefined;
 }
 
+/**
+ * Contains the necessary information to allow DDSes to do incremental summaries
+ */
+export interface IIncrementalContext {
+	sequenceNumber: number;
+	previousSequenceNumber: number;
+	parentPath: string;
+}
+
 export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
+	incrementalContext?: IIncrementalContext,
 ) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {
