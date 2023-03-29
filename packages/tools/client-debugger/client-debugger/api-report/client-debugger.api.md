@@ -184,7 +184,7 @@ export type FluidObjectChildNode = VisualTreeNode | VisualValueNode | FluidHandl
 export type FluidObjectId = string;
 
 // @public
-export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode;
+export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
 
 // @public
 export interface FluidObjectNodeBase extends VisualNodeBase {
