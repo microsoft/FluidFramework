@@ -18,6 +18,7 @@ import {
 	ValueNode,
 	VisualTreeNode,
 	VisualNode,
+	Primitive,
 } from "./VisualTree";
 
 // Ideas:
@@ -394,11 +395,11 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * {@inheritDoc VisualizeChildData}
 	 */
 	private async renderChildData(data: unknown, label: string): Promise<VisualNode> {
-		if (typeof data !== "object") {
+		if (typeof data !== "object" && typeof data !== "function") {
 			// Render primitives and falsy types via their string representation
 			const result: ValueNode = {
 				label,
-				value: data,
+				value: data as Primitive,
 				typeMetadata: typeof data,
 				nodeKind: NodeKind.ValueNode,
 			};
