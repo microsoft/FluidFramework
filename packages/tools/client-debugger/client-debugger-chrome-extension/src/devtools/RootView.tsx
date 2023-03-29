@@ -6,8 +6,8 @@
 /**
  * This script represents the root view for the Devtools extension.
  * It establishes communication with the Background Service as a relay for communication with the webpage (tab),
- * and passes that communication context (see {@link BackgroundConnection}) as the {@link MessageRelayContext} used
- * by our internal React components.
+ * and passes that communication context (see {@link BackgroundConnection}) as the
+ * {@link @fluid-tools/client-debugger-view#MessageRelayContext} used by our internal React components.
  */
 
 import { FluidClientDebuggers, MessageRelayContext } from "@fluid-tools/client-debugger-view";
