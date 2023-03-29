@@ -81,7 +81,7 @@ export class TinyliciousClient {
 			}
 			const request = createTinyliciousCreateNewRequest();
 			await container.attach(request);
-			if (!container.resolvedUrl) {
+			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
 			return container.resolvedUrl.id;
