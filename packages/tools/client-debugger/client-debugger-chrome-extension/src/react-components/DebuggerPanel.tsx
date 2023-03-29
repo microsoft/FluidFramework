@@ -10,7 +10,7 @@ import React from "react";
 import {
 	ContainerMetadata,
 	handleIncomingMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	RegistryChangeMessage,
 } from "@fluid-tools/client-debugger";
@@ -26,7 +26,7 @@ const loggingContext = "EXTENSION(DebuggerPanel)";
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: IDebuggerMessage = {
+const getContainerListMessage: ISourcedDebuggerMessage = {
 	type: "GET_CONTAINER_LIST",
 	source: extensionMessageSource,
 	data: undefined,
@@ -59,7 +59,7 @@ export function DebuggerPanel(): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});

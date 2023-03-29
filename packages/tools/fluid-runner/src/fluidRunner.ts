@@ -65,6 +65,12 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 							'Property to add to every telemetry entry. Formatted like "--telemetryProp prop1 value1 --telemetryProp prop2 \\"value 2\\"".',
 						type: "array",
 						demandOption: false,
+					})
+					.option("eventsPerFlush", {
+						describe:
+							"Number of telemetry events per flush to telemetryFile (only applicable for JSON format)",
+						type: "number",
+						demandOption: false,
 					}),
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
 			async (argv) => {
@@ -76,6 +82,7 @@ export function fluidRunner(fluidFileConverter?: IFluidFileConverter) {
 				const telemetryOptionsResult = validateAndParseTelemetryOptions(
 					argv.telemetryFormat,
 					argv.telemetryProp,
+					argv.eventsPerFlush,
 				);
 				if (!telemetryOptionsResult.success) {
 					console.error(telemetryOptionsResult.error);

@@ -19,8 +19,9 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-experimental/react-inputs";
-import { closeFluidClientDebugger } from "@fluid-tools/client-debugger";
+import { closeFluidClientDebugger, FluidDebuggerLogger } from "@fluid-tools/client-debugger";
 
+import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import {
 	ContainerInfo,
 	createFluidContainer,
@@ -94,7 +95,7 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * React hook for asynchronously creating / loading two Fluid Containers: a shared container whose ID is put in
  * the URL to enable collaboration, and a private container that is only exposed to the local user.
  */
-function useContainerInfo(): {
+function useContainerInfo(logger: ITelemetryBaseLogger): {
 	privateContainer: ContainerInfo | undefined;
 	sharedContainer: ContainerInfo | undefined;
 } {
@@ -113,8 +114,18 @@ function useContainerInfo(): {
 
 				const containerId = getContainerIdFromLocation(window.location);
 				return containerId.length === 0
-					? createFluidContainer(containerSchema, populateRootMap, containerNickname)
-					: loadExistingFluidContainer(containerId, containerSchema, containerNickname);
+					? createFluidContainer(
+							containerSchema,
+							logger,
+							populateRootMap,
+							containerNickname,
+					  )
+					: loadExistingFluidContainer(
+							containerId,
+							containerSchema,
+							logger,
+							containerNickname,
+					  );
 			}
 
 			getSharedFluidData().then(
@@ -134,7 +145,13 @@ function useContainerInfo(): {
 			async function getPrivateContainerData(): Promise<ContainerInfo> {
 				// Always create a new container for the private view.
 				// This isn't shared with other collaborators.
-				return createFluidContainer(containerSchema, populateRootMap, "Private Container");
+
+				return createFluidContainer(
+					containerSchema,
+					logger,
+					populateRootMap,
+					"Private Container",
+				);
 			}
 
 			getPrivateContainerData().then(
@@ -207,8 +224,11 @@ const appViewPaneStackStyles = mergeStyles({
  * Initializes the Fluid Container and displays app view once it is ready.
  */
 export function App(): React.ReactElement {
+	// Initialize the Fluid Debugger logger
+	const logger = FluidDebuggerLogger.create();
+
 	// Load the collaborative SharedString object
-	const { privateContainer, sharedContainer } = useContainerInfo();
+	const { privateContainer, sharedContainer } = useContainerInfo(logger);
 
 	const view = (
 		<Stack horizontal>

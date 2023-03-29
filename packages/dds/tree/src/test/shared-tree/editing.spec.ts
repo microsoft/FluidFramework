@@ -35,6 +35,30 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2, tree3, tree4], ["x", "y"]);
 		});
 
+		// TODO: enable once muted marks are supported
+		it.skip("can rebase change under a node whose insertion is also rebased", () => {
+			const sequencer = new Sequencer();
+			const tree1 = TestTree.fromJson(["B"]);
+			const tree2 = tree1.fork();
+			const tree3 = tree1.fork();
+
+			const addC = insert(tree2, 1, "C");
+			const addA = insert(tree1, 0, "A");
+			const nestedChange = tree1.runTransaction((forest, editor) => {
+				editor.setValue(
+					{ parent: undefined, parentField: rootFieldKeySymbol, parentIndex: 0 },
+					"a",
+				);
+			});
+
+			const sequenced = sequencer.sequence([addC, addA, nestedChange]);
+			tree1.receive(sequenced);
+			tree2.receive(sequenced);
+			tree3.receive(sequenced);
+
+			expectJsonTree([tree1, tree2, tree3], ["a", "B", "C"]);
+		});
+
 		it("can handle competing deletes", () => {
 			for (const index of [0, 1, 2, 3]) {
 				const sequencer = new Sequencer();
@@ -253,8 +277,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], ["a", "b", "c"]);
 		});
 
-		// TODO: Re-enable test once TASK 3601 (Fix intra-field move editor API) is completed
-		it.skip("intra-field move", () => {
+		it("intra-field move", () => {
 			const sequencer = new Sequencer();
 			const tree1 = TestTree.fromJson(["a", "b"]);
 

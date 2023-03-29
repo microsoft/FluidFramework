@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	FieldSchema,
-	GlobalFieldKey,
-	SchemaDataAndPolicy,
-	TreeSchemaIdentifier,
-	ValueSchema,
-} from "../../core";
+import { GlobalFieldKey, SchemaDataAndPolicy, TreeSchemaIdentifier, ValueSchema } from "../../core";
 import { typeNameSymbol, valueSymbol } from "../contextuallyTyped";
-import { FullSchemaPolicy, Multiplicity, TypedSchema } from "../modular-schema";
+import {
+	FullSchemaPolicy,
+	Multiplicity,
+	TypedSchema,
+	FieldViewSchema,
+	ViewSchemaCollection,
+} from "../modular-schema";
 import { defaultSchemaPolicy } from "../defaultSchema";
 import { NamesFromSchema, PrimitiveValueSchema, TypedValue, ValuesOf } from "./schemaAwareUtil";
 
@@ -185,15 +185,16 @@ export interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
  * @alpha
  */
 export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(
-	globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>,
+	globalFieldSchema: [GlobalFieldKey, FieldViewSchema][],
 	...t: T
-): SchemaDataAndPolicy<FullSchemaPolicy> & {
-	treeSchemaObject: {
-		[schema in T[number] as schema["typeInfo"]["name"]]: schema;
-	};
+): SchemaDataAndPolicy<FullSchemaPolicy> &
+	ViewSchemaCollection & {
+		treeSchemaObject: {
+			[schema in T[number] as schema["typeInfo"]["name"]]: schema;
+		};
 
-	allTypes: NamesFromSchema<T>;
-} {
+		allTypes: NamesFromSchema<T>;
+	} {
 	const treeSchemaObject = {};
 	const allTypes = [];
 	for (const schema of t) {
@@ -207,7 +208,7 @@ export function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(
 	}
 	const schemaData = {
 		policy: defaultSchemaPolicy,
-		globalFieldSchema,
+		globalFieldSchema: new Map(globalFieldSchema),
 		treeSchema: new Map<TreeSchemaIdentifier, TypedSchema.LabeledTreeSchema>(
 			t.map((schema) => [schema.name, schema]),
 		),
