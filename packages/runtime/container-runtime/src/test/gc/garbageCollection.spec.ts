@@ -7,16 +7,12 @@ import { strict as assert } from "assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { concatGarbageCollectionStates } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	gcBlobPrefix,
 	gcTreeKey,
 	IGarbageCollectionData,
-	IGarbageCollectionNodeData,
-	IGarbageCollectionState,
 	IGarbageCollectionDetailsBase,
-	IGarbageCollectionSummaryDetailsLegacy,
 	ISummarizeResult,
 	gcDeletedBlobKey,
 } from "@fluidframework/runtime-definitions";
@@ -31,9 +27,13 @@ import {
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 import { Timer } from "@fluidframework/common-utils";
 import {
+	concatGarbageCollectionStates,
 	GarbageCollector,
 	GCNodeType,
 	GCSummaryStateTracker,
+	IGarbageCollectionNodeData,
+	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,

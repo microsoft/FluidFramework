@@ -11,16 +11,16 @@ import {
 	done,
 	IRandom,
 } from "@fluid-internal/stochastic-test-utils";
-import { ISharedTree } from "../../shared-tree";
-import { brand, fail } from "../../util";
-import { ITestTreeProvider } from "../utils";
+import { ISharedTree } from "../../../shared-tree";
+import { brand, fail } from "../../../util";
+import { ITestTreeProvider } from "../../utils";
 import {
 	CursorLocationType,
 	FieldKey,
 	moveToDetachedField,
 	rootFieldKeySymbol,
 	UpPath,
-} from "../../core";
+} from "../../../core";
 
 export type Operation = TreeEdit | Synchronize;
 

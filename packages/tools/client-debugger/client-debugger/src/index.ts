@@ -83,6 +83,7 @@ export {
 	GetContainerStateMessageData,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
+	ITimestampedTelemetryEvent,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
 	TelemetryHistoryMessage,

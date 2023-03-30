@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { cloneGCData, GCDataBuilder } from "@fluidframework/garbage-collector";
 import { ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -16,7 +15,7 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
+import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils";
 import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { IFetchSnapshotResult } from "../summary/summarizerNode";
@@ -25,6 +24,7 @@ import {
 	IRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc";
+import { cloneGCData } from "../gc";
 
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";

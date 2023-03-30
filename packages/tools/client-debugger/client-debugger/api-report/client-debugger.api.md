@@ -19,7 +19,7 @@ import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
 import { TelemetryLogger } from '@fluidframework/telemetry-utils';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
 
-// @internal
+// @public
 export interface AudienceChangeLogEntry extends LogEntry {
     changeKind: "added" | "removed";
     client: IClient;
@@ -40,7 +40,6 @@ export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummary
 
 // @public
 export interface AudienceSummaryMessageData extends HasContainerId {
-    // Warning: (ae-incompatible-release-tags) The symbol "audienceHistory" is marked as @public, but its signature references "AudienceChangeLogEntry" which is marked as @internal
     audienceHistory: readonly AudienceChangeLogEntry[];
     audienceState: AudienceClientMetaData[];
     clientId: string | undefined;
@@ -70,9 +69,6 @@ export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContain
 // @public
 export type ConnectContainerMessageData = HasContainerId;
 
-// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "StateChangeLogEntry" which is marked as @internal
-// Warning: (ae-incompatible-release-tags) The symbol "ConnectionStateChangeLogEntry" is marked as @public, but its signature references "ContainerStateChangeKind" which is marked as @internal
-//
 // @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
@@ -95,7 +91,7 @@ export interface ContainerMetadata {
     nickname?: string;
 }
 
-// @internal
+// @public
 export enum ContainerStateChangeKind {
     Attached = "attached",
     Closed = "closed",
@@ -282,7 +278,13 @@ export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessa
     source: string;
 }
 
-// @internal
+// @public
+export interface ITimestampedTelemetryEvent {
+    logContent: ITelemetryBaseEvent;
+    timestamp: number;
+}
+
+// @public
 export interface LogEntry {
     timestamp: number;
 }
@@ -312,7 +314,7 @@ export interface RegistryChangeMessageData {
     containers: ContainerMetadata[];
 }
 
-// @internal
+// @public
 export interface StateChangeLogEntry<TState> extends LogEntry {
     newState: TState;
 }
@@ -324,7 +326,7 @@ export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMe
 
 // @public
 export interface TelemetryEventMessageData {
-    contents: ITelemetryBaseEvent[];
+    contents: ITimestampedTelemetryEvent[];
 }
 
 // @public
