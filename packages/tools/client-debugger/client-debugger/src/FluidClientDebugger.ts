@@ -17,14 +17,16 @@ import {
 	GetAudienceMessage,
 	CloseContainerMessage,
 	ConnectContainerMessage,
-	debuggerMessageSource,
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	GetContainerDataMessage,
+	ContainerDataMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -190,6 +192,14 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
+		["GET_CONTAINER_DATA"]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerDataMessage;
+			if (message.data.containerId === this.containerId) {
+				this.postContainerData();
+				return true;
+			}
+			return false;
+		},
 		["CONNECT_CONTAINER"]: (untypedMessage) => {
 			const message = untypedMessage as ConnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
@@ -228,19 +238,18 @@ export class FluidClientDebugger
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
+	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
 		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_CHANGE",
 				data: {
 					containerId: this.containerId,
@@ -248,7 +257,6 @@ export class FluidClientDebugger
 				},
 			},
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_HISTORY",
 				data: {
 					containerId: this.containerId,
@@ -256,6 +264,21 @@ export class FluidClientDebugger
 				},
 			},
 		);
+	};
+
+	/**
+	 * Posts a {@link ContainerDataMessage} to the window (globalThis).
+	 */
+	private readonly postContainerData = (): void => {
+		postMessagesToWindow<ContainerDataMessage>(this.messageLoggingOptions, {
+			type: "CONTAINER_DATA",
+			data: {
+				containerId: this.containerId,
+				// TODO: fix when we can send container data as a message
+				containerData:
+					"THIS IS A TEST: we can't send actual container data as messages yet.", // this.containerData
+			},
+		});
 	};
 
 	/**
@@ -271,7 +294,6 @@ export class FluidClientDebugger
 		});
 
 		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
-			source: debuggerMessageSource,
 			type: "AUDIENCE_EVENT",
 			data: {
 				containerId: this.containerId,

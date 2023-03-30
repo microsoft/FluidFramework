@@ -40,54 +40,6 @@ use_old_TypeAliasDeclaration_Factory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFetchSnapshotResult": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IFetchSnapshotResult": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNode": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNode": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNodeWithGC": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IRootSummarizerNodeWithGC": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummarizerNodeRootContract": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_ISummarizerNodeRootContract": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ObjectStoragePartition": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ObjectStoragePartition():
@@ -132,18 +84,6 @@ declare function use_old_TypeAliasDeclaration_ReadAndParseBlob(
     use: TypeOnly<old.ReadAndParseBlob>);
 use_old_TypeAliasDeclaration_ReadAndParseBlob(
     get_current_TypeAliasDeclaration_ReadAndParseBlob());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_RefreshSummaryResult": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedTypeAliasDeclaration_RefreshSummaryResult": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -504,30 +444,6 @@ declare function use_old_FunctionDeclaration_createResponseError(
     use: TypeOnly<typeof old.createResponseError>);
 use_old_FunctionDeclaration_createResponseError(
     get_current_FunctionDeclaration_createResponseError());
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNode": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNode": {"backCompat": false}
-*/
-
-/*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNodeWithGC": {"forwardCompat": false}
-*/
-
-/*
-* Validate back compat by using current type in place of old type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedVariableDeclaration_createRootSummarizerNodeWithGC": {"backCompat": false}
-*/
 
 /*
 * Validate forward compat by using old type in place of current type

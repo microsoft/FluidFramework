@@ -22,14 +22,18 @@ export {
 	DisconnectContainerMessageData,
 	CloseContainerMessage,
 	CloseContainerMessageData,
+	ContainerDataMessage,
+	ContainerDataMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	GetContainerDataMessage,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage } from "./Messages";
+export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
 	RegistryChangeMessage,
@@ -41,7 +45,13 @@ export {
 	AudienceSummaryMessageData,
 	AudienceSummaryMessage,
 } from "./AudienceMessages";
-export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
+export {
+	ITimestampedTelemetryEvent,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
+} from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
