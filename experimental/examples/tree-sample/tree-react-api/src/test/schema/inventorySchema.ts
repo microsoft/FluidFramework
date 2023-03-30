@@ -3,25 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	brand,
-	EditableTree,
-	FieldKinds,
-	fieldSchema,
-	namedTreeSchema,
-} from "@fluid-internal/tree";
+import { FieldKinds, TypedSchema } from "@fluid-internal/tree";
 
 import { numberSchema } from "./primitivesSchema";
 
-export const inventorySchema = namedTreeSchema({
-	name: brand("Contoso:Inventory-1.0.0"),
-	localFields: {
-		nuts: fieldSchema(FieldKinds.value, [numberSchema.name]),
-		bolts: fieldSchema(FieldKinds.value, [numberSchema.name]),
+export const inventorySchema = TypedSchema.tree("Contoso:Inventory-1.0.0", {
+	local: {
+		nuts: TypedSchema.field(FieldKinds.value, numberSchema),
+		bolts: TypedSchema.field(FieldKinds.value, numberSchema),
 	},
 });
-
-export type Inventory = EditableTree & {
-	nuts: number;
-	bolts: number;
-};
