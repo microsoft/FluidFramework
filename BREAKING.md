@@ -21,6 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [Container-loader deprecations](#Container-loader-deprecations)
 
 ### garbage-collector and related items deprecated
 
@@ -41,12 +42,14 @@ The following functions, interfaces, and types currently available in `@fluidfra
 
 ### GC interfaces removed from runtime-definitions
 
-The following interfaces available in `@fluidframework/runtime-definitions` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+### Container-loader deprecations
 
--   `IGarbageCollectionNodeData`
--   `IGarbageCollectionState`
--   `IGarbageCollectionSnapshotData`
--   `IGarbageCollectionSummaryDetailsLegacy`
+The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so will be removed from export in the next major release:
+
+-   IContainerLoadOptions
+-   IContainerConfig
+-   IPendingContainerState
+-   ISerializableBlobContents
 
 # 2.0.0-internal.4.0.0
 
