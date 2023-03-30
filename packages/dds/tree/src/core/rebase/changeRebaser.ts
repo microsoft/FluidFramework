@@ -51,6 +51,12 @@ export interface ChangeRebaser<TChangeset> {
 	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 
 	/**
+	 * @param changes - The changes to invert.
+	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
+	 * performing a sandwich rebase.
+	 * This flag is relevant to merge semantics that are dependent on edit sequencing order:
+	 * - In the context of an undo, this function inverts a change that is sequenced and applied before the produced inverse.
+	 * - In the context of a rollback, this function inverts a change that is sequenced after but applied before the produced inverse.
 	 * @param repairStore - The store to query for repair data.
 	 * If undefined, dummy data will be created instead.
 	 * @returns the inverse of `changes`.
@@ -60,6 +66,7 @@ export interface ChangeRebaser<TChangeset> {
 	 */
 	invert(
 		changes: TaggedChange<TChangeset>,
+		isRollback: boolean,
 		// TODO: make the repair store mandatory when all usages of this method have repair data support.
 		repairStore?: ReadonlyRepairDataStore,
 	): TChangeset;
@@ -91,31 +98,27 @@ export interface ChangeRebaser<TChangeset> {
  */
 export interface TaggedChange<TChangeset> {
 	readonly revision: RevisionTag | undefined;
-
 	/**
-	 * Whether this change represents the inverse of the specified revision.
-	 * Considered false if undefined.
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
 	 */
-	readonly isInverse?: boolean;
+	readonly rollbackOf?: RevisionTag;
 	readonly change: TChangeset;
 }
 
-export function tagChange<T>(
-	change: T,
-	tag: RevisionTag | undefined,
-	isInverse?: boolean,
-): TaggedChange<T> {
-	return { revision: tag, isInverse, change };
+export function tagChange<T>(change: T, revision: RevisionTag | undefined): TaggedChange<T> {
+	return { revision, change };
 }
 
-export function tagInverse<T>(
+export function tagRollbackInverse<T>(
 	inverseChange: T,
-	invertedRevision: RevisionTag | undefined,
+	revision: RevisionTag | undefined,
+	rollbackOf: RevisionTag | undefined,
 ): TaggedChange<T> {
 	return {
-		revision: invertedRevision,
-		isInverse: true,
+		revision,
 		change: inverseChange,
+		rollbackOf,
 	};
 }
 

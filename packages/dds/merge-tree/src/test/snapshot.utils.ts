@@ -9,12 +9,12 @@ import { strict as assert } from "assert";
 import { ISequencedDocumentMessage, ISummaryTree } from "@fluidframework/protocol-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { MockStorage } from "@fluidframework/test-runtime-utils";
-import { IMergeTreeOp } from "../ops";
+import { IMergeTreeOp, ReferenceType } from "../ops";
 import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestSerializer } from "./testSerializer";
-import { ISegment, TestClient } from ".";
+import { ISegment, PropertySet, TestClient } from ".";
 
 // Reconstitutes a MergeTree client from a summary
 export async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
@@ -57,8 +57,25 @@ export class TestString {
 		);
 	}
 
+	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
+		this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
+	}
+
 	public append(text: string, increaseMsn: boolean) {
 		this.insert(this.client.getLength(), text, increaseMsn);
+	}
+
+	public insertMarker(pos: number, increaseMsn: boolean) {
+		this.queue(
+			this.client.insertMarkerLocal(pos, ReferenceType.Simple, {
+				segment: this.pending.length,
+			})!,
+			increaseMsn,
+		);
+	}
+
+	public appendMarker(increaseMsn: boolean) {
+		this.insertMarker(this.client.getLength(), increaseMsn);
 	}
 
 	public removeRange(start: number, end: number, increaseMsn: boolean) {
@@ -75,7 +92,7 @@ export class TestString {
 			"MergeTree must contain the expected text prior to applying ops.",
 		);
 
-		await this.checkSnapshot();
+		await this.checkSnapshot(this.options);
 	}
 
 	// Ensures the MergeTree client's contents successfully roundtrip through a snapshot.

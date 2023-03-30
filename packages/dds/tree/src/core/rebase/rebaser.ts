@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
-import { ChangeRebaser, TaggedChange, tagInverse } from "./changeRebaser";
-import type { GraphCommit } from "./types";
+import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
+import { GraphCommit, mintRevisionTag } from "./types";
 import { findCommonAncestor } from "./utils";
 
 /**
@@ -89,7 +89,13 @@ export class Rebaser<TChange> {
 				};
 				targetRebasePath.push({ ...c, change });
 			}
-			inverses.unshift(tagInverse(this.changeRebaser.invert(c), c.revision));
+			inverses.unshift(
+				tagRollbackInverse(
+					this.changeRebaser.invert(c, true),
+					mintRevisionTag(),
+					c.revision,
+				),
+			);
 		}
 
 		// Compose all changes together to get a single change that represents the entire rebase operation
@@ -139,6 +145,10 @@ export class Rebaser<TChange> {
 	}
 
 	private inverseFromCommit(commit: GraphCommit<TChange>): TaggedChange<TChange> {
-		return tagInverse(this.changeRebaser.invert(commit), commit.revision);
+		return tagRollbackInverse(
+			this.changeRebaser.invert(commit, true),
+			mintRevisionTag(),
+			commit.revision,
+		);
 	}
 }

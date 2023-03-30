@@ -41,7 +41,7 @@ export interface AttributionInfo {
 }
 
 // @alpha
-export type AttributionKey = OpAttributionKey | DetachedAttributionKey;
+export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
 // @public (undocumented)
 export const blobCountPropertyName = "BlobCount";
@@ -273,13 +273,13 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionNodeData {
     outboundRoutes: string[];
     unreferencedTimestampMs?: number;
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionSnapshotData {
     // (undocumented)
     deletedNodes: string[] | undefined;
@@ -289,7 +289,7 @@ export interface IGarbageCollectionSnapshotData {
     tombstones: string[] | undefined;
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionState {
     // (undocumented)
     gcNodes: {
@@ -424,6 +424,12 @@ export interface ITelemetryContext {
     serialize(): string;
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+}
+
+// @alpha
+export interface LocalAttributionKey {
+    // (undocumented)
+    type: "local";
 }
 
 // @public

@@ -5,6 +5,7 @@
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
 import {
+	ITelemetryBaseLogger,
 	TinyliciousClient,
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
@@ -43,9 +44,11 @@ export interface ContainerInfo {
 	containerNickname?: string;
 }
 
-function initializeTinyliciousClient(): TinyliciousClient {
+function initializeTinyliciousClient(logger: ITelemetryBaseLogger): TinyliciousClient {
 	console.log(`Initializing Tinylicious client on port ${process.env.PORT}...`);
-	return new TinyliciousClient();
+	return new TinyliciousClient({
+		logger,
+	});
 }
 
 /**
@@ -60,12 +63,12 @@ function initializeTinyliciousClient(): TinyliciousClient {
  */
 export async function createFluidContainer(
 	containerSchema: ContainerSchema,
+	logger: ITelemetryBaseLogger,
 	setContentsPreAttach?: (container: IFluidContainer) => Promise<void>,
 	containerNickname?: string,
 ): Promise<ContainerInfo> {
 	// Initialize Tinylicious client
-	const client = initializeTinyliciousClient();
-
+	const client = initializeTinyliciousClient(logger);
 	// Create the container
 	console.log("Creating new container...");
 	let createContainerResult: ContainerLoadResult;
@@ -116,10 +119,11 @@ export async function createFluidContainer(
 export async function loadExistingFluidContainer(
 	containerId: string,
 	containerSchema: ContainerSchema,
+	logger: ITelemetryBaseLogger,
 	containerNickname?: string,
 ): Promise<ContainerInfo> {
 	// Initialize Tinylicious client
-	const client = initializeTinyliciousClient();
+	const client = initializeTinyliciousClient(logger);
 
 	console.log("Loading existing container...");
 	let loadContainerResult: ContainerLoadResult;

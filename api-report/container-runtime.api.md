@@ -27,9 +27,7 @@ import { IFluidDataStoreContextDetached } from '@fluidframework/runtime-definiti
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
-import { IFluidLoadable } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
-import { IFluidTokenProvider } from '@fluidframework/container-definitions';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions } from '@fluidframework/container-definitions';
@@ -79,10 +77,8 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
-// Warning: (ae-forgotten-export) The symbol "IGarbageCollectionRuntime" needs to be exported by the entry point index.d.ts
-//
 // @public
-export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IGarbageCollectionRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
+export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents> implements IContainerRuntime, IRuntime, ISummarizerRuntime, ISummarizerInternalsProvider {
     // Warning: (ae-forgotten-export) The symbol "IContainerRuntimeMetadata" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "ISerializedElection" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "IBlobManagerLoadInfo" needs to be exported by the entry point index.d.ts
@@ -157,8 +153,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents>
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     get IFluidRouter(): this;
-    // @deprecated (undocumented)
-    get IFluidTokenProvider(): IFluidTokenProvider | undefined;
     get isDirty(): boolean;
     // @deprecated (undocumented)
     static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
@@ -372,6 +366,7 @@ export interface IGCRuntimeOptions {
     gcAllowed?: boolean;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
+    // @deprecated (undocumented)
     sweepAllowed?: boolean;
 }
 
@@ -421,44 +416,6 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
 }
 
-// @public @deprecated
-export interface IPendingFlush {
-    // (undocumented)
-    type: "flush";
-}
-
-// @public @deprecated (undocumented)
-export interface IPendingLocalState {
-    pendingStates: IPendingState[];
-}
-
-// @public @deprecated
-export interface IPendingMessage {
-    // (undocumented)
-    clientSequenceNumber: number;
-    // (undocumented)
-    content: any;
-    // (undocumented)
-    localOpMetadata: unknown;
-    // (undocumented)
-    messageType: ContainerMessageType;
-    // (undocumented)
-    opMetadata: Record<string, unknown> | undefined;
-    // (undocumented)
-    referenceSequenceNumber: number;
-    // (undocumented)
-    type: "message";
-}
-
-// @public @deprecated (undocumented)
-export type IPendingState = IPendingMessage | IPendingFlush;
-
-// @public @deprecated (undocumented)
-export interface IProvideSummarizer {
-    // @deprecated (undocumented)
-    readonly ISummarizer: ISummarizer;
-}
-
 // @public
 export interface IRefreshSummaryAckOptions {
     readonly ackHandle: string;
@@ -495,14 +452,12 @@ export interface ISummarizeOptions {
     readonly refreshLatestAck?: boolean;
 }
 
-// @public @deprecated (undocumented)
-export const ISummarizer: keyof IProvideSummarizer;
-
 // @public (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents>, IFluidLoadable, Partial<IProvideSummarizer> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
+    readonly ISummarizer?: ISummarizer;
     // (undocumented)
     run(onBehalfOf: string, disableHeuristics?: boolean): Promise<SummarizerStopReason>;
     // (undocumented)
@@ -683,7 +638,7 @@ export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeRes
 
 // @public
 export class Summarizer extends EventEmitter implements ISummarizer {
-    constructor(url: string,
+    constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
     // (undocumented)
@@ -692,10 +647,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     dispose(): void;
     // (undocumented)
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
-    // (undocumented)
-    get handle(): IFluidHandle<this>;
-    // (undocumented)
-    get IFluidLoadable(): this;
     // (undocumented)
     get ISummarizer(): this;
     // (undocumented)

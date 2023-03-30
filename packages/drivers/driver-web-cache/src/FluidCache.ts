@@ -96,10 +96,10 @@ export class FluidCache implements IPersistedCache {
 				db = await getFluidCacheIndexedDbInstance(this.logger);
 
 				const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
-				const index = transaction.store.index("lastAccessTimeMs");
-				// Get items that have not been accessed in 4 weeks
+				const index = transaction.store.index("createdTimeMs");
+				// Get items which were cached before the maxCacheItemAge.
 				const keysToDelete = await index.getAllKeys(
-					IDBKeyRange.upperBound(new Date().getTime() - 4 * 7 * 24 * 60 * 60 * 1000),
+					IDBKeyRange.upperBound(new Date().getTime() - this.maxCacheItemAge),
 				);
 
 				await Promise.all(keysToDelete.map((key) => transaction.store.delete(key)));
@@ -151,6 +151,8 @@ export class FluidCache implements IPersistedCache {
 			cacheHit: cachedItem !== undefined,
 			type: cacheEntry.type,
 			duration: performance.now() - startTime,
+			dbOpenPerf: cachedItem?.dbOpenPerf,
+			dbClosePerf: cachedItem?.dbClosePerf,
 		});
 
 		// Value will contain metadata like the expiry time, we just want to return the object we were asked to cache
@@ -163,8 +165,9 @@ export class FluidCache implements IPersistedCache {
 		try {
 			const key = getKeyForCacheEntry(cacheEntry);
 
+			const dbOpenStartTime = performance.now();
 			db = await getFluidCacheIndexedDbInstance(this.logger);
-
+			const dbOpenPerf = performance.now() - dbOpenStartTime;
 			const value = await db.get(FluidDriverObjectStoreName, key);
 
 			if (!value) {
@@ -191,34 +194,10 @@ export class FluidCache implements IPersistedCache {
 				return undefined;
 			}
 
-			const transaction = db.transaction(FluidDriverObjectStoreName, "readwrite");
-			// We don't want to block the get return of this function on updating the last accessed time
-			// We catch this promise because there is no user bad if this is rejected.
-			transaction.store
-				.get(key)
-				.then(async (valueToUpdate) => {
-					// This value in the database could have been updated concurrently by other tabs/iframes
-					// since we first read it. Only update the last accessed time if the current value in the
-					// DB was the same one we returned.
-					if (
-						valueToUpdate !== undefined &&
-						valueToUpdate.createdTimeMs === value.createdTimeMs &&
-						(valueToUpdate.lastAccessTimeMs === undefined ||
-							valueToUpdate.lastAccessTimeMs < currentTime)
-					) {
-						await transaction.store.put(
-							{ ...valueToUpdate, lastAccessTimeMs: currentTime },
-							key,
-						);
-					}
-					await transaction.done;
-
-					db?.close();
-				})
-				.catch(() => {
-					db?.close();
-				});
-			return value;
+			const dbCloseStartTime = performance.now();
+			db.close();
+			const dbClosePerf = performance.now() - dbCloseStartTime;
+			return { ...value, dbOpenPerf, dbClosePerf };
 		} catch (error: any) {
 			// We can fail to open the db for a variety of reasons,
 			// such as the database version having upgraded underneath us. Return undefined in this case
@@ -226,9 +205,8 @@ export class FluidCache implements IPersistedCache {
 				{ eventName: FluidCacheErrorEvent.FluidCacheGetError },
 				error,
 			);
-			return undefined;
-		} finally {
 			db?.close();
+			return undefined;
 		}
 	}
 

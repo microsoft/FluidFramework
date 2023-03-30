@@ -25,6 +25,8 @@ function constructTree(numOfSegments: number): MergeTree {
 	return mergeTree;
 }
 
+const TREE_SIZE: number = 7_500;
+
 describe("MergeTree insertion", () => {
 	benchmark({
 		type: BenchmarkType.Measurement,
@@ -44,66 +46,72 @@ describe("MergeTree insertion", () => {
 		},
 	});
 
-	let startTree = constructTree(1000);
+	let startTree = constructTree(TREE_SIZE);
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert at start of large tree",
 		benchmarkFn: () => {
-			insertText({
-				mergeTree: startTree,
-				pos: 0,
-				refSeq: 1000,
-				clientId: 0,
-				seq: 1001,
-				text: "a",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
+				insertText({
+					mergeTree: startTree,
+					pos: 0,
+					refSeq: i,
+					clientId: 0,
+					seq: i + 1,
+					text: "a",
+					props: undefined,
+					opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+				});
+			}
 		},
-		onCycle: () => {
-			startTree = constructTree(1000);
+		beforeEachBatch: () => {
+			startTree = constructTree(TREE_SIZE);
 		},
 	});
 
-	let middleTree = constructTree(1000);
+	let middleTree = constructTree(TREE_SIZE);
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert at middle of large tree",
 		benchmarkFn: () => {
-			insertText({
-				mergeTree: middleTree,
-				pos: 500,
-				refSeq: 1000,
-				clientId: 0,
-				seq: 1001,
-				text: "a",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
+				insertText({
+					mergeTree: middleTree,
+					pos: TREE_SIZE / 2,
+					refSeq: i,
+					clientId: 0,
+					seq: i + 1,
+					text: "a",
+					props: undefined,
+					opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+				});
+			}
 		},
-		onCycle: () => {
-			middleTree = constructTree(1000);
+		beforeEachBatch: () => {
+			middleTree = constructTree(TREE_SIZE);
 		},
 	});
 
-	let endTree = constructTree(1000);
+	let endTree = constructTree(TREE_SIZE);
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title: "insert at end of large tree",
-		benchmarkFn: async () => {
-			insertText({
-				mergeTree: endTree,
-				pos: 1000,
-				refSeq: 1000,
-				clientId: 0,
-				seq: 1001,
-				text: "a",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+		benchmarkFn: () => {
+			for (let i = TREE_SIZE; i < TREE_SIZE + 25; i++) {
+				insertText({
+					mergeTree: endTree,
+					pos: i,
+					refSeq: i,
+					clientId: 0,
+					seq: i + 1,
+					text: "a",
+					props: undefined,
+					opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
+				});
+			}
 		},
-		onCycle: () => {
-			endTree = constructTree(1000);
+		beforeEachBatch: () => {
+			endTree = constructTree(TREE_SIZE);
 		},
 	});
 });

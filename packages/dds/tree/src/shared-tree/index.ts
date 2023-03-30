@@ -5,7 +5,11 @@
 
 export {
 	ISharedTree,
-	ISharedTreeCheckout,
-	ISharedTreeCheckoutFork,
+	ISharedTreeView,
+	ISharedTreeFork,
+	runSynchronous,
 	SharedTreeFactory,
+	ViewEvents,
 } from "./sharedTree";
+
+export { SchematizeConfiguration, schematizeView } from "./schematizedTree";

@@ -19,7 +19,6 @@ export {
 	EditableTreeOrPrimitive,
 	getEditableTreeContext,
 	typeSymbol,
-	indexSymbol,
 	isEditableField,
 	isPrimitive,
 	isUnwrappedNode,
@@ -30,6 +29,9 @@ export {
 	createField,
 	replaceField,
 	parentField,
+	EditableTreeEvents,
+	on,
+	contextSymbol,
 } from "./editable-tree";
 
 export {
@@ -45,12 +47,16 @@ export {
 	isContextuallyTypedNodeDataObject,
 	getFieldKind,
 	getFieldSchema,
+	ArrayLikeMut,
+	cursorFromContextualData,
+	cursorsFromContextualData,
+	ContextuallyTypedFieldData,
 } from "./contextuallyTyped";
 
-export { ForestIndex } from "./forestIndex";
+export { ForestSummarizer } from "./forestSummarizer";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor } from "./schemaIndex";
+export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { getSchemaString } from "./schemaIndexFormat";
 export {
@@ -70,6 +76,7 @@ export { defaultSchemaPolicy, emptyField, neverField, neverTree } from "./defaul
 
 export {
 	ChangesetLocalId,
+	idAllocatorFromMaxId,
 	isNeverField,
 	ModularChangeFamily,
 	ModularEditBuilder,
@@ -101,26 +108,40 @@ export {
 	genericFieldKind,
 	NodeReviver,
 	RevisionIndexer,
+	RevisionMetadataSource,
 	RevisionInfo,
+	HasFieldChanges,
+	ValueConstraint,
+	TypedSchema,
+	revisionMetadataSourceFromInfo,
+	ViewSchema,
+	ViewSchemaCollection,
+	FieldViewSchema,
+	TreeViewSchema,
 } from "./modular-schema";
 
-// Split this up into separate import and export for compatibility with API-Extractor.
-import * as FieldKinds from "./defaultFieldKinds";
-export { FieldKinds };
-
-export { mapFieldMarks, mapMark, mapMarkList } from "./deltaUtils";
-
-export {
-	EditManagerIndex,
-	CommitEncoder,
-	parseSummary as loadSummary,
-	stringifySummary as encodeSummary,
-} from "./editManagerIndex";
+export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
 export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
-export { runSynchronousTransaction } from "./defaultTransaction";
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
+
+// Split into separate import and export for compatibility with API-Extractor.
+import * as SchemaAware from "./schema-aware";
+import * as FieldKindsOriginal from "./defaultFieldKinds";
+export { SchemaAware };
+
+// Export subset of FieldKinds in an API-Extractor compatible way:
+import { FieldEditor, FieldKind, Multiplicity } from "./modular-schema";
+
+/**
+ * @alpha
+ */
+export const FieldKinds: {
+	readonly value: FieldKind<FieldEditor<any>, Multiplicity.Value>;
+	readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
+	readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
+} = FieldKindsOriginal;

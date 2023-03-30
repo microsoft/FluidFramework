@@ -25,7 +25,7 @@ class CachedValue<T> extends SimpleObservingDependent implements ICachedValue<T>
 		}, computationName);
 	}
 
-	get(): T {
+	public get(): T {
 		this.cache ??= this.compute(this);
 		return this.cache;
 	}

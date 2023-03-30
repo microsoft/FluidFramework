@@ -15,8 +15,9 @@ import {
 	tagChange,
 	TreeSchemaIdentifier,
 	FieldSchema,
+	RevisionTag,
 } from "../core";
-import { brand, fail, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -38,15 +39,14 @@ import {
 	isolatedFieldChangeRebaser,
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
-import { chunkTree, defaultChunkPolicy } from "./chunked-forest";
+import { populateChildModifications } from "./deltaUtils";
 
 type BrandedFieldKind<
 	TName extends string,
 	TMultiplicity extends Multiplicity,
 	TEditor extends FieldEditor<any>,
-> = FieldKind<TEditor> & {
+> = FieldKind<TEditor, TMultiplicity> & {
 	identifier: TName & FieldKindIdentifier;
-	multiplicity: TMultiplicity;
 };
 
 function brandedFieldKind<
@@ -63,13 +63,13 @@ function brandedFieldKind<
 	) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
-	return new FieldKind<TEditor>(
+	return new FieldKind<TEditor, TMultiplicity>(
 		brand(identifier),
 		multiplicity,
 		changeHandler,
 		allowsTreeSupersetOf,
 		handlesEditsFrom,
-	) as unknown as BrandedFieldKind<TName, TMultiplicity, TEditor>;
+	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
 }
 
 /**
@@ -82,7 +82,7 @@ export class UnitEncoder extends ChangeEncoder<0> {
 		return 0;
 	}
 
-	public encodeBinary(formatVersion: number, change: 0): IsoBuffer {
+	public override encodeBinary(formatVersion: number, change: 0): IsoBuffer {
 		return IsoBuffer.from("");
 	}
 
@@ -90,7 +90,7 @@ export class UnitEncoder extends ChangeEncoder<0> {
 		return 0;
 	}
 
-	public decodeBinary(formatVersion: number, change: IsoBuffer): 0 {
+	public override decodeBinary(formatVersion: number, change: IsoBuffer): 0 {
 		return 0;
 	}
 }
@@ -188,6 +188,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	encoder: new UnitEncoder(),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
+	isEmpty: (change: 0) => true,
 };
 
 /**
@@ -212,6 +213,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 			setValue: change,
 		},
 	],
+	isEmpty: (change: number) => change === 0,
 };
 
 /**
@@ -240,17 +242,36 @@ export const counter: BrandedFieldKind<
 	"Counter",
 	Multiplicity.Value,
 	counterHandle,
-	(types, other) => other.kind === counter.identifier,
+	(types, other) => other.kind.identifier === counter.identifier,
 	new Set(),
 );
 
 export type NodeUpdate =
-	| { set: JsonableTree }
+	| {
+			set: JsonableTree;
+			changes?: NodeChangeset;
+	  }
 	| {
 			/**
 			 * The node being restored.
 			 */
 			revert: ITreeCursorSynchronous;
+			revision: RevisionTag | undefined;
+			changes?: NodeChangeset;
+	  };
+
+type EncodedNodeUpdate =
+	| {
+			set: JsonableTree;
+			changes?: JsonCompatibleReadOnly;
+	  }
+	| {
+			/**
+			 * The node being restored.
+			 */
+			revert: JsonableTree;
+			revision: RevisionTag | undefined;
+			changes?: JsonCompatibleReadOnly;
 	  };
 
 export interface ValueChangeset {
@@ -304,8 +325,8 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 			inverse.changes = invertChild(change.changes, 0);
 		}
 		if (change.value !== undefined) {
-			assert(revision !== undefined, "Unable to revert to undefined revision");
-			inverse.value = { revert: reviver(revision, 0, 1)[0] };
+			assert(revision !== undefined, 0x591 /* Unable to revert to undefined revision */);
+			inverse.value = { revert: reviver(revision, 0, 1)[0], revision };
 		}
 		return inverse;
 	},
@@ -323,7 +344,7 @@ const valueRebaser: FieldChangeRebaser<ValueChangeset> = isolatedFieldChangeReba
 });
 
 interface EncodedValueChangeset {
-	value?: NodeUpdate;
+	value?: EncodedNodeUpdate;
 	changes?: JsonCompatibleReadOnly;
 }
 
@@ -335,7 +356,7 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 	) => {
 		const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
 		if (change.value !== undefined) {
-			encoded.value = change.value;
+			encoded.value = encodeNodeUpdate(change.value, encodeChild);
 		}
 
 		if (change.changes !== undefined) {
@@ -353,7 +374,7 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 		const encoded = change as EncodedValueChangeset;
 		const decoded: ValueChangeset = {};
 		if (encoded.value !== undefined) {
-			decoded.value = encoded.value;
+			decoded.value = decodeNodeUpdate(encoded.value, decodeChild);
 		}
 
 		if (encoded.changes !== undefined) {
@@ -363,6 +384,40 @@ const valueFieldEncoder: FieldChangeEncoder<ValueChangeset> = {
 		return decoded;
 	},
 };
+
+function encodeNodeUpdate(update: NodeUpdate, encodeChild: NodeChangeEncoder): EncodedNodeUpdate {
+	const encoded: EncodedNodeUpdate =
+		"revert" in update
+			? {
+					revert: jsonableTreeFromCursor(update.revert),
+					revision: update.revision,
+			  }
+			: {
+					set: update.set,
+			  };
+
+	if (update.changes !== undefined) {
+		encoded.changes = encodeChild(update.changes);
+	}
+
+	return encoded;
+}
+
+function decodeNodeUpdate(encoded: EncodedNodeUpdate, decodeChild: NodeChangeDecoder): NodeUpdate {
+	const decoded: NodeUpdate =
+		"revert" in encoded
+			? {
+					revert: singleTextCursor(encoded.revert),
+					revision: encoded.revision,
+			  }
+			: { set: encoded.set };
+
+	if (encoded.changes !== undefined) {
+		decoded.changes = decodeChild(encoded.changes);
+	}
+
+	return decoded;
+}
 
 export interface ValueFieldEditor extends FieldEditor<ValueChangeset> {
 	/**
@@ -387,30 +442,16 @@ const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> =
 
 	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
 		if (change.value !== undefined) {
-			let mark: Delta.Mark;
 			const newValue: ITreeCursorSynchronous =
 				"revert" in change.value ? change.value.revert : singleTextCursor(change.value.set);
-			if (change.changes === undefined) {
-				mark = {
-					type: Delta.MarkType.Insert,
-					content: [newValue],
-				};
-			} else {
-				const modify = deltaFromChild(change.changes);
-				const cursor = chunkTree(newValue, defaultChunkPolicy).cursor();
-				cursor.firstNode();
-				mark = {
-					...modify,
-					type: Delta.MarkType.InsertAndModify,
-					content: cursor,
-				};
-			}
-
-			return [{ type: Delta.MarkType.Delete, count: 1 }, mark];
+			const insertDelta = deltaFromInsertAndChange(newValue, change.changes, deltaFromChild);
+			return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
 		}
 
 		return change.changes === undefined ? [] : [deltaFromChild(change.changes)];
 	},
+
+	isEmpty: (change: ValueChangeset) => change.changes === undefined && change.value === undefined,
 };
 
 /**
@@ -422,9 +463,9 @@ export const value: BrandedFieldKind<"Value", Multiplicity.Value, ValueFieldEdit
 		Multiplicity.Value,
 		valueChangeHandler,
 		(types, other) =>
-			(other.kind === sequence.identifier ||
-				other.kind === value.identifier ||
-				other.kind === optional.identifier) &&
+			(other.kind.identifier === sequence.identifier ||
+				other.kind.identifier === value.identifier ||
+				other.kind.identifier === optional.identifier) &&
 			allowsTreeSchemaIdentifierSuperset(types, other.types),
 		new Set(),
 	);
@@ -448,9 +489,18 @@ export interface OptionalChangeset {
 	fieldChange?: OptionalFieldChange;
 
 	/**
-	 * Changes to the node which will be in the field after this changeset is applied.
+	 * Changes to the node which were in the field before this changeset is applied, or the node deleted in this field in the given revision
 	 */
 	childChange?: NodeChangeset;
+
+	/**
+	 * The revision the node `childChange` is referring to was deleted in.
+	 * If undefined, `childChange` refers to the node currently in this field.
+	 *
+	 * This representation is sufficient for representing changes to the node present before this changeset and
+	 * after this changeset, but not for changes to nodes that existed only transiently in a transaction.
+	 */
+	deletedBy?: RevisionTag;
 }
 
 const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFieldChangeRebaser({
@@ -459,35 +509,53 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		composeChild: NodeChangeComposer,
 	): OptionalChangeset => {
 		let fieldChange: OptionalFieldChange | undefined;
-		const childChanges: TaggedChange<NodeChangeset>[] = [];
+		const origNodeChange: TaggedChange<NodeChangeset>[] = [];
+		const newNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		for (const { change, revision } of changes) {
+			if (change.deletedBy === undefined && change.childChange !== undefined) {
+				const taggedChange = tagChange(change.childChange, revision);
+				if (fieldChange === undefined) {
+					origNodeChange.push(taggedChange);
+				} else {
+					newNodeChanges.push(taggedChange);
+				}
+			}
+
 			if (change.fieldChange !== undefined) {
 				if (fieldChange === undefined) {
 					fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
 				}
 
 				if (change.fieldChange.newContent !== undefined) {
-					fieldChange.newContent = change.fieldChange.newContent;
+					fieldChange.newContent = { ...change.fieldChange.newContent };
 				} else {
 					delete fieldChange.newContent;
 				}
 
 				// The previous changes applied to a different value, so we discard them.
 				// TODO: Represent muted changes
-				childChanges.length = 0;
-			}
-			if (change.childChange !== undefined) {
-				childChanges.push(tagChange(change.childChange, revision));
+				newNodeChanges.length = 0;
+
+				if (change.fieldChange.newContent?.changes !== undefined) {
+					newNodeChanges.push(tagChange(change.fieldChange.newContent.changes, revision));
+				}
 			}
 		}
 
 		const composed: OptionalChangeset = {};
 		if (fieldChange !== undefined) {
+			if (newNodeChanges.length > 0) {
+				assert(
+					fieldChange.newContent !== undefined,
+					"Shouldn't have new node changes if there is no new node",
+				);
+				fieldChange.newContent.changes = composeChild(newNodeChanges);
+			}
 			composed.fieldChange = fieldChange;
 		}
 
-		if (childChanges.length > 0) {
-			composed.childChange = composeChild(childChanges);
+		if (origNodeChange.length > 0) {
+			composed.childChange = composeChild(origNodeChange);
 		}
 
 		return composed;
@@ -503,14 +571,32 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 		const fieldChange = change.fieldChange;
 		if (fieldChange !== undefined) {
 			inverse.fieldChange = { wasEmpty: fieldChange.newContent === undefined };
-			if (!fieldChange.wasEmpty) {
-				assert(revision !== undefined, "Unable to revert to undefined revision");
-				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0] };
+			if (fieldChange.newContent?.changes !== undefined) {
+				// The node inserted by change will be the node deleted by inverse
+				// Move the inverted changes to the child change field
+				inverse.childChange = invertChild(fieldChange.newContent.changes, 0);
 			}
-		}
 
-		if (change.childChange !== undefined) {
-			inverse.childChange = invertChild(change.childChange, 0);
+			if (!fieldChange.wasEmpty) {
+				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
+				inverse.fieldChange.newContent = { revert: reviver(revision, 0, 1)[0], revision };
+				if (change.childChange !== undefined) {
+					if (change.deletedBy === undefined) {
+						inverse.fieldChange.newContent.changes = invertChild(change.childChange, 0);
+					} else {
+						// We currently drop the muted changes in the inverse.
+						// TODO: produce muted inverse changes so that a retroactive undo of revision
+						// `change.deletedBy` would be able to pick up and unmute those changes.
+					}
+				}
+			}
+		} else {
+			if (change.childChange !== undefined && change.deletedBy === undefined) {
+				inverse.childChange = invertChild(change.childChange, 0);
+			} else {
+				// Drop the muted changes if deletedBy is set to avoid
+				// applying muted changes on undo
+			}
 		}
 
 		return inverse;
@@ -526,29 +612,72 @@ const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = isolatedFie
 			if (over.fieldChange !== undefined) {
 				const wasEmpty = over.fieldChange.newContent === undefined;
 
-				// We don't have to rebase the child changes, since the other child changes don't apply to the same node
+				// TODO: Handle rebasing child changes over `over.childChange`.
 				return {
 					...change,
 					fieldChange: { ...change.fieldChange, wasEmpty },
 				};
 			}
 
-			return change;
+			const rebasedChange = { ...change };
+			const overChildChange =
+				change.deletedBy === over.deletedBy ? over.childChange : undefined;
+			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
+			if (rebasedChildChange !== undefined) {
+				rebasedChange.childChange = rebasedChildChange;
+			} else {
+				delete rebasedChange.childChange;
+			}
+
+			return rebasedChange;
 		}
 
 		if (change.childChange !== undefined) {
 			if (over.fieldChange !== undefined) {
-				// The node the child changes applied to no longer exists so we drop the changes.
-				// TODO: Represent muted changes
-				return {};
-			}
-
-			if (over.childChange !== undefined) {
-				return { childChange: rebaseChild(change.childChange, over.childChange) };
+				if (change.deletedBy === undefined) {
+					// `change.childChange` refers to the node being deleted by `over`.
+					return {
+						childChange: rebaseChild(
+							change.childChange,
+							over.deletedBy === undefined ? undefined : over.childChange,
+						),
+						deletedBy: overTagged.revision,
+					};
+				} else if (
+					over.fieldChange.newContent !== undefined &&
+					"revert" in over.fieldChange.newContent &&
+					over.fieldChange.newContent.revision === change.deletedBy
+				) {
+					// Over is reviving the node that change.childChange is referring to.
+					// Rebase change.childChange and remove deletedBy
+					// because we revived the node that childChange refers to
+					return {
+						childChange: rebaseChild(
+							change.childChange,
+							over.fieldChange.newContent.changes,
+						),
+					};
+				}
 			}
 		}
 
-		return change;
+		{
+			const rebasedChange = { ...change };
+
+			let overChildChange: NodeChangeset | undefined;
+			if (change.deletedBy === undefined && over.deletedBy === undefined) {
+				overChildChange = over.childChange;
+			}
+
+			const rebasedChildChange = rebaseChild(change.childChange, overChildChange);
+			if (rebasedChildChange !== undefined) {
+				rebasedChange.childChange = rebasedChildChange;
+			} else {
+				delete rebasedChange.childChange;
+			}
+
+			return rebasedChange;
+		}
 	},
 });
 
@@ -580,8 +709,20 @@ const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
+interface EncodedOptionalFieldChange {
+	/**
+	 * The new content for the trait. If undefined, the trait will be cleared.
+	 */
+	newContent?: EncodedNodeUpdate;
+
+	/**
+	 * Whether the field was empty in the state this change is based on.
+	 */
+	wasEmpty: boolean;
+}
+
 interface EncodedOptionalChangeset {
-	fieldChange?: OptionalFieldChange;
+	fieldChange?: EncodedOptionalFieldChange;
 	childChange?: JsonCompatibleReadOnly;
 }
 
@@ -593,7 +734,13 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 	) => {
 		const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
 		if (change.fieldChange !== undefined) {
-			encoded.fieldChange = change.fieldChange;
+			encoded.fieldChange = { wasEmpty: change.fieldChange.wasEmpty };
+			if (change.fieldChange.newContent !== undefined) {
+				encoded.fieldChange.newContent = encodeNodeUpdate(
+					change.fieldChange.newContent,
+					encodeChild,
+				);
+			}
 		}
 
 		if (change.childChange !== undefined) {
@@ -611,7 +758,16 @@ const optionalFieldEncoder: FieldChangeEncoder<OptionalChangeset> = {
 		const encoded = change as EncodedOptionalChangeset;
 		const decoded: OptionalChangeset = {};
 		if (encoded.fieldChange !== undefined) {
-			decoded.fieldChange = encoded.fieldChange;
+			decoded.fieldChange = {
+				wasEmpty: encoded.fieldChange.wasEmpty,
+			};
+
+			if (encoded.fieldChange.newContent !== undefined) {
+				decoded.fieldChange.newContent = decodeNodeUpdate(
+					encoded.fieldChange.newContent,
+					decodeChild,
+				);
+			}
 		}
 
 		if (encoded.childChange !== undefined) {
@@ -628,24 +784,15 @@ function deltaFromInsertAndChange(
 	deltaFromNode: ToDelta,
 ): Delta.Mark[] {
 	if (insertedContent !== undefined) {
-		const content = chunkTree(insertedContent, defaultChunkPolicy).cursor();
-		content.firstNode();
+		const insert: Mutable<Delta.Insert> = {
+			type: Delta.MarkType.Insert,
+			content: [insertedContent],
+		};
 		if (nodeChange !== undefined) {
 			const nodeDelta = deltaFromNode(nodeChange);
-			return [
-				{
-					...nodeDelta,
-					type: Delta.MarkType.InsertAndModify,
-					content,
-				},
-			];
+			populateChildModifications(nodeDelta, insert);
 		}
-		return [
-			{
-				type: Delta.MarkType.Insert,
-				content: [content],
-			},
-		];
+		return [insert];
 	}
 
 	if (nodeChange !== undefined) {
@@ -655,10 +802,28 @@ function deltaFromInsertAndChange(
 	return [];
 }
 
+function deltaForDelete(
+	nodeExists: boolean,
+	nodeChange: NodeChangeset | undefined,
+	deltaFromNode: ToDelta,
+): Delta.Mark[] {
+	if (!nodeExists) {
+		return [];
+	}
+
+	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
+	if (nodeChange !== undefined) {
+		const modify = deltaFromNode(nodeChange);
+		deleteDelta.setValue = modify.setValue;
+		deleteDelta.fields = modify.fields;
+	}
+	return [deleteDelta];
+}
+
 /**
  * 0 or 1 items.
  */
-export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
+export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = new FieldKind(
 	brand("Optional"),
 	Multiplicity.Optional,
 	{
@@ -667,6 +832,19 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 		editor: optionalFieldEditor,
 
 		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {
+			if (change.fieldChange === undefined) {
+				if (change.deletedBy === undefined && change.childChange !== undefined) {
+					return [deltaFromChild(change.childChange)];
+				}
+				return [];
+			}
+
+			const deleteDelta = deltaForDelete(
+				!change.fieldChange.wasEmpty,
+				change.deletedBy === undefined ? change.childChange : undefined,
+				deltaFromChild,
+			);
+
 			const update = change.fieldChange?.newContent;
 			let content: ITreeCursorSynchronous | undefined;
 			if (update === undefined) {
@@ -676,21 +854,18 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 			} else {
 				content = update.revert;
 			}
-			const insertDelta = deltaFromInsertAndChange(
-				content,
-				change.childChange,
-				deltaFromChild,
-			);
 
-			if (change.fieldChange !== undefined && !change.fieldChange.wasEmpty) {
-				return [{ type: Delta.MarkType.Delete, count: 1 }, ...insertDelta];
-			}
+			const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
 
-			return insertDelta;
+			return [...deleteDelta, ...insertDelta];
 		},
+
+		isEmpty: (change: OptionalChangeset) =>
+			change.childChange === undefined && change.fieldChange === undefined,
 	},
 	(types, other) =>
-		(other.kind === sequence.identifier || other.kind === optional.identifier) &&
+		(other.kind.identifier === sequence.identifier ||
+			other.kind.identifier === optional.identifier) &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	new Set([value.identifier]),
 );
@@ -698,12 +873,12 @@ export const optional: FieldKind<OptionalFieldEditor> = new FieldKind(
 /**
  * 0 or more items.
  */
-export const sequence: FieldKind<SequenceFieldEditor> = new FieldKind(
+export const sequence: FieldKind<SequenceFieldEditor, Multiplicity.Sequence> = new FieldKind(
 	brand("Sequence"),
 	Multiplicity.Sequence,
 	sequenceFieldChangeHandler,
 	(types, other) =>
-		other.kind === sequence.identifier &&
+		other.kind.identifier === sequence.identifier &&
 		allowsTreeSchemaIdentifierSuperset(types, other.types),
 	// TODO: add normalizer/importers for handling ops from other kinds.
 	new Set([]),
@@ -742,7 +917,7 @@ export const forbidden = brandedFieldKind(
 	Multiplicity.Forbidden,
 	noChangeHandler,
 	// All multiplicities other than Value support empty.
-	(types, other) => fieldKinds.get(other.kind)?.multiplicity !== Multiplicity.Value,
+	(types, other) => fieldKinds.get(other.kind.identifier)?.multiplicity !== Multiplicity.Value,
 	new Set(),
 );
 

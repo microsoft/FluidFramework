@@ -195,7 +195,7 @@ export class ContainerContext implements IContainerContext {
 			const runtimeInstantiatedHandler = () => {
 				assert(
 					this._runtime !== undefined,
-					"runtimeInstantiated fired but runtime is still undefined",
+					0x5a3 /* runtimeInstantiated fired but runtime is still undefined */,
 				);
 				resolve(this._runtime.getEntryPoint?.());
 				this.lifecycleEvents.off("disposed", disposedHandler);

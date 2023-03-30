@@ -3,27 +3,43 @@
  * Licensed under the MIT License.
  */
 
-import { IDebuggerMessage } from "./Messages";
+import { debuggerMessageSource } from "./Constants";
+import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).
+ *
+ * @param messages - The messages to be posted.
+ * @param loggingOptions - Settings related to logging to console for troubleshooting.
+ * If not passed, this function won't log to console before posting the message.
  *
  * @remarks Thin wrapper to provide some message-wise type-safety.
  *
  * @internal
  */
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(
-	message: TMessage,
+export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
+	...messages: TMessage[]
 ): void {
-	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-	console.log(`${loggingPreamble}Posting message to the window:`, message); // TODO: console.debug
-	globalThis.postMessage?.(message, "*"); // TODO: verify target is okay
+	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((message) => ({
+		...message,
+		source: debuggerMessageSource,
+	}));
+
+	// TODO: remove loggingOptions once things settle.
+	// If we need special logic for globalThis.postMessage maybe keep this function, but otherwise maybe remove it too.
+	if (loggingOptions !== undefined) {
+		const loggingPreamble =
+			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
+		console.debug(`${loggingPreamble}Posting messages to the window:`, messagesWithSource);
+	}
+	for (const message of messagesWithSource) {
+		globalThis.postMessage?.(message, "*");
+	}
 }
 
 /**
- * Handlers for incoming {@link IDebuggerMessage}s.
+ * Handlers for incoming {@link ISourcedDebuggerMessage}s.
  *
  * @internal
  */
@@ -32,7 +48,7 @@ export interface InboundHandlers {
 	 * Mapping from {@link IDebuggerMessage."type"}s to a handler callback for that message type.
 	 * @returns Whether or not the message was actually handled.
 	 */
-	[type: string]: (message: IDebuggerMessage) => boolean;
+	[type: string]: (message: ISourcedDebuggerMessage) => boolean;
 }
 
 /**
@@ -57,14 +73,17 @@ export interface MessageLoggingOptions {
  * @param handlers - List of handlers for particular event types.
  * If the incoming event's message type has a corresponding handler callback, that callback will be invoked.
  * Otherwise, this function will no-op.
+ * @param loggingOptions - Settings related to logging to console for troubleshooting.
+ * If not passed, this function won't log to console after the message has been handled.
  *
  * @internal
  */
 export function handleIncomingWindowMessage(
-	event: MessageEvent<Partial<IDebuggerMessage>>,
+	event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
+	// TODO: remove loggingOptions once things settle.
 	return handleIncomingMessage(event.data, handlers, loggingOptions);
 }
 
@@ -75,14 +94,18 @@ export function handleIncomingWindowMessage(
  * @param handlers - List of handlers for particular event types.
  * If the incoming event's message type has a corresponding handler callback, that callback will be invoked.
  * Otherwise, this function will no-op.
+ * @param loggingOptions - Settings related to logging to console for troubleshooting.
+ * If not passed, this function won't log to console after the message has been handled.
  *
  * @internal
  */
 export function handleIncomingMessage(
-	message: Partial<IDebuggerMessage>,
+	message: Partial<ISourcedDebuggerMessage>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
+	// TODO: remove loggingOptions once things settle.
+
 	if (message === undefined || !isDebuggerMessage(message)) {
 		return;
 	}
@@ -95,18 +118,20 @@ export function handleIncomingMessage(
 	const handled = handlers[message.type](message);
 
 	// Only log if the message was actually handled by the recipient.
-	if (handled) {
+	if (handled && loggingOptions !== undefined) {
 		const loggingPreamble =
 			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-		console.log(`${loggingPreamble} message handled:`, message); // TODO: console.debug
+		console.debug(`${loggingPreamble} message handled:`, message);
 	}
 }
 
 /**
- * Determines whether the provided event message data is an {@link IDebuggerMessage}.
+ * Determines whether the provided event message data is an {@link ISourcedDebuggerMessage}.
  *
  * @internal
  */
-export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage {
+export function isDebuggerMessage(
+	value: Partial<ISourcedDebuggerMessage>,
+): value is ISourcedDebuggerMessage {
 	return typeof value.source === "string" && value.type !== undefined;
 }

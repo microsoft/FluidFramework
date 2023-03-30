@@ -5,10 +5,18 @@
 
 import { IResolvedUrl, IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 
+/**
+ * @deprecated In the next major release all IResolvedUrl will be IFluidResolvedUrl,
+ * so this method is no longer necessary.
+ */
 export const isFluidResolvedUrl = (
 	resolved: IResolvedUrl | undefined,
 ): resolved is IFluidResolvedUrl => resolved?.type === "fluid";
 
+/**
+ * @deprecated In the next major release all IResolvedUrl will be IFluidResolvedUrl,
+ * so this method is no longer necessary.
+ */
 export function ensureFluidResolvedUrl(
 	resolved: IResolvedUrl | undefined,
 ): asserts resolved is IFluidResolvedUrl {

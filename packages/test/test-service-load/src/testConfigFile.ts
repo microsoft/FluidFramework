@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { OptionsMatrix } from "@fluid-internal/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-definitions";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ConfigTypes } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
-import { OptionsMatrix } from "@fluidframework/test-pairwise-generator";
 
 /** Type modeling the structure of the testConfig.json file */
 export interface ITestConfig {
@@ -101,6 +101,11 @@ export interface ILoadTestConfig {
 		 * By default, all ops will be large ops (`largeOpRate` is 1).
 		 */
 		largeOpRate?: number;
+		/**
+		 * How many clients should send large ops if `opSizeinBytes` is specified.
+		 * By default, only one client will send large ops.
+		 */
+		numClients?: number;
 	};
 }
 
