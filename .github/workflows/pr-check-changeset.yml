@@ -26,7 +26,7 @@ jobs:
           header: changeset
           recreate: true
           message: |
-            This PR requires a changesetand it has one! Good job!
+            This PR requires a changeset and it has one! Good job!
 
   changesets-not-required:
     name: Changesets not required
