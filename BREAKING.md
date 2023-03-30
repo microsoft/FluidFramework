@@ -22,6 +22,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 -   [Some test packages no longer published](#some-test-packages-no-longer-published)
+-   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
 
 ### garbage-collector and related items deprecated
 
@@ -54,6 +55,10 @@ The following interfaces available in `@fluidframework/runtime-definitions` are 
 These packages were previously published under the `@fluidframework` scope:
 
 -   `@fluidframework/test-end-to-end-tests`
+
+### ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` is deprecated as it is equivalent to `LoaderContainerTracker.ensureSynchronized` and will be removed in an upcoming release. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Please configure the timeout for the test instead.
 
 # 2.0.0-internal.4.0.0
 

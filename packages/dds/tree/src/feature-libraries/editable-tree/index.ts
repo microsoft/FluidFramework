@@ -17,6 +17,7 @@ export {
 	parentField,
 	EditableTreeEvents,
 	on,
+	contextSymbol,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";
