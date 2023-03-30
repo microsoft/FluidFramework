@@ -14,7 +14,7 @@ These data formats are used to persist data in Fluid documents:
 -   op format (for trailing ops: both the runtime and DDS specific parts).
 -   application data formats (how the application encodes its data in the DDS).
 
-Collectively all of these formats will be refereed to as "document schema".
+Collectively all of these formats will be referred to as "document schema".
 
 This document makes the following assumptions which relate to use of these schema:
 
@@ -34,7 +34,7 @@ This document makes the following assumptions which relate to use of these schem
         Teams is a great example of this: changes go through rings of validation, where users from different rings collaborate on same files, and it may take months for changes to fully propagate through all rings and get to 99.99% saturation.
 
         This means old code stays in use and needs to be able to collaborate (on same doc) with new code seamlessly, at least for some amount of time.
-        This window will differ depending on app and how it’s deployed – from couple weeks for web applications, to couple years for something like win32 Office Word.
+        This window will differ depending on app and how it’s deployed – from a couple weeks for web applications, to a couple years for something like win32 Office Word.
 
 1.  Documents can be read-only for some users, thus in-place conversion is not possible for all clients.
 
@@ -46,9 +46,9 @@ The above assumptions imply the following requirements for changes in document s
 
 1.  Applications (including Fluid Framework bits) must support reading all formats that have ever been written.
 
-1.  Any changes in document schema must ship dark (default to not being used for writing) and be roll out (enabling new format) on a schedule controlled by the controlled the team controlling the application deployment schedule.
+1.  Any changes in document schema must ship dark (default to not being used for writing) and be rolled out (enabling new format) on a schedule controlled by the team controlling the application deployment schedule.
 
-    Writing new formats can only be enabled by application only when application knows it is close to 100% of clients having new bits to collaborate in new schema (or it’s Ok for old clients to fail in some controlled way).
+    Writing new formats can only be enabled by an application once its authors confirm nearly 100% of clients have code capable of collaborating with new schema (or it’s OK for old clients to fail in some controlled way).
 
 1.  When a new format is added, support for writing the previous format must available in the same version that has support for the new format.
 
@@ -60,12 +60,12 @@ Here are some patterns to follow to meet the above requirements while optimizing
 
 Both libraries and applications can use these.
 
--   Update Data to new formats lazily (when the data would be rewritten anyway).
-    This approach as several benefits over eager updating:
+-   Update data to new formats lazily (when the data would be rewritten anyway).
+    This approach has several benefits over eager updating:
 
     1. Works with no special handling for readonly clients.
     2. Avoids new formats causing write amplification.
-    3. Keeps providence metadata (like who edited the content most recently) accurate.
+    3. Keeps provenance metadata (like who edited the content most recently) accurate.
     4. Reduces the impact of compatibility issues. For example just opening a document in one client will never break it for another. This also reduces the amount of damage caused by a bad update before it can be rolled back.
 
 -   Always check for unsupported formats, and report recoverable errors including what the format is that is not supported.
@@ -81,10 +81,10 @@ Both libraries and applications can use these.
 
     A type which is persisted has very different evolvability than one that is not.
     For example a package that has a non-exported interface usually can do a rename refactoring for members of the interface, but if that interface is used for Json serialized objects which are persisted,
-    the change could easily break support for all existing documents and/or collaboration with all existing clients, and do so in a way that won't show up in code review since the persistance/format logic might be untouched.
-    Instead any code which defined a persisted format (including interfaces used with Json) should be clearly documented as such.
-    An easy way to do this is put persisted related details in a clearly named file (for example persisted_formats.ts),
-    and do not import anything into that file which could change and result in a changed data format (for example don't import any types to include in json serialized data).
+    the change could easily break support for all existing documents and/or collaboration with all existing clients, and do so in a way that won't show up in code review since the persistence/format logic might be untouched.
+    Instead any code which defines a persisted format (including interfaces used with Json) should be clearly documented as such.
+    An easy way to do this by putting persisted related details in a clearly named file (for example persisted_formats.ts),
+    and not importing anything into that file which could change and result in a changed data format (for example don't import any types to include in Json serialized data).
     If necessary duplicate types, or move the source of truth to the persisted format code.
 
 -   Factor legacy format reading code (code for reading formats old enough that writing them is not supported) into compatibility libraries which can be authored as converters.
@@ -104,7 +104,7 @@ This includes Fluid Framework, as well other libraries consumed by Fluid applica
 
 -   Explicitly require users of the library to select the default write format.
 
-    Changing the default format for writing a breaking change, and can only be done with a major version bump.
+    Changing the default format for writing is a breaking change, and can only be done with a major version bump.
     However if this default is part of the library, and not specified through the API, the developer updating the application might not be aware of the change and its implications (requiring that support for the new format is fully deployed already).
 
     Explicitly specifying the format as part of the API makes sure that an update which removes support for writing the format the application is using will cause a build error, and gives a clear location for where documentation about write formats and compatibility can be found for such a user (On the API that accepts the write format).
@@ -133,7 +133,8 @@ A couple examples:
 
 ## Deprecating DDS
 
-We decide to deprecate some DDS by eventually removing it from code base. Clients who rely on it will be stuck, and have one of these options:
+Say we decide to deprecate some DDS and eventually remove it from the code base.
+Clients who rely on this DDS will be stuck, and have one of these options:
 
 1. Stay forever on old versions of Fluid Framework.
 2. Copy DDS code into their repo and continue to support it the way it’s described at the beginning of the document.
@@ -142,7 +143,7 @@ It’s a possibility, but it’s very inefficient if many customers depend on it
 
 Note that this workflow does not work with other changes, like changes in snapshot format.
 
-On-the fly converters
+## On-the fly converters
 
 In some distant future, we may offer converter workflow, where (for example) Directory DDS can be morphed transparently into SharedTree DDS on open / first edit (and API not exposing Directory DDS at all), including any trailing ops. Based on assumptions above, we will need to deploy such changes dark and eventually trigger conversion. Due to offline clients having local changes in old format, we will need to deal with merging ops in old and new format. Given that in general, better support for offline will require addition of 3-way merge, we are likely to rely on 3-way merge to deal with these changes (it simplifies certain aspects of conversion, but requires more expensive, but more generic merge tooling).
 
