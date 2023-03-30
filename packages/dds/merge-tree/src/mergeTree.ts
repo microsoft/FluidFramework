@@ -32,6 +32,7 @@ import {
 	IncrementalMapState,
 	InsertContext,
 	internedSpaces,
+	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
 	ISegmentChanges,
@@ -40,6 +41,7 @@ import {
 	MergeBlock,
 	MergeNode,
 	MinListener,
+	reservedMarkerIdKey,
 	SegmentActions,
 	SegmentGroup,
 	toRemovalInfo,
@@ -81,7 +83,7 @@ import {
 } from "./mergeTreeNodeWalk";
 import type { TrackingGroup } from "./mergeTreeTracking";
 import { zamboniSegments } from "./zamboni";
-import { Client, reservedMarkerIdKey, IRemovalInfo } from ".";
+import { Client } from "./client";
 
 const minListenerComparer: Comparer<MinListener> = {
 	min: {
