@@ -53,11 +53,11 @@ function canUseCache(request: IRequest): boolean {
 	return request.headers[LoaderHeader.cache] !== false;
 }
 
-function ensureFluidResolvedUrl(
+function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
-): asserts resolved is IFluidResolvedUrl {
-	if (!resolved) {
-		throw new Error(`resolved is not a Fluid url.`);
+): asserts resolved is IResolvedUrl {
+	if (resolved === undefined) {
+		throw new Error(`Object is not a IResolveUrl.`);
 	}
 }
 /**
@@ -78,7 +78,7 @@ export class RelativeLoader implements ILoader {
 			if (canUseCache(request)) {
 				return this.container;
 			} else {
-				ensureFluidResolvedUrl(this.container.resolvedUrl);
+				ensureResolvedUrlDefined(this.container.resolvedUrl);
 				const container = await Container.load(this.loader as Loader, {
 					canReconnect: request.headers?.[LoaderHeader.reconnect],
 					clientDetailsOverride: request.headers?.[LoaderHeader.clientDetails],
@@ -272,7 +272,7 @@ export async function requestResolvedObjectFromContainer(
 	container: IContainer,
 	headers?: IRequestHeader,
 ): Promise<IResponse> {
-	ensureFluidResolvedUrl(container.resolvedUrl);
+	ensureResolvedUrlDefined(container.resolvedUrl);
 	const parsedUrl = parseUrl(container.resolvedUrl.url);
 
 	if (parsedUrl === undefined) {
@@ -338,7 +338,7 @@ export class Loader implements IHostLoader {
 
 		if (this.cachingEnabled) {
 			container.once("attached", () => {
-				ensureFluidResolvedUrl(container.resolvedUrl);
+				ensureResolvedUrlDefined(container.resolvedUrl);
 				const parsedUrl = parseUrl(container.resolvedUrl.url);
 				if (parsedUrl !== undefined) {
 					this.addToContainerCache(parsedUrl.id, Promise.resolve(container));
@@ -407,7 +407,7 @@ export class Loader implements IHostLoader {
 		pendingLocalState?: IPendingContainerState,
 	): Promise<{ container: Container; parsed: IParsedUrl }> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
-		ensureFluidResolvedUrl(resolvedAsFluid);
+		ensureResolvedUrlDefined(resolvedAsFluid);
 
 		// Parse URL into data stores
 		const parsed = parseUrl(resolvedAsFluid.url);

@@ -25,7 +25,7 @@ import { IUser } from "@fluidframework/protocol-definitions";
 import { BaseTelemetryNullLogger } from "@fluidframework/telemetry-utils";
 import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
+import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
 import { RequestParser } from "@fluidframework/runtime-utils";
 import { InsecureUrlResolver } from "@fluidframework/driver-utils";
@@ -417,10 +417,7 @@ async function attachContainer(
 	shouldUseContainerId: boolean,
 ) {
 	// This is called once loading is complete to replace the url in the address bar with the new `url`.
-	const replaceUrl = (attachedContainer: IContainer) => {
-		if (attachedContainer.resolvedUrl === undefined) {
-			throw new Error("Container does not have resolved url");
-		}
+	const replaceUrl = (resolvedUrl: IResolvedUrl | undefined) => {
 		let [docUrl, title] = [url, documentId];
 		if (shouldUseContainerId) {
 			// for a r11s and t9s container we need to use the actual ID
@@ -428,8 +425,11 @@ async function attachContainer(
 			// as opposed to the ID requested on the client prior to attaching the container.
 			// NOTE: in case of an odsp container, the ID in the resolved URL cannot be used for
 			// referring/opening the attached container.
-			docUrl = url.replace(documentId, attachedContainer.resolvedUrl.id);
-			title = attachedContainer.resolvedUrl.id;
+			if (resolvedUrl === undefined) {
+				throw new Error("resolvedUrl must be defined");
+			}
+			docUrl = url.replace(documentId, resolvedUrl.id);
+			title = resolvedUrl.id;
 		}
 		window.history.replaceState({}, "", docUrl);
 		document.title = title;
@@ -496,7 +496,7 @@ async function attachContainer(
 			currentContainer.attach(attachUrl).then(
 				() => {
 					attachDiv.remove();
-					replaceUrl(currentContainer);
+					replaceUrl(currentContainer.resolvedUrl);
 
 					if (rightDiv) {
 						rightDiv.innerText = "";
@@ -516,7 +516,7 @@ async function attachContainer(
 		}
 	} else {
 		await currentContainer.attach(attachUrl);
-		replaceUrl(currentContainer);
+		replaceUrl(currentContainer.resolvedUrl);
 		attached.resolve();
 	}
 	await attached.promise;
