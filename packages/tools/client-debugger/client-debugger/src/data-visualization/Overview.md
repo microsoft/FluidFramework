@@ -89,7 +89,7 @@ end
 
 ## Laziness
 
-The system has designed to be lazy.
+The system was designed to be lazy.
 Visualizer nodes will only be generated for a given DDS Handle once they have been reached by rendering some "parent" DDS.
 
 But once it has been reached, the system will ensure that messages are posted for all subsequent changes to that DDS.
