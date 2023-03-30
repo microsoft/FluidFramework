@@ -145,7 +145,10 @@ Note that this workflow does not work with other changes, like changes in snapsh
 
 ## On-the fly converters
 
-In some distant future, we may offer converter workflow, where (for example) Directory DDS can be morphed transparently into SharedTree DDS on open / first edit (and API not exposing Directory DDS at all), including any trailing ops. Based on assumptions above, we will need to deploy such changes dark and eventually trigger conversion. Due to offline clients having local changes in old format, we will need to deal with merging ops in old and new format. Given that in general, better support for offline will require addition of 3-way merge, we are likely to rely on 3-way merge to deal with these changes (it simplifies certain aspects of conversion, but requires more expensive, but more generic merge tooling).
+In some distant future, we may offer a converter workflow, where (for example) a Directory DDS can be morphed transparently into a SharedTree DDS on open / first edit (and the API does not expose the Directory DDS at all), including any trailing ops.
+Based on the assumptions above, we will need to deploy such changes dark and eventually trigger conversion.
+Due to offline clients having local changes in the old format, we will need to deal with merging ops in the old and new formats.
+Given that in general, better support for offline will require addition of 3-way merge, we are likely to rely on 3-way merge to deal with these changes (it simplifies certain aspects of conversion, but requires more expensive, but more generic merge tooling).
 
 While we did not think through designs here, I think it’s safe to say that we will not have these flows in production for next 2+ years.
 
