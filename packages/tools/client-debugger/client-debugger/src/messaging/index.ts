@@ -22,14 +22,18 @@ export {
 	DisconnectContainerMessageData,
 	CloseContainerMessage,
 	CloseContainerMessageData,
+	ContainerDataMessage,
+	ContainerDataMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	GetContainerDataMessage,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
+export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
 	RegistryChangeMessage,

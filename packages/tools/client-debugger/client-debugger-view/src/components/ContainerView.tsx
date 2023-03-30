@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
+import { HasContainerId } from "@fluid-tools/client-debugger";
 import React from "react";
 
-import { HasClientDebugger } from "../CommonProps";
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
-import { TelemetryView } from "./TelemetryView";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -24,18 +23,18 @@ import { TelemetryView } from "./TelemetryView";
 initializeFluentUiIcons();
 
 /**
- * `className` used by {@link ClientDebugView}.
+ * `className` used by {@link ContainerView}.
  *
  * @internal
  */
-export const clientDebugViewClassName = `fluid-client-debugger-view`;
+const containerViewClassName = `fluid-client-debugger-view`;
 
 /**
- * {@link ClientDebugView} input props.
+ * {@link ContainerView} input props.
  *
  * @internal
  */
-export interface ClientDebugViewProps extends HasClientDebugger {
+export interface ContainerViewProps extends HasContainerId {
 	/**
 	 * Rendering policies for different kinds of Fluid client and object data.
 	 *
@@ -51,8 +50,8 @@ export interface ClientDebugViewProps extends HasClientDebugger {
  *
  * @internal
  */
-export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement {
-	const { clientDebugger, renderOptions: userRenderOptions } = props;
+export function ContainerView(props: ContainerViewProps): React.ReactElement {
+	const { containerId, renderOptions: userRenderOptions } = props;
 	const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
 
 	// Inner view selection
@@ -64,7 +63,7 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 		case PanelView.ContainerData:
 			innerView = (
 				<DataObjectsView
-					clientDebugger={clientDebugger}
+					containerId={containerId}
 					renderOptions={renderOptions.sharedObjectRenderOptions}
 				/>
 			);
@@ -72,18 +71,13 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 		case PanelView.Audience:
 			innerView = (
 				<AudienceView
-					clientDebugger={clientDebugger}
+					containerId={containerId}
 					onRenderAudienceMember={renderOptions.onRenderAudienceMember}
 				/>
 			);
 			break;
-		case PanelView.Telemetry:
-			innerView = <TelemetryView />;
-			break;
-		// TODO: add the Telemetry view here, without ReactContext
-
 		case PanelView.ContainerStateHistory:
-			innerView = <ContainerHistoryView clientDebugger={clientDebugger} />;
+			innerView = <ContainerHistoryView containerId={containerId} />;
 			break;
 		default:
 			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
@@ -109,16 +103,16 @@ export function ClientDebugView(props: ClientDebugViewProps): React.ReactElement
 					height: "100%",
 				},
 			}}
-			className={clientDebugViewClassName}
+			className={containerViewClassName}
 		>
-			<ContainerSummaryView clientDebugger={clientDebugger} />
+			<ContainerSummaryView containerId={containerId} />
 			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
 		</Stack>
 	);
 }
 
 /**
- * View options for the container visualizer.
+ * Inner view options within the container view.
  *
  * @internal
  */
@@ -132,11 +126,6 @@ export enum PanelView {
 	 * Display view of Audience participants / history.
 	 */
 	Audience = "Audience",
-
-	/**
-	 * Display view of Telemetry events.
-	 */
-	Telemetry = "Telemetry",
 
 	/**
 	 * Display view of Container state history.
@@ -155,18 +144,18 @@ export enum PanelView {
  */
 export interface PanelViewSelectionMenuProps {
 	/**
-	 * The currently-selected inner app view.
+	 * The currently selected inner view.
 	 */
 	currentSelection: PanelView;
 
 	/**
-	 * Updates the inner app view to the one specified.
+	 * Updates the inner view to the one specified.
 	 */
 	updateSelection(newSelection: PanelView): void;
 }
 
 /**
- * Menu for selecting the inner app view to be displayed in the debug panel.
+ * Menu for selecting the inner view to be displayed within the view for the currently selected container.
  *
  * @internal
  */
@@ -212,7 +201,7 @@ export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): Reac
 
 	return (
 		<OverflowSet
-			aria-label="Debug root view selection"
+			aria-label="Container sub-view selection"
 			items={options}
 			// TODO: We can add additional menu options here. Reserved for less-frequently used views items.
 			// overflowItems={}

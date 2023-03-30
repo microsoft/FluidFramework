@@ -25,6 +25,8 @@ import {
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	GetContainerDataMessage,
+	ContainerDataMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -190,6 +192,14 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
+		["GET_CONTAINER_DATA"]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerDataMessage;
+			if (message.data.containerId === this.containerId) {
+				this.postContainerData();
+				return true;
+			}
+			return false;
+		},
 		["CONNECT_CONTAINER"]: (untypedMessage) => {
 			const message = untypedMessage as ConnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
@@ -254,6 +264,21 @@ export class FluidClientDebugger
 				},
 			},
 		);
+	};
+
+	/**
+	 * Posts a {@link ContainerDataMessage} to the window (globalThis).
+	 */
+	private readonly postContainerData = (): void => {
+		postMessagesToWindow<ContainerDataMessage>(this.messageLoggingOptions, {
+			type: "CONTAINER_DATA",
+			data: {
+				containerId: this.containerId,
+				// TODO: fix when we can send container data as a message
+				containerData:
+					"THIS IS A TEST: we can't send actual container data as messages yet.", // this.containerData
+			},
+		});
 	};
 
 	/**
