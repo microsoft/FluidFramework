@@ -53,10 +53,10 @@ export {
 	ContextuallyTypedFieldData,
 } from "./contextuallyTyped";
 
-export { ForestIndex } from "./forestIndex";
+export { ForestSummarizer } from "./forestSummarizer";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor } from "./schemaIndex";
+export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { getSchemaString } from "./schemaIndexFormat";
 export {
@@ -121,13 +121,6 @@ export {
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
-
-export {
-	EditManagerIndex,
-	CommitEncoder,
-	parseSummary as loadSummary,
-	stringifySummary as encodeSummary,
-} from "./editManagerIndex";
 
 export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";

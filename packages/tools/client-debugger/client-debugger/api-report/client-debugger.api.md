@@ -297,6 +297,16 @@ export interface IFluidClientDebuggerEvents extends IEvent {
 }
 
 // @internal
+export interface IMessageRelay<TSend extends IDebuggerMessage = IDebuggerMessage, TReceive extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEventProvider<IMessageRelayEvents<TReceive>> {
+    postMessage: (message: TSend) => void;
+}
+
+// @internal
+export interface IMessageRelayEvents<TMessage extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEvent {
+    (event: "message", listener: (message: TMessage) => void): any;
+}
+
+// @internal
 export interface InboundHandlers {
     [type: string]: (message: ISourcedDebuggerMessage) => boolean;
 }
@@ -310,6 +320,12 @@ export function isDebuggerMessage(value: Partial<ISourcedDebuggerMessage>): valu
 // @public
 export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessage<TData> {
     source: string;
+}
+
+// @public
+export interface ITimestampedTelemetryEvent {
+    logContent: ITelemetryBaseEvent;
+    timestamp: number;
 }
 
 // @public
@@ -367,7 +383,7 @@ export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMe
 
 // @public
 export interface TelemetryEventMessageData {
-    contents: ITelemetryBaseEvent[];
+    contents: ITimestampedTelemetryEvent[];
 }
 
 // @public

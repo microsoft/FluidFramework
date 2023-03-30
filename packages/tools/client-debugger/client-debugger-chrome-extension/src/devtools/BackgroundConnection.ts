@@ -5,7 +5,10 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	IDebuggerMessage,
 	ISourcedDebuggerMessage,
+	IMessageRelay,
+	IMessageRelayEvents,
 	isDebuggerMessage,
 	debuggerMessageSource,
 } from "@fluid-tools/client-debugger";
@@ -15,8 +18,6 @@ import {
 	DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
-	IMessageRelayEvents,
-	IMessageRelay,
 	postMessageToPort,
 	TypedPortConnection,
 } from "../messaging";
@@ -60,14 +61,24 @@ export class BackgroundConnection
 	private readonly backgroundServiceConnection: TypedPortConnection;
 
 	public static async Initialize(): Promise<BackgroundConnection> {
-		const connection = new BackgroundConnection();
+		const connection = new BackgroundConnection(extensionMessageSource);
 		await new Promise((resolve) => {
 			connection.once("tabConnected", resolve);
 		});
 		return connection;
 	}
 
-	private constructor() {
+	/**
+	 * Creates an instance of {@link BackgroundConnection}.
+	 */
+	private constructor(
+		/**
+		 * All messages sent through the returned instance's {@link BackgroundConnection.postMessage}
+		 * method will get this value written to their 'source' property.
+		 * @see {@link @fluid-tools/client-debugger#ISourcedDebuggerMessage}
+		 */
+		private readonly messageSource: string,
+	) {
 		super();
 
 		console.log(formatDevtoolsScriptMessageForLogging("Connecting to Background script..."));
@@ -79,7 +90,7 @@ export class BackgroundConnection
 
 		// Relay the tab ID to the background service worker.
 		const initMessage: DevToolsInitMessage = {
-			source: extensionMessageSource,
+			source: this.messageSource,
 			type: devToolsInitMessageType,
 			data: {
 				tabId: chrome.devtools.inspectedWindow.tabId,
@@ -99,11 +110,17 @@ export class BackgroundConnection
 	}
 
 	/**
-	 * Post a message for the debugger to the Background Script.
+	 * Post a message to the Background Script.
+	 *
+	 * @remarks These messages are mostly for the debugger, but some are for the Background Script itself (for initialization).
 	 */
-	public postMessage(message: ISourcedDebuggerMessage): void {
+	public postMessage(message: IDebuggerMessage): void {
+		const sourcedMessage: ISourcedDebuggerMessage = {
+			...message,
+			source: this.messageSource,
+		};
 		postMessageToPort(
-			message,
+			sourcedMessage,
 			this.backgroundServiceConnection,
 			devtoolsScriptMessageLoggingOptions,
 		);
@@ -133,15 +150,14 @@ export class BackgroundConnection
 				formatDevtoolsScriptMessageForLogging("Background initialization complete."),
 			);
 			return this.emit("tabConnected");
-		} else {
-			// Forward incoming message onto subscribers.
-			// TODO: validate source
-			console.log(
-				formatDevtoolsScriptMessageForLogging(`Relaying message from Background Service:`),
-				message,
-			);
-			return this.emit("message", message);
 		}
+
+		// Forward incoming message onto subscribers.
+		console.log(
+			formatDevtoolsScriptMessageForLogging(`Relaying message from Background Service:`),
+			message,
+		);
+		return this.emit("message", message);
 	};
 
 	/**

@@ -10,10 +10,12 @@ export * from "./client-data-views";
 export * from "./data-object-views";
 
 export * from "./AudienceView";
-export * from "./ClientDebugView";
+export * from "./ContainerView";
 export * from "./ContainerHistoryView";
-export * from "./ContainerSelectionDropdown";
 export * from "./ContainerSummaryView";
+export * from "./LandingView";
+export * from "./Menu";
 export * from "./TelemetryView";
+export * from "./Waiting";
 
 /* eslint-enable no-restricted-syntax */
