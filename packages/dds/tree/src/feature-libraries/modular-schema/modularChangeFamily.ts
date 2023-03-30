@@ -41,7 +41,9 @@ import {
 	CrossFieldManager,
 	CrossFieldQuerySet,
 	CrossFieldTarget,
+	IdAllocationState,
 	idAllocatorFromMaxId,
+	idAllocatorFromState,
 } from "./crossFieldQueries";
 import {
 	FieldChangeHandler,
@@ -135,15 +137,10 @@ export class ModularChangeFamily
 	}
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-		let maxId = -1;
-		const revInfos: RevisionInfo[] = [];
-		for (const taggedChange of changes) {
-			const change = taggedChange.change;
-			maxId = Math.max(change.maxId ?? -1, maxId);
-			revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
-		}
+		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
-		const genId: IdAllocator = () => brand(++maxId);
+		const idState: IdAllocationState = { maxId };
+		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<ComposeData>();
 
 		const changesWithoutConstraintViolations = changes.filter(
@@ -182,7 +179,7 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		return makeModularChangeset(composedFields, maxId, revInfos);
+		return makeModularChangeset(composedFields, idState.maxId, revInfos);
 	}
 
 	private composeFieldMaps(
@@ -310,8 +307,8 @@ export class ModularChangeFamily
 		isRollback: boolean,
 		repairStore?: ReadonlyRepairDataStore,
 	): ModularChangeset {
-		let maxId = change.change.maxId ?? -1;
-		const genId: IdAllocator = () => brand(++maxId);
+		const idState: IdAllocationState = { maxId: brand(change.change.maxId ?? -1) };
+		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
 		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
 
@@ -350,7 +347,7 @@ export class ModularChangeFamily
 		const revInfo = change.change.revisions;
 		return makeModularChangeset(
 			invertedFields,
-			maxId,
+			idState.maxId,
 			revInfo === undefined
 				? undefined
 				: (isRollback
@@ -463,8 +460,9 @@ export class ModularChangeFamily
 		change: ModularChangeset,
 		over: TaggedChange<ModularChangeset>,
 	): ModularChangeset {
-		let maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
-		const genId: IdAllocator = () => brand(++maxId);
+		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
+		const idState: IdAllocationState = { maxId: brand(maxId) };
+		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable: RebaseTable = {
 			...newCrossFieldTable<FieldChange>(),
 			baseMapToRebased: new Map(),
@@ -491,7 +489,7 @@ export class ModularChangeFamily
 
 		const rebasedChangeset = makeModularChangeset(
 			rebasedFields,
-			maxId,
+			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
 		);
@@ -524,8 +522,8 @@ export class ModularChangeFamily
 			0x5b4 /* Should not change constraint violation count during amend pass */,
 		);
 
-		if (maxId >= 0) {
-			rebasedChangeset.maxId = brand(maxId);
+		if (idState.maxId >= 0) {
+			rebasedChangeset.maxId = brand(idState.maxId);
 		}
 		return rebasedChangeset;
 	}
@@ -1248,6 +1246,21 @@ export interface EditDescription {
 	field: FieldKey;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
+}
+
+function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]): {
+	revInfos: RevisionInfo[];
+	maxId: ChangesetLocalId;
+} {
+	let maxId = -1;
+	const revInfos: RevisionInfo[] = [];
+	for (const taggedChange of changes) {
+		const change = taggedChange.change;
+		maxId = Math.max(change.maxId ?? -1, maxId);
+		revInfos.push(...revisionInfoFromTaggedChange(taggedChange));
+	}
+
+	return { maxId: brand(maxId), revInfos };
 }
 
 function revisionInfoFromTaggedChange(
