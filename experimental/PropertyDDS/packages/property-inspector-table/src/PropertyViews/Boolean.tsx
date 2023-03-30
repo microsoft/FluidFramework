@@ -6,25 +6,32 @@
 import { ContainerProperty } from "@fluid-experimental/property-properties";
 import Switch, { SwitchProps } from "@material-ui/core/Switch";
 import * as React from "react";
-import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes";
+import {
+	IEditableTreeRow,
+	IEditableValueCellProps,
+	IInspectorRow,
+	isEditableTreeRow,
+} from "../InspectorTableTypes";
 import { getPropertyValue } from "../propertyInspectorUtils";
 
 type BooleanProps = IEditableValueCellProps & {
 	onSubmit: (val: boolean, props: IEditableValueCellProps) => void;
 	SwitchProps: SwitchProps;
-	rowData: IInspectorRow & { value: boolean };
+	rowData: (IInspectorRow | IEditableTreeRow) & { value: boolean };
 };
 
 export const BooleanView: React.FunctionComponent<BooleanProps> = (props) => {
 	const { followReferences, onSubmit, SwitchProps: switchProps, rowData, readOnly } = props;
 
-	const value = getPropertyValue(
-		rowData.parent as ContainerProperty,
-		rowData.name,
-		rowData.context,
-		rowData.typeid,
-		followReferences,
-	);
+	const value = isEditableTreeRow(rowData)
+		? rowData.value
+		: getPropertyValue(
+				rowData.parent as ContainerProperty,
+				rowData.name,
+				rowData.context,
+				rowData.typeid,
+				followReferences,
+		  );
 
 	return (
 		<Switch

@@ -2,18 +2,33 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+import { assert } from "@fluidframework/common-utils";
+import { isUnwrappedNode, valueSymbol } from "@fluid-internal/tree";
 import { PropertyProxy, ProxifiedMapProperty } from "@fluid-experimental/property-proxy";
 import { SetProperty, ContainerProperty } from "@fluid-experimental/property-properties";
 import * as React from "react";
 import { StringView, typeToViewMap } from "./PropertyViews";
 import { Utils } from "./typeUtils";
-import { IEditableValueCellProps } from "./InspectorTableTypes";
+import { IEditableValueCellProps, isEditableTreeRow } from "./InspectorTableTypes";
+
+const nonNumericTypes = new Set(["Bool", "Uint64", "Int64", "String", "Reference"]);
 
 function onInlineEditEnd(val: string | number | boolean, props: IEditableValueCellProps) {
 	const { rowData } = props;
 	// Convert to number if it is possible and the type is not an integer with 64 bits.
-	if (rowData.typeid !== "Uint64" && rowData.typeid !== "Int64" && rowData.typeid !== "String") {
+	if (!nonNumericTypes.has(rowData.typeid)) {
 		val = !isNaN(+val) ? +val : val;
+	}
+
+	if (isEditableTreeRow(rowData)) {
+		assert(isUnwrappedNode(rowData.data), "Expected row data as `EditableField` only at root");
+		try {
+			rowData.data[valueSymbol] = val;
+		} catch (e) {
+			console.error(e);
+		}
+		return;
 	}
 
 	const proxiedParent = PropertyProxy.proxify(rowData.parent!);
@@ -54,17 +69,19 @@ export const Field: React.FunctionComponent<IEditableValueCellProps> = ({
 	rowData,
 	...restProps
 }) => {
-	const parent = rowData.parent!;
 	let typeid = rowData.typeid;
 	let property;
 
-	try {
-		property = (rowData.parent! as ContainerProperty).get(rowData.name);
-	} catch {
-		typeid = "Reference";
-	}
-	if (Utils.isEnumProperty(property) || Utils.isEnumArrayProperty(parent!)) {
-		typeid = "enum";
+	if (!isEditableTreeRow(rowData)) {
+		const parent = rowData.parent!;
+		try {
+			property = (parent as ContainerProperty).get(rowData.name);
+		} catch {
+			typeid = "Reference";
+		}
+		if (Utils.isEnumProperty(property) || Utils.isEnumArrayProperty(parent)) {
+			typeid = "enum";
+		}
 	}
 
 	// eslint-disable-next-line no-prototype-builtins
