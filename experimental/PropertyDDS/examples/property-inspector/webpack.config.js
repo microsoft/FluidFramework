@@ -10,7 +10,8 @@ module.exports = (env) => {
 	const htmlTemplate = "./src/index.html";
 	return {
 		devtool: "inline-source-map",
-		entry: "./src/app.tsx",
+		// entry: "./src/app.tsx",
+		entry: "./src/azureApp.tsx",
 		mode: "development",
 		devServer: {
 			port: 9000,
