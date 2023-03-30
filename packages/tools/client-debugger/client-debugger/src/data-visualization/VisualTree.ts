@@ -18,18 +18,23 @@ export type FluidObjectId = string;
 /**
  * The kind of {@link VisualNodeBase}.
  *
- * @remarks Can be used to type-switch on the particular kind of node being processed.
+ * @remarks
+ *
+ * Can be used to type-switch on the particular kind of node being processed.
+ *
+ * Note: for forwards compatability reasons, consumers of this should not assume it is exhaustive.
+ * I.e. consumers should gracefully handle the case where
  *
  * @public
  */
 export enum VisualNodeKind {
-	FluidTreeNode,
-	FluidValueNode,
-	FluidHandleNode,
-	FluidUnknownNode,
-	TreeNode,
-	ValueNode,
-	UnknownObjectNode,
+	FluidTreeNode = "FluidTreeNode",
+	FluidValueNode = "FluidValueNode",
+	FluidHandleNode = "FluidHandleNode",
+	FluidUnknownObjectNode = "FluidUnknownObjectNode",
+	TreeNode = "TreeNode",
+	ValueNode = "ValueNode",
+	UnknownObjectNode = "UnknownObjectNode",
 }
 
 /**
@@ -64,9 +69,15 @@ export interface VisualNodeBase {
 	metadata?: Record<string, Primitive>;
 
 	/**
-	 * {@inheritDoc VisualNodeKind}
+	 * The "kind" of tree node.
+	 *
+	 * @remarks
+	 *
+	 * This will generally be {@link VisualNodeKind}, but for forwards/backwards compatability reasons,
+	 * we allow this to be an arbitrary string.
+	 * Consumers of this value should attempt to handle unrecognized values gracefully.
 	 */
-	nodeKind: VisualNodeKind;
+	nodeKind: VisualNodeKind | string;
 }
 
 /**
@@ -187,7 +198,7 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: VisualNodeKind.FluidUnknownNode;
+	nodeKind: VisualNodeKind.FluidUnknownObjectNode;
 }
 
 /**

@@ -204,7 +204,7 @@ export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase
 
 // @public
 export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
-    nodeKind: VisualNodeKind.FluidUnknownNode;
+    nodeKind: VisualNodeKind.FluidUnknownObjectNode;
 }
 
 // @public
@@ -411,26 +411,26 @@ export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | Fl
 export interface VisualNodeBase {
     label: string;
     metadata?: Record<string, Primitive>;
-    nodeKind: VisualNodeKind;
+    nodeKind: VisualNodeKind | string;
     typeMetadata?: string;
 }
 
 // @public
 export enum VisualNodeKind {
     // (undocumented)
-    FluidHandleNode = 2,
+    FluidHandleNode = "FluidHandleNode",
     // (undocumented)
-    FluidTreeNode = 0,
+    FluidTreeNode = "FluidTreeNode",
     // (undocumented)
-    FluidUnknownNode = 3,
+    FluidUnknownObjectNode = "FluidUnknownObjectNode",
     // (undocumented)
-    FluidValueNode = 1,
+    FluidValueNode = "FluidValueNode",
     // (undocumented)
-    TreeNode = 4,
+    TreeNode = "TreeNode",
     // (undocumented)
-    UnknownObjectNode = 6,
+    UnknownObjectNode = "UnknownObjectNode",
     // (undocumented)
-    ValueNode = 5
+    ValueNode = "ValueNode"
 }
 
 // @public

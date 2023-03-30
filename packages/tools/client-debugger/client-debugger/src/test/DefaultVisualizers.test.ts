@@ -169,7 +169,7 @@ describe("DefaultVisualizers unit tests", () => {
 			fluidObjectId: "test-object-id",
 			label: "test-label",
 			typeMetadata: "UnknownSharedObjectType",
-			nodeKind: VisualNodeKind.FluidUnknownNode,
+			nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 		};
 
 		expect(result).to.deep.equal(expected);

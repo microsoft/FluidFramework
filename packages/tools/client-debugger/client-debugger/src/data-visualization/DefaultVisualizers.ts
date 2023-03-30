@@ -120,7 +120,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 		fluidObjectId: sharedObject.id,
 		label,
 		typeMetadata: sharedObject.attributes.type,
-		nodeKind: VisualNodeKind.FluidUnknownNode,
+		nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 	};
 };
 
