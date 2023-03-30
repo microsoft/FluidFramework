@@ -10,24 +10,22 @@ import { ITelemetryBufferedLogger } from '@fluidframework/test-driver-definition
 import { Snippet } from '@microsoft/applicationinsights-web';
 
 // @public (undocumented)
-export class AppInsightsLogger implements ITelemetryBufferedLogger {
-    	constructor(loggerConfig: AppInsightsLoggerConfig);
-    	// (undocumented)
+export class FluidAppInsightsLogger implements ITelemetryBufferedLogger {
+    constructor(config: FluidAppInsightsLoggerConfig);
+    // (undocumented)
     protected readonly baseLoggingClient: ApplicationInsights;
-    	// (undocumented)
+    // (undocumented)
     flush(): Promise<void>;
-    	// (undocumented)
+    // (undocumented)
     getBaseLoggingClient(): ApplicationInsights;
-    	// (undocumented)
+    // (undocumented)
     send(event: ITelemetryBaseEvent): void;
 }
 
 // @public (undocumented)
-export interface AppInsightsLoggerConfig {
-    	// (undocumented)
-    appInsightsClient?: ApplicationInsights;
-    	// (undocumented)
-    appInsightsConfig?: Snippet;
+export interface FluidAppInsightsLoggerConfig {
+    // (undocumented)
+    appInsights: ApplicationInsights | Snippet;
 }
 
 // (No @packageDocumentation comment for this package)
