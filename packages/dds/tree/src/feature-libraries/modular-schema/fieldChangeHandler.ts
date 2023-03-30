@@ -230,6 +230,14 @@ export type IdAllocator = () => ChangesetLocalId;
 export interface NodeChangeset extends HasFieldChanges {
 	valueChange?: ValueChange;
 	valueConstraint?: ValueConstraint;
+	nodeExistsConstraint?: NodeExistsConstraint;
+}
+
+/**
+ * @alpha
+ */
+export interface NodeExistsConstraint {
+	violated: boolean;
 }
 
 /**

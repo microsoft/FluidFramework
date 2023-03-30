@@ -55,6 +55,8 @@ import {
 	HasFieldChanges,
 	RevisionInfo,
 	RevisionMetadataSource,
+	NodeExistsConstraint,
+	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
 import {
@@ -257,7 +259,8 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		const fieldChanges: TaggedChange<FieldChangeMap>[] = [];
 		let valueChange: ValueChange | undefined;
-		let valueConstraint: Value | undefined;
+		let valueConstraint: ValueConstraint | undefined;
+		let nodeExistsConstraint: NodeExistsConstraint | undefined;
 		for (const change of changes) {
 			// Use the first defined value constraint before any value changes.
 			// Any value constraints defined after a value change can never be violated so they are ignored in the composition.
@@ -268,6 +271,11 @@ export class ModularChangeFamily
 			) {
 				valueConstraint = { ...change.change.valueConstraint };
 			}
+
+			if (change.change.nodeExistsConstraint !== undefined) {
+				nodeExistsConstraint = { ...change.change.nodeExistsConstraint };
+			}
+
 			if (change.change.valueChange !== undefined) {
 				valueChange = { ...change.change.valueChange };
 				valueChange.revision ??= change.revision;
@@ -294,6 +302,10 @@ export class ModularChangeFamily
 
 		if (valueConstraint !== undefined) {
 			composedNodeChange.valueConstraint = valueConstraint;
+		}
+
+		if (nodeExistsConstraint !== undefined) {
+			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
 		}
 
 		return composedNodeChange;
@@ -1226,6 +1238,22 @@ export class ModularEditBuilder
 	public addValueConstraint(path: UpPath, currentValue: Value): void {
 		const nodeChange: NodeChangeset = {
 			valueConstraint: { value: currentValue, violated: false },
+		};
+		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
+			path.parentIndex,
+			nodeChange,
+		);
+		this.submitChange(
+			path.parent,
+			path.parentField,
+			genericFieldKind.identifier,
+			brand(fieldChange),
+		);
+	}
+
+	public addNodeExistsConstraint(path: UpPath): void {
+		const nodeChange: NodeChangeset = {
+			nodeExistsConstraint: { violated: false },
 		};
 		const fieldChange = genericFieldKind.changeHandler.editor.buildChildChange(
 			path.parentIndex,

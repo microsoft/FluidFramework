@@ -152,6 +152,10 @@ export class DefaultEditBuilder
 		this.modularBuilder.addValueConstraint(path, value);
 	}
 
+	public addNodeExistsConstraint(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraint(path);
+	}
+
 	public valueField(parent: UpPath | undefined, field: FieldKey): ValueFieldEditBuilder {
 		return {
 			set: (newContent: ITreeCursor): void => {

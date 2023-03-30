@@ -353,6 +353,50 @@ describe("Editing", () => {
 
 			expectJsonTree([tree1, tree2], ["43"]);
 		});
+
+		it.only("node exists constraint", () => {
+			const sequencer = new Sequencer();
+			const tree1 = TestTree.fromJson([]);
+			const tree2 = tree1.fork();
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+
+			const e1 = tree1.runTransaction((forest, editor) => {
+				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(singleJsonCursor("41"), true);
+			});
+
+			let sequenced = sequencer.sequence([e1]);
+			tree1.receive(sequenced);
+			tree2.receive(sequenced);
+
+			const e2 = tree1.runTransaction((forest, editor) => {
+				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(undefined, false);
+			});
+
+			const e3 = tree2.runTransaction((forest, editor) => {
+				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(undefined, false);
+			});
+
+			const e4 = tree2.runTransaction((forest, editor) => {
+				editor.addNodeExistsConstraint(rootPath);
+				const field = editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(singleJsonCursor("42"), true);
+			});
+
+			sequenced = sequencer.sequence([e2, e3, e4]);
+
+			tree1.receive(sequenced);
+			tree2.receive(sequenced);
+
+			expectJsonTree([tree1, tree2], ["42"]);
+		});
 	});
 });
 
