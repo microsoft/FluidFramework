@@ -40,7 +40,7 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
 		fluidObjectId: sharedCell.id,
 		label,
 		children: [renderedData],
-		typeMetadata: "SharedCell",
+		typeMetadata: sharedCell.attributes.type,
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
@@ -57,7 +57,7 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 		fluidObjectId: sharedCounter.id,
 		label,
 		value: sharedCounter.value,
-		typeMetadata: "SharedCounter",
+		typeMetadata: sharedCounter.attributes.type,
 		nodeKind: VisualNodeKind.FluidValueNode,
 	};
 };
@@ -85,7 +85,7 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 		metadata: {
 			size: sharedMap.size,
 		},
-		typeMetadata: "SharedMap",
+		typeMetadata: sharedMap.attributes.type,
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
@@ -104,7 +104,7 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 		fluidObjectId: sharedString.id,
 		label,
 		value: text,
-		typeMetadata: "SharedString",
+		typeMetadata: sharedString.attributes.type,
 		nodeKind: VisualNodeKind.FluidValueNode,
 	};
 };
