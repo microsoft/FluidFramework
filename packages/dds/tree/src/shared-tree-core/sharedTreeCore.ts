@@ -40,6 +40,7 @@ import {
 } from "../core";
 import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
+import { StableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 
@@ -238,23 +239,28 @@ export class SharedTreeCore<
 	 * @param revision - The revision to associate with the change.
 	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
-	protected applyChange(change: TChange, revision?: RevisionTag): void {
-		const commit = {
+	protected applyChange(change: TChange, revision?: StableId): void {
+		const commit = this.addLocalChangeWithRevision(
 			change,
-			revision: revision ?? mintRevisionTag(),
-			sessionId: this.editManager.localSessionId,
-		};
-		const delta = this.editManager.addLocalChange(commit.revision, change, false);
-		this.transactions.repairStore?.capture(
-			this.changeFamily.intoDelta(change),
-			commit.revision,
+			revision ? revision : mintRevisionTag(),
 		);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
+	}
+
+	private addLocalChangeWithRevision(change: TChange, revision: StableId): Commit<TChange> {
+		const commit = {
+			change,
+			revision,
+			sessionId: this.editManager.localSessionId,
+		};
+		const delta = this.editManager.addLocalChange(revision, change, false);
+		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
 
 		this.indexEventEmitter.emit("newLocalChange", change);
 		this.indexEventEmitter.emit("newLocalState", delta);
+		return commit;
 	}
 
 	protected processCore(
@@ -347,8 +353,17 @@ export class SharedTreeCore<
 		}
 	}
 
-	protected applyStashedOp(content: any): unknown {
-		throw new Error("Method not implemented.");
+	protected override reSubmitCore(content: any, localOpMetadata: unknown) {
+		const [commit, commitsAfter] = this.editManager.findLocalCommit(content.revision);
+		console.log(commitsAfter);
+		this.submitCommit(commit);
+	}
+
+	protected applyStashedOp(content: any): undefined {
+		const { revision, changeset } = content as Message;
+		const decodedChangeset = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
+		this.addLocalChangeWithRevision(decodedChangeset, revision);
+		return;
 	}
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
