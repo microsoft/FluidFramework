@@ -64,7 +64,7 @@ Both libraries and applications can use these.
     This approach has several benefits over eager updating:
 
     1. Works with no special handling for readonly clients.
-    2. Avoids new formats causing write amplification.
+    1. Avoids new formats causing write amplification.
     3. Keeps provenance metadata (like who edited the content most recently) accurate.
     4. Reduces the impact of compatibility issues. For example just opening a document in one client will never break it for another. This also reduces the amount of damage caused by a bad update before it can be rolled back.
 
