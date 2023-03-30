@@ -780,7 +780,7 @@ describe("SharedTree", () => {
 			validateTree(tree1, [expectedState]);
 			validateTree(tree2, [expectedState]);
 		});
-		it.only("rebases stashed ops with prior state present", async () => {
+		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
 			insert(provider.trees[0], 0, "a");
 			await provider.ensureSynchronized();
