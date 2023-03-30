@@ -452,7 +452,8 @@ async function scheduleContainerClose(
 				def.promise,
 				// make this promise resolve on container closure, but allow the deferred promise to resolve first
 				new Promise<undefined>((resolve) =>
-					container.on("closed", async () => {
+					container.on("closed", () => {
+						// eslint-disable-next-line @typescript-eslint/no-floating-promises
 						Promise.resolve().then(() => resolve(undefined));
 					}),
 				),
