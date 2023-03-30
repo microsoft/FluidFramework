@@ -2,7 +2,7 @@
 
 This directory contains a system for describing Fluid Distributed Data Structure (DDS) visuals in a declarative manner, and for communicating incremental updates to those visuals.
 
-This system is designed to be compatible with the message-passing-based approach taken by the debugger, such that consumers can process the visuals however they wish.
+This system is designed to be compatible with the message-passing-based approach taken by the debugger, such that consumers can process the visual descriptors however they wish.
 
 -   In particular, this enables tooling that may live in another process; e.g. Chromium Browser Extensions.
 
@@ -11,7 +11,7 @@ This system is designed to be compatible with the message-passing-based approach
 For the purpose of demonstrating the intended usage flow of the system, we will be looking at it from the context of the debugger, rather than viewing this system in isolation.
 
 When initializing the debugger, the initializing consumer may optionally provide a root DDS(s) they wish to have visualized by the tooling.
-If they do not specify this, then the tooling will not generate any visuals.
+If they do not specify this, then the tooling will not generate any visual descriptors.
 
 To initiate "rendering" (generating visual summary trees), the consumer passes the `GET_ROOT_DATA_VISUALIZATIONS` to request the "root" visual summary.
 This call will return a flat list of "handle" nodes, which include a unique identifier assigned by the system for the corresponding DDS.
@@ -50,7 +50,7 @@ At a high level, the DDS trees contain:
 2.  Some root visual metadata
 3.  Child trees / values
 
-    -   These children will **always** be either nested visuals describing primitive data or a handle node pointing to another DDS.
+    -   These children will **always** be either nested visual trees describing primitive data, or a handle node pointing to another DDS.
         When such a node is encountered, the consumer may post another `GET_DATA_VISUALIZATION` message requesting the corresponding "rendering".
 
 ### Example
