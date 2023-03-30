@@ -75,6 +75,17 @@ export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<Conta
 }
 
 // @public
+export interface ContainerDataMessage extends IDebuggerMessage<ContainerDataMessageData> {
+    // (undocumented)
+    type: "CONTAINER_DATA";
+}
+
+// @public
+export interface ContainerDataMessageData extends HasContainerId {
+    containerData?: unknown;
+}
+
+// @public
 export interface ContainerMetadata {
     id: string;
     nickname?: string;
@@ -173,6 +184,12 @@ export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
 }
 
 // @public
+export interface GetContainerDataMessage extends IDebuggerMessage<HasContainerId> {
+    // (undocumented)
+    type: "GET_CONTAINER_DATA";
+}
+
+// @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
     // (undocumented)
     type: "GET_CONTAINER_LIST";
@@ -233,6 +250,16 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
 // @internal
 export interface IFluidClientDebuggerEvents extends IEvent {
     (event: "disposed", listener: () => void): any;
+}
+
+// @internal
+export interface IMessageRelay<TSend extends IDebuggerMessage = IDebuggerMessage, TReceive extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEventProvider<IMessageRelayEvents<TReceive>> {
+    postMessage: (message: TSend) => void;
+}
+
+// @internal
+export interface IMessageRelayEvents<TMessage extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEvent {
+    (event: "message", listener: (message: TMessage) => void): any;
 }
 
 // @internal

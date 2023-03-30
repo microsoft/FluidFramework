@@ -4,8 +4,7 @@
  */
 
 import React from "react";
-
-import { IMessageRelay } from "../messaging";
+import { IMessageRelay } from "@fluid-tools/client-debugger";
 
 /**
  * Context for accessing a shared {@link @fluid-tools/client-debugger#IMessageRelay} for communicating with the webpage.
@@ -23,7 +22,7 @@ export const MessageRelayContext = React.createContext<IMessageRelay | undefined
 );
 
 /**
- * Gets the {@link IMessageRelay} from the local {@link MessageRelayContext}.
+ * Gets the {@link @fluid-tools/client-debugger#IMessageRelay} from the local {@link MessageRelayContext}.
  *
  * @throws If {@link MessageRelayContext} has not been set.
  */
