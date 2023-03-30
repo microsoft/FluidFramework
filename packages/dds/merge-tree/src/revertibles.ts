@@ -348,9 +348,7 @@ function revertLocalAnnotate(
 ) {
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
-		const unlinked = tracked.trackingCollection.unlink(
-			revertible.trackingGroup,
-		);
+		const unlinked = tracked.trackingCollection.unlink(revertible.trackingGroup);
 		assert(unlinked && tracked.isLeaf(), 0x3f7 /* annotates must track segments */);
 		if (toRemovalInfo(tracked) === undefined) {
 			const start = driver.getPosition(tracked);
