@@ -164,7 +164,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// complains if this assert isn't done this way
 		assert(
 			this.wipReferenceSequenceNumber !== undefined,
-			0x1a1 /* "summarize should not be called when not tracking the summary" */,
+			"Same as assert 0x1a1 - Summarize should not be called when tracking the summary",
 		);
 		const incrementalSummaryContext: IIncrementalSummaryContext | undefined =
 			this._latestSummary !== undefined
