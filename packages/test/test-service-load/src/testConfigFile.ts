@@ -37,7 +37,7 @@ export interface ILoadTestConfig {
 			min: number;
 			max: number;
 		};
-	}
+	};
 	opsSendType?: "allClientsConcurrentReadWrite" | "staggeredReadWrite";
 
 	/**

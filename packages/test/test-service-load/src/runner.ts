@@ -262,7 +262,7 @@ async function runnerProcess(
 					faultInjection.max,
 				);
 			}
-            const containerClose = runConfig.testConfig.containerClose;
+			const containerClose = runConfig.testConfig.containerClose;
 			if (containerClose) {
 				stashedOpP = scheduleContainerClose(
 					container,
@@ -273,7 +273,7 @@ async function runnerProcess(
 					containerClose.stashedOps?.min,
 					containerClose.stashedOps?.max,
 				);
-            }
+			}
 			const offline = runConfig.testConfig.offline;
 			if (offline) {
 				scheduleOffline(
@@ -424,10 +424,10 @@ async function scheduleContainerClose(
 						);
 						setTimeout(() => {
 							if (!container.closed) {
-								const count = random.integer(
+								const count = runConfig.random.integer(
 									stashedOpsMin,
 									stashedOpsMax,
-								)(runConfig.randEng);
+								);
 								if (count > 0) {
 									test.generateChanges(count);
 									def.resolve({

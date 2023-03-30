@@ -163,14 +163,14 @@
 			"numClients": 4,
 			"totalSendCount": 150,
 			"readWriteCycleMs": 10000,
-            "containerClose": {
+			"containerClose": {
 				"min": 5000,
 				"max": 30000,
-                "stashedOps": {
-                    "min": 0,
-                    "max": 100
-                }
-            },
+				"stashedOps": {
+					"min": 0,
+					"max": 100
+				}
+			},
 			"offline": {
 				"delayMs": {
 					"min": 0,
