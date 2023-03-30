@@ -96,11 +96,13 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 				res();
 			}
 		};
+		const containerConnectedHandler = (_clientId: string): void => {};
+
 		if (!container.deltaManager.active) {
 			await new Promise<void>((resolve) =>
 				container.on("connected", () => resolveIfActive(resolve)),
 			);
-			container.off("connected", resolveIfActive);
+			container.off("connected", containerConnectedHandler);
 		}
 	}
 
@@ -176,7 +178,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		this.mainDataStore = await requestFluidObject<TestDataObject>(this._mainContainer, "/");
 		this.containerRuntime = this.mainDataStore._context.containerRuntime as ContainerRuntime;
 		this.mainDataStore._root.set("mode", "write");
-		await this.ensureContainerConnectedWriteMode(this._mainContainer as Container);
+		await this.ensureContainerConnectedWriteMode(this._mainContainer);
 		await this.createDataStores();
 	}
 
