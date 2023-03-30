@@ -29,7 +29,7 @@ export enum VisualNodeKind {
 	FluidUnknownNode,
 	TreeNode,
 	ValueNode,
-	UnknownData,
+	UnknownObjectNode,
 }
 
 /**
@@ -118,11 +118,11 @@ export interface VisualValueNode extends ValueNodeBase {
  *
  * @public
  */
-export interface UnknownDataNode extends VisualNodeBase {
+export interface UnknownObjectNode extends VisualNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
-	nodeKind: VisualNodeKind.UnknownData;
+	nodeKind: VisualNodeKind.UnknownObjectNode;
 }
 
 /**
@@ -221,7 +221,7 @@ export type VisualNode =
 	| FluidObjectTreeNode
 	| FluidObjectValueNode
 	| FluidUnknownObjectNode
-	| UnknownDataNode;
+	| UnknownObjectNode;
 
 /**
  * A visual tree describing a Fluid object.
@@ -239,7 +239,14 @@ export type FluidObjectChildNode =
 	| VisualTreeNode
 	| VisualValueNode
 	| FluidHandleNode
-	| UnknownDataNode;
+	| UnknownObjectNode;
+
+/**
+ * A visual tree node representing a root data object provided to the debugger at initialization time.
+ *
+ * @public
+ */
+export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 /**
  * Creates a {@link FluidHandleNode} from the provided ID and label.
@@ -254,11 +261,11 @@ export function createHandleNode(id: FluidObjectId, label: string): FluidHandleN
 }
 
 /**
- * Creates a {@link UnknownDataNode} with the provided label.
+ * Creates a {@link UnknownObjectNode} with the provided label.
  */
-export function createUnknownDataNode(label: string): UnknownDataNode {
+export function createUnknownObjectNode(label: string): UnknownObjectNode {
 	return {
 		label,
-		nodeKind: VisualNodeKind.UnknownData,
+		nodeKind: VisualNodeKind.UnknownObjectNode,
 	};
 }

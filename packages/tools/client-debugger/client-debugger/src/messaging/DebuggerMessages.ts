@@ -4,7 +4,7 @@
  */
 
 import { ContainerStateMetadata } from "../ContainerMetadata";
-import { FluidHandleNode, FluidObjectId, FluidObjectNodeBase } from "../data-visualization";
+import { FluidObjectId, FluidObjectNode, RootHandleNode } from "../data-visualization";
 import { ConnectionStateChangeLogEntry } from "../Logs";
 import { IDebuggerMessage } from "./Messages";
 
@@ -164,7 +164,7 @@ export interface RootDataVisualizationsMessageData extends HasContainerId {
 	 *
 	 * @remarks Will be `undefined` iff the debugger has no data registered for visualization.
 	 */
-	visualizations: FluidHandleNode[] | undefined;
+	visualizations: RootHandleNode[] | undefined;
 }
 
 /**
@@ -179,7 +179,7 @@ export interface DataVisualizationMessageData extends HasContainerId, HasFluidOb
 	 * Will be undefined only if the debugger has no data associated with the provided
 	 * {@link HasFluidObjectId.fluidObjectId | ID}.
 	 */
-	visualization: FluidObjectNodeBase | undefined;
+	visualization: FluidObjectNode | undefined;
 }
 
 /**

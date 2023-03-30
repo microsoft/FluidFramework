@@ -31,10 +31,12 @@ export {
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
 	Primitive,
+	RootHandleNode,
 	VisualValueNode,
 	ValueNodeBase,
 	VisualNodeBase,
 	VisualNode,
 	VisualNodeKind,
 	VisualTreeNode,
+	UnknownObjectNode,
 } from "./VisualTree";

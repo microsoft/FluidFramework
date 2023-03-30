@@ -126,7 +126,7 @@ export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualiza
 
 // @public
 export interface DataVisualizationMessageData extends HasContainerId, HasFluidObjectId {
-    visualization: FluidObjectNodeBase | undefined;
+    visualization: FluidObjectNode | undefined;
 }
 
 // @public
@@ -178,7 +178,7 @@ export interface FluidHandleNode extends VisualNodeBase {
 }
 
 // @public
-export type FluidObjectChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode;
+export type FluidObjectChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode | UnknownObjectNode;
 
 // @public
 export type FluidObjectId = string;
@@ -368,8 +368,11 @@ export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootData
 
 // @public
 export interface RootDataVisualizationsMessageData extends HasContainerId {
-    visualizations: FluidHandleNode[] | undefined;
+    visualizations: RootHandleNode[] | undefined;
 }
+
+// @public
+export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 // @public
 export interface StateChangeLogEntry<TState> extends LogEntry {
@@ -392,12 +395,17 @@ export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEvent
 }
 
 // @public
+export interface UnknownObjectNode extends VisualNodeBase {
+    nodeKind: VisualNodeKind.UnknownObjectNode;
+}
+
+// @public
 export interface ValueNodeBase extends VisualNodeBase {
     value: Primitive;
 }
 
 // @public
-export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
+export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode | UnknownObjectNode;
 
 // @public
 export interface VisualNodeBase {
@@ -419,6 +427,8 @@ export enum VisualNodeKind {
     FluidValueNode = 1,
     // (undocumented)
     TreeNode = 4,
+    // (undocumented)
+    UnknownObjectNode = 6,
     // (undocumented)
     ValueNode = 5
 }

@@ -56,12 +56,14 @@ export {
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
 	Primitive,
+	RootHandleNode,
 	VisualValueNode,
 	ValueNodeBase,
 	VisualNode,
 	VisualNodeBase,
 	VisualNodeKind,
 	VisualTreeNode,
+	UnknownObjectNode,
 } from "./data-visualization";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";

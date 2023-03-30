@@ -11,7 +11,6 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
-	FluidHandleNode,
 	FluidObjectId,
 	FluidObjectNode,
 	VisualNodeKind,
@@ -19,7 +18,8 @@ import {
 	VisualTreeNode,
 	FluidObjectChildNode,
 	Primitive,
-	createUnknownDataNode,
+	createUnknownObjectNode,
+	RootHandleNode,
 } from "./VisualTree";
 
 // Ideas:
@@ -186,7 +186,7 @@ export class DataVisualizerGraph
 	 * Generates and returns visual descriptions ({@link FluidHandleNode}s) for each of the specified
 	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
-	public async renderRootHandles(): Promise<(FluidHandleNode | undefined)[]> {
+	public async renderRootHandles(): Promise<RootHandleNode[]> {
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
 		const rootDataEntries = Object.entries(this.rootData);
@@ -194,7 +194,7 @@ export class DataVisualizerGraph
 			rootDataEntries.map(async ([key, value]) => {
 				const fluidObjectId = await this.registerVisualizerForHandle(value.handle, key);
 				return fluidObjectId === undefined
-					? undefined
+					? createUnknownObjectNode(key)
 					: createHandleNode(fluidObjectId, key);
 			}),
 		);
@@ -417,7 +417,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 			// If no ID was found, then the data is not a SharedObject.
 			// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
 			return fluidObjectId === undefined
-				? createUnknownDataNode(label)
+				? createUnknownObjectNode(label)
 				: createHandleNode(fluidObjectId, label);
 		} else {
 			// Assume any other data must be a record of some kind (since DDS contents must be serializable)

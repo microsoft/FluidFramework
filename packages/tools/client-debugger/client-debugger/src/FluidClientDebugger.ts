@@ -7,16 +7,16 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
+
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
 	defaultVisualizers,
 	DataVisualizerGraph,
-	FluidHandleNode,
 	FluidObjectId,
 	FluidObjectNodeBase,
+	RootHandleNode,
 } from "./data-visualization";
-
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
@@ -345,7 +345,7 @@ export class FluidClientDebugger
 	};
 
 	private readonly postRootDataVisualizations = (
-		visualizations: FluidHandleNode[] | undefined,
+		visualizations: RootHandleNode[] | undefined,
 	): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
 			type: "ROOT_DATA_VISUALIZATION",
@@ -490,7 +490,7 @@ export class FluidClientDebugger
 		};
 	}
 
-	private async getRootDataVisualizations(): Promise<FluidHandleNode[] | undefined> {
+	private async getRootDataVisualizations(): Promise<RootHandleNode[] | undefined> {
 		return this.dataVisualizer?.renderRootHandles() ?? undefined;
 	}
 
