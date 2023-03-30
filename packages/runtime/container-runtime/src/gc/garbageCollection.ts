@@ -215,22 +215,21 @@ export class GarbageCollector implements IGarbageCollector {
 						readAndParseBlob,
 					);
 
-					if (
-						this.configs.gcVersionInBaseSnapshot ===
-						this.summaryStateTracker.currentGCVersion
-					) {
-						return snapshotData;
-					}
-
 					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
 					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
 					// brought back. The deletedNodes info is needed to identify when these nodes are used.
-					return {
-						gcState: undefined,
-						tombstones: undefined,
-						deletedNodes: snapshotData.deletedNodes,
-					};
+					if (
+						this.configs.gcVersionInBaseSnapshot !==
+						this.summaryStateTracker.currentGCVersion
+					) {
+						return {
+							gcState: undefined,
+							tombstones: undefined,
+							deletedNodes: snapshotData.deletedNodes,
+						};
+					}
+					return snapshotData;
 				} catch (error) {
 					const dpe = DataProcessingError.wrapIfUnrecognized(
 						error,
