@@ -7,8 +7,8 @@ import { IDisposable, IEvent } from "@fluidframework/common-definitions";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
-import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 
+import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
 	FluidHandleNode,
@@ -19,6 +19,7 @@ import {
 	VisualTreeNode,
 	FluidObjectChildNode,
 	Primitive,
+	createUnknownDataNode,
 } from "./VisualTree";
 
 // Ideas:
@@ -185,14 +186,16 @@ export class DataVisualizerGraph
 	 * Generates and returns visual descriptions ({@link FluidHandleNode}s) for each of the specified
 	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
-	public async renderRootHandles(): Promise<FluidHandleNode[]> {
+	public async renderRootHandles(): Promise<(FluidHandleNode | undefined)[]> {
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
 		const rootDataEntries = Object.entries(this.rootData);
 		return Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
 				const fluidObjectId = await this.registerVisualizerForHandle(value.handle, key);
-				return createHandleNode(fluidObjectId, key);
+				return fluidObjectId === undefined
+					? undefined
+					: createHandleNode(fluidObjectId, key);
 			}),
 		);
 	}
@@ -242,13 +245,17 @@ export class DataVisualizerGraph
 	 * Adds a visualizer node to the collection for the specified {@link @fluidframework/core-interfaces#IFluidHandle}
 	 * if one does not already exist.
 	 *
-	 * @throws This method will throw if the provided `handle` does not resolve to an
-	 * {@link @fluidframework/shared-object-base#ISharedObject}.
+	 * @returns
+	 *
+	 * The ID of object associated with the provided handle, if the handle resolves to a {@link ISharedObject}.
+	 * If the handle resolves to something else, this sytem has no way to reason about it sufficiently to generate
+	 * visual descriptors from it.
+	 * In this case, we return `undefined`.
 	 */
 	private async registerVisualizerForHandle(
 		handle: IFluidHandle,
 		label: string,
-	): Promise<FluidObjectId> {
+	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
 		// TODO: is this the right type check for this?
@@ -257,7 +264,8 @@ export class DataVisualizerGraph
 			return this.registerVisualizerForSharedObject(sharedObject, label);
 		} else {
 			// Unknown data.
-			throw new Error(`Encountered unrecognized kind of Fluid data under "${label}".`);
+			console.warn("Fluid Handle resolved to data that is not a Shared Object.");
+			return undefined;
 		}
 	}
 
@@ -319,7 +327,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	private readonly registerHandle: (
 		handle: IFluidHandle,
 		label: string,
-	) => Promise<FluidObjectId>;
+	) => Promise<FluidObjectId | undefined>;
 
 	/**
 	 * Handler for {@link VisualizerNode.sharedObject}'s "op" event.
@@ -340,7 +348,7 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		sharedObject: ISharedObject,
 		label: string,
 		visualizeSharedObject: VisualizeSharedObject,
-		registerHandle: (handle: IFluidHandle, label: string) => Promise<FluidObjectId>,
+		registerHandle: (handle: IFluidHandle, label: string) => Promise<FluidObjectId | undefined>,
 	) {
 		super();
 
@@ -405,7 +413,12 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 			// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 			const handle = data as IFluidHandle;
 			const fluidObjectId = await this.registerHandle(handle, label);
-			return createHandleNode(fluidObjectId, label);
+
+			// If no ID was found, then the data is not a SharedObject.
+			// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
+			return fluidObjectId === undefined
+				? createUnknownDataNode(label)
+				: createHandleNode(fluidObjectId, label);
 		} else {
 			// Assume any other data must be a record of some kind (since DDS contents must be serializable)
 			// and simply recurse over its keys.

@@ -29,6 +29,7 @@ export enum VisualNodeKind {
 	FluidUnknownNode,
 	TreeNode,
 	ValueNode,
+	UnknownData,
 }
 
 /**
@@ -107,6 +108,21 @@ export interface VisualValueNode extends ValueNodeBase {
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
 	nodeKind: VisualNodeKind.ValueNode;
+}
+
+/**
+ * Terminal node indicating that the data associated with the {@link VisualNodeBase.label} is not in a form
+ * the debugger recognizes.
+ *
+ * @remarks I.e. it is not a {@link @fluidframework/shared-object-base#ISharedObject}.
+ *
+ * @public
+ */
+export interface UnknownDataNode extends VisualNodeBase {
+	/**
+	 * {@inheritDoc VisualNodeBase.nodeKind}
+	 */
+	nodeKind: VisualNodeKind.UnknownData;
 }
 
 /**
@@ -204,7 +220,8 @@ export type VisualNode =
 	| FluidHandleNode
 	| FluidObjectTreeNode
 	| FluidObjectValueNode
-	| FluidUnknownObjectNode;
+	| FluidUnknownObjectNode
+	| UnknownDataNode;
 
 /**
  * A visual tree describing a Fluid object.
@@ -218,7 +235,11 @@ export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | Fluid
  *
  * @public
  */
-export type FluidObjectChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode;
+export type FluidObjectChildNode =
+	| VisualTreeNode
+	| VisualValueNode
+	| FluidHandleNode
+	| UnknownDataNode;
 
 /**
  * Creates a {@link FluidHandleNode} from the provided ID and label.
@@ -229,5 +250,15 @@ export function createHandleNode(id: FluidObjectId, label: string): FluidHandleN
 		fluidObjectId: id,
 		typeMetadata: "Fluid Handle",
 		nodeKind: VisualNodeKind.FluidHandleNode,
+	};
+}
+
+/**
+ * Creates a {@link UnknownDataNode} with the provided label.
+ */
+export function createUnknownDataNode(label: string): UnknownDataNode {
+	return {
+		label,
+		nodeKind: VisualNodeKind.UnknownData,
 	};
 }
