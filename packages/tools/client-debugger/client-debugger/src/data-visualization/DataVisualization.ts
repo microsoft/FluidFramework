@@ -202,16 +202,10 @@ export class DataVisualizerGraph
 	 * If no such object exists in the graph, returns `undefined`.
 	 */
 	public async render(fluidObjectId: FluidObjectId): Promise<FluidObjectNode | undefined> {
-		if (!this.visualizerNodes.has(fluidObjectId)) {
-			// We don't have anything registered for the requested Fluid object.
-			// This could indicate a stale data request from an external consumer, or could indicate a bug.
-			return undefined;
-		}
-
-		// Checked above.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const visualizerNode = this.visualizerNodes.get(fluidObjectId)!;
-		return visualizerNode.render();
+		// If we don't have anything registered for the requested Fluid object, return `undefined`.
+		// This could indicate a stale data request from an external consumer, or could indicate a bug,
+		// but this library isn't capable of telling the difference.
+		return this.visualizerNodes.get(fluidObjectId)?.render() ?? undefined;
 	}
 
 	/**
