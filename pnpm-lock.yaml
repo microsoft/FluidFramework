@@ -14337,9 +14337,6 @@ importers:
       '@fluidframework/map':
         specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
         version: link:../../../dds/map
-      '@fluidframework/matrix':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../dds/matrix
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.1.0
@@ -14349,9 +14346,6 @@ importers:
       '@fluidframework/shared-object-base':
         specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
         version: link:../../../dds/shared-object-base
-      '@fluidframework/task-manager':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../dds/task-manager
       '@fluidframework/telemetry-utils':
         specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
         version: link:../../../utils/telemetry-utils
@@ -17820,13 +17814,13 @@ packages:
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
-      '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/driver-utils': 2.0.0-internal.2.4.0
+      '@fluidframework/container-definitions': 2.0.0-internal.2.4.3
+      '@fluidframework/container-runtime-definitions': 2.0.0-internal.2.4.3
+      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.3
+      '@fluidframework/datastore-definitions': 2.0.0-internal.2.4.3
+      '@fluidframework/driver-utils': 2.0.0-internal.2.4.3
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
+      '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.3
       '@fluidframework/shared-object-base': 2.0.0-internal.2.4.3
     transitivePeerDependencies:
       - debug
@@ -18163,16 +18157,6 @@ packages:
       lodash: 4.17.21
       sha.js: 2.4.11
 
-  /@fluidframework/container-definitions@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-ha4VYvAgozdUxjzGXJEdWNhQkxS8LmCwKKaBgiJsZW9XB87c7NU2IXd/Rx1E3BzfakhVDYYUKO/pfoILks/+aA==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      events: 3.3.0
-    dev: true
-
   /@fluidframework/container-definitions@2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-LajwUIrZZ/L46HmExSMk753Y/km4NFa9PCVCyVAp9Sh6vhQww+TBEVPvzJFry/Ji6cdYXgVVSlqcGG3YRkQDYQ==}
     dependencies:
@@ -18247,17 +18231,6 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
-    dev: true
-
-  /@fluidframework/container-runtime-definitions@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-Rc2W7SL/a7fbQ0MzPsX7rTfZu32TEVvaiCDs5C7JYAyK212JlyE74W3ELeZyWqoB92rtdu4Oqry5/fiamEQbFw==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
     dev: true
 
   /@fluidframework/container-runtime-definitions@2.0.0-internal.2.4.3:
@@ -18407,10 +18380,6 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/core-interfaces@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-Fnox1Hgk7PbhVCH1lCQe3Cr/204r4vaQBSOYLMfO/ai3xvfy9oirEfFcBYdt3+5gs2f+fY85ip2zvmE0wTXwyw==}
-    dev: true
-
   /@fluidframework/core-interfaces@2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-wNH5TrE69s8nmP9XCacHAdUDuBlLbWk1FJhtrM+n4fXRBMa+UzJ3JS97ZsMJQcqBrEVtsA1ioov4iaoOFyGQuA==}
     dev: true
@@ -18455,17 +18424,6 @@ packages:
     transitivePeerDependencies:
       - debug
       - supports-color
-    dev: true
-
-  /@fluidframework/datastore-definitions@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-aHm94gMa35ITiLb82JGewW8PpsFsilwKGy2wudP3vYiTMs6rJiJjASX6bySQO7hSARc2hdmsvYVIvaESErHBaQ==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/runtime-definitions': 2.0.0-internal.2.4.0
     dev: true
 
   /@fluidframework/datastore-definitions@2.0.0-internal.2.4.3:
@@ -18612,14 +18570,6 @@ packages:
       - supports-color
     dev: true
 
-  /@fluidframework/driver-definitions@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-mcxzMqDqKCK3BIq8BIjLRze2EgBvdrz51B23k+zuu1VskpzzFF6W6+VKhBcP5/MCcWhVZ62jOQg4+jf2ZJRe0w==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.3
-      '@fluidframework/protocol-definitions': 1.1.0
-    dev: true
-
   /@fluidframework/driver-definitions@2.0.0-internal.2.4.3:
     resolution: {integrity: sha512-6t2DvzDS0x6rtUl+A5BFQVC/5ptlAu0w99yN0X59fN8jGv9KZpFvBdC6A02kATfqkpCVvIxCw9BS8FGRRRuYcQ==}
     dependencies:
@@ -18641,25 +18591,6 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/core-interfaces': 2.0.0-internal.4.0.0
       '@fluidframework/protocol-definitions': 1.1.0
-    dev: true
-
-  /@fluidframework/driver-utils@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-rl0/4fsbmvVsjpbzJTu/XCCfM/xysNs9xQQ+TfK9Rcdh6xZABL1Dgzc/iz7So/aRI8OjjDI9fi/Xglmkq7md5g==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/gitresources': 0.1038.4000
-      '@fluidframework/protocol-base': 0.1038.4000
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/telemetry-utils': 2.0.0-internal.2.4.0
-      axios: 0.26.1(debug@4.3.4)
-      url: 0.11.0
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-      - supports-color
     dev: true
 
   /@fluidframework/driver-utils@2.0.0-internal.2.4.3:
@@ -19214,17 +19145,6 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       nconf: 0.12.0
       url: 0.11.0
-    dev: true
-
-  /@fluidframework/runtime-definitions@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-RP22j5+lEP+1s7IAyl8qq5HCti8BdzQafPgoV75nN85dizB1fkuFC0/CSarxNZ/JeaxHd7Eaj2gQtPIc4JxVDg==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/container-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/core-interfaces': 2.0.0-internal.2.4.0
-      '@fluidframework/driver-definitions': 2.0.0-internal.2.4.0
-      '@fluidframework/protocol-definitions': 1.1.0
     dev: true
 
   /@fluidframework/runtime-definitions@2.0.0-internal.2.4.3:
@@ -19812,18 +19732,6 @@ packages:
       events: 3.3.0
     transitivePeerDependencies:
       - debug
-      - supports-color
-    dev: true
-
-  /@fluidframework/telemetry-utils@2.0.0-internal.2.4.0:
-    resolution: {integrity: sha512-lCODM/TUikeCDm0hY9KM/HIQnCLpthQGwxMZIQ2V8LE7HWn7BTd7vq2xetulzCrbEqcRqcT0hyza7gla/Y+A6A==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 1.1.1
-      debug: 4.3.4(supports-color@8.1.1)
-      events: 3.3.0
-      uuid: 8.3.2
-    transitivePeerDependencies:
       - supports-color
     dev: true
 
