@@ -239,7 +239,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 		this.changeEvents.emit("newLocalChange", change);
 		this.changeEvents.emit("newLocalState", delta);
-    return commit;
+		return commit;
 	}
 
 	protected processCore(
