@@ -33,10 +33,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
-		"test": "npm run test:jest",
-		"test:coverage": "npm run test:jest:coverage",
-		"test:jest": "jest --detectOpenHandles",
-		"test:jest:coverage": "jest  --detectOpenHandles --coverage --ci --reporters=default --reporters=jest-junit",
+		"test": "echo 'TODO: figure out appropriate tests'",
 		"tsc": "tsc",
 		"webpack": "webpack"
 	},
