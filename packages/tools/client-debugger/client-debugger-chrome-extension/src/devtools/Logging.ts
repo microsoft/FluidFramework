@@ -8,7 +8,7 @@ import { MessageLoggingOptions } from "@fluid-tools/client-debugger";
 /**
  * Devtools Script context label for console logging.
  */
-export const devtoolsScriptLoggingContext = "DEVTOOLS";
+const devtoolsScriptLoggingContext = "DEVTOOLS";
 
 /**
  * Content Script configuration for console logging.
