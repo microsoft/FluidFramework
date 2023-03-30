@@ -16,6 +16,7 @@ import {
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	ITimestampedTelemetryEvent,
 	TelemetryHistoryMessage,
 	TelemetryEventMessage,
 } from "./messaging";
@@ -43,7 +44,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	/**
 	 * Accumulated data for Telemetry logs.
 	 */
-	private readonly _telemetryLog: ITelemetryBaseEvent[];
+	private readonly _telemetryLog: ITimestampedTelemetryEvent[];
 
 	/**
 	 * Message logging options used by the debugger.
@@ -149,7 +150,10 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	public send(event: ITelemetryBaseEvent): void {
 		// TODO: ability to disable the logger so this becomes a no-op
 
-		const newEvent: ITelemetryBaseEvent = this.prepareEvent(event);
+		const newEvent: ITimestampedTelemetryEvent = {
+			logContent: this.prepareEvent(event),
+			timestamp: Date.now(),
+		};
 		const newMessage: TelemetryEventMessage = {
 			type: "TELEMETRY_EVENT",
 			data: {

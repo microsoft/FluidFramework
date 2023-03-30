@@ -52,6 +52,7 @@ import {
 	proxyTargetSymbol,
 	replaceField,
 	typeSymbol,
+	contextSymbol,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -347,6 +348,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.replaceField.bind(target);
 			case parentField:
 				return target.parentField;
+			case contextSymbol:
+				return target.context;
 			case on:
 				return target.on.bind(target);
 			default:
@@ -426,6 +429,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case replaceField:
 			case parentField:
 			case on:
+			case contextSymbol:
 				return true;
 			case valueSymbol:
 				// Could do `target.value !== ValueSchema.Nothing`
@@ -514,6 +518,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					configurable: true,
 					enumerable: false,
 					value: target.parentField,
+					writable: false,
+				};
+			case contextSymbol:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.context,
 					writable: false,
 				};
 			case on:
