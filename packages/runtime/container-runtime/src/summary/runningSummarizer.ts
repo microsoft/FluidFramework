@@ -246,6 +246,10 @@ export class RunningSummarizer implements IDisposable {
 			this.runtime.deltaManager.on("op", (op) => {
 				this.handleOp(op);
 			});
+		} else {
+			this.runtime.on?.("op", (op, runtimeMessage) => {
+				this.handleOp(op, runtimeMessage);
+			});
 		}
 	}
 
@@ -356,6 +360,9 @@ export class RunningSummarizer implements IDisposable {
 		this.runtime.deltaManager.off("op", (op) => {
 			this.handleOp(op);
 		});
+		this.runtime.off?.("op", (op, runtimeMessage) => {
+			this.handleOp(op, runtimeMessage);
+		});
 		this.summaryWatcher.dispose();
 		this.heuristicRunner?.dispose();
 		this.heuristicRunner = undefined;
@@ -380,10 +387,10 @@ export class RunningSummarizer implements IDisposable {
 	/** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
 	private heuristicRunnerMicroTaskExists = false;
 
-	public handleOp(op: ISequencedDocumentMessage) {
+	public handleOp(op: ISequencedDocumentMessage, runtimeMessage?: boolean) {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
-		if (isRuntimeMessage(op)) {
+		if (runtimeMessage || isRuntimeMessage(op)) {
 			this.heuristicData.numRuntimeOps++;
 		} else {
 			this.heuristicData.numNonRuntimeOps++;
@@ -394,7 +401,7 @@ export class RunningSummarizer implements IDisposable {
 		// Check for enqueued on-demand summaries; Intentionally do nothing otherwise
 		if (
 			this.initialized &&
-			this.opCanTriggerSummary(op) &&
+			this.opCanTriggerSummary(op, runtimeMessage || isRuntimeMessage(op)) &&
 			!this.tryRunEnqueuedSummary() &&
 			!this.heuristicRunnerMicroTaskExists
 		) {
@@ -415,14 +422,14 @@ export class RunningSummarizer implements IDisposable {
 	 * @param op - op to check
 	 * @returns true if this op can trigger a summary
 	 */
-	private opCanTriggerSummary(op: ISequencedDocumentMessage): boolean {
+	private opCanTriggerSummary(op: ISequencedDocumentMessage, runtimeMessage: boolean): boolean {
 		switch (op.type) {
 			case MessageType.Summarize:
 			case MessageType.SummaryAck:
 			case MessageType.SummaryNack:
 				return false;
 			default:
-				return isRuntimeMessage(op) || this.nonRuntimeOpCanTriggerSummary();
+				return runtimeMessage || this.nonRuntimeOpCanTriggerSummary();
 		}
 	}
 

@@ -1834,12 +1834,6 @@ export class ContainerRuntime
 	public process(messageArg: ISequencedDocumentMessage, local: boolean) {
 		this.verifyNotClosed();
 
-		const updateSummaryHeuristics = (message: ISequencedDocumentMessage) => {
-			if (this._summarizer !== undefined && this.groupedBatchingEnabled) {
-				this._summarizer.processOp?.(message);
-			}
-		};
-
 		// Whether or not the message is actually a runtime message.
 		// It may be a legacy runtime message (ie already unpacked and ContainerMessageType)
 		// or something different, like a system message.
@@ -1847,10 +1841,7 @@ export class ContainerRuntime
 
 		// Do shallow copy of message, as the processing flow will modify it.
 		const messageCopy = { ...messageArg };
-		for (const message of this.remoteMessageProcessor.process(
-			messageCopy,
-			updateSummaryHeuristics,
-		)) {
+		for (const message of this.remoteMessageProcessor.process(messageCopy)) {
 			this.processCore(message, local, runtimeMessage);
 		}
 	}
@@ -1914,10 +1905,7 @@ export class ContainerRuntime
 					}
 			}
 
-			// For back-compat, notify only about runtime messages for now.
-			if (runtimeMessage) {
-				this.emit("op", message, runtimeMessage);
-			}
+			this.emit("op", message, runtimeMessage);
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 

@@ -494,6 +494,10 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
     disposeFn?(): void;
     // (undocumented)
     readonly logger: ITelemetryLogger;
+    // (undocumented)
+    off?(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
+    // (undocumented)
+    on?(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): this;
     readonly summarizerClientId: string | undefined;
 }
 
@@ -650,8 +654,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
     readonly enqueueSummarize: ISummarizer["enqueueSummarize"];
     // (undocumented)
     get ISummarizer(): this;
-    // (undocumented)
-    processOp?(message: ISequencedDocumentMessage): void;
     // (undocumented)
     run(onBehalfOf: string): Promise<SummarizerStopReason>;
     stop(reason: SummarizerStopReason): void;

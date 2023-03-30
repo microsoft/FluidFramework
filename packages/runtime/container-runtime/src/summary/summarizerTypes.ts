@@ -78,6 +78,14 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	disposeFn?(): void;
 	closeFn(): void;
+	on?(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
+	off?(
+		event: "op",
+		listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void,
+	): this;
 }
 
 /** Options affecting summarize behavior. */
