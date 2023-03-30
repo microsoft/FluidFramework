@@ -127,6 +127,11 @@ export interface Insert<TNodeChange = NodeChangeType>
 		HasChanges<TNodeChange> {
 	type: "Insert";
 	content: ProtoNode[];
+
+	/**
+	 * The first ID in a block associated with the nodes being inserted.
+	 * The node `content[i]` is associated with `id + i`.
+	 */
 	id: ChangesetLocalId;
 }
 
