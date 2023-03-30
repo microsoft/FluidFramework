@@ -118,17 +118,17 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		// Rest API Throttler
 		const restApiTenantGeneralThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling.restCallsPerTenant.generalRestCall") ?? {};
+			config.get("throttling:restCallsPerTenant:generalRestCall") ?? {};
 		const restTenantGeneralThrottler = configureThrottler(restApiTenantGeneralThrottleConfig);
 
 		const restApiTenantGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling.restCallsPerTenant.getSummary") ?? {};
+			config.get("throttling:restCallsPerTenant:getSummary") ?? {};
 		const restTenantGetSummaryThrottler = configureThrottler(
 			restApiTenantGetSummaryThrottleConfig,
 		);
 
 		const restApiTenantCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling.restCallsPerTenant.createSummary") ?? {};
+			config.get("throttling:restCallsPerTenant:createSummary") ?? {};
 		const restTenantCreateSummaryThrottler = configureThrottler(
 			restApiTenantCreateSummaryThrottleConfig,
 		);
@@ -148,13 +148,13 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		);
 
 		const restApiClusterCreateSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling.restCallsPerCluster.createSummary") ?? {};
+			config.get("throttling:restCallsPerCluster:createSummary") ?? {};
 		const throttlerCreateSummaryPerCluster = configureThrottler(
 			restApiClusterCreateSummaryThrottleConfig,
 		);
 
 		const restApiClusterGetSummaryThrottleConfig: Partial<IThrottleConfig> =
-			config.get("throttling.restCallsPerCluster.getSummary") ?? {};
+			config.get("throttling:restCallsPerCluster:getSummary") ?? {};
 		const throttlerGetSummaryPerCluster = configureThrottler(
 			restApiClusterGetSummaryThrottleConfig,
 		);
