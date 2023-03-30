@@ -16,10 +16,10 @@ import {
 	VisualNodeKind,
 	VisualValueNode,
 	VisualTreeNode,
-	FluidObjectChildNode,
+	VisualChildNode,
 	Primitive,
-	createUnknownObjectNode,
 	RootHandleNode,
+	unknownObjectNode,
 } from "./VisualTree";
 
 // Ideas:
@@ -45,15 +45,12 @@ export type SharedObjectType = string;
  * current state.
  *
  * @param sharedObject - The object whose data will be rendered.
- * @param label - Some label to associate with the root of the visual tree.
- * This will usually be some corresponding property name or key.
  * @param visualizeChildData - Callback to render child content of the shared object.
  *
  * @returns A visual tree representation of the provided `sharedObject`.
  */
 export type VisualizeSharedObject = (
 	sharedObject: ISharedObject,
-	label: string,
 	visualizeChildData: VisualizeChildData,
 ) => Promise<FluidObjectNode>;
 
@@ -69,12 +66,9 @@ export type VisualizeSharedObject = (
  *
  * - A handle to another Fluid object
  *
- * @param label - The corresponding label (e.g. property name) to associate with the visual tree
- * generated for `data`.
- *
  * @returns A visual tree representation of the input `data`.
  */
-export type VisualizeChildData = (data: unknown, label: string) => Promise<FluidObjectChildNode>;
+export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -178,18 +172,22 @@ export class DataVisualizerGraph
 	 * Generates and returns visual descriptions ({@link FluidHandleNode}s) for each of the specified
 	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
-	public async renderRootHandles(): Promise<RootHandleNode[]> {
+	public async renderRootHandles(): Promise<Record<string, RootHandleNode>> {
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
 		const rootDataEntries = Object.entries(this.rootData);
-		return Promise.all(
+
+		const result: Record<string, RootHandleNode> = {};
+		await Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
-				const fluidObjectId = await this.registerVisualizerForHandle(value.handle, key);
-				return fluidObjectId === undefined
-					? createUnknownObjectNode(key)
-					: createHandleNode(fluidObjectId, key);
+				const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
+				result[key] =
+					fluidObjectId === undefined
+						? unknownObjectNode
+						: createHandleNode(fluidObjectId);
 			}),
 		);
+		return result;
 	}
 
 	/**
@@ -207,10 +205,7 @@ export class DataVisualizerGraph
 	 * Adds a visualizer node to the collection for the specified
 	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
 	 */
-	private registerVisualizerForSharedObject(
-		sharedObject: ISharedObject,
-		label: string,
-	): FluidObjectId {
+	private registerVisualizerForSharedObject(sharedObject: ISharedObject): FluidObjectId {
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction =
@@ -219,9 +214,8 @@ export class DataVisualizerGraph
 					: visualizeUnknownSharedObject;
 			const visualizerNode = new VisualizerNode(
 				sharedObject,
-				label,
 				visualizationFunction,
-				async (_handle, _label) => this.registerVisualizerForHandle(_handle, _label),
+				async (handle) => this.registerVisualizerForHandle(handle),
 			);
 
 			// Register event handler so we can bubble up update events
@@ -246,14 +240,13 @@ export class DataVisualizerGraph
 	 */
 	private async registerVisualizerForHandle(
 		handle: IFluidHandle,
-		label: string,
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
 		// TODO: is this the right type check for this?
 		const sharedObject = resolvedObject as ISharedObject;
 		if (sharedObject?.id !== undefined) {
-			return this.registerVisualizerForSharedObject(sharedObject, label);
+			return this.registerVisualizerForSharedObject(sharedObject);
 		} else {
 			// Unknown data.
 			console.warn("Fluid Handle resolved to data that is not a Shared Object.");
@@ -311,13 +304,6 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		public readonly sharedObject: ISharedObject,
 
 		/**
-		 * Label corresponding to the shared object.
-		 *
-		 * @remarks Generally, this will be the associated property name, map key, etc.
-		 */
-		public readonly label: string,
-
-		/**
 		 * Callback for visualizing {@link VisualizerNode.sharedObject}.
 		 * Encapsulates the policies for rendering different kinds of DDSs.
 		 */
@@ -334,7 +320,6 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		 */
 		private readonly registerHandle: (
 			handle: IFluidHandle,
-			label: string,
 		) => Promise<FluidObjectId | undefined>,
 	) {
 		super();
@@ -373,19 +358,18 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	 * @returns A visual tree representation of {@link VisualizerNode.sharedObject}.
 	 */
 	public async render(): Promise<FluidObjectNode> {
-		return this.visualizeSharedObject(this.sharedObject, this.label, async (_data, _label) =>
-			this.renderChildData(_data, _label),
+		return this.visualizeSharedObject(this.sharedObject, async (data) =>
+			this.renderChildData(data),
 		);
 	}
 
 	/**
 	 * {@inheritDoc VisualizeChildData}
 	 */
-	private async renderChildData(data: unknown, label: string): Promise<FluidObjectChildNode> {
+	private async renderChildData(data: unknown): Promise<VisualChildNode> {
 		if (typeof data !== "object" && typeof data !== "function") {
 			// Render primitives and falsy types via their string representation
 			const result: VisualValueNode = {
-				label,
 				value: data as Primitive,
 				typeMetadata: typeof data,
 				nodeKind: VisualNodeKind.ValueNode,
@@ -394,26 +378,28 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		} else if ((data as IProvideFluidHandle)?.IFluidHandle !== undefined) {
 			// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 			const handle = data as IFluidHandle;
-			const fluidObjectId = await this.registerHandle(handle, label);
+			const fluidObjectId = await this.registerHandle(handle);
 
 			// If no ID was found, then the data is not a SharedObject.
 			// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
 			return fluidObjectId === undefined
-				? createUnknownObjectNode(label)
-				: createHandleNode(fluidObjectId, label);
+				? unknownObjectNode
+				: createHandleNode(fluidObjectId);
 		} else {
 			// Assume any other data must be a record of some kind (since DDS contents must be serializable)
 			// and simply recurse over its keys.
 			const childEntries = Object.entries(data as Record<string | number | symbol, unknown>);
 
-			const renderedChildren = await Promise.all(
-				// eslint-disable-next-line @typescript-eslint/promise-function-async
-				childEntries.map(([key, value]) => this.renderChildData(value, key)),
+			const children: Record<string, VisualChildNode> = {};
+			await Promise.all(
+				childEntries.map(async ([key, value]) => {
+					const childNode = await this.renderChildData(value);
+					children[key] = childNode;
+				}),
 			);
 
 			const result: VisualTreeNode = {
-				label,
-				children: renderedChildren,
+				children,
 				nodeKind: VisualNodeKind.TreeNode,
 				typeMetadata: "object",
 			};

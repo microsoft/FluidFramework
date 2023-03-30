@@ -164,7 +164,7 @@ export interface RootDataVisualizationsMessageData extends HasContainerId {
 	 *
 	 * @remarks Will be `undefined` iff the debugger has no data registered for visualization.
 	 */
-	visualizations: RootHandleNode[] | undefined;
+	visualizations: Record<string, RootHandleNode> | undefined;
 }
 
 /**

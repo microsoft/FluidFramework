@@ -23,7 +23,6 @@ export {
 export {
 	createHandleNode,
 	FluidHandleNode,
-	FluidObjectChildNode,
 	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -32,11 +31,13 @@ export {
 	FluidUnknownObjectNode,
 	Primitive,
 	RootHandleNode,
-	VisualValueNode,
+	TreeNodeBase,
+	VisualChildNode,
 	ValueNodeBase,
 	VisualNodeBase,
 	VisualNode,
 	VisualNodeKind,
 	VisualTreeNode,
+	VisualValueNode,
 	UnknownObjectNode,
 } from "./VisualTree";

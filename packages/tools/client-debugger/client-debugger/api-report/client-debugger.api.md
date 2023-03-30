@@ -178,9 +178,6 @@ export interface FluidHandleNode extends VisualNodeBase {
 }
 
 // @public
-export type FluidObjectChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode | UnknownObjectNode;
-
-// @public
 export type FluidObjectId = string;
 
 // @public
@@ -192,8 +189,7 @@ export interface FluidObjectNodeBase extends VisualNodeBase {
 }
 
 // @public
-export interface FluidObjectTreeNode extends FluidObjectNodeBase {
-    children: FluidObjectChildNode[];
+export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
     nodeKind: VisualNodeKind.FluidTreeNode;
 }
 
@@ -368,7 +364,7 @@ export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootData
 
 // @public
 export interface RootDataVisualizationsMessageData extends HasContainerId {
-    visualizations: RootHandleNode[] | undefined;
+    visualizations: Record<string, RootHandleNode> | undefined;
 }
 
 // @public
@@ -395,6 +391,11 @@ export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEvent
 }
 
 // @public
+export interface TreeNodeBase extends VisualNodeBase {
+    children: Record<string, VisualChildNode>;
+}
+
+// @public
 export interface UnknownObjectNode extends VisualNodeBase {
     nodeKind: VisualNodeKind.UnknownObjectNode;
 }
@@ -405,11 +406,13 @@ export interface ValueNodeBase extends VisualNodeBase {
 }
 
 // @public
+export type VisualChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode | UnknownObjectNode;
+
+// @public
 export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode | UnknownObjectNode;
 
 // @public
 export interface VisualNodeBase {
-    label: string;
     metadata?: Record<string, Primitive>;
     nodeKind: VisualNodeKind | string;
     typeMetadata?: string;
@@ -434,8 +437,7 @@ export enum VisualNodeKind {
 }
 
 // @public
-export interface VisualTreeNode extends VisualNodeBase {
-    children: FluidObjectChildNode[];
+export interface VisualTreeNode extends TreeNodeBase {
     nodeKind: VisualNodeKind.TreeNode;
 }
 

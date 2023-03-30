@@ -20,7 +20,7 @@ import {
 	FluidObjectValueNode,
 	FluidUnknownObjectNode,
 	VisualNodeKind,
-	FluidObjectChildNode,
+	VisualChildNode,
 } from "./VisualTree";
 
 /**
@@ -28,18 +28,16 @@ import {
  */
 export const visualizeSharedCell: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
-	label: string,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
 	const sharedCell = sharedObject as SharedCell<unknown>;
 	const data = sharedCell.get();
 
-	const renderedData = await visualizeChildData(data, "data");
+	const renderedData = await visualizeChildData(data);
 
 	return {
 		fluidObjectId: sharedCell.id,
-		label,
-		children: [renderedData],
+		children: { data: renderedData },
 		typeMetadata: "SharedCell",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
@@ -50,12 +48,10 @@ export const visualizeSharedCell: VisualizeSharedObject = async (
  */
 export const visualizeSharedCounter: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
-	label: string,
 ): Promise<FluidObjectValueNode> => {
 	const sharedCounter = sharedObject as SharedCounter;
 	return {
 		fluidObjectId: sharedCounter.id,
-		label,
 		value: sharedCounter.value,
 		typeMetadata: "SharedCounter",
 		nodeKind: VisualNodeKind.FluidValueNode,
@@ -67,20 +63,18 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
  */
 export const visualizeSharedMap: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
-	label: string,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectTreeNode> => {
 	const sharedMap = sharedObject as SharedMap;
 
-	const children: FluidObjectChildNode[] = [];
+	const children: Record<string, VisualChildNode> = {};
 	for (const [key, value] of sharedMap) {
-		const renderedChild = await visualizeChildData(value, key);
-		children.push(renderedChild);
+		const renderedChild = await visualizeChildData(value);
+		children[key] = renderedChild;
 	}
 
 	return {
 		fluidObjectId: sharedMap.id,
-		label,
 		children,
 		metadata: {
 			size: sharedMap.size,
@@ -95,14 +89,12 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
  */
 export const visualizeSharedString: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
-	label: string,
 ): Promise<FluidObjectValueNode> => {
 	const sharedString = sharedObject as SharedString;
 	const text = sharedString.getText();
 
 	return {
 		fluidObjectId: sharedString.id,
-		label,
 		value: text,
 		typeMetadata: "SharedString",
 		nodeKind: VisualNodeKind.FluidValueNode,
@@ -114,11 +106,9 @@ export const visualizeSharedString: VisualizeSharedObject = async (
  */
 export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
-	label: string,
 ): Promise<FluidUnknownObjectNode> => {
 	return {
 		fluidObjectId: sharedObject.id,
-		label,
 		typeMetadata: sharedObject.attributes.type,
 		nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 	};

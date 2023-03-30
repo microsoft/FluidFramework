@@ -36,14 +36,12 @@ describe("DataVisualizerGraph unit tests", () => {
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
-		expect(rootTrees.length).to.equal(1);
 
-		const expectedTree = createHandleNode(sharedCounter.id, "counter");
-		expect(rootTrees[0]).to.deep.equal(expectedTree);
+		const expectedTree = createHandleNode(sharedCounter.id);
+		expect(rootTrees.counter).to.deep.equal(expectedTree);
 
 		const childTree = await visualizer.render(sharedCounter.id);
 		const expectedChildTree: FluidObjectValueNode = {
-			label: "counter",
 			fluidObjectId: sharedCounter.id,
 			value: 0,
 			typeMetadata: "SharedCounter",
@@ -57,7 +55,6 @@ describe("DataVisualizerGraph unit tests", () => {
 
 		const childTreeAfterEdit = await visualizer.render(sharedCounter.id);
 		const expectedChildTreeAfterEdit: FluidObjectValueNode = {
-			label: "counter",
 			fluidObjectId: sharedCounter.id,
 			value: 37,
 			typeMetadata: "SharedCounter",
@@ -80,16 +77,14 @@ describe("DataVisualizerGraph unit tests", () => {
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
-		expect(rootTrees.length).to.equal(1);
 
-		const expectedTree = createHandleNode(sharedMap.id, "map");
-		expect(rootTrees[0]).to.deep.equal(expectedTree);
+		const expectedTree = createHandleNode(sharedMap.id);
+		expect(rootTrees.map).to.deep.equal(expectedTree);
 
 		const childTree = await visualizer.render(sharedMap.id);
 		const expectedChildTree: FluidObjectTreeNode = {
-			label: "map",
 			fluidObjectId: sharedMap.id,
-			children: [],
+			children: {},
 			metadata: { size: 0 },
 			typeMetadata: "SharedMap",
 			nodeKind: VisualNodeKind.FluidTreeNode,
@@ -112,47 +107,40 @@ describe("DataVisualizerGraph unit tests", () => {
 
 		const childTreeAfterEdit = await visualizer.render(sharedMap.id);
 		const expectedChildTreeAfterEdit: FluidObjectTreeNode = {
-			label: "map",
 			fluidObjectId: sharedMap.id,
-			children: [
-				{
-					label: "test-string",
+			children: {
+				"test-string": {
 					value: "Hello world",
 					typeMetadata: "string",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
-				{
-					label: "test-object",
-					children: [
-						{
-							label: "a",
+				"test-object": {
+					children: {
+						a: {
 							value: 1,
 							typeMetadata: "number",
 							nodeKind: VisualNodeKind.ValueNode,
 						},
-						{
-							label: "b",
+						b: {
 							value: "2",
 							typeMetadata: "string",
 							nodeKind: VisualNodeKind.ValueNode,
 						},
-						{
-							label: "c",
+						c: {
 							value: true,
 							typeMetadata: "boolean",
 							nodeKind: VisualNodeKind.ValueNode,
 						},
-					],
+					},
 					typeMetadata: "object",
 					nodeKind: VisualNodeKind.TreeNode,
 				},
-				{
-					label: "test-handle",
+				"test-handle": {
 					fluidObjectId: sharedCounter.id,
 					typeMetadata: "Fluid Handle",
 					nodeKind: VisualNodeKind.FluidHandleNode,
 				},
-			],
+			},
 			metadata: { size: 3 },
 			typeMetadata: "SharedMap",
 			nodeKind: VisualNodeKind.FluidTreeNode,
@@ -181,17 +169,15 @@ describe("DataVisualizerGraph unit tests", () => {
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
-		expect(rootTrees.length).to.equal(2);
 
-		const expectedCounterTree = createHandleNode(sharedCounter.id, "counter");
-		expect(rootTrees[0]).to.deep.equal(expectedCounterTree);
+		const expectedCounterTree = createHandleNode(sharedCounter.id);
+		expect(rootTrees.counter).to.deep.equal(expectedCounterTree);
 
-		const expectedCellTree = createHandleNode(sharedCell.id, "cell");
-		expect(rootTrees[1]).to.deep.equal(expectedCellTree);
+		const expectedCellTree = createHandleNode(sharedCell.id);
+		expect(rootTrees.cell).to.deep.equal(expectedCellTree);
 
 		const childCounterTree = await visualizer.render(sharedCounter.id);
 		const expectedChildCounterTree: FluidObjectValueNode = {
-			label: "counter",
 			fluidObjectId: sharedCounter.id,
 			value: 42,
 			typeMetadata: "SharedCounter",
@@ -201,16 +187,14 @@ describe("DataVisualizerGraph unit tests", () => {
 
 		const childCellTree = await visualizer.render(sharedCell.id);
 		const expectedChildCellTree: FluidObjectTreeNode = {
-			label: "cell",
 			fluidObjectId: sharedCell.id,
-			children: [
-				{
-					label: "data",
+			children: {
+				data: {
 					value: "Hello world",
 					typeMetadata: "string",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
-			],
+			},
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 		};

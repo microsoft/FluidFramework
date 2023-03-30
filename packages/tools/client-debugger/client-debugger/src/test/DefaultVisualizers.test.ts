@@ -28,9 +28,8 @@ import {
 /**
  * Mock {@link VisualizeChildData} for use in tests
  */
-async function visualizeChildData(child: unknown, label: string): Promise<VisualValueNode> {
+async function visualizeChildData(): Promise<VisualValueNode> {
 	return {
-		label,
 		value: "test",
 		nodeKind: VisualNodeKind.ValueNode,
 	};
@@ -41,18 +40,16 @@ describe("DefaultVisualizers unit tests", () => {
 		const runtime = new MockFluidDataStoreRuntime();
 		const sharedCell = new SharedCell("test-cell", runtime, SharedCell.getFactory().attributes);
 
-		const result = await visualizeSharedCell(sharedCell, "test-label", visualizeChildData);
+		const result = await visualizeSharedCell(sharedCell, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			label: "test-label",
 			fluidObjectId: sharedCell.id,
-			children: [
-				{
-					label: "data",
+			children: {
+				data: {
 					value: "test",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
-			],
+			},
 			typeMetadata: "SharedCell",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
@@ -69,14 +66,9 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 		sharedCounter.increment(37);
 
-		const result = await visualizeSharedCounter(
-			sharedCounter,
-			"test-label",
-			visualizeChildData,
-		);
+		const result = await visualizeSharedCounter(sharedCounter, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			label: "test-label",
 			fluidObjectId: sharedCounter.id,
 			value: 37,
 			typeMetadata: "SharedCounter",
@@ -96,28 +88,24 @@ describe("DefaultVisualizers unit tests", () => {
 			b: "World",
 		});
 
-		const result = await visualizeSharedMap(sharedMap, "test-label", visualizeChildData);
+		const result = await visualizeSharedMap(sharedMap, visualizeChildData);
 
 		const expected: FluidObjectTreeNode = {
-			label: "test-label",
 			fluidObjectId: sharedMap.id,
-			children: [
-				{
-					label: "foo",
+			children: {
+				foo: {
 					value: "test",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
-				{
-					label: "bar",
+				bar: {
 					value: "test",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
-				{
-					label: "baz",
+				baz: {
 					value: "test",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
-			],
+			},
 			metadata: {
 				size: 3,
 			},
@@ -137,10 +125,9 @@ describe("DefaultVisualizers unit tests", () => {
 		);
 		sharedString.insertText(0, "Hello World!");
 
-		const result = await visualizeSharedString(sharedString, "test-label", visualizeChildData);
+		const result = await visualizeSharedString(sharedString, visualizeChildData);
 
 		const expected: FluidObjectValueNode = {
-			label: "test-label",
 			fluidObjectId: sharedString.id,
 			value: "Hello World!",
 			typeMetadata: "SharedString",
@@ -159,15 +146,10 @@ describe("DefaultVisualizers unit tests", () => {
 			},
 		} as ISharedObject;
 
-		const result = await visualizeUnknownSharedObject(
-			unknownObject,
-			"test-label",
-			visualizeChildData,
-		);
+		const result = await visualizeUnknownSharedObject(unknownObject, visualizeChildData);
 
 		const expected: FluidUnknownObjectNode = {
 			fluidObjectId: "test-object-id",
-			label: "test-label",
 			typeMetadata: "UnknownSharedObjectType",
 			nodeKind: VisualNodeKind.FluidUnknownObjectNode,
 		};

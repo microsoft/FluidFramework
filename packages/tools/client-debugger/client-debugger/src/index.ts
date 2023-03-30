@@ -48,7 +48,6 @@ export { ContainerStateChangeKind } from "./Container";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
-	FluidObjectChildNode,
 	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -57,12 +56,14 @@ export {
 	FluidUnknownObjectNode,
 	Primitive,
 	RootHandleNode,
-	VisualValueNode,
+	TreeNodeBase,
 	ValueNodeBase,
+	VisualChildNode,
 	VisualNode,
 	VisualNodeBase,
 	VisualNodeKind,
 	VisualTreeNode,
+	VisualValueNode,
 	UnknownObjectNode,
 } from "./data-visualization";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";

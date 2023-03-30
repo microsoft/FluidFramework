@@ -54,11 +54,6 @@ export type Primitive = bigint | number | boolean | null | string | symbol | und
  */
 export interface VisualNodeBase {
 	/**
-	 * Label text used as the item name in the visual tree.
-	 */
-	label: string;
-
-	/**
 	 * (optional) Metadata describing the type of the item, to be displayed inline.
 	 */
 	typeMetadata?: string;
@@ -93,16 +88,24 @@ export interface ValueNodeBase extends VisualNodeBase {
 }
 
 /**
+ * Base interface for visual parent nodes containing child nodes.
+ *
+ * @public
+ */
+export interface TreeNodeBase extends VisualNodeBase {
+	/**
+	 * Child items to be displayed beneath this node, keyed by some associated label
+	 * (e.g. map key, property name, etc.).
+	 */
+	children: Record<string, VisualChildNode>;
+}
+
+/**
  * A visual tree with children, which should be displayed beneath this item in the visual tree.
  *
  * @public
  */
-export interface VisualTreeNode extends VisualNodeBase {
-	/**
-	 * Child items to be displayed beneath this node.
-	 */
-	children: FluidObjectChildNode[];
-
+export interface VisualTreeNode extends TreeNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
@@ -122,8 +125,7 @@ export interface VisualValueNode extends ValueNodeBase {
 }
 
 /**
- * Terminal node indicating that the data associated with the {@link VisualNodeBase.label} is not in a form
- * the debugger recognizes.
+ * Terminal node indicating the debugger encountered data of a kind it did not recognize.
  *
  * @remarks I.e. it is not a {@link @fluidframework/shared-object-base#ISharedObject}.
  *
@@ -158,12 +160,7 @@ export interface FluidObjectNodeBase extends VisualNodeBase {
  *
  * @public
  */
-export interface FluidObjectTreeNode extends FluidObjectNodeBase {
-	/**
-	 * Child items to be displayed beneath this node.
-	 */
-	children: FluidObjectChildNode[];
-
+export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
 	/**
 	 * {@inheritDoc VisualNodeBase.nodeKind}
 	 */
@@ -246,7 +243,7 @@ export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | Fluid
  *
  * @public
  */
-export type FluidObjectChildNode =
+export type VisualChildNode =
 	| VisualTreeNode
 	| VisualValueNode
 	| FluidHandleNode
@@ -262,9 +259,8 @@ export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 /**
  * Creates a {@link FluidHandleNode} from the provided ID and label.
  */
-export function createHandleNode(id: FluidObjectId, label: string): FluidHandleNode {
+export function createHandleNode(id: FluidObjectId): FluidHandleNode {
 	return {
-		label,
 		fluidObjectId: id,
 		typeMetadata: "Fluid Handle",
 		nodeKind: VisualNodeKind.FluidHandleNode,
@@ -272,11 +268,8 @@ export function createHandleNode(id: FluidObjectId, label: string): FluidHandleN
 }
 
 /**
- * Creates a {@link UnknownObjectNode} with the provided label.
+ * {@link UnknownObjectNode} singleton.
  */
-export function createUnknownObjectNode(label: string): UnknownObjectNode {
-	return {
-		label,
-		nodeKind: VisualNodeKind.UnknownObjectNode,
-	};
-}
+export const unknownObjectNode: UnknownObjectNode = {
+	nodeKind: VisualNodeKind.UnknownObjectNode,
+};

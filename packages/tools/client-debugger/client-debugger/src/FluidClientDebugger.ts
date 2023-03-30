@@ -345,7 +345,7 @@ export class FluidClientDebugger
 	};
 
 	private readonly postRootDataVisualizations = (
-		visualizations: RootHandleNode[] | undefined,
+		visualizations: Record<string, RootHandleNode> | undefined,
 	): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
 			type: "ROOT_DATA_VISUALIZATION",
@@ -490,7 +490,7 @@ export class FluidClientDebugger
 		};
 	}
 
-	private async getRootDataVisualizations(): Promise<RootHandleNode[] | undefined> {
+	private async getRootDataVisualizations(): Promise<Record<string, RootHandleNode> | undefined> {
 		return this.dataVisualizer?.renderRootHandles() ?? undefined;
 	}
 
