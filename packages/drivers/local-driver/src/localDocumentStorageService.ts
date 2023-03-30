@@ -108,9 +108,10 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		const uint8ArrayFile = new Uint8Array(file);
+		const minTTLInSeconds = 24 * 60 *60; // Same TTL as ODSP
 		return this.manager
 			.createBlob(Uint8ArrayToString(uint8ArrayFile, "base64"), "base64")
-			.then((r) => ({ id: r.sha, url: r.url, minTTLInSeconds: 86700 }));
+			.then((r) => ({ id: r.sha, url: r.url, minTTLInSeconds }));
 	}
 
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
