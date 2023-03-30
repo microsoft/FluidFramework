@@ -39,7 +39,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "ReturnTo": {
 					const moveMark: Delta.MoveIn = {
 						type: Delta.MarkType.MoveIn,
-						count: mark.count,
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 					};
 					out.pushContent(moveMark);

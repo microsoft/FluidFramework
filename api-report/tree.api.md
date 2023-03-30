@@ -1002,8 +1002,6 @@ interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
 
 // @alpha
 interface MoveIn {
-    // (undocumented)
-    readonly count: number;
     readonly moveId: MoveId;
     // (undocumented)
     readonly type: typeof MarkType.MoveIn;

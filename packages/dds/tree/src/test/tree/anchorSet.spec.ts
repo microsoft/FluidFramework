@@ -55,7 +55,6 @@ describe("AnchorSet", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 1,
 			moveId: brand(1),
 		};
 
@@ -140,7 +139,6 @@ describe("AnchorSet", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 1,
 			moveId: brand(1),
 		};
 

@@ -212,7 +212,6 @@ describe("toDelta", () => {
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			moveId,
-			count: 10,
 		};
 		const expected: Delta.MarkList = [
 			{
@@ -256,7 +255,6 @@ describe("toDelta", () => {
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			moveId,
-			count: 10,
 		};
 		const expected: Delta.MarkList = [
 			{
@@ -307,7 +305,6 @@ describe("toDelta", () => {
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			moveId,
-			count: 10,
 		};
 		const expected: Delta.Root = new Map([
 			[

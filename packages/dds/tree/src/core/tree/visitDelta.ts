@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import { FieldKey, Value } from "./types";
 import * as Delta from "./delta";
 
@@ -67,17 +67,17 @@ import * as Delta from "./delta";
  * @param visitor - The object to notify of the changes encountered.
  */
 export function visitDelta(delta: Delta.Root, visitor: DeltaVisitor): void {
-	const modsToMovedTrees = new Map<Delta.MoveId, Delta.HasModifications>();
+	const modsToMovedTrees = new Map<Delta.MoveId, Delta.MoveOut>();
 	const containsMovesOrDeletes = visitFieldMarks(delta, visitor, {
 		func: firstPass,
 		applyValueChanges: true,
-		modsToMovedTrees,
+		moveOuts: modsToMovedTrees,
 	});
 	if (containsMovesOrDeletes) {
 		visitFieldMarks(delta, visitor, {
 			func: secondPass,
 			applyValueChanges: false,
-			modsToMovedTrees,
+			moveOuts: modsToMovedTrees,
 		});
 	}
 }
@@ -101,7 +101,7 @@ export interface DeltaVisitor {
 interface PassConfig {
 	readonly func: Pass;
 	readonly applyValueChanges: boolean;
-	readonly modsToMovedTrees: Map<Delta.MoveId, Delta.HasModifications>;
+	readonly moveOuts: Map<Delta.MoveId, Delta.MoveOut>;
 }
 
 type Pass = (delta: Delta.MarkList, visitor: DeltaVisitor, config: PassConfig) => boolean;
@@ -168,9 +168,7 @@ function firstPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCon
 					break;
 				case Delta.MarkType.MoveOut:
 					result = visitModify(index, mark, visitor, config);
-					if (result) {
-						config.modsToMovedTrees.set(mark.moveId, mark);
-					}
+					config.moveOuts.set(mark.moveId, mark);
 					visitor.onMoveOut(index, mark.count, mark.moveId);
 					break;
 				case Delta.MarkType.Modify:
@@ -221,14 +219,13 @@ function secondPass(delta: Delta.MarkList, visitor: DeltaVisitor, config: PassCo
 					index += mark.content.length;
 					break;
 				case Delta.MarkType.MoveIn: {
-					visitor.onMoveIn(index, mark.count, mark.moveId);
-					if (mark.count === 1) {
-						const modify = config.modsToMovedTrees.get(mark.moveId);
-						if (modify !== undefined) {
-							visitModify(index, modify, visitor, config);
-						}
+					const moveOut = config.moveOuts.get(mark.moveId);
+					assert(moveOut !== undefined, "MoveIn without MoveOut");
+					visitor.onMoveIn(index, moveOut.count, mark.moveId);
+					if (moveOut.count === 1) {
+						visitModify(index, moveOut, visitor, config);
 					}
-					index += mark.count;
+					index += moveOut.count;
 					break;
 				}
 				default:

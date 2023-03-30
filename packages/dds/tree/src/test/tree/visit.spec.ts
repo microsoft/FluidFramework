@@ -230,7 +230,6 @@ describe("visit", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 1,
 			moveId,
 		};
 
@@ -261,7 +260,6 @@ describe("visit", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 2,
 			moveId,
 		};
 
@@ -307,7 +305,6 @@ describe("visit", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 2,
 			moveId,
 		};
 
@@ -354,7 +351,6 @@ describe("visit", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 1,
 			moveId,
 		};
 
@@ -403,7 +399,6 @@ describe("visit", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 2,
 			moveId,
 		};
 
@@ -456,7 +451,6 @@ describe("visit", () => {
 
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 2,
 			moveId,
 		};
 
@@ -501,7 +495,6 @@ describe("visit", () => {
 
 		const moveIn1: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 1,
 			moveId: moveId1,
 		};
 
@@ -513,7 +506,6 @@ describe("visit", () => {
 
 		const moveIn2: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 2,
 			moveId: moveId2,
 		};
 
@@ -560,7 +552,6 @@ describe("visit", () => {
 
 		const moveIn1: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
-			count: 1,
 			moveId: moveId1,
 		};
 

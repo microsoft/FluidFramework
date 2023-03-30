@@ -61,7 +61,6 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 				case "MoveIn": {
 					const moveMark: Delta.MoveIn = {
 						type: Delta.MarkType.MoveIn,
-						count: mark.count,
 						moveId: brandOpaque<Delta.MoveId>(mark.id),
 					};
 					out.pushContent(moveMark);

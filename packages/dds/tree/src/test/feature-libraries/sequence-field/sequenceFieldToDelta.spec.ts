@@ -192,7 +192,6 @@ describe("SequenceField - toDelta", () => {
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			moveId: deltaMoveId,
-			count: 10,
 		};
 		const expected: Delta.MarkList = [42, moveOut, 8, moveIn];
 		const actual = toDelta(changeset);

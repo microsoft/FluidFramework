@@ -550,7 +550,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				};
 				const moveIn: Delta.MoveIn = {
 					type: Delta.MarkType.MoveIn,
-					count: 1,
 					moveId,
 				};
 				const modify: Delta.Modify = {
@@ -770,7 +769,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				};
 				const moveIn: Delta.MoveIn = {
 					type: Delta.MarkType.MoveIn,
-					count: 1,
 					moveId,
 				};
 				const modify: Delta.Modify = {
