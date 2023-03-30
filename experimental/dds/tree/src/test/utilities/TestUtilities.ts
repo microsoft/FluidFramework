@@ -29,7 +29,7 @@ import type { IContainer, IHostLoader } from '@fluidframework/container-definiti
 import type { IFluidCodeDetails, IFluidHandle, IRequestHeader } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IContainerRuntimeBase } from '@fluidframework/runtime-definitions';
-import { TelemetryNullLogger } from '@fluidframework/telemetry-utils';
+import { ConfigTypes, IConfigProviderBase, TelemetryNullLogger } from '@fluidframework/telemetry-utils';
 import { IRequest } from '@fluidframework/core-interfaces';
 import {
 	AttributionId,
@@ -324,7 +324,6 @@ export async function setUpLocalServerTestSharedTree(
 			TestDataStoreType,
 			new TestFluidObjectFactory(registry),
 			{
-				enableOfflineLoad: true,
 				summaryOptions: {
 					summaryConfigOverrides: {
 						...DefaultSummaryConfiguration,
@@ -347,8 +346,13 @@ export async function setUpLocalServerTestSharedTree(
 
 	function makeTestLoader(provider: TestObjectProvider): IHostLoader {
 		const fluidEntryPoint = runtimeFactory();
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+
 		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
 			options: { maxClientLeaveWaitTime: 1000 },
+			configProvider: configProvider({ 'Fluid.Container.enableOfflineLoad': true }),
 		});
 	}
 

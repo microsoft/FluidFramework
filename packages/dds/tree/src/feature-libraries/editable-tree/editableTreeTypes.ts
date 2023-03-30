@@ -19,6 +19,7 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 } from "../contextuallyTyped";
+import { EditableTreeContext } from "./editableTreeContext";
 
 /**
  * A symbol for extracting target from {@link EditableTree} proxies.
@@ -60,6 +61,13 @@ export const replaceField: unique symbol = Symbol("editable-tree:replaceField()"
  * @alpha
  */
 export const parentField: unique symbol = Symbol("editable-tree:parentField()");
+
+/**
+ * A symbol to get a common context of a "forest" of EditableTrees
+ * in contexts where string keys are already in use for fields.
+ * @alpha
+ */
+export const contextSymbol: unique symbol = Symbol("editable-tree:context");
 
 /**
  * A symbol for subscribing to events.
@@ -134,6 +142,11 @@ export interface EditableTree extends Iterable<EditableField>, ContextuallyTyped
 	 * but the presence of this symbol can be used to separate EditableTrees from other types.
 	 */
 	readonly [proxyTargetSymbol]: object;
+
+	/**
+	 * A common context of a "forest" of EditableTrees.
+	 */
+	readonly [contextSymbol]: EditableTreeContext;
 
 	/**
 	 * Gets the field of this node by its key without unwrapping.
@@ -283,6 +296,11 @@ export interface EditableField
 	 * `undefined` iff this field is a detached field.
 	 */
 	readonly parent?: EditableTree;
+
+	/**
+	 * A common context of a "forest" of EditableTrees.
+	 */
+	readonly context: EditableTreeContext;
 
 	/**
 	 * Stores the target for the proxy which implements reading and writing for this sequence field.

@@ -353,8 +353,8 @@ jobs:
         condition: succeededOrFailed()
 
       # Log Test Failures
-      - template: include-log-test-failures.yml
-        parameters:
-          buildDirectory: ${{ variables.testPackageDir }}
+      # - template: include-log-test-failures.yml
+      #   parameters:
+      #     buildDirectory: ${{ variables.testPackageDir }}
 
       - ${{ parameters.additionalSteps }}

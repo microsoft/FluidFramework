@@ -4,9 +4,25 @@
  */
 
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
-import { ISourcedDebuggerMessage } from "./Messages";
+import { IDebuggerMessage } from "./Messages";
 
 // #region Outbound messages
+
+/**
+ * Interface for telemetry events with a timestamp. Specific to the Fluid Debugger.
+ * @public
+ */
+export interface ITimestampedTelemetryEvent {
+	/**
+	 * The contents of the telemetry event.
+	 */
+	logContent: ITelemetryBaseEvent;
+
+	/**
+	 * The timestamp at which the event was logged. {@link Date#now}. i.e. MM/DD/YYYY, HH:MM:SS AM/PM.
+	 */
+	timestamp: number;
+}
 
 /**
  * Message data format used by {@link TelemetryEventMessage}.
@@ -17,7 +33,7 @@ export interface TelemetryEventMessageData {
 	/**
 	 * Contents of the telemetry event. This can be a single latest event or all the history events.
 	 */
-	contents: ITelemetryBaseEvent[];
+	contents: ITimestampedTelemetryEvent[];
 }
 
 /**
@@ -26,7 +42,7 @@ export interface TelemetryEventMessageData {
  *
  * @public
  */
-export interface TelemetryEventMessage extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -38,8 +54,7 @@ export interface TelemetryEventMessage extends ISourcedDebuggerMessage<Telemetry
  *
  * @public
  */
-export interface TelemetryHistoryMessage
-	extends ISourcedDebuggerMessage<TelemetryEventMessageData> {
+export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
@@ -51,7 +66,7 @@ export interface TelemetryHistoryMessage
  *
  * @public
  */
-export interface GetTelemetryHistoryMessage extends ISourcedDebuggerMessage {
+export interface GetTelemetryHistoryMessage extends IDebuggerMessage {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */

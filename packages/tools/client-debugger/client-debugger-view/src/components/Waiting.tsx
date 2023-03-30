@@ -14,8 +14,6 @@ const defaultLabel = "Waiting for data from webpage.";
 export interface WaitingProps {
 	/**
 	 * Label text to accompany the spinner.
-	 *
-	 * @defaultValue {@link defaultLabel}
 	 */
 	label?: string;
 }

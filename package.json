@@ -125,6 +125,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
+		"@changesets/cli": "^2.26.0",
 		"@fluid-tools/build-cli": "^0.13.1",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.13.1",
@@ -133,6 +134,7 @@
 		"@microsoft/api-extractor": "^7.34.4",
 		"@octokit/core": "^4.0.5",
 		"c8": "^7.7.1",
+		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^7.6.0",
 		"copyfiles": "^2.4.1",
 		"danger": "^10.9.0",
@@ -147,7 +149,7 @@
 		"typescript": "~4.5.5"
 	},
 	"engines": {
-		"node": ">=14.13.0"
+		"node": ">=16.16.0"
 	},
 	"packageManager": "pnpm@7.27.0",
 	"pnpm": {

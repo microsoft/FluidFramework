@@ -273,13 +273,13 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionNodeData {
     outboundRoutes: string[];
     unreferencedTimestampMs?: number;
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionSnapshotData {
     // (undocumented)
     deletedNodes: string[] | undefined;
@@ -289,7 +289,7 @@ export interface IGarbageCollectionSnapshotData {
     tombstones: string[] | undefined;
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionState {
     // (undocumented)
     gcNodes: {

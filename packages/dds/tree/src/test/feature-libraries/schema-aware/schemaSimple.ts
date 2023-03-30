@@ -31,7 +31,7 @@ export const pointSchema = tree("point", {
 export const rootFieldSchema = field(sequence, pointSchema);
 
 export const appSchemaData = SchemaAware.typedSchemaData(
-	new Map([[rootFieldKey, rootFieldSchema]]),
+	[[rootFieldKey, rootFieldSchema]],
 	numberSchema,
 	pointSchema,
 );
