@@ -26,10 +26,12 @@ import { InspectorMessages, minRowWidth, rowWidthInterval } from "./constants";
 import { HashCalculator } from "./HashCalculator";
 import {
 	ColumnRendererType,
+	IEditableTreeRow,
 	IExpandedMap,
 	IInspectorRow,
 	IInspectorSearchMatch,
 	IPropertyToTableRowOptions,
+	isEditableTreeRow,
 	IToTableRowsOptions,
 	IToTableRowsProps,
 	SearchResult,
@@ -753,8 +755,12 @@ export const handleReferencePropertyEdit = async (rowData: IInspectorRow, newPat
 	parentProp!.getRoot().getWorkspace()!.commit();
 };
 
-export const generateForm = (rowData: IInspectorRow, handleCreateData: any) => {
-	if (rowData.parent!.getContext() === "array" && rowData.parent!.isPrimitiveType()) {
+export const generateForm = (rowData: IInspectorRow | IEditableTreeRow, handleCreateData: any) => {
+	if (
+		!isEditableTreeRow(rowData) &&
+		rowData.parent!.getContext() === "array" &&
+		rowData.parent!.isPrimitiveType()
+	) {
 		handleCreateData(rowData, "", rowData.parent!.getTypeid(), "single");
 		return false;
 	}
@@ -844,7 +850,7 @@ const getRandomWidth = (width: number) => {
 const getCellSkeleton = (width: number) =>
 	ThemedSkeleton(<Skeleton width={getRandomWidth(width)} />);
 const determineCellClassName = (
-	rowData: IInspectorRow,
+	rowData: IInspectorRow | IEditableTreeRow,
 	columnIndex: number,
 	classes: any,
 	searchResults: SearchResult,

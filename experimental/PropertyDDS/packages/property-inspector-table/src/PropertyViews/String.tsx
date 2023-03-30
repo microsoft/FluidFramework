@@ -6,7 +6,7 @@
 import { ContainerProperty } from "@fluid-experimental/property-properties";
 import TextField, { TextFieldProps } from "@material-ui/core/TextField";
 import * as React from "react";
-import { IEditableValueCellProps } from "../InspectorTableTypes";
+import { IEditableValueCellProps, isEditableTreeRow } from "../InspectorTableTypes";
 import { getPropertyValue } from "../propertyInspectorUtils";
 
 type StringProps = IEditableValueCellProps & {
@@ -42,13 +42,15 @@ export const StringView: React.FunctionComponent<StringProps> = (props) => {
 		readOnly,
 	} = props;
 
-	const value = getPropertyValue(
-		rowData.parent as ContainerProperty,
-		rowData.name,
-		rowData.context,
-		rowData.typeid,
-		followReferences,
-	);
+	const value = isEditableTreeRow(rowData)
+		? rowData.value
+		: getPropertyValue(
+				rowData.parent as ContainerProperty,
+				rowData.name,
+				rowData.context,
+				rowData.typeid,
+				followReferences,
+		  );
 
 	return (
 		<TextField

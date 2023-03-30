@@ -37,6 +37,7 @@ export {
 	IPropertyToTableRowOptions,
 	IShowNextResultResult,
 	SearchResult,
+	IEditableTreeRow,
 } from "./InspectorTableTypes";
 export { ModalManager, ModalContext, ModalConsumer } from "./ModalManager";
 export { ModalRoot } from "./ModalRoot";

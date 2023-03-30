@@ -122,10 +122,10 @@ class DeleteModal extends React.Component<
 			.then(() => {
 				this.props.onClosed();
 			})
-			.catch(() => {
+			.catch((e) => {
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				ErrorPopup(() => {
-					throw new Error("The property was deleted by a remote collaborator!");
+					throw e ?? new Error("The property was deleted by a remote collaborator!");
 				});
 				this.setState({ deleting: false });
 				this.props.onClosed();

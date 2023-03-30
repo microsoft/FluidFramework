@@ -9,13 +9,14 @@ import {
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
 import { PropertyProxy } from "@fluid-experimental/property-proxy";
+import { assert } from "@fluidframework/common-utils";
 import { Tooltip } from "@material-ui/core";
 import { ReactWrapper } from "enzyme";
 import React from "react";
 import { useFakeTimers } from "sinon";
 import { InspectorMessages } from "../src/constants";
 import { Empty } from "../src/Empty";
-import { IDataGetterParameter } from "../src/InspectorTableTypes";
+import { IDataGetterParameter, isEditableTreeRow } from "../src/InspectorTableTypes";
 import { NameCell } from "../src/NameCell";
 import { fetchRegisteredTemplates } from "../src/PropertyDataCreationHandlers";
 import { BooleanView, EnumView, NumberView, StringView } from "../src/PropertyViews";
@@ -141,6 +142,7 @@ describe("InspectorTable", () => {
 			expect(
 				tableRows.reduce((acc, curr) => {
 					const rowData = curr.props().rowData;
+					assert(!isEditableTreeRow(rowData), "expected property inspector row");
 					return (
 						acc ||
 						(rowData.name === "d" &&

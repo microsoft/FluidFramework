@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import { ContainerProperty, EnumArrayProperty } from "@fluid-experimental/property-properties";
 import MenuItem from "@material-ui/core/MenuItem";
 import Select, { SelectProps } from "@material-ui/core/Select";
 import * as React from "react";
-import { IEditableValueCellProps, IInspectorRow } from "../InspectorTableTypes";
+import { IEditableValueCellProps, IInspectorRow, isEditableTreeRow } from "../InspectorTableTypes";
 import { Utils } from "../typeUtils";
 import { getPropertyValue } from "../propertyInspectorUtils";
 
@@ -38,6 +39,8 @@ export const EnumView: React.FunctionComponent<EnumProps> = (props) => {
 		classes,
 		readOnly,
 	} = props;
+
+	assert(!isEditableTreeRow(rowData), `"Enums" are currently not supported by the SharedTree`);
 
 	const options = getOptions(rowData);
 	const value = getPropertyValue(

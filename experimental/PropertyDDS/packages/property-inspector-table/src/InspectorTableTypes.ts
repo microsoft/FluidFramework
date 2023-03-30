@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { EditableField, EditableTree, Value } from "@fluid-internal/tree";
+
 import { BaseProxifiedProperty } from "@fluid-experimental/property-proxy";
 import { BaseProperty } from "@fluid-experimental/property-properties";
 
@@ -62,6 +64,7 @@ export interface IRowData<T = never> {
 	isReference?: boolean;
 	context?: string;
 	isNewDataRow?: boolean;
+	isEditableTree?: boolean;
 }
 
 export type IToTableRowsProps = Pick<
@@ -113,6 +116,27 @@ export interface IInspectorRow extends IRowData<BaseProxifiedProperty> {
 	parentIsConstant: boolean;
 	propertyId: string;
 }
+
+export interface IEditableTreeRow extends IRowData<EditableTree | EditableField> {
+	context?: string;
+	typeid: string;
+	isReference?: boolean;
+	parent: EditableTree | EditableField;
+	children?: IEditableTreeRow[];
+	value?: Value;
+	name: string;
+	// currently not supported
+	isConstant?: boolean;
+	// currently not supported
+	parentIsConstant?: boolean;
+}
+
+export function isEditableTreeRow(
+	data: IInspectorRow | IEditableTreeRow,
+): data is IEditableTreeRow {
+	return !!data.isEditableTree;
+}
+
 /**
  * The interface for the cell data getter function parameter
  */
@@ -334,7 +358,7 @@ export interface IInspectorTableState<T = any> {
 }
 
 export interface ColumnRendererType {
-	rowData: IInspectorRow;
+	rowData: IInspectorRow | IEditableTreeRow;
 	cellData: React.ReactNode | undefined;
 	columnIndex: number;
 	tableProps: IInspectorTableProps;
@@ -355,11 +379,11 @@ export interface IEditableValueCellProps extends React.InputHTMLAttributes<HTMLI
 	/**
 	 * A callback that returns the icons based on the row data.
 	 */
-	iconRenderer: (rowData: IInspectorRow) => React.ReactNode;
+	iconRenderer: (rowData: IInspectorRow | IEditableTreeRow) => React.ReactNode;
 	/**
 	 * The row data of the row which contains the cell.
 	 */
-	rowData: IInspectorRow;
+	rowData: IInspectorRow | IEditableTreeRow;
 	/**
 	 * Indicates if read only mode is enabled
 	 */
