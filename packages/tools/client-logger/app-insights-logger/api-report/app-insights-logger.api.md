@@ -22,9 +22,8 @@ export class FluidAppInsightsLogger implements ITelemetryBufferedLogger {
     send(event: ITelemetryBaseEvent): void;
 }
 
-// @public (undocumented)
+// @public
 export interface FluidAppInsightsLoggerConfig {
-    // (undocumented)
     appInsights: ApplicationInsights | Snippet;
 }
 

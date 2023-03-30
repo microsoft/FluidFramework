@@ -3,7 +3,15 @@ import { ApplicationInsights, Snippet } from "@microsoft/applicationinsights-web
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
+/**
+ * Config object for FluidAppInsightsLogger.
+ */
 export interface FluidAppInsightsLoggerConfig {
+	/**
+	 * Accepts either an existing preconfigured ApplicationInsights instance to use
+	 * for logging or a config object used to instantiate an instance of ApplicationInsights. If providing a
+	 * preconfigured instance of ApplicationInsights, .loadAppInsights() must be called on the instance first.
+	 */
 	appInsights: ApplicationInsights | Snippet;
 }
 
@@ -13,8 +21,6 @@ export class FluidAppInsightsLogger implements ITelemetryBufferedLogger {
 	/**
 	 * Creates an instance of FluidAppInsightsLogger using either a provided instance of ApplicationInsights
 	 * logging client or by creating a new instance with a provided ApplicationInsights configuration object.
-	 * @param config - Accepts either an existing preconfigured ApplicationInsights instance to use
-	 * for logging or a config object used to instantiate an instance of ApplicationInsights.
 	 */
 	public constructor(config: FluidAppInsightsLoggerConfig) {
 		if (config.appInsights instanceof ApplicationInsights) {
