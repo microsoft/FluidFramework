@@ -4,15 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-
-// Allow importing from this specific file which is being tested:
-import { loadSummary, encodeSummary } from "../../feature-libraries";
-
 import { mintRevisionTag, SummaryData } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
+import { parseSummary, stringifySummary } from "../../shared-tree-core";
 
-describe("EditManagerIndex", () => {
+describe("EditManagerSummarizer", () => {
 	it("roundtrip", () => {
 		const tag1 = mintRevisionTag();
 		const tag2 = mintRevisionTag();
@@ -62,13 +59,13 @@ describe("EditManagerIndex", () => {
 				],
 			]),
 		};
-		const s1 = encodeSummary(input, TestChange.encoder);
-		const output = loadSummary(s1, TestChange.encoder);
+		const s1 = stringifySummary(input, TestChange.encoder);
+		const output = parseSummary(s1, TestChange.encoder);
 		assert.deepEqual(output, input);
-		const s2 = encodeSummary(output, TestChange.encoder);
+		const s2 = stringifySummary(output, TestChange.encoder);
 		assert.equal(s1, s2);
 	});
 
-	// TODO: testing EditManagerIndex class itself, specifically for attachment and normal summaries.
+	// TODO: testing EditManagerSummarizer class itself, specifically for attachment and normal summaries.
 	// TODO: format compatibility tests to detect breaking of existing documents.
 });
