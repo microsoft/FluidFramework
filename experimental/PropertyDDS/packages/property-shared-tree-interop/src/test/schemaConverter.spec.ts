@@ -13,9 +13,14 @@ import {
 	lookupTreeSchema,
 	ValueSchema,
 	rootFieldKey,
+	TreeSchemaIdentifier,
+	EmptyKey,
 } from "@fluid-internal/tree";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
-import { convertPropertyToSharedTreeStorageSchema } from "../schemaConverter";
+import {
+	addComplexTypeToSchema,
+	convertPropertyToSharedTreeStorageSchema,
+} from "../schemaConverter";
 import personSchema from "./personSchema";
 
 describe("schema converter", () => {
@@ -92,5 +97,56 @@ describe("schema converter", () => {
 			extraGlobalFields: false,
 			value: ValueSchema.Nothing,
 		});
+	});
+
+	it("can dynamically create collection types", () => {
+		const rootFieldSchema = fieldSchema(FieldKinds.optional, [brand("Test:Person-1.0.0")]);
+		const fullSchemaData = convertPropertyToSharedTreeStorageSchema(rootFieldSchema);
+
+		const geoLocationTypeName: TreeSchemaIdentifier = brand("Test:GeodesicLocation-1.0.0");
+		const schemaWithNewArray = addComplexTypeToSchema(
+			fullSchemaData,
+			"array",
+			geoLocationTypeName,
+		);
+		const arrayTypeName: TreeSchemaIdentifier = brand(`array<${geoLocationTypeName}>`);
+		const geoLocationArraySchema = lookupTreeSchema(schemaWithNewArray, arrayTypeName);
+		expect(geoLocationArraySchema).toMatchObject({
+			name: arrayTypeName,
+			localFields: new Map([
+				[
+					EmptyKey,
+					fieldSchema(FieldKinds.sequence, [
+						geoLocationTypeName,
+						brand("Test:Address-1.0.0"),
+					]),
+				],
+			]),
+			extraLocalFields: new Map(),
+			globalFields: new Set(),
+			extraGlobalFields: false,
+			value: ValueSchema.Nothing,
+		});
+
+		const schemaWithNewMap = addComplexTypeToSchema(fullSchemaData, "map", geoLocationTypeName);
+		const mapTypeName: TreeSchemaIdentifier = brand(`map<${geoLocationTypeName}>`);
+		const geoLocationMapSchema = lookupTreeSchema(schemaWithNewMap, mapTypeName);
+		expect(geoLocationMapSchema).toMatchObject({
+			name: mapTypeName,
+			localFields: new Map(),
+			extraLocalFields: fieldSchema(FieldKinds.optional, [
+				geoLocationTypeName,
+				brand("Test:Address-1.0.0"),
+			]),
+			globalFields: new Set(),
+			extraGlobalFields: false,
+			value: ValueSchema.Nothing,
+		});
+
+		assert.throws(
+			() => addComplexTypeToSchema(fullSchemaData, "tuple", geoLocationTypeName),
+			(e) => validateAssertionError(e, `Not supported collection context "tuple"`),
+			"Expected exception was not thrown",
+		);
 	});
 });
