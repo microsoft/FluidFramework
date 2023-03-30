@@ -10,12 +10,6 @@ import { SortedSegmentSet } from "./sortedSegmentSet";
 export type Trackable = ISegment | LocalReferencePosition;
 
 export interface ITrackingGroup {
-	/**
-	 * @deprecated - use tracked instead.
-	 * For references positions this will return the underlying segment,
-	 * which may not match the intention
-	 */
-	segments: readonly ISegment[];
 	tracked: readonly Trackable[];
 	size: number;
 	has(trackable: Trackable): boolean;
@@ -78,16 +72,6 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 		this.trackedSet = new Set<Trackable>();
 	}
 
-	/**
-	 * @deprecated - use tracked instead.
-	 * For references positions this will return the underlying segment,
-	 * which may not match the intention
-	 */
-	public get segments(): readonly ISegment[] {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return Array.from(this.trackedSet.keys(), (v) => (v.isLeaf() ? v : v.getSegment()!));
-	}
-
 	public get tracked(): readonly Trackable[] {
 		return Array.from(this.trackedSet);
 	}
@@ -103,12 +87,6 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 	public link(trackable: Trackable): void {
 		if (!this.trackedSet.has(trackable)) {
 			this.trackedSet.add(trackable);
-			// Unsafe cast here is necessary to avoid a breaking change to
-			// `TrackingGroupCollection`. `UnorderedTrackingGroup` and `TrackingGroup`
-			// _do_ overlap in every way except for private fields which should
-			// be inaccessible.
-			//
-			// This cast should be removed in a future breaking release
 			trackable.trackingCollection.link(this);
 		}
 	}

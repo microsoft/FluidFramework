@@ -98,7 +98,7 @@ export {
 export {
 	Trackable,
 	TrackingGroup,
-	UnorderedTrackingGroup,
+	ITrackingGroup,
 	TrackingGroupCollection,
 } from "./mergeTreeTracking";
 export {

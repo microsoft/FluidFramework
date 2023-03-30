@@ -551,6 +551,13 @@ export class MergeTree {
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
+	private cachedSlideDestination:
+		| {
+				segmentToSlideDestination: Map<ISegment, ISegment | "detached">;
+				seq: number;
+		  }
+		| undefined;
+
 	public constructor(public options?: IMergeTreeOptions) {
 		this._root = this.makeBlock(0);
 		this._root.mergeTree = this;
@@ -822,6 +829,14 @@ export class MergeTree {
 		if (!segment || !isRemovedAndAcked(segment)) {
 			return segment;
 		}
+
+		if (this.cachedSlideDestination?.seq !== segment.removedSeq) {
+			this.cachedSlideDestination = {
+				segmentToSlideDestination: new Map<ISegment, ISegment>(),
+				seq: segment.removedSeq,
+			};
+		}
+
 		assert(
 			this.cachedSlideDestination !== undefined,
 			"expected cachedSlideDestination to exist",
@@ -859,13 +874,6 @@ export class MergeTree {
 		return slideToSegment;
 	}
 
-	private cachedSlideDestination:
-		| {
-				segmentToSlideDestination: Map<ISegment, ISegment | "detached">;
-				seq: number;
-		  }
-		| undefined;
-
 	/**
 	 * This method should only be called when the current client sequence number is
 	 * max(remove segment sequence number, add reference sequence number).
@@ -879,12 +887,6 @@ export class MergeTree {
 		);
 		if (segment.localRefs?.empty !== false) {
 			return;
-		}
-		if (this.cachedSlideDestination?.seq !== segment.removedSeq) {
-			this.cachedSlideDestination = {
-				segmentToSlideDestination: new Map<ISegment, ISegment>(),
-				seq: segment.removedSeq,
-			};
 		}
 		const newSegment = this._getSlideToSegment(segment);
 		if (newSegment) {
