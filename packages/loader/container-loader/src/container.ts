@@ -124,7 +124,6 @@ export interface IContainerLoadOptions {
 }
 
 export interface IContainerConfig {
-	resolvedUrl?: IFluidResolvedUrl;
 	canReconnect?: boolean;
 	/**
 	 * Client details provided in the override will be merged over the default client.
@@ -264,9 +263,6 @@ export interface IPendingContainerState {
 
 const summarizerClientType = "summarizer";
 
-/**
- * @deprecated - In the next release Container will no longer be exported, IContainer should be used in its place.
- */
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
 	implements IContainer
@@ -286,7 +282,6 @@ export class Container
 			loader,
 			{
 				clientDetailsOverride: loadOptions.clientDetailsOverride,
-				resolvedUrl: loadOptions.resolvedUrl,
 				canReconnect: loadOptions.canReconnect,
 				serializedContainerState: pendingLocalState,
 			},
@@ -485,6 +480,17 @@ export class Container
 	}
 
 	public get resolvedUrl(): IResolvedUrl | undefined {
+		/**
+		 * All attached containers will have a document service,
+		 * this is required, as attached containers are attached to
+		 * a service. Detached containers will neither have a document
+		 * service or a resolved url as they only exist locally.
+		 * in order to create a document service a resolved url must
+		 * first be obtained, this is how the container is identified.
+		 * Because of this, the document service's resolved url
+		 * is always the same as the containers, as we had to
+		 * obtain the resolved url, and then create the service from it.
+		 */
 		return this.service?.resolvedUrl;
 	}
 
