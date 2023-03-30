@@ -113,7 +113,7 @@ export class SharedTreeCore<
 	/**
 	 * Provides events that indexes can subscribe to
 	 */
-	private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
+	protected readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
 
 	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.

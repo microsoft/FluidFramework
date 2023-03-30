@@ -15,7 +15,13 @@ import {
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { identifierKey, ISharedTree, ISharedTreeView, runSynchronous } from "../../shared-tree";
+import {
+	identifierKey,
+	identifierKeySymbol,
+	ISharedTree,
+	ISharedTreeView,
+	runSynchronous,
+} from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -1606,20 +1612,17 @@ describe("SharedTree", () => {
 			const [tree] = provider.trees;
 			const id = 3;
 			const initialTreeState: JsonableTree = {
-				type: brand("IdentifiedNode"),
-				fields: {
-					foo: [{ type: brand("Foo"), value: "foo" }],
-				},
+				type: brand("TestValue"),
 				globalFields: {
-					identifierKey: [{ type: brand("Identifier"), value: id }],
+					[identifierKey]: [{ type: brand("TestValue"), value: id }],
 				},
 			};
 
 			initializeTestTree(tree, initialTreeState);
 			const node = tree.identifiedNodes.get(3);
-			assert(node !== undefined, `Expected to find node with identifier ${id}`);
-			assert.equal(node[identifierKey], id);
-			assert.equal(node.foo, "foo");
+			assert(node !== undefined, "Expected to find node with identifier");
+			const identifier = node[identifierKeySymbol][valueSymbol];
+			assert.equal(identifier, id);
 		});
 	});
 

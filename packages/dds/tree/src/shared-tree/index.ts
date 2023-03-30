@@ -5,6 +5,7 @@
 
 export {
 	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	ISharedTreeFork,

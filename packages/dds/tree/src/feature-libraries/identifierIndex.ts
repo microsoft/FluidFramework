@@ -3,18 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, FieldKey } from "../core";
-import { EditableTree, EditableTreeContext, getField } from "./editable-tree";
+import { Delta, GlobalFieldKeySymbol } from "../core";
+import { valueSymbol } from "./contextuallyTyped";
+import { EditableTree, EditableTreeContext } from "./editable-tree";
 
-export class IdentifierIndex<TId, TIdentifierFieldKey extends FieldKey>
-	implements ReadonlyMap<TId, EditableTree>
+export type IdentifiedNode<TField extends GlobalFieldKeySymbol> = EditableTree &
+	Record<TField, EditableTree>;
+
+export class IdentifierIndex<TId, TField extends GlobalFieldKeySymbol>
+	implements ReadonlyMap<TId, IdentifiedNode<TField>>
 {
 	public constructor(
 		private readonly context: EditableTreeContext,
-		private readonly identifierFieldKey: TIdentifierFieldKey,
+		private readonly identifierFieldKey: TField,
 		private readonly isId: (x: TId | unknown) => x is TId,
 		private readonly compareIds: (a: TId, b: TId) => number,
-		private readonly nodes = new Map<TId, EditableTree>(),
+		private readonly nodes = new Map<TId, IdentifiedNode<TField>>(),
 	) {}
 
 	public applyDelta(_: Delta.Root): void {
@@ -26,7 +30,7 @@ export class IdentifierIndex<TId, TIdentifierFieldKey extends FieldKey>
 		}
 	}
 
-	public clone(context: EditableTreeContext): IdentifierIndex<TId, TIdentifierFieldKey> {
+	public clone(context: EditableTreeContext): IdentifierIndex<TId, TField> {
 		return new IdentifierIndex(
 			context,
 			this.identifierFieldKey,
@@ -38,12 +42,16 @@ export class IdentifierIndex<TId, TIdentifierFieldKey extends FieldKey>
 
 	// #region ReadonlyMap interface
 	public forEach(
-		callbackfn: (value: EditableTree, key: TId, map: ReadonlyMap<TId, EditableTree>) => void,
+		callbackfn: (
+			value: IdentifiedNode<TField>,
+			key: TId,
+			map: ReadonlyMap<TId, IdentifiedNode<TField>>,
+		) => void,
 		thisArg?: any,
 	): void {
 		return this.nodes.forEach(callbackfn, thisArg);
 	}
-	public get(key: TId): EditableTree | undefined {
+	public get(key: TId): IdentifiedNode<TField> | undefined {
 		return this.nodes.get(key);
 	}
 	public has(key: TId): boolean {
@@ -52,31 +60,34 @@ export class IdentifierIndex<TId, TIdentifierFieldKey extends FieldKey>
 	public get size(): number {
 		return this.nodes.size;
 	}
-	public entries(): IterableIterator<[TId, EditableTree]> {
+	public entries(): IterableIterator<[TId, IdentifiedNode<TField>]> {
 		return this.nodes.entries();
 	}
 	public keys(): IterableIterator<TId> {
 		return this.nodes.keys();
 	}
-	public values(): IterableIterator<EditableTree> {
+	public values(): IterableIterator<IdentifiedNode<TField>> {
 		return this.nodes.values();
 	}
-	public [Symbol.iterator](): IterableIterator<[TId, EditableTree]> {
+	public [Symbol.iterator](): IterableIterator<[TId, IdentifiedNode<TField>]> {
 		return this.nodes[Symbol.iterator]();
 	}
 	// #endregion ReadonlyMap interface
 
-	private *findIdentifiers(node: EditableTree): Iterable<[identifier: TId, node: EditableTree]> {
-		const identifierField = node[getField](this.identifierFieldKey);
-		for (const id of identifierField) {
+	private *findIdentifiers(
+		node: EditableTree,
+	): Iterable<[identifier: TId, node: IdentifiedNode<TField>]> {
+		if (this.identifierFieldKey in node) {
+			const nodeWithIdentifier = node as IdentifiedNode<TField>;
+			const id = nodeWithIdentifier[this.identifierFieldKey][valueSymbol];
 			if (this.isId(id)) {
-				yield [id, node];
+				yield [id, nodeWithIdentifier];
 			}
 		}
 
 		for (const f of node) {
-			for (let n = 0; n < f.length; n++) {
-				yield* this.findIdentifiers(f.getNode(n));
+			for (let i = 0; i < f.length; i++) {
+				yield* this.findIdentifiers(f.getNode(i));
 			}
 		}
 	}

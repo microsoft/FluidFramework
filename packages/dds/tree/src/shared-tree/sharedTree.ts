@@ -22,6 +22,7 @@ import {
 	IEditableForest,
 	AnchorSetRootEvents,
 	symbolFromKey,
+	GlobalFieldKey,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
@@ -42,8 +43,8 @@ import {
 	ModularChangeset,
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
-	EditableTree,
 	IdentifierIndex,
+	IdentifiedNode,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, compareFiniteNumbers, TransactionResult } from "../util";
@@ -172,7 +173,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	// TODO: doc
-	readonly identifiedNodes: ReadonlyMap<number, EditableTree>;
+	readonly identifiedNodes: ReadonlyMap<number, IdentifiedNode<typeof identifierKeySymbol>>;
 }
 
 /**
@@ -214,7 +215,8 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {}
  * TODO doc
  * @alpha
  */
-export const identifierKey = symbolFromKey(brand("identifier"));
+export const identifierKey: GlobalFieldKey = brand("identifier");
+export const identifierKeySymbol = symbolFromKey(identifierKey);
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
@@ -233,7 +235,7 @@ export class SharedTree
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKey>;
+	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKeySymbol>;
 	public readonly transaction: ISharedTreeView["transaction"];
 
 	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
@@ -282,9 +284,12 @@ export class SharedTree
 		this.context = getEditableTreeContext(forest, this.editor);
 		this.identifiedNodes = new IdentifierIndex(
 			this.context,
-			identifierKey,
+			identifierKeySymbol,
 			(x: unknown | number): x is number => typeof x === "number",
 			compareFiniteNumbers,
+		);
+		this.indexEventEmitter.on("newLocalState", (delta) =>
+			this.identifiedNodes.applyDelta(delta),
 		);
 	}
 
@@ -365,14 +370,14 @@ export class SharedTreeFactory implements IChannelFactory {
 class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
 	public readonly context: EditableTreeContext;
-	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKey>;
+	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKeySymbol>;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		identifiedNodes: IdentifierIndex<number, typeof identifierKey>, // TODO: this is cloned _during_ construction, whereas forest/schema are cloned _before_. Make consistent. Probably pull out a separate clone function
+		identifiedNodes: IdentifierIndex<number, typeof identifierKeySymbol>, // TODO: this is cloned _during_ construction, whereas forest/schema are cloned _before_. Make consistent. Probably pull out a separate clone function
 	) {
 		this.context = getEditableTreeContext(forest, this.editor);
 		this.identifiedNodes = identifiedNodes.clone(this.context);
