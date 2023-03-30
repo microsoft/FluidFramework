@@ -10,7 +10,14 @@ This system is designed to be compatible with the message-passing-based approach
 
 For the purpose of demonstrating the intended usage flow of the system, we will be looking at it from the context of the debugger, rather than viewing this system in isolation.
 
-When initializing the debugger, the initializing consumer may optionally provide a root DDS(s) they wish to have visualized by the tooling.
+**Terms**:
+
+-   "Application": The client application, which initializes the "debugger".
+-   "Debugger": Represents the client-side debugger, which communicates application state updates via message passing to the "consumer".
+-   "Consumer": External tooling which consumes data from the "debugger" via message passing.
+    -   Note that multiple consumers may be associated with a single debugger instance.
+
+When initializing the debugger, the initializing application may optionally provide a root DDS(s) they wish to have visualized by the tooling.
 If they do not specify this, then the tooling will not generate any visual descriptors.
 
 To initiate "rendering" (generating visual summary trees), the consumer passes the `GET_ROOT_DATA_VISUALIZATIONS` to request the "root" visual summary.
