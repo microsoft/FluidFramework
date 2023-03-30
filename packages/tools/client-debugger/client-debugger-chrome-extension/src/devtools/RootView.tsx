@@ -10,7 +10,8 @@
  * {@link @fluid-tools/client-debugger-view#MessageRelayContext} used by our internal React components.
  */
 
-import { renderClientDebuggerView } from "@fluid-tools/client-debugger-view";
+import ReactDOM from "react-dom";
+import { RootView } from "@fluid-tools/client-debugger-view";
 
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
@@ -24,17 +25,17 @@ document.body.append(container);
 
 BackgroundConnection.Initialize()
 	.then((connection) => {
-		renderClientDebuggerView(container, () => connection)
-			.then(() => {
+		try {
+			ReactDOM.render(<RootView messageRelay={connection} />, container, () => {
 				console.log(
 					formatDevtoolsScriptMessageForLogging(
 						"Rendered debug view in devtools window!",
 					),
 				);
-			})
-			.catch((error: unknown) => {
-				console.error(`Error initializing the devtools root view.`, error);
 			});
+		} catch (error) {
+			console.error(`Error initializing the devtools root view.`, error);
+		}
 	})
 	.catch((error: unknown) => {
 		console.error(`Error initializing the BackgroundConnection.`, error);

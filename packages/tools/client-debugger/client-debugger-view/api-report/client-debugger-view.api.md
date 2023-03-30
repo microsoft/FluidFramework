@@ -58,6 +58,14 @@ sharedObject: ISharedObject,
 renderChild: RenderChild) => React_2.ReactElement;
 
 // @public
+export function RootView(props: RootViewProps): React_2.ReactElement;
+
+// @public
+export interface RootViewProps {
+    messageRelayFactory: () => IMessageRelay;
+}
+
+// @public
 export interface SharedObjectRenderOptions {
     [k: SharedObjectType]: RenderSharedObject;
 }
