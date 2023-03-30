@@ -4,6 +4,7 @@
  */
 
 import { TreeSchema, ValueSchema } from "../../core";
+// import { forbidden } from "../defaultFieldKinds";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -16,11 +17,13 @@ import { TreeSchema, ValueSchema } from "../../core";
  */
 export function isPrimitive(schema: TreeSchema): boolean {
 	// TODO: use a separate `TreeViewSchema` type, with metadata that determines if the type is primitive.
-	// Since the above is not done yet, use use a heuristic:
+	// Since the above is not done yet, use a heuristic:
 	return (
 		schema.value !== ValueSchema.Nothing &&
 		schema.localFields.size === 0 &&
 		schema.globalFields.size === 0
+		// schema.extraLocalFields.kind === forbidden &&
+		// !schema.extraGlobalFields
 	);
 }
 

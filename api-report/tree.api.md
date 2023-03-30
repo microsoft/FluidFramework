@@ -926,6 +926,12 @@ type ListToKeys<T extends readonly (string | symbol)[], TValue> = {
 export type LocalFieldKey = Brand<string, "tree.LocalFieldKey">;
 
 // @alpha
+export function lookupGlobalFieldSchema(data: SchemaDataAndPolicy, identifier: GlobalFieldKey): FieldSchema;
+
+// @alpha
+export function lookupTreeSchema(data: SchemaDataAndPolicy, identifier: TreeSchemaIdentifier): TreeSchema;
+
+// @alpha
 export interface MakeNominal {
 }
 

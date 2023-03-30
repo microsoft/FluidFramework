@@ -67,6 +67,8 @@ export {
 	SchemaData,
 	SchemaPolicy,
 	SchemaDataAndPolicy,
+	lookupGlobalFieldSchema,
+	lookupTreeSchema,
 	ChangeEncoder,
 	ChangeFamily,
 	ChangeFamilyEditor,
