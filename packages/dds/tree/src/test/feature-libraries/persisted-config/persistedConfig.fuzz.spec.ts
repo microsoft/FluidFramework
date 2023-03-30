@@ -16,7 +16,7 @@ import {
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
-import { IContainerRuntimeBase, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import {
 	createSingleBlobSummary,
 	IFluidSerializer,
@@ -64,6 +64,11 @@ interface CounterFlags {
 	 * really increment -2 + 6 = 4.
 	 */
 	incrementVersion: never;
+
+	/**
+	 * Changes to this field always render concurrent ops invalid.
+	 */
+	rendersConcurrentOpsInvalid: never;
 }
 
 /**
@@ -121,10 +126,6 @@ interface IIncrementOperation {
 	formatVersion: Version;
 }
 
-interface CounterLocalOpMetadata {
-	config: CounterConfig;
-}
-
 /**
  * @remarks Used in snapshotting.
  */
@@ -136,13 +137,12 @@ interface ICounterSnapshotFormat {
 	config: PersistedConfigSummary;
 }
 
-const unimplemented = () => assert.fail("not implemented");
-
 // TODO: make this parameterizable for different fuzz test cases.
 const schema: PersistedConfigSchema<keyof CounterFlags> = {
 	formatVersion: () => ConfigUpgradeType.ConcurrentOpsValid,
 	flags: {
 		incrementVersion: () => ConfigUpgradeType.ConcurrentOpsValid,
+		rendersConcurrentOpsInvalid: () => ConfigUpgradeType.ConcurrentOpsInvalid,
 	},
 };
 
@@ -155,6 +155,8 @@ class SharedCounter extends SharedObject {
 
 	private readonly configStore: IPersistedConfigStore<keyof CounterFlags>;
 
+	private totalPendingIncrement: number = 0;
+
 	public constructor(
 		config: CounterConfig,
 		id: string,
@@ -163,7 +165,15 @@ class SharedCounter extends SharedObject {
 	) {
 		super(id, runtime, attributes, "fluid_counter_");
 		const onProtocolChange = () => {};
-		const reSubmitPendingOps = unimplemented;
+		// TODO: Current shape of this API forces real DDSes to track their pending ops in an
+		// array and be able to interpret them without access to version info. This might limit
+		// its usefulness. But DDSes which never need to invalidate concurrent ops needn't care (and
+		// hopefully that's most of them)
+		const reSubmitPendingOps = (config: CounterConfig) => {
+			if (this.totalPendingIncrement !== 0) {
+				this.submitIncrementMessage(this.totalPendingIncrement);
+			}
+		};
 		this.configStore = createPersistedConfigStore(
 			schema,
 			config,
@@ -183,6 +193,12 @@ class SharedCounter extends SharedObject {
 	 * {@inheritDoc ISharedCounter.increment}
 	 */
 	public increment(incrementAmount: number): void {
+		this.incrementCore(incrementAmount);
+		this.totalPendingIncrement += incrementAmount;
+		this.submitIncrementMessage(incrementAmount);
+	}
+
+	private submitIncrementMessage(incrementAmount: number): void {
 		const config = this.configStore.getConfigForNextSubmission();
 		const op: IIncrementOperation = {
 			type: "increment",
@@ -190,8 +206,7 @@ class SharedCounter extends SharedObject {
 			formatVersion: config.formatVersion,
 		};
 
-		this.incrementCore(incrementAmount);
-		this.configStore.submit(op, { config });
+		this.configStore.submit(op);
 	}
 
 	private incrementOffsetFromOpConfig(config: CounterConfig): number {
@@ -222,26 +237,28 @@ class SharedCounter extends SharedObject {
 		return createSingleBlobSummary("contents", JSON.stringify(content));
 	}
 
-	protected reSubmitCore(content: any, metadata: CounterLocalOpMetadata): void {
+	protected reSubmitCore(content: any, metadata: unknown): void {
 		const configForNextSubmission = this.configStore.getConfigForNextSubmission();
-		if (configForNextSubmission.configVersion === metadata.config.configVersion) {
-			this.configStore.submit(content, metadata);
+		const configForPreviousSubmission = this.configStore.getConfigForLocalSubmission(
+			content,
+			metadata,
+		);
+		const isIncrementOp = (op: any): op is IIncrementOperation => op.type === "increment";
+		if (
+			configForNextSubmission.configVersion !== configForPreviousSubmission.configVersion &&
+			isIncrementOp(content)
+		) {
+			const rebasedOp: IIncrementOperation = {
+				type: "increment",
+				incrementAmount:
+					content.incrementAmount +
+					this.incrementOffsetFromOpConfig(configForPreviousSubmission) -
+					this.incrementOffsetFromOpConfig(configForNextSubmission),
+				formatVersion: configForNextSubmission.formatVersion,
+			};
+			this.configStore.submit(rebasedOp);
 		} else {
-			const isIncrementOp = (op: any): op is IIncrementOperation => op.type === "increment";
-			if (isIncrementOp(content)) {
-				const rebasedOp: IIncrementOperation = {
-					type: "increment",
-					incrementAmount:
-						content.incrementAmount +
-						this.incrementOffsetFromOpConfig(metadata.config) -
-						this.incrementOffsetFromOpConfig(configForNextSubmission),
-					formatVersion: configForNextSubmission.formatVersion,
-				};
-				this.configStore.submit(rebasedOp, { config: configForNextSubmission });
-			} else {
-				// could do this in case 1 above too
-				super.reSubmitCore(content, metadata);
-			}
+			super.reSubmitCore(content, metadata);
 		}
 	}
 
@@ -277,21 +294,25 @@ class SharedCounter extends SharedObject {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		if (this.configStore.tryProcessOp(message, local, localOpMetadata)) {
+		if (this.configStore.consumesMessage(message)) {
+			this.configStore.process(message, local, localOpMetadata);
 			return;
 		}
 
 		this.checkForMismatchedMessage(message);
 		const config = this.configStore.getConfigForMessage(message);
-
-		if (message.type === MessageType.Operation && !local) {
+		if (message.type === MessageType.Operation) {
 			const op = message.contents as IIncrementOperation;
 
 			switch (op.type) {
 				case "increment":
-					this.incrementCore(
-						op.incrementAmount + this.incrementOffsetFromOpConfig(config),
-					);
+					const incrementAmount =
+						op.incrementAmount + this.incrementOffsetFromOpConfig(config);
+					if (local) {
+						this.totalPendingIncrement -= incrementAmount;
+					} else {
+						this.incrementCore(incrementAmount);
+					}
 					break;
 
 				default:
@@ -373,6 +394,7 @@ function makeGenerator(options?: GeneratorOptions): AsyncGenerator<Operation, St
 			formatVersion: `${random.integer(1, 10)}.0.0`,
 			flags: {
 				incrementVersion: `${random.integer(1, 20)}.0.0`,
+				rendersConcurrentOpsInvalid: `${random.bool(0.1) ? 1 : 0}.0.0`,
 			},
 		};
 		deployedConfigs.set(configVersion, config);
@@ -401,7 +423,7 @@ function makeGenerator(options?: GeneratorOptions): AsyncGenerator<Operation, St
 
 	return createWeightedAsyncGenerator<Operation, State>([
 		[{ type: "synchronize" }, 1, atLeastOneClient],
-		[increment, 5, atLeastOneClient],
+		[increment, 20, atLeastOneClient],
 		[join, 1],
 		[leave, 1, atLeastOneClient],
 	]);
@@ -411,111 +433,115 @@ const directory = resolve(
 	__dirname,
 	"../../../../src/test/feature-libraries/persisted-config/seeds",
 );
-function runFuzzTestCase(seed: number, generator: AsyncGenerator<Operation, State>): void {
-	it(`seed ${seed}`, async () => {
-		const random = makeRandom(seed);
-		const driver = new LocalServerTestDriver();
-		const createFluidEntrypoint = (testContainerConfig?: ITestContainerConfig) => {
-			const counterConfig = testContainerConfig?.loaderProps?.options?.counterConfig ?? {
-				configVersion: 0,
-				formatVersion: "1.0.0",
-				flags: {
-					incrementVersion: "0.0.0",
-				},
-			};
-			const registry: ChannelFactoryRegistry = [
-				[CounterFactory.Type, new CounterFactory(counterConfig)],
-			];
-			return new TestContainerRuntimeFactory(
-				"@fluid-example/test-dataStore",
-				new TestFluidObjectFactory(registry),
-				{
-					summaryOptions: {
-						summaryConfigOverrides: {
-							...DefaultSummaryConfiguration,
-							...{
-								minIdleTime: Number.MAX_SAFE_INTEGER,
-								maxIdleTime: Number.MAX_SAFE_INTEGER,
-								maxTime: Number.MAX_SAFE_INTEGER,
-								initialSummarizerDelayMs: 0,
-								maxOps: 20,
-							},
+
+async function runFuzzTestCase(
+	seed: number,
+	generator: AsyncGenerator<Operation, State>,
+): Promise<void> {
+	const random = makeRandom(seed);
+	const driver = new LocalServerTestDriver();
+	const createFluidEntrypoint = (testContainerConfig?: ITestContainerConfig) => {
+		const counterConfig: CounterConfig = testContainerConfig?.loaderProps?.options
+			?.counterConfig ?? {
+			configVersion: 0,
+			formatVersion: "1.0.0",
+			flags: {
+				incrementVersion: "0.0.0",
+				rendersConcurrentOpsInvalid: "0.0.0",
+			},
+		};
+		const registry: ChannelFactoryRegistry = [
+			[CounterFactory.Type, new CounterFactory(counterConfig)],
+		];
+		return new TestContainerRuntimeFactory(
+			"@fluid-example/test-dataStore",
+			new TestFluidObjectFactory(registry),
+			{
+				summaryOptions: {
+					summaryConfigOverrides: {
+						...DefaultSummaryConfiguration,
+						...{
+							minIdleTime: Number.MAX_SAFE_INTEGER,
+							maxIdleTime: Number.MAX_SAFE_INTEGER,
+							maxTime: Number.MAX_SAFE_INTEGER,
+							initialSummarizerDelayMs: 0,
+							maxOps: 20,
 						},
 					},
 				},
-			);
-		};
-
-		const testObjectProvider = new TestObjectProvider(Loader, driver, createFluidEntrypoint);
-		const initialContainer = await testObjectProvider.makeTestContainer();
-
-		const counterFromContainer = async (container: IContainer): Promise<SharedCounter> => {
-			const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
-			const counter = await dataObject.getSharedObject<SharedCounter>(CounterFactory.Type);
-			assert(counter !== undefined);
-			return counter;
-		};
-
-		const initialState: State = {
-			clients: [
-				{
-					container: initialContainer,
-					counter: await counterFromContainer(initialContainer),
-				},
-			],
-			currentMaxConfigVersion: 0,
-			random,
-			testObjectProvider,
-		};
-
-		const assertConsistent = (state: State): void => {
-			for (const { counter } of state.clients) {
-				counter.verifyNoMismatchedFormats();
-			}
-
-			if (state.clients.length > 2) {
-				const client0Count = state.clients[0].counter.value;
-				for (const client of state.clients) {
-					assert.equal(client.counter.value, client0Count);
-				}
-			}
-		};
-
-		const finalState = await performFuzzActionsAsync<Operation, State>(
-			generator,
-			{
-				join: async (state, operation) => {
-					const container = await state.testObjectProvider.loadTestContainer({
-						loaderProps: { options: { counterConfig: operation.config } },
-					});
-					const counter = await counterFromContainer(container);
-					state.currentMaxConfigVersion = Math.max(
-						state.currentMaxConfigVersion,
-						operation.config.configVersion,
-					);
-					state.clients.push({ counter, container });
-				},
-				leave: async (state, operation) => {
-					const { container } = state.clients[operation.client];
-					container.close();
-					state.clients.splice(operation.client, 1);
-				},
-				increment: async (state, { amount, client }) => {
-					const { counter } = state.clients[client];
-					counter.increment(amount);
-				},
-				synchronize: async (state) => {
-					await state.testObjectProvider.ensureSynchronized();
-					assertConsistent(state);
-				},
 			},
-			initialState,
-			{ saveOnFailure: true, filepath: join(directory, `${seed}.json`) },
 		);
+	};
 
-		await testObjectProvider.ensureSynchronized();
-		assertConsistent(finalState);
-	});
+	const testObjectProvider = new TestObjectProvider(Loader, driver, createFluidEntrypoint);
+	const initialContainer = await testObjectProvider.makeTestContainer();
+
+	const counterFromContainer = async (container: IContainer): Promise<SharedCounter> => {
+		const dataObject = await requestFluidObject<ITestFluidObject>(container, "/");
+		const counter = await dataObject.getSharedObject<SharedCounter>(CounterFactory.Type);
+		assert(counter !== undefined);
+		return counter;
+	};
+
+	const initialState: State = {
+		clients: [
+			{
+				container: initialContainer,
+				counter: await counterFromContainer(initialContainer),
+			},
+		],
+		currentMaxConfigVersion: 0,
+		random,
+		testObjectProvider,
+	};
+
+	const assertConsistent = (state: State): void => {
+		for (const { counter } of state.clients) {
+			counter.verifyNoMismatchedFormats();
+		}
+
+		if (state.clients.length > 2) {
+			const client0Count = state.clients[0].counter.value;
+			for (const client of state.clients) {
+				assert.equal(client.counter.value, client0Count);
+			}
+		}
+	};
+
+	const finalState = await performFuzzActionsAsync<Operation, State>(
+		generator,
+		{
+			join: async (state, operation) => {
+				const container = await state.testObjectProvider.loadTestContainer({
+					loaderProps: { options: { counterConfig: operation.config } },
+				});
+				const counter = await counterFromContainer(container);
+				state.currentMaxConfigVersion = Math.max(
+					state.currentMaxConfigVersion,
+					operation.config.configVersion,
+				);
+				state.clients.push({ counter, container });
+			},
+			leave: async (state, operation) => {
+				const { container } = state.clients[operation.client];
+				container.close();
+				state.clients.splice(operation.client, 1);
+			},
+			increment: async (state, { amount, client }) => {
+				const { counter } = state.clients[client];
+				counter.increment(amount);
+			},
+			synchronize: async (state) => {
+				await state.testObjectProvider.ensureSynchronized();
+				assertConsistent(state);
+			},
+		},
+		initialState,
+		{ saveOnFailure: true, filepath: join(directory, `${seed}.json`) },
+	);
+
+	await testObjectProvider.ensureSynchronized();
+	assertConsistent(finalState);
 }
 
 const testCount = 100;
@@ -527,15 +553,22 @@ describe.only("Persisted Config Fuzz", () => {
 		}
 	});
 
+	// Note: it would be great to run these fuzz tests without entire e2e infrastructure--
+	// doing so adds a lot of execution time overhead and we could get similar coverage with
+	// a reasonably authentic stack (e.g. variant of mock with reconnection that also supports
+	// a 'summarize in current state and add new client').
+	// This is roughly the purpose of the generic DDS harness.
 	for (let seed = 0; seed < testCount; seed++) {
-		runFuzzTestCase(seed, takeAsync(100, makeGenerator()));
+		it(`seed ${seed}`, async () => {
+			await runFuzzTestCase(seed, takeAsync(200, makeGenerator()));
+		});
 	}
 
-	describe.only(`replay seed from file`, () => {
-		const seed = 47;
+	it.skip(`replay seed from file`, async () => {
+		const seed = 4;
 		const filepath = join(directory, `${seed}.json`);
 		const operations: Operation[] = JSON.parse(readFileSync(filepath).toString());
 		const generator = asyncGeneratorFromArray(operations);
-		runFuzzTestCase(seed, generator);
+		await runFuzzTestCase(seed, generator);
 	});
 });

@@ -194,7 +194,7 @@ describe("PersistedFormatConfigStore", () => {
 						store.submit({ dummy: 0 }, undefined);
 						const server = new TestServer();
 						for (const [contents, localOpMetadata] of submitLocalMessage.calls) {
-							store.tryProcessOp(
+							store.process(
 								server.makeSequencedDocumentMessage({ contents }),
 								true,
 								localOpMetadata,
@@ -220,7 +220,7 @@ describe("PersistedFormatConfigStore", () => {
 				store.submit({ dummy: 0 }, undefined);
 				const server = new TestServer();
 				for (const [contents, localOpMetadata] of submitLocalMessage.calls) {
-					store.tryProcessOp(
+					store.process(
 						server.makeSequencedDocumentMessage({ contents }),
 						true,
 						localOpMetadata,
@@ -236,7 +236,7 @@ describe("PersistedFormatConfigStore", () => {
 				store.submit({ dummy: 0 }, undefined);
 				const server = new TestServer();
 				for (const [contents, localOpMetadata] of submitLocalMessage.calls) {
-					store.tryProcessOp(
+					store.process(
 						server.makeSequencedDocumentMessage({ contents }),
 						true,
 						localOpMetadata,
@@ -253,7 +253,7 @@ describe("PersistedFormatConfigStore", () => {
 				store.submit({ dummy: 1 }, undefined);
 				const server = new TestServer();
 				for (const [contents, localOpMetadata] of submitLocalMessage.calls) {
-					store.tryProcessOp(
+					store.process(
 						server.makeSequencedDocumentMessage({ contents, refSeq: 1 }),
 						true,
 						localOpMetadata,
@@ -318,7 +318,7 @@ describe("PersistedFormatConfigStore", () => {
 						store.submit({ dummy: 0 }, undefined);
 						const server = new TestServer();
 						for (const [contents, localOpMetadata] of submitLocalMessage.calls) {
-							store.tryProcessOp(
+							store.process(
 								server.makeSequencedDocumentMessage({ contents }),
 								true,
 								localOpMetadata,
@@ -354,7 +354,7 @@ describe("PersistedFormatConfigStore", () => {
 					if (contents.type === "upgrade") {
 						mostRecentResubmissionSeq = message.sequenceNumber;
 					}
-					store.tryProcessOp(message, true, localOpMetadata);
+					store.process(message, true, localOpMetadata);
 				}
 
 				assert.notEqual(mostRecentResubmissionSeq, 0);
@@ -365,7 +365,7 @@ describe("PersistedFormatConfigStore", () => {
 				});
 
 				// Simulate another client sending a message which advances the MSN.
-				store.tryProcessOp(
+				store.process(
 					server.makeSequencedDocumentMessage({
 						contents: { dummy: 2 },
 						minSeq: mostRecentResubmissionSeq + 1,
@@ -396,13 +396,13 @@ describe("PersistedFormatConfigStore", () => {
 				if (contents.type === "upgrade") {
 					mostRecentResubmissionSeq = message.sequenceNumber;
 				}
-				store.tryProcessOp(message, true, localOpMetadata);
+				store.process(message, true, localOpMetadata);
 			}
 
 			// Simulate another client sending a message with refSeq below
 			// the most recent seq requiring resubmission
 			assert.equal(
-				store.tryProcessOp(
+				store.process(
 					server.makeSequencedDocumentMessage({
 						contents: { dummy: 2 },
 						refSeq: mostRecentResubmissionSeq - 1,
@@ -495,7 +495,7 @@ describe("PersistedFormatConfigStore", () => {
 				store.submit({ dummy: 1 }, undefined);
 				const server = new TestServer();
 				for (const [contents, localOpMetadata] of submitLocalMessage.calls) {
-					store.tryProcessOp(
+					store.process(
 						server.makeSequencedDocumentMessage({ contents, refSeq: 1 }),
 						true,
 						localOpMetadata,
@@ -519,7 +519,7 @@ describe("PersistedFormatConfigStore", () => {
 				store.submit({ dummy: 1 }, undefined);
 				const server = new TestServer();
 				for (const [contents, localOpMetadata] of submitLocalMessage.calls) {
-					store.tryProcessOp(
+					store.process(
 						server.makeSequencedDocumentMessage({ contents, refSeq: 1 }),
 						true,
 						localOpMetadata,
