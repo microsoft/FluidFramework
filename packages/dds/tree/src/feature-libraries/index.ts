@@ -31,6 +31,7 @@ export {
 	parentField,
 	EditableTreeEvents,
 	on,
+	contextSymbol,
 } from "./editable-tree";
 
 export {
@@ -49,6 +50,7 @@ export {
 	ArrayLikeMut,
 	cursorFromContextualData,
 	cursorsFromContextualData,
+	ContextuallyTypedFieldData,
 } from "./contextuallyTyped";
 
 export { ForestIndex } from "./forestIndex";
@@ -112,6 +114,10 @@ export {
 	ValueConstraint,
 	TypedSchema,
 	revisionMetadataSourceFromInfo,
+	ViewSchema,
+	ViewSchemaCollection,
+	FieldViewSchema,
+	TreeViewSchema,
 } from "./modular-schema";
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";

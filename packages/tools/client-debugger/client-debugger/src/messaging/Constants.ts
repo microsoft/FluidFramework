@@ -4,7 +4,7 @@
  */
 
 /**
- * The message {@link IDebuggerMessage.source} for all messages posted by the Client Debugger.
+ * The message {@link ISourcedDebuggerMessage.source} for all messages posted by the Client Debugger.
  *
  * @public
  */
