@@ -27,6 +27,7 @@ import { IAlfredTenant, ISession, NetworkError } from "@fluidframework/server-se
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
+import * as bodyparser from "body-parser";
 import { Constants, getSession } from "../../../utils";
 
 export function create(
@@ -98,6 +99,7 @@ export function create(
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
 		}),
+		bodyparser.json( {limit: "5mb"} ),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
