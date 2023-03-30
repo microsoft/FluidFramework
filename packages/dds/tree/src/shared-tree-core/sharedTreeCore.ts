@@ -56,7 +56,7 @@ export interface ISharedTreeCoreEvents {
 // TODO: How should the format version be determined?
 const formatVersion = 0;
 // TODO: Organize this to be adjacent to persisted types.
-const summarizablesTreekey = "indexes";
+const summarizablesTreeKey = "indexes";
 
 /**
  * Events which result from the state of the tree changing.
@@ -178,14 +178,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			);
 		}
 
-		builder.addWithStats(summarizablesTreekey, summarizableBuilder.getSummaryTree());
+		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
 		return builder.getSummaryTree();
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
 		const loadSummaries = this.summarizables.map(async (summaryElement) =>
 			summaryElement.load(
-				scopeStorageService(services, summarizablesTreekey, summaryElement.key),
+				scopeStorageService(services, summarizablesTreeKey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
 			),
 		);
