@@ -1175,8 +1175,8 @@ export class ModularEditBuilder
 		this.applyChange(composedChange);
 	}
 
-	public generateId(): ChangesetLocalId {
-		return this.idAllocator();
+	public generateId(count?: number): ChangesetLocalId {
+		return this.idAllocator(count);
 	}
 
 	private buildChangeMap(
