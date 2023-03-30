@@ -13,6 +13,12 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @alpha
+export enum AllowedUpdateType {
+    None = 0,
+    SchemaCompatible = 1
+}
+
+// @alpha
 type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];
 
 // @alpha
@@ -205,14 +211,20 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 }[Mode];
 
 // @alpha
+export const contextSymbol: unique symbol;
+
+// @alpha
+export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
+
+// @alpha
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ContextuallyTypedNodeDataObject {
     readonly [typeNameSymbol]?: string;
     readonly [valueSymbol]?: Value;
-    [key: FieldKey]: ContextuallyTypedNodeData | undefined;
-    [key: string]: ContextuallyTypedNodeData | undefined;
+    [key: FieldKey]: ContextuallyTypedFieldData;
+    [key: string]: ContextuallyTypedFieldData;
 }
 
 // @alpha
@@ -326,6 +338,7 @@ type _dummy = 0;
 // @alpha
 export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
     readonly [proxyTargetSymbol]: object;
+    readonly context: EditableTreeContext;
     deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
@@ -337,6 +350,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
+    readonly [contextSymbol]: EditableTreeContext;
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     // (undocumented)
@@ -561,6 +575,12 @@ export interface FieldUpPath {
 }
 
 // @alpha
+export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends FieldSchema {
+    // (undocumented)
+    readonly kind: Kind;
+}
+
+// @alpha
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
 }][_dummy];
@@ -775,7 +795,7 @@ export interface ISubscribable<E extends Events<E>> {
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
 
 // @alpha
-export function isWritableArrayLike(data: ContextuallyTypedNodeData | undefined): data is MarkedArrayLike<ContextuallyTypedNodeData>;
+export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ITreeCursor {
@@ -1291,6 +1311,16 @@ export interface SchemaPolicy {
     readonly defaultTreeSchema: TreeSchema;
 }
 
+// @alpha
+export interface SchematizeConfiguration {
+    readonly allowedSchemaModifications: AllowedUpdateType;
+    readonly initialTree: ContextuallyTypedFieldData;
+    readonly schema: ViewSchemaCollection;
+}
+
+// @alpha
+export function schematizeView(tree: ISharedTreeView, config: SchematizeConfiguration): ISharedTreeView;
+
 // @alpha (undocumented)
 export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
@@ -1458,6 +1488,10 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 export interface TreeValue extends Serializable {
 }
 
+// @alpha (undocumented)
+export interface TreeViewSchema extends TreeSchema {
+}
+
 // @alpha
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
     [key: string]: TypedSchema.FieldSchemaTypeInfo;
@@ -1520,7 +1554,7 @@ interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
 }
 
 // @alpha
-function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & {
+function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(globalFieldSchema: [GlobalFieldKey, FieldViewSchema][], ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & ViewSchemaCollection & {
     treeSchemaObject: {
         [schema in T[number] as schema["typeInfo"]["name"]]: schema;
     };
@@ -1655,6 +1689,14 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
+}
+
+// @alpha
+export interface ViewSchemaCollection {
+    // (undocumented)
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
 }
 
 // @alpha

@@ -29,7 +29,7 @@ export {
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage } from "./Messages";
+export { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 export {
 	GetContainerListMessage,
 	RegistryChangeMessage,
@@ -41,7 +41,13 @@ export {
 	AudienceSummaryMessageData,
 	AudienceSummaryMessage,
 } from "./AudienceMessages";
-export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
+export {
+	ITimestampedTelemetryEvent,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
+} from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,

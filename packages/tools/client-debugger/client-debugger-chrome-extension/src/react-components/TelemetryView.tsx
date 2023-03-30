@@ -7,12 +7,14 @@ import React from "react";
 
 import {
 	handleIncomingMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
+	ITimestampedTelemetryEvent,
+	TelemetryHistoryMessage,
 	TelemetryEventMessage,
 } from "@fluid-tools/client-debugger";
-import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { _TelemetryView } from "@fluid-tools/client-debugger-view";
+import { extensionMessageSource } from "../messaging";
 import { useMessageRelay } from "./MessageRelayContext";
 
 const loggingContext = "EXTENSION(DebuggerPanel:Telemetry)";
@@ -25,7 +27,7 @@ const loggingContext = "EXTENSION(DebuggerPanel:Telemetry)";
 export function TelemetryView(): React.ReactElement {
 	const messageRelay = useMessageRelay();
 
-	const [telemetryEvents, setTelemetryEvents] = React.useState<ITelemetryBaseEvent[]>([]);
+	const [telemetryEvents, setTelemetryEvents] = React.useState<ITimestampedTelemetryEvent[]>([]);
 
 	React.useEffect(() => {
 		/**
@@ -34,7 +36,12 @@ export function TelemetryView(): React.ReactElement {
 		const inboundMessageHandlers: InboundHandlers = {
 			["TELEMETRY_EVENT"]: (untypedMessage) => {
 				const message: TelemetryEventMessage = untypedMessage as TelemetryEventMessage;
-				setTelemetryEvents([message.data.contents, ...telemetryEvents]);
+				setTelemetryEvents((currentEvents) => [...message.data.contents, ...currentEvents]);
+				return true;
+			},
+			["TELEMETRY_HISTORY"]: (untypedMessage) => {
+				const message: TelemetryHistoryMessage = untypedMessage as TelemetryHistoryMessage;
+				setTelemetryEvents(message.data.contents);
 				return true;
 			},
 		};
@@ -42,7 +49,7 @@ export function TelemetryView(): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
@@ -50,10 +57,17 @@ export function TelemetryView(): React.ReactElement {
 
 		messageRelay.on("message", messageHandler);
 
+		// Request all log history
+		messageRelay.postMessage({
+			source: extensionMessageSource,
+			type: "GET_TELEMETRY_HISTORY",
+			data: undefined,
+		});
+
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, telemetryEvents, setTelemetryEvents]);
+	}, [messageRelay, setTelemetryEvents]);
 
 	return <_TelemetryView telemetryEvents={telemetryEvents}></_TelemetryView>;
 }

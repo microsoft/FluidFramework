@@ -26,14 +26,7 @@ import {
 	mapCursorField,
 	moveToDetachedField,
 } from "../core";
-import {
-	Index,
-	SummaryElement,
-	SummaryElementParser,
-	SummaryElementStringifier,
-	IndexEvents,
-} from "../shared-tree-core";
-import { ISubscribable } from "../events";
+import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
@@ -42,18 +35,10 @@ import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 const treeBlobKey = "ForestTree";
 
 /**
- * Index which provides an editable forest for the current state for the document.
- *
- * Maintains part of the document in memory, but can fetch more on demand.
- *
- * TODO: support for partial checkouts.
- *
- * Used to capture snapshots of document for summaries.
+ * Provides methods for summarizing and loading a forest.
  */
-export class ForestIndex implements Index, SummaryElement {
+export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
-
-	public readonly summaryElement?: SummaryElement = this;
 
 	private readonly cursor: ITreeSubscriptionCursor;
 
@@ -62,7 +47,6 @@ export class ForestIndex implements Index, SummaryElement {
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
-		events: ISubscribable<IndexEvents<unknown>>,
 		private readonly forest: IEditableForest,
 	) {
 		this.cursor = this.forest.allocateCursor();
@@ -74,9 +58,6 @@ export class ForestIndex implements Index, SummaryElement {
 			// For now we are not chunking the data, and instead put it in a single blob:
 			// TODO: use lower level API to avoid blob manager?
 			return this.runtime.uploadBlob(IsoBuffer.from(treeText));
-		});
-		events.on("newLocalState", (changeDelta) => {
-			this.forest.applyDelta(changeDelta);
 		});
 	}
 

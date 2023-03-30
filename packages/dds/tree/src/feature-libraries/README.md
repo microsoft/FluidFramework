@@ -14,7 +14,7 @@ Some important libraries in here:
 -   Families of changes/edits which can be applies for various field kinds
 -   `ChangeRebaser` implementations for these change families
 -   Implementations of Forest (Currently just [object-forest](./object-forest/README.md)).
--   `Index` implementations, including [schemaIndex](./schemaIndex.ts), [editManagerIndex](./editManagerIndex.ts) and [forestIndex](./forestIndex.ts).
+-   `Index` summarizers, including [schemaSummarizer](./schemaSummarizer.ts), and [forestSummarizer](./forestSummarizer.ts).
 
 ## Future Plans
 
