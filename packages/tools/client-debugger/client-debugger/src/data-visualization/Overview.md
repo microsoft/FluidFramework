@@ -21,7 +21,7 @@ When initializing the debugger, the initializing application may optionally prov
 If they do not specify this, then the tooling will not generate any visual descriptors.
 
 To initiate "rendering" (generating visual summary trees), the consumer passes the `GET_ROOT_DATA_VISUALIZATIONS` to request the "root" visual summary.
-This call will return a flat list of "handle" nodes, which include a unique identifier assigned by the system for the corresponding DDS.
+This call will return a flat list of "handle" nodes (represented as a Record), which include a unique identifier assigned by the system for the corresponding DDS.
 
 The handle node is not useful on its own, but consumers can use its ID to request a visual summary of the corresponding DDS from the system.
 The `GET_DATA_VISUALIZATION` message is used to request such a "rendering" for an individual DDS.
@@ -36,7 +36,7 @@ participant Consumer
 
 Application->>Debugger: Initialize debugger
 Consumer-->>Debugger: "GET_ROOT_DATA_VISUALIZATIONS"
-Debugger->>Consumer: "ROOT_DATA_VISUALIZATIONS" ([handle1, handle2, ..., handleN])
+Debugger->>Consumer: "ROOT_DATA_VISUALIZATIONS" ({ key1: handle1, key2: handle2, ..., keyN: handleN })
 loop renderTrees
 	Consumer->>Consumer: renderTree(handle.id)
 end
@@ -82,7 +82,7 @@ participant Consumer
 
 Application->>Debugger: Initialize debugger
 Consumer-->>Debugger: "GET_ROOT_DATA_VISUALIZATIONS"
-Debugger->>Consumer: "ROOT_DATA_VISUALIZATIONS" ([rootMapHandle])
+Debugger->>Consumer: "ROOT_DATA_VISUALIZATIONS" ({ rootMap: rootMapHandle })
 loop renderTrees
 	Consumer->>Consumer: renderTree(rootMapID)
 end
