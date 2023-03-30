@@ -163,13 +163,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	}
 
 	/**
-	 * Ensure all tracked containers are synchronized
-	 */
-	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
-		await this.processSynchronized(...containers);
-	}
-
-	/**
 	 * Ensure all tracked containers are synchronized with a time limit
 	 *
 	 * @deprecated - this method is equivalent to @see {@link LoaderContainerTracker.ensureSynchronized}, please configure the test timeout instead
@@ -178,7 +171,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		timeoutDuration: number | undefined,
 		...containers: IContainer[]
 	) {
-		await this.processSynchronized(...containers);
+		await this.ensureSynchronized(...containers);
 	}
 
 	/**
@@ -200,7 +193,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * - Trailing NoOp is tracked and don't count as pending ops.
 	 */
-	private async processSynchronized(...containers: IContainer[]) {
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
 		const resumed = this.resumeProcessing(...containers);
 
 		let waitingSequenceNumberSynchronized = false;
