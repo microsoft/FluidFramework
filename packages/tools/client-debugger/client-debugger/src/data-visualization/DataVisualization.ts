@@ -122,16 +122,6 @@ export class DataVisualizerGraph
 	implements IDisposable
 {
 	/**
-	 * {@inheritDoc IFluidClientDebugger.containerData}
-	 */
-	private readonly rootData: Record<string, IFluidLoadable>;
-
-	/**
-	 * Policy object for visualizing different kinds of shared objects.
-	 */
-	private readonly visualizers: SharedObjectVisualizers;
-
-	/**
 	 * Map of registered {@link VisualizerNode}s, keyed by their corresponding {@link FluidObjectId}.
 	 *
 	 * @privateRemarks TODO: Dependency tracking so we don't leak memory.
@@ -153,13 +143,17 @@ export class DataVisualizerGraph
 	};
 
 	public constructor(
-		rootData: Record<string, IFluidLoadable>,
-		visualizers: SharedObjectVisualizers,
+		/**
+		 * {@inheritDoc IFluidClientDebugger.containerData}
+		 */
+		private readonly rootData: Record<string, IFluidLoadable>,
+
+		/**
+		 * Policy object for visualizing different kinds of shared objects.
+		 */
+		private readonly visualizers: SharedObjectVisualizers,
 	) {
 		super();
-
-		this.rootData = rootData;
-		this.visualizers = visualizers;
 
 		this.visualizerNodes = new Map<FluidObjectId, VisualizerNode>();
 
@@ -296,38 +290,6 @@ export class DataVisualizerGraph
  */
 export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> implements IDisposable {
 	/**
-	 * The Fluid object whose data will be emitted in visualized form when requested / whenever its data is updated.
-	 */
-	public readonly sharedObject: ISharedObject;
-
-	/**
-	 * Label corresponding to the shared object.
-	 *
-	 * @remarks Generally, this will be the associated property name, map key, etc.
-	 */
-	public readonly label: string;
-
-	/**
-	 * Callback for visualizing {@link VisualizerNode.sharedObject}.
-	 * Encapsulates the policies for rendering different kinds of DDSs.
-	 */
-	private readonly visualizeSharedObject: VisualizeSharedObject;
-
-	/**
-	 * Registers some child handle to a Fluid object for future rendering.
-	 *
-	 * @remarks
-	 *
-	 * Called during {@link VisualizerNode.render} whenever a Fluid handle is encountered.
-	 * Ensures that the consumer of this object's visual tree will be able to request a rendering of the handle's
-	 * corresponding DDS as needed.
-	 */
-	private readonly registerHandle: (
-		handle: IFluidHandle,
-		label: string,
-	) => Promise<FluidObjectId | undefined>;
-
-	/**
 	 * Handler for {@link VisualizerNode.sharedObject}'s "op" event.
 	 * Will broadcast an updated visual tree representation of the DDS's data via the
 	 * {@link SharedObjectListenerEvents | "update"} event.
@@ -343,17 +305,39 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	private _disposed: boolean;
 
 	public constructor(
-		sharedObject: ISharedObject,
-		label: string,
-		visualizeSharedObject: VisualizeSharedObject,
-		registerHandle: (handle: IFluidHandle, label: string) => Promise<FluidObjectId | undefined>,
+		/**
+		 * The Fluid object whose data will be emitted in visualized form when requested / whenever its data is updated.
+		 */
+		public readonly sharedObject: ISharedObject,
+
+		/**
+		 * Label corresponding to the shared object.
+		 *
+		 * @remarks Generally, this will be the associated property name, map key, etc.
+		 */
+		public readonly label: string,
+
+		/**
+		 * Callback for visualizing {@link VisualizerNode.sharedObject}.
+		 * Encapsulates the policies for rendering different kinds of DDSs.
+		 */
+		private readonly visualizeSharedObject: VisualizeSharedObject,
+
+		/**
+		 * Registers some child handle to a Fluid object for future rendering.
+		 *
+		 * @remarks
+		 *
+		 * Called during {@link VisualizerNode.render} whenever a Fluid handle is encountered.
+		 * Ensures that the consumer of this object's visual tree will be able to request a rendering of the handle's
+		 * corresponding DDS as needed.
+		 */
+		private readonly registerHandle: (
+			handle: IFluidHandle,
+			label: string,
+		) => Promise<FluidObjectId | undefined>,
 	) {
 		super();
-
-		this.sharedObject = sharedObject;
-		this.label = label;
-		this.visualizeSharedObject = visualizeSharedObject;
-		this.registerHandle = registerHandle;
 
 		this.sharedObject.on("op", this.onOpHandler);
 
