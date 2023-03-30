@@ -126,17 +126,28 @@ export interface IGarbageCollectionSnapshotData {
 /**
  * Contains the necessary information to allow DDSes to do incremental summaries
  */
-export interface IIncrementalContext {
-	sequenceNumber: number;
-	previousSequenceNumber: number;
-	parentPath: string;
+export interface IIncrementalSummaryContext {
+	/**
+	 * The sequence number of the summary generated that will be sent to the server.
+	 */
+	wipSummarySequenceNumber: number;
+	/**
+	 * The sequence number of the most recent summary that was acknowledged by the server.
+	 */
+	lastAckedSummarySequenceNumber: number;
+	/**
+	 * The path to the runtime/datastore/dds that is used to generate summary handles
+	 * Note: Summary handles are nodes of the summary tree that point to previous parts of the last successful summary
+	 * instead of being a blob or tree node
+	 */
+	summaryPath: string;
 }
 
 export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
-	incrementalContext?: IIncrementalContext,
+	incrementalSummaryContext?: IIncrementalSummaryContext,
 ) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {

@@ -7,7 +7,7 @@ import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
-	IIncrementalContext,
+	IIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
@@ -92,7 +92,7 @@ export interface IChannel extends IFluidLoadable {
 		fullTree?: boolean,
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
-		incrementalContext?: IIncrementalContext,
+		incrementalSummaryContext?: IIncrementalSummaryContext,
 	): Promise<ISummaryTreeWithStats>;
 
 	/**

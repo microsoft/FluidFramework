@@ -12,7 +12,7 @@ import {
 	CreateSummarizerNodeSource,
 	SummarizeInternalFn,
 	ITelemetryContext,
-	IIncrementalContext,
+	IIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -160,17 +160,26 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		const incrementalContext: IIncrementalContext = {
-			sequenceNumber: this.wipReferenceSequenceNumber ?? this._changeSequenceNumber,
-			previousSequenceNumber: this._latestSummary?.referenceSequenceNumber ?? 0,
-			parentPath: this._latestSummary?.fullPath.path ?? "",
-		};
+		// This assert is the same the other 0a1x1 assert `isSummaryInProgress`, the only difference is that typescript
+		// complains if this assert isn't done this way
+		assert(
+			this.wipReferenceSequenceNumber !== undefined,
+			0x1a1 /* "summarize should not be called when not tracking the summary" */,
+		);
+		const incrementalSummaryContext: IIncrementalSummaryContext | undefined =
+			this._latestSummary !== undefined
+				? {
+						wipSummarySequenceNumber: this.wipReferenceSequenceNumber,
+						lastAckedSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
+						summaryPath: this._latestSummary.fullPath.path,
+				  }
+				: undefined;
 
 		const result = await this.summarizeInternalFn(
 			fullTree,
 			true,
 			telemetryContext,
-			incrementalContext,
+			incrementalSummaryContext,
 		);
 		this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
 		if (result.pathPartsForChildren !== undefined) {
