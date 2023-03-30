@@ -110,8 +110,6 @@ export interface VersionedSerializedIdCompressor {
 export interface SerializedIdCompressor extends VersionedSerializedIdCompressor {
 	/** The cluster capacity of this compressor */
 	readonly clusterCapacity: number;
-	/** The number of reserved IDs in this compressor */
-	readonly reservedIdCount: number;
 	/** All sessions except the local session. */
 	readonly sessions: readonly SerializedSessionData[];
 	/** All clusters in the compressor in the order they were created. */

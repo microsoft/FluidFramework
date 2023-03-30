@@ -307,33 +307,13 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 
 	/**
 	 * @param localSessionId - the `IdCompressor`'s current local session ID.
-	 * @param reservedIdCount - the number of IDs that will be known by this compressor without relying on consensus.
-	 * The reserved ID count for a given session must be constant for any compressor that contains IDs from that session
-	 * (i.e. any DDS that uses the ID compressor must have the same reservedIdCount forever). Compressors with different
-	 * reserved ID counts will fail to synchronize their IDs.
 	 * {@link generateStableId}.
 	 */
 	public constructor(
 		public readonly localSessionId: SessionId,
-		public readonly reservedIdCount: number,
 		private readonly logger?: ITelemetryLogger,
 	) {
-		assert(reservedIdCount >= 0, 0x483 /* reservedIdCount must be non-negative */);
 		this.localSession = this.createSession(localSessionId);
-		if (reservedIdCount > 0) {
-			const clusterCapacity = this.clusterCapacity;
-			this.clusterCapacity = reservedIdCount;
-			const reservedIdRange: IdCreationRange = {
-				sessionId: reservedSessionId,
-				ids: {
-					first: -1 as UnackedLocalId,
-					last: -reservedIdCount as UnackedLocalId,
-				},
-			};
-			// Reserved final IDs are implicitly finalized and no one locally created them, so finalizing immediately is safe.
-			this.finalizeCreationRange(reservedIdRange);
-			this.clusterCapacity = clusterCapacity;
-		}
 	}
 
 	/**
@@ -359,20 +339,6 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 		};
 		this.sessions.set(sessionId, session);
 		return session;
-	}
-
-	/**
-	 * Return the nth reserved ID.
-	 * @param index - the index of the ID to return
-	 */
-	public getReservedId(index: number): SessionSpaceCompressedId & FinalCompressedId {
-		if (index < 0 || index >= this.reservedIdCount) {
-			fail("Reserved Id index out of bounds");
-		}
-
-		// All reserved IDs are contiguous and finalized during the Compressor's construction, therefore they are always the lowest
-		// final IDs, beginning at 0
-		return index as SessionSpaceCompressedId & FinalCompressedId;
 	}
 
 	/**
@@ -1599,7 +1565,6 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 			"_versionedSerializedIdCompressor"
 		> = {
 			version: currentWrittenVersion,
-			reservedIdCount: this.reservedIdCount,
 			clusterCapacity: this.clusterCapacity,
 			sessions: serializedSessions,
 			clusters: serializedClusters,
@@ -1657,7 +1622,6 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 
 		const {
 			clusterCapacity,
-			reservedIdCount,
 			sessions: serializedSessions,
 			clusters: serializedClusters,
 		} = serialized;
@@ -1675,7 +1639,7 @@ export class IdCompressor implements IIdCompressorCore, IIdCompressor {
 			localSessionId = newSessionIdMaybe;
 		}
 
-		const compressor = new IdCompressor(localSessionId, reservedIdCount);
+		const compressor = new IdCompressor(localSessionId);
 		compressor.clusterCapacity = clusterCapacity;
 
 		const localOverridesInverse = new Map<string, LocalCompressedId>();

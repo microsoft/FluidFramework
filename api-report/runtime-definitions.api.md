@@ -552,7 +552,6 @@ overriddenId?: FinalCompressedId
 export interface SerializedIdCompressor extends VersionedSerializedIdCompressor {
     readonly clusterCapacity: number;
     readonly clusters: readonly SerializedCluster[];
-    readonly reservedIdCount: number;
     readonly sessions: readonly SerializedSessionData[];
 }
 

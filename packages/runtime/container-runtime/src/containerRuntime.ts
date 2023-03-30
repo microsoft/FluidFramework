@@ -476,11 +476,6 @@ export enum CompressionAlgorithms {
 }
 
 /**
- * Default count of reserved Ids that the runtime IdCompressor will initialize itself with if enabled.
- */
-export const defaultIdCompressorReservedIdCount = 10;
-
-/**
  * @deprecated
  * Untagged logger is unsupported going forward. There are old loaders with old ContainerContexts that only
  * have the untagged logger, so to accommodate that scenario the below interface is used. It can be removed once
@@ -1149,11 +1144,7 @@ export class ContainerRuntime
 			this.idCompressor =
 				idCompressorSnapshot !== undefined
 					? IdCompressor.deserialize(idCompressorSnapshot, createSessionId())
-					: new IdCompressor(
-							createSessionId(),
-							defaultIdCompressorReservedIdCount,
-							this.logger,
-					  );
+					: new IdCompressor(createSessionId(), this.logger);
 		}
 
 		this.maxConsecutiveReconnects =
