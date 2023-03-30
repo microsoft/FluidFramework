@@ -27,14 +27,6 @@ export interface AudienceMemberViewProps {
 // @public
 export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
 
-// @public
-export function FluidClientDebuggers(props: FluidClientDebuggersProps): React_2.ReactElement;
-
-// @public
-export interface FluidClientDebuggersProps {
-    renderOptions?: RenderOptions;
-}
-
 export { IMessageRelay }
 
 // @public
@@ -42,9 +34,6 @@ export const MessageRelayContext: React_2.Context<IMessageRelay<IDebuggerMessage
 
 // @public
 export type RenderChild = (childObject: unknown) => React_2.ReactElement;
-
-// @public
-export function renderClientDebuggerView(targetElement: Element, messageRelayFactory: () => IMessageRelay): Promise<void>;
 
 // @public
 export interface RenderOptions {
@@ -62,7 +51,7 @@ export function RootView(props: RootViewProps): React_2.ReactElement;
 
 // @public
 export interface RootViewProps {
-    messageRelayFactory: () => IMessageRelay;
+    messageRelay: IMessageRelay;
 }
 
 // @public
