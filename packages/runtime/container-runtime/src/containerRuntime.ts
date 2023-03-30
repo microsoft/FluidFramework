@@ -410,6 +410,8 @@ export interface IContainerRuntimeOptions {
 	 *
 	 * By default, the feature is disabled. If enabled from options, the `Fluid.ContainerRuntime.DisableGroupedBatching`
 	 * flag can be used to disable it at runtime.
+	 *
+	 * @experimental Not ready for use.
 	 */
 	readonly enableGroupedBatching?: boolean;
 }

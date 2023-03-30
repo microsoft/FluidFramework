@@ -241,6 +241,7 @@ export class RunningSummarizer implements IDisposable {
 		// Purpose of this argument is for back-compat
 		// It can be set to false once loader version is past 2.0.0-internal.1.2.0 (https://github.com/microsoft/FluidFramework/pull/11832)
 		// Expectation when this is false is that the consumer of this class will call "handleOp" explicitly
+		// Tracked by AB#3883
 		if (listenToDeltaManagerOps) {
 			// Listen for ops
 			this.runtime.deltaManager.on("op", (op) => {
