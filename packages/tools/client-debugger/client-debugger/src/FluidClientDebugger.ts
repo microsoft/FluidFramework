@@ -457,7 +457,7 @@ export class FluidClientDebugger
 		globalThis.removeEventListener?.("message", this.windowMessageHandler);
 
 		// Dispose of data visualization graph
-		// Note: no need to unbind associated event handler, since we're disposing the object altogether.
+		this.dataVisualizer?.off("update", this.dataUpdateHandler);
 		this.dataVisualizer?.dispose();
 		this.dataVisualizer = undefined;
 
