@@ -9,7 +9,7 @@ trigger: none
 pr: none
 schedules:
 - cron: "0 14 * * *" # Run every day at 7 am PST
-  displayName: LTS Branch Daily Test Run
+  displayName: LTS Branch Daily Stress Test Run
   branches:
     include:
     - lts
