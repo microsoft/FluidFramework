@@ -39,7 +39,7 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
-        npm i -g pnpm
+        npm i -g pnpm@7.30.5
         pnpm i
         npm run build:compile
         popd
