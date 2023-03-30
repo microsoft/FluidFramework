@@ -18,7 +18,6 @@ import { SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IContainer } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
 import {
 	createAndAttachContainer,
 	createLoader,
@@ -91,7 +90,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		return this.props.logger;
 	}
 
-	private async ensureContainerConnectedWriteMode(container: Container): Promise<void> {
+	private async ensureContainerConnectedWriteMode(container: IContainer): Promise<void> {
 		const resolveIfActive = (res: () => void) => {
 			if (container.deltaManager.active) {
 				res();
