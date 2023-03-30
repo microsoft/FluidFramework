@@ -11,7 +11,7 @@ import { LocalReferenceCollection, LocalReferencePosition } from "./localReferen
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
 import { ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
-import { ITrackingGroup, TrackingGroup, UnorderedTrackingGroup } from "./mergeTreeTracking";
+import { ITrackingGroup, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { matchProperties, PropertySet } from "./properties";
 import { DetachedReferencePosition } from "./referencePositions";
@@ -217,7 +217,7 @@ export function appendToMergeTreeDeltaRevertibles(
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
 	revertibles.forEach((r) => {
 		r.trackingGroup.tracked.forEach((t) => {
-			t.trackingCollection.unlink(r.trackingGroup as any as TrackingGroup);
+			t.trackingCollection.unlink(r.trackingGroup);
 			// remove untracked local references
 			if (t.trackingCollection.empty && !t.isLeaf()) {
 				t.getSegment()?.localRefs?.removeLocalRef(t);
@@ -233,7 +233,7 @@ function revertLocalInsert(
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
 		assert(
-			tracked.trackingCollection.unlink(revertible.trackingGroup as any as TrackingGroup),
+			tracked.trackingCollection.unlink(revertible.trackingGroup),
 			0x3f1 /* tracking group removed */,
 		);
 		assert(tracked.isLeaf(), 0x3f2 /* inserts must track segments */);
@@ -252,7 +252,7 @@ function revertLocalRemove(
 		const tracked = revertible.trackingGroup.tracked[0];
 
 		assert(
-			tracked.trackingCollection.unlink(revertible.trackingGroup as any as TrackingGroup),
+			tracked.trackingCollection.unlink(revertible.trackingGroup),
 			0x3f3 /* tracking group removed */,
 		);
 
@@ -349,7 +349,7 @@ function revertLocalAnnotate(
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
 		const unlinked = tracked.trackingCollection.unlink(
-			revertible.trackingGroup as any as TrackingGroup,
+			revertible.trackingGroup,
 		);
 		assert(unlinked && tracked.isLeaf(), 0x3f7 /* annotates must track segments */);
 		if (toRemovalInfo(tracked) === undefined) {

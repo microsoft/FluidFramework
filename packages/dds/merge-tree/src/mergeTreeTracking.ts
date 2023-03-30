@@ -109,19 +109,13 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 			// be inaccessible.
 			//
 			// This cast should be removed in a future breaking release
-			trackable.trackingCollection.link(this as any as TrackingGroup);
+			trackable.trackingCollection.link(this);
 		}
 	}
 
 	public unlink(trackable: Trackable): boolean {
 		if (this.trackedSet.delete(trackable)) {
-			// Unsafe cast here is necessary to avoid a breaking change to
-			// `TrackingGroupCollection`. `UnorderedTrackingGroup` and `TrackingGroup`
-			// _do_ overlap in every way except for private fields which should
-			// be inaccessible.
-			//
-			// This cast should be removed in a future breaking release
-			trackable.trackingCollection.unlink(this as any as TrackingGroup);
+			trackable.trackingCollection.unlink(this);
 			return true;
 		}
 		return false;
@@ -129,16 +123,23 @@ export class UnorderedTrackingGroup implements ITrackingGroup {
 }
 
 export class TrackingGroupCollection {
-	public readonly trackingGroups: Set<TrackingGroup>;
+	private readonly _trackingGroups: Set<ITrackingGroup>;
 
-	constructor(private readonly trackable: Trackable) {
-		this.trackingGroups = new Set<TrackingGroup>();
+	public get trackingGroups(): Set<TrackingGroup> {
+		// Cast here is necessary to avoid a breaking change to
+		// `TrackingGroupCollection`. Ideally we could just return
+		// `Set<ITrackingGroup>`
+		return this._trackingGroups as Set<TrackingGroup>;
 	}
 
-	public link(trackingGroup: TrackingGroup): void {
+	constructor(private readonly trackable: Trackable) {
+		this._trackingGroups = new Set<ITrackingGroup>();
+	}
+
+	public link(trackingGroup: ITrackingGroup): void {
 		if (trackingGroup) {
-			if (!this.trackingGroups.has(trackingGroup)) {
-				this.trackingGroups.add(trackingGroup);
+			if (!this._trackingGroups.has(trackingGroup)) {
+				this._trackingGroups.add(trackingGroup);
 			}
 
 			if (!trackingGroup.has(this.trackable)) {
@@ -147,37 +148,37 @@ export class TrackingGroupCollection {
 		}
 	}
 
-	public unlink(trackingGroup: TrackingGroup): boolean {
-		if (this.trackingGroups.has(trackingGroup)) {
+	public unlink(trackingGroup: ITrackingGroup): boolean {
+		if (this._trackingGroups.has(trackingGroup)) {
 			if (trackingGroup.has(this.trackable)) {
 				trackingGroup.unlink(this.trackable);
 			}
-			this.trackingGroups.delete(trackingGroup);
+			this._trackingGroups.delete(trackingGroup);
 			return true;
 		}
 
 		return false;
 	}
 
-	public copyTo(trackable: Trackable) {
-		this.trackingGroups.forEach((sg) => {
+	public copyTo(trackable: Trackable): void {
+		this._trackingGroups.forEach((sg) => {
 			trackable.trackingCollection.link(sg);
 		});
 	}
 
 	public get empty(): boolean {
-		return this.trackingGroups.size === 0;
+		return this._trackingGroups.size === 0;
 	}
 
 	public matches(trackingCollection: TrackingGroupCollection): boolean {
 		if (
 			!trackingCollection ||
-			this.trackingGroups.size !== trackingCollection.trackingGroups.size
+			this._trackingGroups.size !== trackingCollection._trackingGroups.size
 		) {
 			return false;
 		}
-		for (const tg of this.trackingGroups.values()) {
-			if (!trackingCollection.trackingGroups.has(tg)) {
+		for (const tg of this._trackingGroups.values()) {
+			if (!trackingCollection._trackingGroups.has(tg)) {
 				return false;
 			}
 		}
