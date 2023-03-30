@@ -27,6 +27,17 @@ export interface ILoadTestConfig {
 		min: number;
 		max: number;
 	};
+	containerClose?: {
+		min: number;
+		max: number;
+		/**
+		 * Stash ops using Container.closeAndGetPendingLocalState() and resubmit them in new Container
+		 */
+		stashedOps?: {
+			min: number;
+			max: number;
+		};
+	}
 	opsSendType?: "allClientsConcurrentReadWrite" | "staggeredReadWrite";
 
 	/**
@@ -90,14 +101,6 @@ export interface ILoadTestConfig {
 		 * By default, all ops will be large ops (`largeOpRate` is 1).
 		 */
 		largeOpRate?: number;
-	};
-
-	/**
-	 * Stash ops using Container.closeAndGetPendingLocalState() and resubmit them in new Container
-	 */
-	stashedOps?: {
-		min: number;
-		max: number;
 	};
 }
 

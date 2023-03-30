@@ -256,15 +256,6 @@ async function runnerProcess(
 			// If undefined then no fault injection.
 			const faultInjection = runConfig.testConfig.faultInjectionMs;
 			if (faultInjection) {
-				stashedOpP = scheduleContainerClose(
-					container,
-					runConfig,
-					test,
-					faultInjection.min,
-					faultInjection.max,
-					runConfig.testConfig.stashedOps?.min,
-					runConfig.testConfig.stashedOps?.max,
-				);
 				scheduleFaultInjection(
 					documentServiceFactory,
 					container,
@@ -273,6 +264,18 @@ async function runnerProcess(
 					faultInjection.max,
 				);
 			}
+            const containerClose = runConfig.testConfig.containerClose;
+			if (containerClose) {
+				stashedOpP = scheduleContainerClose(
+					container,
+					runConfig,
+					test,
+					containerClose.min,
+					containerClose.max,
+					containerClose.stashedOps?.min,
+					containerClose.stashedOps?.max,
+				);
+            }
 			const offline = runConfig.testConfig.offline;
 			if (offline) {
 				scheduleOffline(
