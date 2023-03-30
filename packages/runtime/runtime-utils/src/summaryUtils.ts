@@ -349,9 +349,9 @@ export class TelemetryContext implements ITelemetryContext {
     }
 
     /**
-     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.setAll}
+     * {@inheritDoc @fluidframework/runtime-definitions#ITelemetryContext.setMultiple}
      */
-    setAll(
+    setMultiple(
         prefix: string,
         property: string,
         values: Record<string, TelemetryEventPropertyType>,

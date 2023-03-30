@@ -335,7 +335,7 @@ export interface ITelemetryContext {
      * @param property - property name of the telemetry data being tracked (ex: "Options")
      * @param values - A set of values to attribute to this summary telemetry data.
      */
-    setAll(
+    setMultiple(
         prefix: string,
         property: string,
         values: Record<string, TelemetryEventPropertyType>,
