@@ -100,7 +100,6 @@ describe("MergeTree remove", () => {
 					),
 				);
 			},
-			only: true,
 		});
 	}
 
