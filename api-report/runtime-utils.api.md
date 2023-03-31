@@ -230,7 +230,7 @@ export class TelemetryContext implements ITelemetryContext {
     // (undocumented)
     set(prefix: string, property: string, value: TelemetryEventPropertyType): void;
     // (undocumented)
-    setAll(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
+    setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
 
 // @public (undocumented)
