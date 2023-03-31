@@ -2045,7 +2045,7 @@ export class Container
 
 	private processSignal(message: ISignalMessage) {
 		// No clientId indicates a system signal message.
-		if (message.clientId === null) {
+		if (this.protocolHandler.shouldProcessSignal(message)) {
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;
