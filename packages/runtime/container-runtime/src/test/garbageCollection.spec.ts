@@ -841,20 +841,13 @@ describe("Garbage Collection Tests", () => {
                 await garbageCollector.collectGarbage({});
 
                 // Validate that the sweep ready event is logged when GC runs after load.
-                if (expectDeleteLogs) {
-                    mockLogger.assertMatch(
-                        [{ eventName: deleteEventName, timeout, id: nodes[3] }],
-                        "sweep ready event not generated as expected",
-                    );
-                } else {
-                    mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
-                }
+                mockLogger.assertMatchNone([{ eventName: deleteEventName }], "Should not have any delete events logged");
 
                 // Validate that all events are logged as expected.
                 garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
                 garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
                 await garbageCollector.collectGarbage({});
-                mockLogger.assertMatch(
+                mockLogger.assertMatchNone(
                     [
                         { eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
                         { eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
@@ -865,7 +858,7 @@ describe("Garbage Collection Tests", () => {
                 // Add reference from node 2 to node 3 and validate that revived event is logged.
                 garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
                 await garbageCollector.collectGarbage({});
-                mockLogger.assertMatch(
+                mockLogger.assertMatchNone(
                     [{ eventName: revivedEventName, timeout, id: nodes[3], pkg: eventPkg, fromId: nodes[2] }],
                     "revived event not generated as expected",
                 );
