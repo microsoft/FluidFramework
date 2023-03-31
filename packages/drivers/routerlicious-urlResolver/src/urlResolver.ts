@@ -139,9 +139,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 	}
 
 	public async getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string): Promise<string> {
-		const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
-
-		const parsedUrl = parse(fluidResolvedUrl.url);
+		const parsedUrl = parse(resolvedUrl.url);
 		assert(!!parsedUrl.pathname, 0x0b9 /* "PathName should exist" */);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");
 		assert(!!tenantId, 0x0ba /* "Tenant id should exist" */);
