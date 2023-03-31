@@ -764,7 +764,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
     // (undocumented)
-    readonly identifiedNodes: ReadonlyMap<number, EditableTree>;
+    readonly identifiedNodes: ReadonlyMap<number, IdentifiedNode<typeof identifierKeySymbol>>;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;

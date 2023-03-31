@@ -7,6 +7,7 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
+	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -45,7 +46,7 @@ import {
 	IdentifiedNode,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { brand, compareFiniteNumbers, TransactionResult } from "../util";
+import { brand, TransactionResult } from "../util";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -171,7 +172,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	// TODO: doc
-	readonly identifiedNodes: ReadonlyMap<number, IdentifiedNode<typeof identifierKeySymbol>>;
+	readonly identifiedNodes: ReadonlyMap<string, IdentifiedNode<typeof identifierKey> | undefined>;
 }
 
 /**
@@ -229,7 +230,7 @@ export class SharedTree
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKeySymbol>;
+	public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>;
 	public readonly transaction: ISharedTreeView["transaction"];
 
 	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
@@ -270,16 +271,10 @@ export class SharedTree
 		};
 
 		this.context = getEditableTreeContext(forest, this.editor);
-		this.identifiedNodes = new IdentifierIndex(
-			this.context,
-			identifierKeySymbol,
-			(x: unknown | number): x is number => typeof x === "number",
-			compareFiniteNumbers,
-		);
+		this.identifiedNodes = new IdentifierIndex(this.context, identifierKey);
 		this.changeEvents.on("newLocalState", (changeDelta) => {
 			this.forest.applyDelta(changeDelta);
-			this.identifiedNodes.applyDelta(changeDelta);
-			this.events.emit("afterBatch");
+			this.finishBatch();
 		});
 	}
 
@@ -324,6 +319,16 @@ export class SharedTree
 			super.processCore(message, local, localOpMetadata);
 		}
 	}
+
+	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+		await super.loadCore(services);
+		this.finishBatch();
+	}
+
+	private finishBatch(): void {
+		this.events.emit("afterBatch");
+		this.identifiedNodes.applyDelta();
+	}
 }
 
 /**
@@ -360,14 +365,14 @@ export class SharedTreeFactory implements IChannelFactory {
 class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
 	public readonly context: EditableTreeContext;
-	public readonly identifiedNodes: IdentifierIndex<number, typeof identifierKeySymbol>;
+	public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		identifiedNodes: IdentifierIndex<number, typeof identifierKeySymbol>, // TODO: this is cloned _during_ construction, whereas forest/schema are cloned _before_. Make consistent. Probably pull out a separate clone function
+		identifiedNodes: IdentifierIndex<typeof identifierKey>, // TODO: this is cloned _during_ construction, whereas forest/schema are cloned _before_. Make consistent. Probably pull out a separate clone function
 	) {
 		this.context = getEditableTreeContext(forest, this.editor);
 		this.identifiedNodes = identifiedNodes.clone(this.context);
