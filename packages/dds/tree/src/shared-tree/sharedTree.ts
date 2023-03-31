@@ -332,7 +332,7 @@ export class SharedTree
 	}
 
 	private finishBatch(): void {
-		this.identifiedNodes.loadIdentifiers(this.context);
+		this.identifiedNodes.scanIdentifiers(this.context);
 		this.events.emit("afterBatch");
 	}
 }
@@ -385,7 +385,7 @@ class SharedTreeFork implements ISharedTreeFork {
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
-			this.identifiedNodes.loadIdentifiers(this.context);
+			this.identifiedNodes.scanIdentifiers(this.context);
 			this.events.emit("afterBatch");
 		});
 	}

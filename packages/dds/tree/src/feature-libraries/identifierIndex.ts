@@ -24,16 +24,24 @@ function isIdentifier(id: unknown | Identifier): id is Identifier {
 	return typeof id === "string";
 }
 
+/**
+ * The tree schema for the identifier primitive
+ */
 export const identifierSchema = TypedSchema.tree("identifier", { value: ValueSchema.String });
+
+/**
+ * The field schema for fields which contain identifiers (see {@link identifierSchema})
+ */
 export const identifierFieldSchema = TypedSchema.field(valueFieldKind, identifierSchema);
 
 /**
- * The identifier index allows any nodes that have a special identifier field to be looked up via a query.
+ * The identifier index allows nodes that have a special identifier field to be looked up via a query.
  */
 export class IdentifierIndex<TField extends GlobalFieldKey>
 	implements ReadonlyMap<Identifier, EditableTree>
 {
 	private readonly identifierFieldKeySymbol: GlobalFieldKeySymbol;
+	// TODO: The data structure that holds the nodes can likely be optimized to better support cloning
 	private readonly nodes: Map<Identifier, EditableTree>;
 
 	public constructor(
@@ -44,7 +52,36 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 		this.nodes = new Map(identifiers);
 	}
 
-	public loadIdentifiers(context: EditableTreeContext): void {
+	/**
+	 * Returns true if the given schema contains the global identifier field, otherwise false
+	 */
+	public identifiersAreInSchema(schema: SchemaData): boolean {
+		const fieldSchema = schema.globalFieldSchema.get(this.identifierFieldKey);
+		if (fieldSchema === undefined) {
+			return false;
+		}
+
+		// TODO: is there a better way to check "the field schema is `identifierFieldSchema`"?
+		{
+			if (fieldSchema.kind.identifier !== identifierFieldSchema.kind.identifier) {
+				return false;
+			}
+
+			if (fieldSchema.types === undefined) {
+				return false;
+			}
+
+			return compareSets({ a: fieldSchema.types, b: identifierFieldSchema.types });
+		}
+	}
+
+	/**
+	 * Search the tree for all nodes with identifiers, and record them in this index for lookup.
+	 * This should be called each time the tree changes; each call to scan forgets all existing identifiers.
+	 * @param context - the editable tree context in which to search for identifiers
+	 */
+	// TODO: This can be optimized by responding to deltas/changes to the tree, rather than rescanning the whole tree every time
+	public scanIdentifiers(context: EditableTreeContext): void {
 		if (this.identifiersAreInSchema(context.schema)) {
 			this.nodes.clear();
 			for (let i = 0; i < context.root.length; i++) {
@@ -55,6 +92,9 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 		}
 	}
 
+	/**
+	 * Create a copy of this index which can be mutated without affecting this one.
+	 */
 	public clone(): IdentifierIndex<TField> {
 		return new IdentifierIndex(this.identifierFieldKey, new Map(this.nodes.entries()));
 	}
@@ -116,26 +156,6 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 			for (let i = 0; i < f.length; i++) {
 				yield* this.findIdentifiers(f.getNode(i));
 			}
-		}
-	}
-
-	public identifiersAreInSchema(schema: SchemaData): boolean {
-		const fieldSchema = schema.globalFieldSchema.get(this.identifierFieldKey);
-		if (fieldSchema === undefined) {
-			return false;
-		}
-
-		// TODO: is there a better way to check "the field schema is `identifierFieldSchema`"?
-		{
-			if (fieldSchema.kind.identifier !== identifierFieldSchema.kind.identifier) {
-				return false;
-			}
-
-			if (fieldSchema.types === undefined) {
-				return false;
-			}
-
-			return compareSets({ a: fieldSchema.types, b: identifierFieldSchema.types });
 		}
 	}
 }
