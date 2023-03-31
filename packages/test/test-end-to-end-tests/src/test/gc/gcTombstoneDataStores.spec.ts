@@ -32,7 +32,11 @@ import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfac
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
-import { MockLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	MockLogger,
+	sessionStorageConfigProvider,
+} from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils";
 
@@ -73,6 +77,18 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	};
 
 	let provider: ITestObjectProvider;
+	let mockLocalStorage: Record<string, ConfigTypes> = {};
+	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+	before(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+	});
+	after(() => {
+		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+	});
+	afterEach(() => {
+		mockLocalStorage = {};
+	});
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
@@ -212,6 +228,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			"Send ops fails for tombstoned datastores in summarizing container loaded after sweep timeout",
 			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" }],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 
@@ -242,6 +259,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			"Send ops fails for tombstoned datastores in summarizing container loaded before sweep timeout",
 			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" }],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
 						sweepTimeoutMs - remainingTimeUntilSweepMs,
@@ -302,6 +320,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizer, summaryVersion, summarizingContainer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				// Load this container from a summary that had not yet tombstoned the datastore so that the datastore loads.
@@ -362,6 +381,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizingContainer, summarizer, summaryVersion } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
 						sweepTimeoutMs - remainingTimeUntilSweepMs,
@@ -552,6 +572,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
@@ -630,6 +651,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async function () {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -679,6 +701,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// NOTE: IT IS RESET AT THE END OF THE TEST
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				testContainerConfig.runtimeOptions!.gcOptions!.gcTombstoneGeneration = 1;
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
@@ -772,6 +795,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
@@ -904,6 +928,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{ eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" },
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
 						sweepTimeoutMs - remainingTimeUntilSweepMs,
@@ -1002,6 +1027,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
+			mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 			const { unreferencedId, summarizingContainer, summarizer } =

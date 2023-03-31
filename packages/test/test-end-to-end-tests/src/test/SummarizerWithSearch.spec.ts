@@ -33,7 +33,11 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	sessionStorageConfigProvider,
+	TelemetryNullLogger,
+} from "@fluidframework/telemetry-utils";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -342,6 +346,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 	}
 
 	describe("Realize DataStore during Search while waiting for Summary Ack", () => {
+		let mockLocalStorage: Record<string, ConfigTypes> = {};
 		beforeEach(async () => {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			// Wrap the document service factory in the driver so that the `uploadSummaryCb` function is called every
@@ -358,8 +363,17 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			mainDataStore._root.set("anytest", "anyvalue");
 			await waitForContainerConnection(mainContainer);
 		});
+		const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+		before(() => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+		});
+		after(() => {
+			sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+		});
 
 		it("Test Assert 0x1a6 should not happen - small repro", async () => {
+			mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 			const summarizerClient = await getNewSummarizer();
 			// Wait for all pending ops to be processed by all clients.
 			await provider.ensureSynchronized();
@@ -392,6 +406,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		});
 
 		it("Test Assert 0x1a6 should not happen with MixinSearch", async () => {
+			mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
+
 			const summarizerClient1 = await getNewSummarizer();
 
 			const DataStoreA = await dataStoreFactory1.createInstance(
@@ -442,6 +458,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			latestAckedSummary = undefined;
 			latestSummaryContext = undefined;
 			latestUploadedSummary = undefined;
+			mockLocalStorage = {};
 		});
 	});
 });

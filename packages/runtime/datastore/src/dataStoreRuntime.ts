@@ -102,8 +102,7 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
-	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
-{
+	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
 	/**
 	 * @deprecated - Instantiate the class using its constructor instead.
 	 *
@@ -1108,7 +1107,7 @@ export class FluidDataStoreRuntime
 		if (this.abortSummarizerIfLocalChanges) {
 			const error = DataProcessingError.create(
 				"Summarizer with local changes - DataStoreRuntime",
-				"unexpectedActionReceived",
+				"identifiedLocalChangeInSummarizer",
 				undefined,
 				{
 					eventName,

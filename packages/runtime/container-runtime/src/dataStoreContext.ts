@@ -142,8 +142,7 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContext, IDisposable
-{
+	implements IFluidDataStoreContext, IDisposable {
 	public get packagePath(): readonly string[] {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
 		return this.pkg;
@@ -348,7 +347,7 @@ export abstract class FluidDataStoreContext
 				.then((runtime) => {
 					runtime.dispose();
 				})
-				.catch((error) => {});
+				.catch((error) => { });
 		}
 	}
 
@@ -911,10 +910,9 @@ export abstract class FluidDataStoreContext
 		if (this.abortSummarizerIfLocalChanges) {
 			const error = DataProcessingError.create(
 				"Summarizer with local changes - DataStoreContext",
-				"unexpectedActionReceived",
+				"identifiedLocalChangeInSummarizer",
 				undefined,
 				{
-					eventName,
 					type,
 					fluidDataStoreId: {
 						value: this.id,
@@ -1196,8 +1194,7 @@ export class LocalFluidDataStoreContext extends LocalFluidDataStoreContextBase {
  */
 export class LocalDetachedFluidDataStoreContext
 	extends LocalFluidDataStoreContextBase
-	implements IFluidDataStoreContextDetached
-{
+	implements IFluidDataStoreContextDetached {
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(props);
 		this.detachedRuntimeCreation = true;

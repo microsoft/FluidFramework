@@ -29,6 +29,7 @@ import {
 import { delay } from "@fluidframework/common-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { ConfigTypes, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils";
 
 /**
@@ -170,11 +171,25 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	};
 
 	describe("Using swept data stores not allowed", () => {
+		let mockLocalStorage: Record<string, ConfigTypes> = {};
+		const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+		before(() => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+		});
+		after(() => {
+			sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+		});
+		afterEach(() => {
+			mockLocalStorage = {};
+		});
+
 		// If this test starts failing due to runtime is closed errors try first adjusting `sweepTimeoutMs` above
 		itExpects(
 			"Send ops fails for swept datastores in summarizing container loaded before sweep timeout",
 			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed" }],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { summarizerDataObject, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 
@@ -199,6 +214,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			"Send signals fails for swept datastores in summarizing container loaded before sweep timeout",
 			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Changed" }],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
+
 				const { summarizerDataObject, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 
@@ -221,6 +238,19 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	describe("Loading swept data stores not allowed", () => {
+		let mockLocalStorage: Record<string, ConfigTypes> = {};
+		const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+		before(() => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+		});
+		after(() => {
+			sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+		});
+		afterEach(() => {
+			mockLocalStorage = {};
+		});
+
 		/**
 		 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
 		 * but the test containers are wired up to route requests to this function.
@@ -247,6 +277,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
@@ -319,6 +350,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const {
 					unreferencedId,
 					summarizingContainer,
@@ -375,6 +407,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
+				mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 				const {
 					unreferencedId,
 					summarizingContainer,
@@ -412,6 +445,18 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	describe("Deleted data stores in summary", () => {
+		let mockLocalStorage: Record<string, ConfigTypes> = {};
+		const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+		before(() => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+		});
+		after(() => {
+			sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+		});
+		afterEach(() => {
+			mockLocalStorage = {};
+		});
 		/**
 		 * Validates that the given data store state is correct in the summary:
 		 * - It should be deleted from the data store summary tree.
@@ -449,6 +494,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		}
 
 		it("updates deleted data store state in the summary", async () => {
+			mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 			const deletedDataStoreNodePath = `/${unreferencedId}`;

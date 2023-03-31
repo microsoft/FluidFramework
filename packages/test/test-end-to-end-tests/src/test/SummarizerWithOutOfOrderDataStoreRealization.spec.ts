@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat, getContainerRuntimeApi } from "@fluidframework/test-version-utils";
 import { IContainerRuntimeBase, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
+import { ConfigTypes, sessionStorageConfigProvider } from "@fluidframework/telemetry-utils";
 import { pkgVersion } from "../packageVersion";
 
 interface ProvideSearchContent {
@@ -192,6 +193,19 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject1;
 
+	let mockLocalStorage: Record<string, ConfigTypes> = {};
+	const oldRawConfig = sessionStorageConfigProvider.value.getRawConfig;
+	before(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		sessionStorageConfigProvider.value.getRawConfig = (name) => mockLocalStorage[name];
+	});
+	after(() => {
+		sessionStorageConfigProvider.value.getRawConfig = oldRawConfig;
+	});
+	afterEach(() => {
+		mockLocalStorage = {};
+	});
+
 	const createContainer = async (): Promise<IContainer> => {
 		return provider.createContainer(runtimeFactory);
 	};
@@ -214,6 +228,7 @@ describeNoCompat("Summary where data store is loaded out of order", (getTestObje
 	});
 
 	it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async () => {
+		mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 		const summarizerClient = await createSummarizer(provider, mainContainer);
 		await provider.ensureSynchronized();
 		mainDataStore.matrix.setCell(0, 0, "value");
