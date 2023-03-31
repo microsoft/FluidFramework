@@ -38,6 +38,7 @@ import {
 	lookupTreeSchema,
 	neverTree,
 	SchemaDataAndPolicy,
+	lookupGlobalFieldSchema,
 } from "@fluid-internal/tree";
 import {
 	IDataCreationOptions,
@@ -191,10 +192,18 @@ function getNewNodeData(
 		const defaultValue: PrimitiveValue = defaultPrimitiveValues[typeName];
 		newData[valueSymbol] = defaultValue;
 	} else {
-		newTreeSchema.localFields.forEach((field, key) => {
-			if (field.kind.identifier === valueKind.identifier) {
-				assert(field.types?.size === 1, "Polymorphic types are not supported yet");
-				newData[key] = getNewNodeData(schema, [...field.types][0]);
+		newTreeSchema.localFields.forEach((fieldSchema, fieldKey) => {
+			if (fieldSchema.kind.identifier === valueKind.identifier) {
+				assert(fieldSchema.types?.size === 1, "Polymorphic types are not supported yet");
+				newData[fieldKey] = getNewNodeData(schema, [...fieldSchema.types][0]);
+			}
+		});
+		newTreeSchema.globalFields.forEach((globalFieldKey) => {
+			const fieldSchema = lookupGlobalFieldSchema(schema, globalFieldKey);
+			if (fieldSchema.kind.identifier === valueKind.identifier) {
+				assert(fieldSchema.types?.size === 1, "Polymorphic types are not supported yet");
+				const globalFieldKeySymbol = symbolFromKey(globalFieldKey);
+				newData[globalFieldKeySymbol] = getNewNodeData(schema, [...fieldSchema.types][0]);
 			}
 		});
 	}
