@@ -22,11 +22,13 @@ import { IValueChanged, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedCell } from "@fluidframework/cell";
 
 const stringId = "sharedStringKey";
+const string2Id = "sharedString2Key";
 const dirId = "sharedDirKey";
 const cellId = "cellKey";
 const mapId = "mapKey";
 const registry: ChannelFactoryRegistry = [
 	[stringId, SharedString.getFactory()],
+	[string2Id, SharedString.getFactory()],
 	[dirId, SharedDirectory.getFactory()],
 	[cellId, SharedCell.getFactory()],
 	[mapId, SharedMap.getFactory()],
@@ -45,6 +47,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let sharedString: SharedString;
+	let sharedString2: SharedString;
 	let sharedDir: SharedDirectory;
 	let sharedCell: SharedCell;
 	let sharedMap: SharedMap;
@@ -69,6 +72,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 		sharedString = await dataObject.getSharedObject<SharedString>(stringId);
+		sharedString2 = await dataObject.getSharedObject<SharedString>(string2Id);
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(dirId);
 		sharedCell = await dataObject.getSharedObject<SharedCell>(cellId);
 		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
@@ -76,6 +80,9 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		changedEventData = [];
 		sharedString.on("sequenceDelta", (changed, _local, _target) => {
+			changedEventData.push(changed);
+		});
+		sharedString2.on("sequenceDelta", (changed, _local, _target) => {
 			changedEventData.push(changed);
 		});
 		sharedDir.on("valueChanged", (changed, _local, _target) => {
@@ -217,9 +224,8 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[7]}`,
 		);
 
-		// sharedcell.delete - last of actual ops sent to os
 		assert.equal(changedEventData[8], undefined);
-		// starting actual rolling back
+
 		assert.equal(changedEventData[9], 5);
 
 		// segments are split up at some point - reason for multiple events
@@ -249,5 +255,73 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 
 		assert.equal(changedEventData[16].key, "key1");
 		assert.equal(changedEventData[16].previousValue, 3);
+	});
+
+	it("Should handle rollback on multiple instances of the same DDS type", () => {
+		sharedString.insertText(0, "abcde");
+		sharedMap.set("key", 1);
+		sharedString2.insertText(0, "12345");
+
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedMap.delete("key");
+				sharedString2.removeRange(0, 2);
+				sharedString.insertText(1, "123");
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false, "Container disposed");
+		assert.equal(sharedString.getText(), "abcde");
+		assert.equal(sharedString2.getText(), "12345");
+		assert.equal(sharedMap.size, 1);
+		assert.equal(sharedMap.has("key"), true);
+		assert.equal(sharedMap.get("key"), 1);
+
+		assert.equal(changedEventData.length, 9);
+
+		assert(
+			changedEventData[0] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[0]}`,
+		);
+
+		assert.equal(changedEventData[1].key, "key");
+		assert.equal(changedEventData[1].previousValue, undefined);
+
+		assert(
+			changedEventData[2] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[2]}`,
+		);
+
+		// rollback
+		assert.equal(changedEventData[3].key, "key");
+		assert.equal(changedEventData[3].previousValue, 1);
+
+		assert(
+			changedEventData[4] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[4]}`,
+		);
+
+		assert(
+			changedEventData[5] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[5]}`,
+		);
+
+		assert(
+			changedEventData[6] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[6]}`,
+		);
+
+		assert(
+			changedEventData[7] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[7]}`,
+		);
+
+		assert.equal(changedEventData[8].key, "key");
+		assert.equal(changedEventData[8].previousValue, undefined);
 	});
 });
