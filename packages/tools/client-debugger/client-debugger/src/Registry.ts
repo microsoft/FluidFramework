@@ -17,6 +17,7 @@ import {
 	postMessagesToWindow,
 	RegistryChangeMessage,
 } from "./messaging";
+import { VisualizeSharedObject } from "./data-visualization";
 
 // TODOs:
 // - Clear registry on `window.beforeunload`, to ensure we do not hold onto stale resources.
@@ -73,6 +74,19 @@ export interface FluidClientDebuggerProps {
 	 * debugger instances.
 	 */
 	containerNickname?: string;
+
+	/**
+	 * (optional) Configurations for generating visual representations of
+	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link FluidClientDebuggerProps.containerData}.
+	 *
+	 * @remarks
+	 *
+	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
+	 * default visualization implementations.
+	 *
+	 * Provided visualizer configurations will be used in place of system defaults if specified.
+	 */
+	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 /**
