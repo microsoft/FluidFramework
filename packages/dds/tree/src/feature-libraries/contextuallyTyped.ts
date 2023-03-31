@@ -313,7 +313,7 @@ function shallowCompatibilityTest(
 	// For now, consider all not explicitly typed objects shallow compatible.
 	// This will require explicit differentiation in polymorphic cases rather than automatic structural differentiation.
 
-	// Special case primitive schema to to not be compatible with data with local fields.
+	// Special case primitive schema to not be compatible with data with local fields.
 	if (isPrimitive(schema)) {
 		if (fieldKeysFromData(data).length > 0) {
 			return false;
