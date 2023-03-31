@@ -72,6 +72,7 @@ describe("connectionManager", () => {
 		// Arrange
 		const connectionManager = new ConnectionManager(
 			() => mockDocumentService,
+			() => true,
 			client as IClient,
 			true /* reconnectAllowed */,
 			mockLogger,
@@ -102,6 +103,7 @@ describe("connectionManager", () => {
 		// Arrange
 		const connectionManager = new ConnectionManager(
 			() => mockDocumentService,
+			() => true,
 			client as IClient,
 			true /* reconnectAllowed */,
 			mockLogger,

@@ -106,6 +106,7 @@ describe("Container Runtime", () => {
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service,
+						() => false,
 						client as IClient,
 						false,
 						DebugLogger.create("fluid:testConnectionManager"),
@@ -308,6 +309,7 @@ describe("Container Runtime", () => {
 				(props: IConnectionManagerFactoryArgs) =>
 					new ConnectionManager(
 						() => service2,
+						() => false,
 						client as IClient,
 						true,
 						DebugLogger.create("fluid:testConnectionManager"),
