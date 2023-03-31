@@ -78,7 +78,7 @@ type GcWithPrivates = IGarbageCollector & {
 
 describe("Garbage Collection Tests", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-
+	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4"];
 
@@ -271,8 +271,9 @@ describe("Garbage Collection Tests", () => {
 				baseSnapshot?: ISnapshotTree,
 				gcBlobsMap?: Map<string, IGarbageCollectionState | IGarbageCollectionDetailsBase>,
 			) => {
-				const sweepTimeoutMs = mode === "sweep" ? timeout : undefined;
-				return createGarbageCollector({ baseSnapshot }, gcBlobsMap, { sweepTimeoutMs });
+				return createGarbageCollector({ baseSnapshot }, gcBlobsMap, {
+					sweepTimeoutMs: mode === "sweep" ? timeout : undefined,
+				});
 			};
 
 			it("doesn't generate events for referenced nodes", async () => {
@@ -707,8 +708,6 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		describe("SweepReady events (summarizer container)", () => {
-			const sweepTimeoutMs =
-				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 			summarizerContainerTests(
 				sweepTimeoutMs,
 				"sweep",
@@ -720,9 +719,6 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		describe("SweepReady events - Delete log disabled (summarizer container)", () => {
-			const sweepTimeoutMs =
-				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
-
 			beforeEach(() => {
 				injectedSettings[disableSweepLogKey] = true;
 			});
@@ -956,8 +952,6 @@ describe("Garbage Collection Tests", () => {
 
 		it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
 			const inactiveTimeoutMs = 500;
-			const sweepTimeoutMs =
-				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 				inactiveTimeoutMs;
 
@@ -1726,5 +1720,47 @@ describe("Garbage Collection Tests", () => {
 
 			checkGCSummaryType(tree2, SummaryType.Handle, "second");
 		});
+	});
+
+	it("Resets gc state when loading from an old snapshot", async () => {
+		// Create GC details for node 3's GC blob whose unreferenced time was > timeout ms ago.
+		// This means this node should time out as soon as its data is loaded.
+		const node3GCDetails: IGarbageCollectionSummaryDetailsLegacy = {
+			gcData: { gcNodes: { "/": [] } },
+			unrefTimestamp: Date.now() - sweepTimeoutMs * 100,
+		};
+		const node3Snapshot = getDummySnapshotTree();
+		const gcBlobId = "node3GCDetails";
+		const attributesBlobId = "attributesBlob";
+		node3Snapshot.blobs[gcTreeKey] = gcBlobId;
+		node3Snapshot.blobs[dataStoreAttributesBlobName] = attributesBlobId;
+
+		// Create a base snapshot that contains snapshot tree of node 3.
+		const channelsTree = getDummySnapshotTree();
+		channelsTree.trees[nodes[3].slice(1)] = node3Snapshot;
+		const baseSnapshot = getDummySnapshotTree();
+		baseSnapshot.trees[channelsTreeName] = channelsTree;
+
+		// Set up the getNodeGCDetails function to return the GC details for node 3 when asked by garbage collector.
+		const gcBlobMap = new Map([
+			[gcBlobId, node3GCDetails],
+			[attributesBlobId, {}],
+		]);
+		const garbageCollector = createGarbageCollector({ baseSnapshot }, gcBlobMap, {
+			sweepTimeoutMs,
+		}) as GcWithPrivates;
+
+		// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
+		const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
+		assert(
+			baseSnapshotData === undefined,
+			"base snapshot should not be defined for old snapshots where we wrote the gc data in the channels",
+		);
+
+		// Initialize from the base state and validate that tombstones has 0 entry because it was discarded.
+		// Deleted nodes should have one entry because it is still used.
+		await garbageCollector.initializeBaseState();
+		assert.strictEqual(garbageCollector.tombstones.length, 0, "Expecting 0 tombstone nodes");
+		assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting 0 deleted nodes");
 	});
 });
