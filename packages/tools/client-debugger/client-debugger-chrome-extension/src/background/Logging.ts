@@ -8,7 +8,7 @@ import { MessageLoggingOptions } from "@fluid-tools/client-debugger";
 /**
  * Background Script context label for logging.
  */
-export const backgroundScriptLoggingContext = "BACKGROUND";
+const backgroundScriptLoggingContext = "BACKGROUND";
 
 /**
  * Configuration for console logging.

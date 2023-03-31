@@ -9,7 +9,7 @@ import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 /**
  * Posts the provided message to the window (globalThis).
  *
- * @param messages - The messages to be posted.
+ * @param messages - The messages to be posted
  * @param loggingOptions - Settings related to logging to console for troubleshooting.
  * If not passed, this function won't log to console before posting the message.
  *
