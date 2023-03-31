@@ -85,7 +85,7 @@ export interface IClient {
 }
 
 /**
- * TODO
+ * A client that has been acknowledged by the sequencer.
  */
 export interface ISequencedClient {
 	/**
@@ -94,7 +94,7 @@ export interface ISequencedClient {
 	client: IClient;
 
 	/**
-	 * The sequence number of the client's join message/op; when the client joined
+	 * The sequence number of the "join" message sent when the client joined the session.
 	 */
 	sequenceNumber: number;
 }
