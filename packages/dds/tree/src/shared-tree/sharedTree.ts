@@ -43,7 +43,7 @@ import {
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
 	IdentifierIndex,
-	IdentifiedNode,
+	EditableTree,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, TransactionResult } from "../util";
@@ -172,7 +172,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	// TODO: doc
-	readonly identifiedNodes: ReadonlyMap<string, IdentifiedNode<typeof identifierKey> | undefined>;
+	readonly identifiedNodes: ReadonlyMap<string, EditableTree>;
 }
 
 /**
@@ -211,10 +211,16 @@ export interface ISharedTreeFork extends ISharedTreeView {
 export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
- * TODO doc
+ * The key for the special identifier field, which allows nodes to be given identifiers that can be used
+ * to find the nodes via the identifier index
  * @alpha
  */
 export const identifierKey: GlobalFieldKey = brand("identifier");
+
+/**
+ * The global field key symbol that corresponds to {@link identifierKey}
+ * @alpha
+ */
 export const identifierKeySymbol = symbolFromKey(identifierKey);
 
 /**
@@ -271,7 +277,7 @@ export class SharedTree
 		};
 
 		this.context = getEditableTreeContext(forest, this.editor);
-		this.identifiedNodes = new IdentifierIndex(this.context, identifierKey);
+		this.identifiedNodes = new IdentifierIndex(identifierKey);
 		this.changeEvents.on("newLocalState", (changeDelta) => {
 			this.forest.applyDelta(changeDelta);
 			this.finishBatch();
@@ -326,8 +332,8 @@ export class SharedTree
 	}
 
 	private finishBatch(): void {
+		this.identifiedNodes.loadIdentifiers(this.context);
 		this.events.emit("afterBatch");
-		this.identifiedNodes.applyDelta();
 	}
 }
 
@@ -375,10 +381,11 @@ class SharedTreeFork implements ISharedTreeFork {
 		identifiedNodes: IdentifierIndex<typeof identifierKey>, // TODO: this is cloned _during_ construction, whereas forest/schema are cloned _before_. Make consistent. Probably pull out a separate clone function
 	) {
 		this.context = getEditableTreeContext(forest, this.editor);
-		this.identifiedNodes = identifiedNodes.clone(this.context);
+		this.identifiedNodes = identifiedNodes.clone();
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
+			this.identifiedNodes.loadIdentifiers(this.context);
 			this.events.emit("afterBatch");
 		});
 	}

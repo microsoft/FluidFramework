@@ -1,0 +1,403 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "assert";
+import {
+	MockFluidDataStoreRuntime,
+	MockEmptyDeltaConnection,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils";
+import {
+	ISharedTreeView,
+	identifierKeySymbol,
+	identifierKey,
+	SharedTreeFactory,
+} from "../../shared-tree";
+import { brand, compareSets } from "../../util";
+import { TestTreeProvider, initializeTestTree } from "../utils";
+import {
+	createField,
+	FieldKinds,
+	identifierFieldSchema,
+	IdentifierIndex,
+	identifierSchema,
+	SchemaAware,
+	singleTextCursor,
+	TypedSchema,
+} from "../../feature-libraries";
+import { rootFieldKey } from "../../core";
+
+const nodeFieldSchema = TypedSchema.field(FieldKinds.optional, "node");
+const nodeSchema = TypedSchema.tree("node", {
+	local: { child: nodeFieldSchema },
+	global: [identifierKeySymbol],
+});
+const nodeSchemaData = SchemaAware.typedSchemaData(
+	[
+		[rootFieldKey, nodeFieldSchema],
+		[identifierKey, identifierFieldSchema],
+	],
+	nodeSchema,
+	identifierSchema,
+);
+
+describe("Node Identifier Index", () => {
+	function assertIds(tree: ISharedTreeView, ids: string[]): void {
+		assert.equal(tree.identifiedNodes.size, ids.length);
+		for (const id of ids) {
+			assert(tree.identifiedNodes.has(id));
+			const node = tree.identifiedNodes.get(id);
+			assert(node !== undefined);
+			const y = node[identifierKeySymbol];
+			assert.equal(node[identifierKeySymbol], id);
+		}
+		assert(compareSets({ a: new Set(tree.identifiedNodes.keys()), b: new Set(ids) }));
+	}
+
+	it("can look up a node that was inserted", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const id = "test id";
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+				},
+			},
+			nodeSchemaData,
+		);
+		assertIds(tree, [id]);
+	});
+
+	it("can look up a deep node that was inserted", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const id = "test id";
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				fields: {
+					child: [
+						{
+							type: nodeSchema.name,
+							fields: {
+								child: [
+									{
+										type: nodeSchema.name,
+										globalFields: {
+											[identifierKey]: [
+												{ type: identifierSchema.name, value: id },
+											],
+										},
+									},
+								],
+							},
+						},
+					],
+				},
+			},
+			nodeSchemaData,
+		);
+		assertIds(tree, [id]);
+	});
+
+	it("can look up multiple nodes that were inserted at once", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const ids = ["a", "b", "c"];
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: ids[0] }],
+				},
+				fields: {
+					child: [
+						{
+							type: nodeSchema.name,
+							globalFields: {
+								[identifierKey]: [{ type: identifierSchema.name, value: ids[1] }],
+							},
+							fields: {
+								child: [
+									{
+										type: nodeSchema.name,
+										globalFields: {
+											[identifierKey]: [
+												{ type: identifierSchema.name, value: ids[2] },
+											],
+										},
+									},
+								],
+							},
+						},
+					],
+				},
+			},
+			nodeSchemaData,
+		);
+		assertIds(tree, ids);
+	});
+
+	it("can look up multiple nodes that were inserted over time", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const idA = "a";
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: idA }],
+				},
+			},
+			nodeSchemaData,
+		);
+
+		const node = tree.identifiedNodes.get(idA);
+		assert(node !== undefined);
+		const idB = "b";
+		node[createField](
+			brand("child"),
+			singleTextCursor({
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: idB }],
+				},
+			}),
+		);
+
+		assertIds(tree, [idA, idB]);
+	});
+
+	it("forgets about nodes that are deleted", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: "test id" }],
+				},
+			},
+			nodeSchemaData,
+		);
+
+		tree.context.root.deleteNodes(0, 1);
+		assertIds(tree, []);
+	});
+
+	it("can look up a node that was loaded from summary", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const id = "test id";
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+				},
+			},
+			nodeSchemaData,
+		);
+		await provider.ensureSynchronized();
+		const summary = await tree.summarize();
+
+		const factory = new SharedTreeFactory();
+		const tree2 = await factory.load(
+			new MockFluidDataStoreRuntime(),
+			factory.type,
+			{
+				deltaConnection: new MockEmptyDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			},
+			factory.attributes,
+		);
+
+		assertIds(tree2, [id]);
+	});
+
+	it("skips nodes which have identifiers, but are not in schema", async () => {
+		// This is missing the global identifier field on the node
+		const nodeSchemaNoIdentifier = TypedSchema.tree("node", {
+			local: { child: nodeFieldSchema },
+		});
+		const nodeSchemaDataNoIdentifier = SchemaAware.typedSchemaData(
+			[
+				[rootFieldKey, nodeFieldSchema],
+				[identifierKey, identifierFieldSchema],
+			],
+			nodeSchemaNoIdentifier,
+			identifierSchema,
+		);
+
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: "test id" }],
+				},
+			},
+			nodeSchemaDataNoIdentifier,
+		);
+		assertIds(tree, []);
+	});
+
+	it("skips nodes which have identifiers of the wrong type", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: {} }],
+				},
+			},
+			nodeSchemaData,
+		);
+		assertIds(tree, []);
+	});
+
+	it("skips nodes which should have identifiers, but do not", async () => {
+		// This is policy choice rather than correctness. It could also fail.
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name }],
+				},
+			},
+			nodeSchemaData,
+		);
+		assertIds(tree, []);
+	});
+
+	it("is disabled if identifier field is not in the global schema", async () => {
+		// This is missing the global identifier field
+		const nodeSchemaDataNoIdentifier = SchemaAware.typedSchemaData(
+			[[rootFieldKey, nodeFieldSchema]],
+			nodeSchema,
+			identifierSchema,
+		);
+
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: "test id" }],
+				},
+			},
+			nodeSchemaDataNoIdentifier,
+		);
+		assertIds(tree, []);
+		const index = tree.identifiedNodes as IdentifierIndex<typeof identifierKey>;
+		assert(!index.identifiersAreInSchema(tree.context.schema));
+	});
+
+	it("respects extra global fields", async () => {
+		// This is missing the global identifier field on the node, but has "extra global fields" enabled
+		const nodeSchemaNoIdentifier = TypedSchema.tree("node", {
+			local: { child: nodeFieldSchema },
+			extraGlobalFields: true,
+		});
+		const nodeSchemaDataNoIdentifier = SchemaAware.typedSchemaData(
+			[
+				[rootFieldKey, nodeFieldSchema],
+				[identifierKey, identifierFieldSchema],
+			],
+			nodeSchemaNoIdentifier,
+			identifierSchema,
+		);
+
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const id = "test id";
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+				},
+			},
+			nodeSchemaDataNoIdentifier,
+		);
+		assertIds(tree, [id]);
+	});
+
+	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
+	it.skip("reacts to schema changes", async () => {
+		// This is missing the global identifier field on the node
+		const nodeSchemaNoIdentifier = TypedSchema.tree("node", {
+			local: { child: nodeFieldSchema },
+		});
+		const nodeSchemaDataNoIdentifier = SchemaAware.typedSchemaData(
+			[
+				[rootFieldKey, nodeFieldSchema],
+				[identifierKey, identifierFieldSchema],
+			],
+			nodeSchemaNoIdentifier,
+			identifierSchema,
+		);
+
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const id = "test id";
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+				},
+			},
+			nodeSchemaData,
+		);
+		assertIds(tree, [id]);
+		tree.storedSchema.update(nodeSchemaDataNoIdentifier);
+		assertIds(tree, []);
+		tree.storedSchema.update(nodeSchemaData);
+		assertIds(tree, [id]);
+	});
+
+	it("correctly forks", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const id = "test id";
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+				},
+			},
+			nodeSchemaData,
+		);
+
+		const fork = tree.fork();
+		fork.context.root.deleteNodes(0, 1);
+		assertIds(tree, [id]);
+		assertIds(fork, []);
+		fork.merge();
+		assertIds(tree, []);
+	});
+});

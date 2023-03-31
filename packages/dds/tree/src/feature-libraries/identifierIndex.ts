@@ -3,95 +3,111 @@
  * Licensed under the MIT License.
  */
 
-import { GlobalFieldKey, GlobalFieldKeySymbol, symbolFromKey, ValueSchema } from "../core";
+import {
+	GlobalFieldKey,
+	GlobalFieldKeySymbol,
+	SchemaData,
+	symbolFromKey,
+	ValueSchema,
+} from "../core";
 import { compareSets } from "../util";
-import { EditableTree, EditableTreeContext, typeSymbol } from "./editable-tree";
+import { EditableTree, EditableTreeContext, getField, typeSymbol } from "./editable-tree";
 import { TypedSchema } from "./modular-schema";
 import { value as valueFieldKind } from "./defaultFieldKinds";
+import { valueSymbol } from "./contextuallyTyped";
 
-export type IdentifiedNode<_TField extends GlobalFieldKey> = EditableTree;
+/**
+ * The primitive type used as an identifier
+ */
+export type Identifier = string;
+function isIdentifier(id: unknown | Identifier): id is Identifier {
+	return typeof id === "string";
+}
 
 export const identifierSchema = TypedSchema.tree("identifier", { value: ValueSchema.String });
 export const identifierFieldSchema = TypedSchema.field(valueFieldKind, identifierSchema);
 
+/**
+ * The identifier index allows any nodes that have a special identifier field to be looked up via a query.
+ */
 export class IdentifierIndex<TField extends GlobalFieldKey>
-	implements ReadonlyMap<string, IdentifiedNode<TField>>
+	implements ReadonlyMap<Identifier, EditableTree>
 {
 	private readonly identifierFieldKeySymbol: GlobalFieldKeySymbol;
+	private readonly nodes: Map<Identifier, EditableTree>;
 
 	public constructor(
-		private readonly context: EditableTreeContext,
 		private readonly identifierFieldKey: TField,
-		private readonly nodes = new Map<string, IdentifiedNode<TField>>(),
+		identifiers: Iterable<[Identifier, EditableTree]> = [],
 	) {
 		this.identifierFieldKeySymbol = symbolFromKey(identifierFieldKey);
+		this.nodes = new Map(identifiers);
 	}
 
-	public applyDelta(): void {
-		// TODO: make this more efficient
-		this.loadIdentifiers();
-	}
-
-	public applySchema(): void {}
-
-	private loadIdentifiers(): void {
-		if (this.identifiersAreInSchema()) {
+	public loadIdentifiers(context: EditableTreeContext): void {
+		if (this.identifiersAreInSchema(context.schema)) {
 			this.nodes.clear();
-			for (let i = 0; i < this.context.root.length; i++) {
-				for (const [id, node] of this.findIdentifiers(this.context.root.getNode(i))) {
+			for (let i = 0; i < context.root.length; i++) {
+				for (const [id, node] of this.findIdentifiers(context.root.getNode(i))) {
 					this.nodes.set(id, node);
 				}
 			}
 		}
 	}
 
-	public clone(context: EditableTreeContext): IdentifierIndex<TField> {
-		return new IdentifierIndex(context, this.identifierFieldKey, new Map(this.nodes.entries()));
+	public clone(): IdentifierIndex<TField> {
+		return new IdentifierIndex(this.identifierFieldKey, new Map(this.nodes.entries()));
 	}
 
 	// #region ReadonlyMap interface
 	public forEach(
 		callbackfn: (
-			value: IdentifiedNode<TField>,
-			key: string,
-			map: ReadonlyMap<string, IdentifiedNode<TField>>,
+			value: EditableTree,
+			key: Identifier,
+			map: ReadonlyMap<Identifier, EditableTree>,
 		) => void,
 		thisArg?: any,
 	): void {
 		return this.nodes.forEach(callbackfn, thisArg);
 	}
-	public get(key: string): IdentifiedNode<TField> | undefined {
+	public get(key: Identifier): EditableTree | undefined {
 		return this.nodes.get(key);
 	}
-	public has(key: string): boolean {
+	public has(key: Identifier): boolean {
 		return this.nodes.has(key);
 	}
 	public get size(): number {
 		return this.nodes.size;
 	}
-	public entries(): IterableIterator<[string, IdentifiedNode<TField>]> {
+	public entries(): IterableIterator<[Identifier, EditableTree]> {
 		return this.nodes.entries();
 	}
-	public keys(): IterableIterator<string> {
+	public keys(): IterableIterator<Identifier> {
 		return this.nodes.keys();
 	}
-	public values(): IterableIterator<IdentifiedNode<TField>> {
+	public values(): IterableIterator<EditableTree> {
 		return this.nodes.values();
 	}
-	public [Symbol.iterator](): IterableIterator<[string, IdentifiedNode<TField>]> {
+	public [Symbol.iterator](): IterableIterator<[Identifier, EditableTree]> {
 		return this.nodes[Symbol.iterator]();
 	}
 	// #endregion ReadonlyMap interface
 
 	private *findIdentifiers(
 		node: EditableTree,
-	): Iterable<[identifier: string, node: IdentifiedNode<TField>]> {
+	): Iterable<[identifier: Identifier, node: EditableTree]> {
 		if (this.identifierFieldKeySymbol in node) {
 			const type = node[typeSymbol];
 			if (type.extraGlobalFields || type.globalFields.has(this.identifierFieldKey)) {
-				const id = node[this.identifierFieldKeySymbol];
-				if (typeof id === "string") {
-					yield [id, node];
+				// Get the ID via a wrapped node rather than an unwrapped node (`node[identifierFieldKeySymbol]`)
+				// so that the length of the field and the type of the value can be validated as correct
+				const field = node[getField](this.identifierFieldKeySymbol);
+				if (field.length >= 1) {
+					const identifierNode = field.getNode(0);
+					const id = identifierNode[valueSymbol];
+					if (isIdentifier(id)) {
+						yield [id, node];
+					}
 				}
 			}
 		}
@@ -103,20 +119,23 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 		}
 	}
 
-	private identifiersAreInSchema(): boolean {
-		const fieldSchema = this.context.schema.globalFieldSchema.get(this.identifierFieldKey);
+	public identifiersAreInSchema(schema: SchemaData): boolean {
+		const fieldSchema = schema.globalFieldSchema.get(this.identifierFieldKey);
 		if (fieldSchema === undefined) {
 			return false;
 		}
 
-		if (fieldSchema.kind !== identifierFieldSchema.kind) {
-			return false;
-		}
+		// TODO: is there a better way to check "the field schema is `identifierFieldSchema`"?
+		{
+			if (fieldSchema.kind.identifier !== identifierFieldSchema.kind.identifier) {
+				return false;
+			}
 
-		if (fieldSchema.types === undefined) {
-			return false;
-		}
+			if (fieldSchema.types === undefined) {
+				return false;
+			}
 
-		return compareSets({ a: fieldSchema.types, b: identifierFieldSchema.types });
+			return compareSets({ a: fieldSchema.types, b: identifierFieldSchema.types });
+		}
 	}
 }

@@ -129,7 +129,7 @@ export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
 
-export { IdentifierIndex, IdentifiedNode } from "./identifierIndex";
+export { identifierFieldSchema, IdentifierIndex, identifierSchema } from "./identifierIndex";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";

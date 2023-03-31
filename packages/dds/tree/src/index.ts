@@ -229,6 +229,8 @@ export {
 } from "./feature-libraries";
 
 export {
+	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	ISharedTreeFork,

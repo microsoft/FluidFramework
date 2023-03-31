@@ -2,14 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { AssertionError, strict as assert } from "assert";
-import {
-	MockDeltaConnection,
-	MockEmptyDeltaConnection,
-	MockFluidDataStoreRuntime,
-	MockStorage,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils";
+import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKinds,
 	singleTextCursor,
@@ -19,16 +13,9 @@ import {
 	on,
 	valueSymbol,
 } from "../../feature-libraries";
-import { brand, compareSets, TransactionResult } from "../../util";
+import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import {
-	identifierKey,
-	identifierKeySymbol,
-	ISharedTree,
-	ISharedTreeView,
-	runSynchronous,
-	SharedTreeFactory,
-} from "../../shared-tree";
+import { identifierKey, ISharedTree, ISharedTreeView, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -47,8 +34,6 @@ import {
 	EditManager,
 	ValueSchema,
 } from "../../core";
-import { numberSchema } from "../feature-libraries/schema-aware/schemaSimple";
-import { identifierFieldSchema } from "../../feature-libraries/identifierIndex";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -1614,79 +1599,6 @@ describe("SharedTree", () => {
 		});
 	});
 
-	// TODO: move to new file and create custom schema now that you know how
-	describe("Node Identifiers", () => {
-		function assertIds(tree: ISharedTreeView, ids: number[]): void {
-			assert.equal(tree.identifiedNodes.size, ids.length);
-			for (const id of ids) {
-				assert(tree.identifiedNodes.has(id));
-				const node = tree.identifiedNodes.get(id);
-				assert(node !== undefined);
-				assert.equal(node[identifierKeySymbol], id);
-			}
-			assert(compareSets({ a: new Set(tree.identifiedNodes.keys()), b: new Set(ids) }));
-		}
-
-		it("can look up a node that was inserted", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const id = 3;
-			initializeTestTree(tree, {
-				type: brand("TestValue"),
-				globalFields: {
-					[identifierKey]: [{ type: numberSchema.name, value: id }],
-				},
-			});
-			assertIds(tree, [id]);
-		});
-
-		it("can look up multiple nodes that were inserted", async () => {
-			// Do two edits, each with an insert
-			assert(false);
-		});
-
-		it("can look up a node that was loaded from summary", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const id = 3;
-			initializeTestTree(tree, {
-				type: brand("TestValue"),
-				globalFields: {
-					[identifierKey]: [{ type: numberSchema.name, value: id }],
-				},
-			});
-			await provider.ensureSynchronized();
-			const summary = await tree.summarize();
-
-			const factory = new SharedTreeFactory();
-			const tree2 = await factory.load(
-				new MockFluidDataStoreRuntime(),
-				factory.type,
-				{
-					deltaConnection: new MockEmptyDeltaConnection(),
-					objectStorage: MockStorage.createFromSummary(summary.summary),
-				},
-				factory.attributes,
-			);
-
-			assertIds(tree2, [id]);
-		});
-
-		it("skips nodes which have identifiers, but are not in schema", () => {
-			assert(false);
-		});
-
-		it("skips nodes which should have identifiers, but do not", () => {
-			// This is policy choice rather than correctness. It could also fail.
-			assert(false);
-		});
-
-		it("does not walk tree if identifier field is not in the global schema", () => {
-			// Glass box
-			assert(false);
-		});
-	});
-
 	describe.skip("Fuzz Test fail cases", () => {
 		it("Invalid operation", async () => {
 			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
@@ -1977,14 +1889,10 @@ const rootNodeSchema = namedTreeSchema({
 	value: ValueSchema.Serializable,
 });
 const testSchema: SchemaData = {
-	treeSchema: new Map([
-		[rootNodeSchema.name, rootNodeSchema],
-		[numberSchema.name, numberSchema],
-	]),
+	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
 	globalFieldSchema: new Map([
 		[rootFieldKey, rootFieldSchema],
 		[globalFieldKey, globalFieldSchema],
-		[identifierKey, identifierFieldSchema],
 	]),
 };
 

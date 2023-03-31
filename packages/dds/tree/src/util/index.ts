@@ -48,7 +48,6 @@ export { StackyIterator } from "./stackyIterator";
 export {
 	clone,
 	compareSets,
-	compareFiniteNumbers,
 	fail,
 	getOrAddEmptyToMap,
 	getOrCreate,
