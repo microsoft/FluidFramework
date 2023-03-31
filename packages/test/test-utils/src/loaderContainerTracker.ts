@@ -163,23 +163,6 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	}
 
 	/**
-	 * Ensure all tracked containers are synchronized
-	 */
-	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
-		await this.processSynchronized(undefined, ...containers);
-	}
-
-	/**
-	 * Ensure all tracked containers are synchronized with a time limit
-	 */
-	public async ensureSynchronizedWithTimeout?(
-		timeoutDuration: number | undefined,
-		...containers: IContainer[]
-	) {
-		await this.processSynchronized(timeoutDuration, ...containers);
-	}
-
-	/**
 	 * Make sure all the tracked containers are synchronized.
 	 *
 	 * No isDirty (non-readonly) containers
@@ -198,10 +181,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 *
 	 * - Trailing NoOp is tracked and don't count as pending ops.
 	 */
-	private async processSynchronized(
-		timeoutDuration: number | undefined,
-		...containers: IContainer[]
-	) {
+	public async ensureSynchronized(...containers: IContainer[]): Promise<void> {
 		const resumed = this.resumeProcessing(...containers);
 
 		let waitingSequenceNumberSynchronized = false;
