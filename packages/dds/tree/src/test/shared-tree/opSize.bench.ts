@@ -290,12 +290,12 @@ const MAX_SUCCESSFUL_OP_BYTE_SIZES = {
 	INSERT: {
 		INDIVIDUAL: {
 			nodeCounts: {
-				"100": 9000,
+				"100": 8900,
 			},
 		},
 		SINGLE: {
 			nodeCounts: {
-				"100": 9700,
+				"100": 9600,
 			},
 		},
 	},

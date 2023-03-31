@@ -4,17 +4,17 @@
  */
 
 import {
+	booleanCases,
+	generatePairwiseOptions,
+	OptionsMatrix,
+	numberCases,
+} from "@fluid-internal/test-pairwise-generator";
+import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import {
-	booleanCases,
-	generatePairwiseOptions,
-	OptionsMatrix,
-	numberCases,
-} from "@fluidframework/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-loader";
 import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
 
@@ -88,7 +88,6 @@ export function generateRuntimeOptions(
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
-		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
 		compressionOptions: [
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },

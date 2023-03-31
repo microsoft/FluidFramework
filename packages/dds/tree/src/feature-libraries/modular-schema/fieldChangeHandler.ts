@@ -219,9 +219,11 @@ export type NodeChangeEncoder = (change: NodeChangeset) => JsonCompatibleReadOnl
 export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangeset;
 
 /**
+ * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
+ * For convenience can be called with no parameters to allocate a single ID.
  * @alpha
  */
-export type IdAllocator = () => ChangesetLocalId;
+export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 /**
  * Changeset for a subtree rooted at a specific node.
@@ -307,12 +309,12 @@ export interface RevisionMetadataSource {
  * @alpha
  */
 export interface RevisionInfo {
-	readonly tag: RevisionTag;
+	readonly revision: RevisionTag;
 	/**
-	 * True when the changeset was produced as part of a rebase sandwich as opposed to for the purpose of undo.
-	 * Considered false if undefined.
+	 * When populated, indicates that the changeset is a rollback for the purpose of a rebase sandwich.
+	 * The value corresponds to the `revision` of the original changeset being rolled back.
 	 */
-	readonly isRollback?: boolean;
+	readonly rollbackOf?: RevisionTag;
 }
 
 /**

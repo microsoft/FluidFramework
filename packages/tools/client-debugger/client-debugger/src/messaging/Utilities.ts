@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IDebuggerMessage } from "./Messages";
+import { debuggerMessageSource } from "./Constants";
+import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).
  *
- * @param message - The list of message to be posted
+ * @param messages - The messages to be posted
  * @param loggingOptions - Settings related to logging to console for troubleshooting.
  * If not passed, this function won't log to console before posting the message.
  *
@@ -16,22 +17,29 @@ import { IDebuggerMessage } from "./Messages";
  *
  * @internal
  */
-export function postMessageToWindow<TMessage extends IDebuggerMessage>(
+export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 	loggingOptions?: MessageLoggingOptions,
-	...message: TMessage[]
+	...messages: TMessage[]
 ): void {
+	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((message) => ({
+		...message,
+		source: debuggerMessageSource,
+	}));
+
 	// TODO: remove loggingOptions once things settle.
 	// If we need special logic for globalThis.postMessage maybe keep this function, but otherwise maybe remove it too.
 	if (loggingOptions !== undefined) {
 		const loggingPreamble =
 			loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
-		console.debug(`${loggingPreamble}Posting message to the window:`, message);
+		console.debug(`${loggingPreamble}Posting messages to the window:`, messagesWithSource);
 	}
-	globalThis.postMessage?.(message, "*"); // TODO: verify target is okay
+	for (const message of messagesWithSource) {
+		globalThis.postMessage?.(message, "*");
+	}
 }
 
 /**
- * Handlers for incoming {@link IDebuggerMessage}s.
+ * Handlers for incoming {@link ISourcedDebuggerMessage}s.
  *
  * @internal
  */
@@ -40,7 +48,7 @@ export interface InboundHandlers {
 	 * Mapping from {@link IDebuggerMessage."type"}s to a handler callback for that message type.
 	 * @returns Whether or not the message was actually handled.
 	 */
-	[type: string]: (message: IDebuggerMessage) => boolean;
+	[type: string]: (message: ISourcedDebuggerMessage) => boolean;
 }
 
 /**
@@ -71,7 +79,7 @@ export interface MessageLoggingOptions {
  * @internal
  */
 export function handleIncomingWindowMessage(
-	event: MessageEvent<Partial<IDebuggerMessage>>,
+	event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
@@ -92,7 +100,7 @@ export function handleIncomingWindowMessage(
  * @internal
  */
 export function handleIncomingMessage(
-	message: Partial<IDebuggerMessage>,
+	message: Partial<ISourcedDebuggerMessage>,
 	handlers: InboundHandlers,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
@@ -118,10 +126,12 @@ export function handleIncomingMessage(
 }
 
 /**
- * Determines whether the provided event message data is an {@link IDebuggerMessage}.
+ * Determines whether the provided event message data is an {@link ISourcedDebuggerMessage}.
  *
  * @internal
  */
-export function isDebuggerMessage(value: Partial<IDebuggerMessage>): value is IDebuggerMessage {
+export function isDebuggerMessage(
+	value: Partial<ISourcedDebuggerMessage>,
+): value is ISourcedDebuggerMessage {
 	return typeof value.source === "string" && value.type !== undefined;
 }

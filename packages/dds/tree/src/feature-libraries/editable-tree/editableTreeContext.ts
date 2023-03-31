@@ -22,13 +22,9 @@ import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
 import { singleMapTreeCursor } from "../mapTreeCursor";
 import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "../contextuallyTyped";
-import {
-	ProxyTarget,
-	EditableField,
-	unwrappedField,
-	UnwrappedEditableField,
-	makeField,
-} from "./editableTree";
+import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
+import { makeField, unwrappedField } from "./editableField";
+import { ProxyTarget } from "./ProxyTarget";
 
 /**
  * A common context of a "forest" of EditableTrees.
@@ -264,7 +260,10 @@ export class ProxyContext implements EditableTreeContext {
 	): void {
 		const field = this.editor.sequenceField(path, fieldKey);
 		field.delete(index, count);
-		field.insert(index, newContent);
+
+		if (!Array.isArray(newContent) || newContent.length > 0) {
+			field.insert(index, newContent);
+		}
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {

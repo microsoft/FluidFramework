@@ -32,7 +32,7 @@ import {
 	wrapDocumentServiceFactory,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 /**
  * Loads a summarizer client with the given version (if any) and returns its container runtime and summary collection.

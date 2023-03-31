@@ -15,10 +15,6 @@ import {
 import { expect } from "chai";
 
 import {
-	MarkdownDocumenterConfiguration,
-	markdownDocumenterConfigurationWithDefaults,
-} from "../../Configuration";
-import {
 	CodeSpanNode,
 	DocumentationNode,
 	FencedCodeBlockNode,
@@ -32,14 +28,18 @@ import {
 	TableHeaderRowNode,
 	TableNode,
 } from "../../documentation-domain";
-import { getHeadingForApiItem } from "../../utilities";
+import { getHeadingForApiItem } from "../ApiItemUtilities";
 import { apiItemToSections } from "../TransformApiItem";
+import {
+	ApiItemTransformationConfiguration,
+	getApiItemTransformationConfigurationWithDefaults,
+} from "../configuration";
 import { wrapInSection } from "../helpers";
 
 /**
  * Sample "default" configuration.
  */
-const defaultPartialConfig: Omit<MarkdownDocumenterConfiguration, "apiModel"> = {
+const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel"> = {
 	uriRoot: ".",
 };
 
@@ -78,10 +78,10 @@ function findApiMember(
 }
 
 function createConfig(
-	partialConfig: Omit<MarkdownDocumenterConfiguration, "apiModel">,
+	partialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">,
 	apiModel: ApiModel,
-): Required<MarkdownDocumenterConfiguration> {
-	return markdownDocumenterConfigurationWithDefaults({
+): Required<ApiItemTransformationConfiguration> {
+	return getApiItemTransformationConfigurationWithDefaults({
 		...partialConfig,
 		apiModel,
 	});

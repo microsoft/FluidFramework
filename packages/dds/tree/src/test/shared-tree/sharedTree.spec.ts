@@ -15,7 +15,7 @@ import {
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree, ISharedTreeBranch, runSynchronous } from "../../shared-tree";
+import { ISharedTree, ISharedTreeView, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -34,7 +34,6 @@ import {
 	EditManager,
 	ValueSchema,
 } from "../../core";
-import { checkTreesAreSynchronized } from "./sharedTreeFuzzTests";
 
 const fooKey: FieldKey = brand("foo");
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");
@@ -389,7 +388,7 @@ describe("SharedTree", () => {
 			}
 		});
 
-		function abortTransaction(branch: ISharedTreeBranch): void {
+		function abortTransaction(branch: ISharedTreeView): void {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
@@ -1358,7 +1357,7 @@ describe("SharedTree", () => {
 
 	describe("Transactions", () => {
 		/** like `pushTestValue`, but does not wrap the operation in a transaction */
-		function pushTestValueDirect(checkout: ISharedTreeBranch, value: TreeValue): void {
+		function pushTestValueDirect(checkout: ISharedTreeView, value: TreeValue): void {
 			const field = checkout.editor.sequenceField(undefined, rootFieldKeySymbol);
 			const nodes = singleTextCursor({ type: brand("Node"), value });
 			field.insert(0, nodes);
@@ -1366,7 +1365,7 @@ describe("SharedTree", () => {
 
 		function describeBasicTransactionTests(
 			title: string,
-			checkoutFactory: () => Promise<ISharedTreeBranch>,
+			checkoutFactory: () => Promise<ISharedTreeView>,
 		) {
 			describe(title, () => {
 				it("update the tree while open", async () => {
@@ -1875,211 +1874,6 @@ describe("SharedTree", () => {
 			anchorPath = tree.locate(firstAnchor);
 			assert(compareUpPaths(expectedPath, anchorPath));
 		});
-		it("ensureSynchronized shows diverged trees", async () => {
-			const provider = await TestTreeProvider.create(4, SummarizeType.onDemand);
-			const initialTreeState: JsonableTree = {
-				type: brand("Node"),
-				fields: {
-					foo: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-					foo2: [
-						{ type: brand("Number"), value: 0 },
-						{ type: brand("Number"), value: 1 },
-						{ type: brand("Number"), value: 2 },
-					],
-				},
-			};
-			initializeTestTree(provider.trees[0], initialTreeState, testSchema);
-			await provider.ensureSynchronized();
-
-			const tree0 = provider.trees[0];
-			const tree1 = provider.trees[1];
-			const tree2 = provider.trees[2];
-
-			const rootPath = {
-				parent: undefined,
-				parentField: rootFieldKeySymbol,
-				parentIndex: 0,
-			};
-
-			let path: UpPath;
-			// edit 1
-			await provider.ensureSynchronized();
-
-			// edit 2
-			let readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			let actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree2, () => {
-				const field = tree2.editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					1,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 3
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree0, () => {
-				const field = tree0.editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 4
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree0, () => {
-				const field = tree0.editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 5
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree1, () => {
-				const field = tree1.editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 6
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree0, () => {
-				const field = tree0.editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 7
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree2, () => {
-				const field = tree2.editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 8
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			remove(tree2, 0, 1);
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 9
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			// eslint-disable-next-line prefer-const
-			path = {
-				parent: rootPath,
-				parentField: brand("Test"),
-				parentIndex: 0,
-			};
-			runSynchronous(tree0, () => {
-				tree0.editor.setValue(path, 3969223090210651);
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 10
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree0, () => {
-				const field = tree0.editor.sequenceField(rootPath, brand("Test"));
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree0.forest.allocateCursor();
-			moveToDetachedField(tree0.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 10
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-			runSynchronous(tree2, () => {
-				const field = tree2.editor.sequenceField(undefined, rootFieldKeySymbol);
-				field.insert(
-					0,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
-				);
-			});
-			readCursor = tree2.forest.allocateCursor();
-			moveToDetachedField(tree2.forest, readCursor);
-			actual = mapCursorField(readCursor, jsonableTreeFromCursor);
-			readCursor.free();
-
-			// edit 11
-			await provider.ensureSynchronized();
-
-			checkTreesAreSynchronized(provider);
-		});
 	});
 });
 
@@ -2106,7 +1900,7 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: ISharedTreeBranch,
+	tree: ISharedTreeView,
 	state?: JsonableTree | JsonableTree[],
 	schema: SchemaData = testSchema,
 ): void {
@@ -2138,14 +1932,14 @@ const testValueSchema = namedTreeSchema({
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
  */
-function pushTestValue(branch: ISharedTreeBranch, value: TreeValue): void {
+function pushTestValue(branch: ISharedTreeView, value: TreeValue): void {
 	insert(branch, 0, value);
 }
 
 /**
  * Reads a value in a tree set by {@link pushTestValue} if it exists.
  */
-function peekTestValue({ forest }: ISharedTreeBranch): TreeValue | undefined {
+function peekTestValue({ forest }: ISharedTreeView): TreeValue | undefined {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (!readCursor.firstNode()) {
@@ -2160,7 +1954,7 @@ function peekTestValue({ forest }: ISharedTreeBranch): TreeValue | undefined {
 /**
  * Reads a value in a tree set by {@link pushTestValue} if it exists.
  */
-function* getTestValues({ forest }: ISharedTreeBranch): Iterable<TreeValue> {
+function* getTestValues({ forest }: ISharedTreeView): Iterable<TreeValue> {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (readCursor.firstNode()) {
@@ -2181,7 +1975,7 @@ function* getTestValues({ forest }: ISharedTreeBranch): Iterable<TreeValue> {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTreeBranch, index: number, ...values: TreeValue[]): void {
+function insert(tree: ISharedTreeView, index: number, ...values: TreeValue[]): void {
 	runSynchronous(tree, () => {
 		const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
 		const nodes = values.map((value) =>
@@ -2209,7 +2003,7 @@ function remove(tree: ISharedTree, index: number, count: number): void {
  * @param tree - The tree to verify.
  * @param expected - The expected values for the nodes in the root field of the tree.
  */
-function validateRootField(tree: ISharedTreeBranch, expected: Value[]): void {
+function validateRootField(tree: ISharedTreeView, expected: Value[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	let hasNode = readCursor.firstNode();
@@ -2222,7 +2016,7 @@ function validateRootField(tree: ISharedTreeBranch, expected: Value[]): void {
 	readCursor.free();
 }
 
-function validateTree(tree: ISharedTreeBranch, expected: JsonableTree[]): void {
+function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);

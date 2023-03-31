@@ -26,8 +26,8 @@ import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	EditableTreeContext,
-	ForestIndex,
-	SchemaIndex,
+	ForestSummarizer,
+	SchemaSummarizer as SchemaSummarizer,
 	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultEditBuilder,
@@ -35,10 +35,8 @@ import {
 	getEditableTreeContext,
 	SchemaEditor,
 	DefaultChangeset,
-	EditManagerIndex,
 	buildForest,
 	ContextuallyTypedNodeData,
-	ModularChangeset,
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
 } from "../feature-libraries";
@@ -46,12 +44,12 @@ import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { TransactionResult } from "../util";
 
 /**
- * Events for {@link ISharedTreeBranch}.
+ * Events for {@link ISharedTreeView}.
  * @alpha
  */
-export interface BranchEvents {
+export interface ViewEvents {
 	/**
-	 * A batch of changes has finished processing and the branch is in a consistent state.
+	 * A batch of changes has finished processing and the view is in a consistent state.
 	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
 	 *
 	 * @remarks
@@ -65,7 +63,7 @@ export interface BranchEvents {
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @alpha
  */
-export interface ISharedTreeBranch extends AnchorLocator {
+export interface ISharedTreeView extends AnchorLocator {
 	/**
 	 * Gets or sets the root field of the tree.
 	 *
@@ -84,7 +82,7 @@ export interface ISharedTreeBranch extends AnchorLocator {
 	set root(data: ContextuallyTypedNodeData | undefined);
 
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeBranch.root}.
+	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
 	 *
 	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
 	 */
@@ -97,7 +95,7 @@ export interface ISharedTreeBranch extends AnchorLocator {
 	 *
 	 * TODO:
 	 * Editing of this should be moved into transactions with the rest of tree editing to they can be intermixed.
-	 * This will be done after the relations between branches and Indexes are figured out.
+	 * This will be done after the relations between views, branches and Indexes are figured out.
 	 *
 	 * TODO:
 	 * Public APIs for dealing with schema should be in terms of View Schema, and schema update policies.
@@ -127,8 +125,8 @@ export interface ISharedTreeBranch extends AnchorLocator {
 	 * If the transaction is aborted, the local state will be reset to what it was before the transaction began.
 	 * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
 	 *
-	 * To avoid updating observers of the branch state with intermediate results during a transaction,
-	 * use {@link ISharedTreeBranch#fork} and {@link ISharedTreeFork#merge}.
+	 * To avoid updating observers of the view state with intermediate results during a transaction,
+	 * use {@link ISharedTreeView#fork} and {@link ISharedTreeFork#merge}.
 	 */
 	readonly transaction: {
 		/**
@@ -139,7 +137,7 @@ export interface ISharedTreeBranch extends AnchorLocator {
 		start(): void;
 		/**
 		 * Close this transaction by squashing its edits and committing them as a single edit.
-		 * If this is the root local branch and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+		 * If this is the root view and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
 		 */
 		commit(): TransactionResult.Commit;
 		/**
@@ -147,49 +145,49 @@ export interface ISharedTreeBranch extends AnchorLocator {
 		 */
 		abort(): TransactionResult.Abort;
 		/**
-		 * True if there is at least one transaction currently in progress on this branch, otherwise false.
+		 * True if there is at least one transaction currently in progress on this view, otherwise false.
 		 */
 		inProgress(): boolean;
 	};
 
 	/**
-	 * Spawn a new branch which is based off of the current state of this branch.
-	 * Any mutations of the new branch will not apply to this branch until the new branch is merged back in.
+	 * Spawn a new view which is based off of the current state of this view.
+	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
 	fork(): ISharedTreeFork;
 
 	/**
-	 * Events about this branch.
+	 * Events about this view.
 	 */
-	readonly events: ISubscribable<BranchEvents>;
+	readonly events: ISubscribable<ViewEvents>;
 
 	/**
-	 * Events about the root of the tree on this branch.
+	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 }
 
 /**
- * An `ISharedTreeBranch` which has been forked from a pre-existing branch.
+ * An `ISharedTreeView` which has been forked from a pre-existing view.
  * @alpha
  */
-export interface ISharedTreeFork extends ISharedTreeBranch {
+export interface ISharedTreeFork extends ISharedTreeView {
 	/**
-	 * Rebase the changes that have been applied to this branch over all the changes in the base branch that have
-	 * occurred since this branch last pulled (or was forked).
+	 * Rebase the changes that have been applied to this view over all the changes in the base view that have
+	 * occurred since this view last pulled (or was forked).
 	 */
 	pull(): void;
 
 	/**
-	 * Apply all the changes on this branch to the base branch from which it was forked.
-	 * If the base branch has new changes since this branch last pulled (or was forked),
-	 * then this branch's changes will be rebased over those first.
-	 * After the merge completes, this branch may no longer be forked or mutated.
+	 * Apply all the changes on this view to the base view from which it was forked.
+	 * If the base view has new changes since this view last pulled (or was forked),
+	 * then this view's changes will be rebased over those first.
+	 * After the merge completes, this view may no longer be forked or mutated.
 	 */
 	merge(): void;
 
 	/**
-	 * Whether or not this branch has been merged into its base branch via `merge()`.
+	 * Whether or not this view has been merged into its base view via `merge()`.
 	 * If it has, then it may no longer be forked or mutated.
 	 */
 	isMerged(): boolean;
@@ -202,7 +200,7 @@ export interface ISharedTreeFork extends ISharedTreeBranch {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject, ISharedTreeBranch {}
+export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
@@ -211,19 +209,15 @@ export interface ISharedTree extends ISharedObject, ISharedTreeBranch {}
  * TODO: detail compatibility requirements.
  */
 class SharedTree
-	extends SharedTreeCore<
-		DefaultEditBuilder,
-		DefaultChangeset,
-		readonly [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
-	>
+	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	public readonly transaction: ISharedTreeBranch["transaction"];
+	public readonly transaction: ISharedTreeView["transaction"];
 
-	public readonly events: ISubscribable<BranchEvents> & IEmitter<BranchEvents>;
+	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
 	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
 		return this.forest.anchors;
 	}
@@ -237,16 +231,10 @@ class SharedTree
 		const anchors = new AnchorSet();
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schema);
+		const forestSummarizer = new ForestSummarizer(runtime, forest);
 		super(
-			(events, editManager) => {
-				const indexes = [
-					new SchemaIndex(runtime, events, schema),
-					new ForestIndex(runtime, events, forest),
-					new EditManagerIndex(runtime, editManager),
-				] as const;
-				events.on("newLocalState", () => this.events.emit("afterBatch"));
-				return indexes;
-			},
+			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
 			anchors,
 			id,
@@ -255,7 +243,7 @@ class SharedTree
 			telemetryContextPrefix,
 		);
 
-		this.events = createEmitter<BranchEvents>();
+		this.events = createEmitter<ViewEvents>();
 		this.forest = forest;
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 
@@ -267,6 +255,10 @@ class SharedTree
 		};
 
 		this.context = getEditableTreeContext(forest, this.editor);
+		this.changeEvents.on("newLocalState", (changeDelta) => {
+			this.forest.applyDelta(changeDelta);
+			this.events.emit("afterBatch");
+		});
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -343,7 +335,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 class SharedTreeFork implements ISharedTreeFork {
-	public readonly events = createEmitter<BranchEvents>();
+	public readonly events = createEmitter<ViewEvents>();
 	public readonly context: EditableTreeContext;
 
 	public constructor(
@@ -368,7 +360,7 @@ class SharedTreeFork implements ISharedTreeFork {
 		return this.branch.editor;
 	}
 
-	public readonly transaction: ISharedTreeBranch["transaction"] = {
+	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
 		commit: () => this.branch.commitTransaction(),
 		abort: () => this.branch.abortTransaction(),
@@ -412,21 +404,21 @@ class SharedTreeFork implements ISharedTreeFork {
 }
 
 /**
- * Run a synchronous transaction on the given shared tree branch.
+ * Run a synchronous transaction on the given shared tree view.
  * This is a convenience helper around the {@link SharedTreeFork#transaction} APIs.
- * @param branch - the branch on which to run the transaction
- * @param transaction - the transaction function. This will be executed immediately. It is passed `branch` as an argument for convenience.
+ * @param view - the view on which to run the transaction
+ * @param transaction - the transaction function. This will be executed immediately. It is passed `view` as an argument for convenience.
  * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns whether or not the transaction was committed or aborted
  * @alpha
  */
 export function runSynchronous(
-	branch: ISharedTreeBranch,
-	transaction: (branch: ISharedTreeBranch) => TransactionResult | void,
+	view: ISharedTreeView,
+	transaction: (view: ISharedTreeView) => TransactionResult | void,
 ): TransactionResult {
-	branch.transaction.start();
-	const result = transaction(branch);
+	view.transaction.start();
+	const result = transaction(view);
 	return result === TransactionResult.Abort
-		? branch.transaction.abort()
-		: branch.transaction.commit();
+		? view.transaction.abort()
+		: view.transaction.commit();
 }

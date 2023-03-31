@@ -75,6 +75,8 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 
 /**
  * The garbage collection data of each node in the reference graph.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export interface IGarbageCollectionNodeData {
 	/**
@@ -90,6 +92,8 @@ export interface IGarbageCollectionNodeData {
 /**
  * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
  * GC data.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export interface IGarbageCollectionState {
 	gcNodes: { [id: string]: IGarbageCollectionNodeData };
@@ -110,6 +114,8 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
 
 /**
  * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export interface IGarbageCollectionSnapshotData {
 	gcState: IGarbageCollectionState;

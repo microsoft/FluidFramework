@@ -2,26 +2,35 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DefaultPalette, IStackItemStyles, Icon, Stack, StackItem } from "@fluentui/react";
+import { DefaultPalette, Icon, IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
+import {
+	HasContainerId,
+	AudienceChangeLogEntry,
+	AudienceClientMetaData,
+	IDebuggerMessage,
+	handleIncomingMessage,
+	InboundHandlers,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+} from "@fluid-tools/client-debugger";
 
-import { AudienceChangeLogEntry } from "@fluid-tools/client-debugger";
-
+import { useMessageRelay } from "../MessageRelayContext";
 import { combineMembersWithMultipleConnections } from "../Audience";
-import { HasClientDebugger } from "../CommonProps";
-import { useMyClientConnection, useMyClientId } from "../ReactHooks";
 import { AudienceMemberViewProps } from "./client-data-views";
+import { Waiting } from "./Waiting";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
-// - History of audience changes
+
+const loggingContext = "EXTENSION(AudienceView)";
 
 /**
  * {@link AudienceView} input props.
  */
-export interface AudienceViewProps extends HasClientDebugger {
+export interface AudienceViewProps extends HasContainerId {
 	/**
 	 * Callback to render data about an individual audience member.
 	 */
@@ -29,38 +38,62 @@ export interface AudienceViewProps extends HasClientDebugger {
 }
 
 /**
- * Displays information about the provided {@link @fluidframework/fluid-static#IServiceAudience | audience}.
- *
- * @param props - See {@link AudienceViewProps}.
+ * Displays information about a container's audience.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-	const { clientDebugger, onRenderAudienceMember } = props;
-	const { audience } = clientDebugger;
+	const { containerId, onRenderAudienceMember } = props;
 
-	const myClientId = useMyClientId(clientDebugger);
-	const myClientConnection = useMyClientConnection(clientDebugger);
+	const messageRelay = useMessageRelay();
 
-	const [allAudienceMembers, setAllAudienceMembers] = React.useState<Map<string, IClient>>(
-		audience.getMembers(),
-	);
-	const [audienceHistory, setAudienceHistory] = React.useState<readonly AudienceChangeLogEntry[]>(
-		clientDebugger.getAudienceHistory(),
-	);
+	const [audienceData, setAudienceData] = React.useState<
+		AudienceSummaryMessageData | undefined
+	>();
 
 	React.useEffect(() => {
-		function onAudienceMembersChanged(): void {
-			setAllAudienceMembers(audience.getMembers());
-			setAudienceHistory(clientDebugger.getAudienceHistory());
+		/**
+		 * Handlers for inbound messages related to Audience
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			["AUDIENCE_EVENT"]: (untypedMessage) => {
+				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
+
+				setAudienceData(message.data);
+
+				return true;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the Message Relay
+		 */
+		function messageHandler(message: Partial<IDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: loggingContext,
+			});
 		}
 
-		audience.on("addMember", onAudienceMembersChanged);
-		audience.on("removeMember", onAudienceMembersChanged);
+		messageRelay.on("message", messageHandler);
+
+		// Request the current Audience State of the Container
+		messageRelay.postMessage({
+			type: "GET_AUDIENCE",
+			data: {
+				containerId,
+			},
+		});
 
 		return (): void => {
-			audience.off("addMember", onAudienceMembersChanged);
-			audience.off("removeMember", onAudienceMembersChanged);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [clientDebugger, audience, setAllAudienceMembers, setAudienceHistory]);
+	}, [containerId, setAudienceData, messageRelay]);
+
+	if (audienceData === undefined) {
+		return <Waiting label="Waiting for Audience data." />;
+	}
+
+	const myClientMetadata = audienceData.audienceState.find(
+		(audience) => audience.clientId === audienceData.clientId,
+	)?.client;
 
 	return (
 		<Stack
@@ -71,21 +104,17 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 			}}
 		>
 			<StackItem>
-				<div className="audience-view-members-list">
-					<h3>Audience members ({allAudienceMembers.size})</h3>
-				</div>
+				<h3>Audience members: ({audienceData.audienceState.length})</h3>
 				<MembersView
-					audience={allAudienceMembers}
-					myClientId={myClientId}
-					myClientConnection={myClientConnection}
+					audience={audienceData.audienceState}
+					myClientId={audienceData.clientId}
+					myClientConnection={myClientMetadata}
 					onRenderAudienceMember={onRenderAudienceMember}
 				/>
 			</StackItem>
 			<StackItem>
-				<div className="history-list">
-					<h3>History</h3>
-				</div>
-				<HistoryView history={audienceHistory} />
+				<h3>History</h3>
+				<HistoryView history={audienceData.audienceHistory} />
 			</StackItem>
 		</Stack>
 	);
@@ -98,7 +127,7 @@ interface MembersViewProps {
 	/**
 	 * The current audience
 	 */
-	audience: Map<string, IClient>;
+	audience: AudienceClientMetaData[];
 
 	/**
 	 * My client ID, if the Container is connected.
