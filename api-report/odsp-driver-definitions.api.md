@@ -6,7 +6,7 @@
 
 import { DriverError } from '@fluidframework/driver-definitions';
 import { IDriverErrorBase } from '@fluidframework/driver-definitions';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
+import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 
 // @public (undocumented)
 export type CacheContentType = "snapshot" | "ops";
@@ -61,7 +61,7 @@ export interface IEntry {
 // @public (undocumented)
 export interface IFileEntry {
     docId: string;
-    resolvedUrl: IResolvedUrl;
+    resolvedUrl: IFluidResolvedUrl;
 }
 
 // @public (undocumented)
@@ -81,7 +81,7 @@ export interface IOdspErrorAugmentations {
 }
 
 // @public (undocumented)
-export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
+export interface IOdspResolvedUrl extends IFluidResolvedUrl, IOdspUrlParts {
     // (undocumented)
     codeHint?: {
         containerPackageName?: string;
