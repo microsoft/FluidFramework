@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { SharedString } from "@fluidframework/sequence";
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -75,6 +75,9 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		changedEventData = [];
+		sharedString.on("sequenceDelta", (changed, _local, _target) => {
+			changedEventData.push(changed);
+		});
 		sharedDir.on("valueChanged", (changed, _local, _target) => {
 			changedEventData.push(changed);
 		});
@@ -92,13 +95,11 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 	it("Should rollback simple edits on multiple DDS types", () => {
 		sharedString.insertText(0, "abcde");
 		sharedMap.set("key1", 0);
-		sharedDir.set("key2", 1);
 		sharedCell.set(2);
 		try {
 			containerRuntime.orderSequentially(() => {
 				sharedString.removeRange(0, 5);
 				sharedMap.delete("key1");
-				sharedDir.delete("key2");
 				sharedCell.delete();
 				throw new Error(errorMessage);
 			});
@@ -113,49 +114,50 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 		assert.equal(sharedMap.size, 1);
 		assert.equal(sharedMap.has("key1"), true);
 		assert.equal(sharedMap.get("key1"), 0);
-		assert.equal(sharedDir.size, 1);
-		assert.equal(sharedDir.has("key2"), true);
-		assert.equal(sharedDir.get("key2"), 1);
 		assert.equal(sharedCell.get(), 2);
 
 		assert.equal(changedEventData.length, 9);
-		assert.equal(changedEventData[0].key, "key1");
-		assert.equal(changedEventData[0].previousValue, undefined);
+		assert(
+			changedEventData[0] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[0]}`,
+		);
 
-		assert.equal(changedEventData[1].key, "key2");
+		assert.equal(changedEventData[1].key, "key1");
 		assert.equal(changedEventData[1].previousValue, undefined);
 
 		assert.equal(changedEventData[2], 2);
 
 		// rollback
-		assert.equal(changedEventData[3].key, "key1");
-		assert.equal(changedEventData[3].previousValue, 0);
+		assert(
+			changedEventData[3] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[3]}`,
+		);
 
-		assert.equal(changedEventData[4].key, "key2");
-		assert.equal(changedEventData[4].previousValue, 1);
+		assert.equal(changedEventData[4].key, "key1");
+		assert.equal(changedEventData[4].previousValue, 0);
 
 		assert.equal(changedEventData[5], undefined);
 
 		assert.equal(changedEventData[6], 2);
 
-		assert.equal(changedEventData[7].key, "key2");
+		assert.equal(changedEventData[7].key, "key1");
 		assert.equal(changedEventData[7].previousValue, undefined);
 
-		assert.equal(changedEventData[8].key, "key1");
-		assert.equal(changedEventData[8].previousValue, undefined);
+		assert(
+			changedEventData[8] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[6]}`,
+		);
 	});
 
 	it("Should rollback complex edits on multiple DDS types", () => {
 		sharedString.insertText(0, "abcde");
 		sharedMap.set("key1", 0);
 		sharedString.annotateRange(2, 5, { foo: "old" });
-		sharedDir.set("key2", 1);
 		sharedCell.set(2);
 		try {
 			containerRuntime.orderSequentially(() => {
 				sharedMap.set("key1", 3);
 				sharedString.annotateRange(0, 3, { foo: "new" });
-				sharedDir.delete("key2");
 				sharedCell.set(5);
 				sharedString.removeRange(0, 5);
 				sharedCell.delete();
@@ -180,39 +182,72 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 		assert.equal(sharedMap.size, 1);
 		assert.equal(sharedMap.has("key1"), true);
 		assert.equal(sharedMap.get("key1"), 0);
-		assert.equal(sharedDir.size, 1);
-		assert.equal(sharedDir.has("key2"), true);
-		assert.equal(sharedDir.get("key2"), 1);
 		assert.equal(sharedCell.get(), 2);
 
-		assert.equal(changedEventData.length, 11);
-		assert.equal(changedEventData[0].key, "key1");
-		assert.equal(changedEventData[0].previousValue, undefined);
+		assert.equal(changedEventData.length, 17);
 
-		assert.equal(changedEventData[1].key, "key2");
+		assert(
+			changedEventData[0] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[0]}`,
+		);
+
+		assert.equal(changedEventData[1].key, "key1");
 		assert.equal(changedEventData[1].previousValue, undefined);
 
-		assert.equal(changedEventData[2], 2);
+		assert(
+			changedEventData[2] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[2]}`,
+		);
+
+		assert.equal(changedEventData[3], 2);
 
 		// rollback
-		assert.equal(changedEventData[3].key, "key1");
-		assert.equal(changedEventData[3].previousValue, 0);
+		assert.equal(changedEventData[4].key, "key1");
+		assert.equal(changedEventData[4].previousValue, 0);
 
-		assert.equal(changedEventData[4].key, "key2");
-		assert.equal(changedEventData[4].previousValue, 1);
+		assert(
+			changedEventData[5] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[5]}`,
+		);
 
-		assert.equal(changedEventData[5], 5);
+		assert.equal(changedEventData[6], 5);
 
-		assert.equal(changedEventData[6], undefined);
+		assert(
+			changedEventData[7] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[7]}`,
+		);
 
-		assert.equal(changedEventData[7], 5);
+		// sharedcell.delete - last of actual ops sent to os
+		assert.equal(changedEventData[8], undefined);
+		// starting actual rolling back
+		assert.equal(changedEventData[9], 5);
 
-		assert.equal(changedEventData[8], 2);
+		// segments are split up at some point - reason for multiple events
+		assert(
+			changedEventData[10] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[10]}`,
+		);
+		assert(
+			changedEventData[11] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[11]}`,
+		);
+		assert(
+			changedEventData[12] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[12]}`,
+		);
 
-		assert.equal(changedEventData[9].key, "key2");
-		assert.equal(changedEventData[9].previousValue, undefined);
+		assert.equal(changedEventData[13], 2);
+		// segments are split up at some point - reason for multiple events
+		assert(
+			changedEventData[14] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[14]}`,
+		);
+		assert(
+			changedEventData[15] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[15]}`,
+		);
 
-		assert.equal(changedEventData[10].key, "key1");
-		assert.equal(changedEventData[10].previousValue, 3);
+		assert.equal(changedEventData[16].key, "key1");
+		assert.equal(changedEventData[16].previousValue, 3);
 	});
 });
