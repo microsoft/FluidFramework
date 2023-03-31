@@ -17,55 +17,61 @@ const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
  * Wrapper over the shared one for driver specific translation.
  */
 export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
-    public static async create(
-        tenantId: string,
-        id: string,
-        token: string | null,
-        io: typeof SocketIOClientStatic,
-        client: IClient,
-        url: string,
-        logger: ITelemetryLogger,
-        timeoutMs = 20000): Promise<IDocumentDeltaConnection> {
-        const socket = io(
-            url,
-            {
-                query: {
-                    documentId: id,
-                    tenantId,
-                },
-                reconnection: false,
-                // Default to websocket connection, with long-polling disabled
-                transports: ["websocket"],
-                timeout: timeoutMs,
-            });
+	public static async create(
+		tenantId: string,
+		id: string,
+		token: string | null,
+		io: typeof SocketIOClientStatic,
+		client: IClient,
+		url: string,
+		logger: ITelemetryLogger,
+		timeoutMs = 20000,
+	): Promise<IDocumentDeltaConnection> {
+		const socket = io(url, {
+			query: {
+				documentId: id,
+				tenantId,
+			},
+			reconnection: false,
+			// Default to websocket connection, with long-polling disabled
+			transports: ["websocket"],
+			timeout: timeoutMs,
+		});
 
-        const connectMessage: IConnect = {
-            client,
-            id,
-            mode: client.mode,
-            tenantId,
-            token,  // Token is going to indicate tenant level information, etc...
-            versions: protocolVersions,
-            relayUserAgent: [client.details.environment, ` driverVersion:${driverVersion}`].join(";"),
-        };
+		const connectMessage: IConnect = {
+			client,
+			id,
+			mode: client.mode,
+			tenantId,
+			token, // Token is going to indicate tenant level information, etc...
+			versions: protocolVersions,
+			relayUserAgent: [client.details.environment, ` driverVersion:${driverVersion}`].join(
+				";",
+			),
+		};
 
-        // TODO: expose to host at factory level
-        const enableLongPollingDowngrades = true;
-        const deltaConnection = new R11sDocumentDeltaConnection(socket, id, logger, enableLongPollingDowngrades);
+		// TODO: expose to host at factory level
+		const enableLongPollingDowngrades = true;
+		const deltaConnection = new R11sDocumentDeltaConnection(
+			socket,
+			id,
+			logger,
+			enableLongPollingDowngrades,
+		);
 
-        await deltaConnection.initialize(connectMessage, timeoutMs);
-        return deltaConnection;
-    }
+		await deltaConnection.initialize(connectMessage, timeoutMs);
+		return deltaConnection;
+	}
 
-    /**
-     * Error raising for socket.io issues
-     */
-    protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
-        // Note: we suspect the incoming error object is either:
-        // - a socketError: add it to the R11sError object for driver to be able to parse it and reason over it.
-        // - anything else: let base class handle it
-        return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
-            ? errorObjectFromSocketError(error as IR11sSocketError, handler)
-            : super.createErrorObject(handler, error, canRetry);
-    }
+	/**
+	 * Error raising for socket.io issues
+	 */
+	protected createErrorObject(handler: string, error?: any, canRetry = true): IAnyDriverError {
+		// Note: we suspect the incoming error object is either:
+		// - a socketError: add it to the R11sError object for driver to be able to parse it and reason over it.
+		// - anything else: let base class handle it
+		return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
+			? errorObjectFromSocketError(error as IR11sSocketError, handler)
+			: super.createErrorObject(handler, error, canRetry);
+	}
 }

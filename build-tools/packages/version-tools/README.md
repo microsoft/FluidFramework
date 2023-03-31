@@ -3,6 +3,7 @@
 The version-tools package provides APIs and a CLI to parse and transform version numbers and ranges that are used by the
 Fluid Framework.
 
+<!-- prettier-ignore-start -->
 <!-- toc -->
 * [@fluid-tools/version-tools](#fluid-toolsversion-tools)
 * [Version schemes](#version-schemes)
@@ -10,21 +11,23 @@ Fluid Framework.
 * [CLI Usage](#cli-usage)
 * [Commands](#commands)
 <!-- tocstop -->
+<!-- prettier-ignore-stop -->
 
 # Version schemes
 
 Fluid Framework packages sometimes use version schemes that diverge from standard semantic versioning. By default, a new
-package should use standard semantic versioning. However, there are also two other versioning schemes: *internal* and
-*virtualPatch*.
+package should use standard semantic versioning. However, there are also two other versioning schemes: _internal_ and
+_virtualPatch_.
+
 ## internal version scheme
 
 The Fluid internal version scheme consists of two semver "triplets" of major/minor/patch. The first triplet is called
-the *public version*, and is stored in the typical semver positions in the version string.
+the _public version_, and is stored in the typical semver positions in the version string.
 
-The second triplet is called the *internal version*, and is found at the end of the pre-release section of the
+The second triplet is called the _internal version_, and is found at the end of the pre-release section of the
 version string.
 
-Fluid internal version strings *always* include the string `internal` in the first position of the pre-release
+Fluid internal version strings _always_ include the string `internal` in the first position of the pre-release
 section.
 
 In the following example, the public version is `a.b.c`, while the internal version is `x.y.z`.
@@ -33,14 +36,14 @@ In the following example, the public version is `a.b.c`, while the internal vers
 
 ### API
 
-* `isInternalVersionScheme` -- Returns true if a string represents an internal version number.
-* `isInternalVersionRange` -- Returns true if a string represents an internal version range.
-* `toInternalScheme` -- Converts a standard semver version string to the internal version scheme.
-* `fromInternalScheme` -- Converts an internal version scheme string into two standard semvers -- one for the public
-  version and one for the internal version.
-* `bumpInternalVersion` -- Given an internal version and a bump type, returns the bumped version.
-* `getVersionRange` -- Given an internal version and a constraint type, returns a dependency version range that enforces
-  the constraint.
+-   `isInternalVersionScheme` -- Returns true if a string represents an internal version number.
+-   `isInternalVersionRange` -- Returns true if a string represents an internal version range.
+-   `toInternalScheme` -- Converts a standard semver version string to the internal version scheme.
+-   `fromInternalScheme` -- Converts an internal version scheme string into two standard semvers -- one for the public
+    version and one for the internal version.
+-   `bumpInternalVersion` -- Given an internal version and a bump type, returns the bumped version.
+-   `getVersionRange` -- Given an internal version and a constraint type, returns a dependency version range that enforces
+    the constraint.
 
 ## virtualPatch version scheme
 
@@ -55,12 +58,12 @@ Minor versions always start at 1 instead of 0. That is, the first release of a m
 
 ### API
 
-* `isVirtualPatch` -- Returns true if a string represents an internal version number.
+-   `isVirtualPatch` -- Returns true if a string represents an internal version number.
 
 # General API
 
-* `detectVersionScheme` -- Given a version or a range string, determines what version scheme the string is using.
-* `incRange` -- Increments a _range_ by the bump type (major, minor, or patch), maintaining the existing constraint.
+-   `detectVersionScheme` -- Given a version or a range string, determines what version scheme the string is using.
+-   `incRange` -- Increments a _range_ by the bump type (major, minor, or patch), maintaining the existing constraint.
 
 # CLI Usage
 
@@ -68,25 +71,28 @@ version-tools provides a command-line interface (`fluv`) when installed directly
 also available in the Fluid build and release tool (`flub`). This is accomplished using
 [oclif's plugin system](https://oclif.io/docs/plugins).
 
+<!-- prettier-ignore-start -->
 <!-- usage -->
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/0.6.0
+@fluid-tools/version-tools/0.14.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
 ...
 ```
 <!-- usagestop -->
+<!-- prettier-ignore-stop -->
 
 # Commands
 
+<!-- prettier-ignore-start -->
 <!-- commands -->
 * [`fluv autocomplete [SHELL]`](#fluv-autocomplete-shell)
-* [`fluv help [COMMAND]`](#fluv-help-command)
+* [`fluv help [COMMANDS]`](#fluv-help-commands)
 * [`fluv version VERSION`](#fluv-version-version)
 * [`fluv version latest`](#fluv-version-latest)
 
@@ -117,18 +123,18 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v1.3.6/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.1.3/src/commands/autocomplete/index.ts)_
 
-## `fluv help [COMMAND]`
+## `fluv help [COMMANDS]`
 
 Display help for fluv.
 
 ```
 USAGE
-  $ fluv help [COMMAND] [-n]
+  $ fluv help [COMMANDS] [-n]
 
 ARGUMENTS
-  COMMAND  Command to show help for.
+  COMMANDS  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
@@ -137,7 +143,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.1.14/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.6/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -145,7 +151,7 @@ Convert version strings between regular semver and the Fluid internal version sc
 
 ```
 USAGE
-  $ fluv version [VERSION] [--json] [-t major|minor|patch|current] [--publicVersion <value>]
+  $ fluv version VERSION [--json] [-t major|minor|patch|current] [--publicVersion <value>]
 
 ARGUMENTS
   VERSION  The version to convert.
@@ -215,12 +221,18 @@ EXAMPLES
     $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
 ```
 <!-- commandsstop -->
+<!-- prettier-ignore-stop -->
 
 ## Developer notes
 
 This package outputs its build files to `lib/` instead of `dist/` like most of our other packages. The reason is that
 oclif uses the lib folder by convention, and there are oclif bugs that can be avoided by putting stuff in lib. See the
 PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
+
+---
+
+Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
+removed once we have upgraded to Node 16 in the repo.
 
 ## Trademark
 

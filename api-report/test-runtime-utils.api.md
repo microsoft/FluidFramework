@@ -54,6 +54,12 @@ import { MessageType } from '@fluidframework/protocol-definitions';
 import { ReadOnlyInfo } from '@fluidframework/container-definitions';
 import { ScopeType } from '@fluidframework/protocol-definitions';
 import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { VisibilityState as VisibilityState_2 } from '@fluidframework/runtime-definitions';
+
+// @public
+export interface IInsecureUser extends IUser {
+    name: string;
+}
 
 // @public (undocumented)
 export interface IMockContainerRuntimePendingMessage {
@@ -69,7 +75,7 @@ export interface IMockContainerRuntimePendingMessage {
 export class InsecureTokenProvider implements ITokenProvider {
     constructor(
     tenantKey: string,
-    user: IUser,
+    user: IInsecureUser,
     scopes?: ScopeType[] | undefined);
     // (undocumented)
     fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse>;
@@ -79,7 +85,9 @@ export class InsecureTokenProvider implements ITokenProvider {
 
 // @public
 export class MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory);
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactory, overrides?: {
+        minimumSequenceNumber?: number | undefined;
+    } | undefined);
     // (undocumented)
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
@@ -96,6 +104,10 @@ export class MockContainerRuntime {
     dirty(): void;
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactory;
+    // (undocumented)
+    protected readonly overrides?: {
+        minimumSequenceNumber?: number | undefined;
+    } | undefined;
     // (undocumented)
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
     // (undocumented)
@@ -133,12 +145,16 @@ export class MockContainerRuntimeFactoryForReconnection extends MockContainerRun
     // (undocumented)
     clearOutstandingClientMessages(clientId: string): void;
     // (undocumented)
-    createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntimeForReconnection;
+    createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime, overrides?: {
+        minimumSequenceNumber?: number;
+    }): MockContainerRuntimeForReconnection;
 }
 
 // @public
 export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
-    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection);
+    constructor(dataStoreRuntime: MockFluidDataStoreRuntime, factory: MockContainerRuntimeFactoryForReconnection, overrides?: {
+        minimumSequenceNumber?: number;
+    });
     // (undocumented)
     get connected(): boolean;
     set connected(connected: boolean);
@@ -293,6 +309,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
     readonly existing: boolean;
     // (undocumented)
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
@@ -379,6 +397,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly documentId: string;
     // (undocumented)
+    ensureNoDataModelChanges<T>(callback: () => T): T;
+    // (undocumented)
     readonly entryPoint?: IFluidHandle<FluidObject>;
     // (undocumented)
     readonly existing: boolean;
@@ -455,6 +475,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     updateUsedRoutes(usedRoutes: string[]): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+    // (undocumented)
+    get visibilityState(): VisibilityState_2;
     // (undocumented)
     waitAttached(): Promise<void>;
 }

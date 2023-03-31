@@ -8,8 +8,8 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { IQuorumClients } from "@fluidframework/protocol-definitions";
 
 export interface IOldestClientObservableEvents extends IEvent {
-    (event: "connected", listener: () => void);
-    (event: "disconnected", listener: () => void);
+	(event: "connected", listener: () => void);
+	(event: "disconnected", listener: () => void);
 }
 
 /**
@@ -19,21 +19,21 @@ export interface IOldestClientObservableEvents extends IEvent {
  * It's information about the connection, so the real source of truth is lower (at the connection layer).
  */
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
-    getQuorum(): IQuorumClients;
-    // Generic usage of attachState is a little unusual here.  We will treat ourselves as "the oldest client that
-    // has information about this [container | data store]", which in the case of detached data store may disagree
-    // with whether we're the oldest client on the connected container.  So in the data store case, it's only
-    // safe use this as an indicator about rights to tasks performed against this specific data store, and not
-    // more broadly.
-    attachState: AttachState;
-    connected: boolean;
-    clientId: string | undefined;
+	getQuorum(): IQuorumClients;
+	// Generic usage of attachState is a little unusual here.  We will treat ourselves as "the oldest client that
+	// has information about this [container | data store]", which in the case of detached data store may disagree
+	// with whether we're the oldest client on the connected container.  So in the data store case, it's only
+	// safe use this as an indicator about rights to tasks performed against this specific data store, and not
+	// more broadly.
+	attachState: AttachState;
+	connected: boolean;
+	clientId: string | undefined;
 }
 
 export interface IOldestClientObserverEvents extends IEvent {
-    (event: "becameOldest" | "lostOldest", listener: () => void);
+	(event: "becameOldest" | "lostOldest", listener: () => void);
 }
 
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
-    isOldest(): boolean;
+	isOldest(): boolean;
 }

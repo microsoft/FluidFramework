@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const settingsJSON = require('./test_settings.json');
-const MinimalSettings = require('../src/utils/minimal_settings');
+const settingsJSON = require("./test_settings.json");
+const MinimalSettings = require("../src/utils/minimal_settings");
 
-module.exports =  new MinimalSettings(settingsJSON);
+module.exports = new MinimalSettings(settingsJSON);

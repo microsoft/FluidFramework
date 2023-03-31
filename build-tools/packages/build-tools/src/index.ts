@@ -4,9 +4,9 @@
  */
 
 export {
-    getSimpleVersion,
-    getVersionsFromStrings,
-    getIsLatest,
+	getSimpleVersion,
+	getVersionsFromStrings,
+	getIsLatest,
 } from "./buildVersion/buildVersionLib";
 export { bumpDependencies, cleanPrereleaseDependencies } from "./bumpVersion/bumpDependencies";
 export { bumpRepo } from "./bumpVersion/bumpVersion";
@@ -17,22 +17,20 @@ export { releaseVersion } from "./bumpVersion/releaseVersion";
 export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
-export { getResolvedFluidRoot } from "./common/fluidUtils";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
 export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
-export { Package } from "./common/npmPackage";
+export { Package, PackageJson, updatePackageJsonFile } from "./common/npmPackage";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
 export {
-    execAsync,
-    execWithErrorAsync,
-    readJsonAsync,
-    readFileAsync,
-    writeFileAsync,
+	execAsync,
+	execWithErrorAsync,
+	readJsonAsync,
+	readFileAsync,
+	writeFileAsync,
 } from "./common/utils";
 export { Handler } from "./repoPolicyCheck/common";
 export { policyHandlers } from "./repoPolicyCheck/handlers";
 export { generateMonoRepoInstallPackageJson } from "./genMonoRepoPackageJson/lib";
-export { findPackagesUnderPath, getAndUpdatePackageDetails } from "./typeValidator/packageJson";
-export { generateTests } from "./typeValidator/testGeneration";
-export { type PreviousVersionStyle } from "./typeValidator/packageJson";
+export { type PreviousVersionStyle } from "./common/fluidRepo";

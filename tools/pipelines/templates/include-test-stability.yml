@@ -32,6 +32,10 @@ parameters:
   type: number
   default: 60
 
+- name: tagName
+  type: string
+  default: client
+
 jobs:
   # Job - Build
   - job: build
@@ -70,16 +74,27 @@ jobs:
 
     # Install
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 16.x
       inputs:
-        version: 14.x
-    - task: Npm@1
-      displayName: npm ci
+        version: 16.x
+
+    - task: Bash@3
+      displayName: Install and configure pnpm
       inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.buildDirectory }}
-        customCommand: 'ci --unsafe-perm'
-        customRegistry: 'useNpmrc'
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          npm i -g pnpm@7.30.5
+          pnpm -v
+          pnpm config set store-dir $(pnpmStorePath)
+
+    - task: Bash@3
+      displayName: Install dependencies
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          pnpm i --frozen-lockfile
 
     # Build
     - ${{ if ne(parameters.taskBuild, 'false') }}:

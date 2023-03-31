@@ -4,10 +4,7 @@
  */
 
 import { ScopeType, ITokenClaims } from "@fluidframework/protocol-definitions";
-import {
-    ITokenProvider,
-    ITokenResponse,
-} from "@fluidframework/routerlicious-driver";
+import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import { getRandomName } from "@fluidframework/server-services-client";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
@@ -17,70 +14,60 @@ import { v4 as uuid } from "uuid";
  * to get up and running.
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
-    constructor(
-        /**
-         * Optional. Override of scopes. If a param is not provided, InsecureTinyliciousTokenProvider
-         * will use the default scopes which are document read, write and summarizer write.
-         *
-         * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
-         *
-         * @defaultValue - [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
-         */
-        private readonly scopes?: ScopeType[],
-    ) {}
+	constructor(
+		/**
+		 * Optional. Override of scopes. If a param is not provided, InsecureTinyliciousTokenProvider
+		 * will use the default scopes which are document read, write and summarizer write.
+		 *
+		 * @param scopes - See {@link @fluidframework/protocol-definitions#ITokenClaims.scopes}
+		 *
+		 * @defaultValue - [ ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite ]
+		 */
+		private readonly scopes?: ScopeType[],
+	) {}
 
-    public async fetchOrdererToken(
-        tenantId: string,
-        documentId?: string,
-    ): Promise<ITokenResponse> {
-        return {
-            fromCache: true,
-            jwt: this.getSignedToken(tenantId, documentId),
-        };
-    }
+	public async fetchOrdererToken(tenantId: string, documentId?: string): Promise<ITokenResponse> {
+		return {
+			fromCache: true,
+			jwt: this.getSignedToken(tenantId, documentId),
+		};
+	}
 
-    public async fetchStorageToken(
-        tenantId: string,
-        documentId: string,
-    ): Promise<ITokenResponse> {
-        return {
-            fromCache: true,
-            jwt: this.getSignedToken(tenantId, documentId),
-        };
-    }
+	public async fetchStorageToken(tenantId: string, documentId: string): Promise<ITokenResponse> {
+		return {
+			fromCache: true,
+			jwt: this.getSignedToken(tenantId, documentId),
+		};
+	}
 
-    private getSignedToken(
-        tenantId: string,
-        documentId: string | undefined,
-        lifetime: number = 60 * 60,
-        ver: string = "1.0"
-    ): string {
-        // Current time in seconds
-        const now = Math.round(Date.now() / 1000);
-        const user = { id: uuid(), name: getRandomName() };
+	private getSignedToken(
+		tenantId: string,
+		documentId: string | undefined,
+		lifetime: number = 60 * 60,
+		ver: string = "1.0",
+	): string {
+		// Current time in seconds
+		const now = Math.round(Date.now() / 1000);
+		const user = { id: uuid(), name: getRandomName() };
 
-        const claims: ITokenClaims = {
-            documentId: documentId ?? "",
-            scopes: this.scopes ?? [
-                ScopeType.DocRead,
-                ScopeType.DocWrite,
-                ScopeType.SummaryWrite,
-            ],
-            tenantId,
-            user,
-            iat: now,
-            exp: now + lifetime,
-            ver,
-        };
+		const claims: ITokenClaims = {
+			documentId: documentId ?? "",
+			scopes: this.scopes ?? [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			tenantId,
+			user,
+			iat: now,
+			exp: now + lifetime,
+			ver,
+		};
 
-        const utf8Key = { utf8: "12345" };
-        return jsrsasign.jws.JWS.sign(
-            // External API uses `null`
-            // eslint-disable-next-line unicorn/no-null
-            null,
-            JSON.stringify({ alg: "HS256", typ: "JWT" }),
-            claims,
-            utf8Key,
-        );
-    }
+		const utf8Key = { utf8: "12345" };
+		return jsrsasign.jws.JWS.sign(
+			// External API uses `null`
+			// eslint-disable-next-line unicorn/no-null
+			null,
+			JSON.stringify({ alg: "HS256", typ: "JWT" }),
+			claims,
+			utf8Key,
+		);
+	}
 }

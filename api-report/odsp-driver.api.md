@@ -6,14 +6,12 @@
 
 import { DriverPreCheckInfo } from '@fluidframework/driver-definitions';
 import { HostStoragePolicy } from '@fluidframework/odsp-driver-definitions';
-import { IConnected } from '@fluidframework/protocol-definitions';
 import { IContainerPackageInfo } from '@fluidframework/driver-definitions';
 import { IdentityType } from '@fluidframework/odsp-driver-definitions';
 import { IDocumentService } from '@fluidframework/driver-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IEntry } from '@fluidframework/odsp-driver-definitions';
 import { IFileEntry } from '@fluidframework/odsp-driver-definitions';
-import type { io } from 'socket.io-client';
 import { IOdspResolvedUrl } from '@fluidframework/odsp-driver-definitions';
 import { IOdspUrlParts } from '@fluidframework/odsp-driver-definitions';
 import { IPersistedCache } from '@fluidframework/odsp-driver-definitions';
@@ -117,7 +115,7 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 
 // @public
 export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
-    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, getSocketIOClient: () => Promise<typeof io>, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
+    constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree | undefined, createNewResolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
@@ -128,11 +126,13 @@ export class OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     protected createDocumentServiceCore(resolvedUrl: IResolvedUrl, odspLogger: TelemetryLogger, cacheAndTrackerArg?: ICacheAndTracker, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     protected persistedCache: IPersistedCache;
+    // Warning: (ae-forgotten-export) The symbol "IPrefetchSnapshotContents" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    readonly protocolName = "fluid-odsp:";
+    get snapshotPrefetchResultCache(): PromiseCache<string, IPrefetchSnapshotContents>;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentServiceFactoryCore implements IDocumentServiceFactory {
     constructor(getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, getWebsocketToken: TokenFetcher<OdspResourceTokenFetchOptions> | undefined, persistedCache?: IPersistedCache, hostPolicy?: HostStoragePolicy);
 }
@@ -140,7 +140,6 @@ export class OdspDocumentServiceFactoryWithCodeSplit extends OdspDocumentService
 // @public
 export class OdspDriverUrlResolver implements IUrlResolver {
     constructor();
-    // (undocumented)
     getAbsoluteUrl(resolvedUrl: IResolvedUrl, relativeUrl: string, packageInfoSource?: IContainerPackageInfo): Promise<string>;
     // (undocumented)
     resolve(request: IRequest): Promise<IOdspResolvedUrl>;
@@ -179,7 +178,7 @@ export function parseCompactSnapshotResponse(buffer: Uint8Array, logger: ITeleme
 // Warning: (ae-forgotten-export) The symbol "SnapshotFormatSupportType" needs to be exported by the entry point index.d.ts
 //
 // @public
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType): Promise<boolean>;
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
 
 // @public
 export interface ShareLinkFetcherProps {

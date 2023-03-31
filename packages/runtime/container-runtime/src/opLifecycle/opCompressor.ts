@@ -4,10 +4,12 @@
  */
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
 import { ChildLogger } from "@fluidframework/telemetry-utils";
 import { compress } from "lz4js";
-import { CompressionAlgorithms, ContainerRuntimeMessage } from "../containerRuntime";
+import { CompressionAlgorithms } from "../containerRuntime";
+import { estimateSocketSize } from "./batchManager";
 import { IBatch, BatchMessage } from "./definitions";
 
 /**
@@ -16,47 +18,85 @@ import { IBatch, BatchMessage } from "./definitions";
  * op to reserve sequence numbers.
  */
 export class OpCompressor {
-    private readonly logger;
+	private readonly logger;
 
-    constructor(logger: ITelemetryLogger) {
-        this.logger = ChildLogger.create(logger, "OpCompressor");
-    }
+	constructor(logger: ITelemetryLogger) {
+		this.logger = ChildLogger.create(logger, "OpCompressor");
+	}
 
-    public compressBatch(batch: IBatch): IBatch {
-        const messages: BatchMessage[] = [];
-        const contentToCompress: ContainerRuntimeMessage[] = [];
-        for (const message of batch.content) {
-            contentToCompress.push(message.deserializedContent);
-        }
+	public compressBatch(batch: IBatch): IBatch {
+		assert(
+			batch.contentSizeInBytes > 0 && batch.content.length > 0,
+			0x5a4 /* Batch should not be empty */,
+		);
 
-        const compressionStart = Date.now();
-        const contentsAsBuffer = new TextEncoder().encode(JSON.stringify(contentToCompress));
-        const compressedContents = compress(contentsAsBuffer);
-        const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
-        const duration = Date.now() - compressionStart;
+		const compressionStart = Date.now();
+		const contentsAsBuffer = new TextEncoder().encode(this.serializeBatch(batch));
+		const compressedContents = compress(contentsAsBuffer);
+		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+		const duration = Date.now() - compressionStart;
 
-        if (batch.contentSizeInBytes > 200000) {
-            this.logger.sendPerformanceEvent({
-                eventName: "CompressedBatch",
-                duration,
-                sizeBeforeCompression: batch.contentSizeInBytes,
-                sizeAfterCompression: compressedContent.length,
-            });
-        }
+		const messages: BatchMessage[] = [];
+		messages.push({
+			...batch.content[0],
+			contents: JSON.stringify({ packedContents: compressedContent }),
+			metadata: batch.content[0].metadata,
+			compression: CompressionAlgorithms.lz4,
+		});
 
-        messages.push({
-            ...batch.content[0], contents: JSON.stringify({ packedContents: compressedContent }),
-            metadata: { ...batch.content[0].metadata, compressed: true },
-            compression: CompressionAlgorithms.lz4,
-        });
+		// Add empty placeholder messages to reserve the sequence numbers
+		for (const message of batch.content.slice(1)) {
+			messages.push({
+				deserializedContent: {
+					contents: undefined,
+					type: message.deserializedContent.type,
+				},
+				localOpMetadata: message.localOpMetadata,
+				metadata: message.metadata,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+			});
+		}
 
-        for (const message of batch.content.slice(1)) {
-            messages.push({ ...message, contents: undefined });
-        }
+		const compressedBatch: IBatch = {
+			contentSizeInBytes: compressedContent.length,
+			content: messages,
+			referenceSequenceNumber: batch.referenceSequenceNumber,
+		};
 
-        return {
-            contentSizeInBytes: compressedContent.length,
-            content: messages,
-        };
-    }
+		if (batch.contentSizeInBytes > 200000) {
+			this.logger.sendPerformanceEvent({
+				eventName: "CompressedBatch",
+				duration,
+				sizeBeforeCompression: batch.contentSizeInBytes,
+				sizeAfterCompression: compressedBatch.contentSizeInBytes,
+				opCount: compressedBatch.content.length,
+				socketSize: estimateSocketSize(compressedBatch),
+			});
+		}
+
+		return compressedBatch;
+	}
+
+	private serializeBatch(batch: IBatch): string {
+		try {
+			return JSON.stringify(batch.content.map((message) => message.deserializedContent));
+		} catch (e: any) {
+			if (e.message === "Invalid string length") {
+				// This is how JSON.stringify signals that
+				// the content size exceeds its capacity
+				const error = new UsageError("Payload too large");
+				this.logger.sendErrorEvent(
+					{
+						eventName: "BatchTooLarge",
+						size: batch.contentSizeInBytes,
+						length: batch.content.length,
+					},
+					error,
+				);
+				throw error;
+			}
+
+			throw e;
+		}
+	}
 }

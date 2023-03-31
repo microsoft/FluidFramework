@@ -22,6 +22,8 @@ trigger:
     - package-lock.json
     - lerna.json
     - lerna-package-lock.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
     - tools/pipelines/build-bundle-size-artifacts.yml
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -41,6 +43,8 @@ extends:
     taskBundleAnalysis: true
     taskPublishBundleSizeArtifacts: true
     taskBuildDocs: false
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
+    packageManager: pnpm
     buildDirectory: .
     tagName: bundle-artifacts
     poolBuild: Large

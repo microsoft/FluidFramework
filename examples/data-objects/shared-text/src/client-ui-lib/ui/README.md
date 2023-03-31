@@ -2,9 +2,9 @@
 
 ## Design Goals
 
-* Viewport centric UI
-* Document level eventing
-* Isomorphic rendering
+-   Viewport centric UI
+-   Document level eventing
+-   Isomorphic rendering
 
 ## Component
 

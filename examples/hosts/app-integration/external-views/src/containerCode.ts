@@ -17,11 +17,11 @@ import { DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject";
  * complex models.
  */
 export interface IDiceRollerAppModel {
-    readonly diceRoller: IDiceRoller;
+	readonly diceRoller: IDiceRoller;
 }
 
 class DiceRollerAppModel implements IDiceRollerAppModel {
-    public constructor(public readonly diceRoller: IDiceRoller) { }
+	public constructor(public readonly diceRoller: IDiceRoller) {}
 }
 
 const diceRollerId = "dice-roller";
@@ -29,33 +29,29 @@ const diceRollerId = "dice-roller";
 /**
  * The runtime factory for our Fluid container.
  */
-export class DiceRollerContainerRuntimeFactory
-    extends ModelContainerRuntimeFactory<IDiceRollerAppModel> {
-    constructor() {
-        super(
-            new Map([
-                DiceRollerInstantiationFactory.registryEntry,
-            ]), // registryEntries
-        );
-    }
+export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFactory<IDiceRollerAppModel> {
+	constructor() {
+		super(
+			new Map([DiceRollerInstantiationFactory.registryEntry]), // registryEntries
+		);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-     */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
-        await diceRoller.trySetAlias(diceRollerId);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+	 */
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+		await diceRoller.trySetAlias(diceRollerId);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-     */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const diceRoller = await requestFluidObject<IDiceRoller>(
-            await runtime.getRootDataStore(diceRollerId),
-            "",
-        );
-        return new DiceRollerAppModel(diceRoller);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+	 */
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		const diceRoller = await requestFluidObject<IDiceRoller>(
+			await runtime.getRootDataStore(diceRollerId),
+			"",
+		);
+		return new DiceRollerAppModel(diceRoller);
+	}
 }
-

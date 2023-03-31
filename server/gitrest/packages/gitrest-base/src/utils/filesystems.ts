@@ -5,16 +5,21 @@
 
 import fs from "node:fs";
 import { Volume } from "memfs";
-import { IFileSystemManager, IFileSystemManagerFactory, IFileSystemManagerParams } from "./definitions";
+import {
+	IFileSystemManager,
+	IFileSystemManagerFactory,
+	IFileSystemManagerParams,
+} from "./definitions";
 
 export class NodeFsManagerFactory implements IFileSystemManagerFactory {
-    public create(params?: IFileSystemManagerParams): IFileSystemManager {
-        return fs;
-    }
+	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+		return fs;
+	}
 }
 
 export class MemFsManagerFactory implements IFileSystemManagerFactory {
-    public create(params?: IFileSystemManagerParams): IFileSystemManager {
-        return (new Volume() as unknown) as IFileSystemManager;
-    }
+	public readonly volume = new Volume();
+	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+		return this.volume as unknown as IFileSystemManager;
+	}
 }

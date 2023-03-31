@@ -5,20 +5,20 @@
 import { Type, TypeChecker } from "ts-morph";
 
 export interface DecompositionResult {
-    /**
-     * The decomposed type with external types replaced with strings
-     */
-    typeAsString: string;
-    /**
-     * External types that have been replaced
-     */
-    replacedTypes: Set<string>;
-    /**
-     * Generic classes that are required for the class because
-     * they can't be replaced without disrupting type structure
-     * Mapping is name to number of type params
-     */
-    requiredGenerics: GenericsInfo;
+	/**
+	 * The decomposed type with external types replaced with strings
+	 */
+	typeAsString: string;
+	/**
+	 * External types that have been replaced
+	 */
+	replacedTypes: Set<string>;
+	/**
+	 * Generic classes that are required for the class because
+	 * they can't be replaced without disrupting type structure
+	 * Mapping is name to number of type params
+	 */
+	requiredGenerics: GenericsInfo;
 }
 
 /**
@@ -27,22 +27,22 @@ export interface DecompositionResult {
  * exported
  */
 export class GenericsInfo extends Map<string, number> {
-    // TODO: add TS built-ins
-    // Should this check for the type in the imports/rest of file instead?  Seems
-    // kind of difficult given the different import methods, re-exports, etc.
-    static builtIns: string[] = ["Array", "Promise", "Map", "Set"];
-    set(key: string, value: number): this {
-        if (GenericsInfo.builtIns.findIndex((v) => v === key) !== -1) {
-            return this;
-        }
+	// TODO: add TS built-ins
+	// Should this check for the type in the imports/rest of file instead?  Seems
+	// kind of difficult given the different import methods, re-exports, etc.
+	static builtIns: string[] = ["Array", "Promise", "Map", "Set"];
+	set(key: string, value: number): this {
+		if (GenericsInfo.builtIns.findIndex((v) => v === key) !== -1) {
+			return this;
+		}
 
-        const oldValue = this.get(key) ?? 0;
-        return super.set(key, Math.max(value, oldValue));
-    }
+		const oldValue = this.get(key) ?? 0;
+		return super.set(key, Math.max(value, oldValue));
+	}
 
-    merge(from: Map<string, number>) {
-        from.forEach((v, k) => this.set(k, v));
-    }
+	merge(from: Map<string, number>) {
+		from.forEach((v, k) => this.set(k, v));
+	}
 }
 
 /**
@@ -50,19 +50,19 @@ export class GenericsInfo extends Map<string, number> {
  * separator and extracted types sets are merged
  */
 function mergeResults(
-    into: Partial<DecompositionResult>,
-    from: DecompositionResult,
-    separator: string,
+	into: Partial<DecompositionResult>,
+	from: DecompositionResult,
+	separator: string,
 ) {
-    if (into.typeAsString === undefined) {
-        into.typeAsString = from.typeAsString;
-        into.replacedTypes = from.replacedTypes;
-        into.requiredGenerics = from.requiredGenerics;
-    } else {
-        into.typeAsString = `${into.typeAsString}${separator}${from.typeAsString}`;
-        from.replacedTypes.forEach((v) => into.replacedTypes!.add(v));
-        into.requiredGenerics!.merge(from.requiredGenerics);
-    }
+	if (into.typeAsString === undefined) {
+		into.typeAsString = from.typeAsString;
+		into.replacedTypes = from.replacedTypes;
+		into.requiredGenerics = from.requiredGenerics;
+	} else {
+		into.typeAsString = `${into.typeAsString}${separator}${from.typeAsString}`;
+		from.replacedTypes.forEach((v) => into.replacedTypes!.add(v));
+		into.requiredGenerics!.merge(from.requiredGenerics);
+	}
 }
 
 /**
@@ -73,7 +73,7 @@ function mergeResults(
  * @returns - The type as a string
  */
 export function typeToString(typeChecker: TypeChecker, type: Type): string {
-    return typeChecker.compilerObject.typeToString(type.compilerType);
+	return typeChecker.compilerObject.typeToString(type.compilerType);
 }
 
 /**
@@ -95,53 +95,53 @@ export function typeToString(typeChecker: TypeChecker, type: Type): string {
  * @returns - DecompositionResult for the type
  */
 export function decomposeType(checker: TypeChecker, node: Type): DecompositionResult {
-    const result = {
-        typeAsString: typeToString(checker, node),
-        replacedTypes: new Set<string>(),
-        requiredGenerics: new GenericsInfo(),
-    };
+	const result = {
+		typeAsString: typeToString(checker, node),
+		replacedTypes: new Set<string>(),
+		requiredGenerics: new GenericsInfo(),
+	};
 
-    // don't try to decompose literals because they don't need to be converted to strings
-    // booleans because they are a union of false | true but not aliased
-    // (the enum/boolean checks don't actually catch when they're unioned with another
-    // type but it also doesn't really matter for type checking...)
-    if (node.isLiteral() || node.isBoolean()) {
-        return result;
-    }
-    // don't try to decompose aliases because they are handled at their declaration
-    // enums because they are unions that don't need to be decomposed
-    // these still need to be converted to strings because they are defined symbols
-    if (node.getAliasSymbol() || node.isEnum()) {
-        result.typeAsString = `"${result.typeAsString}"`;
-    }
+	// don't try to decompose literals because they don't need to be converted to strings
+	// booleans because they are a union of false | true but not aliased
+	// (the enum/boolean checks don't actually catch when they're unioned with another
+	// type but it also doesn't really matter for type checking...)
+	if (node.isLiteral() || node.isBoolean()) {
+		return result;
+	}
+	// don't try to decompose aliases because they are handled at their declaration
+	// enums because they are unions that don't need to be decomposed
+	// these still need to be converted to strings because they are defined symbols
+	if (node.getAliasSymbol() || node.isEnum()) {
+		result.typeAsString = `"${result.typeAsString}"`;
+	}
 
-    // type parameters can't be string literals and should not be replaced
-    if (node.isTypeParameter()) {
-        return result;
-    }
-    node = node as Type;
-    // intersections bind more strongly than unions so split those second
-    if (node.isUnion()) {
-        return decomposeTypes(checker, node.getUnionTypes(), " | ");
-    } else if (node.isIntersection()) {
-        return decomposeTypes(checker, node.getIntersectionTypes(), " & ");
-    } else {
-        // handle type args/generics
-        const typeArgs = node.getTypeArguments();
-        if (typeArgs.length > 0) {
-            // Array shorthand (type[]) is handled by type arguments
-            const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
-            const symbolName = checker.compilerObject.symbolToString(
-                node.compilerType.getSymbol()!,
-            );
-            typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
-            typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
-            return typeArgsResult;
-        } else {
-            result.typeAsString = `"${result.typeAsString}"`;
-            return result;
-        }
-    }
+	// type parameters can't be string literals and should not be replaced
+	if (node.isTypeParameter()) {
+		return result;
+	}
+	node = node as Type;
+	// intersections bind more strongly than unions so split those second
+	if (node.isUnion()) {
+		return decomposeTypes(checker, node.getUnionTypes(), " | ");
+	} else if (node.isIntersection()) {
+		return decomposeTypes(checker, node.getIntersectionTypes(), " & ");
+	} else {
+		// handle type args/generics
+		const typeArgs = node.getTypeArguments();
+		if (typeArgs.length > 0) {
+			// Array shorthand (type[]) is handled by type arguments
+			const typeArgsResult = decomposeTypes(checker, typeArgs, ", ");
+			const symbolName = checker.compilerObject.symbolToString(
+				node.compilerType.getSymbol()!,
+			);
+			typeArgsResult.requiredGenerics.set(symbolName, typeArgs.length);
+			typeArgsResult.typeAsString = `${symbolName}<${typeArgsResult.typeAsString}>`;
+			return typeArgsResult;
+		} else {
+			result.typeAsString = `"${result.typeAsString}"`;
+			return result;
+		}
+	}
 }
 
 /**
@@ -153,14 +153,14 @@ export function decomposeType(checker: TypeChecker, node: Type): DecompositionRe
  * @returns - Combined DecompositionResult for the types
  */
 export function decomposeTypes(
-    checker: TypeChecker,
-    nodes: Type[],
-    separator: string,
+	checker: TypeChecker,
+	nodes: Type[],
+	separator: string,
 ): DecompositionResult {
-    const result = {} as DecompositionResult;
-    nodes.map((t) => {
-        const subResult = decomposeType(checker, t);
-        mergeResults(result, subResult, separator);
-    });
-    return result;
+	const result = {} as DecompositionResult;
+	nodes.map((t) => {
+		const subResult = decomposeType(checker, t);
+		mergeResults(result, subResult, separator);
+	});
+	return result;
 }

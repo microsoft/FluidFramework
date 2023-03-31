@@ -9,8 +9,8 @@ mocha).
 
 This package exports a few functions that you'll use instead of mocha's `it()` to define profiling tests:
 
-- `benchmark()` for runtime tests
-- `benchmarkMemory()` for memory usage tests
+-   `benchmark()` for runtime tests
+-   `benchmarkMemory()` for memory usage tests
 
 More details particular to each can be found in the sections below.
 
@@ -21,7 +21,7 @@ To run them as profiling tests, invoke `mocha` as you normally would for your pa
 like this:
 
 ```console
---expose-gc --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js
+--v8-expose-gc --perfMode --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js
 ```
 
 ### `--perfMode` (required)
@@ -30,7 +30,7 @@ Indicates that the tests should be run as profiling instead of just correctness 
 When run like this, many iterations will be run and measured, but when run as correctness tests only one iteration
 will be run and no measuring will take place.
 
-### `--expose-gc` (required)
+### `--v8-expose-gc` (required)
 
 This is necessary so the package can perform explicit garbage collection between tests to help reduce
 cross-test contamination.
@@ -80,6 +80,11 @@ Look at the documentation for `BenchmarkArguments` for more details on what the 
 When run, tests for runtime profiling will be tagged with `@Benchmark` (or whatever you pass in `BenchmarkOptions.type`
 when you define the test) and `@ExecutionTime` (as opposed to `@MemoryUsage` for memory profiling tests).
 
+> **NOTE**: Be wary of gotchas when writing benchmarks for impure functions.
+> The test execution strategy presents problems if each iteration of `benchmarkFn` isn't an independent event.
+> The problem can be alleviated but not fully fixed using the `onCycle` hook argument.
+> See documentation on `HookArguments` for more detail.
+
 ## Profiling memory usage
 
 To profile memory usage, define tests using the `benchmarkMemory()` function.
@@ -92,58 +97,74 @@ A high-level explanation of how memory profiling tests execute might help make t
 
 For each test:
 
-01. The `before()` method in the class instance is called.
-02. The `beforeIteration()` method in the class instance is called.
-03. Garbage Collection is triggered.
-04. We collect a baseline "before" memory measurement.
-05. The `run()` method in the class instance is called.
-06. The `afterIteration()` method in the class instance is called.
-07. Garbage Collection is triggered.
-08. We collect an "after" memory measurement.
-09. Repeat steps 2-9 until some conditions are met.
+1.  The `before()` method in the class instance is called.
+2.  The `beforeIteration()` method in the class instance is called.
+3.  Garbage Collection is triggered.
+4.  We collect a baseline "before" memory measurement.
+5.  The `run()` method in the class instance is called.
+6.  The `afterIteration()` method in the class instance is called.
+7.  Garbage Collection is triggered.
+8.  We collect an "after" memory measurement.
+9.  Repeat steps 2-9 until some conditions are met.
 10. The `after()` method in the class instance is called.
 
 In general terms, this means you should:
 
-- Put code that sets up the test but should *not* be included in the baseline "before" memory measurement, in the
-  `beforeIteration()` method.
-- Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
-  are assigned to local variables declared *outside* of the `run()` method, so they won't go out of scope as soon as
-  the method returns, and thus are not collected when GC runs in step 7 above.
+-   Put code that sets up the test but should _not_ be included in the baseline "before" memory measurement, in the
+    `beforeIteration()` method.
+-   Put test code in the `run()` method, and ensure that things that need to be considered in the "after" memory measurement
+    are assigned to local variables declared _outside_ of the `run()` method, so they won't go out of scope as soon as
+    the method returns, and thus are not collected when GC runs in step 7 above.
 
-  Technically, those variables could be declared outside the class, but that is prone to cross-test contamination.
-  Private variables declared inside the class (which in a way "represents" the test), should make it clear that they are
-  only relevant for that test, and help avoid cross-contamination because the class instance will be out of scope (and
-  thus garbage-collectable) by the time the next test executes.
+    Technically, those variables could be declared outside the class, but that is prone to cross-test contamination.
+    Private variables declared inside the class (which in a way "represents" the test), should make it clear that they are
+    only relevant for that test, and help avoid cross-contamination because the class instance will be out of scope (and
+    thus garbage-collectable) by the time the next test executes.
 
 The pattern most memory tests will want to follow is something like this (note the `()` after the test declaration
 to immediately instantiate it):
 
 ```typescript
-benchmarkMemory(new class implements IMemoryTestObject {
-    title = `My test title`;
-    private someLocalVariable: MyType | undefined;
+benchmarkMemory(
+	new (class implements IMemoryTestObject {
+		title = `My test title`;
+		private someLocalVariable: MyType | undefined;
 
-    beforeIteration() {
-        // Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
+		beforeIteration() {
+			// Code that sets up the test but should *not* be included in the baseline "before" memory measurement.
+			// For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
+		}
 
-        // For example, clearing someLocalVariable to set up an "empty state" before we take the first measurement.
-    }
-
-    async run() {
-        // The actual code that you want to measure.
-
-        // For example, creating a new object and assigning it to someLocalVariable.
-        // Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
-        // the memory allocated into the variable will be "seen" by the "after" memory measurement.
-    }
-}());
+		async run() {
+			// The actual code that you want to measure.
+			// For example, creating a new object and assigning it to someLocalVariable.
+			// Since someLocalVariable belongs to the class instance, which isn't yet out of scope after this method returns,
+			// the memory allocated into the variable will be "seen" by the "after" memory measurement.
+		}
+	})(),
+);
 ```
 
 When ran, tests for memory profiling will be tagged with `@Benchmark` (or whatever you pass in `IMemoryTestObject.type`
 when you define the test) and `@MemoryUsage` (as opposed to `@ExecutionTime` for runtime profiling tests).
 
 For more details, look at the documentation for `IMemoryTestObject`.
+
+## Release Notes
+
+### 0.47
+
+In this version the largest change was [Use custom benchmarking code instead of Benchmark.js](https://github.com/microsoft/FluidFramework/commit/a282e8d173b365d04bf950b860b1342ebcb1513e).
+This included using more modern timing APIs, a new measurement inner loop, removal of all code generation, non-callback based async support and much more.
+This change is likely to have slight impact on times reported from benchmarks:
+across a large suite of benchmarks the new version seems to be about 2% faster results (based on geometric mean), perhaps due to more efficient JITing of the much more modern JavaScript and lower timing overhead from the newer APIs.
+Another significant change was [Use Chalk](https://github.com/microsoft/FluidFramework/commit/996102fcf2bbbfb042c7a504d62708b7ca19f72c) which improved how formatting (mainly coloring) of console output was done.
+The reporter now auto detects support from the console and thus will avoid including formatting escape sequences when redirecting output to a file.
+
+Breaking Changes:
+
+-   `onCycle` renamed to `beforeEachBatch`.
+-   Many renames and a lot of refactoring unlikely to impact users of the mocha test APIs, but likely to break more integrated code, like custom reporters.
 
 ## Trademark
 

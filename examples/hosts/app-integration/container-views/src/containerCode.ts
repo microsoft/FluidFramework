@@ -16,7 +16,6 @@ import { IDiceRoller } from "./interface";
 import { DiceRollerInstantiationFactory } from "./model";
 import { DiceRollerView } from "./view";
 
-
 /**
  * The data model for our application.
  *
@@ -24,11 +23,11 @@ import { DiceRollerView } from "./view";
  * complex models.
  */
 export interface IMountableViewAppModel {
-    readonly mountableView: IFluidMountableView;
+	readonly mountableView: IFluidMountableView;
 }
 
 class MountableViewAppModel implements IMountableViewAppModel {
-    public constructor(public readonly mountableView: IFluidMountableView) { }
+	public constructor(public readonly mountableView: IFluidMountableView) {}
 }
 
 const diceRollerId = "dice-roller";
@@ -36,35 +35,32 @@ const diceRollerId = "dice-roller";
 /**
  * The runtime factory for our Fluid container.
  */
-export class DiceRollerContainerRuntimeFactory
-    extends ModelContainerRuntimeFactory<IMountableViewAppModel> {
-    constructor() {
-        super(
-            new Map([
-                DiceRollerInstantiationFactory.registryEntry,
-            ]), // registryEntries
-        );
-    }
+export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFactory<IMountableViewAppModel> {
+	constructor() {
+		super(
+			new Map([DiceRollerInstantiationFactory.registryEntry]), // registryEntries
+		);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-     */
-    protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-        const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
-        await diceRoller.trySetAlias(diceRollerId);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
+	 */
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
+		await diceRoller.trySetAlias(diceRollerId);
+	}
 
-    /**
-     * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-     */
-    protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-        const diceRoller = await requestFluidObject<IDiceRoller>(
-            await runtime.getRootDataStore(diceRollerId),
-            "",
-        );
-        const mountableView = new MountableView(
-            React.createElement(DiceRollerView, { model: diceRoller }),
-        );
-        return new MountableViewAppModel(mountableView);
-    }
+	/**
+	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
+	 */
+	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		const diceRoller = await requestFluidObject<IDiceRoller>(
+			await runtime.getRootDataStore(diceRollerId),
+			"",
+		);
+		const mountableView = new MountableView(
+			React.createElement(DiceRollerView, { model: diceRoller }),
+		);
+		return new MountableViewAppModel(mountableView);
+	}
 }

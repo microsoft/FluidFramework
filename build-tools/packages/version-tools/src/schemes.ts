@@ -7,9 +7,9 @@ import * as semver from "semver";
 
 import { VersionBumpTypeExtended, isVersionBumpType } from "./bumpTypes";
 import {
-    bumpInternalVersion,
-    isInternalVersionRange,
-    isInternalVersionScheme,
+	bumpInternalVersion,
+	isInternalVersionRange,
+	isInternalVersionScheme,
 } from "./internalVersionScheme";
 import { bumpVirtualPatchVersion, isVirtualPatch } from "./virtualPatchScheme";
 
@@ -30,12 +30,12 @@ export type VersionScheme = "semver" | "internal" | "internalPrerelease" | "virt
  * A typeguard to check if a string is a {@link VersionScheme}.
  */
 export function isVersionScheme(scheme: string): scheme is VersionScheme {
-    return (
-        scheme === "semver" ||
-        scheme === "internal" ||
-        scheme === "internalPrerelease" ||
-        scheme === "virtualPatch"
-    );
+	return (
+		scheme === "semver" ||
+		scheme === "internal" ||
+		scheme === "internalPrerelease" ||
+		scheme === "virtualPatch"
+	);
 }
 
 /**
@@ -44,51 +44,51 @@ export function isVersionScheme(scheme: string): scheme is VersionScheme {
  * @returns The version scheme that the string is in.
  */
 export function detectVersionScheme(rangeOrVersion: string | semver.SemVer): VersionScheme {
-    // First check if the string is a valid internal version
-    if (isInternalVersionScheme(rangeOrVersion)) {
-        return "internal";
-    }
+	// First check if the string is a valid internal version
+	if (isInternalVersionScheme(rangeOrVersion)) {
+		return "internal";
+	}
 
-    if (isInternalVersionScheme(rangeOrVersion, true, true)) {
-        return "internalPrerelease";
-    }
+	if (isInternalVersionScheme(rangeOrVersion, true, true)) {
+		return "internalPrerelease";
+	}
 
-    if (semver.valid(rangeOrVersion) !== null) {
-        // Must be a version string
-        if (isVirtualPatch(rangeOrVersion)) {
-            return "virtualPatch";
-        }
+	if (semver.valid(rangeOrVersion) !== null) {
+		// Must be a version string
+		if (isVirtualPatch(rangeOrVersion)) {
+			return "virtualPatch";
+		}
 
-        return "semver";
-    } else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
-        // Must be a range string
-        if (isInternalVersionRange(rangeOrVersion)) {
-            return "internal";
-        }
+		return "semver";
+	} else if (typeof rangeOrVersion === "string" && semver.validRange(rangeOrVersion) !== null) {
+		// Must be a range string
+		if (isInternalVersionRange(rangeOrVersion)) {
+			return "internal";
+		}
 
-        const coercedVersion = semver.coerce(rangeOrVersion);
-        if (coercedVersion === null) {
-            throw new Error(`Couldn't parse a usable version from '${rangeOrVersion}'.`);
-        }
+		const coercedVersion = semver.coerce(rangeOrVersion);
+		if (coercedVersion === null) {
+			throw new Error(`Couldn't parse a usable version from '${rangeOrVersion}'.`);
+		}
 
-        const operator = rangeOrVersion.slice(0, 1);
-        if (operator === "^" || operator === "~") {
-            if (isVirtualPatch(coercedVersion)) {
-                return "virtualPatch";
-            }
-        } else {
-            if (isVirtualPatch(rangeOrVersion)) {
-                return "virtualPatch";
-            }
-        }
-    }
-    return "semver";
+		const operator = rangeOrVersion.slice(0, 1);
+		if (operator === "^" || operator === "~") {
+			if (isVirtualPatch(coercedVersion)) {
+				return "virtualPatch";
+			}
+		} else {
+			if (isVirtualPatch(rangeOrVersion)) {
+				return "virtualPatch";
+			}
+		}
+	}
+	return "semver";
 }
 
 function fatal(error: string): never {
-    const e = new Error(error);
-    (e as any).fatal = true;
-    throw e;
+	const e = new Error(error);
+	(e as any).fatal = true;
+	throw e;
 }
 
 /**
@@ -100,54 +100,54 @@ function fatal(error: string): never {
  * @returns An adjusted version as a semver.SemVer.
  */
 export function bumpVersionScheme(
-    version: string | semver.SemVer | undefined,
-    bumpType: VersionBumpTypeExtended,
-    scheme?: VersionScheme,
+	version: string | semver.SemVer | undefined,
+	bumpType: VersionBumpTypeExtended,
+	scheme?: VersionScheme,
 ): semver.SemVer {
-    const sv = semver.parse(version);
-    assert(sv !== null && version !== undefined, `Not a valid semver: ${version}`);
-    if (scheme === undefined) {
-        // eslint-disable-next-line no-param-reassign
-        scheme = detectVersionScheme(version);
-    }
-    switch (scheme) {
-        case "semver": {
-            switch (bumpType) {
-                case "current":
-                    return sv;
-                case "major":
-                case "minor":
-                case "patch":
-                    return sv?.inc(bumpType) ?? null;
-                default:
-                    // If the bump type is an explicit version, just use it.
-                    return bumpType;
-            }
-        }
-        case "internal": {
-            if (version === undefined || !isInternalVersionScheme(version)) {
-                throw new Error(`Version is not in the ${scheme} version scheme: ${version}`);
-            }
-            return bumpInternalVersion(version, bumpType);
-        }
-        case "virtualPatch": {
-            if (isVersionBumpType(bumpType)) {
-                const translatedVersion = bumpVirtualPatchVersion(bumpType, sv);
-                if (!isVersionBumpType(translatedVersion)) {
-                    return translatedVersion;
-                } else {
-                    throw new Error(
-                        `Applying virtual patch failed. The version returned was: ${translatedVersion}`,
-                    );
-                }
-            } else {
-                return sv;
-            }
-        }
-        default: {
-            fatal(`Unexpected version scheme: ${scheme}`);
-        }
-    }
+	const sv = semver.parse(version);
+	assert(sv !== null && version !== undefined, `Not a valid semver: ${version}`);
+	if (scheme === undefined) {
+		// eslint-disable-next-line no-param-reassign
+		scheme = detectVersionScheme(version);
+	}
+	switch (scheme) {
+		case "semver": {
+			switch (bumpType) {
+				case "current":
+					return sv;
+				case "major":
+				case "minor":
+				case "patch":
+					return sv?.inc(bumpType) ?? null;
+				default:
+					// If the bump type is an explicit version, just use it.
+					return bumpType;
+			}
+		}
+		case "internal": {
+			if (version === undefined || !isInternalVersionScheme(version)) {
+				throw new Error(`Version is not in the ${scheme} version scheme: ${version}`);
+			}
+			return bumpInternalVersion(version, bumpType);
+		}
+		case "virtualPatch": {
+			if (isVersionBumpType(bumpType)) {
+				const translatedVersion = bumpVirtualPatchVersion(bumpType, sv);
+				if (!isVersionBumpType(translatedVersion)) {
+					return translatedVersion;
+				} else {
+					throw new Error(
+						`Applying virtual patch failed. The version returned was: ${translatedVersion}`,
+					);
+				}
+			} else {
+				return sv;
+			}
+		}
+		default: {
+			fatal(`Unexpected version scheme: ${scheme}`);
+		}
+	}
 }
 
 /**
@@ -159,41 +159,41 @@ export function bumpVersionScheme(
  * @returns The highest version number in the list.
  */
 export function getLatestReleaseFromList(versionList: string[], allowPrereleases = false) {
-    const list = sortVersions(versionList, allowPrereleases);
-    const latest = list[0];
+	const list = sortVersions(versionList, allowPrereleases);
+	const latest = list[0];
 
-    return latest;
+	return latest;
 }
 
 export function sortVersions(versionList: string[], allowPrereleases = false): string[] {
-    let list: string[] = [];
+	let list: string[] = [];
 
-    // Check if the versionList is version strings or tag names
-    const isTagNames = versionList.some((v) => v.includes("_v"));
-    const versionsToIterate = isTagNames
-        ? versionList
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              .map((t) => getVersionFromTag(t)!)
-              .filter((t) => t !== undefined && t !== "" && t !== null)
-        : versionList;
+	// Check if the versionList is version strings or tag names
+	const isTagNames = versionList.some((v) => v.includes("_v"));
+	const versionsToIterate = isTagNames
+		? versionList
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				.map((t) => getVersionFromTag(t)!)
+				.filter((t) => t !== undefined && t !== "" && t !== null)
+		: versionList;
 
-    // Remove pre-releases from the list
-    if (!allowPrereleases) {
-        list = versionsToIterate.filter((v) => {
-            if (v === undefined) {
-                return false;
-            }
-            const hasSemverPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
-            const scheme = detectVersionScheme(v);
-            const isPrerelease =
-                scheme === "internalPrerelease" ||
-                (hasSemverPrereleaseSection && scheme !== "internal");
-            return !isPrerelease;
-        });
-    }
+	// Remove pre-releases from the list
+	if (!allowPrereleases) {
+		list = versionsToIterate.filter((v) => {
+			if (v === undefined) {
+				return false;
+			}
+			const hasSemverPrereleaseSection = semver.prerelease(v)?.length ?? 0 !== 0;
+			const scheme = detectVersionScheme(v);
+			const isPrerelease =
+				scheme === "internalPrerelease" ||
+				(hasSemverPrereleaseSection && scheme !== "internal");
+			return !isPrerelease;
+		});
+	}
 
-    list = semver.sort(list).reverse();
-    return list;
+	list = semver.sort(list).reverse();
+	return list;
 }
 
 /**
@@ -202,10 +202,10 @@ export function sortVersions(versionList: string[], allowPrereleases = false): s
  * @returns A version parsed from the tag.
  */
 export function getVersionFromTag(tag: string): string | undefined {
-    const tagSplit = tag.split("_v");
-    if (tagSplit.length !== 2) {
-        return undefined;
-    }
+	const tagSplit = tag.split("_v");
+	if (tagSplit.length !== 2) {
+		return undefined;
+	}
 
-    return tagSplit[1];
+	return tagSplit[1];
 }

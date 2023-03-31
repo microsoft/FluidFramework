@@ -3,4 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { isLocationRedirectionError, resolveWithLocationRedirectionHandling } from "./resolveWithLocationRedirection";
+export {
+	isLocationRedirectionError,
+	resolveWithLocationRedirectionHandling,
+} from "./resolveWithLocationRedirection";

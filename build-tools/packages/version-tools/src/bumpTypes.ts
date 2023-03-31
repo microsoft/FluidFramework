@@ -40,16 +40,16 @@ export type VersionChangeTypeExtended = VersionBumpTypeExtended | SemVer;
  * A typeguard to check if a version is a {@link VersionBumpType}.
  */
 export function isVersionBumpType(
-    type: VersionChangeType | string | undefined,
+	type: VersionChangeType | string | undefined,
 ): type is VersionBumpType {
-    return type === undefined ? false : type === "major" || type === "minor" || type === "patch";
+	return type === undefined ? false : type === "major" || type === "minor" || type === "patch";
 }
 
 /**
  * A typeguard to check if a version is a {@link VersionBumpTypeExtended}.
  */
 export function isVersionBumpTypeExtended(
-    type: VersionChangeType | string,
+	type: VersionChangeType | string,
 ): type is VersionBumpTypeExtended {
-    return type === "major" || type === "minor" || type === "patch" || type === "current";
+	return type === "major" || type === "minor" || type === "patch" || type === "current";
 }

@@ -5,7 +5,13 @@
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 
 export function apisToBundle() {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    prefetchLatestSnapshot(
-        undefined as any, undefined as any, undefined as any, undefined as any, undefined as any, undefined);
+	// eslint-disable-next-line @typescript-eslint/no-floating-promises
+	prefetchLatestSnapshot(
+		undefined as any,
+		undefined as any,
+		undefined as any,
+		undefined as any,
+		undefined as any,
+		undefined,
+	);
 }

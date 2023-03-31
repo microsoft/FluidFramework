@@ -8,10 +8,9 @@ See [GitHub](https://github.com/microsoft/FluidFramework) for more details on th
 
 This talks about loading of a container by handling location change of container in the storage. For example, today
 the site domain can change for a particular container on server for spo. The host/app does not know about this change
-and they request the container using the old domain name and it will cause the container load request to fail. 
+and they request the container using the old domain name and it will cause the container load request to fail.
 `resolveWithLocationRedirectionHandling` utility handles that scenario and use the new absolute url supplied by the
 driver when driver sees that error, to make the request again and successfully load the container.
-
 
 ## Usage
 

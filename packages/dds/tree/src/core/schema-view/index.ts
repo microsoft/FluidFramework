@@ -4,10 +4,11 @@
  */
 
 export {
-    Adapters,
-    Compatibility,
-    FieldAdapter,
-    TreeAdapter,
-    ViewSchemaData,
-    AdaptedViewSchema,
+	Adapters,
+	Compatibility,
+	FieldAdapter,
+	TreeAdapter,
+	ViewSchemaData,
+	AdaptedViewSchema,
+	AllowedUpdateType,
 } from "./view";

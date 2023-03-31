@@ -5,17 +5,20 @@
 
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { ISharedMap } from "@fluidframework/map";
-import { IFluidDataStoreContext, IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
+import {
+	IFluidDataStoreContext,
+	IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 export interface IProvideTestFluidObject {
-    readonly ITestFluidObject: ITestFluidObject;
+	readonly ITestFluidObject: ITestFluidObject;
 }
 
 export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadable {
-    root: ISharedMap;
-    readonly runtime: IFluidDataStoreRuntime;
-    readonly channel: IFluidDataStoreChannel;
-    readonly context: IFluidDataStoreContext;
-    getSharedObject<T = any>(id: string): Promise<T>;
+	root: ISharedMap;
+	readonly runtime: IFluidDataStoreRuntime;
+	readonly channel: IFluidDataStoreChannel;
+	readonly context: IFluidDataStoreContext;
+	getSharedObject<T = any>(id: string): Promise<T>;
 }

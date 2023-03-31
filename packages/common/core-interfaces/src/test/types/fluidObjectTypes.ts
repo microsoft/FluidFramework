@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys, IFluidObject } from "../../";
+import { IFluidLoadable, IProvideFluidLoadable, FluidObject, FluidObjectKeys } from "../../";
 
 declare function getFluidObject(): FluidObject;
 
@@ -86,21 +86,6 @@ declare function use(obj: any);
     useProvider(unknown);
     useProvider<IFoo>(unknown);
     useLoadable(unknown);
-}
-
-// test implicit conversions between FluidObject and IFluidObject for backcompat
-declare function getIFluidObject(): IFluidObject;
-{
-    const fluidObject: FluidObject = getIFluidObject();
-    const legacy: IFluidObject = getFluidObject();
-    useLoadable(fluidObject);
-    useLoadable(legacy);
-    useFluidObject(fluidObject);
-    useFluidObject(legacy);
-    useProvider(legacy);
-    useProvider(fluidObject);
-    useProvider<IFluidLoadable>(legacy);
-    useProvider<IFluidLoadable>(fluidObject);
 }
 
 // validate nested property is FluidObject too

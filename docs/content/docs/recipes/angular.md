@@ -57,11 +57,6 @@ This tutorial assumes that you are familiar with the [Fluid Framework Overview](
     npm install @fluidframework/tinylicious-client fluid-framework
     ```
 
-{{< callout note >}}
-
-You may need to install an additional dependency to make this demo compatible with Webpack 5. If you receive a compilation error related to a "buffer" package, please run `npm install -D buffer` and try again. This will be resolved in a future release of Fluid Framework.
-
-{{< /callout >}}
 
 ## Code the project
 
@@ -86,7 +81,7 @@ You may need to install an additional dependency to make this demo compatible wi
     ```
 
 1. Define the following component properties inside of the `AppComponent` class. These will be used later. Note about this code:
-    - `localTimestamp` has the `{ time: string | undefined }` type. This is represented as the `TimestampDataModel` interface in the completed demo in our repo.
+    -   `localTimestamp` has the `{ time: string | undefined }` type. This is represented as the `TimestampDataModel` interface in the completed demo in our repo.
 
     ```js
     sharedTimestamp: SharedMap | undefined;
@@ -175,8 +170,8 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 1. Replace `TODO 4` with the following code. Note about this code:
 
-    - `this.sharedTimestamp` is an instance of a `SharedMap` which exposes the ability to set/get from the API. The `updateLocalTimestamp` function is setting the `localTimestamp` property to the value of the key `"time"` on the `sharedTimestamp`. (The "time"key is created in a later step. It will have been set by the time this code runs the first time.)
-    - `updateLocalTimestamp` is called immediately to ensure that `localTimestamp` is initialized with the current shared timestamp value.
+    -   `this.sharedTimestamp` is an instance of a `SharedMap` which exposes the ability to set/get from the API. The `updateLocalTimestamp` function is setting the `localTimestamp` property to the value of the key `"time"` on the `sharedTimestamp`. (The "time"key is created in a later step. It will have been set by the time this code runs the first time.)
+    -   `updateLocalTimestamp` is called immediately to ensure that `localTimestamp` is initialized with the current shared timestamp value.
 
     ```js
     this.updateLocalTimestamp = () => { this.localTimestamp = { time: this.sharedTimestamp!.get("time") } };
@@ -205,8 +200,8 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 1. In order to update the Fluid Data across all clients, we need to define an additional function in the `AppComponent`. This function will be called to update the time of the `sharedTimestamp` object whenever a user clicks the "Get Time" button in the UI. Add the following code under the perviously defined `syncData` function. Note about this code:
 
-    - The `sharedTimestamp.set` function sets the `sharedTimestamp` object's "time" *key's* *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`.
-    - All other clients update too because the Fluid server propagates the change to the `sharedTimestamp` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
+    -   The `sharedTimestamp.set` function sets the `sharedTimestamp` object's "time" *key's* *value* to the current UNIX epoch time. This triggers the `valueChanged` event on the object, so the `updateLocalTimestamp` function runs and sets the `localTimestamp` state to the same object; for example, `{time: "1615996266675"}`.
+    -   All other clients update too because the Fluid server propagates the change to the `sharedTimestamp` on all of them and this `valueChanged` event updates the `localTimestamp` state on all of them.
 
     ```js
     onButtonClick() {
@@ -218,7 +213,7 @@ To ensure that both local and remote changes to the timestamp are reflected in t
 
 1. Open the file `\src\app\app.component.html` in your code editor. Delete all the default code in the file and replace it with the following. Note about this code:
 
-    - If the `localTimestamp` state has not been initialized, a blank screen is rendered.
+    -   If the `localTimestamp` state has not been initialized, a blank screen is rendered.
 
     ```html
     <div class="app" *ngIf="localTimestamp">
@@ -247,9 +242,9 @@ Paste the URL of the application into the address bar of another tab or even ano
 
 ## Next steps
 
-- You can find the completed code for this example in our Fluid Examples GitHub repository [here](https://github.com/microsoft/FluidExamples/tree/main/angular-demo).
-- Try extending the demo with more key/value pairs and a more complex UI.
-- Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
+-   You can find the completed code for this example in our Fluid Examples GitHub repository [here](https://github.com/microsoft/FluidExamples/tree/main/angular-demo).
+-   Try extending the demo with more key/value pairs and a more complex UI.
+-   Try changing the container schema to use a different shared data object type or specify multiple objects in `initialObjects`.
 
 {{< callout tip >}}
 
@@ -257,19 +252,24 @@ When you make changes to the code the project will automatically rebuild and the
 
 {{< /callout >}}
 
-<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=docs/_includes/links.md) -->
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../_includes/links.md) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated by embedding the referenced file contents. Do not update these generated contents directly. -->
+
 <!-- Links -->
 
 <!-- Concepts -->
 
 [Fluid container]: {{< relref "containers.md" >}}
+[Signals]: {{< relref "/docs/concepts/signals.md" >}}
 
 <!-- Distributed Data Structures -->
 
 [SharedCounter]: {{< relref "/docs/data-structures/counter.md" >}}
 [SharedMap]: {{< relref "/docs/data-structures/map.md" >}}
-[SharedSequence]: {{< relref "/docs/data-structures/sequences.md" >}}
 [SharedString]: {{< relref "/docs/data-structures/string.md" >}}
+[Sequences]:  {{< relref "/docs/data-structures/sequences.md" >}}
 
 <!-- API links -->
 
@@ -282,5 +282,7 @@ When you make changes to the code the project will automatically rebuild and the
 
 [FluidContainer]: {{< relref "/docs/apis/fluid-static/fluidcontainer-class.md" >}}
 [IFluidContainer]: {{< relref "/docs/apis/fluid-static/ifluidcontainer-interface.md" >}}
+
+<!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->

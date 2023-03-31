@@ -151,6 +151,8 @@ variables:
   # basic ANSI color support though, so force that in the pipeline
 - name: FORCE_COLOR
   value: 1
+- name: pnpmStorePath
+  value: $(Pipeline.Workspace)/.pnpm-store
 
 stages:
   - ${{ each stageName in parameters.stageNames }}:

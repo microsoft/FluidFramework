@@ -4,13 +4,14 @@
 
 ```ts
 
+/// <reference types="mocha" />
+
 // @public (undocumented)
 export const mochaHooks: {
     beforeAll(): void;
-    beforeEach(): void;
-    afterEach(): void;
+    beforeEach(this: Mocha.Context): void;
+    afterEach(this: Mocha.Context): void;
 };
-
 
 // (No @packageDocumentation comment for this package)
 

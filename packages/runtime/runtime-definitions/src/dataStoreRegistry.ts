@@ -7,10 +7,11 @@ import { IProvideFluidDataStoreFactory } from "./dataStoreFactory";
 
 /**
  * A single registry entry that may be used to create data stores
-* It has to have either factory or registry, or both.
+ * It has to have either factory or registry, or both.
  */
-export type FluidDataStoreRegistryEntry =
-    Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
+export type FluidDataStoreRegistryEntry = Readonly<
+	Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>
+>;
 /**
  * An associated pair of an identifier and registry entry.  Registry entries
  * may be dynamically loaded.
@@ -21,10 +22,11 @@ export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRe
  */
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
 
-export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry = "IFluidDataStoreRegistry";
+export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry =
+	"IFluidDataStoreRegistry";
 
 export interface IProvideFluidDataStoreRegistry {
-    readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
+	readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
 
 /**
@@ -32,5 +34,5 @@ export interface IProvideFluidDataStoreRegistry {
  * entries can be used to create data stores.
  */
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
-    get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+	get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
 }

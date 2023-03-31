@@ -1,17 +1,11 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "declaration": false,
-        "declarationMap": false,
-        "rootDir": "../",
-        "outDir": "../../dist",
-        "types": [
-            "mocha",
-            "@fluidframework/test-driver-definitions",
-        ]
-    },
-    "include": [
-        "./**/*",
-        "../*"
-    ]
+	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"compilerOptions": {
+		"declaration": false,
+		"declarationMap": false,
+		"rootDir": "../",
+		"outDir": "../../dist",
+		"types": ["mocha", "@fluidframework/test-driver-definitions"],
+	},
+	"include": ["./**/*", "../*"],
 }

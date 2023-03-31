@@ -13,31 +13,31 @@
 
 import { emptyField, FieldKinds } from "../../../feature-libraries";
 import {
-    TreeSchema,
-    ValueSchema,
-    NamedTreeSchema,
-    emptyMap,
-    emptySet,
-    fieldSchema,
+	TreeSchema,
+	ValueSchema,
+	NamedTreeSchema,
+	emptyMap,
+	emptySet,
+	fieldSchema,
 } from "../../../core";
 import { brand } from "../../../util";
 
 export const codePoint: NamedTreeSchema = {
-    name: brand("Primitive.CodePoint"),
-    localFields: emptyMap,
-    globalFields: emptySet,
-    extraLocalFields: emptyField,
-    extraGlobalFields: false,
-    value: ValueSchema.Number,
+	name: brand("Primitive.CodePoint"),
+	localFields: emptyMap,
+	globalFields: emptySet,
+	extraLocalFields: emptyField,
+	extraGlobalFields: false,
+	value: ValueSchema.Number,
 };
 
 /**
  * String made of unicode code points, allowing for sequence editing of a string.
  */
 export const string: TreeSchema = {
-    globalFields: emptySet,
-    extraLocalFields: emptyField,
-    extraGlobalFields: false,
-    localFields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
-    value: ValueSchema.Nothing,
+	globalFields: emptySet,
+	extraLocalFields: emptyField,
+	extraGlobalFields: false,
+	localFields: new Map([[brand("children"), fieldSchema(FieldKinds.sequence, [codePoint.name])]]),
+	value: ValueSchema.Nothing,
 };

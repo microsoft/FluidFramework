@@ -71,6 +71,7 @@ pr:
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-generate-notice-steps.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     exclude:
@@ -87,6 +88,10 @@ extends:
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
+    # We need to install only the root dependencies; r11s has native deps that don't install in CI since we use Docker
+    # to do the actual build in CI. We need the root dependencies so setting package versions works.
+    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
+    packageManager: pnpm
     tagName: server
     pool: Large
     pack: true
@@ -94,3 +99,4 @@ extends:
     test: ci:test
     docs: true
     containerBaseDir: /usr/src/server
+    usesPrettier: false

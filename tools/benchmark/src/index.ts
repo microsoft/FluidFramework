@@ -16,22 +16,25 @@
  */
 
 export {
-    BenchmarkType,
-    BenchmarkArguments,
-    BenchmarkSyncArguments,
-    BenchmarkAsyncArguments,
-    BenchmarkOptions,
-    MochaExclusiveOptions,
-    HookFunction,
-    HookArguments,
-    isInPerformanceTestingMode,
-    validateBenchmarkArguments,
+	BenchmarkType,
+	BenchmarkArguments,
+	BenchmarkSyncArguments,
+	BenchmarkAsyncArguments,
+	BenchmarkOptions,
+	MochaExclusiveOptions,
+	HookFunction,
+	HookArguments,
+	isInPerformanceTestingMode,
+	validateBenchmarkArguments,
+	Titled,
+	BenchmarkTimingOptions,
+	BenchmarkRunningOptions,
+	BenchmarkSyncFunction,
+	BenchmarkAsyncFunction,
+	OnBatch,
 } from "./Configuration";
 export { benchmark } from "./Runner";
-export {
-    benchmarkMemory,
-    IMemoryTestObject,
-    MemoryTestObjectProps,
-} from "./MemoryTestRunner";
-export { prettyNumber, geometricMean } from "./ReporterUtilities";
-export { BenchmarkReporter, BenchmarkData } from "./Reporter";
+export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./MemoryTestRunner";
+export { prettyNumber, geometricMean, Stats } from "./ReporterUtilities";
+export { BenchmarkReporter } from "./Reporter";
+export { BenchmarkData, BenchmarkError, BenchmarkResult, isResultError } from "./runBenchmark";

@@ -12,6 +12,8 @@ import { jsonSchemaData } from "../../domains";
 import { defaultSchemaPolicy } from "../../feature-libraries";
 import { testForest } from "../forestTestSuite";
 
-testForest("object-forest", () =>
-    buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
-);
+testForest({
+	suiteName: "object-forest",
+	factory: () =>
+		buildForest(new InMemoryStoredSchemaRepository(defaultSchemaPolicy, jsonSchemaData)),
+});

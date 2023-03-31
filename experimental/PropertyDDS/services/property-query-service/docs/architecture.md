@@ -4,10 +4,10 @@ Accessing an arbitrary state at a commit could be implemented by finding the clo
 
 We need a structure that enables:
 
- - To store large data-sets in a single repository.
- - Efficiently (in bounded time) retrieve a subset of the state at any commit in the history (random access of data at any point in history).
- - Branching should be supported with zero data copies.
- - The total storage space should not be too high (it should asymptotically be approximately linear in the size of the changeSets).
+-   To store large data-sets in a single repository.
+-   Efficiently (in bounded time) retrieve a subset of the state at any commit in the history (random access of data at any point in history).
+-   Branching should be supported with zero data copies.
+-   The total storage space should not be too high (it should asymptotically be approximately linear in the size of the changeSets).
 
 To achieve this we have designed a data-structure which we call a Materialized History. For a survey of index data-structures that provide random access to arbitrary versions and branching see [1]. Our approach is conceptually similar to the OB+Tree [2], which stores the keyspace as a B-Tree, but reuses shared nodes between different versions. However, we use changeSets to store several versions in one chunk – to reduce the amount of storage needed. This is somewhat similar to a BT-Tree [1], where the leaf nodes also contain all entries for a certain range of keys x versions . In contrast to BT-Trees, we do not store the full version history in one large tree, but have multiple separate roots for each commit.
 
@@ -24,6 +24,7 @@ If we would perform a full copy of a chunk every time a modification is applied,
 It is important to note, that this type of storage has a different asymptotic performance than storing full copies of the materialized view at intermediate states. Since only the chunks that actually have been modified are duplicated after a certain number of changes, the cost for modifications or insertions does not grow linearly with the total size of the materialized view. For example, if we repeatedly perform a certain number of modifications in one commit, the number of chunks that are affected by those modifications can be at most as high, as the number of modified properties, no matter how big the total repository is. The overhead for the B-Tree is logarithmic in the number of properties in the repository, but we can choose a fairly high base b, so that in most cases it will remain a reasonably small overhead.
 
 #### Literature:
+
 [1] Design and Analysis of Index Structures in MultiVersion Data., Jouini K., Jomier G., New Trends in Data Warehousing and Data Analysis. Annals of Information Systems, vol 3, 2009 Theodoros Tzouramanis, Yannis Manolopoulos, and Nikos A. Lorentzos. Overlapping
 
 [2] Overlapping B+-Trees: An Implementation of a Transaction Time Access Method, Theodoros Tzouramanis, Yannis Manolopoulos, and Nikos A. Lorentzos, Data & Knowledge Engineering, 29(3):381–404, 1999
