@@ -1937,7 +1937,7 @@ export class Container
 
 		this.setContextConnectedState(
 			state,
-			this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false,
+			this.readOnlyInfo.readonly ?? false,
 		);
 		this.protocolHandler.setConnectionState(state, this.clientId);
 		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
