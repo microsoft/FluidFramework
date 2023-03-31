@@ -5,13 +5,13 @@
 
 import {
 	ICache,
-	ICollection,
 	IDeltaService,
-	IDocument,
+	IDocumentRepository,
 	IDocumentStorage,
 	IProducer,
 	ITenantManager,
 	IThrottler,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import cors from "cors";
 import { Router } from "express";
@@ -24,14 +24,15 @@ import * as documents from "./documents";
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
 	deltaService: IDeltaService,
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
+	tokenManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 	const deltasRoute = deltas.create(
@@ -39,20 +40,29 @@ export function create(
 		tenantManager,
 		deltaService,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
+		tokenManager,
 	);
 	const documentsRoute = documents.create(
 		storage,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		config,
 		tenantManager,
-		documentsCollection,
+		documentRepository,
+		tokenManager,
 	);
-	const apiRoute = api.create(config, producer, tenantManager, storage, tenantThrottler);
+	const apiRoute = api.create(
+		config,
+		producer,
+		tenantManager,
+		storage,
+		tenantThrottlers,
+		tokenManager,
+	);
 
 	router.use(cors());
 	router.use("/deltas", deltasRoute);

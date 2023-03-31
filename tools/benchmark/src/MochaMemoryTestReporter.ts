@@ -7,17 +7,9 @@ import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
+import chalk from "chalk";
 import { isChildProcess } from "./Configuration";
-import {
-	bold,
-	green,
-	italicize,
-	pad,
-	prettyNumber,
-	red,
-	getName,
-	getSuiteName,
-} from "./ReporterUtilities";
+import { pad, prettyNumber, getName, getSuiteName } from "./ReporterUtilities";
 import { MemoryBenchmarkStats } from "./MemoryTestRunner";
 
 /**
@@ -59,7 +51,9 @@ class MochaMemoryTestReporter {
 				});
 			})
 			.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-				console.info(red(`Test ${test.fullTitle()} failed with error: '${err.message}'`));
+				console.info(
+					chalk.red(`Test ${test.fullTitle()} failed with error: '${err.message}'`),
+				);
 			})
 			.on(Runner.constants.EVENT_TEST_END, (test: Test) => {
 				// Type signature for `Test.state` indicates it will never be 'pending',
@@ -74,7 +68,7 @@ class MochaMemoryTestReporter {
 				if (memoryTestStats === undefined) {
 					// Mocha test complected with out reporting data. This is an error, so report it as such.
 					console.error(
-						red(
+						chalk.red(
 							`Test ${test.title} in ${suite} completed with status '${test.state}' without reporting any data.`,
 						),
 					);
@@ -84,7 +78,7 @@ class MochaMemoryTestReporter {
 					// The mocha test failed after reporting benchmark data.
 					// This may indicate the benchmark did not measure what was intended, so mark as aborted.
 					console.info(
-						red(
+						chalk.red(
 							`Test ${test.title} in ${suite} completed with status '${test.state}' after reporting data.`,
 						),
 					);
@@ -110,44 +104,44 @@ class MochaMemoryTestReporter {
 					if (suiteData === undefined) {
 						return;
 					}
-					console.log(`\n${bold(suiteName)}`);
+					console.log(`\n${chalk.bold(suiteName)}`);
 
 					const table = new Table();
 					const failedTests = new Array<[string, MemoryBenchmarkStats]>();
 					suiteData?.forEach(([testName, testData]) => {
 						if (testData.aborted) {
-							table.cell("status", `${pad(4)}${red("×")}`);
+							table.cell("status", `${pad(4)}${chalk.red("×")}`);
 							failedTests.push([testName, testData]);
 						} else {
-							table.cell("status", `${pad(4)}${green("✔")}`);
+							table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 						}
-						table.cell("name", italicize(testName));
+						table.cell("name", chalk.italic(testName));
 						if (!testData.aborted) {
 							table.cell(
 								"Heap Used Avg",
-								prettyNumber(testData.stats.mean, 2),
+								prettyNumber(testData.stats.arithmeticMean, 2),
 								Table.padLeft,
 							);
 							table.cell(
 								"Heap Used StdDev",
-								prettyNumber(testData.stats.deviation, 2),
+								prettyNumber(testData.stats.standardDeviation, 2),
 								Table.padLeft,
 							);
 							table.cell(
 								"Margin of Error",
-								`±${prettyNumber(testData.stats.moe, 2)}`,
+								`±${prettyNumber(testData.stats.marginOfError, 2)}`,
 								Table.padLeft,
 							);
 							table.cell(
 								"Relative Margin of Error",
-								`±${prettyNumber(testData.stats.rme, 2)}%`,
+								`±${prettyNumber(testData.stats.marginOfErrorPercent, 2)}%`,
 								Table.padLeft,
 							);
 
 							table.cell("Iterations", testData.runs.toString(), Table.padLeft);
 							table.cell(
 								"Samples used",
-								testData.stats.sample.length.toString(),
+								testData.stats.samples.length.toString(),
 								Table.padLeft,
 							);
 							table.cell(
@@ -162,10 +156,10 @@ class MochaMemoryTestReporter {
 					if (failedTests.length > 0) {
 						console.log(
 							"------------------------------------------------------",
-							`\n${red("ERRORS:")}`,
+							`\n${chalk.red("ERRORS:")}`,
 						);
 						failedTests.forEach(([testName, testData]) => {
-							console.log(`\n${red(testName)}`, "\n", testData.error);
+							console.log(`\n${chalk.red(testName)}`, "\n", testData.error);
 						});
 					}
 					this.writeCompletedBenchmarks(suiteName);

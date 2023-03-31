@@ -16,8 +16,9 @@ import { assertValidTaskData, ITaskData } from "../model-interface";
  * Submits notifications of changes to Fluid Service.
  */
 function echoExternalDataWebhookToFluid(
-	data: ITaskData,
+	taskData: ITaskData,
 	fluidServiceUrl: string,
+	containerUrl: string,
 	externalTaskListId: string,
 ): void {
 	console.log(
@@ -26,7 +27,7 @@ function echoExternalDataWebhookToFluid(
 
 	// TODO: we will need to add details (like ContainerId) to the message body or the url,
 	// so this message body format will evolve
-	const messageBody = JSON.stringify({ data, externalTaskListId });
+	const messageBody = JSON.stringify({ taskData, containerUrl, externalTaskListId });
 	fetch(fluidServiceUrl, {
 		method: "POST",
 		headers: {
@@ -87,29 +88,6 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		return `CUSTOMER SERVICE (${port}): ${message}`;
 	}
 
-	// Register with external data service for webhook notifications.
-	try {
-		await fetch(externalDataServiceWebhookRegistrationUrl, {
-			method: "POST",
-			headers: {
-				"Access-Control-Allow-Origin": "*",
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				// External data service will call our webhook echoer to notify our subscribers of the data changes.
-				url: `http://localhost:${port}/external-data-webhook`,
-			}),
-		});
-	} catch (error) {
-		console.error(
-			formatLogMessage(
-				`Registering for data update notifications webhook with the external data service failed due to an error.`,
-			),
-			error,
-		);
-		throw error;
-	}
-
 	const expressApp = express();
 	expressApp.use(express.json());
 	expressApp.use(cors());
@@ -164,12 +142,20 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
+			const containerUrls = clientManager.getClientSessions(externalTaskListId);
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			echoExternalDataWebhookToFluid(taskData, fluidServiceUrl, externalTaskListId);
+			for (const containerUrl of containerUrls) {
+				echoExternalDataWebhookToFluid(
+					taskData,
+					fluidServiceUrl,
+					containerUrl,
+					externalTaskListId,
+				);
+			}
 			result.send();
 		}
 	});

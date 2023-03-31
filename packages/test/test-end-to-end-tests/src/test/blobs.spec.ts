@@ -21,7 +21,7 @@ import {
 	ExpectedEvents,
 	ITestDataObject,
 	itExpects,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { v4 as uuid } from "uuid";
 import {
 	driverSupportsBlobs,

@@ -13,6 +13,12 @@ import { IsoBuffer } from '@fluidframework/common-utils';
 import { Serializable } from '@fluidframework/datastore-definitions';
 
 // @alpha
+export enum AllowedUpdateType {
+    None = 0,
+    SchemaCompatible = 1
+}
+
+// @alpha
 type AllowOptional<T> = [FlattenKeys<RequiredFields<T> & OptionalFields<T>>][_dummy];
 
 // @alpha
@@ -64,7 +70,7 @@ export interface AnchorSetRootEvents {
     treeChanging(anchors: AnchorSet): void;
 }
 
-// @alpha (undocumented)
+// @alpha
 export type AnchorSlot<TContent> = BrandedKey<Opaque<AnchorKeyBrand>, TContent>;
 
 // @alpha
@@ -99,11 +105,6 @@ type AsNames<T extends (unknown | Named<TName>)[], TName = string> = Assume<T ex
 
 // @alpha
 type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
-
-// @alpha
-export interface BranchEvents {
-    afterBatch(): void;
-}
 
 // @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
@@ -210,14 +211,20 @@ type CollectOptions<Mode extends ApiMode, TTypedFields, TValueSchema extends Val
 }[Mode];
 
 // @alpha
+export const contextSymbol: unique symbol;
+
+// @alpha
+export type ContextuallyTypedFieldData = ContextuallyTypedNodeData | undefined;
+
+// @alpha
 export type ContextuallyTypedNodeData = ContextuallyTypedNodeDataObject | PrimitiveValue | readonly ContextuallyTypedNodeData[] | MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ContextuallyTypedNodeDataObject {
     readonly [typeNameSymbol]?: string;
     readonly [valueSymbol]?: Value;
-    [key: FieldKey]: ContextuallyTypedNodeData | undefined;
-    [key: string]: ContextuallyTypedNodeData | undefined;
+    [key: FieldKey]: ContextuallyTypedFieldData;
+    [key: string]: ContextuallyTypedFieldData;
 }
 
 // @alpha
@@ -331,6 +338,7 @@ type _dummy = 0;
 // @alpha
 export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | ContextuallyTypedNodeData> {
     readonly [proxyTargetSymbol]: object;
+    readonly context: EditableTreeContext;
     deleteNodes(index: number, count?: number): void;
     readonly fieldKey: FieldKey;
     readonly fieldSchema: FieldSchema;
@@ -342,6 +350,7 @@ export interface EditableField extends MarkedArrayLike<UnwrappedEditableTree | C
 
 // @alpha
 export interface EditableTree extends Iterable<EditableField>, ContextuallyTypedNodeDataObject {
+    readonly [contextSymbol]: EditableTreeContext;
     [createField](fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void;
     [getField](fieldKey: FieldKey): EditableField;
     // (undocumented)
@@ -566,6 +575,12 @@ export interface FieldUpPath {
 }
 
 // @alpha
+export interface FieldViewSchema<Kind extends FieldKind = FieldKind> extends FieldSchema {
+    // (undocumented)
+    readonly kind: Kind;
+}
+
+// @alpha
 type FlattenKeys<T> = [{
     [Property in keyof T]: T[Property];
 }][_dummy];
@@ -636,8 +651,8 @@ interface HasModifications<TTree = ProtoNode> {
     readonly setValue?: Value;
 }
 
-// @alpha (undocumented)
-export type IdAllocator = () => ChangesetLocalId;
+// @alpha
+export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 // @alpha
 export interface IDefaultEditBuilder {
@@ -731,14 +746,21 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 export function isGlobalFieldKey(key: FieldKey): key is GlobalFieldKeySymbol;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, ISharedTreeBranch {
+export interface ISharedTree extends ISharedObject, ISharedTreeView {
 }
 
 // @alpha
-export interface ISharedTreeBranch extends AnchorLocator {
+export interface ISharedTreeFork extends ISharedTreeView {
+    isMerged(): boolean;
+    merge(): void;
+    pull(): void;
+}
+
+// @alpha
+export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
     readonly editor: IDefaultEditBuilder;
-    readonly events: ISubscribable<BranchEvents>;
+    readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
     get root(): UnwrappedEditableField;
@@ -751,13 +773,6 @@ export interface ISharedTreeBranch extends AnchorLocator {
         abort(): TransactionResult.Abort;
         inProgress(): boolean;
     };
-}
-
-// @alpha
-export interface ISharedTreeFork extends ISharedTreeBranch {
-    isMerged(): boolean;
-    merge(): void;
-    pull(): void;
 }
 
 // @alpha (undocumented)
@@ -778,7 +793,7 @@ export interface ISubscribable<E extends Events<E>> {
 export function isUnwrappedNode(field: UnwrappedEditableField): field is EditableTree;
 
 // @alpha
-export function isWritableArrayLike(data: ContextuallyTypedNodeData | undefined): data is MarkedArrayLike<ContextuallyTypedNodeData>;
+export function isWritableArrayLike(data: ContextuallyTypedFieldData): data is MarkedArrayLike<ContextuallyTypedNodeData>;
 
 // @alpha
 export interface ITreeCursor {
@@ -988,7 +1003,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     // (undocumented)
     exitTransaction(): void;
     // (undocumented)
-    generateId(): ChangesetLocalId;
+    generateId(count?: number): ChangesetLocalId;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
@@ -1219,9 +1234,9 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
 
 // @alpha (undocumented)
 export interface RevisionInfo {
-    readonly isRollback?: boolean;
     // (undocumented)
-    readonly tag: RevisionTag;
+    readonly revision: RevisionTag;
+    readonly rollbackOf?: RevisionTag;
 }
 
 // @alpha (undocumented)
@@ -1256,7 +1271,7 @@ export const rootFieldKey: GlobalFieldKey;
 export const rootFieldKeySymbol: GlobalFieldKeySymbol;
 
 // @alpha
-export function runSynchronous(branch: ISharedTreeBranch, transaction: (branch: ISharedTreeBranch) => TransactionResult | void): TransactionResult;
+export function runSynchronous(view: ISharedTreeView, transaction: (view: ISharedTreeView) => TransactionResult | void): TransactionResult;
 
 declare namespace SchemaAware {
     export {
@@ -1293,6 +1308,16 @@ export interface SchemaPolicy {
     readonly defaultGlobalFieldSchema: FieldSchema;
     readonly defaultTreeSchema: TreeSchema;
 }
+
+// @alpha
+export interface SchematizeConfiguration {
+    readonly allowedSchemaModifications: AllowedUpdateType;
+    readonly initialTree: ContextuallyTypedFieldData;
+    readonly schema: ViewSchemaCollection;
+}
+
+// @alpha
+export function schematizeView(tree: ISharedTreeView, config: SchematizeConfiguration): ISharedTreeView;
 
 // @alpha (undocumented)
 export interface SequenceFieldEditBuilder {
@@ -1360,9 +1385,9 @@ export function symbolIsFieldKey(key: symbol): key is GlobalFieldKeySymbol;
 export interface TaggedChange<TChangeset> {
     // (undocumented)
     readonly change: TChangeset;
-    readonly isRollback?: boolean;
     // (undocumented)
     readonly revision: RevisionTag | undefined;
+    readonly rollbackOf?: RevisionTag;
 }
 
 // @alpha
@@ -1461,6 +1486,10 @@ export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
 export interface TreeValue extends Serializable {
 }
 
+// @alpha (undocumented)
+export interface TreeViewSchema extends TreeSchema {
+}
+
 // @alpha
 type TypedFields<TMap extends TypedSchemaData, Mode extends ApiMode, TFields extends {
     [key: string]: TypedSchema.FieldSchemaTypeInfo;
@@ -1523,7 +1552,7 @@ interface TypedSchemaData extends SchemaDataAndPolicy<FullSchemaPolicy> {
 }
 
 // @alpha
-function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldSchema>, ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & {
+function typedSchemaData<T extends TypedSchema.LabeledTreeSchema[]>(globalFieldSchema: [GlobalFieldKey, FieldViewSchema][], ...t: T): SchemaDataAndPolicy<FullSchemaPolicy> & ViewSchemaCollection & {
     treeSchemaObject: {
         [schema in T[number] as schema["typeInfo"]["name"]]: schema;
     };
@@ -1654,6 +1683,19 @@ type ValuesOf<T> = T[keyof T];
 
 // @alpha
 export const valueSymbol: unique symbol;
+
+// @alpha
+export interface ViewEvents {
+    afterBatch(): void;
+}
+
+// @alpha
+export interface ViewSchemaCollection {
+    // (undocumented)
+    readonly globalFieldSchema: ReadonlyMap<GlobalFieldKey, FieldViewSchema>;
+    // (undocumented)
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeViewSchema>;
+}
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;
