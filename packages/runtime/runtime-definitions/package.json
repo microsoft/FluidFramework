@@ -56,6 +56,23 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedInterfaceDeclaration_IGarbageCollectionNodeData": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IGarbageCollectionSnapshotData": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IGarbageCollectionState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IGarbageCollectionSummaryDetailsLegacy": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
