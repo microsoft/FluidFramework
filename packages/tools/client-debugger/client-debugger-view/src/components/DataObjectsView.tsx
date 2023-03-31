@@ -5,17 +5,10 @@
 import { HasContainerId } from "@fluid-tools/client-debugger";
 import React from "react";
 
-import { SharedObjectRenderOptions } from "../RendererOptions";
-
 /**
  * {@link DataObjectsView} input props.
  */
-export interface DataObjectsViewProps extends HasContainerId {
-	/**
-	 * {@inheritDoc RendererOptions}
-	 */
-	renderOptions: SharedObjectRenderOptions;
-}
+export type DataObjectsViewProps = HasContainerId;
 
 /**
  * Displays the data inside a container.
