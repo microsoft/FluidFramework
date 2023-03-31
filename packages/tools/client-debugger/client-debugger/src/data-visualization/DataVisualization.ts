@@ -35,7 +35,7 @@ import {
  *
  * @remarks
  *
- * This be acquired via {@link @fluidframework/datastore-definitions#IChannelFactory.Type} field of
+ * This can be acquired via {@link @fluidframework/datastore-definitions#IChannelFactory.Type} field of
  * your shared object's factory class.
  */
 export type SharedObjectType = string;
