@@ -53,7 +53,7 @@ export {
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
 } from "./gcSummaryDefinitions";
-export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
+export { GCSummaryStateTracker, IGCSummaryTrackingData } from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
 	closuresMapLocalStorageKey,

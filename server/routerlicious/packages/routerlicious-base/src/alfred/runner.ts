@@ -39,7 +39,7 @@ export class AlfredRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly orderManager: IOrdererManager,
 		private readonly tenantManager: ITenantManager,
-		private readonly restTenantThrottler: IThrottler,
+		private readonly restTenantThrottlers: Map<string, IThrottler>,
 		private readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly socketConnectTenantThrottler: IThrottler,
 		private readonly socketConnectClusterThrottler: IThrottler,
@@ -68,7 +68,7 @@ export class AlfredRunner implements IRunner {
 		const alfred = app.create(
 			this.config,
 			this.tenantManager,
-			this.restTenantThrottler,
+			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.singleUseTokenCache,
 			this.storage,
