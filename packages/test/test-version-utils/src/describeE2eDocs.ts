@@ -22,10 +22,10 @@ export type DocumentType =
 	| "MediumDocumentMap"
 	/** Document with a SharedMap with 2 x 5Mb entries */
 	| "LargeDocumentMap"
-	/** Medium document with Multiple DDSs */
-	| "MediumDocumentMultipleDDSs"
-	/** Large document with Multiple DDSs */
-	| "LargeDocumentMultipleDDSs";
+	/** Medium document with Multiple DataStores (each data store has 3 DDS) */
+	| "MediumDocumentMultipleDataStores"
+	/** Large document with Multiple DataStores (each data store has 3 DDS) */
+	| "LargeDocumentMultipleDataStores";
 
 // Default document types to be used during the performance E2E runs.
 const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
@@ -41,12 +41,12 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	},
 	{
 		testTitle: "250 DDSs",
-		documentType: "MediumDocumentMultipleDDSs",
+		documentType: "MediumDocumentMultipleDataStores",
 		minSampleCount: 1,
 	},
 	{
 		testTitle: "500 DDSs",
-		documentType: "LargeDocumentMultipleDDSs",
+		documentType: "LargeDocumentMultipleDataStores",
 		minSampleCount: 1,
 	},
 ];

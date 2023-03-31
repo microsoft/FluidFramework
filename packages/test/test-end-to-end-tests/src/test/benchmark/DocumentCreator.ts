@@ -65,8 +65,8 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 		case "MediumDocumentMap":
 		case "LargeDocumentMap":
 			return new DocumentMap(documentProps);
-		case "MediumDocumentMultipleDDSs":
-		case "LargeDocumentMultipleDDSs":
+		case "MediumDocumentMultipleDataStores":
+		case "LargeDocumentMultipleDataStores":
 			return new DocumentMultipleDds(documentProps);
 		default:
 			throw new Error("Invalid document type");

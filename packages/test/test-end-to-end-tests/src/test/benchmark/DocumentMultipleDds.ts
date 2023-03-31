@@ -27,6 +27,8 @@ import {
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
 
+// Tests usually make use of the default data object provided by the test object provider.
+// However, it only creates a single DDS and in these tests we create multiple (3) DDSes per data store.
 class TestDataObject extends DataObject {
 	public get _root() {
 		return this.root;
@@ -69,13 +71,14 @@ const runtimeOptions: IContainerRuntimeOptions = {
 	},
 };
 
+const dsCountsPerIteration = 250;
+
 // implement IDocumentLoader methods
 export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	private _mainContainer: IContainer | undefined;
 	private containerRuntime: ContainerRuntime | undefined;
 	private mainDataStore: TestDataObject | undefined;
-	private readonly dsCounts: number;
-	private readonly dsCountPerIteration: number;
+	private readonly dataStoreCounts: number;
 	private readonly _dataObjectFactory: DataObjectFactory<TestDataObject>;
 	public get dataObjectFactory() {
 		return this._dataObjectFactory;
@@ -119,9 +122,11 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 			this.mainDataStore !== undefined,
 			"mainDataStore should be initialized before creating data stores",
 		);
-		const totalIterations = this.dsCounts / this.dsCountPerIteration;
+		// Data stores are not created as to not generate too many ops, and hit the # of ops limit.
+		// This is a workaround to prevent that.
+		const totalIterations = this.dataStoreCounts / dsCountsPerIteration;
 		for (let i = 0; i < totalIterations; i++) {
-			for (let j = 0; j < this.dsCountPerIteration; j++) {
+			for (let j = 0; j < dsCountsPerIteration; j++) {
 				const dataStore = await this.dataObjectFactory.createInstance(
 					this.containerRuntime,
 				);
@@ -139,9 +144,8 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 	}
 
 	/**
-	 * Creates a new DocumentCreator using configuration parameters.
+	 * Creates a new Document with Multiple DDSs using configuration parameters.
 	 * @param props - Properties for initializing the Document Creator.
-	 * @param numberOfKeysInMap - Size of the document to be created 1=5Mb, 2=10Mb, etc.
 	 */
 	public constructor(private readonly props: IDocumentProps) {
 		this._dataObjectFactory = new DataObjectFactory(
@@ -159,13 +163,11 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		);
 
 		switch (this.props.documentType) {
-			case "MediumDocumentMultipleDDSs":
-				this.dsCounts = 250;
-				this.dsCountPerIteration = 125;
+			case "MediumDocumentMultipleDataStores":
+				this.dataStoreCounts = 250;
 				break;
-			case "LargeDocumentMultipleDDSs":
-				this.dsCounts = 500;
-				this.dsCountPerIteration = 250;
+			case "LargeDocumentMultipleDataStores":
+				this.dataStoreCounts = 500;
 				break;
 			default:
 				throw new Error("Invalid document type");
