@@ -143,10 +143,11 @@ const defaultPrimitiveValues = {
 	Int16: 0,
 	Uint16: 0,
 	Int32: 0,
-	Int64: 0,
-	Uint64: 0,
 	Uint32: 0,
 	Float32: 0,
+	// Currently not supported by the SharedTree
+	Int64: 0,
+	Uint64: 0,
 	Float64: 0,
 	Reference: "",
 };
@@ -173,6 +174,8 @@ function getNewNodeData(
 		const subType = contextAndType[1].replace(/>/g, "");
 		const treeSchema = lookupTreeSchema(schema, typeName);
 		if (treeSchema === neverTree) {
+			// TODO: address this case to MSFT
+			// Ideally, one could expect that for every type there should be all sequence kind types.
 			sharedTree.storedSchema.update(addComplexTypeToSchema(schema, context, brand(subType)));
 		}
 		if (context === "array") {
@@ -181,6 +184,8 @@ function getNewNodeData(
 		return newData;
 	}
 	const newTreeSchema = lookupTreeSchema(schema, typeName);
+	// TODO: tbd if this code below could be moved to the EditableTree implementation
+	// for creation of fields and nodes, also having a "hook" to define own default values.
 	if (isPrimitive(newTreeSchema)) {
 		// avoid `undefined` as not supported by schema and UI
 		const defaultValue: PrimitiveValue = defaultPrimitiveValues[typeName];
