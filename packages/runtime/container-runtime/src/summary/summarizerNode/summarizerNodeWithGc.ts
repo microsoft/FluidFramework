@@ -402,13 +402,15 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			// process it as explained above.
 			const gcSnapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 
-			const gcNodes: { [id: string]: string[] } = {};
-			for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
-				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+			if (gcSnapshotData.gcState !== undefined) {
+				const gcNodes: { [id: string]: string[] } = {};
+				for (const [nodeId, nodeData] of Object.entries(gcSnapshotData.gcState.gcNodes)) {
+					gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+				}
+				// Run GC on the nodes in the snapshot to get the used routes for each node in the container.
+				const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
+				gcDetails = { gcData: { gcNodes }, usedRoutes };
 			}
-			// Run GC on the nodes in the snapshot to get the used routes for each node in the container.
-			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
-			gcDetails = { gcData: { gcNodes }, usedRoutes };
 		} else {
 			// If there is a GC blob in the snapshot, it's a non-root summarizer nodes - The root summarizer node
 			// writes GC blob in the snapshot of child nodes. Get  GC data and used routes from the blob.

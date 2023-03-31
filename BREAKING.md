@@ -21,6 +21,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 -   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
 
 ### garbage-collector and related items deprecated
 
@@ -47,6 +48,10 @@ The following interfaces available in `@fluidframework/runtime-definitions` are 
 -   `IGarbageCollectionState`
 -   `IGarbageCollectionSnapshotData`
 -   `IGarbageCollectionSummaryDetailsLegacy`
+
+### ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` is deprecated as it is equivalent to `LoaderContainerTracker.ensureSynchronized` and will be removed in an upcoming release. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Please configure the timeout for the test instead.
 
 # 2.0.0-internal.4.0.0
 
