@@ -19,6 +19,7 @@ resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
     source: Build - client packages
+    branch: lts
     trigger:
       branches:
       - release/*
