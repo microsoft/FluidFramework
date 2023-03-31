@@ -213,7 +213,7 @@ export interface IDriverHeader {
     [DriverHeader.createNew]: any;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IFluidResolvedUrl {
     // (undocumented)
     endpoints: {

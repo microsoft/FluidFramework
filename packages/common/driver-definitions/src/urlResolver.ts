@@ -6,6 +6,9 @@ import { IRequest } from "@fluidframework/core-interfaces";
 
 export type IResolvedUrl = IFluidResolvedUrl;
 
+/**
+ * @deprecated Use IResolvedUrl instead.
+ */
 export interface IFluidResolvedUrl {
 	type: "fluid";
 	/**

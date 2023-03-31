@@ -6,7 +6,7 @@
 import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { IFluidResolvedUrl, IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { Provider } from "nconf";
 
@@ -124,7 +124,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		ordererUrl += ``;
 		deltaStorageUrl += ``;
 
-		const resolved: IFluidResolvedUrl = {
+		const resolved: IResolvedUrl = {
 			endpoints: {
 				storageUrl,
 				deltaStorageUrl,

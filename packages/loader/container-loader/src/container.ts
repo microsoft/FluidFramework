@@ -33,7 +33,6 @@ import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IDocumentService,
 	IDocumentStorageService,
-	IFluidResolvedUrl,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
@@ -116,7 +115,7 @@ export interface IContainerLoadOptions {
 	 * Client details provided in the override will be merged over the default client.
 	 */
 	clientDetailsOverride?: IClientDetails;
-	resolvedUrl: IFluidResolvedUrl;
+	resolvedUrl: IResolvedUrl;
 	/**
 	 * Control which snapshot version to load from.  See IParsedUrl for detailed information.
 	 */

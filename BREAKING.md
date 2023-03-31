@@ -19,6 +19,12 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.5.0.0 Upcoming changes
 
+-   [IFluidResolvedUrl Deprecated](#IFluidResolvedUrl-Deprecated)
+
+### IFluidResolvedUrl Deprecated
+
+IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl instead. This aligns with the preceding change, [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+
 ## 2.0.0-internal.5.0.0 Breaking changes
 
 -   [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
