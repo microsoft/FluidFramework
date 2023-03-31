@@ -35,7 +35,6 @@ export {
 	UnreferencedState,
 } from "./gcDefinitions";
 export {
-	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,
