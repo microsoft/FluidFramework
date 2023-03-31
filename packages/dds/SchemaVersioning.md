@@ -65,8 +65,10 @@ Both libraries and applications can use these.
 
     1. Works with no special handling for readonly clients.
     1. Avoids new formats causing write amplification.
-    3. Keeps provenance metadata (like who edited the content most recently) accurate.
-    4. Reduces the impact of compatibility issues. For example just opening a document in one client will never break it for another. This also reduces the amount of damage caused by a bad update before it can be rolled back.
+    1. Keeps provenance metadata (like who edited the content most recently) accurate.
+    1. Reduces the impact of compatibility issues.
+       For example just opening a document in one client will never break it for another.
+       This also reduces the amount of damage caused by a bad update before it can be rolled back.
 
 -   Always check for unsupported formats, and report recoverable errors including what the format is that is not supported.
     Libraries should make it as easy as possible for applications to expose this error to the users so they can ideally update the application and continue without data-loss.
@@ -122,7 +124,8 @@ This includes Fluid Framework, as well other libraries consumed by Fluid applica
 
 ## Applications
 
--   Applications should opt into writing new data formats only once support for those formats has been fully deployed. This includes enough testing to be confident they won't need to roll back to a version without the support.
+-   Applications should opt into writing new data formats only once support for those formats has been fully deployed.
+    This includes enough testing to be confident they won't need to roll back to a version without the support.
 -   To best support Fluids maximum 30 day session length, applications may want to include an extra 30 days after the last rollout of support for the format before starting the rollout of enabling the new format for writing.
 -   When updating to a new major version of a library (such as Fluid), check the release notes for current or upcoming format changes, and schedule format updates accordingly.
 
@@ -139,7 +142,8 @@ Clients who rely on this DDS will be stuck, and have one of these options:
 1. Stay forever on old versions of Fluid Framework.
 2. Copy DDS code into their repo and continue to support it the way it’s described at the beginning of the document.
 
-It’s a possibility, but it’s very inefficient if many customers depend on it, then I’d argue it’s better to push it to separate repo for partners to share cost of supporting it. The obvious next step – we continue to support it, which is not much different form having it in our repo under “legacy” bucket.
+It’s a possibility, but it’s very inefficient if many customers depend on it, then I’d argue it’s better to push it to separate repo for partners to share cost of supporting it.
+The obvious next step – we continue to support it, which is not much different form having it in our repo under “legacy” bucket.
 
 Note that this workflow does not work with other changes, like changes in snapshot format.
 
@@ -156,8 +160,8 @@ While we did not think through designs here, I think it’s safe to say that we 
 
 Shared Tree resources:
 
-[FluidFramework/Breaking-Change-Migration.md at main · microsoft/FluidFramework](../../experimental/dds/tree/docs/Breaking-Change-Migration.md)
+[Experimental SharedTree's Breaking-Change-Migration.md](../../experimental/dds/tree/docs/Breaking-Change-Migration.md)
 
-[FluidFramework/Stored and View Schema.md at main · microsoft/FluidFramework](./tree/src/schema-stored/Stored%20and%20View%20Schema.md)
+[SharedTree's "Stored and View Schema.md"](./tree/src/schema-stored/Stored%20and%20View%20Schema.md)
 
-[FluidFramework/schemaEvolutionExamples.spec.ts at main · microsoft/FluidFramework](./tree/src/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.ts#L85)
+[SharedTree's `schemaEvolutionExamples.spec.ts`](./tree/src/test/feature-libraries/modular-schema/schemaEvolutionExamples.spec.ts#L98)
