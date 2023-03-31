@@ -66,6 +66,7 @@ import {
 	ISummaryTree,
 	IVersion,
 	MessageType,
+	SignalType,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
 import {
@@ -2045,7 +2046,11 @@ export class Container
 
 	private processSignal(message: ISignalMessage) {
 		// No clientId indicates a system signal message.
-		if (this.protocolHandler.shouldProcessSignal(message)) {
+		if (
+			Boolean(this.protocolHandler.shouldProcessSignal?.(message)) ||
+			message.content.type === SignalType.ClientJoin ||
+			message.content.type === SignalType.ClientLeave
+		) {
 			this.protocolHandler.processSignal(message);
 		} else {
 			const local = this.clientId === message.clientId;

@@ -125,6 +125,8 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
+    // (undocumented)
+    shouldProcessSignal?(message: ISignalMessage): any;
 }
 
 // @public
