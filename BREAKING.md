@@ -23,7 +23,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ### IFluidResolvedUrl Deprecated
 
-IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl instead. This aligns with the below change, [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl instead. This aligns with the preceding change, [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
 
 ## 2.0.0-internal.5.0.0 Breaking changes
 
@@ -31,7 +31,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 
 ## IResolvedUrl equivalent to IFluidResolvedUrl
 
-In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed,
+In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed.
 
 This makes IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls are now FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
 ensureFluidResolvedUrl have been removed due to this.
