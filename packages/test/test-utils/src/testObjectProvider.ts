@@ -21,7 +21,6 @@ import {
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ITestDriver, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { v4 as uuid } from "uuid";
 import { ChildLogger, MultiSinkLogger, TelemetryLogger } from "@fluidframework/telemetry-utils";
@@ -137,8 +136,7 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 				get: () => documentId,
 				update: (resolvedUrl?: IResolvedUrl) => {
 					// Extract the document ID from the resolved container's URL and reset the ID property
-					ensureFluidResolvedUrl(resolvedUrl);
-					documentId = resolvedUrl.id ?? documentId;
+					documentId = resolvedUrl?.id ?? documentId;
 				},
 				reset: () => {
 					documentId = createDocumentId();
@@ -454,10 +452,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 		this._documentCreated = false;
 	}
 
-	public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronizedWithTimeout
-			? this._loaderContainerTracker.ensureSynchronizedWithTimeout(timeoutDuration)
-			: this._loaderContainerTracker.ensureSynchronized();
+	public async ensureSynchronized(): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized();
 	}
 
 	public async waitContainerToCatchUp(container: IContainer) {

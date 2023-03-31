@@ -39,7 +39,5 @@ export {
 	IDriverHeader,
 	IFluidResolvedUrl,
 	IResolvedUrl,
-	IResolvedUrlBase,
-	IWebResolvedUrl,
 	IUrlResolver,
 } from "./urlResolver";

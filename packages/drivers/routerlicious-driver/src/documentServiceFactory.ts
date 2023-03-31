@@ -16,7 +16,6 @@ import {
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import {
-	ensureFluidResolvedUrl,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
@@ -85,7 +84,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(resolvedUrl);
 		if (createNewSummary === undefined) {
 			throw new Error("Empty file summary creation isn't supported in this driver.");
 		}
@@ -220,7 +218,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		clientIsSummarizer?: boolean,
 		session?: ISession,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(resolvedUrl);
 		const parsedUrl = parseFluidUrl(resolvedUrl.url);
 		const [, tenantId, documentId] = parsedUrl.pathname.split("/");
 		if (!documentId || !tenantId) {
