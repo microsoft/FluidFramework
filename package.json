@@ -149,7 +149,8 @@
 		"typescript": "~4.5.5"
 	},
 	"engines": {
-		"node": ">=16.16.0"
+		"node": ">=16.16.0",
+		"pnpm": "^7.0.0"
 	},
 	"packageManager": "pnpm@7.27.0",
 	"pnpm": {
