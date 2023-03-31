@@ -1722,7 +1722,7 @@ describe("Garbage Collection Tests", () => {
 		});
 	});
 
-	it("Resets gc state when loading from an old snapshot", async () => {
+	it("resets gc state when loading from an old snapshot format", async () => {
 		// Create GC details for node 3's GC blob whose unreferenced time was > timeout ms ago.
 		// This means this node should time out as soon as its data is loaded.
 		const node3GCDetails: IGarbageCollectionSummaryDetailsLegacy = {
