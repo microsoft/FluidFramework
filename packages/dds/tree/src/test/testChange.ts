@@ -5,7 +5,6 @@
 
 import { fail, strict as assert } from "assert";
 import {
-	ChangeEncoder,
 	ChangeFamily,
 	ChangeRebaser,
 	TaggedChange,
@@ -13,7 +12,8 @@ import {
 	Delta,
 	ChangeFamilyEditor,
 } from "../core";
-import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
+import { makeValueCodec } from "../feature-libraries/defaultFieldKinds";
+import { JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -194,17 +194,7 @@ export interface AnchorRebaseData {
 }
 
 const emptyChange: TestChange = { intentions: [] };
-
-export class TestChangeEncoder extends ChangeEncoder<TestChange> {
-	public encodeForJson(formatVersion: number, change: TestChange): JsonCompatible {
-		return change as unknown as JsonCompatible;
-	}
-	public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): TestChange {
-		return change as unknown as TestChange;
-	}
-}
-
-const encoder = new TestChangeEncoder();
+const codec = makeValueCodec<TestChange>();
 
 export const TestChange = {
 	emptyChange,
@@ -215,7 +205,7 @@ export const TestChange = {
 	rebaseAnchors,
 	checkChangeList,
 	toDelta,
-	encoder,
+	codec,
 };
 deepFreeze(TestChange);
 

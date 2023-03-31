@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { FieldKinds, NodeChangeset } from "../feature-libraries";
 import { makeAnonChange, TreeSchemaIdentifier, Delta } from "../core";
 import { brand } from "../util";
-import { TestChange, TestChangeEncoder } from "./testChange";
+import { TestChange } from "./testChange";
 
 const nodeType: TreeSchemaIdentifier = brand("Node");
 const fieldHandler = FieldKinds.value.changeHandler;
@@ -85,11 +85,10 @@ describe("TestChange", () => {
 	});
 
 	it("can be encoded in JSON", () => {
-		const version = 0;
-		const codec = new TestChangeEncoder();
+		const codec = TestChange.codec.json;
 		const empty = TestChange.emptyChange;
 		const normal = TestChange.mint([0, 1], [2, 3]);
-		assert.deepEqual(empty, codec.decodeJson(version, codec.encodeForJson(version, empty)));
-		assert.deepEqual(normal, codec.decodeJson(version, codec.encodeForJson(version, normal)));
+		assert.deepEqual(empty, codec.decode(codec.encode(empty)));
+		assert.deepEqual(normal, codec.decode(codec.encode(normal)));
 	});
 });

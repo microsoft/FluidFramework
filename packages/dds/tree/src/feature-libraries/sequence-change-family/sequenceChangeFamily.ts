@@ -22,5 +22,5 @@ export const sequenceChangeFamily: SequenceChangeFamily = {
 	rebaser: sequenceChangeRebaser,
 	buildEditor,
 	intoDelta: toDelta,
-	encoder: sequenceChangeEncoder,
+	codec: sequenceChangeEncoder,
 };

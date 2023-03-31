@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { IMultiFormatCodec } from "../../codec";
 import { ChangeRebaser } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
-import { ChangeEncoder } from "./changeEncoder";
 
 /**
  * @alpha
@@ -19,7 +19,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	intoDelta(change: TChange): Delta.Root;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly encoder: ChangeEncoder<TChange>;
+	readonly codec: IMultiFormatCodec<TChange>;
 }
 
 /**

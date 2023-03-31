@@ -62,10 +62,10 @@ describe("EditManagerIndex", () => {
 				],
 			]),
 		};
-		const s1 = encodeSummary(input, TestChange.encoder);
-		const output = loadSummary(s1, TestChange.encoder);
+		const s1 = encodeSummary(input, TestChange.codec);
+		const output = loadSummary(s1, TestChange.codec);
 		assert.deepEqual(output, input);
-		const s2 = encodeSummary(output, TestChange.encoder);
+		const s2 = encodeSummary(output, TestChange.codec);
 		assert.equal(s1, s2);
 	});
 

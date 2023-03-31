@@ -133,7 +133,6 @@ export {
 } from "./schema-stored";
 
 export {
-	ChangeEncoder,
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ProgressiveEditBuilder,

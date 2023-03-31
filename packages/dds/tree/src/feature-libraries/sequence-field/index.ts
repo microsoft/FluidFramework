@@ -51,9 +51,7 @@ export { SequenceChangeRebaser, sequenceFieldChangeRebaser } from "./sequenceFie
 export {
 	decodeJson,
 	encodeForJson,
-	NodeChangeDecoder,
-	NodeChangeEncoder,
-	sequenceFieldChangeEncoder,
+	sequenceFieldChangeCodecFactory as sequenceFieldChangeEncoder,
 } from "./sequenceFieldChangeEncoder";
 export { sequenceFieldToDelta, ToDelta } from "./sequenceFieldToDelta";
 export { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";

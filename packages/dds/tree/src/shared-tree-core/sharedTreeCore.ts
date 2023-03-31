@@ -226,7 +226,8 @@ export class SharedTreeCore<
 		const message: Message = {
 			revision: commit.revision,
 			originatorId: this.editManager.localSessionId,
-			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, commit.change),
+			// TODO: formatVersion usage here
+			changeset: this.changeFamily.codec.json.encode(commit.change),
 		};
 		this.submitLocalMessage(message);
 	}
@@ -263,7 +264,8 @@ export class SharedTreeCore<
 		localOpMetadata: unknown,
 	) {
 		const { revision, originatorId: stableClientId, changeset } = message.contents as Message;
-		const changes = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
+		// TODO: format version usage here
+		const changes = this.changeFamily.codec.json.decode(changeset);
 		const commit: Commit<TChange> = {
 			revision,
 			sessionId: stableClientId,

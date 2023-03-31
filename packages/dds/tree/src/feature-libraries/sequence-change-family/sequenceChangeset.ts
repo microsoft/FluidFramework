@@ -3,20 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeEncoder } from "../../core";
-import { JsonCompatible } from "../../util";
+import { makeValueCodec } from "../defaultFieldKinds";
+import { IMultiFormatCodec } from "../../codec";
 import { Transposed as T } from "./changeset";
 
 export type SequenceChangeset = T.LocalChangeset;
 
-class SequenceChangeEncoder extends ChangeEncoder<SequenceChangeset> {
-	public encodeForJson(formatVersion: number, change: SequenceChangeset): JsonCompatible {
-		return change as unknown as JsonCompatible;
-	}
-
-	public decodeJson(formatVersion: number, change: JsonCompatible): SequenceChangeset {
-		return change as unknown as SequenceChangeset;
-	}
-}
-
-export const sequenceChangeEncoder: ChangeEncoder<SequenceChangeset> = new SequenceChangeEncoder();
+export const sequenceChangeEncoder: IMultiFormatCodec<SequenceChangeset> =
+	makeValueCodec<SequenceChangeset>();

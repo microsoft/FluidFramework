@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/common-utils";
 import {
-	ChangeEncoder,
 	ChangeFamily,
 	ProgressiveEditBuilder,
 	ProgressiveEditBuilderBase,
@@ -36,6 +35,7 @@ import {
 	tryGetFromNestedMap,
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
+import { IMultiFormatCodec, withDefaultBinaryEncoding } from "../../codec";
 import {
 	ChangesetLocalId,
 	CrossFieldManager,
@@ -75,10 +75,11 @@ import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-	public readonly encoder: ChangeEncoder<ModularChangeset>;
+	// this probably needs to expose something that resolves versions to a codec
+	public readonly codec: IMultiFormatCodec<ModularChangeset>;
 
 	public constructor(public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-		this.encoder = new ModularChangeEncoder(this.fieldKinds);
+		this.codec = makeModularChangeCodec(this.fieldKinds);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -1090,18 +1091,13 @@ function makeModularChangeset(
 	return changeset;
 }
 
-class ModularChangeEncoder extends ChangeEncoder<ModularChangeset> {
-	public constructor(private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-		super();
-	}
-
-	public encodeForJson(formatVersion: number, change: ModularChangeset): JsonCompatibleReadOnly {
-		return encodeForJsonFormat0(this.fieldKinds, change);
-	}
-
-	public decodeJson(formatVersion: number, change: JsonCompatibleReadOnly): ModularChangeset {
-		return decodeJsonFormat0(this.fieldKinds, change);
-	}
+function makeModularChangeCodec(
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+): IMultiFormatCodec<ModularChangeset> {
+	return withDefaultBinaryEncoding({
+		encode: (change) => encodeForJsonFormat0(fieldKinds, change),
+		decode: (change) => decodeJsonFormat0(fieldKinds, change),
+	});
 }
 
 /**

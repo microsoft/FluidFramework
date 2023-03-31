@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import {
-	FieldChangeEncoder,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldKind,
@@ -41,7 +40,7 @@ type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
-	encoder: new FieldKinds.ValueEncoder<ValueChangeset & JsonCompatibleReadOnly>(),
+	codecFactory: () => () => FieldKinds.makeValueCodec<ValueChangeset>().json,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild) =>
@@ -57,11 +56,6 @@ const valueField = new FieldKind(
 	(a, b) => false,
 	new Set(),
 );
-
-const singleNodeEncoder: FieldChangeEncoder<NodeChangeset> = {
-	encodeForJson: (formatVersion, change, encodeChild) => encodeChild(change),
-	decodeJson: (formatVersion, change, decodeChild) => decodeChild(change),
-};
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
@@ -81,7 +75,7 @@ const singleNodeEditor: FieldEditor<NodeChangeset> = {
 
 const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
-	encoder: singleNodeEncoder,
+	codecFactory: (childCodec) => (version) => childCodec,
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
 	isEmpty: (change) => change.fieldChanges === undefined && change.valueChange === undefined,
@@ -668,17 +662,16 @@ describe("ModularChangeFamily", () => {
 	];
 
 	describe("Encoding", () => {
-		const version = 0;
 		for (const [name, data] of encodingTestData) {
 			describe(name, () => {
 				it("roundtrip", () => {
-					const encoded = family.encoder.encodeForJson(version, data);
-					const decoded = family.encoder.decodeJson(version, encoded);
+					const encoded = family.codec.json.encode(data);
+					const decoded = family.codec.json.decode(encoded);
 					assert.deepEqual(decoded, data);
 				});
 				it("json roundtrip", () => {
-					const encoded = JSON.stringify(family.encoder.encodeForJson(version, data));
-					const decoded = family.encoder.decodeJson(version, JSON.parse(encoded));
+					const encoded = JSON.stringify(family.codec.json.encode(data));
+					const decoded = family.codec.json.decode(JSON.parse(encoded));
 					assert.deepEqual(decoded, data);
 				});
 			});

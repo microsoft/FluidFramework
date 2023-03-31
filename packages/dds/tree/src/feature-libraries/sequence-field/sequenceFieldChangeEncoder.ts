@@ -5,23 +5,22 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
-import { FieldChangeEncoder } from "../modular-schema";
+import { FieldChangeHandler } from "../modular-schema";
+import { IJsonCodec } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Changeset, Mark } from "./format";
 import { isSkipMark } from "./utils";
 
-export const sequenceFieldChangeEncoder: FieldChangeEncoder<Changeset> = {
-	encodeForJson,
-	decodeJson,
-};
-
-export type NodeChangeEncoder<TNodeChange> = (change: TNodeChange) => JsonCompatibleReadOnly;
-export type NodeChangeDecoder<TNodeChange> = (change: JsonCompatibleReadOnly) => TNodeChange;
+export const sequenceFieldChangeCodecFactory: FieldChangeHandler<Changeset>["codecFactory"] =
+	(childCodec) => (formatVersion) => ({
+		encode: (changeset) => encodeForJson(formatVersion, changeset, childCodec),
+		decode: (changeset) => decodeJson(formatVersion, changeset, childCodec),
+	});
 
 export function encodeForJson<TNodeChange>(
 	formatVersion: number,
 	markList: Changeset<TNodeChange>,
-	encodeChild: NodeChangeEncoder<TNodeChange>,
+	childCodec: IJsonCodec<TNodeChange>,
 ): JsonCompatibleReadOnly {
 	const jsonMarks: JsonCompatible[] = [];
 	for (const mark of markList) {
@@ -37,7 +36,7 @@ export function encodeForJson<TNodeChange>(
 					if (mark.changes !== undefined) {
 						jsonMarks.push({
 							...mark,
-							changes: encodeChild(mark.changes),
+							changes: childCodec.encode(mark.changes),
 						} as unknown as JsonCompatible);
 					} else {
 						jsonMarks.push(mark as Mark<TNodeChange> & JsonCompatible);
@@ -50,7 +49,7 @@ export function encodeForJson<TNodeChange>(
 						jsonMarks.push({
 							...mark,
 							content,
-							changes: encodeChild(mark.changes),
+							changes: childCodec.encode(mark.changes),
 						} as unknown as JsonCompatible);
 					} else {
 						jsonMarks.push({
@@ -63,7 +62,7 @@ export function encodeForJson<TNodeChange>(
 				case "Modify":
 					jsonMarks.push({
 						...mark,
-						changes: encodeChild(mark.changes),
+						changes: childCodec.encode(mark.changes),
 					} as unknown as JsonCompatible);
 					break;
 				case "MoveIn":
@@ -81,7 +80,7 @@ export function encodeForJson<TNodeChange>(
 export function decodeJson<TNodeChange>(
 	formatVersion: number,
 	change: JsonCompatibleReadOnly,
-	decodeChild: NodeChangeDecoder<TNodeChange>,
+	childCodec: IJsonCodec<TNodeChange>,
 ): Changeset<TNodeChange> {
 	const marks: Changeset<TNodeChange> = [];
 	const array = change as Changeset<JsonCompatibleReadOnly>;
@@ -94,7 +93,7 @@ export function decodeJson<TNodeChange>(
 				case "Modify": {
 					marks.push({
 						...mark,
-						changes: decodeChild(mark.changes),
+						changes: childCodec.decode(mark.changes),
 					});
 					break;
 				}
@@ -105,7 +104,7 @@ export function decodeJson<TNodeChange>(
 					if (mark.changes !== undefined) {
 						marks.push({
 							...mark,
-							changes: decodeChild(mark.changes),
+							changes: childCodec.decode(mark.changes),
 						});
 					} else {
 						marks.push(mark as Mark<TNodeChange>);
@@ -118,7 +117,7 @@ export function decodeJson<TNodeChange>(
 						marks.push({
 							...mark,
 							content,
-							changes: decodeChild(mark.changes),
+							changes: childCodec.decode(mark.changes),
 						});
 					} else {
 						marks.push({

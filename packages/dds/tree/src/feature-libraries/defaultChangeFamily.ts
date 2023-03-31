@@ -4,7 +4,6 @@
  */
 
 import {
-	ChangeEncoder,
 	ChangeFamily,
 	ProgressiveEditBuilder,
 	ChangeRebaser,
@@ -28,6 +27,7 @@ import {
 	NodeReviver,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+import { IMultiFormatCodec } from "../codec";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -51,8 +51,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.rebaser;
 	}
 
-	public get encoder(): ChangeEncoder<DefaultChangeset> {
-		return this.modularFamily.encoder;
+	public get codec(): IMultiFormatCodec<DefaultChangeset> {
+		return this.modularFamily.codec;
 	}
 
 	public intoDelta(change: DefaultChangeset): Delta.Root {

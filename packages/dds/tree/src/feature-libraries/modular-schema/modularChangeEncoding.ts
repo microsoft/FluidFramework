@@ -13,6 +13,7 @@ import {
 	symbolFromKey,
 } from "../../core";
 import { brand, JsonCompatibleReadOnly, Mutable } from "../../util";
+import { IJsonCodec } from "../../codec";
 import { ChangesetLocalId } from "./crossFieldQueries";
 import {
 	FieldChangeMap,
@@ -77,12 +78,14 @@ function encodeFieldChangesForJson(
 ): EncodedFieldChangeMap & JsonCompatibleReadOnly {
 	const encodedFields: EncodedFieldChangeMap & JsonCompatibleReadOnly = [];
 	for (const [field, fieldChange] of change) {
-		const encodedChange = getChangeHandler(
-			fieldKinds,
-			fieldChange.fieldKind,
-		).encoder.encodeForJson(0, fieldChange.change, (childChange) =>
-			encodeNodeChangesForJson(fieldKinds, childChange),
-		);
+		// TODO: more scoping of field kinds should clean up this organization. Here and in decode.
+		const nodeChangesetCodec: IJsonCodec<NodeChangeset> = {
+			encode: (change) => encodeNodeChangesForJson(fieldKinds, change),
+			decode: (encodedChild) => decodeNodeChangesetFromJson(fieldKinds, encodedChild),
+		};
+		const encodedChange = getChangeHandler(fieldKinds, fieldChange.fieldKind)
+			.codecFactory(nodeChangesetCodec)(0)
+			.encode(fieldChange.change);
 
 		const global = isGlobalFieldKey(field);
 		const fieldKey: LocalFieldKey | GlobalFieldKey = global ? keyFromSymbol(field) : field;
@@ -143,11 +146,13 @@ function decodeFieldChangesFromJson(
 ): FieldChangeMap {
 	const decodedFields: FieldChangeMap = new Map();
 	for (const field of encodedChange) {
-		const fieldChangeset = getChangeHandler(fieldKinds, field.fieldKind).encoder.decodeJson(
-			0,
-			field.change,
-			(encodedChild) => decodeNodeChangesetFromJson(fieldKinds, encodedChild),
-		);
+		const nodeChangesetCodec: IJsonCodec<NodeChangeset> = {
+			encode: (change) => encodeNodeChangesForJson(fieldKinds, change),
+			decode: (encodedChild) => decodeNodeChangesetFromJson(fieldKinds, encodedChild),
+		};
+		const fieldChangeset = getChangeHandler(fieldKinds, field.fieldKind)
+			.codecFactory(nodeChangesetCodec)(0)
+			.decode(field.change);
 
 		const fieldKey: FieldKey = field.keyIsGlobal
 			? symbolFromKey(brand<GlobalFieldKey>(field.fieldKey))

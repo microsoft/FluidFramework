@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import {
 	ContextuallyTypedNodeDataObject,
-	FieldChangeEncoder,
 	FieldChangeHandler,
 	IdAllocator,
 	NodeChangeset,
@@ -32,6 +31,7 @@ import {
 } from "../../core";
 import { JsonCompatibleReadOnly } from "../../util";
 import { assertMarkListEqual, fakeTaggedRepair as fakeRepair } from "../utils";
+import { IJsonCodec } from "../../codec";
 
 const nodeSchema = TypedSchema.tree("Node", {
 	value: ValueSchema.String,
@@ -89,14 +89,15 @@ const deltaFromChild2 = (child: NodeChangeset): Delta.Modify => {
 
 const encodedChild = "encoded child";
 
-const childEncoder1 = (change: NodeChangeset) => {
-	assert.deepEqual(change, nodeChange1);
-	return encodedChild;
-};
-
-const childDecoder1 = (encodedChange: JsonCompatibleReadOnly) => {
-	assert.equal(encodedChange, encodedChild);
-	return nodeChange1;
+const childCodec1: IJsonCodec<NodeChangeset> = {
+	encode: (change: NodeChangeset) => {
+		assert.deepEqual(change, nodeChange1);
+		return encodedChild;
+	},
+	decode: (encodedChange: JsonCompatibleReadOnly) => {
+		assert.equal(encodedChange, encodedChild);
+		return nodeChange1;
+	},
 };
 
 const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -278,7 +279,7 @@ describe("Value field changesets", () => {
 		["with repair data", revertChange2],
 	];
 
-	runEncodingTests(fieldHandler.encoder, encodingTestData);
+	runEncodingTests(fieldHandler.codecFactory, encodingTestData);
 });
 
 describe("Optional field changesets", () => {
@@ -458,29 +459,27 @@ describe("Optional field changesets", () => {
 		["with repair data", revertChange2],
 	];
 
-	runEncodingTests(fieldHandler.encoder, encodingTestData);
+	runEncodingTests(fieldHandler.codecFactory, encodingTestData);
 });
 
 function runEncodingTests<TChangeset>(
-	encoder: FieldChangeEncoder<TChangeset>,
+	codecFactory: FieldChangeHandler<TChangeset>["codecFactory"],
 	encodingTestData: [string, TChangeset][],
 ) {
 	describe("encoding", () => {
 		const version = 0;
-
+		const codec = codecFactory(childCodec1)(version);
 		for (const [name, data] of encodingTestData) {
 			describe(name, () => {
 				it("roundtrip", () => {
-					const encoded = encoder.encodeForJson(version, data, childEncoder1);
-					const decoded = encoder.decodeJson(version, encoded, childDecoder1);
+					const encoded = codec.encode(data);
+					const decoded = codec.decode(encoded);
 					assert.deepEqual(decoded, data);
 				});
 
 				it("json roundtrip", () => {
-					const encoded = JSON.stringify(
-						encoder.encodeForJson(version, data, childEncoder1),
-					);
-					const decoded = encoder.decodeJson(version, JSON.parse(encoded), childDecoder1);
+					const encoded = JSON.stringify(codec.encode(data));
+					const decoded = codec.decode(JSON.parse(encoded));
 					assert.deepEqual(decoded, data);
 				});
 			});

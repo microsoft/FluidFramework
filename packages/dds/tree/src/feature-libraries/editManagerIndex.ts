@@ -27,7 +27,6 @@ import {
 	SessionId,
 	SummaryBranch,
 	SequencedCommit,
-	ChangeEncoder,
 	ChangeFamilyEditor,
 } from "../core";
 import {
@@ -36,6 +35,7 @@ import {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../shared-tree-core";
+import { IMultiFormatCodec } from "../codec";
 
 /**
  * The storage key for the blob in the summary containing EditManager data
@@ -67,7 +67,7 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 			recordDependency(observer, this.editManager);
 			const dataString = stringifySummary(
 				this.editManager.getSummaryData(),
-				this.editManager.changeFamily.encoder,
+				this.editManager.changeFamily.codec,
 			);
 			// For now we are not chunking the edit data, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(dataString));
@@ -82,7 +82,7 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 	): ISummaryTreeWithStats {
 		const dataString = stringifySummary(
 			this.editManager.getSummaryData(),
-			this.editManager.changeFamily.encoder,
+			this.editManager.changeFamily.codec,
 		);
 		return createSingleBlobSummary(stringKey, dataString);
 	}
@@ -135,7 +135,7 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 		);
 
 		const dataString = bufferToString(schemaBuffer, "utf-8");
-		const data = parseSummary(dataString, this.editManager.changeFamily.encoder);
+		const data = parseSummary(dataString, this.editManager.changeFamily.codec);
 		this.editManager.loadSummaryData(data);
 	}
 }
@@ -156,11 +156,12 @@ export interface CommitEncoder<TChange, TCommit extends Commit<TChange>> {
 
 export function parseSummary<TChangeset>(
 	summary: string,
-	encoder: ChangeEncoder<TChangeset>,
+	codec: IMultiFormatCodec<TChangeset>,
 ): SummaryData<TChangeset> {
 	const decodeCommit = <T extends Commit<JsonCompatibleReadOnly>>(commit: T) => ({
 		...commit,
-		change: encoder.decodeJson(0, commit.change),
+		// TODO: version number stripped here.
+		change: codec.json.decode(commit.change),
 	});
 
 	const json: ReadonlyJsonSummaryData = JSON.parse(summary);
@@ -178,11 +179,12 @@ export function parseSummary<TChangeset>(
 
 export function stringifySummary<TChangeset>(
 	data: SummaryData<TChangeset>,
-	encoder: ChangeEncoder<TChangeset>,
+	codec: IMultiFormatCodec<TChangeset>,
 ): string {
 	const encodeCommit = <T extends Commit<TChangeset>>(commit: T) => ({
 		...commit,
-		change: encoder.encodeForJson(0, commit.change),
+		// TODO: version number stripped here.
+		change: codec.json.encode(commit.change),
 	});
 
 	const json: ReadonlyJsonSummaryData = {

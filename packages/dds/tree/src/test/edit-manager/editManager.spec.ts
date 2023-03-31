@@ -23,7 +23,6 @@ import {
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
 	TestAnchorSet,
-	TestChangeEncoder,
 	TestChangeFamily,
 	TestChangeRebaser,
 	TestChange,
@@ -51,7 +50,7 @@ function changeFamilyFactory(
 ): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
-		encoder: new TestChangeEncoder(),
+		codec: TestChange.codec,
 		buildEditor: () => assert.fail("Unexpected call to buildEditor"),
 		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
 	};

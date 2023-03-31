@@ -6,7 +6,7 @@
 import { FieldChangeHandler } from "../modular-schema";
 import { Changeset, isEmpty } from "./format";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser";
-import { sequenceFieldChangeEncoder } from "./sequenceFieldChangeEncoder";
+import { sequenceFieldChangeCodecFactory } from "./sequenceFieldChangeEncoder";
 import { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
 
@@ -14,7 +14,7 @@ export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceF
 
 export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	rebaser: sequenceFieldChangeRebaser,
-	encoder: sequenceFieldChangeEncoder,
+	codecFactory: sequenceFieldChangeCodecFactory,
 	editor: sequenceFieldEditor,
 	intoDelta: sequenceFieldToDelta,
 	isEmpty,
