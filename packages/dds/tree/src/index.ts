@@ -202,6 +202,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
+	Identifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,

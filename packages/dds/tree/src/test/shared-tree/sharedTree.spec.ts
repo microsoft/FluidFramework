@@ -15,7 +15,7 @@ import {
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { identifierKey, ISharedTree, ISharedTreeView, runSynchronous } from "../../shared-tree";
+import { ISharedTree, ISharedTreeView, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -1885,7 +1885,7 @@ const rootNodeSchema = namedTreeSchema({
 		optionalChild: fieldSchema(FieldKinds.optional, [brand("TestValue")]),
 	},
 	extraLocalFields: fieldSchema(FieldKinds.sequence),
-	globalFields: [globalFieldKey, identifierKey],
+	globalFields: [globalFieldKey],
 	value: ValueSchema.Serializable,
 });
 const testSchema: SchemaData = {

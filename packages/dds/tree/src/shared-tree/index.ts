@@ -10,7 +10,6 @@ export {
 	ISharedTreeView,
 	ISharedTreeFork,
 	runSynchronous,
-	SharedTree,
 	SharedTreeFactory,
 	ViewEvents,
 } from "./sharedTree";

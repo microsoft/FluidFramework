@@ -44,6 +44,7 @@ import {
 	ForestRepairDataStore,
 	IdentifierIndex,
 	EditableTree,
+	Identifier,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, TransactionResult } from "../util";
@@ -171,8 +172,10 @@ export interface ISharedTreeView extends AnchorLocator {
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
-	// TODO: doc
-	readonly identifiedNodes: ReadonlyMap<string, EditableTree>;
+	/**
+	 * A map of nodes that have been recorded by the identifier index.
+	 */
+	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
 }
 
 /**
@@ -229,7 +232,7 @@ export const identifierKeySymbol = symbolFromKey(identifierKey);
  *
  * TODO: detail compatibility requirements.
  */
-export class SharedTree
+class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
@@ -302,8 +305,8 @@ export class SharedTree
 			this.createBranch(anchors),
 			defaultChangeFamily,
 			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, anchors), // TODO I think this is using the wrong schema
-			this.identifiedNodes,
+			this.forest.clone(this.storedSchema, anchors),
+			this.identifiedNodes.clone(),
 		);
 	}
 
@@ -331,6 +334,7 @@ export class SharedTree
 		this.finishBatch();
 	}
 
+	/** Finish a batch (see {@link ViewEvents}) */
 	private finishBatch(): void {
 		this.identifiedNodes.scanIdentifiers(this.context);
 		this.events.emit("afterBatch");
@@ -371,17 +375,15 @@ export class SharedTreeFactory implements IChannelFactory {
 class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
 	public readonly context: EditableTreeContext;
-	public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		identifiedNodes: IdentifierIndex<typeof identifierKey>, // TODO: this is cloned _during_ construction, whereas forest/schema are cloned _before_. Make consistent. Probably pull out a separate clone function
+		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
 		this.context = getEditableTreeContext(forest, this.editor);
-		this.identifiedNodes = identifiedNodes.clone();
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);

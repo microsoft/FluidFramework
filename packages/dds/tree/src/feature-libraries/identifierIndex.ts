@@ -18,6 +18,7 @@ import { valueSymbol } from "./contextuallyTyped";
 
 /**
  * The primitive type used as an identifier
+ * @alpha
  */
 export type Identifier = string;
 function isIdentifier(id: unknown | Identifier): id is Identifier {
