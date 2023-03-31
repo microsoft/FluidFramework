@@ -33,12 +33,6 @@ const getContainerListMessage: IDebuggerMessage = {
 };
 
 /**
- * {@link FluidClientDebuggers} input props.
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface FluidClientDebuggersProps {}
-
-/**
  * Indicates that the currently selected menu option is a particular Container.
  * @see {@link MenuSection} for other possible options.
  */
@@ -79,7 +73,7 @@ type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
-export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
+export function FluidClientDebuggers(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
