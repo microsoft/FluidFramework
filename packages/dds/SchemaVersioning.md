@@ -54,7 +54,7 @@ The above assumptions imply the following requirements for changes in document s
 
     Writing new formats can only be enabled by an application once its authors confirm nearly 100% of clients have code capable of collaborating with new schema (or it’s OK for old clients to fail in some controlled way).
 
-1.  When a new format is added, support for writing the previous format must available in the same version that has support for the new format.
+1.  When a new format is added, support for writing the previous format must available in the same version that has support for the new format. (This is implied by the above, and is called out separately for clarity).
 
 # Best Practices
 
