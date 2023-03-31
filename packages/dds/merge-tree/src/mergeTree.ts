@@ -553,6 +553,9 @@ export class MergeTree {
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
+	/**
+	 * Cache the sliding destination for segments after a remove
+	 */
 	private cachedSlideDestination:
 		| {
 				segmentToSlideDestination: Map<ISegment, ISegment | "detached">;
@@ -839,10 +842,6 @@ export class MergeTree {
 			};
 		}
 
-		assert(
-			this.cachedSlideDestination !== undefined,
-			"expected cachedSlideDestination to exist",
-		);
 		const cachedSegment = this.cachedSlideDestination.segmentToSlideDestination.get(segment);
 		if (cachedSegment !== undefined) {
 			return cachedSegment === "detached" ? undefined : cachedSegment;
@@ -1323,9 +1322,11 @@ export class MergeTree {
 		let overwrite = false;
 		if (pendingSegmentGroup !== undefined) {
 			const deltaSegments: IMergeTreeSegmentDelta[] = [];
+			const overlappingRemoves: boolean[] = [];
 			pendingSegmentGroup.segments.map((pendingSegment) => {
 				const overlappingRemove = !pendingSegment.ack(pendingSegmentGroup, opArgs);
 				overwrite = overlappingRemove || overwrite;
+				overlappingRemoves.push(overlappingRemove);
 				if (MergeTree.options.zamboniSegments) {
 					this.addToLRUSet(pendingSegment, seq);
 				}
@@ -1336,6 +1337,17 @@ export class MergeTree {
 					segment: pendingSegment,
 				});
 			});
+
+			if (opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+				// Perform slides after all segments have been acked, so that
+				// positions after slide are final
+				pendingSegmentGroup.segments.map((pendingSegment, idx) => {
+					if (overlappingRemoves[idx]) {
+						this.slideAckedRemovedSegmentReferences(pendingSegment);
+					}
+				});
+			}
+
 			this.mergeTreeMaintenanceCallback?.(
 				{
 					deltaSegments,

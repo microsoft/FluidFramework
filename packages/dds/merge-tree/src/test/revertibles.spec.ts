@@ -176,6 +176,79 @@ describe("MergeTree.Revertibles", () => {
 		logger.validate({ baseText: "123" });
 	});
 
+	it("revert overlapping remove", () => {
+		const clients = createClientsAtInitialState(
+			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
+			"A",
+			"B",
+			"C",
+		);
+		const logger = new TestClientLogger(clients.all);
+		let seq = 0;
+		const ops: ISequencedDocumentMessage[] = [];
+
+		const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
+		const clientBDriver = createRevertDriver(clients.B);
+		clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
+		clients.B.on("delta", (op, delta) => {
+			appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
+		});
+
+		ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq));
+		ops.push(clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq));
+
+		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+		logger.validate({ baseText: "23" });
+
+		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+
+		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+		logger.validate({ baseText: "123" });
+	});
+
+	it("revert two overlapping removes", () => {
+		const clients = createClientsAtInitialState(
+			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
+			"A",
+			"B",
+			"C",
+		);
+		const logger = new TestClientLogger(clients.all);
+		let seq = 0;
+		const ops: ISequencedDocumentMessage[] = [];
+
+		const clientB_Revertibles: MergeTreeDeltaRevertible[] = [];
+		const clientBDriver = createRevertDriver(clients.B);
+		clientBDriver.submitOpCallback = (op) => ops.push(clients.B.makeOpMessage(op, ++seq));
+
+		const clientC_Revertibles: MergeTreeDeltaRevertible[] = [];
+		const clientCDriver = createRevertDriver(clients.C);
+		clientCDriver.submitOpCallback = (op) => ops.push(clients.C.makeOpMessage(op, ++seq));
+
+		clients.B.on("delta", (op, delta) => {
+			appendToMergeTreeDeltaRevertibles(clientBDriver, delta, clientB_Revertibles);
+		});
+
+		clients.C.on("delta", (op, delta) => {
+			appendToMergeTreeDeltaRevertibles(clientCDriver, delta, clientC_Revertibles);
+		});
+
+		ops.push(clients.B.makeOpMessage(clients.B.removeRangeLocal(0, 1), ++seq));
+		ops.push(clients.C.makeOpMessage(clients.C.removeRangeLocal(0, 1), ++seq));
+
+		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+		logger.validate({ baseText: "23" });
+
+		revertMergeTreeDeltaRevertibles(clientBDriver, clientB_Revertibles.splice(0));
+		revertMergeTreeDeltaRevertibles(clientCDriver, clientC_Revertibles.splice(0));
+
+		// "123" would be the ideal final state, but due to current limitations,
+		// the eventual consistent state is "1123"
+		ops.splice(0).forEach((op) => clients.all.forEach((c) => c.applyMsg(op)));
+		logger.validate({ baseText: "1123" });
+	});
+
 	it("revert annotate", () => {
 		const clients = createClientsAtInitialState(
 			{ initialState: "123", options: { mergeTreeUseNewLengthCalculations: true } },
