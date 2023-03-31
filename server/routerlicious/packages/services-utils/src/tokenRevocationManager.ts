@@ -7,10 +7,9 @@ import {
 	IWebSocketTracker,
 	ITokenRevocationManager,
 	ITokenRevocationResponse,
-	TokenRevocationError,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-// import { NetworkError } from "@fluidframework/server-services-client";
+import { NetworkError } from "@fluidframework/server-services-client";
 
 export class WebSocketTracker implements IWebSocketTracker {
 	// Map of socket id to socket object
@@ -96,13 +95,7 @@ export class DummyTokenRevocationManager implements ITokenRevocationManager {
 	// Revoke the access of a token given its jwtId
 	public async revokeToken(tenantId: string, documentId: string, jwtId: string): Promise<ITokenRevocationResponse> {
 		Lumberjack.info(`DummyTokenManager revokeToken called`);
-		// throw new NetworkError(501, "Token revocation is not supported for now", false, true);
-		throw new TokenRevocationError(
-			"NotAvailable",
-			501,
-			"Token revocation is not supported for now",
-			false,
-			true);
+		throw new NetworkError(501, "Token revocation is not supported for now", false, true);
 	}
 
 	// Check if a given token id is revoked
