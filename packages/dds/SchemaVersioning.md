@@ -23,8 +23,6 @@ This document makes the following assumptions which relate to use of these schem
 1.  **Documents at rest need to continue to work.** Fluid service providers (including SharePoint Online and Fluid Relay Service) want to avoid converting existing documents.
     Such conversions would be very expensive (from COGS perspective), only work for online content and be somewhat risky (if something goes wrong, it’s easy to lose user data).
 
-1.  Collaboration between users should work as long as they have a version of the application that is "current" for a definition of "current" controlled by the application authors (not the Fluid Framework authors!).
-
 1.  There is no way to ship new application code (including Fluid Framework bits) instantly to all clients of a given application.
     This means every update must result in at least two "current" versions at a time for a while.
 
@@ -35,6 +33,12 @@ This document makes the following assumptions which relate to use of these schem
 
         This means old code stays in use and needs to be able to collaborate (on same doc) with new code seamlessly, at least for some amount of time.
         This window will differ depending on app and how it’s deployed – from a couple weeks for web applications, to a couple years for something like win32 Office Word.
+
+        To support this, the application must be able to make any needed change in a way where the before and after version of the application can both be "current" at the same time.
+        This means two different "current" versions must be able to have different Fluid Framework versions.
+
+1.  Collaboration between users should work as long as they have a version of the application that is "current" for a definition of "current" controlled by the application authors (not the Fluid Framework authors!).
+    This includes cross version collaboration between multiple current versions of the application with different Fluid Framework versions noted above.
 
 1.  Documents can be read-only for some users, thus in-place conversion is not possible for all clients.
 
@@ -103,7 +107,7 @@ This includes Fluid Framework, as well other libraries consumed by Fluid applica
 
     If the format is not yet stable (current version of it will not be supported for reading in all future versions), it must be explicitly documented as such,
     and ideally should not be included in any releases unless required for some transient use cases that do not require supporting persisted data across versions.
-    A good way to do this is to indicate that the format is not stable in the version itself, for example by naming the version something like `4-Unstable-Development` (this applies to the  version string written into the persisted data as well as the version name in the API).
+    A good way to do this is to indicate that the format is not stable in the version itself, for example by naming the version something like `4-Unstable-Development` (this applies to the version string written into the persisted data as well as the version name in the API).
     When the format is stabilized a new version should be used to ensure any data encoded while the format was unstable will not be parsed as if it was in the final format.
     As a third line of defense (after not including unstable formats in the API and clearly marking them as unstable), actually persisting data in an unstable format should error before writing the data unless explicitly opting into allowing persisting unstable formats, which should only be possible using internal testing APIs.
 
