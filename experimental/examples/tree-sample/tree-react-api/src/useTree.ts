@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedTree } from "@fluid-internal/tree";
+import { ISharedTreeView } from "@fluid-internal/tree";
 import React from "react";
 
 /**
@@ -15,7 +15,7 @@ import React from "react";
  *
  * Not currently compatible with 'React.memo'.
  */
-export function useTree<T>(tree: ISharedTree): T {
+export function useTree<T>(tree: ISharedTreeView): T {
 	// This proof-of-concept implementation allocates a state variable this is modified
 	// when the tree changes to trigger re-render.
 	const [invalidations, setInvalidations] = React.useState(0);
@@ -23,7 +23,7 @@ export function useTree<T>(tree: ISharedTree): T {
 	// Register for tree deltas when the component mounts
 	React.useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
-		return tree.forest.on("afterDelta", () => {
+		return tree.events.on("afterBatch", () => {
 			setInvalidations(invalidations + 1);
 		});
 	});

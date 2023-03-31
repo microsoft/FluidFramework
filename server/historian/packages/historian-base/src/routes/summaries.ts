@@ -19,22 +19,62 @@ import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../services";
-import { parseToken } from "../utils";
+import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ): Router {
 	const router: Router = Router();
 
-	const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-		throttleIdSuffix: utils.Constants.throttleIdSuffix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
+
+	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
+	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.createSummaryThrottleIdPrefix,
+	};
+	const restTenantCreateSummaryThrottler = restTenantThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
+
+	// Throttling logic for getting summary to provide per-tenant rate-limiting at the HTTP route level
+	const getSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.getSummaryThrottleIdPrefix,
+	};
+	const restTenantGetSummaryThrottler = restTenantThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
+
+	// Throttling logic for creating summary to provide per-cluster rate-limiting at the HTTP route level
+	const createSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.createSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterCreateSummaryThrottler = restClusterThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
+
+	// Throttling logic for getting summary to provide per-cluster rate-limiting at the HTTP route level
+	const getSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterGetSummaryThrottler = restTenantThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
 
 	async function getSummary(
 		tenantId: string,
@@ -95,7 +135,8 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/summaries/:sha",
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
+		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -116,7 +157,12 @@ export function create(
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/summaries",
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(
+			restClusterCreateSummaryThrottler,
+			winston,
+			createSummaryPerClusterThrottleOptions,
+		),
+		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -140,7 +186,7 @@ export function create(
 
 	router.delete(
 		"/repos/:ignored?/:tenantId/git/summaries",
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(
