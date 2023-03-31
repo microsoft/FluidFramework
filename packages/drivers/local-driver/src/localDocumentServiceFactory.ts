@@ -13,7 +13,6 @@ import {
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { ISummaryTree, NackErrorType } from "@fluidframework/protocol-definitions";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection";
 import { createLocalDocumentService } from "./localDocumentService";
@@ -46,7 +45,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 			throw new Error("Provide the localDeltaConnectionServer!!");
 		}
 		if (createNewSummary !== undefined) {
-			ensureFluidResolvedUrl(resolvedUrl);
 			await createDocument(this.localDeltaConnectionServer, resolvedUrl, createNewSummary);
 		}
 		return this.createDocumentService(resolvedUrl, logger, clientIsSummarizer);
@@ -62,8 +60,6 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		ensureFluidResolvedUrl(resolvedUrl);
-
 		const parsedUrl = parse(resolvedUrl.url);
 		const [, tenantId, documentId] = parsedUrl.path ? parsedUrl.path.split("/") : [];
 		if (!documentId || !tenantId) {

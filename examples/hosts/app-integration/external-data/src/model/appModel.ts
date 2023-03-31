@@ -37,6 +37,6 @@ export class AppModel extends TypedEventEmitter<IAppModelEvents> implements IApp
 	 * {@inheritDoc IAppModel.getContainerResolvedUrl}
 	 */
 	public readonly getContainerResolvedUrl = (): IFluidResolvedUrl | undefined => {
-		return this.container?.resolvedUrl as IFluidResolvedUrl;
+		return this.container?.resolvedUrl;
 	};
 }

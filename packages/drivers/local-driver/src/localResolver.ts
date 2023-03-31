@@ -66,9 +66,7 @@ export class LocalResolver implements IUrlResolver {
 		if (url.startsWith("/")) {
 			url = url.substr(1);
 		}
-		const fluidResolvedUrl = resolvedUrl as IFluidResolvedUrl;
-
-		const parsedUrl = parse(fluidResolvedUrl.url);
+		const parsedUrl = parse(resolvedUrl.url);
 		if (parsedUrl.pathname === null) {
 			throw new Error("Url should contain tenant and docId!!");
 		}

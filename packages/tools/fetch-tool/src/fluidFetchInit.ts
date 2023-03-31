@@ -170,7 +170,7 @@ export async function fluidFetchInit(urlStr: string) {
 	if (resolvedInfo === undefined) {
 		throw new Error(`Unknown URL ${urlStr}`);
 	}
-	const fluidResolvedUrl = resolvedInfo.resolvedUrl as IFluidResolvedUrl;
+	const fluidResolvedUrl = resolvedInfo.resolvedUrl;
 	if (resolvedInfo.serviceType === "odsp") {
 		const odspResolvedUrl = fluidResolvedUrl as IOdspResolvedUrl;
 		return initializeODSPCore(

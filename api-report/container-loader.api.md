@@ -49,8 +49,6 @@ export interface IContainerConfig {
     // (undocumented)
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
-    // (undocumented)
-    resolvedUrl?: IFluidResolvedUrl;
     serializedContainerState?: IPendingContainerState;
 }
 
