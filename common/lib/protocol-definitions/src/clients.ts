@@ -29,7 +29,7 @@ export interface IClientDetails {
 	 * TODO
 	 */
 	capabilities: ICapabilities;
-	
+
 	/**
 	 * TODO
 	 */
@@ -40,7 +40,7 @@ export interface IClientDetails {
 	 * it should be in particular format like: `prop1:val1;prop2:val2;prop3:val3`.
 	 */
 	environment?: string;
-	
+
 	/**
 	 * TODO
 	 */
@@ -55,24 +55,24 @@ export interface IClient {
 	 * {@inheritDoc ConnectionMode}
 	 */
 	mode: ConnectionMode;
-	
+
 	/**
 	 * TODO
 	 */
 	details: IClientDetails;
-	
+
 	/**
 	 * TODO
 	 */
 	permission: string[];
-	
+
 	/**
 	 * The user associated with this client.
-	 * 
+	 *
 	 * @remarks There may be more than 1 client associated with the same user.
 	 */
 	user: IUser;
-	
+
 	/**
 	 * TODO
 	 */
@@ -94,7 +94,7 @@ export interface ISequencedClient {
 	client: IClient;
 
 	/**
-	 * TODO
+	 * The sequence number of the client's join message/op; when the client joined
 	 */
 	sequenceNumber: number;
 }
@@ -111,12 +111,12 @@ export interface ISignalClient {
 	client: IClient;
 
 	/**
-	 * Counts the number of signals sent by the client
+	 * Counts the number of signals sent by the client.
 	 */
 	clientConnectionNumber?: number;
 
 	/**
-	 * Sequence number that indicates when the signal was created in relation to the delta stream
+	 * Sequence number that indicates when the signal was created in relation to the delta stream.
 	 */
 	referenceSequenceNumber?: number;
 }
