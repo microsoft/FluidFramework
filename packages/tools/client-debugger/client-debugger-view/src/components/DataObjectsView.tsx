@@ -8,8 +8,7 @@ import React from "react";
 /**
  * {@link DataObjectsView} input props.
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface DataObjectsViewProps extends HasContainerId {}
+export type DataObjectsViewProps = HasContainerId;
 
 /**
  * Displays the data inside a container.
