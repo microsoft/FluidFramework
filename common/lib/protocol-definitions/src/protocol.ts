@@ -53,7 +53,7 @@ export enum MessageType {
 	SummaryNack = "summaryNack",
 
 	/**
-	 * Channel operation (op).
+	 * Operation (op) produced by container runtime.
 	 */
 	Operation = "op",
 
