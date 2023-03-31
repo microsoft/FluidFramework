@@ -78,6 +78,9 @@
 			},
 			"TypeAliasDeclaration_DriverError": {
 				"forwardCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IResolvedUrl": {
+				"forwardCompat": false
 			}
 		}
 	}

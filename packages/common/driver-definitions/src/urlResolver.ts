@@ -4,9 +4,12 @@
  */
 import { IRequest } from "@fluidframework/core-interfaces";
 
-export type IResolvedUrl = IFluidResolvedUrl;
+/**
+ * @deprecated Use IResolvedUrl instead.
+ */
+export type IFluidResolvedUrl = IResolvedUrl;
 
-export interface IFluidResolvedUrl {
+export interface IResolvedUrl {
 	type: "fluid";
 	/**
 	 * The id of the container this resolved url is for.

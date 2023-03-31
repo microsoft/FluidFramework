@@ -9,7 +9,6 @@ import {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageServicePolicies,
-	IFluidResolvedUrl,
 	IResolvedUrl,
 	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions";
@@ -239,7 +238,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.driverPolicies.enableRestLess,
 		);
 
-		const discoverFluidResolvedUrl = async (): Promise<IFluidResolvedUrl> => {
+		const discoverFluidResolvedUrl = async (): Promise<IResolvedUrl> => {
 			if (!this.driverPolicies.enableDiscovery) {
 				return resolvedUrl;
 			}
@@ -259,7 +258,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			);
 			return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
 		};
-		const fluidResolvedUrl: IFluidResolvedUrl =
+		const fluidResolvedUrl: IResolvedUrl =
 			session !== undefined
 				? getDiscoveredFluidResolvedUrl(resolvedUrl, session)
 				: await discoverFluidResolvedUrl();

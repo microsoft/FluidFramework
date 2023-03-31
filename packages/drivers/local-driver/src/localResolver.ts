@@ -6,12 +6,7 @@
 import { parse } from "url";
 import { assert } from "@fluidframework/common-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	IFluidResolvedUrl,
-	IResolvedUrl,
-	IUrlResolver,
-	DriverHeader,
-} from "@fluidframework/driver-definitions";
+import { IResolvedUrl, IUrlResolver, DriverHeader } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { generateToken } from "./auth";
 
@@ -46,7 +41,7 @@ export class LocalResolver implements IUrlResolver {
 		const fullPath = `${parsedUrl.pathname.substr(1)}${parsedUrl.search}`;
 		const documentId = fullPath.split("/")[0];
 		const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
-		const resolved: IFluidResolvedUrl = {
+		const resolved: IResolvedUrl = {
 			endpoints: {
 				deltaStorageUrl: `http://localhost:3000/deltas/${this.tenantId}/${documentId}`,
 				ordererUrl: "http://localhost:3000",

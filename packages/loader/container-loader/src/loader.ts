@@ -35,7 +35,6 @@ import {
 import {
 	IDocumentServiceFactory,
 	IDocumentStorageService,
-	IFluidResolvedUrl,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions";
@@ -492,7 +491,7 @@ export class Loader implements IHostLoader {
 
 	private async loadContainer(
 		request: IRequest,
-		resolved: IFluidResolvedUrl,
+		resolved: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	): Promise<Container> {
 		return Container.load(

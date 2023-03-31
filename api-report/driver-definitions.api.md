@@ -213,22 +213,8 @@ export interface IDriverHeader {
     [DriverHeader.createNew]: any;
 }
 
-// @public (undocumented)
-export interface IFluidResolvedUrl {
-    // (undocumented)
-    endpoints: {
-        [name: string]: string;
-    };
-    id: string;
-    // (undocumented)
-    tokens: {
-        [name: string]: string;
-    };
-    // (undocumented)
-    type: "fluid";
-    // (undocumented)
-    url: string;
-}
+// @public @deprecated (undocumented)
+export type IFluidResolvedUrl = IResolvedUrl;
 
 // @public (undocumented)
 export interface IGenericNetworkError extends IDriverErrorBase {
@@ -247,7 +233,21 @@ export interface ILocationRedirectionError extends IDriverErrorBase {
 }
 
 // @public (undocumented)
-export type IResolvedUrl = IFluidResolvedUrl;
+export interface IResolvedUrl {
+    // (undocumented)
+    endpoints: {
+        [name: string]: string;
+    };
+    id: string;
+    // (undocumented)
+    tokens: {
+        [name: string]: string;
+    };
+    // (undocumented)
+    type: "fluid";
+    // (undocumented)
+    url: string;
+}
 
 // @public
 export interface IStream<T> {
