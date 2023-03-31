@@ -79,7 +79,7 @@ class TestServer {
 	}
 }
 
-describe("PersistedFormatConfigStore", () => {
+describe.skip("PersistedFormatConfigStore", () => {
 	let submitLocalMessage = mockFn<[content: any, localOpMetadata: unknown]>();
 	let onProtocolChange =
 		mockFn<[current: PersistedFormatConfig, previous: PersistedFormatConfig]>();

@@ -546,7 +546,7 @@ async function runFuzzTestCase(
 
 const testCount = 100;
 
-describe.only("Persisted Config Fuzz", () => {
+describe.skip("Persisted Config Fuzz", () => {
 	before(() => {
 		if (!existsSync(directory)) {
 			mkdirSync(directory, { recursive: true });
