@@ -124,6 +124,7 @@ export interface IGarbageCollectionSnapshotData {
 }
 
 /**
+ * @experimental - Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
  */
 export interface IIncrementalSummaryContext {
