@@ -125,8 +125,6 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
-    // (undocumented)
-    shouldProcessSignal?(message: ISignalMessage): any;
 }
 
 // @public
@@ -148,6 +146,9 @@ export class Loader implements IHostLoader {
 
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
+
+// @public (undocumented)
+export function protocolHandlerShouldProcessSignal(message: ISignalMessage): boolean;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

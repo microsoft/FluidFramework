@@ -39,7 +39,6 @@ export type ProtocolHandlerBuilder = (
 export interface IProtocolHandler extends IBaseProtocolHandler {
 	readonly audience: IAudienceOwner;
 	processSignal(message: ISignalMessage);
-	shouldProcessSignal?(message: ISignalMessage);
 }
 
 export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandler {
@@ -124,20 +123,20 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 				break;
 		}
 	}
+}
 
-	public shouldProcessSignal?(message: ISignalMessage) {
-		if (message.clientId === null) {
-			// Signal originates from server
-			const innerContent = message.content as { content: any; type: string };
-			switch (innerContent.type) {
-				case SignalType.Clear:
-				case SignalType.ClientJoin:
-				case SignalType.ClientLeave:
-					return true;
-				default:
-					return false;
-			}
+export function protocolHandlerShouldProcessSignal(message: ISignalMessage) {
+	// Signal originates from server
+	if (message.clientId === null) {
+		const innerContent = message.content as { content: any; type: string };
+		switch (innerContent.type) {
+			case SignalType.Clear:
+			case SignalType.ClientJoin:
+			case SignalType.ClientLeave:
+				return true;
+			default:
+				return false;
 		}
-		return false;
 	}
+	return false;
 }

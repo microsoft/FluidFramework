@@ -19,4 +19,8 @@ export {
 	ILoaderServices,
 	Loader,
 } from "./loader";
-export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
+export {
+	IProtocolHandler,
+	ProtocolHandlerBuilder,
+	protocolHandlerShouldProcessSignal,
+} from "./protocol";
