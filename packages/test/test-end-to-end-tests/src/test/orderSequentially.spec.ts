@@ -324,4 +324,68 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 		assert.equal(changedEventData[8].key, "key");
 		assert.equal(changedEventData[8].previousValue, undefined);
 	});
+
+	it("Should handle nested calls to orderSequentially", () => {
+		sharedString.insertText(0, "abcde");
+		sharedMap.set("key", 1);
+
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedMap.set("key", 0);
+				try {
+					containerRuntime.orderSequentially(() => {
+						sharedString.removeRange(0, 2);
+						throw new Error("callback failure");
+					});
+				} catch (err) {
+					error = err as Error;
+				}
+				sharedMap.delete("key");
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false, "Container disposed");
+		assert.equal(sharedString.getText(), "abcde");
+		assert.equal(sharedMap.size, 1);
+		assert.equal(sharedMap.has("key"), true);
+		assert.equal(sharedMap.get("key"), 1);
+
+		assert.equal(changedEventData.length, 8);
+
+		assert(
+			changedEventData[0] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[0]}`,
+		);
+
+		assert.equal(changedEventData[1].key, "key");
+		assert.equal(changedEventData[1].previousValue, undefined);
+
+		// rollback
+		assert.equal(changedEventData[2].key, "key");
+		assert.equal(changedEventData[2].previousValue, 1);
+
+		assert(
+			changedEventData[3] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[3]}`,
+		);
+
+		assert(
+			changedEventData[4] instanceof SequenceDeltaEvent,
+			`Unexpected event type - ${typeof changedEventData[4]}`,
+		);
+
+		assert.equal(changedEventData[5].key, "key");
+		assert.equal(changedEventData[5].previousValue, 0);
+
+		assert.equal(changedEventData[6].key, "key");
+		assert.equal(changedEventData[6].previousValue, undefined);
+
+		assert.equal(changedEventData[7].key, "key");
+		assert.equal(changedEventData[7].previousValue, 0);
+	});
 });
