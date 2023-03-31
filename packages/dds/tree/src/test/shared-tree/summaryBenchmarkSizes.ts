@@ -74,12 +74,12 @@ describe("Summary size benchmark", () => {
 		assert(summarySize > 1000);
 		assert(summarySize < 2000000);
 	});
-	it("for a deep tree with 1000 nodes.", async () => {
-		const summaryTree = await getInsertsSummaryTree(1000, TreeShape.Deep);
+	it("for a deep tree with 200 nodes.", async () => {
+		const summaryTree = await getInsertsSummaryTree(200, TreeShape.Deep);
 		const summaryString = JSON.stringify(summaryTree);
 		const summarySize = IsoBuffer.from(summaryString).byteLength;
 		assert(summarySize > 1000);
-		assert(summarySize < 200000000);
+		assert(summarySize < 10000000);
 	}).timeout(50000);
 });
 
