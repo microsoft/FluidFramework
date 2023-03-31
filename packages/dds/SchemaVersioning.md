@@ -103,6 +103,9 @@ This includes Fluid Framework, as well other libraries consumed by Fluid applica
 
     If the format is not yet stable (current version of it will not be supported for reading in all future versions), it must be explicitly documented as such,
     and ideally should not be included in any releases unless required for some transient use cases that do not require supporting persisted data across versions.
+    A good way to do this is to indicate that the format is not stable in the version itself, for example by naming the version something like `4-Unstable-Development` (this applies to the  version string written into the persisted data as well as the version name in the API).
+    When the format is stabilized a new version should be used to ensure any data encoded while the format was unstable will not be parsed as if it was in the final format.
+    As a third line of defense (after not including unstable formats in the API and clearly marking them as unstable), actually persisting data in an unstable format should error before writing the data unless explicitly opting into allowing persisting unstable formats, which should only be possible using internal testing APIs.
 
 -   Explicitly require users of the library to select the default write format.
 
