@@ -15,7 +15,6 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { RenderOptions } from "./RendererOptions";
 import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
@@ -36,14 +35,8 @@ const getContainerListMessage: IDebuggerMessage = {
 /**
  * {@link FluidClientDebuggers} input props.
  */
-export interface FluidClientDebuggersProps {
-	/**
-	 * Rendering policies for different kinds of Fluid client and object data.
-	 *
-	 * @defaultValue Strictly use default visualization policies.
-	 */
-	renderOptions?: RenderOptions;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface FluidClientDebuggersProps {}
 
 /**
  * Indicates that the currently selected menu option is a particular Container.

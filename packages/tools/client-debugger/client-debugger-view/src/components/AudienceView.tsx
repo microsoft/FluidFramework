@@ -19,8 +19,8 @@ import {
 
 import { useMessageRelay } from "../MessageRelayContext";
 import { combineMembersWithMultipleConnections } from "../Audience";
-import { AudienceMemberViewProps } from "./client-data-views";
 import { Waiting } from "./Waiting";
+import { AudienceMemberView } from "./client-data-views";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -30,18 +30,13 @@ const loggingContext = "EXTENSION(AudienceView)";
 /**
  * {@link AudienceView} input props.
  */
-export interface AudienceViewProps extends HasContainerId {
-	/**
-	 * Callback to render data about an individual audience member.
-	 */
-	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
-}
+export type AudienceViewProps = HasContainerId;
 
 /**
  * Displays information about a container's audience.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-	const { containerId, onRenderAudienceMember } = props;
+	const { containerId } = props;
 
 	const messageRelay = useMessageRelay();
 
@@ -109,7 +104,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 					audience={audienceData.audienceState}
 					myClientId={audienceData.clientId}
 					myClientConnection={myClientMetadata}
-					onRenderAudienceMember={onRenderAudienceMember}
 				/>
 			</StackItem>
 			<StackItem>
@@ -138,18 +132,13 @@ interface MembersViewProps {
 	 * My client connection data, if the Container is connected.
 	 */
 	myClientConnection: IClient | undefined;
-
-	/**
-	 * Callback to render data about an individual audience member.
-	 */
-	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
 }
 
 /**
  * Displays a list of current audience members and their metadata.
  */
 function MembersView(props: MembersViewProps): React.ReactElement {
-	const { audience, myClientId, myClientConnection, onRenderAudienceMember } = props;
+	const { audience, myClientId, myClientConnection } = props;
 
 	const transformedAudience = combineMembersWithMultipleConnections(audience);
 
@@ -157,11 +146,11 @@ function MembersView(props: MembersViewProps): React.ReactElement {
 	for (const member of transformedAudience.values()) {
 		memberViews.push(
 			<StackItem key={member.userId}>
-				{onRenderAudienceMember({
-					audienceMember: member,
-					myClientId,
-					myClientConnection,
-				})}
+				<AudienceMemberView
+					audienceMember={member}
+					myClientId={myClientId}
+					myClientConnection={myClientConnection}
+				/>
 			</StackItem>,
 		);
 	}

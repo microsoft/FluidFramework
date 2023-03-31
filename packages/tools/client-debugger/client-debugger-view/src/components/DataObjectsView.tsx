@@ -5,17 +5,11 @@
 import { HasContainerId } from "@fluid-tools/client-debugger";
 import React from "react";
 
-import { SharedObjectRenderOptions } from "../RendererOptions";
-
 /**
  * {@link DataObjectsView} input props.
  */
-export interface DataObjectsViewProps extends HasContainerId {
-	/**
-	 * {@inheritDoc RendererOptions}
-	 */
-	renderOptions: SharedObjectRenderOptions;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface DataObjectsViewProps extends HasContainerId {}
 
 /**
  * Displays the data inside a container.
