@@ -88,6 +88,30 @@ use_old_ClassDeclaration_DataProcessingError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DeltaManagerProxyBase": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_DeltaManagerProxyBase():
+    TypeOnly<old.DeltaManagerProxyBase>;
+declare function use_current_ClassDeclaration_DeltaManagerProxyBase(
+    use: TypeOnly<current.DeltaManagerProxyBase>);
+use_current_ClassDeclaration_DeltaManagerProxyBase(
+    get_old_ClassDeclaration_DeltaManagerProxyBase());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_DeltaManagerProxyBase": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_DeltaManagerProxyBase():
+    TypeOnly<current.DeltaManagerProxyBase>;
+declare function use_old_ClassDeclaration_DeltaManagerProxyBase(
+    use: TypeOnly<old.DeltaManagerProxyBase>);
+use_old_ClassDeclaration_DeltaManagerProxyBase(
+    get_current_ClassDeclaration_DeltaManagerProxyBase());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_GenericError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_GenericError():

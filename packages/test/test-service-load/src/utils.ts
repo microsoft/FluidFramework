@@ -213,9 +213,7 @@ export async function initialize(
 		);
 	}
 
-	// Currently odsp binary snapshot format only works for special file names. This won't affect any other test
-	// since we have a unique dateId as prefix. So we can just add the required suffix.
-	const testId = testIdn ?? `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
+	const testId = testIdn ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);

@@ -83,10 +83,10 @@
 		"uuid": "^8.3.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.13.0",
-		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.0.0-internal.3.2.0",
+		"@fluid-tools/build-cli": "^0.13.1",
+		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.0.0-internal.4.0.0",
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "^0.13.0",
+		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.5.0.0 <2.0.0-internal.6.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
@@ -104,27 +104,6 @@
 	},
 	"module:es5": "es5/index.js",
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_BaseContainerService": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_generateContainerServicesRequestHandler": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedTypeAliasDeclaration_ContainerServiceRegistryEntries": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedVariableDeclaration_serviceRoutePathRoot": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
-			"RemovedFunctionDeclaration_waitForAttach": {
-				"forwardCompat": false,
-				"backCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

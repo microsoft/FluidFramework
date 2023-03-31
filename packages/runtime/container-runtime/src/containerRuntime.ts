@@ -100,13 +100,13 @@ import {
 	RequestParser,
 	create404Response,
 	exceptionToResponse,
+	GCDataBuilder,
 	requestFluidObject,
 	seqFromTree,
 	calculateStats,
 	TelemetryContext,
 	ReadAndParseBlob,
 } from "@fluidframework/runtime-utils";
-import { GCDataBuilder, trimLeadingAndTrailingSlashes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry";
@@ -156,6 +156,7 @@ import {
 	IGCRuntimeOptions,
 	IGCStats,
 	shouldAllowGcTombstoneEnforcement,
+	trimLeadingAndTrailingSlashes,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import { BindBatchTracker } from "./batchTracker";
@@ -1325,7 +1326,7 @@ export class ContainerRuntime
 				// an initializeEntryPoint for that case.
 				assert(
 					initializeEntryPoint === undefined,
-					"Summarizer clients cannot have a custom entryPoint",
+					0x5be /* Summarizer clients cannot have a custom entryPoint */,
 				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
@@ -1447,7 +1448,7 @@ export class ContainerRuntime
 			if (this.context.clientDetails.type === summarizerClientType) {
 				assert(
 					this._summarizer !== undefined,
-					"Summarizer object is undefined in a summarizer client",
+					0x5bf /* Summarizer object is undefined in a summarizer client */,
 				);
 				return this._summarizer;
 			}
