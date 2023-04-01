@@ -6,9 +6,8 @@
 import { ScriptoriumLambdaFactory } from "@fluidframework/server-lambdas";
 import * as services from "@fluidframework/server-services";
 import {
-	ICollection,
-	IDocument,
 	IPartitionLambdaFactory,
+	MongoDocumentRepository,
 	MongoManager,
 } from "@fluidframework/server-services-core";
 import {
@@ -18,7 +17,10 @@ import {
 } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
 
-export async function create(config: Provider): Promise<IPartitionLambdaFactory> {
+export async function create(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<IPartitionLambdaFactory> {
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 	const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
 	const deltasCollectionName = config.get("mongo:collectionNames:deltas");
@@ -50,8 +52,9 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 
 	const documentsCollectionDb = globalDbEnabled ? globalDb : operationsDb;
 
-	const documentsCollection: ICollection<IDocument> =
-		documentsCollectionDb.collection(documentsCollectionName);
+	const documentRepository =
+		customizations?.documentRepository ??
+		new MongoDocumentRepository(documentsCollectionDb.collection(documentsCollectionName));
 	const opCollection = operationsDb.collection(deltasCollectionName);
 
 	if (createCosmosDBIndexes) {
@@ -83,7 +86,7 @@ export async function create(config: Provider): Promise<IPartitionLambdaFactory>
 		async () =>
 			deleteSummarizedOps(
 				opCollection,
-				documentsCollection,
+				documentRepository,
 				softDeletionRetentionPeriodMs,
 				offlineWindowMs,
 				softDeletionEnabled,

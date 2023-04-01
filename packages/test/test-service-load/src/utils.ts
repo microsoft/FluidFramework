@@ -5,11 +5,16 @@
 
 import crypto from "crypto";
 import fs from "fs";
+import {
+	createFluidTestDriver,
+	generateOdspHostStoragePolicy,
+	OdspTestDriver,
+} from "@fluid-internal/test-drivers";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ITelemetryBaseEvent } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
-import { Container, IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
+import { IDetachedBlobStorage, Loader } from "@fluidframework/container-loader";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { ICreateBlobResponse } from "@fluidframework/protocol-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -20,11 +25,6 @@ import {
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import {
-	createFluidTestDriver,
-	generateOdspHostStoragePolicy,
-	OdspTestDriver,
-} from "@fluidframework/test-drivers";
 import { LocalCodeLoader } from "@fluidframework/test-utils";
 import { createFluidExport, ILoadTest } from "./loadTestDataStore";
 import {
@@ -52,7 +52,7 @@ class FileLogger extends TelemetryLogger implements ITelemetryBufferedLogger {
 	public static async createLogger(dimensions: {
 		driverType: string;
 		driverEndpointName: string | undefined;
-		profile: string | undefined;
+		profile: string;
 		runId: number | undefined;
 	}) {
 		return ChildLogger.create(await this.loggerP, undefined, {
@@ -160,8 +160,8 @@ export async function initialize(
 	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
+	profileName: string,
 	testIdn?: string,
-	profileName?: string,
 ) {
 	const random = makeRandom(seed);
 	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
@@ -201,11 +201,6 @@ export async function initialize(
 	});
 
 	const container: IContainer = await loader.createDetachedContainer(codeDetails);
-	(container as Container).on("error", (error) => {
-		console.log(error);
-		process.exit(-1);
-	});
-
 	if ((testConfig.detachedBlobCount ?? 0) > 0) {
 		assert(
 			testDriver.type === "odsp",
@@ -218,9 +213,7 @@ export async function initialize(
 		);
 	}
 
-	// Currently odsp binary snapshot format only works for special file names. This won't affect any other test
-	// since we have a unique dateId as prefix. So we can just add the required suffix.
-	const testId = testIdn ?? `${Date.now().toString()}-WireFormatV1RWOptimizedSnapshot_45e4`;
+	const testId = testIdn ?? Date.now().toString();
 	assert(testId !== "", "testId specified cannot be an empty string");
 	const request = testDriver.createCreateNewRequest(testId);
 	await container.attach(request);

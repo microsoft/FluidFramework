@@ -16,6 +16,7 @@
 export { debuggerMessageSource } from "./Constants";
 export {
 	HasContainerId,
+	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
 	DisconnectContainerMessage,
@@ -24,21 +25,44 @@ export {
 	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
+	DataVisualizationMessage,
+	DataVisualizationMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
+	GetDataVisualizationMessage,
+	GetDataVisualizationMessageData,
+	GetRootDataVisualizationsMessage,
+	GetRootDataVisualizationsMessageData,
+	RootDataVisualizationsMessage,
+	RootDataVisualizationsMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage } from "./Messages";
+export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
 } from "./RegistryMessages";
-export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
+export {
+	GetAudienceMessage,
+	AudienceClientMetaData,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+} from "./AudienceMessages";
+export {
+	ITimestampedTelemetryEvent,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
+} from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./Utilities";

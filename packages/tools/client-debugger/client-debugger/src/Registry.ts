@@ -10,12 +10,11 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FluidClientDebugger } from "./FluidClientDebugger";
 import { IFluidClientDebugger } from "./IFluidClientDebugger";
 import {
-	debuggerMessageSource,
 	handleIncomingWindowMessage,
-	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 	RegistryChangeMessage,
 } from "./messaging";
 
@@ -41,19 +40,29 @@ export interface FluidClientDebuggerProps {
 	container: IContainer;
 
 	/**
-	 * The ID of {@link FluidClientDebuggerProps.container | the Container}.
+	 * The ID of the {@link FluidClientDebuggerProps.container | Container}.
 	 */
 	containerId: string;
 
 	/**
-	 * Optional: Data belonging to {@link FluidClientDebuggerProps.container | the Container}.
+	 * (optional) Distributed Data Structures (DDSs) associated with the
+	 * {@link FluidClientDebuggerProps.container | Container}.
 	 *
-	 * @remarks The debugger will not mutate this data.
+	 * @remarks
+	 *
+	 * Providing this data will enable associated tooling to visualize the Fluid data reachable from the provided
+	 * objects.
+	 *
+	 * The debugger will not mutate this data.
+	 *
+	 * @privateRemarks TODO: rename this to make it more clear that this data does not *belong* to the Container.
 	 */
-	containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+	containerData?: Record<string, IFluidLoadable>;
+
+	// TODO: Accept custom data visualizers.
 
 	/**
-	 * Optional: Nickname for {@link FluidClientDebuggerProps.container | the Container} / debugger instance.
+	 * (optional) Nickname for the {@link FluidClientDebuggerProps.container | Container} / debugger instance.
 	 *
 	 * @remarks
 	 *
@@ -128,7 +137,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(
 			event,
@@ -141,19 +150,15 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 * Posts a {@link RegistryChangeMessage} to the window (globalThis).
 	 */
 	private readonly postRegistryChange = (): void => {
-		postMessageToWindow<RegistryChangeMessage>(
-			{
-				source: debuggerMessageSource,
-				type: "REGISTRY_CHANGE",
-				data: {
-					containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
-						id: clientDebugger.containerId,
-						nickname: clientDebugger.containerNickname,
-					})),
-				},
+		postMessagesToWindow<RegistryChangeMessage>(registryMessageLoggingOptions, {
+			type: "REGISTRY_CHANGE",
+			data: {
+				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				})),
 			},
-			registryMessageLoggingOptions,
-		);
+		});
 	};
 
 	// #endregion

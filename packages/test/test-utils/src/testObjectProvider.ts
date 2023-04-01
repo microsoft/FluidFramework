@@ -455,9 +455,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	}
 
 	public async ensureSynchronized(timeoutDuration?: number): Promise<void> {
-		return this._loaderContainerTracker.ensureSynchronizedWithTimeout
-			? this._loaderContainerTracker.ensureSynchronizedWithTimeout(timeoutDuration)
-			: this._loaderContainerTracker.ensureSynchronized();
+		return this._loaderContainerTracker.ensureSynchronized();
 	}
 
 	public async waitContainerToCatchUp(container: IContainer) {

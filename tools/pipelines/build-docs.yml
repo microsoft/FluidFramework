@@ -187,9 +187,9 @@ stages:
             path: '$(Build.SourcesDirectory)/_api-extractor-temp/doc-models'
 
         - task: UseNode@1
-          displayName: 'Use Node 14.x'
+          displayName: 'Use Node 16.x'
           inputs:
-            version: 14.x
+            version: 16.x
 
         - task: Cache@2
           displayName: Cache pnpm store
@@ -202,7 +202,8 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              npm i -g pnpm
+              npm i -g pnpm@7.30.5
+              pnpm -v
               pnpm config set store-dir $(pnpmStorePath)
 
         - task: Bash@3
@@ -248,9 +249,9 @@ stages:
           clean: true
 
         - task: UseNode@1
-          displayName: 'Use Node 14.x'
+          displayName: 'Use Node 16.x'
           inputs:
-            version: 14.x
+            version: 16.x
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'

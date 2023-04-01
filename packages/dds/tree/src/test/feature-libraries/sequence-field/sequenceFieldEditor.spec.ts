@@ -5,9 +5,16 @@
 
 import { strict as assert } from "assert";
 import { jsonString } from "../../../domains";
-import { NodeChangeset, SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import {
+	ChangesetLocalId,
+	NodeChangeset,
+	SequenceField as SF,
+	singleTextCursor,
+} from "../../../feature-libraries";
+import { brand } from "../../../util";
 import { deepFreeze } from "../../utils";
 
+const id: ChangesetLocalId = brand(0);
 const nodeX = { type: jsonString.name, value: "X" };
 const nodeY = { type: jsonString.name, value: "Y" };
 const content = [singleTextCursor(nodeX), singleTextCursor(nodeY)];
@@ -23,14 +30,14 @@ describe("SequenceField - Editor", () => {
 	});
 
 	it("insert one node", () => {
-		const actual = SF.sequenceFieldEditor.insert(42, content[0]);
-		const expected: SF.Changeset = [42, { type: "Insert", content: [nodeX] }];
+		const actual = SF.sequenceFieldEditor.insert(42, content[0], id);
+		const expected: SF.Changeset = [42, { type: "Insert", content: [nodeX], id }];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert multiple nodes", () => {
-		const actual = SF.sequenceFieldEditor.insert(42, content);
-		const expected: SF.Changeset = [42, { type: "Insert", content: [nodeX, nodeY] }];
+		const actual = SF.sequenceFieldEditor.insert(42, content, id);
+		const expected: SF.Changeset = [42, { type: "Insert", content: [nodeX, nodeY], id }];
 		assert.deepEqual(actual, expected);
 	});
 

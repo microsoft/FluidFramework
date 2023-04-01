@@ -30,9 +30,9 @@ stages:
     displayName: Run checks
     steps:
     - task: UseNode@1
-      displayName: Use Node 14.x
+      displayName: Use Node 16.x
       inputs:
-        version: 14.x
+        version: 16.x
 
     - task: Bash@3
       displayName: Install root dependencies
@@ -41,7 +41,8 @@ stages:
         workingDirectory: ${{ parameters.buildDirectory }}
         script: |
           # Install pnpm globally
-          npm i -g pnpm
+          npm i -g pnpm@7.30.5
+          pnpm -v
 
           # We only want to install the root package deps, so we set recursive-install to false
           pnpm config set recursive-install false
