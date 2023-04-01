@@ -200,7 +200,11 @@ export enum ContainerMessageType {
 	// Sets the alias of a root data store
 	Alias = "alias",
 
-	// Id allocation op
+	/**
+	 * An op containing an IdRange of Ids allocated using the runtime's IdCompressor since
+	 * the last allocation op was sent.
+	 * See the [IdCompressor README](./id-compressor/README.md) for more details.
+	 */
 	IdAllocation = "idAllocation",
 }
 
@@ -702,13 +706,14 @@ export class ContainerRuntime
 			}
 		};
 
-		const [chunks, metadata, electedSummarizerData, aliases, idCompressor] = await Promise.all([
-			tryFetchBlob<[string, string[]][]>(chunksBlobName),
-			tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
-			tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
-			tryFetchBlob<[string, string][]>(aliasBlobName),
-			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
-		]);
+		const [chunks, metadata, electedSummarizerData, aliases, serializedIdCompressor] =
+			await Promise.all([
+				tryFetchBlob<[string, string[]][]>(chunksBlobName),
+				tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
+				tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
+				tryFetchBlob<[string, string][]>(aliasBlobName),
+				tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
+			]);
 
 		const loadExisting = existing === true || context.existing === true;
 
@@ -777,7 +782,7 @@ export class ContainerRuntime
 			loadExisting,
 			blobManagerSnapshot,
 			storage,
-			idCompressor,
+			serializedIdCompressor,
 			requestHandler,
 			undefined, // summaryConfiguration
 			initializeEntryPoint,
@@ -1044,7 +1049,7 @@ export class ContainerRuntime
 		existing: boolean,
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
-		idCompressorSnapshot: SerializedIdCompressorWithNoSession | undefined,
+		serializedIdCompressor: SerializedIdCompressorWithNoSession | undefined,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -1142,8 +1147,8 @@ export class ContainerRuntime
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 		if (this.runtimeOptions.enableRuntimeIdCompressor) {
 			this.idCompressor =
-				idCompressorSnapshot !== undefined
-					? IdCompressor.deserialize(idCompressorSnapshot, createSessionId())
+				serializedIdCompressor !== undefined
+					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
 					: new IdCompressor(createSessionId(), this.logger);
 		}
 
@@ -1776,6 +1781,11 @@ export class ContainerRuntime
 			case ContainerMessageType.Attach:
 				return this.dataStores.applyStashedAttachOp(op as unknown as IAttachMessage);
 			case ContainerMessageType.IdAllocation:
+				if (this.idCompressor === undefined) {
+					throw new Error(
+						"Received an IdAllocation op without having the compressor enabled",
+					);
+				}
 				return this.applyStashedIdAllocationOp(op as unknown as IdCreationRange);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
@@ -1933,7 +1943,7 @@ export class ContainerRuntime
 					this.blobManager.processBlobAttachOp(message, local);
 					break;
 				case ContainerMessageType.IdAllocation:
-					if (this.runtimeOptions.enableRuntimeIdCompressor !== true) {
+					if (this.idCompressor === undefined) {
 						throw new Error(
 							"Received an IdAllocation op without having the compressor enabled",
 						);

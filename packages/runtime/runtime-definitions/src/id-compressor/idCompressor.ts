@@ -121,7 +121,7 @@ export interface IIdCompressor {
 	 * Performance note: assigning override strings incurs a performance overhead.
 	 * @returns an existing ID if one already exists for `override`, and a new local ID otherwise. The returned ID is in session space.
 	 */
-	generateCompressedId(): SessionSpaceCompressedId;
+	generateCompressedId(override?: string): SessionSpaceCompressedId;
 	/**
 	 * Normalizes a session space ID into op space.
 	 * @param id - the local ID to normalize.
