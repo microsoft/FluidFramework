@@ -8,6 +8,7 @@ import {
 	IHostLoader,
 	IFluidCodeDetails,
 	LoaderHeader,
+	ILoader,
 } from "@fluidframework/container-definitions";
 import {
 	ITelemetryGenericEvent,
@@ -382,8 +383,11 @@ export class TestObjectProvider implements ITestObjectProvider {
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return this.resolveContainer(loader, requestHeader);
+	}
 
-		// Once ADO#3889 is done to switch default connection mode to "read" on load, we don't need
+	private async resolveContainer(loader: ILoader, requestHeader?: IRequestHeader) {
+		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
 		// to load "delayed" across the board. Remove the following code.
 		const delayConnection =
 			requestHeader === undefined || requestHeader[LoaderHeader.reconnect] !== false;
@@ -399,7 +403,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 			headers,
 		});
 
-		// Once ADO#3889 is done to switch default connection mode to "read" on load, we don't need
+		// Once AB#3889 is done to switch default connection mode to "read" on load, we don't need
 		// to load "delayed" across the board. Remove the following code.
 		if (delayConnection) {
 			// Older version may not have connect, use resume instead.
@@ -411,7 +415,6 @@ export class TestObjectProvider implements ITestObjectProvider {
 				(container as any).resume();
 			}
 		}
-
 		return container;
 	}
 
@@ -464,10 +467,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		const loader = this.makeTestLoader(testContainerConfig);
-		const container = await loader.resolve({
-			url: await this.driver.createContainerUrl(this.documentId),
-			headers: requestHeader,
-		});
+
+		const container = await this.resolveContainer(loader, requestHeader);
 		await this.waitContainerToCatchUp(container);
 
 		return container;
