@@ -401,10 +401,10 @@ export class TestObjectProvider implements ITestObjectProvider {
 
 		// Once ADO#3889 is done to switch default connection mode to "read" on load, we don't need
 		// to load "delayed" across the board. Remove the following code.
-
 		if (delayConnection) {
-			// Older version might have the connect function, but that also means that delayed doesn't work
-			if ((container as any).connect !== undefined) {
+			// Older version may not have connect, use resume instead.
+			const maybeContainer = container as Partial<IContainer>;
+			if (maybeContainer.connect !== undefined) {
 				container.connect();
 			} else {
 				// back compat
