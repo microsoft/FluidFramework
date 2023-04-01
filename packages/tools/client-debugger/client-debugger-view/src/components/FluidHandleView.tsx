@@ -77,8 +77,5 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <Waiting label="Waiting for container DDS data." />;
 	}
 
-	return(
-		<FluidDataView containerId={containerId} node={visualTree}/>
-	);
+	return <FluidDataView containerId={containerId} node={visualTree} />;
 }
-

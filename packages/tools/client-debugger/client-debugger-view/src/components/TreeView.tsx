@@ -10,7 +10,7 @@ import { FluidDataView } from "./FluidDataView";
  * {@link TreeView} input props
  */
 export interface TreeViewProps extends HasContainerId {
-	containerId: string, 
+	containerId: string;
 	node: TreeNodeBase;
 }
 
@@ -20,17 +20,12 @@ export interface TreeViewProps extends HasContainerId {
 export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
-	console.log(containerId, node); 
+	console.log(containerId, node);
 
 	return (
 		<>
 			{Object.entries(node).map(([_, fluidObject], index) => {
-					return (
-							<FluidDataView
-								containerId={containerId}
-								node={fluidObject}
-							/>
-					);
+				return <FluidDataView containerId={containerId} node={fluidObject} />;
 			})}
 		</>
 	);

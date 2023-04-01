@@ -5,15 +5,15 @@
 import React from "react";
 import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-tools/client-debugger";
 import { FluidHandleView } from "./FluidHandleView";
-import { Waiting } from "./Waiting";
 import { TreeView } from "./TreeView";
 import { ValueView } from "./ValueView";
+import { UnknownDataView } from "./UnknownDataView";
 
 /**
  * {@link FluidDataView} input props
  */
 export interface FluidDataViewProps extends HasContainerId {
-	containerId: string, 
+	containerId: string;
 	node: VisualNode;
 }
 
@@ -23,42 +23,38 @@ export interface FluidDataViewProps extends HasContainerId {
 export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
-	let view: React.ReactElement; 
+	let view: React.ReactElement;
 	switch (node.nodeKind) {
 		/**
-		 * node with children 
+		 * node with children
 		 * TreeNodeBase
 		 */
-		case VisualNodeKind.TreeNode: 
+		case VisualNodeKind.TreeNode:
 		case VisualNodeKind.FluidTreeNode:
-			view = <TreeView containerId={containerId} node={node}/>
+			view = <TreeView containerId={containerId} node={node} />;
 			break;
 		/**
-		 * node with primitive value 
+		 * node with primitive value
 		 * ValueNodeBase
 		 */
 		case VisualNodeKind.ValueNode:
 		case VisualNodeKind.FluidValueNode:
-			view = <ValueView containerId={containerId} node={node}/>
+			view = <ValueView containerId={containerId} node={node} />;
 			break;
 		/**
-		 * unknown node type 
+		 * unknown node type
 		 */
 		case VisualNodeKind.FluidUnknownObjectNode:
-		case VisualNodeKind.UnknownObjectNode: 
-			view = <Waiting label="Waiting for container DDS data." />
-			break	
+		case VisualNodeKind.UnknownObjectNode:
+			view = <UnknownDataView containerId={containerId} node={node} />;
+			break;
 		/**
-		 * POST request to FluidClientDebugger 
+		 * POST request to FluidClientDebugger
 		 */
 		case VisualNodeKind.FluidHandleNode:
-			view = <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId}/>
+			view = <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
 			break;
 	}
 
-	return (
-		<>
-			{view}
-		</>
-	);
+	return <>{view}</>;
 }

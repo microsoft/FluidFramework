@@ -9,7 +9,7 @@ import { HasContainerId, ValueNodeBase } from "@fluid-tools/client-debugger";
  * {@link ValueView} input props
  */
 export interface ValueViewProps extends HasContainerId {
-	containerId: string, 
+	containerId: string;
 	node: ValueNodeBase;
 }
 
@@ -19,11 +19,12 @@ export interface ValueViewProps extends HasContainerId {
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
-	console.log(containerId, node); 
-
 	return (
 		<>
-			<h1> Hello World </h1>
+			<h1>
+				{" "}
+				{containerId} {node}{" "}
+			</h1>
 		</>
 	);
 }
