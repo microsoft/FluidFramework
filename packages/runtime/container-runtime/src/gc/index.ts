@@ -39,7 +39,6 @@ export {
 	cloneGCData,
 	concatGarbageCollectionStates,
 	getGCDataFromSnapshot,
-	getSnapshotDataFromOldSnapshotFormat,
 	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
 	shouldAllowGcSweep,

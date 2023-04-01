@@ -49,7 +49,7 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 
 	const sectionBody = [];
 	sectionBody.push("You can run this example using the following steps:\n");
-	sectionBody.push("1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.");
+	sectionBody.push("1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm@7`.");
 	sectionBody.push(`1. Run \`pnpm install\` and \`npm run build:fast -- --nolint\` from the \`FluidFramework\` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       \`npm run build:fast -- --nolint ${packageName}\``);

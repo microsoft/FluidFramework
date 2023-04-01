@@ -13,7 +13,7 @@ const message = `
 ║                                                             ║
 ║   Use "pnpm install" for installation in this project.      ║
 ║                                                             ║
-║   If you don't have pnpm, install it via "npm i -g pnpm".   ║
+║   If you don't have pnpm, install it via "npm i -g pnpm@7". ║
 ║   For more details, see the README.                         ║
 ║                                                             ║
 ╚═════════════════════════════════════════════════════════════╝
@@ -21,7 +21,7 @@ const message = `
 
 const used_pnpm = process.env.npm_config_user_agent.startsWith(`pnpm`);
 
-if(!used_pnpm) {
-    console.error(message);
-    process.exit(1);
+if (!used_pnpm) {
+	console.error(message);
+	process.exit(1);
 }

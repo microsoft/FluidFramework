@@ -9,7 +9,6 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	Multiplicity,
-	isPrimitiveValue,
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
@@ -44,21 +43,8 @@ describe("editable-tree utilities", () => {
 	it("isPrimitive", () => {
 		assert(isPrimitive(int32Schema));
 		assert(isPrimitive(stringSchema));
-		assert(isPrimitive(mapStringSchema));
+		assert(!isPrimitive(mapStringSchema));
 		assert(!isPrimitive(optionalChildSchema));
-	});
-
-	it("isPrimitiveValue", () => {
-		assert(isPrimitiveValue(0));
-		assert(isPrimitiveValue(0.001));
-		assert(isPrimitiveValue(NaN));
-		assert(isPrimitiveValue(true));
-		assert(isPrimitiveValue(false));
-		assert(isPrimitiveValue(""));
-		assert(!isPrimitiveValue({}));
-		assert(!isPrimitiveValue(undefined));
-		assert(!isPrimitiveValue(null));
-		assert(!isPrimitiveValue([]));
 	});
 
 	it("field utils", () => {

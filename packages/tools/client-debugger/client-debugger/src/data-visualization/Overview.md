@@ -14,7 +14,7 @@ For the purpose of demonstrating the intended usage flow of the system, we will 
 
 -   "Application": The client application, which initializes the "debugger".
 -   "Debugger": Represents the client-side debugger, which communicates application state updates via message passing to the "consumer".
--   "Consumer": External tooling which consumes data from the "debugger" via message passing.
+-   "Consumer": External tooling which consumes data from the "debugger" via message passing (e.g. our [browser extension](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/client-debugger/client-debugger-chrome-extension)).
     -   Note that multiple consumers may be associated with a single debugger instance.
 
 When initializing the debugger, the initializing application may optionally provide a root DDS(s) they wish to have visualized by the tooling.

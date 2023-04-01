@@ -22,12 +22,7 @@ const loggingContext = "EXTENSION(DataObjectsView)";
 /**
  * {@link DataObjectsView} input props.
  */
-export interface DataObjectsViewProps extends HasContainerId {
-	/**
-	 * {@inheritDoc RendererOptions}
-	 */
-	renderOptions: SharedObjectRenderOptions;
-}
+export type DataObjectsViewProps = HasContainerId;
 
 /**
  * Displays the data inside a container.

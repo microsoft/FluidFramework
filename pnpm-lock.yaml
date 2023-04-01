@@ -14312,122 +14312,85 @@ importers:
         version: 4.10.0(webpack-bundle-analyzer@4.7.0)(webpack-dev-server@4.6.0)(webpack@5.76.2)
 
   packages/tools/client-debugger/client-debugger:
+    specifiers:
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.13.1
+      '@fluidframework/cell': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@microsoft/api-extractor': ^7.34.4
+      '@types/chai': ^4.0.0
+      '@types/events': ^3.0.0
+      '@types/mocha': ^9.1.1
+      chai: ^4.2.0
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      eslint-config-prettier: ~8.5.0
+      eslint-plugin-chai-expect: ~3.0.0
+      events: ^3.1.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nyc: ^15.1.0
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      typescript: ~4.5.5
     dependencies:
-      '@fluidframework/cell':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../dds/cell
-      '@fluidframework/common-definitions':
-        specifier: ^0.20.1
-        version: 0.20.1
-      '@fluidframework/common-utils':
-        specifier: ^1.1.1
-        version: 1.1.1
-      '@fluidframework/container-definitions':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../loader/container-loader
-      '@fluidframework/core-interfaces':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../common/core-interfaces
-      '@fluidframework/counter':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../dds/counter
-      '@fluidframework/map':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../dds/map
-      '@fluidframework/protocol-definitions':
-        specifier: ^1.1.0
-        version: 1.1.0
-      '@fluidframework/sequence':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../dds/sequence
-      '@fluidframework/shared-object-base':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../dds/shared-object-base
-      '@fluidframework/telemetry-utils':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../utils/telemetry-utils
+      '@fluidframework/cell': link:../../../dds/cell
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-definitions': link:../../../common/container-definitions
+      '@fluidframework/container-loader': link:../../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/map': link:../../../dds/map
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
     devDependencies:
-      '@fluidframework/build-common':
-        specifier: ^1.1.0
-        version: 1.1.0
-      '@fluidframework/build-tools':
-        specifier: ^0.13.1
-        version: 0.13.1(@types/node@14.18.38)(webpack-cli@4.10.0)
-      '@fluidframework/driver-definitions':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../common/driver-definitions
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^2.0.0
-        version: 2.0.0(eslint@8.6.0)(typescript@4.5.5)
-      '@fluidframework/mocha-test-setup':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../test/mocha-test-setup
-      '@fluidframework/test-runtime-utils':
-        specifier: '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-        version: link:../../../runtime/test-runtime-utils
-      '@microsoft/api-extractor':
-        specifier: ^7.34.4
-        version: 7.34.4(@types/node@14.18.38)
-      '@types/chai':
-        specifier: ^4.0.0
-        version: 4.3.4
-      '@types/events':
-        specifier: ^3.0.0
-        version: 3.0.0
-      '@types/mocha':
-        specifier: ^9.1.1
-        version: 9.1.1
-      chai:
-        specifier: ^4.2.0
-        version: 4.3.7
-      concurrently:
-        specifier: ^7.6.0
-        version: 7.6.0
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.6.0
-        version: 8.6.0
-      eslint-config-prettier:
-        specifier: ~8.5.0
-        version: 8.5.0(eslint@8.6.0)
-      eslint-plugin-chai-expect:
-        specifier: ~3.0.0
-        version: 3.0.0(eslint@8.6.0)
-      events:
-        specifier: ^3.1.0
-        version: 3.3.0
-      mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
-      mocha-json-output-reporter:
-        specifier: ^2.0.1
-        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
-      mocha-multi-reporters:
-        specifier: ^1.5.1
-        version: 1.5.1(mocha@10.2.0)
-      moment:
-        specifier: ^2.21.0
-        version: 2.29.4
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-      prettier:
-        specifier: ~2.6.2
-        version: 2.6.2
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.0
-      typescript:
-        specifier: ~4.5.5
-        version: 4.5.5
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.13.1
+      '@fluidframework/driver-definitions': link:../../../common/driver-definitions
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
+      '@microsoft/api-extractor': 7.34.4
+      '@types/chai': 4.3.4
+      '@types/events': 3.0.0
+      '@types/mocha': 9.1.1
+      chai: 4.3.7
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      eslint-config-prettier: 8.5.0_eslint@8.6.0
+      eslint-plugin-chai-expect: 3.0.0_eslint@8.6.0
+      events: 3.3.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      typescript: 4.5.5
 
   packages/tools/client-debugger/client-debugger-chrome-extension:
     dependencies:

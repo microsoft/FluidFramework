@@ -275,11 +275,12 @@ class SharedTree
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
+		const schema = this.storedSchema.inner.clone();
 		return new SharedTreeFork(
 			this.createBranch(anchors),
 			defaultChangeFamily,
-			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, anchors),
+			schema,
+			this.forest.clone(schema, anchors),
 		);
 	}
 

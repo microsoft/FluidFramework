@@ -110,7 +110,7 @@ DraftData - Local collaboration state between the Fluid clients is stored in a S
 
 You can run this example using the following steps:
 
-1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
+1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm@7`.
 1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/app-integration-external-data`
