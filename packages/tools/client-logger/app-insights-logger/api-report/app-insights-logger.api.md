@@ -6,25 +6,17 @@
 
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
-import { ITelemetryBufferedLogger } from '@fluidframework/test-driver-definitions';
-import { Snippet } from '@microsoft/applicationinsights-web';
+import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 
 // @public (undocumented)
-export class FluidAppInsightsLogger implements ITelemetryBufferedLogger {
-    constructor(config: FluidAppInsightsLoggerConfig);
+export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
+    constructor(client: ApplicationInsights);
     // (undocumented)
     protected readonly baseLoggingClient: ApplicationInsights;
     // (undocumented)
-    flush(): Promise<void>;
-    // (undocumented)
-    getBaseLoggingClient(): ApplicationInsights;
+    flush(): void;
     // (undocumented)
     send(event: ITelemetryBaseEvent): void;
-}
-
-// @public
-export interface FluidAppInsightsLoggerConfig {
-    appInsights: ApplicationInsights | Snippet;
 }
 
 // (No @packageDocumentation comment for this package)

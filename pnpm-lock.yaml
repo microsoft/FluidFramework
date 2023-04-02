@@ -10088,19 +10088,13 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-definitions': ^0.20.1
-      '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/datastore': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/fluid-static': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/tinylicious-client': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
@@ -10113,9 +10107,8 @@ importers:
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
       '@types/testing-library__jest-dom': ^5.14.5
-      concurrently: ^6.2.0
-      copyfiles: ^2.4.1
-      cross-env: ^7.0.2
+      concurrently: ^7.6.0
+      cross-env: ^7.0.3
       eslint: ~8.6.0
       eslint-config-prettier: ~8.5.0
       eslint-plugin-jest: ~27.1.5
@@ -10124,12 +10117,9 @@ importers:
       jest: ^26.6.3
       jest-junit: ^10.0.0
       prettier: ~2.6.2
-      re-resizable: ^6.9.9
       react: ^17.0.1
       react-dom: ^17.0.1
-      react-json-view: ^1.21.3
       rimraf: ^2.6.2
-      scheduler: ^0.20.0
       start-server-and-test: ^1.11.7
       style-loader: ^1.0.0
       tinylicious: 0.6.0
@@ -10142,30 +10132,24 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/test-driver-definitions': link:../../../test/test-driver-definitions
       '@microsoft/applicationinsights-web': 2.8.11
     devDependencies:
       '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
       '@fluentui/react-icons-mdl2': 1.3.28_74b3ggvk3akyhuq4eydyx3fqim
-      '@fluentui/react-tabs': 9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
+      '@fluentui/react-tabs': 9.1.6_74b3ggvk3akyhuq4eydyx3fqim
       '@fluid-example/collaborative-textarea': link:../../../../examples/apps/collaborative-textarea
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-tools/webpack-fluid-loader': link:../../webpack-fluid-loader
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.13.1_webpack-cli@4.10.0
-      '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
       '@fluidframework/counter': link:../../../dds/counter
-      '@fluidframework/datastore': link:../../../runtime/datastore
-      '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/fluid-static': link:../../../framework/fluid-static
       '@fluidframework/map': link:../../../dds/map
-      '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/sequence': link:../../../dds/sequence
-      '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@fluidframework/tinylicious-client': link:../../../framework/tinylicious-client
       '@microsoft/api-extractor': 7.34.4
@@ -10177,8 +10161,7 @@ importers:
       '@types/react': 17.0.52
       '@types/react-dom': 17.0.18
       '@types/testing-library__jest-dom': 5.14.5
-      concurrently: 6.5.1
-      copyfiles: 2.4.1
+      concurrently: 7.6.0
       cross-env: 7.0.3
       eslint: 8.6.0
       eslint-config-prettier: 8.5.0_eslint@8.6.0
@@ -10188,12 +10171,9 @@ importers:
       jest: 26.6.3
       jest-junit: 10.0.0
       prettier: 2.6.2
-      re-resizable: 6.9.9_sfoxds7t5ydpegc3knd667wn6m
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
-      react-json-view: 1.21.3_gzv7pa6nrbev3fs6gyzn7sadkq
       rimraf: 2.7.1
-      scheduler: 0.20.2
       start-server-and-test: 1.14.0
       style-loader: 1.3.0_webpack@5.76.2
       tinylicious: 0.6.0
@@ -12514,6 +12494,23 @@ packages:
       '@fluentui/set-version': 8.2.3
       tslib: 2.5.0
 
+  /@fluentui/react-context-selector/9.1.5_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-3U0d6qOP1IMASLpWK6ek9PLagxdGK0L0EKBhaO7U9Q89k2DJ0JQRzz2kZSrnN0a23yL0BipxtKGZiqhO0u6AHA==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/react-utilities': 9.4.0_q5o373oqrklnndq2vhekyuzhxi
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 2.5.0
+    dev: true
+
   /@fluentui/react-context-selector/9.1.5_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-3U0d6qOP1IMASLpWK6ek9PLagxdGK0L0EKBhaO7U9Q89k2DJ0JQRzz2kZSrnN0a23yL0BipxtKGZiqhO0u6AHA==}
     peerDependencies:
@@ -12530,6 +12527,7 @@ packages:
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/react-focus/7.18.17_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-W+sLIhX7wLzMsJ0jhBrDAblkG3DNbRbF8UoSieRVdAAm7xVf5HpiwJ6tb6nGqcFOnpRh8y+fjyVM+dV3K6GNHA==}
@@ -12632,6 +12630,27 @@ packages:
       react: 17.0.2
       tslib: 2.5.0
 
+  /@fluentui/react-tabs/9.1.6_74b3ggvk3akyhuq4eydyx3fqim:
+    resolution: {integrity: sha512-U0fjKZOV5Z6BZW+ZtOOvS43ttkCVZGdE+OlbkU8+6r+DHltl5Y4hPu0d4pL39NnwPHuDGyayB7MRixrNT64Myg==}
+    peerDependencies:
+      '@types/react': '>=16.8.0 <19.0.0'
+      '@types/react-dom': '>=16.8.0 <19.0.0'
+      react: '>=16.8.0 <19.0.0 || 17.0.2'
+      react-dom: '>=16.8.0 <19.0.0 || 17.0.2'
+      scheduler: ^0.19.0 || ^0.20.0
+    dependencies:
+      '@fluentui/react-context-selector': 9.1.5_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-tabster': 9.3.6_74b3ggvk3akyhuq4eydyx3fqim
+      '@fluentui/react-theme': 9.1.5
+      '@fluentui/react-utilities': 9.4.0_q5o373oqrklnndq2vhekyuzhxi
+      '@griffel/react': 1.5.2_react@17.0.2
+      '@types/react': 17.0.52
+      '@types/react-dom': 17.0.18
+      react: 17.0.2
+      react-dom: 17.0.2_react@17.0.2
+      tslib: 2.5.0
+    dev: true
+
   /@fluentui/react-tabs/9.1.6_7dy3sgqkcy3kjbu4ktqmdo3kpm:
     resolution: {integrity: sha512-U0fjKZOV5Z6BZW+ZtOOvS43ttkCVZGdE+OlbkU8+6r+DHltl5Y4hPu0d4pL39NnwPHuDGyayB7MRixrNT64Myg==}
     peerDependencies:
@@ -12652,6 +12671,7 @@ packages:
       react-dom: 17.0.2_react@17.0.2
       scheduler: 0.20.2
       tslib: 2.5.0
+    dev: false
 
   /@fluentui/react-tabster/9.3.6_74b3ggvk3akyhuq4eydyx3fqim:
     resolution: {integrity: sha512-WGb+qwUxjxXqThuIUK0BW2M4b+GMll9iouKhlkPBmXUfdnkKVgpD/BeoWsj7pvBhKfqFp2rM1HaqgxRSVMQRXQ==}
@@ -22940,6 +22960,7 @@ packages:
 
   /base16/1.0.0:
     resolution: {integrity: sha512-pNdYkNPiJUnEhnfXV56+sQy8+AaPcG3POZAUnwr4EeqCUZFz4u2PePbo3e5Gj4ziYPCWGUZT9RHisvJKnwFuBQ==}
+    dev: false
 
   /base64-arraybuffer-es6/0.7.0:
     resolution: {integrity: sha512-ESyU/U1CFZDJUdr+neHRhNozeCv72Y7Vm0m1DCbjX3KBjT6eYocvAJlSk6+8+HkVwXlT1FNxhGW6q3UKAlCvvw==}
@@ -24533,21 +24554,6 @@ packages:
       inherits: 2.0.4
       readable-stream: 3.6.2
       typedarray: 0.0.6
-    dev: true
-
-  /concurrently/6.5.1:
-    resolution: {integrity: sha512-FlSwNpGjWQfRwPLXvJ/OgysbBxPkWpiVjy1042b0U7on7S7qwwMIILRj7WTN1mTgqa582bG6NFuScOoh6Zgdag==}
-    engines: {node: '>=10.0.0'}
-    hasBin: true
-    dependencies:
-      chalk: 4.1.2
-      date-fns: 2.29.3
-      lodash: 4.17.21
-      rxjs: 6.6.7
-      spawn-command: 0.0.2-1
-      supports-color: 8.1.1
-      tree-kill: 1.2.2
-      yargs: 16.2.0
     dev: true
 
   /concurrently/7.6.0:
@@ -27527,6 +27533,7 @@ packages:
       fbjs: 3.0.4
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /fbjs-css-vars/1.0.2:
     resolution: {integrity: sha512-b2XGFAFdWZWg0phtAWLHCk836A1Xann+I+Dgd3Gk64MHKZO44FfoD1KxyvbSh0qZsIoXQGGlVztIY+oitJPpRQ==}
@@ -27832,6 +27839,7 @@ packages:
       react: 17.0.2
     transitivePeerDependencies:
       - encoding
+    dev: false
 
   /fn.name/1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
@@ -32419,6 +32427,7 @@ packages:
 
   /lodash.curry/4.1.1:
     resolution: {integrity: sha512-/u14pXGviLaweY5JI0IUzgzF2J6Ne8INyzAZjImcryjgkZ+ebruBxy2/JaOOkTqScddcYtakjhSaeemV8lR0tA==}
+    dev: false
 
   /lodash.debounce/4.0.8:
     resolution: {integrity: sha512-FT1yDzDYEoYWhnSGnpE/4Kj1fLZkDFyqRb7fNt6FdYOSxlUWAtp42Eh6Wb0rGIv/m9Bgo7x4GhQbm5Ys4SG5ow==}
@@ -32443,6 +32452,7 @@ packages:
 
   /lodash.flow/3.5.0:
     resolution: {integrity: sha512-ff3BX/tSioo+XojX4MOsOMhJw0nZoUEF011LX8g8d3gvjVbxd89cCio4BCXronjxcTUIJUoqKEUA+n4CqvvRPw==}
+    dev: false
 
   /lodash.get/4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
@@ -36416,6 +36426,7 @@ packages:
 
   /pure-color/1.3.0:
     resolution: {integrity: sha512-QFADYnsVoBMw1srW7OVKEYjG+MbIa49s54w1MA1EDY6r2r/sTcKKYqRX1f4GYvnXP7eN/Pe9HFcX+hwzmrXRHA==}
+    dev: false
 
   /q/1.5.1:
     resolution: {integrity: sha512-kV/CThkXo6xyFEZUugw/+pIOywXcDbFYgSct5cT3gqlbkBE1SJdwy6UQoZvodiWF/ckQLZyDE/Bu1M6gVu5lVw==}
@@ -36613,6 +36624,7 @@ packages:
     dependencies:
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
+    dev: false
 
   /react-base-table/1.13.2_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-VhyKXZwEu8U/wH2eY3Ie3GJbvGP9wQzts26k1t/A7b8IS1OM31j8ul6HAvLmudpT33XqFPD7/KK18tfx/5I/eA==}
@@ -36637,6 +36649,7 @@ packages:
       lodash.curry: 4.1.1
       lodash.flow: 3.5.0
       pure-color: 1.3.0
+    dev: false
 
   /react-collapsible/2.10.0_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-kEVsmlFfXBMTCnU5gwIv19MdmPAhbIPzz5Er37TiJSzRKS0IHrqAKQyQeHEmtoGIQMTcVI46FzE4z3NlVTx77A==}
@@ -36776,9 +36789,11 @@ packages:
     transitivePeerDependencies:
       - '@types/react'
       - encoding
+    dev: false
 
   /react-lifecycles-compat/3.0.4:
     resolution: {integrity: sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==}
+    dev: false
 
   /react-loading-skeleton/3.1.0_react@17.0.2:
     resolution: {integrity: sha512-j1U1CWWs68nBPOg7tkQqnlFcAMFF6oEK6MgqAo15f8A5p7mjH6xyKn2gHbkcimpwfO0VQXqxAswnSYVr8lWzjw==}
@@ -36856,6 +36871,7 @@ packages:
       use-latest: 1.2.1_q5o373oqrklnndq2vhekyuzhxi
     transitivePeerDependencies:
       - '@types/react'
+    dev: false
 
   /react-transition-group/2.9.0_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-+HzNTCHpeQyl4MJ/bdE0u6XRMe9+XG/+aL4mCxVN4DnPBQ0/5bfHWPDuOZUzYdMj94daZaZdCCc1Dzt9R/xSSg==}
@@ -40732,6 +40748,7 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || 17.0.2
     dependencies:
       react: 17.0.2
+    dev: false
 
   /use-isomorphic-layout-effect/1.1.2_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-49L8yCO3iGT/ZF9QttjwLF/ZD9Iwto5LnH5LmEdk/6cFmXddqi2ulF0edxTwjj+7mqvpVVGQWvbXZdn32wRSHA==}
@@ -40744,6 +40761,7 @@ packages:
     dependencies:
       '@types/react': 17.0.52
       react: 17.0.2
+    dev: false
 
   /use-latest/1.2.1_q5o373oqrklnndq2vhekyuzhxi:
     resolution: {integrity: sha512-xA+AVm/Wlg3e2P/JiItTziwS7FK92LWrDB0p+hgXloIMuVCeJJ8v6f0eeHyPZaJrM+usM1FkFfbNCrJGs8A/zw==}
@@ -40757,6 +40775,7 @@ packages:
       '@types/react': 17.0.52
       react: 17.0.2
       use-isomorphic-layout-effect: 1.1.2_q5o373oqrklnndq2vhekyuzhxi
+    dev: false
 
   /use-resize-observer/7.0.1_sfoxds7t5ydpegc3knd667wn6m:
     resolution: {integrity: sha512-tJESENDoVXfzkv1Cl9dJ13ySgENcKjvEKSU7QwjckjxjXg/MV2zW1CjEUtLpmXY084womIxJROUR3L1SuqlvOw==}

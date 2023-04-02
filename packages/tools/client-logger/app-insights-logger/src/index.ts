@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { FluidAppInsightsLogger, FluidAppInsightsLoggerConfig } from "./FluidAppInsightsLogger";
+export { FluidAppInsightsLogger } from "./fluidAppInsightsLogger";
