@@ -8,6 +8,7 @@ import * as core from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import Redis from "ioredis";
 import winston from "winston";
+import { DummyTokenRevocationManager } from "@fluidframework/server-services-utils";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
@@ -23,11 +24,15 @@ export class HistorianResources implements core.IResources {
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly cache?: historianServices.RedisCache,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
+		public readonly tokenRevocationManager?: core.ITokenRevocationManager,
 	) {
 		this.webServerFactory = new services.BasicWebServerFactory();
 	}
 
 	public async dispose(): Promise<void> {
+		if (this.tokenRevocationManager) {
+			await this.tokenRevocationManager.close();
+		}
 		return;
 	}
 }
@@ -59,10 +64,18 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
+
+		// Token revocation
+		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
+		if (tokenRevocationEnabled) {
+			tokenRevocationManager = new DummyTokenRevocationManager();
+		}
 		const riddler = new historianServices.RiddlerService(
 			riddlerEndpoint,
 			tenantCache,
 			asyncLocalStorage,
+			tokenRevocationManager,
 		);
 
 		// Redis connection for throttling.
@@ -179,6 +192,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restClusterThrottlers,
 			gitCache,
 			asyncLocalStorage,
+			tokenRevocationManager,
 		);
 	}
 }
