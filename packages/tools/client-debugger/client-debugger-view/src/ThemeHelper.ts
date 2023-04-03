@@ -12,7 +12,7 @@ export function flueUIThemeToUse(): Theme {
 	let defaultTheme = webLightTheme;
 
 	if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-		// The user has a light theme set in their web browser
+		// The user has a dark theme set in their web browser
 		console.log("Dark theme detected.");
 		defaultTheme = webDarkTheme;
 	}
