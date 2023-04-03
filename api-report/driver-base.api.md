@@ -48,7 +48,7 @@ export class DocumentDeltaConnection extends EventEmitterWithErrorHandling<IDocu
     // (undocumented)
     protected earlyOpHandler: (documentId: string, msgs: ISequencedDocumentMessage[]) => void;
     // (undocumented)
-    protected earlySignalHandler: (msg: ISignalMessage) => void;
+    protected earlySignalHandler: (msg: ISignalMessage | ISignalMessage[]) => void;
     // (undocumented)
     protected emitMessages(type: string, messages: IDocumentMessage[][]): void;
     // (undocumented)
