@@ -134,6 +134,7 @@
 		"outputDirectory": "nyc",
 		"outputName": "jest-junit-report.xml"
 	},
+	"packageManager": "pnpm@7.30.5+sha1.ba4f8057ab7b24db2ebe553808b95adb55b5330f",
 	"typeValidation": {
 		"broken": {}
 	}

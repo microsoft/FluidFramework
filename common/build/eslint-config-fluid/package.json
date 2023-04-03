@@ -52,5 +52,6 @@
 		"prettier": "~2.6.2",
 		"sort-json": "^2.0.1",
 		"typescript": "~4.5.5"
-	}
+	},
+	"packageManager": "pnpm@7.30.5+sha1.ba4f8057ab7b24db2ebe553808b95adb55b5330f"
 }
