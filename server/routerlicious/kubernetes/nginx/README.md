@@ -66,7 +66,7 @@ helm upgrade --install --set controller.image.registry=<registry> \
 	--set controller.image.tag=<optional-tag> \
 	--set controller.image.digest=<optional-digest> \
 	$HELM_RELEASE_NAME $HELM_CHART_NAME --version $HELM_CHART_VERSION --repo $HELM_CHART_REPO -f $VALUES_FILE --namespace $K8S_NAMESPACE --create-namespace
-
+```
 
 The output will include a command that you can use to check the status of the `Service` object, something similar to this:
 
