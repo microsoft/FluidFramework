@@ -27,6 +27,7 @@ import {
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { sweepAttachmentBlobsKey } from "../gc";
 
+const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
 	implements Pick<IDocumentStorageService, "readBlob" | "createBlob">
 {
@@ -43,7 +44,28 @@ class DedupeStorage extends BaseMockBlobStorage {
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = await gitHashFile(blob as any);
 		this.blobs.set(id, blob);
-		return { id };
+		return { id, minTTLInSeconds: MIN_TTL };
+	}
+}
+
+class DedupeTTLStorage extends BaseMockBlobStorage {
+	private _createBlobCount: number = 0;
+	private _min_TTL: number = 0.001; // 1ms to make blobs "expired" by default
+
+	set min_TTL(minTTL: number) {
+		this._min_TTL = minTTL;
+	  }
+
+	get createBlobCount(): number {
+		return this._createBlobCount;
+	}
+
+	public async createBlob(blob: ArrayBufferLike) {
+		console.log("createblob in expired storage");
+		const id = await gitHashFile(blob as any);
+		this._createBlobCount += 1;
+		this.blobs.set(id, blob);
+		return { id, minTTLInSeconds: this._min_TTL };
 	}
 }
 
@@ -51,7 +73,7 @@ class NonDedupeStorage extends BaseMockBlobStorage {
 	public async createBlob(blob: ArrayBufferLike) {
 		const id = this.blobs.size.toString();
 		this.blobs.set(id, blob);
-		return { id };
+		return { id, minTTLInSeconds: MIN_TTL };
 	}
 }
 
@@ -83,13 +105,18 @@ class MockRuntime
 	public gcTombstoneEnforcementAllowed: boolean = true;
 
 	public get storage() {
-		return (this.attachState === AttachState.Detached
-			? this.detachedStorage
-			: this.attachedStorage) as unknown as IDocumentStorageService;
+		if(this.attachState === AttachState.Detached){
+			return this.detachedStorage as unknown as IDocumentStorageService;
+		} else if (this._useTTLStorage){
+			return this.attachedTTLStorage as unknown as IDocumentStorageService;
+		} else {
+			return this.attachedStorage as unknown as IDocumentStorageService;
+		}
 	}
 
 	private processing = false;
 	public unprocessedBlobs = new Set();
+	private _useTTLStorage: boolean = false;
 
 	public getStorage() {
 		return {
@@ -117,6 +144,10 @@ class MockRuntime
 		} as unknown as IDocumentStorageService;
 	}
 
+	public set useTTLStorage(expired: boolean){
+		this._useTTLStorage = expired;
+	}
+
 	public sendBlobAttachOp(localId: string, blobId?: string) {
 		this.ops.push({ metadata: { localId, blobId } });
 	}
@@ -138,6 +169,7 @@ class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
+	public attachedTTLStorage = new DedupeTTLStorage();
 	public logger = this.mc.logger;
 
 	private ops: any[] = [];
@@ -193,7 +225,7 @@ class MockRuntime
 		return summary;
 	}
 
-	public async connect() {
+	public async connect(delay?: number) {
 		assert(!this.connected);
 		await new Promise<void>((resolve) => setTimeout(resolve, 0));
 		if (this.blobManager.hasPendingOfflineUploads) {
@@ -203,6 +235,7 @@ class MockRuntime
 			await uploadP;
 			this.processing = false;
 		}
+		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
 		this.emit("connected", "client ID");
 		const ops = this.ops;
@@ -373,7 +406,6 @@ describe("BlobManager", () => {
 
 	it("uploads while disconnected", async () => {
 		await runtime.attach();
-
 		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
 		await runtime.processBlobs();
 		await handle;
@@ -384,6 +416,38 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.ids.length, 1);
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
+
+	it("reuploads if expired", async () => {
+		await runtime.attach();
+		runtime.useTTLStorage = true;
+		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs();
+		await handle;
+		await runtime.connect(50);
+		await runtime.processAll();
+
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(runtime.attachedTTLStorage.createBlobCount, 2);
+		assert.strictEqual(summaryData.ids.length, 1);
+		assert.strictEqual(summaryData.redirectTable.size, 1);
+	});
+
+	it("no reupload if not expired", async () => {
+		await runtime.attach();
+		runtime.useTTLStorage = true;
+		const handle = runtime.createBlob(IsoBuffer.from("blob", "utf8"));
+		await runtime.processBlobs();
+		await handle;
+		runtime.attachedTTLStorage.min_TTL = 1; // min TTL enough to not expired
+		await runtime.connect(50);
+		await runtime.processAll();
+
+		const summaryData = validateSummary(runtime);
+		assert.strictEqual(runtime.attachedTTLStorage.createBlobCount, 1);
+		assert.strictEqual(summaryData.ids.length, 1);
+		assert.strictEqual(summaryData.redirectTable.size, 1);
+	});
+
 
 	it("transition to offline while upload pending", async () => {
 		await runtime.attach();

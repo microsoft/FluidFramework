@@ -998,49 +998,37 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 	});
 
 	it("stashed changes with blobs", async function () {
-		console.log("1");
 		const container = await loadOffline(provider, { url });
-		console.log("2");
 		const dataStore = await requestFluidObject<ITestFluidObject>(
 			container.container,
 			"default",
 		);
-		console.log("3");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
-		console.log("4");
 
 		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
 		const handle = await dataStore.runtime.uploadBlob(
 			stringToBuffer("blob contents 1", "utf8"),
 		);
-		console.log("5");
 		map.set("blob handle 1", handle);
-		console.log("6");
 
 		const stashedChanges = container.container.closeAndGetPendingLocalState();
 
-		console.log("7");
 		const container3 = await loadOffline(provider, { url }, stashedChanges);
-		console.log("8");
 		const dataStore3 = await requestFluidObject<ITestFluidObject>(
 			container3.container,
 			"default",
 		);
-		console.log("9");
 		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 
-		console.log("10");
 		// Blob is accessible locally while offline
 		assert.strictEqual(
 			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
 			"blob contents 1",
 		);
 
-		console.log("11");
 		container3.connect();
 		await waitForContainerConnection(container3.container);
 		await provider.ensureSynchronized();
-		console.log("14");
 
 		// Blob is uploaded and accessible by all clients
 		assert.strictEqual(
@@ -1049,87 +1037,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		);
 		assert.strictEqual(
 			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-	});
-
-	it("stashed changes with blobs 2", async function () {
-		console.log("1");
-		const container = await loadOffline(provider, { url });
-		console.log("2");
-		const dataStore = await requestFluidObject<ITestFluidObject>(
-			container.container,
-			"default",
-		);
-		console.log("3");
-		const map = await dataStore.getSharedObject<SharedMap>(mapId);
-		console.log("4");
-
-		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handle = await dataStore.runtime.uploadBlob(
-			stringToBuffer("blob contents 1", "utf8"),
-		);
-		console.log("5");
-		map.set("blob handle 1", handle);
-		console.log("6");
-
-		const stashedChanges = container.container.closeAndGetPendingLocalState();
-
-		console.log("7");
-		const container3 = await loadOffline(provider, { url }, stashedChanges);
-		console.log("8");
-		const dataStore3 = await requestFluidObject<ITestFluidObject>(
-			container3.container,
-			"default",
-		);
-		console.log("9");
-		const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
-
-		console.log("10");
-		// Blob is accessible locally while offline
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-
-		console.log("11");
-		container3.connect();
-		console.log("12");
-		await waitForContainerConnection(container3.container, true);
-		console.log("13");
-		const stashedChanges2 = container3.container.closeAndGetPendingLocalState();
-
-		console.log("14");
-		const container4 = await loadOffline(provider, { url }, stashedChanges2);
-		const dataStore4 = await requestFluidObject<ITestFluidObject>(
-			container4.container,
-			"default",
-		);
-		console.log("15");
-		const map4 = await dataStore4.getSharedObject<SharedMap>(mapId);
-		assert.strictEqual(
-			bufferToString(await map4.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-
-		container4.connect();
-		await waitForContainerConnection(container4.container, true);
-		await provider.ensureSynchronized();
-		console.log("16");
-
-		// Blob is uploaded and accessible by all clients
-		assert.strictEqual(
-			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-		console.log("17");
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-		console.log("18");
-		assert.strictEqual(
-			bufferToString(await map4.get("blob handle 1").get(), "utf8"),
 			"blob contents 1",
 		);
 	});
