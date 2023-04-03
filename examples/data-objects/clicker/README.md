@@ -17,7 +17,7 @@ There is another experimental implementation of Clicker using a WiP Fluid React 
 
 You can run this example using the following steps:
 
-1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm@7`.
+1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
 1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `npm run build:fast -- --nolint @fluid-example/clicker`

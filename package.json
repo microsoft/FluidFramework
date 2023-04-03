@@ -152,7 +152,7 @@
 		"node": ">=16.16.0",
 		"pnpm": "7"
 	},
-	"packageManager": "pnpm@7.27.0",
+	"packageManager": "pnpm@7.30.5",
 	"pnpm": {
 		"overrides": {
 			"@types/node": "^14.18.38",

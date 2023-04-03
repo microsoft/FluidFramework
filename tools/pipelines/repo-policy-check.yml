@@ -45,7 +45,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      npm i -g pnpm@7.30.5
+      corepack enable
       pnpm -v
       pnpm config set store-dir $(pnpmStorePath)
 
