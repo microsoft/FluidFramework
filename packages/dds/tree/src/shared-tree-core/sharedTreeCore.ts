@@ -42,6 +42,7 @@ import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } fro
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
+import { IMultiFormatCodec } from "../codec";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -123,6 +124,17 @@ export class SharedTreeCore<
 	private readonly transactions = new TransactionStack();
 
 	/**
+	 * Used to encode and decode changes.
+	 *
+	 * @remarks - Since there is currently only one format, this can just be cached on the class.
+	 * With more write formats active, it may make sense to keep around the "usual" format codec
+	 * (the one for the current persisted configuration) and resolve codecs for different versions
+	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
+	 * and an op needs to be interpreted which isn't written with the current configuration).
+	 */
+	private readonly changeCodec: IMultiFormatCodec<TChange>;
+
+	/**
 	 * @param indexes - A list of indexes, either as an array or as a factory function
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
@@ -168,6 +180,7 @@ export class SharedTreeCore<
 			0x350 /* Index summary element keys must be unique */,
 		);
 
+		this.changeCodec = changeFamily.codecs.resolve(formatVersion);
 		this.editor = this.changeFamily.buildEditor((change) => this.applyChange(change), anchors);
 	}
 
@@ -226,8 +239,7 @@ export class SharedTreeCore<
 		const message: Message = {
 			revision: commit.revision,
 			originatorId: this.editManager.localSessionId,
-			// TODO: formatVersion usage here
-			changeset: this.changeFamily.codec.json.encode(commit.change),
+			changeset: this.changeCodec.json.encode(commit.change),
 		};
 		this.submitLocalMessage(message);
 	}
@@ -264,8 +276,7 @@ export class SharedTreeCore<
 		localOpMetadata: unknown,
 	) {
 		const { revision, originatorId: stableClientId, changeset } = message.contents as Message;
-		// TODO: format version usage here
-		const changes = this.changeFamily.codec.json.decode(changeset);
+		const changes = this.changeCodec.json.decode(changeset);
 		const commit: Commit<TChange> = {
 			revision,
 			sessionId: stableClientId,

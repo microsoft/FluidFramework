@@ -30,7 +30,11 @@ import {
 	ValueSchema,
 } from "../../core";
 import { JsonCompatibleReadOnly } from "../../util";
-import { assertMarkListEqual, fakeTaggedRepair as fakeRepair } from "../utils";
+import {
+	assertMarkListEqual,
+	fakeTaggedRepair as fakeRepair,
+	makeEncodingTestSuite,
+} from "../utils";
 import { IJsonCodec } from "../../codec";
 
 const nodeSchema = TypedSchema.tree("Node", {
@@ -279,7 +283,7 @@ describe("Value field changesets", () => {
 		["with repair data", revertChange2],
 	];
 
-	runEncodingTests(fieldHandler.codecFactory, encodingTestData);
+	makeEncodingTestSuite(fieldHandler.codecsFactory(childCodec1), encodingTestData);
 });
 
 describe("Optional field changesets", () => {
@@ -454,35 +458,12 @@ describe("Optional field changesets", () => {
 		assertMarkListEqual(fieldHandler.intoDelta(change4, deltaFromChild2), expected);
 	});
 
-	const encodingTestData: [string, FieldKinds.OptionalChangeset][] = [
-		["change", change1],
-		["with repair data", revertChange2],
-	];
+	describe("Encoding", () => {
+		const encodingTestData: [string, FieldKinds.OptionalChangeset][] = [
+			["change", change1],
+			["with repair data", revertChange2],
+		];
 
-	runEncodingTests(fieldHandler.codecFactory, encodingTestData);
-});
-
-function runEncodingTests<TChangeset>(
-	codecFactory: FieldChangeHandler<TChangeset>["codecFactory"],
-	encodingTestData: [string, TChangeset][],
-) {
-	describe("encoding", () => {
-		const version = 0;
-		const codec = codecFactory(childCodec1)(version);
-		for (const [name, data] of encodingTestData) {
-			describe(name, () => {
-				it("roundtrip", () => {
-					const encoded = codec.encode(data);
-					const decoded = codec.decode(encoded);
-					assert.deepEqual(decoded, data);
-				});
-
-				it("json roundtrip", () => {
-					const encoded = JSON.stringify(codec.encode(data));
-					const decoded = codec.decode(JSON.parse(encoded));
-					assert.deepEqual(decoded, data);
-				});
-			});
-		}
+		makeEncodingTestSuite(fieldHandler.codecsFactory(childCodec1), encodingTestData);
 	});
-}
+});

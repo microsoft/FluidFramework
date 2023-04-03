@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";
@@ -149,26 +150,32 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return rebased;
 		},
 	}),
-	codecFactory: (childCodec) => (formatVersion) => ({
-		encode: (change: GenericChangeset): JsonCompatibleReadOnly => {
-			const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset = change.map(
-				({ index, nodeChange }) => ({
-					index,
-					nodeChange: childCodec.encode(nodeChange),
-				}),
-			);
-			return encoded;
-		},
-		decode: (change: JsonCompatibleReadOnly): GenericChangeset => {
-			const encoded = change as JsonCompatibleReadOnly[] & EncodedGenericChangeset;
-			return encoded.map(
-				({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
-					index,
-					nodeChange: childCodec.decode(nodeChange),
-				}),
-			);
-		},
-	}),
+	codecsFactory: (childCodec) =>
+		makeCodecFamily([
+			[
+				0,
+				{
+					encode: (change: GenericChangeset): JsonCompatibleReadOnly => {
+						const encoded: JsonCompatibleReadOnly[] & EncodedGenericChangeset =
+							change.map(({ index, nodeChange }) => ({
+								index,
+								nodeChange: childCodec.encode(nodeChange),
+							}));
+						return encoded;
+					},
+					decode: (change: JsonCompatibleReadOnly): GenericChangeset => {
+						const encoded = change as JsonCompatibleReadOnly[] &
+							EncodedGenericChangeset;
+						return encoded.map(
+							({ index, nodeChange }: EncodedGenericChange): GenericChange => ({
+								index,
+								nodeChange: childCodec.decode(nodeChange),
+							}),
+						);
+					},
+				},
+			],
+		]),
 	editor: {
 		buildChildChange(index, change): GenericChangeset {
 			return [{ index, nodeChange: change }];

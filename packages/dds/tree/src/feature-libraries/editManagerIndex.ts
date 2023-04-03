@@ -44,6 +44,8 @@ const blobKey = "Blob";
 
 const stringKey = "String";
 
+const formatVersion = 0;
+
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
  * which were based on a given session's branch, to the document history
@@ -56,6 +58,12 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 
 	private readonly editDataBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
 
+	// Note: since there is only one format, this can just be cached on the class.
+	// With more write formats active, it may make sense to keep around the "usual" format codec
+	// (the one for the current persisted configuration) and resolve codecs for different versions
+	// as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
+	// and an op needs to be interpreted which isn't written with the current configuration).
+	private readonly changesetCodec: IMultiFormatCodec<TChangeset>;
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly editManager: EditManager<
@@ -63,11 +71,12 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 			ChangeFamily<ChangeFamilyEditor, TChangeset>
 		>,
 	) {
+		this.changesetCodec = this.editManager.changeFamily.codecs.resolve(formatVersion);
 		this.editDataBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.editManager);
 			const dataString = stringifySummary(
 				this.editManager.getSummaryData(),
-				this.editManager.changeFamily.codec,
+				this.changesetCodec,
 			);
 			// For now we are not chunking the edit data, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(dataString));
@@ -80,10 +89,7 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const dataString = stringifySummary(
-			this.editManager.getSummaryData(),
-			this.editManager.changeFamily.codec,
-		);
+		const dataString = stringifySummary(this.editManager.getSummaryData(), this.changesetCodec);
 		return createSingleBlobSummary(stringKey, dataString);
 	}
 
@@ -135,7 +141,7 @@ export class EditManagerIndex<TChangeset> implements Index, SummaryElement {
 		);
 
 		const dataString = bufferToString(schemaBuffer, "utf-8");
-		const data = parseSummary(dataString, this.editManager.changeFamily.codec);
+		const data = parseSummary(dataString, this.changesetCodec);
 		this.editManager.loadSummaryData(data);
 	}
 }

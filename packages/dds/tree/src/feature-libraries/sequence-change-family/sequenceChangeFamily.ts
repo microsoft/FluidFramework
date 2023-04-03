@@ -6,7 +6,7 @@
 import { ChangeFamily, AnchorSet } from "../../core";
 import { toDelta } from "./changeset";
 import { sequenceChangeRebaser } from "./sequenceChangeRebaser";
-import { sequenceChangeEncoder, SequenceChangeset } from "./sequenceChangeset";
+import { sequenceChangeCodecs, SequenceChangeset } from "./sequenceChangeset";
 import { SequenceEditBuilder } from "./sequenceEditBuilder";
 
 function buildEditor(
@@ -22,5 +22,5 @@ export const sequenceChangeFamily: SequenceChangeFamily = {
 	rebaser: sequenceChangeRebaser,
 	buildEditor,
 	intoDelta: toDelta,
-	codec: sequenceChangeEncoder,
+	codecs: sequenceChangeCodecs,
 };

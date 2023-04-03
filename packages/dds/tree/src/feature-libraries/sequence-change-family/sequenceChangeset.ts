@@ -4,10 +4,11 @@
  */
 
 import { makeValueCodec } from "../defaultFieldKinds";
-import { IMultiFormatCodec } from "../../codec";
+import { ICodecFamily, makeCodecFamily } from "../../codec";
 import { Transposed as T } from "./changeset";
 
 export type SequenceChangeset = T.LocalChangeset;
 
-export const sequenceChangeEncoder: IMultiFormatCodec<SequenceChangeset> =
-	makeValueCodec<SequenceChangeset>();
+export const sequenceChangeCodecs: ICodecFamily<SequenceChangeset> = makeCodecFamily([
+	[0, makeValueCodec<SequenceChangeset>()],
+]);

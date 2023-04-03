@@ -11,6 +11,7 @@ import { loadSummary, encodeSummary } from "../../feature-libraries";
 import { mintRevisionTag, SummaryData } from "../../core";
 import { TestChange } from "../testChange";
 import { brand } from "../../util";
+import { withDefaultBinaryEncoding } from "../../codec";
 
 describe("EditManagerIndex", () => {
 	it("roundtrip", () => {
@@ -62,10 +63,11 @@ describe("EditManagerIndex", () => {
 				],
 			]),
 		};
-		const s1 = encodeSummary(input, TestChange.codec);
-		const output = loadSummary(s1, TestChange.codec);
+		const codec = withDefaultBinaryEncoding(TestChange.codec);
+		const s1 = encodeSummary(input, codec);
+		const output = loadSummary(s1, codec);
 		assert.deepEqual(output, input);
-		const s2 = encodeSummary(output, TestChange.codec);
+		const s2 = encodeSummary(output, codec);
 		assert.equal(s1, s2);
 	});
 

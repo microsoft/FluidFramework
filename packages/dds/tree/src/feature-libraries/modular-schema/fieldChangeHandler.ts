@@ -5,7 +5,7 @@
 
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
 import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
-import { IJsonCodec } from "../../codec";
+import { ICodecFamily, IJsonCodec } from "../../codec";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
 
 /**
@@ -19,9 +19,7 @@ export interface FieldChangeHandler<
 > {
 	_typeCheck?: Invariant<TChangeset>;
 	rebaser: FieldChangeRebaser<TChangeset>;
-	codecFactory: (
-		childCodec: IJsonCodec<NodeChangeset>,
-	) => (formatVersion: number) => IJsonCodec<TChangeset>;
+	codecsFactory: (childCodec: IJsonCodec<NodeChangeset>) => ICodecFamily<TChangeset>;
 	editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 

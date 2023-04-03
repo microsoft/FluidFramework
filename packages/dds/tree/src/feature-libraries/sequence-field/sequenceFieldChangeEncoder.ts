@@ -5,20 +5,24 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
-import { FieldChangeHandler } from "../modular-schema";
 import { IJsonCodec } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Changeset, Mark } from "./format";
 import { isSkipMark } from "./utils";
+import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec/codec";
 
-export const sequenceFieldChangeCodecFactory: FieldChangeHandler<Changeset>["codecFactory"] =
-	(childCodec) => (formatVersion) => ({
-		encode: (changeset) => encodeForJson(formatVersion, changeset, childCodec),
-		decode: (changeset) => decodeJson(formatVersion, changeset, childCodec),
-	});
+export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
+	makeCodecFamily<Changeset<TNodeChange>>([
+		[
+			0,
+			{
+				encode: (changeset) => encodeForJson(changeset, childCodec),
+				decode: (changeset) => decodeJson(changeset, childCodec),
+			},
+		],
+	]);
 
-export function encodeForJson<TNodeChange>(
-	formatVersion: number,
+function encodeForJson<TNodeChange>(
 	markList: Changeset<TNodeChange>,
 	childCodec: IJsonCodec<TNodeChange>,
 ): JsonCompatibleReadOnly {
@@ -77,8 +81,7 @@ export function encodeForJson<TNodeChange>(
 	return jsonMarks as JsonCompatibleReadOnly;
 }
 
-export function decodeJson<TNodeChange>(
-	formatVersion: number,
+function decodeJson<TNodeChange>(
 	change: JsonCompatibleReadOnly,
 	childCodec: IJsonCodec<TNodeChange>,
 ): Changeset<TNodeChange> {

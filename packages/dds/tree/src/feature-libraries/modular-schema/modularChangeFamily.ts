@@ -35,7 +35,7 @@ import {
 	tryGetFromNestedMap,
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
-import { IMultiFormatCodec, withDefaultBinaryEncoding } from "../../codec";
+import { ICodecFamily, makeCodecFamily } from "../../codec";
 import {
 	ChangesetLocalId,
 	CrossFieldManager,
@@ -63,7 +63,7 @@ import {
 	genericFieldKind,
 	newGenericChangeset,
 } from "./genericFieldKind";
-import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding";
+import { makeModularChangeCodecFamily } from "./modularChangeEncoding";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -75,11 +75,10 @@ import { decodeJsonFormat0, encodeForJsonFormat0 } from "./modularChangeEncoding
 export class ModularChangeFamily
 	implements ChangeFamily<ModularEditBuilder, ModularChangeset>, ChangeRebaser<ModularChangeset>
 {
-	// this probably needs to expose something that resolves versions to a codec
-	public readonly codec: IMultiFormatCodec<ModularChangeset>;
+	public readonly codecs: ICodecFamily<ModularChangeset>;
 
 	public constructor(public readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>) {
-		this.codec = makeModularChangeCodec(this.fieldKinds);
+		this.codecs = makeModularChangeCodecFamily(this.fieldKinds);
 	}
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
@@ -1089,15 +1088,6 @@ function makeModularChangeset(
 		changeset.constraintViolationCount = constraintViolationCount;
 	}
 	return changeset;
-}
-
-function makeModularChangeCodec(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
-): IMultiFormatCodec<ModularChangeset> {
-	return withDefaultBinaryEncoding({
-		encode: (change) => encodeForJsonFormat0(fieldKinds, change),
-		decode: (change) => decodeJsonFormat0(fieldKinds, change),
-	});
 }
 
 /**

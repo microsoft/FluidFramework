@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 export {
-	IEncoder,
+	IBinaryCodec,
+	ICodecFamily,
 	IDecoder,
+	IEncoder,
 	IJsonCodec,
 	IMultiFormatCodec,
-	ICodecFamily,
+	makeCodecFamily,
 	withDefaultBinaryEncoding,
 } from "./codec";

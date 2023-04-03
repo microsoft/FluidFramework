@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IMultiFormatCodec } from "../../codec";
+import { ICodecFamily } from "../../codec";
 import { ChangeRebaser } from "../rebase";
 import { AnchorSet, Delta } from "../tree";
 
@@ -19,7 +19,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	intoDelta(change: TChange): Delta.Root;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly codec: IMultiFormatCodec<TChange>;
+	readonly codecs: ICodecFamily<TChange>;
 }
 
 /**

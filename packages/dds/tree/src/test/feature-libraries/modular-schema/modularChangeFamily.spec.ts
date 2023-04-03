@@ -33,14 +33,15 @@ import {
 	mintRevisionTag,
 	tagRollbackInverse,
 } from "../../../core";
-import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { assertDeltaEqual, deepFreeze } from "../../utils";
+import { brand, fail } from "../../../util";
+import { assertDeltaEqual, deepFreeze, makeEncodingTestSuite } from "../../utils";
+import { makeCodecFamily } from "../../../codec";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
-	codecFactory: () => () => FieldKinds.makeValueCodec<ValueChangeset>().json,
+	codecsFactory: () => makeCodecFamily([[0, FieldKinds.makeValueCodec<ValueChangeset>()]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild) =>
@@ -75,7 +76,7 @@ const singleNodeEditor: FieldEditor<NodeChangeset> = {
 
 const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
-	codecFactory: (childCodec) => (version) => childCodec,
+	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
 	isEmpty: (change) => change.fieldChanges === undefined && change.valueChange === undefined,
@@ -656,26 +657,13 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	const encodingTestData: [string, ModularChangeset][] = [
-		["without constrain", rootChange1a],
-		["with constrain", rootChange3],
-	];
-
 	describe("Encoding", () => {
-		for (const [name, data] of encodingTestData) {
-			describe(name, () => {
-				it("roundtrip", () => {
-					const encoded = family.codec.json.encode(data);
-					const decoded = family.codec.json.decode(encoded);
-					assert.deepEqual(decoded, data);
-				});
-				it("json roundtrip", () => {
-					const encoded = JSON.stringify(family.codec.json.encode(data));
-					const decoded = family.codec.json.decode(JSON.parse(encoded));
-					assert.deepEqual(decoded, data);
-				});
-			});
-		}
+		const encodingTestData: [string, ModularChangeset][] = [
+			["without constrain", rootChange1a],
+			["with constrain", rootChange3],
+		];
+
+		makeEncodingTestSuite(family.codecs, encodingTestData);
 	});
 
 	it("build child change", () => {

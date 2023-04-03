@@ -35,7 +35,7 @@ import {
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
-import { IJsonCodec as ICodec, IMultiFormatCodec, withDefaultBinaryEncoding } from "../codec";
+import { IJsonCodec, IMultiFormatCodec, makeCodecFamily } from "../codec";
 
 type BrandedFieldKind<
 	TName extends string,
@@ -69,11 +69,11 @@ function brandedFieldKind<
 }
 
 /**
- * Encoder for changesets which carry no information.
+ * Codec for changesets which carry no information.
  *
  * @sealed
  */
-export const unitEncoder: IMultiFormatCodec<0> = {
+export const unitCodec: IMultiFormatCodec<0> = {
 	json: {
 		encode: () => 0,
 		decode: () => 0,
@@ -85,19 +85,19 @@ export const unitEncoder: IMultiFormatCodec<0> = {
 };
 
 /**
- * Creates an encoder for objects which are just a json compatible value, and
- * can be serialized as-is.
+ * Creates a json codec for objects which are just a json compatible value
+ * and can be serialized as-is.
  *
  * @remarks - Beware that this encoder doesn't validate its input and isn't typesafe.
  * It would be great to be able to constrain T to a reasonable type, but due to how typechecking
  * of index signatures works, JsonCompatibleReadOnly isn't sufficient.
  * @sealed
  */
-export function makeValueCodec<T>(): IMultiFormatCodec<T> {
-	return withDefaultBinaryEncoding<T, JsonCompatibleReadOnly>({
+export function makeValueCodec<T>(): IJsonCodec<T> {
+	return {
 		encode: (obj: T) => obj as unknown as JsonCompatibleReadOnly,
 		decode: (obj: JsonCompatibleReadOnly) => obj as unknown as T,
-	});
+	};
 }
 
 /**
@@ -175,7 +175,7 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		invert: (changes: 0) => 0,
 		rebase: (change: 0, over: 0) => 0,
 	}),
-	codecFactory: () => () => unitEncoder.json,
+	codecsFactory: () => makeCodecFamily([[0, unitCodec]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change: 0, deltaFromChild: ToDelta): Delta.MarkList => [],
 	isEmpty: (change: 0) => true,
@@ -195,7 +195,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 		compose: (changes: number[]) => changes.reduce((a, b) => a + b, 0),
 		invert: (change: number) => -change,
 	}),
-	codecFactory: () => () => makeValueCodec<number>().json,
+	codecsFactory: () => makeCodecFamily([[0, makeValueCodec<number>()]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change: number, deltaFromChild: ToDelta): Delta.MarkList => [
 		{
@@ -328,7 +328,7 @@ interface EncodedValueChangeset {
 	changes?: JsonCompatibleReadOnly;
 }
 
-function makeValueFieldCodec(childCodec: ICodec<NodeChangeset>): ICodec<ValueChangeset> {
+function makeValueFieldCodec(childCodec: IJsonCodec<NodeChangeset>): IJsonCodec<ValueChangeset> {
 	return {
 		encode: (change: ValueChangeset) => {
 			const encoded: EncodedValueChangeset & JsonCompatibleReadOnly = {};
@@ -387,7 +387,7 @@ const valueFieldEditor: ValueFieldEditor = {
 
 const valueChangeHandler: FieldChangeHandler<ValueChangeset, ValueFieldEditor> = {
 	rebaser: valueRebaser,
-	codecFactory: (childCodec) => (version: number) => makeValueFieldCodec(childCodec),
+	codecsFactory: (childCodec) => makeCodecFamily([[0, makeValueFieldCodec(childCodec)]]),
 	editor: valueFieldEditor,
 
 	intoDelta: (change: ValueChangeset, deltaFromChild: ToDelta) => {
@@ -588,57 +588,66 @@ interface EncodedOptionalChangeset {
 	childChange?: JsonCompatibleReadOnly;
 }
 
-const optionalFieldEncoderFactory: FieldChangeHandler<OptionalChangeset>["codecFactory"] =
-	(childCodec) => (version) => ({
-		encode: (change: OptionalChangeset) => {
-			const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
-			if (change.fieldChange !== undefined) {
-				encoded.fieldChange =
-					change.fieldChange.newContent !== undefined &&
-					"revert" in change.fieldChange.newContent
-						? {
-								...change.fieldChange,
-								newContent: {
-									revert: jsonableTreeFromCursor(
-										change.fieldChange.newContent.revert,
-									),
-								},
-						  }
-						: change.fieldChange;
-			}
+const optionalFieldCodecFamilyFactory: FieldChangeHandler<OptionalChangeset>["codecsFactory"] = (
+	childCodec,
+) =>
+	makeCodecFamily([
+		[
+			0,
+			{
+				encode: (change: OptionalChangeset) => {
+					const encoded: EncodedOptionalChangeset & JsonCompatibleReadOnly = {};
+					if (change.fieldChange !== undefined) {
+						encoded.fieldChange =
+							change.fieldChange.newContent !== undefined &&
+							"revert" in change.fieldChange.newContent
+								? {
+										...change.fieldChange,
+										newContent: {
+											revert: jsonableTreeFromCursor(
+												change.fieldChange.newContent.revert,
+											),
+										},
+								  }
+								: change.fieldChange;
+					}
 
-			if (change.childChange !== undefined) {
-				encoded.childChange = childCodec.encode(change.childChange);
-			}
+					if (change.childChange !== undefined) {
+						encoded.childChange = childCodec.encode(change.childChange);
+					}
 
-			return encoded;
-		},
+					return encoded;
+				},
 
-		decode: (change: JsonCompatibleReadOnly) => {
-			const encoded = change as EncodedOptionalChangeset;
-			const decoded: OptionalChangeset = {};
-			if (encoded.fieldChange !== undefined) {
-				decoded.fieldChange = {
-					wasEmpty: encoded.fieldChange.wasEmpty,
-				};
+				decode: (change: JsonCompatibleReadOnly) => {
+					const encoded = change as EncodedOptionalChangeset;
+					const decoded: OptionalChangeset = {};
+					if (encoded.fieldChange !== undefined) {
+						decoded.fieldChange = {
+							wasEmpty: encoded.fieldChange.wasEmpty,
+						};
 
-				if (encoded.fieldChange.newContent !== undefined) {
-					decoded.fieldChange.newContent =
-						"revert" in encoded.fieldChange.newContent
-							? {
-									revert: singleTextCursor(encoded.fieldChange.newContent.revert),
-							  }
-							: encoded.fieldChange.newContent;
-				}
-			}
+						if (encoded.fieldChange.newContent !== undefined) {
+							decoded.fieldChange.newContent =
+								"revert" in encoded.fieldChange.newContent
+									? {
+											revert: singleTextCursor(
+												encoded.fieldChange.newContent.revert,
+											),
+									  }
+									: encoded.fieldChange.newContent;
+						}
+					}
 
-			if (encoded.childChange !== undefined) {
-				decoded.childChange = childCodec.decode(encoded.childChange);
-			}
+					if (encoded.childChange !== undefined) {
+						decoded.childChange = childCodec.decode(encoded.childChange);
+					}
 
-			return decoded;
-		},
-	});
+					return decoded;
+				},
+			},
+		],
+	]);
 
 function deltaFromInsertAndChange(
 	insertedContent: ITreeCursorSynchronous | undefined,
@@ -672,7 +681,7 @@ export const optional: FieldKind<OptionalFieldEditor, Multiplicity.Optional> = n
 	Multiplicity.Optional,
 	{
 		rebaser: optionalChangeRebaser,
-		codecFactory: optionalFieldEncoderFactory,
+		codecsFactory: optionalFieldCodecFamilyFactory,
 		editor: optionalFieldEditor,
 
 		intoDelta: (change: OptionalChangeset, deltaFromChild: ToDelta) => {

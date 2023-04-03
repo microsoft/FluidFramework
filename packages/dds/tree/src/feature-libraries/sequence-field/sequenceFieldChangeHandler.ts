@@ -14,7 +14,7 @@ export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceF
 
 export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	rebaser: sequenceFieldChangeRebaser,
-	codecFactory: sequenceFieldChangeCodecFactory,
+	codecsFactory: sequenceFieldChangeCodecFactory,
 	editor: sequenceFieldEditor,
 	intoDelta: sequenceFieldToDelta,
 	isEmpty,

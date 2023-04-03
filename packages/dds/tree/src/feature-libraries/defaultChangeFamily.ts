@@ -27,7 +27,7 @@ import {
 	NodeReviver,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
-import { IMultiFormatCodec } from "../codec";
+import { ICodecFamily } from "../codec";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -51,8 +51,8 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.rebaser;
 	}
 
-	public get codec(): IMultiFormatCodec<DefaultChangeset> {
-		return this.modularFamily.codec;
+	public get codecs(): ICodecFamily<DefaultChangeset> {
+		return this.modularFamily.codecs;
 	}
 
 	public intoDelta(change: DefaultChangeset): Delta.Root {

@@ -85,7 +85,7 @@ describe("TestChange", () => {
 	});
 
 	it("can be encoded in JSON", () => {
-		const codec = TestChange.codec.json;
+		const codec = TestChange.codec;
 		const empty = TestChange.emptyChange;
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty)));

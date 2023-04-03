@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, IsoBuffer } from "@fluidframework/common-utils";
-import { JsonCompatibleReadOnly } from "../util";
+import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { fail, JsonCompatibleReadOnly } from "../util";
 
 export interface IEncoder<TDecoded, TEncoded> {
 	/**
@@ -29,6 +29,12 @@ export interface IBinaryCodec<TDecoded>
 	extends IEncoder<TDecoded, IsoBuffer>,
 		IDecoder<TDecoded, IsoBuffer> {}
 
+export interface ICodecFamily<TDecoded> {
+	resolve(formatVersion: number): IMultiFormatCodec<TDecoded>;
+
+	getSupportedFormats(): Iterable<number>;
+}
+
 /**
  * Contains knowledge of how to encode some in-memory type into JSON and binary formats,
  * as well as how to decode those representations.
@@ -45,30 +51,63 @@ export interface IMultiFormatCodec<TDecoded, TJsonEncoded = JsonCompatibleReadOn
 	binary: IBinaryCodec<TDecoded>;
 }
 
-export interface ICodecFamily<TDecoded, TJsonEncoded = JsonCompatibleReadOnly> {
-	resolve(version: number): IMultiFormatCodec<TDecoded, TJsonEncoded>;
+export function makeCodecFamily<TDecoded>(
+	registry: Iterable<
+		[formatVersion: number, codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>]
+	>,
+): ICodecFamily<TDecoded> {
+	const isJsonCodec = (
+		codec: IMultiFormatCodec<TDecoded> | IJsonCodec<TDecoded>,
+	): codec is IJsonCodec<TDecoded> =>
+		typeof (codec as any).encode === "function" && typeof (codec as any).decode === "function";
+	const codecs: Map<number, IMultiFormatCodec<TDecoded>> = new Map();
+	for (const [formatVersion, codec] of registry) {
+		if (codecs.get(formatVersion) !== undefined) {
+			fail("Duplicate codecs specified.");
+		}
+		if (isJsonCodec(codec)) {
+			codecs.set(formatVersion, withDefaultBinaryEncoding(codec));
+		} else {
+			codecs.set(formatVersion, codec);
+		}
+	}
+
+	return {
+		resolve(formatVersion: number) {
+			const codec = codecs.get(formatVersion);
+			assert(codec !== undefined, "Requested coded for unsupported format.");
+			return codec;
+		},
+		getSupportedFormats() {
+			return codecs.keys();
+		},
+	};
+}
+
+class DefaultBinaryCodec<TDecoded> implements IBinaryCodec<TDecoded> {
+	public constructor(private jsonCodec: IJsonCodec<TDecoded>) {}
+
+	public encode(change: TDecoded): IsoBuffer {
+		const jsonable = this.jsonCodec.encode(change);
+		const json = JSON.stringify(jsonable);
+		return IsoBuffer.from(json);
+	}
+
+	public decode(change: IsoBuffer): TDecoded {
+		const json = bufferToString(change, "utf8");
+		const jsonable = JSON.parse(json);
+		return this.jsonCodec.decode(jsonable);
+	}
 }
 
 /**
  * Constructs a {@link IMultiFormatCodec} from a `IJsonCodec` using a generic binary encoding.
  */
-export function withDefaultBinaryEncoding<TDecoded, TEncoded>(
-	jsonCodec: IJsonCodec<TDecoded, TEncoded>,
-): IMultiFormatCodec<TDecoded, TEncoded> {
+export function withDefaultBinaryEncoding<TDecoded>(
+	jsonCodec: IJsonCodec<TDecoded>,
+): IMultiFormatCodec<TDecoded> {
 	return {
 		json: jsonCodec,
-		binary: {
-			encode: (change: TDecoded): IsoBuffer => {
-				const jsonable = jsonCodec.encode(change);
-				const json = JSON.stringify(jsonable);
-				return IsoBuffer.from(json);
-			},
-
-			decode: (change: IsoBuffer): TDecoded => {
-				const json = bufferToString(change, "utf8");
-				const jsonable = JSON.parse(json);
-				return jsonCodec.decode(jsonable);
-			},
-		},
+		binary: new DefaultBinaryCodec(jsonCodec),
 	};
 }

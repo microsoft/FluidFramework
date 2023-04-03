@@ -20,15 +20,17 @@ import {
 import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
-import { IJsonCodec } from "../../../codec";
+import { fakeTaggedRepair as fakeRepair, makeEncodingTestSuite } from "../../utils";
+import { IJsonCodec, makeCodecFamily } from "../../../codec";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
-	codecFactory: () => () =>
-		FieldKinds.makeValueCodec<ValueChangeset & JsonCompatibleReadOnly>().json,
+	codecsFactory: () =>
+		makeCodecFamily([
+			[0, FieldKinds.makeValueCodec<ValueChangeset & JsonCompatibleReadOnly>()],
+		]),
 	editor: { buildChildChange: () => fail("Child changes not supported") },
 	intoDelta: (change) =>
 		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],
@@ -145,23 +147,6 @@ const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 		setValue: valueChange.new,
 	};
 	return nodeDelta;
-};
-
-const throwCodec: IJsonCodec<any> = {
-	encode: unexpectedDelegate,
-	decode: unexpectedDelegate,
-};
-
-const leafCodec = valueHandler.codecFactory(throwCodec)(0);
-const childCodec: IJsonCodec<NodeChangeset> = {
-	encode: (nodeChange) => {
-		const valueChange = valueChangeFromNodeChange(nodeChange);
-		return leafCodec.encode(valueChange);
-	},
-	decode: (nodeChange) => {
-		const valueChange = leafCodec.decode(nodeChange);
-		return nodeChangeFromValueChange(valueChange);
-	},
 };
 
 const crossFieldManager: CrossFieldManager = {
@@ -418,39 +403,44 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	const encodingTestData: [string, GenericChangeset][] = [
-		[
-			"Misc",
-			[
-				{
-					index: 0,
-					nodeChange: nodeChange0To1,
-				},
-				{
-					index: 2,
-					nodeChange: nodeChange1To2,
-				},
-			],
-		],
-	];
-
 	describe("Encoding", () => {
-		const version = 0;
-		const codec = genericFieldKind.changeHandler.codecFactory(childCodec)(version);
-		for (const [name, data] of encodingTestData) {
-			describe(name, () => {
-				it("roundtrip", () => {
-					const encoded = codec.encode(data);
-					const decoded = codec.decode(encoded);
-					assert.deepEqual(decoded, data);
-				});
-				it("Json roundtrip", () => {
-					const encoded = JSON.stringify(codec.encode(data));
-					const decoded = codec.decode(JSON.parse(encoded));
-					assert.deepEqual(decoded, data);
-				});
-			});
-		}
+		const encodingTestData: [string, GenericChangeset][] = [
+			[
+				"Misc",
+				[
+					{
+						index: 0,
+						nodeChange: nodeChange0To1,
+					},
+					{
+						index: 2,
+						nodeChange: nodeChange1To2,
+					},
+				],
+			],
+		];
+
+		const throwCodec: IJsonCodec<any> = {
+			encode: unexpectedDelegate,
+			decode: unexpectedDelegate,
+		};
+
+		const leafCodec = valueHandler.codecsFactory(throwCodec).resolve(0).json;
+		const childCodec: IJsonCodec<NodeChangeset> = {
+			encode: (nodeChange) => {
+				const valueChange = valueChangeFromNodeChange(nodeChange);
+				return leafCodec.encode(valueChange);
+			},
+			decode: (nodeChange) => {
+				const valueChange = leafCodec.decode(nodeChange);
+				return nodeChangeFromValueChange(valueChange);
+			},
+		};
+
+		makeEncodingTestSuite(
+			genericFieldKind.changeHandler.codecsFactory(childCodec),
+			encodingTestData,
+		);
 	});
 
 	it("build child change", () => {
