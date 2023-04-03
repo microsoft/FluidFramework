@@ -26,6 +26,7 @@ import {
 	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
+import { genericFieldKind } from "./genericFieldKind";
 
 /**
  * Format for encoding as json.
@@ -73,7 +74,12 @@ function makeV0Codec(
 	const fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
 		IMultiFormatCodec<FieldChangeset>
-	> = new Map();
+	> = new Map([
+		[
+			genericFieldKind.identifier,
+			genericFieldKind.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0),
+		],
+	]);
 
 	fieldKinds.forEach((fieldKind, identifier) => {
 		const codec = fieldKind.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);

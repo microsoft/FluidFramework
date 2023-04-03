@@ -757,12 +757,17 @@ describe("ModularChangeFamily", () => {
 			rebaseWasTested = true;
 			return change;
 		};
+		const throwCodec = {
+			encode: () => fail("Should not be called"),
+			decode: () => fail("Should not be called"),
+		};
 		const handler = {
 			rebaser: {
 				compose,
 				rebase,
 			},
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
+			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
 		const field = new FieldKind(
 			brand("ChecksRevIndexing"),
