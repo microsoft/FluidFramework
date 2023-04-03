@@ -49,7 +49,9 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 
 	const sectionBody = [];
 	sectionBody.push("You can run this example using the following steps:\n");
-	sectionBody.push("1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.");
+	sectionBody.push(
+		"1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.",
+	);
 	sectionBody.push(`1. Run \`pnpm install\` and \`pnpm run build:fast --nolint\` from the \`FluidFramework\` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       \`pnpm run build:fast --nolint ${packageName}\``);
