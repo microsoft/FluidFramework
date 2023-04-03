@@ -15,9 +15,4 @@ export {
 
 export { TransactionStack } from "./transactionStack";
 
-export {
-	EditManagerSummarizer,
-	CommitEncoder,
-	parseSummary,
-	stringifySummary,
-} from "./editManagerSummarizer";
+export { EditManagerSummarizer, parseSummary, stringifySummary } from "./editManagerSummarizer";

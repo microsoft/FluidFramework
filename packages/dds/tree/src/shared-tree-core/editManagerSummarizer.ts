@@ -146,11 +146,6 @@ interface ReadonlyJsonSummaryData {
 	readonly branches: readonly [SessionId, Readonly<SummaryBranch<JsonCompatibleReadOnly>>][];
 }
 
-export interface CommitEncoder<TChange, TCommit extends Commit<TChange>> {
-	readonly encode: (commit: TCommit) => SequencedCommit<JsonCompatibleReadOnly>;
-	readonly decode: (commit: SequencedCommit<JsonCompatibleReadOnly>) => SequencedCommit<TChange>;
-}
-
 export function parseSummary<TChangeset>(
 	summary: string,
 	codec: IMultiFormatCodec<TChangeset>,
