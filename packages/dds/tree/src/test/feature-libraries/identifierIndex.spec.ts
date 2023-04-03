@@ -386,6 +386,34 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, [id]);
 	});
 
+	it("is synchronized after each batch update", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+
+		const id = makeId();
+		let expectedIds: Identifier[] = [id];
+		let batches = 0;
+		tree.events.on("afterBatch", () => {
+			assertIds(tree, expectedIds);
+			batches += 1;
+		});
+
+		initializeTestTree(
+			tree,
+			{
+				type: nodeSchema.name,
+				globalFields: {
+					[identifierKey]: [{ type: identifierSchema.name, value: id }],
+				},
+			},
+			nodeSchemaData,
+		);
+
+		expectedIds = [];
+		tree.context.root.deleteNodes(0, 1);
+		assert.equal(batches, 2);
+	});
+
 	// TODO: Schema changes are not yet fully hooked up to eventing. A schema change should probably trigger
 	it.skip("reacts to schema changes", async () => {
 		// This is missing the global identifier field on the node
