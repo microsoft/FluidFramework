@@ -20,15 +20,16 @@ import { valueSymbol } from "./contextuallyTyped";
  * The primitive type used as an identifier
  * @alpha
  */
-export type Identifier = string;
+// TODO: This type will replaced with the CompressedId type from the IdCompressor, when available in the runtime
+export type Identifier = number;
 function isIdentifier(id: unknown | Identifier): id is Identifier {
-	return typeof id === "string";
+	return typeof id === "number";
 }
 
 /**
  * The tree schema for the identifier primitive
  */
-export const identifierSchema = TypedSchema.tree("identifier", { value: ValueSchema.String });
+export const identifierSchema = TypedSchema.tree("identifier", { value: ValueSchema.Number });
 
 /**
  * The field schema for fields which contain identifiers (see {@link identifierSchema})

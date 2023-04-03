@@ -20,6 +20,7 @@ import { TestTreeProvider, initializeTestTree } from "../utils";
 import {
 	createField,
 	FieldKinds,
+	Identifier,
 	identifierFieldSchema,
 	IdentifierIndex,
 	identifierSchema,
@@ -44,7 +45,7 @@ const nodeSchemaData = SchemaAware.typedSchemaData(
 );
 
 describe("Node Identifier Index", () => {
-	function assertIds(tree: ISharedTreeView, ids: string[]): void {
+	function assertIds(tree: ISharedTreeView, ids: Identifier[]): void {
 		assert.equal(tree.identifiedNodes.size, ids.length);
 		for (const id of ids) {
 			assert(tree.identifiedNodes.has(id));
@@ -59,7 +60,7 @@ describe("Node Identifier Index", () => {
 	it("can look up a node that was inserted", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = "test id";
+		const id = 42;
 		initializeTestTree(
 			tree,
 			{
@@ -76,7 +77,7 @@ describe("Node Identifier Index", () => {
 	it("can look up a deep node that was inserted", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = "test id";
+		const id = 42;
 		initializeTestTree(
 			tree,
 			{
@@ -109,7 +110,7 @@ describe("Node Identifier Index", () => {
 	it("can look up multiple nodes that were inserted at once", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const ids = ["a", "b", "c"];
+		const ids = [42, 43, 44];
 		initializeTestTree(
 			tree,
 			{
@@ -148,7 +149,7 @@ describe("Node Identifier Index", () => {
 	it("can look up multiple nodes that were inserted over time", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const idA = "a";
+		const idA = 42;
 		initializeTestTree(
 			tree,
 			{
@@ -162,7 +163,7 @@ describe("Node Identifier Index", () => {
 
 		const node = tree.identifiedNodes.get(idA);
 		assert(node !== undefined);
-		const idB = "b";
+		const idB = 43;
 		node[createField](
 			brand("child"),
 			singleTextCursor({
@@ -197,7 +198,7 @@ describe("Node Identifier Index", () => {
 	it("can look up a node that was loaded from summary", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = "test id";
+		const id = 42;
 		initializeTestTree(
 			tree,
 			{
@@ -302,7 +303,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: "test id" }],
+					[identifierKey]: [{ type: identifierSchema.name, value: 42 }],
 				},
 			},
 			nodeSchemaDataNoIdentifier,
@@ -329,7 +330,7 @@ describe("Node Identifier Index", () => {
 
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = "test id";
+		const id = 42;
 		initializeTestTree(
 			tree,
 			{
@@ -360,7 +361,7 @@ describe("Node Identifier Index", () => {
 
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = "test id";
+		const id = 42;
 		initializeTestTree(
 			tree,
 			{
@@ -381,7 +382,7 @@ describe("Node Identifier Index", () => {
 	it("correctly forks", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = "test id";
+		const id = 42;
 		initializeTestTree(
 			tree,
 			{

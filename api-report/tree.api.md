@@ -671,7 +671,7 @@ export interface IDefaultEditBuilder {
 }
 
 // @alpha
-export type Identifier = string;
+export type Identifier = number;
 
 // @alpha
 export const identifierKey: GlobalFieldKey;
