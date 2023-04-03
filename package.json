@@ -152,7 +152,7 @@
 		"node": ">=16.16.0",
 		"pnpm": "7"
 	},
-	"packageManager": "pnpm@7.30.5+sha1.invalidhash",
+	"packageManager": "pnpm@7.30.5+sha1.ba4f8057ab7b24db2ebe553808b95adb55b5330f",
 	"pnpm": {
 		"overrides": {
 			"@types/node": "^14.18.38",
