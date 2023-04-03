@@ -77,6 +77,7 @@ module.exports = {
 		pnpmSinglePackageWorkspace: [
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
+			"@fluid-tools/markdown-magic",
 			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
 			"@fluidframework/common-definitions",
@@ -84,6 +85,8 @@ module.exports = {
 			"@fluidframework/eslint-config-fluid",
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
+			"fluidframework-docs",
+			"tinylicious",
 		],
 	},
 

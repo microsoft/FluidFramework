@@ -67,8 +67,8 @@
 		"@fluidframework/common-utils": "^1.1.1",
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/gitresources": "^0.1038.4000",
-		"@fluidframework/protocol-base": "^0.1038.4000",
+		"@fluidframework/gitresources": "^0.1039.1000",
+		"@fluidframework/protocol-base": "^0.1039.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"axios": "^0.26.0",
@@ -79,7 +79,7 @@
 		"@fluid-tools/build-cli": "^0.13.1",
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/build-tools": "^0.13.1",
-		"@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@2.0.0-internal.3.2.0",
+		"@fluidframework/driver-utils-previous": "npm:@fluidframework/driver-utils@2.0.0-internal.4.0.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
@@ -102,63 +102,6 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"RemovedClassDeclaration_MapWithExpiration": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_MultiUrlResolver": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedFunctionDeclaration_configurableUrlResolver": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_MultiDocumentServiceFactory": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_BlobCacheStorageService": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_EmptyDocumentDeltaStorageService": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_ISummaryTreeAssemblerProps": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_SummaryTreeAssembler": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedFunctionDeclaration_convertSnapshotAndBlobsToSummaryTree": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedFunctionDeclaration_waitForConnectedState": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_BlobAggregationStorage": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedClassDeclaration_SnapshotExtractor": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedFunctionDeclaration_isUnpackedRuntimeMessage": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"RemovedInterfaceDeclaration_IAnyDriverError": {
-				"backCompat": false,
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

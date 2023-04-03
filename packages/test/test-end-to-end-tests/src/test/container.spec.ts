@@ -33,6 +33,7 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 	timeoutPromise,
+	ITestContainerConfig,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
@@ -45,6 +46,7 @@ import {
 	itExpects,
 } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 const id = "fluid-test://localhost/containerTest";
@@ -319,10 +321,20 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 	});
 
 	it("closeAndGetPendingLocalState() called on container", async () => {
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+
+		const testContainerConfig: ITestContainerConfig = {
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.Container.enableOfflineLoad": true,
+				}),
+			},
+		};
+
 		const runtimeFactory = (_?: unknown) =>
-			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory(), {
-				enableOfflineLoad: true,
-			});
+			new TestContainerRuntimeFactory(TestDataObjectType, getDataStoreFactory());
 
 		const localTestObjectProvider = new TestObjectProvider(
 			Loader,
@@ -330,7 +342,7 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container = await localTestObjectProvider.makeTestContainer();
+		const container = await localTestObjectProvider.makeTestContainer(testContainerConfig);
 
 		const pendingLocalState: IPendingLocalState = JSON.parse(
 			container.closeAndGetPendingLocalState(),

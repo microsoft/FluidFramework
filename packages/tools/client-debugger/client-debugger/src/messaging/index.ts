@@ -16,6 +16,7 @@
 export { debuggerMessageSource } from "./Constants";
 export {
 	HasContainerId,
+	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
 	DisconnectContainerMessage,
@@ -26,10 +27,19 @@ export {
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	DataVisualizationMessage,
+	DataVisualizationMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
+	GetDataVisualizationMessage,
+	GetDataVisualizationMessageData,
+	GetRootDataVisualizationsMessage,
+	GetRootDataVisualizationsMessageData,
+	RootDataVisualizationsMessage,
+	RootDataVisualizationsMessageData,
 } from "./DebuggerMessages";
-export { IDebuggerMessage } from "./Messages";
+export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
 	RegistryChangeMessage,
@@ -41,7 +51,13 @@ export {
 	AudienceSummaryMessageData,
 	AudienceSummaryMessage,
 } from "./AudienceMessages";
-export { TelemetryEventMessage, TelemetryEventMessageData } from "./TelemetryMessages";
+export {
+	ITimestampedTelemetryEvent,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
+	TelemetryEventMessage,
+	TelemetryEventMessageData,
+} from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,

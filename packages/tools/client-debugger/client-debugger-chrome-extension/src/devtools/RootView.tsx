@@ -6,41 +6,37 @@
 /**
  * This script represents the root view for the Devtools extension.
  * It establishes communication with the Background Service as a relay for communication with the webpage (tab),
- * and passes that communication context (see {@link BackgroundConnection}) as the {@link MessageRelayContext} used
- * by our internal React components.
+ * and passes that communication context (see {@link BackgroundConnection}) as the
+ * {@link @fluid-tools/client-debugger-view#MessageRelayContext} used by our internal React components.
  */
 
-import React from "react";
 import ReactDOM from "react-dom";
+import { RootView } from "@fluid-tools/client-debugger-view";
 
-import { DebuggerPanel, MessageRelayContext } from "../react-components";
 import { BackgroundConnection } from "./BackgroundConnection";
 import { formatDevtoolsScriptMessageForLogging } from "./Logging";
 
-// TODOs:
-// - Wait for Background Script connection before rendering, to ensure messages are able to flow before we first
-//  request data from the registry / debuggers.
+document.body.style.margin = "0px";
 
-const panelElement = document.createElement("div");
-panelElement.id = "fluid-devtools-root";
-panelElement.style.height = "100%";
-panelElement.style.width = "100%";
+const container = document.createElement("debugger");
+container.style.position = "absolute";
+container.style.height = "100%";
+document.body.append(container);
 
-/**
- * Root component of our React tree.
- *
- * @remarks Sets up message-passing context and renders the debugger.
- */
-function RootView(): React.ReactElement {
-	const messageRelay = React.useMemo<BackgroundConnection>(() => new BackgroundConnection(), []);
-	return (
-		<MessageRelayContext.Provider value={messageRelay}>
-			<DebuggerPanel />
-		</MessageRelayContext.Provider>
-	);
-}
-
-ReactDOM.render(<RootView />, panelElement, () => {
-	document.body.append(panelElement);
-	console.log(formatDevtoolsScriptMessageForLogging("Rendered debug view in devtools window!"));
-});
+BackgroundConnection.Initialize()
+	.then((connection) => {
+		try {
+			ReactDOM.render(<RootView messageRelay={connection} />, container, () => {
+				console.log(
+					formatDevtoolsScriptMessageForLogging(
+						"Rendered debug view in devtools window!",
+					),
+				);
+			});
+		} catch (error) {
+			console.error(`Error initializing the devtools root view.`, error);
+		}
+	})
+	.catch((error: unknown) => {
+		console.error(`Error initializing the BackgroundConnection.`, error);
+	});

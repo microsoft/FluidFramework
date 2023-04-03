@@ -29,11 +29,8 @@ import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
 	getFieldKind,
 	getFieldSchema,
-	isPrimitiveValue,
-	assertPrimitiveValueType,
 	ContextuallyTypedNodeData,
 	applyFieldTypesFromContext,
-	getPossibleTypes,
 	typeNameSymbol,
 	valueSymbol,
 	allowsValue,
@@ -52,6 +49,7 @@ import {
 	proxyTargetSymbol,
 	replaceField,
 	typeSymbol,
+	contextSymbol,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -245,7 +243,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		}
 	}
 
-	public replaceField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
+	public replaceField(
+		fieldKey: FieldKey,
+		newContent: undefined | ITreeCursor | ITreeCursor[],
+	): void {
 		const fieldKind = this.lookupFieldKind(fieldKey);
 		const path = this.anchorNode;
 		switch (fieldKind.multiplicity) {
@@ -258,6 +259,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				break;
 			}
 			case Multiplicity.Sequence: {
+				assert(
+					Array.isArray(newContent),
+					"It is invalid to replace the sequence field with a non array value.",
+				);
 				const length = this.fieldLength(fieldKey);
 				/**
 				 * `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
@@ -273,6 +278,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				assert(
 					!Array.isArray(newContent),
 					0x4ce /* It is invalid to replace the value field using the array data. */,
+				);
+				assert(
+					newContent !== undefined,
+					"It is invalid to replace a value field with undefined",
 				);
 				this.context.setValueField(path, fieldKey, newContent);
 				break;
@@ -347,6 +356,8 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.replaceField.bind(target);
 			case parentField:
 				return target.parentField;
+			case contextSymbol:
+				return target.context;
 			case on:
 				return target.on.bind(target);
 			default:
@@ -363,24 +374,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			const fieldKey: FieldKey = brand(key);
 			const fieldSchema = target.getFieldSchema(fieldKey);
 			const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
-			if (target.has(fieldKey) && isPrimitiveValue(value)) {
-				assert(
-					multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
-					0x4cf /* single value provided for an unsupported field */,
-				);
-				const possibleTypes = getPossibleTypes(
-					target.context.schema,
-					fieldSchema.types,
-					value,
-				);
-				if (possibleTypes.length > 1) {
-					const field = target.getField(fieldKey);
-					const node = field.getNode(0);
-					assertPrimitiveValueType(value, node[typeSymbol]);
-					node[valueSymbol] = value;
-					return true;
-				}
-			}
 			const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
 			const cursors = content.map(singleMapTreeCursor);
 			// This unconditionally uses `replaceField`, which differs from `createField`
@@ -390,13 +383,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			// Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
 			// being a bit more general purpose function, it's ok to just use that.
 			if (multiplicity !== Multiplicity.Sequence) {
-				target.replaceField(fieldKey, cursors[0]);
+				assert(cursors.length <= 1, "more than one top level node in non-sequence filed");
+				target.replaceField(fieldKey, cursors.length === 0 ? undefined : cursors[0]);
 			} else {
 				target.replaceField(fieldKey, cursors);
 			}
 			return true;
-		}
-		if (key === valueSymbol) {
+		} else if (key === valueSymbol) {
 			target.value = value;
 			return true;
 		}
@@ -426,6 +419,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			case replaceField:
 			case parentField:
 			case on:
+			case contextSymbol:
 				return true;
 			case valueSymbol:
 				// Could do `target.value !== ValueSchema.Nothing`
@@ -514,6 +508,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					configurable: true,
 					enumerable: false,
 					value: target.parentField,
+					writable: false,
+				};
+			case contextSymbol:
+				return {
+					configurable: true,
+					enumerable: false,
+					value: target.context,
 					writable: false,
 				};
 			case on:
