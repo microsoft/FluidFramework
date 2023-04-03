@@ -677,7 +677,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
-		connection.off("signal", this.props.signalHandler);
+		connection.off("signal", this.signalHandler);
 		connection.off("nack", this.nackHandler);
 		connection.off("disconnect", this.disconnectHandlerInternal);
 		connection.off("error", this.errorHandler);
@@ -765,7 +765,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.resume();
 
 		connection.on("op", this.opHandler);
-		connection.on("signal", this.props.signalHandler);
+		connection.on("signal", this.signalHandler);
 		connection.on("nack", this.nackHandler);
 		connection.on("disconnect", this.disconnectHandlerInternal);
 		connection.on("error", this.errorHandler);
@@ -1060,6 +1060,11 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
 		const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
 		this.props.incomingOpHandler(messages, "opHandler");
+	};
+
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		this.props.signalHandler(signals);
 	};
 
 	// Always connect in write mode after getting nacked.
