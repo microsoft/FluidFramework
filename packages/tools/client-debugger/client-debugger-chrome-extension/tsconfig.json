@@ -9,6 +9,8 @@
 		"module": "es6",
 		"target": "es6",
 		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
 	},
+	"exclude": [ "node_modules/@fluentui/react-components/**/*"],
 	"include": ["src/**/*"],
 }

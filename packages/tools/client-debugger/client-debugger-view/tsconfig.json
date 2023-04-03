@@ -10,5 +10,5 @@
 		"skipLibCheck": true,
 	},
 	"exclude": [ "node_modules/@fluentui/react-components/**/*"],
-	"include": ["src/**/*"]	
+	"include": ["src/**/*"],
 }
