@@ -335,9 +335,8 @@ export class OdspDelayLoadedDeltaStream {
 					requestSocketToken,
 				).catch((error) => {
 					const canRetry = canRetryOnError(error);
-					// Only record error event in case it is non retriable.
 					if (!canRetry) {
-						this.mc.logger.sendErrorEvent(
+						this.mc.logger.sendTelemetryEvent(
 							{
 								eventName: "JoinSessionRefreshError",
 								details: JSON.stringify(props),
