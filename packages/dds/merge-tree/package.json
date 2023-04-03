@@ -162,6 +162,9 @@
 			},
 			"ClassDeclaration_TextSegment": {
 				"forwardCompat": false
+			},
+			"TypeAliasDeclaration_MergeTreeDeltaRevertible": {
+				"backCompat": false
 			}
 		}
 	}
