@@ -86,8 +86,7 @@ const clientIdNoDeltaStream: string = "storage-only client";
 
 class NoDeltaStream
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-	implements IDocumentDeltaConnection, IDisposable
-{
+	implements IDocumentDeltaConnection, IDisposable {
 	clientId = clientIdNoDeltaStream;
 	claims: ITokenClaims = {
 		scopes: [ScopeType.DocRead],
@@ -270,10 +269,10 @@ export class ConnectionManager implements IConnectionManager {
 		return this.connection !== undefined
 			? this._connectionProps
 			: {
-					...this._connectionProps,
-					// Report how many ops this client sent in last disconnected session
-					sentOps: this.clientSequenceNumber,
-			  };
+				...this._connectionProps,
+				// Report how many ops this client sent in last disconnected session
+				sentOps: this.clientSequenceNumber,
+			};
 	}
 
 	public shouldJoinWrite(): boolean {
@@ -832,28 +831,31 @@ export class ConnectionManager implements IConnectionManager {
 				type: SignalType.Clear,
 			}),
 		};
-		this.props.signalHandler(clearSignal);
 
-		for (const priorClient of connection.initialClients ?? []) {
-			const joinSignal: ISignalMessage = {
+		// list of signals to process due to this new connection
+		let signalsToProcess: ISignalMessage[] = [clearSignal];
+
+		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? [])
+			.map(priorClient => ({
 				clientId: null, // system signal
 				content: JSON.stringify({
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
 				}),
-			};
-			this.props.signalHandler(joinSignal);
+			}));
+		if (clientJoinSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(clientJoinSignals);
 		}
 
 		// Unfortunately, there is no defined order between initialSignals (including join & leave signals)
 		// and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
-		if (connection.initialSignals !== undefined) {
-			for (const signal of connection.initialSignals) {
-				this.props.signalHandler(signal);
-			}
+		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
 		}
+
+		this.props.signalHandler(signalsToProcess);
 	}
 
 	/**
@@ -997,7 +999,7 @@ export class ConnectionManager implements IConnectionManager {
 							);
 						}
 					})
-					.catch(() => {});
+					.catch(() => { });
 			}
 			return;
 		}

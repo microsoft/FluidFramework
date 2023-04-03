@@ -86,8 +86,8 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 export class DeltaManager<TConnectionManager extends IConnectionManager>
 	extends TypedEventEmitter<IDeltaManagerInternalEvents>
 	implements
-		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		IEventProvider<IDeltaManagerInternalEvents>
+	IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+	IEventProvider<IDeltaManagerInternalEvents>
 {
 	public readonly connectionManager: TConnectionManager;
 
@@ -357,7 +357,11 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.close(normalizeError(error));
 				}
 			},
-			signalHandler: (message: ISignalMessage) => this._inboundSignal.push(message),
+			signalHandler: (signals: ISignalMessage[]) => {
+				for (const signal of signals) {
+					this._inboundSignal.push(signal);
+				}
+			},
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
 			closeHandler: (error: any) => this.close(error),
@@ -867,7 +871,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 							// instances such that the same sequence number is reused for two different ops.
 							// pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
 							"Found two messages with the same sequenceNumber but different payloads. Likely to be a " +
-								"service issue",
+							"service issue",
 							DriverErrorType.fileOverwrittenInStorage,
 							{
 								clientId: this.connectionManager.clientId,
