@@ -51,7 +51,7 @@ export interface IFluidResolvedUrl extends IResolvedUrlBase {
 	id: string;
 	
 	/**
-	 * TODO
+	 * URL for the Fluid resource.
 	 */
 	url: string;
 	
