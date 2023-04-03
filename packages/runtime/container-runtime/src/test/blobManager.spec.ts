@@ -54,7 +54,7 @@ class DedupeTTLStorage extends BaseMockBlobStorage {
 
 	set min_TTL(minTTL: number) {
 		this._min_TTL = minTTL;
-	  }
+	}
 
 	get createBlobCount(): number {
 		return this._createBlobCount;
@@ -105,9 +105,9 @@ class MockRuntime
 	public gcTombstoneEnforcementAllowed: boolean = true;
 
 	public get storage() {
-		if(this.attachState === AttachState.Detached){
+		if (this.attachState === AttachState.Detached) {
 			return this.detachedStorage as unknown as IDocumentStorageService;
-		} else if (this._useTTLStorage){
+		} else if (this._useTTLStorage) {
 			return this.attachedTTLStorage as unknown as IDocumentStorageService;
 		} else {
 			return this.attachedStorage as unknown as IDocumentStorageService;
@@ -144,7 +144,7 @@ class MockRuntime
 		} as unknown as IDocumentStorageService;
 	}
 
-	public set useTTLStorage(expired: boolean){
+	public set useTTLStorage(expired: boolean) {
 		this._useTTLStorage = expired;
 	}
 
@@ -447,7 +447,6 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.ids.length, 1);
 		assert.strictEqual(summaryData.redirectTable.size, 1);
 	});
-
 
 	it("transition to offline while upload pending", async () => {
 		await runtime.attach();

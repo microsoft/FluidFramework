@@ -27,7 +27,7 @@ import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server
 import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
 import { createDocument } from "./localCreateDocument";
 
-const minTTLInSeconds = 24 * 60 *60; // Same TTL as ODSP
+const minTTLInSeconds = 24 * 60 * 60; // Same TTL as ODSP
 
 export class LocalDocumentStorageService implements IDocumentStorageService {
 	// The values of this cache is useless. We only need the keys. So we are always putting
