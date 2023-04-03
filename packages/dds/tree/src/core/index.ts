@@ -165,6 +165,7 @@ export {
 	Compatibility,
 	FieldAdapter,
 	TreeAdapter,
+	AllowedUpdateType,
 } from "./schema-view";
 
 export {

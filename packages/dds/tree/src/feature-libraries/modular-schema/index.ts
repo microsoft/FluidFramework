@@ -58,7 +58,13 @@ export {
 	EditDescription,
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
-export { FieldTypeView, TreeViewSchema, ViewSchemaCollection, ViewSchema } from "./view";
+export {
+	FieldViewSchema as FieldTypeView,
+	TreeViewSchema,
+	ViewSchemaCollection,
+	ViewSchema,
+	FieldViewSchema,
+} from "./view";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as TypedSchema from "./typedSchema";

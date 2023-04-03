@@ -413,11 +413,16 @@ export const fakeTaggedRepair = createFakeRepair(
 );
 
 export function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
+	const actual = toJsonableTree(tree);
+	assert.deepEqual(actual, expected);
+}
+
+export function toJsonableTree(tree: ISharedTree): JsonableTree[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
-	const actual = mapCursorField(readCursor, jsonableTreeFromCursor);
+	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
 	readCursor.free();
-	assert.deepEqual(actual, expected);
+	return jsonable;
 }
 
 const globalFieldKey: GlobalFieldKey = brand("globalFieldKey");

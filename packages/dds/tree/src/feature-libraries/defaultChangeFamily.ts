@@ -212,7 +212,13 @@ export class DefaultEditBuilder
 		return {
 			insert: (index: number, newContent: ITreeCursor | ITreeCursor[]): void => {
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, newContent),
+					sequence.changeHandler.editor.insert(
+						index,
+						newContent,
+						this.modularBuilder.generateId(
+							Array.isArray(newContent) ? newContent.length : 1,
+						),
+					),
 				);
 				this.modularBuilder.submitChange(parent, field, sequence.identifier, change);
 			},

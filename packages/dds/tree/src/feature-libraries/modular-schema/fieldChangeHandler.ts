@@ -187,9 +187,11 @@ export type NodeChangeRebaser = (
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 /**
+ * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
+ * For convenience can be called with no parameters to allocate a single ID.
  * @alpha
  */
-export type IdAllocator = () => ChangesetLocalId;
+export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 /**
  * Changeset for a subtree rooted at a specific node.
