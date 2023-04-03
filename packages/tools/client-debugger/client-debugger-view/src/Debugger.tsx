@@ -15,7 +15,6 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { RenderOptions } from "./RendererOptions";
 import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
@@ -32,18 +31,6 @@ const getContainerListMessage: IDebuggerMessage = {
 	type: "GET_CONTAINER_LIST",
 	data: undefined,
 };
-
-/**
- * {@link FluidClientDebuggers} input props.
- */
-export interface FluidClientDebuggersProps {
-	/**
-	 * Rendering policies for different kinds of Fluid client and object data.
-	 *
-	 * @defaultValue Strictly use default visualization policies.
-	 */
-	renderOptions?: RenderOptions;
-}
 
 /**
  * Indicates that the currently selected menu option is a particular Container.
@@ -86,7 +73,7 @@ type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
-export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
+export function FluidClientDebuggers(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
