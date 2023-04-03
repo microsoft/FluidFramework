@@ -41,8 +41,7 @@ import { pkgVersion as driverVersion } from "./packageVersion";
  */
 export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
-	implements IDocumentDeltaConnection, IDisposable
-{
+	implements IDocumentDeltaConnection, IDisposable {
 	static readonly eventsToForward = ["nack", "op", "signal", "pong"];
 
 	// WARNING: These are critical events that we can't miss, so registration for them has to be in place at all times!
@@ -510,7 +509,7 @@ export class DocumentDeltaConnection
 						// That's a WebSocket. Clear it as we can't log it.
 						description.target = undefined;
 					}
-				} catch (_e) {}
+				} catch (_e) { }
 
 				// Handle socket transport downgrading when not offline.
 				if (
@@ -532,7 +531,7 @@ export class DocumentDeltaConnection
 				if (
 					isInternalSocketReconnectionEnabled() &&
 					internalSocketConnectionFailureCount <
-					getMaxAllowedInternalSocketConnectionFailures()
+						getMaxAllowedInternalSocketConnectionFailures()
 				) {
 					// Reconnection is enabled and maximum reconnect attempts have not been reached.
 					return;

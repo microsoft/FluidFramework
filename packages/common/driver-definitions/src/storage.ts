@@ -210,7 +210,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 
 export interface IDocumentDeltaConnection
 	extends IDisposable,
-	IEventProvider<IDocumentDeltaConnectionEvents> {
+		IEventProvider<IDocumentDeltaConnectionEvents> {
 	/**
 	 * ClientID for the connection
 	 */

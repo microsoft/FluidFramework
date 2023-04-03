@@ -86,8 +86,8 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 export class DeltaManager<TConnectionManager extends IConnectionManager>
 	extends TypedEventEmitter<IDeltaManagerInternalEvents>
 	implements
-	IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-	IEventProvider<IDeltaManagerInternalEvents>
+		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+		IEventProvider<IDeltaManagerInternalEvents>
 {
 	public readonly connectionManager: TConnectionManager;
 

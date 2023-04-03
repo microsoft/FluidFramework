@@ -86,7 +86,8 @@ const clientIdNoDeltaStream: string = "storage-only client";
 
 class NoDeltaStream
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-	implements IDocumentDeltaConnection, IDisposable {
+	implements IDocumentDeltaConnection, IDisposable
+{
 	clientId = clientIdNoDeltaStream;
 	claims: ITokenClaims = {
 		scopes: [ScopeType.DocRead],

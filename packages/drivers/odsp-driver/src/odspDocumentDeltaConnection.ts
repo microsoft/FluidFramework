@@ -175,11 +175,11 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 		this.emit(
 			"disconnect",
 			error ??
-			createGenericNetworkError(
-				"Socket closed without error",
-				{ canRetry: true },
-				{ driverVersion: pkgVersion },
-			),
+				createGenericNetworkError(
+					"Socket closed without error",
+					{ canRetry: true },
+					{ driverVersion: pkgVersion },
+				),
 			undefined /* clientId */,
 		);
 
