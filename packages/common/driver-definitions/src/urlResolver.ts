@@ -91,7 +91,7 @@ export interface IContainerPackageInfo {
  */
 export interface IUrlResolver {
 	/**
-	 * TODO
+	 * Resolves the provided request to a Fluid resource URL.
 	 * 
 	 * @privateRemarks
 	 * 
