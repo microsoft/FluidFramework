@@ -651,8 +651,8 @@ interface HasModifications<TTree = ProtoNode> {
     readonly setValue?: Value;
 }
 
-// @alpha (undocumented)
-export type IdAllocator = () => ChangesetLocalId;
+// @alpha
+export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 // @alpha
 export interface IDefaultEditBuilder {
@@ -679,6 +679,7 @@ export interface IEditableForest extends IForestSubscription {
 // @alpha
 export interface IEmitter<E extends Events<E>> {
     emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+    emitAndCollect<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): ReturnType<E[K]>[];
 }
 
 // @alpha
@@ -1003,7 +1004,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     // (undocumented)
     exitTransaction(): void;
     // (undocumented)
-    generateId(): ChangesetLocalId;
+    generateId(count?: number): ChangesetLocalId;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;
