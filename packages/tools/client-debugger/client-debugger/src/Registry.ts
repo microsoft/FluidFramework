@@ -84,7 +84,7 @@ export interface FluidClientDebuggerProps {
 	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
 	 * default visualization implementations.
 	 *
-	 * Provided visualizer configurations will be used in place of system defaults if specified.
+	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
 	 */
 	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
