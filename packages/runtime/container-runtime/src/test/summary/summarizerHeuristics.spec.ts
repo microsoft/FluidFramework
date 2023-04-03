@@ -235,7 +235,7 @@ describe("Runtime", () => {
 				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1.0 });
 
 				data.numRuntimeOps = minOpsForLastSummaryAttempt;
-				assert(runner.shouldRunLastSummary() === true, "should run on close");
+				assert.strictEqual(runner.shouldRunLastSummary(), true, "should run on close");
 			});
 
 			it("Should not summarize on close if insufficient outstanding ops", () => {
@@ -243,7 +243,25 @@ describe("Runtime", () => {
 				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1.0 });
 
 				data.numRuntimeOps = minOpsForLastSummaryAttempt - 1;
-				assert(runner.shouldRunLastSummary() === false, "should not run on close");
+				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run on close");
+			});
+
+			it("Should summarize on close weights ops properly", () => {
+				const minOpsForLastSummaryAttempt = 2;
+				initialize({
+					minOpsForLastSummaryAttempt,
+					runtimeOpWeight: 0.1,
+					nonRuntimeOpWeight: 1.1,
+				});
+
+				data.numRuntimeOps += 8;
+				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run yet");
+
+				data.numNonRuntimeOps += 1;
+				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run yet");
+
+				data.numRuntimeOps += 1;
+				assert.strictEqual(runner.shouldRunLastSummary(), true, "should run");
 			});
 
 			it("Should not run idle timer after dispose", () => {
