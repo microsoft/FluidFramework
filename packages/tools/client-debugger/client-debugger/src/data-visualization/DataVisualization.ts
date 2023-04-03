@@ -48,6 +48,8 @@ export type SharedObjectType = string;
  * @param visualizeChildData - Callback to render child content of the shared object.
  *
  * @returns A visual tree representation of the provided `sharedObject`.
+ *
+ * @public
  */
 export type VisualizeSharedObject = (
 	sharedObject: ISharedObject,
@@ -67,6 +69,8 @@ export type VisualizeSharedObject = (
  * - A handle to another Fluid object
  *
  * @returns A visual tree representation of the input `data`.
+ *
+ * @public
  */
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 
