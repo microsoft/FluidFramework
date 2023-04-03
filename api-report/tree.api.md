@@ -659,6 +659,7 @@ export interface IEditableForest extends IForestSubscription {
 // @alpha
 export interface IEmitter<E extends Events<E>> {
     emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+    emitAndCollect<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): ReturnType<E[K]>[];
 }
 
 // @alpha
