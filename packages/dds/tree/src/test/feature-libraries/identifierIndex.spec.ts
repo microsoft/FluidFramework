@@ -8,6 +8,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockEmptyDeltaConnection,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils";
 import {
 	ISharedTreeView,
@@ -202,6 +203,38 @@ describe("Node Identifier Index", () => {
 
 		tree.context.root.deleteNodes(0, 1);
 		assertIds(tree, []);
+	});
+
+	it("fails if multiple nodes have the same ID", async () => {
+		const provider = await TestTreeProvider.create(1);
+		const [tree] = provider.trees;
+		const id = makeId();
+		assert.throws(
+			() =>
+				initializeTestTree(
+					tree,
+					{
+						type: nodeSchema.name,
+						globalFields: {
+							[identifierKey]: [{ type: identifierSchema.name, value: id }],
+						},
+						fields: {
+							child: [
+								{
+									type: nodeSchema.name,
+									globalFields: {
+										[identifierKey]: [
+											{ type: identifierSchema.name, value: id },
+										],
+									},
+								},
+							],
+						},
+					},
+					nodeSchemaData,
+				),
+			(e) => validateAssertionError(e, "Encountered duplicate node identifier"),
+		);
 	});
 
 	it("can look up a node that was loaded from summary", async () => {
