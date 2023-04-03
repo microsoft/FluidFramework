@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -20,7 +19,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import {
 	cloneGCData,
 	getGCDataFromSnapshot,
