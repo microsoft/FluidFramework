@@ -118,6 +118,8 @@ resources:
 stages:
 - stage: build
   displayName: 'Build website'
+  env:
+    COREPACK_DEFAULT_TO_LATEST: 0
   dependsOn: [] # run in parallel
   jobs:
     - job: debug_variables

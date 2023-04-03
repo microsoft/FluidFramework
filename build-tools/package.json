@@ -99,7 +99,7 @@
 	"engines": {
 		"node": ">=14.17.0"
 	},
-	"packageManager": "pnpm@7.30.5",
+	"packageManager": "pnpm@7.30.5+sha1.ba4f8057ab7basdfasdf24db2ebeasdfasdf553f808b95adb55b5330f",
 	"pnpm": {
 		"peerDependencyRules": {
 			"allowedVersions": {

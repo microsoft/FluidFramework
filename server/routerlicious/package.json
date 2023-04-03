@@ -88,7 +88,7 @@
 	"engines": {
 		"node": ">=14.13.0"
 	},
-	"packageManager": "pnpm@7.30.5",
+	"packageManager": "pnpm@7.30.5+sha1.ba4f8057ab7b24db2ebe553808b95adb55b5330f",
 	"pnpm": {
 		"overrides": {
 			"qs": "^6.11.0",

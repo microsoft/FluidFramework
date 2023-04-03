@@ -152,8 +152,8 @@
 		"node": ">=16.16.0",
 		"pnpm": "7"
 	},
-	"packageManager": "pnpm@7.30.5",
-	"pnpm": {
+    "packageManager": "yarn@3.2.3+sha224.953c8233f7a92884easdfasdfee2de69a1b92d1f2ec1655e66d08071ba9a02fa",
+  "pnpm": {
 		"overrides": {
 			"@types/node": "^14.18.38",
 			"node-fetch": "^2.6.9",
