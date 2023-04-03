@@ -5,9 +5,9 @@
 
 import { strict as assert } from "assert";
 import { mintRevisionTag, RevisionTag, TreeSchemaIdentifier } from "../../../core";
-import { NodeChangeset, SequenceField as SF } from "../../../feature-libraries";
+import { ChangesetLocalId, NodeChangeset, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeRepair } from "../../utils";
+import { fakeTaggedRepair as fakeRepair } from "../../utils";
 
 const dummyMark: SF.Detach = { type: "Delete", count: 1 };
 const type: TreeSchemaIdentifier = brand("Node");
@@ -45,9 +45,11 @@ describe("SequenceField - MarkListFactory", () => {
 	});
 
 	it("Can merge consecutive inserts", () => {
+		const id1: ChangesetLocalId = brand(1);
+		const id2: ChangesetLocalId = brand(2);
 		const factory = new SF.MarkListFactory();
-		const insert1: SF.Insert = { type: "Insert", content: [{ type, value: 1 }] };
-		const insert2: SF.Insert = { type: "Insert", content: [{ type, value: 2 }] };
+		const insert1: SF.Insert = { type: "Insert", content: [{ type, value: 1 }], id: id1 };
+		const insert2: SF.Insert = { type: "Insert", content: [{ type, value: 2 }], id: id2 };
 		factory.pushContent(insert1);
 		factory.pushContent(insert2);
 		assert.deepStrictEqual(factory.list, [
@@ -57,6 +59,7 @@ describe("SequenceField - MarkListFactory", () => {
 					{ type, value: 1 },
 					{ type, value: 2 },
 				],
+				id: id1,
 			},
 		]);
 	});

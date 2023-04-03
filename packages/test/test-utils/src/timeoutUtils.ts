@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { Container } from "@fluidframework/container-loader";
 import { assert, Deferred } from "@fluidframework/common-utils";
 
 // @deprecated this value is no longer used
@@ -131,12 +130,6 @@ export async function timeoutAwait<T = void>(
 	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
 ) {
 	return Promise.race([promise, timeoutPromise<T>(() => {}, timeoutOptions)]);
-}
-
-export async function ensureContainerConnected(container: Container): Promise<void> {
-	if (!container.connected) {
-		return timeoutPromise((resolve) => container.once("connected", () => resolve()));
-	}
 }
 
 // Create a promise based on the timeout options

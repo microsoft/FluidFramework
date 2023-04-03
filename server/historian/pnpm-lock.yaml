@@ -1,6 +1,7 @@
 lockfileVersion: 5.4
 
 overrides:
+  qs: ^6.11.0
   socket.io-parser: ^4.2.1
 
 importers:
@@ -85,7 +86,7 @@ importers:
       '@types/lodash': ^4.14.119
       '@types/mocha': ^10.0.0
       '@types/nconf': 0.0.37
-      '@types/node': ^14.18.0
+      '@types/node': ^16.18.16
       '@types/supertest': ^2.0.7
       '@types/uuid': ^3.4.4
       async: ^3.2.2
@@ -139,7 +140,7 @@ importers:
       '@types/lodash': 4.14.191
       '@types/mocha': 10.0.1
       '@types/nconf': 0.0.37
-      '@types/node': 14.18.36
+      '@types/node': 16.18.16
       '@types/supertest': 2.0.12
       '@types/uuid': 3.4.10
       async: 3.2.4
@@ -183,7 +184,7 @@ importers:
       '@types/ioredis': ^4.22.0
       '@types/mocha': ^10.0.0
       '@types/nconf': 0.0.37
-      '@types/node': ^14.18.0
+      '@types/node': ^16.18.16
       '@types/supertest': ^2.0.7
       '@types/uuid': ^3.4.4
       async: ^3.2.2
@@ -253,7 +254,7 @@ importers:
       '@types/ioredis': 4.28.10
       '@types/mocha': 10.0.1
       '@types/nconf': 0.0.37
-      '@types/node': 14.18.36
+      '@types/node': 16.18.16
       '@types/supertest': 2.0.12
       '@types/uuid': 3.4.10
       async: 3.2.4
@@ -2870,7 +2871,7 @@ packages:
     resolution: {integrity: sha512-ALYone6pm6QmwZoAgeyNksccT9Q4AWZQ6PvfwR37GT6r6FWUPguq6sUmNGSMV2Wr761oQoBxwGGa6DR5o1DC9g==}
     dependencies:
       '@types/connect': 3.4.35
-      '@types/node': 14.18.36
+      '@types/node': 18.14.1
     dev: true
 
   /@types/cacheable-request/6.0.3:
@@ -2951,7 +2952,7 @@ packages:
   /@types/express-serve-static-core/4.17.33:
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 18.14.1
       '@types/qs': 6.9.7
       '@types/range-parser': 1.2.4
     dev: true
@@ -2979,7 +2980,7 @@ packages:
   /@types/ioredis/4.28.10:
     resolution: {integrity: sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==}
     dependencies:
-      '@types/node': 14.18.36
+      '@types/node': 18.14.1
     dev: true
 
   /@types/json-schema/7.0.11:
@@ -3038,6 +3039,10 @@ packages:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
     dev: true
 
+  /@types/node/16.18.16:
+    resolution: {integrity: sha512-ZOzvDRWp8dCVBmgnkIqYCArgdFOO9YzocZp8Ra25N/RStKiWvMOXHMz+GjSeVNe5TstaTmTWPucGJkDw0XXJWA==}
+    dev: true
+
   /@types/node/18.14.1:
     resolution: {integrity: sha512-QH+37Qds3E0eDlReeboBxfHbX9omAcBCXEzswCu6jySP642jiM3cYSIkU/REqwhCUqXdonHFuBfJDiAJxMNhaQ==}
 
@@ -3073,7 +3078,7 @@ packages:
     resolution: {integrity: sha512-NUo5XNiAdULrJENtJXZZ3fHtfMolzZwczzBbnAeBbqBwG+LaG6YaJtuwzwGSQZ2wsCrxjEhNNjAkKigy3n8teQ==}
     dependencies:
       '@types/mime': 3.0.1
-      '@types/node': 14.18.36
+      '@types/node': 18.14.1
     dev: true
 
   /@types/sinon/10.0.13:

@@ -6,7 +6,7 @@
 /**
  * Mocha configuration file for memory profiling tests
  */
-const getFluidTestMochaConfig = require("@fluidframework/test-version-utils/mocharc-common.js");
+const getFluidTestMochaConfig = require("@fluid-internal/test-version-utils/mocharc-common.js");
 const packageDir = `${__dirname}/../../..`;
 
 const config = getFluidTestMochaConfig(packageDir);
@@ -24,6 +24,6 @@ const newConfig = {
 		"dist/test/benchmark/**/*.all.spec.js",
 		"--perfMode",
 	],
-	"timeout": "120000",
+	"timeout": "120000", // depending on the test and the size of the E2E document, the timeout might not be enough. To address it, let's first try to decrease the number of iterations (minSampleCount).
 };
 module.exports = newConfig;

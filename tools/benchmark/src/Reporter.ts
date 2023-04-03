@@ -30,65 +30,49 @@ SOFTWARE.
 /* eslint no-console: ["error", { allow: ["log"] }] */
 import * as path from "path";
 import * as fs from "fs";
-import Benchmark from "benchmark";
 import Table from "easy-table";
-import {
-	bold,
-	geometricMean,
-	italicize,
-	pad,
-	prettyNumber,
-	green,
-	red,
-	yellow,
-} from "./ReporterUtilities";
+import chalk from "chalk";
+import { geometricMean, pad, prettyNumber, Stats } from "./ReporterUtilities";
+import { BenchmarkData, BenchmarkResult, isResultError } from "./runBenchmark";
+import { ExpectedCell, addCells, numberCell, stringCell } from "./resultFormatting";
 
 interface BenchmarkResults {
 	table: Table;
-	benchmarksMap: Map<string, BenchmarkData>;
+	benchmarksMap: Map<string, BenchmarkResult>;
 }
 
-/**
- * Subset of Benchmark type which is output data.
- * Json compatible.
- * @public
- */
-export interface BenchmarkData {
-	aborted: boolean;
-	readonly error?: Error;
-	readonly count: number;
-	readonly cycles: number;
-	readonly hz: number;
-
-	readonly stats: Benchmark.Stats;
-	readonly times: Benchmark.Times;
-}
-
-export const failedData: BenchmarkData = {
-	aborted: true,
-	error: { name: "Aborted", message: "Reason Unknown" },
-	count: 0,
-	cycles: 0,
-
-	hz: NaN,
-
-	stats: {
-		deviation: NaN,
-		mean: NaN,
-		moe: NaN,
-		rme: NaN,
-		sample: [],
-		sem: NaN,
-		variance: NaN,
+const expectedKeys: ExpectedCell[] = [
+	stringCell("error", "error", (message) => chalk.red(message || "Error")),
+	{
+		key: "stats",
+		cell: (table, data) => {
+			const stats = data.stats as Stats;
+			table.cell(
+				"period (ns/op)",
+				prettyNumber(1e9 * stats.arithmeticMean, 2),
+				Table.padLeft,
+			);
+			table.cell(
+				"relative margin of error",
+				`±${stats.marginOfErrorPercent.toFixed(2)}%`,
+				Table.padLeft,
+			);
+		},
 	},
-	times: { cycle: NaN, elapsed: NaN, period: NaN, timeStamp: NaN },
-};
+	numberCell(
+		"iterationsPerBatch",
+		"iterations per batch",
+		(iterationsPerBatch) => `${prettyNumber(iterationsPerBatch, 0)}`,
+	),
+	numberCell("numberOfBatches", "batch count", (elapsedSeconds) =>
+		prettyNumber(elapsedSeconds, 0),
+	),
+	numberCell("elapsedSeconds", "total time (s)", (elapsedSeconds) => elapsedSeconds.toFixed(2)),
+];
 
 /**
  * Collects and formats performance data for a sequence of suites of benchmarks.
  * Data must be provided in the form of one {@link BenchmarkData} for each test in each suite.
- *
- * Benchmark.js is typically used to collect the data.
  *
  * The data will be aggregated and processed.
  * Human friendly tables are logged to the console, and a machine friendly version is logged to json files.
@@ -139,43 +123,28 @@ export class BenchmarkReporter {
 	 * Appends a prettified version of the results of a benchmark instance provided to the provided
 	 * BenchmarkResults object.
 	 */
-	public recordTestResult(
-		suiteName: string,
-		testName: string,
-		benchmarkInstance: BenchmarkData,
-	): void {
+	public recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void {
 		let results = this.inProgressSuites.get(suiteName);
 		if (results === undefined) {
-			results = { table: new Table(), benchmarksMap: new Map<string, BenchmarkData>() };
+			results = { table: new Table(), benchmarksMap: new Map<string, BenchmarkResult>() };
 			this.inProgressSuites.set(suiteName, results);
 		}
 
 		const { table, benchmarksMap } = results;
 
-		benchmarksMap.set(testName, benchmarkInstance);
-		if (benchmarkInstance.aborted) {
-			table.cell("status", `${pad(4)}${red("×")}`);
+		benchmarksMap.set(testName, result);
+		if (isResultError(result)) {
+			table.cell("status", `${pad(4)}${chalk.red("×")}`);
 		} else {
-			table.cell("status", `${pad(4)}${green("✔")}`);
+			table.cell("status", `${pad(4)}${chalk.green("✔")}`);
 		}
-		table.cell("name", italicize(testName));
-		if (!benchmarkInstance.aborted) {
-			const numIterations: number =
-				benchmarkInstance.stats.sample.length * benchmarkInstance.count;
-			table.cell(
-				"period (ns/op)",
-				prettyNumber(1e9 * benchmarkInstance.times.period, 1),
-				Table.padLeft,
-			);
-			table.cell(
-				"relative margin of error",
-				`±${benchmarkInstance.stats.rme.toFixed(2)}%`,
-				Table.padLeft,
-			);
-			table.cell("iterations", `${prettyNumber(numIterations, 0)}`, Table.padLeft);
-			table.cell("samples", benchmarkInstance.stats.sample.length.toString(), Table.padLeft);
-			table.cell("total time (s)", benchmarkInstance.times.elapsed.toFixed(2), Table.padLeft);
-		}
+		table.cell("name", chalk.italic(testName));
+
+		// Using this utility to print the data means missing fields don't crash and extra fields are reported.
+		// This is useful if this reporter is given unexpected data (such as from a memory test).
+		// It can also be used as a way to add extensible data formatting in the future.
+		addCells(table, result as unknown as Record<string, unknown>, expectedKeys);
+
 		table.newRow();
 	}
 
@@ -203,7 +172,7 @@ export class BenchmarkReporter {
 		const { benchmarksMap, table } = results;
 
 		// Output results from suite
-		console.log(`\n${bold(suiteName)}`);
+		console.log(`\n${chalk.bold(suiteName)}`);
 		const filenameFull: string = this.writeCompletedBenchmarks(suiteName, benchmarksMap);
 		console.log(`Results file: ${filenameFull}`);
 		console.log(`${table.toString()}`);
@@ -213,12 +182,12 @@ export class BenchmarkReporter {
 		let sumRuntime = 0;
 		let countSuccessful = 0;
 		let countFailure = 0;
-		benchmarksMap.forEach((value: BenchmarkData, key: string) => {
-			if (value.aborted) {
+		benchmarksMap.forEach((value: BenchmarkResult, key: string) => {
+			if (isResultError(value)) {
 				countFailure++;
 			} else {
-				benchmarkPeriodsSeconds.push(value.times.period);
-				sumRuntime += value.times.elapsed;
+				benchmarkPeriodsSeconds.push(value.stats.arithmeticMean);
+				sumRuntime += value.elapsedSeconds;
 				countSuccessful++;
 			}
 		});
@@ -227,16 +196,16 @@ export class BenchmarkReporter {
 		let statusSymbol: string;
 		switch (benchmarksMap.size) {
 			case countSuccessful:
-				statusSymbol = green("✔");
+				statusSymbol = chalk.green("✔");
 				break;
 			case countFailure:
-				statusSymbol = red("×");
+				statusSymbol = chalk.red("×");
 				break;
 			default:
-				statusSymbol = yellow("!");
+				statusSymbol = chalk.yellow("!");
 		}
 		this.overallSummaryTable.cell("status", pad(4) + statusSymbol);
-		this.overallSummaryTable.cell("suite name", italicize(suiteName));
+		this.overallSummaryTable.cell("suite name", chalk.italic(suiteName));
 		const geometricMeanString: string = prettyNumber(
 			geometricMean(benchmarkPeriodsSeconds) * 1e9,
 			1,
@@ -289,7 +258,7 @@ export class BenchmarkReporter {
 			Table.padLeft,
 		);
 		this.overallSummaryTable.newRow();
-		console.log(`\n\n${bold("Overall summary")}`);
+		console.log(`\n\n${chalk.bold("Overall summary")}`);
 		console.log(`\n${this.overallSummaryTable.toString()}`);
 		if (countFailure > 0) {
 			console.log(
@@ -302,16 +271,17 @@ export class BenchmarkReporter {
 
 	private writeCompletedBenchmarks(
 		suiteName: string,
-		benchmarks: Map<string, BenchmarkData>,
+		benchmarks: Map<string, BenchmarkResult>,
 	): string {
 		const outputFriendlyBenchmarks: unknown[] = [];
-		// Filter successful benchmarks and ready them for output to file
-		const successful = Benchmark.filter(Array.from(benchmarks.values()), "successful");
-		benchmarks.forEach((value: BenchmarkData, key: string) => {
-			if (successful.includes(value)) {
-				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, value));
+
+		for (const [key, bench] of benchmarks.entries()) {
+			if (!isResultError(bench)) {
+				// successful benchmarks: ready them for output to file
+				outputFriendlyBenchmarks.push(this.outputFriendlyObjectFromBenchmark(key, bench));
 			}
-		});
+		}
+
 		// Use the suite name as a filename, but first replace non-alphanumerics with underscores
 		const suiteNameEscaped: string = suiteName.replace(/[^\da-z]/gi, "_");
 		const outputContentString: string = JSON.stringify(
@@ -337,31 +307,29 @@ export class BenchmarkReporter {
 		benchmark: BenchmarkData,
 	): Record<string, unknown> {
 		const obj = {
-			iterationsPerSecond: benchmark.hz,
+			iterationsPerSecond: 1 / benchmark.stats.arithmeticMean,
 			stats: this.outputFriendlyObjectFromStats(benchmark.stats),
-			iterationCountPerSample: benchmark.count,
-			numSamples: benchmark.stats.sample.length,
+			iterationCountPerSample: benchmark.iterationsPerBatch,
+			numSamples: benchmark.stats.samples.length,
 			benchmarkName,
-			totalTimeSeconds: benchmark.times.elapsed,
+			totalTimeSeconds: benchmark.elapsedSeconds,
 		};
 		return obj;
 	}
 
 	/**
-	 * The Benchmark.Stats object contains a lot of data we don't need and also has vague names,
+	 * The Stats object contains a lot of data we don't need,
 	 * so this method extracts the necessary data and provides friendlier names.
 	 */
-	private outputFriendlyObjectFromStats(
-		benchmarkStats: Benchmark.Stats,
-	): Record<string, unknown> {
+	private outputFriendlyObjectFromStats(benchmarkStats: Stats): Record<string, unknown> {
 		const obj = {
-			marginOfError: benchmarkStats.moe,
-			relatedMarginOfError: benchmarkStats.rme,
-			arithmeticMean: benchmarkStats.mean,
-			standardErrorOfMean: benchmarkStats.sem,
+			marginOfError: benchmarkStats.marginOfError,
+			marginOfErrorPercent: benchmarkStats.marginOfErrorPercent,
+			arithmeticMean: benchmarkStats.arithmeticMean,
+			standardErrorOfMean: benchmarkStats.standardErrorOfMean,
 			variance: benchmarkStats.variance,
-			standardDeviation: benchmarkStats.deviation,
-			sample: benchmarkStats.sample,
+			standardDeviation: benchmarkStats.standardDeviation,
+			sample: benchmarkStats.samples,
 		};
 		return obj;
 	}

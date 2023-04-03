@@ -14,7 +14,7 @@ import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestSerializer } from "./testSerializer";
-import { ISegment, TestClient } from ".";
+import { ISegment, PropertySet, TestClient } from ".";
 
 // Reconstitutes a MergeTree client from a summary
 export async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
@@ -57,6 +57,10 @@ export class TestString {
 		);
 	}
 
+	public annotate(start: number, end: number, props: PropertySet, increaseMsn: boolean) {
+		this.queue(this.client.annotateRangeLocal(start, end, props, undefined)!, increaseMsn);
+	}
+
 	public append(text: string, increaseMsn: boolean) {
 		this.insert(this.client.getLength(), text, increaseMsn);
 	}
@@ -88,7 +92,7 @@ export class TestString {
 			"MergeTree must contain the expected text prior to applying ops.",
 		);
 
-		await this.checkSnapshot();
+		await this.checkSnapshot(this.options);
 	}
 
 	// Ensures the MergeTree client's contents successfully roundtrip through a snapshot.

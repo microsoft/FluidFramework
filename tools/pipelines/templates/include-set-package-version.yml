@@ -44,7 +44,8 @@ steps:
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
         pushd "$(Build.SourcesDirectory)/build-tools"
-        npm i -g pnpm
+        npm i -g pnpm@7.30.5
+        pnpm -v
         pnpm config set store-dir $(pnpmStorePath)
         pnpm i
         pnpm build:compile
@@ -152,7 +153,7 @@ steps:
         if [ -f "lerna.json" ]; then
           if [ "$VERSION_RELEASE" = "release" ]; then
             # no need to run anything here, as the version in the package should be correct
-            npx lerna exec "if [ \`npm -s run env echo '\$npm_package_version'\` != '$(SetVersion.version)' ]; then ( exit 1 ) fi"
+            npx lerna exec -- node $(Build.SourcesDirectory)/scripts/check-package-version.cjs
             exit $?
           fi
           npx lerna version $(SetVersion.version) --no-git-tag-version --no-push --yes --exact
@@ -175,3 +176,31 @@ steps:
 
         # Format the package.json at the root of the release group/package
         npx --no-install prettier --write package.json
+
+# This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
+# help find and prevent bugs in the version bumping tools.
+- task: Bash@3
+  displayName: Check for caret dependencies on internal versions
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      grep -r -e "\^2.0.0-internal.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
+      if [[ $? == 0 ]]; then
+        echo "##vso[task.logissue type=error]Fluid internal versions shouldn't use caret dependencies"
+        exit -1;
+      fi
+
+# This task is a last-minute verification that no Fluid internal dev versions show up with caret dependencies. This is
+# to help find and prevent bugs in the version bumping tools.
+- task: Bash@3
+  displayName: Check for caret dependencies on dev versions
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.buildDirectory }}
+    script: |
+      grep -r -e "\^2.0.0-dev.\d*.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
+      if [[ $? == 0 ]]; then
+        echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"
+        exit -1;
+      fi

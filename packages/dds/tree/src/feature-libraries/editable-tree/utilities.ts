@@ -4,11 +4,13 @@
  */
 
 import { TreeSchema, ValueSchema } from "../../core";
+import { forbidden } from "../defaultFieldKinds";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
  *
- * Note that this may return true for some types which can not be unwrapped to just their value,
+ * @remarks
+ * This may return true for some types which EditableTree does not unwrap to just their value,
  * since EditableTree avoids ever unwrapping primitives that are objects
  * so users checking for primitives by type won't be broken.
  * Checking for this object case is done elsewhere.
@@ -20,7 +22,9 @@ export function isPrimitive(schema: TreeSchema): boolean {
 	return (
 		schema.value !== ValueSchema.Nothing &&
 		schema.localFields.size === 0 &&
-		schema.globalFields.size === 0
+		schema.globalFields.size === 0 &&
+		schema.extraGlobalFields === false &&
+		schema.extraLocalFields.kind.identifier === forbidden.identifier
 	);
 }
 

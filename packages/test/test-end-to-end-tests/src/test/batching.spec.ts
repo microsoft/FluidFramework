@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
@@ -23,7 +23,9 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 const map1Id = "map1Key";
 const map2Id = "map2Key";
@@ -31,9 +33,19 @@ const registry: ChannelFactoryRegistry = [
 	[map1Id, SharedMap.getFactory()],
 	[map2Id, SharedMap.getFactory()],
 ];
+
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
+	loaderProps: {
+		configProvider: configProvider({
+			"Fluid.Container.enableOfflineLoad": true,
+		}),
+	},
 };
 
 // Function to yield a turn in the Javascript event loop.
@@ -97,7 +109,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	let container1: Container;
+	let container1: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let dataObject1map1: SharedMap;
@@ -109,7 +121,7 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		const configCopy = { ...testContainerConfig, runtimeOptions };
 
 		// Create a Container for the first client.
-		container1 = (await provider.makeTestContainer(configCopy)) as Container;
+		container1 = await provider.makeTestContainer(configCopy);
 		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
@@ -599,15 +611,16 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 
 	describe("Batch validation when using getPendingLocalState()", () => {
 		beforeEach(async () => {
-			await setupContainers({ enableOfflineLoad: true });
+			await setupContainers();
 		});
 		it("cannot capture the pending local state during ordersequentially", async () => {
 			dataObject1.context.containerRuntime.orderSequentially(() => {
 				dataObject1map1.set("key1", "value1");
 				dataObject1map2.set("key2", "value2");
-				assert.throws(() => {
-					container1.closeAndGetPendingLocalState();
-				}, "Should throw for incomplete batch");
+				assert.throws(
+					() => container1.closeAndGetPendingLocalState(),
+					/can't get state during orderSequentially/,
+				);
 				dataObject1map1.set("key3", "value3");
 				dataObject1map2.set("key4", "value4");
 			});

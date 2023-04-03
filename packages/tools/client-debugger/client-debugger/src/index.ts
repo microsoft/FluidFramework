@@ -46,8 +46,30 @@
 export { MemberChangeKind } from "./AudienceMetadata";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
-
+export {
+	FluidHandleNode,
+	FluidObjectId,
+	FluidObjectNode,
+	FluidObjectNodeBase,
+	FluidObjectTreeNode,
+	FluidObjectValueNode,
+	FluidUnknownObjectNode,
+	Primitive,
+	RootHandleNode,
+	TreeNodeBase,
+	ValueNodeBase,
+	VisualChildNode,
+	VisualNode,
+	VisualNodeBase,
+	VisualNodeKind,
+	VisualTreeNode,
+	VisualValueNode,
+	VisualizeChildData,
+	VisualizeSharedObject,
+	UnknownObjectNode,
+} from "./data-visualization";
 export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
+export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -55,24 +77,51 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
+	AudienceClientMetaData,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessage,
+	GetAudienceMessage,
 	debuggerMessageSource,
 	HasContainerId,
+	HasFluidObjectId,
+	ConnectContainerMessage,
+	ConnectContainerMessageData,
+	DisconnectContainerMessage,
+	DisconnectContainerMessageData,
+	CloseContainerMessage,
+	CloseContainerMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
-	IDebuggerMessage,
+	ContainerStateHistoryMessage,
+	ContainerStateHistoryMessageData,
+	DataVisualizationMessage,
+	DataVisualizationMessageData,
 	GetContainerListMessage,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
+	GetDataVisualizationMessage,
+	GetDataVisualizationMessageData,
+	GetRootDataVisualizationsMessage,
+	GetRootDataVisualizationsMessageData,
+	IDebuggerMessage,
+	IMessageRelay,
+	IMessageRelayEvents,
+	ISourcedDebuggerMessage,
+	ITimestampedTelemetryEvent,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
+	RootDataVisualizationsMessage,
+	RootDataVisualizationsMessageData,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
+	TelemetryHistoryMessage,
+	GetTelemetryHistoryMessage,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
 	isDebuggerMessage,
 	MessageLoggingOptions,
-	postMessageToWindow,
+	postMessagesToWindow,
 } from "./messaging";
 export {
 	DebuggerRegistry,
@@ -85,4 +134,3 @@ export {
 	getFluidClientDebuggers,
 	initializeFluidClientDebugger,
 } from "./Registry";
-export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
