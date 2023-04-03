@@ -14,10 +14,14 @@ import {
 	IDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
-import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
+
+import { FluentProvider } from '@fluentui/react-components';
+
+import { ThemeHelper } from './ThemeHelper';
 
 const loggingContext = "INLINE(DebuggerPanel)";
 
@@ -132,17 +136,42 @@ export function FluidClientDebuggers(): React.ReactElement {
 	// Styles definition
 	const stackStyles: IStackStyles = {
 		root: {
-			background: DefaultPalette.themeTertiary,
-			height: "100%",
+			display: 'flex',
+			flexDirection: 'row',
+			flexWrap: 'nowrap',
+			width: 'auto',
+			height: 'auto',
+			boxSizing: 'border-box',
+			'> *': {
+			textOverflow: 'ellipsis',
+			},
+			'> :not(:first-child)': {
+			marginTop: '0px',
+			},
+			'> *:not(.ms-StackItem)': {
+			flexShrink: 1,
+			},
 		},
 	};
 	const contentViewStyles: IStackItemStyles = {
 		root: {
 			alignItems: "center",
-			background: DefaultPalette.themeLight,
-			color: DefaultPalette.black,
 			display: "flex",
 			justifyContent: "center",
+			flexDirection: 'column',
+			flexWrap: 'nowrap',
+			width: 'auto',
+			height: 'auto',
+			boxSizing: 'border-box',
+			'> *': {
+			textOverflow: 'ellipsis',
+			},
+			'> :not(:first-child)': {
+			marginTop: '0px',
+			},
+			'> *:not(.ms-StackItem)': {
+			flexShrink: 1,
+			},
 		},
 	};
 
@@ -151,7 +180,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 			...contentViewStyles,
 			display: "flex",
 			flexDirection: "column",
-			borderRight: `1px solid ${DefaultPalette.themePrimary}`,
+			borderRight: `2px solid`,
 			minWidth: 150,
 		},
 	};
@@ -165,6 +194,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 	}
 
 	return (
+		<FluentProvider theme={ThemeHelper.currentTheme()}>
 		<Stack enableScopedSelectors horizontal styles={stackStyles}>
 			<Stack.Item grow={1} styles={menuStyles}>
 				{/* TODO: button to refresh list of containers */}
@@ -200,5 +230,6 @@ export function FluidClientDebuggers(): React.ReactElement {
 				</div>
 			</Stack.Item>
 		</Stack>
+		</FluentProvider>
 	);
 }

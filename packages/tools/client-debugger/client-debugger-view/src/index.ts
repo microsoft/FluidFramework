@@ -20,4 +20,5 @@ export { AudienceMember } from "./Audience";
 export { AudienceMemberViewProps } from "./components";
 export { MessageRelayContext } from "./MessageRelayContext";
 export { RootView, RootViewProps } from "./RootView";
+//export { ThemeHelper } from "./ThemeHelper";
 export { IMessageRelay } from "@fluid-tools/client-debugger";
