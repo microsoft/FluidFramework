@@ -98,6 +98,18 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_LocationRedirectionError": {
+				"forwardCompat": false
+			},
+			"RemovedFunctionDeclaration_ensureFluidResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_isFluidResolvedUrl": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

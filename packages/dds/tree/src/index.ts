@@ -193,6 +193,7 @@ export {
 	getField,
 	createField,
 	replaceField,
+	contextSymbol,
 	ContextuallyTypedNodeDataObject,
 	ContextuallyTypedNodeData,
 	MarkedArrayLike,

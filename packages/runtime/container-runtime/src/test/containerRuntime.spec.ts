@@ -1072,7 +1072,6 @@ describe("Runtime", () => {
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
 				flushMode: FlushMode.TurnBased,
-				enableOfflineLoad: false,
 				compressionOptions: {
 					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
