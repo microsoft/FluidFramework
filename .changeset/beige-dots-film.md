@@ -4,5 +4,4 @@
 
 end-to-end-tests package moved to internal scope
 
-The `@fluidframework/test-end-to-end-tests` packages has been renamed to @fluid-internal/test-end-to-end-tests and
-marked private.
+The `@fluidframework/test-end-to-end-tests` packages has been renamed to @fluid-internal/test-end-to-end-tests.
