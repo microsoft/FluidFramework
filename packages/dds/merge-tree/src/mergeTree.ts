@@ -554,7 +554,8 @@ export class MergeTree {
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
 	/**
-	 * Cache the sliding destination for segments after a remove
+	 * Cache the sliding destination for segments after a remove to improve the
+	 * pathological case in which we slide the same segment multiple times
 	 */
 	private cachedSlideDestination:
 		| {
@@ -842,6 +843,8 @@ export class MergeTree {
 			};
 		}
 
+		// cache slide destination of segments to improve the pathological case
+		// in which we slide the same segment multiple times
 		const cachedSegment = this.cachedSlideDestination.segmentToSlideDestination.get(segment);
 		if (cachedSegment !== undefined) {
 			return cachedSegment === "detached" ? undefined : cachedSegment;

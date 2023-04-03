@@ -87,8 +87,6 @@ describe("MergeTree remove", () => {
 					appendToMergeTreeDeltaRevertibles(driver, delta, revertibles);
 				});
 
-				// TODO: deal with end of tree segment too.
-				// logic to check if ref is detached is unnecessary, asymptotics-wise.
 				const op = str.removeRangeLocal(0, length - 1);
 				str.applyMsg(
 					str.makeOpMessage(
