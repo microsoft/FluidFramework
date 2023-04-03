@@ -41,7 +41,8 @@ import { pkgVersion as driverVersion } from "./packageVersion";
  */
 export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
-	implements IDocumentDeltaConnection, IDisposable {
+	implements IDocumentDeltaConnection, IDisposable
+{
 	static readonly eventsToForward = ["nack", "op", "signal", "pong"];
 
 	// WARNING: These are critical events that we can't miss, so registration for them has to be in place at all times!
