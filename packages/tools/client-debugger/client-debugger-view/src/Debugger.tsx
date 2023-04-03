@@ -15,13 +15,11 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { FluentProvider } from "@fluentui/react-components";
 import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
-
-import { FluentProvider } from '@fluentui/react-components';
-
-import { ThemeHelper } from './ThemeHelper';
+import { flueUIThemeToUse } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DebuggerPanel)";
 
@@ -136,41 +134,41 @@ export function FluidClientDebuggers(): React.ReactElement {
 	// Styles definition
 	const stackStyles: IStackStyles = {
 		root: {
-			display: 'flex',
-			flexDirection: 'row',
-			flexWrap: 'nowrap',
-			width: 'auto',
-			height: 'auto',
-			boxSizing: 'border-box',
-			'> *': {
-			textOverflow: 'ellipsis',
+			"display": "flex",
+			"flexDirection": "row",
+			"flexWrap": "nowrap",
+			"width": "auto",
+			"height": "auto",
+			"boxSizing": "border-box",
+			"> *": {
+				textOverflow: "ellipsis",
 			},
-			'> :not(:first-child)': {
-			marginTop: '0px',
+			"> :not(:first-child)": {
+				marginTop: "0px",
 			},
-			'> *:not(.ms-StackItem)': {
-			flexShrink: 1,
+			"> *:not(.ms-StackItem)": {
+				flexShrink: 1,
 			},
 		},
 	};
 	const contentViewStyles: IStackItemStyles = {
 		root: {
-			alignItems: "center",
-			display: "flex",
-			justifyContent: "center",
-			flexDirection: 'column',
-			flexWrap: 'nowrap',
-			width: 'auto',
-			height: 'auto',
-			boxSizing: 'border-box',
-			'> *': {
-			textOverflow: 'ellipsis',
+			"alignItems": "center",
+			"display": "flex",
+			"justifyContent": "center",
+			"flexDirection": "column",
+			"flexWrap": "nowrap",
+			"width": "auto",
+			"height": "auto",
+			"boxSizing": "border-box",
+			"> *": {
+				textOverflow: "ellipsis",
 			},
-			'> :not(:first-child)': {
-			marginTop: '0px',
+			"> :not(:first-child)": {
+				marginTop: "0px",
 			},
-			'> *:not(.ms-StackItem)': {
-			flexShrink: 1,
+			"> *:not(.ms-StackItem)": {
+				flexShrink: 1,
 			},
 		},
 	};
@@ -194,42 +192,42 @@ export function FluidClientDebuggers(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={ThemeHelper.currentTheme()}>
-		<Stack enableScopedSelectors horizontal styles={stackStyles}>
-			<Stack.Item grow={1} styles={menuStyles}>
-				{/* TODO: button to refresh list of containers */}
-				<MenuSection header="Containers">
-					{containers?.map((container) => (
+		<FluentProvider theme={flueUIThemeToUse()}>
+			<Stack enableScopedSelectors horizontal styles={stackStyles}>
+				<Stack.Item grow={1} styles={menuStyles}>
+					{/* TODO: button to refresh list of containers */}
+					<MenuSection header="Containers">
+						{containers?.map((container) => (
+							<MenuItem
+								key={container.id}
+								isActive={
+									menuSelection?.type === "containerMenuSelection" &&
+									menuSelection.containerId === container.id
+								}
+								text={container.nickname ?? container.id}
+								onClick={(event): void => {
+									onContainerClicked(`${container.id}`);
+								}}
+							/>
+						))}
+					</MenuSection>
+					<MenuSection header="Telemetry">
 						<MenuItem
-							key={container.id}
-							isActive={
-								menuSelection?.type === "containerMenuSelection" &&
-								menuSelection.containerId === container.id
-							}
-							text={container.nickname ?? container.id}
-							onClick={(event): void => {
-								onContainerClicked(`${container.id}`);
-							}}
+							isActive={menuSelection?.type === "telemetryMenuSelection"}
+							text="See Telemetry"
+							onClick={onTelemetryClicked}
 						/>
-					))}
-				</MenuSection>
-				<MenuSection header="Telemetry">
-					<MenuItem
-						isActive={menuSelection?.type === "telemetryMenuSelection"}
-						text="See Telemetry"
-						onClick={onTelemetryClicked}
-					/>
-				</MenuSection>
-			</Stack.Item>
-			<Stack.Item grow={5} styles={contentViewStyles}>
-				<div
-					id="debugger-view-content"
-					style={{ width: "100%", height: "100%", overflowY: "auto" }}
-				>
-					{innerView}
-				</div>
-			</Stack.Item>
-		</Stack>
+					</MenuSection>
+				</Stack.Item>
+				<Stack.Item grow={5} styles={contentViewStyles}>
+					<div
+						id="debugger-view-content"
+						style={{ width: "100%", height: "100%", overflowY: "auto" }}
+					>
+						{innerView}
+					</div>
+				</Stack.Item>
+			</Stack>
 		</FluentProvider>
 	);
 }

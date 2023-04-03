@@ -5,13 +5,12 @@
 import React from "react";
 
 import { IMessageRelay } from "@fluid-tools/client-debugger";
+import { FluentProvider } from "@fluentui/react-components";
 
 import { FluidClientDebuggers } from "./Debugger";
 import { MessageRelayContext } from "./MessageRelayContext";
 
-import { FluentProvider } from '@fluentui/react-components';
-
-import { ThemeHelper } from './ThemeHelper';
+import { flueUIThemeToUse } from "./ThemeHelper";
 
 /**
  * Necessary props to render {@link RootView}.
@@ -29,12 +28,11 @@ export interface RootViewProps {
  * Top-level component for the Fluid debugger.
  */
 export function RootView(props: RootViewProps): React.ReactElement {
-
 	return (
-		<FluentProvider theme={ThemeHelper.currentTheme()}>
-		<MessageRelayContext.Provider value={props.messageRelay}>
-			<FluidClientDebuggers />
-		</MessageRelayContext.Provider>
+		<FluentProvider theme={flueUIThemeToUse()}>
+			<MessageRelayContext.Provider value={props.messageRelay}>
+				<FluidClientDebuggers />
+			</MessageRelayContext.Provider>
 		</FluentProvider>
 	);
 }

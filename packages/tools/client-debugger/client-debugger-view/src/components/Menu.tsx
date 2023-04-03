@@ -66,7 +66,9 @@ function getMenuSectionItemStyles(isActive: boolean): IStackStyles {
 		root: {
 			"paddingLeft": "20px",
 			"cursor": "pointer",
-			"background": isActive ? tokens.colorNeutralBackground1Selected : tokens.colorNeutralBackground1,
+			"background": isActive
+				? tokens.colorNeutralBackground1Selected
+				: tokens.colorNeutralBackground1,
 			"&:hover": {
 				background: tokens.colorNeutralBackground1Hover,
 			},
