@@ -45,13 +45,22 @@ const nodeSchemaData = SchemaAware.typedSchemaData(
 );
 
 describe("Node Identifier Index", () => {
+	let nextId: Identifier = 42;
+	beforeEach(() => {
+		nextId = 42;
+	});
+	// All tests should use this function to make their IDs - this makes it easier to change the
+	// type of `Identifier` when the IdCompressor is hooked up later, or as the design evolves
+	function makeId(): Identifier {
+		return nextId++;
+	}
+
 	function assertIds(tree: ISharedTreeView, ids: Identifier[]): void {
 		assert.equal(tree.identifiedNodes.size, ids.length);
 		for (const id of ids) {
 			assert(tree.identifiedNodes.has(id));
 			const node = tree.identifiedNodes.get(id);
 			assert(node !== undefined);
-			const y = node[identifierKeySymbol];
 			assert.equal(node[identifierKeySymbol], id);
 		}
 		assert(compareSets({ a: new Set(tree.identifiedNodes.keys()), b: new Set(ids) }));
@@ -60,7 +69,7 @@ describe("Node Identifier Index", () => {
 	it("can look up a node that was inserted", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = 42;
+		const id = makeId();
 		initializeTestTree(
 			tree,
 			{
@@ -77,7 +86,7 @@ describe("Node Identifier Index", () => {
 	it("can look up a deep node that was inserted", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = 42;
+		const id = makeId();
 		initializeTestTree(
 			tree,
 			{
@@ -110,7 +119,7 @@ describe("Node Identifier Index", () => {
 	it("can look up multiple nodes that were inserted at once", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const ids = [42, 43, 44];
+		const ids = [makeId(), makeId(), makeId()];
 		initializeTestTree(
 			tree,
 			{
@@ -149,7 +158,7 @@ describe("Node Identifier Index", () => {
 	it("can look up multiple nodes that were inserted over time", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const idA = 42;
+		const idA = makeId();
 		initializeTestTree(
 			tree,
 			{
@@ -163,7 +172,7 @@ describe("Node Identifier Index", () => {
 
 		const node = tree.identifiedNodes.get(idA);
 		assert(node !== undefined);
-		const idB = 43;
+		const idB = makeId();
 		node[createField](
 			brand("child"),
 			singleTextCursor({
@@ -185,7 +194,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: "test id" }],
+					[identifierKey]: [{ type: identifierSchema.name, value: makeId() }],
 				},
 			},
 			nodeSchemaData,
@@ -198,7 +207,7 @@ describe("Node Identifier Index", () => {
 	it("can look up a node that was loaded from summary", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = 42;
+		const id = makeId();
 		initializeTestTree(
 			tree,
 			{
@@ -247,7 +256,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: "test id" }],
+					[identifierKey]: [{ type: identifierSchema.name, value: makeId() }],
 				},
 			},
 			nodeSchemaDataNoIdentifier,
@@ -303,7 +312,7 @@ describe("Node Identifier Index", () => {
 			{
 				type: nodeSchema.name,
 				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: 42 }],
+					[identifierKey]: [{ type: identifierSchema.name, value: makeId() }],
 				},
 			},
 			nodeSchemaDataNoIdentifier,
@@ -330,7 +339,7 @@ describe("Node Identifier Index", () => {
 
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = 42;
+		const id = makeId();
 		initializeTestTree(
 			tree,
 			{
@@ -361,7 +370,7 @@ describe("Node Identifier Index", () => {
 
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = 42;
+		const id = makeId();
 		initializeTestTree(
 			tree,
 			{
@@ -382,7 +391,7 @@ describe("Node Identifier Index", () => {
 	it("correctly forks", async () => {
 		const provider = await TestTreeProvider.create(1);
 		const [tree] = provider.trees;
-		const id = 42;
+		const id = makeId();
 		initializeTestTree(
 			tree,
 			{
