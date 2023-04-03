@@ -16,7 +16,7 @@ import {
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap";
-import { DocumentMultipleDds } from "./DocumentMultipleDds";
+import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
 
 export interface IDocumentCreatorProps {
 	testName: string;

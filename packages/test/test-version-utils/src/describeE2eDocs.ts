@@ -40,12 +40,12 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 		minSampleCount: 2,
 	},
 	{
-		testTitle: "250 DataStores",
+		testTitle: "250 DataStores - 750 DDSs",
 		documentType: "MediumDocumentMultipleDataStores",
 		minSampleCount: 1,
 	},
 	{
-		testTitle: "500 DataStores",
+		testTitle: "500 DataStores - 1500 DDSs",
 		documentType: "LargeDocumentMultipleDataStores",
 		minSampleCount: 1,
 	},
