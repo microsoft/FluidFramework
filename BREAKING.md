@@ -30,7 +30,6 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
 -   [garbage-collector and related items removed](#garbage-collector-and-related-items-removed)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
--   [Upgraded Typescript target to ES2020](#Upgraded-Typescript-target-to-ES2020)
 
 ## IResolvedUrl equivalent to IFluidResolvedUrl
 
@@ -64,11 +63,6 @@ The following interfaces available in `@fluidframework/runtime-definitions` were
 -   `IGarbageCollectionState`
 -   `IGarbageCollectionSnapshotData`
 -   `IGarbageCollectionSummaryDetailsLegacy`
-
-### Upgraded Typescript target to ES2020
-
-Upgraded typescript transpilation target to ES2020. This is done in order to decrease the bundle sizes of Fluid Framework packages. This has provided size improvements across the board for ex. Loader, Driver, Runtime etc. Reduced bundle sizes helps to load lesser code in apps and hence also helps to improve the perf.
-If any app want to target any older versions of browsers with which this target version is not compatible, then they can use packages like babel to transpile to a older target.
 
 # 2.0.0-internal.4.1.0
 
