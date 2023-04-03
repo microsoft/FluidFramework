@@ -139,6 +139,7 @@ export class OdspDelayLoadedDeltaStream {
 			const joinSessionPromise = this.joinSession(
 				requestWebsocketTokenFromJoinSession,
 				options,
+				false,
 			);
 			const [websocketEndpoint, websocketToken] = await Promise.all([
 				joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
@@ -216,7 +217,7 @@ export class OdspDelayLoadedDeltaStream {
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				getWithRetryForTokenRefresh(async (options) => {
-					await this.joinSession(requestSocketToken, options);
+					await this.joinSession(requestSocketToken, options, true);
 					resolve();
 				}).catch((error) => {
 					reject(error);
@@ -225,8 +226,28 @@ export class OdspDelayLoadedDeltaStream {
 		});
 	}
 
-	private async joinSession(requestSocketToken: boolean, options: TokenFetchOptionsEx) {
-		const response = await this.joinSessionCore(requestSocketToken, options).catch((e) => {
+	private async joinSession(
+		requestSocketToken: boolean,
+		options: TokenFetchOptionsEx,
+		isRefreshingJoinSession: boolean,
+	) {
+		// If this call is to refresh the join session for the current connection but we are already disconnected in
+		// the meantime then do not make the call. However, we should not have come here if that is the case because
+		// timer should have been disposed, but due to race condition with the timer we should not make the call and
+		// throw error.
+		if (isRefreshingJoinSession && this.currentConnection === undefined) {
+			this.clearJoinSessionTimer();
+			throw new NonRetryableError(
+				"JoinSessionRefreshTimerNotCancelled",
+				DriverErrorType.genericError,
+				{ driverVersion },
+			);
+		}
+		const response = await this.joinSessionCore(
+			requestSocketToken,
+			options,
+			isRefreshingJoinSession,
+		).catch((e) => {
 			if (hasFacetCodes(e) && e.facetCodes !== undefined) {
 				for (const code of e.facetCodes) {
 					switch (code) {
@@ -252,6 +273,7 @@ export class OdspDelayLoadedDeltaStream {
 	private async joinSessionCore(
 		requestSocketToken: boolean,
 		options: TokenFetchOptionsEx,
+		isRefreshingJoinSession: boolean,
 	): Promise<ISocketStorageDiscovery> {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
@@ -267,6 +289,7 @@ export class OdspDelayLoadedDeltaStream {
 				requestSocketToken,
 				options,
 				disableJoinSessionRefresh,
+				isRefreshingJoinSession,
 				this.hostPolicy.sessionOptions?.unauthenticatedUserDisplayName,
 			);
 			return {
