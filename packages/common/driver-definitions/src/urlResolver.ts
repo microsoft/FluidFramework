@@ -140,7 +140,7 @@ export interface DriverPreCheckInfo {
  */
 export enum DriverHeader {
 	/**
-	 * Key to indicate whether the request for summarizer
+	 * Key to indicate whether or not the request is for the summarizer client.
 	 */
 	summarizingClient = "fluid-client-summarizer",
 	
