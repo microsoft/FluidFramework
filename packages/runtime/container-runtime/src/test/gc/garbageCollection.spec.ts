@@ -54,7 +54,7 @@ type GcWithPrivates = IGarbageCollector & {
 
 describe("Garbage Collection Tests", () => {
 	const defaultSnapshotCacheExpiryMs = 5 * 24 * 60 * 60 * 1000;
-
+	const sweepTimeoutMs = defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 	// Nodes in the reference graph.
 	const nodes: string[] = ["/node1", "/node2", "/node3", "/node4"];
 
@@ -525,24 +525,17 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodes[2]] = [];
 				await garbageCollector.collectGarbage({});
 
-				// Validate that the sweep ready event is logged when GC runs after load.
-				if (expectDeleteLogs) {
-					mockLogger.assertMatch(
-						[{ eventName: deleteEventName, timeout, id: nodes[3] }],
-						"sweep ready event not generated as expected",
-					);
-				} else {
-					mockLogger.assertMatchNone(
-						[{ eventName: deleteEventName }],
-						"Should not have any delete events logged",
-					);
-				}
+				// Since old snapshots get ignored now, we only accept new snapshot formats
+				mockLogger.assertMatchNone(
+					[{ eventName: deleteEventName }],
+					"Should not have any delete events logged",
+				);
 
-				// Validate that all events are logged as expected.
+				// Validate that no events are generated since none of the timeouts have passed
 				garbageCollector.nodeUpdated(nodes[3], "Changed", Date.now(), testPkgPath);
 				garbageCollector.nodeUpdated(nodes[3], "Loaded", Date.now(), testPkgPath);
 				await garbageCollector.collectGarbage({});
-				mockLogger.assertMatch(
+				mockLogger.assertMatchNone(
 					[
 						{ eventName: changedEventName, timeout, id: nodes[3], pkg: eventPkg },
 						{ eventName: loadedEventName, timeout, id: nodes[3], pkg: eventPkg },
@@ -550,10 +543,10 @@ describe("Garbage Collection Tests", () => {
 					"all events not generated as expected",
 				);
 
-				// Add reference from node 2 to node 3 and validate that revived event is logged.
+				// No revived events should be logged as no timeouts should have occurred
 				garbageCollector.addedOutboundReference(nodes[2], nodes[3]);
 				await garbageCollector.collectGarbage({});
-				mockLogger.assertMatch(
+				mockLogger.assertMatchNone(
 					[
 						{
 							eventName: revivedEventName,
@@ -669,8 +662,6 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		describe("SweepReady events (summarizer container)", () => {
-			const sweepTimeoutMs =
-				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 			summarizerContainerTests(
 				sweepTimeoutMs,
 				"GarbageCollector:SweepReadyObject_Revived",
@@ -681,9 +672,6 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		describe("SweepReady events - Delete log disabled (summarizer container)", () => {
-			const sweepTimeoutMs =
-				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
-
 			beforeEach(() => {
 				injectedSettings[disableSweepLogKey] = true;
 			});
@@ -699,8 +687,6 @@ describe("Garbage Collection Tests", () => {
 
 		it("generates both inactive and sweep ready events when nodes are used after time out", async () => {
 			const inactiveTimeoutMs = 500;
-			const sweepTimeoutMs =
-				defaultSessionExpiryDurationMs + defaultSnapshotCacheExpiryMs + oneDayMs;
 			injectedSettings["Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs"] =
 				inactiveTimeoutMs;
 

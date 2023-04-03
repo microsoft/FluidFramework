@@ -52,7 +52,7 @@ import {
 	IGCMetadata,
 	IGarbageCollectorConfigs,
 } from "./gcDefinitions";
-import { getSnapshotDataFromOldSnapshotFormat, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import { sendGCUnexpectedUsageEvent } from "./gcHelpers";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
@@ -213,12 +213,9 @@ export class GarbageCollector implements IGarbageCollector {
 						return getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
 					}
 
-					// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
-					return getSnapshotDataFromOldSnapshotFormat(
-						baseSnapshot,
-						createParams.metadata,
-						readAndParseBlob,
-					);
+					// back-compat - Older documents get their gc data reset for simplicity as there are few of them
+					// incremental gc summary will not work with older gc data as well
+					return undefined;
 				} catch (error) {
 					const dpe = DataProcessingError.wrapIfUnrecognized(
 						error,
