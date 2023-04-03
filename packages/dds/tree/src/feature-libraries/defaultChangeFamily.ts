@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ICodecFamily } from "../codec";
 import {
 	ChangeFamily,
 	ProgressiveEditBuilder,
@@ -27,7 +28,6 @@ import {
 	NodeReviver,
 } from "./modular-schema";
 import { forbidden, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
-import { ICodecFamily } from "../codec";
 
 export type DefaultChangeset = ModularChangeset;
 

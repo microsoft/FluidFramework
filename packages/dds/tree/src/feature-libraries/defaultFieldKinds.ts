@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, IsoBuffer } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/common-utils";
+import { IJsonCodec, makeCodecFamily, makeValueCodec, unitCodec } from "../codec";
 import {
 	FieldKindIdentifier,
 	Delta,
@@ -15,7 +16,7 @@ import {
 	TreeSchemaIdentifier,
 	FieldSchema,
 } from "../core";
-import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
+import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
 import {
 	FieldKind,
@@ -35,7 +36,6 @@ import {
 } from "./modular-schema";
 import { sequenceFieldChangeHandler, SequenceFieldEditor } from "./sequence-field";
 import { populateChildModifications } from "./deltaUtils";
-import { IJsonCodec, IMultiFormatCodec, makeCodecFamily } from "../codec";
 
 type BrandedFieldKind<
 	TName extends string,
@@ -66,38 +66,6 @@ function brandedFieldKind<
 		allowsTreeSupersetOf,
 		handlesEditsFrom,
 	) as BrandedFieldKind<TName, TMultiplicity, TEditor>;
-}
-
-/**
- * Codec for changesets which carry no information.
- *
- * @sealed
- */
-export const unitCodec: IMultiFormatCodec<0> = {
-	json: {
-		encode: () => 0,
-		decode: () => 0,
-	},
-	binary: {
-		encode: () => IsoBuffer.from(""),
-		decode: () => 0,
-	},
-};
-
-/**
- * Creates a json codec for objects which are just a json compatible value
- * and can be serialized as-is.
- *
- * @remarks - Beware that this encoder doesn't validate its input and isn't typesafe.
- * It would be great to be able to constrain T to a reasonable type, but due to how typechecking
- * of index signatures works, JsonCompatibleReadOnly isn't sufficient.
- * @sealed
- */
-export function makeValueCodec<T>(): IJsonCodec<T> {
-	return {
-		encode: (obj: T) => obj as unknown as JsonCompatibleReadOnly,
-		decode: (obj: JsonCompatibleReadOnly) => obj as unknown as T,
-	};
 }
 
 /**

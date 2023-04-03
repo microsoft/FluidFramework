@@ -22,6 +22,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { v4 as uuid } from "uuid";
+import { IMultiFormatCodec } from "../codec";
 import {
 	ChangeFamily,
 	Commit,
@@ -42,7 +43,6 @@ import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } fro
 import { createEmitter, ISubscribable, TransformEvents } from "../events";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
-import { IMultiFormatCodec } from "../codec";
 
 /**
  * The events emitted by a {@link SharedTreeCore}

@@ -12,8 +12,8 @@ import {
 	Delta,
 	ChangeFamilyEditor,
 } from "../core";
-import { makeValueCodec } from "../feature-libraries/defaultFieldKinds";
-import { JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
+import { makeValueCodec } from "../codec";
+import { RecursiveReadonly } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {

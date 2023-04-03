@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/common-utils";
 import {
 	FieldKey,
 	FieldKindIdentifier,
@@ -25,7 +26,6 @@ import {
 	ValueConstraint,
 } from "./fieldChangeHandler";
 import { FieldKind } from "./fieldKind";
-import { assert } from "@fluidframework/common-utils";
 
 /**
  * Format for encoding as json.

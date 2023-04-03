@@ -227,4 +227,13 @@ export {
 	ViewEvents,
 } from "./shared-tree";
 
+export type {
+	IBinaryCodec,
+	ICodecFamily,
+	IDecoder,
+	IEncoder,
+	IJsonCodec,
+	IMultiFormatCodec,
+} from "./codec";
+
 export { StableId, UuidString } from "./id-compressor";

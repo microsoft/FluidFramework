@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec";
+import { makeCodecFamily } from "../../codec";
 import { Delta, makeAnonChange, tagChange, TaggedChange } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../util";
 import { CrossFieldManager } from "./crossFieldQueries";

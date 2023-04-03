@@ -35,13 +35,13 @@ import {
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { assertDeltaEqual, deepFreeze, makeEncodingTestSuite } from "../../utils";
-import { makeCodecFamily } from "../../../codec";
+import { makeCodecFamily, makeValueCodec } from "../../../codec";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
-	codecsFactory: () => makeCodecFamily([[0, FieldKinds.makeValueCodec<ValueChangeset>()]]),
+	codecsFactory: () => makeCodecFamily([[0, makeValueCodec<ValueChangeset>()]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change, deltaFromChild) =>

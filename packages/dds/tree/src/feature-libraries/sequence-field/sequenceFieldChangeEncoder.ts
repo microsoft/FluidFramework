@@ -5,11 +5,10 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { JsonCompatible, JsonCompatibleReadOnly } from "../../util";
-import { IJsonCodec } from "../../codec";
+import { IJsonCodec, makeCodecFamily } from "../../codec";
 import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import { Changeset, Mark } from "./format";
 import { isSkipMark } from "./utils";
-import { makeCodecFamily, withDefaultBinaryEncoding } from "../../codec/codec";
 
 export const sequenceFieldChangeCodecFactory = <TNodeChange>(childCodec: IJsonCodec<TNodeChange>) =>
 	makeCodecFamily<Changeset<TNodeChange>>([

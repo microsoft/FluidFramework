@@ -21,16 +21,14 @@ import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
 import { brand, fail, JsonCompatibleReadOnly } from "../../../util";
 import { fakeTaggedRepair as fakeRepair, makeEncodingTestSuite } from "../../utils";
-import { IJsonCodec, makeCodecFamily } from "../../../codec";
+import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../../../codec";
 
 type ValueChangeset = FieldKinds.ReplaceOp<number>;
 
 const valueHandler: FieldChangeHandler<ValueChangeset> = {
 	rebaser: FieldKinds.replaceRebaser(),
 	codecsFactory: () =>
-		makeCodecFamily([
-			[0, FieldKinds.makeValueCodec<ValueChangeset & JsonCompatibleReadOnly>()],
-		]),
+		makeCodecFamily([[0, makeValueCodec<ValueChangeset & JsonCompatibleReadOnly>()]]),
 	editor: { buildChildChange: () => fail("Child changes not supported") },
 	intoDelta: (change) =>
 		change === 0 ? [] : [{ type: Delta.MarkType.Modify, setValue: change.new }],

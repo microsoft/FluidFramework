@@ -10,5 +10,7 @@ export {
 	IJsonCodec,
 	IMultiFormatCodec,
 	makeCodecFamily,
+	makeValueCodec,
+	unitCodec,
 	withDefaultBinaryEncoding,
 } from "./codec";

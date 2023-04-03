@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/common-utils";
+import { ICodecFamily } from "../../codec";
 import {
 	ChangeFamily,
 	ProgressiveEditBuilder,
@@ -27,7 +28,6 @@ import {
 	brand,
 	getOrAddEmptyToMap,
 	getOrAddInNestedMap,
-	JsonCompatibleReadOnly,
 	Mutable,
 	NestedMap,
 	nestedSetContains,
@@ -35,7 +35,6 @@ import {
 	tryGetFromNestedMap,
 } from "../../util";
 import { dummyRepairDataStore } from "../fakeRepairDataStore";
-import { ICodecFamily, makeCodecFamily } from "../../codec";
 import {
 	ChangesetLocalId,
 	CrossFieldManager,

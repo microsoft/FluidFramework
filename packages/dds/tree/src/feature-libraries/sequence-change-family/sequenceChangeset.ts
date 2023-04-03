@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeValueCodec } from "../defaultFieldKinds";
-import { ICodecFamily, makeCodecFamily } from "../../codec";
+import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../../codec";
 import { Transposed as T } from "./changeset";
 
 export type SequenceChangeset = T.LocalChangeset;

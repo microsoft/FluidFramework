@@ -4,7 +4,7 @@
  */
 
 import { FieldKindIdentifier, Delta, FieldKey, Value, TaggedChange, RevisionTag } from "../../core";
-import { Brand, fail, Invariant, JsonCompatibleReadOnly } from "../../util";
+import { Brand, fail, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { ChangesetLocalId, CrossFieldManager } from "./crossFieldQueries";
 
