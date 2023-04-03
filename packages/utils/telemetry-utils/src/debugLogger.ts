@@ -17,6 +17,9 @@ import {
 	ITelemetryLoggerPropertyBags,
 } from "./logger";
 
+// Capture console.error early so that we can still get the built-in one even if it has been replaced
+const consoleErrorFn = console.error.bind(console);
+
 /**
  * Implementation of debug logger
  */
@@ -35,7 +38,7 @@ export class DebugLogger extends TelemetryLogger {
 		const debug = registerDebug(namespace);
 
 		const debugErr = registerDebug(namespace);
-		debugErr.log = console.error.bind(console);
+		debugErr.log = consoleErrorFn;
 		debugErr.enabled = true;
 
 		return new DebugLogger(debug, debugErr, properties);
