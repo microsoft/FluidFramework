@@ -97,13 +97,13 @@ export interface ContainerDevtoolsProps {
 }
 
 // @public
-export interface ContainerListChangeMessage extends IDebuggerMessage<ContainerListChangeMessageData> {
-    type: "CONTAINER_LIST_CHANGE";
+export interface ContainerListChangeMessageData {
+    containers: ContainerMetadata[];
 }
 
 // @public
-export interface ContainerListChangeMessageData {
-    containers: ContainerMetadata[];
+export interface ContainerListMessage extends IDebuggerMessage<ContainerListChangeMessageData> {
+    type: "CONTAINER_LIST";
 }
 
 // @public

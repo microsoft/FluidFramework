@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/container-utils";
 import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
 import { IContainerDevtools } from "./IContainerDevtools";
 import {
-	ContainerListChangeMessage,
+	ContainerListMessage,
 	handleIncomingWindowMessage,
 	ISourcedDebuggerMessage,
 	InboundHandlers,
@@ -53,13 +53,13 @@ export interface FluidDevtoolsProps {
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerListMessage}: When received, the registry will post {@link ContainerListChangeMessage}.
+ * - {@link GetContainerListMessage}: When received, the registry will post {@link ContainerListMessage}.
  *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
- * - {@link ContainerListChangeMessage}: The registry will post this whenever the list of registered
+ * - {@link ContainerListMessage}: The registry will post this whenever the list of registered
  * debuggers changes, or when requested (via {@link GetContainerListMessage}).
  *
  * TODO: Document others as they are added.
@@ -107,7 +107,7 @@ export class FluidDevtools
 	};
 
 	/**
-	 * Posts a {@link ContainerListChangeMessage} to the window (globalThis).
+	 * Posts a {@link ContainerListMessage} to the window (globalThis).
 	 */
 	private readonly postContainerListChange = (): void => {
 		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
@@ -117,8 +117,8 @@ export class FluidDevtools
 			}),
 		);
 
-		postMessagesToWindow<ContainerListChangeMessage>(devtoolsMessageLoggingOptions, {
-			type: "CONTAINER_LIST_CHANGE",
+		postMessagesToWindow<ContainerListMessage>(devtoolsMessageLoggingOptions, {
+			type: "CONTAINER_LIST",
 			data: {
 				containers,
 			},

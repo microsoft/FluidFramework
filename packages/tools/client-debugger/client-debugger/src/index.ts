@@ -93,7 +93,7 @@ export {
 	DisconnectContainerMessageData,
 	CloseContainerMessage,
 	CloseContainerMessageData,
-	ContainerListChangeMessage,
+	ContainerListMessage,
 	ContainerListChangeMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,

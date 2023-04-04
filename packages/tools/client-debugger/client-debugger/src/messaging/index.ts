@@ -42,7 +42,7 @@ export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
-	ContainerListChangeMessage,
+	ContainerListMessage,
 	ContainerListChangeMessageData,
 } from "./DevtoolsMessages";
 export {

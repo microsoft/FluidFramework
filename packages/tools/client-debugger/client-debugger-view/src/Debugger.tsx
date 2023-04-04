@@ -84,7 +84,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["CONTAINER_LIST_CHANGE"]: (untypedMessage) => {
+			["CONTAINER_LIST"]: (untypedMessage) => {
 				const message = untypedMessage as ContainerListChangeMessage;
 				setContainers(message.data.containers);
 				return true;
