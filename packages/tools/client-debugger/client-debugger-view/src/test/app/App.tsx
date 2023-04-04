@@ -236,10 +236,14 @@ const appViewPaneStackStyles = mergeStyles({
  */
 export function App(): React.ReactElement {
 	// Initialize the Fluid Debugger logger
-	const logger = FluidDebuggerLogger.create();
+	const logger = React.useMemo(() => FluidDebuggerLogger.create(), []);
 
 	// Initialize devtools
-	const devtools = initializeFluidDevtools();
+	const devtools = React.useMemo(() => initializeFluidDevtools(), []);
+	React.useEffect(() => {
+		// Dispose of devtools resources on teardown to ensure message listeners are notified.
+		return (): void => devtools.dispose();
+	}, [devtools]);
 
 	// Load the collaborative SharedString object
 	const { privateContainer, sharedContainer } = useContainerInfo(devtools, logger);
