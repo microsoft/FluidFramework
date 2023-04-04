@@ -174,19 +174,15 @@ export class FluidDevtools
 	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
 	 */
 	public closeContainerDevtools(containerId: string): void {
-		if (this.containerDevtools.has(containerId)) {
-			const containerDevtools = this.containerDevtools.get(containerId);
-			if (containerDevtools === undefined) {
-				console.warn(
-					`No active client debugger associated with container ID "${containerId}" was found.`,
-				);
-			} else {
-				containerDevtools.dispose();
-				this.containerDevtools.delete(containerId);
-				this.emit("containerDevtoolsClosed", containerId);
-			}
+		const containerDevtools = this.containerDevtools.get(containerId);
+		if (containerDevtools === undefined) {
+			console.warn(
+				`No ContainerDevtools associated with container ID "${containerId}" was found.`,
+			);
 		} else {
-			console.warn(`Fluid Client debugger never been registered.`);
+			containerDevtools.dispose();
+			this.containerDevtools.delete(containerId);
+			this.emit("containerDevtoolsClosed", containerId);
 		}
 	}
 
