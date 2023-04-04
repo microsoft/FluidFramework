@@ -460,7 +460,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	public async attachOpHandler(
 		minSequenceNumber: number,
 		sequenceNumber: number,
-		term: number,
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "cached" | "all" | "none" = "none",
 	) {

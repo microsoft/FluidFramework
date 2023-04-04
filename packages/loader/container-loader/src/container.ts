@@ -1868,7 +1868,6 @@ export class Container
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			attributes.term ?? 1,
 			{
 				process: (message) => this.processRemoteMessage(message),
 				processSignal: (message) => {
