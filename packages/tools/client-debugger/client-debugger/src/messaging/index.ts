@@ -16,21 +16,27 @@
 export { debuggerMessageSource } from "./Constants";
 export {
 	HasContainerId,
+	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
 	DisconnectContainerMessage,
 	DisconnectContainerMessageData,
 	CloseContainerMessage,
 	CloseContainerMessageData,
-	ContainerDataMessage,
-	ContainerDataMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
-	GetContainerDataMessage,
+	DataVisualizationMessage,
+	DataVisualizationMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
+	GetDataVisualizationMessage,
+	GetDataVisualizationMessageData,
+	GetRootDataVisualizationsMessage,
+	GetRootDataVisualizationsMessageData,
+	RootDataVisualizationsMessage,
+	RootDataVisualizationsMessageData,
 } from "./DebuggerMessages";
 export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";

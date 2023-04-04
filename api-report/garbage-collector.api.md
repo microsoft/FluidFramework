@@ -70,7 +70,7 @@ export function trimTrailingSlashes(str: string): string;
 // @public @deprecated
 export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase): Map<string, IGarbageCollectionDetailsBase>;
 
-// @public
+// @public @deprecated
 export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
 
 // (No @packageDocumentation comment for this package)

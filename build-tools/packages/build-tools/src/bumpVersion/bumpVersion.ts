@@ -202,7 +202,7 @@ async function bumpLegacyDependencies(context: Context, versionBump: VersionChan
 	if (versionBump !== "patch") {
 		// Assumes that we want N/N-1 testing
 		const pkg =
-			context.fullPackageMap.get("@fluidframework/test-end-to-end-tests") ||
+			context.fullPackageMap.get("@fluid-internal/test-end-to-end-tests") ||
 			context.fullPackageMap.get("@fluid-internal/end-to-end-tests");
 		if (!pkg) {
 			fatal("Unable to find package @fluid-internal/end-to-end-tests");

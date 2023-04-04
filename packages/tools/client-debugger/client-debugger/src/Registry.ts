@@ -17,6 +17,7 @@ import {
 	postMessagesToWindow,
 	RegistryChangeMessage,
 } from "./messaging";
+import { VisualizeSharedObject } from "./data-visualization";
 
 // TODOs:
 // - Clear registry on `window.beforeunload`, to ensure we do not hold onto stale resources.
@@ -40,19 +41,29 @@ export interface FluidClientDebuggerProps {
 	container: IContainer;
 
 	/**
-	 * The ID of {@link FluidClientDebuggerProps.container | the Container}.
+	 * The ID of the {@link FluidClientDebuggerProps.container | Container}.
 	 */
 	containerId: string;
 
 	/**
-	 * Optional: Data belonging to {@link FluidClientDebuggerProps.container | the Container}.
+	 * (optional) Distributed Data Structures (DDSs) associated with the
+	 * {@link FluidClientDebuggerProps.container | Container}.
 	 *
-	 * @remarks The debugger will not mutate this data.
+	 * @remarks
+	 *
+	 * Providing this data will enable associated tooling to visualize the Fluid data reachable from the provided
+	 * objects.
+	 *
+	 * The debugger will not mutate this data.
+	 *
+	 * @privateRemarks TODO: rename this to make it more clear that this data does not *belong* to the Container.
 	 */
-	containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+	containerData?: Record<string, IFluidLoadable>;
+
+	// TODO: Accept custom data visualizers.
 
 	/**
-	 * Optional: Nickname for {@link FluidClientDebuggerProps.container | the Container} / debugger instance.
+	 * (optional) Nickname for the {@link FluidClientDebuggerProps.container | Container} / debugger instance.
 	 *
 	 * @remarks
 	 *
@@ -63,6 +74,19 @@ export interface FluidClientDebuggerProps {
 	 * debugger instances.
 	 */
 	containerNickname?: string;
+
+	/**
+	 * (optional) Configurations for generating visual representations of
+	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link FluidClientDebuggerProps.containerData}.
+	 *
+	 * @remarks
+	 *
+	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
+	 * default visualization implementations.
+	 *
+	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
+	 */
+	dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 /**

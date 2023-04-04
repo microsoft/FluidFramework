@@ -18,7 +18,6 @@ import { HasContainerId } from "@fluid-tools/client-debugger";
 import * as React from "react";
 
 import { initializeFluentUiIcons } from "../InitializeIcons";
-import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
@@ -74,16 +73,7 @@ const containerViewClassName = `fluid-client-debugger-view`;
  *
  * @internal
  */
-export interface ContainerViewProps extends HasContainerId {
-	/**
-	 * Rendering policies for different kinds of Fluid client and object data.
-	 *
-	 * @defaultValue Strictly use default visualization policies.
-	 *
-	 * @privateRemarks TODO: get render options from debugger object.
-	 */
-	renderOptions?: RenderOptions;
-}
+export type ContainerViewProps = HasContainerId;
 
 /**
  * Displays information about the provided container and its audience.
@@ -91,8 +81,7 @@ export interface ContainerViewProps extends HasContainerId {
  * @internal
  */
 export function ContainerView(props: ContainerViewProps): React.ReactElement {
-	const { containerId, renderOptions: userRenderOptions } = props;
-	const renderOptions: Required<RenderOptions> = getRenderOptionsWithDefaults(userRenderOptions);
+	const { containerId } = props;
 
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
@@ -101,20 +90,10 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData:
-			innerView = (
-				<DataObjectsView
-					containerId={containerId}
-					renderOptions={renderOptions.sharedObjectRenderOptions}
-				/>
-			);
+			innerView = <DataObjectsView containerId={containerId} />;
 			break;
 		case PanelView.Audience:
-			innerView = (
-				<AudienceView
-					containerId={containerId}
-					onRenderAudienceMember={renderOptions.onRenderAudienceMember}
-				/>
-			);
+			innerView = <AudienceView containerId={containerId} />;
 			break;
 		case PanelView.ContainerStateHistory:
 			innerView = <ContainerHistoryView containerId={containerId} />;

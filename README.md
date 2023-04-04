@@ -101,7 +101,7 @@ cd FluidFramework
 Run the following to build the client packages:
 
 ```shell
-npm i -g pnpm
+corepack enable
 pnpm install
 npm run build:fast
 ```

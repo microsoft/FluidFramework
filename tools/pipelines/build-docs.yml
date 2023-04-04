@@ -118,6 +118,8 @@ resources:
 stages:
 - stage: build
   displayName: 'Build website'
+  env:
+    COREPACK_DEFAULT_TO_LATEST: 0
   dependsOn: [] # run in parallel
   jobs:
     - job: debug_variables
@@ -202,7 +204,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              npm i -g pnpm@7.30.5
+              corepack enable
               pnpm -v
               pnpm config set store-dir $(pnpmStorePath)
 

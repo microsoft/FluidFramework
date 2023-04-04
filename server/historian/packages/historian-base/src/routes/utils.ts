@@ -115,10 +115,6 @@ export function queryParamToString(value: any): string {
 	return value;
 }
 
-export const Constants = Object.freeze({
-	throttleIdSuffix: "HistorianRest",
-});
-
 /**
  * Validate specific request parameters to prevent directory traversal.
  * TODO: replace with validateRequestParams from service-shared.
