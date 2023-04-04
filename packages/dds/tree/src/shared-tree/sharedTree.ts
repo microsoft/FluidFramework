@@ -301,6 +301,11 @@ class SharedTree
 			super.processCore(message, local, localOpMetadata);
 		}
 	}
+	protected override reSubmitCore(content: any, localOpMetadata: unknown): void {
+		if (!this.storedSchema.tryResubmitOp(content)) {
+			super.reSubmitCore(content, localOpMetadata);
+		}
+	}
 }
 
 /**
