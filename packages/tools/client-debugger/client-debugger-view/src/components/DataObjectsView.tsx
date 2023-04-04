@@ -11,10 +11,10 @@ import {
 	InboundHandlers,
 	RootHandleNode,
 } from "@fluid-tools/client-debugger";
-import { SharedObjectRenderOptions } from "../RendererOptions";
 
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
+import { waitingLabels } from "./WaitingLabels";
 import { FluidDataView } from "./FluidDataView";
 
 const loggingContext = "EXTENSION(DataObjectsView)";
@@ -64,6 +64,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
 		messageRelay.on("message", messageHandler);
 
+		// POST Request for DDS data in container.
 		messageRelay.postMessage({
 			type: "GET_ROOT_DATA_VISUALIZATIONS",
 			data: {
@@ -74,19 +75,17 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [containerId, rootDataHandles, messageRelay]);
+	}, [containerId, setRootDataHandles, messageRelay]);
 
 	if (rootDataHandles === undefined) {
-		return <Waiting label="Waiting for container DDS data. DATAOBJECTSVIEW" />;
+		return <Waiting label={waitingLabels.containerError} />;
 	}
 
 	return (
 		<div>
-			<>
-				{Object.entries(rootDataHandles).map(([_, fluidObject], index) => {
-					return <FluidDataView containerId={containerId} node={fluidObject} />;
-				})}
-			</>
+			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
+				return <FluidDataView key={key} containerId={containerId} node={fluidObject} />;
+			})}
 		</div>
 	);
 }

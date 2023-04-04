@@ -6,14 +6,18 @@ import React from "react";
 import { HasContainerId, VisualNode, VisualNodeKind } from "@fluid-tools/client-debugger";
 import { FluidHandleView } from "./FluidHandleView";
 import { TreeView } from "./TreeView";
+import { FluidTreeView } from "./FluidTreeView";
 import { ValueView } from "./ValueView";
+import { FluidValueView } from "./FluidValueView";
+import { UnknownFluidObjectView } from "./UnknownFluidObjectView";
 import { UnknownDataView } from "./UnknownDataView";
+import { Waiting } from "./Waiting";
+import { waitingLabels } from "./WaitingLabels";
 
 /**
  * {@link FluidDataView} input props
  */
 export interface FluidDataViewProps extends HasContainerId {
-	containerId: string;
 	node: VisualNode;
 }
 
@@ -26,33 +30,49 @@ export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
 	let view: React.ReactElement;
 	switch (node.nodeKind) {
 		/**
-		 * node with children
-		 * TreeNodeBase
+		 * Node with children.
 		 */
 		case VisualNodeKind.TreeNode:
-		case VisualNodeKind.FluidTreeNode:
 			view = <TreeView containerId={containerId} node={node} />;
 			break;
 		/**
-		 * node with primitive value
-		 * ValueNodeBase
+		 * FluidObjectNode with children.
+		 */
+		case VisualNodeKind.FluidTreeNode:
+			view = <FluidTreeView containerId={containerId} node={node} />;
+			break;
+		/**
+		 * Node with primitive value.
 		 */
 		case VisualNodeKind.ValueNode:
-		case VisualNodeKind.FluidValueNode:
 			view = <ValueView containerId={containerId} node={node} />;
 			break;
 		/**
-		 * unknown node type
+		 * FluidObjectNode with primitive value.
+		 */
+		case VisualNodeKind.FluidValueNode:
+			view = <FluidValueView containerId={containerId} node={node} />;
+			break;
+		/**
+		 * Unknown SharedObject data type.
 		 */
 		case VisualNodeKind.FluidUnknownObjectNode:
+			view = <UnknownFluidObjectView containerId={containerId} node={node} />;
+			break;
+		/**
+		 * Unknown data type.
+		 */
 		case VisualNodeKind.UnknownObjectNode:
 			view = <UnknownDataView containerId={containerId} node={node} />;
 			break;
 		/**
-		 * POST request to FluidClientDebugger
+		 * POST request to FluidClientDebugger.
 		 */
 		case VisualNodeKind.FluidHandleNode:
 			view = <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
+			break;
+		default:
+			view = <Waiting label={waitingLabels.undefinedError} />;
 			break;
 	}
 

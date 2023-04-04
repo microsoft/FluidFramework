@@ -13,6 +13,7 @@ import {
 import React from "react";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
+import { waitingLabels } from "./WaitingLabels";
 import { FluidDataView } from "./FluidDataView";
 
 const loggingContext = "EXTENSION(HandleView)";
@@ -21,6 +22,7 @@ const loggingContext = "EXTENSION(HandleView)";
  * {@link FluidHandleView} input props.
  */
 export interface FluidHandleViewProps extends HasContainerId {
+	containerId: string;
 	fluidObjectId: string;
 }
 
@@ -29,7 +31,6 @@ export interface FluidHandleViewProps extends HasContainerId {
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
 	const { containerId, fluidObjectId } = props;
-
 	const messageRelay = useMessageRelay();
 
 	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
@@ -65,16 +66,19 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		}
 
 		messageRelay.on("message", messageHandler);
+
+		// POST Request for FluidObjectNode
 		messageRelay.postMessage({
 			type: "GET_DATA_VISUALIZATION",
 			data: {
+				containerId,
 				fluidObjectId,
 			},
 		});
 	}, [containerId, visualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
-		return <Waiting label="Waiting for container DDS data." />;
+		return <Waiting label={waitingLabels.containerError} />;
 	}
 
 	return <FluidDataView containerId={containerId} node={visualTree} />;

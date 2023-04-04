@@ -19,12 +19,5 @@ export interface ValueViewProps extends HasContainerId {
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
-	return (
-		<>
-			<h1>
-				{" "}
-				{containerId} {node}{" "}
-			</h1>
-		</>
-	);
+	return <>{`containerId: ${containerId}, value: ${JSON.stringify(node.value)}`}</>;
 }

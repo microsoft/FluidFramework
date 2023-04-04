@@ -10,7 +10,7 @@ import { waitingLabels } from "./WaitingLabels";
 /**
  * {@link UnknownDataView} input props
  */
-export interface UnknownDataViewProps extends HasContainerId {
+export interface UnknownFluidObjectViewProps extends HasContainerId {
 	containerId: string;
 	node: FluidObjectNodeBase | VisualNodeBase;
 }
@@ -18,12 +18,12 @@ export interface UnknownDataViewProps extends HasContainerId {
 /**
  * Displays visual summary trees for DDS_s within the container
  */
-export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
+export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
 	return (
 		<Waiting
-			label={`${waitingLabels.unknownDataError}: ${containerId}, Node: ${JSON.stringify(
+			label={`${waitingLabels.unkownFluidDataError}: ${containerId}, Node: ${JSON.stringify(
 				node,
 			)}`}
 		/>
