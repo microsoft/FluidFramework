@@ -7,7 +7,6 @@ import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fl
 import { useId } from "@fluentui/react-hooks";
 import {
 	Badge,
-	makeStyles,
 	Table,
 	TableBody,
 	TableRow,
@@ -33,13 +32,6 @@ import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 
-const useOverrides = makeStyles({
-	cell: {
-		...shorthands.border('1px', 'solid', tokens.colorNeutralBackground1),
-		// fontWeight: "light",
-	},
-});
-
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
@@ -57,7 +49,6 @@ export type ContainerSummaryViewProps = HasContainerId;
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerId } = props;
-	const classes = useOverrides();
 
 	const messageRelay: IMessageRelay = useMessageRelay();
 
@@ -158,12 +149,12 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	return (
 		<Stack className="container-summary-view">
 			<StackItem>
-				<Table className={classes.cell}>
+				<Table>
 					<TableBody>
 						<TableRow>
 							<TableCell>
 								<TableCellLayout>
-									<b>Container</b>
+									<b>Container</b>:
 								</TableCellLayout>
 							</TableCell>
 							<TableCell>

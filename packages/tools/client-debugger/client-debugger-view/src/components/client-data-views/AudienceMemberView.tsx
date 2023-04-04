@@ -53,7 +53,7 @@ export function AudienceMemberView(props: AudienceMemberViewProps): React.ReactE
 
 	const headerBackgroundColor = isUserMyself
 		? tokens.colorPaletteBlueBackground2
-		: tokens.colorPaletteYellowBorder1;
+		: tokens.colorPaletteYellowBackground2;
 
 	let view: React.ReactElement;
 	if (connectionCount === 1) {
