@@ -40,7 +40,6 @@ import {
 } from "../core";
 import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
-import { StableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -218,17 +217,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param revision - The revision to associate with the change.
 	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
-	protected applyChange(change: TChange, revision?: StableId): void {
-		const commit = this.addLocalChangeWithRevision(
-			change,
-			revision ? revision : mintRevisionTag(),
-		);
+	protected applyChange(change: TChange, revision?: RevisionTag): void {
+		const commit = this.addLocalChange(change, revision ?? mintRevisionTag());
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
 	}
 
-	private addLocalChangeWithRevision(change: TChange, revision: StableId): Commit<TChange> {
+	private addLocalChange(change: TChange, revision: RevisionTag): Commit<TChange> {
 		const commit = {
 			change,
 			revision,
@@ -333,15 +329,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected override reSubmitCore(content: any, localOpMetadata: unknown) {
-		const [commit, commitsAfter] = this.editManager.findLocalCommit(content.revision);
-		console.log(commitsAfter);
+		const [commit] = this.editManager.findLocalCommit(content.revision);
 		this.submitCommit(commit);
 	}
 
 	protected applyStashedOp(content: any): undefined {
 		const { revision, changeset } = content as Message;
 		const decodedChangeset = this.changeFamily.encoder.decodeJson(formatVersion, changeset);
-		this.addLocalChangeWithRevision(decodedChangeset, revision);
+		this.addLocalChange(decodedChangeset, revision);
 		return;
 	}
 
