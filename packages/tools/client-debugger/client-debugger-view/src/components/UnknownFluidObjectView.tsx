@@ -22,9 +22,9 @@ export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): Reac
 
 	return (
 		<Waiting
-			label={`${waitingLabels.unkownFluidDataError}: ${containerId}, ${node.fluidObjectId} Node: ${JSON.stringify(
-				node,
-			)}`}
+			label={`${waitingLabels.unkownFluidDataError}: ${containerId}, ${
+				node.fluidObjectId
+			} Node: ${JSON.stringify(node)}`}
 		/>
 	);
 }
