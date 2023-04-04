@@ -165,10 +165,9 @@ export class FluidDevtools
 			existingDebugger.dispose();
 		}
 
-		const clientDebugger = new ContainerDevtools(props);
-		console.log(`Add new debugger${clientDebugger.containerId}`);
-		this.containerDevtools.set(containerId, clientDebugger);
-		this.emit("debuggerRegistered", containerId, clientDebugger);
+		const containerDevtools = new ContainerDevtools(props);
+		this.containerDevtools.set(containerId, containerDevtools);
+		this.emit("containerRegistered", containerId, containerDevtools);
 	}
 
 	/**
@@ -176,15 +175,15 @@ export class FluidDevtools
 	 */
 	public closeContainerDevtools(containerId: string): void {
 		if (this.containerDevtools.has(containerId)) {
-			const clientDebugger = this.containerDevtools.get(containerId);
-			if (clientDebugger === undefined) {
+			const containerDevtools = this.containerDevtools.get(containerId);
+			if (containerDevtools === undefined) {
 				console.warn(
 					`No active client debugger associated with container ID "${containerId}" was found.`,
 				);
 			} else {
-				clientDebugger.dispose();
+				containerDevtools.dispose();
 				this.containerDevtools.delete(containerId);
-				this.emit("debuggerClosed", containerId);
+				this.emit("containerDevtoolsClosed", containerId);
 			}
 		} else {
 			console.warn(`Fluid Client debugger never been registered.`);
