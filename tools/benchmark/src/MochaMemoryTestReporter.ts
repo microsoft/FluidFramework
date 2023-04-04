@@ -11,10 +11,14 @@ import * as fs from "fs";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 import chalk from "chalk";
-import { isChildProcess } from "../Configuration";
-import { pad, prettyNumber, getName } from "../ReporterUtilities";
-import { MemoryBenchmarkStats } from "./memoryTestRunner";
-import { getSuiteName } from "./mochaReporterUtilities";
+import { isChildProcess } from "./Configuration";
+import { pad, prettyNumber, getName } from "./ReporterUtilities";
+// TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
+// Since its not moved yet, it needs this lint suppression to do this import:
+// eslint-disable-next-line import/no-internal-modules
+import { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
+// eslint-disable-next-line import/no-internal-modules
+import { getSuiteName } from "./mocha/mochaReporterUtilities";
 
 /**
  * Custom mocha reporter for memory tests. It can be used by passing the JavaScript version of this file to
