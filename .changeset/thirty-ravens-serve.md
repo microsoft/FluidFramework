@@ -1,15 +1,17 @@
 ---
-"@fluidframework/runtime-definitions": minor
-"@fluidframework/test-end-to-end-tests": minor
+"@fluid-internal/tree": minor
 "@fluidframework/container-runtime": minor
+"@fluidframework/datastore": minor
 "@fluidframework/garbage-collector": minor
 "@fluidframework/runtime-utils": minor
-"@fluidframework/datastore": minor
+"@fluidframework/test-end-to-end-tests": minor
 ---
 
-garbage-collector and related items deprecated
+@fluidframework/garbage-collector deprecated
 
-The following functions, interfaces, and types currently available in `@fluidframework/garbage-collector` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+The `@fluidframework/garbage-collector` package is deprecated with the following functions, interfaces, and types in it.
+These are internal implementation details and have been deprecated for public use. They will be removed in an upcoming
+release.
 
 -   `cloneGCData`
 -   `concatGarbageCollectionData`
@@ -23,3 +25,4 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `trimLeadingSlashes`
 -   `trimTrailingSlashes`
 -   `unpackChildNodesGCDetails`
+-   `unpackChildNodesUsedRoutes`
