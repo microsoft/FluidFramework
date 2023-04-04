@@ -16,6 +16,7 @@ import {
 	postMessagesToWindow,
 } from "./messaging";
 import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+import { ContainerMetadata } from "./ContainerMetadata";
 
 // TODOs:
 // - Devtools disposal
@@ -73,7 +74,7 @@ export class FluidDevtools
 	 * Stores Container-level devtools instances registered with this object.
 	 * Maps from Container IDs to the corresponding devtools instance.
 	 */
-	private readonly containerDevtools: Map<string, ContainerDevtools>;
+	private readonly containers: Map<string, ContainerDevtools>;
 
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
@@ -109,13 +110,17 @@ export class FluidDevtools
 	 * Posts a {@link ContainerListChangeMessage} to the window (globalThis).
 	 */
 	private readonly postContainerListChange = (): void => {
+		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
+			(containerDevtools) => ({
+				id: containerDevtools.containerId,
+				nickname: containerDevtools.containerNickname,
+			}),
+		);
+
 		postMessagesToWindow<ContainerListChangeMessage>(devtoolsMessageLoggingOptions, {
 			type: "CONTAINER_LIST_CHANGE",
 			data: {
-				containers: [...this.containerDevtools.values()].map((clientDebugger) => ({
-					id: clientDebugger.containerId,
-					nickname: clientDebugger.containerNickname,
-				})),
+				containers,
 			},
 		});
 	};
@@ -126,10 +131,10 @@ export class FluidDevtools
 		super();
 
 		// Populate initial Container-level devtools
-		this.containerDevtools = new Map<string, ContainerDevtools>();
+		this.containers = new Map<string, ContainerDevtools>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
-				this.containerDevtools.set(
+				this.containers.set(
 					containerConfig.containerId,
 					new ContainerDevtools(containerConfig),
 				);
@@ -157,7 +162,7 @@ export class FluidDevtools
 		}
 
 		const { containerId } = props;
-		const existingDebugger = this.containerDevtools.get(containerId);
+		const existingDebugger = this.containers.get(containerId);
 		if (existingDebugger !== undefined) {
 			console.warn(
 				`Active debugger registry already contains an entry for container ID "${containerId}". Override existing entry.`,
@@ -166,7 +171,7 @@ export class FluidDevtools
 		}
 
 		const containerDevtools = new ContainerDevtools(props);
-		this.containerDevtools.set(containerId, containerDevtools);
+		this.containers.set(containerId, containerDevtools);
 		this.emit("containerRegistered", containerId, containerDevtools);
 	}
 
@@ -180,14 +185,14 @@ export class FluidDevtools
 			);
 		}
 
-		const containerDevtools = this.containerDevtools.get(containerId);
+		const containerDevtools = this.containers.get(containerId);
 		if (containerDevtools === undefined) {
 			console.warn(
 				`No ContainerDevtools associated with container ID "${containerId}" was found.`,
 			);
 		} else {
 			containerDevtools.dispose();
-			this.containerDevtools.delete(containerId);
+			this.containers.delete(containerId);
 			this.emit("containerDevtoolsClosed", containerId);
 		}
 	}
@@ -200,7 +205,7 @@ export class FluidDevtools
 			throw new UsageError("The Devtools has been disposed.");
 		}
 
-		return this.containerDevtools.get(containerId);
+		return this.containers.get(containerId);
 	}
 
 	/**
@@ -211,7 +216,7 @@ export class FluidDevtools
 			throw new UsageError("The Devtools has been disposed.");
 		}
 
-		return [...this.containerDevtools.values()];
+		return [...this.containers.values()];
 	}
 
 	/**
@@ -230,11 +235,11 @@ export class FluidDevtools
 		}
 
 		// Dispose of container-level devtools
-		for (const [containerId, containerDevtools] of this.containerDevtools) {
+		for (const [containerId, containerDevtools] of this.containers) {
 			containerDevtools.dispose();
 			this.emit("containerDevtoolsClosed", containerId);
 		}
-		this.containerDevtools.clear();
+		this.containers.clear();
 
 		// Notify listeners that the devtools have been disposed.
 		this.emit("devtoolsDisposed");
