@@ -267,6 +267,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 
+		// Summarize the root node and store it as a summary tree
 		const tree = this.summarizeNode(
 			this.root,
 			incrementalSummaryContext,
@@ -279,28 +280,40 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 		return builder.getSummaryTree();
 	}
 
+	// Creates a summary tree for a node
 	private summarizeNode(
 		node: ITreeNode,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 		path?: string,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
+
+		// This is the nodeData of the tree that we need to store in the blob
 		const nodeData: ISerializableTreeNode = {
 			children: [],
 			name: node.name,
 			seqNumber: node.seqNumber,
 		};
 
+		// Go through each child and either generate a handle or tree node
 		for (const childNode of node.children) {
+			// Populate the nodeData
 			nodeData.children.push(childNode.name);
+
+			// Generate the child path if given a path.
+			// The only time path === undefined is when incremental summary context is undefined
 			const childPath = path ? `${path}/${childNode.name}` : undefined;
+
+			// Determine if the child has changed, generate a handle if that's the case
 			if (
 				incrementalSummaryContext !== undefined &&
 				childNode.seqNumber <= incrementalSummaryContext.latestSummarySequenceNumber
 			) {
+				// Generate a handle
 				assert(childPath !== undefined, "Path should be defined!");
 				builder.addHandle(childNode.name, SummaryType.Tree, childPath);
 			} else {
+				// Generate a tree
 				builder.addWithStats(
 					childNode.name,
 					this.summarizeNode(childNode, incrementalSummaryContext, childPath),
@@ -308,12 +321,15 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 			}
 		}
 
-		// Note: you can also make this part of the tree incremental, check the TreeBlobDDS for that
+		// Note: you can also make this part of the tree incremental, check the BlobDDS for that
+		// Unfortunately for DDSes, the snapshot tree is not given to the DDS, the IChannelStorageService should be
+		// updated to return the DDS tree itself
 		builder.addBlob(headerBlobName, JSON.stringify(nodeData));
 
 		return builder.getSummaryTree();
 	}
 
+	// Loads the root node from storage
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const loadedRoot = await this.loadTreeNode(storage, rootNodeName);
 		this.root.children = loadedRoot.children;
@@ -322,6 +338,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 	}
 
 	private async loadTreeNode(storage: IChannelStorageService, path: string): Promise<ITreeNode> {
+		// Based on the storage API, we have to retrieve the data from a blob instead of using the snapshot tree itself
 		const nodeData = await readAndParse<ISerializableTreeNode>(
 			storage,
 			`${path}/${headerBlobName}`,
@@ -369,6 +386,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 
 	// searches the node tree for a given path, updates the seq number of each node
 	// returns the found child node.
+	// This essentially updates the sequence number of the spine of the tree.
 	private findNodeAndUpdateSeqNumber(
 		path: string[],
 		current: ITreeNode,
@@ -397,6 +415,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 		this.validatePath(newPath, child);
 	}
 
+	// Finds a treeNode in a list of tree nodes with the given name
 	private searchForChild(name: string, children: ITreeNode[]): ITreeNode {
 		for (const child of children) {
 			if (child.name === name) {
@@ -406,6 +425,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 		throw new Error("child not found!");
 	}
 
+	// All this does is creates a new node attached to some parent with the path starting from the root node
 	public createTreeOp(parentPath: string[], name: string) {
 		this.validatePath(parentPath, this.root);
 		const op: ICreateTreeNodeOp = {
@@ -425,165 +445,173 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 /**
  * Validates that incremental summaries can be created at the sub DDS level
  */
-describeNoCompat(
-	"Incremental summary context fields are properly populated",
-	(getTestObjectProvider) => {
-		let provider: ITestObjectProvider;
-		const dataObjectFactory = new TestFluidObjectFactory([
-			[
-				TestIncrementalSummaryTreeDDS.getFactory().type,
-				TestIncrementalSummaryTreeDDS.getFactory(),
-			],
-			[
-				TestIncrementalSummaryBlobDDS.getFactory().type,
-				TestIncrementalSummaryBlobDDS.getFactory(),
-			],
-		]);
-		const runtimeOptions: IContainerRuntimeOptions = {
-			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-		};
-		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
-			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	const dataObjectFactory = new TestFluidObjectFactory([
+		[
+			TestIncrementalSummaryTreeDDS.getFactory().type,
+			TestIncrementalSummaryTreeDDS.getFactory(),
+		],
+		[
+			TestIncrementalSummaryBlobDDS.getFactory().type,
+			TestIncrementalSummaryBlobDDS.getFactory(),
+		],
+	]);
+	const runtimeOptions: IContainerRuntimeOptions = {
+		summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+	};
+	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+		runtime.IFluidHandleContext.resolveHandle(request);
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+		dataObjectFactory,
+		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+		undefined,
+		[innerRequestHandler],
+		runtimeOptions,
+	);
+
+	const createContainer = async (): Promise<IContainer> => {
+		return provider.createContainer(runtimeFactory);
+	};
+
+	async function loadContainer(summaryVersion: string) {
+		return provider.loadContainer(runtimeFactory, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+	}
+
+	async function createSummarizer(container: IContainer, summaryVersion?: string) {
+		const createSummarizerResult = await createSummarizerFromFactory(
+			provider,
+			container,
 			dataObjectFactory,
-			[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-			undefined,
-			[innerRequestHandler],
-			runtimeOptions,
+			summaryVersion,
+			getContainerRuntimeApi(pkgVersion, pkgVersion)
+				.ContainerRuntimeFactoryWithDefaultDataStore,
+		);
+		return createSummarizerResult.summarizer;
+	}
+
+	beforeEach(async () => {
+		provider = getTestObjectProvider({ syncSummarizer: true });
+	});
+
+	it("can create summary handles for blobs in DDSes that do not change", async () => {
+		const container = await createContainer();
+		const datastore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dds = await datastore.getSharedObject<TestIncrementalSummaryBlobDDS>(
+			TestIncrementalSummaryBlobDDS.getFactory().type,
+		);
+		// Each op leads to the creation of a new blob in the summary.
+		// Older blobs never are modified in this case for simplicity sake.
+		dds.createBlobOp("test data 1");
+		dds.createBlobOp("test data 2");
+		dds.createBlobOp("test data 3");
+
+		const summarizer = await createSummarizer(container);
+		await provider.ensureSynchronized();
+		await summarizeNow(summarizer);
+
+		// This op goes into a different blob. The previous unchanged 3 should be summarized as summary handles.
+		dds.createBlobOp("test data 4");
+
+		await provider.ensureSynchronized();
+		const { summaryTree } = await summarizeNow(summarizer);
+
+		// Verify the summary tree is generated as we expected it to be.
+		assert(summaryTree.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
+		const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
+		assert(dataObjectTree.type === SummaryType.Tree, "tree!");
+		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
+		assert(dataObjectChannelsTree.type === SummaryType.Tree, "data store channels tree!");
+		const ddsTree = dataObjectChannelsTree.tree[dds.id];
+		assert(ddsTree.type === SummaryType.Tree, "dds tree!");
+		assert(ddsTree.tree["0"].type === SummaryType.Handle);
+		assert(ddsTree.tree["1"].type === SummaryType.Handle);
+		assert(ddsTree.tree["2"].type === SummaryType.Handle);
+		assert(ddsTree.tree["3"].type === SummaryType.Blob);
+	});
+
+	it("can create summary handles for trees in DDSes that do not change", async () => {
+		const container = await createContainer();
+		const datastore = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dds = await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(
+			TestIncrementalSummaryTreeDDS.getFactory().type,
+		);
+		// Tree starts with a root with name rootNodeName
+		// The next ops create this tree
+		//   root
+		//   / | \
+		//  a  b  c
+		dds.createTreeOp([rootNodeName], "a");
+		dds.createTreeOp([rootNodeName], "b");
+		dds.createTreeOp([rootNodeName], "c");
+
+		const summarizer = await createSummarizer(container);
+		await provider.ensureSynchronized();
+		await summarizeNow(summarizer);
+
+		// This tree gets updated this way
+		//   root
+		//   / | \
+		//  a  b  c
+		//     |
+		//     f
+		// a and c should be handles, and the root -> b -> f should be trees
+		dds.createTreeOp([rootNodeName, "b"], "f");
+
+		await provider.ensureSynchronized();
+		const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
+
+		// Verify the summary tree is generated as we expected it to be.
+		// Handles for "a" and "c", "b" and "f" should be trees
+		assert(summaryTree.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
+		const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
+		assert(dataObjectTree.type === SummaryType.Tree, "tree!");
+		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
+		assert(dataObjectChannelsTree.type === SummaryType.Tree, "data store channels tree!");
+		const ddsTree = dataObjectChannelsTree.tree[dds.id];
+		assert(ddsTree.type === SummaryType.Tree, "dds tree!");
+		const rootNode = ddsTree.tree[rootNodeName];
+		assert(rootNode.type === SummaryType.Tree);
+		assert(rootNode.tree.a.type === SummaryType.Handle);
+		assert(rootNode.tree.b.type === SummaryType.Tree);
+		assert(rootNode.tree.b.tree.f.type === SummaryType.Tree);
+		assert(rootNode.tree.c.type === SummaryType.Handle);
+
+		// Test that we can load from multiple containers
+		const container2 = await loadContainer(summaryVersion);
+		const datastore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const dds2 = await datastore2.getSharedObject<TestIncrementalSummaryTreeDDS>(
+			TestIncrementalSummaryTreeDDS.getFactory().type,
 		);
 
-		const createContainer = async (): Promise<IContainer> => {
-			return provider.createContainer(runtimeFactory);
-		};
+		// This tree gets updated this way
+		//   root
+		//   / | \
+		//  a  b  c
+		//     |   \
+		//     f    g
+		// a and c should be handles, and the root -> b -> f should be trees
+		dds2.createTreeOp([rootNodeName, "c"], "g");
 
-		async function loadContainer(summaryVersion: string) {
-			return provider.loadContainer(runtimeFactory, undefined, {
-				[LoaderHeader.version]: summaryVersion,
-			});
-		}
+		await provider.ensureSynchronized();
+		const { summaryTree: summaryTree2 } = await summarizeNow(summarizer);
 
-		async function createSummarizer(container: IContainer, summaryVersion?: string) {
-			const createSummarizerResult = await createSummarizerFromFactory(
-				provider,
-				container,
-				dataObjectFactory,
-				summaryVersion,
-				getContainerRuntimeApi(pkgVersion, pkgVersion)
-					.ContainerRuntimeFactoryWithDefaultDataStore,
-			);
-			return createSummarizerResult.summarizer;
-		}
-
-		beforeEach(async () => {
-			provider = getTestObjectProvider({ syncSummarizer: true });
-		});
-
-		it("can create summary handles for blobs in DDSes that do not change", async () => {
-			const container = await createContainer();
-			const datastore = await requestFluidObject<ITestFluidObject>(container, "default");
-			const dds = await datastore.getSharedObject<TestIncrementalSummaryBlobDDS>(
-				TestIncrementalSummaryBlobDDS.getFactory().type,
-			);
-			// Each op goes into a different blob
-			dds.createBlobOp("test data 1");
-			dds.createBlobOp("test data 2");
-			dds.createBlobOp("test data 3");
-
-			const summarizer = await createSummarizer(container);
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
-
-			// This op goes into a different blob. The previous unchanged 3 should be summarized as summary handles.
-			dds.createBlobOp("test data 4");
-
-			await provider.ensureSynchronized();
-			const { summaryTree } = await summarizeNow(summarizer);
-			assert(summaryTree.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
-			const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
-			assert(dataObjectTree.type === SummaryType.Tree, "tree!");
-			const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
-			assert(dataObjectChannelsTree.type === SummaryType.Tree, "data store channels tree!");
-			const ddsTree = dataObjectChannelsTree.tree[dds.id];
-			assert(ddsTree.type === SummaryType.Tree, "dds tree!");
-			assert(ddsTree.tree["0"].type === SummaryType.Handle);
-			assert(ddsTree.tree["1"].type === SummaryType.Handle);
-			assert(ddsTree.tree["2"].type === SummaryType.Handle);
-			assert(ddsTree.tree["3"].type === SummaryType.Blob);
-		});
-
-		it("can create summary handles for trees in DDSes that do not change", async () => {
-			const container = await createContainer();
-			const datastore = await requestFluidObject<ITestFluidObject>(container, "default");
-			const dds = await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(
-				TestIncrementalSummaryTreeDDS.getFactory().type,
-			);
-			// Tree starts with a root with name rootNodeName
-			// The next ops create this tree
-			//   root
-			//   / | \
-			//  a  b  c
-			dds.createTreeOp([rootNodeName], "a");
-			dds.createTreeOp([rootNodeName], "b");
-			dds.createTreeOp([rootNodeName], "c");
-
-			const summarizer = await createSummarizer(container);
-			await provider.ensureSynchronized();
-			await summarizeNow(summarizer);
-
-			// This tree gets updated this way
-			//   root
-			//   / | \
-			//  a  b  c
-			//     |
-			//     f
-			// a and c should be handles, and the root -> b -> f should be trees
-			dds.createTreeOp([rootNodeName, "b"], "f");
-
-			await provider.ensureSynchronized();
-			const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
-			assert(summaryTree.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
-			const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
-			assert(dataObjectTree.type === SummaryType.Tree, "tree!");
-			const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
-			assert(dataObjectChannelsTree.type === SummaryType.Tree, "data store channels tree!");
-			const ddsTree = dataObjectChannelsTree.tree[dds.id];
-			assert(ddsTree.type === SummaryType.Tree, "dds tree!");
-			const rootNode = ddsTree.tree[rootNodeName];
-			assert(rootNode.type === SummaryType.Tree);
-			assert(rootNode.tree.a.type === SummaryType.Handle);
-			assert(rootNode.tree.c.type === SummaryType.Handle);
-			assert(rootNode.tree.b.type === SummaryType.Tree);
-			assert(rootNode.tree.b.tree.f.type === SummaryType.Tree);
-
-			const container2 = await loadContainer(summaryVersion);
-			const datastore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-			const dds2 = await datastore2.getSharedObject<TestIncrementalSummaryTreeDDS>(
-				TestIncrementalSummaryTreeDDS.getFactory().type,
-			);
-			// This tree gets updated this way
-			//   root
-			//   / | \
-			//  a  b  c
-			//     |   \
-			//     f    g
-			// a and c should be handles, and the root -> b -> f should be trees
-			dds2.createTreeOp([rootNodeName, "c"], "g");
-
-			await provider.ensureSynchronized();
-			const { summaryTree: summaryTree2 } = await summarizeNow(summarizer);
-			assert(summaryTree2.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
-			const dataObjectTree2 = summaryTree2.tree[".channels"].tree[datastore2.runtime.id];
-			assert(dataObjectTree2.type === SummaryType.Tree, "tree!");
-			const dataObjectChannelsTree2 = dataObjectTree2.tree[".channels"];
-			assert(dataObjectChannelsTree2.type === SummaryType.Tree, "data store channels tree!");
-			const ddsTree2 = dataObjectChannelsTree2.tree[dds2.id];
-			assert(ddsTree2.type === SummaryType.Tree, "dds tree!");
-			const rootNode2 = ddsTree2.tree[rootNodeName];
-			assert(rootNode2.type === SummaryType.Tree);
-			assert(rootNode2.tree.a.type === SummaryType.Handle);
-			assert(rootNode2.tree.b.type === SummaryType.Handle);
-			assert(rootNode2.tree.c.type === SummaryType.Tree);
-			assert(rootNode2.tree.c.tree.g.type === SummaryType.Tree);
-		});
-	},
-);
+		// Verify the summary tree is generated as we expected it to be.
+		// Handles for "a" and "b", "c" and "g" should be trees, "f" is under "b" and thus shouldn't be in the summary.
+		assert(summaryTree2.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
+		const dataObjectTree2 = summaryTree2.tree[".channels"].tree[datastore2.runtime.id];
+		assert(dataObjectTree2.type === SummaryType.Tree, "tree!");
+		const dataObjectChannelsTree2 = dataObjectTree2.tree[".channels"];
+		assert(dataObjectChannelsTree2.type === SummaryType.Tree, "data store channels tree!");
+		const ddsTree2 = dataObjectChannelsTree2.tree[dds2.id];
+		assert(ddsTree2.type === SummaryType.Tree, "dds tree!");
+		const rootNode2 = ddsTree2.tree[rootNodeName];
+		assert(rootNode2.type === SummaryType.Tree);
+		assert(rootNode2.tree.a.type === SummaryType.Handle);
+		assert(rootNode2.tree.b.type === SummaryType.Handle);
+		assert(rootNode2.tree.c.type === SummaryType.Tree);
+		assert(rootNode2.tree.c.tree.g.type === SummaryType.Tree);
+	});
+});
