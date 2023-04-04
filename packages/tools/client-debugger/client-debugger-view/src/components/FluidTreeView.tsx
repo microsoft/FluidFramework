@@ -7,14 +7,14 @@ import { HasContainerId, TreeNodeBase } from "@fluid-tools/client-debugger";
 import { FluidDataView } from "./FluidDataView";
 
 /**
- * {@link TreeView} input props
+ * {@link TreeView} input props.
  */
 export interface FluidTreeViewProps extends HasContainerId {
 	node: TreeNodeBase;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container
+ * Displays visual summary trees for DDS_s within the container.
  */
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const { containerId, node } = props;

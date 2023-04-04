@@ -6,14 +6,14 @@ import React from "react";
 import { HasContainerId, ValueNodeBase } from "@fluid-tools/client-debugger";
 
 /**
- * {@link ValueView} input props
+ * {@link ValueView} input props.
  */
 export interface ValueViewProps extends HasContainerId {
 	node: ValueNodeBase;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container
+ * Displays visual summary trees for DDS_s within the container.
  */
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { containerId, node } = props;

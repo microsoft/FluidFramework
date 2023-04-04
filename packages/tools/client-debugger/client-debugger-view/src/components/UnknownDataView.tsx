@@ -8,14 +8,14 @@ import { Waiting } from "./Waiting";
 import { waitingLabels } from "./WaitingLabels";
 
 /**
- * {@link UnknownDataView} input props
+ * {@link UnknownDataView} input props.
  */
 export interface UnknownDataViewProps extends HasContainerId {
 	node: FluidObjectNodeBase | VisualNodeBase;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container
+ * Displays visual summary trees for DDS_s within the container.
  */
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { containerId, node } = props;

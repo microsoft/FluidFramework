@@ -26,7 +26,7 @@ export interface FluidHandleViewProps extends HasContainerId {
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container
+ * Displays visual summary trees for DDS_s within the container.
  */
 export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
 	const { containerId, fluidObjectId } = props;
@@ -36,7 +36,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 
 	React.useEffect(() => {
 		/**
-		 * Handlers for inbound message related to Data View
+		 * Handlers for inbound message related to Data View.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
 			["DATA_VISUALIZATION"]: (untypedMessage) => {
@@ -56,7 +56,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		};
 
 		/**
-		 * Event handler for messages coming from the Message Relay
+		 * Event handler for messages coming from the Message Relay.
 		 */
 		function messageHandler(message: Partial<IDebuggerMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
@@ -66,7 +66,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 
 		messageRelay.on("message", messageHandler);
 
-		// POST Request for FluidObjectNode
+		// POST Request for FluidObjectNode.
 		messageRelay.postMessage({
 			type: "GET_DATA_VISUALIZATION",
 			data: {

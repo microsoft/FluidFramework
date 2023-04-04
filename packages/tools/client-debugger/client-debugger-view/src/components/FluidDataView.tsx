@@ -15,14 +15,14 @@ import { Waiting } from "./Waiting";
 import { waitingLabels } from "./WaitingLabels";
 
 /**
- * {@link FluidDataView} input props
+ * {@link FluidDataView} input props.
  */
 export interface FluidDataViewProps extends HasContainerId {
 	node: VisualNode;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container
+ * Displays visual summary trees for DDS_s within the container.
  */
 export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
 	const { containerId, node } = props;
@@ -54,16 +54,16 @@ export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
 			view = <FluidValueView containerId={containerId} node={node} />;
 			break;
 		/**
-		 * Unknown SharedObject data type.
-		 */
-		case VisualNodeKind.FluidUnknownObjectNode:
-			view = <UnknownFluidObjectView containerId={containerId} node={node} />;
-			break;
-		/**
 		 * Unknown data type.
 		 */
 		case VisualNodeKind.UnknownObjectNode:
 			view = <UnknownDataView containerId={containerId} node={node} />;
+			break;
+		/**
+		 * Unknown SharedObject data type.
+		 */
+		case VisualNodeKind.FluidUnknownObjectNode:
+			view = <UnknownFluidObjectView containerId={containerId} node={node} />;
 			break;
 		/**
 		 * POST request to FluidClientDebugger.

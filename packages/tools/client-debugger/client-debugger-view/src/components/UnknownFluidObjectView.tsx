@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, FluidObjectNodeBase, VisualNodeBase } from "@fluid-tools/client-debugger";
+import { HasContainerId, FluidUnknownObjectNode } from "@fluid-tools/client-debugger";
 import { Waiting } from "./Waiting";
 import { waitingLabels } from "./WaitingLabels";
 
 /**
- * {@link UnknownDataView} input props
+ * {@link UnknownDataView} input props.
  */
 export interface UnknownFluidObjectViewProps extends HasContainerId {
-	node: FluidObjectNodeBase | VisualNodeBase;
+	node: FluidUnknownObjectNode;
 }
 
 /**
- * Displays visual summary trees for DDS_s within the container
+ * Displays visual summary trees for DDS_s within the container.
  */
 export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
 	return (
 		<Waiting
-			label={`${waitingLabels.unkownFluidDataError}: ${containerId}, Node: ${JSON.stringify(
+			label={`${waitingLabels.unkownFluidDataError}: ${containerId}, ${node.fluidObjectId} Node: ${JSON.stringify(
 				node,
 			)}`}
 		/>
