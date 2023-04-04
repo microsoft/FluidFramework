@@ -43,7 +43,7 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
-	tokenRevocationManager?: ITokenRevocationManager
+	tokenRevocationManager?: ITokenRevocationManager,
 ): IRoutes {
 	return {
 		git: {

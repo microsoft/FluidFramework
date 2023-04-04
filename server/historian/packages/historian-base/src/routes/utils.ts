@@ -138,7 +138,9 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 	};
 }
 
-export function verifyTokenNotRevoked(tokenRevocationManager: ITokenRevocationManager | undefined): RequestHandler {
+export function verifyTokenNotRevoked(
+	tokenRevocationManager: ITokenRevocationManager | undefined,
+): RequestHandler {
 	return async (request, response, next) => {
 		try {
 			if (tokenRevocationManager) {
@@ -149,24 +151,25 @@ export function verifyTokenNotRevoked(tokenRevocationManager: ITokenRevocationMa
 
 				let isTokenRevoked = false;
 				if (claims.jti) {
-					isTokenRevoked = await tokenRevocationManager.isTokenRevoked(tenantId, claims.documentId, claims.jti);
+					isTokenRevoked = await tokenRevocationManager.isTokenRevoked(
+						tenantId,
+						claims.documentId,
+						claims.jti,
+					);
 				}
 
 				if (isTokenRevoked) {
 					throw new NetworkError(
 						403,
 						"Permission denied. Token has been revoked.",
-						false, /* canRetry */
-						true /* isFatal */);
+						false /* canRetry */,
+						true /* isFatal */,
+					);
 				}
 			}
 			next();
-		}
-		catch (error) {
-			return handleResponse(
-				Promise.reject(error),
-				response,
-			);
+		} catch (error) {
+			return handleResponse(Promise.reject(error), response);
 		}
 	};
 }
