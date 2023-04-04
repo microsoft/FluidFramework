@@ -9,6 +9,7 @@ importers:
 
   .:
     specifiers:
+      '@changesets/cli': ^2.26.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
@@ -17,6 +18,7 @@ importers:
       '@microsoft/api-extractor': ^7.34.4
       '@octokit/core': ^4.0.5
       c8: ^7.7.1
+      changesets-format-with-issue-links: ^0.3.0
       concurrently: ^7.6.0
       copyfiles: ^2.4.1
       danger: ^10.9.0
@@ -30,6 +32,7 @@ importers:
       syncpack: ^9.8.4
       typescript: ~4.5.5
     devDependencies:
+      '@changesets/cli': 2.26.1
       '@fluid-tools/build-cli': 0.13.1
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.13.1
@@ -38,6 +41,7 @@ importers:
       '@microsoft/api-extractor': 7.34.4
       '@octokit/core': 4.2.0
       c8: 7.7.1
+      changesets-format-with-issue-links: 0.3.0_@changesets+cli@2.26.1
       concurrently: 7.6.0
       copyfiles: 2.4.1
       danger: 10.9.0_@octokit+core@4.2.0
@@ -2865,7 +2869,7 @@ importers:
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
       '@fluidframework/task-manager': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/tinylicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/view-adapters': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -2897,7 +2901,7 @@ importers:
       '@fluidframework/routerlicious-driver': link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
-      '@fluidframework/server-local-server': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
@@ -3444,7 +3448,7 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
       '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -3504,7 +3508,7 @@ importers:
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
-      '@fluidframework/server-local-server': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
@@ -3842,7 +3846,7 @@ importers:
       '@fluidframework/local-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       async: ^3.2.2
       aws-sdk: 2.547.0
@@ -3926,7 +3930,7 @@ importers:
       '@fluidframework/local-driver': link:../../../../packages/drivers/local-driver
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
-      '@fluidframework/server-local-server': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/test-utils': link:../../../../packages/test/test-utils
       aws-sdk: 2.547.0
       chai: 4.3.7
@@ -3959,6 +3963,85 @@ importers:
       typescript: 4.5.5
       wait-on: 3.2.0
       yargs: 13.2.2
+
+  experimental/dds/attributable-map:
+    specifiers:
+      '@fluid-internal/stochastic-test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluid-internal/test-dds-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/build-cli': ^0.13.1
+      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-tools': ^0.13.1
+      '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
+      '@fluidframework/container-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/driver-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/map-previous': npm:@fluidframework/map@2.0.0-internal.4.0.0
+      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@microsoft/api-extractor': ^7.34.4
+      '@types/mocha': ^9.1.1
+      '@types/node': ^14.18.38
+      '@types/path-browserify': ^1.0.0
+      concurrently: ^7.6.0
+      copyfiles: ^2.4.1
+      cross-env: ^7.0.3
+      eslint: ~8.6.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      nyc: ^15.1.0
+      path-browserify: ^1.0.1
+      prettier: ~2.6.2
+      rimraf: ^4.4.0
+      typescript: ~4.5.5
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/container-utils': link:../../../packages/loader/container-utils
+      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/driver-utils': link:../../../packages/loader/driver-utils
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
+      '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
+      path-browserify: 1.0.1
+    devDependencies:
+      '@fluid-internal/stochastic-test-utils': link:../../../packages/test/stochastic-test-utils
+      '@fluid-internal/test-dds-utils': link:../../../packages/dds/test-dds-utils
+      '@fluid-tools/benchmark': 0.47.0-140906
+      '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
+      '@fluidframework/build-common': 1.1.0
+      '@fluidframework/build-tools': 0.13.1_@types+node@14.18.38
+      '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@fluidframework/map-previous': /@fluidframework/map/2.0.0-internal.4.0.0
+      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
+      '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
+      '@types/mocha': 9.1.1
+      '@types/node': 14.18.38
+      '@types/path-browserify': 1.0.0
+      concurrently: 7.6.0
+      copyfiles: 2.4.1
+      cross-env: 7.0.3
+      eslint: 8.6.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      nyc: 15.1.0
+      prettier: 2.6.2
+      rimraf: 4.4.0
+      typescript: 4.5.5
 
   experimental/dds/ot/ot:
     specifiers:
@@ -4885,7 +4968,6 @@ importers:
       '@fluidframework/container-runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/shared-summary-block': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -4913,7 +4995,6 @@ importers:
       '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
@@ -5408,7 +5489,7 @@ importers:
       '@fluidframework/matrix-previous': npm:@fluidframework/matrix@2.0.0-internal.4.0.0
       '@fluidframework/merge-tree': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -5445,7 +5526,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/merge-tree': link:../merge-tree
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
@@ -5714,7 +5795,7 @@ importers:
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/register-collection-previous': npm:@fluidframework/register-collection@2.0.0-internal.4.0.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -5739,7 +5820,7 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/shared-object-base': link:../shared-object-base
@@ -5783,14 +5864,14 @@ importers:
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.4000
+      '@fluidframework/gitresources': ^0.1039.1000
       '@fluidframework/merge-tree': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence-previous': npm:@fluidframework/sequence@2.0.0-internal.4.0.0
-      '@fluidframework/server-services-client': ^0.1038.4000
+      '@fluidframework/server-services-client': ^0.1039.1000
       '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -5836,10 +5917,10 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.13.1_@types+node@14.18.38
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/gitresources': 0.1038.4000
+      '@fluidframework/gitresources': 0.1039.1000
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/sequence-previous': /@fluidframework/sequence/2.0.0-internal.4.0.0
-      '@fluidframework/server-services-client': 0.1038.4000
+      '@fluidframework/server-services-client': 0.1039.1000
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/diff': 3.5.5
@@ -6469,19 +6550,20 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/local-driver-previous': npm:@fluidframework/local-driver@2.0.0-internal.4.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
-      '@fluidframework/server-services-client': ^0.1038.4000
-      '@fluidframework/server-services-core': ^0.1038.4000
-      '@fluidframework/server-test-utils': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
+      '@fluidframework/server-services-client': ^0.1039.1000
+      '@fluidframework/server-services-core': ^0.1039.1000
+      '@fluidframework/server-test-utils': ^0.1039.1000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/jsrsasign': ^8.0.8
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
       concurrently: ^7.6.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.6.0
       events: ^3.1.0
@@ -6504,13 +6586,13 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
-      '@fluidframework/server-local-server': 0.1038.4000
-      '@fluidframework/server-services-client': 0.1038.4000
-      '@fluidframework/server-services-core': 0.1038.4000
-      '@fluidframework/server-test-utils': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-core': 0.1039.1000
+      '@fluidframework/server-test-utils': 0.1039.1000
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       events: 3.3.0
       jsrsasign: 10.6.1
@@ -6528,6 +6610,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
       concurrently: 7.6.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.6.0
       mocha: 10.2.0
@@ -6552,12 +6635,12 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.4000
+      '@fluidframework/gitresources': ^0.1039.1000
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/odsp-doclib-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/odsp-driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/odsp-driver-previous': npm:@fluidframework/odsp-driver@2.0.0-internal.4.0.0
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
@@ -6590,10 +6673,10 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1038.4000
+      '@fluidframework/gitresources': 0.1039.1000
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver-definitions': link:../odsp-driver-definitions
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       abort-controller: 3.0.0
@@ -6773,12 +6856,12 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.4000
+      '@fluidframework/gitresources': ^0.1039.1000
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver-previous': npm:@fluidframework/routerlicious-driver@2.0.0-internal.4.0.0
-      '@fluidframework/server-services-client': ^0.1038.4000
+      '@fluidframework/server-services-client': ^0.1039.1000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
@@ -6814,10 +6897,10 @@ importers:
       '@fluidframework/driver-base': link:../driver-base
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/gitresources': 0.1038.4000
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-services-client': 0.1038.4000
+      '@fluidframework/server-services-client': 0.1039.1000
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.5
       json-stringify-safe: 5.0.1
@@ -6924,7 +7007,7 @@ importers:
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-services-client': ^0.1038.4000
+      '@fluidframework/server-services-client': ^0.1039.1000
       '@fluidframework/test-tools': ^0.2.3074
       '@fluidframework/tinylicious-driver-previous': npm:@fluidframework/tinylicious-driver@2.0.0-internal.4.0.0
       '@types/jsrsasign': ^8.0.8
@@ -6946,7 +7029,7 @@ importers:
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': link:../routerlicious-driver
-      '@fluidframework/server-services-client': 0.1038.4000
+      '@fluidframework/server-services-client': 0.1039.1000
       jsrsasign: 10.6.1
       uuid: 8.3.2
     devDependencies:
@@ -7201,7 +7284,6 @@ importers:
       '@fluidframework/datastore': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/request-handler': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -7236,7 +7318,6 @@ importers:
       '@fluidframework/build-tools': 0.13.1_@types+node@14.18.38
       '@fluidframework/data-object-base-previous': /@fluidframework/data-object-base/2.0.0-internal.4.0.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
       '@types/node': 14.18.38
@@ -7446,7 +7527,6 @@ importers:
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
@@ -7473,7 +7553,6 @@ importers:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/build-tools': 0.13.1_@types+node@14.18.38
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.4_@types+node@14.18.38
       '@types/mocha': 9.1.1
@@ -7879,7 +7958,7 @@ importers:
       '@fluidframework/driver-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
@@ -7916,7 +7995,7 @@ importers:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../driver-utils
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       abort-controller: 3.0.0
@@ -8024,9 +8103,9 @@ importers:
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-utils-previous': npm:@fluidframework/driver-utils@2.0.0-internal.4.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
-      '@fluidframework/gitresources': ^0.1038.4000
+      '@fluidframework/gitresources': ^0.1039.1000
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -8055,8 +8134,8 @@ importers:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/gitresources': 0.1038.4000
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       axios: 0.26.1
@@ -8196,7 +8275,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/garbage-collector': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -8236,7 +8315,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -8331,7 +8410,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/garbage-collector': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -8365,7 +8444,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/garbage-collector': link:../garbage-collector
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
@@ -8549,7 +8628,7 @@ importers:
       '@fluidframework/datastore-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils-previous': npm:@fluidframework/runtime-utils@2.0.0-internal.4.0.0
@@ -8578,7 +8657,7 @@ importers:
       '@fluidframework/container-runtime-definitions': link:../container-runtime-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/datastore-definitions': link:../datastore-definitions
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
@@ -8791,7 +8870,7 @@ importers:
       '@fluidframework/runtime-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
       '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -8851,7 +8930,7 @@ importers:
       '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/sequence': link:../../dds/sequence
-      '@fluidframework/server-local-server': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/shared-object-base': link:../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
@@ -8944,7 +9023,7 @@ importers:
       '@fluidframework/register-collection': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/replay-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
       '@fluidframework/test-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
@@ -8980,7 +9059,7 @@ importers:
       '@fluidframework/register-collection': link:../../dds/register-collection
       '@fluidframework/replay-driver': link:../../drivers/replay-driver
       '@fluidframework/sequence': link:../../dds/sequence
-      '@fluidframework/server-local-server': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/test-utils': link:../test-utils
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
@@ -9154,7 +9233,7 @@ importers:
       '@fluidframework/odsp-urlresolver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/tinylicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -9186,7 +9265,7 @@ importers:
       '@fluidframework/odsp-urlresolver': link:../../drivers/odsp-urlResolver
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
-      '@fluidframework/server-local-server': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
       '@fluidframework/test-driver-definitions': link:../test-driver-definitions
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tinylicious-driver': link:../../drivers/tinylicious-driver
@@ -9787,16 +9866,22 @@ importers:
     specifiers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
+      '@fluidframework/cell': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/common-definitions': ^0.20.1
       '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/counter': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/eslint-config-fluid': ^2.0.0
+      '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/protocol-definitions': ^1.1.0
+      '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/shared-object-base': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@microsoft/api-extractor': ^7.34.4
       '@types/chai': ^4.0.0
       '@types/events': ^3.0.0
@@ -9818,12 +9903,17 @@ importers:
       rimraf: ^4.4.0
       typescript: ~4.5.5
     dependencies:
+      '@fluidframework/cell': link:../../../dds/cell
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/counter': link:../../../dds/counter
+      '@fluidframework/map': link:../../../dds/map
       '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/sequence': link:../../../dds/sequence
+      '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
     devDependencies:
       '@fluidframework/build-common': 1.1.0
@@ -9831,6 +9921,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.34.4
       '@types/chai': 4.3.4
       '@types/events': 3.0.0
@@ -9962,6 +10053,7 @@ importers:
       '@fluidframework/build-common': ^1.1.0
       '@fluidframework/build-tools': ^0.13.1
       '@fluidframework/common-definitions': ^0.20.1
+      '@fluidframework/common-utils': ^1.1.1
       '@fluidframework/container-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/container-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/core-interfaces': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -10020,6 +10112,7 @@ importers:
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
       '@fluid-tools/client-debugger': link:../client-debugger
       '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
       '@fluidframework/container-definitions': link:../../../common/container-definitions
       '@fluidframework/container-loader': link:../../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
@@ -10308,8 +10401,8 @@ importers:
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-local-server': ^0.1038.4000
-      '@fluidframework/server-services-client': ^0.1038.4000
+      '@fluidframework/server-local-server': ^0.1039.1000
+      '@fluidframework/server-services-client': ^0.1039.1000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/tool-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -10356,8 +10449,8 @@ importers:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
-      '@fluidframework/server-local-server': 0.1038.4000
-      '@fluidframework/server-services-client': 0.1038.4000
+      '@fluidframework/server-local-server': 0.1039.1000
+      '@fluidframework/server-services-client': 0.1039.1000
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/tool-utils': link:../../utils/tool-utils
@@ -10531,7 +10624,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/odsp-doclib-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/protocol-base': ^0.1038.4000
+      '@fluidframework/protocol-base': ^0.1039.1000
       '@fluidframework/protocol-definitions': ^1.1.0
       '@fluidframework/tool-utils-previous': npm:@fluidframework/tool-utils@2.0.0-internal.4.0.0
       '@microsoft/api-extractor': ^7.34.4
@@ -10558,7 +10651,7 @@ importers:
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/odsp-doclib-utils': link:../odsp-doclib-utils
-      '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       async-mutex: 0.3.2
       debug: 4.3.4
@@ -11043,7 +11136,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/helper-validator-identifier': 7.19.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       js-tokens: 4.0.0
 
   /@babel/parser/7.12.16:
@@ -12202,6 +12295,190 @@ packages:
       lodash.groupby: 4.6.0
       semver: 7.3.8
       webpack: 5.76.2_webpack-cli@4.10.0
+    dev: true
+
+  /@changesets/apply-release-plan/6.1.3:
+    resolution: {integrity: sha512-ECDNeoc3nfeAe1jqJb5aFQX7CqzQhD2klXRez2JDb/aVpGUbX673HgKrnrgJRuQR/9f2TtLoYIzrGB9qwD77mg==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/config': 2.3.0
+      '@changesets/get-version-range-type': 0.3.2
+      '@changesets/git': 2.0.0
+      '@changesets/types': 5.2.1
+      '@manypkg/get-packages': 1.1.3
+      detect-indent: 6.1.0
+      fs-extra: 7.0.1
+      lodash.startcase: 4.4.0
+      outdent: 0.5.0
+      prettier: 2.8.7
+      resolve-from: 5.0.0
+      semver: 5.7.1
+    dev: true
+
+  /@changesets/assemble-release-plan/5.2.3:
+    resolution: {integrity: sha512-g7EVZCmnWz3zMBAdrcKhid4hkHT+Ft1n0mLussFMcB1dE2zCuwcvGoy9ec3yOgPGF4hoMtgHaMIk3T3TBdvU9g==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/errors': 0.1.4
+      '@changesets/get-dependents-graph': 1.3.5
+      '@changesets/types': 5.2.1
+      '@manypkg/get-packages': 1.1.3
+      semver: 5.7.1
+    dev: true
+
+  /@changesets/changelog-git/0.1.14:
+    resolution: {integrity: sha512-+vRfnKtXVWsDDxGctOfzJsPhaCdXRYoe+KyWYoq5X/GqoISREiat0l3L8B0a453B2B4dfHGcZaGyowHbp9BSaA==}
+    dependencies:
+      '@changesets/types': 5.2.1
+    dev: true
+
+  /@changesets/cli/2.26.1:
+    resolution: {integrity: sha512-XnTa+b51vt057fyAudvDKGB0Sh72xutQZNAdXkCqPBKO2zvs2yYZx5hFZj1u9cbtpwM6Sxtcr02/FQJfZOzemQ==}
+    hasBin: true
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/apply-release-plan': 6.1.3
+      '@changesets/assemble-release-plan': 5.2.3
+      '@changesets/changelog-git': 0.1.14
+      '@changesets/config': 2.3.0
+      '@changesets/errors': 0.1.4
+      '@changesets/get-dependents-graph': 1.3.5
+      '@changesets/get-release-plan': 3.0.16
+      '@changesets/git': 2.0.0
+      '@changesets/logger': 0.0.5
+      '@changesets/pre': 1.0.14
+      '@changesets/read': 0.5.9
+      '@changesets/types': 5.2.1
+      '@changesets/write': 0.2.3
+      '@manypkg/get-packages': 1.1.3
+      '@types/is-ci': 3.0.0
+      '@types/semver': 6.2.3
+      ansi-colors: 4.1.3
+      chalk: 2.4.1
+      enquirer: 2.3.6
+      external-editor: 3.1.0
+      fs-extra: 7.0.1
+      human-id: 1.0.2
+      is-ci: 3.0.1
+      meow: 6.1.1
+      outdent: 0.5.0
+      p-limit: 2.3.0
+      preferred-pm: 3.0.3
+      resolve-from: 5.0.0
+      semver: 5.7.1
+      spawndamnit: 2.0.0
+      term-size: 2.2.1
+      tty-table: 4.2.1
+    dev: true
+
+  /@changesets/config/2.3.0:
+    resolution: {integrity: sha512-EgP/px6mhCx8QeaMAvWtRrgyxW08k/Bx2tpGT+M84jEdX37v3VKfh4Cz1BkwrYKuMV2HZKeHOh8sHvja/HcXfQ==}
+    dependencies:
+      '@changesets/errors': 0.1.4
+      '@changesets/get-dependents-graph': 1.3.5
+      '@changesets/logger': 0.0.5
+      '@changesets/types': 5.2.1
+      '@manypkg/get-packages': 1.1.3
+      fs-extra: 7.0.1
+      micromatch: 4.0.5
+    dev: true
+
+  /@changesets/errors/0.1.4:
+    resolution: {integrity: sha512-HAcqPF7snsUJ/QzkWoKfRfXushHTu+K5KZLJWPb34s4eCZShIf8BFO3fwq6KU8+G7L5KdtN2BzQAXOSXEyiY9Q==}
+    dependencies:
+      extendable-error: 0.1.7
+    dev: true
+
+  /@changesets/get-dependents-graph/1.3.5:
+    resolution: {integrity: sha512-w1eEvnWlbVDIY8mWXqWuYE9oKhvIaBhzqzo4ITSJY9hgoqQ3RoBqwlcAzg11qHxv/b8ReDWnMrpjpKrW6m1ZTA==}
+    dependencies:
+      '@changesets/types': 5.2.1
+      '@manypkg/get-packages': 1.1.3
+      chalk: 2.4.2
+      fs-extra: 7.0.1
+      semver: 5.7.1
+    dev: true
+
+  /@changesets/get-release-plan/3.0.16:
+    resolution: {integrity: sha512-OpP9QILpBp1bY2YNIKFzwigKh7Qe9KizRsZomzLe6pK8IUo8onkAAVUD8+JRKSr8R7d4+JRuQrfSSNlEwKyPYg==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/assemble-release-plan': 5.2.3
+      '@changesets/config': 2.3.0
+      '@changesets/pre': 1.0.14
+      '@changesets/read': 0.5.9
+      '@changesets/types': 5.2.1
+      '@manypkg/get-packages': 1.1.3
+    dev: true
+
+  /@changesets/get-version-range-type/0.3.2:
+    resolution: {integrity: sha512-SVqwYs5pULYjYT4op21F2pVbcrca4qA/bAA3FmFXKMN7Y+HcO8sbZUTx3TAy2VXulP2FACd1aC7f2nTuqSPbqg==}
+    dev: true
+
+  /@changesets/git/2.0.0:
+    resolution: {integrity: sha512-enUVEWbiqUTxqSnmesyJGWfzd51PY4H7mH9yUw0hPVpZBJ6tQZFMU3F3mT/t9OJ/GjyiM4770i+sehAn6ymx6A==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/errors': 0.1.4
+      '@changesets/types': 5.2.1
+      '@manypkg/get-packages': 1.1.3
+      is-subdir: 1.2.0
+      micromatch: 4.0.5
+      spawndamnit: 2.0.0
+    dev: true
+
+  /@changesets/logger/0.0.5:
+    resolution: {integrity: sha512-gJyZHomu8nASHpaANzc6bkQMO9gU/ib20lqew1rVx753FOxffnCrJlGIeQVxNWCqM+o6OOleCo/ivL8UAO5iFw==}
+    dependencies:
+      chalk: 2.4.2
+    dev: true
+
+  /@changesets/parse/0.3.16:
+    resolution: {integrity: sha512-127JKNd167ayAuBjUggZBkmDS5fIKsthnr9jr6bdnuUljroiERW7FBTDNnNVyJ4l69PzR57pk6mXQdtJyBCJKg==}
+    dependencies:
+      '@changesets/types': 5.2.1
+      js-yaml: 3.14.1
+    dev: true
+
+  /@changesets/pre/1.0.14:
+    resolution: {integrity: sha512-dTsHmxQWEQekHYHbg+M1mDVYFvegDh9j/kySNuDKdylwfMEevTeDouR7IfHNyVodxZXu17sXoJuf2D0vi55FHQ==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/errors': 0.1.4
+      '@changesets/types': 5.2.1
+      '@manypkg/get-packages': 1.1.3
+      fs-extra: 7.0.1
+    dev: true
+
+  /@changesets/read/0.5.9:
+    resolution: {integrity: sha512-T8BJ6JS6j1gfO1HFq50kU3qawYxa4NTbI/ASNVVCBTsKquy2HYwM9r7ZnzkiMe8IEObAJtUVGSrePCOxAK2haQ==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/git': 2.0.0
+      '@changesets/logger': 0.0.5
+      '@changesets/parse': 0.3.16
+      '@changesets/types': 5.2.1
+      chalk: 2.4.2
+      fs-extra: 7.0.1
+      p-filter: 2.1.0
+    dev: true
+
+  /@changesets/types/4.1.0:
+    resolution: {integrity: sha512-LDQvVDv5Kb50ny2s25Fhm3d9QSZimsoUGBsUioj6MC3qbMUCuC8GPIvk/M6IvXx3lYhAs0lwWUQLb+VIEUCECw==}
+    dev: true
+
+  /@changesets/types/5.2.1:
+    resolution: {integrity: sha512-myLfHbVOqaq9UtUKqR/nZA/OY7xFjQMdfgfqeZIBK4d0hA6pgxArvdv8M+6NUzzBsjWLOtvApv8YHr4qM+Kpfg==}
+    dev: true
+
+  /@changesets/write/0.2.3:
+    resolution: {integrity: sha512-Dbamr7AIMvslKnNYsLFafaVORx4H0pvCA2MHqgtNCySMe1blImEyAEOzDmcgKAkgz4+uwoLz7demIrX+JBr/Xw==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/types': 5.2.1
+      fs-extra: 7.0.1
+      human-id: 1.0.2
+      prettier: 2.8.7
     dev: true
 
   /@cnakazawa/watch/1.0.4:
@@ -13869,6 +14146,9 @@ packages:
   /@fluidframework/gitresources/0.1038.4000:
     resolution: {integrity: sha512-YYHauGScTKafXUTqRvpJyYLF0T5wGYXRagZz/ymZFYmG/3AzSj0XKCv1QmkKyAw6wgHWSk/IZyKQ9bukHpPB2w==}
 
+  /@fluidframework/gitresources/0.1039.1000:
+    resolution: {integrity: sha512-O1LAJQL6/TGXZPKHLE8Z8J8KlQ5wpODP+Pj/Q7KvNYWkIUOWepXyq873MobT2adN4hlUdwia4jqif9jaNcIQBA==}
+
   /@fluidframework/ink/2.0.0-internal.4.0.0:
     resolution: {integrity: sha512-/dQChSfncobmWmp+8A/KtCj26QtuKCfQbe8fYYsVEtfkrfSaKVIzUBISiPITK2GX/WEn0Ih3ixOx65lBZiPSDg==}
     dependencies:
@@ -14146,6 +14426,15 @@ packages:
       events: 3.3.0
       lodash: 4.17.21
 
+  /@fluidframework/protocol-base/0.1039.1000:
+    resolution: {integrity: sha512-ohQTfRUugH3oHV1TAU+6KXUmQLZTpWW0EMx6Aa2XJZrd5IGHrJuFTo2RNsfeKKRQmdswbUG1DqrA2O6eJnEtkA==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      events: 3.3.0
+      lodash: 4.17.21
+
   /@fluidframework/protocol-definitions/1.1.0:
     resolution: {integrity: sha512-Q4YA6FBlB2cHicgvfs9z3LPKnfZMdx5JrmIEGOmxFmom/l9EV1F43sXl6K9/j5se8tQ9V9L8drFbDzqVf37roQ==}
     dependencies:
@@ -14349,6 +14638,20 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@fluidframework/server-lambdas-driver/0.1039.1000:
+    resolution: {integrity: sha512-PKU4NhbJeuNCQHzLPlyE6BdylNWP6jurOq/Uw/jE6vGht/Z42Qite8adAcV5JBNmo6qZE0xdCEZJbjH9bTScBA==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-core': 0.1039.1000
+      '@fluidframework/server-services-telemetry': 0.1039.1000
+      assert: 2.0.0
+      async: 3.2.4
+      events: 3.3.0
+      lodash: 4.17.21
+    transitivePeerDependencies:
+      - supports-color
+
   /@fluidframework/server-lambdas/0.1038.4000:
     resolution: {integrity: sha512-uy/XrfKPSjo9RHWW6NWdEzkIiLhMZDZCNck1UyWAYiaCWNjcpQJ98Wv/HO0fpTPxGPn7CysGlX7qreXqBRkwoQ==}
     dependencies:
@@ -14407,6 +14710,35 @@ packages:
       - debug
       - supports-color
 
+  /@fluidframework/server-lambdas/0.1039.1000_debug@4.3.4:
+    resolution: {integrity: sha512-z4YPMW8LGVucsBRQs5t/ElzPXugrBLqWIozK4OQm1u5Pwfe3gzUpSGE2LRxMycGG6o2c2fdzIlbygHxKwkQcIA==}
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-base': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/server-lambdas-driver': 0.1039.1000
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-core': 0.1039.1000
+      '@fluidframework/server-services-telemetry': 0.1039.1000
+      '@types/semver': 6.2.3
+      assert: 2.0.0
+      async: 3.2.4
+      axios: 0.26.1_debug@4.3.4
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.17.21
+      nconf: 0.12.0
+      semver: 6.3.0
+      sha.js: 2.4.11
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   /@fluidframework/server-local-server/0.1038.4000:
     resolution: {integrity: sha512-tPb2Hj1g6felYCx29DMSn3qvxo1bfBVeSjsVNFjxkFwY/tG/8p2odj6X7x8TgLQSENcBTxZLL9X8m8LDt8/+ZA==}
     dependencies:
@@ -14418,6 +14750,26 @@ packages:
       '@fluidframework/server-services-core': 0.1038.4000
       '@fluidframework/server-services-telemetry': 0.1038.4000
       '@fluidframework/server-test-utils': 0.1038.4000
+      debug: 4.3.4
+      events: 3.3.0
+      jsrsasign: 10.7.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
+  /@fluidframework/server-local-server/0.1039.1000:
+    resolution: {integrity: sha512-wjCxzKKcsOl9Yjn3L0kmxSkjuFv4LXh2tx2FC6WRr1bA3OFQEho/zsC5XZWonjweV7sMvP5Vd5xh1FuBaylujQ==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/server-lambdas': 0.1039.1000_debug@4.3.4
+      '@fluidframework/server-memory-orderer': 0.1039.1000
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-core': 0.1039.1000
+      '@fluidframework/server-services-telemetry': 0.1039.1000
+      '@fluidframework/server-test-utils': 0.1039.1000
       debug: 4.3.4
       events: 3.3.0
       jsrsasign: 10.7.0
@@ -14455,12 +14807,59 @@ packages:
       - supports-color
       - utf-8-validate
 
+  /@fluidframework/server-memory-orderer/0.1039.1000:
+    resolution: {integrity: sha512-C1FohlcAc5lIstF3jMAchgIX20jARi4pUaCNZN7o7UZw2MQQ/kZpsy/dSZsJ5kQoT51nHfsqmqUpqJAF3wF1ow==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/protocol-base': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/server-lambdas': 0.1039.1000_debug@4.3.4
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-core': 0.1039.1000
+      '@fluidframework/server-services-telemetry': 0.1039.1000
+      '@types/debug': 4.1.7
+      '@types/double-ended-queue': 2.1.2
+      '@types/lodash': 4.14.191
+      '@types/node': 14.18.38
+      '@types/ws': 6.0.4
+      assert: 2.0.0
+      debug: 4.3.4
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      lodash: 4.17.21
+      sillyname: 0.1.0
+      uuid: 8.3.2
+      ws: 7.5.9
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   /@fluidframework/server-services-client/0.1038.4000:
     resolution: {integrity: sha512-oQBFNkReL8mOL1Q/I549X1nhG19RE/XAnmXwV9T1sLxQOHFE0u+J5H80ufCZ4WpyeCFA0usGDHZr9/zJJ6B/vg==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       '@fluidframework/gitresources': 0.1038.4000
       '@fluidframework/protocol-base': 0.1038.4000
+      '@fluidframework/protocol-definitions': 1.1.0
+      axios: 0.26.1_debug@4.3.4
+      crc-32: 1.2.0
+      debug: 4.3.4
+      json-stringify-safe: 5.0.1
+      jsrsasign: 10.7.0
+      jwt-decode: 3.1.2
+      querystring: 0.2.1
+      sillyname: 0.1.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+
+  /@fluidframework/server-services-client/0.1039.1000:
+    resolution: {integrity: sha512-wyDH6VdcV5px+sCSAQ/5No/w+T0Mg6M7XZ5bTl/IBN/v05yxFZME3vUCt/zkviZSMYj2MoCkYT3YvD4BHAdrkw==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-base': 0.1039.1000
       '@fluidframework/protocol-definitions': 1.1.0
       axios: 0.26.1_debug@4.3.4
       crc-32: 1.2.0
@@ -14482,6 +14881,22 @@ packages:
       '@fluidframework/protocol-definitions': 1.1.0
       '@fluidframework/server-services-client': 0.1038.4000
       '@fluidframework/server-services-telemetry': 0.1038.4000
+      '@types/nconf': 0.10.3
+      '@types/node': 14.18.38
+      debug: 4.3.4
+      events: 3.3.0
+      nconf: 0.12.0
+    transitivePeerDependencies:
+      - supports-color
+
+  /@fluidframework/server-services-core/0.1039.1000:
+    resolution: {integrity: sha512-9aRoIWjLNMTP3XpcngD03aXUnwbSSaejbqqEdgeN7vzvng9sL0BJVZSNfpB01H+DUbVn83IrGVzCyhzrpbZPQg==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-telemetry': 0.1039.1000
       '@types/nconf': 0.10.3
       '@types/node': 14.18.38
       debug: 4.3.4
@@ -14528,6 +14943,15 @@ packages:
       serialize-error: 8.1.0
       uuid: 8.3.2
 
+  /@fluidframework/server-services-telemetry/0.1039.1000:
+    resolution: {integrity: sha512-nK8/xRCazYH5lF0FzDNmcKAulTb1fPFVhRUh2ZVKtCmcT5e/eJ5yukCRrkC4bNK0wnYBbXAd3PqWvX7tttgL5Q==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      json-stringify-safe: 5.0.1
+      path-browserify: 1.0.1
+      serialize-error: 8.1.0
+      uuid: 8.3.2
+
   /@fluidframework/server-services-utils/0.1038.4000:
     resolution: {integrity: sha512-pIYlHAFUs6c4CyS4KfV7ZCPdCsTtFGV5gunKWm42DzxeO0cuN2pLpau2HybHj7YL4pz4tBMziLilZZnxEnjLvQ==}
     dependencies:
@@ -14561,6 +14985,25 @@ packages:
       '@fluidframework/server-services-client': 0.1038.4000
       '@fluidframework/server-services-core': 0.1038.4000
       '@fluidframework/server-services-telemetry': 0.1038.4000
+      assert: 2.0.0
+      debug: 4.3.4
+      events: 3.3.0
+      lodash: 4.17.21
+      string-hash: 1.1.3
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+
+  /@fluidframework/server-test-utils/0.1039.1000:
+    resolution: {integrity: sha512-pLGt809wo69u9GVXZkOvkcj9SBC1BLS7ABTludWUlXKbzntP/63GT2zqifwFLNO5OCb0jliMLPMnARL/y9eDNg==}
+    dependencies:
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1039.1000
+      '@fluidframework/protocol-base': 0.1039.1000
+      '@fluidframework/protocol-definitions': 1.1.0
+      '@fluidframework/server-services-client': 0.1039.1000
+      '@fluidframework/server-services-core': 0.1039.1000
+      '@fluidframework/server-services-telemetry': 0.1039.1000
       assert: 2.0.0
       debug: 4.3.4
       events: 3.3.0
@@ -16357,7 +16800,7 @@ packages:
       npmlog: 6.0.2
     dev: true
 
-  /@lerna/publish/5.6.2_nx@15.7.2+typescript@4.5.5:
+  /@lerna/publish/5.6.2_nx@15.7.2+typescript@4.8.4:
     resolution: {integrity: sha512-QaW0GjMJMuWlRNjeDCjmY/vjriGSWgkLS23yu8VKNtV5U3dt5yIKA3DNGV3HgZACuu45kQxzMDsfLzgzbGNtYA==}
     engines: {node: ^14.15.0 || >=16.0.0}
     dependencies:
@@ -16379,7 +16822,7 @@ packages:
       '@lerna/run-lifecycle': 5.6.2
       '@lerna/run-topologically': 5.6.2
       '@lerna/validation-error': 5.6.2
-      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.5.5
+      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.8.4
       fs-extra: 9.1.0
       libnpmaccess: 6.0.4
       npm-package-arg: 8.1.1
@@ -16511,7 +16954,7 @@ packages:
       npmlog: 6.0.2
     dev: true
 
-  /@lerna/version/5.6.2_nx@15.7.2+typescript@4.5.5:
+  /@lerna/version/5.6.2_nx@15.7.2+typescript@4.8.4:
     resolution: {integrity: sha512-odNSR2rTbHW++xMZSQKu/F6Syrd/sUvwDLPaMKktoOSPKmycHt/eWcuQQyACdtc43Iqeu4uQd7PCLsniqOVFrw==}
     engines: {node: ^14.15.0 || >=16.0.0}
     dependencies:
@@ -16529,7 +16972,7 @@ packages:
       '@lerna/run-topologically': 5.6.2
       '@lerna/temp-write': 5.6.2
       '@lerna/validation-error': 5.6.2
-      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.5.5
+      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.8.4
       chalk: 4.1.2
       dedent: 0.7.0
       load-json-file: 6.2.0
@@ -16556,6 +16999,26 @@ packages:
     dependencies:
       npmlog: 6.0.2
       write-file-atomic: 4.0.2
+    dev: true
+
+  /@manypkg/find-root/1.1.0:
+    resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@types/node': 14.18.38
+      find-up: 4.1.0
+      fs-extra: 8.1.0
+    dev: true
+
+  /@manypkg/get-packages/1.1.3:
+    resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
+    dependencies:
+      '@babel/runtime': 7.21.0
+      '@changesets/types': 4.1.0
+      '@manypkg/find-root': 1.1.0
+      fs-extra: 8.1.0
+      globby: 11.1.0
+      read-yaml-file: 1.1.0
     dev: true
 
   /@mapbox/node-pre-gyp/1.0.10:
@@ -17380,12 +17843,12 @@ packages:
       - debug
     dev: true
 
-  /@nrwl/devkit/15.7.2_nx@15.7.2+typescript@4.5.5:
+  /@nrwl/devkit/15.7.2_nx@15.7.2+typescript@4.8.4:
     resolution: {integrity: sha512-HMGi7L6w2g4IrYwhb04snD8Zr24Z/gzau5i9WUNkwzrjeR1xAm0Cc9WRre221zaeohtK11gyBt7BerT1tgkNwA==}
     peerDependencies:
       nx: '>= 14.1 <= 16'
     dependencies:
-      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.5.5
+      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.8.4
       ejs: 3.1.8
       ignore: 5.2.4
       nx: 15.7.2
@@ -17987,13 +18450,13 @@ packages:
       node-gyp-build: 4.6.0
     dev: true
 
-  /@phenomnomnominal/tsquery/4.1.1_typescript@4.5.5:
+  /@phenomnomnominal/tsquery/4.1.1_typescript@4.8.4:
     resolution: {integrity: sha512-jjMmK1tnZbm1Jq5a7fBliM4gQwjxMU7TFoRNwIyzwlO+eHPRCFv/Nv+H/Gi1jc3WR7QURG8D5d0Tn12YGrUqBQ==}
     peerDependencies:
       typescript: ^3 || ^4
     dependencies:
       esquery: 1.4.2
-      typescript: 4.5.5
+      typescript: 4.8.4
     dev: true
 
   /@pmmmwh/react-refresh-webpack-plugin/0.5.9_qouehdyvslt6cyfzajsl2rhebu:
@@ -20011,6 +20474,12 @@ packages:
     dependencies:
       '@types/node': 14.18.38
 
+  /@types/is-ci/3.0.0:
+    resolution: {integrity: sha512-Q0Op0hdWbYd1iahB+IFNQcWXFq4O0Q5MwQP7uN0souuQ4rPg1vEYcnIOfr1gY+M+6rc8FGoRaBO1mOOvL29sEQ==}
+    dependencies:
+      ci-info: 3.8.0
+    dev: true
+
   /@types/is-function/1.0.1:
     resolution: {integrity: sha512-A79HEEiwXTFtfY+Bcbo58M2GRYzCr9itHWzbzHVFNEYCcoU/MMGwYYf721gBrnhpj1s6RGVVha/IgNFnR0Iw/Q==}
     dev: true
@@ -20458,7 +20927,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/eslint-plugin/5.43.0_i37r4pxnuonvhfobrnldva5ppi:
+  /@typescript-eslint/eslint-plugin/5.43.0_bbzbxlo3azetmd26uxywfchwoi:
     resolution: {integrity: sha512-wNPzG+eDR6+hhW4yobEmpR36jrqqQv1vxBq5LJO3fBAktjkvekfr4BRl+3Fn1CM/A+s8/EiGUbOMDoYqWdbtXA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -20471,10 +20940,10 @@ packages:
     dependencies:
       '@typescript-eslint/parser': 5.9.1_kufnqfq7tb5rpdawkdb6g5smma
       '@typescript-eslint/scope-manager': 5.43.0
-      '@typescript-eslint/type-utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
-      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@typescript-eslint/type-utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
+      '@typescript-eslint/utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
       debug: 4.3.4
-      eslint: 8.6.0
+      eslint: 8.28.0
       ignore: 5.2.4
       natural-compare-lite: 1.4.0
       regexpp: 3.2.0
@@ -20652,7 +21121,7 @@ packages:
       - supports-color
     dev: true
 
-  /@typescript-eslint/type-utils/5.43.0_kufnqfq7tb5rpdawkdb6g5smma:
+  /@typescript-eslint/type-utils/5.43.0_24w3dq2y5hvyqjdcjculbumysy:
     resolution: {integrity: sha512-K21f+KY2/VvYggLf5Pk4tgBOPs2otTaIHy2zjclo7UZGLyFH86VfUOm5iq+OtDtxq/Zwu2I3ujDBykVW4Xtmtg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
@@ -20663,9 +21132,9 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/typescript-estree': 5.43.0_typescript@4.5.5
-      '@typescript-eslint/utils': 5.43.0_kufnqfq7tb5rpdawkdb6g5smma
+      '@typescript-eslint/utils': 5.43.0_24w3dq2y5hvyqjdcjculbumysy
       debug: 4.3.4
-      eslint: 8.6.0
+      eslint: 8.28.0
       tsutils: 3.21.0_typescript@4.5.5
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -20808,6 +21277,26 @@ packages:
       eslint: 8.6.0
       eslint-scope: 5.1.1
       eslint-utils: 3.0.0_eslint@8.6.0
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
+    dev: true
+
+  /@typescript-eslint/utils/5.43.0_24w3dq2y5hvyqjdcjculbumysy:
+    resolution: {integrity: sha512-8nVpA6yX0sCjf7v/NDfeaOlyaIIqL7OaIGOWSPFqUKK59Gnumd3Wa+2l8oAaYO2lk0sO+SbWFWRSvhu8gLGv4A==}
+    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+    peerDependencies:
+      eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
+    dependencies:
+      '@types/json-schema': 7.0.11
+      '@types/semver': 7.3.13
+      '@typescript-eslint/scope-manager': 5.43.0
+      '@typescript-eslint/types': 5.43.0
+      '@typescript-eslint/typescript-estree': 5.43.0_typescript@4.5.5
+      eslint: 8.28.0
+      eslint-scope: 5.1.1
+      eslint-utils: 3.0.0_eslint@8.28.0
+      semver: 7.3.8
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -22665,6 +23154,13 @@ packages:
       open: 7.4.2
     dev: true
 
+  /better-path-resolve/1.0.0:
+    resolution: {integrity: sha512-pbnl5XzGBdrFU/wT4jqmJVPn2B6UHPBOhzMQkY/SPUPB6QtUXtmBHBIwCbXJol93mOpGMnQyP/+BB19q04xj7g==}
+    engines: {node: '>=4'}
+    dependencies:
+      is-windows: 1.0.2
+    dev: true
+
   /better_git_changelog/1.6.2:
     resolution: {integrity: sha512-A6U5HdV+gygmNfZ+2UbztVI3aQCXkJzLYL27gJ/WhdNzg1blpE+faHC5y2Iu7Omu0FO2Ra0C0WLU7f5prGoRKg==}
     hasBin: true
@@ -22809,7 +23305,7 @@ packages:
     dependencies:
       ansi-align: 2.0.0
       camelcase: 4.1.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-boxes: 1.0.0
       string-width: 2.1.1
       term-size: 1.2.0
@@ -22885,6 +23381,12 @@ packages:
     engines: {node: '>=8'}
     dependencies:
       fill-range: 7.0.1
+
+  /breakword/1.0.5:
+    resolution: {integrity: sha512-ex5W9DoOQ/LUEU3PMdLs9ua/CYZl1678NUkKOdUSi8Aw5F1idieaiRURCBFJCwVcrD1J8Iy3vfWSloaMwO2qFg==}
+    dependencies:
+      wcwidth: 1.0.1
+    dev: true
 
   /brorand/1.1.0:
     resolution: {integrity: sha512-cKV8tMCEpQs4hK/ik71d6LrPOnpkpGBR0wzxqr68g2m/LB2GxVYQroAjMJZRVM1Y4BCjCKc3vAamxSzOY2RP+w==}
@@ -23448,7 +23950,6 @@ packages:
       ansi-styles: 3.2.1
       escape-string-regexp: 1.0.5
       supports-color: 5.5.0
-    dev: true
 
   /chalk/3.0.0:
     resolution: {integrity: sha512-4D3B6Wf41KOYRFdszmDqMCGq5VV/uMAB273JILmO+3jAlh8X4qDtdtgCR3fxtbLEMzSx22QdhnDcJvu2u1fVwg==}
@@ -23499,6 +24000,18 @@ packages:
       sentence-case: 3.0.4
       snake-case: 3.0.4
       tslib: 2.5.0
+
+  /changesets-format-with-issue-links/0.3.0_@changesets+cli@2.26.1:
+    resolution: {integrity: sha512-+GmelydJ+bYPVQyapFIELe/bM2+98cBIG7gb9raBxzx5MiBY0cDZnj4ii7xkrgpQLx96PWH3O9VA7Mhag0gs3w==}
+    peerDependencies:
+      '@changesets/cli': ^2.0.0
+    dependencies:
+      '@changesets/cli': 2.26.1
+      gitlog: 4.0.4
+      lodash: 4.17.21
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
 
   /char-regex/1.0.2:
     resolution: {integrity: sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw==}
@@ -23936,7 +24449,7 @@ packages:
     engines: {node: '>= 4.0'}
     dependencies:
       '@types/q': 1.5.5
-      chalk: 2.4.1
+      chalk: 2.4.2
       q: 1.5.1
     dev: true
 
@@ -24905,6 +25418,28 @@ packages:
 
   /csstype/3.1.1:
     resolution: {integrity: sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw==}
+
+  /csv-generate/3.4.3:
+    resolution: {integrity: sha512-w/T+rqR0vwvHqWs/1ZyMDWtHHSJaN06klRqJXBEpDJaM/+dZkso0OKh1VcuuYvK3XM53KysVNq8Ko/epCK8wOw==}
+    dev: true
+
+  /csv-parse/4.16.3:
+    resolution: {integrity: sha512-cO1I/zmz4w2dcKHVvpCr7JVRu8/FymG5OEpmvsZYlccYolPBLoVGKUHgNoc4ZGkFeFlWGEDmMyBM+TTqRdW/wg==}
+    dev: true
+
+  /csv-stringify/5.6.5:
+    resolution: {integrity: sha512-PjiQ659aQ+fUTQqSrd1XEDnOr52jh30RBurfzkscaE2tPaFsDH5wOAHJiw8XAHphRknCwMUE9KRayc4K/NbO8A==}
+    dev: true
+
+  /csv/5.5.3:
+    resolution: {integrity: sha512-QTaY0XjjhTQOdguARF0lGKm5/mEq9PD9/VhZZegHDIBq2tQwgNpHc3dneD4mGo2iJs+fTKv5Bp0fZ+BRuY3Z0g==}
+    engines: {node: '>= 0.1.90'}
+    dependencies:
+      csv-generate: 3.4.3
+      csv-parse: 4.16.3
+      csv-stringify: 5.6.5
+      stream-transform: 2.1.3
+    dev: true
 
   /currently-unhandled/0.4.1:
     resolution: {integrity: sha512-/fITjgjGU50vjQ4FH6eUoYu+iUoUKIXws2hL15JJpIR+BbTxaXQsMuuyjtNh2WqsSBS5nsaZHFsFecyw5CCAng==}
@@ -26234,9 +26769,9 @@ packages:
   /eslint-plugin-editorconfig/3.2.0_4x3vxi7gdq53yv6dpzqqqrxppq:
     resolution: {integrity: sha512-XiUg69+qgv6BekkPCjP8+2DMODzPqtLV5i0Q9FO1v40P62pfodG1vjIihVbw/338hS5W26S+8MTtXaAlrg37QQ==}
     dependencies:
-      '@typescript-eslint/eslint-plugin': 5.43.0_i37r4pxnuonvhfobrnldva5ppi
+      '@typescript-eslint/eslint-plugin': 5.43.0_bbzbxlo3azetmd26uxywfchwoi
       editorconfig: 0.15.3
-      eslint: 8.6.0
+      eslint: 8.28.0
       klona: 2.0.5
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
@@ -26974,6 +27509,10 @@ packages:
     resolution: {integrity: sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g==}
     dev: true
 
+  /extendable-error/0.1.7:
+    resolution: {integrity: sha512-UOiS2in6/Q0FK0R0q6UY9vYpQ21mr/Qn1KOnte7vsACuNJf514WvCCUHSRCPcgjPT2bAhNIJdlE6bVap1GKmeg==}
+    dev: true
+
   /external-editor/2.2.0:
     resolution: {integrity: sha512-bSn6gvGxKt+b7+6TKEv1ZycHleA7aHhRHyAqJyp5pbUFuYYNIzpZnQDk7AsYckyWdEnTeAnay0aCy2aV6iTk9A==}
     engines: {node: '>=0.12'}
@@ -27547,7 +28086,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.18.6
-      chalk: 2.4.1
+      chalk: 2.4.2
       eslint: 8.6.0
       micromatch: 3.1.10
       minimatch: 3.1.2
@@ -28060,6 +28599,16 @@ packages:
       universal-url: 2.0.0
     transitivePeerDependencies:
       - encoding
+    dev: true
+
+  /gitlog/4.0.4:
+    resolution: {integrity: sha512-jeY2kO7CVyTa6cUM7ZD2ZxIyBkna1xvW2esV/3o8tbhiUneX1UBQCH4D9aMrHgGiohBjyXbuZogyjKXslnY5Yg==}
+    engines: {node: '>= 10.x'}
+    dependencies:
+      debug: 4.3.4
+      tslib: 1.14.1
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /glob-option-error/1.0.0:
@@ -29199,6 +29748,10 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /human-id/1.0.2:
+    resolution: {integrity: sha512-UNopramDEhHJD+VR+ehk8rOslwSfByxPIZyJRfV739NDhN5LF1fa1MqnzKm2lGTQRjNrjK19Q5fhkgIfjlVUKw==}
+    dev: true
+
   /human-signals/1.1.1:
     resolution: {integrity: sha512-SEQu7vl8KjNL2eoGBLF3+wAjpsNfA9XMlXAYj/3EdaNfAlxKthD1xjEQfGOUhllCGGJVNY34bRr6lPINhNjyZw==}
     engines: {node: '>=8.12.0'}
@@ -29468,7 +30021,7 @@ packages:
     resolution: {integrity: sha512-h+xtnyk4EwKvFWHrUYsWErEVR+igKtLdchu+o0Z1RL7VU/jVMFbYir2bp6bAj8efFNxWqHX0dIss6fJQ+/+qeQ==}
     dependencies:
       ansi-escapes: 3.2.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-cursor: 2.1.0
       cli-width: 2.2.1
       external-editor: 2.2.0
@@ -30111,6 +30664,13 @@ packages:
     engines: {node: '>= 0.4'}
     dependencies:
       has-tostringtag: 1.0.0
+
+  /is-subdir/1.2.0:
+    resolution: {integrity: sha512-2AT6j+gXe/1ueqbW6fLZJiIw3F8iXGJtt0yDrZaBhAZEG1raiTxKWU+IPqMCzQAXOUCKdA4UDMgacKH25XG2Cw==}
+    engines: {node: '>=4'}
+    dependencies:
+      better-path-resolve: 1.0.0
+    dev: true
 
   /is-subset/0.1.1:
     resolution: {integrity: sha512-6Ybun0IkarhmEqxXCNw/C0bna6Zb/TkfUX9UbwJtK6ObwAVCxmAP308WWTHviM/zAqXk05cdhYsUsZeGQh99iw==}
@@ -30902,7 +31462,7 @@ packages:
     dependencies:
       '@jest/types': 24.9.0
       camelcase: 5.3.1
-      chalk: 2.4.1
+      chalk: 2.4.2
       jest-get-type: 24.9.0
       leven: 3.1.0
       pretty-format: 24.9.0
@@ -31667,15 +32227,15 @@ packages:
       '@lerna/init': 5.6.2
       '@lerna/link': 5.6.2
       '@lerna/list': 5.6.2
-      '@lerna/publish': 5.6.2_nx@15.7.2+typescript@4.5.5
+      '@lerna/publish': 5.6.2_nx@15.7.2+typescript@4.8.4
       '@lerna/run': 5.6.2
-      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.5.5
-      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.5.5
+      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.8.4
+      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.8.4
       import-local: 3.1.0
       inquirer: 8.2.5
       npmlog: 6.0.2
       nx: 15.7.2
-      typescript: 4.5.5
+      typescript: 4.8.4
     transitivePeerDependencies:
       - '@swc-node/register'
       - '@swc/core'
@@ -31923,7 +32483,7 @@ packages:
     resolution: {integrity: sha512-04PDPqSlsqIOaaaGZ+41vq5FejI9auqTInicFRndCBgE3bXG8D6W1I+mWhk+1nqbHmyhla/6BUrd5OSiHwKRXw==}
     engines: {node: '>=4'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       cli-cursor: 2.1.0
       date-fns: 1.30.1
       figures: 2.0.0
@@ -32165,6 +32725,10 @@ packages:
 
   /lodash.sortby/4.7.0:
     resolution: {integrity: sha512-HDWXG8isMntAyRF5vZ7xKuEvOhT4AhlRt/3czTSjvGUxjYCBVRQY48ViDHyfYz9VIoBkW4TMGQNapx+l3RUwdA==}
+    dev: true
+
+  /lodash.startcase/4.4.0:
+    resolution: {integrity: sha512-+WKqsK294HMSc2jEbNgpHpd0JfIBhp7rEV4aqXWqFr6AlXov+SlcgB1Fv01y2kGe3Gc8nMW7VA0SrGuSkRfIEg==}
     dev: true
 
   /lodash.truncate/4.4.2:
@@ -32692,6 +33256,23 @@ packages:
     dev: true
     optional: true
 
+  /meow/6.1.1:
+    resolution: {integrity: sha512-3YffViIt2QWgTy6Pale5QpopX/IvU3LPL03jOTqp6pGj3VjesdO/U8CuHMKpnQr4shCNCM5fd5XFFvIIl6JBHg==}
+    engines: {node: '>=8'}
+    dependencies:
+      '@types/minimist': 1.2.2
+      camelcase-keys: 6.2.2
+      decamelize-keys: 1.1.1
+      hard-rejection: 2.1.0
+      minimist-options: 4.1.0
+      normalize-package-data: 2.5.0
+      read-pkg-up: 7.0.1
+      redent: 3.0.0
+      trim-newlines: 3.0.1
+      type-fest: 0.13.1
+      yargs-parser: 18.1.3
+    dev: true
+
   /meow/8.1.2:
     resolution: {integrity: sha512-r85E3NdZ+mpYk1C6RjPFEMSE+s1iZMuHtsHAqY0DT3jZczl0diWUZ8g6oU7h0M9cD2EL+PzaYghhCLzR0ZNn5Q==}
     engines: {node: '>=10'}
@@ -33081,6 +33662,11 @@ packages:
       is-extendable: 0.1.1
     dev: true
 
+  /mixme/0.5.9:
+    resolution: {integrity: sha512-VC5fg6ySUscaWUpI4gxCBTQMH2RdUpNrk+MsbpCYtIvf9SBJdiUey4qE7BXviJsJR4nDQxCZ+3yaYNW3guz/Pw==}
+    engines: {node: '>= 8.0.0'}
+    dev: true
+
   /mkdirp-classic/0.5.3:
     resolution: {integrity: sha512-gKLcREMhtuZRwRAfqP3RFW+TK4JqApVBtOIftVgjuABpAtpxhPGaDcfvbhNvD0B8iD1oUr/txX35NjcaY6Ns/A==}
 
@@ -33196,7 +33782,7 @@ packages:
     resolution: {integrity: sha512-/lFmlpY1cPfLXmV/Qb7kprbQS5VYExEaJGRR86rCLYUdLQM5uivIwvulUEt5VV9mbK/GttN2XPb8al7/5VgtOw==}
     hasBin: true
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       dateformat: 3.0.3
       fs-extra: 4.0.3
       fsu: 1.1.1
@@ -34568,6 +35154,10 @@ packages:
       unicount: 1.1.0
     dev: false
 
+  /outdent/0.5.0:
+    resolution: {integrity: sha512-/jHxFIzoMXdqPzTaCpFzAAWhpkSjZPF4Vsn6jAfNpmbH/ymsmd7Qc6VE9BGn0L6YMj6uwpQLxCECpus4ukKS9Q==}
+    dev: true
+
   /override-require/1.1.1:
     resolution: {integrity: sha512-eoJ9YWxFcXbrn2U8FKT6RV+/Kj7fiGAB1VvHzbYKt8xM5ZuKZgCGvnHzDxmreEjcBH28ejg5MiOH4iyY1mQnkg==}
     dev: true
@@ -35466,7 +36056,7 @@ packages:
     resolution: {integrity: sha512-soOk1h6J3VMTZtVeVpv15/Hpdl2cBLX3CAw4TAbkpTJiNPk9YP/zWcD1ND+xEtvyuuvKzbxliTOIyvkSeSJ6ag==}
     engines: {node: '>=4.0.0'}
     dependencies:
-      chalk: 2.4.1
+      chalk: 2.4.2
       source-map: 0.6.1
       supports-color: 5.5.0
 
@@ -35579,6 +36169,12 @@ packages:
 
   /prettier/2.6.2:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: true
+
+  /prettier/2.8.7:
+    resolution: {integrity: sha512-yPngTo3aXUUmyuTjeTUT75txrf+aMh9FiD7q9ZE/i6r0bPb22g4FsE6Y338PQX1bmfy08i9QQCB7/rcUAVntfw==}
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
@@ -36678,6 +37274,16 @@ packages:
       normalize-package-data: 2.5.0
       parse-json: 5.2.0
       type-fest: 0.6.0
+    dev: true
+
+  /read-yaml-file/1.1.0:
+    resolution: {integrity: sha512-VIMnQi/Z4HT2Fxuwg5KrY174U1VdUIASQVWXXyqtNRtxSr9IYkn1rsI6Tb6HsrHCmB7gVpNwX6JxPTHcH6IoTA==}
+    engines: {node: '>=6'}
+    dependencies:
+      graceful-fs: 4.2.11
+      js-yaml: 3.14.1
+      pify: 4.0.1
+      strip-bom: 3.0.0
     dev: true
 
   /read-yaml-file/2.1.0:
@@ -37947,6 +38553,19 @@ packages:
     resolution: {integrity: sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==}
     engines: {node: '>= 6.0.0', npm: '>= 3.0.0'}
 
+  /smartwrap/2.0.2:
+    resolution: {integrity: sha512-vCsKNQxb7PnCNd2wY1WClWifAc2lwqsG8OaswpJkVJsvMGcnEntdTCDajZCkk93Ay1U3t/9puJmb525Rg5MZBA==}
+    engines: {node: '>=6'}
+    hasBin: true
+    dependencies:
+      array.prototype.flat: 1.3.1
+      breakword: 1.0.5
+      grapheme-splitter: 1.0.4
+      strip-ansi: 6.0.1
+      wcwidth: 1.0.1
+      yargs: 15.4.1
+    dev: true
+
   /snake-case/3.0.4:
     resolution: {integrity: sha512-LAOh4z89bGQvl9pFfNF8V146i7o7/CqFPbqzYgP+yYzDIDeS9HaNFtXABamRW+AQzEVODcvE79ljJ+8a9YSdMg==}
     dependencies:
@@ -38226,6 +38845,13 @@ packages:
       - supports-color
     dev: true
 
+  /spawndamnit/2.0.0:
+    resolution: {integrity: sha512-j4JKEcncSjFlqIwU5L/rp2N5SIPsdxaRsIv678+TZxZ0SRDJTm8JrxJMjE/XuiEZNEir3S8l0Fa3Ke339WI4qA==}
+    dependencies:
+      cross-spawn: 5.1.0
+      signal-exit: 3.0.7
+    dev: true
+
   /spdx-correct/3.1.1:
     resolution: {integrity: sha512-cOYcUWwhCuHCXi49RhFRCyJEK3iPj1Ziz9DpViV3tbZOwXD49QzIN3MpOLJNxh2qwq2lJJZaKMVw9qNi4jTC0w==}
     dependencies:
@@ -38496,6 +39122,12 @@ packages:
     dependencies:
       looper: 3.0.0
       pull-stream: 3.7.0
+
+  /stream-transform/2.1.3:
+    resolution: {integrity: sha512-9GHUiM5hMiCi6Y03jD2ARC1ettBXkQBoQAe7nJsPknnI0ow10aXjTnew8QtYQmLjzn974BnmWEAJgCY6ZP1DeQ==}
+    dependencies:
+      mixme: 0.5.9
+    dev: true
 
   /strict-uri-encode/1.1.0:
     resolution: {integrity: sha512-R3f198pcvnB+5IpnBlRkphuE9n46WyVl8I39W/ZUTZLz4nqSP/oLYUrcnJrw462Ds8he4YKMov2efsTIw1BDGQ==}
@@ -39131,6 +39763,11 @@ packages:
       execa: 0.7.0
     dev: true
 
+  /term-size/2.2.1:
+    resolution: {integrity: sha512-wK0Ri4fOGjv/XPy8SBHZChl8CM7uMc5VML7SqiQ0zG7+J5Vr+RMQDoHa2CNT6KHUnTGIXH34UDMkPzAUyapBZg==}
+    engines: {node: '>=8'}
+    dev: true
+
   /terminal-link/2.1.1:
     resolution: {integrity: sha512-un0FmiRUQNr5PJqy9kP7c40F5BOfpGlYTrxonDChEZB7pzZxRNp/bt+ymiy9/npwXya9KH99nJ/GXFIiUkYGFQ==}
     engines: {node: '>=8'}
@@ -39714,6 +40351,20 @@ packages:
     resolution: {integrity: sha512-JVa5ijo+j/sOoHGjw0sxw734b1LhBkQ3bvUGNdxnVXDCX81Yx7TFgnZygxrIIWn23hbfTaMYLwRmAxFyDuFmIw==}
     dev: true
 
+  /tty-table/4.2.1:
+    resolution: {integrity: sha512-xz0uKo+KakCQ+Dxj1D/tKn2FSyreSYWzdkL/BYhgN6oMW808g8QRMuh1atAV9fjTPbWBjfbkKQpI/5rEcnAc7g==}
+    engines: {node: '>=8.0.0'}
+    hasBin: true
+    dependencies:
+      chalk: 4.1.2
+      csv: 5.5.3
+      kleur: 4.1.5
+      smartwrap: 2.0.2
+      strip-ansi: 6.0.1
+      wcwidth: 1.0.1
+      yargs: 17.7.1
+    dev: true
+
   /tunnel-agent/0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
     dependencies:
@@ -39753,6 +40404,11 @@ packages:
   /type-fest/0.10.0:
     resolution: {integrity: sha512-EUV9jo4sffrwlg8s0zDhP0T2WD3pru5Xi0+HTE3zTUmBaZNhfkite9PdSJwdXLwPVW0jnAHT56pZHIOYckPEiw==}
     engines: {node: '>=8'}
+
+  /type-fest/0.13.1:
+    resolution: {integrity: sha512-34R7HTnG0XIJcBSn5XhDd7nNFPRcXYRZrBB2O2jdKqYODldSzBAqzsWoZYYvduky73toYS/ESqxPvkDf/F0XMg==}
+    engines: {node: '>=10'}
+    dev: true
 
   /type-fest/0.18.1:
     resolution: {integrity: sha512-OIAYXk8+ISY+qTOwkHtKqzAuxchoMiD9Udx+FSGQDuiRR+PJKJHc2NJAXlbhkGwTt/4/nKZxELY1w3ReWOL8mw==}
@@ -40222,7 +40878,7 @@ packages:
     engines: {node: '>=4'}
     dependencies:
       boxen: 1.3.0
-      chalk: 2.4.1
+      chalk: 2.4.2
       configstore: 3.1.5
       import-lazy: 2.1.0
       is-ci: 1.2.1

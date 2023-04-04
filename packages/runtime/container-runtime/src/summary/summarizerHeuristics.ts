@@ -157,16 +157,21 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 	}
 
 	public shouldRunLastSummary(): boolean {
-		const opsSinceLastAck = this.opsSinceLastAck;
+		const weightedOpsSinceLastAck = getWeightedNumberOfOps(
+			this.heuristicData.numRuntimeOps,
+			this.heuristicData.numNonRuntimeOps,
+			this.configuration.runtimeOpWeight,
+			this.configuration.nonRuntimeOpWeight,
+		);
 		const minOpsForLastSummaryAttempt = this.configuration.minOpsForLastSummaryAttempt;
 
 		this.logger.sendTelemetryEvent({
 			eventName: "ShouldRunLastSummary",
-			opsSinceLastAck,
+			weightedOpsSinceLastAck,
 			minOpsForLastSummaryAttempt,
 		});
 
-		return opsSinceLastAck >= minOpsForLastSummaryAttempt;
+		return weightedOpsSinceLastAck >= minOpsForLastSummaryAttempt;
 	}
 
 	public dispose() {
