@@ -8,10 +8,9 @@ import {
 	ContainerMetadata,
 	IMessageRelay,
 	InboundHandlers,
-	ContainerListChangeMessage,
+	ContainerListMessage,
 	ISourcedDebuggerMessage,
 	handleIncomingMessage,
-	IDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
@@ -27,7 +26,7 @@ initializeFluentUiIcons();
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: IDebuggerMessage = {
+const getContainerListMessage: ContainerListMessage = {
 	type: "GET_CONTAINER_LIST",
 	data: undefined,
 };
@@ -85,7 +84,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
 			["CONTAINER_LIST"]: (untypedMessage) => {
-				const message = untypedMessage as ContainerListChangeMessage;
+				const message = untypedMessage as ContainerListMessage;
 				setContainers(message.data.containers);
 				return true;
 			},
