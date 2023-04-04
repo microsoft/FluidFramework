@@ -398,11 +398,13 @@ export class FluidClientDebugger
 		this._connectionStateLog = [];
 		this._audienceChangeLog = [];
 
-		// TODO: accept custom visualizers.
 		this.dataVisualizer =
 			props.containerData === undefined
 				? undefined
-				: new DataVisualizerGraph(props.containerData, defaultVisualizers);
+				: new DataVisualizerGraph(props.containerData, {
+						...defaultVisualizers,
+						...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
+				  });
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging

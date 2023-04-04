@@ -45,10 +45,6 @@ export const stringSchema = TypedSchema.tree("String", {
 	value: ValueSchema.String,
 });
 
-export const decimalSchema = TypedSchema.tree("Decimal", {
-	value: ValueSchema.String,
-});
-
 export const int32Schema = TypedSchema.tree("Int32", {
 	value: ValueSchema.Number,
 });
@@ -116,13 +112,7 @@ export const personSchema = TypedSchema.tree("Test:Person-1.0.0", {
 		name: TypedSchema.field(FieldKinds.value, stringSchema),
 		age: TypedSchema.field(FieldKinds.optional, int32Schema),
 		adult: TypedSchema.field(FieldKinds.optional, boolSchema),
-		salary: TypedSchema.field(
-			FieldKinds.optional,
-			float64Schema,
-			int32Schema,
-			stringSchema,
-			decimalSchema,
-		),
+		salary: TypedSchema.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
 		friends: TypedSchema.field(FieldKinds.optional, mapStringSchema),
 		address: TypedSchema.field(FieldKinds.optional, addressSchema),
 	},
@@ -156,7 +146,6 @@ export const treeSchema = [
 	addressSchema,
 	mapStringSchema,
 	personSchema,
-	decimalSchema,
 ] as const;
 
 export const fullSchemaData = SchemaAware.typedSchemaData(

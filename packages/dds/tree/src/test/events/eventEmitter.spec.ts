@@ -10,6 +10,7 @@ import { createEmitter, EventEmitter, ISubscribable } from "../../events";
 interface TestEvents {
 	open: () => void;
 	close: (error: boolean) => void;
+	compute: (input: string) => string;
 }
 
 describe("EventEmitter", () => {
@@ -22,6 +23,22 @@ describe("EventEmitter", () => {
 		});
 		emitter.emit("open");
 		assert(opened);
+	});
+
+	it("emits events and collects their results", () => {
+		const emitter = createEmitter<TestEvents>();
+		const listener1 = (arg: string) => arg.toUpperCase();
+		const listener2 = (arg: string) => arg.toLowerCase();
+		emitter.on("compute", listener1);
+		emitter.on("compute", listener2);
+		const results = emitter.emitAndCollect("compute", "hello");
+		assert.deepEqual(results, ["HELLO", "hello"]);
+	});
+
+	it("emits events and collects an empty result array when no listeners registered", () => {
+		const emitter = createEmitter<TestEvents>();
+		const results = emitter.emitAndCollect("compute", "hello");
+		assert.deepEqual(results, []);
 	});
 
 	it("passes arguments to events", () => {
@@ -121,6 +138,7 @@ describe("EventEmitter", () => {
 
 interface MyEvents {
 	loaded: () => void;
+	computed: () => number;
 }
 
 // The below classes correspond to the examples given in the doc comment of `EventEmitter` to ensure that they compile
@@ -128,6 +146,7 @@ interface MyEvents {
 class MyInheritanceClass extends EventEmitter<MyEvents> {
 	private load() {
 		this.emit("loaded");
+		const results: number[] = this.emitAndCollect("computed");
 	}
 }
 
@@ -136,6 +155,7 @@ class MyCompositionClass implements ISubscribable<MyEvents> {
 
 	private load() {
 		this.events.emit("loaded");
+		const results: number[] = this.events.emitAndCollect("computed");
 	}
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
