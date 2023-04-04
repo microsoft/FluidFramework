@@ -79,7 +79,6 @@ export class ContainerDevtools extends TypedEventEmitter<ContainerDevtoolsEvents
     // (undocumented)
     get disposed(): boolean;
     getAudienceHistory(): readonly AudienceChangeLogEntry[];
-    // (undocumented)
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 }
 
@@ -88,7 +87,7 @@ export interface ContainerDevtoolsEvents extends IEvent {
     (event: "disposed", listener: () => void): any;
 }
 
-// @internal
+// @public
 export interface ContainerDevtoolsProps {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
@@ -191,7 +190,7 @@ export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implem
     dispose(): void;
     // (undocumented)
     get disposed(): boolean;
-    getAllContainerDevtools(): IContainerDevtools[];
+    getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
     registerContainer(props: ContainerDevtoolsProps): void;
 }
@@ -321,7 +320,7 @@ export interface IDebuggerMessage<TData = unknown> {
 // @public
 export interface IFluidDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
     closeContainerDevtools(containerId: string): void;
-    getAllContainerDevtools(): IContainerDevtools[];
+    getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
     registerContainer(props: ContainerDevtoolsProps): void;
 }
