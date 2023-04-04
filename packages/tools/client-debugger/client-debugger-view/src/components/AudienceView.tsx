@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { DefaultPalette, Icon, IStackItemStyles, Stack, StackItem } from "@fluentui/react";
+import { tokens } from "@fluentui/react-components";
 import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
@@ -184,7 +185,10 @@ function HistoryView(props: HistoryViewProps): React.ReactElement {
 
 		const accordianBackgroundColor: IStackItemStyles = {
 			root: {
-				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
+				background:
+					history[i].changeKind === "added"
+						? tokens.colorPaletteLightGreenBackground2
+						: tokens.colorPaletteRedBackground2,
 				borderStyle: "solid",
 				borderWidth: 1,
 				borderColor: DefaultPalette.neutralTertiary,

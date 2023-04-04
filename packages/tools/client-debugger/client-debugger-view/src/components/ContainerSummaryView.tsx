@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IconButton, IStackItemStyles, IStackTokens, Stack, StackItem, TooltipHost } from "@fluentui/react";
+import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fluentui/react";
 import { useId } from "@fluentui/react-hooks";
-import { Badge, Divider, Table, TableBody, TableRow, TableCell, TableCellLayout } from "@fluentui/react-components";
+import {
+	Badge,
+	makeStyles,
+	Table,
+	TableBody,
+	TableRow,
+	TableCell,
+	TableCellLayout,
+} from "@fluentui/react-components";
 import React from "react";
 
 import {
@@ -25,6 +33,13 @@ import { connectionStateToString } from "../Utilities";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 
+const useOverrides = makeStyles({
+	cell: {
+		...shorthands.border('1px', 'solid', tokens.colorNeutralBackground1),
+		// fontWeight: "light",
+	},
+});
+
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
@@ -42,6 +57,7 @@ export type ContainerSummaryViewProps = HasContainerId;
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
 	const { containerId } = props;
+	const classes = useOverrides();
 
 	const messageRelay: IMessageRelay = useMessageRelay();
 
@@ -139,125 +155,75 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 	const statusString = statusComponents.join(" | ");
 
-	const themedLargeStackTokens: IStackTokens = {
-		childrenGap: 's1',
-		padding: 's1',
-	  };
-
 	return (
-		<Stack className="container-summary-view" tokens={themedLargeStackTokens} >
+		<Stack className="container-summary-view">
 			<StackItem>
-				<span>
-					<b>Container</b>:{" "}
-					{containerState.nickname !== undefined
-						? `${containerState.nickname} (${containerState.id})`
-						: containerState.id}
-				</span>
+				<Table className={classes.cell}>
+					<TableBody>
+						<TableRow>
+							<TableCell>
+								<TableCellLayout>
+									<b>Container</b>
+								</TableCellLayout>
+							</TableCell>
+							<TableCell>
+								<TableCellLayout>
+									{containerState.nickname !== undefined
+										? `${containerState.nickname} (${containerState.id})`
+										: containerState.id}
+								</TableCellLayout>
+							</TableCell>
+						</TableRow>
+						<TableRow>
+							<TableCell>
+								<TableCellLayout>
+									<b>Status</b>:
+								</TableCellLayout>
+							</TableCell>
+							<TableCell>
+								<TableCellLayout>
+									{((): JSX.Element => {
+										switch (statusString) {
+											case "disconnected":
+												return <Badge color="danger">{statusString}</Badge>;
+											case "detached":
+												return (
+													<Badge color="warning">{statusString}</Badge>
+												);
+											default:
+												return (
+													<Badge color="success">{statusString}</Badge>
+												);
+										}
+									})()}
+								</TableCellLayout>
+							</TableCell>
+						</TableRow>
+						<TableRow>
+							<TableCell>
+								<TableCellLayout>
+									<b>Client ID</b>:
+								</TableCellLayout>
+							</TableCell>
+							<TableCell>
+								<TableCellLayout>{containerState.clientId}</TableCellLayout>
+							</TableCell>
+						</TableRow>
+
+						<TableRow>
+							<TableCell>
+								<TableCellLayout>
+									<b>Audience ID</b>:
+								</TableCellLayout>
+							</TableCell>
+							<TableCell>
+								<TableCellLayout>{containerState.audienceId}</TableCellLayout>
+							</TableCell>
+						</TableRow>
+					</TableBody>
+				</Table>
 			</StackItem>
-			<StackItem>
-				<span>
-					<b>Status</b>:
-					<span style={{ marginLeft: "10px" }}>
-						{((): JSX.Element => {
-							switch (statusString) {
-								case "disconnected":
-									return <Badge color="danger">{statusString}</Badge>;
-								case "detached":
-									return <Badge color="warning">{statusString}</Badge>;
-								default:
-									return <Badge color="success">{statusString}</Badge>;
-							}
-						})()}
-					</span>
-				</span>
-			</StackItem>
-			<StackItem>
-				{containerState.clientId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Client ID</b>: {containerState.clientId}
-					</span>
-				)}
-			</StackItem>
-			<Divider></Divider>
-			<StackItem>
-				{containerState.audienceId === undefined ? (
-					<></>
-				) : (
-					<span>
-						<b>Audience ID</b>: {containerState.audienceId}
-					</span>
-				)}
-			</StackItem>
-			
-			<StackItem>
-		<Table>
-			<TableBody>
-				<TableRow>
-					<TableCell>
-						<TableCellLayout>
-							<b>Container</b>
-						</TableCellLayout>
-					</TableCell>
-					<TableCell>
-						<TableCellLayout>
-						{containerState.nickname !== undefined
-						? `${containerState.nickname} (${containerState.id})`
-						: containerState.id}
-						</TableCellLayout>
-					</TableCell>
-				</TableRow>
-				<TableRow>
-					<TableCell>
-						<TableCellLayout>
-						<b>Status</b>:
-						</TableCellLayout>
-					</TableCell>
-					<TableCell>
-						<TableCellLayout>
-						{((): JSX.Element => {
-							switch (statusString) {
-								case "disconnected":
-									return <Badge color="danger">{statusString}</Badge>;
-								case "detached":
-									return <Badge color="warning">{statusString}</Badge>;
-								default:
-									return <Badge color="success">{statusString}</Badge>;
-							}
-						})()}
-						</TableCellLayout>
-					</TableCell>
-				</TableRow>
-				<TableRow>
-					<TableCell>
-						<TableCellLayout>
-							<b>Client ID</b>:
-						</TableCellLayout>
-					</TableCell>
-					<TableCell>
-						<TableCellLayout>
-							{containerState.clientId}
-						</TableCellLayout>
-					</TableCell>
-				</TableRow>
-				
-				<TableRow>
-					<TableCell>
-						<TableCellLayout>
-							<b>Audience ID</b>:
-						</TableCellLayout>
-					</TableCell>
-					<TableCell>
-						<TableCellLayout>
-							{containerState.audienceId}
-						</TableCellLayout>
-					</TableCell>
-				</TableRow>
-			</TableBody>
-		</Table>
-		</StackItem>
-		<StackItem align="end">
+			<StackItem align="end">
 				<ActionsBar
 					isContainerConnected={
 						containerState.connectionState === ConnectionState.Connected

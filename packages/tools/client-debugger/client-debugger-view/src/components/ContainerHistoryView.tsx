@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { DefaultPalette, IStackItemStyles, Icon, Stack, StackItem } from "@fluentui/react";
+import { tokens } from "@fluentui/react-components";
 import React from "react";
 
 import {
@@ -96,11 +97,11 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 			root: {
 				background:
 					containerHistory[i].newState === ContainerStateChangeKind.Connected
-						? "#F0FFF0" // green
+						? tokens.colorPaletteLightGreenBackground2 // green
 						: containerHistory[i].newState === ContainerStateChangeKind.Attached
-						? "#F0FFFF" // blue
+						? tokens.colorPaletteRoyalBlueBackground2 // blue
 						: containerHistory[i].newState === ContainerStateChangeKind.Disconnected
-						? "#FDF5E6" // yellow
+						? tokens.colorPaletteYellowBackground2 // yellow
 						: containerHistory[i].newState === ContainerStateChangeKind.Closed
 						? "#FFF0F5" // red
 						: containerHistory[i].newState === ContainerStateChangeKind.Disposed
