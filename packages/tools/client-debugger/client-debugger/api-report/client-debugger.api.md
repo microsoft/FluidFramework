@@ -340,6 +340,9 @@ export interface InboundHandlers {
     [type: string]: (message: ISourcedDebuggerMessage) => boolean;
 }
 
+// @public
+export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
+
 // @internal
 export function isDebuggerMessage(value: Partial<ISourcedDebuggerMessage>): value is ISourcedDebuggerMessage;
 
