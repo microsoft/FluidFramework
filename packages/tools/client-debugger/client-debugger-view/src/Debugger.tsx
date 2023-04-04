@@ -8,7 +8,7 @@ import {
 	ContainerMetadata,
 	IMessageRelay,
 	InboundHandlers,
-	RegistryChangeMessage,
+	ContainerListChangeMessage,
 	ISourcedDebuggerMessage,
 	handleIncomingMessage,
 	IDebuggerMessage,
@@ -84,8 +84,8 @@ export function FluidClientDebuggers(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["REGISTRY_CHANGE"]: (untypedMessage) => {
-				const message = untypedMessage as RegistryChangeMessage;
+			["CONTAINER_LIST_CHANGE"]: (untypedMessage) => {
+				const message = untypedMessage as ContainerListChangeMessage;
 				setContainers(message.data.containers);
 				return true;
 			},
