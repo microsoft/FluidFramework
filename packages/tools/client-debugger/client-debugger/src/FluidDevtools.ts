@@ -174,6 +174,12 @@ export class FluidDevtools
 	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
 	 */
 	public closeContainerDevtools(containerId: string): void {
+		if (this.disposed) {
+			throw new UsageError(
+				"The Devtools has been disposed. All Container Devtools instances have already been closed.",
+			);
+		}
+
 		const containerDevtools = this.containerDevtools.get(containerId);
 		if (containerDevtools === undefined) {
 			console.warn(
@@ -190,6 +196,10 @@ export class FluidDevtools
 	 * {@inheritDoc IFluidDevtools.getContainerDevtools}
 	 */
 	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
+		if (this.disposed) {
+			throw new UsageError("The Devtools has been disposed.");
+		}
+
 		return this.containerDevtools.get(containerId);
 	}
 
@@ -197,6 +207,10 @@ export class FluidDevtools
 	 * {@inheritDoc IFluidDevtools.getAllContainerDevtools}
 	 */
 	public getAllContainerDevtools(): readonly IContainerDevtools[] {
+		if (this.disposed) {
+			throw new UsageError("The Devtools has been disposed.");
+		}
+
 		return [...this.containerDevtools.values()];
 	}
 
