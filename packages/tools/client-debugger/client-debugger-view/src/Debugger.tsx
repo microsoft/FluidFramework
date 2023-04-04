@@ -19,7 +19,7 @@ import { FluentProvider } from "@fluentui/react-components";
 import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
-import { flueUIThemeToUse } from "./ThemeHelper";
+import { getFluentUIThemeToUse } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DebuggerPanel)";
 
@@ -192,7 +192,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={flueUIThemeToUse()}>
+		<FluentProvider theme={getFluentUIThemeToUse()}>
 			<Stack enableScopedSelectors horizontal styles={stackStyles}>
 				<Stack.Item grow={1} styles={menuStyles}>
 					{/* TODO: button to refresh list of containers */}

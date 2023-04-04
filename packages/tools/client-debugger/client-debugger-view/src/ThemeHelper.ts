@@ -11,9 +11,8 @@ import { webDarkTheme, webLightTheme, Theme } from "@fluentui/react-components";
 export function getFluentUIThemeToUse(): Theme {
 	let defaultTheme = webLightTheme;
 
+	// API reference: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme
 	if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
-		// The user has a dark theme set in their web browser
-		console.log("Dark theme detected.");
 		defaultTheme = webDarkTheme;
 	}
 
