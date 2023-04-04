@@ -71,7 +71,8 @@ export interface ILocalOrdererSetup {
 	 */
 	documentP(): Promise<IDocumentDetails>;
 	documentRepositoryP(): Promise<IDocumentRepository>;
-	checkpointRepositoryP(): Promise<ICheckpointRepository>;
+	deliCheckpointRepositoryP(): Promise<ICheckpointRepository>;
+	scribeCheckpointRepositoryP(): Promise<ICheckpointRepository>;
 	deltaCollectionP(): Promise<ICollection<any>>;
 	scribeDeltaCollectionP(): Promise<ICollection<ISequencedOperationMessage>>;
 	protocolHeadP(): Promise<number>;

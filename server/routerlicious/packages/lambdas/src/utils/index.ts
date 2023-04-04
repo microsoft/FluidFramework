@@ -12,5 +12,5 @@ export { NoOpLambda } from "./noOpLambda";
 export { getRandomInt } from "./random";
 export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";
 export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
-export { CheckpointReason, ICheckpoint } from "./checkpointHelper";
+export { CheckpointReason, ICheckpoint, restoreFromCheckpoint } from "./checkpointHelper";
 export { ConnectionCountLogger } from "./connectionCountLogger";

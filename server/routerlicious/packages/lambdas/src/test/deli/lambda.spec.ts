@@ -130,10 +130,10 @@ describe("Routerlicious", () => {
 
 				Sinon.replace(
 					checkpointRepository,
-					"readOne",
+					"getCheckpoint",
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
-				Sinon.replace(checkpointRepository, "updateOne", Sinon.fake.resolves(undefined));
+				Sinon.replace(checkpointRepository, "writeCheckpoint", Sinon.fake.resolves(undefined));
 
 				testKafka = new TestKafka();
 				testForwardProducer = testKafka.createProducer();

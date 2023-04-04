@@ -88,9 +88,9 @@ export async function scribeCreate(
 		);
 
 	const checkpointRepository =
-		customizations?.checkpointRepository ??
 		new core.MongoCheckpointRepository(
 			operationsDb.collection<ICheckpoint>(checkpointsCollectionName),
+            "scribe"
 		);
 
 	if (createCosmosDBIndexes) {

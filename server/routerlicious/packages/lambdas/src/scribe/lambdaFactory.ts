@@ -37,7 +37,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid, restoreFromCheckpoint } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
@@ -180,44 +180,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 				Lumberjack.info(checkpointMessage, lumberProperties);
 			}
 		} else {
-			let checkpoint;
-			let isLocalCheckpoint = false;
-
-			if (!this.localCheckpointEnabled || !this.checkpointRepository) {
-				// No local checkpoints, use document
-				lastCheckpoint = JSON.parse(document.scribe);
-			} else {
-				// Search local database for checkpoint
-				Lumberjack.info(`Checking local DB for checkpoint.`, lumberProperties);
-				checkpoint = await this.checkpointRepository
-					.readOne({ documentId, tenantId })
-					.catch((error) => {
-						Lumberjack.error(
-							`Error retrieving checkpoint from local DB.`,
-							lumberProperties,
-							error,
-						);
-					});
-				if (checkpoint?.scribe) {
-					// If the checkpoint exists, get the value from the checkpoint
-					lastCheckpoint = JSON.parse(checkpoint.scribe);
-					isLocalCheckpoint = true;
-				} else {
-					// If the checkpoint doesn't exist, get the value from the document
-					lastCheckpoint = JSON.parse(document.scribe);
-				}
-			}
-
-			const lumberjackProperties = {
-				...getLumberBaseProperties(documentId, tenantId),
-				lastCheckpointSeqNo: lastCheckpoint.sequenceNumber,
-				logOffset: lastCheckpoint.logOffset,
-				LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
-				retrievedFromLocalDB: isLocalCheckpoint,
-			};
-
-			Lumberjack.info("Restoring checkpoint from db", lumberjackProperties);
-
+            lastCheckpoint = await restoreFromCheckpoint(documentId, tenantId, "scribe", this.localCheckpointEnabled, this.checkpointRepository, document);
 			opMessages = await this.getOpMessages(documentId, tenantId, lastCheckpoint);
 		}
 

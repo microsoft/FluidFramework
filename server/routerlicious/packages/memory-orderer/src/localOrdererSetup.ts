@@ -28,7 +28,8 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 		private readonly storage: IDocumentStorage,
 		private readonly databaseManager: IDatabaseManager,
 		private readonly documentRepository: IDocumentRepository,
-		private readonly checkpointRepository: ICheckpointRepository,
+		private readonly deliCheckpointRepository: ICheckpointRepository,
+		private readonly scribeCheckpointRepository: ICheckpointRepository,
 		private readonly gitManager?: IGitManager,
 	) {}
 
@@ -54,8 +55,12 @@ export class LocalOrdererSetup implements ILocalOrdererSetup {
 		return this.documentRepository;
 	}
 
-	public async checkpointRepositoryP(): Promise<ICheckpointRepository> {
-		return this.checkpointRepository;
+	public async deliCheckpointRepositoryP(): Promise<ICheckpointRepository> {
+		return this.deliCheckpointRepository;
+	}
+
+    public async scribeCheckpointRepositoryP(): Promise<ICheckpointRepository> {
+		return this.scribeCheckpointRepository;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async

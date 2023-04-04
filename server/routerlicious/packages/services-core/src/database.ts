@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICheckpoint, IDocument } from "./document";
+import { ICheckpoint, IDeliState, IDocument, IScribe } from "./document";
 import { ISequencedOperationMessage } from "./messages";
 import { INode } from "./orderer";
 
@@ -91,43 +91,22 @@ export interface ICheckpointRepository {
 	/**
 	 * Retrieves a checkpoint from the database
 	 */
-	readOne(filter: any): Promise<ICheckpoint>;
+    getCheckpoint(documentId: string, tenantId: string): Promise<ICheckpoint>;
 
-	/**
-	 * Update one checkpoint in the database
+    /**
+	 * Writes a checkpoint to the database
 	 */
-	updateOne(filter: any, update: any, options?: any): Promise<void>;
+    writeCheckpoint(documentId: string, tenantId: string, checkpoint: IDeliState | IScribe ): Promise<void>;
 
-	/**
-	 * Delete one checkpoint from the database
+    /**
+	 * Removes checkpoint for one service from the checkpoint's schema
 	 */
-	deleteOne(filter: any): Promise<void>;
+    removeServiceCheckpoint(documentId: string, tenantId: string): Promise<void>;
 
-	/**
-	 * Find and create a checkpoint in the database by following option behavior
+    /**
+	 * Deletes a checkpoint from the database
 	 */
-	findOneOrCreate(
-		filter: any,
-		value: any,
-		options?: any,
-	): Promise<{ value: ICheckpoint; existing: boolean }>;
-
-	/**
-	 * Find and update a checkpoint in the database by following option behavior
-	 */
-	findOneAndUpdate(
-		filter: any,
-		value: any,
-		options?: any,
-	): Promise<{ value: ICheckpoint; existing: boolean }>;
-
-	create(document: ICheckpoint): Promise<any>;
-
-	/**
-	 * Find if any checkpoint exists in the database by given filter
-	 * @param filter - filter to check the existence of document
-	 */
-	exists(filter: any): Promise<boolean>;
+    deleteCheckpoint(documentId: string, tenantId: string): Promise<void>;
 }
 
 /**

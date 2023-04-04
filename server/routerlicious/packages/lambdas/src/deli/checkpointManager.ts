@@ -57,17 +57,7 @@ export function createDeliCheckpointManagerFromCollection(
 	const checkpointManager = {
 		writeCheckpoint: async (checkpoint: IDeliState, isLocal: boolean) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return isLocal
-				? checkpointRepository.updateOne(
-						{
-							documentId,
-							tenantId,
-						},
-						{
-							deli: JSON.stringify(checkpoint),
-						},
-						{ upsert: true },
-				  )
+			return isLocal ? checkpointRepository.writeCheckpoint(documentId, tenantId, checkpoint)
 				: documentRepository.updateOne(
 						{
 							documentId,
@@ -81,16 +71,7 @@ export function createDeliCheckpointManagerFromCollection(
 		deleteCheckpoint: async (checkpointParams: ICheckpointParams, isLocal: boolean) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return isLocal
-				? checkpointRepository.updateOne(
-						{
-							documentId,
-							tenantId,
-						},
-						{
-							deli: "",
-						},
-						null,
-				  )
+				? checkpointRepository.removeServiceCheckpoint(documentId, tenantId)
 				: documentRepository.updateOne(
 						{
 							documentId,
@@ -124,7 +105,7 @@ export async function getLatestCheckpoint(
 	}
 
 	const checkpoint = await checkpointRepository
-		.readOne({ documentId, tenantId })
+		.getCheckpoint(documentId, tenantId)
 		.catch((error) => {
 			Lumberjack.error(
 				`Error reading checkpoint from checkpoint collection.`,

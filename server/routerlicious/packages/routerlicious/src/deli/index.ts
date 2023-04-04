@@ -76,8 +76,7 @@ export async function deliCreate(
 	);
 	const documentRepository =
 		customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
-	const checkpointRepository =
-		customizations?.documentRepository ?? new core.MongoCheckpointRepository(localCollection);
+	const checkpointRepository = new core.MongoCheckpointRepository(localCollection, "deli");
 
 	const forwardProducer = services.createProducer(
 		kafkaLibrary,

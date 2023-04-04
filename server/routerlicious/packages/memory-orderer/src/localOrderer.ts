@@ -105,7 +105,8 @@ export class LocalOrderer implements IOrderer {
 		tokenGenerator: TokenGenerator,
 		logger: ILogger,
 		documentRepository: IDocumentRepository,
-		checkpointRepository: ICheckpointRepository,
+		deliCheckpointRepository: ICheckpointRepository,
+		scribeCheckpointRepository: ICheckpointRepository,
 		gitManager?: IGitManager,
 		setup: ILocalOrdererSetup = new LocalOrdererSetup(
 			tenantId,
@@ -113,7 +114,8 @@ export class LocalOrderer implements IOrderer {
 			storage,
 			databaseManager,
 			documentRepository,
-			checkpointRepository,
+			deliCheckpointRepository,
+			scribeCheckpointRepository,
 			gitManager,
 		),
 		pubSub: IPubSub = new PubSub(),
@@ -301,13 +303,13 @@ export class LocalOrderer implements IOrderer {
 			this.deliContext,
 			async (lambdaSetup, context) => {
 				const documentRepository = await lambdaSetup.documentRepositoryP();
-				const checkpointRepository = await lambdaSetup.checkpointRepositoryP();
+				const deliCheckpointRepository = await lambdaSetup.deliCheckpointRepositoryP();
 				const lastCheckpoint = JSON.parse(this.dbObject.deli);
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					this.tenantId,
 					this.documentId,
 					documentRepository,
-					checkpointRepository,
+					deliCheckpointRepository,
 				);
 				return new DeliLambda(
 					context,
@@ -353,7 +355,7 @@ export class LocalOrderer implements IOrderer {
 			scribeMessages,
 		] = await Promise.all([
 			setup.documentRepositoryP(),
-			setup.checkpointRepositoryP(),
+            setup.scribeCheckpointRepositoryP(),
 			setup.scribeDeltaCollectionP(),
 			setup.protocolHeadP(),
 			setup.scribeMessagesP(),

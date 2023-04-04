@@ -85,9 +85,13 @@ export class LocalOrdererManager implements IOrdererManager {
 		const documentRepository =
 			this.documentRepository ??
 			new MongoDocumentRepository(await this.databaseManager.getDocumentCollection());
-		const checkpointRepository =
+		const deliCheckpointRepository =
 			this.checkpointRepository ??
-			new MongoCheckpointRepository(await this.databaseManager.getCheckpointCollection());
+			new MongoCheckpointRepository(await this.databaseManager.getCheckpointCollection(), "deli");
+
+        const scribeCheckpointRepository =
+            this.checkpointRepository ??
+            new MongoCheckpointRepository(await this.databaseManager.getCheckpointCollection(), "scribe");
 
 		const orderer = await LocalOrderer.load(
 			this.storage,
@@ -100,7 +104,8 @@ export class LocalOrdererManager implements IOrdererManager {
 			this.tokenGenerator,
 			this.logger,
 			documentRepository,
-			checkpointRepository,
+			deliCheckpointRepository,
+            scribeCheckpointRepository,
 			gitManager,
 			undefined /* ILocalOrdererSetup */,
 			this.pubsub,
