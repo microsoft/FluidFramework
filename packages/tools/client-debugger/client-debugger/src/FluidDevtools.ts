@@ -240,6 +240,7 @@ export class FluidDevtools
 			this.emit("containerDevtoolsClosed", containerId);
 		}
 		this.containers.clear();
+		this.postContainerList(); // Notify listeners that the list of Containers changed.
 
 		// Notify listeners that the devtools have been disposed.
 		this.emit("devtoolsDisposed");
