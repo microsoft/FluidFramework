@@ -393,14 +393,13 @@ export class LocalOrderer implements IOrderer {
 			this.tenantId,
 			this.documentId,
 			summaryWriter,
-			summaryReader,
 			undefined,
 			checkpointManager,
 			scribe,
 			this.serviceConfiguration,
 			this.rawDeltasKafka,
 			protocolHandler,
-			1, // TODO (Change when local orderer also ticks epoch)
+			1, // term - TODO remove
 			protocolHead,
 			scribeMessages.map((message) => message.operation),
 			undefined,

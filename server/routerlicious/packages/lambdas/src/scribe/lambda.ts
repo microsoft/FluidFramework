@@ -48,7 +48,6 @@ import {
 import {
 	ICheckpointManager,
 	IPendingMessageReader,
-	ISummaryReader,
 	ISummaryWriter,
 } from "./interfaces";
 import { initializeProtocol, sendToDeli } from "./utils";
@@ -99,7 +98,6 @@ export class ScribeLambda implements IPartitionLambda {
 		protected tenantId: string,
 		protected documentId: string,
 		private readonly summaryWriter: ISummaryWriter,
-		summaryReader: ISummaryReader,
 		private readonly pendingMessageReader: IPendingMessageReader | undefined,
 		private readonly checkpointManager: ICheckpointManager,
 		scribe: IScribe,

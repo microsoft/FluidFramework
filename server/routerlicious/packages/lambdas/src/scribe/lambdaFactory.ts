@@ -278,7 +278,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			document.tenantId,
 			document.documentId,
 			summaryWriter,
-			summaryReader,
 			pendingMessageReader,
 			checkpointManager,
 			lastCheckpoint,
