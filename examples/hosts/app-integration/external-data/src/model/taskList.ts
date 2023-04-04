@@ -519,7 +519,7 @@ export const TaskListInstantiationFactory = new DataObjectFactory<TaskList>(
  */
 export class BaseDocument extends DataObject implements IBaseDocument {
 	private readonly taskListCollection = new Map<string, TaskList>();
-
+	private readonly leader = "leader";
 	public readonly addTaskList = async (props: IBaseDocumentInitialState): Promise<void> => {
 		if (this.taskListCollection.has(props.externalTaskListId)) {
 			throw new Error(
@@ -543,10 +543,10 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 	};
 
 	public readonly getLeader = (): string | undefined => {
-		return this.root.get("leader");
+		return this.root.get(this.leader);
 	};
 	public readonly setLeader = (newLeader: string): void => {
-		this.root.set("leader", newLeader);
+		this.root.set(this.leader, newLeader);
 	};
 
 	protected async hasInitialized(): Promise<void> {

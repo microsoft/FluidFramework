@@ -71,9 +71,7 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 			if (message?.content?.type === SignalType.ExternalDataChanged) {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				const taskListId = message?.content?.taskListId as string;
-				console.log(taskListId);
 				const taskList = taskListCollection.getTaskList(taskListId);
-				console.log(taskList);
 				if (taskList === undefined) {
 					throw new Error(
 						`TaskList with id '${taskListId}' does not exist in collection`,
