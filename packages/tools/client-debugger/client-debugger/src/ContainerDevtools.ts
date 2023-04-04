@@ -434,7 +434,7 @@ export class ContainerDevtools
 	 * Message logging options used by the debugger.
 	 */
 	private get messageLoggingOptions(): MessageLoggingOptions {
-		return { context: `Debugger(${this.containerId})` };
+		return { context: `Container Devtools (${this.containerId})` };
 	}
 
 	/**
