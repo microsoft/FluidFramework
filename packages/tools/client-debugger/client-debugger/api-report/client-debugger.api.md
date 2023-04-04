@@ -98,7 +98,6 @@ export interface ContainerDevtoolsProps {
 
 // @public
 export interface ContainerListChangeMessage extends IDebuggerMessage<ContainerListChangeMessageData> {
-    // (undocumented)
     type: "CONTAINER_LIST_CHANGE";
 }
 
@@ -250,7 +249,6 @@ export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
 
 // @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
-    // (undocumented)
     type: "GET_CONTAINER_LIST";
 }
 
