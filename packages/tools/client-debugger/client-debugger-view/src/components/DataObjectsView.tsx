@@ -82,10 +82,10 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	}
 
 	return (
-		<div>
+		<>
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
 				return <FluidDataView key={key} containerId={containerId} node={fluidObject} />;
 			})}
-		</div>
+		</>
 	);
 }
