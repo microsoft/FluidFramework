@@ -7,12 +7,11 @@ import * as fs from "fs";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle";
 import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
-import { getArgsValidationError } from "./getArgsValidationError";
 /* eslint-disable import/no-internal-modules */
 import { ITelemetryOptions } from "./logger/fileLogger";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
 /* eslint-enable import/no-internal-modules */
-import { getSnapshotFileContent } from "./utils";
+import { getSnapshotFileContent, timeoutPromise, getArgsValidationError } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 
@@ -27,6 +26,7 @@ export async function parseBundleAndExportFile(
 	telemetryFile: string,
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
+	timeout: number = 60 * 60 * 1000, // hour timeout
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -58,22 +58,25 @@ export async function parseBundleAndExportFile(
 					return { success: false, eventName, errorMessage };
 				}
 
-				const argsValidationError = getArgsValidationError(inputFile, outputFile);
+				const argsValidationError = getArgsValidationError(inputFile, outputFile, timeout);
 				if (argsValidationError) {
 					const eventName = clientArgsValidationError;
 					logger.sendErrorEvent({ eventName, message: argsValidationError });
 					return { success: false, eventName, errorMessage: argsValidationError };
 				}
 
-				fs.writeFileSync(
-					outputFile,
-					await createContainerAndExecute(
+				const executeResult = await timeoutPromise<string>((resolve, reject) => {
+					createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
 						logger,
 						options,
-					),
-				);
+					)
+						.then((value) => resolve(value))
+						.catch((error) => reject(error));
+				}, timeout);
+
+				fs.writeFileSync(outputFile, executeResult);
 
 				return { success: true };
 			},
