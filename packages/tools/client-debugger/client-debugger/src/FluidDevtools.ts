@@ -1,0 +1,244 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { UsageError } from "@fluidframework/container-utils";
+
+import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
+import { IContainerDevtools } from "./IContainerDevtools";
+import {
+	ContainerListChangeMessage,
+	handleIncomingWindowMessage,
+	ISourcedDebuggerMessage,
+	InboundHandlers,
+	MessageLoggingOptions,
+	postMessagesToWindow,
+} from "./messaging";
+import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+
+// TODOs:
+// - Devtools disposal
+// - Clear devtools on `window.beforeunload`, to ensure we do not hold onto stale resources.
+
+/**
+ * Message logging options used by the root devtools.
+ */
+const devtoolsMessageLoggingOptions: MessageLoggingOptions = {
+	context: "Fluid Devtools",
+};
+
+/**
+ * Properties for configuring a {@link FluidDevtools}.
+ *
+ * @public
+ */
+export interface FluidDevtoolsProps {
+	/**
+	 * (optional) List of Containers to initialize the devtools with.
+	 *
+	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainer}.
+	 */
+	initialContainers?: ContainerDevtoolsProps[];
+}
+
+/**
+ * {@link IFluidDevtools} implementation.
+ *
+ * @remarks
+ *
+ * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
+ * state changes and when requested.
+ *
+ * **Messages it listens for:**
+ *
+ * - {@link GetContainerListMessage}: When received, the registry will post {@link ContainerListChangeMessage}.
+ *
+ * TODO: Document others as they are added.
+ *
+ * **Messages it posts:**
+ *
+ * - {@link ContainerListChangeMessage}: The registry will post this whenever the list of registered
+ * debuggers changes, or when requested (via {@link GetContainerListMessage}).
+ *
+ * TODO: Document others as they are added.
+ *
+ * @internal
+ */
+export class FluidDevtools
+	extends TypedEventEmitter<FluidDevtoolsEvents>
+	implements IFluidDevtools
+{
+	/**
+	 * Stores Container-level devtools instances registered with this object.
+	 * Maps from Container IDs to the corresponding devtools instance.
+	 */
+	private readonly containerDevtools: Map<string, ContainerDevtools>;
+
+	/**
+	 * Private {@link FluidDevtools.disposed} tracking.
+	 */
+	private _disposed: boolean;
+
+	// #region Event handlers
+
+	/**
+	 * Handlers for inbound messages related to the registry.
+	 */
+	private readonly inboundMessageHandlers: InboundHandlers = {
+		["GET_CONTAINER_LIST"]: () => {
+			this.postContainerListChange();
+			return true;
+		},
+	};
+
+	/**
+	 * Event handler for messages coming from the window (globalThis).
+	 */
+	private readonly windowMessageHandler = (
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+	): void => {
+		handleIncomingWindowMessage(
+			event,
+			this.inboundMessageHandlers,
+			devtoolsMessageLoggingOptions,
+		);
+	};
+
+	/**
+	 * Posts a {@link ContainerListChangeMessage} to the window (globalThis).
+	 */
+	private readonly postContainerListChange = (): void => {
+		postMessagesToWindow<ContainerListChangeMessage>(devtoolsMessageLoggingOptions, {
+			type: "CONTAINER_LIST_CHANGE",
+			data: {
+				containers: [...this.containerDevtools.values()].map((clientDebugger) => ({
+					id: clientDebugger.containerId,
+					nickname: clientDebugger.containerNickname,
+				})),
+			},
+		});
+	};
+
+	// #endregion
+
+	public constructor(props?: FluidDevtoolsProps) {
+		super();
+
+		// Populate initial Container-level devtools
+		this.containerDevtools = new Map<string, ContainerDevtools>();
+		if (props?.initialContainers !== undefined) {
+			for (const containerConfig of props.initialContainers) {
+				this.containerDevtools.set(
+					containerConfig.containerId,
+					new ContainerDevtools(containerConfig),
+				);
+			}
+		}
+
+		// Register listener for inbound messages from the window (globalThis)
+		globalThis.addEventListener?.("message", this.windowMessageHandler);
+
+		// Initiate message posting of container list updates.
+		this.on("containerRegistered", this.postContainerListChange);
+		this.on("containerDevtoolsClosed", this.postContainerListChange);
+
+		this._disposed = false;
+	}
+
+	/**
+	 * {@inheritDoc IFluidDevtools.registerContainer}
+	 */
+	public registerContainer(props: ContainerDevtoolsProps): void {
+		if (this.disposed) {
+			throw new UsageError(
+				"The Devtools has been disposed. Cannot register a new Container.",
+			);
+		}
+
+		const { containerId } = props;
+		const existingDebugger = this.containerDevtools.get(containerId);
+		if (existingDebugger !== undefined) {
+			console.warn(
+				`Active debugger registry already contains an entry for container ID "${containerId}". Override existing entry.`,
+			);
+			existingDebugger.dispose();
+		}
+
+		const clientDebugger = new ContainerDevtools(props);
+		console.log(`Add new debugger${clientDebugger.containerId}`);
+		this.containerDevtools.set(containerId, clientDebugger);
+		this.emit("debuggerRegistered", containerId, clientDebugger);
+	}
+
+	/**
+	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
+	 */
+	public closeContainerDevtools(containerId: string): void {
+		if (this.containerDevtools.has(containerId)) {
+			const clientDebugger = this.containerDevtools.get(containerId);
+			if (clientDebugger === undefined) {
+				console.warn(
+					`No active client debugger associated with container ID "${containerId}" was found.`,
+				);
+			} else {
+				clientDebugger.dispose();
+				this.containerDevtools.delete(containerId);
+				this.emit("debuggerClosed", containerId);
+			}
+		} else {
+			console.warn(`Fluid Client debugger never been registered.`);
+		}
+	}
+
+	/**
+	 * {@inheritDoc IFluidDevtools.getContainerDevtools}
+	 */
+	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
+		return this.containerDevtools.get(containerId);
+	}
+
+	/**
+	 * {@inheritDoc IFluidDevtools.getAllContainerDevtools}
+	 */
+	public getAllContainerDevtools(): readonly IContainerDevtools[] {
+		return [...this.containerDevtools.values()];
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 */
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+	 */
+	public dispose(): void {
+		if (this.disposed) {
+			throw new UsageError("The Devtools have already been disposed.");
+		}
+
+		// Dispose of container-level devtools
+		for (const [containerId, containerDevtools] of this.containerDevtools) {
+			containerDevtools.dispose();
+			this.emit("containerDevtoolsClosed", containerId);
+		}
+		this.containerDevtools.clear();
+
+		// Notify listeners that the devtools have been disposed.
+		this.emit("devtoolsDisposed");
+
+		this._disposed = true;
+	}
+}
+
+/**
+ * Initializes
+ *
+ * @public
+ */
+export function initializeFluidDevtools(props: FluidDevtoolsProps): IFluidDevtools {
+	return new FluidDevtools(props);
+}

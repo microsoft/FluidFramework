@@ -37,14 +37,14 @@ export {
 	GetRootDataVisualizationsMessageData,
 	RootDataVisualizationsMessage,
 	RootDataVisualizationsMessageData,
-} from "./DebuggerMessages";
+} from "./ContainerDevtoolsMessages";
 export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
-} from "./RegistryMessages";
+	ContainerListChangeMessage,
+	ContainerListChangeMessageData,
+} from "./DevtoolsMessages";
 export {
 	GetAudienceMessage,
 	AudienceClientMetaData,
