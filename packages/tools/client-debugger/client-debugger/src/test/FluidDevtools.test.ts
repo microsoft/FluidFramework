@@ -19,10 +19,10 @@ describe("ClientDebugger unit tests", () => {
 		let containerRegistered = false;
 		let containerDevtoolsClosed = false;
 
-		devtools.on("debuggerRegistered", () => {
+		devtools.on("containerRegistered", () => {
 			containerRegistered = true;
 		});
-		devtools.on("debuggerClosed", () => {
+		devtools.on("containerDevtoolsClosed", () => {
 			containerDevtoolsClosed = true;
 		});
 
@@ -53,6 +53,8 @@ describe("ClientDebugger unit tests", () => {
 		expect(devtools.getAllContainerDevtools().length).to.equal(0);
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions, @typescript-eslint/no-non-null-assertion
 		expect(containerDevtools!.disposed).to.be.true;
+
+		devtools.dispose();
 	});
 
 	it("Disposal", () => {
