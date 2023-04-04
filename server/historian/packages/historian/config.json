@@ -76,6 +76,6 @@
 	},
 	"storageUrl": "",
 	"tokenRevocation": {
-		"enable": true
+		"enable": false
 	}
 }

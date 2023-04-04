@@ -64,18 +64,10 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
-
-		// Token revocation
-		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
-		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
-		if (tokenRevocationEnabled) {
-			tokenRevocationManager = new DummyTokenRevocationManager();
-		}
 		const riddler = new historianServices.RiddlerService(
 			riddlerEndpoint,
 			tenantCache,
 			asyncLocalStorage,
-			tokenRevocationManager,
 		);
 
 		// Redis connection for throttling.
@@ -184,6 +176,14 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		const port = normalizePort(process.env.PORT || "3000");
 
+		// Token revocation
+		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
+		console.log(`yunho: token revocation enabled: ${tokenRevocationEnabled}`);
+		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
+		if (tokenRevocationEnabled) {
+			tokenRevocationManager = new DummyTokenRevocationManager();
+		}
+
 		return new HistorianResources(
 			config,
 			port,
@@ -208,6 +208,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.restClusterThrottlers,
 			resources.cache,
 			resources.asyncLocalStorage,
+			resources.tokenRevocationManager,
 		);
 	}
 }

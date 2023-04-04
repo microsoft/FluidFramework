@@ -10,6 +10,7 @@ import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { ITokenRevocationManager } from "@fluidframework/server-services-core";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -134,5 +135,49 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 			}
 		}
 		next();
+	};
+}
+
+export function verifyTokenNotRevoked(tokenRevocationManager: ITokenRevocationManager | undefined): RequestHandler {
+	return async (request, response, next) => {
+		try {
+			if (tokenRevocationManager) {
+				// TODO: remove debug log
+				console.log("yunho: verifyTokenNotRevoked called");
+
+				const tenantId = request.params.tenantId;
+				const authorization = request.get("Authorization");
+				const token = parseToken(tenantId, authorization);
+				console.log(`yunho: token=${token}`);
+				const claims = decode(token) as ITokenClaims;
+				console.log(`yunho: token claims: ${JSON.stringify(claims)}`);
+				let isTokenRevoked = false;
+				if (claims.jti) {
+					isTokenRevoked = await tokenRevocationManager.isTokenRevoked(tenantId, claims.documentId, claims.jti);
+					console.log(`yunho: isTokenRevoked=${isTokenRevoked}`);
+				}
+
+				// TODO: remove debug code
+				if (request.url.includes("commit")) {
+					console.log(`yunho set revoke token flag to true for url ${request.url}`);
+					isTokenRevoked = true;
+				}
+
+				if (isTokenRevoked) {
+					throw new NetworkError(
+						403,
+						"Permission denied. Token has been revoked.",
+						false, /* canRetry */
+						true /* isFatal */);
+				}
+			}
+			next();
+		}
+		catch (error) {
+			return handleResponse(
+				Promise.reject(error),
+				response,
+			);
+		}
 	};
 }

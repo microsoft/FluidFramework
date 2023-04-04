@@ -4,9 +4,9 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { ITenantConfig, ITokenRevocationManager } from "@fluidframework/server-services-core";
-import { getCorrelationId, validateTokenClaims } from "@fluidframework/server-services-utils";
-import { BasicRestWrapper, NetworkError, RestWrapper } from "@fluidframework/server-services-client";
+import { ITenantConfig } from "@fluidframework/server-services-core";
+import { getCorrelationId } from "@fluidframework/server-services-utils";
+import { BasicRestWrapper, RestWrapper } from "@fluidframework/server-services-client";
 import * as uuid from "uuid";
 import * as winston from "winston";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
@@ -20,7 +20,6 @@ export class RiddlerService implements ITenantService {
 		endpoint: string,
 		private readonly cache: RedisTenantCache,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
-		private readonly tokenRevocationManager?: ITokenRevocationManager
 	) {
 		this.restWrapper = new BasicRestWrapper(
 			endpoint,
@@ -88,27 +87,6 @@ export class RiddlerService implements ITenantService {
 		includeDisabledTenant = false,
 	): Promise<void> {
 		const lumberProperties = { [BaseTelemetryProperties.tenantId]: tenantId };
-
-		// Check if token is revoked
-		if (this.tokenRevocationManager) {
-			let isTokenRevoked = false;
-			const claims = validateTokenClaims(token, undefined, tenantId, false);
-			if (claims.jti) {
-				isTokenRevoked = await this.tokenRevocationManager.isTokenRevoked(
-					tenantId,
-					claims.documentId,
-					claims.jti);
-			}
-			// TODO: remove debug code
-			console.log(`yunho: historian token revoked: ${isTokenRevoked}`);
-			if (isTokenRevoked) {
-				throw new NetworkError(
-					403,
-					"Permission denied. Token has been revoked.",
-					false, /* canRetry */
-					true /* isFatal */);
-			}
-		}
 		const cachedToken = await this.cache.exists(token).catch((error) => {
 			winston.error(`Error fetching token from cache`, error);
 			Lumberjack.error(`Error fetching token from cache`, lumberProperties, error);
