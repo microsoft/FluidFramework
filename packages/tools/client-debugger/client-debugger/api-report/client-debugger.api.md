@@ -13,6 +13,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
@@ -50,7 +51,6 @@ export function clearDebuggerRegistry(): void;
 
 // @public
 export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
-    // (undocumented)
     type: "CLOSE_CONTAINER";
 }
 
@@ -62,7 +62,6 @@ export function closeFluidClientDebugger(containerId: string): void;
 
 // @public
 export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
-    // (undocumented)
     type: "CONNECT_CONTAINER";
 }
 
@@ -72,17 +71,6 @@ export type ConnectContainerMessageData = HasContainerId;
 // @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
-}
-
-// @public
-export interface ContainerDataMessage extends IDebuggerMessage<ContainerDataMessageData> {
-    // (undocumented)
-    type: "CONTAINER_DATA";
-}
-
-// @public
-export interface ContainerDataMessageData extends HasContainerId {
-    containerData?: unknown;
 }
 
 // @public
@@ -102,7 +90,6 @@ export enum ContainerStateChangeKind {
 
 // @public
 export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
-    // (undocumented)
     type: "CONTAINER_STATE_CHANGE";
 }
 
@@ -113,7 +100,6 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 
 // @public
 export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
-    // (undocumented)
     type: "CONTAINER_STATE_HISTORY";
 }
 
@@ -132,6 +118,16 @@ export interface ContainerStateMetadata extends ContainerMetadata {
     closed: boolean;
     // (undocumented)
     connectionState: ConnectionState;
+}
+
+// @public
+export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
+    type: "DATA_VISUALIZATION";
+}
+
+// @public
+export interface DataVisualizationMessageData extends HasContainerId, HasFluidObjectId {
+    visualization: FluidObjectNode | undefined;
 }
 
 // @public
@@ -155,7 +151,6 @@ export interface DebuggerRegistryEvents extends IEvent {
 
 // @public
 export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
-    // (undocumented)
     type: "DISCONNECT_CONTAINER";
 }
 
@@ -165,9 +160,10 @@ export type DisconnectContainerMessageData = HasContainerId;
 // @public
 export interface FluidClientDebuggerProps {
     container: IContainer;
-    containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+    containerData?: Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
+    dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 // @internal @sealed
@@ -178,15 +174,41 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 }
 
 // @public
-export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
-    // (undocumented)
-    type: "GET_AUDIENCE";
+export interface FluidHandleNode extends VisualNodeBase {
+    fluidObjectId: string;
+    nodeKind: VisualNodeKind.FluidHandleNode;
 }
 
 // @public
-export interface GetContainerDataMessage extends IDebuggerMessage<HasContainerId> {
+export type FluidObjectId = string;
+
+// @public
+export type FluidObjectNode = FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode;
+
+// @public
+export interface FluidObjectNodeBase extends VisualNodeBase {
+    fluidObjectId: FluidObjectId;
+}
+
+// @public
+export interface FluidObjectTreeNode extends TreeNodeBase, FluidObjectNodeBase {
+    nodeKind: VisualNodeKind.FluidTreeNode;
+}
+
+// @public
+export interface FluidObjectValueNode extends ValueNodeBase, FluidObjectNodeBase {
+    nodeKind: VisualNodeKind.FluidValueNode;
+}
+
+// @public
+export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
+    nodeKind: VisualNodeKind.FluidUnknownObjectNode;
+}
+
+// @public
+export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
     // (undocumented)
-    type: "GET_CONTAINER_DATA";
+    type: "GET_AUDIENCE";
 }
 
 // @public
@@ -197,12 +219,19 @@ export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
 
 // @public
 export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
-    // (undocumented)
     type: "GET_CONTAINER_STATE";
 }
 
 // @public
 export type GetContainerStateMessageData = HasContainerId;
+
+// @public
+export interface GetDataVisualizationMessage extends IDebuggerMessage<GetDataVisualizationMessageData> {
+    type: "GET_DATA_VISUALIZATION";
+}
+
+// @public
+export type GetDataVisualizationMessageData = HasContainerId & HasFluidObjectId;
 
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
@@ -212,6 +241,14 @@ export function getFluidClientDebugger(containerId: string): IFluidClientDebugge
 
 // @internal
 export function getFluidClientDebuggers(): IFluidClientDebugger[];
+
+// @public
+export interface GetRootDataVisualizationsMessage extends IDebuggerMessage<GetRootDataVisualizationsMessageData> {
+    type: "GET_ROOT_DATA_VISUALIZATIONS";
+}
+
+// @public
+export type GetRootDataVisualizationsMessageData = HasContainerId;
 
 // @public
 export interface GetTelemetryHistoryMessage extends IDebuggerMessage {
@@ -227,6 +264,11 @@ export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourced
 // @public
 export interface HasContainerId {
     containerId: string;
+}
+
+// @public
+export interface HasFluidObjectId {
+    fluidObjectId: FluidObjectId;
 }
 
 // @public
@@ -304,6 +346,9 @@ export interface MessageLoggingOptions {
 export function postMessagesToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
+export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
+
+// @public
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
     // (undocumented)
     type: "REGISTRY_CHANGE";
@@ -313,6 +358,19 @@ export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMe
 export interface RegistryChangeMessageData {
     containers: ContainerMetadata[];
 }
+
+// @public
+export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootDataVisualizationsMessageData> {
+    type: "ROOT_DATA_VISUALIZATIONS";
+}
+
+// @public
+export interface RootDataVisualizationsMessageData extends HasContainerId {
+    visualizations: Record<string, RootHandleNode> | undefined;
+}
+
+// @public
+export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
 
 // @public
 export interface StateChangeLogEntry<TState> extends LogEntry {
@@ -332,6 +390,68 @@ export interface TelemetryEventMessageData {
 // @public
 export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
     type: "TELEMETRY_HISTORY";
+}
+
+// @public
+export interface TreeNodeBase extends VisualNodeBase {
+    children: Record<string, VisualChildNode>;
+}
+
+// @public
+export interface UnknownObjectNode extends VisualNodeBase {
+    nodeKind: VisualNodeKind.UnknownObjectNode;
+}
+
+// @public
+export interface ValueNodeBase extends VisualNodeBase {
+    value: Primitive;
+}
+
+// @public
+export type VisualChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode | UnknownObjectNode;
+
+// @public
+export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
+
+// @public
+export type VisualizeSharedObject = (sharedObject: ISharedObject, visualizeChildData: VisualizeChildData) => Promise<FluidObjectNode>;
+
+// @public
+export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode | UnknownObjectNode;
+
+// @public
+export interface VisualNodeBase {
+    metadata?: Record<string, Primitive>;
+    nodeKind: VisualNodeKind | string;
+    typeMetadata?: string;
+}
+
+// @public
+export enum VisualNodeKind {
+    // (undocumented)
+    FluidHandleNode = "FluidHandleNode",
+    // (undocumented)
+    FluidTreeNode = "FluidTreeNode",
+    // (undocumented)
+    FluidUnknownObjectNode = "FluidUnknownObjectNode",
+    // (undocumented)
+    FluidValueNode = "FluidValueNode",
+    // (undocumented)
+    TreeNode = "TreeNode",
+    // (undocumented)
+    UnknownObjectNode = "UnknownObjectNode",
+    // (undocumented)
+    ValueNode = "ValueNode"
+}
+
+// @public
+export interface VisualTreeNode extends TreeNodeBase {
+    nodeKind: VisualNodeKind.TreeNode;
+}
+
+// @public
+export interface VisualValueNode extends ValueNodeBase {
+    nodeKind: VisualNodeKind.ValueNode;
 }
 
 ```
