@@ -20,7 +20,7 @@ DDSes necessarily commit to backwards compatibility of their format for all time
 
 ## Format Management
 
-The actively used format is stored and manabed by an `IPersistedConfigStore`.
+The actively used format is stored and managed by an `IPersistedConfigStore`.
 This configuration dictates all pieces of policy which impact the set of allowed ops, write format, etc.
 
 This config store is serialized at summarization time,
@@ -76,8 +76,8 @@ There are a couple different dimensions to consider with respect to testing:
 ### Configuration Unit Tests
 
 Each codec family should contain a suite of unit tests which verify the in-memory representation can be round-tripped through encoding and decoding.
-When adding a new codec version, the test data for this suite should be augmented if there are any interesting cases to consider.
-The set of test data used in these unit tests should yield 100% code coverage on the new codec.
+When adding a new codec version, the test data for this suite should be augmented if existing data doesn't yield 100% code coverage on the new
+codec version.
 
 If the persisted configuration impacts more than just the data encoding step,
 appropriate unit tests should be added for whatever components that configuration impacts.
@@ -117,10 +117,12 @@ This is a vast area that could use more well-established framework testing suppo
 catching regressions.
 
 The idea behind snapshot testing is to verify a document produced using one version of the code is still usable using another version of the code.
-It's typically implemented by source-controlling a set of serialized test documents and writing a suite which verifies:
+It's typically implemented by writing some code to generate a set of fixed documents "from scratch," then source-controlling the serialized form
+of those documents after summarization.
+Since the serialized form of the documents correspond to documents produced by an older version of the code, this enables writing a test suite that verifies:
 
-1. The current version of the code serializes the documents in the same way
-1. The current version of the code is capable of loading those documents
+1. The current version of the code serializes each document to exactly match how the older version of the code serialized each document.
+1. The current version of the code is capable of loading documents written using older versions of the code.
 
 A few examples (which may be exhaustive) of snapshot tests are:
 
@@ -128,19 +130,18 @@ A few examples (which may be exhaustive) of snapshot tests are:
 -   [Sequence / SharedString](../../../sequence/src/test/snapshotVersion.spec.ts)
 -   [e2e Snapshot tests](../../../../test/snapshots/README.md)
 
-The first two examples generate their documents in a similar fashion: in addition to source-controlling the serialized snapshot,
-they have functions to "re-build" the same state from scratch using the current version of the code.
-The e2e snapshot tests accomplish this by serializing the op stream alongside the snapshots.
+The first two examples generate their "from scratch" documents by directly calling DDS APIs on a newly created document.
+The e2e snapshot tests accomplish "from scratch" generation by serializing the op stream alongside the snapshots and replaying it.
+In addition to verifying serialized states line up between old and current version of the code, it can also be helpful to
+verify equivalence at runtime, which typically gives more friendly error messages.
 
-This enables checking a third invariant: that loading a document serialized using some previous version of the code and
-generating it from scratch using the current version of the code produce the same state.
-
-Snapshot tests are effective at catching changes which inadvertently modify document format over time.
+Snapshot tests are effective at catching changes which inadvertently modify the document format over time.
 SharedTree should have snapshot testing for each of its supported configurations.
 
 ## Current State
 
-Since a DDS has effectively 2 ways of creating persisted state, one can audit both sources to find all code that impacts persisted state as follows:
+Since a DDS has effectively 2 ways of creating persisted state (summaries and ops),
+one can audit both sources to find all code that impacts persisted state as follows:
 
 1. Locate all calls to `submitLocalMessage` and determine the format for data that can used for a message's contents.
 1. Locate all code which `summarizeCore` transitively invokes and determine the format for data that it can return.
@@ -153,7 +154,7 @@ Doing so for the current SharedTree yields the following areas.
 
 SharedTreeCore summarizes each of its indexes in its own summary tree.
 
-A sample summary which is partially beatified is shown below, taken from a test involving summarization:
+A sample summary which is partially beautified is shown below, taken from a test involving summarization:
 
 ```json
 {
