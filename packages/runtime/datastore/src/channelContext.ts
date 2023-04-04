@@ -10,7 +10,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
-	IIncrementalSummaryContext,
+	IExperimentalIncrementalSummaryContext,
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -100,7 +100,7 @@ export async function summarizeChannelAsync(
 	fullTree: boolean = false,
 	trackState: boolean = false,
 	telemetryContext?: ITelemetryContext,
-	incrementalSummaryContext?: IIncrementalSummaryContext,
+	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ): Promise<ISummaryTreeWithStats> {
 	const summarizeResult = await channel.summarize(
 		fullTree,

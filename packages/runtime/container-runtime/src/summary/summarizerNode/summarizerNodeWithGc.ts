@@ -18,7 +18,7 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
-	IIncrementalSummaryContext,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
@@ -108,7 +108,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
-			incrementalSummaryContext?: IIncrementalSummaryContext,
+			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 		) => Promise<ISummarizeInternalResult>,
 		config: ISummarizerNodeConfigWithGC,
 		changeSequenceNumber: number,
@@ -127,7 +127,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 				fullTree: boolean,
 				_trackState: boolean,
 				telemetryContext?: ITelemetryContext,
-				incrementalSummaryContext?: IIncrementalSummaryContext,
+				incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 			) =>
 				summarizeFn(
 					fullTree,

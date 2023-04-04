@@ -12,7 +12,7 @@ import {
 	CreateSummarizerNodeSource,
 	SummarizeInternalFn,
 	ITelemetryContext,
-	IIncrementalSummaryContext,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -164,13 +164,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 		// complains if this assert isn't done this way
 		assert(
 			this.wipReferenceSequenceNumber !== undefined,
-			"Same as assert 0x1a1 - Summarize should not be called when tracking the summary",
+			"Summarize should not be called when not tracking the summary",
 		);
-		const incrementalSummaryContext: IIncrementalSummaryContext | undefined =
+		const incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined =
 			this._latestSummary !== undefined
 				? {
-						wipSummarySequenceNumber: this.wipReferenceSequenceNumber,
-						lastAckedSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
+						summarySequenceNumber: this.wipReferenceSequenceNumber,
+						latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
+						// TODO: remove summaryPath
 						summaryPath: this._latestSummary.fullPath.path,
 				  }
 				: undefined;

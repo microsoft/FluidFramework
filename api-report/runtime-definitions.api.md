@@ -159,6 +159,13 @@ export interface IEnvelope {
 }
 
 // @public
+export interface IExperimentalIncrementalSummaryContext {
+    latestSummarySequenceNumber: number;
+    summaryPath: string;
+    summarySequenceNumber: number;
+}
+
+// @public
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
@@ -311,13 +318,6 @@ export interface IInboundSignalMessage extends ISignalMessage {
 }
 
 // @public
-export interface IIncrementalSummaryContext {
-    lastAckedSummarySequenceNumber: number;
-    summaryPath: string;
-    wipSummarySequenceNumber: number;
-}
-
-// @public
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
@@ -452,7 +452,7 @@ export interface OpAttributionKey {
 }
 
 // @public (undocumented)
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
 // @public (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";

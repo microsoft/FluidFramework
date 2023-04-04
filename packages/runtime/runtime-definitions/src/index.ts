@@ -56,7 +56,7 @@ export {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
-	IIncrementalSummaryContext,
+	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,
