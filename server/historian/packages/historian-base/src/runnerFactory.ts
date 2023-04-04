@@ -8,7 +8,6 @@ import * as core from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import Redis from "ioredis";
 import winston from "winston";
-import { DummyTokenRevocationManager } from "@fluidframework/server-services-utils";
 import * as historianServices from "./services";
 import { normalizePort, Constants } from "./utils";
 import { HistorianRunner } from "./runner";
@@ -176,13 +175,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		const port = normalizePort(process.env.PORT || "3000");
 
-		// Token revocation
-		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
-		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
-		if (tokenRevocationEnabled) {
-			tokenRevocationManager = new DummyTokenRevocationManager();
-		}
-
 		return new HistorianResources(
 			config,
 			port,
@@ -191,7 +183,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			restClusterThrottlers,
 			gitCache,
 			asyncLocalStorage,
-			tokenRevocationManager,
 		);
 	}
 }

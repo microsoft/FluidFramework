@@ -57,6 +57,13 @@ export class HistorianRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
+		// Token revocation
+		if (this.tokenRevocationManager) {
+			this.tokenRevocationManager.start().catch((error) => {
+				this.runningDeferred.reject(error);
+			});
+		}
+
 		return this.runningDeferred.promise;
 	}
 
