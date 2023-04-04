@@ -28,7 +28,7 @@ COPY scripts/*.* ./scripts/
 COPY packages/historian/package.json packages/historian/
 COPY packages/historian-base/package.json packages/historian-base/
 
-RUN npm install --global pnpm@7.30.5
+RUN corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
