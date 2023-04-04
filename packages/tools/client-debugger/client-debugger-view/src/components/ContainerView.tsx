@@ -2,9 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
+import { IOverflowSetItemProps, Stack } from "@fluentui/react";
+
+import {
+	makeStyles,
+	shorthands,
+	tokens,
+	Tab,
+	TabList,
+	SelectTabData,
+	SelectTabEvent,
+	TabValue,
+} from "@fluentui/react-components";
 import { HasContainerId } from "@fluid-tools/client-debugger";
-import React from "react";
+import * as React from "react";
 
 import { initializeFluentUiIcons } from "../InitializeIcons";
 import { RenderOptions, getRenderOptionsWithDefaults } from "../RendererOptions";
@@ -12,6 +23,35 @@ import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
+
+const useStyles = makeStyles({
+	root: {
+		alignItems: "flex-start",
+		display: "flex",
+		flexDirection: "column",
+		justifyContent: "flex-start",
+		...shorthands.padding("50px", "20px"),
+		rowGap: "20px",
+	},
+	words: {
+		color: "red",
+	},
+	panels: {
+		...shorthands.padding(0, "10px"),
+		"& th": {
+			textAlign: "left",
+			...shorthands.padding(0, "30px", 0, 0),
+		},
+	},
+	propsTable: {
+		"& td:first-child": {
+			fontWeight: tokens.fontWeightSemibold,
+		},
+		"& td": {
+			...shorthands.padding(0, "30px", 0, 0),
+		},
+	},
+});
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -160,53 +200,28 @@ export interface PanelViewSelectionMenuProps {
  * @internal
  */
 export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
-	const { currentSelection, updateSelection } = props;
+	const { updateSelection } = props;
+	const styles = useStyles();
+	console.log(styles);
+	const [selectedValue, setSelectedValue] = React.useState<TabValue>("none");
 
+	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
+		setSelectedValue(data.value);
+		updateSelection(data.value as PanelView);
+	};
 	const options: IOverflowSetItemProps[] = Object.entries(PanelView).map(([_, flag]) => ({
 		key: flag,
 	}));
 
-	/**
-	 * Specifies how to render an individual menu option.
-	 */
-	function onRenderItem(item: IOverflowSetItemProps): React.ReactElement {
-		return (
-			<Link
-				aria-label={item.key}
-				styles={{ root: { marginRight: 10 } }}
-				disabled={item.key === currentSelection}
-				onClick={(): void => updateSelection(item.key as PanelView)}
-			>
-				{item.key}
-			</Link>
-		);
-	}
-
-	/**
-	 * Specifies how to render any overflow options in the menu.
-	 */
-	function onRenderOverflowButton(
-		overflowItems: IOverflowSetItemProps[] | undefined,
-	): React.ReactElement {
-		return overflowItems === undefined ? (
-			<></>
-		) : (
-			<IconButton
-				title="More options"
-				menuIconProps={{ iconName: "More" }}
-				menuProps={{ items: overflowItems }}
-			/>
-		);
-	}
-
 	return (
-		<OverflowSet
-			aria-label="Container sub-view selection"
-			items={options}
-			// TODO: We can add additional menu options here. Reserved for less-frequently used views items.
-			// overflowItems={}
-			onRenderItem={onRenderItem}
-			onRenderOverflowButton={onRenderOverflowButton}
-		/>
+		<div>
+			<TabList selectedValue={selectedValue} onTabSelect={onTabSelect}>
+				{options.map((option, index) => (
+					<Tab key={`tab${index + 1}`} value={option.key}>
+						{option.key}
+					</Tab>
+				))}
+			</TabList>
+		</div>
 	);
 }

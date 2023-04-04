@@ -40,7 +40,7 @@ function DevToolsView(): React.ReactElement {
 				zIndex: "2",
 				backgroundColor: "lightgray", // TODO: remove
 			}}
-			defaultSize={{ width: 400, height: "100%" }}
+			defaultSize={{ width: 500, height: "100%" }}
 			className={"debugger-panel"}
 		>
 			<RootView messageRelay={new WindowMessageRelay("fluid-client-debugger-inline")} />
