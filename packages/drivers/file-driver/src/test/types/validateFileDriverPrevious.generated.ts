@@ -47,6 +47,7 @@ declare function get_old_ClassDeclaration_FileDocumentService():
 declare function use_current_ClassDeclaration_FileDocumentService(
     use: TypeOnly<current.FileDocumentService>);
 use_current_ClassDeclaration_FileDocumentService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_FileDocumentService());
 
 /*

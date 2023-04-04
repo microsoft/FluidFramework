@@ -133,6 +133,7 @@
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@octokit/core": "^4.0.5",
+		"@types/node": "^14.18.38",
 		"c8": "^7.7.1",
 		"changesets-format-with-issue-links": "^0.3.0",
 		"concurrently": "^7.6.0",
@@ -162,9 +163,10 @@
 			"allowedVersions": {
 				"react": "17.0.2",
 				"react-dom": "17.0.2",
-				"webpack": "5.76.2"
+				"webpack": "5.77.0"
 			},
 			"ignoreMissing": [
+				"@types/node",
 				"fluid-framework"
 			]
 		}

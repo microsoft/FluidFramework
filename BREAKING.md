@@ -15,6 +15,59 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   Avoid using code formatting in the title (it's fine to use in the body).
 -   To explain the benefit of your change, use the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
+# 2.0.0-internal.5.0.0
+
+## 2.0.0-internal.5.0.0 Upcoming changes
+
+-   [IFluidResolvedUrl Deprecated](#IFluidResolvedUrl-Deprecated)
+
+### IFluidResolvedUrl Deprecated
+
+IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl instead. This aligns with the preceding change, [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+
+## 2.0.0-internal.5.0.0 Breaking changes
+
+-   [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
+-   [garbage-collector and related items removed](#garbage-collector-and-related-items-removed)
+-   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
+## IResolvedUrl equivalent to IFluidResolvedUrl
+
+In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed.
+
+This makes IResolvedUrl and IFluidResolvedUrl equivalent. Since all ResolvedUrls are now FluidResolvedUrls we no longer need to differentiate them. In @fluidframework/driver-utils isFluidResolvedUrl and
+ensureFluidResolvedUrl have been removed due to this.
+
+### garbage-collector and related items removed
+
+The following functions, interfaces, and types currently available in `@fluidframework/garbage-collector` were deprecated in 2.0.0-internal.4.1.0 and are now removed.
+
+-   `runGarbageCollection`
+-   `trimLeadingAndTrailingSlashes`
+-   `trimLeadingSlashes`
+-   `trimTrailingSlashes`
+-   `cloneGCData`
+-   `unpackChildNodesGCDetails`
+-   `removeRouteFromAllNodes`
+-   `concatGarbageCollectionStates`
+-   `concatGarbageCollectionData`
+-   `GCDataBuilder`
+-   `getGCDataFromSnapshot`
+-   `IGCResult`
+
+### GC interfaces removed from runtime-definitions
+
+The following interfaces available in `@fluidframework/runtime-definitions` were deprecated in 2.0.0-internal.4.1.0 and are now removed.
+
+-   `IGarbageCollectionNodeData`
+-   `IGarbageCollectionState`
+-   `IGarbageCollectionSnapshotData`
+-   `IGarbageCollectionSummaryDetailsLegacy`
+
+### ensureSynchronizedWithTimeout removed from LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` has been removed as it is equivalent to `LoaderContainerTracker.ensureSynchronized`. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Configure the timeout for the test instead.
+
 # 2.0.0-internal.4.1.0
 
 ## 2.0.0-internal.4.1.0 Upcoming changes
@@ -22,6 +75,7 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 -   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 -   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
+
 
 ### garbage-collector and related items deprecated
 

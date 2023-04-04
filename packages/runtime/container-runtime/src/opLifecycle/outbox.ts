@@ -241,7 +241,8 @@ export class Outbox {
 			for (const message of batch.content) {
 				this.params.containerContext.submitFn(
 					MessageType.Operation,
-					message.deserializedContent,
+					// For back-compat (submitFn only works on deserialized content)
+					message.contents === undefined ? undefined : JSON.parse(message.contents),
 					true, // batch
 					message.metadata,
 				);
@@ -270,9 +271,9 @@ export class Outbox {
 		// In future, need to shift toward keeping batch as a whole!
 		for (const message of batch) {
 			this.params.pendingStateManager.onSubmitMessage(
-				message.deserializedContent.type,
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				message.contents!,
 				message.referenceSequenceNumber,
-				message.deserializedContent.contents,
 				message.localOpMetadata,
 				message.metadata,
 			);
