@@ -17,9 +17,6 @@ import {
 	ITelemetryLoggerPropertyBags,
 } from "./logger";
 
-// Capture console.error early so that we can still get the built-in one even if it has been replaced
-const consoleErrorFn = console.error.bind(console);
-
 /**
  * Implementation of debug logger
  */
@@ -37,8 +34,18 @@ export class DebugLogger extends TelemetryLogger {
 		// Setup base logger upfront, such that host can disable it (if needed)
 		const debug = registerDebug(namespace);
 
+		// Create one for errors that is always enabled
+		// It can be silenced by replacing console.error if the debug namespace is not enabled.
 		const debugErr = registerDebug(namespace);
-		debugErr.log = consoleErrorFn;
+		debugErr.log = function () {
+			if (debug.enabled) {
+				// if the namespace is enabled, just use the default logger
+				registerDebug.log(...arguments);
+			} else {
+				// other wise, use the console logger (which could be replaced and silenced)
+				console.error(...arguments);
+			}
+		};
 		debugErr.enabled = true;
 
 		return new DebugLogger(debug, debugErr, properties);
