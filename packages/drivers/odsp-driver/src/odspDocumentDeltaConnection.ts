@@ -517,7 +517,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				}
 			};
 
-			this.earlySignalHandler = (msg: ISignalMessage | ISignalMessage[], messageDocumentId?: string) => {
+			this.earlySignalHandler = (
+				msg: ISignalMessage | ISignalMessage[],
+				messageDocumentId?: string,
+			) => {
 				if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
 					if (Array.isArray(msg)) {
 						this.queuedSignals.push(...msg);
@@ -614,11 +617,18 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 			case "signal":
 				// per document signal handling
-				super.addTrackedListener(event, (msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
-					if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
-						listener(msg, documentId);
-					}
-				});
+				super.addTrackedListener(
+					event,
+					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
+						if (
+							!this.enableMultiplexing ||
+							!documentId ||
+							documentId === this.documentId
+						) {
+							listener(msg, documentId);
+						}
+					},
+				);
 				break;
 
 			case "nack":
