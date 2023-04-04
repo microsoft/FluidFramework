@@ -164,7 +164,7 @@ export interface DataVisualizationMessageData extends HasContainerId, HasFluidOb
 }
 
 // @public
-export const debuggerMessageSource: string;
+export const devtoolsMessageSource: string;
 
 // @public
 export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {

@@ -84,7 +84,7 @@ export {
 	AudienceSummaryMessageData,
 	AudienceSummaryMessage,
 	GetAudienceMessage,
-	debuggerMessageSource,
+	devtoolsMessageSource,
 	HasContainerId,
 	HasFluidObjectId,
 	ConnectContainerMessage,
