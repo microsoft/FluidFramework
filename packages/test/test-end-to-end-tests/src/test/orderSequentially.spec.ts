@@ -134,7 +134,6 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 
 		assert.equal(changedEventData[2], 2);
 
-		// rollback
 		assert(
 			changedEventData[3] instanceof SequenceDeltaEvent,
 			`Unexpected event type - ${typeof changedEventData[3]}`,
@@ -145,6 +144,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 
 		assert.equal(changedEventData[5], undefined);
 
+		// rollback
 		assert.equal(changedEventData[6], 2);
 
 		assert.equal(changedEventData[7].key, "key1");
@@ -208,7 +208,6 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 
 		assert.equal(changedEventData[3], 2);
 
-		// rollback
 		assert.equal(changedEventData[4].key, "key1");
 		assert.equal(changedEventData[4].previousValue, 0);
 
@@ -226,6 +225,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 
 		assert.equal(changedEventData[8], undefined);
 
+		// rollback
 		assert.equal(changedEventData[9], 5);
 
 		// segments are split up at some point - reason for multiple events
@@ -297,7 +297,6 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[2]}`,
 		);
 
-		// rollback
 		assert.equal(changedEventData[3].key, "key");
 		assert.equal(changedEventData[3].previousValue, 1);
 
@@ -311,6 +310,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[5]}`,
 		);
 
+		// rollback
 		assert(
 			changedEventData[6] instanceof SequenceDeltaEvent,
 			`Unexpected event type - ${typeof changedEventData[6]}`,
@@ -365,7 +365,6 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 		assert.equal(changedEventData[1].key, "key");
 		assert.equal(changedEventData[1].previousValue, undefined);
 
-		// rollback
 		assert.equal(changedEventData[2].key, "key");
 		assert.equal(changedEventData[2].previousValue, 1);
 
@@ -374,6 +373,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 			`Unexpected event type - ${typeof changedEventData[3]}`,
 		);
 
+		// rollback - inner orderSequentially call
 		assert(
 			changedEventData[4] instanceof SequenceDeltaEvent,
 			`Unexpected event type - ${typeof changedEventData[4]}`,
@@ -382,6 +382,7 @@ describeNoCompat("Multiple DDS orderSequentially", (getTestObjectProvider) => {
 		assert.equal(changedEventData[5].key, "key");
 		assert.equal(changedEventData[5].previousValue, 0);
 
+		// rollback - outer orderSequentially call
 		assert.equal(changedEventData[6].key, "key");
 		assert.equal(changedEventData[6].previousValue, undefined);
 
