@@ -459,6 +459,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		});
 
 		it("Data store with GC data realized after summarize", async () => {
+			mockLocalStorage["Fluid.DataStore.AbortSummarizerIfLocalChanges"] = false;
 			// Create a summarizer client.
 			const { summarizer: summarizer1 } = await createSummarizerFromFactory(
 				provider,
