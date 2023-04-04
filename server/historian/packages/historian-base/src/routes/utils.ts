@@ -142,25 +142,14 @@ export function verifyTokenNotRevoked(tokenRevocationManager: ITokenRevocationMa
 	return async (request, response, next) => {
 		try {
 			if (tokenRevocationManager) {
-				// TODO: remove debug log
-				console.log("yunho: verifyTokenNotRevoked called");
-
 				const tenantId = request.params.tenantId;
 				const authorization = request.get("Authorization");
 				const token = parseToken(tenantId, authorization);
-				console.log(`yunho: token=${token}`);
 				const claims = decode(token) as ITokenClaims;
-				console.log(`yunho: token claims: ${JSON.stringify(claims)}`);
+
 				let isTokenRevoked = false;
 				if (claims.jti) {
 					isTokenRevoked = await tokenRevocationManager.isTokenRevoked(tenantId, claims.documentId, claims.jti);
-					console.log(`yunho: isTokenRevoked=${isTokenRevoked}`);
-				}
-
-				// TODO: remove debug code
-				if (request.url.includes("commit")) {
-					console.log(`yunho set revoke token flag to true for url ${request.url}`);
-					isTokenRevoked = true;
 				}
 
 				if (isTokenRevoked) {

@@ -178,7 +178,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 
 		// Token revocation
 		const tokenRevocationEnabled: boolean = config.get("tokenRevocation:enable") as boolean;
-		console.log(`yunho: token revocation enabled: ${tokenRevocationEnabled}`);
 		let tokenRevocationManager: core.ITokenRevocationManager | undefined;
 		if (tokenRevocationEnabled) {
 			tokenRevocationManager = new DummyTokenRevocationManager();
