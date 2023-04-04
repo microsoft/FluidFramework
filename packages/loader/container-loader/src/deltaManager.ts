@@ -871,7 +871,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 							// instances such that the same sequence number is reused for two different ops.
 							// pre-0.58 error message: twoMessagesWithSameSeqNumAndDifferentPayload
 							"Found two messages with the same sequenceNumber but different payloads. Likely to be a " +
-							"service issue",
+								"service issue",
 							DriverErrorType.fileOverwrittenInStorage,
 							{
 								clientId: this.connectionManager.clientId,

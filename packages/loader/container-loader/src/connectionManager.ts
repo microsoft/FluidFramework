@@ -270,10 +270,10 @@ export class ConnectionManager implements IConnectionManager {
 		return this.connection !== undefined
 			? this._connectionProps
 			: {
-				...this._connectionProps,
-				// Report how many ops this client sent in last disconnected session
-				sentOps: this.clientSequenceNumber,
-			};
+					...this._connectionProps,
+					// Report how many ops this client sent in last disconnected session
+					sentOps: this.clientSequenceNumber,
+			  };
 	}
 
 	public shouldJoinWrite(): boolean {
@@ -836,14 +836,15 @@ export class ConnectionManager implements IConnectionManager {
 		// list of signals to process due to this new connection
 		let signalsToProcess: ISignalMessage[] = [clearSignal];
 
-		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? [])
-			.map(priorClient => ({
+		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
+			(priorClient) => ({
 				clientId: null, // system signal
 				content: JSON.stringify({
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
 				}),
-			}));
+			}),
+		);
 		if (clientJoinSignals.length > 0) {
 			signalsToProcess = signalsToProcess.concat(clientJoinSignals);
 		}
@@ -1000,7 +1001,7 @@ export class ConnectionManager implements IConnectionManager {
 							);
 						}
 					})
-					.catch(() => { });
+					.catch(() => {});
 			}
 			return;
 		}
