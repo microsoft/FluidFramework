@@ -26,8 +26,8 @@ export interface RootViewProps {
  */
 export function RootView(props: RootViewProps): React.ReactElement {
 	return (
-			<MessageRelayContext.Provider value={props.messageRelay}>
-				<FluidClientDebuggers />
-			</MessageRelayContext.Provider>
+		<MessageRelayContext.Provider value={props.messageRelay}>
+			<FluidClientDebuggers />
+		</MessageRelayContext.Provider>
 	);
 }
