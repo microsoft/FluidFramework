@@ -6,10 +6,8 @@
 
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudienceOwner } from '@fluidframework/container-definitions';
-import { IClientDetails } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IContainer } from '@fluidframework/container-definitions';
-import { IContainerLoadMode } from '@fluidframework/container-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
 import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
@@ -22,11 +20,8 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
-import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
-import { ISnapshotTree } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLogger } from '@fluidframework/common-definitions';
 import { IUrlResolver } from '@fluidframework/driver-definitions';
@@ -42,24 +37,6 @@ export enum ConnectionState {
 // @public @deprecated (undocumented)
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
-}
-
-// @internal (undocumented)
-export interface IContainerConfig {
-    // (undocumented)
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-    serializedContainerState?: IPendingContainerState;
-}
-
-// @public (undocumented)
-export interface IContainerLoadOptions {
-    canReconnect?: boolean;
-    clientDetailsOverride?: IClientDetails;
-    loadMode?: IContainerLoadMode;
-    // (undocumented)
-    resolvedUrl: IResolvedUrl;
-    version: string | undefined;
 }
 
 // @public
@@ -104,33 +81,12 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @internal
-export interface IPendingContainerState {
-    baseSnapshot: ISnapshotTree;
-    // (undocumented)
-    clientId?: string;
-    // (undocumented)
-    pendingRuntimeState: unknown;
-    savedOps: ISequencedDocumentMessage[];
-    snapshotBlobs: ISerializableBlobContents;
-    // (undocumented)
-    term: number;
-    // (undocumented)
-    url: string;
-}
-
 // @public (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
     readonly audience: IAudienceOwner;
     // (undocumented)
     processSignal(message: ISignalMessage): any;
-}
-
-// @internal
-export interface ISerializableBlobContents {
-    // (undocumented)
-    [id: string]: string;
 }
 
 // @public
