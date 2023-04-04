@@ -154,7 +154,8 @@ export interface ICreateBlobResponse {
 export interface IDocumentAttributes {
     minimumSequenceNumber: number;
     sequenceNumber: number;
-    term: number | undefined;
+    // @deprecated
+    term?: number | undefined;
 }
 
 // @public

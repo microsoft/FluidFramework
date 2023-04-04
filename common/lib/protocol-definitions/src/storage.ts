@@ -18,8 +18,9 @@ export interface IDocumentAttributes {
 
 	/**
 	 * Term number at which the snapshot was taken
+	 * @deprecated 2.0.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
 	 */
-	term: number | undefined;
+	term?: number | undefined;
 }
 
 export enum FileMode {

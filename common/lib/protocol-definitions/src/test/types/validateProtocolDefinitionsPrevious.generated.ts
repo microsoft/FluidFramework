@@ -419,6 +419,7 @@ declare function get_current_InterfaceDeclaration_IDocumentAttributes():
 declare function use_old_InterfaceDeclaration_IDocumentAttributes(
     use: TypeOnly<old.IDocumentAttributes>);
 use_old_InterfaceDeclaration_IDocumentAttributes(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentAttributes());
 
 /*
