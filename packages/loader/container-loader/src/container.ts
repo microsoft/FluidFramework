@@ -278,10 +278,6 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
-	/**
-	 * @deprecated 2.0.0-internal.5.0.0 - Unused from a legacy feature, will be removed entirely in an upcoming release.
-	 */
-	term?: number;
 	clientId?: string;
 }
 
@@ -1013,7 +1009,6 @@ export class Container
 			snapshotBlobs: this.baseSnapshotBlobs,
 			savedOps: this.savedOps,
 			url: this.resolvedUrl.url,
-			term: this._protocolHandler.attributes.term,
 			clientId: this.clientId,
 		};
 

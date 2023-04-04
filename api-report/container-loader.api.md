@@ -113,8 +113,6 @@ export interface IPendingContainerState {
     pendingRuntimeState: unknown;
     savedOps: ISequencedDocumentMessage[];
     snapshotBlobs: ISerializableBlobContents;
-    // @deprecated (undocumented)
-    term?: number;
     // (undocumented)
     url: string;
 }
