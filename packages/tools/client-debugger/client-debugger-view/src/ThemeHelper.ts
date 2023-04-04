@@ -5,10 +5,10 @@
 import { webDarkTheme, webLightTheme, Theme } from "@fluentui/react-components";
 
 /**
- * Utility function to get the current fluent ui for use
+ * Utility function to get the current Fluent UI theme to use.
  * @returns Theme object of FluentUI to be used for dev tool
  */
-export function flueUIThemeToUse(): Theme {
+export function getFluentUIThemeToUse(): Theme {
 	let defaultTheme = webLightTheme;
 
 	if (window.matchMedia?.("(prefers-color-scheme: dark)").matches) {
