@@ -5,12 +5,13 @@
 import React from "react";
 
 import {
+	ContainerListMessage,
 	ContainerMetadata,
+	GetContainerListMessage,
+	handleIncomingMessage,
 	IMessageRelay,
 	InboundHandlers,
-	ContainerListMessage,
 	ISourcedDebuggerMessage,
-	handleIncomingMessage,
 } from "@fluid-tools/client-debugger";
 
 import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
@@ -26,7 +27,7 @@ initializeFluentUiIcons();
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: ContainerListMessage = {
+const getContainerListMessage: GetContainerListMessage = {
 	type: "GET_CONTAINER_LIST",
 	data: undefined,
 };
