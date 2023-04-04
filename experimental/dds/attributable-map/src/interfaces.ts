@@ -121,7 +121,6 @@ export interface ISerializableValue {
 	value: any;
 
 	/**
-	 * @alpha
 	 * The attribution key attached with the entry
 	 */
 	attribution?: AttributionKey | number;
@@ -144,7 +143,6 @@ export interface ISerializedValue {
 	value: string | undefined;
 
 	/**
-	 * @alpha
 	 * The attribution key or seq number attached with the entry
 	 */
 	attribution?: string;
@@ -153,7 +151,7 @@ export interface ISerializedValue {
 /**
  * Options related to attribution
  *
- * @alpha
+ * @public
  */
 export interface IMapOptions {
 	attribution?: IMapAttributionOptions;
@@ -165,7 +163,7 @@ export interface IMapOptions {
  *
  * default: false
  *
- * @alpha
+ * @public
  */
 export interface IMapAttributionOptions {
 	track?: boolean;

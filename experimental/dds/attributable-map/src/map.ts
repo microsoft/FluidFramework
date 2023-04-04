@@ -101,10 +101,10 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 	 * @returns Newly created shared map.
 	 *
 	 * @example
-	 * To create a `SharedMap`, call the static create method:
+	 * To create a `AttributableMap`, call the static create method:
 	 *
 	 * ```typescript
-	 * const myMap = SharedMap.create(this.runtime, id);
+	 * const myMap = AttributableMap.create(this.runtime, id);
 	 * ```
 	 */
 	public static create(runtime: IFluidDataStoreRuntime, id?: string): AttributableMap {
@@ -112,8 +112,8 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 	}
 
 	/**
-	 * Get a factory for SharedMap to register with the data store.
-	 * @returns A factory that creates SharedMaps and loads them from storage.
+	 * Get a factory for AttributableMap to register with the data store.
+	 * @returns A factory that creates AttributableMap's and loads them from storage.
 	 */
 	public static getFactory(): IChannelFactory {
 		return new MapFactory();

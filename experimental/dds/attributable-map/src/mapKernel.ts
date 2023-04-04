@@ -131,7 +131,7 @@ function createKeyLocalOpMetadata(
 }
 
 /**
- * A SharedMap is a map-like distributed data structure.
+ * An AttributableMap is a map-like distributed data structure.
  */
 export class AttributableMapKernel {
 	/**
@@ -174,7 +174,7 @@ export class AttributableMapKernel {
 	private attribution: Map<string, AttributionKey> | undefined;
 
 	/**
-	 * Create a new shared map kernel.
+	 * Create a new attributable-map kernel.
 	 * @param serializer - The serializer to serialize / parse handles
 	 * @param handle - The handle of the shared object using the kernel
 	 * @param submitMessage - A callback to submit a message through the shared object
