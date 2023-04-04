@@ -56,8 +56,7 @@
 		"@fluidframework/routerlicious-driver": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/server-services-client": "^0.1038.4000",
-		"axios": "^0.26.0",
-		"uuid": "^8.3.1"
+		"axios": "^0.26.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.13.1",

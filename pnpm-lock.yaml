@@ -95,7 +95,6 @@ importers:
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       typescript: ~4.5.5
-      uuid: ^8.3.1
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -111,7 +110,6 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-services-client': 0.1038.4000
       axios: 0.26.1
-      uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
@@ -150,11 +148,11 @@ importers:
       forever: ^4.0.3
       prettier: ~2.6.2
       rimraf: ^4.4.0
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
       ts-node: ^8.6.2
       typescript: ~4.5.5
     dependencies:
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
     devDependencies:
       '@fluidframework/build-common': 1.1.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -247,7 +245,7 @@ importers:
       puppeteer: ^1.20.0
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
       ts-jest: ^26.4.4
       ts-loader: ^9.3.0
       typescript: ~4.5.5
@@ -292,7 +290,7 @@ importers:
       puppeteer: 1.20.0
       rimraf: 4.4.0
       start-server-and-test: 1.14.0
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
       ts-jest: 26.5.6_iml3gh354yi2jyq3i6mkncucre
       ts-loader: 9.4.1_d664n5xaaib3xfulxjg4qx3hse
       typescript: 4.5.5
@@ -334,7 +332,7 @@ importers:
       rimraf: ^4.4.0
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -358,7 +356,7 @@ importers:
       prettier: 2.6.2
       sinon: 7.5.0
       start-server-and-test: 1.14.0
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
       uuid: 8.3.2
     devDependencies:
       '@fluidframework/build-common': 1.1.0
@@ -414,7 +412,7 @@ importers:
       rimraf: ^4.4.0
       sinon: ^7.4.2
       start-server-and-test: ^1.11.7
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
       typescript: ~4.5.5
       uuid: ^8.3.1
     dependencies:
@@ -442,7 +440,7 @@ importers:
       mocha: 10.2.0
       sinon: 7.5.0
       start-server-and-test: 1.14.0
-      tinylicious: 0.6.0
+      tinylicious: 0.7.2
       uuid: 8.3.2
     devDependencies:
       '@fluid-tools/build-cli': 0.13.1_@types+node@14.18.38
@@ -42178,50 +42176,6 @@ packages:
   /tiny-warning/1.0.3:
     resolution: {integrity: sha512-lBN9zLN/oAf68o3zNXYrdCt1kP8WsiGW8Oo2ka41b2IM5JL/S1CTyX1rW0mb/zSuJun0ZUrDxx4sqvYS2FWzPA==}
     dev: false
-
-  /tinylicious/0.6.0:
-    resolution: {integrity: sha512-xOhIuwJt4Y9vYesQHzT61piJciFwz+dQnFA52B6CSb5i3dkcLhBMxMX6VvG07zN4HjaR2Sl4HTT7I1lHRM1zBA==}
-    engines: {node: '>=14.0.0'}
-    hasBin: true
-    dependencies:
-      '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.4000
-      '@fluidframework/protocol-base': 0.1038.4000
-      '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-lambdas': 0.1038.4000
-      '@fluidframework/server-local-server': 0.1038.4000
-      '@fluidframework/server-memory-orderer': 0.1038.4000
-      '@fluidframework/server-services-client': 0.1038.4000
-      '@fluidframework/server-services-core': 0.1038.4000
-      '@fluidframework/server-services-shared': 0.1038.4000
-      '@fluidframework/server-services-telemetry': 0.1038.4000
-      '@fluidframework/server-services-utils': 0.1038.4000
-      '@fluidframework/server-test-utils': 0.1038.4000
-      agentkeepalive: 4.3.0
-      axios: 0.26.1
-      body-parser: 1.20.2
-      charwise: 3.0.1
-      compression: 1.7.4
-      cookie-parser: 1.4.6
-      cors: 2.8.5
-      detect-port: 1.5.1
-      express: 4.18.2
-      isomorphic-git: 1.21.0
-      json-stringify-safe: 5.0.1
-      level: 8.0.0
-      level-sublevel: 6.6.4
-      lodash: 4.17.21
-      morgan: 1.10.0
-      nconf: 0.12.0
-      socket.io: 4.6.1
-      split: 1.0.1
-      uuid: 8.3.2
-      winston: 3.8.2
-    transitivePeerDependencies:
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
 
   /tinylicious/0.7.2:
     resolution: {integrity: sha512-4rcvw+baGFDDUMi8M+bkr7gQOdS90xal6vhUh2//hN1J62iKlFEdwzf3mlbapOoTiXzct1Ic9IDHFkmakL6EZA==}
