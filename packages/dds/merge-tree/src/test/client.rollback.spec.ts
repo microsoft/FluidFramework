@@ -555,22 +555,16 @@ describe("client.rollback", () => {
 		});
 
 		logger.validate({ baseText: "1245" });
-		for (let i = 0; i < client.getText().length; i++) {
-			const props = client.getPropertiesAtPosition(i);
-			if (i >= 0 && i < 3) {
-				assert.equal(props?.foo, "bar");
-			} else {
-				assert(props === undefined || props.foo === undefined);
+		clients.forEach((c) => {
+			for (let i = 0; i < c.getText().length; i++) {
+				const props = c.getPropertiesAtPosition(i);
+				if (i >= 0 && i < 3) {
+					assert.equal(props?.foo, "bar");
+				} else {
+					assert(props === undefined || props.foo === undefined);
+				}
 			}
-		}
-		for (let i = 0; i < remoteClient.getText().length; i++) {
-			const props = remoteClient.getPropertiesAtPosition(i);
-			if (i >= 0 && i < 3) {
-				assert.equal(props?.foo, "bar");
-			} else {
-				assert(props === undefined || props.foo === undefined);
-			}
-		}
+		});
 
 		msg = remoteClient.makeOpMessage(remoteClient.insertTextLocal(3, "abc"), ++seq);
 		clients.forEach((c) => {
