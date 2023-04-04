@@ -1342,10 +1342,26 @@ export class MergeTree {
 			});
 
 			if (opArgs.op.type === MergeTreeDeltaType.REMOVE) {
+				// if segments slid to the right, then we have to slide pending
+				// segments in reverse order
+				const newSegment = this._getSlideToSegment(pendingSegmentGroup.segments[0]);
+				const shouldReverse =
+					pendingSegmentGroup.segments[0] &&
+					newSegment &&
+					pendingSegmentGroup.segments[0].ordinal < newSegment.ordinal;
+
+				const pendingSegments = shouldReverse
+					? pendingSegmentGroup.segments.slice().reverse()
+					: pendingSegmentGroup.segments;
+
+				if (shouldReverse) {
+					overlappingRemoves.reverse();
+				}
+
 				// Perform slides after all segments have been acked, so that
 				// positions after slide are final
-				pendingSegmentGroup.segments.map((pendingSegment, idx) => {
-					if (overlappingRemoves[idx]) {
+				pendingSegments.map((pendingSegment, idx) => {
+					if (!overlappingRemoves[idx]) {
 						this.slideAckedRemovedSegmentReferences(pendingSegment);
 					}
 				});
