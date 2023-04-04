@@ -15,6 +15,9 @@ import { IDebuggerMessage } from "./Messages";
  * @public
  */
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "GET_CONTAINER_LIST";
 }
 
@@ -42,6 +45,9 @@ export interface ContainerListChangeMessageData {
  */
 export interface ContainerListChangeMessage
 	extends IDebuggerMessage<ContainerListChangeMessageData> {
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
 	type: "CONTAINER_LIST_CHANGE";
 }
 
