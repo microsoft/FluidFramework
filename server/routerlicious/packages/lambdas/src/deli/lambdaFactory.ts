@@ -6,7 +6,6 @@
 import { EventEmitter } from "events";
 import { inspect } from "util";
 import { toUtf8 } from "@fluidframework/common-utils";
-import { ICreateCommitParams, ICreateTreeEntry } from "@fluidframework/gitresources";
 import {
 	IClientManager,
 	IContext,
@@ -23,8 +22,6 @@ import {
 	LambdaCloseType,
 	MongoManager,
 } from "@fluidframework/server-services-core";
-import { generateServiceProtocolEntries } from "@fluidframework/protocol-base";
-import { FileMode } from "@fluidframework/protocol-definitions";
 import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
 	Lumber,
@@ -35,10 +32,6 @@ import {
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
-
-// Epoch should never tick in our current setting. This flag is just for being extra cautious.
-// TODO: Remove when everything is up to date.
-const FlipTerm = false;
 
 const getDefaultCheckpooint = (epoch: number): IDeliState => {
 	return {
@@ -199,16 +192,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			lastCheckpoint.term = 1;
 		}
 
-		const newCheckpoint = FlipTerm
-			? await this.resetCheckpointOnEpochTick(
-					tenantId,
-					documentId,
-					gitManager,
-					context.log,
-					lastCheckpoint,
-					leaderEpoch,
-			  )
-			: lastCheckpoint;
+		const newCheckpoint = lastCheckpoint;
 
 		const checkpointManager = createDeliCheckpointManagerFromCollection(
 			tenantId,
@@ -337,112 +321,5 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 				return undefined;
 			}
 		}
-	}
-
-	// Check the current epoch with last epoch. If not matched, we need to flip the term.
-	// However, we need to store the current term and epoch reliably before we kick off the lambda.
-	// Hence we need to create another summary. Logically its an update but in a git sense,
-	// its a new commit in the chain.
-
-	// Another aspect is the starting summary. What happens when epoch ticks and we never had a prior summary?
-	// For now we are just skipping the step if no prior summary was present.
-	// TODO: May be alfred/deli should create a summary at inception?
-	private async resetCheckpointOnEpochTick(
-		tenantId: string,
-		documentId: string,
-		gitManager: IGitManager,
-		logger: ILogger | undefined,
-		checkpoint: IDeliState,
-		leaderEpoch: number,
-	): Promise<IDeliState> {
-		let newCheckpoint = checkpoint;
-		if (leaderEpoch !== newCheckpoint.epoch) {
-			const lastSummaryState = await this.loadStateFromSummary(
-				tenantId,
-				documentId,
-				gitManager,
-				logger,
-			);
-			if (lastSummaryState === undefined) {
-				newCheckpoint.epoch = leaderEpoch;
-			} else {
-				// Log offset should never move backwards.
-				const logOffset = newCheckpoint.logOffset;
-				newCheckpoint = lastSummaryState;
-				newCheckpoint.epoch = leaderEpoch;
-				++newCheckpoint.term;
-				newCheckpoint.durableSequenceNumber = lastSummaryState.sequenceNumber;
-				newCheckpoint.logOffset = logOffset;
-				// Now create the summary.
-				await this.createSummaryWithLatestTerm(gitManager, newCheckpoint, documentId);
-				const message = "Created a summary on epoch tick";
-				logger?.info(message, {
-					messageMetaData: {
-						documentId,
-						tenantId,
-					},
-				});
-				Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
-			}
-		}
-		return newCheckpoint;
-	}
-
-	private async createSummaryWithLatestTerm(
-		gitManager: IGitManager,
-		checkpoint: IDeliState,
-		documentId: string,
-	) {
-		const existingRef = await gitManager.getRef(encodeURIComponent(documentId));
-		const [lastCommit, scribeContent] = await Promise.all([
-			gitManager.getCommit(existingRef.object.sha),
-			gitManager.getContent(existingRef.object.sha, ".serviceProtocol/scribe"),
-		]);
-
-		const scribe = toUtf8(scribeContent.content, scribeContent.encoding);
-		const serviceProtocolEntries = generateServiceProtocolEntries(
-			JSON.stringify(checkpoint),
-			scribe,
-		);
-
-		const [serviceProtocolTree, lastSummaryTree] = await Promise.all([
-			gitManager.createTree({ entries: serviceProtocolEntries }),
-			gitManager.getTree(lastCommit.tree.sha, false),
-		]);
-
-		const newTreeEntries = lastSummaryTree.tree
-			.filter((value) => value.path !== ".serviceProtocol")
-			.map((value) => {
-				const createTreeEntry: ICreateTreeEntry = {
-					mode: value.mode,
-					path: value.path,
-					sha: value.sha,
-					type: value.type,
-				};
-				return createTreeEntry;
-			});
-
-		newTreeEntries.push({
-			mode: FileMode.Directory,
-			path: ".serviceProtocol",
-			sha: serviceProtocolTree.sha,
-			type: "tree",
-		});
-
-		const gitTree = await gitManager.createGitTree({ tree: newTreeEntries });
-		const commitParams: ICreateCommitParams = {
-			author: {
-				date: new Date().toISOString(),
-				email: "praguertdev@microsoft.com",
-				name: "Routerlicious Service",
-			},
-			message: `Term Change Summary @T${checkpoint.term}S${checkpoint.sequenceNumber}`,
-			parents: [lastCommit.sha],
-			tree: gitTree.sha,
-		};
-
-		// Finally commit the summary and update the ref.
-		const commit = await gitManager.createCommit(commitParams);
-		await gitManager.upsertRef(documentId, commit.sha);
 	}
 }
