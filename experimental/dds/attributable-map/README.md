@@ -35,8 +35,8 @@ when the key becomes available.
 
 ### Attribution
 
- This experimental DDS allows for the tracking of attribution information, such as the user who made an update and the timestamp of the change. The `attributableMap` currently includes three types of attribution keys: Op-stream, detached, and local.
+This experimental DDS allows for the tracking of attribution information, such as the user who made an update and the timestamp of the change. The `attributableMap` currently includes three types of attribution keys: Op-stream, detached, and local.
 
-- The Op-stream attribution key indicates that the update of attribution information is synchronized with the processing of a map operation, and only occurs once the update is ack'd. 
-- The detached attribution key only occurs when the DDS is not attached, and can be summarized into a snapshot. 
-- The local attribution key exists when the operation has not yet been ack'd and cannot be summarized.
+-   The Op-stream attribution key indicates that the update of attribution information is synchronized with the processing of a map operation, and only occurs once the update is ack'd.
+-   The detached attribution key only occurs when the DDS is not attached, and can be summarized into a snapshot.
+-   The local attribution key exists when the operation has not yet been ack'd and cannot be summarized.
