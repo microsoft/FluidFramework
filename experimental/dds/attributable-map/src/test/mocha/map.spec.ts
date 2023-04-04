@@ -6,14 +6,13 @@
 import { strict as assert } from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/protocol-definitions";
-import { IGCTestProvider, runGCTests } from "@fluid-internal/test-dds-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISerializableValue, IValueChanged } from "../../interfaces";
+import { IMapOptions, ISerializableValue, IValueChanged } from "../../interfaces";
 import {
 	IMapSetOperation,
 	IMapDeleteOperation,
@@ -22,27 +21,35 @@ import {
 	IMapClearLocalOpMetadata,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces";
-import { MapFactory, SharedMap } from "../../map";
+import { MapFactory, AttributableMap } from "../../map";
 import { IMapOperation } from "../../mapKernel";
 
-function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFactory): SharedMap {
+function createConnectedMap(
+	id: string,
+	runtimeFactory: MockContainerRuntimeFactory,
+	options?: IMapOptions,
+): AttributableMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
+
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
 		deltaConnection: containerRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
-	const map = new SharedMap(id, dataStoreRuntime, MapFactory.Attributes);
+	const map: AttributableMap = new AttributableMap(id, dataStoreRuntime, MapFactory.Attributes);
 	map.connect(services);
 	return map;
 }
 
-function createLocalMap(id: string): SharedMap {
-	const map = new SharedMap(id, new MockFluidDataStoreRuntime(), MapFactory.Attributes);
+function createLocalMap(id: string, options?: IMapOptions): AttributableMap {
+	const dataStoreRuntime = new MockFluidDataStoreRuntime();
+	dataStoreRuntime.options = options ?? dataStoreRuntime.options;
+	const map: AttributableMap = new AttributableMap(id, dataStoreRuntime, MapFactory.Attributes);
 	return map;
 }
 
-class TestSharedMap extends SharedMap {
+class TestSharedMap extends AttributableMap {
 	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
 		return this.applyStashedOp(content) as MapLocalOpMetadata;
 	}
@@ -50,7 +57,7 @@ class TestSharedMap extends SharedMap {
 
 describe("Map", () => {
 	describe("Local state", () => {
-		let map: SharedMap;
+		let map: AttributableMap;
 
 		beforeEach(async () => {
 			map = createLocalMap("testMap");
@@ -343,7 +350,11 @@ describe("Map", () => {
 			 */
 			it("should correctly process a set operation sent in local state", async () => {
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				const map1 = new SharedMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
+				const map1 = new AttributableMap(
+					"testMap1",
+					dataStoreRuntime1,
+					MapFactory.Attributes,
+				);
 
 				// Set a key in local state.
 				const key = "testKey";
@@ -360,7 +371,11 @@ describe("Map", () => {
 				);
 				services2.deltaConnection = containerRuntime2.createDeltaConnection();
 
-				const map2 = new SharedMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
+				const map2 = new AttributableMap(
+					"testMap2",
+					dataStoreRuntime2,
+					MapFactory.Attributes,
+				);
 				await map2.load(services2);
 
 				// Now connect the first SharedMap
@@ -423,12 +438,61 @@ describe("Map", () => {
 				assert.equal(metadata.previousMap?.has("key2"), false);
 			});
 		});
+
+		describe("Attributor", () => {
+			it("should retrive proper attribution in detached state", async () => {
+				const options: IMapOptions = { attribution: { track: true } };
+				map = createLocalMap("testMap", options);
+
+				map.set("key1", 1);
+				map.set("key2", 2);
+
+				let attribution1 = map.getAttribution("key1");
+				let attribution2 = map.getAttribution("key2");
+
+				assert.equal(
+					attribution1?.type,
+					"detached",
+					"the first entry should have detached attribution",
+				);
+				assert.equal(
+					attribution2?.type,
+					"detached",
+					"the second entry should have detached attribution",
+				);
+
+				// load a new map from the snapshot
+				const services = MockSharedObjectServices.createFromSummary(
+					map.getAttachSummary().summary,
+				);
+				const map2 = new AttributableMap(
+					"map2",
+					new MockFluidDataStoreRuntime(),
+					MapFactory.Attributes,
+				);
+				await map2.load(services);
+
+				attribution1 = map2.getAttribution("key1");
+				attribution2 = map2.getAttribution("key2");
+
+				assert.equal(
+					attribution1?.type,
+					"detached",
+					"the first entry of the loaded map should have detached attribution",
+				);
+				assert.equal(
+					attribution2?.type,
+					"detached",
+					"the second entry of the loaded map should have detached attribution",
+				);
+			});
+		});
 	});
 
 	describe("Connected state", () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
-		let map1: SharedMap;
-		let map2: SharedMap;
+		let map1: AttributableMap;
+		let map2: AttributableMap;
 
 		beforeEach(async () => {
 			containerRuntimeFactory = new MockContainerRuntimeFactory();
@@ -771,85 +835,171 @@ describe("Map", () => {
 				});
 			});
 		});
-	});
 
-	describe("Garbage Collection", () => {
-		class GCSharedMapProvider implements IGCTestProvider {
-			private subMapCount = 0;
-			private _expectedRoutes: string[] = [];
-			private readonly map1: SharedMap;
-			private readonly map2: SharedMap;
-			private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
+		describe("Attributor", () => {
+			beforeEach(() => {
+				const options: IMapOptions = { attribution: { track: true } };
+				containerRuntimeFactory = new MockContainerRuntimeFactory();
+				// Connect the first map with attribution enabled.
+				map1 = createConnectedMap("map1", containerRuntimeFactory, options);
+				// Create a second map with attribution enabled.
+				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
+			});
 
-			public constructor() {
-				this.containerRuntimeFactory = new MockContainerRuntimeFactory();
-				this.map1 = createConnectedMap("map1", this.containerRuntimeFactory);
-				this.map2 = createConnectedMap("map2", this.containerRuntimeFactory);
-			}
+			it("Can retrieve proper attribution information with some normal operations", () => {
+				map1.set("key1", 1);
+				map1.set("key2", 2);
+				map2.set("key1", 3);
+				map1.delete("key2");
 
-			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.sharedObject}
-			 */
-			public get sharedObject(): SharedMap {
-				// Return the remote SharedMap because we want to verify its summary data.
-				return this.map2;
-			}
+				containerRuntimeFactory.processSomeMessages(1);
 
-			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.expectedOutboundRoutes}
-			 */
-			public get expectedOutboundRoutes(): string[] {
-				return this._expectedRoutes;
-			}
+				let attribution1 = map1.getAttribution("key1");
+				let attribution2 = map1.getAttribution("key2");
+				let attribution3 = map2.getAttribution("key1");
+				let attribution4 = map2.getAttribution("key2");
 
-			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addOutboundRoutes}
-			 */
-			public async addOutboundRoutes(): Promise<void> {
-				const newSubMapId = `subMap-${++this.subMapCount}`;
-				const subMap = createLocalMap(newSubMapId);
-				this.map1.set(newSubMapId, subMap.handle);
-				this._expectedRoutes.push(subMap.handle.absolutePath);
-				this.containerRuntimeFactory.processAllMessages();
-			}
-
-			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.deleteOutboundRoutes}
-			 */
-			public async deleteOutboundRoutes(): Promise<void> {
-				// Delete the last handle that was added.
-				const subMapId = `subMap-${this.subMapCount}`;
-				const deletedHandle = this.map1.get<IFluidHandle>(subMapId);
-				assert(deletedHandle, "Route must be added before deleting");
-
-				this.map1.delete(subMapId);
-				// Remove deleted handle's route from expected routes.
-				this._expectedRoutes = this._expectedRoutes.filter(
-					(route) => route !== deletedHandle.absolutePath,
+				assert.equal(
+					attribution1?.type === "op" && attribution1?.seq,
+					1,
+					"the first entry of map1 should have correct op-based attribution",
 				);
-				this.containerRuntimeFactory.processAllMessages();
-			}
+				assert.equal(
+					attribution2?.type,
+					"local",
+					"the second entry of map1 should have valid local attribution",
+				);
+				assert.equal(
+					attribution3?.type,
+					"local",
+					"the first entry of map2 should have valid local attribution",
+				);
+				assert.equal(
+					attribution4,
+					undefined,
+					"the second entry of map2 should not have valid attribution",
+				);
 
-			/**
-			 * {@inheritDoc @fluid-internal/test-dds-utils#IGCTestProvider.addNestedHandles}
-			 */
-			public async addNestedHandles(): Promise<void> {
-				const subMapId1 = `subMap-${++this.subMapCount}`;
-				const subMapId2 = `subMap-${++this.subMapCount}`;
-				const subMap = createLocalMap(subMapId1);
-				const subMap2 = createLocalMap(subMapId2);
-				const containingObject = {
-					subMapHandle: subMap.handle,
-					nestedObj: {
-						subMap2Handle: subMap2.handle,
-					},
-				};
-				this.map1.set(subMapId2, containingObject);
-				this._expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
-				this.containerRuntimeFactory.processAllMessages();
-			}
-		}
+				containerRuntimeFactory.processSomeMessages(2);
 
-		runGCTests(GCSharedMapProvider);
+				attribution1 = map1.getAttribution("key1");
+				attribution2 = map1.getAttribution("key2");
+				attribution3 = map2.getAttribution("key1");
+				attribution4 = map2.getAttribution("key2");
+
+				assert.equal(
+					attribution1?.type === "op" && attribution1?.seq,
+					3,
+					"the first entry of map1 should have correct op-based attribution",
+				);
+				assert.equal(
+					attribution2?.type === "op" && attribution2?.seq,
+					2,
+					"the second entry of map1 should have correct op-based local attribution",
+				);
+				assert.equal(
+					attribution3?.type === "op" && attribution3?.seq,
+					3,
+					"the first entry of map2 should have correct op-based attribution",
+				);
+				assert.equal(
+					attribution4?.type === "op" && attribution4?.seq,
+					2,
+					"the second entry of map2 should have correct op-based local attribution",
+				);
+
+				containerRuntimeFactory.processSomeMessages(1);
+
+				attribution1 = map1.getAttribution("key1");
+				attribution2 = map1.getAttribution("key2");
+				attribution3 = map2.getAttribution("key1");
+				attribution4 = map2.getAttribution("key2");
+
+				assert.equal(
+					attribution1?.type === "op" && attribution1?.seq,
+					3,
+					"the first entry of map1 should have correct op-based attribution",
+				);
+				assert.equal(
+					attribution2?.type === "op" && attribution2?.seq,
+					4,
+					"the second entry of map1 should have correct op-based local attribution",
+				);
+				assert.equal(
+					attribution3?.type === "op" && attribution3?.seq,
+					3,
+					"the first entry of map2 should have correct op-based attribution",
+				);
+				assert.equal(
+					attribution4?.type === "op" && attribution4?.seq,
+					4,
+					"the second entry of map2 should have correct op-based local attribution",
+				);
+			});
+
+			it("Can remove attribution table after the clearance", () => {
+				map1.set("key1", 1);
+				map1.set("key2", 2);
+				map2.set("key1", 3);
+				map1.delete("key2");
+				map2.clear();
+
+				containerRuntimeFactory.processAllMessages();
+
+				assert.equal(
+					map1.getAllAttribution()?.size,
+					0,
+					"The attribution table of map1 should be cleared",
+				);
+				assert.equal(
+					map2.getAllAttribution()?.size,
+					0,
+					"The attribution table of map2 should be cleared",
+				);
+			});
+
+			it("Can retrieve proper attribution information after summarization/loading", async () => {
+				map1.set("key1", 1);
+				map2.set("key1", 2);
+
+				containerRuntimeFactory.processSomeMessages(1);
+
+				const service1 = MockSharedObjectServices.createFromSummary(
+					map1.getAttachSummary().summary,
+				);
+				const map3 = new AttributableMap(
+					"map3",
+					new MockFluidDataStoreRuntime(),
+					MapFactory.Attributes,
+				);
+				await map3.load(service1);
+
+				const attribution1 = map3.getAttribution("key1");
+
+				assert.equal(
+					attribution1?.type === "op" && attribution1?.seq,
+					1,
+					"The loaded map should have valid op-based attribution for the first entry",
+				);
+
+				const service2 = MockSharedObjectServices.createFromSummary(
+					map2.getAttachSummary().summary,
+				);
+				const map4 = new AttributableMap(
+					"map4",
+					new MockFluidDataStoreRuntime(),
+					MapFactory.Attributes,
+				);
+				await map4.load(service2);
+
+				const attribution2 = map4.getAttribution("key1");
+
+				assert.equal(
+					attribution2,
+					undefined,
+					"The loaded map should not have local attribution",
+				);
+			});
+		});
 	});
 });
