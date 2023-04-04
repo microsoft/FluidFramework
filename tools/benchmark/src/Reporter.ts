@@ -27,7 +27,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-// This file is a reported used with node, so depending on node is fine.
+// This file is a reporter used with node, so depending on node is fine.
 /* eslint-disable import/no-nodejs-modules */
 
 /* eslint no-console: ["error", { allow: ["log"] }] */

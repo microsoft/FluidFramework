@@ -10,7 +10,7 @@ import { BenchmarkReporter } from "./Reporter";
 import { getName } from "./ReporterUtilities";
 import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
-// Since its not moved yet, it needs this lint suppression to do this import:
+// Since it's not moved yet, it needs this lint suppression to do this import:
 // eslint-disable-next-line import/no-internal-modules
 import { getSuiteName } from "./mocha/mochaReporterUtilities";
 

@@ -134,7 +134,7 @@ describe("`benchmark` function", () => {
 	// This pattern is roughly what the non-custom `benchmark` does.
 	// It minimizes per iteration over head by timing the whole batch as a single unit.
 	// This is important for timing operations which are very fast relative to measurement overhead and clock precision.
-	// Since measurement overhead and clock precision are not the same on all systems, this approach necessary to be robustly portable.
+	// Since measurement overhead and clock precision are not the same on all systems, this approach is necessary to be robustly portable.
 	customBenchmark({
 		title: "Custom Benchmark",
 		run: async <T>(state: BenchmarkTimer<T>) => {
@@ -153,9 +153,9 @@ describe("`benchmark` function", () => {
 		type: BenchmarkType.OwnCorrectness,
 	});
 
-	// This pattern is allows for cleanup to happen after each iteration that is not included in the reported time.
+	// This pattern allows for cleanup to happen after each iteration that is not included in the reported time.
 	// It incurs per iteration over head by timing each individual iteration.
-	// This can leave to accuracy issues, biasing the results upward due to the overhead.
+	// This can lead to accuracy issues, biasing the results upward due to the overhead.
 	// Additionally it can have precision issues if the iteration time is not much larger than the timer precision.
 	// Since timing overhead and precision vary on different systems, this approach to measurement may work well on some setups, and poorly on others.
 	// A good practice is to compare any tests that work this way to a version of the test which is empty (measuring a no-op, like below) and only
@@ -183,7 +183,7 @@ describe("`benchmark` function", () => {
 		minBatchDurationSeconds: 0,
 	});
 
-	// This patterns is only suable for very slow benchmarks which don't need any averaging or warmup runs.
+	// This patterns is only suitable for very slow benchmarks which don't need any averaging or warmup runs.
 	// Typically this only makes sense for benchmarks which have a runtime on the order of seconds as they have to be long enough
 	// to amortize GC.
 	// As this only does a single run, no estimate of variance or error will be available.

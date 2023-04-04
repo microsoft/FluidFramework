@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// This file is a reported used with node, so depending on node is fine.
+// This file is a reporter used with node, so depending on node is fine.
 /* eslint-disable import/no-nodejs-modules */
 
 import * as path from "path";
@@ -14,7 +14,7 @@ import chalk from "chalk";
 import { isChildProcess } from "./Configuration";
 import { pad, prettyNumber, getName } from "./ReporterUtilities";
 // TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
-// Since its not moved yet, it needs this lint suppression to do this import:
+// Since it's not moved yet, it needs this lint suppression to do this import:
 // eslint-disable-next-line import/no-internal-modules
 import { MemoryBenchmarkStats } from "./mocha/memoryTestRunner";
 // eslint-disable-next-line import/no-internal-modules

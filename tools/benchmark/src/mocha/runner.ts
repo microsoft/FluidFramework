@@ -101,7 +101,7 @@ export function customBenchmark(
 }
 
 /**
- * This is wrapper for Mocha's it function that can run the in body in a child process,
+ * This is a wrapper for Mocha's it function that can run the body in a child process,
  * and write status from the run to the reporter.
  *
  * @public
