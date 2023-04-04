@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
+// This file is a reported used with node, so depending on node is fine.
+/* eslint-disable import/no-nodejs-modules */
+
 import * as path from "path";
 import * as fs from "fs";
 import Table from "easy-table";
 import { Runner, Suite, Test } from "mocha";
 import chalk from "chalk";
-import { isChildProcess } from "./Configuration";
-import { pad, prettyNumber, getName, getSuiteName } from "./ReporterUtilities";
-import { MemoryBenchmarkStats } from "./MemoryTestRunner";
+import { isChildProcess } from "../Configuration";
+import { pad, prettyNumber, getName } from "../ReporterUtilities";
+import { MemoryBenchmarkStats } from "./memoryTestRunner";
+import { getSuiteName } from "./mochaReporterUtilities";
 
 /**
  * Custom mocha reporter for memory tests. It can be used by passing the JavaScript version of this file to
@@ -32,9 +36,8 @@ class MochaMemoryTestReporter {
 		const reportDir = options?.reporterOptions?.reportDir ?? "";
 		this.outputDirectory =
 			reportDir !== "" ? path.resolve(reportDir) : path.join(__dirname, ".output");
-		if (!fs.existsSync(this.outputDirectory)) {
-			fs.mkdirSync(this.outputDirectory, { recursive: true });
-		}
+
+		fs.mkdirSync(this.outputDirectory, { recursive: true });
 
 		const data: Map<Test, MemoryBenchmarkStats> = new Map();
 

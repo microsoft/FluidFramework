@@ -11,12 +11,19 @@ import {
 	BenchmarkTimingOptions,
 } from "./Configuration";
 import { Stats, getArrayStatistics } from "./ReporterUtilities";
-import { Timer, defaultMinTime, timer } from "./timer";
+import { Timer, defaultMinimumTime, timer } from "./timer";
 
-export const defaults: Required<BenchmarkTimingOptions> = {
+export enum Phase {
+	WarmUp,
+	AdjustIterationPerBatch,
+	CollectData,
+}
+
+export const defaultTimingOptions: Required<BenchmarkTimingOptions> = {
 	maxBenchmarkDurationSeconds: 5,
 	minBatchCount: 5,
-	minBatchDurationSeconds: defaultMinTime,
+	minBatchDurationSeconds: defaultMinimumTime,
+	startPhase: Phase.WarmUp,
 };
 
 /**
@@ -53,6 +60,23 @@ export interface BenchmarkData {
 export type BenchmarkResult = BenchmarkError | BenchmarkData;
 
 /**
+ * Use for readonly view of Json compatible data.
+ *
+ * Note that this does not robustly forbid non json comparable data via type checking,
+ * but instead mostly restricts access to it.
+ *
+ * @public
+ */
+export type JsonCompatible =
+	| string
+	| number
+	| boolean
+	| readonly JsonCompatible[]
+	| { readonly [P in string]: JsonCompatible | undefined };
+
+export type Results = { readonly [P in string]: JsonCompatible | undefined };
+
+/**
  * @public
  */
 export function isResultError(result: BenchmarkResult): result is BenchmarkError {
@@ -69,7 +93,7 @@ export interface BenchmarkError {
 
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
 	const options = {
-		...defaults,
+		...defaultTimingOptions,
 		...args,
 	};
 	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
@@ -101,45 +125,60 @@ function tryRunGarbageCollection(): void {
 	global?.gc?.();
 }
 
-enum Mode {
-	WarmUp,
-	AdjustIterationPerBatch,
-	CollectData,
+export interface BenchmarkTimer<T> {
+	readonly iterationsPerBatch: number;
+	readonly timer: Timer<T>;
+	recordBatch(duration: number): boolean;
 }
 
-class BenchmarkState<T> {
+export interface CustomBenchmark {
+	run<T>(state: BenchmarkTimer<T>): Promise<void>;
+}
+
+export async function runCustomBenchmark(
+	args: CustomBenchmark & BenchmarkTimingOptions,
+): Promise<BenchmarkData> {
+	const state = new BenchmarkState(timer, args);
+	await args.run(state);
+	return state.computeData();
+}
+
+class BenchmarkState<T> implements BenchmarkTimer<T> {
 	/**
 	 * Duration for each batch, in seconds.
 	 */
 	private readonly samples: number[];
 	private readonly options: Readonly<Required<BenchmarkTimingOptions>>;
 	private readonly startTime: T;
-	private mode: Mode = Mode.WarmUp;
+	private phase: Phase;
 	public iterationsPerBatch: number;
 	public constructor(public readonly timer: Timer<T>, options: BenchmarkTimingOptions) {
 		this.startTime = timer.now();
 		this.samples = [];
 		this.options = {
-			...defaults,
+			...defaultTimingOptions,
 			...options,
 		};
+		this.phase = this.options.startPhase;
 
 		if (this.options.minBatchCount < 1) {
 			throw new Error("Invalid minSampleCount");
 		}
-		this.iterationsPerBatch = this.options.minBatchCount;
+		this.iterationsPerBatch = 1;
 		tryRunGarbageCollection();
 	}
 
 	public recordBatch(duration: number): boolean {
-		switch (this.mode) {
-			case Mode.WarmUp: {
-				this.mode = Mode.AdjustIterationPerBatch;
+		switch (this.phase) {
+			case Phase.WarmUp: {
+				this.phase = Phase.AdjustIterationPerBatch;
 				return true;
 			}
-			case Mode.AdjustIterationPerBatch: {
+			case Phase.AdjustIterationPerBatch: {
 				if (!this.growBatchSize(duration)) {
-					this.mode = Mode.CollectData;
+					this.phase = Phase.CollectData;
+					// Since batch is big enough, include it in data collection.
+					return this.addSample(duration);
 				}
 				return true;
 			}

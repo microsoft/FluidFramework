@@ -4,6 +4,7 @@
  */
 
 import { assert } from "chai";
+import { Phase } from "./runBenchmark";
 
 /**
  * Kinds of benchmarks.
@@ -174,6 +175,8 @@ export interface BenchmarkTimingOptions {
 	 * The minimum time in seconds to run an individual batch.
 	 */
 	minBatchDurationSeconds?: number;
+
+	startPhase?: Phase;
 }
 
 /**
@@ -202,7 +205,14 @@ export interface BenchmarkOptions
 	extends MochaExclusiveOptions,
 		HookArguments,
 		BenchmarkTimingOptions,
-		OnBatch {
+		OnBatch,
+		BenchmarkDescription {}
+
+/**
+ * Set of options to describe a benchmark.
+ * @public
+ */
+export interface BenchmarkDescription {
 	/**
 	 * The kind of benchmark.
 	 */
@@ -386,7 +396,7 @@ export const isInPerformanceTestingMode = process.argv.includes("--perfMode");
  * Ex: cpu temperature will still be an issue, and thus running with fixed CPU clock speeds is still recommend
  * for more precise data.
  */
-export const isParentProcess = process.argv.includes("--parentProcess");
+export const isParentProcess: boolean = process.argv.includes("--parentProcess");
 
 /**
  * --childProcess should only be used to indicate that a test run with parentProcess is running,

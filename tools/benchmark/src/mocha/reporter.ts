@@ -5,10 +5,11 @@
 
 import { Runner, Suite, Test } from "mocha";
 import chalk from "chalk";
-import { isChildProcess, ReporterOptions } from "./Configuration";
-import { BenchmarkReporter } from "./Reporter";
-import { getName, getSuiteName } from "./ReporterUtilities";
-import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
+import { isChildProcess, ReporterOptions } from "../Configuration";
+import { BenchmarkReporter } from "../Reporter";
+import { getName } from "../ReporterUtilities";
+import { BenchmarkData, BenchmarkResult } from "../runBenchmark";
+import { getSuiteName } from "./mochaReporterUtilities";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).

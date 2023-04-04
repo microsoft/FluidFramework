@@ -14,8 +14,29 @@ import {
 	performanceTestSuiteTag,
 	userCategoriesSplitter,
 	TestType,
-} from "./Configuration";
-import { runBenchmark } from "./runBenchmark";
+	Titled,
+	MochaExclusiveOptions,
+	BenchmarkDescription,
+	BenchmarkTimingOptions,
+} from "../Configuration";
+import {
+	BenchmarkResult,
+	CustomBenchmark,
+	Phase,
+	runBenchmark,
+	runCustomBenchmark,
+} from "../runBenchmark";
+
+export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
+	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
+	const testTypeTag = TestType[TestType.ExecutionTime];
+	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
+
+	if (args.category !== "") {
+		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
+	}
+	return qualifiedTitle;
+}
 
 /**
  * This is wrapper for Mocha's it function that runs a performance benchmark.
@@ -33,16 +54,63 @@ import { runBenchmark } from "./runBenchmark";
  * @public
  */
 export function benchmark(args: BenchmarkArguments): Test {
-	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
-	const testTypeTag = TestType[TestType.ExecutionTime];
-	let qualifiedTitle = `${performanceTestSuiteTag} @${benchmarkTypeTag} @${testTypeTag} ${args.title}`;
+	return supportParentProcess({
+		title: qualifiedTitle(args),
+		only: args.only,
+		run: async () => {
+			// Create and run a benchmark if we are in perfMode, else run the passed in function normally
+			if (isInPerformanceTestingMode) {
+				const stats = await runBenchmark(args);
+				return stats;
+			} else {
+				const { benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
+				await args.before?.();
+				await argsBenchmarkFn();
+				args.beforeEachBatch?.();
+				await args.after?.();
+				await Promise.resolve();
+				return { error: "Not running in performance testing mode, so no data collected" };
+			}
+		},
+	});
+}
 
-	if (args.category !== "") {
-		qualifiedTitle = `${qualifiedTitle} ${userCategoriesSplitter} @${args.category}`;
-	}
+export function customBenchmark(
+	args: MochaExclusiveOptions &
+		CustomBenchmark &
+		BenchmarkTimingOptions &
+		BenchmarkDescription &
+		Titled,
+): Test {
+	return supportParentProcess({
+		title: qualifiedTitle(args),
+		only: args.only,
+		run: async () => {
+			const innerArgs = {
+				...args,
+			};
+			if (!isInPerformanceTestingMode) {
+				innerArgs.startPhase = Phase.CollectData;
+				innerArgs.minBatchDurationSeconds = 0;
+				innerArgs.minBatchCount = 1;
+				innerArgs.maxBenchmarkDurationSeconds = 0;
+			}
+			return runCustomBenchmark(innerArgs);
+		},
+	});
+}
 
+/**
+ * This is wrapper for Mocha's it function that can run the in body in a child process,
+ * and write status from the run to the reporter.
+ *
+ * @public
+ */
+export function supportParentProcess<
+	TArgs extends MochaExclusiveOptions & Titled & { run: () => Promise<BenchmarkResult> },
+>(args: TArgs): Test {
 	const itFunction = args.only === true ? it.only : it;
-	const test = itFunction(qualifiedTitle, async () => {
+	const test = itFunction(args.title, async () => {
 		if (isParentProcess) {
 			// Instead of running the benchmark in this process, create a new process.
 			// See {@link isParentProcess} for why.
@@ -105,17 +173,10 @@ export function benchmark(args: BenchmarkArguments): Test {
 			return;
 		}
 
+		const stats = await args.run();
 		// Create and run a benchmark if we are in perfMode, else run the passed in function normally
 		if (isInPerformanceTestingMode) {
-			const stats = await runBenchmark(args);
 			test.emit("benchmark end", stats);
-		} else {
-			const { benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
-			await args.before?.();
-			await argsBenchmarkFn();
-			args.beforeEachBatch?.();
-			await args.after?.();
-			await Promise.resolve();
 		}
 	});
 	return test;
