@@ -66,6 +66,10 @@
 				"min": 0,
 				"max": 150000
 			},
+			"containerClose": {
+				"min": 0,
+				"max": 150000
+			},
 			"content": {
 				"useRandomContent": true,
 				"opSizeinBytes": 214800,
@@ -82,6 +86,10 @@
 			"faultInjectionMs": {
 				"min": 0,
 				"max": 150000
+			},
+			"containerClose": {
+				"min": 0,
+				"max": 150000
 			}
 		},
 		"mini": {
@@ -91,6 +99,10 @@
 			"totalSendCount": 30,
 			"readWriteCycleMs": 10000,
 			"faultInjectionMs": {
+				"min": 0,
+				"max": 50000
+			},
+			"containerClose": {
 				"min": 0,
 				"max": 50000
 			},
@@ -111,6 +123,10 @@
 			"faultInjectionMs": {
 				"min": 0,
 				"max": 50000
+			},
+			"containerClose": {
+				"min": 0,
+				"max": 50000
 			}
 		},
 		"ci_nofault": {
@@ -129,6 +145,10 @@
 			"faultInjectionMs": {
 				"min": 900000,
 				"max": 1800000
+			},
+			"containerClose": {
+				"min": 900000,
+				"max": 1800000
 			}
 		},
 		"scale_nofault": {
@@ -145,6 +165,10 @@
 			"totalSendCount": 150,
 			"readWriteCycleMs": 10000,
 			"faultInjectionMs": {
+				"min": 5000,
+				"max": 30000
+			},
+			"containerClose": {
 				"min": 5000,
 				"max": 30000
 			},
@@ -217,6 +241,10 @@
 			"faultInjectionMs": {
 				"min": 900000,
 				"max": 1800000
+			},
+			"containerClose": {
+				"min": 900000,
+				"max": 1800000
 			}
 		},
 		"scale_with_signals_concurrent": {
@@ -228,6 +256,10 @@
 			"totalSendCount": 70000,
 			"readWriteCycleMs": 30000,
 			"faultInjectionMs": {
+				"min": 900000,
+				"max": 1800000
+			},
+			"containerClose": {
 				"min": 900000,
 				"max": 1800000
 			},

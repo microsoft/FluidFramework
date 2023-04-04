@@ -400,7 +400,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		).then(
 			(response) => this.onUploadResolve(localId, response),
 			async (err) => this.onUploadReject(localId, err),
-		);
+		).catch((error) => {
+			// an error has occured while handling upload response
+            const entry = this.pendingBlobs.get(localId);
+            entry?.handleP.reject(error);
+            this.mc.logger.sendErrorEvent({
+                eventName: "blobUploadResponseHandlingError",
+                localId,
+                status: entry?.status,
+            }, error);
+            throw error;
+        });
 	}
 
 	/**
@@ -422,15 +432,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
-		if (
-			!(
-				entry?.status === PendingBlobStatus.OnlinePendingUpload ||
-				entry?.status === PendingBlobStatus.OfflinePendingUpload
-			)
-		) {
-			console.log("no entry or incorrect entry:");
-			console.log(localId);
-			console.debug(entry);
+		// if this is a rehydrated blob we may see the successful BlobAttach op and delete the
+		// entry before reupload finishes
+		if (!entry) {
+			return response;
 		}
 		assert(
 			entry?.status === PendingBlobStatus.OnlinePendingUpload ||
@@ -897,6 +902,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	public getPendingBlobs(): IPendingBlobs {
 		const blobs = {};
 		for (const [key, entry] of this.pendingBlobs) {
+			// We never gave out handles for online-flow entries, so at this point there is no reason to save them
 			if (
 				entry.status === PendingBlobStatus.OfflinePendingOp ||
 				entry.status === PendingBlobStatus.OfflinePendingUpload

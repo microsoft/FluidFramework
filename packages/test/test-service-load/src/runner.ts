@@ -152,10 +152,10 @@ function* factoryPermutations<T extends IDocumentServiceFactory>(create: () => T
 				headers = { [LoaderHeader.loadMode]: { opsBeforeReturn: "all" } };
 				break;
 			case 3:
-			// headers = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
-			// break;
+				headers = { [LoaderHeader.loadMode]: { deltaConnection: "none" } };
+				break;
 			case 4:
-				// headers = { [LoaderHeader.loadMode]: { deltaConnection: undefined } };
+				headers = { [LoaderHeader.loadMode]: { deltaConnection: "delayed" } };
 				break;
 		}
 		yield { documentServiceFactory, headers };
@@ -231,7 +231,6 @@ async function runnerProcess(
 				},
 			});
 
-			// const stashedOps = stashedOpP ? await Promise.race([stashedOpP, new Promise<never>((_, reject) => setTimeout(reject, 1000))]) : undefined;
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
 			stashedOpTotal += stashedOps?.count ?? 0;
@@ -391,7 +390,6 @@ async function scheduleContainerClose(
 		if (container.connectionState !== ConnectionState.Connected && !container.closed) {
 			container.once("connected", () => {
 				resolve();
-				// container.off("closed", () => resolve);
 			});
 		}
 	})
@@ -450,9 +448,10 @@ async function scheduleContainerClose(
 
 			return Promise.race([
 				def.promise,
-				// make this promise resolve on container closure, but allow the deferred promise to resolve first
+				// make this promise resolve on container closure
 				new Promise<undefined>((resolve) =>
 					container.on("closed", () => {
+						// allow the deferred promise to resolve first
 						// eslint-disable-next-line @typescript-eslint/no-floating-promises
 						Promise.resolve().then(() => resolve(undefined));
 					}),

@@ -30,7 +30,6 @@ import {
 	createGenericNetworkError,
 	getRetryDelayFromError,
 	logNetworkFailure,
-	// isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -196,7 +195,6 @@ export class ConnectionManager implements IConnectionManager {
 	private clientSequenceNumber = 0;
 	private clientSequenceNumberObserved = 0;
 	/** Counts the number of non-runtime ops sent by the client which may not be acked. */
-	// private localOpsToIgnore = 0;
 
 	/** track clientId used last time when we sent any ops */
 	private lastSubmittedClientId: string | undefined;
@@ -275,13 +273,6 @@ export class ConnectionManager implements IConnectionManager {
 					sentOps: this.clientSequenceNumber,
 			  };
 	}
-
-	// public shouldJoinWrite(): boolean {
-	// 	// We don't have to wait for ack for topmost NoOps. So subtract those.
-	// 	return (
-	// 		this.clientSequenceNumberObserved < this.clientSequenceNumber - this.localOpsToIgnore
-	// 	);
-	// }
 
 	/**
 	 * Tells if container is in read-only mode.
@@ -956,12 +947,6 @@ export class ConnectionManager implements IConnectionManager {
 			this.clientSequenceNumber = 0;
 			this.clientSequenceNumberObserved = 0;
 		}
-
-		// if (!isRuntimeMessage(message)) {
-		// 	this.localOpsToIgnore++;
-		// } else {
-		// 	this.localOpsToIgnore = 0;
-		// }
 
 		return {
 			...message,
