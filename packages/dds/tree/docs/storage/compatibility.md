@@ -12,7 +12,7 @@ as most of the concrete recommendations presented henceforth fall out of those b
 
 ## What State is Persisted?
 
-Due to [trailing ops](../../../README.md), a DDS's persisted format encompasses the format it uses for its ops and summaries,
+A DDS's persisted format encompasses the format it uses for its summaries as well as its ops (due to [trailing ops](../../../README.md))
 including transitively referenced structured blob data.
 
 Since documents are stored outside of Fluid control (i.e. no type of central data migration is possible),
