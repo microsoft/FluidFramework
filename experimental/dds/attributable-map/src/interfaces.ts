@@ -5,7 +5,7 @@
 
 import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/common-definitions";
-
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 /**
  * Type of "valueChanged" event parameter.
  */
@@ -119,6 +119,12 @@ export interface ISerializableValue {
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	value: any;
+
+	/**
+	 * @alpha
+	 * The attribution key attached with the entry
+	 */
+	attribution?: AttributionKey | number;
 }
 
 /**
@@ -136,4 +142,31 @@ export interface ISerializedValue {
 	 * @remarks Will be undefined if the original value was undefined.
 	 */
 	value: string | undefined;
+
+	/**
+	 * @alpha
+	 * The attribution key or seq number attached with the entry
+	 */
+	attribution?: string;
+}
+
+/**
+ * Options related to attribution
+ *
+ * @alpha
+ */
+export interface IMapOptions {
+	attribution?: IMapAttributionOptions;
+}
+
+/**
+ * This enables the map to store the attribution information which can be accessed with the runtime
+ * (i.e. who creeated the content and when it was created)
+ *
+ * default: false
+ *
+ * @alpha
+ */
+export interface IMapAttributionOptions {
+	track?: boolean;
 }
