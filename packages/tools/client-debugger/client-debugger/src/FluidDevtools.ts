@@ -88,7 +88,7 @@ export class FluidDevtools
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		["GET_CONTAINER_LIST"]: () => {
-			this.postContainerListChange();
+			this.postContainerList();
 			return true;
 		},
 	};
@@ -109,7 +109,7 @@ export class FluidDevtools
 	/**
 	 * Posts a {@link ContainerListMessage} to the window (globalThis).
 	 */
-	private readonly postContainerListChange = (): void => {
+	private readonly postContainerList = (): void => {
 		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
 			(containerDevtools) => ({
 				id: containerDevtools.containerId,
@@ -145,8 +145,8 @@ export class FluidDevtools
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
 		// Initiate message posting of container list updates.
-		this.on("containerRegistered", this.postContainerListChange);
-		this.on("containerDevtoolsClosed", this.postContainerListChange);
+		this.on("containerRegistered", this.postContainerList);
+		this.on("containerDevtoolsClosed", this.postContainerList);
 
 		this._disposed = false;
 	}
