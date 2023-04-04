@@ -60,7 +60,7 @@ describe("Routerlicious", () => {
 				testDocumentRepository = new testUtils.TestNotImplementedDocumentRepository();
 				testCheckpointRepository = new testUtils.TestNotImplementedCheckpointRepository();
 				Sinon.replace(testDocumentRepository, "updateOne", Sinon.fake());
-				Sinon.replace(testCheckpointRepository, "updateOne", Sinon.fake());
+				Sinon.replace(testCheckpointRepository, "writeCheckpoint", Sinon.fake());
 				const checkpointManager = createDeliCheckpointManagerFromCollection(
 					testTenant,
 					testId,

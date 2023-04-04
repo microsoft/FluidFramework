@@ -153,10 +153,7 @@ export class CheckpointManager implements ICheckpointManager {
 			? this.writeScribeCheckpointToCollection(checkpoint, true)
 			: Promise.all([
 					this.checkpointRepository
-						.deleteOne({
-							documentId: this.documentId,
-							tenantId: this.tenantId,
-						})
+						.deleteCheckpoint(this.documentId, this.tenantId)
 						.catch((error) => {
 							Lumberjack.error(
 								`Error removing checkpoint data from the local database.`,
@@ -182,7 +179,7 @@ export class CheckpointManager implements ICheckpointManager {
 
 		await (isLocal
 			? this.checkpointRepository
-					.updateOne(checkpointFilter, checkpointData, { upsert: true })
+					.writeCheckpoint(this.documentId, this.tenantId, checkpoint)
 					.catch((error) => {
 						Lumberjack.error(
 							`Error writing checkpoint to local database`,

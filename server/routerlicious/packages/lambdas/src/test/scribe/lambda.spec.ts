@@ -95,12 +95,12 @@ describe("Routerlicious", () => {
 				testCheckpointRepository = new TestNotImplementedCheckpointRepository();
 				Sinon.replace(
 					testCheckpointRepository,
-					"readOne",
+					"getCheckpoint",
 					Sinon.fake.resolves(_.cloneDeep(testData[0])),
 				);
 				Sinon.replace(
 					testCheckpointRepository,
-					"updateOne",
+					"writeCheckpoint",
 					Sinon.fake.resolves(undefined),
 				);
 				testMessageCollection = new TestCollection([]);

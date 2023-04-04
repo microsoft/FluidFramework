@@ -32,9 +32,8 @@ import {
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
-	BaseTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
-import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
+import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid, restoreFromCheckpoint } from "../utils";
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
@@ -184,58 +183,9 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
 				}
 			} else {
-				let checkpoint;
-				let isLocalCheckpoint = false;
-				const restoreFromCheckpointMetric = Lumberjack.newLumberMetric(
-					LumberEventName.RestoreFromCheckpoint,
-				);
-				let checkpointSource = "defaultGlobalCollection";
-
-				if (!this.localCheckpointEnabled || !this.checkpointRepository) {
-					// If we cannot checkpoint locally, use document
-					lastCheckpoint = JSON.parse(document.deli);
-				} else {
-					// Search checkpoints collection for checkpoint
-					checkpoint = await this.checkpointRepository
-						.readOne({
-							documentId,
-							tenantId,
-						})
-						.catch((error) => {
-							Lumberjack.error(
-								`Error retrieving local checkpoint`,
-								getLumberBaseProperties(documentId, tenantId),
-							);
-							checkpointSource = "notFoundInLocalCollection";
-						});
-
-					if (checkpoint?.deli) {
-						lastCheckpoint = JSON.parse(checkpoint.deli);
-						checkpointSource = "foundInLocalCollection";
-						isLocalCheckpoint = true;
-					} else {
-						// If checkpoint does not exist, use document
-						checkpointSource = "notFoundInLocalCollection";
-						lastCheckpoint = JSON.parse(document.deli);
-					}
-				}
-
-				restoreFromCheckpointMetric.setProperties({
-					[BaseTelemetryProperties.tenantId]: tenantId,
-					[BaseTelemetryProperties.documentId]: documentId,
-					checkpointSource,
-					retrievedFromLocalDatabase: isLocalCheckpoint,
-				});
-
-				if (lastCheckpoint) {
-					restoreFromCheckpointMetric.success(`Restored checkpoint from database.`);
-				} else {
-					restoreFromCheckpointMetric.error(
-						`Error restoring checkpoint from database. Last checkpoint not found.`,
-					);
-				}
-			}
-		}
+                lastCheckpoint = await restoreFromCheckpoint(documentId, tenantId, "deli", this.localCheckpointEnabled, this.checkpointRepository, document);
+		    }
+        }
 
 		// Add checkpointTimestamp as UTC now if checkpoint doesn't have a timestamp yet.
 		if (

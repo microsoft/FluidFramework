@@ -335,9 +335,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const documentRepository =
 			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);
-		const checkpointRepository =
-			customizations?.checkpointRepository ??
-			new core.MongoCheckpointRepository(checkpointsCollection);
+		const deliCheckpointRepository =
+			new core.MongoCheckpointRepository(checkpointsCollection, "deli");
+        const scribeCheckpointRepository =
+        new core.MongoCheckpointRepository(checkpointsCollection, "scribe");
 
 		const databaseManager = new core.MongoDatabaseManager(
 			globalDbEnabled,
@@ -388,7 +389,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			storage,
 			databaseManager,
 			documentRepository,
-			checkpointRepository,
+			deliCheckpointRepository,
+            scribeCheckpointRepository,
 			60000,
 			() => new NodeWebSocketServer(4000),
 			taskMessageSender,

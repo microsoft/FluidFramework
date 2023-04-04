@@ -3,43 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { ICheckpoint, ICheckpointRepository } from "@fluidframework/server-services-core";
+import { ICheckpoint, ICheckpointRepository, IDeliState, IScribe } from "@fluidframework/server-services-core";
 
 const defaultErrorMsg = "Method not implemented. Provide your own mock.";
+
 export class TestNotImplementedCheckpointRepository implements ICheckpointRepository {
-	async create(document: ICheckpoint): Promise<any> {
-		throw new Error(defaultErrorMsg);
-	}
+    async writeCheckpoint(tenantId: string, documentId: string, checkpoint: IDeliState | IScribe): Promise<void> {
+        throw new Error(defaultErrorMsg);
+    }
+    async deleteCheckpoint(documentId: string, tenantId: string): Promise<void> {
+        throw new Error(defaultErrorMsg);
+    }
+    async getCheckpoint(filter: any): Promise<ICheckpoint> {
+        throw new Error(defaultErrorMsg);
+    }
 
-	async readOne(filter: any): Promise<ICheckpoint> {
-		throw new Error(defaultErrorMsg);
-	}
+    async removeServiceCheckpoint(documentId: string, tenantId: string): Promise<void> {
+        throw new Error(defaultErrorMsg);
+    }
 
-	async updateOne(filter: any, update: any, options?: any): Promise<void> {
-		throw new Error(defaultErrorMsg);
-	}
-
-	async deleteOne(filter: any): Promise<void> {
-		throw new Error(defaultErrorMsg);
-	}
-
-	async findOneOrCreate(
-		filter: any,
-		value: any,
-		options: any,
-	): Promise<{ value: ICheckpoint; existing: boolean }> {
-		throw new Error(defaultErrorMsg);
-	}
-
-	async findOneAndUpdate(
-		filter: any,
-		value: any,
-		options: any,
-	): Promise<{ value: ICheckpoint; existing: boolean }> {
-		throw new Error(defaultErrorMsg);
-	}
-
-	async exists(filter: any): Promise<boolean> {
-		throw new Error(defaultErrorMsg);
-	}
 }
