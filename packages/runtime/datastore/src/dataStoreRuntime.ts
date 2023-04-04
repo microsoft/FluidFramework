@@ -103,7 +103,8 @@ export interface ISharedObjectRegistry {
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
-	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext {
+	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
+{
 	/**
 	 * @deprecated - Instantiate the class using its constructor instead.
 	 *
