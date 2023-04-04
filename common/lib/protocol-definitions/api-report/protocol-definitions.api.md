@@ -308,7 +308,8 @@ export interface ISequencedDocumentMessage {
     referenceSequenceNumber: number;
     sequenceNumber: number;
     serverMetadata?: any;
-    term: number | undefined;
+    // @deprecated
+    term?: number | undefined;
     timestamp: number;
     traces?: ITrace[];
     type: string;

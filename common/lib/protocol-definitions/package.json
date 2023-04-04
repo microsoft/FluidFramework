@@ -70,6 +70,18 @@
 		"broken": {
 			"InterfaceDeclaration_IDocumentAttributes": {
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IConnected": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISequencedDocumentAugmentedMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISequencedDocumentMessage": {
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ISequencedDocumentSystemMessage": {
+				"backCompat": false
 			}
 		}
 	}
