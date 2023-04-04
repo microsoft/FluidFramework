@@ -312,7 +312,6 @@ importers:
       '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/matrix': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-services-client': ^0.1038.4000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-client-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-runtime-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -345,7 +344,6 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       '@fluidframework/matrix': link:../../../../packages/dds/matrix
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
-      '@fluidframework/server-services-client': 0.1038.4000
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       '@fluidframework/test-client-utils': link:../../../../packages/framework/test-client-utils
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
@@ -388,7 +386,6 @@ importers:
       '@fluidframework/map': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/matrix': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/sequence': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluidframework/server-services-client': ^0.1038.4000
       '@fluidframework/telemetry-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-client-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/test-driver-definitions': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -427,7 +424,6 @@ importers:
       '@fluidframework/map': link:../../../../packages/dds/map
       '@fluidframework/matrix': link:../../../../packages/dds/matrix
       '@fluidframework/sequence': link:../../../../packages/dds/sequence
-      '@fluidframework/server-services-client': 0.1038.4000
       '@fluidframework/telemetry-utils': link:../../../../packages/utils/telemetry-utils
       '@fluidframework/test-client-utils': link:../../../../packages/framework/test-client-utils
       '@fluidframework/test-driver-definitions': link:../../../../packages/test/test-driver-definitions

@@ -65,7 +65,6 @@
 		"@fluidframework/map": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/matrix": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/sequence": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
-		"@fluidframework/server-services-client": "^0.1038.4000",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-client-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
