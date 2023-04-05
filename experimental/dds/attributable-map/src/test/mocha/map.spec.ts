@@ -447,17 +447,14 @@ describe("Map", () => {
 				map.set("key1", 1);
 				map.set("key2", 2);
 
-				let attribution1 = map.getAttribution("key1");
-				let attribution2 = map.getAttribution("key2");
-
-				assert.equal(
-					attribution1?.type,
-					"detached",
+				assert.deepEqual(
+					map.getAttribution("key1"),
+					{ type: "detached", id: 0 },
 					"the first entry should have detached attribution",
 				);
-				assert.equal(
-					attribution2?.type,
-					"detached",
+				assert.deepEqual(
+					map.getAttribution("key2"),
+					{ type: "detached", id: 0 },
 					"the second entry should have detached attribution",
 				);
 
@@ -472,17 +469,14 @@ describe("Map", () => {
 				);
 				await map2.load(services);
 
-				attribution1 = map2.getAttribution("key1");
-				attribution2 = map2.getAttribution("key2");
-
-				assert.equal(
-					attribution1?.type,
-					"detached",
+				assert.deepEqual(
+					map2.getAttribution("key1"),
+					{ type: "detached", id: 0 },
 					"the first entry of the loaded map should have detached attribution",
 				);
-				assert.equal(
-					attribution2?.type,
-					"detached",
+				assert.deepEqual(
+					map2.getAttribution("key2"),
+					{ type: "detached", id: 0 },
 					"the second entry of the loaded map should have detached attribution",
 				);
 			});
@@ -853,86 +847,71 @@ describe("Map", () => {
 
 				containerRuntimeFactory.processSomeMessages(1);
 
-				let attribution1 = map1.getAttribution("key1");
-				let attribution2 = map1.getAttribution("key2");
-				let attribution3 = map2.getAttribution("key1");
-				let attribution4 = map2.getAttribution("key2");
-
-				assert.equal(
-					attribution1?.type === "op" && attribution1?.seq,
-					1,
+				assert.deepEqual(
+					map1.getAttribution("key1"),
+					{ type: "op", seq: 1 },
 					"the first entry of map1 should have correct op-based attribution",
 				);
-				assert.equal(
-					attribution2?.type,
-					"local",
+				assert.deepEqual(
+					map1.getAttribution("key2"),
+					{ type: "local" },
 					"the second entry of map1 should have valid local attribution",
 				);
-				assert.equal(
-					attribution3?.type,
-					"local",
+				assert.deepEqual(
+					map2.getAttribution("key1"),
+					{ type: "local" },
 					"the first entry of map2 should have valid local attribution",
 				);
 				assert.equal(
-					attribution4,
+					map2.getAttribution("key2"),
 					undefined,
 					"the second entry of map2 should not have valid attribution",
 				);
 
 				containerRuntimeFactory.processSomeMessages(2);
 
-				attribution1 = map1.getAttribution("key1");
-				attribution2 = map1.getAttribution("key2");
-				attribution3 = map2.getAttribution("key1");
-				attribution4 = map2.getAttribution("key2");
-
-				assert.equal(
-					attribution1?.type === "op" && attribution1?.seq,
-					3,
+				assert.deepEqual(
+					map1.getAttribution("key1"),
+					{ type: "op", seq: 3 },
 					"the first entry of map1 should have correct op-based attribution",
 				);
-				assert.equal(
-					attribution2?.type === "op" && attribution2?.seq,
-					2,
-					"the second entry of map1 should have correct op-based local attribution",
+				assert.deepEqual(
+					map1.getAttribution("key2"),
+					{ type: "op", seq: 2 },
+					"the second entry of map1 should have correct op-based attribution",
 				);
-				assert.equal(
-					attribution3?.type === "op" && attribution3?.seq,
-					3,
+				assert.deepEqual(
+					map2.getAttribution("key1"),
+					{ type: "op", seq: 3 },
 					"the first entry of map2 should have correct op-based attribution",
 				);
-				assert.equal(
-					attribution4?.type === "op" && attribution4?.seq,
-					2,
-					"the second entry of map2 should have correct op-based local attribution",
+				assert.deepEqual(
+					map2.getAttribution("key2"),
+					{ type: "op", seq: 2 },
+					"the second entry of map2 should have correct op-based attribution",
 				);
 
 				// Delete an entry and check the attribution
 				map1.delete("key2");
 				containerRuntimeFactory.processSomeMessages(1);
 
-				attribution1 = map1.getAttribution("key1");
-				attribution2 = map1.getAttribution("key2");
-				attribution3 = map2.getAttribution("key1");
-				attribution4 = map2.getAttribution("key2");
-
-				assert.equal(
-					attribution1?.type === "op" && attribution1?.seq,
-					3,
+				assert.deepEqual(
+					map1.getAttribution("key1"),
+					{ type: "op", seq: 3 },
 					"the first entry of map1 should have correct op-based attribution",
 				);
 				assert.equal(
-					attribution2,
+					map1.getAttribution("key2"),
 					undefined,
 					"the attribution of second entry of map1 should be removed",
 				);
-				assert.equal(
-					attribution3?.type === "op" && attribution3?.seq,
-					3,
+				assert.deepEqual(
+					map2.getAttribution("key1"),
+					{ type: "op", seq: 3 },
 					"the first entry of map2 should have correct op-based attribution",
 				);
 				assert.equal(
-					attribution4,
+					map2.getAttribution("key2"),
 					undefined,
 					"the attribution of second entry of map2 should be removed",
 				);
@@ -976,18 +955,15 @@ describe("Map", () => {
 				);
 				await map3.load(service);
 
-				const attribution1 = map3.getAttribution("key1");
-				const attribution2 = map3.getAttribution("key2");
-
-				assert.equal(
-					attribution1?.type === "op" && attribution1?.seq,
-					3,
+				assert.deepEqual(
+					map3.getAttribution("key1"),
+					{ type: "op", seq: 3 },
 					"The loaded map should have valid op-based attribution for the first entry",
 				);
 
-				assert.equal(
-					attribution2?.type === "op" && attribution2?.seq,
-					2,
+				assert.deepEqual(
+					map3.getAttribution("key2"),
+					{ type: "op", seq: 2 },
 					"The loaded map should have valid op-based attribution for the second entry",
 				);
 			});
