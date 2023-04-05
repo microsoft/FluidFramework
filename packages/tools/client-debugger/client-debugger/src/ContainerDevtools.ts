@@ -11,10 +11,10 @@ import { IClient } from "@fluidframework/protocol-definitions";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
-	defaultVisualizers,
 	DataVisualizerGraph,
+	defaultVisualizers,
 	FluidObjectId,
-	FluidObjectNodeBase,
+	FluidObjectNode,
 	RootHandleNode,
 	VisualizeSharedObject,
 } from "./data-visualization";
@@ -36,6 +36,8 @@ import {
 	postMessagesToWindow,
 	GetDataVisualizationMessage,
 	GetRootDataVisualizationsMessage,
+	DataVisualizationMessage,
+	RootDataVisualizationsMessage,
 } from "./messaging";
 
 /**
@@ -275,8 +277,8 @@ export class ContainerDevtools
 
 	// #region Data-related event handlers
 
-	private readonly dataUpdateHandler = (visualization: FluidObjectNodeBase): void => {
-		this.postDataVisualization(visualization);
+	private readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
+		this.postDataVisualization(visualization.fluidObjectId, visualization);
 	};
 
 	// #endregion
@@ -341,7 +343,7 @@ export class ContainerDevtools
 			const message = untypedMessage as GetDataVisualizationMessage;
 			if (message.data.containerId === this.containerId) {
 				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
-					this.postDataVisualization(visualization);
+					this.postDataVisualization(message.data.fluidObjectId, visualization);
 				}, console.error);
 				return true;
 			}
@@ -407,20 +409,24 @@ export class ContainerDevtools
 	private readonly postRootDataVisualizations = (
 		visualizations: Record<string, RootHandleNode> | undefined,
 	): void => {
-		postMessagesToWindow(this.messageLoggingOptions, {
+		postMessagesToWindow<RootDataVisualizationsMessage>(this.messageLoggingOptions, {
 			type: "ROOT_DATA_VISUALIZATIONS",
 			data: {
+				containerId: this.containerId,
 				visualizations,
 			},
 		});
 	};
 
 	private readonly postDataVisualization = (
-		visualization: FluidObjectNodeBase | undefined,
+		fluidObjectId: FluidObjectId,
+		visualization: FluidObjectNode | undefined,
 	): void => {
-		postMessagesToWindow(this.messageLoggingOptions, {
+		postMessagesToWindow<DataVisualizationMessage>(this.messageLoggingOptions, {
 			type: "DATA_VISUALIZATION",
 			data: {
+				containerId: this.containerId,
+				fluidObjectId,
 				visualization,
 			},
 		});
@@ -558,7 +564,7 @@ export class ContainerDevtools
 
 	private async getDataVisualization(
 		fluidObjectId: FluidObjectId,
-	): Promise<FluidObjectNodeBase | undefined> {
+	): Promise<FluidObjectNode | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
 	}
 }
