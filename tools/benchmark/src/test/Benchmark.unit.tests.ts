@@ -4,15 +4,9 @@
  */
 
 import { strict as assert } from "node:assert";
-import { benchmark, customBenchmark } from "..";
-import { BenchmarkType, isParentProcess } from "../Configuration";
-import {
-	BenchmarkTimer,
-	Phase,
-	runBenchmark,
-	runBenchmarkAsync,
-	runBenchmarkSync,
-} from "../runBenchmark";
+import { benchmark } from "..";
+import { BenchmarkType, isParentProcess, BenchmarkTimer } from "../Configuration";
+import { Phase, runBenchmark, runBenchmarkAsync, runBenchmarkSync } from "../runBenchmark";
 
 describe("`benchmark` function", () => {
 	describe("uses `before` and `after`", () => {
@@ -135,9 +129,9 @@ describe("`benchmark` function", () => {
 	// It minimizes per iteration over head by timing the whole batch as a single unit.
 	// This is important for timing operations which are very fast relative to measurement overhead and clock precision.
 	// Since measurement overhead and clock precision are not the same on all systems, this approach is necessary to be robustly portable.
-	customBenchmark({
+	benchmark({
 		title: "Custom Benchmark",
-		run: async <T>(state: BenchmarkTimer<T>) => {
+		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 			let duration: number;
 			do {
 				let counter = state.iterationsPerBatch;
@@ -161,9 +155,9 @@ describe("`benchmark` function", () => {
 	// A good practice is to compare any tests that work this way to a version of the test which is empty (measuring a no-op, like below) and only
 	// use the data if the test is much slower than the no-op case.
 	// For NodeJS on linux, times over a microsecond should be mostly ok on modern CPUs.
-	customBenchmark({
+	benchmark({
 		title: "Custom Batch Size 1 Benchmark",
-		run: async <T>(state: BenchmarkTimer<T>) => {
+		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 			let duration: number;
 			do {
 				// Since this setup one collects data from one iteration, assert that this is what is expected.
@@ -187,9 +181,9 @@ describe("`benchmark` function", () => {
 	// Typically this only makes sense for benchmarks which have a runtime on the order of seconds as they have to be long enough
 	// to amortize GC.
 	// As this only does a single run, no estimate of variance or error will be available.
-	customBenchmark({
+	benchmark({
 		title: "One Iteration Custom Benchmark",
-		run: async <T>(state: BenchmarkTimer<T>) => {
+		benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 			assert.equal(state.iterationsPerBatch, 1);
 			const before = state.timer.now();
 			// Do the thing

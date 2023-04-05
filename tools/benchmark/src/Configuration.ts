@@ -5,6 +5,7 @@
 
 import { assert } from "chai";
 import { Phase } from "./runBenchmark";
+import { Timer } from "./timer";
 
 /**
  * Kinds of benchmarks.
@@ -93,12 +94,17 @@ for (const type of Object.values(TestType)) {
  * Arguments to `benchmark`
  * @public
  */
-export type BenchmarkArguments = Titled & (BenchmarkSyncArguments | BenchmarkAsyncArguments);
+export type BenchmarkArguments = Titled &
+	(BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
 
-export type BenchmarkRunningOptions = (BenchmarkSyncArguments | BenchmarkAsyncArguments) &
-	BenchmarkTimingOptions &
-	OnBatch &
-	HookArguments;
+export type CustomBenchmarkArguments = MochaExclusiveOptions &
+	CustomBenchmark &
+	BenchmarkDescription;
+
+export type BenchmarkRunningOptions =
+	| BenchmarkSyncArguments
+	| BenchmarkAsyncArguments
+	| CustomBenchmarkArguments;
 
 export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnBatch;
 
@@ -152,6 +158,16 @@ export interface BenchmarkAsyncFunction extends BenchmarkOptions {
 	 * https://developer.mozilla.org/en-US/docs/Web/API/WindowOrWorkerGlobalScope/setTimeout#Minimum_delay_and_timeout_nesting
 	 */
 	benchmarkFnAsync: () => Promise<unknown>;
+}
+
+export interface BenchmarkTimer<T> {
+	readonly iterationsPerBatch: number;
+	readonly timer: Timer<T>;
+	recordBatch(duration: number): boolean;
+}
+
+export interface CustomBenchmark extends BenchmarkTimingOptions {
+	benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
 }
 
 /**
@@ -360,7 +376,7 @@ export interface HookArguments {
  * @public
  */
 export function validateBenchmarkArguments(
-	args: BenchmarkRunningOptions,
+	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
 ):
 	| { isAsync: true; benchmarkFn: () => Promise<unknown> }
 	| { isAsync: false; benchmarkFn: () => void } {
@@ -376,6 +392,27 @@ export function validateBenchmarkArguments(
 	}
 
 	return { isAsync: true, benchmarkFn: intersection.benchmarkFnAsync };
+}
+
+/**
+ * Validates arguments to `benchmark`.
+ * @public
+ */
+export function benchmarkArgumentsIsCustom(
+	args: BenchmarkRunningOptions,
+): args is CustomBenchmarkArguments {
+	const intersection = args as Partial<BenchmarkSyncArguments> &
+		Partial<BenchmarkAsyncArguments> &
+		Partial<CustomBenchmarkArguments>;
+
+	const isSync = intersection.benchmarkFn !== undefined;
+	const isAsync = intersection.benchmarkFnAsync !== undefined;
+	const isCustom = intersection.benchmarkFnCustom !== undefined;
+	assert(
+		[isSync, isAsync, isCustom].filter((x) => x).length === 1,
+		"Exactly one of `benchmarkFn`, `benchmarkFnAsync` or `benchmarkFnCustom` should be defined.",
+	);
+	return isCustom;
 }
 
 /**

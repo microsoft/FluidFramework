@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { benchmark, customBenchmark } from "./runner";
+export { benchmark } from "./runner";
 export { benchmarkMemory, IMemoryTestObject, MemoryTestObjectProps } from "./memoryTestRunner";

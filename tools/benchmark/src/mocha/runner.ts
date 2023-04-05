@@ -8,7 +8,6 @@ import { Test } from "mocha";
 import {
 	BenchmarkType,
 	BenchmarkArguments,
-	validateBenchmarkArguments,
 	isParentProcess,
 	isInPerformanceTestingMode,
 	performanceTestSuiteTag,
@@ -17,15 +16,8 @@ import {
 	Titled,
 	MochaExclusiveOptions,
 	BenchmarkDescription,
-	BenchmarkTimingOptions,
 } from "../Configuration";
-import {
-	BenchmarkResult,
-	CustomBenchmark,
-	Phase,
-	runBenchmark,
-	runCustomBenchmark,
-} from "../runBenchmark";
+import { BenchmarkResult, Phase, runBenchmark } from "../runBenchmark";
 
 export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
 	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];
@@ -58,44 +50,18 @@ export function benchmark(args: BenchmarkArguments): Test {
 		title: qualifiedTitle(args),
 		only: args.only,
 		run: async () => {
-			// Create and run a benchmark if we are in perfMode, else run the passed in function normally
-			if (isInPerformanceTestingMode) {
-				const stats = await runBenchmark(args);
-				return stats;
-			} else {
-				const { benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
-				await args.before?.();
-				await argsBenchmarkFn();
-				args.beforeEachBatch?.();
-				await args.after?.();
-				await Promise.resolve();
-				return { error: "Not running in performance testing mode, so no data collected" };
-			}
-		},
-	});
-}
-
-export function customBenchmark(
-	args: MochaExclusiveOptions &
-		CustomBenchmark &
-		BenchmarkTimingOptions &
-		BenchmarkDescription &
-		Titled,
-): Test {
-	return supportParentProcess({
-		title: qualifiedTitle(args),
-		only: args.only,
-		run: async () => {
 			const innerArgs = {
 				...args,
 			};
+			// If not in perfMode, just use a single iteration.
 			if (!isInPerformanceTestingMode) {
 				innerArgs.startPhase = Phase.CollectData;
 				innerArgs.minBatchDurationSeconds = 0;
 				innerArgs.minBatchCount = 1;
 				innerArgs.maxBenchmarkDurationSeconds = 0;
 			}
-			return runCustomBenchmark(innerArgs);
+			const stats = await runBenchmark(innerArgs);
+			return stats;
 		},
 	});
 }

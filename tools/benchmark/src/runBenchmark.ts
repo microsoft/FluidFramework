@@ -9,6 +9,8 @@ import {
 	BenchmarkRunningOptionsSync,
 	BenchmarkRunningOptionsAsync,
 	BenchmarkTimingOptions,
+	benchmarkArgumentsIsCustom,
+	BenchmarkTimer,
 } from "./Configuration";
 import { Stats, getArrayStatistics } from "./ReporterUtilities";
 import { Timer, defaultMinimumTime, timer } from "./timer";
@@ -92,6 +94,12 @@ export interface BenchmarkError {
 }
 
 export async function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData> {
+	if (benchmarkArgumentsIsCustom(args)) {
+		const state = new BenchmarkState(timer, args);
+		await args.benchmarkFnCustom(state);
+		return state.computeData();
+	}
+
 	const options = {
 		...defaultTimingOptions,
 		...args,
@@ -123,24 +131,6 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
  */
 function tryRunGarbageCollection(): void {
 	global?.gc?.();
-}
-
-export interface BenchmarkTimer<T> {
-	readonly iterationsPerBatch: number;
-	readonly timer: Timer<T>;
-	recordBatch(duration: number): boolean;
-}
-
-export interface CustomBenchmark {
-	run<T>(state: BenchmarkTimer<T>): Promise<void>;
-}
-
-export async function runCustomBenchmark(
-	args: CustomBenchmark & BenchmarkTimingOptions,
-): Promise<BenchmarkData> {
-	const state = new BenchmarkState(timer, args);
-	await args.run(state);
-	return state.computeData();
 }
 
 class BenchmarkState<T> implements BenchmarkTimer<T> {
