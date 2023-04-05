@@ -241,7 +241,7 @@ async function runnerProcess(
 				// transitioning to "connected" until pending blob uploads are finished. If fault injection closes
 				// the container before this point, no stashed ops are resubmitted.
 				const runtime: IContainerRuntime = (container as any).context.runtime;
-				const addExpectedOps = () => stashedOpTotal += stashedOps.count;
+				const addExpectedOps = () => (stashedOpTotal += stashedOps.count);
 				runtime.once("connected", addExpectedOps);
 				container.once("closed", () => runtime.off("connected", addExpectedOps));
 			}
@@ -437,15 +437,18 @@ async function scheduleContainerClose(
 									stashedOpsMax,
 								);
 								if (count > 0) {
-									test.waitLoaded().then(() => {
-										// Synchronously generate changes and close. There should be zero chance these ops
-										// round-trip before closing.
-										test.generateChanges(count);
-										def.resolve({
-											pendingState: container.closeAndGetPendingLocalState(),
-											count,
-										});
-									}).catch((e) => console.error(e));
+									test.waitLoaded()
+										.then(() => {
+											// Synchronously generate changes and close. There should be zero chance these ops
+											// round-trip before closing.
+											test.generateChanges(count);
+											def.resolve({
+												pendingState:
+													container.closeAndGetPendingLocalState(),
+												count,
+											});
+										})
+										.catch((e) => console.error(e));
 								} else {
 									container.close();
 									def.resolve(undefined);

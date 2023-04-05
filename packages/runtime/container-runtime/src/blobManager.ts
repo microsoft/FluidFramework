@@ -391,27 +391,35 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return pendingEntry.handleP.promise;
 	}
 
-	private async uploadBlob(localId: string, blob: ArrayBufferLike): Promise<void | ICreateBlobResponse> {
+	private async uploadBlob(
+		localId: string,
+		blob: ArrayBufferLike,
+	): Promise<void | ICreateBlobResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "createBlob" },
 			async () => this.getStorage().createBlob(blob),
 			{ end: true, cancel: this.runtime.connected ? "error" : "generic" },
-		).then(
-			(response) => this.onUploadResolve(localId, response),
-			async (err) => this.onUploadReject(localId, err),
-		).catch((error) => {
-			// an error has occured while handling upload response
-            const entry = this.pendingBlobs.get(localId);
-            this.mc.logger.sendErrorEvent({
-                eventName: "blobUploadResponseHandlingError",
-                localId,
-                status: entry?.status,
-            }, error);
-			// We can't rethrow here because it will be unhandled. Reject the promise returned by
-			// createBlob() if possible.
-            entry?.handleP.reject(error);
-        });
+		)
+			.then(
+				(response) => this.onUploadResolve(localId, response),
+				async (err) => this.onUploadReject(localId, err),
+			)
+			.catch((error) => {
+				// an error has occured while handling upload response
+				const entry = this.pendingBlobs.get(localId);
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "blobUploadResponseHandlingError",
+						localId,
+						status: entry?.status,
+					},
+					error,
+				);
+				// We can't rethrow here because it will be unhandled. Reject the promise returned by
+				// createBlob() if possible.
+				entry?.handleP.reject(error);
+			});
 	}
 
 	/**
@@ -492,11 +500,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const entry = this.pendingBlobs.get(localId);
 		assert(!!entry, 0x387 /* Must have pending blob entry for blob which failed to upload */);
 		// Disconnect due to ping timeout on websocket takes ~45s; until then driver will throw errors with
-        // errorType "offlineError" or the enigmatic "fetchFailure".
-        if (!this.runtime.connected ||
-            error.errorType === DriverErrorType.offlineError ||
-            error.errorType === DriverErrorType.fetchFailure) {
-            if (!this.runtime.connected && entry.status === PendingBlobStatus.OnlinePendingUpload) {
+		// errorType "offlineError" or the enigmatic "fetchFailure".
+		if (
+			!this.runtime.connected ||
+			error.errorType === DriverErrorType.offlineError ||
+			error.errorType === DriverErrorType.fetchFailure
+		) {
+			if (!this.runtime.connected && entry.status === PendingBlobStatus.OnlinePendingUpload) {
 				this.transitionToOffline(localId);
 			}
 			// we are probably not connected to storage but start another upload request in case we are
