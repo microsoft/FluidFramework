@@ -10045,6 +10045,7 @@ importers:
       '@fluentui/react': ^8.96.1
       '@fluentui/react-components': ^9.18.6
       '@fluentui/react-hooks': ^8.6.12
+      '@fluentui/react-icons': ^2.0.199
       '@fluentui/react-icons-mdl2': ^1.3.22
       '@fluentui/react-tabs': ^9.3.6
       '@fluid-example/collaborative-textarea': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
@@ -10109,6 +10110,7 @@ importers:
       '@fluentui/react': 8.104.3_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-components': 9.18.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluentui/react-hooks': 8.6.14_q5o373oqrklnndq2vhekyuzhxi
+      '@fluentui/react-icons': 2.0.199_react@17.0.2
       '@fluentui/react-icons-mdl2': 1.3.28_74b3ggvk3akyhuq4eydyx3fqim
       '@fluentui/react-tabs': 9.3.6_7dy3sgqkcy3kjbu4ktqmdo3kpm
       '@fluid-experimental/react-inputs': link:../../../../experimental/framework/react-inputs
