@@ -5,7 +5,11 @@
 
 import { expect } from "chai";
 
-import { FluidDevtools } from "../FluidDevtools";
+import {
+	FluidDevtools,
+	getContainerAlreadyRegisteredErrorText,
+	useAfterDisposeErrorText,
+} from "../FluidDevtools";
 import { ContainerDevtoolsProps } from "../ContainerDevtools";
 import { createMockContainer } from "./Utilities";
 
@@ -80,7 +84,33 @@ describe("FluidDevtools unit tests", () => {
 			container,
 		};
 
-		expect(() => devtools.registerContainer(containerProps)).to.throw();
-		expect(() => devtools.closeContainerDevtools(containerId)).to.throw();
+		// Validate that subsequent actions on disposed devtools instance fail
+		expect(() => devtools.registerContainer(containerProps)).to.throw(useAfterDisposeErrorText);
+		expect(() => devtools.closeContainerDevtools(containerId)).to.throw(
+			useAfterDisposeErrorText,
+		);
+	});
+
+	it("Registering a duplicate Container ID throws", () => {
+		const devtools = new FluidDevtools();
+
+		const containerId = "test-container-id";
+
+		const container1 = createMockContainer();
+		const container1Props: ContainerDevtoolsProps = {
+			containerId,
+			container: container1,
+		};
+		devtools.registerContainer(container1Props);
+
+		const container2 = createMockContainer();
+		const container2Props: ContainerDevtoolsProps = {
+			containerId,
+			container: container2,
+		};
+
+		expect(() => devtools.registerContainer(container2Props)).to.throw(
+			getContainerAlreadyRegisteredErrorText(containerId),
+		);
 	});
 });
