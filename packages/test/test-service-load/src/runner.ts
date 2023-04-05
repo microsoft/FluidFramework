@@ -11,6 +11,7 @@ import {
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState } from "@fluidframework/container-loader";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
@@ -233,8 +234,17 @@ async function runnerProcess(
 
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
-			stashedOpTotal += stashedOps?.count ?? 0;
 			container = await loader.resolve({ url, headers }, stashedOps?.pendingState);
+
+			if (stashedOps && stashedOps.count > 0 && !container.closed) {
+				// hack: this is better than waiting for Container "connected", since runtime will delay
+				// transitioning to "connected" until pending blob uploads are finished. If fault injection closes
+				// the container before this point, no stashed ops are resubmitted.
+				const runtime: IContainerRuntime = (container as any).context.runtime;
+				const addExpectedOps = () => stashedOpTotal += stashedOps.count;
+				runtime.once("connected", addExpectedOps);
+				container.once("closed", () => runtime.off("connected", addExpectedOps));
+			}
 
 			container.connect();
 			const test = await requestFluidObject<ILoadTest>(container, "/");
@@ -337,7 +347,7 @@ function scheduleFaultInjection(
 				const deltaConn = ds.documentServices.get(
 					container.resolvedUrl,
 				)?.documentDeltaConnection;
-				if (deltaConn !== undefined) {
+				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
 					switch (random.integer(0, 5)) {
@@ -427,11 +437,15 @@ async function scheduleContainerClose(
 									stashedOpsMax,
 								);
 								if (count > 0) {
-									test.generateChanges(count);
-									def.resolve({
-										count,
-										pendingState: container.closeAndGetPendingLocalState(),
-									});
+									test.waitLoaded().then(() => {
+										// Synchronously generate changes and close. There should be zero chance these ops
+										// round-trip before closing.
+										test.generateChanges(count);
+										def.resolve({
+											pendingState: container.closeAndGetPendingLocalState(),
+											count,
+										});
+									}).catch((e) => console.error(e));
 								} else {
 									container.close();
 									def.resolve(undefined);

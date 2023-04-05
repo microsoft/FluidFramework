@@ -36,6 +36,11 @@ export interface ILoadTest {
 	run(config: IRunConfig, reset: boolean): Promise<boolean>;
 	detached(config: Omit<IRunConfig, "runId" | "profileName">): Promise<LoadTestDataStoreModel>;
 	getRuntime(): Promise<IFluidDataStoreRuntime>;
+	waitLoaded(): Promise<void>;
+	/**
+	 * Generate ops.
+	 * @param n - number of ops to generate
+	 */
 	generateChanges(n: number);
 	/**
 	 * Verify that the expected number of stashed ops have been applied to the counter
@@ -509,8 +514,17 @@ export class LoadTestDataStoreModel {
 
 class LoadTestDataStore extends DataObject implements ILoadTest {
 	public static DataStoreName = "StressTestDataStore";
-	private dataModel?: LoadTestDataStoreModel;
 	private config?: IRunConfig;
+
+	private dataModelP?: Promise<LoadTestDataStoreModel>;
+	private dataModel?: LoadTestDataStoreModel;
+
+	public async waitLoaded(): Promise<void> {
+		if (!this.dataModelP) {
+			throw new Error("run() not called");
+		}
+		return this.dataModelP.then();
+	}
 
 	protected async initializingFirstTime() {
 		this.root.set(taskManagerKey, TaskManager.create(this.runtime).handle);
@@ -527,13 +541,14 @@ class LoadTestDataStore extends DataObject implements ILoadTest {
 	}
 
 	public async run(config: IRunConfig, reset: boolean) {
-		const dataModel = await LoadTestDataStoreModel.createRunnerInstance(
+		this.dataModelP = LoadTestDataStoreModel.createRunnerInstance(
 			config,
 			reset,
 			this.root,
 			this.runtime,
 			this.context.containerRuntime,
 		);
+		const dataModel = await this.dataModelP;
 		this.dataModel = dataModel;
 		this.config = config;
 

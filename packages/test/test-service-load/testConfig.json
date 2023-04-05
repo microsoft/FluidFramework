@@ -19,7 +19,7 @@
 				"max": 150000,
 				"stashedOps": {
 					"min": 0,
-					"max": 100
+					"max": 30
 				}
 			},
 			"offline": {
@@ -31,10 +31,6 @@
 					"min": 5000,
 					"max": 15000
 				}
-			},
-			"stashedOps": {
-				"min": 0,
-				"max": 30
 			},
 			"optionOverrides": {
 				"odsp": {
@@ -193,8 +189,12 @@
 			"opRatePerMin": 60,
 			"progressIntervalMs": 5000,
 			"numClients": 4,
-			"totalSendCount": 150,
+			"totalSendCount": 300,
 			"readWriteCycleMs": 10000,
+			"faultInjection": {
+				"min": 0,
+				"max": 45000
+			},
 			"containerClose": {
 				"min": 5000,
 				"max": 30000,
