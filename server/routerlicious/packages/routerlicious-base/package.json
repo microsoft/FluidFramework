@@ -14,7 +14,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc",
+		"build:compile": "npm run tsc && npm run typetests:gen",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:genver": "gen-version",
@@ -28,7 +28,9 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"test": "mocha --recursive dist/test --unhandled-rejections=strict",
 		"test:coverage": "nyc npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"tsc": "tsc"
+		"tsc": "tsc",
+		"typetests:gen": "fluid-type-test-generator",
+		"typetests:prepare": "flub generate typetests --prepare --dir . --pin"
 	},
 	"nyc": {
 		"all": true,
@@ -88,6 +90,7 @@
 		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server": "^0.1040.1000",
+		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@0.1039.1000",
 		"@fluidframework/server-test-utils": "^0.1040.1000",
 		"@types/body-parser": "^1.19.2",
 		"@types/bytes": "^3.0.0",
@@ -117,5 +120,8 @@
 		"sinon": "^9.2.3",
 		"supertest": "^3.1.0",
 		"typescript": "~4.5.5"
+	},
+	"typeValidation": {
+		"broken": {}
 	}
 }
