@@ -62,7 +62,7 @@ export class DocumentService implements api.IDocumentService {
 		private readonly driverPolicies: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike>,
 		private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion>,
-		private readonly discoverFluidResolvedUrl: () => Promise<api.IFluidResolvedUrl>,
+		private readonly discoverFluidResolvedUrl: () => Promise<api.IResolvedUrl>,
 	) {}
 
 	private documentStorageService: DocumentStorageService | undefined;

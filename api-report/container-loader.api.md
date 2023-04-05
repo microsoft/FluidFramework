@@ -15,7 +15,6 @@ import { IDocumentServiceFactory } from '@fluidframework/driver-definitions';
 import { IDocumentStorageService } from '@fluidframework/driver-definitions';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
 import { IFluidModule } from '@fluidframework/container-definitions';
-import { IFluidResolvedUrl } from '@fluidframework/driver-definitions';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IHostLoader } from '@fluidframework/container-definitions';
 import { ILoaderOptions as ILoaderOptions_2 } from '@fluidframework/container-definitions';
@@ -23,6 +22,7 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
+import { IResolvedUrl } from '@fluidframework/driver-definitions';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
@@ -49,8 +49,6 @@ export interface IContainerConfig {
     // (undocumented)
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
-    // (undocumented)
-    resolvedUrl?: IFluidResolvedUrl;
     serializedContainerState?: IPendingContainerState;
 }
 
@@ -60,7 +58,7 @@ export interface IContainerLoadOptions {
     clientDetailsOverride?: IClientDetails;
     loadMode?: IContainerLoadMode;
     // (undocumented)
-    resolvedUrl: IFluidResolvedUrl;
+    resolvedUrl: IResolvedUrl;
     version: string | undefined;
 }
 
