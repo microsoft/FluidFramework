@@ -719,7 +719,7 @@
         "mergeType": "merge",
         "deleteBranches": true
       }
-    }
+    },
     {
       "taskType": "trigger",
       "capabilityId": "IssueResponder",
