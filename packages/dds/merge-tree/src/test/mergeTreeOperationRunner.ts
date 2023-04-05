@@ -162,7 +162,7 @@ export function doOverRanges<T extends ProvidesGrowthFunc>(
 		if (selections.length === rangeEntries.length) {
 			const selectionsObj = {};
 			for (const [key, value] of selections) {
-				selections[key] = value;
+				selectionsObj[key] = value;
 			}
 			const description = selections.map(([key, value]) => `${key}:${value}`).join("_");
 			doAction(selectionsObj as PickFromRanges<T>, description);
