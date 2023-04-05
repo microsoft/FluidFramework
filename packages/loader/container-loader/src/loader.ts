@@ -322,9 +322,6 @@ export class Loader implements IHostLoader {
 		this.protocolHandlerBuilder = loaderProps.protocolHandlerBuilder;
 	}
 
-	/**
-	 * @deprecated Use Loader.resolve with requestResolvedObjectFromContainer
-	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -364,9 +361,6 @@ export class Loader implements IHostLoader {
 		});
 	}
 
-	/**
-	 * @deprecated Use Loader.resolve with requestResolvedObjectFromContainer
-	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
