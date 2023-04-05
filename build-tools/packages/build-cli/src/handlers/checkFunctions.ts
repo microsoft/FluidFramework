@@ -325,8 +325,8 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 			BaseStateHandler.signalFailure(machine, state);
 		}
 	} else {
-    BaseStateHandler.signalSuccess(machine, state);
-  }
+		BaseStateHandler.signalSuccess(machine, state);
+	}
 
 	return true;
 };
