@@ -81,6 +81,7 @@
 		"tslib": "^1.10.0"
 	},
 	"devDependencies": {
+		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluid-internal/test-dds-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluid-tools/benchmark": "0.47.0-140906",
 		"@fluid-tools/build-cli": "^0.13.1",
@@ -88,7 +89,6 @@
 		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/matrix-previous": "npm:@fluidframework/matrix@2.0.0-internal.4.0.0",
-		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@microsoft/api-extractor": "^7.34.4",
 		"@tiny-calc/micro": "0.0.0-alpha.5",

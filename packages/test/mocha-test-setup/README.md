@@ -1,4 +1,4 @@
-#
+# @fluid-internal/mocha-test-setup
 
 This package has a few main purposes:
 
@@ -154,3 +154,9 @@ to the module with that implementation should **not** be specified with the `--r
 `FLUID_TEST_LOGGER_PKG_PATH` environment variable.
 This package has logic that needs the custom logger to be imported/executed at a particular time, and we ensure that
 by requiring that the path be provided through that environment variable.
+
+## Trademark
+
+This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
+or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
