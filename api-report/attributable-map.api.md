@@ -4,6 +4,7 @@
 
 ```ts
 
+import { AttributionKey } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -20,20 +21,69 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
 // @public
+export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+    [Symbol.iterator](): IterableIterator<[string, any]>;
+    readonly [Symbol.toStringTag]: string;
+    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
+    // @internal (undocumented)
+    protected applyStashedOp(content: unknown): unknown;
+    clear(): void;
+    static create(runtime: IFluidDataStoreRuntime, id?: string): AttributableMap;
+    delete(key: string): boolean;
+    entries(): IterableIterator<[string, any]>;
+    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
+    get<T = any>(key: string): T | undefined;
+    getAllAttribution(): Map<string, AttributionKey> | undefined;
+    getAttribution(key: string): AttributionKey | undefined;
+    static getFactory(): IChannelFactory;
+    has(key: string): boolean;
+    keys(): IterableIterator<string>;
+    // @internal (undocumented)
+    protected loadCore(storage: IChannelStorageService): Promise<void>;
+    // @internal (undocumented)
+    protected onDisconnect(): void;
+    // @internal (undocumented)
+    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    // @internal (undocumented)
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
+    set(key: string, value: unknown): this;
+    get size(): number;
+    // @internal (undocumented)
+    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    values(): IterableIterator<any>;
+}
+
+// @public
 export interface ILocalValue {
-    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+    makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle, attribution?: AttributionKey | number): ISerializedValue;
     readonly type: string;
     readonly value: any;
 }
 
+// @public
+export interface IMapAttributionOptions {
+    // (undocumented)
+    track?: boolean;
+}
+
+// @public
+export interface IMapOptions {
+    // (undocumented)
+    attribution?: IMapAttributionOptions;
+}
+
 // @public @deprecated
 export interface ISerializableValue {
+    attribution?: AttributionKey | number;
     type: string;
     value: any;
 }
 
 // @public
 export interface ISerializedValue {
+    attribution?: string;
     type: string;
     value: string | undefined;
 }
@@ -77,39 +127,6 @@ export class MapFactory implements IChannelFactory {
     static readonly Type = "https://graph.microsoft.com/types/map";
     // (undocumented)
     get type(): string;
-}
-
-// @public
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
-    [Symbol.iterator](): IterableIterator<[string, any]>;
-    readonly [Symbol.toStringTag]: string;
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    // @internal (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
-    clear(): void;
-    static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
-    delete(key: string): boolean;
-    entries(): IterableIterator<[string, any]>;
-    forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void;
-    get<T = any>(key: string): T | undefined;
-    static getFactory(): IChannelFactory;
-    has(key: string): boolean;
-    keys(): IterableIterator<string>;
-    // @internal (undocumented)
-    protected loadCore(storage: IChannelStorageService): Promise<void>;
-    // @internal (undocumented)
-    protected onDisconnect(): void;
-    // @internal (undocumented)
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    // @internal (undocumented)
-    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
-    // @internal (undocumented)
-    protected rollback(content: unknown, localOpMetadata: unknown): void;
-    set(key: string, value: unknown): this;
-    get size(): number;
-    // @internal (undocumented)
-    protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
-    values(): IterableIterator<any>;
 }
 
 ```

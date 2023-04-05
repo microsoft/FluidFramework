@@ -5,7 +5,6 @@
 
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, LazyPromise } from "@fluidframework/common-utils";
-import { unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	CreateChildSummarizerNodeParam,
@@ -18,9 +17,10 @@ import {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import { LoggingError, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
+import { ReadAndParseBlob, unpackChildNodesUsedRoutes } from "@fluidframework/runtime-utils";
 import {
 	cloneGCData,
 	getGCDataFromSnapshot,
@@ -107,6 +107,7 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
+			incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 		) => Promise<ISummarizeInternalResult>,
 		config: ISummarizerNodeConfigWithGC,
 		changeSequenceNumber: number,
@@ -121,8 +122,18 @@ class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNode
 	) {
 		super(
 			logger,
-			async (fullTree: boolean, _trackState: boolean, telemetryContext?: ITelemetryContext) =>
-				summarizeFn(fullTree, true /* trackState */, telemetryContext),
+			async (
+				fullTree: boolean,
+				_trackState: boolean,
+				telemetryContext?: ITelemetryContext,
+				incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+			) =>
+				summarizeFn(
+					fullTree,
+					true /* trackState */,
+					telemetryContext,
+					incrementalSummaryContext,
+				),
 			config,
 			changeSequenceNumber,
 			latestSummary,

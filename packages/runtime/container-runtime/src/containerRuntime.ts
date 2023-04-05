@@ -1289,12 +1289,6 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
-				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
-				// an initializeEntryPoint for that case.
-				assert(
-					initializeEntryPoint === undefined,
-					0x5be /* Summarizer clients cannot have a custom entryPoint */,
-				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -1945,12 +1939,13 @@ export class ContainerRuntime
 					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 				});
 			} else if (
-				this.consecutiveReconnects === 0 &&
 				envelope.clientSignalSequenceNumber ===
-					this._perfSignalData.trackingSignalSequenceNumber
+				this._perfSignalData.trackingSignalSequenceNumber
 			) {
 				// only logging for the first connection and the trackingSignalSequenceNUmber.
-				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				if (this.consecutiveReconnects === 0) {
+					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				}
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
 			}
 		}

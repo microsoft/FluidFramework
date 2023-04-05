@@ -68,6 +68,7 @@ import {
 	GCDataBuilder,
 	requestFluidObject,
 	packagePathToTelemetryProperty,
+	unpackChildNodesUsedRoutes,
 } from "@fluidframework/runtime-utils";
 import {
 	IChannel,
@@ -75,7 +76,6 @@ import {
 	IFluidDataStoreRuntimeEvents,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { unpackChildNodesUsedRoutes } from "@fluidframework/garbage-collector";
 import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext";
 import {

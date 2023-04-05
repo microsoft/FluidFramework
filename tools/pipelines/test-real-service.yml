@@ -25,7 +25,7 @@ variables:
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 - name: testPackage
-  value: "@fluidframework/test-end-to-end-tests"
+  value: "@fluid-internal/test-end-to-end-tests"
   readonly: true
 
 lockBehavior: sequential
