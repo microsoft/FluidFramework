@@ -36,6 +36,17 @@ import {
 	GetDataVisualizationMessage,
 	GetRootDataVisualizationsMessage,
 	AudienceSummaryMessageType,
+	GetContainerStateMessageType,
+	ConnectContainerMessageType,
+	DisconnectContainerMessageType,
+	CloseContainerMessageType,
+	GetAudienceMessageType,
+	GetRootDataVisualizationsMessageType,
+	GetDataVisualizationMessageType,
+	ContainerStateChangeMessageType,
+	ContainerStateHistoryMessageType,
+	RootDataVisualizationsMessageType,
+	DataVisualizationMessageType,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -228,7 +239,7 @@ export class FluidClientDebugger
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		["GET_CONTAINER_STATE"]: (untypedMessage) => {
+		[GetContainerStateMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerStateMessage;
 			if (message.data.containerId === this.containerId) {
 				this.postContainerStateChange();
@@ -236,7 +247,7 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
-		["CONNECT_CONTAINER"]: (untypedMessage) => {
+		[ConnectContainerMessageType]: (untypedMessage) => {
 			const message = untypedMessage as ConnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.connect();
@@ -244,7 +255,7 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
-		["DISCONNECT_CONTAINER"]: (untypedMessage) => {
+		[DisconnectContainerMessageType]: (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
@@ -252,7 +263,7 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
-		["CLOSE_CONTAINER"]: (untypedMessage) => {
+		[CloseContainerMessageType]: (untypedMessage) => {
 			const message = untypedMessage as CloseContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
@@ -260,7 +271,7 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
-		["GET_AUDIENCE"]: (untypedMessage) => {
+		[GetAudienceMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetAudienceMessage;
 			if (message.data.containerId === this.containerId) {
 				this.postAudienceStateChange();
@@ -268,7 +279,7 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
-		["GET_ROOT_DATA_VISUALIZATIONS"]: (untypedMessage) => {
+		[GetRootDataVisualizationsMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetRootDataVisualizationsMessage;
 			if (message.data.containerId === this.containerId) {
 				this.getRootDataVisualizations().then((visualizations) => {
@@ -278,7 +289,7 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
-		["GET_DATA_VISUALIZATION"]: (untypedMessage) => {
+		[GetDataVisualizationMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetDataVisualizationMessage;
 			if (message.data.containerId === this.containerId) {
 				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
@@ -306,14 +317,14 @@ export class FluidClientDebugger
 		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
-				type: "CONTAINER_STATE_CHANGE",
+				type: ContainerStateChangeMessageType,
 				data: {
 					containerId: this.containerId,
 					containerState: this.getContainerState(),
 				},
 			},
 			{
-				type: "CONTAINER_STATE_HISTORY",
+				type: ContainerStateHistoryMessageType,
 				data: {
 					containerId: this.containerId,
 					history: [...this._connectionStateLog],
@@ -349,7 +360,7 @@ export class FluidClientDebugger
 		visualizations: Record<string, RootHandleNode> | undefined,
 	): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
-			type: "ROOT_DATA_VISUALIZATION",
+			type: RootDataVisualizationsMessageType,
 			data: {
 				visualizations,
 			},
@@ -360,7 +371,7 @@ export class FluidClientDebugger
 		visualization: FluidObjectNodeBase | undefined,
 	): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
-			type: "DATA_VISUALIZATION",
+			type: DataVisualizationMessageType,
 			data: {
 				visualization,
 			},

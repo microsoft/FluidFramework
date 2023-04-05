@@ -53,22 +53,28 @@ export function clearDebuggerRegistry(): void;
 
 // @public
 export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
-    type: "CLOSE_CONTAINER";
+    type: typeof CloseContainerMessageType;
 }
 
 // @public
 export type CloseContainerMessageData = HasContainerId;
 
 // @public
+export const CloseContainerMessageType = "CLOSE_CONTAINER";
+
+// @public
 export function closeFluidClientDebugger(containerId: string): void;
 
 // @public
 export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
-    type: "CONNECT_CONTAINER";
+    type: typeof ConnectContainerMessageType;
 }
 
 // @public
 export type ConnectContainerMessageData = HasContainerId;
+
+// @public
+export const ConnectContainerMessageType = "CONNECT_CONTAINER";
 
 // @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
@@ -92,7 +98,7 @@ export enum ContainerStateChangeKind {
 
 // @public
 export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
-    type: "CONTAINER_STATE_CHANGE";
+    type: typeof ContainerStateChangeMessageType;
 }
 
 // @public
@@ -101,14 +107,20 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 }
 
 // @public
+export const ContainerStateChangeMessageType = "CONTAINER_STATE_CHANGE";
+
+// @public
 export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
-    type: "CONTAINER_STATE_HISTORY";
+    type: typeof ContainerStateHistoryMessageType;
 }
 
 // @public
 export interface ContainerStateHistoryMessageData extends HasContainerId {
     history: ConnectionStateChangeLogEntry[];
 }
+
+// @public
+export const ContainerStateHistoryMessageType = "CONTAINER_STATE_HISTORY";
 
 // @public
 export interface ContainerStateMetadata extends ContainerMetadata {
@@ -124,13 +136,16 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 
 // @public
 export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
-    type: "DATA_VISUALIZATION";
+    type: typeof DataVisualizationMessageType;
 }
 
 // @public
 export interface DataVisualizationMessageData extends HasContainerId, HasFluidObjectId {
     visualization: FluidObjectNode | undefined;
 }
+
+// @public
+export const DataVisualizationMessageType = "DATA_VISUALIZATION";
 
 // @public
 export const debuggerMessageSource: string;
@@ -153,11 +168,14 @@ export interface DebuggerRegistryEvents extends IEvent {
 
 // @public
 export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
-    type: "DISCONNECT_CONTAINER";
+    type: typeof DisconnectContainerMessageType;
 }
 
 // @public
 export type DisconnectContainerMessageData = HasContainerId;
+
+// @public
+export const DisconnectContainerMessageType = "DISCONNECT_CONTAINER";
 
 // @public
 export interface FluidClientDebuggerProps {
@@ -223,19 +241,25 @@ export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
 
 // @public
 export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
-    type: "GET_CONTAINER_STATE";
+    type: typeof GetContainerStateMessageType;
 }
 
 // @public
 export type GetContainerStateMessageData = HasContainerId;
 
 // @public
+export const GetContainerStateMessageType = "GET_CONTAINER_STATE";
+
+// @public
 export interface GetDataVisualizationMessage extends IDebuggerMessage<GetDataVisualizationMessageData> {
-    type: "GET_DATA_VISUALIZATION";
+    type: typeof GetDataVisualizationMessageType;
 }
 
 // @public
 export type GetDataVisualizationMessageData = HasContainerId & HasFluidObjectId;
+
+// @public
+export const GetDataVisualizationMessageType = "GET_DATA_VISUALIZATION";
 
 // @internal
 export function getDebuggerRegistry(): DebuggerRegistry;
@@ -248,11 +272,14 @@ export function getFluidClientDebuggers(): IFluidClientDebugger[];
 
 // @public
 export interface GetRootDataVisualizationsMessage extends IDebuggerMessage<GetRootDataVisualizationsMessageData> {
-    type: "GET_ROOT_DATA_VISUALIZATIONS";
+    type: typeof GetRootDataVisualizationsMessageType;
 }
 
 // @public
 export type GetRootDataVisualizationsMessageData = HasContainerId;
+
+// @public
+export const GetRootDataVisualizationsMessageType = "GET_ROOT_DATA_VISUALIZATIONS";
 
 // @public
 export interface GetTelemetryHistoryMessage extends IDebuggerMessage {
@@ -368,7 +395,7 @@ export interface RegistryChangeMessageData {
 
 // @public
 export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootDataVisualizationsMessageData> {
-    type: "ROOT_DATA_VISUALIZATIONS";
+    type: typeof RootDataVisualizationsMessageType;
 }
 
 // @public

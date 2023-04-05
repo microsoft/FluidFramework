@@ -9,10 +9,12 @@ import {
 	ConnectionStateChangeLogEntry,
 	ContainerStateChangeKind,
 	ContainerStateHistoryMessage,
+	GetContainerStateMessageType,
 	handleIncomingMessage,
 	HasContainerId,
 	ISourcedDebuggerMessage,
 	InboundHandlers,
+	ContainerStateChangeMessageType,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
@@ -40,7 +42,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["CONTAINER_STATE_HISTORY"]: (untypedMessage) => {
+			[ContainerStateChangeMessageType]: (untypedMessage) => {
 				const message = untypedMessage as ContainerStateHistoryMessage;
 				if (message.data.containerId === containerId) {
 					setContainerHistory(message.data.history);
@@ -69,7 +71,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 
 		// Request state info for the newly specified containerId
 		messageRelay.postMessage({
-			type: "GET_CONTAINER_STATE",
+			type: GetContainerStateMessageType,
 			data: {
 				containerId,
 			},
