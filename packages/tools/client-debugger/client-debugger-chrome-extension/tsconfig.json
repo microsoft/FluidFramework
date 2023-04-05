@@ -9,6 +9,7 @@
 		"module": "es6",
 		"target": "es6",
 		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
 	},
 	"include": ["src/**/*"],
 }

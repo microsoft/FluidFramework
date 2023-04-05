@@ -36,14 +36,14 @@ import { assertMarkListEqual, fakeTaggedRepair as fakeRepair } from "../utils";
 
 const nodeSchema = TypedSchema.tree("Node", {
 	value: ValueSchema.String,
-	local: { foo: TypedSchema.field(FieldKinds.value, "Node") },
+	local: { foo: TypedSchema.field(FieldKinds.optional, "Node") },
 });
 
 const schemaData = SchemaAware.typedSchemaData([], nodeSchema);
 
 const tree1ContextuallyTyped: ContextuallyTypedNodeDataObject = {
 	[valueSymbol]: "value1",
-	foo: "value3",
+	foo: { [valueSymbol]: "value3" },
 };
 
 // TODO: This file is mainly working with in memory representations.

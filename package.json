@@ -149,9 +149,10 @@
 		"typescript": "~4.5.5"
 	},
 	"engines": {
-		"node": ">=16.16.0"
+		"node": ">=16.16.0",
+		"pnpm": "7"
 	},
-	"packageManager": "pnpm@7.27.0",
+	"packageManager": "pnpm@7.30.5+sha512.917887efe886843726dd45618dbe29cdb458963a13d8a551f1614bdfb6fe735e45f42b9a2dabb4453a33ad7c7ff6c9dfd491261880a346730cd9702b98cd35b2",
 	"pnpm": {
 		"overrides": {
 			"@types/node": "^14.18.38",

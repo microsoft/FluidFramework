@@ -10,7 +10,7 @@ import {
 	IMessageRelay,
 	IMessageRelayEvents,
 	isDebuggerMessage,
-	debuggerMessageSource,
+	devtoolsMessageSource,
 } from "@fluid-tools/client-debugger";
 
 import {
@@ -140,7 +140,7 @@ export class BackgroundConnection
 		// Ignore messages from unexpected sources.
 		// We receive at least one message directly from the Background script so we need to include
 		// extensionMessageSource as a valid source.
-		if (message.source !== extensionMessageSource && message.source !== debuggerMessageSource) {
+		if (message.source !== extensionMessageSource && message.source !== devtoolsMessageSource) {
 			return false;
 		}
 

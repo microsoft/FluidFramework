@@ -5,20 +5,23 @@
 import React from "react";
 
 import {
+	ContainerListMessage,
+	ContainerListMessageType,
 	ContainerMetadata,
+	GetContainerListMessage,
+	GetContainerListMessageType,
+	handleIncomingMessage,
 	IMessageRelay,
 	InboundHandlers,
-	RegistryChangeMessage,
 	ISourcedDebuggerMessage,
-	handleIncomingMessage,
-	IDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
-import { DefaultPalette, IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { RenderOptions } from "./RendererOptions";
+import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { FluentProvider } from "@fluentui/react-components";
 import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
+import { getFluentUIThemeToUse } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DebuggerPanel)";
 
@@ -28,22 +31,10 @@ initializeFluentUiIcons();
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: IDebuggerMessage = {
-	type: "GET_CONTAINER_LIST",
+const getContainerListMessage: GetContainerListMessage = {
+	type: GetContainerListMessageType,
 	data: undefined,
 };
-
-/**
- * {@link FluidClientDebuggers} input props.
- */
-export interface FluidClientDebuggersProps {
-	/**
-	 * Rendering policies for different kinds of Fluid client and object data.
-	 *
-	 * @defaultValue Strictly use default visualization policies.
-	 */
-	renderOptions?: RenderOptions;
-}
 
 /**
  * Indicates that the currently selected menu option is a particular Container.
@@ -86,7 +77,7 @@ type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
-export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
+export function FluidClientDebuggers(): React.ReactElement {
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
@@ -97,8 +88,8 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["REGISTRY_CHANGE"]: (untypedMessage) => {
-				const message = untypedMessage as RegistryChangeMessage;
+			[ContainerListMessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerListMessage;
 				setContainers(message.data.containers);
 				return true;
 			},
@@ -145,17 +136,42 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	// Styles definition
 	const stackStyles: IStackStyles = {
 		root: {
-			background: DefaultPalette.themeTertiary,
-			height: "100%",
+			"display": "flex",
+			"flexDirection": "row",
+			"flexWrap": "nowrap",
+			"width": "auto",
+			"height": "auto",
+			"boxSizing": "border-box",
+			"> *": {
+				textOverflow: "ellipsis",
+			},
+			"> :not(:first-child)": {
+				marginTop: "0px",
+			},
+			"> *:not(.ms-StackItem)": {
+				flexShrink: 1,
+			},
 		},
 	};
 	const contentViewStyles: IStackItemStyles = {
 		root: {
-			alignItems: "center",
-			background: DefaultPalette.themeLight,
-			color: DefaultPalette.black,
-			display: "flex",
-			justifyContent: "center",
+			"alignItems": "center",
+			"display": "flex",
+			"justifyContent": "center",
+			"flexDirection": "column",
+			"flexWrap": "nowrap",
+			"width": "auto",
+			"height": "auto",
+			"boxSizing": "border-box",
+			"> *": {
+				textOverflow: "ellipsis",
+			},
+			"> :not(:first-child)": {
+				marginTop: "0px",
+			},
+			"> *:not(.ms-StackItem)": {
+				flexShrink: 1,
+			},
 		},
 	};
 
@@ -164,7 +180,7 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 			...contentViewStyles,
 			display: "flex",
 			flexDirection: "column",
-			borderRight: `1px solid ${DefaultPalette.themePrimary}`,
+			borderRight: `2px solid`,
 			minWidth: 150,
 		},
 	};
@@ -178,40 +194,42 @@ export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.Re
 	}
 
 	return (
-		<Stack enableScopedSelectors horizontal styles={stackStyles}>
-			<Stack.Item grow={1} styles={menuStyles}>
-				{/* TODO: button to refresh list of containers */}
-				<MenuSection header="Containers">
-					{containers?.map((container) => (
+		<FluentProvider theme={getFluentUIThemeToUse()}>
+			<Stack enableScopedSelectors horizontal styles={stackStyles}>
+				<Stack.Item grow={1} styles={menuStyles}>
+					{/* TODO: button to refresh list of containers */}
+					<MenuSection header="Containers">
+						{containers?.map((container) => (
+							<MenuItem
+								key={container.id}
+								isActive={
+									menuSelection?.type === "containerMenuSelection" &&
+									menuSelection.containerId === container.id
+								}
+								text={container.nickname ?? container.id}
+								onClick={(event): void => {
+									onContainerClicked(`${container.id}`);
+								}}
+							/>
+						))}
+					</MenuSection>
+					<MenuSection header="Telemetry">
 						<MenuItem
-							key={container.id}
-							isActive={
-								menuSelection?.type === "containerMenuSelection" &&
-								menuSelection.containerId === container.id
-							}
-							text={container.nickname ?? container.id}
-							onClick={(event): void => {
-								onContainerClicked(`${container.id}`);
-							}}
+							isActive={menuSelection?.type === "telemetryMenuSelection"}
+							text="See Telemetry"
+							onClick={onTelemetryClicked}
 						/>
-					))}
-				</MenuSection>
-				<MenuSection header="Telemetry">
-					<MenuItem
-						isActive={menuSelection?.type === "telemetryMenuSelection"}
-						text="See Telemetry"
-						onClick={onTelemetryClicked}
-					/>
-				</MenuSection>
-			</Stack.Item>
-			<Stack.Item grow={5} styles={contentViewStyles}>
-				<div
-					id="debugger-view-content"
-					style={{ width: "100%", height: "100%", overflowY: "auto" }}
-				>
-					{innerView}
-				</div>
-			</Stack.Item>
-		</Stack>
+					</MenuSection>
+				</Stack.Item>
+				<Stack.Item grow={5} styles={contentViewStyles}>
+					<div
+						id="debugger-view-content"
+						style={{ width: "100%", height: "100%", overflowY: "auto" }}
+					>
+						{innerView}
+					</div>
+				</Stack.Item>
+			</Stack>
+		</FluentProvider>
 	);
 }

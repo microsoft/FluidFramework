@@ -486,7 +486,15 @@ const defaultFlushMode = FlushMode.TurnBased;
 // We can't estimate it fully, as we
 // - do not know what properties relay service will add
 // - we do not stringify final op, thus we do not know how much escaping will be added.
-const defaultMaxBatchSizeInBytes = 950 * 1024;
+const defaultMaxBatchSizeInBytes = 700 * 1024;
+
+const defaultCompressionConfig = {
+	// Batches with content size exceeding this value will be compressed
+	minimumBatchSizeInBytes: 614400,
+	compressionAlgorithm: CompressionAlgorithms.lz4,
+};
+
+const defaultChunkSizeInBytes = 204800;
 
 /**
  * @deprecated - use ContainerRuntimeMessage instead
@@ -631,12 +639,9 @@ export class ContainerRuntime
 			gcOptions = {},
 			loadSequenceNumberVerification = "close",
 			flushMode = defaultFlushMode,
-			compressionOptions = {
-				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
+			compressionOptions = defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			chunkSizeInBytes = Number.POSITIVE_INFINITY,
+			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableOpReentryCheck = false,
 		} = runtimeOptions;
 
@@ -1049,7 +1054,7 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.disableAttachOpReorder",
 		);
 		const disableChunking = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableCompressionChunking",
+			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
 		);
 		const opSplitter = new OpSplitter(
 			chunks,
@@ -1222,7 +1227,7 @@ export class ContainerRuntime
 		);
 
 		const disableCompression = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.DisableCompression",
+			"Fluid.ContainerRuntime.CompressionDisabled",
 		);
 		const compressionOptions =
 			disableCompression === true
@@ -1284,12 +1289,6 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
-				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
-				// an initializeEntryPoint for that case.
-				assert(
-					initializeEntryPoint === undefined,
-					0x5be /* Summarizer clients cannot have a custom entryPoint */,
-				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
@@ -1940,12 +1939,13 @@ export class ContainerRuntime
 					clientSignalSequenceNumber: envelope.clientSignalSequenceNumber,
 				});
 			} else if (
-				this.consecutiveReconnects === 0 &&
 				envelope.clientSignalSequenceNumber ===
-					this._perfSignalData.trackingSignalSequenceNumber
+				this._perfSignalData.trackingSignalSequenceNumber
 			) {
 				// only logging for the first connection and the trackingSignalSequenceNUmber.
-				this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				if (this.consecutiveReconnects === 0) {
+					this.sendSignalTelemetryEvent(envelope.clientSignalSequenceNumber);
+				}
 				this._perfSignalData.trackingSignalSequenceNumber = undefined;
 			}
 		}

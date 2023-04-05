@@ -25,7 +25,7 @@ COPY scripts/*.* ./scripts/
 COPY packages/gitrest/package*.json packages/gitrest/
 COPY packages/gitrest-base/package*.json packages/gitrest-base/
 
-RUN npm install --global pnpm@7.30.5
+RUN corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
