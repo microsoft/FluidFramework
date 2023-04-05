@@ -8,7 +8,6 @@ import {
 	IConsumer,
 	IQueuedMessage,
 	IPartition,
-	IPartitionWithEpoch,
 	IPartitionLambdaFactory,
 	ILogger,
 	LambdaCloseType,
@@ -45,7 +44,7 @@ export class PartitionManager extends EventEmitter {
 			this.rebalancing(partitions);
 		});
 
-		this.consumer.on("rebalanced", (partitions: IPartitionWithEpoch[]) => {
+		this.consumer.on("rebalanced", (partitions: IPartition[]) => {
 			this.rebalanced(partitions);
 		});
 
@@ -136,7 +135,7 @@ export class PartitionManager extends EventEmitter {
 	 * @param partitions - Assigned partitions after the rebalance.
 	 * May contain partitions that have been previously assigned to this consumer
 	 */
-	private rebalanced(partitions: IPartitionWithEpoch[]) {
+	private rebalanced(partitions: IPartition[]) {
 		if (this.stopped) {
 			return;
 		}
@@ -167,10 +166,10 @@ export class PartitionManager extends EventEmitter {
 			}
 
 			this.logger?.info(
-				`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`,
+				`Creating ${partition.topic}: Partition ${partition.partition}, Offset ${partition.offset} due to rebalance`,
 			);
 			Lumberjack.info(
-				`Creating ${partition.topic}: Partition ${partition.partition}, Epoch ${partition.leaderEpoch}, Offset ${partition.offset} due to rebalance`,
+				`Creating ${partition.topic}: Partition ${partition.partition}, Offset ${partition.offset} due to rebalance`,
 			);
 
 			const newPartition = new Partition(
