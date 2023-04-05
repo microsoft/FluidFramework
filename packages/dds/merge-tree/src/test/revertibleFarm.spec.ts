@@ -9,6 +9,7 @@ import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
 	appendToMergeTreeDeltaRevertibles,
+	InternalRevertRootMergeBlock,
 	MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles";
@@ -189,11 +190,15 @@ describe("MergeTree.Client", () => {
 								);
 							}
 						});
-						const detachedReferences =
-							clientBDriver.__mergeTreeRevertible?.detachedReferences;
-						if (detachedReferences?.localRefs?.empty === false) {
+						const revertRoot = clients.B.mergeTree
+							.root as Partial<InternalRevertRootMergeBlock>;
+						if (
+							revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs
+								?.empty === false
+						) {
 							assert.notDeepStrictEqual(
-								detachedReferences?.localRefs?.empty,
+								revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs
+									?.empty,
 								false,
 								"there should be no left over local references in detached references",
 							);

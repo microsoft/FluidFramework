@@ -513,6 +513,22 @@ export interface IRootMergeBlock extends IMergeBlock {
 	mergeTree?: MergeTree;
 }
 
+export function findRootMergeBlock(
+	segmentOrNode: IMergeNode | undefined,
+): IRootMergeBlock | undefined {
+	if (segmentOrNode === undefined) {
+		return undefined;
+	}
+	let maybeRoot: IRootMergeBlock | undefined = segmentOrNode.isLeaf()
+		? segmentOrNode.parent
+		: segmentOrNode;
+	while (maybeRoot?.parent !== undefined) {
+		maybeRoot = maybeRoot.parent;
+	}
+
+	return maybeRoot;
+}
+
 /**
  * @internal
  */
