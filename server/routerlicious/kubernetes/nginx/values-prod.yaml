@@ -17,9 +17,10 @@ controller:
       # Without it, health probes on the automatically-created load balancer will have an incorrect path, fail because
       # of that, and make it look like the targets of the load balancing rules are unhealthy, which results in external
       # requests hanging instead of getting routed to the appropriate pods.
+      # More details at https://cloud-provider-azure.sigs.k8s.io/topics/loadbalancer/#custom-load-balancer-health-probe
       service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
     # The "Local" external traffic policy ensures that the source IP of external requests to the AKS cluster isn't
-    # completely lost as they go throught network translation inside the AKS cluster in order to get to a pod.
+    # completely lost as they go through network translation inside the AKS cluster in order to get to a pod.
     # See https://learn.microsoft.com/en-us/azure/aks/concepts-network#client-source-ip-preservation for details.
     externalTrafficPolicy: Local
 
