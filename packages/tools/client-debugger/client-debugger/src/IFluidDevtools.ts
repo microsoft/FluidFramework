@@ -5,7 +5,7 @@
 import { IDisposable, IEvent, IEventProvider } from "@fluidframework/common-definitions";
 
 import { ContainerDevtoolsProps } from "./ContainerDevtools";
-import { IContainerDevtools, ContainerDevtoolsEvents } from "./IContainerDevtools";
+import { IContainerDevtools } from "./IContainerDevtools";
 
 /**
  * Events emitted by {@link IFluidDevtools}.
@@ -43,7 +43,7 @@ export interface FluidDevtoolsEvents extends IEvent {
  *
  * @public
  */
-export interface IFluidDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
+export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
 	/**
 	 * Initializes a {@link IContainerDevtools} from the provided properties and stores it for future reference.
 	 */

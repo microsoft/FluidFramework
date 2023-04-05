@@ -316,7 +316,7 @@ export interface IDebuggerMessage<TData = unknown> {
 }
 
 // @public
-export interface IFluidDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
+export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
     closeContainerDevtools(containerId: string): void;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
