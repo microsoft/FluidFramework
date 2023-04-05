@@ -256,8 +256,11 @@ export type GetRootDataVisualizationsMessageData = HasContainerId;
 
 // @public
 export interface GetTelemetryHistoryMessage extends IDebuggerMessage {
-    type: "GET_TELEMETRY_HISTORY";
+    type: typeof GetTelemetryHistoryMessageType;
 }
+
+// @public
+export const GetTelemetryHistoryMessageType = "GET_TELEMETRY_HISTORY";
 
 // @internal
 export function handleIncomingMessage(message: Partial<ISourcedDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
@@ -383,7 +386,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 
 // @public
 export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
-    type: "TELEMETRY_EVENT";
+    type: typeof TelemetryEventMessageType;
 }
 
 // @public
@@ -392,9 +395,15 @@ export interface TelemetryEventMessageData {
 }
 
 // @public
+export const TelemetryEventMessageType = "TELEMETRY_EVENT";
+
+// @public
 export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
-    type: "TELEMETRY_HISTORY";
+    type: typeof TelemetryHistoryMessageType;
 }
+
+// @public
+export const TelemetryHistoryMessageType = "TELEMETRY_HISTORY";
 
 // @public
 export interface TreeNodeBase extends VisualNodeBase {

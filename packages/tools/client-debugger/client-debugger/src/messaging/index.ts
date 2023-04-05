@@ -54,11 +54,14 @@ export {
 	GetAudienceMessageType,
 } from "./AudienceMessages";
 export {
-	ITimestampedTelemetryEvent,
-	TelemetryHistoryMessage,
 	GetTelemetryHistoryMessage,
+	GetTelemetryHistoryMessageType,
+	ITimestampedTelemetryEvent,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
+	TelemetryEventMessageType,
+	TelemetryHistoryMessage,
+	TelemetryHistoryMessageType,
 } from "./TelemetryMessages";
 export {
 	handleIncomingMessage,
