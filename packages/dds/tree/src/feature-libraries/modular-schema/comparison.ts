@@ -201,6 +201,15 @@ export function isNeverField(
 	originalData: SchemaData,
 	field: FieldSchema,
 ): boolean {
+	return isNeverFieldRecursive(policy, originalData, field, new Set());
+}
+
+export function isNeverFieldRecursive(
+	policy: FullSchemaPolicy,
+	originalData: SchemaData,
+	field: FieldSchema,
+	parentTypeStack: Set<TreeSchema>,
+): boolean {
 	if (
 		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
 			.multiplicity === Multiplicity.Value &&
@@ -208,10 +217,11 @@ export function isNeverField(
 	) {
 		for (const type of field.types) {
 			if (
-				!isNeverTree(
+				!isNeverTreeRecursive(
 					policy,
 					originalData,
 					originalData.treeSchema.get(type) ?? policy.defaultTreeSchema,
+					parentTypeStack,
 				)
 			) {
 				return false;
@@ -224,31 +234,60 @@ export function isNeverField(
 	return false;
 }
 
+/**
+ * Returns true iff there are no possible trees that could meet this schema.
+ * Trees which are infinate (like endless linked lists) are considered impossible.
+ */
 export function isNeverTree(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
 	tree: TreeSchema,
 ): boolean {
-	if (
-		(policy.fieldKinds.get(tree.extraLocalFields.kind.identifier) ?? fail("missing field kind"))
-			.multiplicity === Multiplicity.Value
-	) {
+	return isNeverTreeRecursive(policy, originalData, tree, new Set());
+}
+
+/**
+ * Returns true iff there are no possible trees that could meet this schema.
+ * Trees which are infinate (like endless linked lists) are considered impossible.
+ */
+export function isNeverTreeRecursive(
+	policy: FullSchemaPolicy,
+	originalData: SchemaData,
+	tree: TreeSchema,
+	parentTypeStack: Set<TreeSchema>,
+): boolean {
+	if (parentTypeStack.has(tree)) {
 		return true;
 	}
-	for (const field of tree.localFields.values()) {
-		// TODO: this can can recurse infinitely for schema that include themselves in a value field.
-		// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
-		// THis can be done by passing a set/stack of current types recursively here.
-		if (isNeverField(policy, originalData, field)) {
+	try {
+		parentTypeStack.add(tree);
+		if (
+			(
+				policy.fieldKinds.get(tree.extraLocalFields.kind.identifier) ??
+				fail("missing field kind")
+			).multiplicity === Multiplicity.Value
+		) {
 			return true;
 		}
-	}
-	for (const field of tree.globalFields) {
-		const schema = originalData.globalFieldSchema.get(field) ?? policy.defaultGlobalFieldSchema;
-		if (isNeverField(policy, originalData, schema)) {
-			return true;
+		for (const field of tree.localFields.values()) {
+			// TODO: this can recurse infinitely for schema that include themselves in a value field.
+			// This breaks even if there are other allowed types.
+			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
+			// This can be done by passing a set/stack of current types recursively here.
+			if (isNeverFieldRecursive(policy, originalData, field, parentTypeStack)) {
+				return true;
+			}
 		}
-	}
+		for (const field of tree.globalFields) {
+			const schema =
+				originalData.globalFieldSchema.get(field) ?? policy.defaultGlobalFieldSchema;
+			if (isNeverField(policy, originalData, schema)) {
+				return true;
+			}
+		}
 
-	return false;
+		return false;
+	} finally {
+		parentTypeStack.delete(tree);
+	}
 }
