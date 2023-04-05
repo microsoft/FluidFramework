@@ -449,26 +449,59 @@ describe("Node Identifier Index", () => {
 		assertIds(tree, [id]);
 	});
 
-	it("correctly forks", async () => {
-		const provider = await TestTreeProvider.create(1);
-		const [tree] = provider.trees;
-		const id = makeId();
-		initializeTestTree(
-			tree,
-			{
-				type: nodeSchema.name,
-				globalFields: {
-					[identifierKey]: [{ type: identifierSchema.name, value: id }],
-				},
-			},
-			nodeSchemaData,
-		);
+	function describeForkingTests(prefork: boolean): void {
+		async function getTree(): Promise<ISharedTreeView> {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			return prefork ? tree.fork() : tree;
+		}
+		describe(`forking from ${prefork ? "a fork" : "the root"}`, () => {
+			it("does not mutate the base when mutating a fork", async () => {
+				const tree = await getTree();
+				const id = makeId();
+				initializeTestTree(
+					tree,
+					{
+						type: nodeSchema.name,
+						globalFields: {
+							[identifierKey]: [{ type: identifierSchema.name, value: id }],
+						},
+					},
+					nodeSchemaData,
+				);
 
-		const fork = tree.fork();
-		fork.context.root.deleteNodes(0, 1);
-		assertIds(tree, [id]);
-		assertIds(fork, []);
-		fork.merge();
-		assertIds(tree, []);
-	});
+				const fork = tree.fork();
+				fork.context.root.deleteNodes(0, 1);
+				assertIds(tree, [id]);
+				assertIds(fork, []);
+				fork.merge();
+				assertIds(tree, []);
+			});
+
+			it("does not mutate the fork when mutating a base", async () => {
+				const tree = await getTree();
+				const id = makeId();
+				initializeTestTree(
+					tree,
+					{
+						type: nodeSchema.name,
+						globalFields: {
+							[identifierKey]: [{ type: identifierSchema.name, value: id }],
+						},
+					},
+					nodeSchemaData,
+				);
+
+				const fork = tree.fork();
+				tree.context.root.deleteNodes(0, 1);
+				assertIds(tree, []);
+				assertIds(fork, [id]);
+				fork.merge();
+				assertIds(tree, []);
+			});
+		});
+	}
+
+	describeForkingTests(false);
+	describeForkingTests(true);
 });

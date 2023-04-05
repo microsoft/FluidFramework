@@ -99,8 +99,10 @@ export class IdentifierIndex<TField extends GlobalFieldKey>
 	/**
 	 * Create a copy of this index which can be mutated without affecting this one.
 	 */
-	public clone(): IdentifierIndex<TField> {
-		return new IdentifierIndex(this.identifierFieldKey, new Map(this.nodes.entries()));
+	public clone(context: EditableTreeContext): IdentifierIndex<TField> {
+		const indexClone = new IdentifierIndex(this.identifierFieldKey);
+		indexClone.scanIdentifiers(context);
+		return indexClone;
 	}
 
 	// #region ReadonlyMap interface

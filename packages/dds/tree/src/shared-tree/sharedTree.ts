@@ -301,13 +301,17 @@ class SharedTree
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
+		const branch = this.createBranch(anchors);
 		const schema = this.storedSchema.inner.clone();
+		const forest = this.forest.clone(schema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
-			this.createBranch(anchors),
+			branch,
 			defaultChangeFamily,
 			schema,
-			this.forest.clone(schema, anchors),
-			this.identifiedNodes.clone(),
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 
@@ -375,16 +379,15 @@ export class SharedTreeFactory implements IChannelFactory {
 
 class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
-	public readonly context: EditableTreeContext;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
+		public readonly context: EditableTreeContext,
 		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		this.context = getEditableTreeContext(forest, this.editor);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
@@ -417,14 +420,18 @@ class SharedTreeFork implements ISharedTreeFork {
 	}
 
 	public fork(): ISharedTreeFork {
-		const storedSchema = this.storedSchema.clone();
 		const anchors = new AnchorSet();
+		const branch = this.branch.fork(anchors);
+		const storedSchema = this.storedSchema.clone();
+		const forest = this.forest.clone(storedSchema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
-			this.branch.fork(anchors),
+			branch,
 			this.changeFamily,
 			storedSchema,
-			this.forest.clone(storedSchema, anchors),
-			this.identifiedNodes,
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 
