@@ -3,13 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IOverflowSetItemProps, Stack } from "@fluentui/react";
-import {
-	Tab,
-	TabList,
-	SelectTabData,
-	SelectTabEvent,
-	TabValue,
-} from "@fluentui/react-components";
+import { Tab, TabList, SelectTabData, SelectTabEvent, TabValue } from "@fluentui/react-components";
 import { HasContainerId } from "@fluid-tools/client-debugger";
 import * as React from "react";
 

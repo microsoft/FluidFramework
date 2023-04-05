@@ -103,10 +103,10 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 						: containerHistory[i].newState === ContainerStateChangeKind.Disconnected
 						? tokens.colorPaletteYellowBackground2 // yellow
 						: containerHistory[i].newState === ContainerStateChangeKind.Closed
-						? "#FFF0F5" // red
+						? tokens.colorPaletteRedForegroundInverted // red
 						: containerHistory[i].newState === ContainerStateChangeKind.Disposed
-						? "#FFE4E1" // dark red
-						: "#C0C0C0", // grey for unknown state
+						? tokens.colorPalettePlatinumBackground2 // bluish grey/platinum
+						: tokens.colorPaletteBeigeBackground2, // grey for unknown state
 				borderStyle: "solid",
 				borderWidth: 1,
 				borderColor: DefaultPalette.neutralTertiary,
