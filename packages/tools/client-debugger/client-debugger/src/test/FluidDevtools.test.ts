@@ -12,7 +12,7 @@ import { createMockContainer } from "./Utilities";
 // TODOs:
 // - Test window messaging
 
-describe("FluidDevTools unit tests", () => {
+describe("FluidDevtools unit tests", () => {
 	it("Container change events", () => {
 		const devtools = new FluidDevtools();
 
