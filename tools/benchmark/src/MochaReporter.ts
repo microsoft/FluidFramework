@@ -7,8 +7,12 @@ import { Runner, Suite, Test } from "mocha";
 import chalk from "chalk";
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
-import { getName, getSuiteName } from "./ReporterUtilities";
+import { getName } from "./ReporterUtilities";
 import { BenchmarkData, BenchmarkResult } from "./runBenchmark";
+// TODO: this file should be moved in with the mocha specific stuff, but is left where it is for now to avoid breaking users of this reporter.
+// Since it's not moved yet, it needs this lint suppression to do this import:
+// eslint-disable-next-line import/no-internal-modules
+import { getSuiteName } from "./mocha/mochaReporterUtilities";
 
 /**
  * Custom mocha reporter (can be used by passing the JavaScript version of this file to mocha with --reporter).
