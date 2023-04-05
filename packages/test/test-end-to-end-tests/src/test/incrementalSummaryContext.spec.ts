@@ -250,6 +250,11 @@ interface ICreateTreeNodeOp {
 const rootNodeName = "rootNode";
 
 // Creates trees that can be incrementally summarized
+// Each op creates a new child node for any node in the tree.
+// The data of the tree is stored in the node's header blob
+// Any node and its subsequent children that do not change are summarized as a summary handle
+// This tree is written in a simple recursive structure.
+// The test below should indicate how the DDS can be used.
 class TestIncrementalSummaryTreeDDS extends SharedObject {
 	static getFactory(): IChannelFactory {
 		return new TestTreeDDSFactory();
@@ -265,6 +270,9 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 		telemetryContext?: ITelemetryContext | undefined,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): ISummaryTreeWithStats {
+		// Technically, we can just return what summarizeNode returns.
+		// It turns out, the logic for the root node gets a little challenging, and it's easier to simply make the tree
+		// on level deeper.
 		const builder = new SummaryTreeBuilder();
 
 		// Summarize the root node and store it as a summary tree
@@ -425,7 +433,10 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
 		throw new Error("child not found!");
 	}
 
-	// All this does is creates a new node attached to some parent with the path starting from the root node
+	/**
+	 * All this does is creates a new node attached to some parent with the path starting from the root node
+	 * Note: The name of the node should be unique, it may cause issues if it is not.
+	 */
 	public createTreeOp(parentPath: string[], name: string) {
 		this.validatePath(parentPath, this.root);
 		const op: ICreateTreeNodeOp = {
@@ -519,17 +530,26 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 		const { summaryTree } = await summarizeNow(summarizer);
 
 		// Verify the summary tree is generated as we expected it to be.
-		assert(summaryTree.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
+		assert(
+			summaryTree.tree[".channels"].type === SummaryType.Tree,
+			"Runtime summary tree not created for blob dds test",
+		);
 		const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
-		assert(dataObjectTree.type === SummaryType.Tree, "tree!");
+		assert(
+			dataObjectTree.type === SummaryType.Tree,
+			"Data store summary tree not created for blob dds test",
+		);
 		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
-		assert(dataObjectChannelsTree.type === SummaryType.Tree, "data store channels tree!");
+		assert(
+			dataObjectChannelsTree.type === SummaryType.Tree,
+			"Data store channels tree not created for blob dds test",
+		);
 		const ddsTree = dataObjectChannelsTree.tree[dds.id];
-		assert(ddsTree.type === SummaryType.Tree, "dds tree!");
-		assert(ddsTree.tree["0"].type === SummaryType.Handle);
-		assert(ddsTree.tree["1"].type === SummaryType.Handle);
-		assert(ddsTree.tree["2"].type === SummaryType.Handle);
-		assert(ddsTree.tree["3"].type === SummaryType.Blob);
+		assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
+		assert(ddsTree.tree["0"].type === SummaryType.Handle, "Blob 0 should be a handle");
+		assert(ddsTree.tree["1"].type === SummaryType.Handle, "Blob 1 should be a handle");
+		assert(ddsTree.tree["2"].type === SummaryType.Handle, "Blob 2 should be a handle");
+		assert(ddsTree.tree["3"].type === SummaryType.Blob, "Blob 3 should be a blob");
 	});
 
 	it("can create summary handles for trees in DDSes that do not change", async () => {
@@ -565,19 +585,43 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 
 		// Verify the summary tree is generated as we expected it to be.
 		// Handles for "a" and "c", "b" and "f" should be trees
-		assert(summaryTree.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
+		assert(
+			summaryTree.tree[".channels"].type === SummaryType.Tree,
+			"Runtime summary1 tree not created for tree dds test",
+		);
 		const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
-		assert(dataObjectTree.type === SummaryType.Tree, "tree!");
+		assert(
+			dataObjectTree.type === SummaryType.Tree,
+			"Data store summary1 tree not created for tree dds test",
+		);
 		const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
-		assert(dataObjectChannelsTree.type === SummaryType.Tree, "data store channels tree!");
+		assert(
+			dataObjectChannelsTree.type === SummaryType.Tree,
+			"Data store summary1 channels tree not created for tree dds test",
+		);
 		const ddsTree = dataObjectChannelsTree.tree[dds.id];
-		assert(ddsTree.type === SummaryType.Tree, "dds tree!");
+		assert(ddsTree.type === SummaryType.Tree, "Summary1 tree not created for tree dds");
 		const rootNode = ddsTree.tree[rootNodeName];
-		assert(rootNode.type === SummaryType.Tree);
-		assert(rootNode.tree.a.type === SummaryType.Handle);
-		assert(rootNode.tree.b.type === SummaryType.Tree);
-		assert(rootNode.tree.b.tree.f.type === SummaryType.Tree);
-		assert(rootNode.tree.c.type === SummaryType.Handle);
+		assert(
+			rootNode.type === SummaryType.Tree,
+			"Summary1 - 'rootNode' should be a summary tree",
+		);
+		assert(
+			rootNode.tree.a.type === SummaryType.Handle,
+			"Summary1 - 'a' should be a summary Handle",
+		);
+		assert(
+			rootNode.tree.b.type === SummaryType.Tree,
+			"Summary1 - 'b' should be a summary tree",
+		);
+		assert(
+			rootNode.tree.b.tree.f.type === SummaryType.Tree,
+			"Summary1 - 'f' should be a summary tree",
+		);
+		assert(
+			rootNode.tree.c.type === SummaryType.Handle,
+			"Summary1 - 'c' should be a summary Handle",
+		);
 
 		// Test that we can load from multiple containers
 		const container2 = await loadContainer(summaryVersion);
@@ -600,18 +644,42 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 
 		// Verify the summary tree is generated as we expected it to be.
 		// Handles for "a" and "b", "c" and "g" should be trees, "f" is under "b" and thus shouldn't be in the summary.
-		assert(summaryTree2.tree[".channels"].type === SummaryType.Tree, "expecting a tree!");
+		assert(
+			summaryTree2.tree[".channels"].type === SummaryType.Tree,
+			"Runtime summary2 tree not created for tree dds test",
+		);
 		const dataObjectTree2 = summaryTree2.tree[".channels"].tree[datastore2.runtime.id];
-		assert(dataObjectTree2.type === SummaryType.Tree, "tree!");
+		assert(
+			dataObjectTree2.type === SummaryType.Tree,
+			"Data store summary2 tree not created for tree dds test",
+		);
 		const dataObjectChannelsTree2 = dataObjectTree2.tree[".channels"];
-		assert(dataObjectChannelsTree2.type === SummaryType.Tree, "data store channels tree!");
+		assert(
+			dataObjectChannelsTree2.type === SummaryType.Tree,
+			"Data store summary2 channels tree not created for tree dds test",
+		);
 		const ddsTree2 = dataObjectChannelsTree2.tree[dds2.id];
-		assert(ddsTree2.type === SummaryType.Tree, "dds tree!");
+		assert(ddsTree2.type === SummaryType.Tree, "Summary2 tree not created for tree dds");
 		const rootNode2 = ddsTree2.tree[rootNodeName];
-		assert(rootNode2.type === SummaryType.Tree);
-		assert(rootNode2.tree.a.type === SummaryType.Handle);
-		assert(rootNode2.tree.b.type === SummaryType.Handle);
-		assert(rootNode2.tree.c.type === SummaryType.Tree);
-		assert(rootNode2.tree.c.tree.g.type === SummaryType.Tree);
+		assert(
+			rootNode2.type === SummaryType.Tree,
+			"Summary2 - 'rootNode' should be a summary tree",
+		);
+		assert(
+			rootNode2.tree.a.type === SummaryType.Handle,
+			"Summary2 - 'a' should be a summary handle",
+		);
+		assert(
+			rootNode2.tree.b.type === SummaryType.Handle,
+			"Summary2 - 'a' should be a summary handle",
+		);
+		assert(
+			rootNode2.tree.c.type === SummaryType.Tree,
+			"Summary2 - 'c' should be a summary tree",
+		);
+		assert(
+			rootNode2.tree.c.tree.g.type === SummaryType.Tree,
+			"Summary2 - 'g' should be a summary tree",
+		);
 	});
 });
