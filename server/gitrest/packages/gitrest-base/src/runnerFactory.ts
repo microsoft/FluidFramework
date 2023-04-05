@@ -50,6 +50,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		const repoPerDocEnabled: boolean = config.get("git:repoPerDocEnabled") ?? false;
 		const enableRepositoryManagerMetrics: boolean =
 			config.get("git:enableRepositoryManagerMetrics") ?? false;
+        const apiMetricsSamplingPeriod: number | undefined =
+			config.get("git:apiMetricsSamplingPeriod");
 		const enableSlimGitInit: boolean = config.get("git:enableSlimGitInit") ?? false;
 		const getRepositoryManagerFactory = () => {
 			if (!gitLibrary || gitLibrary === "nodegit") {
@@ -59,6 +61,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 					externalStorageManager,
 					repoPerDocEnabled,
 					enableRepositoryManagerMetrics,
+                    apiMetricsSamplingPeriod,
 				);
 			} else if (gitLibrary === "isomorphic-git") {
 				return new IsomorphicGitManagerFactory(
@@ -68,6 +71,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 					repoPerDocEnabled,
 					enableRepositoryManagerMetrics,
 					enableSlimGitInit,
+                    apiMetricsSamplingPeriod,
 				);
 			}
 			throw new Error("Invalid git library name.");

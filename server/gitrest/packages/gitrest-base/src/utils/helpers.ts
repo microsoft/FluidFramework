@@ -325,15 +325,31 @@ export async function checkSoftDeleted(
 export async function executeApiWithMetric<U>(
 	api: () => Promise<U>,
 	apiName: string,
-	telemetryProperties: Record<string, any>,
+    apiCategory: string,
+    metricEnabled: boolean,
+    samplingPeriod?: number,
+	telemetryProperties?: Record<string, any>,
 ): Promise<U> {
+    // If generating a metric is not enabled, we just execute the API.
+    // We also do the same if sampling tells us to skip the metric for
+    // this instance (when a sampling period is provided).
+    if (!metricEnabled && samplingPeriod && getRandomInt(samplingPeriod) !== 0) {
+        return api();
+    }
 	const metric = Lumberjack.newLumberMetric(apiName, telemetryProperties);
 	try {
 		const result = await api();
-		metric.success(`RepositoryManager: ${apiName} success`);
+		metric.success(`${apiCategory}: ${apiName} success`);
 		return result;
 	} catch (error: any) {
-		metric.error(`RepositoryManager: ${apiName} error`, error);
+		metric.error(`${apiCategory}: ${apiName} error`, error);
 		throw error;
 	}
 }
+
+/**
+ * Temporarily copying implementation from routerlicious while it is being moved to a shared
+ * package (services-shared).
+ * getRandomInt is not and should not be used as part of any secure random number generation
+ */
+export const getRandomInt = (range: number) => Math.floor(Math.random() * range);

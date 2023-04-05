@@ -52,3 +52,8 @@ export enum BaseGitRestTelemetryProperties {
 	summaryType = "summaryType",
 	tag = "tag",
 }
+
+export enum GitRestLumberMetricApiCategory {
+    RepositoryManager = "RepositoryManager",
+    RepositoryManagerFactory = "RepositoryManagerFactory",
+}

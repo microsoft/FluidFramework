@@ -45,6 +45,7 @@ gitrest:
     persistLatestFullSummary: false
     repoPerDocEnabled: false
     enableRepositoryManagerMetrics: false
+    apiMetricsSamplingPeriod: 100
     enableLowIoWrite: false
     enableOptimizedInitialSummary: false
     enableSlimGitInit: false

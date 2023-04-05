@@ -6,243 +6,260 @@
 import type * as git from "@fluidframework/gitresources";
 import { IExternalWriterConfig, IRepositoryManager } from "./definitions";
 import {
-	BaseGitRestTelemetryProperties,
-	GitRestLumberEventName,
+    BaseGitRestTelemetryProperties,
+    GitRestLumberEventName,
+    GitRestLumberMetricApiCategory,
 } from "./gitrestTelemetryDefinitions";
 import { executeApiWithMetric } from "./helpers";
 
 export abstract class RepositoryManagerBase implements IRepositoryManager {
-	constructor(
-		protected readonly directory: string,
-		protected readonly lumberjackBaseProperties: Record<string, any>,
-		private readonly enableRepositoryManagerMetrics: boolean = false,
-	) {}
+    constructor(
+        protected readonly directory: string,
+        protected readonly lumberjackBaseProperties: Record<string, any>,
+        private readonly enableRepositoryManagerMetrics: boolean = false,
+        private readonly apiMetricsSamplingPeriod?: number,
+    ) { }
 
-	protected abstract getCommitCore(sha: string): Promise<git.ICommit>;
-	protected abstract getCommitsCore(
-		sha: string,
-		count: number,
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.ICommitDetails[]>;
-	protected abstract getTreeCore(root: string, recursive: boolean): Promise<git.ITree>;
-	protected abstract getBlobCore(sha: string): Promise<git.IBlob>;
-	protected abstract getContentCore(commit: string, path: string): Promise<git.IBlob>;
-	protected abstract createBlobCore(
-		createBlobParams: git.ICreateBlobParams,
-	): Promise<git.ICreateBlobResponse>;
-	protected abstract createTreeCore(params: git.ICreateTreeParams): Promise<git.ITree>;
-	protected abstract createCommitCore(commit: git.ICreateCommitParams): Promise<git.ICommit>;
-	protected abstract getRefsCore(): Promise<git.IRef[]>;
-	protected abstract getRefCore(
-		ref: string,
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.IRef>;
-	protected abstract createRefCore(
-		createRefParams: git.ICreateRefParams,
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.IRef>;
-	protected abstract patchRefCore(
-		refId: string,
-		patchRefParams: git.IPatchRefParams,
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.IRef>;
-	protected abstract deleteRefCore(refId: string): Promise<void>;
-	protected abstract getTagCore(tagId: string): Promise<git.ITag>;
-	protected abstract createTagCore(tagParams: git.ICreateTagParams): Promise<git.ITag>;
+    protected abstract getCommitCore(sha: string): Promise<git.ICommit>;
+    protected abstract getCommitsCore(
+        sha: string,
+        count: number,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.ICommitDetails[]>;
+    protected abstract getTreeCore(root: string, recursive: boolean): Promise<git.ITree>;
+    protected abstract getBlobCore(sha: string): Promise<git.IBlob>;
+    protected abstract getContentCore(commit: string, path: string): Promise<git.IBlob>;
+    protected abstract createBlobCore(
+        createBlobParams: git.ICreateBlobParams,
+    ): Promise<git.ICreateBlobResponse>;
+    protected abstract createTreeCore(params: git.ICreateTreeParams): Promise<git.ITree>;
+    protected abstract createCommitCore(commit: git.ICreateCommitParams): Promise<git.ICommit>;
+    protected abstract getRefsCore(): Promise<git.IRef[]>;
+    protected abstract getRefCore(
+        ref: string,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.IRef>;
+    protected abstract createRefCore(
+        createRefParams: git.ICreateRefParams,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.IRef>;
+    protected abstract patchRefCore(
+        refId: string,
+        patchRefParams: git.IPatchRefParams,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.IRef>;
+    protected abstract deleteRefCore(refId: string): Promise<void>;
+    protected abstract getTagCore(tagId: string): Promise<git.ITag>;
+    protected abstract createTagCore(tagParams: git.ICreateTagParams): Promise<git.ITag>;
 
-	public get path(): string {
-		return this.directory;
-	}
+    public get path(): string {
+        return this.directory;
+    }
 
-	public async getCommit(sha: string): Promise<git.ICommit> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getCommitCore.bind(this),
-					[sha],
-					GitRestLumberEventName.GetCommit,
-					{ [BaseGitRestTelemetryProperties.sha]: sha },
-			  )
-			: this.getCommitCore(sha);
-	}
+    public async getCommit(sha: string): Promise<git.ICommit> {
+        return executeApiWithMetric(
+            async () => this.getCommitCore(sha),
+            GitRestLumberEventName.GetCommit,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.sha]: sha,
+            },
+        );
+    }
 
-	public async getCommits(
-		sha: string,
-		count: number,
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.ICommitDetails[]> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getCommitsCore.bind(this),
-					[sha, count, externalWriterConfig],
-					GitRestLumberEventName.GetCommits,
-					{
-						[BaseGitRestTelemetryProperties.sha]: sha,
-						count,
-					},
-			  )
-			: this.getCommitsCore(sha, count, externalWriterConfig);
-	}
+    public async getCommits(
+        sha: string,
+        count: number,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.ICommitDetails[]> {
+        return executeApiWithMetric(
+            async () => this.getCommitsCore(sha, count, externalWriterConfig),
+            GitRestLumberEventName.GetCommits,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.sha]: sha,
+                count,
+            },
+        );
+    }
 
-	public async getTree(rootSha: string, recursive: boolean): Promise<git.ITree> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getTreeCore.bind(this),
-					[rootSha, recursive],
-					GitRestLumberEventName.GetTree,
-					{
-						[BaseGitRestTelemetryProperties.sha]: rootSha,
-						recursive,
-					},
-			  )
-			: this.getTreeCore(rootSha, recursive);
-	}
+    public async getTree(rootSha: string, recursive: boolean): Promise<git.ITree> {
+        return executeApiWithMetric(
+            async () => this.getTreeCore(rootSha, recursive),
+            GitRestLumberEventName.GetTree,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.sha]: rootSha,
+                recursive,
+            },
+        );
+    }
 
-	public async getBlob(sha: string): Promise<git.IBlob> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getBlobCore.bind(this),
-					[sha],
-					GitRestLumberEventName.GetBlob,
-					{ [BaseGitRestTelemetryProperties.sha]: sha },
-			  )
-			: this.getBlobCore(sha);
-	}
+    public async getBlob(sha: string): Promise<git.IBlob> {
+        return executeApiWithMetric(
+            async () => this.getBlobCore(sha),
+            GitRestLumberEventName.GetBlob,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.sha]: sha
+            },
+        );
+    }
 
-	public async getContent(commit: string, contentPath: string): Promise<git.IBlob> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getContentCore.bind(this),
-					[commit, contentPath],
-					GitRestLumberEventName.GetContent,
-			  )
-			: this.getContentCore(commit, contentPath);
-	}
+    public async getContent(commit: string, contentPath: string): Promise<git.IBlob> {
+        return executeApiWithMetric(
+            async () => this.getContentCore(commit, contentPath),
+            GitRestLumberEventName.GetContent,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            this.lumberjackBaseProperties,
+        );
+    }
 
-	public async getRef(
-		refId: string,
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.IRef> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getRefCore.bind(this),
-					[refId, externalWriterConfig],
-					GitRestLumberEventName.GetRef,
-					{ [BaseGitRestTelemetryProperties.ref]: refId },
-			  )
-			: this.getRefCore(refId, externalWriterConfig);
-	}
+    public async getRef(
+        refId: string,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.IRef> {
+        return executeApiWithMetric(
+            async () => this.getRefCore(refId, externalWriterConfig),
+            GitRestLumberEventName.GetRef,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.ref]: refId,
+            },
+        );
+    }
 
-	public async getRefs(): Promise<git.IRef[]> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getRefsCore.bind(this),
-					[],
-					GitRestLumberEventName.GetRefs,
-			  )
-			: this.getRefsCore();
-	}
+    public async getRefs(): Promise<git.IRef[]> {
+        return executeApiWithMetric(
+            async () => this.getRefsCore(),
+            GitRestLumberEventName.GetRefs,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            this.lumberjackBaseProperties,
+        );
+    }
 
-	public async createBlob(
-		createBlobParams: git.ICreateBlobParams,
-	): Promise<git.ICreateBlobResponse> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.createBlobCore.bind(this),
-					[createBlobParams],
-					GitRestLumberEventName.CreateBlob,
-			  )
-			: this.createBlobCore(createBlobParams);
-	}
+    public async createBlob(
+        createBlobParams: git.ICreateBlobParams,
+    ): Promise<git.ICreateBlobResponse> {
+        return executeApiWithMetric(
+            async () => this.createBlobCore(createBlobParams),
+            GitRestLumberEventName.CreateBlob,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            this.lumberjackBaseProperties,
+        );
+    }
 
-	public async createTree(params: git.ICreateTreeParams): Promise<git.ITree> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.createTreeCore.bind(this),
-					[params],
-					GitRestLumberEventName.CreateTree,
-			  )
-			: this.createTreeCore(params);
-	}
+    public async createTree(params: git.ICreateTreeParams): Promise<git.ITree> {
+        return executeApiWithMetric(
+            async () => this.createTreeCore(params),
+            GitRestLumberEventName.CreateTree,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            this.lumberjackBaseProperties,
+        );
+    }
 
-	public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.createCommitCore.bind(this),
-					[commit],
-					GitRestLumberEventName.CreateCommit,
-			  )
-			: this.createCommitCore(commit);
-	}
+    public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
+        return executeApiWithMetric(
+            async () => this.createCommitCore(commit),
+            GitRestLumberEventName.CreateCommit,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            this.lumberjackBaseProperties,
+        );
+    }
 
-	public async createRef(
-		createRefParams: git.ICreateRefParams & { force?: boolean },
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.IRef> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.createRefCore.bind(this),
-					[createRefParams, externalWriterConfig],
-					GitRestLumberEventName.CreateRef,
-			  )
-			: this.createRefCore(createRefParams, externalWriterConfig);
-	}
+    public async createRef(
+        createRefParams: git.ICreateRefParams & { force?: boolean },
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.IRef> {
+        return executeApiWithMetric(
+            async () => this.createRefCore(createRefParams, externalWriterConfig),
+            GitRestLumberEventName.CreateRef,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            this.lumberjackBaseProperties,
+        );
+    }
 
-	public async patchRef(
-		refId: string,
-		patchRefParams: git.IPatchRefParams,
-		externalWriterConfig?: IExternalWriterConfig,
-	): Promise<git.IRef> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.patchRefCore.bind(this),
-					[refId, patchRefParams, externalWriterConfig],
-					GitRestLumberEventName.PatchRef,
-					{ [BaseGitRestTelemetryProperties.ref]: refId },
-			  )
-			: this.patchRefCore(refId, patchRefParams, externalWriterConfig);
-	}
+    public async patchRef(
+        refId: string,
+        patchRefParams: git.IPatchRefParams,
+        externalWriterConfig?: IExternalWriterConfig,
+    ): Promise<git.IRef> {
+        return executeApiWithMetric(
+            async () => this.patchRefCore(refId, patchRefParams, externalWriterConfig),
+            GitRestLumberEventName.PatchRef,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.ref]: refId,
+            },
+        );
+    }
 
-	public async deleteRef(refId: string): Promise<void> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.deleteRefCore.bind(this),
-					[refId],
-					GitRestLumberEventName.DeleteRef,
-					{ [BaseGitRestTelemetryProperties.ref]: refId },
-			  )
-			: this.deleteRefCore(refId);
-	}
+    public async deleteRef(refId: string): Promise<void> {
+        return executeApiWithMetric(
+            async () => this.deleteRefCore(refId),
+            GitRestLumberEventName.DeleteRef,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.ref]: refId,
+            },
+        );
+    }
 
-	public async getTag(tagId: string): Promise<git.ITag> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.getTagCore.bind(this),
-					[tagId],
-					GitRestLumberEventName.GetTag,
-					{ [BaseGitRestTelemetryProperties.tag]: tagId },
-			  )
-			: this.getTagCore(tagId);
-	}
+    public async getTag(tagId: string): Promise<git.ITag> {
+        return executeApiWithMetric(
+            async () => this.getTagCore(tagId),
+            GitRestLumberEventName.GetTag,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            {
+                ...this.lumberjackBaseProperties,
+                [BaseGitRestTelemetryProperties.tag]: tagId
+            },
+        );
+    }
 
-	public async createTag(tagParams: git.ICreateTagParams): Promise<git.ITag> {
-		return this.enableRepositoryManagerMetrics
-			? this.executeApiWithMetric(
-					this.createTagCore.bind(this),
-					[tagParams],
-					GitRestLumberEventName.CreateTag,
-			  )
-			: this.createTagCore(tagParams);
-	}
-
-	private async executeApiWithMetric<T extends any[], U>(
-		api: (...args: T) => Promise<U>,
-		apiArgs: T,
-		apiName: string,
-		additionalProperties?: Record<string, any>,
-	): Promise<U> {
-		return executeApiWithMetric(async () => api(...apiArgs), apiName, {
-			...this.lumberjackBaseProperties,
-			...additionalProperties,
-		});
-	}
+    public async createTag(tagParams: git.ICreateTagParams): Promise<git.ITag> {
+        return executeApiWithMetric(
+            async () => this.createTagCore(tagParams),
+            GitRestLumberEventName.CreateTag,
+            GitRestLumberMetricApiCategory.RepositoryManager,
+            this.enableRepositoryManagerMetrics,
+            this.apiMetricsSamplingPeriod,
+            this.lumberjackBaseProperties,
+        );
+    }
 }
