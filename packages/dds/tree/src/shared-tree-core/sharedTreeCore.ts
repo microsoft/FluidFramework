@@ -37,9 +37,13 @@ import {
 	GraphCommit,
 	RepairDataStore,
 	ChangeFamilyEditor,
+	IForestSubscription,
+	UndoRedoManager,
 } from "../core";
-import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { brand, fail, JsonCompatibleReadOnly, TransactionResult } from "../util";
 import { createEmitter, TransformEvents } from "../events";
+import { ForestRepairDataStore } from "../feature-libraries";
+import { StableId } from "../id-compressor";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
 import { EditManagerSummarizer } from "./editManagerSummarizer";
@@ -94,6 +98,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
 > {
 	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
+	private readonly undoRedoManager: UndoRedoManager<TChange, TEditor>;
 	private readonly summarizables: readonly Summarizable[];
 
 	/**
@@ -129,12 +134,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
-
 		// Base class arguments
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
 		telemetryContextPrefix: string,
+		forestProvider: (revision: StableId) => IForestSubscription,
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
 
@@ -145,6 +150,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		const localSessionId = uuid();
 		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
+		this.undoRedoManager = new UndoRedoManager(
+			() => new ForestRepairDataStore(forestProvider),
+			changeFamily,
+			this.applyChange.bind(this),
+		);
 		this.summarizables = [
 			new EditManagerSummarizer(runtime, this.editManager),
 			...summarizables,
@@ -208,6 +218,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, commit.change),
 		};
 		this.submitLocalMessage(message);
+		this.undoRedoManager.trackCommit(commit);
 	}
 
 	/**
@@ -286,6 +297,17 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	/**
+	 * TODO: Return something, prob undo result
+	 */
+	public undo(): void {
+		if (this.isTransacting()) {
+			fail("cannot undo during a transaction");
+		}
+
+		this.undoRedoManager.undo();
+	}
+
+	/**
 	 * Spawns a `SharedTreeBranch` that is based on the current state of the tree.
 	 * This can be used to support asynchronous checkouts of the tree.
 	 */
@@ -314,6 +336,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			new Rebaser(this.changeFamily.rebaser),
 			this.changeFamily,
 			anchors,
+			this.undoRedoManager,
 		);
 		return branch;
 	}

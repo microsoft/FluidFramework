@@ -180,3 +180,5 @@ export {
 } from "./edit-manager";
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
+
+export { UndoRedoManager } from "./undo";

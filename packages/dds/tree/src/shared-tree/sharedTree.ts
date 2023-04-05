@@ -237,6 +237,7 @@ class SharedTree
 			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
 			anchors,
+			() => this.forest,
 			id,
 			runtime,
 			attributes,

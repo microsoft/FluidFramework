@@ -14,9 +14,10 @@ import {
 	mintRevisionTag,
 	Rebaser,
 	RepairDataStore,
+	UndoRedoManager,
 } from "../core";
 import { EventEmitter } from "../events";
-import { TransactionResult } from "../util";
+import { fail, TransactionResult } from "../util";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -37,6 +38,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 > {
 	private head: GraphCommit<TChange>;
 	public readonly editor: TEditor;
+	private readonly undoRedoManager: UndoRedoManager<TChange, TEditor>;
 	private readonly transactions = new TransactionStack();
 	private readonly forks = new Set<SharedTreeBranch<TEditor, TChange>>();
 	private disposed = false;
@@ -48,6 +50,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * It returns the net change to the child branch.
 	 * @param sessionId - the session ID used to author commits made by to this branch
 	 * @param rebaser - a rebaser to rebase this branch's changes when it pulls or merges
+	 * @param parentUndoRedoManager - the {@link UndoRedoManager} to clone off of
 	 */
 	public constructor(
 		private readonly getBaseBranch: () => GraphCommit<TChange>,
@@ -56,6 +59,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private readonly rebaser: Rebaser<TChange>,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
+		parentUndoRedoManager: UndoRedoManager<TChange, TEditor>,
 	) {
 		super();
 		this.head = getBaseBranch();
@@ -63,6 +67,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			(change) => this.applyChange(change, false),
 			anchors,
 		);
+		this.undoRedoManager = parentUndoRedoManager.clone(this.applyChange.bind(this));
 	}
 
 	public applyChange(change: TChange, rebaseAnchors = true): void {
@@ -156,6 +161,17 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
+	 * TODO: Return something, prob undo result
+	 */
+	public undo(): void {
+		if (this.isTransacting()) {
+			fail("cannot undo ");
+		}
+
+		this.undoRedoManager.undo();
+	}
+
+	/**
 	 * Rebase the changes that have been applied to this branch over all the changes in the base branch that have
 	 * occurred since this branch last pulled (or was forked).
 	 * @returns the net change to this branch
@@ -207,6 +223,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.rebaser,
 			this.changeFamily,
 			anchors,
+			this.undoRedoManager,
 		);
 		this.forks.add(fork);
 		return fork;

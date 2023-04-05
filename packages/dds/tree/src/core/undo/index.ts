@@ -3,3 +3,4 @@
  * Licensed under the MIT License.
  */
 
+export { UndoRedoManager } from "./undoRedoManager";
