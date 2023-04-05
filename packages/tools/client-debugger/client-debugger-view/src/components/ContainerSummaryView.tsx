@@ -7,11 +7,16 @@ import { IconButton, IStackItemStyles, Stack, StackItem, TooltipHost } from "@fl
 import { useId } from "@fluentui/react-hooks";
 import {
 	Badge,
+	createTableColumn,
 	Table,
 	TableBody,
 	TableRow,
 	TableCell,
 	TableCellLayout,
+	TableColumnDefinition,
+	TableColumnSizingOptions,
+	useTableFeatures,
+	useTableColumnSizing_unstable,
 } from "@fluentui/react-components";
 import React from "react";
 
@@ -44,6 +49,21 @@ initializeFluentUiIcons();
  */
 export type ContainerSummaryViewProps = HasContainerId;
 
+const columnsDef: TableColumnDefinition<Item>[] = [
+	createTableColumn<Item>({
+		columnId: "containerProperty",
+		renderHeaderCell: () => <>Boi</>,
+	}),
+	createTableColumn<Item>({
+		columnId: "value",
+		renderHeaderCell: () => <>gyal</>,
+	}),
+];
+interface Item {
+	property: string;
+	value: string;
+}
+const items = [];
 /**
  * Debugger view displaying basic Container stats.
  */
@@ -55,6 +75,17 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	const [containerState, setContainerState] = React.useState<
 		ContainerStateMetadata | undefined
 	>();
+	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
+	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
+		containerProperty: {
+			idealWidth: 80,
+			minWidth: 120,
+		},
+	});
+
+	const { columnSizing_unstable, tableRef } = useTableFeatures({ columns, items }, [
+		useTableColumnSizing_unstable({ columnSizingOptions }),
+	]);
 
 	React.useEffect(() => {
 		/**
@@ -144,56 +175,72 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			statusComponents.push(connectionStateToString(containerState.connectionState));
 		}
 	}
-	const statusString = statusComponents.join(" | ");
+	// const statusString = statusComponents.join(" | ");
 
 	return (
-		<Stack className="container-summary-view">
+		<Stack>
 			<StackItem>
-				<Table>
+				<Table size="extra-small" ref={tableRef}>
 					<TableBody>
 						<TableRow>
-							<TableCell>
+							<TableCell
+								{...columnSizing_unstable.getTableCellProps("containerProperty")}
+							>
 								<TableCellLayout>
-									<b>Container</b>:
+									<b>Container</b>
 								</TableCellLayout>
 							</TableCell>
 							<TableCell>
-								<TableCellLayout>
-									{containerState.nickname !== undefined
-										? `${containerState.nickname} (${containerState.id})`
-										: containerState.id}
-								</TableCellLayout>
+								<TableCellLayout>{containerState.id}</TableCellLayout>
 							</TableCell>
 						</TableRow>
 						<TableRow>
 							<TableCell>
 								<TableCellLayout>
-									<b>Status</b>:
+									<b>Status</b>
 								</TableCellLayout>
 							</TableCell>
 							<TableCell>
-								<TableCellLayout>
-									{((): JSX.Element => {
-										switch (statusString) {
-											case "disconnected":
-												return <Badge color="danger">{statusString}</Badge>;
+								<TableCellLayout
+									media={((): JSX.Element => {
+										switch (statusComponents[0]) {
+											case "attaching":
+												return (
+													<Badge shape="rounded" color="warning">
+														{statusComponents[0]}
+													</Badge>
+												);
 											case "detached":
 												return (
-													<Badge color="warning">{statusString}</Badge>
+													<Badge shape="rounded" color="danger">
+														{statusComponents[0]}
+													</Badge>
 												);
 											default:
 												return (
-													<Badge color="success">{statusString}</Badge>
+													<Badge shape="rounded" color="success">
+														{statusComponents[0]}
+													</Badge>
 												);
 										}
 									})()}
+								>
+									{statusComponents[1] === "Connected" ? (
+										<Badge shape="rounded" color="success">
+											{statusComponents[1]}
+										</Badge>
+									) : (
+										<Badge shape="rounded" color="danger">
+											{statusComponents[1]}
+										</Badge>
+									)}
 								</TableCellLayout>
 							</TableCell>
 						</TableRow>
 						<TableRow>
 							<TableCell>
 								<TableCellLayout>
-									<b>Client ID</b>:
+									<b>Client ID</b>
 								</TableCellLayout>
 							</TableCell>
 							<TableCell>
@@ -204,7 +251,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 						<TableRow>
 							<TableCell>
 								<TableCellLayout>
-									<b>Audience ID</b>:
+									<b>Audience ID</b>
 								</TableCellLayout>
 							</TableCell>
 							<TableCell>

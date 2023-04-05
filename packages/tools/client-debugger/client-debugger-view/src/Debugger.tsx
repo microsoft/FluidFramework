@@ -15,11 +15,9 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
-import { FluentProvider } from "@fluentui/react-components";
 import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
 import { useMessageRelay } from "./MessageRelayContext";
-import { getFluentUIThemeToUse } from "./ThemeHelper";
 
 const loggingContext = "INLINE(DebuggerPanel)";
 
@@ -192,42 +190,40 @@ export function FluidClientDebuggers(): React.ReactElement {
 	}
 
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()}>
-			<Stack enableScopedSelectors horizontal styles={stackStyles}>
-				<Stack.Item grow={1} styles={menuStyles}>
-					{/* TODO: button to refresh list of containers */}
-					<MenuSection header="Containers">
-						{containers?.map((container) => (
-							<MenuItem
-								key={container.id}
-								isActive={
-									menuSelection?.type === "containerMenuSelection" &&
-									menuSelection.containerId === container.id
-								}
-								text={container.nickname ?? container.id}
-								onClick={(event): void => {
-									onContainerClicked(`${container.id}`);
-								}}
-							/>
-						))}
-					</MenuSection>
-					<MenuSection header="Telemetry">
+		<Stack enableScopedSelectors horizontal styles={stackStyles}>
+			<Stack.Item grow={1} styles={menuStyles}>
+				{/* TODO: button to refresh list of containers */}
+				<MenuSection header="Containers">
+					{containers?.map((container) => (
 						<MenuItem
-							isActive={menuSelection?.type === "telemetryMenuSelection"}
-							text="See Telemetry"
-							onClick={onTelemetryClicked}
+							key={container.id}
+							isActive={
+								menuSelection?.type === "containerMenuSelection" &&
+								menuSelection.containerId === container.id
+							}
+							text={container.nickname ?? container.id}
+							onClick={(event): void => {
+								onContainerClicked(`${container.id}`);
+							}}
 						/>
-					</MenuSection>
-				</Stack.Item>
-				<Stack.Item grow={5} styles={contentViewStyles}>
-					<div
-						id="debugger-view-content"
-						style={{ width: "100%", height: "100%", overflowY: "auto" }}
-					>
-						{innerView}
-					</div>
-				</Stack.Item>
-			</Stack>
-		</FluentProvider>
+					))}
+				</MenuSection>
+				<MenuSection header="Telemetry">
+					<MenuItem
+						isActive={menuSelection?.type === "telemetryMenuSelection"}
+						text="See Telemetry"
+						onClick={onTelemetryClicked}
+					/>
+				</MenuSection>
+			</Stack.Item>
+			<Stack.Item grow={5} styles={contentViewStyles}>
+				<div
+					id="debugger-view-content"
+					style={{ width: "100%", height: "100%", overflowY: "auto" }}
+				>
+					{innerView}
+				</div>
+			</Stack.Item>
+		</Stack>
 	);
 }

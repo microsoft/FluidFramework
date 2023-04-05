@@ -5,10 +5,11 @@
 import React from "react";
 
 import { IMessageRelay } from "@fluid-tools/client-debugger";
-import { FluentProvider, teamsLightTheme } from "@fluentui/react-components";
+import { FluentProvider } from "@fluentui/react-components";
 
 import { FluidClientDebuggers } from "./Debugger";
 import { MessageRelayContext } from "./MessageRelayContext";
+import { getFluentUIThemeToUse } from "./ThemeHelper";
 
 /**
  * Necessary props to render {@link RootView}.
@@ -28,7 +29,7 @@ export interface RootViewProps {
 export function RootView(props: RootViewProps): React.ReactElement {
 	return (
 		<MessageRelayContext.Provider value={props.messageRelay}>
-			<FluentProvider theme={teamsLightTheme}>
+			<FluentProvider theme={getFluentUIThemeToUse()}>
 				<FluidClientDebuggers />
 			</FluentProvider>
 		</MessageRelayContext.Provider>
