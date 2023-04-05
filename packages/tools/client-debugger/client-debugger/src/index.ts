@@ -45,6 +45,7 @@
 
 export { MemberChangeKind } from "./AudienceMetadata";
 export { ContainerStateChangeKind } from "./Container";
+export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
@@ -68,7 +69,9 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
-export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
+export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
+export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
 export {
 	AudienceChangeLogEntry,
@@ -81,7 +84,7 @@ export {
 	AudienceSummaryMessageData,
 	AudienceSummaryMessage,
 	GetAudienceMessage,
-	debuggerMessageSource,
+	devtoolsMessageSource,
 	HasContainerId,
 	HasFluidObjectId,
 	ConnectContainerMessage,
@@ -90,6 +93,8 @@ export {
 	DisconnectContainerMessageData,
 	CloseContainerMessage,
 	CloseContainerMessageData,
+	ContainerListMessage,
+	ContainerListChangeMessageData,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
@@ -108,8 +113,6 @@ export {
 	IMessageRelayEvents,
 	ISourcedDebuggerMessage,
 	ITimestampedTelemetryEvent,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
 	RootDataVisualizationsMessage,
 	RootDataVisualizationsMessageData,
 	TelemetryEventMessage,
@@ -123,14 +126,3 @@ export {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-export {
-	DebuggerRegistry,
-	DebuggerRegistryEvents,
-	clearDebuggerRegistry,
-	closeFluidClientDebugger,
-	FluidClientDebuggerProps,
-	getDebuggerRegistry,
-	getFluidClientDebugger,
-	getFluidClientDebuggers,
-	initializeFluidClientDebugger,
-} from "./Registry";
