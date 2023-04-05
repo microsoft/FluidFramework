@@ -55,7 +55,6 @@ export {
 	IContext,
 	IContextErrorData,
 	ILogger,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,

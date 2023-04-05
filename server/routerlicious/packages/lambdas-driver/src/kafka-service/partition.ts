@@ -7,7 +7,6 @@ import { EventEmitter } from "events";
 import {
 	IConsumer,
 	IQueuedMessage,
-	IPartitionConfig,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 	ILogger,
@@ -33,15 +32,11 @@ export class Partition extends EventEmitter {
 
 	constructor(
 		private readonly id: number,
-		leaderEpoch: number,
-		factory: IPartitionLambdaFactory<IPartitionConfig>,
+		factory: IPartitionLambdaFactory,
 		consumer: IConsumer,
 		private readonly logger?: ILogger,
 	) {
 		super();
-
-		// Should we pass epoch with the context?
-		const partitionConfig: IPartitionConfig = { leaderEpoch };
 
 		this.checkpointManager = new CheckpointManager(id, consumer);
 		this.context = new Context(this.checkpointManager, this.logger);
@@ -66,7 +61,7 @@ export class Partition extends EventEmitter {
 		}, 1);
 		this.q.pause();
 
-		this.lambdaP = factory.create(partitionConfig, this.context);
+		this.lambdaP = factory.create(undefined, this.context);
 		this.lambdaP.then(
 			(lambda) => {
 				this.lambda = lambda;

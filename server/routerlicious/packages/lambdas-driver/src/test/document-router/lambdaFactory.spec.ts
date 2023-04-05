@@ -5,7 +5,6 @@
 
 import {
 	DefaultServiceConfiguration,
-	IPartitionConfig,
 	IPartitionLambdaFactory,
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
@@ -16,7 +15,7 @@ import { create, TestLambdaFactory } from "./testDocumentLambda";
 
 describe("document-router", () => {
 	describe("DocumentLambdaFactory", () => {
-		let factory: IPartitionLambdaFactory<IPartitionConfig>;
+		let factory: IPartitionLambdaFactory;
 		let testContext: TestContext;
 		let documentFactory: TestLambdaFactory;
 
@@ -31,7 +30,7 @@ describe("document-router", () => {
 
 		describe(".create", () => {
 			it("Should create a new IPartitionLambda", async () => {
-				const lambda = await factory.create({ leaderEpoch: 0 }, testContext);
+				const lambda = await factory.create(undefined, testContext);
 				assert.ok(lambda);
 				lambda.close(LambdaCloseType.Stop);
 			});

@@ -33,11 +33,11 @@ import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionVali
 import { DeliLambda } from "./lambda";
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
 
-const getDefaultCheckpooint = (epoch: number): IDeliState => {
+const getDefaultCheckpoint = (): IDeliState => {
 	return {
 		clients: undefined,
 		durableSequenceNumber: 0,
-		epoch,
+		epoch: 0,
 		expHash1: defaultHash,
 		logOffset: -1,
 		sequenceNumber: 0,
@@ -50,7 +50,7 @@ const getDefaultCheckpooint = (epoch: number): IDeliState => {
 	};
 };
 
-export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory {
+export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaFactory<IPartitionLambdaConfig> {
 	constructor(
 		private readonly operationsDbMongoManager: MongoManager,
 		private readonly documentRepository: IDocumentRepository,
@@ -68,7 +68,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		config: IPartitionLambdaConfig,
 		context: IContext,
 	): Promise<IPartitionLambda> {
-		const { documentId, tenantId, leaderEpoch } = config;
+		const { documentId, tenantId } = config;
 		const sessionMetric = createSessionMetric(
 			tenantId,
 			documentId,
@@ -138,7 +138,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			const message = "New document. Setting empty deli checkpoint";
 			context.log?.info(message, { messageMetaData });
 			Lumberjack.info(message, getLumberBaseProperties(documentId, tenantId));
-			lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
+			lastCheckpoint = getDefaultCheckpoint();
 		} else {
 			if (document.deli === "") {
 				const docExistsMessge = "Existing document. Fetching checkpoint from summary";
@@ -157,7 +157,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					Lumberjack.error(errMsg, getLumberBaseProperties(documentId, tenantId));
 					this.logSessionFailureMetrics(sessionMetric, sessionStartMetric, errMsg);
 
-					lastCheckpoint = getDefaultCheckpooint(leaderEpoch);
+					lastCheckpoint = getDefaultCheckpoint();
 				} else {
 					lastCheckpoint = lastCheckpointFromSummary;
 					// Since the document was originated elsewhere or cache was cleared, logOffset info is irrelavant.
@@ -165,7 +165,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					// is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
 					// the sequence number is 'n' rather than '0'.
 					lastCheckpoint.logOffset = -1;
-					lastCheckpoint.epoch = leaderEpoch;
+					lastCheckpoint.epoch = 0;
 					const message = `Deli checkpoint from summary: ${JSON.stringify(
 						lastCheckpoint,
 					)}`;
@@ -188,7 +188,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 		// For cases such as detached container where the document was generated outside the scope of deli
 		// and checkpoint was written manually.
 		if (lastCheckpoint.epoch === undefined) {
-			lastCheckpoint.epoch = leaderEpoch;
+			lastCheckpoint.epoch = 0;
 			lastCheckpoint.term = 1;
 		}
 

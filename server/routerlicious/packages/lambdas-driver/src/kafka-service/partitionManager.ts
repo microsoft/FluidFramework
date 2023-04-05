@@ -8,7 +8,6 @@ import {
 	IConsumer,
 	IQueuedMessage,
 	IPartition,
-	IPartitionConfig,
 	IPartitionWithEpoch,
 	IPartitionLambdaFactory,
 	ILogger,
@@ -30,7 +29,7 @@ export class PartitionManager extends EventEmitter {
 	private stopped = false;
 
 	constructor(
-		private readonly factory: IPartitionLambdaFactory<IPartitionConfig>,
+		private readonly factory: IPartitionLambdaFactory,
 		private readonly consumer: IConsumer,
 		private readonly logger?: ILogger,
 		listenForConsumerErrors = true,
@@ -176,7 +175,6 @@ export class PartitionManager extends EventEmitter {
 
 			const newPartition = new Partition(
 				partition.partition,
-				partition.leaderEpoch,
 				this.factory,
 				this.consumer,
 				this.logger,
