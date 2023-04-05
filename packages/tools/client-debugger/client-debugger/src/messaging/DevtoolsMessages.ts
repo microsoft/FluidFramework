@@ -9,7 +9,7 @@ import { IDebuggerMessage } from "./Messages";
 // #region Inbound messages
 
 /**
- * Inbound event requesting the list of Container IDs for which Devtools have been registered.
+ * Inbound message requesting the list of Container IDs for which Devtools have been registered.
  * Will result in the {@link ContainerListMessage} message being posted.
  *
  * @public
@@ -38,7 +38,7 @@ export interface ContainerListChangeMessageData {
 }
 
 /**
- * Outbound event containing the list of Container-level devtools instances tracked by the root Devtools.
+ * Outbound message containing the list of Container-level devtools instances tracked by the root Devtools.
  *
  * Includes the new list of active Container IDs associated with active Container Devtools instances.
  *

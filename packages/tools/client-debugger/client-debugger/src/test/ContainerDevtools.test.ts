@@ -23,7 +23,7 @@ describe("ContainerDevtools unit tests", () => {
 		};
 		const devtools = new ContainerDevtools(containerProps);
 
-		// verify audience change in container is reflecting in client debugger
+		// verify audience change in container is reflecting in container devtools
 		const clientId = addAudienceMember(container);
 		expect(container?.audience.getMembers().size).to.equal(1);
 		expect(devtools?.getAudienceHistory().length).to.equal(1);
@@ -46,7 +46,7 @@ describe("ContainerDevtools unit tests", () => {
 		};
 		const devtools = new ContainerDevtools(containerProps);
 
-		// verify container state change in container is reflecting in client debugger
+		// verify state change in container is reflecting in container devtools
 		container.connect();
 
 		expect(devtools.getContainerConnectionLog().length).to.equal(1);

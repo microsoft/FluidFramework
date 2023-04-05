@@ -64,11 +64,11 @@ export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEven
 	 *
 	 * @remarks
 	 *
-	 * Associated tooling may take advantage of this to differentiate between debugger instances using
+	 * Associated tooling may take advantage of this to differentiate between instances using
 	 * semantically meaningful information.
 	 *
-	 * If not provided, the {@link IContainerDevtools.containerId} will be used for the purpose of distinguising
-	 * debugger instances.
+	 * If not provided, the {@link IContainerDevtools.containerId} will be used for the purpose of distinguishing
+	 * instances.
 	 */
 	readonly containerNickname?: string;
 

@@ -45,7 +45,7 @@ import {
  */
 export interface ContainerDevtoolsProps {
 	/**
-	 * The Container with which the debugger will be associated.
+	 * The Container with which the {@link ContainerDevtools} instance will be associated.
 	 */
 	container: IContainer;
 
@@ -63,7 +63,7 @@ export interface ContainerDevtoolsProps {
 	 * Providing this data will enable associated tooling to visualize the Fluid data reachable from the provided
 	 * objects.
 	 *
-	 * The debugger will not mutate this data.
+	 * Fluid DevTools will not mutate this data.
 	 *
 	 * @privateRemarks TODO: rename this to make it more clear that this data does not *belong* to the Container.
 	 */
@@ -76,11 +76,11 @@ export interface ContainerDevtoolsProps {
 	 *
 	 * @remarks
 	 *
-	 * Associated tooling may take advantage of this to differentiate between debugger instances using
+	 * Associated tooling may take advantage of this to differentiate between instances using
 	 * semantically meaningful information.
 	 *
-	 * If not provided, the {@link ContainerDevtoolsProps.containerId} will be used for the purpose of distinguising
-	 * debugger instances.
+	 * If not provided, the {@link ContainerDevtoolsProps.containerId} will be used for the purpose of distinguishing
+	 * instances.
 	 */
 	containerNickname?: string;
 

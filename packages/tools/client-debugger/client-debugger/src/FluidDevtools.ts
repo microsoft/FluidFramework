@@ -48,19 +48,19 @@ export interface FluidDevtoolsProps {
  *
  * @remarks
  *
- * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
+ * This class listens for incoming messages from the window (globalThis), and posts messages to it upon relevant
  * state changes and when requested.
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerListMessage}: When received, the registry will post {@link ContainerListMessage}.
+ * - {@link GetContainerListMessage}: When received, {@link ContainerListMessage} will be posted in response.
  *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
- * - {@link ContainerListMessage}: The registry will post this whenever the list of registered
- * debuggers changes, or when requested (via {@link GetContainerListMessage}).
+ * - {@link ContainerListMessage}: Posted whenever the list of registered
+ * containers changes, or when requested (via {@link GetContainerListMessage}).
  *
  * TODO: Document others as they are added.
  *
@@ -84,7 +84,7 @@ export class FluidDevtools
 	// #region Event handlers
 
 	/**
-	 * Handlers for inbound messages related to the registry.
+	 * Handlers for inbound messages specific to FluidDevTools.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
 		["GET_CONTAINER_LIST"]: () => {
