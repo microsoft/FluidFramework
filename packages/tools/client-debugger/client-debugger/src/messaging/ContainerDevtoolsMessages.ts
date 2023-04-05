@@ -37,11 +37,25 @@ export interface HasFluidObjectId {
 // #region Inbound messages
 
 /**
+ * {@link GetContainerStateMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const GetContainerStateMessageType = "GET_CONTAINER_STATE";
+
+/**
  * Message data format used by {@link GetContainerStateMessage}.
  *
  * @public
  */
 export type GetContainerStateMessageData = HasContainerId;
+
+/**
+ * {@link ConnectContainerMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const ConnectContainerMessageType = "CONNECT_CONTAINER";
 
 /**
  * Message data format used by {@link ConnectContainerMessage}.
@@ -51,11 +65,25 @@ export type GetContainerStateMessageData = HasContainerId;
 export type ConnectContainerMessageData = HasContainerId;
 
 /**
+ * {@link DisconnectContainerMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const DisconnectContainerMessageType = "DISCONNECT_CONTAINER";
+
+/**
  * Message data format used by {@link DisconnectContainerMessage}.
  *
  * @public
  */
 export type DisconnectContainerMessageData = HasContainerId;
+
+/**
+ * {@link CloseContainerMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const CloseContainerMessageType = "CLOSE_CONTAINER";
 
 /**
  * Message data format used by {@link CloseContainerMessage}.
@@ -65,11 +93,25 @@ export type DisconnectContainerMessageData = HasContainerId;
 export type CloseContainerMessageData = HasContainerId;
 
 /**
+ * {@link GetRootDataVisualizationsMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const GetRootDataVisualizationsMessageType = "GET_ROOT_DATA_VISUALIZATIONS";
+
+/**
  * Message data format used by {@link GetRootDataVisualizationsMessage}.
  *
  * @public
  */
 export type GetRootDataVisualizationsMessageData = HasContainerId;
+
+/**
+ * {@link GetDataVisualizationMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const GetDataVisualizationMessageType = "GET_DATA_VISUALIZATION";
 
 /**
  * Message data format used by {@link GetDataVisualizationMessage}.
@@ -89,7 +131,7 @@ export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerI
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "GET_CONTAINER_STATE";
+	type: typeof GetContainerStateMessageType;
 }
 
 /**
@@ -105,7 +147,7 @@ export interface GetRootDataVisualizationsMessage
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "GET_ROOT_DATA_VISUALIZATIONS";
+	type: typeof GetRootDataVisualizationsMessageType;
 }
 
 /**
@@ -120,12 +162,19 @@ export interface GetDataVisualizationMessage
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "GET_DATA_VISUALIZATION";
+	type: typeof GetDataVisualizationMessageType;
 }
 
 // #endregion
 
 // #region Outbound messages
+
+/**
+ * {@link ContainerStateChangeMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const ContainerStateChangeMessageType = "CONTAINER_STATE_CHANGE";
 
 /**
  * Message data format used by {@link ContainerStateChangeMessage}.
@@ -142,6 +191,13 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 }
 
 /**
+ * {@link ContainerStateHistoryMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const ContainerStateHistoryMessageType = "CONTAINER_STATE_HISTORY";
+
+/**
  * Message data format used by {@link ContainerStateHistoryMessage}.
  *
  * @public
@@ -152,6 +208,13 @@ export interface ContainerStateHistoryMessageData extends HasContainerId {
 	 */
 	history: ConnectionStateChangeLogEntry[];
 }
+
+/**
+ * {@link RootDataVisualizationsMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const RootDataVisualizationsMessageType = "ROOT_DATA_VISUALIZATIONS";
 
 /**
  * Message data format used by {@link RootDataVisualizationsMessage}.
@@ -166,6 +229,13 @@ export interface RootDataVisualizationsMessageData extends HasContainerId {
 	 */
 	visualizations: Record<string, RootHandleNode> | undefined;
 }
+
+/**
+ * {@link DataVisualizationMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const DataVisualizationMessageType = "DATA_VISUALIZATION";
 
 /**
  * Message data format used by {@link DataVisualizationMessage}.
@@ -192,7 +262,7 @@ export interface ContainerStateChangeMessage
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "CONTAINER_STATE_CHANGE";
+	type: typeof ContainerStateChangeMessageType;
 }
 
 /**
@@ -204,7 +274,7 @@ export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContain
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "CONNECT_CONTAINER";
+	type: typeof ConnectContainerMessageType;
 }
 
 /**
@@ -217,7 +287,7 @@ export interface DisconnectContainerMessage
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "DISCONNECT_CONTAINER";
+	type: typeof DisconnectContainerMessageType;
 }
 
 /**
@@ -229,7 +299,7 @@ export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMe
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "CLOSE_CONTAINER";
+	type: typeof CloseContainerMessageType;
 }
 
 /**
@@ -242,7 +312,7 @@ export interface ContainerStateHistoryMessage
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "CONTAINER_STATE_HISTORY";
+	type: typeof ContainerStateHistoryMessageType;
 }
 
 /**
@@ -256,7 +326,7 @@ export interface RootDataVisualizationsMessage
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "ROOT_DATA_VISUALIZATIONS";
+	type: typeof RootDataVisualizationsMessageType;
 }
 
 /**
@@ -268,7 +338,7 @@ export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualiza
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "DATA_VISUALIZATION";
+	type: typeof DataVisualizationMessageType;
 }
 
 // #endregion
