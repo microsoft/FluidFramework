@@ -177,6 +177,7 @@ describeNoCompat("Fewer batches", (getTestObjectProvider) => {
 	 */
 	const processOutOfOrderOp = async (featureGates: Record<string, ConfigTypes> = {}) => {
 		await setupContainers(
+			// AB#3983 track work to removing this exception using simulateReadConnectionUsingDelay
 			{ simulateReadConnectionUsingDelay: false, ...testContainerConfig },
 			featureGates,
 		);

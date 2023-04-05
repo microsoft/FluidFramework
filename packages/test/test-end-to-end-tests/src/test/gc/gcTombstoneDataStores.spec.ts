@@ -90,6 +90,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			? testContainerConfigWithFutureMinGcOption
 			: testContainerConfig;
 		return provider.loadTestContainer(
+			// AB#3982 track work to removing this exception using simulateReadConnectionUsingDelay
 			{ simulateReadConnectionUsingDelay: false, ...config },
 			{
 				[LoaderHeader.version]: summaryVersion,
