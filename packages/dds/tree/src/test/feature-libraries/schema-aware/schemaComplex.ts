@@ -37,13 +37,13 @@ export const appSchemaData = SchemaAware.typedSchemaData(
 // Schema aware types
 export type StringTask = SchemaAware.NodeDataFor<
 	typeof appSchemaData,
-	SchemaAware.ApiMode.Normalized,
+	SchemaAware.ApiMode.Editable,
 	typeof stringTaskSchema
 >;
 
 export type ListTask = SchemaAware.NodeDataFor<
 	typeof appSchemaData,
-	SchemaAware.ApiMode.Normalized,
+	SchemaAware.ApiMode.Editable,
 	typeof listTaskSchema
 >;
 

@@ -2,15 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable @typescript-eslint/no-empty-interface */
 
 import {
-	EditableTree,
 	FieldKinds,
 	rootFieldKey,
 	ValueSchema,
 	TypedSchema,
 	SchemaAware,
-	EditableField,
 } from "@fluid-internal/tree";
 
 // Aliases for conciseness
@@ -50,24 +49,20 @@ export const appSchemaData = SchemaAware.typedSchemaData(
 
 type Typed<
 	TSchema extends TypedSchema.LabeledTreeSchema,
-	TMode extends SchemaAware.ApiMode = SchemaAware.ApiMode.Normalized,
+	TMode extends SchemaAware.ApiMode = SchemaAware.ApiMode.Editable,
 > = SchemaAware.NodeDataFor<typeof appSchemaData, TMode, TSchema>;
 
-// TODO: Generate this from schema automatically instead of hand coding it.
-export type Bubble = EditableTree & NormalizedBubble;
+export type Bubble = Typed<typeof bubbleSchema>;
+export type Client = Typed<typeof clientSchema>;
 
-export type NormalizedBubble = Typed<typeof bubbleSchema>;
-export type NormalizedClient = Typed<typeof clientSchema>;
+export type FlexBubble = Typed<typeof bubbleSchema, SchemaAware.ApiMode.Simple>;
+export type FlexClient = Typed<typeof clientSchema, SchemaAware.ApiMode.Simple>;
 
-export type FlexBubble = Typed<typeof bubbleSchema, SchemaAware.ApiMode.Flexible>;
-export type FlexClient = Typed<typeof clientSchema, SchemaAware.ApiMode.Flexible>;
-
-// TODO: Generate this from schema automatically instead of hand coding it.
-export type Client = EditableTree & {
-	clientId: string;
-	color: string;
-	bubbles: EditableField & Bubble[];
-};
-
-// TODO: Generate this from schema automatically instead of hand coding it.
-export type ClientsField = EditableField & Client[];
+// TODO: experiment with this interface pattern. Maybe it makes better intellisense and errors?
+// TODO: Intellisense is pretty bad here if not using interface.
+export interface ClientsField
+	extends SchemaAware.TypedField<
+		typeof appSchemaData,
+		SchemaAware.ApiMode.Editable,
+		typeof rootAppStateSchema
+	> {}

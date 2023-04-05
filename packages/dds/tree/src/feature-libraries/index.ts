@@ -152,3 +152,13 @@ export const FieldKinds: {
 	readonly optional: FieldKind<FieldEditor<any>, Multiplicity.Optional>;
 	readonly sequence: FieldKind<FieldEditor<any>, Multiplicity.Sequence>;
 } = FieldKindsOriginal;
+
+export {
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
+} from "./unknownTree";
