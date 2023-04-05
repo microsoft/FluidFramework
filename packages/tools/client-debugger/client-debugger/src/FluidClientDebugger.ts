@@ -20,7 +20,7 @@ import {
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
-	AudienceClientMetaData,
+	AudienceClientMetadata,
 	AudienceSummaryMessage,
 	GetAudienceMessage,
 	CloseContainerMessage,
@@ -35,6 +35,7 @@ import {
 	postMessagesToWindow,
 	GetDataVisualizationMessage,
 	GetRootDataVisualizationsMessage,
+	AudienceSummaryMessageType,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -327,18 +328,18 @@ export class FluidClientDebugger
 	private readonly postAudienceStateChange = (): void => {
 		const allAudienceMembers = this.container.audience.getMembers();
 
-		const audienceClientMetaData: AudienceClientMetaData[] = [
+		const audienceClientMetadata: AudienceClientMetadata[] = [
 			...allAudienceMembers.entries(),
-		].map(([clientId, client]): AudienceClientMetaData => {
+		].map(([clientId, client]): AudienceClientMetadata => {
 			return { clientId, client };
 		});
 
 		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
-			type: "AUDIENCE_EVENT",
+			type: AudienceSummaryMessageType,
 			data: {
 				containerId: this.containerId,
 				clientId: this.container.clientId,
-				audienceState: audienceClientMetaData,
+				audienceState: audienceClientMetadata,
 				audienceHistory: this.getAudienceHistory(),
 			},
 		});

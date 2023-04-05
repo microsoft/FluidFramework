@@ -46,10 +46,12 @@ export {
 	RegistryChangeMessageData,
 } from "./RegistryMessages";
 export {
-	GetAudienceMessage,
-	AudienceClientMetaData,
-	AudienceSummaryMessageData,
+	AudienceClientMetadata,
 	AudienceSummaryMessage,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessageType,
+	GetAudienceMessage,
+	GetAudienceMessageType,
 } from "./AudienceMessages";
 export {
 	ITimestampedTelemetryEvent,

@@ -28,23 +28,25 @@ export interface AudienceChangeLogEntry extends LogEntry {
 }
 
 // @public
-export interface AudienceClientMetaData {
+export interface AudienceClientMetadata {
     client: IClient;
     clientId: string;
 }
 
 // @public
 export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
-    // (undocumented)
-    type: "AUDIENCE_EVENT";
+    type: typeof AudienceSummaryMessageType;
 }
 
 // @public
 export interface AudienceSummaryMessageData extends HasContainerId {
     audienceHistory: readonly AudienceChangeLogEntry[];
-    audienceState: AudienceClientMetaData[];
+    audienceState: AudienceClientMetadata[];
     clientId: string | undefined;
 }
+
+// @public
+export const AudienceSummaryMessageType = "AUDIENCE_EVENT";
 
 // @internal
 export function clearDebuggerRegistry(): void;
@@ -207,9 +209,11 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 
 // @public
 export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
-    // (undocumented)
-    type: "GET_AUDIENCE";
+    type: typeof GetAudienceMessageType;
 }
+
+// @public
+export const GetAudienceMessageType = "GET_AUDIENCE";
 
 // @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
