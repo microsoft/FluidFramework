@@ -846,11 +846,10 @@ describe("Map", () => {
 				map2 = createConnectedMap("map2", containerRuntimeFactory, options);
 			});
 
-			it("Can retrieve proper attribution information with some normal operations", () => {
+			it("Can retrieve proper attribution information with set/delete key operations", () => {
 				map1.set("key1", 1);
 				map1.set("key2", 2);
 				map2.set("key1", 3);
-				map1.delete("key2");
 
 				containerRuntimeFactory.processSomeMessages(1);
 
@@ -908,6 +907,8 @@ describe("Map", () => {
 					"the second entry of map2 should have correct op-based local attribution",
 				);
 
+				// Delete an entry and check the attribution
+				map1.delete("key2");
 				containerRuntimeFactory.processSomeMessages(1);
 
 				attribution1 = map1.getAttribution("key1");
@@ -921,9 +922,9 @@ describe("Map", () => {
 					"the first entry of map1 should have correct op-based attribution",
 				);
 				assert.equal(
-					attribution2?.type === "op" && attribution2?.seq,
-					4,
-					"the second entry of map1 should have correct op-based local attribution",
+					attribution2,
+					undefined,
+					"the attribution of second entry of map1 should be removed",
 				);
 				assert.equal(
 					attribution3?.type === "op" && attribution3?.seq,
@@ -931,9 +932,9 @@ describe("Map", () => {
 					"the first entry of map2 should have correct op-based attribution",
 				);
 				assert.equal(
-					attribution4?.type === "op" && attribution4?.seq,
-					4,
-					"the second entry of map2 should have correct op-based local attribution",
+					attribution4,
+					undefined,
+					"the attribution of second entry of map2 should be removed",
 				);
 			});
 

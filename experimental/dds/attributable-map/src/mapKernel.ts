@@ -331,7 +331,7 @@ export class AttributableMapKernel {
 	public delete(key: string): boolean {
 		// Delete the key locally first.
 		const previousValue = this.deleteCore(key, true);
-		this.setAttribution(key);
+		this.deleteAttribution(key);
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -399,7 +399,13 @@ export class AttributableMapKernel {
 		}
 	}
 
-	private clearAttribution(): void {
+	private deleteAttribution(key: string): void {
+		if (this.options?.attribution?.track) {
+			this.attribution?.delete(key);
+		}
+	}
+
+	private clearAllAttribution(): void {
 		if (this.options?.attribution?.track) {
 			this.attribution?.clear();
 		}
@@ -704,7 +710,12 @@ export class AttributableMapKernel {
 				if (pendingMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
-				this.setAttribution(op.key, message);
+				// Process the attribution
+				if (op.type === "set") {
+					this.setAttribution(op.key, message);
+				} else {
+					this.deleteAttribution(op.key);
+				}
 			}
 			return false;
 		}
@@ -731,14 +742,14 @@ export class AttributableMapKernel {
 						pendingClearMessageId === localOpMetadata.pendingMessageId,
 						0x2fb /* pendingMessageId does not match */,
 					);
-					this.clearAttribution();
+					this.clearAllAttribution();
 					return;
 				}
 				if (this.pendingKeys.size > 0) {
 					this.clearExceptPendingKeys();
 					return;
 				}
-				this.clearAttribution();
+				this.clearAllAttribution();
 				this.clearCore(local);
 			},
 			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
@@ -767,7 +778,7 @@ export class AttributableMapKernel {
 				if (!this.needProcessKeyOperation(message, local, localOpMetadata)) {
 					return;
 				}
-				this.setAttribution(op.key, message);
+				this.deleteAttribution(op.key);
 				this.deleteCore(op.key, local);
 			},
 			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
