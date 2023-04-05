@@ -10,8 +10,8 @@ import {
 	ITenantManager,
 	IThrottler,
 	ICache,
-	ICollection,
-	IDocument,
+	IDocumentRepository,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -26,27 +26,29 @@ export interface IRoutes {
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	deltaService: IDeltaService,
 	storage: IDocumentStorage,
 	producer: IProducer,
 	appTenants: IAlfredTenant[],
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
+	tokenManager?: ITokenRevocationManager,
 ) {
 	return {
 		api: api.create(
 			config,
 			tenantManager,
-			tenantThrottler,
+			tenantThrottlers,
 			clusterThrottlers,
 			singleUseTokenCache,
 			storage,
 			deltaService,
 			producer,
 			appTenants,
-			documentsCollection,
+			documentRepository,
+			tokenManager,
 		),
 	};
 }

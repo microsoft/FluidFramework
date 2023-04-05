@@ -8,9 +8,7 @@ import util from "util";
 
 import { bufferToString, stringToBuffer } from "@fluidframework/common-utils";
 import { IDocumentService, IDocumentStorageService } from "@fluidframework/driver-definitions";
-import { BlobAggregationStorage } from "@fluidframework/driver-utils";
 import { ISnapshotTree, IVersion } from "@fluidframework/protocol-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
 
 import { formatNumber } from "./fluidAnalyzeMessages";
 import {
@@ -20,7 +18,6 @@ import {
 	paramActualFormatting,
 	paramNumSnapshotVersions,
 	paramSnapshotVersionIndex,
-	paramUnpackAggregatedBlobs,
 } from "./fluidFetchArgs";
 import { latestVersionsId } from "./fluidFetchInit";
 
@@ -290,14 +287,7 @@ export async function fluidFetchSnapshot(documentService?: IDocumentService, sav
 
 	console.log("\n");
 
-	let storage = await documentService.connectToStorage();
-	if (paramUnpackAggregatedBlobs) {
-		storage = BlobAggregationStorage.wrap(
-			storage,
-			new TelemetryNullLogger(),
-			false /* allowPacking */,
-		);
-	}
+	const storage = await documentService.connectToStorage();
 
 	let version: IVersion | undefined;
 	const versions = await reportErrors(

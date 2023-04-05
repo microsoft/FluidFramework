@@ -10,8 +10,8 @@ import {
 	ITenantManager,
 	IThrottler,
 	ICache,
-	ICollection,
-	IDocument,
+	IDocumentRepository,
+	ITokenRevocationManager,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
@@ -32,14 +32,15 @@ import * as alfredRoutes from "./routes";
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
 	appTenants: IAlfredTenant[],
 	deltaService: IDeltaService,
 	producer: IProducer,
-	documentsCollection: ICollection<IDocument>,
+	documentRepository: IDocumentRepository,
+	tokenManager?: ITokenRevocationManager,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
@@ -88,14 +89,15 @@ export function create(
 	const routes = alfredRoutes.create(
 		config,
 		tenantManager,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		deltaService,
 		storage,
 		producer,
 		appTenants,
-		documentsCollection,
+		documentRepository,
+		tokenManager,
 	);
 
 	app.use(routes.api);

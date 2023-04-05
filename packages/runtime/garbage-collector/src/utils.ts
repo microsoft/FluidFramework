@@ -19,6 +19,8 @@ import {
  * Trims the leading and trailing slashes from the given string.
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
@@ -28,6 +30,8 @@ export function trimLeadingAndTrailingSlashes(str: string) {
  * Trims the leading slashes from the given string.
  * @param str - A string that may contain leading slashes.
  * @returns A new string without leading slashes.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function trimLeadingSlashes(str: string) {
 	return str.replace(/^\/+/g, "");
@@ -37,6 +41,8 @@ export function trimLeadingSlashes(str: string) {
  * Trims the trailing slashes from the given string.
  * @param str - A string that may contain trailing slashes.
  * @returns A new string without trailing slashes.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function trimTrailingSlashes(str: string) {
 	return str.replace(/\/+$/g, "");
@@ -46,6 +52,8 @@ export function trimTrailingSlashes(str: string) {
  * Helper function that clones the GC data.
  * @param gcData - The GC data to clone.
  * @returns a clone of the given GC data.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
@@ -61,6 +69,8 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
  * Helper function that unpacks the GC details of the children from a given node's GC details.
  * @param gcDetails - The GC details of a node.
  * @returns A map of GC details of each children of the the given node.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase) {
 	const childGCDetailsMap: Map<string, IGarbageCollectionDetailsBase> = new Map();
@@ -126,6 +136,8 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  * Helper function that unpacks the used routes of children from a given node's used routes.
  * @param usedRoutes - The used routes of a node.
  * @returns A map of used routes of each children of the the given node.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
 	// Remove the node's self used route, if any, and generate the children used routes.
@@ -150,6 +162,8 @@ export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
  * Removes the given route from the outbound routes of all the given GC nodes, and any duplicates
  * @param gcNodes - The nodes from which the route is to be removed.
  * @param outboundRoute - The route to be removed.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function removeRouteFromAllNodes(
 	gcNodes: { [id: string]: string[] },
@@ -166,6 +180,8 @@ export function removeRouteFromAllNodes(
 
 /**
  * Concatenates the given GC states and returns the concatenated GC state.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function concatGarbageCollectionStates(
 	gcState1: IGarbageCollectionState,
@@ -212,6 +228,8 @@ export function concatGarbageCollectionStates(
 
 /**
  * Concatenates the given GC datas and returns the concatenated GC data.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function concatGarbageCollectionData(
 	gcData1: IGarbageCollectionData,
@@ -229,6 +247,9 @@ export function concatGarbageCollectionData(
 	return combinedGCData;
 }
 
+/**
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
+ */
 export class GCDataBuilder implements IGarbageCollectionData {
 	private readonly gcNodesSet: { [id: string]: Set<string> } = {};
 	public get gcNodes(): { [id: string]: string[] } {
@@ -289,6 +310,8 @@ export class GCDataBuilder implements IGarbageCollectionData {
 /**
  * Gets the base garbage collection state from the given snapshot tree. It contains GC state, deleted nodes and
  * tombstones. The GC state may be written into multiple blobs. Merge the GC state from all such blobs into one.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export async function getGCDataFromSnapshot(
 	gcSnapshotTree: ISnapshotTree,

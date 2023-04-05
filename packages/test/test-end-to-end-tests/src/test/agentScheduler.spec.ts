@@ -10,10 +10,10 @@ import {
 	TaskSubscription,
 } from "@fluidframework/agent-scheduler";
 import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
-import { Container } from "@fluidframework/container-loader";
+
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, TestContainerRuntimeFactory } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
 const runtimeFactory: IProvideRuntimeFactory = {
@@ -27,9 +27,11 @@ const runtimeFactory: IProvideRuntimeFactory = {
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
 // mode.  To overcome this and test pick(), we can register a fake task (which always tries to perform
-// a write) so we get nack'd and bumped into write mode.
+// a write) so we get nack'd and bumped into write mode.  Only new task would generate op, so use a counter
+// to make them different.
+let writeModeCount = 0;
 const forceWriteMode = async (scheduler: IAgentScheduler): Promise<void> =>
-	scheduler.register("makeWriteMode");
+	scheduler.register(`makeWriteMode ${writeModeCount++}`);
 
 describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -38,6 +40,11 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 		provider.createContainer(runtimeFactory);
 
 	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
+	const getAgentScheduler = async (container: IContainer): Promise<IAgentScheduler> => {
+		const scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
+		await forceWriteMode(scheduler);
+		return scheduler;
+	};
 
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -48,8 +55,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 
 		beforeEach(async () => {
 			const container = await createContainer();
-			scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
-			await forceWriteMode(scheduler);
+			scheduler = await getAgentScheduler(container);
 		});
 
 		it("No tasks initially", async () => {
@@ -110,13 +116,11 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 		beforeEach(async () => {
 			// Create a new Container for the first document.
 			container1 = await createContainer();
-			scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
-			await forceWriteMode(scheduler1);
+			scheduler1 = await getAgentScheduler(container1);
 
 			// Load existing Container for the second document.
 			container2 = await loadContainer();
-			scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
-			await forceWriteMode(scheduler2);
+			scheduler2 = await getAgentScheduler(container2);
 
 			// const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
 
@@ -241,16 +245,16 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 	});
 
 	describe("State transitions", () => {
-		let container1: Container;
-		let container2: Container;
+		let container1: IContainer;
+		let container2: IContainer;
 		let scheduler1: IAgentScheduler;
 		let scheduler2: IAgentScheduler;
 
 		beforeEach(async () => {
-			container1 = (await createContainer()) as Container;
+			container1 = await createContainer();
 			scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
 
-			container2 = (await loadContainer()) as Container;
+			container2 = await loadContainer();
 			scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
 		});
 
@@ -288,7 +292,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider) => {
 			assert.strict(taskSubscription.haveTask(), "Failed to get task in write mode");
 
 			// Forcing readonly should cause us to drop the task
-			container1.forceReadonly(true);
+			container1.forceReadonly?.(true);
 			await provider.ensureSynchronized();
 
 			assert.strict(!taskSubscription.haveTask(), "Still have task after forcing readonly");

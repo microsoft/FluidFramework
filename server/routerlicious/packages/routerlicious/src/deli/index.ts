@@ -17,7 +17,10 @@ import { Provider } from "nconf";
 import { RedisOptions } from "ioredis";
 import * as winston from "winston";
 
-export async function deliCreate(config: Provider): Promise<core.IPartitionLambdaFactory> {
+export async function deliCreate(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<core.IPartitionLambdaFactory> {
 	const kafkaEndpoint = config.get("kafka:lib:endpoint");
 	const kafkaLibrary = config.get("kafka:lib:name");
 	const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
@@ -39,7 +42,6 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
-
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
@@ -65,6 +67,8 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const collection = await db.collection<core.IDocument>(documentsCollectionName);
+	const documentRepository =
+		customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
 
 	const forwardProducer = services.createProducer(
 		kafkaLibrary,
@@ -133,7 +137,7 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 
 	return new DeliLambdaFactory(
 		operationsDbManager,
-		collection,
+		documentRepository,
 		tenantManager,
 		undefined,
 		combinedProducer,
@@ -143,8 +147,11 @@ export async function deliCreate(config: Provider): Promise<core.IPartitionLambd
 	);
 }
 
-export async function create(config: Provider): Promise<core.IPartitionLambdaFactory> {
+export async function create(
+	config: Provider,
+	customizations?: Record<string, any>,
+): Promise<core.IPartitionLambdaFactory> {
 	// Nconf has problems with prototype methods which prevents us from storing this as a class
 	config.set("documentLambda", { create: deliCreate });
-	return createDocumentRouter(config);
+	return createDocumentRouter(config, customizations);
 }

@@ -11,7 +11,11 @@ import { Changeset, Mark, MoveId, NodeChangeType, Reattach } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, cursor: ITreeCursor | ITreeCursor[]): Changeset<never>;
+	insert(
+		index: number,
+		cursor: ITreeCursor | ITreeCursor[],
+		id: ChangesetLocalId,
+	): Changeset<never>;
 	delete(index: number, count: number): Changeset<never>;
 	revive(
 		index: number,
@@ -34,7 +38,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		count: number,
 		destIndex: number,
 		id: ChangesetLocalId,
-	): [Changeset<never>, Changeset<never>];
+	): [moveOut: Changeset<never>, moveIn: Changeset<never>];
 	return(
 		sourceIndex: number,
 		count: number,
@@ -49,12 +53,17 @@ export const sequenceFieldEditor = {
 		index: number,
 		change: TNodeChange,
 	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
-	insert: (index: number, cursors: ITreeCursor | ITreeCursor[]): Changeset<never> =>
+	insert: (
+		index: number,
+		cursors: ITreeCursor | ITreeCursor[],
+		id: ChangesetLocalId,
+	): Changeset<never> =>
 		markAtIndex(index, {
 			type: "Insert",
 			content: Array.isArray(cursors)
 				? cursors.map(jsonableTreeFromCursor)
 				: [jsonableTreeFromCursor(cursors)],
+			id,
 		}),
 	delete: (index: number, count: number): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count }),
@@ -87,7 +96,7 @@ export const sequenceFieldEditor = {
 		count: number,
 		destIndex: number,
 		id: ChangesetLocalId,
-	): [Changeset<never>, Changeset<never>] {
+	): [moveOut: Changeset<never>, moveIn: Changeset<never>] {
 		const moveOut: Mark<never> = {
 			type: "MoveOut",
 			id,

@@ -37,6 +37,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "nyc npm test:mocha -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:mocha": "mocha dist/**/test/**/*.test.js --unhandled-rejections=strict --reporter-option maxDiffSize=100000",
+		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"tsc": "tsc"
 	},
 	"nyc": {
@@ -68,12 +69,11 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
-		"@fluidframework/build-tools": "0.11.0-135362",
+		"@fluidframework/build-tools": "^0.13.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "^1.2.5",
 		"@fluidframework/test-utils": "^1.2.5",
 		"@microsoft/api-extractor": "^7.34.4",
-		"@trivago/prettier-plugin-sort-imports": "^3.3.0",
 		"@types/chai": "^4",
 		"@types/fs-extra": "^9.0.13",
 		"@types/mocha": "^9.1.1",
@@ -89,6 +89,9 @@
 		"eslint-plugin-chai-friendly": "^0.7.2",
 		"fs-extra": "^10.1.0",
 		"mocha": "^10.0.0",
+		"mocha-json-output-reporter": "^2.0.1",
+		"mocha-multi-reporters": "^1.5.1",
+		"moment": "^2.21.0",
 		"nyc": "^15.0.0",
 		"prettier": "~2.6.2",
 		"rimraf": "^2.6.2",

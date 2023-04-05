@@ -9,17 +9,13 @@ import {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import {
-	ISequencedDocumentMessage,
-	ISummaryTree,
-	SummaryType,
-} from "@fluidframework/protocol-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
-import { mergeStats } from "@fluidframework/runtime-utils";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
@@ -42,10 +38,11 @@ import {
 	RepairDataStore,
 	ChangeFamilyEditor,
 } from "../core";
-import { brand, isReadonlyArray, JsonCompatibleReadOnly, TransactionResult } from "../util";
-import { createEmitter, ISubscribable, TransformEvents } from "../events";
+import { brand, JsonCompatibleReadOnly, TransactionResult } from "../util";
+import { createEmitter, TransformEvents } from "../events";
 import { TransactionStack } from "./transactionStack";
 import { SharedTreeBranch } from "./branch";
+import { EditManagerSummarizer } from "./editManagerSummarizer";
 
 /**
  * The events emitted by a {@link SharedTreeCore}
@@ -58,8 +55,14 @@ export interface ISharedTreeCoreEvents {
 
 // TODO: How should the format version be determined?
 const formatVersion = 0;
+// TODO: Organize this to be adjacent to persisted types.
+const summarizablesTreeKey = "indexes";
 
-export interface IndexEvents<TChangeset> {
+/**
+ * Events which result from the state of the tree changing.
+ * These are for internal use by the tree.
+ */
+export interface ChangeEvents<TChangeset> {
 	/**
 	 * @param change - change that was just sequenced.
 	 * @param derivedFromLocal - iff provided, change was a local change (from this session)
@@ -87,17 +90,11 @@ export interface IndexEvents<TChangeset> {
  * TODO: actually implement
  * TODO: is history policy a detail of what indexes are used, or is there something else to it?
  */
-export class SharedTreeCore<
-	TEditor extends ChangeFamilyEditor,
-	TChange,
-	TIndexes extends readonly Index[],
-> extends SharedObject<TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>> {
+export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends SharedObject<
+	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
+> {
 	private readonly editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>;
-
-	/**
-	 * All {@link SummaryElement}s that are present on any {@link Index}es in this DDS
-	 */
-	private readonly summaryElements: SummaryElement[];
+	private readonly summarizables: readonly Summarizable[];
 
 	/**
 	 * The sequence number that this instance is at.
@@ -107,15 +104,9 @@ export class SharedTreeCore<
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
 
 	/**
-	 * The indexes available to this tree.
-	 * These are declared at construction time.
+	 * Provides internal events that result from changes to the tree
 	 */
-	protected readonly indexes: TIndexes;
-
-	/**
-	 * Provides events that indexes can subscribe to
-	 */
-	private readonly indexEventEmitter = createEmitter<IndexEvents<TChange>>();
+	protected readonly changeEvents = createEmitter<ChangeEvents<TChange>>();
 
 	/**
 	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
@@ -125,7 +116,7 @@ export class SharedTreeCore<
 	private readonly transactions = new TransactionStack();
 
 	/**
-	 * @param indexes - A list of indexes, either as an array or as a factory function
+	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
 	 * @param anchors - The anchor set
@@ -135,12 +126,7 @@ export class SharedTreeCore<
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		indexes:
-			| TIndexes
-			| ((
-					events: ISubscribable<IndexEvents<TChange>>,
-					editManager: EditManager<TChange, ChangeFamily<TEditor, TChange>>,
-			  ) => TIndexes),
+		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
 
@@ -159,14 +145,12 @@ export class SharedTreeCore<
 		 */
 		const localSessionId = uuid();
 		this.editManager = new EditManager(changeFamily, localSessionId, anchors);
-		this.indexes = isReadonlyArray(indexes)
-			? indexes
-			: indexes(this.indexEventEmitter, this.editManager);
-		this.summaryElements = this.indexes
-			.map((i) => i.summaryElement)
-			.filter((e): e is SummaryElement => e !== undefined);
+		this.summarizables = [
+			new EditManagerSummarizer(runtime, this.editManager),
+			...summarizables,
+		];
 		assert(
-			new Set(this.summaryElements.map((e) => e.key)).size === this.summaryElements.length,
+			new Set(this.summarizables.map((e) => e.key)).size === this.summarizables.length,
 			0x350 /* Index summary element keys must be unique */,
 		);
 
@@ -179,48 +163,34 @@ export class SharedTreeCore<
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		let stats = mergeStats();
-		const summary: ISummaryTree = {
-			type: SummaryType.Tree,
-			tree: {},
-		};
-		stats.treeNodeCount += 1;
-
-		// Merge the summaries of all indexes together under a single ISummaryTree
-		const indexSummaryTree: ISummaryTree["tree"] = {};
-		for (const summaryElement of this.summaryElements) {
-			const { stats: elementStats, summary: elementSummary } =
-				summaryElement.getAttachSummary(
+		const builder = new SummaryTreeBuilder();
+		const summarizableBuilder = new SummaryTreeBuilder();
+		// Merge the summaries of all summarizables together under a single ISummaryTree
+		for (const s of this.summarizables) {
+			summarizableBuilder.addWithStats(
+				s.key,
+				s.getAttachSummary(
 					(contents) => serializer.stringify(contents, this.handle),
 					undefined,
 					undefined,
 					telemetryContext,
-				);
-			indexSummaryTree[summaryElement.key] = elementSummary;
-			stats = mergeStats(stats, elementStats);
+				),
+			);
 		}
 
-		summary.tree.indexes = {
-			type: SummaryType.Tree,
-			tree: indexSummaryTree,
-		};
-		stats.treeNodeCount += 1;
-
-		return {
-			stats,
-			summary,
-		};
+		builder.addWithStats(summarizablesTreeKey, summarizableBuilder.getSummaryTree());
+		return builder.getSummaryTree();
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		const loadIndexes = this.summaryElements.map(async (summaryElement) =>
+		const loadSummaries = this.summarizables.map(async (summaryElement) =>
 			summaryElement.load(
-				scopeStorageService(services, "indexes", summaryElement.key),
+				scopeStorageService(services, summarizablesTreeKey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
 			),
 		);
 
-		await Promise.all(loadIndexes);
+		await Promise.all(loadSummaries);
 	}
 
 	private submitCommit(commit: Commit<TChange>): void {
@@ -243,22 +213,27 @@ export class SharedTreeCore<
 	/**
 	 * Update the state of the tree (including all indexes) according to the given change.
 	 * If there is not currently a transaction open, the change will be submitted to Fluid.
+	 * @param change - The change to apply.
+	 * @param revision - The revision to associate with the change.
+	 * Defaults to a new, randomly generated, revision if not provided.
 	 */
-	protected applyChange(change: TChange): void {
-		const revision = mintRevisionTag();
+	protected applyChange(change: TChange, revision?: RevisionTag): void {
 		const commit = {
 			change,
-			revision,
+			revision: revision ?? mintRevisionTag(),
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(revision, change, false);
-		this.transactions.repairStore?.capture(this.changeFamily.intoDelta(change), revision);
+		const delta = this.editManager.addLocalChange(commit.revision, change, false);
+		this.transactions.repairStore?.capture(
+			this.changeFamily.intoDelta(change),
+			commit.revision,
+		);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
 
-		this.indexEventEmitter.emit("newLocalChange", change);
-		this.indexEventEmitter.emit("newLocalState", delta);
+		this.changeEvents.emit("newLocalChange", change);
+		this.changeEvents.emit("newLocalState", delta);
 	}
 
 	protected processCore(
@@ -280,8 +255,8 @@ export class SharedTreeCore<
 			brand(message.referenceSequenceNumber),
 		);
 		const sequencedChange = this.editManager.getLastSequencedChange();
-		this.indexEventEmitter.emit("newSequencedChange", sequencedChange);
-		this.indexEventEmitter.emit("newLocalState", delta);
+		this.changeEvents.emit("newSequencedChange", sequencedChange);
+		this.changeEvents.emit("newLocalState", delta);
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
@@ -302,7 +277,7 @@ export class SharedTreeCore<
 		const { startRevision, repairStore } = this.transactions.pop();
 		this.editor.exitTransaction();
 		const delta = this.editManager.rollbackLocalChanges(startRevision, repairStore);
-		this.indexEventEmitter.emit("newLocalState", delta);
+		this.changeEvents.emit("newLocalState", delta);
 		return TransactionResult.Abort;
 	}
 
@@ -329,8 +304,8 @@ export class SharedTreeCore<
 					ancestor === localBranchHead,
 					0x598 /* Expected merging checkout branches to be related */,
 				);
-				for (const { change } of changes) {
-					this.applyChange(change);
+				for (const { change, revision } of changes) {
+					this.applyChange(change, revision);
 					this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 				}
 				return changeToForked;
@@ -357,8 +332,8 @@ export class SharedTreeCore<
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
 		const gcNodes: IGarbageCollectionData["gcNodes"] = {};
-		for (const summaryElement of this.summaryElements) {
-			for (const [id, routes] of Object.entries(summaryElement.getGCData(fullGC).gcNodes)) {
+		for (const s of this.summarizables) {
+			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {
 					gcNodes[id].push(route);
@@ -391,29 +366,17 @@ interface Message {
 }
 
 /**
- * Observes Changesets (after rebase), after writes data into summaries when requested.
+ * Specifies the behavior of a component that puts data in a summary.
  */
-export interface Index {
-	/**
-	 * If provided, records data into summaries.
-	 */
-	readonly summaryElement?: SummaryElement;
-}
-
-/**
- * Specifies the behavior of an {@link Index} that puts data in a summary.
- */
-export interface SummaryElement {
+export interface Summarizable {
 	/**
 	 * Field name in summary json under which this element stores its data.
-	 *
-	 * TODO: define how this is used (ex: how does user of index consume this before calling loadCore).
 	 */
 	readonly key: string;
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+	 * @param stringify - Serializes the contents of the component (including {@link IFluidHandle}s) for storage.
 	 */
 	getAttachSummary(
 		stringify: SummaryElementStringifier,
@@ -424,7 +387,7 @@ export interface SummaryElement {
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
-	 * @param stringify - Serializes the contents of the index (including {@link IFluidHandle}s) for storage.
+	 * @param stringify - Serializes the contents of the component (including {@link IFluidHandle}s) for storage.
 	 */
 	summarize(
 		stringify: SummaryElementStringifier,
@@ -441,10 +404,10 @@ export interface SummaryElement {
 	getGCData(fullGC?: boolean): IGarbageCollectionData;
 
 	/**
-	 * Allows the index to perform custom loading. The storage service is scoped to this index and therefore
-	 * paths in this index will not collide with those in other indexes, even if they are the same string.
-	 * @param service - Storage used by the index
-	 * @param parse - Parses serialized data from storage into runtime objects for the index
+	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore
+	 * paths in this component will not collide with those in other components, even if they are the same string.
+	 * @param service - Storage used by the component
+	 * @param parse - Parses serialized data from storage into runtime objects for the component
 	 */
 	load(service: IChannelStorageService, parse: SummaryElementParser): Promise<void>;
 }

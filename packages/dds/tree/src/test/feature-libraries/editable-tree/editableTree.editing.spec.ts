@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
 	FieldKey,
-	fieldSchema,
 	GlobalFieldKey,
 	JsonableTree,
 	LocalFieldKey,
@@ -52,7 +51,6 @@ import {
 	float64Schema,
 	Phones,
 	phonesSchema,
-	decimalSchema,
 	personJsonableTree,
 } from "./mockData";
 
@@ -71,10 +69,10 @@ function getTestSchema(fieldKind: FieldKind): SchemaData {
 		value: ValueSchema.Serializable,
 	});
 	return SchemaAware.typedSchemaData(
-		new Map([
-			[rootFieldKey, fieldSchema(FieldKinds.optional, [rootSchemaName])],
-			[globalFieldKey, fieldSchema(fieldKind, [stringSchema.name])],
-		]),
+		[
+			[rootFieldKey, TypedSchema.field(FieldKinds.optional, rootNodeSchema)],
+			[globalFieldKey, TypedSchema.field(fieldKind, stringSchema)],
+		],
 		stringSchema,
 		rootNodeSchema,
 	);
@@ -128,19 +126,21 @@ describe("editable-tree: editing", () => {
 		// polymorphic field supports:
 		// - Float64 schema (number-based)
 		// - Int32 schema (number-based)
-		// - Decimal schema (string-based)
 		// - String schema
 		maybePerson.salary = {
 			[valueSymbol]: "100.1",
-			[typeNameSymbol]: decimalSchema.name,
+			[typeNameSymbol]: stringSchema.name,
 		};
-		// basic primitive data type does match the current node type
+		// unambiguous type
 		maybePerson.salary = "not ok";
-		// basic primitive data type does not match the current node type
+		// ambiguous type since there are multiple options which are numbers:
 		assert.throws(
 			() => (maybePerson.salary = 99.99),
-			(e) => validateAssertionError(e, "unsupported schema for provided primitive"),
-			"Expected exception was not thrown",
+			(e) =>
+				validateAssertionError(
+					e,
+					"data compatible with more than one type allowed by the schema",
+				),
 		);
 		// explicit typing
 		maybePerson.salary = {
@@ -365,7 +365,7 @@ describe("editable-tree: editing", () => {
 
 	it("validates schema of values", async () => {
 		const schemaData = SchemaAware.typedSchemaData(
-			new Map([[rootFieldKey, TypedSchema.field(FieldKinds.value, stringSchema)]]),
+			[[rootFieldKey, TypedSchema.field(FieldKinds.value, stringSchema)]],
 			stringSchema,
 		);
 		const [, trees] = await createSharedTrees(schemaData, [

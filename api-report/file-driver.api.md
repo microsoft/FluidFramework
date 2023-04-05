@@ -62,8 +62,6 @@ export class FileDocumentServiceFactory implements IDocumentServiceFactory {
     // (undocumented)
     createContainer(createNewSummary: ISummaryTree, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(fileURL: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
-    // @deprecated (undocumented)
-    readonly protocolName = "fluid-file:";
 }
 
 // @public (undocumented)

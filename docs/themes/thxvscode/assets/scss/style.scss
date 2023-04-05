@@ -69,8 +69,8 @@ b {
   font-weight: 600;
 }
 
-// This selector adds an external link icon to all external links
-a[href^=http]:not(.no-external-icon)::after
+// This selector adds an external link icon to all external links in the main content
+#main-content p>a[href^=http]:not(.no-external-icon)::after
 {
   content: "";
   width: 16px;

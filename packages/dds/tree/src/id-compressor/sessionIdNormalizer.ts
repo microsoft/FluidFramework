@@ -258,7 +258,7 @@ export class SessionIdNormalizer<TRangeObject> {
 		lastFinal: FinalCompressedId,
 		rangeObject: TRangeObject,
 	): void {
-		assert(lastFinal >= firstFinal, "Malformed normalization range.");
+		assert(lastFinal >= firstFinal, 0x5ae /* Malformed normalization range. */);
 		const [firstLocal, finalRangesObj] =
 			this.idRanges.last() ?? fail("Final IDs must be added to an existing local range.");
 		const [lastLocal, finalRanges] = finalRangesObj;
@@ -332,7 +332,7 @@ export class SessionIdNormalizer<TRangeObject> {
 		count: number,
 		rangeObject: TRangeObject,
 	): void {
-		assert(count >= 1, "Malformed normalization block.");
+		assert(count >= 1, 0x5af /* Malformed normalization block. */);
 		const [firstLocal, [lastLocal, finalRanges]] =
 			this.idRanges.last() ??
 			fail("Final ID block should not be registered before any locals.");

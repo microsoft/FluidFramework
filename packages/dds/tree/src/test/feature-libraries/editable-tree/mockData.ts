@@ -14,6 +14,14 @@ import {
 	ContextuallyTypedNodeDataObject,
 	jsonableTreeFromCursor,
 	cursorFromContextualData,
+	EditableTreeContext,
+	DefaultEditBuilder,
+	ContextuallyTypedNodeData,
+	buildForest,
+	cursorsFromContextualData,
+	defaultSchemaPolicy,
+	getEditableTreeContext,
+	FieldViewSchema,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -24,16 +32,16 @@ import {
 	JsonableTree,
 	symbolFromKey,
 	GlobalFieldKeySymbol,
-	FieldSchema,
 	SchemaData,
+	IEditableForest,
+	SchemaDataAndPolicy,
+	InMemoryStoredSchemaRepository,
+	lookupGlobalFieldSchema,
+	initializeForest,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
 
 export const stringSchema = TypedSchema.tree("String", {
-	value: ValueSchema.String,
-});
-
-export const decimalSchema = TypedSchema.tree("Decimal", {
 	value: ValueSchema.String,
 });
 
@@ -104,13 +112,7 @@ export const personSchema = TypedSchema.tree("Test:Person-1.0.0", {
 		name: TypedSchema.field(FieldKinds.value, stringSchema),
 		age: TypedSchema.field(FieldKinds.optional, int32Schema),
 		adult: TypedSchema.field(FieldKinds.optional, boolSchema),
-		salary: TypedSchema.field(
-			FieldKinds.optional,
-			float64Schema,
-			int32Schema,
-			stringSchema,
-			decimalSchema,
-		),
+		salary: TypedSchema.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
 		friends: TypedSchema.field(FieldKinds.optional, mapStringSchema),
 		address: TypedSchema.field(FieldKinds.optional, addressSchema),
 	},
@@ -144,14 +146,13 @@ export const treeSchema = [
 	addressSchema,
 	mapStringSchema,
 	personSchema,
-	decimalSchema,
 ] as const;
 
 export const fullSchemaData = SchemaAware.typedSchemaData(
-	new Map<GlobalFieldKey, FieldSchema>([
+	[
 		[rootFieldKey, rootPersonSchema],
 		[globalFieldKeySequencePhones, globalFieldSchemaSequencePhones],
-	]),
+	],
 	...treeSchema,
 );
 
@@ -284,9 +285,50 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema(rootField: FieldSchema = rootPersonSchema): SchemaData {
+export function buildTestSchema(rootField: FieldViewSchema = rootPersonSchema): SchemaData {
 	return SchemaAware.typedSchemaData(
-		new Map([...fullSchemaData.globalFieldSchema.entries(), [rootFieldKey, rootField]]),
+		[
+			...(fullSchemaData.globalFieldSchema.entries() as Iterable<
+				[GlobalFieldKey, FieldViewSchema]
+			>),
+			[rootFieldKey, rootField],
+		],
 		...treeSchema,
 	);
+}
+
+export function getReadonlyEditableTreeContext(forest: IEditableForest): EditableTreeContext {
+	// This will error if someone tries to call mutation methods on it
+	const dummyEditor = {} as unknown as DefaultEditBuilder;
+	return getEditableTreeContext(forest, dummyEditor);
+}
+
+export function setupForest(
+	schema: SchemaData,
+	data: ContextuallyTypedNodeData | undefined,
+): IEditableForest {
+	const schemaRepo = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, schema);
+	const forest = buildForest(schemaRepo);
+	const root = cursorsFromContextualData(
+		schemaRepo,
+		lookupGlobalFieldSchema(schemaRepo, rootFieldKey),
+		data,
+	);
+	initializeForest(forest, root);
+	return forest;
+}
+
+export function buildTestTree(
+	data: ContextuallyTypedNodeData | undefined,
+	rootField: FieldViewSchema = rootPersonSchema,
+): EditableTreeContext {
+	const schema: SchemaData = buildTestSchema(rootField);
+	const forest = setupForest(schema, data);
+	const context = getReadonlyEditableTreeContext(forest);
+	return context;
+}
+
+export function buildTestPerson(): readonly [SchemaDataAndPolicy, Person] {
+	const context = buildTestTree(personData);
+	return [context.schema, context.unwrappedRoot as Person];
 }

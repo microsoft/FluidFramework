@@ -8,8 +8,6 @@ export {
 	EditableTree,
 	EditableField,
 	EditableTreeOrPrimitive,
-	isEditableField,
-	isUnwrappedNode,
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
@@ -19,7 +17,11 @@ export {
 	parentField,
 	EditableTreeEvents,
 	on,
-} from "./editableTree";
+	contextSymbol,
+} from "./editableTreeTypes";
+
+export { isEditableField } from "./editableField";
+export { isUnwrappedNode } from "./editableTree";
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
