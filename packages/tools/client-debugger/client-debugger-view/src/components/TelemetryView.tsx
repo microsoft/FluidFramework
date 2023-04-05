@@ -19,6 +19,9 @@ import {
 	ITimestampedTelemetryEvent,
 	TelemetryHistoryMessage,
 	TelemetryEventMessage,
+	TelemetryEventMessageType,
+	TelemetryHistoryMessageType,
+	GetTelemetryHistoryMessageType,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
@@ -73,7 +76,7 @@ export function TelemetryView(): React.ReactElement {
 		 * Handlers for inbound messages related to telemetry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["TELEMETRY_EVENT"]: (untypedMessage) => {
+			[TelemetryEventMessageType]: (untypedMessage) => {
 				const message: TelemetryEventMessage = untypedMessage as TelemetryEventMessage;
 				setTelemetryEvents((currentEvents) => [
 					...message.data.contents,
@@ -81,7 +84,7 @@ export function TelemetryView(): React.ReactElement {
 				]);
 				return true;
 			},
-			["TELEMETRY_HISTORY"]: (untypedMessage) => {
+			[TelemetryHistoryMessageType]: (untypedMessage) => {
 				const message: TelemetryHistoryMessage = untypedMessage as TelemetryHistoryMessage;
 				setTelemetryEvents(message.data.contents);
 				return true;
@@ -97,7 +100,7 @@ export function TelemetryView(): React.ReactElement {
 
 		// Request all log history
 		messageRelay.postMessage({
-			type: "GET_TELEMETRY_HISTORY",
+			type: GetTelemetryHistoryMessageType,
 			data: undefined,
 		});
 
