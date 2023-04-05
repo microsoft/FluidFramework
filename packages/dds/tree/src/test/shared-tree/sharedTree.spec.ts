@@ -580,7 +580,7 @@ describe("SharedTree", () => {
 	});
 
 	describe("Events", () => {
-		it("triggers events for changes", async () => {
+		it("triggers events for local and subtree changes", async () => {
 			const value = "42";
 			const provider = await TestTreeProvider.create(1);
 			const [tree1] = provider.trees;
@@ -598,6 +598,7 @@ describe("SharedTree", () => {
 
 			const log: string[] = [];
 			const unsubscribe = root[on]("changing", () => log.push("change"));
+			const unsubscribeSubtree = root[on]("subtreeChanging", () => log.push("subtree"));
 			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root[valueSymbol] = 5;
@@ -605,16 +606,69 @@ describe("SharedTree", () => {
 			root[valueSymbol] = 6;
 			log.push("unsubscribe");
 			unsubscribe();
+			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
 			root[valueSymbol] = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
+				"subtree",
 				"change",
 				"after",
 				"editStart",
+				"subtree",
 				"change",
+				"after",
+				"unsubscribe",
+				"editStart",
+			]);
+		});
+
+		it("propagates path and value args for local and subtree changes", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(1);
+			const [tree1] = provider.trees;
+			tree1.storedSchema.update({
+				globalFieldSchema: new Map([
+					[globalFieldKey, fieldSchema(FieldKinds.value, [testValueSchema.name])],
+				]),
+				treeSchema: new Map([[testValueSchema.name, testValueSchema]]),
+			});
+
+			// Insert node
+			pushTestValue(tree1, value);
+
+			const root = tree1.context.root.getNode(0);
+
+			const log: string[] = [];
+			const unsubscribe = root[on]("changing", (upPath, value) =>
+				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}-${value}`),
+			);
+			const unsubscribeSubtree = root[on]("subtreeChanging", (upPath) =>
+				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`),
+			);
+			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
+
+			log.push("editStart");
+			root[valueSymbol] = 5;
+			log.push("editStart");
+			root[valueSymbol] = 6;
+			log.push("unsubscribe");
+			unsubscribe();
+			unsubscribeSubtree();
+			unsubscribeAfter();
+			log.push("editStart");
+			root[valueSymbol] = 7;
+
+			assert.deepEqual(log, [
+				"editStart",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0-5",
+				"after",
+				"editStart",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0-6",
 				"after",
 				"unsubscribe",
 				"editStart",
