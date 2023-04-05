@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IContainer, IHostLoader, IFluidCodeDetails } from "@fluidframework/container-definitions";
+import {
+	IContainer,
+	IHostLoader,
+	IFluidCodeDetails,
+	LoaderHeader,
+} from "@fluidframework/container-definitions";
 import {
 	ITelemetryGenericEvent,
 	ITelemetryBaseLogger,
@@ -377,10 +382,37 @@ export class TestObjectProvider implements ITestObjectProvider {
 		requestHeader?: IRequestHeader,
 	): Promise<IContainer> {
 		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
-		return loader.resolve({
+
+		// Once ADO#3889 is done to switch default connection mode to "read" on load, we don't need
+		// to load "delayed" across the board. Remove the following code.
+		const delayConnection =
+			requestHeader === undefined || requestHeader[LoaderHeader.reconnect] !== false;
+		const headers: IRequestHeader = delayConnection
+			? {
+					[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+					...requestHeader,
+			  }
+			: requestHeader;
+
+		const container = await loader.resolve({
 			url: await this.driver.createContainerUrl(this.documentId),
-			headers: requestHeader,
+			headers,
 		});
+
+		// Once ADO#3889 is done to switch default connection mode to "read" on load, we don't need
+		// to load "delayed" across the board. Remove the following code.
+		if (delayConnection) {
+			// Older version may not have connect, use resume instead.
+			const maybeContainer = container as Partial<IContainer>;
+			if (maybeContainer.connect !== undefined) {
+				container.connect();
+			} else {
+				// back compat
+				(container as any).resume();
+			}
+		}
+
+		return container;
 	}
 
 	/**

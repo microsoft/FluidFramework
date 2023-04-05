@@ -89,16 +89,31 @@ export interface ISubscribable<E extends Events<E>> {
 }
 
 /**
- * An object which can emit events to subscribed listeners.
+ * Interface for an event emitter that can emit typed events to subscribed listeners.
  * @alpha
  */
 export interface IEmitter<E extends Events<E>> {
 	/**
-	 * Fire the given event, notifying all subscribers by calling their registered listener functions.
+	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
 	 * @param eventName - the name of the event to fire
 	 * @param args - the arguments passed to the event listener functions
 	 */
 	emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+
+	/**
+	 * Emits an event with the specified name and arguments, notifying all subscribers by calling their registered listener functions.
+	 * It also collects the return values of all listeners into an array.
+	 *
+	 * Warning: This method should be used with caution. It deviates from the standard event-based integration pattern as creates substantial coupling between the emitter and its listeners.
+	 * For the majority of use-cases it is recommended to use the standard {@link IEmitter.emit} functionality.
+	 * @param eventName - the name of the event to fire
+	 * @param args - the arguments passed to the event listener functions
+	 * @returns - An array of the return values of each listener, preserving the order listeners were called.
+	 */
+	emitAndCollect<K extends keyof Events<E>>(
+		eventName: K,
+		...args: Parameters<E[K]>
+	): ReturnType<E[K]>[];
 }
 
 /**
@@ -168,7 +183,7 @@ export interface HasListeners<E extends Events<E>> {
  * ```
  */
 export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasListeners<E> {
-	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => void>>();
+	private readonly listeners = new Map<keyof E, Set<(...args: unknown[]) => any>>();
 
 	// Because this is protected and not public, calling this externally (not from a subclass) makes sending events to the constructed instance impossible.
 	// Instead, use the static `create` function to get an instance which allows emitting events.
@@ -182,6 +197,22 @@ export class EventEmitter<E extends Events<E>> implements ISubscribable<E>, HasL
 				listener(...argArray);
 			}
 		}
+	}
+
+	protected emitAndCollect<K extends keyof Events<E>>(
+		eventName: K,
+		...args: Parameters<E[K]>
+	): ReturnType<E[K]>[] {
+		const listeners = this.listeners.get(eventName);
+		if (listeners !== undefined) {
+			const argArray: unknown[] = args;
+			const resultArray: ReturnType<E[K]>[] = [];
+			for (const listener of listeners.values()) {
+				resultArray.push(listener(...argArray));
+			}
+			return resultArray;
+		}
+		return [];
 	}
 
 	/**
@@ -228,5 +259,12 @@ class ComposableEventEmitter<E extends Events<E>> extends EventEmitter<E> implem
 
 	public override emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void {
 		return super.emit(eventName, ...args);
+	}
+
+	public override emitAndCollect<K extends keyof Events<E>>(
+		eventName: K,
+		...args: Parameters<E[K]>
+	): ReturnType<E[K]>[] {
+		return super.emitAndCollect(eventName, ...args);
 	}
 }

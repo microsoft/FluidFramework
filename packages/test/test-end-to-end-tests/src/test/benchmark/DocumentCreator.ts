@@ -16,7 +16,7 @@ import {
 } from "@fluid-tools/benchmark";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { DocumentMap } from "./DocumentMap";
-import { DocumentMultipleDds } from "./DocumentMultipleDds";
+import { DocumentMultipleDds } from "./DocumentMultipleDataStores";
 
 export interface IDocumentCreatorProps {
 	testName: string;
@@ -74,12 +74,13 @@ export function createDocument(props: IDocumentCreatorProps): IDocumentLoaderAnd
 }
 
 export interface IBenchmarkParameters {
+	readonly minSampleCount?: number;
 	readonly run: () => Promise<void>;
 	readonly beforeIteration?: () => void;
 	readonly afterIteration?: () => void;
 	readonly before?: () => void;
 	readonly after?: () => void;
-	readonly onCycle?: () => void;
+	readonly beforeEachBatch?: () => void;
 }
 /**
  * In order to share the files between memory and benchmark tests, we need to create a test object that can be passed and used
@@ -106,7 +107,10 @@ export function benchmarkAll<T extends IBenchmarkParameters>(title: string, obj:
 		benchmarkFnAsync: obj.run.bind(obj),
 		before: obj.before?.bind(obj),
 		after: obj.after?.bind(obj),
-		onCycle: obj.onCycle?.bind(obj),
+		beforeEachBatch: obj.beforeEachBatch?.bind(obj),
 	};
+	if (obj.minSampleCount !== undefined) {
+		t1.minBatchCount = obj.minSampleCount;
+	}
 	benchmark(t1);
 }

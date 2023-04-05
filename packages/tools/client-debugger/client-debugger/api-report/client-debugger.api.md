@@ -13,6 +13,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
+import { ISharedObject } from '@fluidframework/shared-object-base';
 import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITelemetryLoggerPropertyBags } from '@fluidframework/telemetry-utils';
@@ -162,6 +163,7 @@ export interface FluidClientDebuggerProps {
     containerData?: Record<string, IFluidLoadable>;
     containerId: string;
     containerNickname?: string;
+    dataVisualizers?: Record<string, VisualizeSharedObject>;
 }
 
 // @internal @sealed
@@ -407,6 +409,12 @@ export interface ValueNodeBase extends VisualNodeBase {
 
 // @public
 export type VisualChildNode = VisualTreeNode | VisualValueNode | FluidHandleNode | UnknownObjectNode;
+
+// @public
+export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
+
+// @public
+export type VisualizeSharedObject = (sharedObject: ISharedObject, visualizeChildData: VisualizeChildData) => Promise<FluidObjectNode>;
 
 // @public
 export type VisualNode = VisualTreeNode | VisualValueNode | FluidHandleNode | FluidObjectTreeNode | FluidObjectValueNode | FluidUnknownObjectNode | UnknownObjectNode;
