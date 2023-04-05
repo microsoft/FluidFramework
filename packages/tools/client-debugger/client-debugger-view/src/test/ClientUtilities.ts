@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, FluidContainer, IFluidContainer } from "@fluidframework/fluid-static";
+import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	ITelemetryBaseLogger,
 	TinyliciousClient,
 	TinyliciousContainerServices,
 } from "@fluidframework/tinylicious-client";
-
-import { initializeFluidClientDebugger as initializeFluidClientDebuggerBase } from "@fluid-tools/client-debugger";
 
 /**
  * This module contains Fluid Client utilities, including Container creation / loading.
@@ -153,19 +151,3 @@ export async function loadExistingFluidContainer(
 		containerNickname,
 	};
 }
-
-/**
- * Initializes the Fluid Client debugger using the current session Container info.
- */
-export function initializeFluidClientDebugger(containerInfo: ContainerInfo): void {
-	initializeFluidClientDebuggerBase({
-		containerId: containerInfo.containerId,
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		container: (containerInfo.container as FluidContainer).INTERNAL_CONTAINER_DO_NOT_USE!(),
-		containerData: containerInfo.container.initialObjects,
-		containerNickname: containerInfo.containerNickname,
-	});
-}
-
-// Convenience re-export, since no adapter logic is required for clean-up
-export { closeFluidClientDebugger } from "@fluid-tools/client-debugger";

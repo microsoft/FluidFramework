@@ -142,7 +142,7 @@ export class DataVisualizerGraph
 
 	public constructor(
 		/**
-		 * {@inheritDoc IFluidClientDebugger.containerData}
+		 * {@inheritDoc IContainerDevtools.containerData}
 		 */
 		private readonly rootData: Record<string, IFluidLoadable>,
 

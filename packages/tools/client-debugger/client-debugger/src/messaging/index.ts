@@ -13,7 +13,7 @@
  * by the Fluid Client Debugger.
  */
 
-export { debuggerMessageSource } from "./Constants";
+export { devtoolsMessageSource } from "./Constants";
 export {
 	HasContainerId,
 	HasFluidObjectId,
@@ -37,14 +37,14 @@ export {
 	GetRootDataVisualizationsMessageData,
 	RootDataVisualizationsMessage,
 	RootDataVisualizationsMessageData,
-} from "./DebuggerMessages";
+} from "./ContainerDevtoolsMessages";
 export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
-} from "./RegistryMessages";
+	ContainerListMessage,
+	ContainerListChangeMessageData,
+} from "./DevtoolsMessages";
 export {
 	GetAudienceMessage,
 	AudienceClientMetaData,
