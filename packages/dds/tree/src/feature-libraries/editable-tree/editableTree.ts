@@ -316,10 +316,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 	): () => void {
 		switch (eventName) {
 			case "changing": {
-				const unsubscribeFromValueChange = this.anchorNode.on(
-					"valueChanging",
-					(anchorNode: AnchorNode, value: Value) => listener(anchorNode, value),
-				);
+				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
 					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
@@ -332,13 +329,9 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => {
-						return (listener as EditableTreeEvents["subtreeChanging"])(anchorNode);
-					},
+					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
 				);
-				return () => {
-					unsubscribeFromSubtreeChange();
-				};
+				return unsubscribeFromSubtreeChange;
 			}
 			default:
 				unreachableCase(eventName);
