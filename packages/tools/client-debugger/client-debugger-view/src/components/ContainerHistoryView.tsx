@@ -8,79 +8,82 @@ import React from "react";
 import {
 	ConnectionStateChangeLogEntry,
 	ContainerStateChangeKind,
+	ContainerStateHistoryMessage,
+	handleIncomingMessage,
+	HasContainerId,
+	ISourcedDebuggerMessage,
+	InboundHandlers,
 } from "@fluid-tools/client-debugger";
-
-import { HasClientDebugger } from "../CommonProps";
+import { useMessageRelay } from "../MessageRelayContext";
+import { Waiting } from "./Waiting";
 
 /**
- * {@link ContainerHistory} input props.
+ * {@link ContainerHistoryView} input props.
  */
-export type ContainerHistoryProps = HasClientDebugger;
+export type ContainerHistoryProps = HasContainerId;
 
 /**
- * Displays information about the provided {@link IFluidClientDebugger.getContainerConnectionLog}.
+ * Displays information about the container state history.
  *
  * @param props - See {@link ContainerHistoryViewProps}.
  */
 export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactElement {
-	const { clientDebugger } = props;
-	const { container } = clientDebugger;
+	const { containerId } = props;
+	const messageRelay = useMessageRelay();
 
 	const [containerHistory, setContainerHistory] = React.useState<
-		readonly ConnectionStateChangeLogEntry[]
-	>(clientDebugger.getContainerConnectionLog());
+		readonly ConnectionStateChangeLogEntry[] | undefined
+	>();
 
 	React.useEffect(() => {
-		function onContainerHistoryChanged(): void {
-			setContainerHistory(clientDebugger.getContainerConnectionLog());
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			["CONTAINER_STATE_HISTORY"]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateHistoryMessage;
+				if (message.data.containerId === containerId) {
+					setContainerHistory(message.data.history);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the webpage.
+		 */
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: "ContainerHistoryView", // TODO: Fix
+			});
 		}
 
-		container.on("attached", onContainerHistoryChanged);
-		container.on("connected", onContainerHistoryChanged);
-		container.on("disconnected", onContainerHistoryChanged);
-		container.on("disposed", onContainerHistoryChanged);
-		container.on("closed", onContainerHistoryChanged);
+		messageRelay.on("message", messageHandler);
+
+		// Reset state with Container data, to ensure we aren't displaying stale data (for the wrong container) while we
+		// wait for a response to the message sent below. Especially relevant for the Container-related views because this
+		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
+		// eslint-disable-next-line unicorn/no-useless-undefined
+		setContainerHistory(undefined);
+
+		// Request state info for the newly specified containerId
+		messageRelay.postMessage({
+			type: "GET_CONTAINER_STATE",
+			data: {
+				containerId,
+			},
+		});
 
 		return (): void => {
-			container.off("attached", onContainerHistoryChanged);
-			container.off("connected", onContainerHistoryChanged);
-			container.off("disconnected", onContainerHistoryChanged);
-			container.off("disposed", onContainerHistoryChanged);
-			container.off("closed", onContainerHistoryChanged);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [clientDebugger, container, setContainerHistory]);
+	}, [containerId, messageRelay, setContainerHistory]);
 
-	return (
-		<Stack
-			styles={{
-				root: {
-					height: "100%",
-				},
-			}}
-		>
-			<StackItem>
-				<h3>Container State History</h3>
-				<_ContainerHistoryView containerHistory={containerHistory} />
-			</StackItem>
-		</Stack>
-	);
-}
+	if (containerHistory === undefined) {
+		return <Waiting label="Waiting for Container Summary data." />;
+	}
 
-/**
- * Input props for {@link _ContainerHistoryView}
- */
-export interface _ContainerHistoryViewProps {
-	/**
-	 * The connection state history of the container.
-	 */
-	containerHistory: readonly ConnectionStateChangeLogEntry[];
-}
-
-/**
- * Displays a container's history of connection state changes.
- */
-export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React.ReactElement {
-	const { containerHistory } = props;
 	const nowTimeStamp = new Date();
 	const historyViews: React.ReactElement[] = [];
 
@@ -163,12 +166,23 @@ export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React.
 		<Stack
 			styles={{
 				root: {
-					overflowY: "auto",
-					height: "300px",
+					height: "100%",
 				},
 			}}
 		>
-			<div style={{ overflowY: "scroll" }}>{historyViews}</div>
+			<StackItem>
+				<h3>Container State History</h3>
+				<Stack
+					styles={{
+						root: {
+							overflowY: "auto",
+							height: "300px",
+						},
+					}}
+				>
+					<div style={{ overflowY: "scroll" }}>{historyViews}</div>
+				</Stack>
+			</StackItem>
 		</Stack>
 	);
 }

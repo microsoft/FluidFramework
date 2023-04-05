@@ -15,10 +15,9 @@ module.exports = {
 	},
 	overrides: [
 		{
-			// Rules only for reporter files. They are expected to run only in node so libraries can be used.
-			files: ["src/MochaMemoryTestReporter.ts", "src/Reporter.ts"],
+			files: ["src/test/**"],
 			rules: {
-				"import/no-nodejs-modules": ["error", { allow: ["fs", "path"] }],
+				"import/no-nodejs-modules": "off",
 			},
 		},
 	],

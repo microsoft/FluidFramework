@@ -7,6 +7,7 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
+	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -21,13 +22,15 @@ import {
 	AnchorNode,
 	IEditableForest,
 	AnchorSetRootEvents,
+	symbolFromKey,
+	GlobalFieldKey,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	EditableTreeContext,
-	ForestIndex,
-	SchemaIndex,
+	ForestSummarizer,
+	SchemaSummarizer as SchemaSummarizer,
 	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultEditBuilder,
@@ -35,15 +38,16 @@ import {
 	getEditableTreeContext,
 	SchemaEditor,
 	DefaultChangeset,
-	EditManagerIndex,
 	buildForest,
 	ContextuallyTypedNodeData,
-	ModularChangeset,
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
+	IdentifierIndex,
+	EditableTree,
+	Identifier,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
-import { TransactionResult } from "../util";
+import { brand, TransactionResult } from "../util";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -167,6 +171,11 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	/**
+	 * A map of nodes that have been recorded by the identifier index.
+	 */
+	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
 }
 
 /**
@@ -205,22 +214,32 @@ export interface ISharedTreeFork extends ISharedTreeView {
 export interface ISharedTree extends ISharedObject, ISharedTreeView {}
 
 /**
+ * The key for the special identifier field, which allows nodes to be given identifiers that can be used
+ * to find the nodes via the identifier index
+ * @alpha
+ */
+export const identifierKey: GlobalFieldKey = brand("identifier");
+
+/**
+ * The global field key symbol that corresponds to {@link identifierKey}
+ * @alpha
+ */
+export const identifierKeySymbol = symbolFromKey(identifierKey);
+
+/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  * TODO: node identifier index.
  *
  * TODO: detail compatibility requirements.
  */
 class SharedTree
-	extends SharedTreeCore<
-		DefaultEditBuilder,
-		DefaultChangeset,
-		readonly [SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
-	>
+	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+	public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>;
 	public readonly transaction: ISharedTreeView["transaction"];
 
 	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
@@ -237,16 +256,10 @@ class SharedTree
 		const anchors = new AnchorSet();
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schema);
+		const forestSummarizer = new ForestSummarizer(runtime, forest);
 		super(
-			(events, editManager) => {
-				const indexes = [
-					new SchemaIndex(runtime, events, schema),
-					new ForestIndex(runtime, events, forest),
-					new EditManagerIndex(runtime, editManager),
-				] as const;
-				events.on("newLocalState", () => this.events.emit("afterBatch"));
-				return indexes;
-			},
+			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
 			anchors,
 			id,
@@ -267,6 +280,11 @@ class SharedTree
 		};
 
 		this.context = getEditableTreeContext(forest, this.editor);
+		this.identifiedNodes = new IdentifierIndex(identifierKey);
+		this.changeEvents.on("newLocalState", (changeDelta) => {
+			this.forest.applyDelta(changeDelta);
+			this.finishBatch();
+		});
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -283,11 +301,17 @@ class SharedTree
 
 	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
+		const branch = this.createBranch(anchors);
+		const schema = this.storedSchema.inner.clone();
+		const forest = this.forest.clone(schema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
-			this.createBranch(anchors),
+			branch,
 			defaultChangeFamily,
-			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, anchors),
+			schema,
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 
@@ -308,6 +332,17 @@ class SharedTree
 		if (!this.storedSchema.tryHandleOp(message)) {
 			super.processCore(message, local, localOpMetadata);
 		}
+	}
+
+	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+		await super.loadCore(services);
+		this.finishBatch();
+	}
+
+	/** Finish a batch (see {@link ViewEvents}) */
+	private finishBatch(): void {
+		this.identifiedNodes.scanIdentifiers(this.context);
+		this.events.emit("afterBatch");
 	}
 }
 
@@ -344,18 +379,19 @@ export class SharedTreeFactory implements IChannelFactory {
 
 class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
-	public readonly context: EditableTreeContext;
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
+		public readonly context: EditableTreeContext,
+		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		this.context = getEditableTreeContext(forest, this.editor);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
+			this.identifiedNodes.scanIdentifiers(this.context);
 			this.events.emit("afterBatch");
 		});
 	}
@@ -384,13 +420,18 @@ class SharedTreeFork implements ISharedTreeFork {
 	}
 
 	public fork(): ISharedTreeFork {
-		const storedSchema = this.storedSchema.clone();
 		const anchors = new AnchorSet();
+		const branch = this.branch.fork(anchors);
+		const storedSchema = this.storedSchema.clone();
+		const forest = this.forest.clone(storedSchema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
 		return new SharedTreeFork(
-			this.branch.fork(anchors),
+			branch,
 			this.changeFamily,
 			storedSchema,
-			this.forest.clone(storedSchema, anchors),
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 

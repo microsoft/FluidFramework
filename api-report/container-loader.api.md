@@ -44,7 +44,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @internal (undocumented)
+// @internal @deprecated (undocumented)
 export interface IContainerConfig {
     // (undocumented)
     canReconnect?: boolean;
@@ -54,7 +54,7 @@ export interface IContainerConfig {
     serializedContainerState?: IPendingContainerState;
 }
 
-// @public (undocumented)
+// @internal @deprecated (undocumented)
 export interface IContainerLoadOptions {
     canReconnect?: boolean;
     clientDetailsOverride?: IClientDetails;
@@ -106,7 +106,7 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @internal
+// @internal @deprecated
 export interface IPendingContainerState {
     baseSnapshot: ISnapshotTree;
     // (undocumented)
@@ -129,7 +129,7 @@ export interface IProtocolHandler extends IProtocolHandler_2 {
     processSignal(message: ISignalMessage): any;
 }
 
-// @internal
+// @internal @deprecated
 export interface ISerializableBlobContents {
     // (undocumented)
     [id: string]: string;

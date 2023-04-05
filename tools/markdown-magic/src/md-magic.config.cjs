@@ -49,10 +49,12 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 
 	const sectionBody = [];
 	sectionBody.push("You can run this example using the following steps:\n");
-	sectionBody.push("1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.");
-	sectionBody.push(`1. Run \`pnpm install\` and \`npm run build:fast -- --nolint\` from the \`FluidFramework\` root directory.
+	sectionBody.push(
+		"1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.",
+	);
+	sectionBody.push(`1. Run \`pnpm install\` and \`pnpm run build:fast --nolint\` from the \`FluidFramework\` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      \`npm run build:fast -- --nolint ${packageName}\``);
+      \`pnpm run build:fast --nolint ${packageName}\``);
 
 	if (includeTinyliciousStep) {
 		sectionBody.push(
@@ -61,7 +63,7 @@ const generateGettingStartedSection = (packageJsonPath, includeTinyliciousStep, 
 	}
 
 	sectionBody.push(
-		`1. Run \`npm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
+		`1. Run \`pnpm start\` from this directory and open <http://localhost:8080> in a web browser to see the app running.`,
 	);
 
 	return formattedSectionText(

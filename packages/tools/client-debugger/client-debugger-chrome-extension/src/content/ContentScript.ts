@@ -4,7 +4,7 @@
  */
 
 import {
-	debuggerMessageSource,
+	devtoolsMessageSource,
 	ISourcedDebuggerMessage,
 	isDebuggerMessage,
 } from "@fluid-tools/client-debugger";
@@ -45,7 +45,7 @@ chrome.runtime.onConnect.addListener((backgroundPort: chrome.runtime.Port) => {
 
 		// Only relay message if it is one of ours, and if the source is the window's debugger
 		// (and not a message originating from the extension).
-		if (isDebuggerMessage(message) && message.source === debuggerMessageSource) {
+		if (isDebuggerMessage(message) && message.source === devtoolsMessageSource) {
 			relayMessageToPort(
 				message,
 				"webpage",

@@ -53,10 +53,10 @@ export {
 	ContextuallyTypedFieldData,
 } from "./contextuallyTyped";
 
-export { ForestIndex } from "./forestIndex";
+export { ForestSummarizer } from "./forestSummarizer";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { buildForest } from "./object-forest";
-export { SchemaIndex, SchemaEditor } from "./schemaIndex";
+export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { getSchemaString } from "./schemaIndexFormat";
 export {
@@ -122,19 +122,19 @@ export {
 
 export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
-export {
-	EditManagerIndex,
-	CommitEncoder,
-	parseSummary as loadSummary,
-	stringifySummary as encodeSummary,
-} from "./editManagerIndex";
-
 export { ForestRepairDataStore } from "./forestRepairDataStore";
 export { dummyRepairDataStore } from "./fakeRepairDataStore";
 
 export { mapFromNamed, namedTreeSchema } from "./viewSchemaUtil";
 
 export { TreeChunk, chunkTree, buildChunkedForest, defaultChunkPolicy } from "./chunked-forest";
+
+export {
+	Identifier,
+	identifierFieldSchema,
+	IdentifierIndex,
+	identifierSchema,
+} from "./identifierIndex";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";

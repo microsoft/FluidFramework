@@ -13,9 +13,10 @@
  * by the Fluid Client Debugger.
  */
 
-export { debuggerMessageSource } from "./Constants";
+export { devtoolsMessageSource } from "./Constants";
 export {
 	HasContainerId,
+	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
 	DisconnectContainerMessage,
@@ -26,15 +27,24 @@ export {
 	ContainerStateChangeMessageData,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	DataVisualizationMessage,
+	DataVisualizationMessageData,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
-} from "./DebuggerMessages";
-export { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
+	GetDataVisualizationMessage,
+	GetDataVisualizationMessageData,
+	GetRootDataVisualizationsMessage,
+	GetRootDataVisualizationsMessageData,
+	RootDataVisualizationsMessage,
+	RootDataVisualizationsMessageData,
+} from "./ContainerDevtoolsMessages";
+export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
-} from "./RegistryMessages";
+	ContainerListMessage,
+	ContainerListChangeMessageData,
+} from "./DevtoolsMessages";
 export {
 	GetAudienceMessage,
 	AudienceClientMetaData,

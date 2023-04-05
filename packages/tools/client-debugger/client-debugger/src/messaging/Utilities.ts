@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { debuggerMessageSource } from "./Constants";
+import { devtoolsMessageSource } from "./Constants";
 import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 
 /**
  * Posts the provided message to the window (globalThis).
  *
- * @param messages - The messages to be posted.
+ * @param messages - The messages to be posted
  * @param loggingOptions - Settings related to logging to console for troubleshooting.
  * If not passed, this function won't log to console before posting the message.
  *
@@ -23,7 +23,7 @@ export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 ): void {
 	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((message) => ({
 		...message,
-		source: debuggerMessageSource,
+		source: devtoolsMessageSource,
 	}));
 
 	// TODO: remove loggingOptions once things settle.
