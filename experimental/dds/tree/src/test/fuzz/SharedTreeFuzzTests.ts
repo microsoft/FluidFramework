@@ -159,6 +159,7 @@ export async function performFuzzActions(
 					case 'fluid:telemetry:Summarizer:Running:SummaryNack':
 					case 'fluid:telemetry:Summarizer:summarizingError':
 					case 'fluid:telemetry:Summarizer:Running:Summarize_cancel':
+					case 'fluid:telemetry:Summarizer:Running:GarbageCollection_cancel':
 						break;
 					default:
 						expect.fail(`Unexpected error event: ${event.eventName}`);
