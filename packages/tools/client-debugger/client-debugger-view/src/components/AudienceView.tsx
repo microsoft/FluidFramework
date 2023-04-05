@@ -13,14 +13,15 @@ import {
 } from "@fluentui/react-components";
 
 import {
-	HasContainerId,
 	AudienceChangeLogEntry,
-	AudienceClientMetaData,
-	IDebuggerMessage,
-	handleIncomingMessage,
-	InboundHandlers,
-	AudienceSummaryMessageData,
+	AudienceClientMetadata,
 	AudienceSummaryMessage,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessageType,
+	handleIncomingMessage,
+	HasContainerId,
+	IDebuggerMessage,
+	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 
 import { useMessageRelay } from "../MessageRelayContext";
@@ -67,7 +68,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to Audience
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["AUDIENCE_EVENT"]: (untypedMessage) => {
+			[AudienceSummaryMessageType]: (untypedMessage) => {
 				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
 
 				setAudienceData(message.data);

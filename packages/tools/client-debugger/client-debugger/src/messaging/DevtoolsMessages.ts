@@ -9,6 +9,13 @@ import { IDebuggerMessage } from "./Messages";
 // #region Inbound messages
 
 /**
+ * {@link GetContainerListMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const GetContainerListMessageType = "GET_CONTAINER_LIST";
+
+/**
  * Inbound message requesting the list of Container IDs for which Devtools have been registered.
  * Will result in the {@link ContainerListMessage} message being posted.
  *
@@ -18,7 +25,7 @@ export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "GET_CONTAINER_LIST";
+	type: typeof GetContainerListMessageType;
 }
 
 // #endregion
@@ -26,11 +33,18 @@ export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
 // #region Outbound messages
 
 /**
+ * {@link ContainerListMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const ContainerListMessageType = "CONTAINER_LIST";
+
+/**
  * Message data format used by {@link ContainerListMessage}.
  *
  * @public
  */
-export interface ContainerListChangeMessageData {
+export interface ContainerListMessageData {
 	/**
 	 * Metadata list of Containers with active Client Debugger sessions registered.
 	 */
@@ -44,11 +58,11 @@ export interface ContainerListChangeMessageData {
  *
  * @public
  */
-export interface ContainerListMessage extends IDebuggerMessage<ContainerListChangeMessageData> {
+export interface ContainerListMessage extends IDebuggerMessage<ContainerListMessageData> {
 	/**
 	 * {@inheritDoc IDebuggerMessage."type"}
 	 */
-	type: "CONTAINER_LIST";
+	type: typeof ContainerListMessageType;
 }
 
 // #endregion
