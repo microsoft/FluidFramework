@@ -333,7 +333,7 @@ export async function executeApiWithMetric<U>(
 	// If generating a metric is not enabled, we just execute the API.
 	// We also do the same if sampling tells us to skip the metric for
 	// this instance (when a sampling period is provided).
-	if (!metricEnabled && samplingPeriod && getRandomInt(samplingPeriod) !== 0) {
+	if (!metricEnabled || (samplingPeriod && getRandomInt(samplingPeriod) !== 0)) {
 		return api();
 	}
 	const metric = Lumberjack.newLumberMetric(apiName, telemetryProperties);
