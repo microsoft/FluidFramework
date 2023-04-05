@@ -124,10 +124,12 @@
 	"typeValidation": {
 		"broken": {
 			"ClassDeclaration_AlfredResources": {
-        "backCompat": false,
+				"backCompat": false,
 				"forwardCompat": false
 			},
-      "VariableDeclaration_Constants": {"forwardCompat": false}
+			"VariableDeclaration_Constants": {
+				"forwardCompat": false
+			}
 		}
 	}
 }
