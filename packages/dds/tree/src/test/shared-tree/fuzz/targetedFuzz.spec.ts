@@ -13,7 +13,7 @@ import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from 
 import { brand } from "../../../util";
 import { TestTreeProvider, SummarizeType, initializeTestTree, validateTree } from "../../utils";
 import { FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
+import { fuzzReducer, fuzzReducerAbortMultipleOps } from "./fuzzEditReducers";
 import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
 
 export async function performFuzzActionsAbort(
@@ -66,6 +66,36 @@ export async function performFuzzActionsAbort(
 	assert(compareUpPaths(expectedPath, anchorPath));
 	return finalState;
 }
+export async function performFuzzActionsAbortMultipleOps(
+	generator: AsyncGenerator<Operation, FuzzTestState>,
+	seed: number,
+	saveInfo?: SaveInfo,
+): Promise<FuzzTestState> {
+	const random = makeRandom(seed);
+	const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
+	const tree = provider.trees[0];
+
+	initializeTestTree(provider.trees[0], initialTreeState, testSchema);
+	validateTree(provider.trees[0], [initialTreeState]);
+
+	tree.transaction.start();
+
+	const initialState: FuzzTestState = {
+		random,
+		testTreeProvider: provider,
+		numberOfEdits: 0,
+	};
+	const finalState = await performFuzzActionsAsync(
+		generator,
+		fuzzReducerAbortMultipleOps,
+		initialState,
+		saveInfo,
+	);
+	tree.transaction.abort();
+	validateTree(provider.trees[0], [initialTreeState]);
+
+	return finalState;
+}
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
@@ -80,5 +110,14 @@ describe("Fuzz - Targeted", () => {
 	const opsPerRun = 20;
 	describe.skip("Anchors are unaffected by aborted transaction", () => {
 		runFuzzBatch(makeOpGenerator, performFuzzActionsAbort, opsPerRun, runsPerBatch, random);
+	});
+	describe.skip("Anchors are unaffected by aborted transaction", () => {
+		runFuzzBatch(
+			makeOpGenerator,
+			performFuzzActionsAbortMultipleOps,
+			opsPerRun,
+			runsPerBatch,
+			random,
+		);
 	});
 });
