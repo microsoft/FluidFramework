@@ -7,6 +7,7 @@ import { EventEmitter } from "events";
 import {
 	IContext,
 	IDocumentLambdaServerConfiguration,
+	IPartitionLambdaConfig,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
@@ -17,7 +18,7 @@ export class DocumentLambdaFactory
 	implements IPartitionLambdaFactory
 {
 	constructor(
-		private readonly documentLambdaFactory: IPartitionLambdaFactory,
+		private readonly documentLambdaFactory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
 	) {
 		super();

@@ -7,6 +7,7 @@ import { inspect } from "util";
 import {
 	IContextErrorData,
 	IPartitionLambda,
+	IPartitionLambdaConfig,
 	IPartitionLambdaFactory,
 	IQueuedMessage,
 	LambdaCloseType,
@@ -24,13 +25,18 @@ export class DocumentPartition {
 	private activityTimeoutTime: number | undefined;
 
 	constructor(
-		factory: IPartitionLambdaFactory,
+		factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly tenantId: string,
 		private readonly documentId: string,
 		public readonly context: DocumentContext,
 		private readonly activityTimeout: number,
 	) {
 		this.updateActivityTime();
+
+		const documentConfig: IPartitionLambdaConfig = {
+			tenantId,
+			documentId,
+		};
 
 		this.q = queue((message: IQueuedMessage, callback) => {
 			// Winston.verbose(`${message.topic}:${message.partition}@${message.offset}`);
@@ -71,7 +77,7 @@ export class DocumentPartition {
 		});
 
 		// Create the lambda to handle the document messages
-		this.lambdaP = factory.create(undefined, context, this.updateActivityTime.bind(this));
+		this.lambdaP = factory.create(documentConfig, context, this.updateActivityTime.bind(this));
 		this.lambdaP.then(
 			(lambda) => {
 				this.lambda = lambda;

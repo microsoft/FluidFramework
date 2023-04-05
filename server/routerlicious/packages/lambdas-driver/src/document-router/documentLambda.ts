@@ -7,6 +7,7 @@ import {
 	extractBoxcar,
 	IContext,
 	IQueuedMessage,
+	IPartitionLambdaConfig,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 	LambdaCloseType,
@@ -33,7 +34,7 @@ export class DocumentLambda implements IPartitionLambda {
 	private activityCheckTimer: NodeJS.Timeout | undefined;
 
 	constructor(
-		private readonly factory: IPartitionLambdaFactory,
+		private readonly factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly context: IContext,
 		private readonly documentLambdaServerConfiguration: IDocumentLambdaServerConfiguration,
 	) {
