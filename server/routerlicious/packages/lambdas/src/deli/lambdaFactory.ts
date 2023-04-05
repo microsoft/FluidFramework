@@ -188,7 +188,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			this.documentRepository,
 		);
 
-		// Should the lambda reaize that term has flipped to send a no-op message at the beginning?
 		const deliLambda = new DeliLambda(
 			context,
 			tenantId,

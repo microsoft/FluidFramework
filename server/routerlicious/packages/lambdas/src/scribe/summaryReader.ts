@@ -269,7 +269,7 @@ export class SummaryReader implements ISummaryReader {
 		return {
 			sequenceNumber: 0,
 			minimumSequenceNumber: 0,
-			term: undefined,
+			term: 1,
 		};
 	}
 

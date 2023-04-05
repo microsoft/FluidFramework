@@ -997,10 +997,6 @@ export class Container
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		assert(!!this._protocolHandler, 0x2e3 /* "Must have a valid protocol handler instance" */);
-		assert(
-			this._protocolHandler.attributes.term !== undefined,
-			0x37e /* Must have a valid protocol handler instance */,
-		);
 		assert(!!this.baseSnapshot, "no base snapshot");
 		assert(!!this.baseSnapshotBlobs, "no snapshot blobs");
 		const pendingState: IPendingContainerState = {
@@ -1637,11 +1633,6 @@ export class Container
 				: tree.blobs[".attributes"];
 
 		const attributes = await readAndParse<IDocumentAttributes>(storage, attributesHash);
-
-		// Backward compatibility for older summaries with no term
-		if (attributes.term === undefined) {
-			attributes.term = 1;
-		}
 
 		return attributes;
 	}

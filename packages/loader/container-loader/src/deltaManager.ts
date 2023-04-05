@@ -977,11 +977,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			0x267 /* "lastObservedSeqNumber should be updated first" */,
 		);
 
-		// Back-compat for older server with no term
-		if (message.term === undefined) {
-			message.term = 1;
-		}
-
 		if (this.handler === undefined) {
 			throw new Error("Attempted to process an inbound message without a handler attached");
 		}
