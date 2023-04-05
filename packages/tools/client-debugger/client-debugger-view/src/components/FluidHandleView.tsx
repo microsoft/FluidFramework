@@ -74,7 +74,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 				fluidObjectId,
 			},
 		});
-	}, [containerId, visualTree, fluidObjectId, messageRelay]);
+	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
 		return <Waiting label={waitingLabels.containerError} />;

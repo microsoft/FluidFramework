@@ -4,8 +4,8 @@
  */
 import React from "react";
 import { HasContainerId, FluidUnknownObjectNode } from "@fluid-tools/client-debugger";
-import { Waiting } from "./Waiting";
-import { waitingLabels } from "./WaitingLabels";
+// import { Waiting } from "./Waiting";
+// import { waitingLabels } from "./WaitingLabels";
 
 /**
  * {@link UnknownDataView} input props.
@@ -21,10 +21,14 @@ export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): Reac
 	const { containerId, node } = props;
 
 	return (
-		<Waiting
-			label={`${waitingLabels.unkownFluidDataError}: ${containerId}, ${
-				node.fluidObjectId
-			} Node: ${JSON.stringify(node)}`}
-		/>
+		<>
+			<h1> Unknown Data Object </h1>
+			{containerId}
+			{node.fluidObjectId}
+		</>
+		// 	label={`${waitingLabels.unkownFluidDataError}: ${containerId}, ${
+		// 		node.fluidObjectId
+		// 	} Node: ${JSON.stringify(node)}`}
+		// />
 	);
 }

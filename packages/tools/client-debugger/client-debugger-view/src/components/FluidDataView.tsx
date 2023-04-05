@@ -11,8 +11,8 @@ import { ValueView } from "./ValueView";
 import { FluidValueView } from "./FluidValueView";
 import { UnknownFluidObjectView } from "./UnknownFluidObjectView";
 import { UnknownDataView } from "./UnknownDataView";
-import { Waiting } from "./Waiting";
-import { waitingLabels } from "./WaitingLabels";
+// import { Waiting } from "./Waiting";
+// import { waitingLabels } from "./WaitingLabels";
 
 /**
  * {@link FluidDataView} input props.
@@ -72,7 +72,10 @@ export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
 			view = <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
 			break;
 		default:
-			view = <Waiting label={waitingLabels.undefinedError} />;
+			view = 
+			<div>
+				{`unknown ${JSON.stringify(node)}`}
+			</div>
 			break;
 	}
 

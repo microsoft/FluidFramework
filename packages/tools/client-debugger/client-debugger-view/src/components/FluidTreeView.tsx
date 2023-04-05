@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, TreeNodeBase } from "@fluid-tools/client-debugger";
+import { HasContainerId, FluidObjectTreeNode } from "@fluid-tools/client-debugger";
 import { FluidDataView } from "./FluidDataView";
 
 /**
  * {@link TreeView} input props.
  */
 export interface FluidTreeViewProps extends HasContainerId {
-	node: TreeNodeBase;
+	node: FluidObjectTreeNode;
 }
 
 /**
@@ -21,8 +21,7 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 
 	return (
 		<>
-			{Object.entries(node).map(([key, fluidObject], index) => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			{Object.entries(node.children).map(([key, fluidObject], index) => {
 				return <FluidDataView key={key} containerId={containerId} node={fluidObject} />;
 			})}
 		</>
