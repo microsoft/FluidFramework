@@ -236,8 +236,11 @@ export const GetAudienceMessageType = "GET_AUDIENCE";
 // @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
     // (undocumented)
-    type: "GET_CONTAINER_LIST";
+    type: typeof GetContainerListMessageType;
 }
+
+// @public
+export const GetContainerListMessageType = "GET_CONTAINER_LIST";
 
 // @public
 export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
@@ -385,13 +388,16 @@ export type Primitive = bigint | number | boolean | null | string | symbol | und
 // @public
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
     // (undocumented)
-    type: "REGISTRY_CHANGE";
+    type: typeof RegistryChangeMessageType;
 }
 
 // @public
 export interface RegistryChangeMessageData {
     containers: ContainerMetadata[];
 }
+
+// @public
+export const RegistryChangeMessageType = "REGISTRY_CHANGE";
 
 // @public
 export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootDataVisualizationsMessageData> {
@@ -402,6 +408,9 @@ export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootData
 export interface RootDataVisualizationsMessageData extends HasContainerId {
     visualizations: Record<string, RootHandleNode> | undefined;
 }
+
+// @public
+export const RootDataVisualizationsMessageType = "ROOT_DATA_VISUALIZATIONS";
 
 // @public
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;

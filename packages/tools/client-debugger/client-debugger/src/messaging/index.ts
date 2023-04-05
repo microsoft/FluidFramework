@@ -52,8 +52,10 @@ export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
+	GetContainerListMessageType,
 	RegistryChangeMessage,
 	RegistryChangeMessageData,
+	RegistryChangeMessageType,
 } from "./RegistryMessages";
 export {
 	AudienceClientMetadata,

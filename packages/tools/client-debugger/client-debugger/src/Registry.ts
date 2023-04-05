@@ -16,6 +16,8 @@ import {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RegistryChangeMessage,
+	RegistryChangeMessageType,
+	GetContainerListMessageType,
 } from "./messaging";
 import { VisualizeSharedObject } from "./data-visualization";
 
@@ -141,7 +143,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 * Handlers for inbound messages related to the registry.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		["GET_CONTAINER_LIST"]: () => {
+		[GetContainerListMessageType]: () => {
 			this.postRegistryChange();
 			return true;
 		},
@@ -165,7 +167,7 @@ export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> 
 	 */
 	private readonly postRegistryChange = (): void => {
 		postMessagesToWindow<RegistryChangeMessage>(registryMessageLoggingOptions, {
-			type: "REGISTRY_CHANGE",
+			type: RegistryChangeMessageType,
 			data: {
 				containers: [...this.registeredDebuggers.values()].map((clientDebugger) => ({
 					id: clientDebugger.containerId,

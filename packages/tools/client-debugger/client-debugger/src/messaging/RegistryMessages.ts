@@ -9,18 +9,32 @@ import { IDebuggerMessage } from "./Messages";
 // #region Inbound messages
 
 /**
+ * {@link GetContainerListMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const GetContainerListMessageType = "GET_CONTAINER_LIST";
+
+/**
  * Inbound event requesting the list of Container IDs for which debuggers have been registered.
  * Will result in the {@link RegistryChangeMessage} message being posted.
  *
  * @public
  */
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
-	type: "GET_CONTAINER_LIST";
+	type: typeof GetContainerListMessageType;
 }
 
 // #endregion
 
 // #region Outbound messages
+
+/**
+ * {@link RegistryChangeMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const RegistryChangeMessageType = "REGISTRY_CHANGE";
 
 /**
  * Message data format used by {@link RegistryChangeMessage}.
@@ -41,7 +55,7 @@ export interface RegistryChangeMessageData {
  * @public
  */
 export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
-	type: "REGISTRY_CHANGE";
+	type: typeof RegistryChangeMessageType;
 }
 
 // #endregion
