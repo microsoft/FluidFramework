@@ -30,7 +30,6 @@ import {
 	createGenericNetworkError,
 	getRetryDelayFromError,
 	logNetworkFailure,
-	isRuntimeMessage,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -195,8 +194,6 @@ export class ConnectionManager implements IConnectionManager {
 
 	private clientSequenceNumber = 0;
 	private clientSequenceNumberObserved = 0;
-	/** Counts the number of non-runtime ops sent by the client which may not be acked. */
-	private localOpsToIgnore = 0;
 
 	/** track clientId used last time when we sent any ops */
 	private lastSubmittedClientId: string | undefined;
@@ -276,13 +273,6 @@ export class ConnectionManager implements IConnectionManager {
 			  };
 	}
 
-	public shouldJoinWrite(): boolean {
-		// We don't have to wait for ack for topmost NoOps. So subtract those.
-		return (
-			this.clientSequenceNumberObserved < this.clientSequenceNumber - this.localOpsToIgnore
-		);
-	}
-
 	/**
 	 * Tells if container is in read-only mode.
 	 * Data stores should listen for "readonly" notifications and disallow user
@@ -332,6 +322,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
+		public readonly shouldJoinWrite: () => boolean,
 		private client: IClient,
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLogger,
@@ -954,12 +945,6 @@ export class ConnectionManager implements IConnectionManager {
 			this.lastSubmittedClientId = this.connection?.clientId;
 			this.clientSequenceNumber = 0;
 			this.clientSequenceNumberObserved = 0;
-		}
-
-		if (!isRuntimeMessage(message)) {
-			this.localOpsToIgnore++;
-		} else {
-			this.localOpsToIgnore = 0;
 		}
 
 		return {
