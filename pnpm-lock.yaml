@@ -17965,7 +17965,7 @@ packages:
       npmlog: 6.0.2
     dev: true
 
-  /@lerna/publish/5.6.2_nx@15.7.2+typescript@4.8.4:
+  /@lerna/publish/5.6.2_nx@15.7.2+typescript@4.5.5:
     resolution: {integrity: sha512-QaW0GjMJMuWlRNjeDCjmY/vjriGSWgkLS23yu8VKNtV5U3dt5yIKA3DNGV3HgZACuu45kQxzMDsfLzgzbGNtYA==}
     engines: {node: ^14.15.0 || >=16.0.0}
     dependencies:
@@ -17987,7 +17987,7 @@ packages:
       '@lerna/run-lifecycle': 5.6.2
       '@lerna/run-topologically': 5.6.2
       '@lerna/validation-error': 5.6.2
-      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.8.4
+      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.5.5
       fs-extra: 9.1.0
       libnpmaccess: 6.0.4
       npm-package-arg: 8.1.1
@@ -18119,7 +18119,7 @@ packages:
       npmlog: 6.0.2
     dev: true
 
-  /@lerna/version/5.6.2_nx@15.7.2+typescript@4.8.4:
+  /@lerna/version/5.6.2_nx@15.7.2+typescript@4.5.5:
     resolution: {integrity: sha512-odNSR2rTbHW++xMZSQKu/F6Syrd/sUvwDLPaMKktoOSPKmycHt/eWcuQQyACdtc43Iqeu4uQd7PCLsniqOVFrw==}
     engines: {node: ^14.15.0 || >=16.0.0}
     dependencies:
@@ -18137,7 +18137,7 @@ packages:
       '@lerna/run-topologically': 5.6.2
       '@lerna/temp-write': 5.6.2
       '@lerna/validation-error': 5.6.2
-      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.8.4
+      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.5.5
       chalk: 4.1.2
       dedent: 0.7.0
       load-json-file: 6.2.0
@@ -19008,12 +19008,12 @@ packages:
       - debug
     dev: true
 
-  /@nrwl/devkit/15.7.2_nx@15.7.2+typescript@4.8.4:
+  /@nrwl/devkit/15.7.2_nx@15.7.2+typescript@4.5.5:
     resolution: {integrity: sha512-HMGi7L6w2g4IrYwhb04snD8Zr24Z/gzau5i9WUNkwzrjeR1xAm0Cc9WRre221zaeohtK11gyBt7BerT1tgkNwA==}
     peerDependencies:
       nx: '>= 14.1 <= 16'
     dependencies:
-      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.8.4
+      '@phenomnomnominal/tsquery': 4.1.1_typescript@4.5.5
       ejs: 3.1.8
       ignore: 5.2.4
       nx: 15.7.2
@@ -19615,13 +19615,13 @@ packages:
       node-gyp-build: 4.6.0
     dev: true
 
-  /@phenomnomnominal/tsquery/4.1.1_typescript@4.8.4:
+  /@phenomnomnominal/tsquery/4.1.1_typescript@4.5.5:
     resolution: {integrity: sha512-jjMmK1tnZbm1Jq5a7fBliM4gQwjxMU7TFoRNwIyzwlO+eHPRCFv/Nv+H/Gi1jc3WR7QURG8D5d0Tn12YGrUqBQ==}
     peerDependencies:
       typescript: ^3 || ^4
     dependencies:
       esquery: 1.4.2
-      typescript: 4.8.4
+      typescript: 4.5.5
     dev: true
 
   /@pmmmwh/react-refresh-webpack-plugin/0.5.9_qouehdyvslt6cyfzajsl2rhebu:
@@ -33398,15 +33398,15 @@ packages:
       '@lerna/init': 5.6.2
       '@lerna/link': 5.6.2
       '@lerna/list': 5.6.2
-      '@lerna/publish': 5.6.2_nx@15.7.2+typescript@4.8.4
+      '@lerna/publish': 5.6.2_nx@15.7.2+typescript@4.5.5
       '@lerna/run': 5.6.2
-      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.8.4
-      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.8.4
+      '@lerna/version': 5.6.2_nx@15.7.2+typescript@4.5.5
+      '@nrwl/devkit': 15.7.2_nx@15.7.2+typescript@4.5.5
       import-local: 3.1.0
       inquirer: 8.2.5
       npmlog: 6.0.2
       nx: 15.7.2
-      typescript: 4.8.4
+      typescript: 4.5.5
     transitivePeerDependencies:
       - '@swc-node/register'
       - '@swc/core'
