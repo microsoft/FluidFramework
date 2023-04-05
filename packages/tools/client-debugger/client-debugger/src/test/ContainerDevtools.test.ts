@@ -11,8 +11,6 @@ import { addAudienceMember, createMockContainer, removeAudienceMember } from "./
 // TODOs:
 // - Test window messaging
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 describe("ContainerDevtools unit tests", () => {
 	it("Audience History", () => {
 		const container = createMockContainer();
@@ -69,5 +67,3 @@ describe("ContainerDevtools unit tests", () => {
 		expect(devtools.getContainerConnectionLog()[4].newState).to.equal("disposed");
 	});
 });
-
-/* eslint-enable @typescript-eslint/no-non-null-assertion */
