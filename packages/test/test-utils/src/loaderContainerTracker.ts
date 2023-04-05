@@ -11,6 +11,7 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
+import { waitForContainerConnection } from "./containerUtils";
 import { debug } from "./debug";
 import { IOpProcessingController } from "./testObjectProvider";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils";
@@ -467,10 +468,13 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	/**
 	 * Pause all queue activities on all tracked containers, and resume only
 	 * outbound to process ops until it is idle. All queues are left in the paused state
-	 * after the function
+	 * after the function.
+	 *
+	 * Note that the incoming queue may be unpaused before outbound ops being sent, to allow for
+	 * catch up and connection (processing join message)
 	 */
 	public async processOutgoing(...containers: IContainer[]) {
-		return this.processQueue(containers, (container) => container.deltaManager.outbound);
+		return this.processQueue(containers, (container) => container.deltaManager.outbound, true);
 	}
 
 	/**
@@ -479,11 +483,53 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	private async processQueue<U>(
 		containers: IContainer[],
 		getQueue: (container: IContainer) => IDeltaQueue<U>,
+		waitForConnectedContainers = false,
 	) {
 		await this.pauseProcessing(...containers);
 		const resumed: IDeltaQueue<U>[] = [];
 
 		const containersToApply = this.getContainers(containers);
+
+		if (waitForConnectedContainers) {
+			for (const container of containersToApply) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const index = this.containers.get(container)!.index;
+
+				// ** Start back compat
+				// Before 0.54.x, the runtime doesn't proactive in disconnecting and reconnecting when there are ops
+				// in read mode, instead it rely on service nacks. It was changed in PR #8423.
+				// For test, we will disconnect and reconnect explicitly for now.
+				// We can remove this code when we no longer support < 0.54.x
+				if (
+					container.connectionState === ConnectionState.Connected &&
+					!container.deltaManager.outbound.idle &&
+					!container.deltaManager.active
+				) {
+					debugWait(`${index}: Force disconnect via nack`);
+					const disconnectedPromise = new Promise<void>((resolve) =>
+						container.once("disconnected", resolve),
+					);
+					// This should nack and disconnect
+					container.deltaManager.outbound.resume();
+					container.deltaManager.inbound.resume();
+					await disconnectedPromise;
+					await container.deltaManager.outbound.pause();
+					await container.deltaManager.inbound.pause();
+				}
+				// ** End back compat
+
+				// Container might be in connecting state make sure the containers are in connected state first
+				if (container.connectionState !== ConnectionState.Connected) {
+					debugWait(`${index}: Wait for container connection`);
+					// Resume the inbound queue so we can process the catchup and join message if any
+					assert(container.deltaManager.inbound.paused, "Should have been paused");
+					container.deltaManager.inbound.resume();
+					await waitForContainerConnection(container);
+					await container.deltaManager.inbound.pause();
+				}
+			}
+		}
+
 		const inflightTracker = new Map<IContainer, number>();
 		const cleanup: (() => void)[] = [];
 		for (const container of containersToApply) {

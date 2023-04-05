@@ -71,9 +71,12 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	async function loadContainer(summaryVersion: string) {
-		return provider.loadTestContainer(testContainerConfig, {
-			[LoaderHeader.version]: summaryVersion,
-		});
+		return provider.loadTestContainer(
+			{ simulateReadConnectionUsingDelay: false, ...testContainerConfig },
+			{
+				[LoaderHeader.version]: summaryVersion,
+			},
+		);
 	}
 
 	const makeContainer = async () => {

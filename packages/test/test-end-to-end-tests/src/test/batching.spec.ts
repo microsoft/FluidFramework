@@ -132,6 +132,13 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 
+		// To precisely control batch boundary, we need to force the container into write mode upfront
+		// So that the first flush doesn't result in reconnect to write mode and cause batches
+		// to be "merged"
+
+		dataObject1map1.set("forceWrite", true);
+		dataObject2map2.set("forceWrite", true);
+
 		await waitForCleanContainers(dataObject1, dataObject2);
 		await provider.ensureSynchronized();
 	}
