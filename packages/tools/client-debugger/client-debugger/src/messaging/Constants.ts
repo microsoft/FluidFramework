@@ -8,4 +8,4 @@
  *
  * @public
  */
-export const debuggerMessageSource: string = "fluid-client-debugger";
+export const devtoolsMessageSource: string = "fluid-client-devtools";

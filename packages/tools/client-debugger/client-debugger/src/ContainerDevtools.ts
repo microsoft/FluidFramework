@@ -16,8 +16,9 @@ import {
 	FluidObjectId,
 	FluidObjectNodeBase,
 	RootHandleNode,
+	VisualizeSharedObject,
 } from "./data-visualization";
-import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
+import { IContainerDevtools, ContainerDevtoolsEvents } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
 	AudienceClientMetadata,
@@ -48,10 +49,69 @@ import {
 	RootDataVisualizationsMessageType,
 	DataVisualizationMessageType,
 } from "./messaging";
-import { FluidClientDebuggerProps } from "./Registry";
 
 /**
- * {@link IFluidClientDebugger} implementation.
+ * Properties for configuring a {@link IContainerDevtools}.
+ *
+ * @public
+ */
+export interface ContainerDevtoolsProps {
+	/**
+	 * The Container with which the {@link ContainerDevtools} instance will be associated.
+	 */
+	container: IContainer;
+
+	/**
+	 * The ID of the {@link ContainerDevtoolsProps.container | Container}.
+	 */
+	containerId: string;
+
+	/**
+	 * (optional) Distributed Data Structures (DDSs) associated with the
+	 * {@link ContainerDevtoolsProps.container | Container}.
+	 *
+	 * @remarks
+	 *
+	 * Providing this data will enable associated tooling to visualize the Fluid data reachable from the provided
+	 * objects.
+	 *
+	 * Fluid DevTools will not mutate this data.
+	 *
+	 * @privateRemarks TODO: rename this to make it more clear that this data does not *belong* to the Container.
+	 */
+	containerData?: Record<string, IFluidLoadable>;
+
+	// TODO: Accept custom data visualizers.
+
+	/**
+	 * (optional) Nickname for the {@link ContainerDevtoolsProps.container | Container} / debugger instance.
+	 *
+	 * @remarks
+	 *
+	 * Associated tooling may take advantage of this to differentiate between instances using
+	 * semantically meaningful information.
+	 *
+	 * If not provided, the {@link ContainerDevtoolsProps.containerId} will be used for the purpose of distinguishing
+	 * instances.
+	 */
+	containerNickname?: string;
+
+	/**
+	 * (optional) Configurations for generating visual representations of
+	 * {@link @fluidframework/shared-object-base#ISharedObject}s under {@link ContainerDevtoolsProps.containerData}.
+	 *
+	 * @remarks
+	 *
+	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
+	 * default visualization implementations.
+	 *
+	 * If a visualizer configuration is specified for a shared object type that has a default visualizer, the custom one will be used.
+	 */
+	dataVisualizers?: Record<string, VisualizeSharedObject>;
+}
+
+/**
+ * {@link IContainerDevtools} implementation.
  *
  * @remarks
  *
@@ -96,53 +156,53 @@ import { FluidClientDebuggerProps } from "./Registry";
  * @sealed
  * @internal
  */
-export class FluidClientDebugger
-	extends TypedEventEmitter<IFluidClientDebuggerEvents>
-	implements IFluidClientDebugger
+export class ContainerDevtools
+	extends TypedEventEmitter<ContainerDevtoolsEvents>
+	implements IContainerDevtools
 {
 	/**
-	 * {@inheritDoc IFluidClientDebugger.containerId}
+	 * {@inheritDoc IContainerDevtools.containerId}
 	 */
 	public readonly containerId: string;
 
 	/**
-	 * {@inheritDoc FluidClientDebuggerProps.container}
+	 * {@inheritDoc IContainerDevtools.container}
 	 */
 	public readonly container: IContainer;
 
 	/**
-	 * {@inheritDoc FluidClientDebuggerProps.audience}
+	 * {@inheritDoc IContainerDevtools.audience}
 	 */
 	public get audience(): IAudience {
 		return this.container.audience;
 	}
 
 	/**
-	 * {@inheritDoc IFluidClientDebugger.containerData}
+	 * {@inheritDoc IContainerDevtools.containerData}
 	 */
 	public readonly containerData?: Record<string, IFluidLoadable>;
 
 	/**
-	 * {@inheritDoc IFluidClientDebugger.containerNickname}
+	 * {@inheritDoc IContainerDevtools.containerNickname}
 	 */
 	public readonly containerNickname?: string;
 
 	// #region Accumulated log state
 
 	/**
-	 * Accumulated data for {@link IFluidClientDebugger.getContainerConnectionLog}.
+	 * Accumulated data for {@link IContainerDevtools.getContainerConnectionLog}.
 	 */
 	private readonly _connectionStateLog: ConnectionStateChangeLogEntry[];
 
 	/**
-	 * Accumulated data for {@link IFluidClientDebugger.getAudienceHistory}.
+	 * Accumulated data for {@link IContainerDevtools.getAudienceHistory}.
 	 */
 	private readonly _audienceChangeLog: AudienceChangeLogEntry[];
 
 	// #endregion
 
 	/**
-	 * Manages state visualization for {@link FluidClientDebugger.containerData}, if any was provided.
+	 * Manages state visualization for {@link ContainerDevtools.containerData}, if any was provided.
 	 *
 	 * @remarks Will only be `undefined` if `containerData` was not provided, or if the debugger has been disposed.
 	 */
@@ -386,7 +446,7 @@ export class FluidClientDebugger
 	 * Message logging options used by the debugger.
 	 */
 	private get messageLoggingOptions(): MessageLoggingOptions {
-		return { context: `Debugger(${this.containerId})` };
+		return { context: `Container Devtools (${this.containerId})` };
 	}
 
 	/**
@@ -394,11 +454,11 @@ export class FluidClientDebugger
 	 *
 	 * @remarks Not related to Container disposal.
 	 *
-	 * @see {@link IFluidClientDebugger.dispose}
+	 * @see {@link IContainerDevtools.dispose}
 	 */
 	private _disposed: boolean;
 
-	public constructor(props: FluidClientDebuggerProps) {
+	public constructor(props: ContainerDevtoolsProps) {
 		super();
 
 		this.containerId = props.containerId;
@@ -437,7 +497,7 @@ export class FluidClientDebugger
 	}
 
 	/**
-	 * {@inheritDoc IFluidClientDebugger.getConnectionStateLog}
+	 * {@inheritDoc IContainerDevtools.getContainerConnectionLog}
 	 */
 	public getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes
@@ -445,7 +505,7 @@ export class FluidClientDebugger
 	}
 
 	/**
-	 * {@inheritDoc IFluidClientDebugger.getAudienceHistory}
+	 * {@inheritDoc IContainerDevtools.getAudienceHistory}
 	 */
 	public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes
@@ -453,7 +513,7 @@ export class FluidClientDebugger
 	}
 
 	/**
-	 * {@inheritDoc IFluidClientDebugger.dispose}
+	 * {@inheritDoc IContainerDevtools.dispose}
 	 */
 	public dispose(): void {
 		// Unbind Container events

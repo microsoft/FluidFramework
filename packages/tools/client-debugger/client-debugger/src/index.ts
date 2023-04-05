@@ -45,6 +45,7 @@
 
 export { MemberChangeKind } from "./AudienceMetadata";
 export { ContainerStateChangeKind } from "./Container";
+export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
@@ -68,7 +69,9 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
-export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
+export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
+export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
 export {
 	AudienceChangeLogEntry,
@@ -81,7 +84,7 @@ export {
 	AudienceSummaryMessage,
 	AudienceSummaryMessageData,
 	AudienceSummaryMessageType,
-	debuggerMessageSource,
+	devtoolsMessageSource,
 	GetAudienceMessage,
 	GetAudienceMessageType,
 	HasContainerId,
@@ -95,6 +98,9 @@ export {
 	CloseContainerMessage,
 	CloseContainerMessageData,
 	CloseContainerMessageType,
+	ContainerListMessage,
+	ContainerListMessageData,
+	ContainerListMessageType,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
 	ContainerStateChangeMessageType,
@@ -120,9 +126,6 @@ export {
 	IMessageRelayEvents,
 	ISourcedDebuggerMessage,
 	ITimestampedTelemetryEvent,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
-	RegistryChangeMessageType,
 	RootDataVisualizationsMessage,
 	RootDataVisualizationsMessageData,
 	RootDataVisualizationsMessageType,
@@ -140,14 +143,3 @@ export {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-export {
-	DebuggerRegistry,
-	DebuggerRegistryEvents,
-	clearDebuggerRegistry,
-	closeFluidClientDebugger,
-	FluidClientDebuggerProps,
-	getDebuggerRegistry,
-	getFluidClientDebugger,
-	getFluidClientDebuggers,
-	initializeFluidClientDebugger,
-} from "./Registry";
