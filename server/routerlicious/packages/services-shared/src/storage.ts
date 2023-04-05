@@ -62,15 +62,13 @@ export class DocumentStorage implements IDocumentStorage {
 	}
 
 	private createInitialProtocolTree(
-		documentId: string,
 		sequenceNumber: number,
-		term: number,
 		values: [string, ICommittedProposal][],
 	): ISummaryTree {
 		const documentAttributes: IDocumentAttributes = {
 			minimumSequenceNumber: sequenceNumber,
 			sequenceNumber,
-			term,
+			term: 1,
 		};
 
 		const summary: ISummaryTree = {
@@ -121,7 +119,6 @@ export class DocumentStorage implements IDocumentStorage {
 		documentId: string,
 		appTree: ISummaryTree,
 		sequenceNumber: number,
-		term: number,
 		initialHash: string,
 		ordererUrl: string,
 		historianUrl: string,
@@ -137,9 +134,7 @@ export class DocumentStorage implements IDocumentStorage {
 		};
 
 		const protocolTree = this.createInitialProtocolTree(
-			documentId,
 			sequenceNumber,
-			term,
 			values,
 		);
 		const fullTree = this.createFullTree(appTree, protocolTree);
@@ -193,14 +188,13 @@ export class DocumentStorage implements IDocumentStorage {
 			throw error;
 		}
 
-		const deli: Omit<IDeliState, "epoch"> = {
+		const deli: IDeliState = {
 			clients: undefined,
 			durableSequenceNumber: sequenceNumber,
 			expHash1: initialHash,
 			logOffset: -1,
 			sequenceNumber,
 			signalClientConnectionNumber: 0,
-			term: 1,
 			lastSentMSN: 0,
 			nackMessages: undefined,
 			successfullyStartedLambdas: [],

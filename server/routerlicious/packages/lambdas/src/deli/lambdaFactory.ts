@@ -37,12 +37,10 @@ const getDefaultCheckpoint = (): IDeliState => {
 	return {
 		clients: undefined,
 		durableSequenceNumber: 0,
-		epoch: 0,
 		expHash1: defaultHash,
 		logOffset: -1,
 		sequenceNumber: 0,
 		signalClientConnectionNumber: 0,
-		term: 1,
 		lastSentMSN: 0,
 		nackMessages: undefined,
 		successfullyStartedLambdas: [],
@@ -184,15 +182,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			lastCheckpoint.checkpointTimestamp = Date.now();
 		}
 
-		// For cases such as detached container where the document was generated outside the scope of deli
-		// and checkpoint was written manually.
-		if (lastCheckpoint.epoch === undefined) {
-			lastCheckpoint.epoch = 0;
-			lastCheckpoint.term = 1;
-		}
-
-		const newCheckpoint = lastCheckpoint;
-
 		const checkpointManager = createDeliCheckpointManagerFromCollection(
 			tenantId,
 			documentId,
@@ -204,7 +193,7 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 			context,
 			tenantId,
 			documentId,
-			newCheckpoint,
+			lastCheckpoint,
 			checkpointManager,
 			this.clientManager,
 			// The producer as well it shouldn't take. Maybe it just gives an output stream?

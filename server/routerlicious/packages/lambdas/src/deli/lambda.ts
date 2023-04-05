@@ -1649,12 +1649,10 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 		return {
 			clients: this.clientSeqManager.cloneValues(),
 			durableSequenceNumber: this.durableSequenceNumber,
-			epoch: 0,
 			expHash1: this.lastHash,
 			logOffset: this.logOffset,
 			sequenceNumber: this.sequenceNumber,
 			signalClientConnectionNumber: this.signalClientConnectionNumber,
-			term: 1,
 			lastSentMSN: this.lastSentMSN,
 			nackMessages: Array.from(this.nackMessages),
 			successfullyStartedLambdas: this.successfullyStartedLambdas,

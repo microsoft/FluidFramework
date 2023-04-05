@@ -140,7 +140,6 @@ export class SummaryReader implements ISummaryReader {
 				summaryReaderMetric.success(`Successfully read whole summary`);
 
 				return {
-					term: 1,
 					protocolHead: attributes.sequenceNumber,
 					scribe,
 					messages,
@@ -241,7 +240,6 @@ export class SummaryReader implements ISummaryReader {
 				summaryReaderMetric.success(`Successfully read summary`);
 
 				return {
-					term: 1,
 					protocolHead: attributes.sequenceNumber,
 					scribe,
 					messages,
@@ -259,7 +257,6 @@ export class SummaryReader implements ISummaryReader {
 
 	private getDefaultSummaryState(): ILatestSummaryState {
 		return {
-			term: 1,
 			protocolHead: 0,
 			scribe: "",
 			messages: [],
@@ -290,8 +287,6 @@ export class SummaryReader implements ISummaryReader {
 			sequenceNumber: 0,
 			signalClientConnectionNumber: 0,
 			expHash1: "",
-			epoch: 0,
-			term: 1,
 			lastSentMSN: undefined,
 			nackMessages: undefined,
 			successfullyStartedLambdas: [],

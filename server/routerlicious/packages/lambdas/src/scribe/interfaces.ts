@@ -17,7 +17,6 @@ export interface ISummaryWriteResponse {
 }
 
 export interface ILatestSummaryState {
-	term: number;
 	protocolHead: number;
 	scribe: string;
 	messages: ISequencedDocumentMessage[];

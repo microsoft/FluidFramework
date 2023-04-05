@@ -71,7 +71,7 @@ export function getGitMode(value: SummaryObject): string;
 export function getGitType(value: SummaryObject): "blob" | "tree";
 
 // @public (undocumented)
-export function getQuorumTreeEntries(documentId: string, minimumSequenceNumber: number, sequenceNumber: number, term: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
+export function getQuorumTreeEntries(minimumSequenceNumber: number, sequenceNumber: number, quorumSnapshot: IQuorumSnapshot): ITreeEntry[];
 
 // @public (undocumented)
 export interface ILocalSequencedClient extends ISequencedClient {
