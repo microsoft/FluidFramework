@@ -83,7 +83,7 @@ export interface MergeTreeRevertibleDriver {
  * exported for test only. should not be exported out the the package
  * @internal
  */
-export interface InternalRevertRootMergeBlock {
+export interface RevertRootMergeBlock {
 	mergeTree: MergeTree;
 	__mergeTreeRevertible: {
 		detachedReferences: EndOfTreeSegment;
@@ -91,34 +91,32 @@ export interface InternalRevertRootMergeBlock {
 	};
 }
 
-function findInternalRevertRootMergeBlock(trackable: Trackable): InternalRevertRootMergeBlock {
+function findRevertRootMergeBlock(trackable: Trackable): RevertRootMergeBlock {
 	const segmentOrNode = trackable.isLeaf() ? trackable : trackable.getSegment();
-	const maybeRoot: Partial<InternalRevertRootMergeBlock> | undefined =
-		findRootMergeBlock(segmentOrNode);
+	const maybeRoot: Partial<RevertRootMergeBlock> | undefined = findRootMergeBlock(segmentOrNode);
 	assert(maybeRoot?.mergeTree !== undefined, "foo");
 
 	if (maybeRoot.__mergeTreeRevertible === undefined) {
 		const detachedReferences = new EndOfTreeSegment(maybeRoot.mergeTree);
-		const refCallbacks: InternalRevertRootMergeBlock["__mergeTreeRevertible"]["refCallbacks"] =
-			{
-				afterSlide: (r: LocalReferencePosition) => {
-					if (
-						maybeRoot.mergeTree?.referencePositionToLocalPosition(r) ===
-						DetachedReferencePosition
-					) {
-						const refs = (detachedReferences.localRefs ??= new LocalReferenceCollection(
-							detachedReferences,
-						));
-						refs.addAfterTombstones([r]);
-					}
-				},
-			};
+		const refCallbacks: RevertRootMergeBlock["__mergeTreeRevertible"]["refCallbacks"] = {
+			afterSlide: (r: LocalReferencePosition) => {
+				if (
+					maybeRoot.mergeTree?.referencePositionToLocalPosition(r) ===
+					DetachedReferencePosition
+				) {
+					const refs = (detachedReferences.localRefs ??= new LocalReferenceCollection(
+						detachedReferences,
+					));
+					refs.addAfterTombstones([r]);
+				}
+			},
+		};
 		maybeRoot.__mergeTreeRevertible = {
 			refCallbacks,
 			detachedReferences,
 		};
 	}
-	return maybeRoot as InternalRevertRootMergeBlock;
+	return maybeRoot as RevertRootMergeBlock;
 }
 
 function appendLocalInsertToRevertibles(
@@ -149,12 +147,13 @@ function appendLocalRemoveToRevertibles(
 	}
 	const last = revertibles[revertibles.length - 1];
 
+	const revertRoot = findRevertRootMergeBlock(deltaArgs.deltaSegments[0].segment);
+
 	deltaArgs.deltaSegments.forEach((t) => {
 		const props: RemoveSegmentRefProperties = {
 			segSpec: t.segment.toJSONObject(),
 			referenceSpace: "mergeTreeDeltaRevertible",
 		};
-		const revertRoot = findInternalRevertRootMergeBlock(t.segment);
 		const ref = revertRoot.mergeTree.createLocalReferencePosition(
 			t.segment,
 			0,
@@ -206,10 +205,13 @@ function appendLocalAnnotateToRevertibles(
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
-	driver: MergeTreeRevertibleDriver,
+	driver: MergeTreeRevertibleDriver | undefined,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {
+	if (deltaArgs.deltaSegments.length === 0) {
+		return;
+	}
 	switch (deltaArgs.operation) {
 		case MergeTreeDeltaType.INSERT:
 			appendLocalInsertToRevertibles(deltaArgs, revertibles);
@@ -248,7 +250,7 @@ export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRever
 
 function revertLocalInsert(
 	driver: MergeTreeRevertibleDriver,
-	revertRoot: InternalRevertRootMergeBlock,
+	revertRoot: RevertRootMergeBlock,
 	revertible: TypedRevertible<typeof MergeTreeDeltaType.INSERT>,
 ) {
 	while (revertible.trackingGroup.size > 0) {
@@ -267,7 +269,7 @@ function revertLocalInsert(
 
 function revertLocalRemove(
 	driver: MergeTreeRevertibleDriver,
-	revertRoot: InternalRevertRootMergeBlock,
+	revertRoot: RevertRootMergeBlock,
 	revertible: TypedRevertible<typeof MergeTreeDeltaType.REMOVE>,
 ) {
 	while (revertible.trackingGroup.size > 0) {
@@ -369,7 +371,7 @@ function revertLocalRemove(
 
 function revertLocalAnnotate(
 	driver: MergeTreeRevertibleDriver,
-	revertRoot: InternalRevertRootMergeBlock,
+	revertRoot: RevertRootMergeBlock,
 	revertible: TypedRevertible<typeof MergeTreeDeltaType.ANNOTATE>,
 ) {
 	while (revertible.trackingGroup.size > 0) {
@@ -383,7 +385,7 @@ function revertLocalAnnotate(
 	}
 }
 
-function getPosition(revertRoot: InternalRevertRootMergeBlock, segment: ISegment) {
+function getPosition(revertRoot: RevertRootMergeBlock, segment: ISegment) {
 	const mergeTree = revertRoot.mergeTree;
 	return mergeTree.getPosition(
 		segment,
@@ -402,12 +404,16 @@ export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {
+	if (revertibles.length === 0) {
+		return;
+	}
+	const revertRoot = findRevertRootMergeBlock(revertibles[0].trackingGroup.tracked[0]);
+
 	while (revertibles.length > 0) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const r = revertibles.pop()!;
 		const operation = r.operation;
 		if (r.trackingGroup.size > 0) {
-			const revertRoot = findInternalRevertRootMergeBlock(r.trackingGroup.tracked[0]);
 			switch (operation) {
 				case MergeTreeDeltaType.INSERT:
 					revertLocalInsert(driver, revertRoot, r);

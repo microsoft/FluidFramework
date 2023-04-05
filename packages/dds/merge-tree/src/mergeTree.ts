@@ -526,7 +526,7 @@ export function findRootMergeBlock(
 		maybeRoot = maybeRoot.parent;
 	}
 
-	return maybeRoot;
+	return maybeRoot?.mergeTree !== undefined ? maybeRoot : undefined;
 }
 
 /**

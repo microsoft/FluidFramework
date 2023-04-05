@@ -9,7 +9,7 @@ import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ISegment, SegmentGroup } from "../mergeTreeNodes";
 import {
 	appendToMergeTreeDeltaRevertibles,
-	InternalRevertRootMergeBlock,
+	RevertRootMergeBlock,
 	MergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles";
@@ -191,7 +191,7 @@ describe("MergeTree.Client", () => {
 							}
 						});
 						const revertRoot = clients.B.mergeTree
-							.root as Partial<InternalRevertRootMergeBlock>;
+							.root as Partial<RevertRootMergeBlock>;
 						if (
 							revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs
 								?.empty === false
