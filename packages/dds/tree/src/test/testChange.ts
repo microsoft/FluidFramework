@@ -12,8 +12,10 @@ import {
 	AnchorSet,
 	Delta,
 	ChangeFamilyEditor,
+	FieldKey,
+	emptyDelta,
 } from "../core";
-import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly } from "../util";
+import { JsonCompatible, JsonCompatibleReadOnly, RecursiveReadonly, brand } from "../util";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -265,3 +267,27 @@ export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
 }
 
 export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;
+
+const rootKey: FieldKey = brand("root");
+
+/**
+ * This is a hack to encode arbitrary information (the intentions) into a Delta.
+ * The resulting Delta does note represent a concrete change to a document tree.
+ * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
+ * `ChangeFamily.intoDelta` with the expected change.
+ */
+export function asDelta(intentions: number[]): Delta.Root {
+	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
+}
+
+export function testChangeFamilyFactory(
+	rebaser?: ChangeRebaser<TestChange>,
+): ChangeFamily<ChangeFamilyEditor, TestChange> {
+	const family = {
+		rebaser: rebaser ?? new TestChangeRebaser(),
+		encoder: new TestChangeEncoder(),
+		buildEditor: () => assert.fail("Unexpected call to buildEditor"),
+		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
+	};
+	return family;
+}

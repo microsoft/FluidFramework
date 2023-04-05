@@ -11,7 +11,6 @@ import {
 	EditManager,
 	SessionId,
 	ChangeRebaser,
-	Delta,
 	FieldKey,
 	TaggedChange,
 	emptyDelta,
@@ -23,40 +22,16 @@ import {
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
 import {
 	TestAnchorSet,
-	TestChangeEncoder,
 	TestChangeFamily,
-	TestChangeRebaser,
 	TestChange,
 	UnrebasableTestChangeRebaser,
 	ConstrainedTestChangeRebaser,
+	testChangeFamilyFactory,
+	asDelta,
 } from "../testChange";
 import { assertDeltaEqual } from "../utils";
 
-const rootKey: FieldKey = brand("root");
-
 type TestEditManager = EditManager<TestChange, TestChangeFamily>;
-
-/**
- * This is a hack to encode arbitrary information (the intentions) into a Delta.
- * The resulting Delta does note represent a concrete change to a document tree.
- * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
- * `ChangeFamily.intoDelta` with the expected change.
- */
-function asDelta(intentions: number[]): Delta.Root {
-	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
-}
-
-function changeFamilyFactory(
-	rebaser?: ChangeRebaser<TestChange>,
-): ChangeFamily<ChangeFamilyEditor, TestChange> {
-	const family = {
-		rebaser: rebaser ?? new TestChangeRebaser(),
-		encoder: new TestChangeEncoder(),
-		buildEditor: () => assert.fail("Unexpected call to buildEditor"),
-		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
-	};
-	return family;
-}
 
 function editManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
@@ -66,7 +41,7 @@ function editManagerFactory(options: {
 	anchors: TestAnchorSet;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
-	const family = changeFamilyFactory(options.rebaser);
+	const family = testChangeFamilyFactory(options.rebaser);
 	const anchors = new TestAnchorSet();
 	const manager = new EditManager<TestChange, ChangeFamily<ChangeFamilyEditor, TestChange>>(
 		family,
