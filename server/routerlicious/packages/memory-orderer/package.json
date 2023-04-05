@@ -97,7 +97,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-      "InterfaceDeclaration_ILocalOrdererSetup": {"forwardCompat": false}
-    }
+			"InterfaceDeclaration_ILocalOrdererSetup": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

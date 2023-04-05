@@ -55,7 +55,7 @@
 		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.js\" --exit",
 		"test:report": "lerna run test --stream --no-bail --no-sort -- -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "lerna run tsc --stream",
-    "typetests:gen": "pnpm -r typetests:gen",
+		"typetests:gen": "pnpm -r typetests:gen",
 		"typetests:prepare": "flub typetests -g server --reset --normalize",
 		"watch": "concurrently \"npm run watch:tsc\" \"npm run watch:esnext\"",
 		"watch:esnext": "lerna run --parallel build:esnext -- -- --watch",

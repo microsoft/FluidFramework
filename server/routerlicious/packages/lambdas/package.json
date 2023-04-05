@@ -15,7 +15,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run typetests:gen",
+		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:full": "npm run build",
 		"build:full:compile": "npm run build:compile",
 		"build:test": "tsc --project ./src/test/tsconfig.json",

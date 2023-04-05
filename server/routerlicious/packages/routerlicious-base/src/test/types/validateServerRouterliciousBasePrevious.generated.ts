@@ -23,6 +23,7 @@ declare function get_old_ClassDeclaration_AlfredResources():
 declare function use_current_ClassDeclaration_AlfredResources(
     use: TypeOnly<current.AlfredResources>);
 use_current_ClassDeclaration_AlfredResources(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_AlfredResources());
 
 /*
@@ -35,6 +36,7 @@ declare function get_current_ClassDeclaration_AlfredResources():
 declare function use_old_ClassDeclaration_AlfredResources(
     use: TypeOnly<old.AlfredResources>);
 use_old_ClassDeclaration_AlfredResources(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_AlfredResources());
 
 /*
@@ -119,6 +121,7 @@ declare function get_old_VariableDeclaration_Constants():
 declare function use_current_VariableDeclaration_Constants(
     use: TypeOnly<typeof current.Constants>);
 use_current_VariableDeclaration_Constants(
+    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_Constants());
 
 /*
