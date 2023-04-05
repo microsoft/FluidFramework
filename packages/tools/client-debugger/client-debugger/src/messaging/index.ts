@@ -14,6 +14,7 @@
  */
 
 export { devtoolsMessageSource } from "./Constants";
+export { GetContainerState } from "./container-devtools-messages";
 export {
 	HasContainerId,
 	HasFluidObjectId,
@@ -35,9 +36,6 @@ export {
 	DataVisualizationMessage,
 	DataVisualizationMessageData,
 	DataVisualizationMessageType,
-	GetContainerStateMessage,
-	GetContainerStateMessageData,
-	GetContainerStateMessageType,
 	GetDataVisualizationMessage,
 	GetDataVisualizationMessageData,
 	GetDataVisualizationMessageType,

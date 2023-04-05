@@ -37,20 +37,6 @@ export interface HasFluidObjectId {
 // #region Inbound messages
 
 /**
- * {@link GetContainerStateMessage} {@link IDebuggerMessage."type"}.
- *
- * @public
- */
-export const GetContainerStateMessageType = "GET_CONTAINER_STATE";
-
-/**
- * Message data format used by {@link GetContainerStateMessage}.
- *
- * @public
- */
-export type GetContainerStateMessageData = HasContainerId;
-
-/**
  * {@link ConnectContainerMessage} {@link IDebuggerMessage."type"}.
  *
  * @public
@@ -119,20 +105,6 @@ export const GetDataVisualizationMessageType = "GET_DATA_VISUALIZATION";
  * @public
  */
 export type GetDataVisualizationMessageData = HasContainerId & HasFluidObjectId;
-
-/**
- * Inbound message requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
- *
- * Will result in the {@link ContainerStateChangeMessage} message being posted.
- *
- * @public
- */
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
-	/**
-	 * {@inheritDoc IDebuggerMessage."type"}
-	 */
-	type: typeof GetContainerStateMessageType;
-}
 
 /**
  * Inbound message requesting visualizations for the root DDS data tracked by the

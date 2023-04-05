@@ -11,6 +11,9 @@ module.exports = {
 	rules: {
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
+
+		// Disabled because it is incompatible with API-Extractor.
+		"@typescript-eslint/no-namespace": "off",
 	},
 	overrides: [
 		{

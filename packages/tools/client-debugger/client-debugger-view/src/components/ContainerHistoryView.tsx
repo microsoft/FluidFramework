@@ -9,7 +9,7 @@ import {
 	ConnectionStateChangeLogEntry,
 	ContainerStateChangeKind,
 	ContainerStateHistoryMessage,
-	GetContainerStateMessageType,
+	GetContainerState,
 	handleIncomingMessage,
 	HasContainerId,
 	ISourcedDebuggerMessage,
@@ -71,7 +71,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 
 		// Request state info for the newly specified containerId
 		messageRelay.postMessage({
-			type: GetContainerStateMessageType,
+			type: GetContainerState.MessageType,
 			data: {
 				containerId,
 			},

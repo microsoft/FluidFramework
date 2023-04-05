@@ -36,8 +36,7 @@ import {
 	DisconnectContainerMessageType,
 	GetAudienceMessage,
 	GetAudienceMessageType,
-	GetContainerStateMessageType,
-	GetContainerStateMessage,
+	GetContainerState,
 	GetDataVisualizationMessage,
 	GetDataVisualizationMessageType,
 	GetRootDataVisualizationsMessage,
@@ -122,7 +121,7 @@ export interface ContainerDevtoolsProps {
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast
+ * - {@link GetContainerState.Message}: When received (if the container ID matches), the debugger will broadcast
  * {@link ContainerStateChangeMessage}.
  *
  * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to
@@ -146,7 +145,7 @@ export interface ContainerDevtoolsProps {
  * **Messages it posts:**
  *
  * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
- * or when requested (via {@link GetContainerStateMessage}).
+ * or when requested (via {@link GetContainerState.Message}).
  *
  * - {@link RootDataVisualizationsMessage}: Posted when requested via {@link GetRootDataVisualizationsMessage}.
  *
@@ -301,8 +300,8 @@ export class ContainerDevtools
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetContainerStateMessageType]: (untypedMessage) => {
-			const message = untypedMessage as GetContainerStateMessage;
+		[GetContainerState.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerState.Message;
 			if (message.data.containerId === this.containerId) {
 				this.postContainerStateChange();
 				return true;

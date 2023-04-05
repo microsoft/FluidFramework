@@ -281,15 +281,14 @@ export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
 export const GetContainerListMessageType = "GET_CONTAINER_LIST";
 
 // @public
-export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
-    type: typeof GetContainerStateMessageType;
+export namespace GetContainerState {
+    const MessageType = "GET_CONTAINER_STATE";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDebuggerMessage<HasContainerId> {
+        type: typeof MessageType;
+    }
+    export type MessageData = HasContainerId;
 }
-
-// @public
-export type GetContainerStateMessageData = HasContainerId;
-
-// @public
-export const GetContainerStateMessageType = "GET_CONTAINER_STATE";
 
 // @public
 export interface GetDataVisualizationMessage extends IDebuggerMessage<GetDataVisualizationMessageData> {

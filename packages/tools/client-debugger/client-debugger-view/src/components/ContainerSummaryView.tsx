@@ -18,7 +18,7 @@ import {
 	ConnectContainerMessageType,
 	DisconnectContainerMessageType,
 	CloseContainerMessageType,
-	GetContainerStateMessageType,
+	GetContainerState,
 	ContainerStateChangeMessageType,
 } from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
@@ -87,7 +87,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 		// Request state info for the newly specified containerId
 		messageRelay.postMessage({
-			type: GetContainerStateMessageType,
+			type: GetContainerState.MessageType,
 			data: {
 				containerId,
 			},
