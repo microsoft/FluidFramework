@@ -13,6 +13,7 @@ import {
 	AudienceSummaryMessageData,
 	AudienceSummaryMessageType,
 	GetAudienceMessage,
+	GetAudienceMessageType,
 	handleIncomingMessage,
 	HasContainerId,
 	IDebuggerMessage,
@@ -73,7 +74,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 		// Request the current Audience State of the Container
 		messageRelay.postMessage<GetAudienceMessage>({
-			type: "GET_AUDIENCE",
+			type: GetAudienceMessageType,
 			data: {
 				containerId,
 			},
