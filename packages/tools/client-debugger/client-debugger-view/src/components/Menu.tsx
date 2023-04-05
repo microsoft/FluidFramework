@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DefaultPalette, IStackStyles, Stack } from "@fluentui/react";
+import { IStackStyles, Stack } from "@fluentui/react";
 import React from "react";
+import { tokens } from "@fluentui/react-components";
 
 /**
  * Props for {@link MenuSection}
@@ -24,7 +25,7 @@ export function MenuSection(props: MenuSectionProps): React.ReactElement {
 	const { header, children } = props;
 
 	return (
-		<Stack styles={menuSectionStyles}>
+		<Stack>
 			<Stack.Item styles={menuSectionHeaderStyles}>{header}</Stack.Item>
 			{children}
 		</Stack>
@@ -53,17 +54,8 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	);
 }
 
-const menuSectionStyles: IStackStyles = {
-	root: {
-		background: DefaultPalette.themeLight,
-		border: `1px 1px 0px 1px solid ${DefaultPalette.themePrimary}`,
-		padding: "3px",
-	},
-};
 const menuSectionHeaderStyles: IStackStyles = {
 	root: {
-		border: `1px solid ${DefaultPalette.themePrimary}`,
-		background: DefaultPalette.themeLighterAlt,
 		fontWeight: "bold",
 		paddingLeft: "2px",
 	},
@@ -74,11 +66,11 @@ function getMenuSectionItemStyles(isActive: boolean): IStackStyles {
 		root: {
 			"paddingLeft": "20px",
 			"cursor": "pointer",
-			"background": isActive ? DefaultPalette.themeTertiary : DefaultPalette.themeLight,
-			"fontWeight": isActive ? "bold" : "",
+			"background": isActive
+				? tokens.colorNeutralBackground1Selected
+				: tokens.colorNeutralBackground1,
 			"&:hover": {
-				background: DefaultPalette.themeSecondary,
-				color: DefaultPalette.white,
+				background: tokens.colorNeutralBackground1Hover,
 			},
 		},
 	};

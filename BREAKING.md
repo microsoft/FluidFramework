@@ -19,15 +19,16 @@ It's important to communicate breaking changes to our stakeholders. To write a g
 
 ## 2.0.0-internal.4.1.0 Upcoming changes
 
--   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
+-   [@fluidframework/garbage-collector deprecated](#@fluidframework/garbage-collector-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
 -   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
 -   [Container-loader deprecations](#Container-loader-deprecations)
 -   [Op compression is enabled by default](#op-compression-is-enabled-by-default)
 
-### garbage-collector and related items deprecated
+### @fluidframework/garbage-collector deprecated
 
-The following functions, interfaces, and types currently available in `@fluidframework/garbage-collector` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+The `@fluidframework/garbage-collector` package is deprecated with the following functions, interfaces, and types in it. These are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
 
 -   `runGarbageCollection`
 -   `trimLeadingAndTrailingSlashes`
@@ -35,6 +36,7 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `trimTrailingSlashes`
 -   `cloneGCData`
 -   `unpackChildNodesGCDetails`
+-   `unpackChildNodesUsedRoutes`
 -   `removeRouteFromAllNodes`
 -   `concatGarbageCollectionStates`
 -   `concatGarbageCollectionData`
@@ -50,6 +52,12 @@ The following interfaces available in `@fluidframework/runtime-definitions` are 
 -   `IGarbageCollectionState`
 -   `IGarbageCollectionSnapshotData`
 -   `IGarbageCollectionSummaryDetailsLegacy`
+
+### Some test packages no longer published
+
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-end-to-end-tests`
 
 ### ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker
 
