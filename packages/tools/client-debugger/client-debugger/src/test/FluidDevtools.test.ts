@@ -23,7 +23,7 @@ describe("FluidDevtools unit tests", () => {
 		let containerRegistered = false;
 		let containerDevtoolsClosed = false;
 
-		devtools.on("containerRegistered", () => {
+		devtools.on("containerDevtoolsRegistered", () => {
 			containerRegistered = true;
 		});
 		devtools.on("containerDevtoolsClosed", () => {
@@ -38,7 +38,7 @@ describe("FluidDevtools unit tests", () => {
 			containerId,
 			container,
 		};
-		devtools.registerContainer(containerProps);
+		devtools.registerContainerDevtools(containerProps);
 
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		expect(containerRegistered).to.be.true;
@@ -85,7 +85,9 @@ describe("FluidDevtools unit tests", () => {
 		};
 
 		// Validate that subsequent actions on disposed devtools instance fail
-		expect(() => devtools.registerContainer(containerProps)).to.throw(useAfterDisposeErrorText);
+		expect(() => devtools.registerContainerDevtools(containerProps)).to.throw(
+			useAfterDisposeErrorText,
+		);
 		expect(() => devtools.closeContainerDevtools(containerId)).to.throw(
 			useAfterDisposeErrorText,
 		);
@@ -101,7 +103,7 @@ describe("FluidDevtools unit tests", () => {
 			containerId,
 			container: container1,
 		};
-		devtools.registerContainer(container1Props);
+		devtools.registerContainerDevtools(container1Props);
 
 		const container2 = createMockContainer();
 		const container2Props: ContainerDevtoolsProps = {
@@ -109,7 +111,7 @@ describe("FluidDevtools unit tests", () => {
 			container: container2,
 		};
 
-		expect(() => devtools.registerContainer(container2Props)).to.throw(
+		expect(() => devtools.registerContainerDevtools(container2Props)).to.throw(
 			getContainerAlreadyRegisteredErrorText(containerId),
 		);
 	});

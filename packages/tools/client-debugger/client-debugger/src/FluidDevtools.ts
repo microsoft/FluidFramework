@@ -59,7 +59,7 @@ export interface FluidDevtoolsProps {
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
-	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainer}.
+	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
 	 */
 	initialContainers?: ContainerDevtoolsProps[];
 }
@@ -166,18 +166,16 @@ export class FluidDevtools
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
 		// Initiate message posting of container list updates.
-		this.on("containerRegistered", this.postContainerList);
+		this.on("containerDevtoolsRegistered", this.postContainerList);
 		this.on("containerDevtoolsClosed", this.postContainerList);
 
 		this._disposed = false;
 	}
 
 	/**
-	 * {@inheritDoc IFluidDevtools.registerContainer}
-	 *
-	 * @throws Will throw if devtools have already been registered for the specified Container ID.
+	 * {@inheritDoc IFluidDevtools.registerContainerDevtools}
 	 */
-	public registerContainer(props: ContainerDevtoolsProps): void {
+	public registerContainerDevtools(props: ContainerDevtoolsProps): void {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
@@ -190,7 +188,7 @@ export class FluidDevtools
 
 		const containerDevtools = new ContainerDevtools(props);
 		this.containers.set(containerId, containerDevtools);
-		this.emit("containerRegistered", containerId);
+		this.emit("containerDevtoolsRegistered", containerId);
 	}
 
 	/**

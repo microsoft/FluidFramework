@@ -105,7 +105,7 @@ function registerContainerWithDevtools(
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const innerContainer = fluidContainer.INTERNAL_CONTAINER_DO_NOT_USE!();
 
-	devtools.registerContainer({
+	devtools.registerContainerDevtools({
 		container: innerContainer,
 		containerId: containerInfo.containerId,
 		containerNickname: containerInfo.containerNickname,

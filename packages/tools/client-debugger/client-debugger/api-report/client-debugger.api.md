@@ -191,13 +191,13 @@ export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implem
     get disposed(): boolean;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    registerContainer(props: ContainerDevtoolsProps): void;
+    registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
 // @public
 export interface FluidDevtoolsEvents extends IEvent {
     // @eventProperty
-    (event: "containerRegistered", listener: (containerId: string) => void): void;
+    (event: "containerDevtoolsRegistered", listener: (containerId: string) => void): void;
     // @eventProperty
     (event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
     // @eventProperty
@@ -320,7 +320,7 @@ export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDi
     closeContainerDevtools(containerId: string): void;
     getAllContainerDevtools(): readonly IContainerDevtools[];
     getContainerDevtools(containerId: string): IContainerDevtools | undefined;
-    registerContainer(props: ContainerDevtoolsProps): void;
+    registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
 // @internal

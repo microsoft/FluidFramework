@@ -18,7 +18,7 @@ export interface FluidDevtoolsEvents extends IEvent {
 	 *
 	 * @eventProperty
 	 */
-	(event: "containerRegistered", listener: (containerId: string) => void): void;
+	(event: "containerDevtoolsRegistered", listener: (containerId: string) => void): void;
 
 	/**
 	 * Emitted when a {@link IContainerDevtools} is closed for a Container.
@@ -46,8 +46,10 @@ export interface FluidDevtoolsEvents extends IEvent {
 export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
 	/**
 	 * Initializes a {@link IContainerDevtools} from the provided properties and stores it for future reference.
+	 *
+	 * @throws Will throw if devtools have already been registered for the specified Container ID.
 	 */
-	registerContainer(props: ContainerDevtoolsProps): void;
+	registerContainerDevtools(props: ContainerDevtoolsProps): void;
 
 	/**
 	 * Closes ({@link IContainerDevtools.dispose | disposes}) a registered Container devtools associated with the
