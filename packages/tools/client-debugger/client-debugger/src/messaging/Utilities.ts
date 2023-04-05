@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { debuggerMessageSource } from "./Constants";
+import { devtoolsMessageSource } from "./Constants";
 import { IDebuggerMessage, ISourcedDebuggerMessage } from "./Messages";
 
 /**
@@ -23,7 +23,7 @@ export function postMessagesToWindow<TMessage extends IDebuggerMessage>(
 ): void {
 	const messagesWithSource: ISourcedDebuggerMessage[] = messages.map((message) => ({
 		...message,
-		source: debuggerMessageSource,
+		source: devtoolsMessageSource,
 	}));
 
 	// TODO: remove loggingOptions once things settle.

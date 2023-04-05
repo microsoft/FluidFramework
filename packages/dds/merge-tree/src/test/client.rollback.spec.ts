@@ -10,6 +10,7 @@ import { Marker, reservedMarkerIdKey, SegmentGroup } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { TestClient } from "./testClient";
+import { TestClientLogger } from "./testClientLogger";
 import { insertSegments, validatePartialLengths } from "./testUtils";
 
 describe("client.rollback", () => {
@@ -500,5 +501,76 @@ describe("client.rollback", () => {
 		}
 		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, client.peekPendingSegmentGroups());
 		assert.equal(client.getText(), "");
+	});
+	it("Should function properly after rollback with local ops", () => {
+		client.insertTextLocal(0, "abcdefg");
+		client.removeRangeLocal(1, 5);
+
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+
+		client.removeRangeLocal(2, 4);
+		assert.equal(client.getText(), "abefg");
+
+		client.annotateRangeLocal(2, 5, { foo: "bar" }, undefined);
+		for (let i = 0; i < client.getText().length; i++) {
+			const props = client.getPropertiesAtPosition(i);
+			if (i >= 2 && i < 5) {
+				assert.equal(props?.foo, "bar");
+			} else {
+				assert(props === undefined || props.foo === undefined);
+			}
+		}
+
+		client.insertTextLocal(1, "123");
+		assert.equal(client.getText(), "a123befg");
+	});
+	it("Should function properly after rollback with external ops", () => {
+		const remoteClient = new TestClient();
+		remoteClient.insertTextLocal(0, client.getText());
+		remoteClient.startOrUpdateCollaboration("remoteUser");
+		const clients = [client, remoteClient];
+		let seq = 0;
+		const logger = new TestClientLogger(clients);
+
+		let msg = remoteClient.makeOpMessage(remoteClient.insertTextLocal(0, "12345"), ++seq);
+		clients.forEach((c) => c.applyMsg(msg));
+		logger.validate({ baseText: "12345" });
+
+		client.removeRangeLocal(1, 4);
+		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
+
+		msg = remoteClient.makeOpMessage(remoteClient.removeRangeLocal(2, 3), ++seq);
+		clients.forEach((c) => {
+			c.applyMsg(msg);
+		});
+
+		logger.validate({ baseText: "1245" });
+
+		msg = remoteClient.makeOpMessage(
+			remoteClient.annotateRangeLocal(0, 3, { foo: "bar" }, undefined),
+			++seq,
+		);
+		clients.forEach((c) => {
+			c.applyMsg(msg);
+		});
+
+		logger.validate({ baseText: "1245" });
+		clients.forEach((c) => {
+			for (let i = 0; i < c.getText().length; i++) {
+				const props = c.getPropertiesAtPosition(i);
+				if (i >= 0 && i < 3) {
+					assert.equal(props?.foo, "bar");
+				} else {
+					assert(props === undefined || props.foo === undefined);
+				}
+			}
+		});
+
+		msg = remoteClient.makeOpMessage(remoteClient.insertTextLocal(3, "abc"), ++seq);
+		clients.forEach((c) => {
+			c.applyMsg(msg);
+		});
+
+		logger.validate({ baseText: "124abc5" });
 	});
 });

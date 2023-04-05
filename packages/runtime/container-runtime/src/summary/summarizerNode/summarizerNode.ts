@@ -12,6 +12,7 @@ import {
 	CreateSummarizerNodeSource,
 	SummarizeInternalFn,
 	ITelemetryContext,
+	IExperimentalIncrementalSummaryContext,
 } from "@fluidframework/runtime-definitions";
 import {
 	ISequencedDocumentMessage,
@@ -159,7 +160,28 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 		}
 
-		const result = await this.summarizeInternalFn(fullTree, true, telemetryContext);
+		// This assert is the same the other 0a1x1 assert `isSummaryInProgress`, the only difference is that typescript
+		// complains if this assert isn't done this way
+		assert(
+			this.wipReferenceSequenceNumber !== undefined,
+			"Summarize should not be called when not tracking the summary",
+		);
+		const incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined =
+			this._latestSummary !== undefined
+				? {
+						summarySequenceNumber: this.wipReferenceSequenceNumber,
+						latestSummarySequenceNumber: this._latestSummary.referenceSequenceNumber,
+						// TODO: remove summaryPath
+						summaryPath: this._latestSummary.fullPath.path,
+				  }
+				: undefined;
+
+		const result = await this.summarizeInternalFn(
+			fullTree,
+			true,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 		this.wipLocalPaths = { localPath: EscapedPath.create(result.id) };
 		if (result.pathPartsForChildren !== undefined) {
 			this.wipLocalPaths.additionalPath = EscapedPath.createAndConcat(
