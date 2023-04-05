@@ -212,34 +212,6 @@ describe("Fluid Cache tests", () => {
 		clearDateMock();
 	});
 
-	it("updates the last accessed time when reading a value from storage", async () => {
-		// We need to mock out the Date API to make this test work
-		const clearDateMock = setupDateMock(100);
-		const fluidCache = getFluidCache();
-
-		const cacheEntry = getMockCacheEntry("shouldUpdateLastAccessedTime");
-		const cachedItem = { dateToStore: "foo" };
-
-		await fluidCache.put(cacheEntry, cachedItem);
-
-		const db = await getFluidCacheIndexedDbInstance();
-
-		expect(
-			(await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry)))
-				?.lastAccessTimeMs,
-		).toBe(100);
-
-		DateMock.mockTimeMs = 800;
-		await fluidCache.get(cacheEntry);
-
-		expect(
-			(await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry)))
-				?.lastAccessTimeMs,
-		).toEqual(800);
-
-		clearDateMock();
-	});
-
 	it("does not throw when APIs are called and the database has been upgraded by another client", async () => {
 		// Create a DB with a much newer version number to simulate an old client
 		await openDB(FluidDriverCacheDBName, 1000000);

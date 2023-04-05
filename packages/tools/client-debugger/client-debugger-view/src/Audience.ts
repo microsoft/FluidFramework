@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluidframework/protocol-definitions";
+import { AudienceClientMetaData } from "@fluid-tools/client-debugger";
 
 /**
  * Represents a single audience user, aggregating their client connections.
@@ -24,11 +25,14 @@ export interface AudienceMember {
  * Combines multiple member instances for the same user, and enumerates their separate client connections.
  */
 export function combineMembersWithMultipleConnections(
-	clients: Map<string, IClient>,
+	audienceMetadata: AudienceClientMetaData[],
 ): Map<string, AudienceMember> {
 	const audienceMembers = new Map<string, AudienceMember>();
-	for (const [clientId, clientMember] of clients) {
-		const userId = clientMember.user.id;
+
+	for (const audienceEntry of audienceMetadata) {
+		const clientId = audienceEntry.clientId;
+		const userId = audienceEntry.client.user.id;
+
 		// Ensure we're tracking the user
 		let audienceMember = audienceMembers.get(userId);
 		if (audienceMember === undefined) {
@@ -40,7 +44,7 @@ export function combineMembersWithMultipleConnections(
 		}
 
 		// Add this connection to their collection
-		audienceMember.clients.set(clientId, clientMember);
+		audienceMember.clients.set(clientId, audienceEntry.client);
 	}
 	return audienceMembers;
 }

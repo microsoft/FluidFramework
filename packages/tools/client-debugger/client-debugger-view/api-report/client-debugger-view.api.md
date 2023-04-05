@@ -4,13 +4,10 @@
 
 ```ts
 
-import { ConnectionStateChangeLogEntry } from '@fluid-tools/client-debugger';
-import { ContainerMetadata } from '@fluid-tools/client-debugger';
-import { ContainerStateMetadata } from '@fluid-tools/client-debugger';
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IFluidClientDebugger } from '@fluid-tools/client-debugger';
-import { ISharedObject } from '@fluidframework/shared-object-base';
-import { ITelemetryBaseEvent } from '@fluidframework/common-definitions';
+import { IDebuggerMessage } from '@fluid-tools/client-debugger';
+import { IMessageRelay } from '@fluid-tools/client-debugger';
+import { ISourcedDebuggerMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
 
 // @public
@@ -26,123 +23,17 @@ export interface AudienceMemberViewProps {
     myClientId: string | undefined;
 }
 
-// @internal
-export function ClientDebugView(props: ClientDebugViewProps): React_2.ReactElement;
-
-// @internal
-export const clientDebugViewClassName = "fluid-client-debugger-view";
-
-// @internal
-export interface ClientDebugViewProps extends HasClientDebugger {
-    renderOptions?: RenderOptions;
-}
+export { IMessageRelay }
 
 // @public
-export function _ContainerHistoryView(props: _ContainerHistoryViewProps): React_2.ReactElement;
+export const MessageRelayContext: React_2.Context<IMessageRelay<IDebuggerMessage<unknown>, ISourcedDebuggerMessage<unknown>> | undefined>;
 
 // @public
-export interface _ContainerHistoryViewProps {
-    containerHistory: readonly ConnectionStateChangeLogEntry[];
-}
-
-// @internal
-export function ContainerSelectionDropdown(props: ContainerSelectionDropdownProps): React_2.ReactElement;
-
-// @internal
-export interface ContainerSelectionDropdownProps {
-    initialSelection?: string;
-    onChangeSelection(containerId: string | undefined): void;
-    options: ContainerMetadata[];
-}
+export function RootView(props: RootViewProps): React_2.ReactElement;
 
 // @public
-export function ContainerSummaryView(props: ContainerSummaryViewProps): React_2.ReactElement;
-
-// @internal
-export function _ContainerSummaryView(props: _ContainerSummaryViewProps): React_2.ReactElement;
-
-// @public
-export type ContainerSummaryViewProps = HasClientDebugger;
-
-// @public
-export interface _ContainerSummaryViewProps extends ContainerStateMetadata, IContainerActions {
-}
-
-// @public
-export const defaultRenderOptions: Required<RenderOptions>;
-
-// @public
-export const defaultSharedObjectRenderers: SharedObjectRenderOptions;
-
-// @public
-export function FluidClientDebuggers(props: FluidClientDebuggersProps): React_2.ReactElement;
-
-// @public
-export interface FluidClientDebuggersProps {
-    renderOptions?: RenderOptions;
-}
-
-// @public
-export interface HasClientDebugger {
-    clientDebugger: IFluidClientDebugger;
-}
-
-// @public
-export interface IContainerActions {
-    closeContainer?: () => void;
-    forceDisconnect?: () => void;
-    tryConnect?: () => void;
-}
-
-// @internal
-export enum PanelView {
-    Audience = "Audience",
-    ContainerData = "Data",
-    ContainerStateHistory = "States",
-    Telemetry = "Telemetry"
-}
-
-// @internal
-export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React_2.ReactElement;
-
-// @internal
-export interface PanelViewSelectionMenuProps {
-    currentSelection: PanelView;
-    updateSelection(newSelection: PanelView): void;
-}
-
-// @public
-export type RenderChild = (childObject: unknown) => React_2.ReactElement;
-
-// @public
-export function renderClientDebuggerView(targetElement: HTMLElement): Promise<void>;
-
-// @public
-export interface RenderOptions {
-    onRenderAudienceMember?: (props: AudienceMemberViewProps) => React_2.ReactElement;
-    sharedObjectRenderOptions?: SharedObjectRenderOptions;
-}
-
-// @public
-export type RenderSharedObject = (
-sharedObject: ISharedObject,
-renderChild: RenderChild) => React_2.ReactElement;
-
-// @public
-export interface SharedObjectRenderOptions {
-    [k: SharedObjectType]: RenderSharedObject;
-}
-
-// @public
-export type SharedObjectType = string;
-
-// @internal
-export function _TelemetryView(props: _TelemetryViewProps): React_2.ReactElement;
-
-// @internal
-export interface _TelemetryViewProps {
-    // (undocumented)
-    telemetryEvents: ITelemetryBaseEvent[];
+export interface RootViewProps {
+    messageRelay: IMessageRelay;
 }
 
 ```

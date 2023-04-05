@@ -21,6 +21,7 @@ import {
 	cursorsFromContextualData,
 	defaultSchemaPolicy,
 	getEditableTreeContext,
+	FieldViewSchema,
 } from "../../../feature-libraries";
 import {
 	ValueSchema,
@@ -31,7 +32,6 @@ import {
 	JsonableTree,
 	symbolFromKey,
 	GlobalFieldKeySymbol,
-	FieldSchema,
 	SchemaData,
 	IEditableForest,
 	SchemaDataAndPolicy,
@@ -42,10 +42,6 @@ import {
 import { brand, Brand } from "../../../util";
 
 export const stringSchema = TypedSchema.tree("String", {
-	value: ValueSchema.String,
-});
-
-export const decimalSchema = TypedSchema.tree("Decimal", {
 	value: ValueSchema.String,
 });
 
@@ -116,13 +112,7 @@ export const personSchema = TypedSchema.tree("Test:Person-1.0.0", {
 		name: TypedSchema.field(FieldKinds.value, stringSchema),
 		age: TypedSchema.field(FieldKinds.optional, int32Schema),
 		adult: TypedSchema.field(FieldKinds.optional, boolSchema),
-		salary: TypedSchema.field(
-			FieldKinds.optional,
-			float64Schema,
-			int32Schema,
-			stringSchema,
-			decimalSchema,
-		),
+		salary: TypedSchema.field(FieldKinds.optional, float64Schema, int32Schema, stringSchema),
 		friends: TypedSchema.field(FieldKinds.optional, mapStringSchema),
 		address: TypedSchema.field(FieldKinds.optional, addressSchema),
 	},
@@ -156,14 +146,13 @@ export const treeSchema = [
 	addressSchema,
 	mapStringSchema,
 	personSchema,
-	decimalSchema,
 ] as const;
 
 export const fullSchemaData = SchemaAware.typedSchemaData(
-	new Map<GlobalFieldKey, FieldSchema>([
+	[
 		[rootFieldKey, rootPersonSchema],
 		[globalFieldKeySequencePhones, globalFieldSchemaSequencePhones],
-	]),
+	],
 	...treeSchema,
 );
 
@@ -296,9 +285,14 @@ export function getPerson(): Person {
 /**
  * Create schema supporting all type defined in this file, with the specified root field.
  */
-export function buildTestSchema(rootField: FieldSchema = rootPersonSchema): SchemaData {
+export function buildTestSchema(rootField: FieldViewSchema = rootPersonSchema): SchemaData {
 	return SchemaAware.typedSchemaData(
-		new Map([...fullSchemaData.globalFieldSchema.entries(), [rootFieldKey, rootField]]),
+		[
+			...(fullSchemaData.globalFieldSchema.entries() as Iterable<
+				[GlobalFieldKey, FieldViewSchema]
+			>),
+			[rootFieldKey, rootField],
+		],
 		...treeSchema,
 	);
 }
@@ -326,7 +320,7 @@ export function setupForest(
 
 export function buildTestTree(
 	data: ContextuallyTypedNodeData | undefined,
-	rootField: FieldSchema = rootPersonSchema,
+	rootField: FieldViewSchema = rootPersonSchema,
 ): EditableTreeContext {
 	const schema: SchemaData = buildTestSchema(rootField);
 	const forest = setupForest(schema, data);

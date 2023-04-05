@@ -12,6 +12,7 @@ import { IFluidDataStoreFactory } from '@fluidframework/runtime-definitions';
 import { IFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
+import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
 import { IProvideFluidDataStoreRegistry } from '@fluidframework/runtime-definitions';
 import { IRequest } from '@fluidframework/core-interfaces';
 import { IRequestHeader } from '@fluidframework/core-interfaces';
@@ -71,6 +72,26 @@ export function exceptionToResponse(err: any): IResponse;
 
 // @public (undocumented)
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
+
+// @internal
+export class GCDataBuilder implements IGarbageCollectionData {
+    // (undocumented)
+    addNode(id: string, outboundRoutes: string[]): void;
+    // (undocumented)
+    addNodes(gcNodes: {
+        [id: string]: string[];
+    }): void;
+    addRouteToAllNodes(outboundRoute: string): void;
+    // (undocumented)
+    get gcNodes(): {
+        [id: string]: string[];
+    };
+    // (undocumented)
+    getGCData(): IGarbageCollectionData;
+    prefixAndAddNodes(prefixId: string, gcNodes: {
+        [id: string]: string[];
+    }): void;
+}
 
 // @public
 export function generateHandleContextPath(path: string, routeContext?: IFluidHandleContext): string;
@@ -176,6 +197,9 @@ export class TelemetryContext implements ITelemetryContext {
     // (undocumented)
     setMultiple(prefix: string, property: string, values: Record<string, TelemetryEventPropertyType>): void;
 }
+
+// @public
+export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
 
 // @public (undocumented)
 export function utf8ByteLength(str: string): number;

@@ -2,26 +2,39 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
+
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
-
+import {
+	defaultVisualizers,
+	DataVisualizerGraph,
+	FluidObjectId,
+	FluidObjectNodeBase,
+	RootHandleNode,
+} from "./data-visualization";
 import { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
+	AudienceClientMetaData,
+	AudienceSummaryMessage,
+	GetAudienceMessage,
 	CloseContainerMessage,
 	ConnectContainerMessage,
-	debuggerMessageSource,
 	DisconnectContainerMessage,
 	GetContainerStateMessage,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
+	ISourcedDebuggerMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	GetDataVisualizationMessage,
+	GetRootDataVisualizationsMessage,
 } from "./messaging";
 import { FluidClientDebuggerProps } from "./Registry";
 
@@ -35,16 +48,37 @@ import { FluidClientDebuggerProps } from "./Registry";
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast {@link ContainerStateChangeMessage}.
- * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to the container.
- * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect from the container.
+ * - {@link GetContainerStateMessage}: When received (if the container ID matches), the debugger will broadcast
+ * {@link ContainerStateChangeMessage}.
+ *
+ * - {@link ConnectContainerMessage}: When received (if the container ID matches), the debugger will connect to
+ * the container.
+ *
+ * - {@link DisconnectContainerMessage}: When received (if the container ID matches), the debugger will disconnect
+ * from the container.
+ *
  * - {@link CloseContainerMessage}: When received (if the container ID matches), the debugger will close the container.
+ *
+ * - {@link GetAudienceMessage}: When received (if the container ID matches), the debugger will broadcast {@link AudienceSummaryMessage}.
+ *
+ * - {@link GetRootDataVisualizationsMessage}: When received (if the container ID matches), the debugger will
+ * broadcast {@link RootDataVisualizationsMessage}.
+ *
+ * - {@link GetDataVisualizationMessage}: When received (if the container ID matches), the debugger will
+ * broadcast {@link DataVisualizationMessage}.
+ *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
  * - {@link ContainerStateChangeMessage}: This is posted any time relevant Container state changes,
  * or when requested (via {@link GetContainerStateMessage}).
+ *
+ * - {@link RootDataVisualizationsMessage}: Posted when requested via {@link GetRootDataVisualizationsMessage}.
+ *
+ * - {@link DataVisualizationMessage}: Posted when requested via {@link GetDataVisualizationMessage}, or when
+ * a change has occurred on the associated DDS, reachable from the visualization graph.
+ *
  * TODO: Document others as they are added.
  *
  * @sealed
@@ -74,7 +108,7 @@ export class FluidClientDebugger
 	/**
 	 * {@inheritDoc IFluidClientDebugger.containerData}
 	 */
-	public readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
+	public readonly containerData?: Record<string, IFluidLoadable>;
 
 	/**
 	 * {@inheritDoc IFluidClientDebugger.containerNickname}
@@ -95,6 +129,13 @@ export class FluidClientDebugger
 
 	// #endregion
 
+	/**
+	 * Manages state visualization for {@link FluidClientDebugger.containerData}, if any was provided.
+	 *
+	 * @remarks Will only be `undefined` if `containerData` was not provided, or if the debugger has been disposed.
+	 */
+	private dataVisualizer: DataVisualizerGraph | undefined;
+
 	// #region Container-related event handlers
 
 	private readonly containerAttachedHandler = (): void => {
@@ -113,6 +154,7 @@ export class FluidClientDebugger
 			clientId,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisconnectedHandler = (): void => {
@@ -122,6 +164,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerClosedHandler = (): void => {
@@ -131,6 +174,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	private readonly containerDisposedHandler = (): void => {
@@ -140,6 +184,7 @@ export class FluidClientDebugger
 			clientId: undefined,
 		});
 		this.postContainerStateChange();
+		this.postAudienceStateChange();
 	};
 
 	// #endregion
@@ -153,6 +198,7 @@ export class FluidClientDebugger
 			changeKind: "added",
 			timestamp: Date.now(),
 		});
+		this.postAudienceStateChange();
 	};
 
 	private readonly audienceMemberRemovedHandler = (clientId: string, client: IClient): void => {
@@ -162,6 +208,15 @@ export class FluidClientDebugger
 			changeKind: "removed",
 			timestamp: Date.now(),
 		});
+		this.postAudienceStateChange();
+	};
+
+	// #endregion
+
+	// #region Data-related event handlers
+
+	private readonly dataUpdateHandler = (visualization: FluidObjectNodeBase): void => {
+		this.postDataVisualization(visualization);
 	};
 
 	// #endregion
@@ -204,25 +259,52 @@ export class FluidClientDebugger
 			}
 			return false;
 		},
+		["GET_AUDIENCE"]: (untypedMessage) => {
+			const message = untypedMessage as GetAudienceMessage;
+			if (message.data.containerId === this.containerId) {
+				this.postAudienceStateChange();
+				return true;
+			}
+			return false;
+		},
+		["GET_ROOT_DATA_VISUALIZATIONS"]: (untypedMessage) => {
+			const message = untypedMessage as GetRootDataVisualizationsMessage;
+			if (message.data.containerId === this.containerId) {
+				this.getRootDataVisualizations().then((visualizations) => {
+					this.postRootDataVisualizations(visualizations);
+				}, console.error);
+				return true;
+			}
+			return false;
+		},
+		["GET_DATA_VISUALIZATION"]: (untypedMessage) => {
+			const message = untypedMessage as GetDataVisualizationMessage;
+			if (message.data.containerId === this.containerId) {
+				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
+					this.postDataVisualization(visualization);
+				}, console.error);
+				return true;
+			}
+			return false;
+		},
 	};
 
 	/**
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a {@link IDebuggerMessage} to the window (globalThis).
+	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
 		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_CHANGE",
 				data: {
 					containerId: this.containerId,
@@ -230,7 +312,6 @@ export class FluidClientDebugger
 				},
 			},
 			{
-				source: debuggerMessageSource,
 				type: "CONTAINER_STATE_HISTORY",
 				data: {
 					containerId: this.containerId,
@@ -238,6 +319,51 @@ export class FluidClientDebugger
 				},
 			},
 		);
+	};
+
+	/**
+	 * Posts a {@link AudienceSummaryMessage} to the window (globalThis).
+	 */
+	private readonly postAudienceStateChange = (): void => {
+		const allAudienceMembers = this.container.audience.getMembers();
+
+		const audienceClientMetaData: AudienceClientMetaData[] = [
+			...allAudienceMembers.entries(),
+		].map(([clientId, client]): AudienceClientMetaData => {
+			return { clientId, client };
+		});
+
+		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
+			type: "AUDIENCE_EVENT",
+			data: {
+				containerId: this.containerId,
+				clientId: this.container.clientId,
+				audienceState: audienceClientMetaData,
+				audienceHistory: this.getAudienceHistory(),
+			},
+		});
+	};
+
+	private readonly postRootDataVisualizations = (
+		visualizations: Record<string, RootHandleNode> | undefined,
+	): void => {
+		postMessagesToWindow(this.messageLoggingOptions, {
+			type: "ROOT_DATA_VISUALIZATION",
+			data: {
+				visualizations,
+			},
+		});
+	};
+
+	private readonly postDataVisualization = (
+		visualization: FluidObjectNodeBase | undefined,
+	): void => {
+		postMessagesToWindow(this.messageLoggingOptions, {
+			type: "DATA_VISUALIZATION",
+			data: {
+				visualization,
+			},
+		});
 	};
 
 	// #endregion
@@ -268,9 +394,18 @@ export class FluidClientDebugger
 		this.container = props.container;
 		this.containerNickname = props.containerNickname;
 
-		// TODO: would it be useful to log the states (and timestamps) at time of debugger intialize?
+		// TODO: would it be useful to log the states (and timestamps) at time of debugger initialize?
 		this._connectionStateLog = [];
 		this._audienceChangeLog = [];
+
+		this.dataVisualizer =
+			props.containerData === undefined
+				? undefined
+				: new DataVisualizerGraph(props.containerData, {
+						...defaultVisualizers,
+						...props.dataVisualizers, // User-specified visualizers take precedence over system defaults
+				  });
+		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
 		// Bind Container events required for change-logging
 		this.container.on("attached", this.containerAttachedHandler);
@@ -298,7 +433,7 @@ export class FluidClientDebugger
 	}
 
 	/**
-	 * {@inheritDoc IFluidClientDebugger.getAuidienceHistory}
+	 * {@inheritDoc IFluidClientDebugger.getAudienceHistory}
 	 */
 	public getAudienceHistory(): readonly AudienceChangeLogEntry[] {
 		// Clone array contents so consumers don't see local changes
@@ -323,6 +458,11 @@ export class FluidClientDebugger
 		// Unbind window event listener
 		globalThis.removeEventListener?.("message", this.windowMessageHandler);
 
+		// Dispose of data visualization graph
+		this.dataVisualizer?.off("update", this.dataUpdateHandler);
+		this.dataVisualizer?.dispose();
+		this.dataVisualizer = undefined;
+
 		this.debuggerDisposedHandler(); // Notify consumers that the debugger has been disposed.
 
 		this._disposed = true;
@@ -335,6 +475,9 @@ export class FluidClientDebugger
 		return this._disposed;
 	}
 
+	/**
+	 * Generates {@link ContainerStateMetadata} describing the current state of the associated Container.
+	 */
 	private getContainerState(): ContainerStateMetadata {
 		const clientId = this.container.clientId;
 		return {
@@ -347,5 +490,15 @@ export class FluidClientDebugger
 			audienceId:
 				clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
+	}
+
+	private async getRootDataVisualizations(): Promise<Record<string, RootHandleNode> | undefined> {
+		return this.dataVisualizer?.renderRootHandles() ?? undefined;
+	}
+
+	private async getDataVisualization(
+		fluidObjectId: FluidObjectId,
+	): Promise<FluidObjectNodeBase | undefined> {
+		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
 	}
 }

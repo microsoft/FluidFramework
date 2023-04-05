@@ -8,19 +8,9 @@ import { assert, LazyPromise, Timer } from "@fluidframework/common-utils";
 import { ClientSessionExpiredError, DataProcessingError } from "@fluidframework/container-utils";
 import { IRequestHeader } from "@fluidframework/core-interfaces";
 import {
-	cloneGCData,
-	concatGarbageCollectionData,
-	getGCDataFromSnapshot,
-	IGCResult,
-	runGarbageCollection,
-	trimLeadingSlashes,
-} from "@fluidframework/garbage-collector";
-import {
 	gcTreeKey,
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionState,
 	ISummarizeResult,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
@@ -43,14 +33,21 @@ import {
 	IGarbageCollector,
 	IGarbageCollectorCreateParams,
 	IGarbageCollectionRuntime,
+	IGCResult,
 	IGCStats,
 	UnreferencedState,
 	IGCMetadata,
 	IGarbageCollectorConfigs,
 } from "./gcDefinitions";
-import { getSnapshotDataFromOldSnapshotFormat, sendGCUnexpectedUsageEvent } from "./gcHelpers";
+import {
+	cloneGCData,
+	concatGarbageCollectionData,
+	getGCDataFromSnapshot,
+	sendGCUnexpectedUsageEvent,
+} from "./gcHelpers";
+import { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
+import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { GCSummaryStateTracker } from "./gcSummaryStateTracker";
-import { SweepReadyUsageDetectionHandler } from "./gcSweepReadyUsageDetection";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
 
 /** The event that is logged when unreferenced node is used after a certain time. */
@@ -152,9 +149,6 @@ export class GarbageCollector implements IGarbageCollector {
 		return this.summaryStateTracker.doesSummaryStateNeedReset;
 	}
 
-	/** Handler to respond to when a SweepReady object is used */
-	private readonly sweepReadyUsageHandler: SweepReadyUsageDetectionHandler;
-
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
 		this.isSummarizerClient = createParams.isSummarizerClient;
@@ -170,12 +164,6 @@ export class GarbageCollector implements IGarbageCollector {
 			ChildLogger.create(createParams.baseLogger, "GarbageCollector", {
 				all: { completedGCRuns: () => this.completedRuns },
 			}),
-		);
-
-		this.sweepReadyUsageHandler = new SweepReadyUsageDetectionHandler(
-			createParams.getContainerDiagnosticId(),
-			this.mc,
-			this.runtime.closeFn,
 		);
 
 		this.configs = generateGCConfigs(this.mc, createParams);
@@ -212,16 +200,32 @@ export class GarbageCollector implements IGarbageCollector {
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
 					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
-					if (gcSnapshotTree !== undefined) {
-						return getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
+					if (gcSnapshotTree === undefined) {
+						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
+						// incremental gc summary will not work with older gc data as well
+						return undefined;
 					}
 
-					// back-compat - Older documents will have the GC blobs in each data store's snapshot tree.
-					return getSnapshotDataFromOldSnapshotFormat(
-						baseSnapshot,
-						createParams.metadata,
+					const snapshotData = await getGCDataFromSnapshot(
+						gcSnapshotTree,
 						readAndParseBlob,
 					);
+
+					// If the GC version in base snapshot does not match the GC version currently in effect, the GC data
+					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
+					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
+					// brought back. The deletedNodes info is needed to identify when these nodes are used.
+					if (
+						this.configs.gcVersionInBaseSnapshot !==
+						this.summaryStateTracker.currentGCVersion
+					) {
+						return {
+							gcState: undefined,
+							tombstones: undefined,
+							deletedNodes: snapshotData.deletedNodes,
+						};
+					}
+					return snapshotData;
 				} catch (error) {
 					const dpe = DataProcessingError.wrapIfUnrecognized(
 						error,
@@ -269,13 +273,14 @@ export class GarbageCollector implements IGarbageCollector {
 				return;
 			}
 			this.updateStateFromSnapshotData(baseSnapshotData, currentReferenceTimestampMs);
+			this.summaryStateTracker.initializeBaseState(baseSnapshotData);
 		});
 
 		// Get the GC details from the GC state in the base summary. This is returned in getBaseGCDetails which is
 		// used to initialize the GC state of all the nodes in the container.
 		this.baseGCDetailsP = new LazyPromise<IGarbageCollectionDetailsBase>(async () => {
 			const baseSnapshotData = await this.baseSnapshotDataP;
-			if (baseSnapshotData === undefined) {
+			if (baseSnapshotData?.gcState === undefined) {
 				return {};
 			}
 
@@ -391,11 +396,8 @@ export class GarbageCollector implements IGarbageCollector {
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
-		// Update the summary state tracker's state from this snapshot.
-		this.summaryStateTracker.updateStateFromSnapshotData(snapshotData);
-
 		// If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
-		if (snapshotData === undefined) {
+		if (snapshotData?.gcState === undefined) {
 			this.gcDataFromLastRun = undefined;
 			return;
 		}
@@ -733,7 +735,7 @@ export class GarbageCollector implements IGarbageCollector {
 				{
 					eventName,
 					category: "generic",
-					url: trimLeadingSlashes(toNodePath),
+					url: toNodePath,
 					nodeType,
 					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
 				},
@@ -1198,16 +1200,6 @@ export class GarbageCollector implements IGarbageCollector {
 				} else {
 					this.mc.logger.sendErrorEvent(event);
 				}
-			}
-
-			// If SweepReady Usage Detection is enabled, the handler may close the interactive container.
-			// Once Sweep is fully implemented, this will be removed since the objects will be gone
-			// and errors will arise elsewhere in the runtime
-			if (state === UnreferencedState.SweepReady) {
-				this.sweepReadyUsageHandler.usageDetectedInInteractiveClient({
-					...propsToLog,
-					usageType,
-				});
 			}
 		}
 	}
