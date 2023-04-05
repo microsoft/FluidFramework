@@ -422,10 +422,16 @@ export class AttributableMapKernel {
 			const attribution = this.options?.attribution?.track
 				? this.attribution?.get(key)
 				: undefined;
+
+			assert(
+				!attribution || attribution.type !== "local",
+				"The attribution for summarization should not be local type",
+			);
+
 			serializableMapData[key] = localValue.makeSerialized(
 				serializer,
 				this.handle,
-				attribution && attribution?.type !== "local"
+				attribution
 					? attribution.type === "op"
 						? attribution.seq
 						: attribution

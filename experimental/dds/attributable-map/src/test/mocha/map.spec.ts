@@ -961,11 +961,12 @@ describe("Map", () => {
 
 			it("Can retrieve proper attribution information after summarization/loading", async () => {
 				map1.set("key1", 1);
-				map2.set("key1", 2);
+				map2.set("key2", 2);
+				map2.set("key1", 3);
 
-				containerRuntimeFactory.processSomeMessages(1);
+				containerRuntimeFactory.processAllMessages();
 
-				const service1 = MockSharedObjectServices.createFromSummary(
+				const service = MockSharedObjectServices.createFromSummary(
 					map1.getAttachSummary().summary,
 				);
 				const map3 = new AttributableMap(
@@ -973,32 +974,21 @@ describe("Map", () => {
 					new MockFluidDataStoreRuntime(),
 					MapFactory.Attributes,
 				);
-				await map3.load(service1);
+				await map3.load(service);
 
 				const attribution1 = map3.getAttribution("key1");
+				const attribution2 = map3.getAttribution("key2");
 
 				assert.equal(
 					attribution1?.type === "op" && attribution1?.seq,
-					1,
+					3,
 					"The loaded map should have valid op-based attribution for the first entry",
 				);
 
-				const service2 = MockSharedObjectServices.createFromSummary(
-					map2.getAttachSummary().summary,
-				);
-				const map4 = new AttributableMap(
-					"map4",
-					new MockFluidDataStoreRuntime(),
-					MapFactory.Attributes,
-				);
-				await map4.load(service2);
-
-				const attribution2 = map4.getAttribution("key1");
-
 				assert.equal(
-					attribution2,
-					undefined,
-					"The loaded map should not have local attribution",
+					attribution2?.type === "op" && attribution2?.seq,
+					2,
+					"The loaded map should have valid op-based attribution for the second entry",
 				);
 			});
 		});
