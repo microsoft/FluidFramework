@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 import { IOverflowSetItemProps, Stack } from "@fluentui/react";
-
 import {
-	makeStyles,
-	shorthands,
-	tokens,
 	Tab,
 	TabList,
 	SelectTabData,
@@ -22,35 +18,6 @@ import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
-
-const useStyles = makeStyles({
-	root: {
-		alignItems: "flex-start",
-		display: "flex",
-		flexDirection: "column",
-		justifyContent: "flex-start",
-		...shorthands.padding("50px", "20px"),
-		rowGap: "20px",
-	},
-	words: {
-		color: "red",
-	},
-	panels: {
-		...shorthands.padding(0, "10px"),
-		"& th": {
-			textAlign: "left",
-			...shorthands.padding(0, "30px", 0, 0),
-		},
-	},
-	propsTable: {
-		"& td:first-child": {
-			fontWeight: tokens.fontWeightSemibold,
-		},
-		"& td": {
-			...shorthands.padding(0, "30px", 0, 0),
-		},
-	},
-});
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -180,8 +147,6 @@ export interface PanelViewSelectionMenuProps {
  */
 export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
 	const { updateSelection } = props;
-	const styles = useStyles();
-	console.log(styles);
 	const [selectedValue, setSelectedValue] = React.useState<TabValue>("none");
 
 	const onTabSelect = (event: SelectTabEvent, data: SelectTabData): void => {
