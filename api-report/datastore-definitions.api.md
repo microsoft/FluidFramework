@@ -12,6 +12,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
+import { IExperimentalIncrementalSummaryContext } from '@fluidframework/runtime-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidLoadable } from '@fluidframework/core-interfaces';
@@ -37,7 +38,7 @@ export interface IChannel extends IFluidLoadable {
     isAttached(): boolean;
     // (undocumented)
     readonly owner?: string;
-    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
 }
 
 // @public
