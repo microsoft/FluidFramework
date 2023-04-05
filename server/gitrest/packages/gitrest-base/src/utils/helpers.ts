@@ -324,8 +324,8 @@ export async function checkSoftDeleted(
 
 export async function executeApiWithMetric<U>(
 	api: () => Promise<U>,
-	apiName: string,
-	apiCategory: string,
+	metricName: string,
+    apiName: string,
 	metricEnabled: boolean,
 	samplingPeriod?: number,
 	telemetryProperties?: Record<string, any>,
@@ -336,13 +336,13 @@ export async function executeApiWithMetric<U>(
 	if (!metricEnabled || (samplingPeriod && getRandomInt(samplingPeriod) !== 0)) {
 		return api();
 	}
-	const metric = Lumberjack.newLumberMetric(apiName, telemetryProperties);
+	const metric = Lumberjack.newLumberMetric(metricName, telemetryProperties);
 	try {
 		const result = await api();
-		metric.success(`${apiCategory}: ${apiName} success`);
+		metric.success(`${metricName}: ${apiName} success`);
 		return result;
 	} catch (error: any) {
-		metric.error(`${apiCategory}: ${apiName} error`, error);
+		metric.error(`${metricName}: ${apiName} error`, error);
 		throw error;
 	}
 }

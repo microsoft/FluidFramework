@@ -20,7 +20,7 @@ import {
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
-	GitRestLumberMetricApiCategory,
+	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
 
 type RepoOperationType = "create" | "open";
@@ -87,8 +87,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 
 		return helpers.executeApiWithMetric(
 					async () => this.internalHandler(params, onRepoNotExists, "create"),
-					GitRestLumberEventName.CreateRepo,
-					GitRestLumberMetricApiCategory.RepositoryManagerFactory,
+					GitRestLumberEventName.RepositoryManagerFactory,
+					GitRestRepositoryApiCategory.CreateRepo,
 					this.enableRepositoryManagerMetrics,
 					this.apiMetricsSamplingPeriod,
 					helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
@@ -112,8 +112,8 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 
 		return helpers.executeApiWithMetric(
 					async () => this.internalHandler(params, onRepoNotExists, "open"),
-					GitRestLumberEventName.OpenRepo,
-					GitRestLumberMetricApiCategory.RepositoryManagerFactory,
+					GitRestLumberEventName.RepositoryManagerFactory,
+					GitRestRepositoryApiCategory.OpenRepo,
 					this.enableRepositoryManagerMetrics,
 					this.apiMetricsSamplingPeriod,
 					helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),

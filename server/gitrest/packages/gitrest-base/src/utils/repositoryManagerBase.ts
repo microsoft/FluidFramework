@@ -8,7 +8,7 @@ import { IExternalWriterConfig, IRepositoryManager } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
-	GitRestLumberMetricApiCategory,
+	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
 import { executeApiWithMetric } from "./helpers";
 
@@ -59,8 +59,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async getCommit(sha: string): Promise<git.ICommit> {
 		return executeApiWithMetric(
 			async () => this.getCommitCore(sha),
-			GitRestLumberEventName.GetCommit,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetCommit,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -77,8 +77,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	): Promise<git.ICommitDetails[]> {
 		return executeApiWithMetric(
 			async () => this.getCommitsCore(sha, count, externalWriterConfig),
-			GitRestLumberEventName.GetCommits,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetCommits,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -92,8 +92,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async getTree(rootSha: string, recursive: boolean): Promise<git.ITree> {
 		return executeApiWithMetric(
 			async () => this.getTreeCore(rootSha, recursive),
-			GitRestLumberEventName.GetTree,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetTree,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -107,8 +107,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async getBlob(sha: string): Promise<git.IBlob> {
 		return executeApiWithMetric(
 			async () => this.getBlobCore(sha),
-			GitRestLumberEventName.GetBlob,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetBlob,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -121,8 +121,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async getContent(commit: string, contentPath: string): Promise<git.IBlob> {
 		return executeApiWithMetric(
 			async () => this.getContentCore(commit, contentPath),
-			GitRestLumberEventName.GetContent,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetContent,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			this.lumberjackBaseProperties,
@@ -135,8 +135,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	): Promise<git.IRef> {
 		return executeApiWithMetric(
 			async () => this.getRefCore(refId, externalWriterConfig),
-			GitRestLumberEventName.GetRef,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetRef,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -149,8 +149,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async getRefs(): Promise<git.IRef[]> {
 		return executeApiWithMetric(
 			async () => this.getRefsCore(),
-			GitRestLumberEventName.GetRefs,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetRefs,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			this.lumberjackBaseProperties,
@@ -162,8 +162,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	): Promise<git.ICreateBlobResponse> {
 		return executeApiWithMetric(
 			async () => this.createBlobCore(createBlobParams),
-			GitRestLumberEventName.CreateBlob,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.CreateBlob,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			this.lumberjackBaseProperties,
@@ -173,8 +173,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async createTree(params: git.ICreateTreeParams): Promise<git.ITree> {
 		return executeApiWithMetric(
 			async () => this.createTreeCore(params),
-			GitRestLumberEventName.CreateTree,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.CreateTree,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			this.lumberjackBaseProperties,
@@ -184,8 +184,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async createCommit(commit: git.ICreateCommitParams): Promise<git.ICommit> {
 		return executeApiWithMetric(
 			async () => this.createCommitCore(commit),
-			GitRestLumberEventName.CreateCommit,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.CreateCommit,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			this.lumberjackBaseProperties,
@@ -198,8 +198,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	): Promise<git.IRef> {
 		return executeApiWithMetric(
 			async () => this.createRefCore(createRefParams, externalWriterConfig),
-			GitRestLumberEventName.CreateRef,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.CreateRef,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			this.lumberjackBaseProperties,
@@ -213,8 +213,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	): Promise<git.IRef> {
 		return executeApiWithMetric(
 			async () => this.patchRefCore(refId, patchRefParams, externalWriterConfig),
-			GitRestLumberEventName.PatchRef,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.PatchRef,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -227,8 +227,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async deleteRef(refId: string): Promise<void> {
 		return executeApiWithMetric(
 			async () => this.deleteRefCore(refId),
-			GitRestLumberEventName.DeleteRef,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.DeleteRef,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -241,8 +241,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async getTag(tagId: string): Promise<git.ITag> {
 		return executeApiWithMetric(
 			async () => this.getTagCore(tagId),
-			GitRestLumberEventName.GetTag,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.GetTag,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			{
@@ -255,8 +255,8 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async createTag(tagParams: git.ICreateTagParams): Promise<git.ITag> {
 		return executeApiWithMetric(
 			async () => this.createTagCore(tagParams),
-			GitRestLumberEventName.CreateTag,
-			GitRestLumberMetricApiCategory.RepositoryManager,
+			GitRestLumberEventName.RepositoryManager,
+			GitRestRepositoryApiCategory.CreateTag,
 			this.enableRepositoryManagerMetrics,
 			this.apiMetricsSamplingPeriod,
 			this.lumberjackBaseProperties,
