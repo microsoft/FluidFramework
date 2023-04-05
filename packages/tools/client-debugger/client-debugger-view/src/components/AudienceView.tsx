@@ -2,10 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { DefaultPalette, Icon, IStackItemStyles, Stack, StackItem } from "@fluentui/react";
 import React from "react";
+import {
+	TableBody,
+	TableCell,
+	TableRow,
+	Table,
+	TableHeader,
+	TableHeaderCell,
+} from "@fluentui/react-components";
 
-import { IClient } from "@fluidframework/protocol-definitions";
 import {
 	HasContainerId,
 	AudienceChangeLogEntry,
@@ -18,9 +24,7 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { useMessageRelay } from "../MessageRelayContext";
-import { combineMembersWithMultipleConnections } from "../Audience";
 import { Waiting } from "./Waiting";
-import { AudienceMemberView } from "./client-data-views";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -38,6 +42,20 @@ export type AudienceViewProps = HasContainerId;
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { containerId } = props;
 
+	// Columns for rendering audience state 
+	const audienceStateColumns = [
+		{ columnKey: "clientId", label: "ClientId" },
+		{ columnKey: "userId", label: "UserId" },
+		{ columnKey: "mode", label: "Mode" },
+		{ columnKey: "scopes", label: "Scopes" },
+	];
+	
+	// Columns for rendering audience history  
+	const audienceHistoryColumns = [
+		{ columnKey: "clientId", label: "ClientId" },
+		{ columnKey: "time", label: "Time" },
+	];
+	
 	const messageRelay = useMessageRelay();
 
 	const [audienceData, setAudienceData] = React.useState<
@@ -86,158 +104,121 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		return <Waiting label="Waiting for Audience data." />;
 	}
 
-	const myClientMetadata = audienceData.audienceState.find(
-		(audience) => audience.clientId === audienceData.clientId,
-	)?.client;
+	const audienceStateItems = AudienceStateDataFilter(audienceData.audienceState);
+	const audienceHistoryItems = AudienceHistoryDataFilter(audienceData.audienceHistory).reverse();
+
+	console.log("audienceData.audienceHistory:", audienceHistoryItems);
+
+	// TODO: Determine if myClientMetaData is necessary 
+	// const myClientMetadata = audienceData.audienceState.find(
+	// 	(audience) => audience.clientId === audienceData.clientId,
+	// )?.client;
 
 	return (
-		<Stack
-			styles={{
-				root: {
-					height: "100%",
-				},
-			}}
-		>
-			<StackItem>
-				<h3>Audience members: ({audienceData.audienceState.length})</h3>
-				<MembersView
-					audience={audienceData.audienceState}
-					myClientId={audienceData.clientId}
-					myClientConnection={myClientMetadata}
-				/>
-			</StackItem>
-			<StackItem>
-				<h3>History</h3>
-				<HistoryView history={audienceData.audienceHistory} />
-			</StackItem>
-		</Stack>
+		<div>
+			<Table size="small" aria-label="Audience state table">
+				<TableHeader>
+					<TableRow>
+						{audienceStateColumns.map((column, columnIndex) => (
+							<TableHeaderCell key={columnIndex}>{column.label}</TableHeaderCell>
+						))}
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{audienceStateItems.map((item, itemIndex) => (
+						<TableRow key={itemIndex}>
+							<TableCell>{item.clientId}</TableCell>
+							<TableCell>{item.userId} </TableCell>
+							<TableCell>{item.mode}</TableCell>
+							<TableCell>
+								{item.scopes.map((scope, scopeIndex) => (
+									<div key={scopeIndex}>{scope}</div>
+								))}
+							</TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+			<Table size="small" aria-label="Audience history table">
+				<TableHeader>
+					<TableRow>
+						{audienceHistoryColumns.map((column, columnIndex) => (
+							<TableHeaderCell key={columnIndex}>{column.label}</TableHeaderCell>
+						))}
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{audienceHistoryItems.map((item, itemIndex) => (
+						<TableRow key={itemIndex}>
+							<TableCell>{item.clientId}</TableCell>
+							<TableCell>{item.time} </TableCell>
+						</TableRow>
+					))}
+				</TableBody>
+			</Table>
+		</div>
 	);
 }
 
 /**
- * {@link MembersView} input props.
+ * Filtered audience state data for {@link AudienceStateDataFilter}
  */
-interface MembersViewProps {
-	/**
-	 * The current audience
-	 */
-	audience: AudienceClientMetaData[];
-
-	/**
-	 * My client ID, if the Container is connected.
-	 */
-	myClientId: string | undefined;
-
-	/**
-	 * My client connection data, if the Container is connected.
-	 */
-	myClientConnection: IClient | undefined;
+interface FilteredAudienceStateData {
+	clientId: string;
+	userId: string;
+	mode: string;
+	scopes: string[];
 }
 
 /**
- * Displays a list of current audience members and their metadata.
+ * Removes unncessary data in audienceData.audienceState
  */
-function MembersView(props: MembersViewProps): React.ReactElement {
-	const { audience, myClientId, myClientConnection } = props;
+function AudienceStateDataFilter(
+	audienceStateData: AudienceClientMetaData[],
+): FilteredAudienceStateData[] {
+	return audienceStateData.map((entry) => {
+		const clientId = entry.clientId;
+		const userId = entry.client.user.id;
+		const mode = entry.client.mode;
+		const scopes = entry.client.scopes;
 
-	const transformedAudience = combineMembersWithMultipleConnections(audience);
-
-	const memberViews: React.ReactElement[] = [];
-	for (const member of transformedAudience.values()) {
-		memberViews.push(
-			<StackItem key={member.userId}>
-				<AudienceMemberView
-					audienceMember={member}
-					myClientId={myClientId}
-					myClientConnection={myClientConnection}
-				/>
-			</StackItem>,
-		);
-	}
-
-	return <Stack>{memberViews}</Stack>;
+		return {
+			clientId,
+			userId,
+			mode,
+			scopes,
+		};
+	});
 }
 
 /**
- * {@link HistoryView} input props.
+ * Filtered audience state data for {@link AudienceHistoryDataFilter}
  */
-interface HistoryViewProps {
-	/**
-	 * History of audience changes tracked by the debugger.
-	 */
-	history: readonly AudienceChangeLogEntry[];
+interface FilteredAudienceHistoryData {
+	clientId: string;
+	time: string;
 }
 
 /**
- * Displays a historical log of audience member changes.
+ * Removes unncessary data in audienceData.audienceHistory
  */
-function HistoryView(props: HistoryViewProps): React.ReactElement {
-	const { history } = props;
-
+function AudienceHistoryDataFilter(
+	audienceHistoryData: readonly AudienceChangeLogEntry[],
+): FilteredAudienceHistoryData[] {
 	const nowTimeStamp = new Date();
-	const historyViews: React.ReactElement[] = [];
 
-	// Reverse history such that newest events are displayed first
-	for (let i = history.length - 1; i >= 0; i--) {
-		const changeTimeStamp = new Date(history[i].timestamp);
+	return audienceHistoryData.map((entry) => {
+		const changeTimeStamp = new Date(entry.timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
-		const accordianBackgroundColor: IStackItemStyles = {
-			root: {
-				background: history[i].changeKind === "added" ? "#90ee90" : "#FF7377",
-				borderStyle: "solid",
-				borderWidth: 1,
-				borderColor: DefaultPalette.neutralTertiary,
-				padding: 3,
-			},
+		const clientId = entry.clientId;
+		const time = wasChangeToday
+			? changeTimeStamp.toTimeString()
+			: changeTimeStamp.toDateString();
+
+		return {
+			clientId,
+			time,
 		};
-
-		const iconStyle: IStackItemStyles = {
-			root: {
-				padding: 10,
-			},
-		};
-
-		historyViews.push(
-			<div key={`audience-history-info-${i}`}>
-				<Stack horizontal={true} styles={accordianBackgroundColor}>
-					<StackItem styles={iconStyle}>
-						<Icon
-							iconName={
-								history[i].changeKind === "added" ? "AddFriend" : "UserRemove"
-							}
-							title={
-								history[i].changeKind === "added" ? "Member Joined" : "Member Left"
-							}
-						/>
-					</StackItem>
-					<StackItem>
-						<div key={`${history[i].clientId}-${history[i].changeKind}`}>
-							<b>Client ID: </b>
-							{history[i].clientId}
-							<br />
-							<b>Time: </b>{" "}
-							{wasChangeToday
-								? changeTimeStamp.toTimeString()
-								: changeTimeStamp.toDateString()}
-							<br />
-						</div>
-					</StackItem>
-				</Stack>
-			</div>,
-		);
-	}
-
-	return (
-		<Stack
-			styles={{
-				root: {
-					overflowY: "auto",
-					height: "300px",
-				},
-			}}
-		>
-			<div style={{ overflowY: "scroll" }}>{historyViews}</div>
-		</Stack>
-	);
+	});
 }
