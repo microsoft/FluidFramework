@@ -86,12 +86,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage({
-			type: GetContainerState.MessageType,
-			data: {
-				containerId,
-			},
-		});
+		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);

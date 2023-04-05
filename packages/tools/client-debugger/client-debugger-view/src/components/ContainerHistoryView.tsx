@@ -70,12 +70,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		setContainerHistory(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage({
-			type: GetContainerState.MessageType,
-			data: {
-				containerId,
-			},
-		});
+		messageRelay.postMessage(GetContainerState.createMessage({ containerId }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
