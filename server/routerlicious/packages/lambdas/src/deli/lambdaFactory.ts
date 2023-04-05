@@ -165,7 +165,6 @@ export class DeliLambdaFactory extends EventEmitter implements IPartitionLambdaF
 					// is okay. Conceptually this is similar to default checkpoint where logOffset is -1. In this case,
 					// the sequence number is 'n' rather than '0'.
 					lastCheckpoint.logOffset = -1;
-					lastCheckpoint.epoch = 0;
 					const message = `Deli checkpoint from summary: ${JSON.stringify(
 						lastCheckpoint,
 					)}`;

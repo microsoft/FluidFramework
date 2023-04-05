@@ -104,7 +104,6 @@ export class ScribeLambda implements IPartitionLambda {
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly producer: IProducer | undefined,
 		private protocolHandler: ProtocolOpHandler,
-		private readonly term: number,
 		private protocolHead: number,
 		messages: ISequencedDocumentMessage[],
 		private scribeSessionMetric: Lumber<LumberEventName.ScribeSessionResult> | undefined,
@@ -511,7 +510,7 @@ export class ScribeLambda implements IPartitionLambda {
 		protocolState: IProtocolState,
 		pendingOps: ISequencedDocumentMessage[],
 	) {
-		this.protocolHandler = initializeProtocol(protocolState, this.term);
+		this.protocolHandler = initializeProtocol(protocolState);
 		this.pendingMessages = new Deque(pendingOps);
 	}
 

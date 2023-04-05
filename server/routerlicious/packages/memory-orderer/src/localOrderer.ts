@@ -355,7 +355,6 @@ export class LocalOrderer implements IOrderer {
 		const protocolHandler = new ProtocolOpHandler(
 			scribe.minimumSequenceNumber,
 			scribe.sequenceNumber,
-			1, // TODO (Change when local orderer also ticks epoch)
 			lastState.members,
 			lastState.proposals,
 			lastState.values,
@@ -399,7 +398,6 @@ export class LocalOrderer implements IOrderer {
 			this.serviceConfiguration,
 			this.rawDeltasKafka,
 			protocolHandler,
-			1, // term - TODO remove
 			protocolHead,
 			scribeMessages.map((message) => message.operation),
 			undefined,

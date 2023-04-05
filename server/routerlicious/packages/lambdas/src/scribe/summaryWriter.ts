@@ -206,7 +206,7 @@ export class SummaryWriter implements ISummaryWriter {
 				this.documentId,
 				checkpoint.protocolState.minimumSequenceNumber,
 				checkpoint.protocolState.sequenceNumber,
-				op.term ?? 1,
+				1, // term
 				checkpoint.protocolState,
 			);
 

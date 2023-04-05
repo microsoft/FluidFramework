@@ -120,7 +120,6 @@ export class SummaryReader implements ISummaryReader {
 				const deli = deliContent
 					? (JSON.parse(bufferToString(deliContent, "utf8")) as IDeliState)
 					: this.getDefaultDeli();
-				const term = deli.term;
 				const messages = opsContent
 					? (JSON.parse(
 							bufferToString(opsContent, "utf8"),
@@ -141,7 +140,7 @@ export class SummaryReader implements ISummaryReader {
 				summaryReaderMetric.success(`Successfully read whole summary`);
 
 				return {
-					term,
+					term: 1,
 					protocolHead: attributes.sequenceNumber,
 					scribe,
 					messages,
@@ -222,7 +221,6 @@ export class SummaryReader implements ISummaryReader {
 				const deli = deliContent
 					? (JSON.parse(toUtf8(deliContent.content, deliContent.encoding)) as IDeliState)
 					: this.getDefaultDeli();
-				const term = deli.term;
 				const messages = opsContent
 					? (JSON.parse(
 							toUtf8(opsContent.content, opsContent.encoding),
@@ -243,7 +241,7 @@ export class SummaryReader implements ISummaryReader {
 				summaryReaderMetric.success(`Successfully read summary`);
 
 				return {
-					term,
+					term: 1,
 					protocolHead: attributes.sequenceNumber,
 					scribe,
 					messages,

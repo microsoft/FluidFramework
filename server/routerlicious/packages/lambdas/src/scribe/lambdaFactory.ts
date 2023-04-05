@@ -232,10 +232,7 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			++expectedSequenceNumber;
 		}
 
-		const protocolHandler = initializeProtocol(
-			lastCheckpoint.protocolState,
-			latestSummary.term,
-		);
+		const protocolHandler = initializeProtocol(lastCheckpoint.protocolState);
 
 		const lastSummaryMessages = latestSummary.messages;
 		const summaryWriter = new SummaryWriter(
@@ -284,7 +281,6 @@ export class ScribeLambdaFactory extends EventEmitter implements IPartitionLambd
 			this.serviceConfiguration,
 			this.producer,
 			protocolHandler,
-			latestSummary.term,
 			latestSummary.protocolHead,
 			opsSinceLastSummary,
 			scribeSessionMetric,
