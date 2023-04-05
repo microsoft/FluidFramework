@@ -709,19 +709,6 @@
     },
     {
       "taskType": "trigger",
-      "capabilityId": "AutoMerge",
-      "subCapability": "AutoMerge",
-      "version": "1.0",
-      "config": {
-        "taskName": "Merge PRs in next",
-        "label": "main-next-integrate",
-        "minMinutesOpen": "5",
-        "mergeType": "merge",
-        "deleteBranches": true
-      }
-    },
-    {
-      "taskType": "trigger",
       "capabilityId": "IssueResponder",
       "subCapability": "IssuesOnlyResponder",
       "version": "1.0",
