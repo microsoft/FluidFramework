@@ -32,7 +32,7 @@
 		"prettier": "prettier --check \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\" --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write \"**/*.{js,json,jsx,md,ts,tsx,yml,yaml}\" --ignore-path ../../../.prettierignore",
 		"test": "nyc npm run test:mocha",
-		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluidframework/mocha-test-setup --unhandled-rejections=strict",
+		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit -r node_modules/@fluid-internal/mocha-test-setup --unhandled-rejections=strict",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc"
@@ -48,7 +48,7 @@
 	"devDependencies": {
 		"@fluidframework/build-common": "^1.1.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
-		"@fluidframework/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
+		"@fluid-internal/mocha-test-setup": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@fluidframework/test-runtime-utils": ">=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0",
 		"@graphql-codegen/cli": "1.20.1",
 		"@graphql-codegen/typescript": "1.20.2",
