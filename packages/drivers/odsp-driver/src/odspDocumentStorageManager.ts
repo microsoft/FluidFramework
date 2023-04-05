@@ -39,7 +39,7 @@ import { FlushResult } from "./odspDocumentDeltaConnection";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase";
 
-export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
+export const defaultSummarizerCacheExpiryTimeout: number = 5 * 60 * 1000; // 5 mins.
 
 // An implementation of Promise.race that gives you the winner of the promise race
 async function promiseRaceWithWinner<T>(
