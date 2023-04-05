@@ -267,6 +267,27 @@ export function configureWebSocketServices(
 		}
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            const startTime = Date.now();
+            const throttleErrorPerCluster = checkThrottleAndUsage(
+                connectThrottlerPerCluster,
+                getSocketConnectThrottleId("connectDoc"),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerCluster) {
+                return Promise.reject(throttleErrorPerCluster);
+            }
+            const throttleErrorPerTenant = checkThrottleAndUsage(
+                connectThrottlerPerTenant,
+                getSocketConnectThrottleId(message.tenantId),
+                message.tenantId,
+                logger);
+            if (throttleErrorPerTenant) {
+                return Promise.reject(throttleErrorPerTenant);
+            }
+            if (!message.token) {
+                throw new NetworkError(403, "Must provide an authorization token");
+            }
+
             // Validate token signature and claims
 			const token = message.token;
 			const claims = validateTokenClaims(token, message.id, message.tenantId);
@@ -300,26 +321,6 @@ export function configureWebSocketServices(
 					5 * 60 * 1000 /* retryAfterMs (5 min) */,
 				);
 			}
-            const startTime = Date.now();
-            const throttleErrorPerCluster = checkThrottleAndUsage(
-                connectThrottlerPerCluster,
-                getSocketConnectThrottleId("connectDoc"),
-                message.tenantId,
-                logger);
-            if (throttleErrorPerCluster) {
-                return Promise.reject(throttleErrorPerCluster);
-            }
-            const throttleErrorPerTenant = checkThrottleAndUsage(
-                connectThrottlerPerTenant,
-                getSocketConnectThrottleId(message.tenantId),
-                message.tenantId,
-                logger);
-            if (throttleErrorPerTenant) {
-                return Promise.reject(throttleErrorPerTenant);
-            }
-            if (!message.token) {
-                throw new NetworkError(403, "Must provide an authorization token");
-            }
 
 			try {
 				await tenantManager.verifyToken(claims.tenantId, token);
