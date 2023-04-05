@@ -119,4 +119,45 @@ describe("interval rebasing", () => {
 		containerRuntimeFactory.processAllMessages();
 		assertConsistent(clients);
 	});
+
+	it("slides to correct final destination", () => {
+		clients[0].sharedString.insertText(0, "A");
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[2].sharedString.insertText(0, "B");
+		clients[2].sharedString.removeRange(0, 2);
+		clients[0].sharedString.insertText(0, "C");
+
+		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		collection_0.add(0, 1, IntervalType.SlideOnRemove, {
+			intervalId: "414e09e9-54bf-43ea-9809-9fc5724c43fe",
+		});
+
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
+
+	it("does not slide to invalid position when 0-length interval", () => {
+		clients[0].sharedString.insertText(0, "A");
+		const collection_0 = clients[0].sharedString.getIntervalCollection("comments");
+		// A 0-length interval is required here to reproduce this error. If in
+		// the future we wish to stop supporting 0-length intervals, this test
+		// can be removed
+		collection_0.add(0, 0, IntervalType.SlideOnRemove, {
+			intervalId: "1",
+		});
+		clients[1].sharedString.insertText(0, "BCD");
+		clients[1].sharedString.removeRange(0, 1);
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+		clients[2].sharedString.removeRange(1, 3);
+		clients[1].sharedString.insertText(1, "E");
+		const collection_1 = clients[1].sharedString.getIntervalCollection("comments");
+		collection_1.add(0, 2, IntervalType.SlideOnRemove, {
+			intervalId: "2",
+		});
+
+		containerRuntimeFactory.processAllMessages();
+		assertConsistent(clients);
+	});
 });

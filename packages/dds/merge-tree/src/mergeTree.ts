@@ -828,15 +828,19 @@ export class MergeTree {
 	/**
 	 * @remarks Must only be used by client.
 	 * @param segment - The segment to slide from.
+	 * @param shouldCache - Whether to cache the sliding destination for this segment.
 	 * @returns The segment to.
 	 * @internal
 	 */
-	public _getSlideToSegment(segment: ISegment | undefined): ISegment | undefined {
+	public _getSlideToSegment(
+		segment: ISegment | undefined,
+		shouldCache?: boolean,
+	): ISegment | undefined {
 		if (!segment || !isRemovedAndAcked(segment)) {
 			return segment;
 		}
 
-		if (this.cachedSlideDestination?.seq !== segment.removedSeq) {
+		if (this.cachedSlideDestination?.seq !== segment.removedSeq && shouldCache) {
 			this.cachedSlideDestination = {
 				segmentToSlideDestination: new Map<ISegment, ISegment>(),
 				seq: segment.removedSeq,
@@ -845,8 +849,8 @@ export class MergeTree {
 
 		// cache slide destination of segments to improve the pathological case
 		// in which we slide the same segment multiple times
-		const cachedSegment = this.cachedSlideDestination.segmentToSlideDestination.get(segment);
-		if (cachedSegment !== undefined) {
+		const cachedSegment = this.cachedSlideDestination?.segmentToSlideDestination.get(segment);
+		if (cachedSegment !== undefined && shouldCache) {
 			return cachedSegment === "detached" ? undefined : cachedSegment;
 		}
 		const segmentsWithSlidDst = new Set<ISegment>();
@@ -862,18 +866,22 @@ export class MergeTree {
 		// Slide to the next farthest valid segment in the tree.
 		forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		if (slideToSegment) {
-			for (const seg of segmentsWithSlidDst) {
-				this.cachedSlideDestination.segmentToSlideDestination.set(seg, slideToSegment);
+			if (shouldCache) {
+				for (const seg of segmentsWithSlidDst) {
+					this.cachedSlideDestination?.segmentToSlideDestination.set(seg, slideToSegment);
+				}
 			}
 			return slideToSegment;
 		}
 		// If no such segment is found, slide to the last valid segment.
 		backwardExcursion(segment, goFurtherToFindSlideToSegment);
-		for (const seg of segmentsWithSlidDst) {
-			this.cachedSlideDestination.segmentToSlideDestination.set(
-				seg,
-				slideToSegment ?? "detached",
-			);
+		if (shouldCache) {
+			for (const seg of segmentsWithSlidDst) {
+				this.cachedSlideDestination?.segmentToSlideDestination.set(
+					seg,
+					slideToSegment ?? "detached",
+				);
+			}
 		}
 		return slideToSegment;
 	}
@@ -892,7 +900,7 @@ export class MergeTree {
 		if (segment.localRefs?.empty !== false) {
 			return;
 		}
-		const newSegment = this._getSlideToSegment(segment);
+		const newSegment = this._getSlideToSegment(segment, true);
 		if (newSegment) {
 			const localRefs = (newSegment.localRefs ??= new LocalReferenceCollection(newSegment));
 			if (newSegment.ordinal < segment.ordinal) {
