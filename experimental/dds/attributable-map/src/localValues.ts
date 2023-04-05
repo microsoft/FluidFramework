@@ -11,6 +11,7 @@ import {
 	serializeHandles,
 	ValueType,
 } from "@fluidframework/shared-object-base";
+import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { ISerializableValue, ISerializedValue } from "./interfaces";
 
 /**
@@ -33,9 +34,14 @@ export interface ILocalValue {
 	 * Retrieve the serialized form of the value stored within.
 	 * @param serializer - Data store runtime's serializer
 	 * @param bind - Container type's handle
+	 * @param attribution - The attribution Key of DDS
 	 * @returns The serialized form of the contained value
 	 */
-	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
+	makeSerialized(
+		serializer: IFluidSerializer,
+		bind: IFluidHandle,
+		attribution?: AttributionKey | number,
+	): ISerializedValue;
 }
 
 /**
@@ -80,7 +86,11 @@ export class PlainLocalValue implements ILocalValue {
 	/**
 	 * {@inheritDoc ILocalValue.makeSerialized}
 	 */
-	public makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue {
+	public makeSerialized(
+		serializer: IFluidSerializer,
+		bind: IFluidHandle,
+		attribution?: AttributionKey | number,
+	): ISerializedValue {
 		// Stringify to convert to the serialized handle values - and then parse in order to create
 		// a POJO for the op
 		const value = serializeHandles(this.value, serializer, bind);
@@ -88,6 +98,7 @@ export class PlainLocalValue implements ILocalValue {
 		return {
 			type: this.type,
 			value,
+			attribution: JSON.stringify(attribution),
 		};
 	}
 }
