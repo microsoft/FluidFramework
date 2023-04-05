@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
+import path from "path";
 import { mkdirSync, readFileSync } from "fs";
 import { strict as assert } from "assert";
 import {
@@ -62,8 +62,12 @@ export interface Synchronize {
 	type: "synchronize";
 }
 
+interface HasWorkloadName {
+	workloadName: string;
+}
+
 function getSaveDirectory(
-	model: DDSFuzzModel<any, any, any>,
+	model: HasWorkloadName,
 	options: DDSFuzzSuiteOptions,
 ): string | undefined {
 	if (!options.saveFailures) {
@@ -74,7 +78,7 @@ function getSaveDirectory(
 }
 
 function getSaveInfo(
-	model: DDSFuzzModel<any, any, any>,
+	model: HasWorkloadName,
 	options: DDSFuzzSuiteOptions,
 	seed: number,
 ): SaveInfo | undefined {
@@ -248,11 +252,10 @@ function mixinReconnect<
 ): DDSFuzzModel<TChannelFactory, TOperation | ChangeConnectionState, TState> {
 	const generatorFactory: () => Generator<TOperation | ChangeConnectionState, TState> = () => {
 		const baseGenerator = model.generatorFactory();
-		return (state) => {
+		return (state): TOperation | ChangeConnectionState | typeof done => {
 			const baseOp = baseGenerator(state);
 			if (state.random.bool(options.reconnectProbability)) {
-				const { channel } = state;
-				const client = state.clients.find((c) => c.channel.id === channel.id);
+				const client = state.clients.find((c) => c.channel.id === state.channel.id);
 				assert(client !== undefined);
 				return {
 					type: "changeConnectionState",
@@ -302,9 +305,9 @@ function mixinSynchronization<
 				validationStrategy.probability < 0.5,
 				"Use a lower synchronization probability.",
 			);
-			generatorFactory = () => {
+			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
-				return (state) => {
+				return (state: TState): TOperation | Synchronize | typeof done => {
 					if (state.random.bool(validationStrategy.probability)) {
 						return { type: "synchronize" };
 					}
@@ -330,7 +333,7 @@ function mixinSynchronization<
 			break;
 
 		case "fixedInterval":
-			generatorFactory = () => {
+			generatorFactory = (): Generator<TOperation | Synchronize, TState> => {
 				const baseGenerator = model.generatorFactory();
 				return interleave<TOperation | Synchronize, TState>(
 					(state) => {
@@ -378,7 +381,8 @@ function mixinSynchronization<
 			}
 			return state;
 		} else {
-			const isClientSpec = (op: any): op is ClientSpec => op.channelId !== undefined;
+			const isClientSpec = (op: unknown): op is ClientSpec =>
+				(op as ClientSpec).channelId !== undefined;
 			assert(isClientSpec(operation), "operation should have been given a client");
 			const client = state.clients.find((c) => c.channel.id === operation.channelId);
 			assert(client !== undefined);
@@ -393,6 +397,17 @@ function mixinSynchronization<
 		generatorFactory,
 		reducer,
 	};
+}
+
+function makeUnreachableCodepathProxy<T extends object>(name: string): T {
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	return new Proxy({} as T, {
+		get: (): never => {
+			throw new Error(
+				`Unexpected read of '${name}:' this indicates a bug in the DDS eventual consistency harness.`,
+			);
+		},
+	});
 }
 
 function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
@@ -410,7 +425,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			const channel: ReturnType<typeof model.factory.create> = model.factory.create(
 				dataStoreRuntime,
 				// Use friendly IDs for a reasonable number of DDSes for easier debugging.
-				index < 26 ? String.fromCharCode(index + 65) : random.uuid4(),
+				index < 26 ? String.fromCodePoint(index + 65) : random.uuid4(),
 			);
 
 			const containerRuntime =
@@ -423,16 +438,6 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			channel.connect(services);
 			return { containerRuntime, channel };
 		});
-
-		const makeUnreachableCodepathProxy = <T extends object>(name: string): T =>
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			new Proxy({} as T, {
-				get: () => {
-					throw new Error(
-						`Unexpected read of '${name}:' this indicates a bug in the DDS eventual consistency harness.`,
-					);
-				},
-			});
 
 		const initialState: DDSFuzzTestState<TChannelFactory> = {
 			// TS resolves the return type of model.factory.create too early and isn't able to retain a more specific type
@@ -466,10 +471,10 @@ export function createDDSFuzzSuite<
 >(
 	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 	providedOptions?: Partial<DDSFuzzSuiteOptions>,
-) {
+): void {
 	const options = {
 		...defaultDDSFuzzSuiteOptions,
-		...(providedOptions ?? {}),
+		...providedOptions,
 	};
 
 	const only = new Set(options.only);
@@ -506,9 +511,10 @@ export function createDDSFuzzSuite<
 				const replayModel = {
 					...model,
 					// We lose some typesafety here because the options interface isn't generic
-					generatorFactory: () =>
-						generatorFromArray<TOperation, unknown>(operations as TOperation[]),
+					generatorFactory: (): Generator<TOperation, unknown> =>
+						generatorFromArray(operations as TOperation[]),
 				};
+				// eslint-disable-next-line unicorn/no-useless-undefined
 				runTest(replayModel, options, seed, undefined);
 			});
 		}
@@ -528,7 +534,7 @@ createDDSFuzzSuite.only =
 	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
 		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 		providedOptions?: Partial<DDSFuzzSuiteOptions>,
-	) =>
+	): void =>
 		createDDSFuzzSuite(ddsModel, {
 			...providedOptions,
 			only: [...seeds, ...(providedOptions?.only ?? [])],

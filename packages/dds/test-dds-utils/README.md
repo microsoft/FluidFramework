@@ -32,3 +32,19 @@ The caller is responsible for the following:
 ### Examples
 
 [SharedCell](../cell/src/test/cell.spec.ts) and [SharedDirectory](../map/test/directory.spec.ts) have tests that use the gcTestRunner for validating GC data.
+
+## Eventual Consistency Fuzz Tests
+
+This package also provides a [generic harness](./src/ddsFuzzHarness.ts) for writing eventual consistency fuzz tests for a DDS.
+This model is written using [@fluid-internal/stochastic-test-utils](../../test/stochastic-test-utils/README.md).
+See documentation on `createDDSFuzzSuite` and `DDSFuzzModel` for more details.
+
+The harness currently supports testing eventual consistency of op application using Fluid's set of [mocks](../../runtime/test-runtime-utils/README.md)
+including the reconnect flow.
+
+### Future Improvements
+
+The generic aspects of this model could be improved to fuzz test correctness a few other general concerns DDS authors have:
+
+-   Summarization correctness
+-   Offline (`applyStashedOp` implementation)

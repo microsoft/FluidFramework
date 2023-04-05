@@ -4,3 +4,13 @@
  */
 
 export { IGCTestProvider, runGCTests } from "./gcTestRunner";
+export {
+	BaseOperation,
+	ChangeConnectionState,
+	Client,
+	ClientSpec,
+	createDDSFuzzSuite,
+	DDSFuzzModel,
+	DDSFuzzTestState,
+	Synchronize,
+} from "./ddsFuzzHarness";
