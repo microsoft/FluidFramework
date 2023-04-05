@@ -31,6 +31,7 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [garbage-collector and related items removed](#garbage-collector-and-related-items-removed)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 -   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
+
 ## IResolvedUrl equivalent to IFluidResolvedUrl
 
 In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed.
@@ -75,7 +76,6 @@ The following interfaces available in `@fluidframework/runtime-definitions` were
 -   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 -   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
-
 
 ### garbage-collector and related items deprecated
 
