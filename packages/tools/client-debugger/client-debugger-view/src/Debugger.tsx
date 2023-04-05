@@ -6,8 +6,10 @@ import React from "react";
 
 import {
 	ContainerListMessage,
+	ContainerListMessageType,
 	ContainerMetadata,
 	GetContainerListMessage,
+	GetContainerListMessageType,
 	handleIncomingMessage,
 	IMessageRelay,
 	InboundHandlers,
@@ -30,7 +32,7 @@ initializeFluentUiIcons();
  * Message sent to the webpage to query for the full container list.
  */
 const getContainerListMessage: GetContainerListMessage = {
-	type: "GET_CONTAINER_LIST",
+	type: GetContainerListMessageType,
 	data: undefined,
 };
 
@@ -86,7 +88,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["CONTAINER_LIST"]: (untypedMessage) => {
+			[ContainerListMessageType]: (untypedMessage) => {
 				const message = untypedMessage as ContainerListMessage;
 				setContainers(message.data.containers);
 				return true;

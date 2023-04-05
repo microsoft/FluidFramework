@@ -7,12 +7,14 @@ import { AudienceChangeLogEntry } from "../Logs";
 import { HasContainerId } from "./ContainerDevtoolsMessages";
 import { IDebuggerMessage } from "./Messages";
 
+// #region Inbound messages
+
 /**
  * Metadata of clients within the Audience.
  *
  * @public
  */
-export interface AudienceClientMetaData {
+export interface AudienceClientMetadata {
 	/**
 	 * Local users's clientId.
 	 */
@@ -25,14 +27,35 @@ export interface AudienceClientMetaData {
 }
 
 /**
+ * {@link GetAudienceMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const GetAudienceMessageType = "GET_AUDIENCE";
+
+/**
  * Inbound message requesting audience data from the Container with the specific ID.
  * Will result in the {@link AudienceSummaryMessage } message being posted.
  *
  * @public
  */
 export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
-	type: "GET_AUDIENCE";
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
+	type: typeof GetAudienceMessageType;
 }
+
+// #endregion
+
+// #region Outbound messages
+
+/**
+ * {@link AudienceSummaryMessage} {@link IDebuggerMessage."type"}.
+ *
+ * @public
+ */
+export const AudienceSummaryMessageType = "AUDIENCE_EVENT";
 
 /**
  * Message data format used by {@link AudienceSummaryMessage }.
@@ -48,7 +71,7 @@ export interface AudienceSummaryMessageData extends HasContainerId {
 	/**
 	 * Metadata of the current Audience state.
 	 */
-	audienceState: AudienceClientMetaData[];
+	audienceState: AudienceClientMetadata[];
 
 	/**
 	 * Connection history of members to the container
@@ -62,5 +85,10 @@ export interface AudienceSummaryMessageData extends HasContainerId {
  * @public
  */
 export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
-	type: "AUDIENCE_EVENT";
+	/**
+	 * {@inheritDoc IDebuggerMessage."type"}
+	 */
+	type: typeof AudienceSummaryMessageType;
 }
+
+// #endregion
