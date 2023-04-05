@@ -273,7 +273,10 @@ export async function requestResolvedObjectFromContainer(
 		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
 	}
 
-	return container.request({
+	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
+	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
+
+	return router.request({
 		url: `${parsedUrl.path}${parsedUrl.query}`,
 		headers,
 	});
@@ -319,6 +322,9 @@ export class Loader implements IHostLoader {
 		this.protocolHandlerBuilder = loaderProps.protocolHandlerBuilder;
 	}
 
+	/**
+	 * @deprecated Use Loader.resolve with requestResolvedObjectFromContainer
+	 */
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -358,6 +364,9 @@ export class Loader implements IHostLoader {
 		});
 	}
 
+	/**
+	 * @deprecated Use Loader.resolve with requestResolvedObjectFromContainer
+	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,

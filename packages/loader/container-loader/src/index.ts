@@ -19,5 +19,6 @@ export {
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
+	requestResolvedObjectFromContainer,
 } from "./loader";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
