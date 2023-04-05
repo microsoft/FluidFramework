@@ -348,7 +348,7 @@ export class FluidClientDebugger
 		visualizations: Record<string, RootHandleNode> | undefined,
 	): void => {
 		postMessagesToWindow(this.messageLoggingOptions, {
-			type: "ROOT_DATA_VISUALIZATION",
+			type: "ROOT_DATA_VISUALIZATIONS",
 			data: {
 				visualizations,
 			},
