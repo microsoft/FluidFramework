@@ -267,6 +267,39 @@ export function configureWebSocketServices(
 		}
 
         async function connectDocument(message: IConnect): Promise<IConnectedClient> {
+            // Validate token signature and claims
+			const token = message.token;
+			const claims = validateTokenClaims(token, message.id, message.tenantId);
+            const clients = await clientManager
+				.getClients(claims.tenantId, claims.documentId)
+				.then((response) => {
+					connectDocumentGetClientsMetric.success(
+						"Successfully got clients from client manager",
+					);
+					return response;
+				})
+				.catch(async (err) => {
+					const errMsg = `Failed to get clients. Error: ${safeStringify(
+						err,
+						undefined,
+						2,
+					)}`;
+					connectDocumentGetClientsMetric.error(
+						"Failed to get clients during connectDocument",
+						err,
+					);
+					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
+				});
+
+            if (clients.length > maxNumberOfClientsPerDocument) {
+				throw new NetworkError(
+					429,
+					"Too Many Clients Connected to Document",
+					true /* canRetry */,
+					false /* isFatal */,
+					5 * 60 * 1000 /* retryAfterMs (5 min) */,
+				);
+			}
             const startTime = Date.now();
             const throttleErrorPerCluster = checkThrottleAndUsage(
                 connectThrottlerPerCluster,
@@ -287,10 +320,6 @@ export function configureWebSocketServices(
             if (!message.token) {
                 throw new NetworkError(403, "Must provide an authorization token");
             }
-
-			// Validate token signature and claims
-			const token = message.token;
-			const claims = validateTokenClaims(token, message.id, message.tenantId);
 
 			try {
 				await tenantManager.verifyToken(claims.tenantId, token);
@@ -384,36 +413,6 @@ export function configureWebSocketServices(
 				LumberEventName.ConnectDocumentGetClients,
 				lumberjackProperties,
 			);
-			const clients = await clientManager
-				.getClients(claims.tenantId, claims.documentId)
-				.then((response) => {
-					connectDocumentGetClientsMetric.success(
-						"Successfully got clients from client manager",
-					);
-					return response;
-				})
-				.catch(async (err) => {
-					const errMsg = `Failed to get clients. Error: ${safeStringify(
-						err,
-						undefined,
-						2,
-					)}`;
-					connectDocumentGetClientsMetric.error(
-						"Failed to get clients during connectDocument",
-						err,
-					);
-					return handleServerError(logger, errMsg, claims.documentId, claims.tenantId);
-				});
-
-			if (clients.length > maxNumberOfClientsPerDocument) {
-				throw new NetworkError(
-					429,
-					"Too Many Clients Connected to Document",
-					true /* canRetry */,
-					false /* isFatal */,
-					5 * 60 * 1000 /* retryAfterMs (5 min) */,
-				);
-			}
 
 			const connectDocumentAddClientMetric = Lumberjack.newLumberMetric(
 				LumberEventName.ConnectDocumentAddClient,
