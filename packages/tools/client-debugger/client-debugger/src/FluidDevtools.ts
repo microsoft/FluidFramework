@@ -30,6 +30,27 @@ const devtoolsMessageLoggingOptions: MessageLoggingOptions = {
 };
 
 /**
+ * Error text thrown when {@link FluidDevtools} operations are used after it has been disposed.
+ *
+ * @privateRemarks Exported for test purposes only.
+ */
+export const useAfterDisposeErrorText =
+	"The devtools instance has been disposed. Further operations are invalid.";
+
+/**
+ * Error text thrown when a user attempts to register a {@link ContainerDevtools} instance for an ID that is already
+ * registered with the {@link FluidDevtools}.
+ *
+ * @privateRemarks Exported for test purposes only.
+ */
+export function getContainerAlreadyRegisteredErrorText(containerId: string): string {
+	return (
+		`A ContainerDevtools instance has already been registered for container ID "${containerId}".` +
+		"Existing instance must be closed before a replacement may be registered."
+	);
+}
+
+/**
  * Properties for configuring a {@link FluidDevtools}.
  *
  * @public
@@ -153,26 +174,23 @@ export class FluidDevtools
 
 	/**
 	 * {@inheritDoc IFluidDevtools.registerContainer}
+	 *
+	 * @throws Will throw if devtools have already been registered for the specified Container ID.
 	 */
 	public registerContainer(props: ContainerDevtoolsProps): void {
 		if (this.disposed) {
-			throw new UsageError(
-				"The Devtools has been disposed. Cannot register a new Container.",
-			);
+			throw new UsageError(useAfterDisposeErrorText);
 		}
 
 		const { containerId } = props;
-		const existingDebugger = this.containers.get(containerId);
-		if (existingDebugger !== undefined) {
-			console.warn(
-				`Active debugger registry already contains an entry for container ID "${containerId}". Override existing entry.`,
-			);
-			existingDebugger.dispose();
+
+		if (this.containers.has(containerId)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerId));
 		}
 
 		const containerDevtools = new ContainerDevtools(props);
 		this.containers.set(containerId, containerDevtools);
-		this.emit("containerRegistered", containerId, containerDevtools);
+		this.emit("containerRegistered", containerId);
 	}
 
 	/**
@@ -180,9 +198,7 @@ export class FluidDevtools
 	 */
 	public closeContainerDevtools(containerId: string): void {
 		if (this.disposed) {
-			throw new UsageError(
-				"The Devtools has been disposed. All Container Devtools instances have already been closed.",
-			);
+			throw new UsageError(useAfterDisposeErrorText);
 		}
 
 		const containerDevtools = this.containers.get(containerId);
@@ -202,7 +218,7 @@ export class FluidDevtools
 	 */
 	public getContainerDevtools(containerId: string): IContainerDevtools | undefined {
 		if (this.disposed) {
-			throw new UsageError("The Devtools has been disposed.");
+			throw new UsageError(useAfterDisposeErrorText);
 		}
 
 		return this.containers.get(containerId);
@@ -213,7 +229,7 @@ export class FluidDevtools
 	 */
 	public getAllContainerDevtools(): readonly IContainerDevtools[] {
 		if (this.disposed) {
-			throw new UsageError("The Devtools has been disposed.");
+			throw new UsageError(useAfterDisposeErrorText);
 		}
 
 		return [...this.containers.values()];
@@ -231,7 +247,7 @@ export class FluidDevtools
 	 */
 	public dispose(): void {
 		if (this.disposed) {
-			throw new UsageError("The Devtools have already been disposed.");
+			throw new UsageError(useAfterDisposeErrorText);
 		}
 
 		// Dispose of container-level devtools
