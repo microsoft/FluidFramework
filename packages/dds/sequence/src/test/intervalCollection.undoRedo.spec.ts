@@ -66,7 +66,7 @@ function assertIntervalEquals(
 	);
 }
 
-describe.only("Undo/redo for interval collection operations", () => {
+describe("Undo/redo for interval collection operations", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	// not sure if i need the factory if im only using one sharedstring
