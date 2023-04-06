@@ -42,20 +42,20 @@ export type AudienceViewProps = HasContainerId;
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { containerId } = props;
 
-	// Columns for rendering audience state 
+	// Columns for rendering audience state
 	const audienceStateColumns = [
 		{ columnKey: "clientId", label: "ClientId" },
 		{ columnKey: "userId", label: "UserId" },
 		{ columnKey: "mode", label: "Mode" },
 		{ columnKey: "scopes", label: "Scopes" },
 	];
-	
-	// Columns for rendering audience history  
+
+	// Columns for rendering audience history
 	const audienceHistoryColumns = [
 		{ columnKey: "clientId", label: "ClientId" },
 		{ columnKey: "time", label: "Time" },
 	];
-	
+
 	const messageRelay = useMessageRelay();
 
 	const [audienceData, setAudienceData] = React.useState<
@@ -109,7 +109,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 
 	console.log("audienceData.audienceHistory:", audienceHistoryItems);
 
-	// TODO: Determine if myClientMetaData is necessary 
+	// TODO: Determine if myClientMetaData is necessary
 	// const myClientMetadata = audienceData.audienceState.find(
 	// 	(audience) => audience.clientId === audienceData.clientId,
 	// )?.client;
