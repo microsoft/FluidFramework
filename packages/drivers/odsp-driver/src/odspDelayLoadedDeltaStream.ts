@@ -220,7 +220,12 @@ export class OdspDelayLoadedDeltaStream {
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				getWithRetryForTokenRefresh(async (options) => {
-					await this.joinSession(requestSocketToken, options, true, clientId);
+					await this.joinSession(
+						requestSocketToken,
+						options,
+						true /* isRefreshingJoinSession */,
+						clientId,
+					);
 					resolve();
 				}).catch((error) => {
 					reject(error);
