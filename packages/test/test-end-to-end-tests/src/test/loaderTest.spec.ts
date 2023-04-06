@@ -18,7 +18,10 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
-import { requestResolvedObjectFromContainer } from "@fluidframework/container-loader";
+import {
+	requestResolvedObjectFromContainer,
+	waitContainerToCatchUp,
+} from "@fluidframework/container-loader";
 
 class TestSharedDataObject1 extends DataObject {
 	public get _root() {
@@ -370,6 +373,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider) => {
 		// Request to the newly created data store with headers.
 		const newLoader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
 		const resolvedContainer = await newLoader.resolve({ url });
+		await waitContainerToCatchUp(resolvedContainer);
 		const response = await requestResolvedObjectFromContainer(resolvedContainer, headers);
 
 		assert.strictEqual(response.status, 200, "Did not return the correct status");
