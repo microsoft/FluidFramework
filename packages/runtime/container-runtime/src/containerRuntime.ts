@@ -3055,7 +3055,7 @@ export class ContainerRuntime
 		// It should only be done by the summarizerNode, if required.
 		// When fetching from storage we will always get the latest version and do not use the ackHandle.
 		const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-			let fetchResult = await this.failOrFetchLatestSnapshotFromStorage(
+			let fetchResult = await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3140,7 +3140,7 @@ export class ContainerRuntime
 	): Promise<{ latestSnapshotRefSeq: number; latestSnapshotVersionId: string | undefined }> {
 		const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
 		const { snapshotTree, versionId, latestSnapshotRefSeq } =
-			await this.failOrFetchLatestSnapshotFromStorage(
+			await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryFromServerFetch",
@@ -3169,23 +3169,6 @@ export class ContainerRuntime
 		return { latestSnapshotRefSeq, latestSnapshotVersionId: versionId };
 	}
 
-	private async failOrFetchLatestSnapshotFromStorage(
-		logger: ITelemetryLogger,
-		event: ITelemetryGenericEvent,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
-		const recoveryMethod = this.mc.config.getString(
-			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
-		);
-		if (recoveryMethod === "restart") {
-			this._summarizer?.stop("unexpectedSummaryAck");
-			const error = new GenericError("Restarting summarizer instead of refreshing");
-			this.closeFn(error);
-			throw error;
-		}
-		return this.fetchLatestSnapshotFromStorage(logger, event, readAndParseBlob);
-	}
-
 	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLogger,
 		event: ITelemetryGenericEvent,
@@ -3200,6 +3183,16 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
+		const recoveryMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
+		);
+		if (recoveryMethod === "restart") {
+			this._summarizer?.stop("latestSummaryStateStale");
+			const error = new GenericError("Restarting summarizer instead of refreshing");
+			this.closeFn(error);
+			throw error;
+		}
+
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,

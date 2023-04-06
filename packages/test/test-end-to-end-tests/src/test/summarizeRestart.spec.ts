@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ITestDataObject, describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ITestContainerConfig,
@@ -13,7 +13,6 @@ import {
 	mockConfigProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvider) => {
 	const settings = {};
@@ -53,9 +52,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				undefined,
 				mockConfigProvider(settings),
 			);
-
-			const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-			dataStore._root.set("an", "op");
 
 			await provider.ensureSynchronized();
 			const summarizeResults = summarizer.summarizeOnDemand({
@@ -105,41 +101,28 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				);
 
 			await summarizeNow(summarizer);
-
-			const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-			dataStore._root.set("an", "op");
-
 			await provider.ensureSynchronized();
-			const container2 = summarizingContainer2 as any;
-			// Intentional hack to allow two summaries to be submitted at the same time
 
 			const summarizeResults = summarizer.summarizeOnDemand({ reason: "end-to-end test" });
-			container2._clientId = (summarizer2 as any).runtime.summarizerClientId;
+			let summary2Error: any;
+			summarizingContainer2.on("closed", (error) => {
+				summary2Error = error;
+			});
 
-			const summarizeResults2 = summarizer2.summarizeOnDemand({ reason: "end-to-end test" });
+			// This tells the summarizer to process the latest summary ack
+			// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
+			// tell the summarizer to process acks.
+			await summarizer2.run("test");
 
-			await Promise.all([
-				summarizeResults.summarySubmitted,
-				summarizeResults2.summarySubmitted,
-			]);
-
-			await Promise.all([
-				summarizeResults.summaryOpBroadcasted,
-				summarizeResults2.summaryOpBroadcasted,
-			]);
-
-			await Promise.all([
-				summarizeResults.receivedSummaryAckOrNack,
-				summarizeResults2.receivedSummaryAckOrNack,
-			]);
 			const ack = await summarizeResults.receivedSummaryAckOrNack;
-			const nack = await summarizeResults2.receivedSummaryAckOrNack;
-
-			await provider.ensureSynchronized();
 
 			assert(ack.success, "Should be an ack");
-			assert(!nack.success, "Should be a nack");
 			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
+			assert.equal(
+				summary2Error.message,
+				"Restarting summarizer instead of refreshing",
+				"Restarting summarizer error expected when receiving an ack from another summarizer",
+			);
 			assert(!summarizingContainer.closed, "summarizer1 should not be closed");
 			assert(!container.closed, "Original container should not be closed");
 		},
@@ -172,13 +155,10 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			);
 
 			// summary1
-			const { summaryVersion } = await summarizeNow(summarizer);
-
-			const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
-			dataStore._root.set("an", "op");
+			const { summaryVersion: summaryVersion1 } = await summarizeNow(summarizer);
 
 			await provider.ensureSynchronized();
-			// s2
+			// summary2
 			await summarizeNow(summarizer);
 			summarizer.close();
 			summarizingContainer.close();
@@ -187,15 +167,29 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				await createSummarizer(
 					provider,
 					container,
-					summaryVersion,
+					summaryVersion1,
 					undefined,
 					mockConfigProvider(settings),
 				);
 
 			await provider.ensureSynchronized();
-			await summarizer2.run("abc");
+			let summary2Error: any;
+			summarizingContainer2.on("closed", (error) => {
+				console.log("trap");
+				summary2Error = error;
+			});
+
+			// This tells the summarizer to process the latest summary ack
+			// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
+			// tell the summarizer to process acks.
+			await summarizer2.run("test");
 
 			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
+			assert.equal(
+				summary2Error.message,
+				"Restarting summarizer instead of refreshing",
+				"Restarting summarizer error expected when loading from an older summary",
+			);
 			assert(summarizingContainer.closed, "summarizer1 should be closed");
 			assert(!container.closed, "Original container should not be closed");
 		},
