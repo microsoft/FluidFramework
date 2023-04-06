@@ -227,6 +227,14 @@ export {
 	ContextuallyTypedFieldData,
 	TreeViewSchema,
 	FieldViewSchema,
+	cursorFromContextualData,
+	UntypedField,
+	UntypedTree,
+	UntypedTreeContext,
+	UntypedTreeCore,
+	UnwrappedUntypedField,
+	UnwrappedUntypedTree,
+	UntypedTreeOrPrimitive,
 } from "./feature-libraries";
 
 export {
