@@ -17,12 +17,9 @@ import {
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 import { IClient } from "@fluidframework/protocol-definitions";
-
 import { useMessageRelay } from "../MessageRelayContext";
-
 import { AudienceStateTable } from "./AudienceStateTable";
 import { AudienceHistoryTable } from "./AudienceHistoryTable";
-
 import { Waiting } from "./Waiting";
 
 // TODOs:
@@ -94,9 +91,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		(audience) => audience.clientId === audienceData.clientId,
 	)?.client;
 
-	const audienceStateItems = AudienceStateDataFilter(audienceData.audienceState, myClientMetadata);
+	const audienceStateItems = AudienceStateDataFilter(
+		audienceData.audienceState,
+		myClientMetadata,
+	);
 	const audienceHistoryItems = AudienceHistoryDataFilter(audienceData.audienceHistory).reverse();
-
 
 	return (
 		<>
@@ -124,7 +123,7 @@ export interface FilteredAudienceStateData {
  */
 function AudienceStateDataFilter(
 	audienceStateData: AudienceClientMetadata[],
-	myClientConnection: IClient | undefined, 
+	myClientConnection: IClient | undefined,
 ): FilteredAudienceStateData[] {
 	return audienceStateData.map((entry) => {
 		const clientId = entry.clientId;
@@ -137,7 +136,7 @@ function AudienceStateDataFilter(
 			userId,
 			mode,
 			scopes,
-			myClientConnection, 
+			myClientConnection,
 		};
 	});
 }
