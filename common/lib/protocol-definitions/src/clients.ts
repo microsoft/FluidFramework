@@ -65,7 +65,7 @@ export interface IClient {
 	mode: ConnectionMode;
 
 	/**
-	 * TODO
+	 * {@inheritDoc IClientDetails}
 	 */
 	details: IClientDetails;
 
