@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ScopeType } from "@fluidframework/protocol-definitions-previous";
+import { ScopeType } from "./scopes";
 import { IUser } from "./users";
 
 /**
