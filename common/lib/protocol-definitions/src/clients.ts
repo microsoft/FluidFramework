@@ -87,7 +87,9 @@ export interface IClient {
 	scopes: string[];
 
 	/**
-	 * The time the client connected
+	 * The time the client connected to the service.
+	 *
+	 * TODO: what does it mean for this to be undefined?
 	 */
 	timestamp?: number;
 }
