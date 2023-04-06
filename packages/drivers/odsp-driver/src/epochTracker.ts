@@ -63,6 +63,15 @@ export const Odsp409Error = "Odsp409Error";
 export const defaultCacheExpiryTimeoutMs: number = 2 * 24 * 60 * 60 * 1000; // 2 days in ms
 
 /**
+ * In ODSP, the concept of "epoch" refers to binary updates to files. For example, this might include using
+ * version restore, or if the user downloads a Fluid file and then uploads it again. These result in the epoch
+ * value being incremented.
+ *
+ * The implications of these binary updates is that the Fluid state is disrupted: the sequence number might
+ * go backwards, the data might be inconsistent with the latest state of collaboration, etc. As a result, it's
+ * not safe to continue collaboration across an epoch change. We need to detect these epoch changes and
+ * error out from the collaboration.
+ *
  * This class is a wrapper around fetch calls. It adds epoch to the request made so that the
  * server can match it with its epoch value in order to match the version.
  * It also validates the epoch value received in response of fetch calls. If the epoch does not match,
