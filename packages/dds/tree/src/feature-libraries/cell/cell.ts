@@ -226,20 +226,18 @@ const cellRebaser: CellRebaser<ContentChange> = {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 	): Change => {
+		const deep = rebaseDeep(change.deep, over.change.deep);
 		if (over.change.shallow !== undefined) {
-			if (change.deep !== undefined) {
-				const rebasedDeep = rebaseDeep(change.deep, over.change.deep);
-				if (rebasedDeep !== undefined) {
-					// Since the content has been replaced by the concurrent change, the deep changes to it should
-					// reside at its new location.
-					crossFieldManager.getOrCreate(
-						CrossFieldTarget.Destination,
-						over.revision,
-						over.change.shallow.oldContentDst,
-						rebasedDeep,
-						true,
-					);
-				}
+			if (deep !== undefined) {
+				// Since the content has been replaced by the concurrent change, the deep changes to it should
+				// reside at its new location.
+				crossFieldManager.getOrCreate(
+					CrossFieldTarget.Destination,
+					over.revision,
+					over.change.shallow.oldContentDst,
+					deep,
+					true,
+				);
 			}
 			if (change.shallow !== undefined) {
 				const shallow: ShallowChange = { ...change.shallow };
@@ -262,13 +260,7 @@ const cellRebaser: CellRebaser<ContentChange> = {
 			return {};
 		}
 
-		if (change.deep !== undefined) {
-			const deep = rebaseDeep(change.deep, over.change.deep);
-			if (deep !== undefined) {
-				return { deep };
-			}
-		}
-		return {};
+		return deep !== undefined ? { deep } : {};
 	},
 };
 
