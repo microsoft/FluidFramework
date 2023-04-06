@@ -15,6 +15,7 @@ import {
 	ISourcedDebuggerMessage,
 	InboundHandlers,
 	ContainerStateHistoryMessageType,
+	GetContainerStateMessage,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
@@ -70,7 +71,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 		setContainerHistory(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage({
+		messageRelay.postMessage<GetContainerStateMessage>({
 			type: GetContainerStateMessageType,
 			data: {
 				containerId,
