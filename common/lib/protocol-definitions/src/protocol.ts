@@ -312,6 +312,17 @@ export interface ISignalMessage {
 	// eslint-disable-next-line @rushstack/no-new-null
 	clientId: string | null;
 
+	/**
+	* The source of the signal. This can be a GUID of the client,
+	* "server" for server generated signals and "external" for
+	* services that use the new Fluid Service broadcast-signal API
+	* to relay signals through the server. To maintain
+	* backward-compat for now, we are making it optional. Over
+	* time clientId should be phased out of use and signalSource
+	* should become the main source of truth.
+	*/
+   signalSource?: string;
+
 	// TODO: use `unknown` instead.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	content: any;

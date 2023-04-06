@@ -132,7 +132,7 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
  */
 export function protocolHandlerShouldProcessSignal(message: ISignalMessage) {
 	// Signal originates from server
-	if (message.clientId === null) {
+	if (message?.signalSource === "server" || message.clientId === null) {
 		const innerContent = message.content as { content: unknown; type: string };
 		switch (innerContent.type) {
 			case SignalType.Clear:
