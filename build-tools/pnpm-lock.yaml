@@ -147,6 +147,7 @@ importers:
       minimatch: 7.4.2
       npm-check-updates: 16.3.8
       oclif: 3.7.0
+      prettier: 2.6.2
       semver: 7.3.7
       semver-utils: 1.1.4
       simple-git: 3.16.1
@@ -190,7 +191,6 @@ importers:
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
       nyc: 15.1.0
-      prettier: 2.6.2
       rimraf: 4.4.0
       ts-node: 10.9.1_2tzjs4v2vmg7rmkqk2kksjfdly
       tslib: 2.4.0
@@ -9822,7 +9822,6 @@ packages:
     resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
     engines: {node: '>=10.13.0'}
     hasBin: true
-    dev: true
 
   /pretty-bytes/5.6.0:
     resolution: {integrity: sha512-FFw039TmrBqFK8ma/7OL3sDz/VytdtJr044/QUJtH0wK9lb9jLq9tJyIxUwtQJHwar2BqtiA4iCWSwo9JLkzFg==}
