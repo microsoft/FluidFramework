@@ -41,8 +41,9 @@ export async function performFuzzActionsAbort(
 
 	const initialState: FuzzTestState = {
 		random,
-		testTreeProvider: provider,
+		trees: provider.trees,
 		numberOfEdits: 0,
+		testTreeProvider: provider,
 	};
 	const finalState = await performFuzzActionsAsync(
 		generator,

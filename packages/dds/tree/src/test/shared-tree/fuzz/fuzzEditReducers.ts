@@ -15,12 +15,14 @@ export const fuzzReducer: {
 } = {
 	edit: async (state, operation) => {
 		const { index, contents } = operation;
+		assert(state.testTreeProvider !== undefined);
 		const tree = state.testTreeProvider.trees[index];
 		applyFuzzChange(tree, contents, TransactionResult.Commit);
 		return state;
 	},
 	synchronize: async (state) => {
 		const { testTreeProvider } = state;
+		assert(testTreeProvider !== undefined);
 		await testTreeProvider.ensureSynchronized();
 		checkTreesAreSynchronized(testTreeProvider);
 		return state;

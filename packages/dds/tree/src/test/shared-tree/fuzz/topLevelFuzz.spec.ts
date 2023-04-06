@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
 	makeRandom,
@@ -25,9 +26,11 @@ export async function performFuzzActions(
 
 	const initialState: FuzzTestState = {
 		random,
-		testTreeProvider: provider,
+		trees: provider.trees,
 		numberOfEdits: 0,
+		testTreeProvider: provider,
 	};
+	assert(initialState.testTreeProvider !== undefined);
 	await initialState.testTreeProvider.ensureSynchronized();
 
 	const finalState = await performFuzzActionsAsync(
@@ -36,6 +39,7 @@ export async function performFuzzActions(
 		initialState,
 		saveInfo,
 	);
+	assert(finalState.testTreeProvider !== undefined);
 	await finalState.testTreeProvider.ensureSynchronized();
 	checkTreesAreSynchronized(finalState.testTreeProvider);
 	return finalState;
@@ -59,7 +63,7 @@ describe("Fuzz - Top-Level", () => {
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
 	 */
-	describe.skip("Everything", () => {
+	describe.only("Everything", () => {
 		runFuzzBatch(makeOpGenerator, performFuzzActions, opsPerRun, runsPerBatch, random);
 	});
 });

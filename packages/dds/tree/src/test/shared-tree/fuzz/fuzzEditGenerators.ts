@@ -56,8 +56,9 @@ export interface Synchronize {
 }
 
 export interface FuzzTestState extends BaseFuzzTestState {
-	testTreeProvider: ITestTreeProvider;
+	trees: readonly ISharedTree[];
 	numberOfEdits: number;
+	testTreeProvider?: ITestTreeProvider;
 }
 
 export interface TreeContext {
@@ -72,7 +73,7 @@ export interface NodeRangePath {
 export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
 	async function insertGenerator(state: EditState): Promise<FuzzInsert> {
-		const trees = state.testTreeProvider.trees;
+		const trees = state.trees;
 		const tree = trees[state.treeIndex];
 
 		// generate edit for that specific tree
@@ -92,7 +93,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 	}
 
 	async function deleteGenerator(state: EditState): Promise<FuzzDelete> {
-		const trees = state.testTreeProvider.trees;
+		const trees = state.trees;
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
 		const { firstNode, count } = getExistingRandomNodeRangePath(tree, state.random);
@@ -104,7 +105,7 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 	}
 
 	async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
-		const trees = state.testTreeProvider.trees;
+		const trees = state.trees;
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
@@ -117,22 +118,16 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 
 	const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
 		[insertGenerator, 5],
-		[
-			deleteGenerator,
-			1,
-			({ testTreeProvider, treeIndex }) =>
-				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
-		],
+		[deleteGenerator, 1, ({ trees, treeIndex }) => containsAtLeastOneNode(trees[treeIndex])],
 		[
 			setPayloadGenerator,
 			1,
-			({ testTreeProvider, treeIndex }) =>
-				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
+			({ trees, treeIndex }) => containsAtLeastOneNode(trees[treeIndex]),
 		],
 	]);
 
 	return async (state: FuzzTestState): Promise<Operation | typeof done> => {
-		const trees = state.testTreeProvider.trees;
+		const trees = state.trees;
 		// does not include last tree, as we want a passive client
 		const treeIndex = trees.length === 1 ? 0 : state.random.integer(0, trees.length - 2);
 
