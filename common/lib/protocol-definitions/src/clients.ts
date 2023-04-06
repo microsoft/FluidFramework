@@ -39,18 +39,20 @@ export interface IClientDetails {
 	capabilities: ICapabilities;
 
 	/**
-	 * TODO
+	 * TODO: What is this? Are there specific expected values? What does it mean for this to be undefined?
 	 */
 	type?: string;
 
 	/**
 	 * If the environment needs to specify multiple properties which gives info about the environment, then
 	 * it should be in particular format like: `prop1:val1;prop2:val2;prop3:val3`.
+	 *
+	 * TODO: What does it mean for this to be undefined?
 	 */
 	environment?: string;
 
 	/**
-	 * TODO
+	 * TODO: What is this? What does it mean for this to be undefined?
 	 */
 	device?: string;
 }
@@ -122,11 +124,15 @@ export interface ISignalClient {
 
 	/**
 	 * Counts the number of signals sent by the client.
+	 *
+	 * TODO: What does it mean for this to be undefined?
 	 */
 	clientConnectionNumber?: number;
 
 	/**
 	 * Sequence number that indicates when the signal was created in relation to the delta stream.
+	 *
+	 * TODO: What does it mean for this to be undefined?
 	 */
 	referenceSequenceNumber?: number;
 }
