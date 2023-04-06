@@ -157,14 +157,15 @@ class MockDetachedBlobStorage implements IDetachedBlobStorage {
 export async function initialize(
 	testDriver: ITestDriver,
 	seed: number,
-	endpoint: DriverEndpoint | undefined,
 	testConfig: ILoadTestConfig,
 	verbose: boolean,
 	profileName: string,
 	testIdn?: string,
 ) {
 	const random = makeRandom(seed);
-	const optionsOverride = `${testDriver.type}${endpoint !== undefined ? `-${endpoint}` : ""}`;
+	const optionsOverride = `${testDriver.type}${
+		testDriver.endpointName !== undefined ? `-${testDriver.endpointName}` : ""
+	}`;
 	const loaderOptions = random.pick(
 		generateLoaderOptions(seed, testConfig.optionOverrides?.[optionsOverride]?.loader),
 	);

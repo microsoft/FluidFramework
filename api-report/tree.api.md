@@ -671,6 +671,15 @@ export interface IDefaultEditBuilder {
 }
 
 // @alpha
+export type Identifier = number;
+
+// @alpha
+export const identifierKey: GlobalFieldKey;
+
+// @alpha
+export const identifierKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
@@ -764,6 +773,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
+    readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
