@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, ITenantService } from "../services";
@@ -43,6 +43,7 @@ export function create(
 	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): IRoutes {
 	return {
 		git: {
@@ -52,6 +53,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 			commits: commits.create(
 				config,
@@ -59,6 +61,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 			refs: refs.create(
 				config,
@@ -66,6 +69,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 			tags: tags.create(
 				config,
@@ -73,6 +77,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 			trees: trees.create(
 				config,
@@ -80,6 +85,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 		},
 		repository: {
@@ -89,6 +95,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 			contents: contents.create(
 				config,
@@ -96,6 +103,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 			headers: headers.create(
 				config,
@@ -103,6 +111,7 @@ export function create(
 				restTenantThrottlers,
 				cache,
 				asyncLocalStorage,
+				tokenRevocationManager,
 			),
 		},
 		summaries: summaries.create(
@@ -112,6 +121,7 @@ export function create(
 			restClusterThrottlers,
 			cache,
 			asyncLocalStorage,
+			tokenRevocationManager,
 		),
 	};
 }

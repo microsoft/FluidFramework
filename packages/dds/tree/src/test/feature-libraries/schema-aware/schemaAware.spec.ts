@@ -10,6 +10,7 @@ import {
 	TypedSchemaData,
 	typedSchemaData,
 	TypedNode,
+	EditableField,
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
@@ -23,6 +24,7 @@ import {
 	TypedSchema,
 	ContextuallyTypedNodeDataObject,
 	FieldViewSchema,
+	UntypedTreeCore,
 } from "../../../feature-libraries";
 import {
 	FlattenKeys,
@@ -162,7 +164,7 @@ const nError1: NumberTree = { [typeNameSymbol]: ballSchema.name, [valueSymbol]: 
 
 interface TypeBuilder<TSchema extends TypedSchema.LabeledTreeSchema> {
 	a: NodeDataFor<typeof schemaData, ApiMode.Flexible, TSchema>;
-	b: NodeDataFor<typeof schemaData, ApiMode.Normalized, TSchema>;
+	b: NodeDataFor<typeof schemaData, ApiMode.Editable, TSchema>;
 	c: NodeDataFor<typeof schemaData, ApiMode.Wrapped, TSchema>;
 }
 
@@ -198,7 +200,7 @@ interface FlexBall {
 	size?: FlexNumber | undefined;
 }
 
-interface NormalizedBall {
+interface EditableBall extends UntypedTreeCore {
 	[typeNameSymbol]: typeof ballSchema.name;
 	x: number;
 	y: number;
@@ -222,7 +224,7 @@ type WrappedBall = {
 	type XB = F["b"];
 	type XC = F["c"];
 	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBall>>;
-	type _check2 = requireTrue<areSafelyAssignable<XB, NormalizedBall>>;
+	type _check2 = requireTrue<areSafelyAssignable<XB, EditableBall>>;
 	type _check3 = requireTrue<areSafelyAssignable<XC, WrappedBall>>;
 }
 
@@ -238,11 +240,11 @@ type WrappedBall = {
 		children: (FlexBall | FlexBox)[];
 	}
 	type _check1 = requireTrue<areSafelyAssignable<XA, FlexBox>>;
-	interface NormalizedBox {
+	interface NormalizedBox extends UntypedTreeCore {
 		[typeNameSymbol]: typeof boxSchema.name;
-		children: (NormalizedBall | NormalizedBox)[];
+		children: EditableField<EditableBall | NormalizedBox>;
 	}
-	type _check2 = requireTrue<areSafelyAssignable<XB, NormalizedBox>>;
+	type _check2 = requireAssignableTo<XB, NormalizedBox>;
 
 	{
 		const child: XA = {
@@ -256,24 +258,6 @@ type WrappedBall = {
 					[typeNameSymbol]: "ball",
 					x: 1,
 					y: { [typeNameSymbol]: "number", [valueSymbol]: 2 },
-				},
-			],
-		};
-	}
-
-	{
-		const child: XB = {
-			[typeNameSymbol]: boxSchema.name,
-			children: [],
-		};
-		const parent: XB = {
-			[typeNameSymbol]: boxSchema.name,
-			children: [
-				child,
-				{
-					[typeNameSymbol]: ballSchema.name,
-					x: 1,
-					y: 2,
 				},
 			],
 		};
