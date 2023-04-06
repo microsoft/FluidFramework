@@ -230,7 +230,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			if (entry.minTTLInSeconds && entry.serverUploadTime) {
 				const timeLapseSinceServerUpload = (Date.now() - entry.serverUploadTime) / 1000;
-				if (entry.minTTLInSeconds - timeLapseSinceServerUpload > 0) {
+				// stashed entries with more than half-life in storage will not be reuploaded  
+				if (entry.minTTLInSeconds - timeLapseSinceServerUpload > entry.minTTLInSeconds / 2) {
 					return;
 				}
 			}
