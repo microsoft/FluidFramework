@@ -8,7 +8,7 @@ import { IDisposable } from '@fluidframework/common-definitions';
 import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
-// @public (undocumented)
+// @public
 export type ConnectionMode = "write" | "read";
 
 // @public (undocumented)
@@ -53,24 +53,18 @@ export interface IBranchOrigin {
     sequenceNumber: number;
 }
 
-// @public (undocumented)
+// @public
 export interface ICapabilities {
-    // (undocumented)
     interactive: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface IClient {
-    // (undocumented)
     details: IClientDetails;
-    // (undocumented)
     mode: ConnectionMode;
-    // (undocumented)
     permission: string[];
-    // (undocumented)
     scopes: string[];
     timestamp?: number;
-    // (undocumented)
     user: IUser;
 }
 
@@ -84,22 +78,17 @@ export interface IClientConfiguration {
     noopTimeFrequency?: number;
 }
 
-// @public (undocumented)
+// @public
 export interface IClientDetails {
-    // (undocumented)
     capabilities: ICapabilities;
-    // (undocumented)
     device?: string;
     environment?: string;
-    // (undocumented)
     type?: string;
 }
 
 // @public
 export interface IClientJoin {
-    // (undocumented)
     clientId: string;
-    // (undocumented)
     detail: IClient;
 }
 
@@ -277,11 +266,9 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
     (event: "approveProposal", listener: (sequenceNumber: number, key: string, value: any, approvalSequenceNumber: number) => void): any;
 }
 
-// @public (undocumented)
+// @public
 export interface ISequencedClient {
-    // (undocumented)
     client: IClient;
-    // (undocumented)
     sequenceNumber: number;
 }
 
@@ -329,12 +316,10 @@ export interface IServerError {
     errorMessage: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ISignalClient {
-    // (undocumented)
     client: IClient;
     clientConnectionNumber?: number;
-    // (undocumented)
     clientId: string;
     referenceSequenceNumber?: number;
 }
