@@ -72,7 +72,7 @@ export interface IClient {
 	details: IClientDetails;
 
 	/**
-	 * TODO
+	 * TODO: What is this? Are there specific values we expect?
 	 */
 	permission: string[];
 
@@ -84,7 +84,7 @@ export interface IClient {
 	user: IUser;
 
 	/**
-	 * TODO
+	 * TODO: What is this? Are there specific values we expect?
 	 */
 	scopes: string[];
 
@@ -113,7 +113,7 @@ export interface ISequencedClient {
 
 export interface ISignalClient {
 	/**
-	 * The {@link ISignalClient.client}'s ID.
+	 * The {@link ISignalClient.client}'s unique ID.
 	 */
 	clientId: string;
 
