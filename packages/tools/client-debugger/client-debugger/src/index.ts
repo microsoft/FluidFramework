@@ -45,6 +45,7 @@
 
 export { MemberChangeKind } from "./AudienceMetadata";
 export { ContainerStateChangeKind } from "./Container";
+export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
@@ -68,7 +69,9 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
-export { IFluidClientDebugger, IFluidClientDebuggerEvents } from "./IFluidClientDebugger";
+export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
+export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
+export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
 export {
 	AudienceChangeLogEntry,
@@ -77,45 +80,62 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
-	AudienceClientMetaData,
-	AudienceSummaryMessageData,
+	AudienceClientMetadata,
 	AudienceSummaryMessage,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessageType,
+	devtoolsMessageSource,
 	GetAudienceMessage,
-	debuggerMessageSource,
+	GetAudienceMessageType,
 	HasContainerId,
 	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
+	ConnectContainerMessageType,
 	DisconnectContainerMessage,
 	DisconnectContainerMessageData,
+	DisconnectContainerMessageType,
 	CloseContainerMessage,
 	CloseContainerMessageData,
+	CloseContainerMessageType,
+	ContainerListMessage,
+	ContainerListMessageData,
+	ContainerListMessageType,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateChangeMessageType,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	ContainerStateHistoryMessageType,
 	DataVisualizationMessage,
 	DataVisualizationMessageData,
+	DataVisualizationMessageType,
 	GetContainerListMessage,
+	GetContainerListMessageType,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
+	GetContainerStateMessageType,
 	GetDataVisualizationMessage,
 	GetDataVisualizationMessageData,
+	GetDataVisualizationMessageType,
 	GetRootDataVisualizationsMessage,
 	GetRootDataVisualizationsMessageData,
+	GetRootDataVisualizationsMessageType,
 	IDebuggerMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
 	ISourcedDebuggerMessage,
 	ITimestampedTelemetryEvent,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
 	RootDataVisualizationsMessage,
 	RootDataVisualizationsMessageData,
+	RootDataVisualizationsMessageType,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
+	TelemetryEventMessageType,
 	TelemetryHistoryMessage,
+	TelemetryHistoryMessageType,
 	GetTelemetryHistoryMessage,
+	GetTelemetryHistoryMessageType,
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	InboundHandlers,
@@ -123,14 +143,3 @@ export {
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-export {
-	DebuggerRegistry,
-	DebuggerRegistryEvents,
-	clearDebuggerRegistry,
-	closeFluidClientDebugger,
-	FluidClientDebuggerProps,
-	getDebuggerRegistry,
-	getFluidClientDebugger,
-	getFluidClientDebuggers,
-	initializeFluidClientDebugger,
-} from "./Registry";

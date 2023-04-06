@@ -1289,12 +1289,6 @@ export class ContainerRuntime
 			);
 
 			if (this.context.clientDetails.type === summarizerClientType) {
-				// ContainerRuntime handles the entryPoint for summarizer clients on its own; we shouldn't receive
-				// an initializeEntryPoint for that case.
-				assert(
-					initializeEntryPoint === undefined,
-					0x5be /* Summarizer clients cannot have a custom entryPoint */,
-				);
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,

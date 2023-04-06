@@ -37,7 +37,6 @@ export {
 	createRoomLeaveMessage,
 	createSessionMetric,
 	generateClientId,
-	getRandomInt,
 	isDocumentSessionValid,
 	isDocumentValid,
 	logCommonSessionEndMetrics,

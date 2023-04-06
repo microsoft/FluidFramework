@@ -28,50 +28,94 @@ export interface AudienceChangeLogEntry extends LogEntry {
 }
 
 // @public
-export interface AudienceClientMetaData {
+export interface AudienceClientMetadata {
     client: IClient;
     clientId: string;
 }
 
 // @public
 export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
-    // (undocumented)
-    type: "AUDIENCE_EVENT";
+    type: typeof AudienceSummaryMessageType;
 }
 
 // @public
 export interface AudienceSummaryMessageData extends HasContainerId {
     audienceHistory: readonly AudienceChangeLogEntry[];
-    audienceState: AudienceClientMetaData[];
+    audienceState: AudienceClientMetadata[];
     clientId: string | undefined;
 }
 
-// @internal
-export function clearDebuggerRegistry(): void;
+// @public
+export const AudienceSummaryMessageType = "AUDIENCE_EVENT";
 
 // @public
 export interface CloseContainerMessage extends IDebuggerMessage<CloseContainerMessageData> {
-    type: "CLOSE_CONTAINER";
+    type: typeof CloseContainerMessageType;
 }
 
 // @public
 export type CloseContainerMessageData = HasContainerId;
 
 // @public
-export function closeFluidClientDebugger(containerId: string): void;
+export const CloseContainerMessageType = "CLOSE_CONTAINER";
 
 // @public
 export interface ConnectContainerMessage extends IDebuggerMessage<ConnectContainerMessageData> {
-    type: "CONNECT_CONTAINER";
+    type: typeof ConnectContainerMessageType;
 }
 
 // @public
 export type ConnectContainerMessageData = HasContainerId;
 
 // @public
+export const ConnectContainerMessageType = "CONNECT_CONTAINER";
+
+// @public
 export interface ConnectionStateChangeLogEntry extends StateChangeLogEntry<ContainerStateChangeKind> {
     clientId: string | undefined;
 }
+
+// @internal @sealed
+export class ContainerDevtools extends TypedEventEmitter<ContainerDevtoolsEvents> implements IContainerDevtools {
+    constructor(props: ContainerDevtoolsProps);
+    get audience(): IAudience;
+    readonly container: IContainer;
+    readonly containerData?: Record<string, IFluidLoadable>;
+    readonly containerId: string;
+    readonly containerNickname?: string;
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
+    getAudienceHistory(): readonly AudienceChangeLogEntry[];
+    getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
+}
+
+// @public
+export interface ContainerDevtoolsEvents extends IEvent {
+    (event: "disposed", listener: () => void): any;
+}
+
+// @public
+export interface ContainerDevtoolsProps {
+    container: IContainer;
+    containerData?: Record<string, IFluidLoadable>;
+    containerId: string;
+    containerNickname?: string;
+    dataVisualizers?: Record<string, VisualizeSharedObject>;
+}
+
+// @public
+export interface ContainerListMessage extends IDebuggerMessage<ContainerListMessageData> {
+    type: typeof ContainerListMessageType;
+}
+
+// @public
+export interface ContainerListMessageData {
+    containers: ContainerMetadata[];
+}
+
+// @public
+export const ContainerListMessageType = "CONTAINER_LIST";
 
 // @public
 export interface ContainerMetadata {
@@ -90,7 +134,7 @@ export enum ContainerStateChangeKind {
 
 // @public
 export interface ContainerStateChangeMessage extends IDebuggerMessage<ContainerStateChangeMessageData> {
-    type: "CONTAINER_STATE_CHANGE";
+    type: typeof ContainerStateChangeMessageType;
 }
 
 // @public
@@ -99,14 +143,20 @@ export interface ContainerStateChangeMessageData extends HasContainerId {
 }
 
 // @public
+export const ContainerStateChangeMessageType = "CONTAINER_STATE_CHANGE";
+
+// @public
 export interface ContainerStateHistoryMessage extends IDebuggerMessage<ContainerStateHistoryMessageData> {
-    type: "CONTAINER_STATE_HISTORY";
+    type: typeof ContainerStateHistoryMessageType;
 }
 
 // @public
 export interface ContainerStateHistoryMessageData extends HasContainerId {
     history: ConnectionStateChangeLogEntry[];
 }
+
+// @public
+export const ContainerStateHistoryMessageType = "CONTAINER_STATE_HISTORY";
 
 // @public
 export interface ContainerStateMetadata extends ContainerMetadata {
@@ -122,7 +172,7 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 
 // @public
 export interface DataVisualizationMessage extends IDebuggerMessage<DataVisualizationMessageData> {
-    type: "DATA_VISUALIZATION";
+    type: typeof DataVisualizationMessageType;
 }
 
 // @public
@@ -131,46 +181,55 @@ export interface DataVisualizationMessageData extends HasContainerId, HasFluidOb
 }
 
 // @public
-export const debuggerMessageSource: string;
+export const DataVisualizationMessageType = "DATA_VISUALIZATION";
 
-// @internal
-export class DebuggerRegistry extends TypedEventEmitter<DebuggerRegistryEvents> {
-    constructor();
-    closeDebugger(containerId: string): void;
-    getRegisteredDebuggers(): Map<string, IFluidClientDebugger>;
-    initializeDebugger(props: FluidClientDebuggerProps): void;
-}
-
-// @internal
-export interface DebuggerRegistryEvents extends IEvent {
-    // @eventProperty
-    (event: "debuggerRegistered", listener: (containerId: string) => void): void;
-    // @eventProperty
-    (event: "debuggerClosed", listener: (containerId: string) => void): void;
-}
+// @public
+export const devtoolsMessageSource: string;
 
 // @public
 export interface DisconnectContainerMessage extends IDebuggerMessage<DisconnectContainerMessageData> {
-    type: "DISCONNECT_CONTAINER";
+    type: typeof DisconnectContainerMessageType;
 }
 
 // @public
 export type DisconnectContainerMessageData = HasContainerId;
 
 // @public
-export interface FluidClientDebuggerProps {
-    container: IContainer;
-    containerData?: Record<string, IFluidLoadable>;
-    containerId: string;
-    containerNickname?: string;
-    dataVisualizers?: Record<string, VisualizeSharedObject>;
-}
+export const DisconnectContainerMessageType = "DISCONNECT_CONTAINER";
 
 // @internal @sealed
 export class FluidDebuggerLogger extends TelemetryLogger {
     static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @internal
+export class FluidDevtools extends TypedEventEmitter<FluidDevtoolsEvents> implements IFluidDevtools {
+    constructor(props?: FluidDevtoolsProps);
+    closeContainerDevtools(containerId: string): void;
+    // (undocumented)
+    dispose(): void;
+    // (undocumented)
+    get disposed(): boolean;
+    getAllContainerDevtools(): readonly IContainerDevtools[];
+    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
+    registerContainerDevtools(props: ContainerDevtoolsProps): void;
+}
+
+// @public
+export interface FluidDevtoolsEvents extends IEvent {
+    // @eventProperty
+    (event: "containerDevtoolsRegistered", listener: (containerId: string) => void): void;
+    // @eventProperty
+    (event: "containerDevtoolsClosed", listener: (containerId: string) => void): void;
+    // @eventProperty
+    (event: "devtoolsDisposed", listener: () => void): void;
+}
+
+// @public
+export interface FluidDevtoolsProps {
+    initialContainers?: ContainerDevtoolsProps[];
 }
 
 // @public
@@ -207,53 +266,60 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 
 // @public
 export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
-    // (undocumented)
-    type: "GET_AUDIENCE";
+    type: typeof GetAudienceMessageType;
 }
+
+// @public
+export const GetAudienceMessageType = "GET_AUDIENCE";
 
 // @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
-    // (undocumented)
-    type: "GET_CONTAINER_LIST";
+    type: typeof GetContainerListMessageType;
 }
 
 // @public
+export const GetContainerListMessageType = "GET_CONTAINER_LIST";
+
+// @public
 export interface GetContainerStateMessage extends IDebuggerMessage<HasContainerId> {
-    type: "GET_CONTAINER_STATE";
+    type: typeof GetContainerStateMessageType;
 }
 
 // @public
 export type GetContainerStateMessageData = HasContainerId;
 
 // @public
+export const GetContainerStateMessageType = "GET_CONTAINER_STATE";
+
+// @public
 export interface GetDataVisualizationMessage extends IDebuggerMessage<GetDataVisualizationMessageData> {
-    type: "GET_DATA_VISUALIZATION";
+    type: typeof GetDataVisualizationMessageType;
 }
 
 // @public
 export type GetDataVisualizationMessageData = HasContainerId & HasFluidObjectId;
 
-// @internal
-export function getDebuggerRegistry(): DebuggerRegistry;
-
-// @internal
-export function getFluidClientDebugger(containerId: string): IFluidClientDebugger | undefined;
-
-// @internal
-export function getFluidClientDebuggers(): IFluidClientDebugger[];
+// @public
+export const GetDataVisualizationMessageType = "GET_DATA_VISUALIZATION";
 
 // @public
 export interface GetRootDataVisualizationsMessage extends IDebuggerMessage<GetRootDataVisualizationsMessageData> {
-    type: "GET_ROOT_DATA_VISUALIZATIONS";
+    type: typeof GetRootDataVisualizationsMessageType;
 }
 
 // @public
 export type GetRootDataVisualizationsMessageData = HasContainerId;
 
 // @public
+export const GetRootDataVisualizationsMessageType = "GET_ROOT_DATA_VISUALIZATIONS";
+
+// @public
 export interface GetTelemetryHistoryMessage extends IDebuggerMessage {
-    type: "GET_TELEMETRY_HISTORY";
+    type: typeof GetTelemetryHistoryMessageType;
 }
+
+// @public
+export const GetTelemetryHistoryMessageType = "GET_TELEMETRY_HISTORY";
 
 // @internal
 export function handleIncomingMessage(message: Partial<ISourcedDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
@@ -272,13 +338,7 @@ export interface HasFluidObjectId {
 }
 
 // @public
-export interface IDebuggerMessage<TData = unknown> {
-    data: TData;
-    type: string;
-}
-
-// @internal
-export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebuggerEvents>, IDisposable {
+export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
     readonly audience: IAudience;
     readonly container: IContainer;
     readonly containerData?: IFluidLoadable | Record<string, IFluidLoadable>;
@@ -289,14 +349,23 @@ export interface IFluidClientDebugger extends IEventProvider<IFluidClientDebugge
     getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
 }
 
-// @internal
-export interface IFluidClientDebuggerEvents extends IEvent {
-    (event: "disposed", listener: () => void): any;
+// @public
+export interface IDebuggerMessage<TData = unknown> {
+    data: TData;
+    type: string;
+}
+
+// @public
+export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDisposable {
+    closeContainerDevtools(containerId: string): void;
+    getAllContainerDevtools(): readonly IContainerDevtools[];
+    getContainerDevtools(containerId: string): IContainerDevtools | undefined;
+    registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
 // @internal
 export interface IMessageRelay<TSend extends IDebuggerMessage = IDebuggerMessage, TReceive extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEventProvider<IMessageRelayEvents<TReceive>> {
-    postMessage: (message: TSend) => void;
+    postMessage<TPost extends TSend>(message: TPost): void;
 }
 
 // @internal
@@ -310,7 +379,7 @@ export interface InboundHandlers {
 }
 
 // @public
-export function initializeFluidClientDebugger(props: FluidClientDebuggerProps): void;
+export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
 export function isDebuggerMessage(value: Partial<ISourcedDebuggerMessage>): value is ISourcedDebuggerMessage;
@@ -349,25 +418,17 @@ export function postMessagesToWindow<TMessage extends IDebuggerMessage>(loggingO
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
 
 // @public
-export interface RegistryChangeMessage extends IDebuggerMessage<RegistryChangeMessageData> {
-    // (undocumented)
-    type: "REGISTRY_CHANGE";
-}
-
-// @public
-export interface RegistryChangeMessageData {
-    containers: ContainerMetadata[];
-}
-
-// @public
 export interface RootDataVisualizationsMessage extends IDebuggerMessage<RootDataVisualizationsMessageData> {
-    type: "ROOT_DATA_VISUALIZATIONS";
+    type: typeof RootDataVisualizationsMessageType;
 }
 
 // @public
 export interface RootDataVisualizationsMessageData extends HasContainerId {
     visualizations: Record<string, RootHandleNode> | undefined;
 }
+
+// @public
+export const RootDataVisualizationsMessageType = "ROOT_DATA_VISUALIZATIONS";
 
 // @public
 export type RootHandleNode = FluidHandleNode | UnknownObjectNode;
@@ -379,7 +440,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 
 // @public
 export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
-    type: "TELEMETRY_EVENT";
+    type: typeof TelemetryEventMessageType;
 }
 
 // @public
@@ -388,9 +449,15 @@ export interface TelemetryEventMessageData {
 }
 
 // @public
+export const TelemetryEventMessageType = "TELEMETRY_EVENT";
+
+// @public
 export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
-    type: "TELEMETRY_HISTORY";
+    type: typeof TelemetryHistoryMessageType;
 }
+
+// @public
+export const TelemetryHistoryMessageType = "TELEMETRY_HISTORY";
 
 // @public
 export interface TreeNodeBase extends VisualNodeBase {
