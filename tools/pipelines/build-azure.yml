@@ -34,8 +34,6 @@ parameters:
 trigger:
   branches:
     include:
-    - main
-    - next
     - lts
     - release/*
   paths:
