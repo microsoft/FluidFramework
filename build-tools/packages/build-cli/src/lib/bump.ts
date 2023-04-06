@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 import path from "node:path";
-import { writeJson, readJson } from "fs-extra";
+import { writeFile, readJson } from "fs-extra";
+import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
 
 import {
 	Context,
 	MonoRepo,
+	Logger,
 	Package,
 	VersionBag,
 	exec,
@@ -150,15 +152,19 @@ export async function bumpPackageDependencies(
  * @param releaseGroupOrPackage - A release group repo or package to bump.
  * @param scheme - The version scheme to use.
  * @param exactDependencyType - The type of dependency to use on packages within the release group.
+ * @param log - A logger to use.
  *
  * @internal
  */
+// eslint-disable-next-line max-params
 export async function bumpReleaseGroup(
 	context: Context,
 	bumpType: VersionChangeType,
 	releaseGroupOrPackage: MonoRepo | Package,
 	scheme?: VersionScheme,
+	// eslint-disable-next-line default-param-last
 	exactDependencyType: "~" | "^" | "" = "^",
+	log?: Logger,
 ): Promise<void> {
 	const translatedVersion = isVersionBumpType(bumpType)
 		? bumpVersionScheme(releaseGroupOrPackage.version, bumpType, scheme)
@@ -181,19 +187,31 @@ export async function bumpReleaseGroup(
 			cmd += " && npm run build:genver";
 		}
 	}
-	await exec(cmd, workingDir, `Error bumping ${name}`);
+	const results = await exec(cmd, workingDir, `Error bumping ${name}`);
+	log?.verbose(results);
 
 	if (releaseGroupOrPackage instanceof Package) {
-		// Return early; packages only need to be bumped using npm.
+		// Return early; packages only need to be bumped using npm. The rest of the logic is only for release groups.
 		return;
 	}
 
 	// Since we don't use lerna to bump, manually updates the lerna.json file. Also updates the root package.json for good
 	// measure. Long term we may consider removing lerna.json and using the root package version as the "source of truth".
 	const lernaPath = path.join(releaseGroupOrPackage.repoPath, "lerna.json");
-	const lernaJson = await readJson(lernaPath);
+	const [lernaJson, prettierConfig] = await Promise.all([
+		readJson(lernaPath),
+		resolvePrettierConfig(lernaPath),
+	]);
+
+	if (prettierConfig !== null) {
+		prettierConfig.filepath = lernaPath;
+	}
 	lernaJson.version = translatedVersion.version;
-	await writeJson(lernaPath, lernaJson);
+	const output = prettier(
+		JSON.stringify(lernaJson),
+		prettierConfig === null ? undefined : prettierConfig,
+	);
+	await writeFile(lernaPath, output);
 
 	updatePackageJsonFile(path.join(releaseGroupOrPackage.repoPath, "package.json"), (json) => {
 		json.version = translatedVersion.version;

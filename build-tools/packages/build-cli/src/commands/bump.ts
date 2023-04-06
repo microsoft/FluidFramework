@@ -200,14 +200,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			}
 		}
 
-		const logs = await bumpReleaseGroup(
-			context,
-			bumpArg,
-			packageOrReleaseGroup,
-			scheme,
-			exactDepType,
-		);
-		this.verbose(logs);
+		await bumpReleaseGroup(context, bumpArg, packageOrReleaseGroup, scheme, exactDepType);
 
 		if (shouldInstall) {
 			if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {
