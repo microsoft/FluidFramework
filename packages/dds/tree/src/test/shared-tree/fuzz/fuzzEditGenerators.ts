@@ -88,12 +88,12 @@ export interface NodeRangePath {
 }
 
 export interface EditGeneratorOpWeights {
-	insert: number;
-	delete: number;
-	setPayload: number;
-	start: number;
-	commit: number;
-	abort: number;
+	insert?: number;
+	delete?: number;
+	setPayload?: number;
+	start?: number;
+	commit?: number;
+	abort?: number;
 }
 const defaultEditGeneratorOpWeights = {
 	insert: 5,
@@ -171,41 +171,29 @@ export const makeEditGenerator = (
 	}
 
 	const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
-		[
-			insertGenerator,
-			opWeights.insert,
-			({ testTreeProvider, treeIndex }) =>
-				transactionsInProgress(testTreeProvider.trees[treeIndex]),
-		],
+		[insertGenerator, opWeights.insert ?? 0],
 		[
 			deleteGenerator,
-			opWeights.delete,
+			opWeights.delete ?? 0,
 			({ testTreeProvider, treeIndex }) =>
-				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]) &&
-				transactionsInProgress(testTreeProvider.trees[treeIndex]),
+				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
 		],
 		[
 			setPayloadGenerator,
-			opWeights.setPayload,
+			opWeights.setPayload ?? 0,
 			({ testTreeProvider, treeIndex }) =>
-				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]) &&
-				transactionsInProgress(testTreeProvider.trees[treeIndex]),
+				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
 		],
-		[
-			transactionStartGenerator,
-			opWeights.start,
-			({ testTreeProvider, treeIndex }) =>
-				!transactionsInProgress(testTreeProvider.trees[treeIndex]),
-		],
+		[transactionStartGenerator, opWeights.start ?? 0],
 		[
 			transactionCommitGenerator,
-			opWeights.commit,
+			opWeights.commit ?? 0,
 			({ testTreeProvider, treeIndex }) =>
 				transactionsInProgress(testTreeProvider.trees[treeIndex]),
 		],
 		[
 			transactionAbortGenerator,
-			opWeights.abort,
+			opWeights.abort ?? 0,
 			({ testTreeProvider, treeIndex }) =>
 				transactionsInProgress(testTreeProvider.trees[treeIndex]),
 		],

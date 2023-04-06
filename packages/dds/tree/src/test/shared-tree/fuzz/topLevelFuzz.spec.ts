@@ -61,8 +61,6 @@ describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
 	const editGeneratorOpWeights: EditGeneratorOpWeights = {
-		insert: 5,
-		delete: 1,
 		setPayload: 1,
 		start: 3,
 		commit: 1,

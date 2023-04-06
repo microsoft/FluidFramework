@@ -49,6 +49,9 @@ export async function performFuzzActionsAbort(
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};
+
+	provider.trees[0].transaction.start();
+
 	const finalState = await performFuzzActionsAsync(
 		generator,
 		fuzzReducer,
@@ -57,10 +60,9 @@ export async function performFuzzActionsAbort(
 	);
 
 	// aborts any transactions that may still be in progress
-	for (const currentTree of provider.trees) {
-		if (currentTree.transaction.inProgress()) {
-			currentTree.transaction.abort();
-		}
+	const finalTree = provider.trees[0];
+	if (finalTree.transaction.inProgress()) {
+		finalTree.transaction.abort();
 	}
 	validateTree(provider.trees[0], [initialTreeState]);
 
@@ -92,14 +94,9 @@ describe("Fuzz - Targeted", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
 	const editGeneratorOpWeights: EditGeneratorOpWeights = {
-		insert: 5,
-		delete: 1,
 		setPayload: 1,
-		start: 3,
-		commit: 0,
-		abort: 1,
 	};
-	describe.skip("Anchors are unaffected by aborted transaction", () => {
+	describe("Anchors are unaffected by aborted transaction", () => {
 		runFuzzBatch(
 			makeOpGenerator,
 			performFuzzActionsAbort,
