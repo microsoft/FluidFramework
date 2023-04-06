@@ -178,11 +178,11 @@ export async function bumpReleaseGroup(
 	if (releaseGroupOrPackage instanceof MonoRepo) {
 		workingDir = releaseGroupOrPackage.repoPath;
 		name = releaseGroupOrPackage.kind;
-		cmd = `flub exec -g ${name} -- "npm version '${translatedVersion.version}'" && npm run build:genver`;
+		cmd = `flub exec -g ${name} -- "npm version '${translatedVersion.version}'&& npm run build:genver"`;
 	} else {
 		workingDir = releaseGroupOrPackage.directory;
 		name = releaseGroupOrPackage.name;
-		cmd = `npm version ${translatedVersion.version}`;
+		cmd = `npm version '${translatedVersion.version}'`;
 		if (releaseGroupOrPackage.getScript("build:genver") !== undefined) {
 			cmd += " && npm run build:genver";
 		}
