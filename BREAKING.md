@@ -58,6 +58,7 @@ The following interfaces available in `@fluidframework/runtime-definitions` are 
 These packages were previously published under the `@fluidframework` scope:
 
 -   `@fluidframework/test-end-to-end-tests`
+-   `@fluidframework/mocha-test-setup`
 
 ### ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker
 
