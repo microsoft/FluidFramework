@@ -54,9 +54,6 @@ export interface UntypedTree extends UntypedTreeCore {
 
 	/**
 	 * Value stored on this node.
-	 *
-	 * Set the value using the simple assignment operator (`=`).
-	 * Concurrently setting the value will follow the "last-write-wins" semantics.
 	 */
 	readonly [valueSymbol]: Value;
 
