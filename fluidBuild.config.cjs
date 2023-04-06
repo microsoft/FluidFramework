@@ -17,6 +17,8 @@ module.exports = {
 		},
 		"build-tools": "build-tools",
 		"server": "server/routerlicious",
+		"gitrest": "server/gitrest",
+		"historian": "server/historian",
 
 		// Independent packages
 		"build": "common/build",
@@ -36,7 +38,7 @@ module.exports = {
 		// Services
 		"services": {
 			directory: "server",
-			ignoredDirs: ["routerlicious", "tinylicious"],
+			ignoredDirs: ["routerlicious", "tinylicious", "gitrest", "historian"],
 		},
 	},
 
