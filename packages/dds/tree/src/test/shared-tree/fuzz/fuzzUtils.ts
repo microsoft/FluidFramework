@@ -9,9 +9,17 @@ import {
 	IRandom,
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
-import { JsonableTree, fieldSchema, SchemaData, rootFieldKey } from "../../../core";
-import { FieldKinds, namedTreeSchema } from "../../../feature-libraries";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
+import {
+	JsonableTree,
+	fieldSchema,
+	SchemaData,
+	rootFieldKey,
+	rootFieldKeySymbol,
+} from "../../../core";
+import { FieldKinds, namedTreeSchema, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
+import { ISharedTree, SharedTreeFactory } from "../../../shared-tree";
 import { FuzzTestState, Operation } from "./fuzzEditGenerators";
 
 export function runFuzzBatch(
@@ -66,3 +74,13 @@ export const testSchema: SchemaData = {
 	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
 	globalFieldSchema: new Map([[rootFieldKey, rootFieldSchema]]),
 };
+
+export function makeTree(initialState: JsonableTree): ISharedTree {
+	const factory = new SharedTreeFactory();
+	const runtime = new MockFluidDataStoreRuntime();
+	const tree = factory.create(runtime, "TestSharedTree");
+	tree.storedSchema.update(testSchema);
+	const field = tree.editor.sequenceField(undefined, rootFieldKeySymbol);
+	field.insert(0, singleTextCursor(initialState));
+	return tree;
+}

@@ -11,10 +11,16 @@ import {
 } from "@fluid-internal/stochastic-test-utils";
 import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from "../../../core";
 import { brand } from "../../../util";
-import { TestTreeProvider, SummarizeType, initializeTestTree, validateTree } from "../../utils";
+import {
+	TestTreeProvider,
+	SummarizeType,
+	initializeTestTree,
+	validateTree,
+	toJsonableTree,
+} from "../../utils";
 import { FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerators";
-import { fuzzReducer } from "./fuzzEditReducers";
-import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
+import { fuzzReducer, fuzzReducerComposeVsIndividual } from "./fuzzEditReducers";
+import { initialTreeState, makeTree, runFuzzBatch, testSchema } from "./fuzzUtils";
 
 export async function performFuzzActionsAbort(
 	generator: AsyncGenerator<Operation, FuzzTestState>,
@@ -68,6 +74,35 @@ export async function performFuzzActionsAbort(
 	return finalState;
 }
 
+export async function performFuzzActionsComposeVsIndividual(
+	generator: AsyncGenerator<Operation, FuzzTestState>,
+	seed: number,
+	saveInfo?: SaveInfo,
+): Promise<FuzzTestState> {
+	const random = makeRandom(seed);
+
+	const tree = makeTree(initialTreeState);
+	const initialState: FuzzTestState = {
+		random,
+		trees: [tree],
+		numberOfEdits: 0,
+	};
+
+	tree.transaction.start();
+	const finalState = await performFuzzActionsAsync(
+		generator,
+		fuzzReducerComposeVsIndividual,
+		initialState,
+		saveInfo,
+	);
+
+	const treeViewBeforeCommit = toJsonableTree(tree);
+	tree.transaction.commit();
+	validateTree(tree, treeViewBeforeCommit);
+
+	return finalState;
+}
+
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
  * They should typically use SharedTree's branching APIs to emulate multiple clients concurrently editing the document
@@ -81,5 +116,14 @@ describe("Fuzz - Targeted", () => {
 	const opsPerRun = 20;
 	describe.skip("Anchors are unaffected by aborted transaction", () => {
 		runFuzzBatch(makeOpGenerator, performFuzzActionsAbort, opsPerRun, runsPerBatch, random);
+	});
+	describe.skip("composed vs individual changes return the same result", () => {
+		runFuzzBatch(
+			makeOpGenerator,
+			performFuzzActionsComposeVsIndividual,
+			opsPerRun,
+			runsPerBatch,
+			random,
+		);
 	});
 });

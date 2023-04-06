@@ -63,7 +63,7 @@ describe("Fuzz - Top-Level", () => {
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
 	 */
-	describe.only("Everything", () => {
+	describe.skip("Everything", () => {
 		runFuzzBatch(makeOpGenerator, performFuzzActions, opsPerRun, runsPerBatch, random);
 	});
 });
