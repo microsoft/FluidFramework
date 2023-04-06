@@ -22,6 +22,7 @@ import {
 	TelemetryEventMessageType,
 	TelemetryHistoryMessageType,
 	GetTelemetryHistoryMessageType,
+	GetTelemetryHistoryMessage,
 } from "@fluid-tools/client-debugger";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
@@ -99,7 +100,7 @@ export function TelemetryView(): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request all log history
-		messageRelay.postMessage({
+		messageRelay.postMessage<GetTelemetryHistoryMessage>({
 			type: GetTelemetryHistoryMessageType,
 			data: undefined,
 		});

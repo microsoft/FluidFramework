@@ -20,6 +20,10 @@ import {
 	CloseContainerMessageType,
 	GetContainerStateMessageType,
 	ContainerStateChangeMessageType,
+	GetContainerStateMessage,
+	ConnectContainerMessage,
+	DisconnectContainerMessage,
+	CloseContainerMessage,
 } from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -86,7 +90,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage({
+		messageRelay.postMessage<GetContainerStateMessage>({
 			type: GetContainerStateMessageType,
 			data: {
 				containerId,
@@ -103,7 +107,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function tryConnect(): void {
-		messageRelay.postMessage({
+		messageRelay.postMessage<ConnectContainerMessage>({
 			type: ConnectContainerMessageType,
 			data: {
 				containerId,
@@ -112,7 +116,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function forceDisconnect(): void {
-		messageRelay.postMessage({
+		messageRelay.postMessage<DisconnectContainerMessage>({
 			type: DisconnectContainerMessageType,
 			data: {
 				containerId,
@@ -122,7 +126,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function closeContainer(): void {
-		messageRelay.postMessage({
+		messageRelay.postMessage<CloseContainerMessage>({
 			type: CloseContainerMessageType,
 			data: {
 				containerId,
