@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ScopeType } from "@fluidframework/protocol-definitions-previous";
 import { IUser } from "./users";
 
 /**
@@ -15,11 +16,13 @@ import { IUser } from "./users";
 export type ConnectionMode = "write" | "read";
 
 /**
- * TODO
+ * Capabilities of a Client.
+ * In particular, whether or not the client is {@link ICapabilities.interactive}.
  */
 export interface ICapabilities {
 	/**
-	 * Indicates if the client represents a potentially interactive session with a user (if 'true') or if it's a "system entity" (if 'false').
+	 * Indicates if the client represents a potentially interactive session with a user (if 'true') or if it's
+	 * a "system entity" (if 'false').
 	 *
 	 * @remarks
 	 *
@@ -58,7 +61,7 @@ export interface IClientDetails {
 }
 
 /**
- * TODO
+ * Represents a client connected to a Fluid service, including associated user details, permissions, and connection mode.
  */
 export interface IClient {
 	/**
@@ -73,6 +76,8 @@ export interface IClient {
 
 	/**
 	 * TODO: What is this? Are there specific values we expect?
+	 *
+	 * This doesn't appear to be used. Safe to remove?
 	 */
 	permission: string[];
 
@@ -84,14 +89,19 @@ export interface IClient {
 	user: IUser;
 
 	/**
-	 * TODO: What is this? Are there specific values we expect?
+	 * Enumerates actions allowed for the client connection.
+	 *
+	 * @remarks
+	 *
+	 * General `string` values are allowed for type-wise backwards compatibility, but this support
+	 * will be removed in the future.
 	 */
-	scopes: string[];
+	scopes: (ScopeType | string)[];
 
 	/**
 	 * The time the client connected to the service.
 	 *
-	 * TODO: what does it mean for this to be undefined?
+	 * @remarks This is optional for backwards compatibility, but will be required in the future.
 	 */
 	timestamp?: number;
 }
@@ -141,7 +151,7 @@ export interface ISignalClient {
 }
 
 /**
- * Contents sent with a ClientJoin message
+ * Contents sent with a `ClientJoin` message.
  */
 export interface IClientJoin {
 	/**

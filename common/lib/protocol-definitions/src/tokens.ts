@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ScopeType } from "./scopes";
 import { IUser } from "./users";
 
 /**
@@ -20,8 +21,13 @@ export interface ITokenClaims {
 	/**
 	 * Identifies the permissions required by the client on the document or summary.
 	 * For every scope, you can define the permissions you want to give to the client.
+	 *
+	 * @remarks
+	 *
+	 * General `string` values are allowed for type-wise backwards compatibility, but this support
+	 * will be removed in the future.
 	 */
-	scopes: string[];
+	scopes: (ScopeType | string)[];
 
 	/**
 	 * Unique tenant identifier.
