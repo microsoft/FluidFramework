@@ -16,6 +16,7 @@ import {
 	IDebuggerMessage,
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
+import { IClient } from "@fluidframework/protocol-definitions";
 
 import { useMessageRelay } from "../MessageRelayContext";
 
@@ -88,13 +89,14 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		return <Waiting label="Waiting for Audience data." />;
 	}
 
-	const audienceStateItems = AudienceStateDataFilter(audienceData.audienceState);
+	// TODO: Determine if myClientMetaData is necessary
+	const myClientMetadata = audienceData.audienceState.find(
+		(audience) => audience.clientId === audienceData.clientId,
+	)?.client;
+
+	const audienceStateItems = AudienceStateDataFilter(audienceData.audienceState, myClientMetadata);
 	const audienceHistoryItems = AudienceHistoryDataFilter(audienceData.audienceHistory).reverse();
 
-	// TODO: Determine if myClientMetaData is necessary
-	// const myClientMetadata = audienceData.audienceState.find(
-	// 	(audience) => audience.clientId === audienceData.clientId,
-	// )?.client;
 
 	return (
 		<>
@@ -114,6 +116,7 @@ export interface FilteredAudienceStateData {
 	userId: string;
 	mode: string;
 	scopes: string[];
+	myClientConnection: IClient | undefined;
 }
 
 /**
@@ -121,6 +124,7 @@ export interface FilteredAudienceStateData {
  */
 function AudienceStateDataFilter(
 	audienceStateData: AudienceClientMetadata[],
+	myClientConnection: IClient | undefined, 
 ): FilteredAudienceStateData[] {
 	return audienceStateData.map((entry) => {
 		const clientId = entry.clientId;
@@ -133,6 +137,7 @@ function AudienceStateDataFilter(
 			userId,
 			mode,
 			scopes,
+			myClientConnection, 
 		};
 	});
 }

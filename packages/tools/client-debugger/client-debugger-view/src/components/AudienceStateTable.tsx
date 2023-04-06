@@ -30,7 +30,6 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 		{ columnKey: "userId", label: "UserId" },
 		{ columnKey: "mode", label: "Mode" },
 		{ columnKey: "scopes", label: "Scopes" },
-		{ columnKey: "time", label: "Time" },
 	];
 
 	return (
@@ -50,7 +49,16 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 			</TableHeader>
 			<TableBody>
 				{audienceStateItems.map((item, itemIndex) => (
-					<TableRow key={itemIndex}>
+					<TableRow
+						key={itemIndex}
+						style={{
+							backgroundColor:
+								item.myClientConnection !== undefined &&
+								item.myClientConnection.user.id === item.userId
+									? "#add8e6"
+									: "",
+						}}
+					>
 						<TableCell>{item.clientId}</TableCell>
 						<TableCell>{item.userId}</TableCell>
 						<TableCell>{item.mode}</TableCell>
