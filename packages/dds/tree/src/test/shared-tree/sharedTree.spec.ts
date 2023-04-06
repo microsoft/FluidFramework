@@ -642,8 +642,8 @@ describe("SharedTree", () => {
 			const root = tree1.context.root.getNode(0);
 
 			const log: string[] = [];
-			const unsubscribe = root[on]("changing", (upPath, value) =>
-				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}-${value}`),
+			const unsubscribe = root[on]("changing", (upPath, val) =>
+				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}-${val}`),
 			);
 			const unsubscribeSubtree = root[on]("subtreeChanging", (upPath) =>
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`),
