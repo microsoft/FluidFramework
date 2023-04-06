@@ -34,7 +34,7 @@ export interface ICapabilities {
  */
 export interface IClientDetails {
 	/**
-	 * TODO
+	 * {@inheritDoc ICapabilities}
 	 */
 	capabilities: ICapabilities;
 
