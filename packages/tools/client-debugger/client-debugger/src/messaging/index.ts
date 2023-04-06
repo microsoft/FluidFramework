@@ -13,50 +13,67 @@
  * by the Fluid Client Debugger.
  */
 
-export { debuggerMessageSource } from "./Constants";
+export { devtoolsMessageSource } from "./Constants";
 export {
 	HasContainerId,
 	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
+	ConnectContainerMessageType,
 	DisconnectContainerMessage,
 	DisconnectContainerMessageData,
+	DisconnectContainerMessageType,
 	CloseContainerMessage,
 	CloseContainerMessageData,
+	CloseContainerMessageType,
 	ContainerStateChangeMessage,
 	ContainerStateChangeMessageData,
+	ContainerStateChangeMessageType,
 	ContainerStateHistoryMessage,
 	ContainerStateHistoryMessageData,
+	ContainerStateHistoryMessageType,
 	DataVisualizationMessage,
 	DataVisualizationMessageData,
+	DataVisualizationMessageType,
 	GetContainerStateMessage,
 	GetContainerStateMessageData,
+	GetContainerStateMessageType,
 	GetDataVisualizationMessage,
 	GetDataVisualizationMessageData,
+	GetDataVisualizationMessageType,
 	GetRootDataVisualizationsMessage,
 	GetRootDataVisualizationsMessageData,
+	GetRootDataVisualizationsMessageType,
 	RootDataVisualizationsMessage,
 	RootDataVisualizationsMessageData,
-} from "./DebuggerMessages";
+	RootDataVisualizationsMessageType,
+} from "./ContainerDevtoolsMessages";
 export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {
 	GetContainerListMessage,
-	RegistryChangeMessage,
-	RegistryChangeMessageData,
-} from "./RegistryMessages";
+	GetContainerListMessageType,
+	ContainerListMessage,
+	ContainerListMessageData,
+	ContainerListMessageType,
+} from "./DevtoolsMessages";
 export {
-	GetAudienceMessage,
-	AudienceClientMetaData,
-	AudienceSummaryMessageData,
+	AudienceClientMetadata,
 	AudienceSummaryMessage,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessageType,
+	GetAudienceMessage,
+	GetAudienceMessageType,
 } from "./AudienceMessages";
 export {
-	ITimestampedTelemetryEvent,
-	TelemetryHistoryMessage,
 	GetTelemetryHistoryMessage,
+	GetTelemetryHistoryMessageType,
+	ITimestampedTelemetryEvent,
 	TelemetryEventMessage,
 	TelemetryEventMessageData,
+	TelemetryEventMessageType,
+	TelemetryHistoryMessage,
+	TelemetryHistoryMessageType,
 } from "./TelemetryMessages";
 export {
 	handleIncomingMessage,

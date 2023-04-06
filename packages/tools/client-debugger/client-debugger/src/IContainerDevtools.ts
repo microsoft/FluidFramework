@@ -14,15 +14,15 @@ import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 // - Pass diffs instead of all data in change events (probably requires defining separate full-dump messages from delta messages)
 
 /**
- * Events emitted by {@link IFluidClientDebugger}.
+ * Events emitted by {@link IContainerDevtools}.
  *
- * @internal
+ * @public
  */
-export interface IFluidClientDebuggerEvents extends IEvent {
+export interface ContainerDevtoolsEvents extends IEvent {
 	/**
-	 * Emitted when the {@link IFluidClientDebugger} itself has been disposed.
+	 * Emitted when the {@link IContainerDevtools} itself has been disposed.
 	 *
-	 * @see {@link IFluidClientDebugger.dispose}
+	 * @see {@link IContainerDevtools.dispose}
 	 */
 	(event: "disposed", listener: () => void);
 }
@@ -32,13 +32,11 @@ export interface IFluidClientDebuggerEvents extends IEvent {
  * {@link @fluidframework/container-definitions#IContainer} and
  * {@link @fluidframework/container-definitions#IAudience}.
  *
- * @internal
+ * @public
  */
-export interface IFluidClientDebugger
-	extends IEventProvider<IFluidClientDebuggerEvents>,
-		IDisposable {
+export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEvents>, IDisposable {
 	/**
-	 * The ID of {@link IFluidClientDebugger.container}.
+	 * The ID of {@link IContainerDevtools.container}.
 	 */
 	readonly containerId: string;
 
@@ -66,11 +64,11 @@ export interface IFluidClientDebugger
 	 *
 	 * @remarks
 	 *
-	 * Associated tooling may take advantage of this to differentiate between debugger instances using
+	 * Associated tooling may take advantage of this to differentiate between instances using
 	 * semantically meaningful information.
 	 *
-	 * If not provided, the {@link FluidClientDebuggerProps.containerId} will be used for the purpose of distinguising
-	 * debugger instances.
+	 * If not provided, the {@link IContainerDevtools.containerId} will be used for the purpose of distinguishing
+	 * instances.
 	 */
 	readonly containerNickname?: string;
 
@@ -79,7 +77,7 @@ export interface IFluidClientDebugger
 	 *
 	 * @remarks
 	 *
-	 * {@link IFluidClientDebugger.container}'s `connected` and `disconnected` events signal that this data has changed.
+	 * {@link IContainerDevtools.container}'s `connected` and `disconnected` events signal that this data has changed.
 	 * Consumers will need to re-call this to get the most up-to-date data.
 	 */
 	getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[];
@@ -89,7 +87,7 @@ export interface IFluidClientDebugger
 	 *
 	 * @remarks
 	 *
-	 * {@link IFluidClientDebugger.audience}'s `addMember` and `removeMember` events signal that this data has changed.
+	 * {@link IContainerDevtools.audience}'s `addMember` and `removeMember` events signal that this data has changed.
 	 * Consumers will need to re-call this to get the most up-to-date data.
 	 */
 	getAudienceHistory(): readonly AudienceChangeLogEntry[];
