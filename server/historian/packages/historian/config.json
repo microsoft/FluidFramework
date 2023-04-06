@@ -74,5 +74,8 @@
 	"restGitService": {
 		"disableGitCache": false
 	},
-	"storageUrl": ""
+	"storageUrl": "",
+	"tokenRevocation": {
+		"enable": false
+	}
 }
