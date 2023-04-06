@@ -1,6 +1,11 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import React from "react";
 import {
-	Avatar,
+	tokens,
 	TableBody,
 	TableCell,
 	TableRow,
@@ -8,13 +13,17 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { EditRegular, Search20Regular } from "@fluentui/react-icons";
+import { EditRegular, Search20Regular, Person24Regular } from "@fluentui/react-icons";
 import { FilteredAudienceStateData } from "./AudienceView";
 
 /**
  * Input for {@link AudienceStateTable}
  */
 export interface AudienceStateTableProps {
+	/**
+	 * Filtered audience state data from {@link audienceStateDataFilter}
+	 * Containing clientId, userId, mode, scopes & myClientConnection.
+	 */
 	audienceStateItems: FilteredAudienceStateData[];
 }
 
@@ -26,8 +35,8 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 
 	// Columns for rendering audience state
 	const audienceStateColumns = [
-		{ columnKey: "clientId", label: "ClientId" },
-		{ columnKey: "userId", label: "UserId" },
+		{ columnKey: "clientId", label: "Client ID" },
+		{ columnKey: "userId", label: "User ID" },
 		{ columnKey: "mode", label: "Mode" },
 		{ columnKey: "scopes", label: "Scopes" },
 	];
@@ -38,8 +47,8 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "clientId" && <Avatar />}
-							{column.columnKey === "userId" && <Avatar />}
+							{column.columnKey === "clientId" && <Person24Regular />}
+							{column.columnKey === "userId" && <Person24Regular />}
 							{column.columnKey === "mode" && <EditRegular />}
 							{column.columnKey === "scopes" && <Search20Regular />}
 							{column.label}
@@ -48,27 +57,35 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{audienceStateItems.map((item, itemIndex) => (
-					<TableRow
-						key={itemIndex}
-						style={{
-							backgroundColor:
-								item.myClientConnection !== undefined &&
-								item.myClientConnection.user.id === item.userId
-									? "#add8e6"
+				{audienceStateItems.map((item, itemIndex) => {
+					const isCurrentUser =
+						item.myClientConnection !== undefined &&
+						item.myClientConnection.user.id === item.userId;
+
+					return (
+						<TableRow
+							key={itemIndex}
+							style={{
+								backgroundColor: isCurrentUser
+									? tokens.colorPaletteGreenBorder1
 									: "",
-						}}
-					>
-						<TableCell>{item.clientId}</TableCell>
-						<TableCell>{item.userId}</TableCell>
-						<TableCell>{item.mode}</TableCell>
-						<TableCell>
-							{item.scopes.map((scope, scopeIndex) => (
-								<div key={scopeIndex}>{scope}</div>
-							))}
-						</TableCell>
-					</TableRow>
-				))}
+							}}
+						>
+							<TableCell>
+								{item.clientId}
+								{isCurrentUser && " (me)"}
+							</TableCell>
+							<TableCell>
+								{item.userId}
+								{isCurrentUser && " (me)"}
+							</TableCell>
+							<TableCell>{item.mode}</TableCell>
+							<TableCell>
+								<span>{item.scopes.join("\n")}</span>
+							</TableCell>
+						</TableRow>
+					);
+				})}
 			</TableBody>
 		</Table>
 	);

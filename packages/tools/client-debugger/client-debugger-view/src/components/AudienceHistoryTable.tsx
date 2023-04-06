@@ -1,6 +1,11 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 import React from "react";
 import {
-	Avatar,
+	tokens,
 	TableBody,
 	TableCell,
 	TableRow,
@@ -8,13 +13,17 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { Clock20Regular } from "@fluentui/react-icons";
+import { Clock20Regular, DoorArrowLeft24Regular, Person24Regular } from "@fluentui/react-icons";
 import { FilteredAudienceHistoryData } from "./AudienceView";
 
 /**
  * Input for {@link AudienceHistoryTable}
  */
 export interface AudienceHistoryTableProps {
+	/**
+	 * Filtered audience data from {@link audienceHistoryDataFilter}
+	 * Containing clientId, timestamp & event.
+	 */
 	audienceHistoryItems: FilteredAudienceHistoryData[];
 }
 
@@ -26,8 +35,9 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 
 	// Columns for rendering audience history
 	const audienceHistoryColumns = [
-		{ columnKey: "clientId", label: "ClientId" },
+		{ columnKey: "clientId", label: "Client ID" },
 		{ columnKey: "time", label: "Time" },
+		{ columnKey: "event", label: "Event" },
 	];
 
 	return (
@@ -36,8 +46,9 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === "clientId" && <Avatar />}
+							{column.columnKey === "clientId" && <Person24Regular />}
 							{column.columnKey === "time" && <Clock20Regular />}
+							{column.columnKey === "event" && <DoorArrowLeft24Regular />}
 							{column.label}
 						</TableHeaderCell>
 					))}
@@ -48,11 +59,15 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 					<TableRow
 						key={itemIndex}
 						style={{
-							backgroundColor: item.changeKind === "added" ? "#90ee90" : "#FF7377",
+							backgroundColor:
+								item.changeKind === "added"
+									? tokens.colorPaletteRoyalBlueBackground2
+									: tokens.colorPaletteRedBorder1,
 						}}
 					>
 						<TableCell>{item.clientId}</TableCell>
 						<TableCell>{item.time}</TableCell>
+						<TableCell>{item.changeKind}</TableCell>
 					</TableRow>
 				))}
 			</TableBody>

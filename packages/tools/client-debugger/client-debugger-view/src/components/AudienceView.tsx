@@ -91,11 +91,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		(audience) => audience.clientId === audienceData.clientId,
 	)?.client;
 
-	const audienceStateItems = AudienceStateDataFilter(
+	const audienceStateItems = audienceStateDataFilter(
 		audienceData.audienceState,
 		myClientMetadata,
 	);
-	const audienceHistoryItems = AudienceHistoryDataFilter(audienceData.audienceHistory).reverse();
+	const audienceHistoryItems = audienceHistoryDataFilter(audienceData.audienceHistory).reverse();
 
 	return (
 		<>
@@ -108,7 +108,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 }
 
 /**
- * Filtered audience state data for {@link AudienceStateDataFilter}
+ * Filtered audience state data for {@link audienceStateDataFilter}
  */
 export interface FilteredAudienceStateData {
 	clientId: string;
@@ -121,28 +121,23 @@ export interface FilteredAudienceStateData {
 /**
  * Removes unncessary data in audienceData.audienceState
  */
-function AudienceStateDataFilter(
+function audienceStateDataFilter(
 	audienceStateData: AudienceClientMetadata[],
 	myClientConnection: IClient | undefined,
 ): FilteredAudienceStateData[] {
 	return audienceStateData.map((entry) => {
-		const clientId = entry.clientId;
-		const userId = entry.client.user.id;
-		const mode = entry.client.mode;
-		const scopes = entry.client.scopes;
-
 		return {
-			clientId,
-			userId,
-			mode,
-			scopes,
+			clientId: entry.clientId,
+			userId: entry.client.user.id,
+			mode: entry.client.mode,
+			scopes: entry.client.scopes,
 			myClientConnection,
 		};
 	});
 }
 
 /**
- * Filtered audience state data for {@link AudienceHistoryDataFilter}
+ * Filtered audience state data for {@link audienceHistoryDataFilter}
  */
 export interface FilteredAudienceHistoryData {
 	clientId: string;
@@ -153,7 +148,7 @@ export interface FilteredAudienceHistoryData {
 /**
  * Removes unncessary data in audienceData.audienceHistory
  */
-function AudienceHistoryDataFilter(
+function audienceHistoryDataFilter(
 	audienceHistoryData: readonly AudienceChangeLogEntry[],
 ): FilteredAudienceHistoryData[] {
 	const nowTimeStamp = new Date();
@@ -162,16 +157,10 @@ function AudienceHistoryDataFilter(
 		const changeTimeStamp = new Date(entry.timestamp);
 		const wasChangeToday = nowTimeStamp.getDate() === changeTimeStamp.getDate();
 
-		const clientId = entry.clientId;
-		const time = wasChangeToday
-			? changeTimeStamp.toTimeString()
-			: changeTimeStamp.toDateString();
-		const changeKind = entry.changeKind;
-
 		return {
-			clientId,
-			time,
-			changeKind,
+			clientId: entry.clientId,
+			time: wasChangeToday ? changeTimeStamp.toTimeString() : changeTimeStamp.toDateString(),
+			changeKind: entry.changeKind,
 		};
 	});
 }
