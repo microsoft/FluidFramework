@@ -4,7 +4,7 @@
  */
 
 import { Delta, TaggedChange, tagChange } from "../../core";
-import { Brand, brand, JsonCompatibleReadOnly, Mutable } from "../../util";
+import { Brand, JsonCompatibleReadOnly, Mutable } from "../../util";
 import { populateChildModifications } from "../deltaUtils";
 
 export type CellId = Brand<unknown, "CellId">;
@@ -74,6 +74,7 @@ export function decodeJson<TDeepChange>(
 export function intoDelta<TDeepChange>(
 	change: CellChange<TDeepChange>,
 	deltaFromDeep: (child: TDeepChange) => Delta.Modify,
+	moveIdFromCellId: (cellId: CellId) => Delta.MoveId,
 ): Delta.MarkList {
 	if (change.shallow === undefined) {
 		return change.deep === undefined ? [] : [deltaFromDeep(change.deep)];
@@ -84,8 +85,7 @@ export function intoDelta<TDeepChange>(
 		const remove: Mutable<Delta.MoveOut> = {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
-			// Is that ok?
-			moveId: brand(change.shallow.oldContentDst),
+			moveId: moveIdFromCellId(change.shallow.oldContentDst),
 		};
 		if (change.deep === undefined) {
 			const modify = deltaFromDeep(change.deep);
@@ -97,8 +97,7 @@ export function intoDelta<TDeepChange>(
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			count: 1,
-			// Is that ok?
-			moveId: brand(change.shallow.newContentSrc),
+			moveId: moveIdFromCellId(change.shallow.newContentSrc),
 		};
 		marks.push(moveIn);
 	}
