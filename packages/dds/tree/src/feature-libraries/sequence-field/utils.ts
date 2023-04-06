@@ -404,7 +404,10 @@ export function tryExtendMark<T>(
 	switch (type) {
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
-			if (isEqualPlace(lhsInsert, rhs)) {
+			if (
+				isEqualPlace(lhsInsert, rhs) &&
+				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id
+			) {
 				lhsInsert.content.push(...rhs.content);
 				return true;
 			}
@@ -595,6 +598,7 @@ export class DetachedNodeTracker {
 								old: v,
 								new: {
 									rev:
+										change.rollbackOf ??
 										mark.revision ??
 										change.revision ??
 										fail("Unable to track detached nodes"),
@@ -734,7 +738,11 @@ export class DetachedNodeTracker {
 		const original = { rev: mark.detachedBy!, index: mark.detachIndex };
 		const updated = this.getUpdatedDetach(original);
 		if (updated.rev !== original.rev || updated.index !== original.index) {
-			mark.detachedBy = updated.rev;
+			if (mark.isIntention === true) {
+				mark.detachedBy = updated.rev;
+			} else if (updated.rev !== mark.detachedBy) {
+				mark.lastDetachedBy = updated.rev;
+			}
 			mark.detachIndex = updated.index;
 		}
 	}

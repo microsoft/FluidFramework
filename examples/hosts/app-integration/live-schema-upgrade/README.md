@@ -19,22 +19,29 @@ There are two main approaches to this problem:
 
 For this example, we will be demonstrating approach 2.
 
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED:tinylicious=true) -->
+### View
+
+There are a number of ways to handle rendering the view. In this example, we include a single view that is compatible with both versions of the model. Although this is a valid approach, it may not scale well as the number of versions increases. Some alternative approaches could be to:
+
+-   Include multiple views and render the appropriate one based on the schema version.
+-   Load the appropriate view after the model is instantiated.
+-   Only include the latest view and ensure that the model upgrades before rendering.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=TRUE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
 
 You can run this example using the following steps:
 
-1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
-1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
+1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `npm run build:fast -- --nolint @fluid-example/app-integration-live-schema-upgrade`
-1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](../../../server/tinylicious).
-1. Run `npm start` from this directory (examples/hosts/app-integration/external-views) and open <http://localhost:8080> in a web browser to see the app running.
+      `pnpm run build:fast --nolint @fluid-example/app-integration-live-schema-upgrade`
+1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious).
+1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 

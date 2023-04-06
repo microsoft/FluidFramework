@@ -159,6 +159,13 @@ export interface IEnvelope {
 }
 
 // @public
+export interface IExperimentalIncrementalSummaryContext {
+    latestSummarySequenceNumber: number;
+    summaryPath: string;
+    summarySequenceNumber: number;
+}
+
+// @public
 export interface IFluidDataStoreChannel extends IFluidRouter, IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
@@ -273,13 +280,13 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionNodeData {
     outboundRoutes: string[];
     unreferencedTimestampMs?: number;
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionSnapshotData {
     // (undocumented)
     deletedNodes: string[] | undefined;
@@ -289,7 +296,7 @@ export interface IGarbageCollectionSnapshotData {
     tombstones: string[] | undefined;
 }
 
-// @public
+// @public @deprecated
 export interface IGarbageCollectionState {
     // (undocumented)
     gcNodes: {
@@ -445,7 +452,7 @@ export interface OpAttributionKey {
 }
 
 // @public (undocumented)
-export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) => Promise<ISummarizeInternalResult>;
+export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 
 // @public (undocumented)
 export const totalBlobSizePropertyName = "TotalBlobSize";

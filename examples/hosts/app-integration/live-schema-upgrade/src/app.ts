@@ -14,8 +14,7 @@ import { assert } from "@fluidframework/common-utils";
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2";
-import { renderDiceRoller as renderDiceRoller1 } from "./modelVersion1";
-import { renderDiceRoller as renderDiceRoller2 } from "./modelVersion2";
+import { renderDiceRoller } from "./view";
 import { IDiceRollerAppModel } from "./interfaces";
 
 /**
@@ -78,15 +77,7 @@ async function start() {
 	document.title = id;
 
 	const contentDiv = document.getElementById("content") as HTMLDivElement;
-	// Depending on the modelVersion, we will render the app differently since the 1.0 model will not have a counter.
-	// This will likely not be necessary in a production app, since you will likely know which version of the model you
-	// are trying to render.
-	if (modelVersion === "1.0") {
-		renderDiceRoller1(model.diceRoller, contentDiv);
-	} else {
-		assert(model.diceCounter !== undefined, "model should have a diceCounter");
-		renderDiceRoller2(model.diceRoller, model.diceCounter, contentDiv);
-	}
+	renderDiceRoller(model, contentDiv);
 }
 
 start().catch((error) => console.error(error));

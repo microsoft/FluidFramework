@@ -2,36 +2,74 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IconButton, Stack, StackItem, TooltipHost } from "@fluentui/react";
-import { useId } from "@fluentui/react-hooks";
-import { Resizable } from "re-resizable";
 import React from "react";
 
 import {
-	DebuggerRegistry,
-	IFluidClientDebugger,
-	getFluidClientDebuggers,
-	getDebuggerRegistry,
+	ContainerListMessage,
+	ContainerListMessageType,
+	ContainerMetadata,
+	GetContainerListMessage,
+	GetContainerListMessageType,
+	handleIncomingMessage,
+	IMessageRelay,
+	InboundHandlers,
+	ISourcedDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
-import { RenderOptions } from "./RendererOptions";
-import { ClientDebugView, ContainerSelectionDropdown } from "./components";
+import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
+import { FluentProvider } from "@fluentui/react-components";
+import { ContainerView, TelemetryView, MenuItem, MenuSection, LandingView } from "./components";
 import { initializeFluentUiIcons } from "./InitializeIcons";
+import { useMessageRelay } from "./MessageRelayContext";
+import { getFluentUIThemeToUse } from "./ThemeHelper";
+
+const loggingContext = "INLINE(DebuggerPanel)";
 
 // Ensure FluentUI icons are initialized.
 initializeFluentUiIcons();
 
 /**
- * {@link FluidClientDebuggers} input props.
+ * Message sent to the webpage to query for the full container list.
  */
-export interface FluidClientDebuggersProps {
+const getContainerListMessage: GetContainerListMessage = {
+	type: GetContainerListMessageType,
+	data: undefined,
+};
+
+/**
+ * Indicates that the currently selected menu option is a particular Container.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface ContainerMenuSelection {
 	/**
-	 * Rendering policies for different kinds of Fluid client and object data.
-	 *
-	 * @defaultValue Strictly use default visualization policies.
+	 * String to differentiate between different types of options in menu.
 	 */
-	renderOptions?: RenderOptions;
+	type: "containerMenuSelection";
+
+	/**
+	 * The containerId for the selected menu option that this object represents.
+	 */
+	containerId: string;
 }
+
+/**
+ * Indicates that the currently selected menu option is the Telemetry view.
+ * @see {@link MenuSection} for other possible options.
+ */
+interface TelemetryMenuSelection {
+	/**
+	 * String to differentiate between different types of options in menu.
+	 */
+	type: "telemetryMenuSelection";
+}
+
+/**
+ * Discriminated union type for all the selectable options in the menu.
+ * Each specific type should contain any additional information it requires.
+ * E.g. {@link ContainerMenuSelection} represents that the menu option for a Container
+ * is selected, and has a 'containerId' property to indicate which Container.
+ */
+type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
 
 /**
  * Renders drop down to show more than 2 containers and manage the selected container in the debug view for an active
@@ -39,139 +77,159 @@ export interface FluidClientDebuggersProps {
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
-export function FluidClientDebuggers(props: FluidClientDebuggersProps): React.ReactElement {
-	const debuggerRegistry: DebuggerRegistry = getDebuggerRegistry();
+export function FluidClientDebuggers(): React.ReactElement {
+	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
+	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
-	const [clientDebuggers, setClientDebuggers] = React.useState<IFluidClientDebugger[]>(
-		getFluidClientDebuggers(),
-	);
-
-	// This function is pure, so there are no state concerns here.
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	function getDefaultDebuggerSelectionId(options: IFluidClientDebugger[]): string | undefined {
-		return options.length === 0 ? undefined : options[0].containerId;
-	}
-
-	const [selectedContainerId, setSelectedContainerId] = React.useState<string | undefined>(
-		getDefaultDebuggerSelectionId(clientDebuggers) ?? undefined,
-	);
-
-	function getDebuggerFromContainerId(containerId: string): IFluidClientDebugger {
-		const match = clientDebuggers.find(
-			(clientDebugger) => clientDebugger.containerId === containerId,
-		);
-		if (match === undefined) {
-			throw new Error(`No debugger found associated with Container ID "${containerId}".`);
-		}
-		return match;
-	}
+	const messageRelay: IMessageRelay = useMessageRelay();
 
 	React.useEffect(() => {
-		function onDebuggerChanged(): void {
-			const newDebuggerList = getFluidClientDebuggers();
-			setClientDebuggers(newDebuggerList);
-			if (selectedContainerId === undefined) {
-				const newSelection = getDefaultDebuggerSelectionId(newDebuggerList);
-				console.log(`Updating selection to container ID "${newSelection}".`);
-				setSelectedContainerId(newSelection);
-			}
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			[ContainerListMessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerListMessage;
+				setContainers(message.data.containers);
+				return true;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the Message Relay
+		 */
+		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: loggingContext,
+			});
 		}
 
-		debuggerRegistry.on("debuggerRegistered", onDebuggerChanged);
-		debuggerRegistry.on("debuggerClosed", onDebuggerChanged);
+		messageRelay.on("message", messageHandler);
+
+		messageRelay.postMessage(getContainerListMessage);
 
 		return (): void => {
-			debuggerRegistry.off("debuggerRegistered", onDebuggerChanged);
-			debuggerRegistry.off("debuggerClosed", onDebuggerChanged);
+			messageRelay.off("message", messageHandler);
 		};
-	}, [getDefaultDebuggerSelectionId, selectedContainerId, debuggerRegistry, setClientDebuggers]);
+	}, [setContainers, messageRelay]);
 
-	const view =
-		selectedContainerId === undefined ? (
-			<NoDebuggerInstance
-				onRetryDebugger={(): void => {
-					const newDebuggerList = getFluidClientDebuggers();
-					setClientDebuggers(newDebuggerList);
-					const newDefaultId = getDefaultDebuggerSelectionId(newDebuggerList);
-					setSelectedContainerId(newDefaultId);
-				}}
-			/>
-		) : (
-			<ClientDebugView
-				clientDebugger={getDebuggerFromContainerId(selectedContainerId)}
-				renderOptions={props.renderOptions}
-			/>
-		);
+	let innerView: React.ReactElement;
+	switch (menuSelection?.type) {
+		case "telemetryMenuSelection":
+			innerView = <TelemetryView />;
+			break;
+		case "containerMenuSelection":
+			// eslint-disable-next-line no-case-declarations
+			const container = containers?.find((x) => x.id === menuSelection.containerId);
+			innerView =
+				container === undefined ? (
+					<div>Could not find a debugger for that container.</div>
+				) : (
+					<ContainerView containerId={menuSelection.containerId} />
+				);
+			break;
+		default:
+			innerView = <LandingView />;
+			break;
+	}
 
-	const selectionView: React.ReactElement =
-		clientDebuggers.length > 1 ? (
-			<ContainerSelectionDropdown
-				initialSelection={selectedContainerId}
-				options={clientDebuggers.map((clientDebugger) => ({
-					id: clientDebugger.containerId,
-					nickname: clientDebugger.containerNickname,
-				}))}
-				onChangeSelection={(containerId): void => setSelectedContainerId(containerId)}
-			/>
-		) : (
-			<></>
-		);
+	// Styles definition
+	const stackStyles: IStackStyles = {
+		root: {
+			"display": "flex",
+			"flexDirection": "row",
+			"flexWrap": "nowrap",
+			"width": "auto",
+			"height": "auto",
+			"boxSizing": "border-box",
+			"> *": {
+				textOverflow: "ellipsis",
+			},
+			"> :not(:first-child)": {
+				marginTop: "0px",
+			},
+			"> *:not(.ms-StackItem)": {
+				flexShrink: 1,
+			},
+		},
+	};
+	const contentViewStyles: IStackItemStyles = {
+		root: {
+			"alignItems": "center",
+			"display": "flex",
+			"justifyContent": "center",
+			"flexDirection": "column",
+			"flexWrap": "nowrap",
+			"width": "auto",
+			"height": "auto",
+			"boxSizing": "border-box",
+			"> *": {
+				textOverflow: "ellipsis",
+			},
+			"> :not(:first-child)": {
+				marginTop: "0px",
+			},
+			"> *:not(.ms-StackItem)": {
+				flexShrink: 1,
+			},
+		},
+	};
+
+	const menuStyles: IStackItemStyles = {
+		root: {
+			...contentViewStyles,
+			display: "flex",
+			flexDirection: "column",
+			borderRight: `2px solid`,
+			minWidth: 150,
+		},
+	};
+
+	function onContainerClicked(id: string): void {
+		setMenuSelection({ type: "containerMenuSelection", containerId: id });
+	}
+
+	function onTelemetryClicked(): void {
+		setMenuSelection({ type: "telemetryMenuSelection" });
+	}
 
 	return (
-		<Resizable
-			style={{
-				position: "absolute",
-				top: "0px",
-				right: "0px",
-				bottom: "0px",
-				zIndex: "2",
-				backgroundColor: "lightgray", // TODO: remove
-			}}
-			defaultSize={{ width: 400, height: "100%" }}
-			className={"debugger-panel"}
-		>
-			{selectionView}
-			{view}
-		</Resizable>
-	);
-}
-
-/**
- * Base props interface used by components below which can re-attempt to find the debugger instance
- * associated with some Container ID.
- */
-interface CanLookForDebugger {
-	/**
-	 * Retry looking for the debugger instance.
-	 */
-	onRetryDebugger(): void;
-}
-
-/**
- * {@link NoDebuggerInstance} input props.
- */
-type NoDebuggerInstanceProps = CanLookForDebugger;
-
-function NoDebuggerInstance(props: NoDebuggerInstanceProps): React.ReactElement {
-	const { onRetryDebugger } = props;
-
-	const retryButtonTooltipId = useId("retry-button-tooltip");
-
-	// TODO: give more info and link to docs, etc. for using the tooling.
-	return (
-		<Stack horizontalAlign="center" tokens={{ childrenGap: 10 }}>
-			<StackItem>
-				<div>No Fluid Client debuggers found.</div>
-			</StackItem>
-			<StackItem>
-				<TooltipHost content="Look again" id={retryButtonTooltipId}>
-					<IconButton
-						onClick={onRetryDebugger}
-						menuIconProps={{ iconName: "Refresh" }}
-						aria-describedby={retryButtonTooltipId}
-					/>
-				</TooltipHost>
-			</StackItem>
-		</Stack>
+		<FluentProvider theme={getFluentUIThemeToUse()}>
+			<Stack enableScopedSelectors horizontal styles={stackStyles}>
+				<Stack.Item grow={1} styles={menuStyles}>
+					{/* TODO: button to refresh list of containers */}
+					<MenuSection header="Containers">
+						{containers?.map((container) => (
+							<MenuItem
+								key={container.id}
+								isActive={
+									menuSelection?.type === "containerMenuSelection" &&
+									menuSelection.containerId === container.id
+								}
+								text={container.nickname ?? container.id}
+								onClick={(event): void => {
+									onContainerClicked(`${container.id}`);
+								}}
+							/>
+						))}
+					</MenuSection>
+					<MenuSection header="Telemetry">
+						<MenuItem
+							isActive={menuSelection?.type === "telemetryMenuSelection"}
+							text="See Telemetry"
+							onClick={onTelemetryClicked}
+						/>
+					</MenuSection>
+				</Stack.Item>
+				<Stack.Item grow={5} styles={contentViewStyles}>
+					<div
+						id="debugger-view-content"
+						style={{ width: "100%", height: "100%", overflowY: "auto" }}
+					>
+						{innerView}
+					</div>
+				</Stack.Item>
+			</Stack>
+		</FluentProvider>
 	);
 }

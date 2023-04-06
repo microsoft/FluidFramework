@@ -12,13 +12,16 @@ export {
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
+	gcSweepGenerationOptionName,
+	GCFeatureMatrix,
 	GCVersion,
-	gcVersionUpgradeToV2Key,
-	IGarbageCollectionRuntime, // Deprecated
+	gcVersionUpgradeToV3Key,
+	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
 	IGCMetadata,
+	IGCResult,
 	IGCRuntimeOptions,
 	IGCStats,
 	oneDayMs,
@@ -33,11 +36,27 @@ export {
 	UnreferencedState,
 } from "./gcDefinitions";
 export {
-	getSnapshotDataFromOldSnapshotFormat,
+	cloneGCData,
+	concatGarbageCollectionStates,
+	getGCDataFromSnapshot,
 	sendGCUnexpectedUsageEvent,
 	shouldAllowGcTombstoneEnforcement,
+	shouldAllowGcSweep,
+	trimLeadingAndTrailingSlashes,
+	unpackChildNodesGCDetails,
 } from "./gcHelpers";
-export { GCSummaryStateTracker } from "./gcSummaryStateTracker";
+export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
+export {
+	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
+	IGarbageCollectionState,
+	IGarbageCollectionSummaryDetailsLegacy,
+} from "./gcSummaryDefinitions";
+export {
+	gcStateBlobKey,
+	GCSummaryStateTracker,
+	IGCSummaryTrackingData,
+} from "./gcSummaryStateTracker";
 export {
 	skipClosureForXDaysKey,
 	closuresMapLocalStorageKey,

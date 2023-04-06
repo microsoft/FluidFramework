@@ -176,7 +176,6 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			undefined,
 			this.logger,
 		);
-		await this.props.provider.ensureSynchronized();
 		const newSummaryVersion = await this.waitForSummary(summarizerClient);
 		assert(newSummaryVersion !== undefined, "summaryVersion needs to be valid.");
 		if (closeContainer) {

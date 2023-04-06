@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
-import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
@@ -16,20 +16,25 @@ import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../../services";
 import * as utils from "../utils";
+import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+	restTenantThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ): Router {
 	const router: Router = Router();
 
-	const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-		throttleIdSuffix: utils.Constants.throttleIdSuffix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
 	async function createCommit(
 		tenantId: string,
@@ -67,7 +72,8 @@ export function create(
 	router.post(
 		"/repos/:ignored?/:tenantId/git/commits",
 		utils.validateRequestParams("tenantId"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const commitP = createCommit(
 				request.params.tenantId,
@@ -82,7 +88,8 @@ export function create(
 	router.get(
 		"/repos/:ignored?/:tenantId/git/commits/:sha",
 		utils.validateRequestParams("tenantId", "sha"),
-		throttle(throttler, winston, commonThrottleOptions),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const commitP = getCommit(

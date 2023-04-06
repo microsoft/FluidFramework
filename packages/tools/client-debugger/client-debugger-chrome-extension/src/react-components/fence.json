@@ -1,5 +1,0 @@
-{
-	"tags": ["react-components"],
-	"exports": ["index"],
-	"imports": ["messaging"]
-}

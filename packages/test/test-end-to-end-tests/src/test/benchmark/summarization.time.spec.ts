@@ -9,7 +9,7 @@ import { ContainerRuntime, DefaultSummaryConfiguration } from "@fluidframework/c
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestContainerConfig, ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeNoCompat, ITestDataObject } from "@fluidframework/test-version-utils";
+import { describeNoCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 import { ISummaryBlob, SummaryType } from "@fluidframework/protocol-definitions";
 import { bufferToString } from "@fluidframework/common-utils";
@@ -32,13 +32,12 @@ function readBlobContent(content: ISummaryBlob["content"]): unknown {
 	return JSON.parse(json);
 }
 
-const testName = "Summarization - runtime benchmarks";
-describeNoCompat(testName, (getTestObjectProvider) => {
+describeNoCompat("Summarization - runtime benchmarks", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let mainContainer: IContainer;
+
 	before(async () => {
 		provider = getTestObjectProvider();
-
 		const loader = provider.makeTestLoader(testContainerConfig);
 		mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		await mainContainer.attach(provider.driver.createCreateNewRequest());

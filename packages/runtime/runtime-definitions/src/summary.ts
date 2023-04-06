@@ -75,6 +75,8 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 
 /**
  * The garbage collection data of each node in the reference graph.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export interface IGarbageCollectionNodeData {
 	/**
@@ -90,6 +92,8 @@ export interface IGarbageCollectionNodeData {
 /**
  * The garbage collection state of the reference graph. It contains a list of all the nodes in the graph and their
  * GC data.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export interface IGarbageCollectionState {
 	gcNodes: { [id: string]: IGarbageCollectionNodeData };
@@ -110,6 +114,8 @@ export interface IGarbageCollectionSummaryDetailsLegacy {
 
 /**
  * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export interface IGarbageCollectionSnapshotData {
 	gcState: IGarbageCollectionState;
@@ -117,10 +123,38 @@ export interface IGarbageCollectionSnapshotData {
 	deletedNodes: string[] | undefined;
 }
 
+/**
+ * @experimental - Can be deleted/changed at any time
+ * Contains the necessary information to allow DDSes to do incremental summaries
+ */
+export interface IExperimentalIncrementalSummaryContext {
+	/**
+	 * The sequence number of the summary generated that will be sent to the server.
+	 */
+	summarySequenceNumber: number;
+	/**
+	 * The sequence number of the most recent summary that was acknowledged by the server.
+	 */
+	latestSummarySequenceNumber: number;
+	/**
+	 * The path to the runtime/datastore/dds that is used to generate summary handles
+	 * Note: Summary handles are nodes of the summary tree that point to previous parts of the last successful summary
+	 * instead of being a blob or tree node
+	 *
+	 * This path contains the id of the data store and dds which should not be leaked to layers below them. Ideally,
+	 * a layer should not know its own id. This is important for channel unification work and there has been a lot of
+	 * work to remove these kinds of leakages. Some still exist, which have to be fixed but we should not be adding
+	 * more dependencies.
+	 */
+	// TODO: remove summaryPath
+	summaryPath: string;
+}
+
 export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
 	telemetryContext?: ITelemetryContext,
+	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ) => Promise<ISummarizeInternalResult>;
 
 export interface ISummarizerNodeConfig {

@@ -5,44 +5,50 @@
 import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
-import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluidframework/test-version-utils";
-import { benchmarkAll, createDocument, IDocumentLoader } from "./DocumentCreator";
+import { describeE2EDocRun, getCurrentBenchmarkType } from "@fluid-internal/test-version-utils";
+import {
+	benchmarkAll,
+	createDocument,
+	IBenchmarkParameters,
+	IDocumentLoader,
+} from "./DocumentCreator";
 
-const scenarioTitle = "Load Document";
-
-describeE2EDocRun(scenarioTitle, (getTestObjectProvider, getDocumentInfo) => {
-	let document: IDocumentLoader;
+describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
+	let documentWrapper: IDocumentLoader;
 	let provider: ITestObjectProvider;
 	const benchmarkType = getCurrentBenchmarkType(describeE2EDocRun);
 
 	before(async () => {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
-		document = createDocument({
-			testName: `${scenarioTitle} - ${docData.testTitle}`,
+		documentWrapper = createDocument({
+			testName: `Load Document - ${docData.testTitle}`,
 			provider,
 			documentType: docData.documentType,
 			benchmarkType,
 		});
-		await document.initializeDocument();
+		await documentWrapper.initializeDocument();
 	});
-
-	class BenchmarkObj {
-		container: IContainer | undefined;
-		minSampleCount = getDocumentInfo().minSampleCount;
-	}
-
-	const obj = new BenchmarkObj();
-
-	benchmarkAll<BenchmarkObj>(scenarioTitle, {
-		run: async () => {
-			obj.container = await document.loadDocument();
-			assert(obj.container !== undefined, "container needs to be defined.");
-			obj.container.close();
-		},
-		obj,
-		beforeIteration: () => {
-			obj.container = undefined;
-		},
-	});
+	/**
+	 * The PerformanceTestWrapper class includes 2 functionalities:
+	 * 1) Store any objects that should not be garbage collected during the benchmark execution (specific for memory tests).
+	 * 2) Stores the configuration properties that should be consumed by benchmarkAll to define its behavior:
+	 * a. Benchmark Time tests: {@link https://benchmarkjs.com/docs#options} or  {@link BenchmarkOptions}
+	 * b. Benchmark Memory tests: {@link MemoryTestObjectProps}
+	 */
+	benchmarkAll(
+		"Load Document",
+		new (class PerformanceTestWrapper implements IBenchmarkParameters {
+			container: IContainer | undefined;
+			minSampleCount = getDocumentInfo().minSampleCount;
+			async run(): Promise<void> {
+				this.container = await documentWrapper.loadDocument();
+				assert(this.container !== undefined, "container needs to be defined.");
+				this.container.close();
+			}
+			beforeIteration(): void {
+				this.container = undefined;
+			}
+		})(),
+	);
 });

@@ -4,7 +4,7 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IThrottler } from "@fluidframework/server-services-core";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
@@ -25,9 +25,11 @@ import { getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	throttler: IThrottler,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -71,7 +73,15 @@ export function create(
 	app.use(cors());
 	app.use(bindCorrelationId(asyncLocalStorage));
 
-	const apiRoutes = routes.create(config, tenantService, throttler, cache, asyncLocalStorage);
+	const apiRoutes = routes.create(
+		config,
+		tenantService,
+		restTenantThrottlers,
+		restClusterThrottlers,
+		cache,
+		asyncLocalStorage,
+		tokenRevocationManager,
+	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
 	app.use(apiRoutes.git.tags);

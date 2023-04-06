@@ -160,7 +160,19 @@ export interface IContainerEvents extends IEvent {
 	(event: "disconnected", listener: () => void);
 
 	/**
-	 * Emitted when a {@link AttachState.Detached | detached} container is
+	 * Emitted when a {@link AttachState.Detached | detached} container begins the process of
+	 * {@link AttachState.Attaching | attached} to the Fluid service.
+	 *
+	 * @see
+	 *
+	 * - {@link IContainer.attachState}
+	 *
+	 * - {@link IContainer.attach}
+	 */
+	(event: "attaching", listener: () => void);
+
+	/**
+	 * Emitted when the {@link AttachState.Attaching | attaching} process is complete and the container is
 	 * {@link AttachState.Attached | attached} to the Fluid service.
 	 *
 	 * @see
@@ -542,6 +554,7 @@ export type ILoaderOptions = {
  */
 export enum LoaderHeader {
 	/**
+	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
 	 * Override the Loader's default caching behavior for this container.
 	 */
 	cache = "fluid-cache",
@@ -609,6 +622,9 @@ export interface IContainerLoadMode {
  * Set of Request Headers that the Loader understands and may inspect or modify
  */
 export interface ILoaderHeader {
+	/**
+	 * @deprecated In next release, all caching functionality will be removed, and this is not useful anymore
+	 */
 	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;

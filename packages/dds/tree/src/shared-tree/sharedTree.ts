@@ -7,6 +7,7 @@ import {
 	IChannelAttributes,
 	IChannelFactory,
 	IChannelServices,
+	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
@@ -20,13 +21,16 @@ import {
 	AnchorSet,
 	AnchorNode,
 	IEditableForest,
+	AnchorSetRootEvents,
+	symbolFromKey,
+	GlobalFieldKey,
 } from "../core";
 import { SharedTreeBranch, SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
 	EditableTreeContext,
-	ForestIndex,
-	SchemaIndex,
+	ForestSummarizer,
+	SchemaSummarizer as SchemaSummarizer,
 	DefaultChangeFamily,
 	defaultChangeFamily,
 	DefaultEditBuilder,
@@ -34,21 +38,38 @@ import {
 	getEditableTreeContext,
 	SchemaEditor,
 	DefaultChangeset,
-	EditManagerIndex,
 	buildForest,
 	ContextuallyTypedNodeData,
-	ModularChangeset,
 	IDefaultEditBuilder,
 	ForestRepairDataStore,
+	IdentifierIndex,
+	EditableTree,
+	Identifier,
 } from "../feature-libraries";
-import { TransactionResult } from "../util";
+import { IEmitter, ISubscribable, createEmitter } from "../events";
+import { brand, TransactionResult } from "../util";
+
+/**
+ * Events for {@link ISharedTreeView}.
+ * @alpha
+ */
+export interface ViewEvents {
+	/**
+	 * A batch of changes has finished processing and the view is in a consistent state.
+	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
+	 *
+	 * @remarks
+	 * This is mainly useful for knowing when to do followup work scheduled during events from Anchors.
+	 */
+	afterBatch(): void;
+}
 
 /**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @alpha
  */
-export interface ISharedTreeCheckout extends AnchorLocator {
+export interface ISharedTreeView extends AnchorLocator {
 	/**
 	 * Gets or sets the root field of the tree.
 	 *
@@ -67,7 +88,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	set root(data: ContextuallyTypedNodeData | undefined);
 
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeCheckout.root}.
+	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
 	 *
 	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
 	 */
@@ -80,7 +101,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 *
 	 * TODO:
 	 * Editing of this should be moved into transactions with the rest of tree editing to they can be intermixed.
-	 * This will be done after the relations between branches and Indexes are figured out.
+	 * This will be done after the relations between views, branches and Indexes are figured out.
 	 *
 	 * TODO:
 	 * Public APIs for dealing with schema should be in terms of View Schema, and schema update policies.
@@ -110,8 +131,8 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 	 * If the transaction is aborted, the local state will be reset to what it was before the transaction began.
 	 * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
 	 *
-	 * To avoid updating observers of the branch state with intermediate results during a transaction,
-	 * use {@link ISharedTreeCheckout#fork} and {@link ISharedTreeCheckoutFork#merge}.
+	 * To avoid updating observers of the view state with intermediate results during a transaction,
+	 * use {@link ISharedTreeView#fork} and {@link ISharedTreeFork#merge}.
 	 */
 	readonly transaction: {
 		/**
@@ -122,7 +143,7 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 		start(): void;
 		/**
 		 * Close this transaction by squashing its edits and committing them as a single edit.
-		 * If this is the root local branch and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
+		 * If this is the root view and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
 		 */
 		commit(): TransactionResult.Commit;
 		/**
@@ -130,39 +151,54 @@ export interface ISharedTreeCheckout extends AnchorLocator {
 		 */
 		abort(): TransactionResult.Abort;
 		/**
-		 * True if there is at least one transaction currently in progress on this checkout, otherwise false.
+		 * True if there is at least one transaction currently in progress on this view, otherwise false.
 		 */
 		inProgress(): boolean;
 	};
 
 	/**
-	 * Spawn a new checkout which is based off of the current state of this checkout.
-	 * Any mutations of the new checkout will not apply to this checkout until the new checkout is merged back in.
+	 * Spawn a new view which is based off of the current state of this view.
+	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
-	fork(): ISharedTreeCheckoutFork;
+	fork(): ISharedTreeFork;
+
+	/**
+	 * Events about this view.
+	 */
+	readonly events: ISubscribable<ViewEvents>;
+
+	/**
+	 * Events about the root of the tree in this view.
+	 */
+	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+
+	/**
+	 * A map of nodes that have been recorded by the identifier index.
+	 */
+	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
 }
 
 /**
- * An `ISharedTreeCheckout` which has been forked from a pre-existing checkout.
+ * An `ISharedTreeView` which has been forked from a pre-existing view.
  * @alpha
  */
-export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
+export interface ISharedTreeFork extends ISharedTreeView {
 	/**
-	 * Rebase the changes that have been applied to this checkout over all the changes in the base checkout that have
-	 * occurred since this checkout last pulled (or was forked).
+	 * Rebase the changes that have been applied to this view over all the changes in the base view that have
+	 * occurred since this view last pulled (or was forked).
 	 */
 	pull(): void;
 
 	/**
-	 * Apply all the changes on this checkout to the base checkout from which it was forked.
-	 * If the base checkout has new changes since this checkout last pulled (or was forked),
-	 * then this checkout's changes will be rebased over those first.
-	 * After the merge completes, this checkout may no longer be forked or mutated.
+	 * Apply all the changes on this view to the base view from which it was forked.
+	 * If the base view has new changes since this view last pulled (or was forked),
+	 * then this view's changes will be rebased over those first.
+	 * After the merge completes, this view may no longer be forked or mutated.
 	 */
 	merge(): void;
 
 	/**
-	 * Whether or not this checkout has been merged into its base checkout via `merge()`.
+	 * Whether or not this view has been merged into its base view via `merge()`.
 	 * If it has, then it may no longer be forked or mutated.
 	 */
 	isMerged(): boolean;
@@ -175,7 +211,20 @@ export interface ISharedTreeCheckoutFork extends ISharedTreeCheckout {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
+export interface ISharedTree extends ISharedObject, ISharedTreeView {}
+
+/**
+ * The key for the special identifier field, which allows nodes to be given identifiers that can be used
+ * to find the nodes via the identifier index
+ * @alpha
+ */
+export const identifierKey: GlobalFieldKey = brand("identifier");
+
+/**
+ * The global field key symbol that corresponds to {@link identifierKey}
+ * @alpha
+ */
+export const identifierKeySymbol = symbolFromKey(identifierKey);
 
 /**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
@@ -184,17 +233,19 @@ export interface ISharedTree extends ISharedObject, ISharedTreeCheckout {}
  * TODO: detail compatibility requirements.
  */
 class SharedTree
-	extends SharedTreeCore<
-		DefaultEditBuilder,
-		DefaultChangeset,
-		[SchemaIndex, ForestIndex, EditManagerIndex<ModularChangeset>]
-	>
+	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
 	public readonly context: EditableTreeContext;
 	public readonly forest: IEditableForest;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	public readonly transaction: ISharedTreeCheckout["transaction"];
+	public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>;
+	public readonly transaction: ISharedTreeView["transaction"];
+
+	public readonly events: ISubscribable<ViewEvents> & IEmitter<ViewEvents>;
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		return this.forest.anchors;
+	}
 
 	public constructor(
 		id: string,
@@ -205,12 +256,10 @@ class SharedTree
 		const anchors = new AnchorSet();
 		const schema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy);
 		const forest = buildForest(schema, anchors);
+		const schemaSummarizer = new SchemaSummarizer(runtime, schema);
+		const forestSummarizer = new ForestSummarizer(runtime, forest);
 		super(
-			(events, editManager) => [
-				new SchemaIndex(runtime, events, schema),
-				new ForestIndex(runtime, events, forest),
-				new EditManagerIndex(runtime, editManager),
-			],
+			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
 			anchors,
 			id,
@@ -219,6 +268,7 @@ class SharedTree
 			telemetryContextPrefix,
 		);
 
+		this.events = createEmitter<ViewEvents>();
 		this.forest = forest;
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op));
 
@@ -230,6 +280,11 @@ class SharedTree
 		};
 
 		this.context = getEditableTreeContext(forest, this.editor);
+		this.identifiedNodes = new IdentifierIndex(identifierKey);
+		this.changeEvents.on("newLocalState", (changeDelta) => {
+			this.forest.applyDelta(changeDelta);
+			this.finishBatch();
+		});
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -244,13 +299,19 @@ class SharedTree
 		this.context.unwrappedRoot = data;
 	}
 
-	public fork(): ISharedTreeCheckoutFork {
+	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
-		return new SharedTreeCheckout(
-			this.createBranch(anchors),
+		const branch = this.createBranch(anchors);
+		const schema = this.storedSchema.inner.clone();
+		const forest = this.forest.clone(schema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
+		return new SharedTreeFork(
+			branch,
 			defaultChangeFamily,
-			this.storedSchema.inner.clone(),
-			this.forest.clone(this.storedSchema, anchors),
+			schema,
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 
@@ -271,6 +332,17 @@ class SharedTree
 		if (!this.storedSchema.tryHandleOp(message)) {
 			super.processCore(message, local, localOpMetadata);
 		}
+	}
+
+	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+		await super.loadCore(services);
+		this.finishBatch();
+	}
+
+	/** Finish a batch (see {@link ViewEvents}) */
+	private finishBatch(): void {
+		this.identifiedNodes.scanIdentifiers(this.context);
+		this.events.emit("afterBatch");
 	}
 }
 
@@ -305,27 +377,34 @@ export class SharedTreeFactory implements IChannelFactory {
 	}
 }
 
-class SharedTreeCheckout implements ISharedTreeCheckoutFork {
-	public readonly context: EditableTreeContext;
+class SharedTreeFork implements ISharedTreeFork {
+	public readonly events = createEmitter<ViewEvents>();
 
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		public readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: InMemoryStoredSchemaRepository,
 		public readonly forest: IEditableForest,
+		public readonly context: EditableTreeContext,
+		public readonly identifiedNodes: IdentifierIndex<typeof identifierKey>,
 	) {
-		this.context = getEditableTreeContext(forest, this.editor);
 		branch.on("onChange", (change) => {
 			const delta = this.changeFamily.intoDelta(change);
 			this.forest.applyDelta(delta);
+			this.identifiedNodes.scanIdentifiers(this.context);
+			this.events.emit("afterBatch");
 		});
+	}
+
+	public get rootEvents(): ISubscribable<AnchorSetRootEvents> {
+		return this.forest.anchors;
 	}
 
 	public get editor() {
 		return this.branch.editor;
 	}
 
-	public readonly transaction: ISharedTreeCheckout["transaction"] = {
+	public readonly transaction: ISharedTreeView["transaction"] = {
 		start: () => this.branch.startTransaction(new ForestRepairDataStore(() => this.forest)),
 		commit: () => this.branch.commitTransaction(),
 		abort: () => this.branch.abortTransaction(),
@@ -340,14 +419,19 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 		this.branch.pull();
 	}
 
-	public fork(): ISharedTreeCheckoutFork {
-		const storedSchema = this.storedSchema.clone();
+	public fork(): ISharedTreeFork {
 		const anchors = new AnchorSet();
-		return new SharedTreeCheckout(
-			this.branch.fork(anchors),
+		const branch = this.branch.fork(anchors);
+		const storedSchema = this.storedSchema.clone();
+		const forest = this.forest.clone(storedSchema, anchors);
+		const context = getEditableTreeContext(forest, branch.editor);
+		return new SharedTreeFork(
+			branch,
 			this.changeFamily,
 			storedSchema,
-			this.forest.clone(storedSchema, anchors),
+			forest,
+			context,
+			this.identifiedNodes.clone(context),
 		);
 	}
 
@@ -369,21 +453,21 @@ class SharedTreeCheckout implements ISharedTreeCheckoutFork {
 }
 
 /**
- * Run a synchronous transaction on the given shared tree checkout.
- * This is a convenience helper around the {@link SharedTreeCheckout#transaction} APIs.
- * @param checkout - the checkout on which to run the transaction
- * @param transaction - the transaction function. This will be executed immediately. It is passed `checkout` as an argument for convenience.
+ * Run a synchronous transaction on the given shared tree view.
+ * This is a convenience helper around the {@link SharedTreeFork#transaction} APIs.
+ * @param view - the view on which to run the transaction
+ * @param transaction - the transaction function. This will be executed immediately. It is passed `view` as an argument for convenience.
  * If this function returns an `Abort` result then the transaction will be aborted. Otherwise, it will be committed.
  * @returns whether or not the transaction was committed or aborted
  * @alpha
  */
 export function runSynchronous(
-	checkout: ISharedTreeCheckout,
-	transaction: (checkout: ISharedTreeCheckout) => TransactionResult | void,
+	view: ISharedTreeView,
+	transaction: (view: ISharedTreeView) => TransactionResult | void,
 ): TransactionResult {
-	checkout.transaction.start();
-	const result = transaction(checkout);
+	view.transaction.start();
+	const result = transaction(view);
 	return result === TransactionResult.Abort
-		? checkout.transaction.abort()
-		: checkout.transaction.commit();
+		? view.transaction.abort()
+		: view.transaction.commit();
 }
