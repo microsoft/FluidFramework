@@ -16,7 +16,6 @@ import {
 	ISummarizeResult,
 	gcDeletedBlobKey,
 	channelsTreeName,
-	IGarbageCollectionSnapshotData,
 	gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions";
 import {
@@ -35,6 +34,7 @@ import {
 	GCNodeType,
 	GCSummaryStateTracker,
 	IGarbageCollectionNodeData,
+	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
 	IGarbageCollectionRuntime,
