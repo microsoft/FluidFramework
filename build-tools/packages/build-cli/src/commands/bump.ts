@@ -111,7 +111,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		const updatedPackages: Package[] = [];
 
 		if (bumpType === undefined && exactVersion === null) {
-			this.error(`Either --bumpType or --exact must be provided.`);
+			this.error(`--exact value invalid: ${flags.exact}`);
 		}
 
 		if (exactDepType !== "" && exactDepType !== "^" && exactDepType !== "~") {
