@@ -689,7 +689,7 @@ export type SummarizerStopReason =
 */
 | "notElectedClient"
 /** Summarizer client was disconnected */
-| "summarizerClientDisconnected" | "summarizerException";
+| "summarizerClientDisconnected" | "summarizerException" | "unexpectedSummaryAck";
 
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {

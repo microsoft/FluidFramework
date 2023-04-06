@@ -24,8 +24,6 @@ import {
 	AttachState,
 	ILoaderOptions,
 	LoaderHeader,
-	IErrorBase,
-	ContainerErrorType,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -3180,12 +3178,10 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
 		);
 		if (recoveryMethod === "restart") {
-			const error: IErrorBase = {
-				errorType: ContainerErrorType.genericError,
-				message: "Restarting summarizer instead of refreshing",
-			};
+			this._summarizer?.stop("unexpectedSummaryAck");
+			const error = new GenericError("Restarting summarizer instead of refreshing");
 			this.closeFn(error);
-			throw new Error(error.message);
+			throw error;
 		}
 		return this.fetchLatestSnapshotFromStorage(logger, event, readAndParseBlob);
 	}

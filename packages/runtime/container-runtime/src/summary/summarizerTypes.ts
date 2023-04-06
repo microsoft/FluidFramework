@@ -295,7 +295,9 @@ export type SummarizerStopReason =
 	/** Summarizer client was disconnected */
 	| "summarizerClientDisconnected"
 	/* running summarizer threw an exception */
-	| "summarizerException";
+	| "summarizerException"
+	/* running summarizer threw an exception */
+	| "unexpectedSummaryAck";
 
 export interface ISummarizerEvents extends IEvent {
 	/**
