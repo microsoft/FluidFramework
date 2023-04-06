@@ -46,6 +46,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 		featureGates: Record<string, ConfigTypes> = {},
 	) => {
 		const configWithFeatureGates = {
+			simulateReadConnectionUsingDelay: false,
 			...containerConfig,
 			loaderProps: { configProvider: configProvider(featureGates) },
 		};
@@ -165,12 +166,8 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 					outOfOrderObservations.push(changed.key);
 				});
 
-				// Make sure the set key2 to 2 is sequenced first (but not processed by container 1 yet)
-				sharedMap2.set("key2", "2");
-				await provider.opProcessingController.processOutgoing();
-
-				// Now change key1, which will cause the re-entrancy to happen immediately and generate op to change key2
 				sharedMap1.set("key1", "1");
+				sharedMap2.set("key2", "2");
 				await provider.ensureSynchronized();
 
 				// The offending container is not closed
