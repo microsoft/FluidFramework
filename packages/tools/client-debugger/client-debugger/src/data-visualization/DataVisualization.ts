@@ -8,10 +8,10 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { IFluidHandle, IFluidLoadable, IProvideFluidHandle } from "@fluidframework/core-interfaces";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 
+import { FluidObjectId } from "../CommonInterfaces";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
-	FluidObjectId,
 	FluidObjectNode,
 	VisualNodeKind,
 	VisualValueNode,

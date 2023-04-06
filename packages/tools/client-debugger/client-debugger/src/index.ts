@@ -44,12 +44,12 @@
  */
 
 export { MemberChangeKind } from "./AudienceMetadata";
+export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
 export { ContainerMetadata, ContainerStateMetadata } from "./ContainerMetadata";
 export {
 	FluidHandleNode,
-	FluidObjectId,
 	FluidObjectNode,
 	FluidObjectNodeBase,
 	FluidObjectTreeNode,
@@ -87,8 +87,6 @@ export {
 	devtoolsMessageSource,
 	GetAudienceMessage,
 	GetAudienceMessageType,
-	HasContainerId,
-	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
 	ConnectContainerMessageType,

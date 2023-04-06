@@ -3,17 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { FluidObjectId } from "../CommonInterfaces";
+
 /**
  * This module contains a type system for describing visual descriptors of data objects in a serializable
  * tree format that can be broadcast by the debugger for external tools to consume.
  */
-
-/**
- * A unique ID for a Fluid object.
- *
- * @public
- */
-export type FluidObjectId = string;
 
 /**
  * The kind of {@link VisualNodeBase}.

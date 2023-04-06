@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 import { IClient } from "@fluidframework/protocol-definitions";
+
+import { HasContainerId } from "../CommonInterfaces";
 import { AudienceChangeLogEntry } from "../Logs";
-import { HasContainerId } from "./ContainerDevtoolsMessages";
 import { IDebuggerMessage } from "./Messages";
 
 // #region Inbound messages

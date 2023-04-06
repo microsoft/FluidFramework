@@ -3,36 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { HasContainerId, HasFluidObjectId } from "../CommonInterfaces";
 import { ContainerStateMetadata } from "../ContainerMetadata";
-import { FluidObjectId, FluidObjectNode, RootHandleNode } from "../data-visualization";
+import { FluidObjectNode, RootHandleNode } from "../data-visualization";
 import { ConnectionStateChangeLogEntry } from "../Logs";
 import { IDebuggerMessage } from "./Messages";
-
-/**
- * Base interface used in message data for events targeting a particular debugger instance via
- * its Container ID.
- *
- * @public
- */
-export interface HasContainerId {
-	/**
-	 * The ID of the Container whose metadata is being requested.
-	 */
-	containerId: string;
-}
-
-/**
- * Base interface used in message data for events targeting a particular Fluid object (DDS) via
- * a unique ID.
- *
- * @public
- */
-export interface HasFluidObjectId {
-	/**
-	 * The ID of the Fluid object (DDS) whose data is being requested.
-	 */
-	fluidObjectId: FluidObjectId;
-}
 
 // #region Inbound messages
 

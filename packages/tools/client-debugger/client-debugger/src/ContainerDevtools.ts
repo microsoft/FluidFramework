@@ -8,12 +8,12 @@ import { IAudience, IContainer } from "@fluidframework/container-definitions";
 import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { IClient } from "@fluidframework/protocol-definitions";
 
+import { FluidObjectId } from "./CommonInterfaces";
 import { ContainerStateChangeKind } from "./Container";
 import { ContainerStateMetadata } from "./ContainerMetadata";
 import {
 	DataVisualizerGraph,
 	defaultVisualizers,
-	FluidObjectId,
 	FluidObjectNode,
 	RootHandleNode,
 	VisualizeSharedObject,

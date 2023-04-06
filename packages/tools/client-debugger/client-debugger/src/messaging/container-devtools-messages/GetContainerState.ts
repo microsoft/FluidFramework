@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerId } from "../ContainerDevtoolsMessages";
+import { HasContainerId } from "../../CommonInterfaces";
 import { IDebuggerMessage } from "../Messages";
 
 /**

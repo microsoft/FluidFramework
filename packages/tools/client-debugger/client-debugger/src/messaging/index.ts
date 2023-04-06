@@ -16,8 +16,6 @@
 export { devtoolsMessageSource } from "./Constants";
 export { GetContainerState } from "./container-devtools-messages";
 export {
-	HasContainerId,
-	HasFluidObjectId,
 	ConnectContainerMessage,
 	ConnectContainerMessageData,
 	ConnectContainerMessageType,
