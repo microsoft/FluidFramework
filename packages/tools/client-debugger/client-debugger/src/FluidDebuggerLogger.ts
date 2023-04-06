@@ -11,6 +11,7 @@ import {
 	ITelemetryLoggerPropertyBags,
 } from "@fluidframework/telemetry-utils";
 import {
+	GetTelemetryHistoryMessageType,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
 	InboundHandlers,
@@ -19,6 +20,8 @@ import {
 	ITimestampedTelemetryEvent,
 	TelemetryHistoryMessage,
 	TelemetryEventMessage,
+	TelemetryHistoryMessageType,
+	TelemetryEventMessageType,
 } from "./messaging";
 
 /**
@@ -57,7 +60,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		["GET_TELEMETRY_HISTORY"]: (untypedMessage) => {
+		[GetTelemetryHistoryMessageType]: (untypedMessage) => {
 			this.postLogHistory();
 			return true;
 		},
@@ -78,7 +81,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	 */
 	private readonly postLogHistory = (): void => {
 		postMessagesToWindow<TelemetryHistoryMessage>(this.messageLoggingOptions, {
-			type: "TELEMETRY_HISTORY",
+			type: TelemetryHistoryMessageType,
 			data: {
 				contents: this._telemetryLog,
 			},
@@ -155,7 +158,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 			timestamp: Date.now(),
 		};
 		const newMessage: TelemetryEventMessage = {
-			type: "TELEMETRY_EVENT",
+			type: TelemetryEventMessageType,
 			data: {
 				contents: [newEvent],
 			},

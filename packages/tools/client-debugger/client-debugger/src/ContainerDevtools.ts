@@ -21,23 +21,35 @@ import {
 import { IContainerDevtools, ContainerDevtoolsEvents } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
-	AudienceClientMetaData,
+	AudienceClientMetadata,
 	AudienceSummaryMessage,
-	GetAudienceMessage,
+	AudienceSummaryMessageType,
 	CloseContainerMessage,
+	CloseContainerMessageType,
 	ConnectContainerMessage,
+	ConnectContainerMessageType,
+	ContainerStateChangeMessageType,
+	ContainerStateHistoryMessageType,
+	DataVisualizationMessage,
+	DataVisualizationMessageType,
 	DisconnectContainerMessage,
+	DisconnectContainerMessageType,
+	GetAudienceMessage,
+	GetAudienceMessageType,
+	GetContainerStateMessageType,
 	GetContainerStateMessage,
+	GetDataVisualizationMessage,
+	GetDataVisualizationMessageType,
+	GetRootDataVisualizationsMessage,
+	GetRootDataVisualizationsMessageType,
 	handleIncomingWindowMessage,
 	IDebuggerMessage,
-	ISourcedDebuggerMessage,
 	InboundHandlers,
+	ISourcedDebuggerMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
-	GetDataVisualizationMessage,
-	GetRootDataVisualizationsMessage,
-	DataVisualizationMessage,
 	RootDataVisualizationsMessage,
+	RootDataVisualizationsMessageType,
 } from "./messaging";
 
 /**
@@ -289,7 +301,7 @@ export class ContainerDevtools
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		["GET_CONTAINER_STATE"]: (untypedMessage) => {
+		[GetContainerStateMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerStateMessage;
 			if (message.data.containerId === this.containerId) {
 				this.postContainerStateChange();
@@ -297,7 +309,7 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		["CONNECT_CONTAINER"]: (untypedMessage) => {
+		[ConnectContainerMessageType]: (untypedMessage) => {
 			const message = untypedMessage as ConnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.connect();
@@ -305,7 +317,7 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		["DISCONNECT_CONTAINER"]: (untypedMessage) => {
+		[DisconnectContainerMessageType]: (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.disconnect(/* TODO: Specify debugger reason here once it is supported */);
@@ -313,7 +325,7 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		["CLOSE_CONTAINER"]: (untypedMessage) => {
+		[CloseContainerMessageType]: (untypedMessage) => {
 			const message = untypedMessage as CloseContainerMessage;
 			if (message.data.containerId === this.containerId) {
 				this.container.close(/* TODO: Specify debugger reason here once it is supported */);
@@ -321,7 +333,7 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		["GET_AUDIENCE"]: (untypedMessage) => {
+		[GetAudienceMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetAudienceMessage;
 			if (message.data.containerId === this.containerId) {
 				this.postAudienceStateChange();
@@ -329,7 +341,7 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		["GET_ROOT_DATA_VISUALIZATIONS"]: (untypedMessage) => {
+		[GetRootDataVisualizationsMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetRootDataVisualizationsMessage;
 			if (message.data.containerId === this.containerId) {
 				this.getRootDataVisualizations().then((visualizations) => {
@@ -339,7 +351,7 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		["GET_DATA_VISUALIZATION"]: (untypedMessage) => {
+		[GetDataVisualizationMessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetDataVisualizationMessage;
 			if (message.data.containerId === this.containerId) {
 				this.getDataVisualization(message.data.fluidObjectId).then((visualization) => {
@@ -367,14 +379,14 @@ export class ContainerDevtools
 		postMessagesToWindow<IDebuggerMessage>(
 			this.messageLoggingOptions,
 			{
-				type: "CONTAINER_STATE_CHANGE",
+				type: ContainerStateChangeMessageType,
 				data: {
 					containerId: this.containerId,
 					containerState: this.getContainerState(),
 				},
 			},
 			{
-				type: "CONTAINER_STATE_HISTORY",
+				type: ContainerStateHistoryMessageType,
 				data: {
 					containerId: this.containerId,
 					history: [...this._connectionStateLog],
@@ -389,18 +401,18 @@ export class ContainerDevtools
 	private readonly postAudienceStateChange = (): void => {
 		const allAudienceMembers = this.container.audience.getMembers();
 
-		const audienceClientMetaData: AudienceClientMetaData[] = [
+		const audienceClientMetadata: AudienceClientMetadata[] = [
 			...allAudienceMembers.entries(),
-		].map(([clientId, client]): AudienceClientMetaData => {
+		].map(([clientId, client]): AudienceClientMetadata => {
 			return { clientId, client };
 		});
 
 		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
-			type: "AUDIENCE_EVENT",
+			type: AudienceSummaryMessageType,
 			data: {
 				containerId: this.containerId,
 				clientId: this.container.clientId,
-				audienceState: audienceClientMetaData,
+				audienceState: audienceClientMetadata,
 				audienceHistory: this.getAudienceHistory(),
 			},
 		});
@@ -410,7 +422,7 @@ export class ContainerDevtools
 		visualizations: Record<string, RootHandleNode> | undefined,
 	): void => {
 		postMessagesToWindow<RootDataVisualizationsMessage>(this.messageLoggingOptions, {
-			type: "ROOT_DATA_VISUALIZATIONS",
+			type: RootDataVisualizationsMessageType,
 			data: {
 				containerId: this.containerId,
 				visualizations,
@@ -423,7 +435,7 @@ export class ContainerDevtools
 		visualization: FluidObjectNode | undefined,
 	): void => {
 		postMessagesToWindow<DataVisualizationMessage>(this.messageLoggingOptions, {
-			type: "DATA_VISUALIZATION",
+			type: DataVisualizationMessageType,
 			data: {
 				containerId: this.containerId,
 				fluidObjectId,

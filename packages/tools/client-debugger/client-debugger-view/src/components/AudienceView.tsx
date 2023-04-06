@@ -7,14 +7,17 @@ import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
-	HasContainerId,
 	AudienceChangeLogEntry,
-	AudienceClientMetaData,
-	IDebuggerMessage,
-	handleIncomingMessage,
-	InboundHandlers,
-	AudienceSummaryMessageData,
+	AudienceClientMetadata,
 	AudienceSummaryMessage,
+	AudienceSummaryMessageData,
+	AudienceSummaryMessageType,
+	GetAudienceMessage,
+	GetAudienceMessageType,
+	handleIncomingMessage,
+	HasContainerId,
+	IDebuggerMessage,
+	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 
 import { useMessageRelay } from "../MessageRelayContext";
@@ -49,7 +52,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to Audience
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["AUDIENCE_EVENT"]: (untypedMessage) => {
+			[AudienceSummaryMessageType]: (untypedMessage) => {
 				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
 
 				setAudienceData(message.data);
@@ -70,8 +73,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container
-		messageRelay.postMessage({
-			type: "GET_AUDIENCE",
+		messageRelay.postMessage<GetAudienceMessage>({
+			type: GetAudienceMessageType,
 			data: {
 				containerId,
 			},
@@ -121,7 +124,7 @@ interface MembersViewProps {
 	/**
 	 * The current audience
 	 */
-	audience: AudienceClientMetaData[];
+	audience: AudienceClientMetadata[];
 
 	/**
 	 * My client ID, if the Container is connected.
