@@ -11,7 +11,7 @@ import { createContainerAndExecute, IExportFileResponse } from "./exportFile";
 import { ITelemetryOptions } from "./logger/fileLogger";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils";
 /* eslint-enable import/no-internal-modules */
-import { getSnapshotFileContent, timeoutPromise, getArgsValidationError } from "./utils";
+import { getSnapshotFileContent, getArgsValidationError } from "./utils";
 
 const clientArgsValidationError = "Client_ArgsValidationError";
 
@@ -26,7 +26,7 @@ export async function parseBundleAndExportFile(
 	telemetryFile: string,
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
-	timeout: number = 60 * 60 * 1000, // hour timeout
+	timeout?: number,
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -65,18 +65,16 @@ export async function parseBundleAndExportFile(
 					return { success: false, eventName, errorMessage: argsValidationError };
 				}
 
-				const executeResult = await timeoutPromise<string>((resolve, reject) => {
-					createContainerAndExecute(
+				fs.writeFileSync(
+					outputFile,
+					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
 						logger,
 						options,
-					)
-						.then((value) => resolve(value))
-						.catch((error) => reject(error));
-				}, timeout);
-
-				fs.writeFileSync(outputFile, executeResult);
+						timeout,
+					),
+				);
 
 				return { success: true };
 			},

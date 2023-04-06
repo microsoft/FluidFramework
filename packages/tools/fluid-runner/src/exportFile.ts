@@ -42,7 +42,7 @@ export async function exportFile(
 	telemetryFile: string,
 	options?: string,
 	telemetryOptions?: ITelemetryOptions,
-	timeout: number = 60 * 60 * 1000, // hour timeout
+	timeout?: number,
 ): Promise<IExportFileResponse> {
 	const telemetryArgError = getTelemetryFileValidationError(telemetryFile);
 	if (telemetryArgError) {
@@ -63,18 +63,16 @@ export async function exportFile(
 					return { success: false, eventName, errorMessage: argsValidationError };
 				}
 
-				const executeResult = await timeoutPromise<string>((resolve, reject) => {
-					createContainerAndExecute(
+				fs.writeFileSync(
+					outputFile,
+					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidFileConverter,
 						logger,
 						options,
-					)
-						.then((value) => resolve(value))
-						.catch((error) => reject(error));
-				}, timeout);
-
-				fs.writeFileSync(outputFile, executeResult);
+						timeout,
+					),
+				);
 
 				return { success: true };
 			},
@@ -97,25 +95,39 @@ export async function createContainerAndExecute(
 	fluidFileConverter: IFluidFileConverter,
 	logger: ITelemetryLogger,
 	options?: string,
+	timeout?: number,
 ): Promise<string> {
-	const loader = new Loader({
-		urlResolver: new FakeUrlResolver(),
-		documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
-		codeLoader: await fluidFileConverter.getCodeLoader(logger),
-		scope: await fluidFileConverter.getScope?.(logger),
-		logger,
-	});
+	const fn = async () => {
+		const loader = new Loader({
+			urlResolver: new FakeUrlResolver(),
+			documentServiceFactory: createLocalOdspDocumentServiceFactory(localOdspSnapshot),
+			codeLoader: await fluidFileConverter.getCodeLoader(logger),
+			scope: await fluidFileConverter.getScope?.(logger),
+			logger,
+		});
 
-	const container = await loader.resolve({
-		url: "/fakeUrl/",
-		headers: {
-			[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
-		},
-	});
+		const container = await loader.resolve({
+			url: "/fakeUrl/",
+			headers: {
+				[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
+			},
+		});
 
-	return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
-		const result = await fluidFileConverter.execute(container, options);
-		container.close();
-		return result;
-	});
+		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
+			const result = await fluidFileConverter.execute(container, options);
+			container.close();
+			return result;
+		});
+	};
+
+	// eslint-disable-next-line unicorn/prefer-ternary
+	if (timeout !== undefined) {
+		return timeoutPromise<string>((resolve, reject) => {
+			fn()
+				.then((value) => resolve(value))
+				.catch((error) => reject(error));
+		}, timeout);
+	} else {
+		return fn();
+	}
 }
