@@ -1973,10 +1973,7 @@ export class Container
 
 		// Both protocol and context should not be undefined if we got so far.
 
-		this.setContextConnectedState(
-			state,
-			this._deltaManager.connectionManager.readOnlyInfo.readonly ?? false,
-		);
+		this.setContextConnectedState(state, this.readOnlyInfo.readonly ?? false);
 		this.protocolHandler.setConnectionState(state, this.clientId);
 		raiseConnectedEvent(this.mc.logger, this, state, this.clientId, disconnectedReason);
 
