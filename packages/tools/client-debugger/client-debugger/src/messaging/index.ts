@@ -14,36 +14,18 @@
  */
 
 export { devtoolsMessageSource } from "./Constants";
-export { GetContainerState } from "./container-devtools-messages";
 export {
-	ConnectContainerMessage,
-	ConnectContainerMessageData,
-	ConnectContainerMessageType,
-	DisconnectContainerMessage,
-	DisconnectContainerMessageData,
-	DisconnectContainerMessageType,
-	CloseContainerMessage,
-	CloseContainerMessageData,
-	CloseContainerMessageType,
-	ContainerStateChangeMessage,
-	ContainerStateChangeMessageData,
-	ContainerStateChangeMessageType,
-	ContainerStateHistoryMessage,
-	ContainerStateHistoryMessageData,
-	ContainerStateHistoryMessageType,
-	DataVisualizationMessage,
-	DataVisualizationMessageData,
-	DataVisualizationMessageType,
-	GetDataVisualizationMessage,
-	GetDataVisualizationMessageData,
-	GetDataVisualizationMessageType,
-	GetRootDataVisualizationsMessage,
-	GetRootDataVisualizationsMessageData,
-	GetRootDataVisualizationsMessageType,
-	RootDataVisualizationsMessage,
-	RootDataVisualizationsMessageData,
-	RootDataVisualizationsMessageType,
-} from "./ContainerDevtoolsMessages";
+	CloseContainer,
+	ConnectContainer,
+	ContainerStateChange,
+	ContainerStateHistory,
+	DataVisualization,
+	DisconnectContainer,
+	GetContainerState,
+	GetDataVisualization,
+	GetRootDataVisualizations,
+	RootDataVisualizations,
+} from "./container-devtools-messages";
 export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export {

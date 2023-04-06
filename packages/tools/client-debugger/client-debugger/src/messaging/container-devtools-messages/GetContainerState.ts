@@ -7,7 +7,7 @@ import { HasContainerId } from "../../CommonInterfaces";
 import { IDebuggerMessage } from "../Messages";
 
 /**
- * TODO
+ * Encapsulates types and logic related to {@link GetContainerState.Message}.
  *
  * @public
  */
@@ -29,7 +29,7 @@ export namespace GetContainerState {
 	/**
 	 * Inbound message requesting the {@link ContainerStateMetadata} of the Container with the specified ID.
 	 *
-	 * Will result in the {@link ContainerStateChangeMessage} message being posted.
+	 * Will result in the {@link ContainerStateChange.Message} message being posted.
 	 *
 	 * @public
 	 */

@@ -8,18 +8,17 @@ import { useId } from "@fluentui/react-hooks";
 import React from "react";
 
 import {
-	ContainerStateChangeMessage,
+	CloseContainer,
+	ConnectContainer,
+	ContainerStateChange,
 	ContainerStateMetadata,
+	DisconnectContainer,
+	GetContainerState,
 	handleIncomingMessage,
 	HasContainerId,
-	ISourcedDebuggerMessage,
 	IMessageRelay,
 	InboundHandlers,
-	ConnectContainerMessageType,
-	DisconnectContainerMessageType,
-	CloseContainerMessageType,
-	GetContainerState,
-	ContainerStateChangeMessageType,
+	ISourcedDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -58,8 +57,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerStateChangeMessageType]: (untypedMessage) => {
-				const message = untypedMessage as ContainerStateChangeMessage;
+			[ContainerStateChange.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerStateChange.Message;
 				if (message.data.containerId === containerId) {
 					setContainerState(message.data.containerState);
 					return true;
@@ -98,32 +97,29 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function tryConnect(): void {
-		messageRelay.postMessage({
-			type: ConnectContainerMessageType,
-			data: {
+		messageRelay.postMessage(
+			ConnectContainer.createMessage({
 				containerId,
-			},
-		});
+			}),
+		);
 	}
 
 	function forceDisconnect(): void {
-		messageRelay.postMessage({
-			type: DisconnectContainerMessageType,
-			data: {
+		messageRelay.postMessage(
+			DisconnectContainer.createMessage({
 				containerId,
 				/* TODO: Specify debugger reason here once it is supported */
-			},
-		});
+			}),
+		);
 	}
 
 	function closeContainer(): void {
-		messageRelay.postMessage({
-			type: CloseContainerMessageType,
-			data: {
+		messageRelay.postMessage(
+			CloseContainer.createMessage({
 				containerId,
 				/* TODO: Specify debugger reason here once it is supported */
-			},
-		});
+			}),
+		);
 	}
 
 	// Build up status string
