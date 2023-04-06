@@ -23,6 +23,8 @@ export enum MonoRepoKind {
 	Server = "server",
 	Azure = "azure",
 	BuildTools = "build-tools",
+	GitRest = "gitrest",
+	Historian = "historian",
 }
 
 /**
