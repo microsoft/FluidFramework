@@ -6,6 +6,7 @@
 import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from "async-mutex";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { executeApiWithMetric } from "@fluidframework/server-services-utils";
 import { IExternalStorageManager } from "../externalStorageManager";
 import * as helpers from "./helpers";
 import {
@@ -85,7 +86,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			});
 		};
 
-		return helpers.executeApiWithMetric(
+		return executeApiWithMetric(
 					async () => this.internalHandler(params, onRepoNotExists, "create"),
 					GitRestLumberEventName.RepositoryManagerFactory,
 					GitRestRepositoryApiCategory.CreateRepo,
@@ -110,7 +111,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			throw new NetworkError(400, `Repo does not exist ${gitdir}`);
 		};
 
-		return helpers.executeApiWithMetric(
+		return executeApiWithMetric(
 					async () => this.internalHandler(params, onRepoNotExists, "open"),
 					GitRestLumberEventName.RepositoryManagerFactory,
 					GitRestRepositoryApiCategory.OpenRepo,

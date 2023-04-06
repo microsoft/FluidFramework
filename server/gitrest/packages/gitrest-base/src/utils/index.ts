@@ -44,7 +44,6 @@ export {
 	retrieveLatestFullSummaryFromStorage,
 	validateBlobContent,
 	validateBlobEncoding,
-	executeApiWithMetric,
 } from "./helpers";
 export {
 	IsomorphicGitManagerFactory,

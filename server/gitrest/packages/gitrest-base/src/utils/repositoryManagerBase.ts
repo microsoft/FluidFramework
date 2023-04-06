@@ -4,13 +4,13 @@
  */
 
 import type * as git from "@fluidframework/gitresources";
+import { executeApiWithMetric } from "@fluidframework/server-services-utils";
 import { IExternalWriterConfig, IRepositoryManager } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
-import { executeApiWithMetric } from "./helpers";
 
 export abstract class RepositoryManagerBase implements IRepositoryManager {
 	constructor(

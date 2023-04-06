@@ -12,7 +12,6 @@ export {
 	BaseGitRestTelemetryProperties,
 	checkSoftDeleted,
 	Constants,
-    executeApiWithMetric,
 	exists,
 	getExternalWriterParams,
 	getGitDirectory,
