@@ -16,7 +16,6 @@ import {
 	DriverErrorType,
 } from "@fluidframework/driver-definitions";
 import {
-	canRetryOnError,
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
@@ -213,11 +212,15 @@ export class OdspDelayLoadedDeltaStream {
 		}
 	}
 
-	private async scheduleJoinSessionRefresh(delta: number, requestSocketToken: boolean) {
+	private async scheduleJoinSessionRefresh(
+		delta: number,
+		requestSocketToken: boolean,
+		clientId: string | undefined,
+	) {
 		await new Promise<void>((resolve, reject) => {
 			this.joinSessionRefreshTimer = setTimeout(() => {
 				getWithRetryForTokenRefresh(async (options) => {
-					await this.joinSession(requestSocketToken, options, true);
+					await this.joinSession(requestSocketToken, options, true, clientId);
 					resolve();
 				}).catch((error) => {
 					reject(error);
@@ -230,17 +233,27 @@ export class OdspDelayLoadedDeltaStream {
 		requestSocketToken: boolean,
 		options: TokenFetchOptionsEx,
 		isRefreshingJoinSession: boolean,
+		clientId?: string,
 	) {
 		// If this call is to refresh the join session for the current connection but we are already disconnected in
-		// the meantime then do not make the call. However, we should not have come here if that is the case because
-		// timer should have been disposed, but due to race condition with the timer we should not make the call and
-		// throw error.
-		if (isRefreshingJoinSession && this.currentConnection === undefined) {
+		// the meantime or disconnected and then reconnected then do not make the call. However, we should not have
+		// come here if that is the case because timer should have been disposed, but due to race condition with the
+		// timer we should not make the call and throw error.
+		if (
+			isRefreshingJoinSession &&
+			(this.currentConnection === undefined || this.currentConnection.clientId !== clientId)
+		) {
 			this.clearJoinSessionTimer();
 			throw new NonRetryableError(
 				"JoinSessionRefreshTimerNotCancelled",
 				DriverErrorType.genericError,
-				{ driverVersion },
+				{
+					driverVersion,
+					details: JSON.stringify({
+						schedulerClientId: clientId,
+						currentClientId: this.currentConnection?.clientId,
+					}),
+				},
 			);
 		}
 		const response = await this.joinSessionCore(
@@ -333,17 +346,16 @@ export class OdspDelayLoadedDeltaStream {
 				this.scheduleJoinSessionRefresh(
 					response.refreshAfterDeltaMs,
 					requestSocketToken,
+					this.currentConnection?.clientId,
 				).catch((error) => {
-					const canRetry = canRetryOnError(error);
-					if (!canRetry) {
-						this.mc.logger.sendTelemetryEvent(
-							{
-								eventName: "JoinSessionRefreshError",
-								details: JSON.stringify(props),
-							},
-							error,
-						);
-					}
+					// Log the error and do nothing as the reconnection would fetch the join session.
+					this.mc.logger.sendTelemetryEvent(
+						{
+							eventName: "JoinSessionRefreshError",
+							details: JSON.stringify(props),
+						},
+						error,
+					);
 				});
 			} else {
 				// Logging just for informational purposes to help with debugging as this is a new feature.
