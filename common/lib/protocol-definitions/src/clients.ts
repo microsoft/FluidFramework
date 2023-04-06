@@ -111,6 +111,9 @@ export interface ISequencedClient {
 	sequenceNumber: number;
 }
 
+/**
+ * TODO
+ */
 export interface ISignalClient {
 	/**
 	 * The {@link ISignalClient.client}'s unique ID.
