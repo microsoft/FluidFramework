@@ -18,7 +18,7 @@ const newConfig = {
 	"recursive": true,
 	"reporter": "@fluid-tools/benchmark/dist/MochaMemoryTestReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
-	"require": [...config.require, "node_modules/@fluidframework/mocha-test-setup"],
+	"require": [...config.require, "node_modules/@fluid-internal/mocha-test-setup"],
 	"spec": [
 		"dist/test/benchmark/**/*.memory.spec.js",
 		"dist/test/benchmark/**/*.all.spec.js",
