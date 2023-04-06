@@ -8,7 +8,7 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { Clock20Regular } from '@fluentui/react-icons';
+import { Clock20Regular } from "@fluentui/react-icons";
 import { FilteredAudienceHistoryData } from "./AudienceView";
 
 /**
@@ -36,8 +36,8 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 				<TableRow>
 					{audienceHistoryColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === 'clientId' && <Avatar />}
-							{column.columnKey === 'time' && <Clock20Regular />}
+							{column.columnKey === "clientId" && <Avatar />}
+							{column.columnKey === "time" && <Clock20Regular />}
 							{column.label}
 						</TableHeaderCell>
 					))}
@@ -45,7 +45,12 @@ export function AudienceHistoryTable(props: AudienceHistoryTableProps): React.Re
 			</TableHeader>
 			<TableBody>
 				{audienceHistoryItems.map((item, itemIndex) => (
-					<TableRow key={itemIndex}>
+					<TableRow
+						key={itemIndex}
+						style={{
+							backgroundColor: item.changeKind === "added" ? "#90ee90" : "#FF7377",
+						}}
+					>
 						<TableCell>{item.clientId}</TableCell>
 						<TableCell>{item.time}</TableCell>
 					</TableRow>

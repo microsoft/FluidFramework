@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import {
-	Divider,
-} from "@fluentui/react-components";
+import { Divider } from "@fluentui/react-components";
 
 import {
 	AudienceChangeLogEntry,
@@ -101,9 +99,9 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	return (
 		<>
 			<Divider appearance="brand"> Audience State </Divider>
-			<AudienceStateTable audienceStateItems={audienceStateItems}/>
+			<AudienceStateTable audienceStateItems={audienceStateItems} />
 			<Divider appearance="brand"> Audience History </Divider>
-			<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems}/>
+			<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems} />
 		</>
 	);
 }
@@ -145,6 +143,7 @@ function AudienceStateDataFilter(
 export interface FilteredAudienceHistoryData {
 	clientId: string;
 	time: string;
+	changeKind: string;
 }
 
 /**
@@ -163,10 +162,12 @@ function AudienceHistoryDataFilter(
 		const time = wasChangeToday
 			? changeTimeStamp.toTimeString()
 			: changeTimeStamp.toDateString();
+		const changeKind = entry.changeKind;
 
 		return {
 			clientId,
 			time,
+			changeKind,
 		};
 	});
 }

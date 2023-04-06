@@ -8,7 +8,7 @@ import {
 	TableHeader,
 	TableHeaderCell,
 } from "@fluentui/react-components";
-import { EditRegular, Search20Regular } from '@fluentui/react-icons';
+import { EditRegular, Search20Regular } from "@fluentui/react-icons";
 import { FilteredAudienceStateData } from "./AudienceView";
 
 /**
@@ -30,6 +30,7 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 		{ columnKey: "userId", label: "UserId" },
 		{ columnKey: "mode", label: "Mode" },
 		{ columnKey: "scopes", label: "Scopes" },
+		{ columnKey: "time", label: "Time" },
 	];
 
 	return (
@@ -38,10 +39,10 @@ export function AudienceStateTable(props: AudienceStateTableProps): React.ReactE
 				<TableRow>
 					{audienceStateColumns.map((column, columnIndex) => (
 						<TableHeaderCell key={columnIndex}>
-							{column.columnKey === 'clientId' && <Avatar />}
-							{column.columnKey === 'userId' && <Avatar />}
-							{column.columnKey === 'mode' && <EditRegular />}
-							{column.columnKey === 'scopes' && <Search20Regular />}
+							{column.columnKey === "clientId" && <Avatar />}
+							{column.columnKey === "userId" && <Avatar />}
+							{column.columnKey === "mode" && <EditRegular />}
+							{column.columnKey === "scopes" && <Search20Regular />}
 							{column.label}
 						</TableHeaderCell>
 					))}
