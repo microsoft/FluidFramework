@@ -33,44 +33,37 @@ export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
 		 * Node with children.
 		 */
 		case VisualNodeKind.TreeNode:
-			view = <TreeView containerId={containerId} node={node} />;
-			break;
+			return <TreeView containerId={containerId} node={node} />;
 		/**
 		 * FluidObjectNode with children.
 		 */
 		case VisualNodeKind.FluidTreeNode:
-			view = <FluidTreeView containerId={containerId} node={node} />;
-			break;
+			return <FluidTreeView containerId={containerId} node={node} />;
 		/**
 		 * Node with primitive value.
 		 */
 		case VisualNodeKind.ValueNode:
-			view = <ValueView containerId={containerId} node={node} />;
-			break;
+			return <ValueView containerId={containerId} node={node} />;
 		/**
 		 * FluidObjectNode with primitive value.
 		 */
 		case VisualNodeKind.FluidValueNode:
-			view = <FluidValueView containerId={containerId} node={node} />;
-			break;
+			return <FluidValueView containerId={containerId} node={node} />;
 		/**
 		 * Unknown data type.
 		 */
 		case VisualNodeKind.UnknownObjectNode:
-			view = <UnknownDataView containerId={containerId} node={node} />;
-			break;
+			return <UnknownDataView containerId={containerId} node={node} />;
 		/**
 		 * Unknown SharedObject data type.
 		 */
 		case VisualNodeKind.FluidUnknownObjectNode:
-			view = <UnknownFluidObjectView containerId={containerId} node={node} />;
-			break;
+			return <UnknownFluidObjectView containerId={containerId} node={node} />;
 		/**
 		 * POST request to FluidClientDebugger.
 		 */
 		case VisualNodeKind.FluidHandleNode:
-			view = <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
-			break;
+			return <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
 		default:
 			view = 
 			<div>
