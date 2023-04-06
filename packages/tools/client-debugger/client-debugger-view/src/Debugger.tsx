@@ -5,13 +5,15 @@
 import React from "react";
 
 import {
+	ContainerListMessage,
+	ContainerListMessageType,
 	ContainerMetadata,
+	GetContainerListMessage,
+	GetContainerListMessageType,
+	handleIncomingMessage,
 	IMessageRelay,
 	InboundHandlers,
-	RegistryChangeMessage,
 	ISourcedDebuggerMessage,
-	handleIncomingMessage,
-	IDebuggerMessage,
 } from "@fluid-tools/client-debugger";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
@@ -29,8 +31,8 @@ initializeFluentUiIcons();
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: IDebuggerMessage = {
-	type: "GET_CONTAINER_LIST",
+const getContainerListMessage: GetContainerListMessage = {
+	type: GetContainerListMessageType,
 	data: undefined,
 };
 
@@ -86,8 +88,8 @@ export function FluidClientDebuggers(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["REGISTRY_CHANGE"]: (untypedMessage) => {
-				const message = untypedMessage as RegistryChangeMessage;
+			[ContainerListMessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerListMessage;
 				setContainers(message.data.containers);
 				return true;
 			},
@@ -104,7 +106,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 
 		messageRelay.on("message", messageHandler);
 
-		messageRelay.postMessage(getContainerListMessage);
+		messageRelay.postMessage<GetContainerListMessage>(getContainerListMessage);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
