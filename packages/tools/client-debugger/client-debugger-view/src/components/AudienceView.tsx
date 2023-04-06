@@ -4,12 +4,7 @@
  */
 import React from "react";
 import {
-	TableBody,
-	TableCell,
-	TableRow,
-	Table,
-	TableHeader,
-	TableHeaderCell,
+	Divider,
 } from "@fluentui/react-components";
 
 import {
@@ -25,6 +20,10 @@ import {
 } from "@fluid-tools/client-debugger";
 
 import { useMessageRelay } from "../MessageRelayContext";
+
+import { AudienceStateTable } from "./AudienceStateTable";
+import { AudienceHistoryTable } from "./AudienceHistoryTable";
+
 import { Waiting } from "./Waiting";
 
 // TODOs:
@@ -42,20 +41,6 @@ export type AudienceViewProps = HasContainerId;
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const { containerId } = props;
-
-	// Columns for rendering audience state
-	const audienceStateColumns = [
-		{ columnKey: "clientId", label: "ClientId" },
-		{ columnKey: "userId", label: "UserId" },
-		{ columnKey: "mode", label: "Mode" },
-		{ columnKey: "scopes", label: "Scopes" },
-	];
-
-	// Columns for rendering audience history
-	const audienceHistoryColumns = [
-		{ columnKey: "clientId", label: "ClientId" },
-		{ columnKey: "time", label: "Time" },
-	];
 
 	const messageRelay = useMessageRelay();
 
@@ -108,63 +93,25 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const audienceStateItems = AudienceStateDataFilter(audienceData.audienceState);
 	const audienceHistoryItems = AudienceHistoryDataFilter(audienceData.audienceHistory).reverse();
 
-	console.log("audienceData.audienceHistory:", audienceHistoryItems);
-
 	// TODO: Determine if myClientMetaData is necessary
 	// const myClientMetadata = audienceData.audienceState.find(
 	// 	(audience) => audience.clientId === audienceData.clientId,
 	// )?.client;
 
 	return (
-		<div>
-			<Table size="small" aria-label="Audience state table">
-				<TableHeader>
-					<TableRow>
-						{audienceStateColumns.map((column, columnIndex) => (
-							<TableHeaderCell key={columnIndex}>{column.label}</TableHeaderCell>
-						))}
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{audienceStateItems.map((item, itemIndex) => (
-						<TableRow key={itemIndex}>
-							<TableCell>{item.clientId}</TableCell>
-							<TableCell>{item.userId} </TableCell>
-							<TableCell>{item.mode}</TableCell>
-							<TableCell>
-								{item.scopes.map((scope, scopeIndex) => (
-									<div key={scopeIndex}>{scope}</div>
-								))}
-							</TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-			<Table size="small" aria-label="Audience history table">
-				<TableHeader>
-					<TableRow>
-						{audienceHistoryColumns.map((column, columnIndex) => (
-							<TableHeaderCell key={columnIndex}>{column.label}</TableHeaderCell>
-						))}
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{audienceHistoryItems.map((item, itemIndex) => (
-						<TableRow key={itemIndex}>
-							<TableCell>{item.clientId}</TableCell>
-							<TableCell>{item.time} </TableCell>
-						</TableRow>
-					))}
-				</TableBody>
-			</Table>
-		</div>
+		<>
+			<Divider appearance="brand"> Audience State </Divider>
+			<AudienceStateTable audienceStateItems={audienceStateItems}/>
+			<Divider appearance="brand"> Audience History </Divider>
+			<AudienceHistoryTable audienceHistoryItems={audienceHistoryItems}/>
+		</>
 	);
 }
 
 /**
  * Filtered audience state data for {@link AudienceStateDataFilter}
  */
-interface FilteredAudienceStateData {
+export interface FilteredAudienceStateData {
 	clientId: string;
 	userId: string;
 	mode: string;
@@ -175,7 +122,7 @@ interface FilteredAudienceStateData {
  * Removes unncessary data in audienceData.audienceState
  */
 function AudienceStateDataFilter(
-	audienceStateData: AudienceClientMetaData[],
+	audienceStateData: AudienceClientMetadata[],
 ): FilteredAudienceStateData[] {
 	return audienceStateData.map((entry) => {
 		const clientId = entry.clientId;
@@ -195,7 +142,7 @@ function AudienceStateDataFilter(
 /**
  * Filtered audience state data for {@link AudienceHistoryDataFilter}
  */
-interface FilteredAudienceHistoryData {
+export interface FilteredAudienceHistoryData {
 	clientId: string;
 	time: string;
 }
