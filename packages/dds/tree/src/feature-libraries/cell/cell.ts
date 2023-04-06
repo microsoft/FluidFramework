@@ -128,7 +128,6 @@ export function replaceContent(oldContentDst: CellId, newContentSrc: CellId): Ce
 export function compose<TDeepChange>(
 	changes: TaggedChange<CellChange<TDeepChange>>[],
 	composeDeep: (changes: TaggedChange<TDeepChange>[]) => TDeepChange,
-	genId: () => CellId,
 	crossCellManager: CrossCellManager<TDeepChange>,
 ): CellChange<TDeepChange> {
 	const composed: CellChange<TDeepChange> = {};
@@ -175,9 +174,8 @@ export function compose<TDeepChange>(
 }
 
 export function invert<TDeepChange>(
-	{ change, revision }: TaggedChange<CellChange<TDeepChange>>,
+	change: CellChange<TDeepChange>,
 	invertDeep: (change: TDeepChange) => TDeepChange,
-	genId: () => CellId,
 	crossCellManager: CrossCellManager<TDeepChange>,
 ): CellChange<TDeepChange> {
 	const inverted: CellChange<TDeepChange> = {};
@@ -209,7 +207,6 @@ export function rebase<TDeepChange>(
 		change: TDeepChange | undefined,
 		baseChange: TDeepChange | undefined,
 	) => TDeepChange | undefined,
-	genId: () => CellId,
 	crossCellManager: CrossCellManager<TDeepChange>,
 ): CellChange<TDeepChange> {
 	const deep = rebaseDeep(change.deep, over.change.deep);
@@ -223,7 +220,10 @@ export function rebase<TDeepChange>(
 			const shallow: ShallowChange = { ...change.shallow };
 			const rebased: CellChange<TDeepChange> = { shallow };
 			if (over.change.shallow.newContentSrc !== undefined) {
-				shallow.oldContentDst = change.shallow.oldContentDst ?? genId();
+				// Since this change is removing the content that was put in place by `over`,
+				// we adopt that content's original source as its destination when we replace it.
+				// Composing `over` with this change will lead to the replaced content not being moved.
+				shallow.oldContentDst = over.change.shallow.newContentSrc;
 				// Any deep changes (within this revision) that apply to the content put in place by `over` should
 				// be represented as part of the change on this cell.
 				const newDeep = crossCellManager.receive(over.change.shallow.newContentSrc);
