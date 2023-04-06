@@ -65,5 +65,5 @@ export {
 	convertWholeFlatSummaryToSnapshotTreeAndBlobs,
 } from "./storageUtils";
 export { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
-export { getOrCreateRepository, getRandomInt } from "./utils";
+export { getOrCreateRepository } from "./utils";
 export { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";

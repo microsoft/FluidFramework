@@ -17,7 +17,6 @@ import {
 import {
 	canSummarize,
 	canWrite,
-	getRandomInt,
 	isNetworkError,
 	NetworkError,
 	validateTokenClaims,
@@ -39,6 +38,7 @@ import {
 	createNackMessage,
 	createRoomLeaveMessage,
 	generateClientId,
+	getRandomInt,
 	ConnectionCountLogger,
 } from "../utils";
 
