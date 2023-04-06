@@ -13,6 +13,10 @@ export {
 	ApplyMultiplicity,
 	ValueFieldTreeFromSchema,
 	FlexibleObject,
+	EditableSequenceField,
+	TypedField,
 } from "./schemaAware";
 
 export { NamesFromSchema, ValuesOf, TypedValue, PrimitiveValueSchema } from "./schemaAwareUtil";
+
+export { UntypedSequenceField } from "./partlyTyped";

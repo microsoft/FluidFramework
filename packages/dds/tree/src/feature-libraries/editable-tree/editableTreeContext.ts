@@ -21,7 +21,7 @@ import {
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../defaultChangeFamily";
 import { singleMapTreeCursor } from "../mapTreeCursor";
-import { applyFieldTypesFromContext, ContextuallyTypedNodeData } from "../contextuallyTyped";
+import { applyFieldTypesFromContext, ContextuallyTypedFieldData } from "../contextuallyTyped";
 import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -63,7 +63,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 */
 	get root(): EditableField;
 
-	set root(data: ContextuallyTypedNodeData | undefined);
+	set root(data: ContextuallyTypedFieldData);
 
 	/**
 	 * Gets or sets the root field of the tree.
@@ -76,7 +76,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 */
 	get unwrappedRoot(): UnwrappedEditableField;
 
-	set unwrappedRoot(data: ContextuallyTypedNodeData | undefined);
+	set unwrappedRoot(data: ContextuallyTypedFieldData);
 
 	/**
 	 * Schema used within this context.
@@ -165,7 +165,7 @@ export class ProxyContext implements EditableTreeContext {
 		return this.getRoot(true);
 	}
 
-	public set unwrappedRoot(value: ContextuallyTypedNodeData | undefined) {
+	public set unwrappedRoot(value: ContextuallyTypedFieldData) {
 		// Note that an implementation of `set root` might change in the future,
 		// see a comment in there regarding the `replaceNodes` and `replaceField` semantics.
 		// This setter might want to keep the `replaceNodes` semantics for the cases when the root is unwrapped,
@@ -179,7 +179,7 @@ export class ProxyContext implements EditableTreeContext {
 		return this.getRoot(false);
 	}
 
-	public set root(value: ContextuallyTypedNodeData | undefined) {
+	public set root(value: ContextuallyTypedFieldData) {
 		const rootField = this.getRoot(false);
 		const mapTrees = applyFieldTypesFromContext(this.schema, rootField.fieldSchema, value);
 		const cursors = mapTrees.map(singleMapTreeCursor);
