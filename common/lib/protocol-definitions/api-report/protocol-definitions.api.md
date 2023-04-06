@@ -63,7 +63,7 @@ export interface IClient {
     details: IClientDetails;
     mode: ConnectionMode;
     permission: string[];
-    scopes: string[];
+    scopes: (ScopeType | string)[];
     timestamp?: number;
     user: IUser;
 }
@@ -446,7 +446,7 @@ export interface ITokenClaims {
     exp: number;
     iat: number;
     jti?: string;
-    scopes: string[];
+    scopes: (ScopeType | string)[];
     tenantId: string;
     user: IUser;
     ver: string;
