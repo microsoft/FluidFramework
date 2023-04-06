@@ -14,6 +14,8 @@ import {
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	GetContainerListMessageType,
+	ContainerListMessageType,
 } from "./messaging";
 import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 import { ContainerMetadata } from "./ContainerMetadata";
@@ -108,7 +110,7 @@ export class FluidDevtools
 	 * Handlers for inbound messages specific to FluidDevTools.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		["GET_CONTAINER_LIST"]: () => {
+		[GetContainerListMessageType]: () => {
 			this.postContainerList();
 			return true;
 		},
@@ -139,7 +141,7 @@ export class FluidDevtools
 		);
 
 		postMessagesToWindow<ContainerListMessage>(devtoolsMessageLoggingOptions, {
-			type: "CONTAINER_LIST",
+			type: ContainerListMessageType,
 			data: {
 				containers,
 			},
