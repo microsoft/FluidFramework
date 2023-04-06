@@ -12,6 +12,7 @@ importers:
       '@commitlint/cli': ^17.1.2
       '@commitlint/config-conventional': ^17.1.0
       '@commitlint/cz-commitlint': ^17.1.2
+      '@fluidframework/build-common': ^1.1.0
       '@fluidframework/test-tools': ^0.2.3074
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.34.4
@@ -33,6 +34,7 @@ importers:
       '@commitlint/cli': 17.2.0
       '@commitlint/config-conventional': 17.2.0
       '@commitlint/cz-commitlint': 17.2.0_yes7iyjckc3rubj3ixzwc3ince
+      '@fluidframework/build-common': 1.1.0
       '@fluidframework/test-tools': 0.2.3074
       '@microsoft/api-documenter': 7.21.6
       '@microsoft/api-extractor': 7.34.4
