@@ -171,7 +171,7 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 				mockConfigProvider(settings),
 			);
 
-			// s1
+			// summary1
 			const { summaryVersion } = await summarizeNow(summarizer);
 
 			const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
