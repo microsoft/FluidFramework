@@ -7,7 +7,11 @@ import child_process from "child_process";
 import fs from "fs";
 import ps from "ps-node";
 import commander from "commander";
-import { TestDriverTypes, DriverEndpoint } from "@fluidframework/test-driver-definitions";
+import {
+	TestDriverTypes,
+	DriverEndpoint,
+	ITestDriver,
+} from "@fluidframework/test-driver-definitions";
 import { ITelemetryLogger } from "@fluidframework/common-definitions";
 import { ILoadTestConfig } from "./testConfigFile";
 import { createLogger, createTestDriver, getProfile, initialize, safeExit } from "./utils";
@@ -76,7 +80,7 @@ async function main() {
 	const debug: true | undefined = commander.debug;
 	const log: string | undefined = commander.log;
 	const verbose: true | undefined = commander.verbose;
-	const seed: number | undefined = commander.seed;
+	const seed: number = commander.seed ?? Date.now();
 	const browserAuth: true | undefined = commander.browserAuth;
 	const credFile: string | undefined = commander.credFile;
 	const enableMetrics: boolean = commander.enableMetrics ?? false;
@@ -90,12 +94,13 @@ async function main() {
 
 	const testUsers = await getTestUsers(credFile);
 
-	await orchestratorProcess(driver, endpoint, profile, {
+	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, browserAuth);
+
+	await orchestratorProcess(testDriver, profile, {
 		testId,
 		debug,
 		verbose,
 		seed,
-		browserAuth,
 		enableMetrics,
 		createTestId,
 		testUsers,
@@ -107,32 +112,19 @@ async function main() {
  * Implementation of the orchestrator process. Returns the return code to exit the process with.
  */
 async function orchestratorProcess(
-	driver: TestDriverTypes,
-	endpoint: DriverEndpoint | undefined,
+	testDriver: ITestDriver,
 	profile: ILoadTestConfig,
 	args: {
 		testId?: string;
 		debug?: true;
 		verbose?: true;
-		seed?: number;
-		browserAuth?: true;
+		seed: number;
 		enableMetrics?: boolean;
 		createTestId?: boolean;
 		testUsers?: ITestUserConfig;
 		profileName: string;
 	},
 ) {
-	const seed = args.seed ?? Date.now();
-	const seedArg = `0x${seed.toString(16)}`;
-	const logger = await createLogger({
-		driverType: driver,
-		driverEndpointName: endpoint,
-		profile: args.profileName,
-		runId: undefined,
-	});
-
-	const testDriver = await createTestDriver(driver, endpoint, seed, undefined, args.browserAuth);
-
 	const url = await (args.testId !== undefined && args.createTestId === false
 		? // If testId is provided and createTestId is false, then load the file;
 		  testDriver.createContainerUrl(args.testId)
@@ -141,8 +133,7 @@ async function orchestratorProcess(
 		  // In case testId is provided, name of the file to be created is taken as the testId provided
 		  initialize(
 				testDriver,
-				seed,
-				endpoint,
+				args.seed,
 				profile,
 				args.verbose === true,
 				args.profileName,
@@ -156,12 +147,19 @@ async function orchestratorProcess(
 	console.log(`Selected test profile: ${args.profileName}`);
 	console.log(`Estimated run time: ${estRunningTimeMin} minutes\n`);
 
+	const logger = await createLogger({
+		driverType: testDriver.type,
+		driverEndpointName: testDriver.endpointName,
+		profile: args.profileName,
+		runId: undefined,
+	});
+
 	const runnerArgs: string[][] = [];
 	for (let i = 0; i < profile.numClients; i++) {
 		const childArgs: string[] = [
 			"./dist/runner.js",
 			"--driver",
-			driver,
+			testDriver.type,
 			"--profile",
 			args.profileName,
 			"--runId",
@@ -169,7 +167,7 @@ async function orchestratorProcess(
 			"--url",
 			url,
 			"--seed",
-			seedArg,
+			`0x${args.seed.toString(16)}`,
 		];
 		if (args.debug === true) {
 			const debugPort = 9230 + i; // 9229 is the default and will be used for the root orchestrator process
@@ -182,8 +180,8 @@ async function orchestratorProcess(
 			childArgs.push("--enableOpsMetrics");
 		}
 
-		if (endpoint) {
-			childArgs.push(`--driverEndpoint`, endpoint);
+		if (testDriver.endpointName !== undefined) {
+			childArgs.push(`--driverEndpoint`, testDriver.endpointName);
 		}
 
 		runnerArgs.push(childArgs);
@@ -222,9 +220,9 @@ async function orchestratorProcess(
 					username !== undefined ? args.testUsers?.credentials[username] : undefined;
 				const envVar = { ...process.env };
 				if (username !== undefined && password !== undefined) {
-					if (endpoint === "odsp") {
+					if (testDriver.endpointName === "odsp") {
 						envVar.login__odsp__test__accounts = createLoginEnv(username, password);
-					} else if (endpoint === "odsp-df") {
+					} else if (testDriver.endpointName === "odsp-df") {
 						envVar.login__odspdf__test__accounts = createLoginEnv(username, password);
 					}
 				}

@@ -10,6 +10,7 @@ import * as nconf from "nconf";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { ITokenRevocationManager } from "@fluidframework/server-services-core";
 import { ICache, ITenantService, RestGitService, ITenantCustomDataExternal } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
@@ -134,5 +135,41 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 			}
 		}
 		next();
+	};
+}
+
+export function verifyTokenNotRevoked(
+	tokenRevocationManager: ITokenRevocationManager | undefined,
+): RequestHandler {
+	return async (request, response, next) => {
+		try {
+			if (tokenRevocationManager) {
+				const tenantId = request.params.tenantId;
+				const authorization = request.get("Authorization");
+				const token = parseToken(tenantId, authorization);
+				const claims = decode(token) as ITokenClaims;
+
+				let isTokenRevoked = false;
+				if (claims.jti) {
+					isTokenRevoked = await tokenRevocationManager.isTokenRevoked(
+						tenantId,
+						claims.documentId,
+						claims.jti,
+					);
+				}
+
+				if (isTokenRevoked) {
+					throw new NetworkError(
+						403,
+						"Permission denied. Token has been revoked.",
+						false /* canRetry */,
+						true /* isFatal */,
+					);
+				}
+			}
+			next();
+		} catch (error) {
+			return handleResponse(Promise.reject(error), response);
+		}
 	};
 }
