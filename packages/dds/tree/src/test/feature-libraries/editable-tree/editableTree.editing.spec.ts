@@ -195,7 +195,7 @@ describe("editable-tree: editing", () => {
 				[typeNameSymbol]: complexPhoneSchema.name,
 				prefix: "+1",
 				number: "2345",
-			};
+			} as unknown as ComplexPhone;
 		}
 
 		const globalPhonesKey: FieldKey = globalFieldSymbolSequencePhones;

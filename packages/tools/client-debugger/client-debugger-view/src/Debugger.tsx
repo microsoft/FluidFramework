@@ -106,7 +106,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 
 		messageRelay.on("message", messageHandler);
 
-		messageRelay.postMessage(getContainerListMessage);
+		messageRelay.postMessage<GetContainerListMessage>(getContainerListMessage);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);

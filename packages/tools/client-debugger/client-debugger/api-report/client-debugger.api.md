@@ -365,7 +365,7 @@ export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDi
 
 // @internal
 export interface IMessageRelay<TSend extends IDebuggerMessage = IDebuggerMessage, TReceive extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEventProvider<IMessageRelayEvents<TReceive>> {
-    postMessage: (message: TSend) => void;
+    postMessage<TPost extends TSend>(message: TPost): void;
 }
 
 // @internal

@@ -23,6 +23,13 @@ export interface IMessageRelayEvents<
 /**
  * Manages relaying messages between the consumer of this interface, and some external message sender/receiver.
  *
+ * @remarks
+ *
+ * To send a message **to** the external recipient, call {@link IMessageRelay.postMessage}.
+ *
+ * To be notified when a message is received **from** the external sender, subscribe to the "message" event
+ * via {@link @fluidframework/common-definitions#IEventProvider.on}.
+ *
  * @internal
  */
 export interface IMessageRelay<
@@ -32,5 +39,5 @@ export interface IMessageRelay<
 	/**
 	 * Posts the provided message to external recipient.
 	 */
-	postMessage: (message: TSend) => void;
+	postMessage<TPost extends TSend>(message: TPost): void;
 }
