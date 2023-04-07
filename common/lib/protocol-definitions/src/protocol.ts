@@ -90,6 +90,13 @@ export enum SignalType {
 	ClientLeave = "leave",
 }
 
+export enum SignalSource {
+	/**
+	 * System signal sent to indicate a new client has joined the collaboration.
+	 */
+	External = "external",
+}
+
 /**
  * Messages to track latency trace
  */
