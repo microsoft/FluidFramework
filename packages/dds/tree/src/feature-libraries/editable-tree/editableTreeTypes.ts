@@ -10,6 +10,7 @@ import {
 	TreeSchemaIdentifier,
 	TreeSchema,
 	ITreeCursor,
+	UpPath,
 } from "../../core";
 import {
 	PrimitiveValue,
@@ -75,7 +76,7 @@ export const contextSymbol: unique symbol = Symbol("editable-tree:context");
 export const on: unique symbol = Symbol("editable-tree:on");
 
 /**
- * Events for {@link EditableTree}.
+ * A collection of events that can be raised by an {@link EditableTree}.
  * These events are triggered while the internal data structures are being updated.
  * Thus these events must not trigger reading of the anchorSet or forest.
  *
@@ -89,11 +90,20 @@ export const on: unique symbol = Symbol("editable-tree:on");
  */
 export interface EditableTreeEvents {
 	/**
-	 * A specific EditableTree node is changing.
+	 * Raised when a specific EditableTree node is changing.
 	 * This includes its values and fields.
-	 * Note that this is shallow: it does not include changes to the values of nodes it its fields for example.
+	 * @param upPath - the path corresponding to the location of the node being changed, upward.
+	 * @param value - the new value stored in the node.
 	 */
-	changing(): void;
+	changing(upPath: UpPath, value: Value): void;
+
+	/**
+	 * Raised when something in the tree is changing, including this node and its descendants.
+	 * This event is called on every parent (transitively) when a change is occurring.
+	 * Includes changes to this node itself.
+	 * @param upPath - the path corresponding to the location of the node being changed, upward.
+	 */
+	subtreeChanging(upPath: UpPath): void;
 }
 
 /**
