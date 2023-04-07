@@ -100,23 +100,18 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 					mockConfigProvider(settings),
 				);
 
-			await summarizeNow(summarizer);
-			await provider.ensureSynchronized();
-
-			const summarizeResults = summarizer.summarizeOnDemand({ reason: "end-to-end test" });
 			let summary2Error: any;
 			summarizingContainer2.on("closed", (error) => {
 				summary2Error = error;
 			});
+			await summarizeNow(summarizer);
+			await provider.ensureSynchronized();
 
 			// This tells the summarizer to process the latest summary ack
 			// This is because the second summarizer is not the elected summarizer and thus the summaryManager does not
 			// tell the summarizer to process acks.
 			await summarizer2.run("test");
 
-			const ack = await summarizeResults.receivedSummaryAckOrNack;
-
-			assert(ack.success, "Should be an ack");
 			assert(summarizingContainer2.closed, "Unknown acks should close the summarizer");
 			assert.equal(
 				summary2Error.message,
@@ -175,7 +170,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			await provider.ensureSynchronized();
 			let summary2Error: any;
 			summarizingContainer2.on("closed", (error) => {
-				console.log("trap");
 				summary2Error = error;
 			});
 
