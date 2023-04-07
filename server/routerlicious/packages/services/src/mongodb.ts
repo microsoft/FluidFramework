@@ -330,7 +330,6 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.collection.updateMany(filter, update, options);
 	}
 
-
 	private async requestWithRetry<TOut>(
 		request: () => Promise<TOut>,
 		callerName: string,
