@@ -13,15 +13,16 @@
  * by the Fluid Client Debugger.
  */
 
-export { AudienceSummary, GetAudienceSummary } from "./audience-messages";
 export { devtoolsMessageSource } from "./Constants";
 export {
+	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
 	DisconnectContainer,
+	GetAudienceSummary,
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
