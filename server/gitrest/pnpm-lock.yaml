@@ -9,7 +9,7 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: 0.11.0-135362
-        version: 0.11.0-135362(@types/node@16.18.16)(mem-fs-editor@9.6.0)(mem-fs@2.2.1)
+        version: 0.11.0-135362(@types/node@16.18.16)
       '@fluidframework/build-common':
         specifier: ^1.1.0
         version: 1.1.0
@@ -101,11 +101,11 @@ importers:
         specifier: ^0.1.0
         version: link:../gitrest-base
       '@fluidframework/server-services-shared':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       '@fluidframework/server-services-utils':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       axios:
         specifier: ^0.26.0
         version: 0.26.1(debug@4.3.4)
@@ -120,7 +120,7 @@ importers:
         version: 2.8.5
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       express:
         specifier: ^4.17.3
         version: 4.18.2
@@ -228,29 +228,29 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       '@fluidframework/protocol-base':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       '@fluidframework/protocol-definitions':
         specifier: ^1.1.0
         version: 1.1.0
       '@fluidframework/server-services-client':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       '@fluidframework/server-services-core':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       '@fluidframework/server-services-shared':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       '@fluidframework/server-services-telemetry':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       '@fluidframework/server-services-utils':
-        specifier: ^0.1038.3000-117199
-        version: 0.1038.3000-117199
+        specifier: ^0.1040.1000-148023
+        version: 0.1040.1000-148023
       async-mutex:
         specifier: ^0.3.2
         version: 0.3.2
@@ -268,7 +268,7 @@ importers:
         version: 2.8.5
       debug:
         specifier: ^4.1.1
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.3.4
       express:
         specifier: ^4.17.3
         version: 4.18.2
@@ -419,7 +419,7 @@ packages:
       '@babel/traverse': 7.20.12
       '@babel/types': 7.20.7
       convert-source-map: 1.9.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       gensync: 1.0.0-beta.2
       json5: 2.2.3
       semver: 6.3.0
@@ -577,7 +577,7 @@ packages:
       '@babel/helper-split-export-declaration': 7.18.6
       '@babel/parser': 7.20.7
       '@babel/types': 7.20.7
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -625,7 +625,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       espree: 9.4.1
       globals: 13.19.0
       ignore: 5.2.4
@@ -637,7 +637,7 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli@0.11.0-135362(@types/node@16.18.16)(mem-fs-editor@9.6.0)(mem-fs@2.2.1):
+  /@fluid-tools/build-cli@0.11.0-135362(@types/node@16.18.16):
     resolution: {integrity: sha512-an4fPu/cFCt4nKZuBfz5GiN4H6j6Jas1mbu8cgmgk66oFNXpH1KOXeUuEhskej0XyE6mo9l17LWc7ymGY6/q8A==}
     engines: {node: '>=14.0.0'}
     dependencies:
@@ -663,7 +663,7 @@ packages:
       jssm-viz-cli: 5.88.3
       minimatch: 7.4.2
       npm-check-updates: 16.6.5
-      oclif: 3.7.0(mem-fs-editor@9.6.0)(mem-fs@2.2.1)
+      oclif: 3.7.0
       semver: 7.3.8
       semver-utils: 1.1.4
       simple-git: 3.16.1
@@ -678,8 +678,6 @@ packages:
       - bluebird
       - encoding
       - esbuild
-      - mem-fs
-      - mem-fs-editor
       - supports-color
       - uglify-js
       - webpack-cli
@@ -720,7 +718,7 @@ packages:
       cosmiconfig: 8.0.0
       danger: 10.9.0(@octokit/core@4.1.0)
       date-fns: 2.29.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       fs-extra: 9.1.0
       glob: 7.2.3
       ignore: 5.2.4
@@ -767,18 +765,6 @@ packages:
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
     dev: false
 
-  /@fluidframework/common-utils@1.0.0:
-    resolution: {integrity: sha512-O3UoZ2dQR/ZWMXTSbDcTH93WMqHmEKoYhYMn6cybESswmMOA2E9UF3B2TkJ+aofBLOLllDKXXGtuhPmu/9rTqQ==}
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@types/events': 3.0.0
-      base64-js: 1.5.1
-      buffer: 6.0.3
-      events: 3.3.0
-      lodash: 4.17.21
-      sha.js: 2.4.11
-    dev: false
-
   /@fluidframework/common-utils@1.1.1:
     resolution: {integrity: sha512-XCPEFE1JAg+juQZYQQVZjHZJlM5+Wm9NxRbsnsix05M1tSq0p3SLqwgfaSGssXhLLX5QtG+aF1QD5a3LA1qtNQ==}
     dependencies:
@@ -817,16 +803,17 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/gitresources@0.1038.3000-117199:
-    resolution: {integrity: sha512-VZbLYNao0tg5k7MYmleCH69SVcT2b0xUCuI/yl7RWgOfnWKtsib2pQj4QN60RVoPl0+1rFMTTS93C34RZDAzrw==}
+  /@fluidframework/gitresources@0.1040.1000-148023:
+    resolution: {integrity: sha512-oGdMT8rhQGFjIPhhkpY14LHIy//mLBw65+G3f1WJS3sWtlPzD9r1XyXVWG1TA4+rNjgX5vgi28xogPFJjx4KDQ==}
     dev: false
 
-  /@fluidframework/protocol-base@0.1038.3000-117199:
-    resolution: {integrity: sha512-leMhMXFnkXa8FNZNTIr5KDpteHbYzVSHTFwHkyspLKceL/I/7s6lLFUZedE17je3pyd47YkBuwjmsABpT0+o3A==}
+  /@fluidframework/protocol-base@0.1040.1000-148023:
+    resolution: {integrity: sha512-jLHk1Wjbw4lWKmHi7o+yHPjuF0KWs9ekCGce1H2opy+Y/ylK9MyH/PXi6UsZa3J40iCxuBOtbRUTteEHpp+ufg==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000-117199
+      '@fluidframework/gitresources': 0.1040.1000-148023
       '@fluidframework/protocol-definitions': 1.1.0
+      events: 3.3.0
       lodash: 4.17.21
     dev: false
 
@@ -836,16 +823,16 @@ packages:
       '@fluidframework/common-definitions': 0.20.1
     dev: false
 
-  /@fluidframework/server-services-client@0.1038.3000-117199:
-    resolution: {integrity: sha512-nhYSibwMrvycuBOvkMIuZU+U23Hshgr8CS+8DP6QAasV6nfLNHRUr6OE7DJU0tyktYl0NskkYVnJ1NegK8PMyA==}
+  /@fluidframework/server-services-client@0.1040.1000-148023:
+    resolution: {integrity: sha512-Cz7codzF8npodz9COvZtLcSu0MiT5i/EyM5/NY1to+zjWnCQRSRNQv2Wn4zYI8Unr/urP7zYLUab1wtKQQ8mQw==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000-117199
-      '@fluidframework/protocol-base': 0.1038.3000-117199
+      '@fluidframework/gitresources': 0.1040.1000-148023
+      '@fluidframework/protocol-base': 0.1040.1000-148023
       '@fluidframework/protocol-definitions': 1.1.0
       axios: 0.26.1(debug@4.3.4)
       crc-32: 1.2.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       json-stringify-safe: 5.0.1
       jsrsasign: 10.6.1
       jwt-decode: 3.1.2
@@ -856,35 +843,37 @@ packages:
       - supports-color
     dev: false
 
-  /@fluidframework/server-services-core@0.1038.3000-117199:
-    resolution: {integrity: sha512-r/1GXIahMp6QOWlursAg4Ht7liaKZMo15k4LanydSjiItovHsMjA6ttSMuXwc6seK6dRyOHX1XRwvfnSCCrPcw==}
+  /@fluidframework/server-services-core@0.1040.1000-148023:
+    resolution: {integrity: sha512-2ZO3a08fxIdUNpAxBA62xlDlCiVx+wv0lEa+aD8RO1YYoik6xpaulhYeVwloroxA+WKMrJKiHDm+n9xt1brr7Q==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
-      '@fluidframework/gitresources': 0.1038.3000-117199
+      '@fluidframework/gitresources': 0.1040.1000-148023
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-services-client': 0.1038.3000-117199
-      '@fluidframework/server-services-telemetry': 0.1038.3000-117199
+      '@fluidframework/server-services-client': 0.1040.1000-148023
+      '@fluidframework/server-services-telemetry': 0.1040.1000-148023
       '@types/nconf': 0.10.3
-      '@types/node': 14.18.36
-      debug: 4.3.4(supports-color@8.1.1)
+      '@types/node': 16.18.16
+      debug: 4.3.4
+      events: 3.3.0
       nconf: 0.12.0
     transitivePeerDependencies:
       - supports-color
     dev: false
 
-  /@fluidframework/server-services-shared@0.1038.3000-117199:
-    resolution: {integrity: sha512-VMssK/kaRj7xYyoMVZ6q8b3rEr57LsXOkGqrMs0wRKB2SZwxAgOwqoPIasFP62J5M50Vi2RmyR/a8MqIW2lPVg==}
+  /@fluidframework/server-services-shared@0.1040.1000-148023:
+    resolution: {integrity: sha512-7wLRmSQCIqt9PvxnUT7t8UGjG+gtEKKoey6sEwwsn/bIJWcPd2d1fq5y5a8MdR97xTDjsE7qrDQxmaTgN4AzGQ==}
     dependencies:
-      '@fluidframework/common-utils': 1.0.0
-      '@fluidframework/gitresources': 0.1038.3000-117199
-      '@fluidframework/protocol-base': 0.1038.3000-117199
+      '@fluidframework/common-utils': 1.1.1
+      '@fluidframework/gitresources': 0.1040.1000-148023
+      '@fluidframework/protocol-base': 0.1040.1000-148023
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-services-client': 0.1038.3000-117199
-      '@fluidframework/server-services-core': 0.1038.3000-117199
-      '@fluidframework/server-services-telemetry': 0.1038.3000-117199
+      '@fluidframework/server-services-client': 0.1040.1000-148023
+      '@fluidframework/server-services-core': 0.1040.1000-148023
+      '@fluidframework/server-services-telemetry': 0.1040.1000-148023
       '@socket.io/redis-adapter': 7.2.0
       body-parser: 1.20.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
+      events: 3.3.0
       ioredis: 4.28.5
       lodash: 4.17.21
       nconf: 0.12.0
@@ -901,8 +890,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@fluidframework/server-services-telemetry@0.1038.3000-117199:
-    resolution: {integrity: sha512-x1t3WCScjrR+iUDfbUhkgLopgVcB6adw7YgQ2I6Ns6zX4lQUOqqtuTa/8yfdYXjbZBb3/nmhAtHlqLQfIYbsLw==}
+  /@fluidframework/server-services-telemetry@0.1040.1000-148023:
+    resolution: {integrity: sha512-68375LXe/Y3Jj8PkPS5XC737M2Ex5NNxeHaskFROrpPYVFWXGAxKfsjCfAcFJwMgJkQREGvoB2nKOPmS1E3f9A==}
     dependencies:
       '@fluidframework/common-utils': 1.1.1
       json-stringify-safe: 5.0.1
@@ -911,14 +900,14 @@ packages:
       uuid: 8.3.2
     dev: false
 
-  /@fluidframework/server-services-utils@0.1038.3000-117199:
-    resolution: {integrity: sha512-FBUL3HN2vh4JLksb53rQhvQpLZ4NJ4IyS4jQi6MYjgZzEzrivNqVgR9k5JaqqSEJ9jZqGKLM7ryk1RAjM8fO9A==}
+  /@fluidframework/server-services-utils@0.1040.1000-148023:
+    resolution: {integrity: sha512-lhx5wkHoW7m//HbAZtmxuBAKG6A1zdFuhqqRW+YJm5quLKJQbh+HaVIwzq/E250GPBcbl5SlaCXvkjbFFZKSug==}
     dependencies:
       '@fluidframework/protocol-definitions': 1.1.0
-      '@fluidframework/server-services-client': 0.1038.3000-117199
-      '@fluidframework/server-services-core': 0.1038.3000-117199
-      '@fluidframework/server-services-telemetry': 0.1038.3000-117199
-      debug: 4.3.4(supports-color@8.1.1)
+      '@fluidframework/server-services-client': 0.1040.1000-148023
+      '@fluidframework/server-services-core': 0.1040.1000-148023
+      '@fluidframework/server-services-telemetry': 0.1040.1000-148023
+      debug: 4.3.4
       express: 4.18.2
       ioredis: 4.28.5
       json-stringify-safe: 5.0.1
@@ -930,6 +919,7 @@ packages:
       split: 1.0.1
       uuid: 8.3.2
       winston: 3.8.2
+      winston-transport: 4.5.0
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -943,7 +933,7 @@ packages:
     engines: {node: '>=10.10.0'}
     dependencies:
       '@humanwhocodes/object-schema': 1.2.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -1031,7 +1021,7 @@ packages:
   /@kwsites/file-exists@1.1.1:
     resolution: {integrity: sha512-m9/5YGR18lIwxSFDwfE3oA7bWuq9kdau6ugN4H2rJeyhFQZcG9AgSHkQtSD15a8WvTgfz9aikZMrKPHvbpqFiw==}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -2194,7 +2184,7 @@ packages:
     dependencies:
       '@oclif/core': 2.4.0
       chalk: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       fs-extra: 9.1.0
     transitivePeerDependencies:
       - supports-color
@@ -2232,7 +2222,7 @@ packages:
       '@oclif/color': 1.0.4
       '@oclif/core': 2.4.0
       chalk: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       fs-extra: 9.1.0
       http-call: 5.3.0
       load-json-file: 5.3.0
@@ -2250,7 +2240,7 @@ packages:
     dependencies:
       '@oclif/core': 2.4.0
       chalk: 4.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       fs-extra: 9.1.0
       http-call: 5.3.0
       lodash: 4.17.21
@@ -2721,7 +2711,7 @@ packages:
     resolution: {integrity: sha512-/r6oF6Myz0K9uatB/pfCi0BhKg/KRMh1OokrqcjlNz6aq40WiXdFLRbHJQuwGHq/KvB+D6141K+IynbVxZGvhw==}
     engines: {node: '>=10.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       notepack.io: 2.2.0
       socket.io-adapter: 2.5.2
       uid2: 0.0.3
@@ -2927,10 +2917,6 @@ packages:
   /@types/nconf@0.10.3:
     resolution: {integrity: sha512-leyIuBk/rMIp9114FlPRkc/cQG+/JzCz1Afx3BD+CwK2ep3ZRxoC843V1rqnE2pC/jRRjANWhuVBEn4clCwlug==}
 
-  /@types/node@14.18.36:
-    resolution: {integrity: sha512-FXKWbsJ6a1hIrRxv+FoukuHnGTgEzKYGi7kilfMae96AL9UNkPFNWJEEYWzdRI9ooIkbr4AKldyuSTLql06vLQ==}
-    dev: false
-
   /@types/node@15.14.9:
     resolution: {integrity: sha512-qjd88DrCxupx/kJD5yQgZdcYKZKSIGBVDIBE1/LTGcNm3d2Np/jxojkdePDdfnBHJc5W7vSMpbJ1aB7p/Py69A==}
     dev: true
@@ -3034,7 +3020,7 @@ packages:
       '@typescript-eslint/scope-manager': 5.20.0
       '@typescript-eslint/type-utils': 5.20.0(eslint@8.27.0)(typescript@4.5.5)
       '@typescript-eslint/utils': 5.20.0(eslint@8.27.0)(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       functional-red-black-tree: 1.0.1
       ignore: 5.2.4
@@ -3061,7 +3047,7 @@ packages:
       '@typescript-eslint/parser': 5.9.1(eslint@8.27.0)(typescript@4.5.5)
       '@typescript-eslint/scope-manager': 5.9.1
       '@typescript-eslint/type-utils': 5.9.1(eslint@8.27.0)(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       functional-red-black-tree: 1.0.1
       ignore: 5.2.4
@@ -3135,7 +3121,7 @@ packages:
       '@typescript-eslint/scope-manager': 5.20.0
       '@typescript-eslint/types': 5.20.0
       '@typescript-eslint/typescript-estree': 5.20.0(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -3155,7 +3141,7 @@ packages:
       '@typescript-eslint/scope-manager': 5.9.1
       '@typescript-eslint/types': 5.9.1
       '@typescript-eslint/typescript-estree': 5.9.1(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       typescript: 4.5.5
     transitivePeerDependencies:
@@ -3197,7 +3183,7 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/utils': 5.20.0(eslint@8.27.0)(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       tsutils: 3.21.0(typescript@4.5.5)
       typescript: 4.5.5
@@ -3216,7 +3202,7 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/experimental-utils': 5.9.1(eslint@8.27.0)(typescript@4.5.5)
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       eslint: 8.27.0
       tsutils: 3.21.0(typescript@4.5.5)
       typescript: 4.5.5
@@ -3250,7 +3236,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.20.0
       '@typescript-eslint/visitor-keys': 5.20.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.3.8
@@ -3271,7 +3257,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.6.0
       '@typescript-eslint/visitor-keys': 5.6.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.3.8
@@ -3292,7 +3278,7 @@ packages:
     dependencies:
       '@typescript-eslint/types': 5.9.1
       '@typescript-eslint/visitor-keys': 5.9.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       is-glob: 4.0.3
       semver: 7.3.8
@@ -3537,7 +3523,7 @@ packages:
     resolution: {integrity: sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==}
     engines: {node: '>= 6.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -3546,7 +3532,7 @@ packages:
     resolution: {integrity: sha512-Zn4cw2NEqd+9fiSVWMscnjyQ1a8Yfoc5oBajLeo5w+YBHgDUcEBY2hS4YpTz6iN5f/2zQiktcuM6tS8x1p9dpA==}
     engines: {node: '>= 8.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       depd: 1.1.2
       humanize-ms: 1.2.1
     transitivePeerDependencies:
@@ -3905,7 +3891,7 @@ packages:
   /axios@1.2.2:
     resolution: {integrity: sha512-bz/J4gS2S3I7mpN/YZfGFTqhXTYzRho8Ay38w2otuuDR322KzFIWm/4W2K6gIwvWaws5n+mnb7D1lN9uD+QH6Q==}
     dependencies:
-      follow-redirects: 1.15.2(debug@4.3.4)
+      follow-redirects: 1.15.2
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -4934,6 +4920,7 @@ packages:
   /crc-32@1.2.0:
     resolution: {integrity: sha512-1uBwHxF+Y/4yF5G48fwnKq6QsIXheor3ZLPT80yGBV1oEUwpPojlEhQbWKVw1VwcTQyMGHK1/XMmTjmlsmTTGA==}
     engines: {node: '>=0.8'}
+    hasBin: true
     dependencies:
       exit-on-epipe: 1.0.1
       printj: 1.1.2
@@ -4986,7 +4973,7 @@ packages:
       async-retry: 1.2.3
       chalk: 2.4.2
       commander: 2.20.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       fast-json-patch: 3.1.1
       get-stdin: 6.0.0
       gitlab: 10.2.1
@@ -5079,6 +5066,17 @@ packages:
     dependencies:
       ms: 2.1.3
 
+  /debug@4.3.4:
+    resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+
   /debug@4.3.4(supports-color@8.1.1):
     resolution: {integrity: sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==}
     engines: {node: '>=6.0'}
@@ -5090,6 +5088,7 @@ packages:
     dependencies:
       ms: 2.1.2
       supports-color: 8.1.1
+    dev: true
 
   /debuglog@1.0.1:
     resolution: {integrity: sha512-syBZ+rnAK3EgMsH2aYEOLUW7mZSY9Gb+0wUMCFsZvcmiz+HigA0LOcq/HoQqVuGG+EKykunc7QG2bzrponfaSw==}
@@ -5382,7 +5381,7 @@ packages:
       base64id: 2.0.0
       cookie: 0.4.2
       cors: 2.8.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       engine.io-parser: 5.0.5
       ws: 8.2.3
     transitivePeerDependencies:
@@ -5570,6 +5569,7 @@ packages:
 
   /eslint-config-prettier@8.5.0(eslint@8.27.0):
     resolution: {integrity: sha512-obmWKLUNCnhtQRKc+tmnYuQl0pFU1ibYJQ5BGhTVB08bHe9wC8qUeG7c08dj9XX+AuPj1YSGSQIHl1pnDHZR0Q==}
+    hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
     dependencies:
@@ -5678,7 +5678,7 @@ packages:
     dependencies:
       '@es-joy/jsdoccomment': 0.33.4
       comment-parser: 1.3.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       escape-string-regexp: 4.0.0
       eslint: 8.27.0
       esquery: 1.4.0
@@ -5840,7 +5840,7 @@ packages:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.1.1
@@ -6269,6 +6269,16 @@ packages:
   /fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
 
+  /follow-redirects@1.15.2:
+    resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
+    dev: true
+
   /follow-redirects@1.15.2(debug@4.3.4):
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
     engines: {node: '>=4.0'}
@@ -6278,7 +6288,8 @@ packages:
       debug:
         optional: true
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
+    dev: false
 
   /for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -6911,6 +6922,7 @@ packages:
   /has-flag@4.0.0:
     resolution: {integrity: sha512-EykJT/Q1KjTWctppgIAgfSO0tKVuZUjhgMr17kqTumMl6Afv3EISleU7qZUzoXDFTAHTDC4NOoG/ZxU3EvlMPQ==}
     engines: {node: '>=8'}
+    dev: true
 
   /has-property-descriptors@1.0.0:
     resolution: {integrity: sha512-62DVLZGoiEBDHQyqG4w9xCuZ7eJEwNmJRWw2VY84Oedb7WFcA27fiEVe8oUQx9hAUJ4ekurquucTGwsyO1XGdQ==}
@@ -7016,7 +7028,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       content-type: 1.0.4
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       is-retry-allowed: 1.2.0
       is-stream: 2.0.1
       parse-json: 4.0.0
@@ -7052,7 +7064,7 @@ packages:
     dependencies:
       '@tootallnate/once': 1.1.2
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -7063,7 +7075,7 @@ packages:
     dependencies:
       '@tootallnate/once': 2.0.0
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -7108,7 +7120,7 @@ packages:
     engines: {node: '>= 6'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -7331,7 +7343,7 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       cluster-key-slot: 1.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       denque: 1.5.1
       lodash.defaults: 4.2.0
       lodash.flatten: 4.4.0
@@ -7785,7 +7797,7 @@ packages:
     resolution: {integrity: sha512-n3s8EwkdFIJCG3BPKBYvskgXGoy88ARzvegkitk60NxRdwltLOTaH7CUiMRXvwYorl0Q712iEjcWB+fK/MrWVw==}
     engines: {node: '>=10'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       istanbul-lib-coverage: 3.2.0
       source-map: 0.6.1
     transitivePeerDependencies:
@@ -9057,7 +9069,7 @@ packages:
     resolution: {integrity: sha512-HHqYQ6mBeiMc+N038w8LkMpDCRquCHWeNmN3v6645P3NhN2+qXOBqvPqo7Rt1VyCMzKhJ733wZqw5B7cQVFNPg==}
     engines: {node: '>= 10.13'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       propagate: 2.0.1
@@ -9426,7 +9438,7 @@ packages:
       ajv-errors: 1.0.1(ajv@6.12.6)
       chalk: 4.1.2
       cosmiconfig: 8.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       globby: 11.1.0
       ignore: 5.2.4
       is-plain-obj: 3.0.0
@@ -9602,6 +9614,7 @@ packages:
 
   /nx@15.5.1:
     resolution: {integrity: sha512-7yvcT6Dc/raLtO7bNK0POmavrV3R1YxfSUVzWylaEgCG6U+rrcDPE+iJMt0TL/ea6szBwvZPi4SmQSE++QMTIA==}
+    hasBin: true
     requiresBuild: true
     peerDependencies:
       '@swc-node/register': ^1.4.2
@@ -9751,7 +9764,7 @@ packages:
       es-abstract: 1.21.1
     dev: true
 
-  /oclif@3.7.0(mem-fs-editor@9.6.0)(mem-fs@2.2.1):
+  /oclif@3.7.0:
     resolution: {integrity: sha512-LtLc7/3lOQ0d6/JKGj8QriIK/MiIcjZXVX3WoynbXUswG/X8oIsSr1+F6Q69VVbXnjbYlbfiP+uYASr36Mrjzg==}
     engines: {node: '>=12.0.0'}
     dependencies:
@@ -9761,7 +9774,7 @@ packages:
       '@oclif/plugin-warn-if-update-available': 2.0.26
       aws-sdk: 2.1310.0
       concurrently: 7.6.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       find-yarn-workspace-root: 2.0.0
       fs-extra: 8.1.0
       github-slugger: 1.5.0
@@ -9771,14 +9784,12 @@ packages:
       semver: 7.3.8
       shelljs: 0.8.5
       tslib: 2.5.0
-      yeoman-environment: 3.13.0(mem-fs-editor@9.6.0)(mem-fs@2.2.1)
+      yeoman-environment: 3.13.0
       yeoman-generator: 5.7.0(yeoman-environment@3.13.0)
       yosay: 2.0.2
     transitivePeerDependencies:
       - bluebird
       - encoding
-      - mem-fs
-      - mem-fs-editor
       - supports-color
     dev: true
 
@@ -10000,7 +10011,7 @@ packages:
     resolution: {integrity: sha512-UJKdSzgd3KOnXXAtqN5+/eeHcvTn1hBkesEmElVgvO/NAYcxAvmjzIGmnNd3Tb/gRAvMBdNRFD4qAWdHxY6QXg==}
     engines: {node: '>=12.10.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       p-queue: 6.6.2
     transitivePeerDependencies:
       - supports-color
@@ -10380,6 +10391,7 @@ packages:
   /printj@1.1.2:
     resolution: {integrity: sha512-zA2SmoLaxZyArQTOPj5LXecR+RagfPSU5Kw1qP+jkWeNlrq+eJZyY2oS68SU1Z/7/myXM4lo9716laOFAVStCQ==}
     engines: {node: '>=0.8'}
+    hasBin: true
     dev: false
 
   /proc-log@1.0.0:
@@ -10543,11 +10555,13 @@ packages:
   /querystring@0.2.0:
     resolution: {integrity: sha512-X/xY82scca2tau62i9mDyU9K+I+djTMUsvwf7xnUX5GLvVzgJybOJf4Y6o9Zx3oJK/LSXg5tTZBjwzqVPaPO2g==}
     engines: {node: '>=0.4.x'}
+    deprecated: The querystring API is considered Legacy. new code should use the URLSearchParams API instead.
     dev: true
 
   /querystring@0.2.1:
     resolution: {integrity: sha512-wkvS7mL/JMugcup3/rMitHmd9ecIGd2lhFhK9N3UUQ450h66d1r3Y9nvXzQAW1Lq+wyx61k/1pfKS5KuKiyEbg==}
     engines: {node: '>=0.4.x'}
+    deprecated: The querystring API is considered Legacy. new code should use the URLSearchParams API instead.
     dev: false
 
   /queue-microtask@1.2.3:
@@ -10592,7 +10606,7 @@ packages:
   /rc-config-loader@4.1.2:
     resolution: {integrity: sha512-qKTnVWFl9OQYKATPzdfaZIbTxcHziQl92zYSxYC6umhOqyAsoj8H8Gq/+aFjAso68sBdjTz3A7omqeAkkF1MWg==}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       js-yaml: 4.1.0
       json5: 2.2.3
       require-from-string: 2.0.2
@@ -11060,18 +11074,22 @@ packages:
 
   /semver@5.3.0:
     resolution: {integrity: sha512-mfmm3/H9+67MCVix1h+IXTpDwL6710LyHuk7+cWC9T1mE0qz4iHhh6r4hU2wrIT9iTsAAC2XQRvfblL028cpLw==}
+    hasBin: true
     dev: false
 
   /semver@5.7.1:
     resolution: {integrity: sha512-sauaDf/PZdVgrLTNYHRtpXa1iRiKcaebiKQ1BJdpQlWH2lCvexQdX55snPFyK7QzpudqbCI0qXFfOasHdyNDGQ==}
+    hasBin: true
 
   /semver@6.3.0:
     resolution: {integrity: sha512-b39TBaTSfV6yBrapU89p5fKekE2m/NwnDocOVruQFS1/veMgdzuPcnOM34M6CwxW8jH/lxEa5rBoDeUwu5HHTw==}
+    hasBin: true
     dev: true
 
   /semver@7.3.4:
     resolution: {integrity: sha512-tCfb2WLjqFAtXn4KEdxIhalnRtoKFN7nAwj0B3ZXCbQloV2tq5eDbcTmT68JJD3nRJq24/XgxtQKFIpQdtvmVw==}
     engines: {node: '>=10'}
+    hasBin: true
     dependencies:
       lru-cache: 6.0.0
     dev: true
@@ -11079,6 +11097,7 @@ packages:
   /semver@7.3.8:
     resolution: {integrity: sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==}
     engines: {node: '>=10'}
+    hasBin: true
     dependencies:
       lru-cache: 6.0.0
 
@@ -11237,7 +11256,7 @@ packages:
     dependencies:
       '@kwsites/file-exists': 1.1.1
       '@kwsites/promise-deferred': 1.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -11288,7 +11307,7 @@ packages:
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -11299,7 +11318,7 @@ packages:
     dependencies:
       accepts: 1.3.8
       base64id: 2.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       engine.io: 6.2.1
       socket.io-adapter: 2.4.0
       socket.io-parser: 4.2.1
@@ -11314,7 +11333,7 @@ packages:
     engines: {node: '>= 10'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       socks: 2.7.1
     transitivePeerDependencies:
       - supports-color
@@ -11325,7 +11344,7 @@ packages:
     engines: {node: '>= 10'}
     dependencies:
       agent-base: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       socks: 2.7.1
     transitivePeerDependencies:
       - supports-color
@@ -11505,7 +11524,7 @@ packages:
     resolution: {integrity: sha512-Xnt9/HHHYfjZ7NeQLvuQDyL1LnbsbddgMFKCuaQKwGCdJm8LnstZIXop+uOY36UR1UXXoHXfMbC1KlVdVd2JLA==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       strip-ansi: 6.0.1
     transitivePeerDependencies:
       - supports-color
@@ -11733,6 +11752,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       has-flag: 4.0.0
+    dev: true
 
   /supports-hyperlinks@1.0.1:
     resolution: {integrity: sha512-HHi5kVSefKaJkGYXbDuKbUGRVxqnWGn3J2e39CYcNJEfWciGq2zYtOhXLTlvrOZW1QU7VX67w7fMmWafHX9Pfw==}
@@ -12331,6 +12351,7 @@ packages:
 
   /update-browserslist-db@1.0.10(browserslist@4.21.4):
     resolution: {integrity: sha512-OztqDenkfFkbSG+tRxBeAnCVPckDBcvibKd35yDONx6OU8N7sqgwc7rCbkJ/WcYtVRZ4ba68d6byhC21GFh7sQ==}
+    hasBin: true
     peerDependencies:
       browserslist: '>= 4.21.0'
     dependencies:
@@ -12395,10 +12416,12 @@ packages:
 
   /uuid@8.0.0:
     resolution: {integrity: sha512-jOXGuXZAWdsTH7eZLtyXMqUb9EcWMGZNbL9YcGBJl4MH4nrxHmZJhEHvyLFrkxo+28uLb/NYRcStH48fnD0Vzw==}
+    hasBin: true
     dev: true
 
   /uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
+    hasBin: true
 
   /v8-compile-cache@2.3.0:
     resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}
@@ -12507,6 +12530,7 @@ packages:
   /webpack@5.75.0:
     resolution: {integrity: sha512-piaIaoVJlqMsPtX/+3KTTO6jfvrSYgauFVdt8cr9LTHKmcq/AMd4mhzsiP7ZF/PGRNPGA8336jldh9l2Kt2ogQ==}
     engines: {node: '>=10.13.0'}
+    hasBin: true
     peerDependencies:
       webpack-cli: '*'
     peerDependenciesMeta:
@@ -12924,12 +12948,10 @@ packages:
     requiresBuild: true
     dev: true
 
-  /yeoman-environment@3.13.0(mem-fs-editor@9.6.0)(mem-fs@2.2.1):
+  /yeoman-environment@3.13.0:
     resolution: {integrity: sha512-eBPpBZCvFzx6yk17x+ZrOHp8ADDv6qHradV+SgdugaQKIy9NjEX5AkbwdTHLOgccSTkQ9rN791xvYOu6OmqjBg==}
     engines: {node: '>=12.10.0'}
-    peerDependencies:
-      mem-fs: ^1.2.0 || ^2.0.0
-      mem-fs-editor: ^8.1.2 || ^9.0.0
+    hasBin: true
     dependencies:
       '@npmcli/arborist': 4.3.1
       are-we-there-yet: 2.0.0
@@ -12939,7 +12961,7 @@ packages:
       cli-table: 0.3.11
       commander: 7.1.0
       dateformat: 4.6.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       diff: 5.0.0
       error: 10.4.0
       escape-string-regexp: 4.0.0
@@ -12983,7 +13005,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       dargs: 7.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.4
       execa: 5.1.1
       github-username: 6.0.0
       lodash: 4.17.21
@@ -12994,7 +13016,7 @@ packages:
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0
-      yeoman-environment: 3.13.0(mem-fs-editor@9.6.0)(mem-fs@2.2.1)
+      yeoman-environment: 3.13.0
     transitivePeerDependencies:
       - encoding
       - supports-color
