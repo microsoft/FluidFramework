@@ -32,12 +32,14 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
 		private readonly externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean = false,
+		apiMetricsSamplingPeriod?: number,
 	) {
 		super(
 			directory,
 			lumberjackBaseProperties,
 			fileSystemManager,
 			enableRepositoryManagerMetrics,
+			apiMetricsSamplingPeriod,
 		);
 	}
 
@@ -390,6 +392,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 		externalStorageManager: IExternalStorageManager,
 		repoPerDocEnabled: boolean,
 		enableRepositoryManagerMetrics: boolean = false,
+		apiMetricsSamplingPeriod?: number,
 	) {
 		super(
 			storageDirectoryConfig,
@@ -398,6 +401,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 			repoPerDocEnabled,
 			enableRepositoryManagerMetrics,
 			true /* enforceSynchronous */,
+			apiMetricsSamplingPeriod,
 		);
 	}
 
@@ -422,6 +426,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 		externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
+		apiMetricsSamplingPeriod?: number,
 	): IRepositoryManager {
 		return new NodegitRepositoryManager(
 			fileSystemManager,
@@ -432,6 +437,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 			externalStorageManager,
 			lumberjackBaseProperties,
 			enableRepositoryManagerMetrics,
+			apiMetricsSamplingPeriod,
 		);
 	}
 }

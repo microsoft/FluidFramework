@@ -6,6 +6,7 @@
 import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from "async-mutex";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { executeApiWithMetric } from "@fluidframework/server-services-utils";
 import { IExternalStorageManager } from "../externalStorageManager";
 import * as helpers from "./helpers";
 import {
@@ -20,6 +21,7 @@ import {
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
+	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
 import { isTransactionTrackerProxyFsPromises, logFileSystemTransactions } from "./filesystems";
 
@@ -53,6 +55,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		externalStorageManager: IExternalStorageManager,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
+		apiMetricsSamplingPeriod?: number,
 	): IRepositoryManager;
 
 	constructor(
@@ -62,6 +65,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		repoPerDocEnabled: boolean,
 		private readonly enableRepositoryManagerMetrics: boolean = false,
 		private readonly enforceSynchronous: boolean = true,
+		private readonly apiMetricsSamplingPeriod?: number,
 	) {
 		this.internalHandler = repoPerDocEnabled
 			? this.repoPerDocInternalHandler.bind(this)
@@ -84,13 +88,14 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			});
 		};
 
-		return this.enableRepositoryManagerMetrics
-			? helpers.executeApiWithMetric(
+		return executeApiWithMetric(
 					async () => this.internalHandler(params, onRepoNotExists, "create"),
-					GitRestLumberEventName.CreateRepo,
+					GitRestLumberEventName.RepositoryManagerFactory,
+					GitRestRepositoryApiCategory.CreateRepo,
+					this.enableRepositoryManagerMetrics,
+					this.apiMetricsSamplingPeriod,
 					helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
-			  )
-			: this.internalHandler(params, onRepoNotExists, "create");
+			  );
 	}
 
 	public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
@@ -108,13 +113,14 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			throw new NetworkError(400, `Repo does not exist ${gitdir}`);
 		};
 
-		return this.enableRepositoryManagerMetrics
-			? helpers.executeApiWithMetric(
+		return executeApiWithMetric(
 					async () => this.internalHandler(params, onRepoNotExists, "open"),
-					GitRestLumberEventName.OpenRepo,
+					GitRestLumberEventName.RepositoryManagerFactory,
+					GitRestRepositoryApiCategory.OpenRepo,
+					this.enableRepositoryManagerMetrics,
+					this.apiMetricsSamplingPeriod,
 					helpers.getLumberjackBasePropertiesFromRepoManagerParams(params),
-			  )
-			: this.internalHandler(params, onRepoNotExists, "open");
+			  );
 	}
 
 	private async repoPerDocInternalHandler(
@@ -246,6 +252,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				this.externalStorageManager,
 				lumberjackBaseProperties,
 				this.enableRepositoryManagerMetrics,
+				this.apiMetricsSamplingPeriod,
 			);
 			// Flush and log fs transactions for soft delete.
 			logFileSystemTransactions(

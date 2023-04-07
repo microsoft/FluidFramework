@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	Value,
 	Anchor,
@@ -314,15 +314,28 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
-		assert(eventName === "changing", 0x5b3 /* unexpected eventName */);
-		const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () => listener());
-		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
-			listener(),
-		);
-		return () => {
-			unsubscribeFromValueChange();
-			unsubscribeFromChildrenChange();
-		};
+		switch (eventName) {
+			case "changing": {
+				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
+				const unsubscribeFromChildrenChange = this.anchorNode.on(
+					"childrenChanging",
+					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+				);
+				return () => {
+					unsubscribeFromValueChange();
+					unsubscribeFromChildrenChange();
+				};
+			}
+			case "subtreeChanging": {
+				const unsubscribeFromSubtreeChange = this.anchorNode.on(
+					"subtreeChanging",
+					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+				);
+				return unsubscribeFromSubtreeChange;
+			}
+			default:
+				unreachableCase(eventName);
+		}
 	}
 }
 

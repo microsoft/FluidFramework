@@ -4,12 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	AllowedUpdateType,
-	ISharedTreeView,
-	SharedTreeFactory,
-	schematizeView,
-} from "@fluid-internal/tree";
+import { AllowedUpdateType, ISharedTreeView, SharedTreeFactory } from "@fluid-internal/tree";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import React from "react";
 import { SinonSandbox, createSandbox } from "sinon";
@@ -20,7 +15,7 @@ describe("useTree()", () => {
 	function createLocalTree(id: string): ISharedTreeView {
 		const factory = new SharedTreeFactory();
 		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
-		const treeView: ISharedTreeView = schematizeView(tree, {
+		const treeView: ISharedTreeView = tree.schematize({
 			schema: appSchemaData,
 			initialTree: {
 				nuts: 0,
