@@ -9,7 +9,12 @@ import {
 	SaveInfo,
 } from "@fluid-internal/stochastic-test-utils";
 import { TestTreeProvider, SummarizeType, initializeTestTree } from "../../utils";
-import { FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerators";
+import {
+	FuzzTestState,
+	makeOpGenerator,
+	Operation,
+	EditGeneratorOpWeights,
+} from "./fuzzEditGenerators";
 import { checkTreesAreSynchronized, fuzzReducer } from "./fuzzEditReducers";
 import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
 
@@ -55,11 +60,21 @@ describe("Fuzz - Top-Level", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
+	const editGeneratorOpWeights: EditGeneratorOpWeights = {
+		setPayload: 1,
+	};
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
 	 */
-	describe.skip("Everything", () => {
-		runFuzzBatch(makeOpGenerator, performFuzzActions, opsPerRun, runsPerBatch, random);
+	describe("Everything", () => {
+		runFuzzBatch(
+			makeOpGenerator,
+			performFuzzActions,
+			opsPerRun,
+			runsPerBatch,
+			random,
+			editGeneratorOpWeights,
+		);
 	});
 });
