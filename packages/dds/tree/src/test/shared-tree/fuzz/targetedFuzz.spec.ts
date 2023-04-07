@@ -61,9 +61,7 @@ export async function performFuzzActionsAbort(
 
 	// aborts any transactions that may still be in progress
 	const finalTree = provider.trees[0];
-	if (finalTree.transaction.inProgress()) {
-		finalTree.transaction.abort();
-	}
+	finalTree.transaction.abort();
 	validateTree(provider.trees[0], [initialTreeState]);
 
 	// validate anchor
