@@ -92,7 +92,7 @@ export enum SignalType {
 
 export enum SignalSource {
 	/**
-	 * System signal sent to indicate a new client has joined the collaboration.
+	 * Signal sent by server on behald of external caller (through brodcast-signal service endpoint).
 	 */
 	External = "external",
 }
