@@ -74,7 +74,7 @@ export interface IClientDetails {
 	environment?: string;
 
 	/**
-	 * TODO: What is this? What does it mean for this to be undefined?
+	 * TODO: What are the semantics of this? What does it mean for this to be undefined?
 	 */
 	device?: string;
 }
@@ -94,7 +94,7 @@ export interface IClient {
 	details: IClientDetails;
 
 	/**
-	 * TODO: What is this? Are there specific values we expect?
+	 * TODO: What are the semantics of this? Are there specific values we expect?
 	 *
 	 * This doesn't appear to be used. Safe to remove?
 	 */
