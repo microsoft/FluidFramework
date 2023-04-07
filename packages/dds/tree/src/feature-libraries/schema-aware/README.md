@@ -15,3 +15,8 @@ TODO:
     - Support extra local fields.
     - Support extra global fields (including in a way that is compatible with use in a library that does not have global schema knowledge).
     - Measure compiler performance, and ensure its good enough and we have a way to track it.
+
+TODO2:
+
+-   Explicit primitive schema and primary fields in schema objects.
+-   Schema sanity check somewhere (when building schema data): runtime error on missing schema types, fields, anything thats a Never node etc. Specific Error on infinite recursion.

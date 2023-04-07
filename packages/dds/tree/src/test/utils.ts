@@ -24,7 +24,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ISharedTree, SharedTreeFactory } from "../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
 	FieldKinds,
 	jsonableTreeFromCursor,
@@ -447,7 +447,7 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 export function initializeTestTree(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	state: JsonableTree,
 	schema: SchemaData = testSchema,
 ): void {

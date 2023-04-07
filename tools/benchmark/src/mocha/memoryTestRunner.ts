@@ -16,8 +16,8 @@ import {
 	BenchmarkType,
 	userCategoriesSplitter,
 	TestType,
-} from "./Configuration";
-import { getArrayStatistics, Stats } from "./ReporterUtilities";
+} from "../Configuration";
+import { getArrayStatistics, Stats } from "../ReporterUtilities";
 
 /**
  * Contains the samples of all memory-related measurements we track for a given benchmark (a test which was

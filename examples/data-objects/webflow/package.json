@@ -127,7 +127,7 @@
 		"source-map-support": "^0.5.16",
 		"style-loader": "^1.0.0",
 		"ts-loader": "^9.3.0",
-		"ts-node": "^7.0.1",
+		"ts-node": "^8.6.2",
 		"typescript": "~4.5.5",
 		"url-loader": "^2.1.0",
 		"webpack": "^5.76.2",
