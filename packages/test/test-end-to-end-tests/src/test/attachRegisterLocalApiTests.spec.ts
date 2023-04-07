@@ -20,7 +20,7 @@ import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 // REVIEW: enable compat testing?
 describeNoCompat(`Attach/Reference Api Tests For Attached Container`, (getTestObjectProvider) => {

@@ -192,11 +192,24 @@ class RuntimeAttributor implements IRuntimeAttributor {
 			throw new Error("Attribution of detached keys is not yet supported.");
 		}
 
+		if (key.type === "local") {
+			// Note: we can *almost* orchestrate this correctly with internal-only changes by looking up the current
+			// client id in the audience. However, for read->write client transition, the container might have not yet
+			// received a client id. This is left as a TODO as it might be more easily solved once the detached case
+			// is settled (e.g. if it's reasonable for the host to know the current user information at container
+			// creation time, we could just use that here as well).
+			throw new Error("Attribution of local keys is not yet supported.");
+		}
+
 		return this.opAttributor.getAttributionInfo(key.seq);
 	}
 
 	public has(key: AttributionKey): boolean {
 		if (key.type === "detached") {
+			return false;
+		}
+
+		if (key.type === "local") {
 			return false;
 		}
 

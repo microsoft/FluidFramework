@@ -11,6 +11,8 @@ import { IGCResult } from "./interfaces";
  * routes to other nodes in the graph.
  * @param rootIds - The ids of root nodes that are considered referenced.
  * @returns the ids of referenced nodes and the ids of deleted nodes in the referenced graph.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function runGarbageCollection(
 	referenceGraph: { [id: string]: string[] },

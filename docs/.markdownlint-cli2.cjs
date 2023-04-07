@@ -99,6 +99,10 @@ module.exports = {
             "style": "atx",
         },
         "line-length": false, // MD013
+
+        // We intentionally have unused reference links in a lot of pages, so this rule is disabled
+        "link-image-reference-definitions": false, // MD053
+
         "list-marker-space": { // MD030
           "ul_multi": 3,
           "ul_single": 3
@@ -111,6 +115,9 @@ module.exports = {
         "no-inline-html": false, //MD033
         "no-multiple-blanks": { // MD012
             "maximum": 2,
+        },
+        "no-trailing-spaces": { // MD009
+          "br_spaces": 0,
         },
         "proper-names": { // MD044
             "code_blocks": false,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
+import { ISourcedDebuggerMessage, isDebuggerMessage } from "@fluid-tools/client-debugger";
 
 import {
 	DevToolsInitAcknowledgement,
@@ -45,7 +45,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 	 * Listen for init messages from the Devtools Script, and instantiate tab (Content Script)
 	 * connections as needed.
 	 */
-	const devtoolsMessageListener = (message: Partial<IDebuggerMessage>): void => {
+	const devtoolsMessageListener = (message: Partial<ISourcedDebuggerMessage>): void => {
 		if (!isDebuggerMessage(message)) {
 			// Since this handler is attached strictly to our Devtools Script port,
 			// we should *only* see our own messages.
@@ -89,7 +89,7 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 					// Forward incoming messages from the tab (Content script) to the Devtools script
 
 					tabConnection.onMessage.addListener(
-						(tabMessage: Partial<IDebuggerMessage>): void => {
+						(tabMessage: Partial<ISourcedDebuggerMessage>): void => {
 							if (isDebuggerMessage(tabMessage)) {
 								relayMessageToPort(
 									tabMessage,
@@ -111,6 +111,24 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 						devtoolsPort.disconnect();
 						tabConnection = undefined;
 					});
+
+					console.log(
+						formatBackgroundScriptMessageForLogging(
+							"Informing DevTools script that tab connection is ready.",
+						),
+					);
+
+					// Send acknowledgement to Devtools Script
+					const ackMessage: DevToolsInitAcknowledgement = {
+						source: extensionMessageSource,
+						type: devToolsInitAcknowledgementType,
+						data: undefined,
+					};
+					postMessageToPort(
+						ackMessage,
+						devtoolsPort,
+						backgroundScriptMessageLoggingOptions,
+					);
 				},
 				(error) => {
 					console.error(
@@ -129,20 +147,12 @@ chrome.runtime.onConnect.addListener((devtoolsPort: chrome.runtime.Port): void =
 				);
 				tabConnection?.disconnect();
 			});
-
-			// Send acknowledgement to Devtools Script
-			const ackMessage: DevToolsInitAcknowledgement = {
-				source: extensionMessageSource,
-				type: devToolsInitAcknowledgementType,
-				data: undefined,
-			};
-			postMessageToPort(ackMessage, devtoolsPort, backgroundScriptMessageLoggingOptions);
 		} else {
 			// Relay message from the Devtools Script to the tab (Content script)
 			if (tabConnection === undefined) {
-				console.warn(
+				console.error(
 					formatBackgroundScriptMessageForLogging(
-						`Tab connection has not been initialized. Cannot relay message:`,
+						`Message received from DevTools port before tab connection has finished initializing. Message won't be relayed:`,
 					),
 					message,
 				);

@@ -14,7 +14,6 @@ export let dumpSnapshotVersions = false;
 export let overWrite = false;
 export let paramSnapshotVersionIndex: number | undefined;
 export let paramNumSnapshotVersions = 10;
-export let paramUnpackAggregatedBlobs = true;
 export let paramActualFormatting = false;
 
 let paramForceTokenReauth = false;
@@ -49,7 +48,6 @@ const optionsArray = [
 	["--filter:messageType <type>", "filter message by <type>"],
 	["--jwt <token>", "token to be used for routerlicious URLs"],
 	["--numSnapshotVersions <number>", "Number of versions to load (default:10)"],
-	["--noUnpack", "Do not unpack aggregated blobs"],
 	[
 		"--actualPayload",
 		"Do not format json payloads nicely, preserve actual bytes / formatting in storage",
@@ -133,9 +131,6 @@ export function parseArguments() {
 				break;
 			case "--numSnapshotVersions":
 				paramNumSnapshotVersions = parseIntArg(i++, "number of versions", false);
-				break;
-			case "--noUnpack":
-				paramUnpackAggregatedBlobs = false;
 				break;
 			case "--actualPayload":
 				paramActualFormatting = true;

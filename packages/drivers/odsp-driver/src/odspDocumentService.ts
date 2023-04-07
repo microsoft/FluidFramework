@@ -127,6 +127,7 @@ export class OdspDocumentService implements IDocumentService {
 		this._policies = {
 			// load in storage-only mode if a file version is specified
 			storageOnly: odspResolvedUrl.fileVersion !== undefined,
+			summarizeProtocolTree: true,
 		};
 
 		this.mc = loggerToMonitoringContext(

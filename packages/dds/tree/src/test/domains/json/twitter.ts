@@ -637,13 +637,13 @@ export function parseSentencesIntoWords(inputSentences: string[]) {
 		const spaceSeparatedWords: string[] = inputSentence.split(" ");
 		spaceSeparatedWords.forEach((potentialWord) => {
 			const innerWords: string[] = [];
-			let previousChar: string | null = null;
+			let previousChar: string | undefined;
 			let currentWord = "";
 			for (let i = 0; i < potentialWord.length; i++) {
 				const currentChar = potentialWord.charAt(i);
 				if (isEscapeChar(currentChar) || isJapaneseSymbolOrPunctuation(currentChar)) {
 					if (
-						(previousChar && !isEscapeChar(previousChar)) ||
+						(previousChar !== undefined && !isEscapeChar(previousChar)) ||
 						isJapaneseSymbolOrPunctuation(currentChar)
 					) {
 						innerWords.push(`${currentWord}`);

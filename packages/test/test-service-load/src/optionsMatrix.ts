@@ -4,17 +4,17 @@
  */
 
 import {
+	booleanCases,
+	generatePairwiseOptions,
+	OptionsMatrix,
+	numberCases,
+} from "@fluid-internal/test-pairwise-generator";
+import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime";
-import {
-	booleanCases,
-	generatePairwiseOptions,
-	OptionsMatrix,
-	numberCases,
-} from "@fluidframework/test-pairwise-generator";
 import { ILoaderOptions } from "@fluidframework/container-loader";
 import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
 
@@ -88,15 +88,14 @@ export function generateRuntimeOptions(
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
-		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
 		compressionOptions: [
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
 		],
 		maxBatchSizeInBytes: [716800],
 		enableOpReentryCheck: [true],
-		// Compressed payloads over 1MB will be split into chunked ops of this size
-		chunkSizeInBytes: [307200, 614400, 706800],
+		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
+		chunkSizeInBytes: [204800],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(

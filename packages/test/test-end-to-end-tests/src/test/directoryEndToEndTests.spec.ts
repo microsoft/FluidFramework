@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Container } from "@fluidframework/container-loader";
+
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
@@ -24,7 +24,8 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { IContainer } from "@fluidframework/container-definitions";
 
 const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
@@ -835,7 +836,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		provider = getTestObjectProvider();
 	});
 
-	let container: Container;
+	let container: IContainer;
 	let dataObject: ITestFluidObject;
 	let sharedDir: SharedDirectory;
 	let containerRuntime: ContainerRuntime;
@@ -860,7 +861,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 				}),
 			},
 		};
-		container = (await provider.makeTestContainer(configWithFeatureGates)) as Container;
+		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
 		sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;

@@ -8,7 +8,12 @@ import * as fs from "fs";
 import { EOL as newline } from "os";
 import path from "path";
 
-import { Handler, policyHandlers, readJsonAsync } from "@fluidframework/build-tools";
+import {
+	getFluidBuildConfig,
+	Handler,
+	policyHandlers,
+	readJsonAsync,
+} from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 
@@ -75,7 +80,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		exclusions: Flags.file({
 			description: `Path to the exclusions.json file.`,
 			exists: true,
-			required: true,
 			char: "e",
 		}),
 		stdin: Flags.boolean({
@@ -137,18 +141,14 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.info("Resolving errors if possible.");
 		}
 
-		if (this.flags.exclusions === undefined) {
-			this.error("No exclusions file provided.");
-		}
+		const manifest = getFluidBuildConfig(this.flags.root ?? process.cwd());
 
-		let exclusionsFile: string[];
-		try {
-			exclusionsFile = await readJsonAsync(this.flags.exclusions);
-		} catch {
-			this.error("Unable to locate or parse path to exclusions file");
-		}
+		const rawExclusions: string[] =
+			this.flags.exclusions === undefined
+				? manifest.policy?.exclusions
+				: await readJsonAsync(this.flags.exclusions);
 
-		const exclusions: RegExp[] = exclusionsFile.map((e: string) => new RegExp(e, "i"));
+		const exclusions: RegExp[] = rawExclusions.map((e: string) => new RegExp(e, "i"));
 
 		if (this.flags.stdin) {
 			const pipeString = await readStdin();

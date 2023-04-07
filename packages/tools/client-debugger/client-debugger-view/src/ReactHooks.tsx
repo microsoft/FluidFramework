@@ -6,7 +6,7 @@ import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
 
-import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
+import { IContainerDevtools } from "@fluid-tools/client-debugger";
 
 /**
  * Contains React hooks for shared use within the library.
@@ -17,8 +17,8 @@ import { IFluidClientDebugger } from "@fluid-tools/client-debugger";
  *
  * @internal
  */
-export function useMyClientId(clientDebugger: IFluidClientDebugger): string | undefined {
-	const { container } = clientDebugger;
+export function useMyClientId(containerDevtools: IContainerDevtools): string | undefined {
+	const { container } = containerDevtools;
 	const [myClientId, setMyClientId] = React.useState<string | undefined>(container.clientId);
 
 	React.useEffect(() => {
@@ -43,8 +43,8 @@ export function useMyClientId(clientDebugger: IFluidClientDebugger): string | un
  *
  * @internal
  */
-export function useAudience(clientDebugger: IFluidClientDebugger): Map<string, IClient> {
-	const { audience } = clientDebugger;
+export function useAudience(containerDevtools: IContainerDevtools): Map<string, IClient> {
+	const { audience } = containerDevtools;
 	const [audienceData, setAudienceData] = React.useState<Map<string, IClient>>(
 		audience.getMembers(),
 	);
@@ -71,9 +71,9 @@ export function useAudience(clientDebugger: IFluidClientDebugger): Map<string, I
  *
  * @internal
  */
-export function useMyClientConnection(clientDebugger: IFluidClientDebugger): IClient | undefined {
-	const myClientId = useMyClientId(clientDebugger);
-	const audience = useAudience(clientDebugger);
+export function useMyClientConnection(containerDevtools: IContainerDevtools): IClient | undefined {
+	const myClientId = useMyClientId(containerDevtools);
+	const audience = useAudience(containerDevtools);
 
 	return myClientId === undefined ? undefined : audience.get(myClientId);
 }

@@ -16,17 +16,11 @@ import {
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils";
-import {
-	FluidObject,
-	IFluidHandleContext,
-	IFluidHandle,
-	IRequest,
-} from "@fluidframework/core-interfaces";
+import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
 import { SummaryCollection } from "./summaryCollection";
-import { SummarizerHandle } from "./summarizerHandle";
 import { RunningSummarizer } from "./runningSummarizer";
 import {
 	IConnectableRuntime,
@@ -67,9 +61,6 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  */
 export class Summarizer extends EventEmitter implements ISummarizer {
-	public get IFluidLoadable() {
-		return this;
-	}
 	public get ISummarizer() {
 		return this;
 	}
@@ -79,15 +70,9 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 	private _disposed: boolean = false;
 	private starting: boolean = false;
 
-	private readonly innerHandle: IFluidHandle<this>;
-
-	public get handle(): IFluidHandle<this> {
-		return this.innerHandle;
-	}
 	private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
 	constructor(
-		url: string,
 		/** Reference to runtime that created this object.
 		 * i.e. runtime with clientType === "summarizer"
 		 */
@@ -105,7 +90,6 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 	) {
 		super();
 		this.logger = ChildLogger.create(this.runtime.logger, "Summarizer");
-		this.innerHandle = new SummarizerHandle(this, url, handleContext);
 	}
 
 	/**
@@ -132,10 +116,12 @@ export class Summarizer extends EventEmitter implements ISummarizer {
 		};
 
 		const resolvedContainer = await loader.resolve(request);
-		const fluidObject = await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
-			url: "_summarizer",
-		});
-		if (fluidObject.ISummarizer === undefined) {
+		const fluidObject: FluidObject<ISummarizer> | undefined = resolvedContainer.getEntryPoint
+			? await resolvedContainer.getEntryPoint?.()
+			: await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
+					url: "_summarizer",
+			  });
+		if (fluidObject?.ISummarizer === undefined) {
 			throw new UsageError("Fluid object does not implement ISummarizer");
 		}
 		return fluidObject.ISummarizer;

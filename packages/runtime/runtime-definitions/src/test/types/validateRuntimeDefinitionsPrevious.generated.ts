@@ -1048,6 +1048,30 @@ use_old_TypeAliasDeclaration_InboundAttachMessage(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_LocalAttributionKey": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_LocalAttributionKey():
+    TypeOnly<old.LocalAttributionKey>;
+declare function use_current_InterfaceDeclaration_LocalAttributionKey(
+    use: TypeOnly<current.LocalAttributionKey>);
+use_current_InterfaceDeclaration_LocalAttributionKey(
+    get_old_InterfaceDeclaration_LocalAttributionKey());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_LocalAttributionKey": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_LocalAttributionKey():
+    TypeOnly<current.LocalAttributionKey>;
+declare function use_old_InterfaceDeclaration_LocalAttributionKey(
+    use: TypeOnly<old.LocalAttributionKey>);
+use_old_InterfaceDeclaration_LocalAttributionKey(
+    get_current_InterfaceDeclaration_LocalAttributionKey());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries": {"forwardCompat": false}
 */
 declare function get_old_TypeAliasDeclaration_NamedFluidDataStoreRegistryEntries():

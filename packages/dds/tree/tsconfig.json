@@ -7,6 +7,11 @@
 		"noImplicitAny": true,
 		"composite": true,
 		"preserveConstEnums": true,
+		// Allow unused locals.
+		// This is needed for type assertions using the TypeCheck library.
+		// Linter is used to enforce "_" prefix for unused locals to prevent accidentally having unused locals.
+		"noUnusedLocals": false,
+		"noImplicitOverride": true,
 	},
 	"include": ["src/**/*"],
 }

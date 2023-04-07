@@ -6,16 +6,13 @@
 import { AxiosRequestConfig } from "axios";
 
 export enum RestLessFieldNames {
-    Method = "method",
-    Header = "header",
-    Body = "body",
+	Method = "method",
+	Header = "header",
+	Body = "body",
 }
 
-const encodeHeader = (
-    headerKey: string,
-    headerValue: string,
-): string => {
-    return `${headerKey}: ${headerValue}`;
+const encodeHeader = (headerKey: string, headerValue: string): string => {
+	return `${headerKey}: ${headerValue}`;
 };
 
 /**
@@ -31,36 +28,39 @@ const encodeHeader = (
  * <url-encoded-headers-body-and-method>
  */
 export class RestLessClient {
-    /**
-     * Translates request from REST to "RestLess" out-of-place.
-     */
-    public translate(request: AxiosRequestConfig): AxiosRequestConfig {
-        const newRequest = { ...request };
-        const body = new URLSearchParams();
+	/**
+	 * Translates request from REST to "RestLess" out-of-place.
+	 */
+	public translate(request: AxiosRequestConfig): AxiosRequestConfig {
+		const newRequest = { ...request };
+		const body = new URLSearchParams();
 
-        body.append(RestLessFieldNames.Method, newRequest.method ?? "GET");
+		body.append(RestLessFieldNames.Method, newRequest.method ?? "GET");
 
-        if (newRequest.headers) {
-            for (const [headerKey, headerValue] of Object.entries(
-                newRequest.headers as Record<string, string>,
-            )) {
-                const encodedHeader = encodeHeader(headerKey, headerValue);
-                body.append(RestLessFieldNames.Header, encodedHeader);
-            }
-        }
+		if (newRequest.headers) {
+			for (const [headerKey, headerValue] of Object.entries(
+				newRequest.headers as Record<string, string>,
+			)) {
+				const encodedHeader = encodeHeader(headerKey, headerValue);
+				body.append(RestLessFieldNames.Header, encodedHeader);
+			}
+		}
 
-        if (newRequest.data && ["post", "put", "patch"].includes(newRequest.method?.toLowerCase())) {
-            const stringifiedBody = JSON.stringify(newRequest.data);
-            body.append(RestLessFieldNames.Body, stringifiedBody);
-        }
+		if (
+			newRequest.data &&
+			["post", "put", "patch"].includes(newRequest.method?.toLowerCase())
+		) {
+			const stringifiedBody = JSON.stringify(newRequest.data);
+			body.append(RestLessFieldNames.Body, stringifiedBody);
+		}
 
-        newRequest.data = body.toString();
-        newRequest.method = "POST";
-        newRequest.headers = {
-            // TODO: when we support blob/file uploads, we should potentially add compatibility with multipart/form-data
-            "Content-Type": "application/x-www-form-urlencoded;restless",
-        };
+		newRequest.data = body.toString();
+		newRequest.method = "POST";
+		newRequest.headers = {
+			// TODO: when we support blob/file uploads, we should potentially add compatibility with multipart/form-data
+			"Content-Type": "application/x-www-form-urlencoded;restless",
+		};
 
-        return newRequest;
-    }
+		return newRequest;
+	}
 }

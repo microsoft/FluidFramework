@@ -68,8 +68,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     // (undocumented)
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean, session?: ISession): Promise<IDocumentService>;
-    // (undocumented)
-    readonly protocolName = "fluid:";
 }
 
 // @public

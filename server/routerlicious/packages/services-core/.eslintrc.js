@@ -4,12 +4,9 @@
  */
 
 module.exports = {
-    "extends": [
-        require.resolve("@fluidframework/eslint-config-fluid/minimal"),
-        "prettier"
-    ],
-    "rules": {
-        "@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
-        "import/no-nodejs-modules": "off",
-    }
-}
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	rules: {
+		"@typescript-eslint/strict-boolean-expressions": "off", // requires strictNullChecks=true in tsconfig
+		"import/no-nodejs-modules": "off",
+	},
+};

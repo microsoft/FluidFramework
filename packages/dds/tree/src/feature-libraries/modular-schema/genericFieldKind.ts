@@ -17,6 +17,7 @@ import {
 	NodeChangeRebaser,
 	IdAllocator,
 	isolatedFieldChangeRebaser,
+	RevisionMetadataSource,
 } from "./fieldChangeHandler";
 import { FieldKind, Multiplicity } from "./fieldKind";
 
@@ -104,7 +105,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return change.map(
 				({ index, nodeChange }: GenericChange): GenericChange => ({
 					index,
-					nodeChange: invertChild(nodeChange),
+					nodeChange: invertChild(nodeChange, index),
 				}),
 			);
 		},
@@ -119,18 +120,31 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			while (iChange < change.length && iOver < over.length) {
 				const a = change[iChange];
 				const b = over[iOver];
+				let nodeChangeA: NodeChangeset | undefined;
+				let nodeChangeB: NodeChangeset | undefined;
+				let index: number;
 				if (a.index === b.index) {
-					rebased.push({
-						index: a.index,
-						nodeChange: rebaseChild(a.nodeChange, b.nodeChange),
-					});
+					index = a.index;
+					nodeChangeA = a.nodeChange;
+					nodeChangeB = b.nodeChange;
 					iChange += 1;
 					iOver += 1;
 				} else if (a.index < b.index) {
-					rebased.push(a);
+					index = a.index;
+					nodeChangeA = a.nodeChange;
 					iChange += 1;
 				} else {
+					index = b.index;
+					nodeChangeB = b.nodeChange;
 					iOver += 1;
+				}
+
+				const nodeChange = rebaseChild(nodeChangeA, nodeChangeB);
+				if (nodeChange !== undefined) {
+					rebased.push({
+						index,
+						nodeChange,
+					});
 				}
 			}
 			rebased.push(...change.slice(iChange));
@@ -176,11 +190,12 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				delta.push(offset);
 				nodeIndex = index;
 			}
-			delta.push(deltaFromChild(nodeChange, index));
+			delta.push(deltaFromChild(nodeChange));
 			nodeIndex += 1;
 		}
 		return delta;
 	},
+	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
 /**
@@ -206,12 +221,19 @@ export function convertGenericChange<TChange>(
 	target: FieldChangeHandler<TChange>,
 	composeChild: NodeChangeComposer,
 	genId: IdAllocator,
+	revisionMetadata: RevisionMetadataSource,
 ): TChange {
 	const perIndex: TaggedChange<TChange>[] = changeset.map(({ index, nodeChange }) =>
 		makeAnonChange(target.editor.buildChildChange(index, nodeChange)),
 	);
 
-	return target.rebaser.compose(perIndex, composeChild, genId, invalidCrossFieldManager);
+	return target.rebaser.compose(
+		perIndex,
+		composeChild,
+		genId,
+		invalidCrossFieldManager,
+		revisionMetadata,
+	);
 }
 
 const invalidFunc = () => fail("Should not be called when converting generic changes");
@@ -219,3 +241,7 @@ const invalidCrossFieldManager: CrossFieldManager = {
 	getOrCreate: invalidFunc,
 	get: invalidFunc,
 };
+
+export function newGenericChangeset(): GenericChangeset {
+	return [];
+}

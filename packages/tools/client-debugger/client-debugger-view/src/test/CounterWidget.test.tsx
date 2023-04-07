@@ -22,8 +22,7 @@ describe("CounterWidget component tests", () => {
 		sharedCounter = new SharedCounter(
 			"test-counter",
 			new MockFluidDataStoreRuntime(),
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-			(SharedCounter.getFactory() as any).attributes,
+			SharedCounter.getFactory().attributes,
 		);
 	});
 

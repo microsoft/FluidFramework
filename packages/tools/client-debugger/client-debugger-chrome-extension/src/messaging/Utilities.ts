@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
+import { ISourcedDebuggerMessage, MessageLoggingOptions } from "@fluid-tools/client-debugger";
 
 import { TypedPortConnection } from "./TypedPortConnection";
 
@@ -20,18 +20,21 @@ function formatMessageForLogging(text: string, loggingOptions?: MessageLoggingOp
  *
  * @internal
  */
-export function relayMessageToWindow<TMessage extends IDebuggerMessage>(
+export function relayMessageToWindow<TMessage extends ISourcedDebuggerMessage>(
 	message: TMessage,
 	messageSource: string,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	console.log(
-		formatMessageForLogging(
-			`Relaying message from "${messageSource}" to the window:`,
-			loggingOptions,
-		),
-		message,
-	); // TODO: console.debug
+	// TODO: remove loggingOptions once things settle.
+	if (loggingOptions !== undefined) {
+		console.debug(
+			formatMessageForLogging(
+				`Relaying message from "${messageSource}" to the window:`,
+				loggingOptions,
+			),
+			message,
+		);
+	}
 	window.postMessage(message, "*"); // TODO: verify target is okay
 }
 
@@ -42,19 +45,24 @@ export function relayMessageToWindow<TMessage extends IDebuggerMessage>(
  *
  * @internal
  */
-export function relayMessageToPort<TMessage extends IDebuggerMessage>(
+export function relayMessageToPort<TMessage extends ISourcedDebuggerMessage>(
 	message: TMessage,
 	messageSource: string,
 	targetPort: TypedPortConnection<TMessage>,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	console.log(
-		formatMessageForLogging(
-			`Relaying message from "${messageSource}" to port "${targetPort.name ?? "(unnamed)"}":`,
-			loggingOptions,
-		),
-		message,
-	); // TODO: console.debug
+	// TODO: remove loggingOptions once things settle.
+	if (loggingOptions !== undefined) {
+		console.debug(
+			formatMessageForLogging(
+				`Relaying message from "${messageSource}" to port "${
+					targetPort.name ?? "(unnamed)"
+				}":`,
+				loggingOptions,
+			),
+			message,
+		);
+	}
 	targetPort.postMessage(message);
 }
 
@@ -65,17 +73,20 @@ export function relayMessageToPort<TMessage extends IDebuggerMessage>(
  *
  * @internal
  */
-export function postMessageToPort<TMessage extends IDebuggerMessage>(
+export function postMessageToPort<TMessage extends ISourcedDebuggerMessage>(
 	message: TMessage,
 	targetPort: TypedPortConnection<TMessage>,
 	loggingOptions?: MessageLoggingOptions,
 ): void {
-	console.log(
-		formatMessageForLogging(
-			`Posting message to port "${targetPort.name ?? "(unnamed)"}":`,
-			loggingOptions,
-		),
-		message,
-	); // TODO: console.debug
+	// TODO: remove loggingOptions once things settle.
+	if (loggingOptions !== undefined) {
+		console.debug(
+			formatMessageForLogging(
+				`Posting message to port "${targetPort.name ?? "(unnamed)"}":`,
+				loggingOptions,
+			),
+			message,
+		);
+	}
 	targetPort.postMessage(message);
 }

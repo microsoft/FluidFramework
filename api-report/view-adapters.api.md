@@ -5,29 +5,7 @@
 ```ts
 
 import { FluidObject } from '@fluidframework/core-interfaces';
-import { IFluidHTMLOptions } from '@fluidframework/view-interfaces';
-import { IFluidHTMLView } from '@fluidframework/view-interfaces';
 import { IFluidMountableView } from '@fluidframework/view-interfaces';
-import { default as React_2 } from 'react';
-
-// @public @deprecated
-export class HTMLViewAdapter implements IFluidHTMLView {
-    // @deprecated
-    constructor(view: FluidObject);
-    // @deprecated
-    static canAdapt(view: FluidObject): boolean;
-    // @deprecated
-    get IFluidHTMLView(): HTMLViewAdapter;
-    // @deprecated (undocumented)
-    remove(): void;
-    // @deprecated (undocumented)
-    render(elm: HTMLElement, options?: IFluidHTMLOptions): void;
-}
-
-// @public @deprecated (undocumented)
-export interface IReactViewAdapterProps {
-    view: FluidObject;
-}
 
 // @public
 export class MountableView implements IFluidMountableView {
@@ -40,16 +18,6 @@ export class MountableView implements IFluidMountableView {
     mount(container: HTMLElement): void;
     // (undocumented)
     unmount(): void;
-}
-
-// @public @deprecated
-export class ReactViewAdapter extends React_2.Component<IReactViewAdapterProps> {
-    // @deprecated
-    constructor(props: IReactViewAdapterProps);
-    // @deprecated
-    static canAdapt(view: FluidObject): boolean;
-    // @deprecated
-    render(): JSX.Element;
 }
 
 ```

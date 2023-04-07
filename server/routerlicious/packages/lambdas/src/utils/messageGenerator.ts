@@ -3,48 +3,48 @@
  * Licensed under the MIT License.
  */
 import {
-    IClient,
-    INack,
-    ISignalClient,
-    ISignalMessage,
-    MessageType,
-    NackErrorType,
+	IClient,
+	INack,
+	ISignalClient,
+	ISignalMessage,
+	MessageType,
+	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 
 export const createNackMessage = (
-    code: number,
-    type: NackErrorType,
-    message: string,
-    retryAfterInSec?: number,
+	code: number,
+	type: NackErrorType,
+	message: string,
+	retryAfterInSec?: number,
 ): INack => ({
-    operation: undefined,
-    sequenceNumber: -1,
-    content: {
-        code,
-        type,
-        message,
-        retryAfter: retryAfterInSec,
-    },
+	operation: undefined,
+	sequenceNumber: -1,
+	content: {
+		code,
+		type,
+		message,
+		retryAfter: retryAfterInSec,
+	},
 });
 
 export function createRoomJoinMessage(clientId: string, client: IClient): ISignalMessage {
-    const joinContent: ISignalClient = {
-        clientId,
-        client,
-    };
-    return {
-        clientId: null,
-        content: JSON.stringify({
-            type: MessageType.ClientJoin,
-            content: joinContent,
-        }),
-    };
+	const joinContent: ISignalClient = {
+		clientId,
+		client,
+	};
+	return {
+		clientId: null,
+		content: JSON.stringify({
+			type: MessageType.ClientJoin,
+			content: joinContent,
+		}),
+	};
 }
 
 export const createRoomLeaveMessage = (clientId: string): ISignalMessage => ({
-    clientId: null,
-    content: JSON.stringify({
-        type: MessageType.ClientLeave,
-        content: clientId,
-    }),
+	clientId: null,
+	content: JSON.stringify({
+		type: MessageType.ClientLeave,
+		content: clientId,
+	}),
 });

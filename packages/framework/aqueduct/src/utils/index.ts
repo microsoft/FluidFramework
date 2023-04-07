@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { waitForAttach } from "./attachUtils";
 export {
 	getDefaultObjectFromContainer,
 	getObjectFromContainer,

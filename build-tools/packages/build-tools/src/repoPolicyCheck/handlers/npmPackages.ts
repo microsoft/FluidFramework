@@ -15,7 +15,7 @@ import sortPackageJson from "sort-package-json";
 
 import { IFluidBuildConfig } from "../../common/fluidRepo";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
-import { PackageJson } from "../../common/npmPackage";
+import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { Handler, readFile, writeFile } from "../common";
 
 const licenseId = "MIT";
@@ -243,42 +243,23 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file) => {
-			let json;
-			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
-			}
-
-			const resolved = true;
-
-			if (json.author === undefined || json.author !== author) {
+		resolver: (file, root) => {
+			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
-			}
-
-			if (json.license === undefined || json.license !== licenseId) {
 				json.license = licenseId;
-			}
 
-			if (json.repository === undefined || typeof json.repository === "string") {
-				json.repository = {
-					type: "git",
-					url: repository,
-				};
-			}
+				if (json.repository === undefined || typeof json.repository === "string") {
+					json.repository = {
+						type: "git",
+						url: repository,
+						directory: path.posix.relative(root, path.dirname(file)),
+					};
+				}
 
-			if (json.repository.url !== repository) {
-				json.repository.url = repository;
-			}
-
-			if (json.homepage === undefined || json.homepage !== homepage) {
 				json.homepage = homepage;
-			}
+			});
 
-			writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
-
-			return { resolved: resolved };
+			return { resolved: true };
 		},
 	},
 	{
@@ -552,38 +533,6 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file, root) => {
-			let json;
-			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
-			}
-
-			const resolved = true;
-
-			const { valid, validationResults } = runNpmJsonLint(json, file);
-
-			if (!valid) {
-				for (const result of validationResults.results) {
-					for (const issue of result.issues) {
-						switch (issue.lintId) {
-							case "require-repository-directory":
-								json.repository.directory = path.posix.relative(
-									root,
-									path.dirname(file),
-								);
-								break;
-							default:
-								break;
-						}
-					}
-				}
-
-				writeFile(file, JSON.stringify(json, undefined, 2) + newline);
-			}
-			return { resolved: resolved };
-		},
 	},
 	{
 		name: "npm-package-json-prettier",
@@ -637,60 +586,56 @@ export const handlers: Handler[] = [
 				: undefined;
 		},
 		resolver: (file) => {
-			let json;
-			try {
-				json = JSON.parse(readFile(file));
-			} catch (err) {
-				return { resolved: false, message: "Error parsing JSON file: " + file };
-			}
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
 
-			const resolved = true;
+				if (hasScriptsField) {
+					const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(
+						json.scripts,
+						"format",
+					);
 
-			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+					const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
+						json.scripts,
+						"prettier",
+					);
 
-			if (hasScriptsField) {
-				addPrettier(json);
-				writeFile(file, JSON.stringify(sortPackageJson(json), undefined, 2) + newline);
-			}
+					const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
+						json.scripts,
+						"prettier:fix",
+					);
 
-			return { resolved: resolved };
+					if (
+						hasFormatScriptResolver ||
+						hasPrettierScriptResolver ||
+						hasPrettierFixScriptResolver
+					) {
+						const formatScript = json.scripts.format?.includes("lerna");
+						const prettierScript = json.scripts.prettier?.includes("--ignore-path");
+						const prettierFixScript =
+							json.scripts["prettier:fix"]?.includes("--ignore-path");
+
+						if (!formatScript) {
+							json.scripts.format = "npm run prettier:fix";
+
+							if (!prettierScript) {
+								json.scripts.prettier = "prettier --check .";
+							}
+
+							if (!prettierFixScript) {
+								json.scripts["prettier:fix"] = "prettier --write .";
+							}
+						}
+					}
+				}
+			});
+
+			return { resolved: true };
 		},
 	},
 ];
 
-function addPrettier(json: Record<string, any>) {
-	const hasFormatScriptResolver = Object.prototype.hasOwnProperty.call(json.scripts, "format");
-
-	const hasPrettierScriptResolver = Object.prototype.hasOwnProperty.call(
-		json.scripts,
-		"prettier",
-	);
-
-	const hasPrettierFixScriptResolver = Object.prototype.hasOwnProperty.call(
-		json.scripts,
-		"prettier:fix",
-	);
-
-	if (hasFormatScriptResolver || hasPrettierScriptResolver || hasPrettierFixScriptResolver) {
-		const formatScript = json["scripts"]["format"]?.includes("lerna");
-		const prettierScript = json["scripts"]["prettier"]?.includes("--ignore-path");
-		const prettierFixScript = json["scripts"]["prettier:fix"]?.includes("--ignore-path");
-
-		if (!formatScript) {
-			json["scripts"]["format"] = "npm run prettier:fix";
-
-			if (!prettierScript) {
-				json["scripts"]["prettier"] = "prettier --check .";
-			}
-
-			if (!prettierFixScript) {
-				json["scripts"]["prettier:fix"] = "prettier --write .";
-			}
-		}
-	}
-}
-
-function runNpmJsonLint(json: any, file: string) {
+function runNpmJsonLint(json: PackageJson, file: string) {
 	const lintConfig = getLintConfig(file);
 	const options = {
 		packageJsonObject: json,

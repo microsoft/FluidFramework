@@ -12,8 +12,8 @@ Bumps the version of a release group or package to the next minor, major, or pat
 
 ```
 USAGE
-  $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--exactDepType ^|~|
-    ] [--scheme semver|internal|virtualPatch | ] [-x | --install | --commit |  |  | ]
+  $ flub bump PACKAGE_OR_RELEASE_GROUP [-v] [-t major|minor|patch | --exact <value>] [--exactDepType ^|~|]
+    [--scheme semver|internal|virtualPatch | ] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.

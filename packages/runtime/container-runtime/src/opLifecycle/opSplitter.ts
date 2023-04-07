@@ -276,6 +276,6 @@ export const splitOp = (
 	}
 
 	assert(offset >= contentLength, 0x58c /* Content offset equal or larger than content length */);
-	assert(chunks.length === chunkCount, "Expected number of chunks");
+	assert(chunks.length === chunkCount, 0x5a5 /* Expected number of chunks */);
 	return chunks;
 };

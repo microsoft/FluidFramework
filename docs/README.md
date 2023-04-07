@@ -325,11 +325,10 @@ The site theme/template lives in `themes/thxvscode`.
 
 The following npm scripts are supported in this directory:
 
-<!-- AUTO-GENERATED-CONTENT:START (SCRIPTS:includeHeading=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCRIPTS:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 | Script | Description |
 |--------|-------------|
@@ -343,7 +342,8 @@ The following npm scripts are supported in this directory:
 | `build:repo-docs` | `npm run build:md-magic:code` |
 | `build:website` | `npm run build:api-rollup && npm run build:md-magic:website && npm run build:api-documentation && npm run hugo` |
 | `ci:build` | `npm run download && npm run build` |
-| `ci:start` | `pm2 serve.js` |
+| `ci:linkcheck` | `start-server-and-test ci:start http://localhost:1313 linkcheck:full` |
+| `ci:start` | `http-server ./public --port 1313 --silent` |
 | `clean` | Remove all generated files. |
 | `download` | Download and extract the API JSON and Playground files locally. |
 | `download:api` | Download and extract the API JSON files locally. |
@@ -351,10 +351,8 @@ The following npm scripts are supported in this directory:
 | `linkcheck` | Starts a local webserver and runs `linkcheck:full` against it. |
 | `linkcheck:fast` | Checks all internal site links and reports the results to the terminal. |
 | `linkcheck:full` | Checks all internal _and external_ site links and reports the results to the terminal. |
-| `linkcheck:reflinks` | Checks the `public` folder for HTML files with broken MarkDown reference links. |
 | `lint` | `markdownlint-cli2` |
 | `lint:fix` | `markdownlint-cli2-fix` |
-| `preinstall` | `node ../scripts/only-pnpm.cjs` |
 | `start` | Start a local webserver to preview the built site on <http://localhost:1313> |
 
 <!-- prettier-ignore-end -->

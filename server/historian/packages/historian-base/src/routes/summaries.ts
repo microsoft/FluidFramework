@@ -4,133 +4,204 @@
  */
 
 import { AsyncLocalStorage } from "async_hooks";
-import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "@fluidframework/server-services-client";
-import { IThrottler } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle, getParam } from "@fluidframework/server-services-utils";
+import {
+	IWholeFlatSummary,
+	IWholeSummaryPayload,
+	IWriteSummaryResponse,
+} from "@fluidframework/server-services-client";
+import { IThrottler, ITokenRevocationManager } from "@fluidframework/server-services-core";
+import {
+	IThrottleMiddlewareOptions,
+	throttle,
+	getParam,
+} from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
 import { ICache, ITenantService } from "../services";
-import { parseToken } from "../utils";
+import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
 export function create(
-    config: nconf.Provider,
-    tenantService: ITenantService,
-    throttler: IThrottler,
-    cache?: ICache,
-    asyncLocalStorage?: AsyncLocalStorage<string>): Router {
-    const router: Router = Router();
+	config: nconf.Provider,
+	tenantService: ITenantService,
+	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
+	cache?: ICache,
+	asyncLocalStorage?: AsyncLocalStorage<string>,
+	tokenRevocationManager?: ITokenRevocationManager,
+): Router {
+	const router: Router = Router();
 
-    const commonThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-        throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
-        throttleIdSuffix: utils.Constants.throttleIdSuffix,
-    };
+	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restTenantGeneralThrottler = restTenantThrottlers.get(
+		Constants.generalRestCallThrottleIdPrefix,
+	);
 
-    async function getSummary(
-        tenantId: string,
-        authorization: string,
-        sha: string,
-        useCache: boolean): Promise<IWholeFlatSummary> {
-        const service = await utils.createGitService(
-            config,
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage);
-        return service.getSummary(sha, useCache);
-    }
+	// Throttling logic for creating summary to provide per-tenant rate-limiting at the HTTP route level
+	const createSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.createSummaryThrottleIdPrefix,
+	};
+	const restTenantCreateSummaryThrottler = restTenantThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
 
-    async function createSummary(
-        tenantId: string,
-        authorization: string,
-        params: IWholeSummaryPayload,
-        initial?: boolean,
-    ): Promise<IWriteSummaryResponse> {
-        const service = await utils.createGitService(
-            config,
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage);
-        return service.createSummary(params, initial);
-    }
+	// Throttling logic for getting summary to provide per-tenant rate-limiting at the HTTP route level
+	const getSummaryPerTenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdSuffix: Constants.getSummaryThrottleIdPrefix,
+	};
+	const restTenantGetSummaryThrottler = restTenantThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
 
-    async function deleteSummary(
-        tenantId: string,
-        authorization: string,
-        softDelete: boolean): Promise<boolean[]> {
-        const service = await utils.createGitService(
-            config,
-            tenantId,
-            authorization,
-            tenantService,
-            cache,
-            asyncLocalStorage,
-            true);
-        const deletionPs = [service.deleteSummary(softDelete)];
-        if (!softDelete) {
-            deletionPs.push(tenantService.deleteFromCache(tenantId, parseToken(tenantId, authorization)));
-        }
-        return Promise.all(deletionPs);
-    }
+	// Throttling logic for creating summary to provide per-cluster rate-limiting at the HTTP route level
+	const createSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.createSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterCreateSummaryThrottler = restClusterThrottlers.get(
+		Constants.createSummaryThrottleIdPrefix,
+	);
 
-    router.get("/repos/:ignored?/:tenantId/git/summaries/:sha",
-        throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
-            const useCache = !("disableCache" in request.query);
-            const summaryP = getSummary(
-                request.params.tenantId, request.get("Authorization"), request.params.sha, useCache);
+	// Throttling logic for getting summary to provide per-cluster rate-limiting at the HTTP route level
+	const getSummaryPerClusterThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
+		throttleIdPrefix: Constants.getSummaryThrottleIdPrefix,
+		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
+	};
+	const restClusterGetSummaryThrottler = restTenantThrottlers.get(
+		Constants.getSummaryThrottleIdPrefix,
+	);
 
-            utils.handleResponse(
-                summaryP,
-                response,
-                // Browser caching for summary data should be disabled for now.
-                false);
-        });
+	async function getSummary(
+		tenantId: string,
+		authorization: string,
+		sha: string,
+		useCache: boolean,
+	): Promise<IWholeFlatSummary> {
+		const service = await utils.createGitService(
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			cache,
+			asyncLocalStorage,
+		);
+		return service.getSummary(sha, useCache);
+	}
 
-    router.post("/repos/:ignored?/:tenantId/git/summaries",
-        throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
-            // request.query type is { [string]: string } but it's actually { [string]: any }
-            // Account for possibilities of undefined, boolean, or string types. A number will be false.
-            const initial: boolean | undefined = typeof request.query.initial === "undefined"
-                ? undefined
-                : typeof request.query.initial === "boolean"
-                    ? request.query.initial
-                    : request.query.initial === "true";
+	async function createSummary(
+		tenantId: string,
+		authorization: string,
+		params: IWholeSummaryPayload,
+		initial?: boolean,
+	): Promise<IWriteSummaryResponse> {
+		const service = await utils.createGitService(
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			cache,
+			asyncLocalStorage,
+		);
+		return service.createSummary(params, initial);
+	}
 
-            const summaryP = createSummary(
-                request.params.tenantId,
-                request.get("Authorization"),
-                request.body,
-                initial,
-            );
+	async function deleteSummary(
+		tenantId: string,
+		authorization: string,
+		softDelete: boolean,
+	): Promise<boolean[]> {
+		const service = await utils.createGitService(
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			cache,
+			asyncLocalStorage,
+			true,
+		);
+		const deletionPs = [service.deleteSummary(softDelete)];
+		if (!softDelete) {
+			deletionPs.push(
+				tenantService.deleteFromCache(tenantId, parseToken(tenantId, authorization)),
+			);
+		}
+		return Promise.all(deletionPs);
+	}
 
-            utils.handleResponse(
-                summaryP,
-                response,
-                false,
-                undefined,
-                201);
-        });
+	router.get(
+		"/repos/:ignored?/:tenantId/git/summaries/:sha",
+		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
+		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		(request, response, next) => {
+			const useCache = !("disableCache" in request.query);
+			const summaryP = getSummary(
+				request.params.tenantId,
+				request.get("Authorization"),
+				request.params.sha,
+				useCache,
+			);
 
-    router.delete("/repos/:ignored?/:tenantId/git/summaries",
-        throttle(throttler, winston, commonThrottleOptions),
-        (request, response, next) => {
-            const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
-            const summaryP = deleteSummary(
-                request.params.tenantId,
-                request.get("Authorization"),
-                softDelete);
+			utils.handleResponse(
+				summaryP,
+				response,
+				// Browser caching for summary data should be disabled for now.
+				false,
+			);
+		},
+	);
 
-            utils.handleResponse(
-                summaryP,
-                response,
-                false);
-        });
+	router.post(
+		"/repos/:ignored?/:tenantId/git/summaries",
+		throttle(
+			restClusterCreateSummaryThrottler,
+			winston,
+			createSummaryPerClusterThrottleOptions,
+		),
+		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		(request, response, next) => {
+			// request.query type is { [string]: string } but it's actually { [string]: any }
+			// Account for possibilities of undefined, boolean, or string types. A number will be false.
+			const initial: boolean | undefined =
+				typeof request.query.initial === "undefined"
+					? undefined
+					: typeof request.query.initial === "boolean"
+					? request.query.initial
+					: request.query.initial === "true";
 
-    return router;
+			const summaryP = createSummary(
+				request.params.tenantId,
+				request.get("Authorization"),
+				request.body,
+				initial,
+			);
+
+			utils.handleResponse(summaryP, response, false, undefined, 201);
+		},
+	);
+
+	router.delete(
+		"/repos/:ignored?/:tenantId/git/summaries",
+		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
+		utils.verifyTokenNotRevoked(tokenRevocationManager),
+		(request, response, next) => {
+			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
+			const summaryP = deleteSummary(
+				request.params.tenantId,
+				request.get("Authorization"),
+				softDelete,
+			);
+
+			utils.handleResponse(summaryP, response, false);
+		},
+	);
+
+	return router;
 }

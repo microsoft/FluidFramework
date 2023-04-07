@@ -10,7 +10,7 @@ import { InsecureTinyliciousUrlResolver } from "../insecureTinyliciousUrlResolve
 
 describe("Insecure Url Resolver Test", () => {
 	const documentId = "fileName";
-	const hostUrl = "fluid://localhost:3000";
+	const hostUrl = "fluid://localhost:7070";
 	let resolver: InsecureTinyliciousUrlResolver;
 
 	beforeEach(() => {
@@ -43,7 +43,7 @@ describe("Insecure Url Resolver Test", () => {
 		const resolvedUrl = await customResolver.resolve(testRequest);
 		ensureFluidResolvedUrl(resolvedUrl);
 
-		const expectedResolvedUrl = `${customFluidEndpoint}/tinylicious/${documentId}`;
+		const expectedResolvedUrl = `${customFluidEndpoint}:${customPort}/tinylicious/${documentId}`;
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
