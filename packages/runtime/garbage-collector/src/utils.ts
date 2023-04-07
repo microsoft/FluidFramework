@@ -9,6 +9,8 @@ import { assert } from "@fluidframework/common-utils";
  * Helper function that unpacks the used routes of children from a given node's used routes.
  * @param usedRoutes - The used routes of a node.
  * @returns A map of used routes of each children of the the given node.
+ *
+ * @deprecated Internal implementation detail and will no longer be exported in an upcoming release.
  */
 export function unpackChildNodesUsedRoutes(usedRoutes: string[]) {
 	// Remove the node's self used route, if any, and generate the children used routes.

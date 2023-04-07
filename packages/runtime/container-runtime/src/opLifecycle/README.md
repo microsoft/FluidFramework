@@ -4,48 +4,46 @@
 
 There is a current limitation regarding the size of the payload a Fluid client can send and receive. [The limit is 1MB per payload](https://github.com/microsoft/FluidFramework/issues/9023) and it is currently enforced explicitly with the `BatchTooLarge` error which closes the container.
 
-There are two features which can be used to work around this size limit, batch compression and compressed batch chunking. This document describes how to enable/disable them, along with a brief description of how they work.
+There are two features which can be used to work around this size limit, batch compression and compressed batch chunking. This document describes how to enable/disable them, along with a brief description of how they work. The features are enabled by default.
 
-**The features are still considered experimental and for safety and back-compat reasons they are disabled by default.**
+By default, the runtime is configured with a max batch size of `716800` bytes, which is lower than the 1MB limit. The reason for the lower value is to account for possible overhead from the op envelope and metadata.
 
 ## Table of contents
 
 -   [Introduction](#introduction)
-    -   [Enabling compression](#enabling-compression)
-    -   [Enabling chunking for compression](#enabling-chunking-for-compression)
+    -   [Compression](#compression)
+    -   [Chunking for compression](#chunking-for-compression)
     -   [Disabling in case of emergency](#disabling-in-case-of-emergency)
     -   [Example configs](#example-configs)
     -   [How it works](#how-it-works)
 
-## Enabling compression
+## Compression
 
-**Compression targets payloads which exceed the max batch size (1MB) and it is disabled by default.** To enable compression, use the `IContainerRuntimeOptions.compressionOptions` property, of type `ICompressionRuntimeOptions`.
+**Compression targets payloads which exceed the max batch size and it is enabled by default.**. The `IContainerRuntimeOptions.compressionOptions` property, of type `ICompressionRuntimeOptions` is the configuration governing how compression works.
 
 `ICompressionRuntimeOptions` has two properties:
 
--   `minimumBatchSizeInBytes` – the minimum size of the batch for which compression should kick in. If the payload is too small, compression may not yield too many benefits. To target the original 1MB issue, a good value here would be to match the default maxBatchSizeInBytes (972800), however, experimentally, a good lower value could be at around 614400 bytes.
+-   `minimumBatchSizeInBytes` – the minimum size of the batch for which compression should kick in. If the payload is too small, compression may not yield too many benefits. To target the original 1MB issue, a good value here would be to match the default maxBatchSizeInBytes (972800), however, experimentally, a good lower value could be at around 614400 bytes. Setting this value to `Number.POSITIVE_INFINITY` will disable compression.
 -   `compressionAlgorithm` – currently, only `lz4` is supported.
 
-## Enabling chunking for compression
+## Chunking for compression
 
-**Op chunking for compression targets payloads which exceed the max batch size (1MB) after compression.** So, only payloads which are already compressed. By default, the feature is disabled.
+**Op chunking for compression targets payloads which exceed the max batch size after compression.** So, only payloads which are already compressed. By default, the feature is enabled.
 
-To enable, use the `IContainerRuntimeOptions.chunkSizeInBytes` property, which represents the size of the chunked ops, when chunking is necessary. When chunking is performed, the large op is split into smaller ops (chunks). This config represents both the size of the chunks and the threshold for the feature to activate. The value enables a trade-off between large chunks / few ops and small chunks / many ops. A good value for this would be at around 204800.
+The `IContainerRuntimeOptions.chunkSizeInBytes` property is the only configuration for chunking and it represents the size of the chunked ops, when chunking is necessary. When chunking is performed, the large op is split into smaller ops (chunks). This config represents both the size of the chunks and the threshold for the feature to activate. The value enables a trade-off between large chunks / few ops and small chunks / many ops. A good value for this would be at around 204800. Setting this value to `Number.POSITIVE_INFINITY` will disable chunking.
 
-This config would govern chunking compressed batches only. We will not be enabling chunking across all types of ops/batches but **only when compression is enabled and when the batch is compressed**, and its payload size is more than `IContainerRuntimeOptions.chunkSizeInBytes`. Therefore, for this feature to be working, it is required that compression is enabled using `IContainerRuntimeOptions.compressionOptions`.
-
-It is recommended to also change the `maxBatchSizeInBytes` property in `IContainerRuntimeOptions`. By default, if unspecified it is 972800. We recommend a lower value such as `716800`, to account for any overhead on the server side. The reason for this is that chunking will only kick in after this configuration limit is exceeded. If the limit is too high, we might allow batches which are under 1MB but can increase in size due to overhead after they reach the server.
+This config would govern chunking compressed batches only. We will not be enabling chunking across all types of ops/batches but **only when compression is enabled and when the batch is compressed**, and its payload size is more than `IContainerRuntimeOptions.chunkSizeInBytes`.
 
 ## Disabling in case of emergency
 
 If the features are enabled using the configs, they can be disabled at runtime via feature gates as following:
 
--   `Fluid.ContainerRuntime.DisableCompression` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
--   `Fluid.ContainerRuntime.DisableCompressionChunking` - if set to true, will disable chunking for compression.
+-   `Fluid.ContainerRuntime.CompressionDisabled` - if set to true, will disable compression (this has a side effect of also disabling chunking, as chunking is invoked only for compressed payloads).
+-   `Fluid.ContainerRuntime.CompressionChunkingDisabled` - if set to true, will disable chunking for compression.
 
 ## Example configs
 
-Enable only compression:
+By default, the runtime is configured with the following values related to compression and chunking:
 
 ```
     const runtimeOptions: IContainerRuntimeOptions = {
@@ -53,20 +51,27 @@ Enable only compression:
             minimumBatchSizeInBytes: 614400,
             compressionAlgorithm: CompressionAlgorithms.lz4,
         },
+        chunkSizeInBytes: 204800,
         maxBatchSizeInBytes: 716800,
     }
 ```
 
-Enable compression and chunking:
+To use compression but disable chunking:
+
+```
+    const runtimeOptions: IContainerRuntimeOptions = {
+        chunkSizeInBytes: Number.POSITIVE_INFINITY,
+    }
+```
+
+To disable compression (will also disable chunking, as chunking works only for compressed batches):
 
 ```
     const runtimeOptions: IContainerRuntimeOptions = {
         compressionOptions: {
-            minimumBatchSizeInBytes: 614400,
+            minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
             compressionAlgorithm: CompressionAlgorithms.lz4,
         },
-        chunkSizeInBytes: 614400,
-        maxBatchSizeInBytes: 716800,
     }
 ```
 

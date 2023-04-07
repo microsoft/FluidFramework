@@ -404,7 +404,10 @@ export function tryExtendMark<T>(
 	switch (type) {
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
-			if (isEqualPlace(lhsInsert, rhs)) {
+			if (
+				isEqualPlace(lhsInsert, rhs) &&
+				(lhsInsert.id as number) + lhsInsert.content.length === rhs.id
+			) {
 				lhsInsert.content.push(...rhs.content);
 				return true;
 			}

@@ -37,4 +37,4 @@ export {
 } from "./redisUtils";
 export { IThrottleMiddlewareOptions, throttle } from "./throttlerMiddleware";
 export { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
-export { WebSocketTracker, DummyTokenManager } from "./tokenManager";
+export { WebSocketTracker, DummyTokenRevocationManager } from "./tokenRevocationManager";

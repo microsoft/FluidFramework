@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @public @deprecated
 export function unpackChildNodesUsedRoutes(usedRoutes: string[]): Map<string, string[]>;
 
 // (No @packageDocumentation comment for this package)

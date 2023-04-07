@@ -4,16 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { ISnapshotTree } from "@fluidframework/protocol-definitions";
-import {
-	getSnapshotDataFromOldSnapshotFormat,
-	shouldAllowGcTombstoneEnforcement,
-	GCFeatureMatrix,
-	shouldAllowGcSweep,
-	IGarbageCollectionSnapshotData,
-	IGarbageCollectionSummaryDetailsLegacy,
-} from "../../gc";
-import { IContainerRuntimeMetadata, ReadFluidDataStoreAttributes } from "../../summary";
+import { shouldAllowGcTombstoneEnforcement, GCFeatureMatrix, shouldAllowGcSweep } from "../../gc";
 
 describe("Garbage Collection Helpers Tests", () => {
 	describe("shouldAllowGcTombstoneEnforcement", () => {
@@ -118,71 +109,6 @@ describe("Garbage Collection Helpers Tests", () => {
 				const shouldAllow = shouldAllowGcSweep(persisted, current);
 				assert.equal(shouldAllow, expectedShouldAllowValue);
 			});
-		});
-	});
-
-	describe("getSnapshotDataFromOldSnapshotFormat", () => {
-		it("can convert GC data from old snapshot format to new format", async () => {
-			const dsNodeId = "/ds";
-			const ddsNodeId = "/ds/dds";
-			const unreferencedTimestampMs = 500;
-			const gcDetailsLegacy: IGarbageCollectionSummaryDetailsLegacy = {
-				gcData: { gcNodes: { "/": [ddsNodeId] } },
-				unrefTimestamp: unreferencedTimestampMs,
-			};
-			const gcBlobId = "dsGCBlob";
-			const attributes: ReadFluidDataStoreAttributes = {
-				isRootDataStore: true,
-				pkg: "legacyDataStore",
-			};
-			const attributesBlobId = "dsAttributesBlob";
-			const oldSnapshot: ISnapshotTree = {
-				blobs: {},
-				trees: {
-					".channels": {
-						trees: {
-							[`${dsNodeId.slice(1)}`]: {
-								blobs: {
-									"gc": gcBlobId,
-									".component": attributesBlobId,
-								},
-								trees: {},
-							},
-						},
-						blobs: {},
-					},
-				},
-			};
-			const blobsMap = new Map();
-			blobsMap.set(gcBlobId, gcDetailsLegacy);
-			blobsMap.set(attributesBlobId, attributes);
-			const metadata: Partial<IContainerRuntimeMetadata> = {};
-			const snapshotData = await getSnapshotDataFromOldSnapshotFormat(
-				oldSnapshot,
-				metadata as IContainerRuntimeMetadata,
-				async <T>(id: string) => blobsMap.get(id) as T,
-			);
-
-			const expectedSnapshotData: IGarbageCollectionSnapshotData = {
-				gcState: {
-					gcNodes: {
-						"/": {
-							outboundRoutes: [dsNodeId],
-						},
-						[`${dsNodeId}`]: {
-							outboundRoutes: [ddsNodeId],
-							unreferencedTimestampMs,
-						},
-					},
-				},
-				tombstones: undefined,
-				deletedNodes: undefined,
-			};
-			assert.deepStrictEqual(
-				snapshotData,
-				expectedSnapshotData,
-				"Old snapshot was not correctly converted",
-			);
 		});
 	});
 });

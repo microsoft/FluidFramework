@@ -202,6 +202,7 @@ export {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	PrimitiveValue,
+	Identifier,
 	IDefaultEditBuilder,
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
@@ -229,6 +230,8 @@ export {
 } from "./feature-libraries";
 
 export {
+	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	ISharedTreeFork,

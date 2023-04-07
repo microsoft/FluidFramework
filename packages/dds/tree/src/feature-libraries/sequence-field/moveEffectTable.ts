@@ -520,7 +520,11 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 		case "Insert":
 			return [
 				{ ...markObj, content: markObj.content.slice(0, length) },
-				{ ...markObj, content: markObj.content.slice(length) },
+				{
+					...markObj,
+					content: markObj.content.slice(length),
+					id: (markObj.id as number) + length,
+				},
 			];
 		case "MoveIn":
 		case "ReturnTo": {
