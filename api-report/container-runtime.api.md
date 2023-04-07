@@ -689,7 +689,14 @@ export type SummarizerStopReason =
 */
 | "notElectedClient"
 /** Summarizer client was disconnected */
-| "summarizerClientDisconnected" | "summarizerException";
+| "summarizerClientDisconnected"
+/** running summarizer threw an exception */
+| "summarizerException"
+/**
+* The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
+* first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
+*/
+| "latestSummaryStateStale";
 
 // @public
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
