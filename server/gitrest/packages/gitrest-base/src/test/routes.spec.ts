@@ -235,11 +235,7 @@ testModes.forEach((mode) => {
 			beforeEach(() => {
 				const repoManagerFactory = getRepoManagerFactory(mode);
 				testUtils.defaultProvider.set("git:repoPerDocEnabled", mode.repoPerDocEnabled);
-				const testApp = app.create(
-					testUtils.defaultProvider,
-					fileSystemManagerFactory,
-					repoManagerFactory,
-				);
+				const testApp = app.create(testUtils.defaultProvider, repoManagerFactory);
 				supertest = request(testApp);
 			});
 
