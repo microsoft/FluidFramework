@@ -138,7 +138,7 @@ export class OdspDelayLoadedDeltaStream {
 			const joinSessionPromise = this.joinSession(
 				requestWebsocketTokenFromJoinSession,
 				options,
-				false,
+				false /* isRefreshingJoinSession */,
 			);
 			const [websocketEndpoint, websocketToken] = await Promise.all([
 				joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
@@ -246,7 +246,8 @@ export class OdspDelayLoadedDeltaStream {
 		// timer we should not make the call and throw error.
 		if (
 			isRefreshingJoinSession &&
-			(this.currentConnection === undefined || this.currentConnection.clientId !== clientId)
+			(this.currentConnection === undefined ||
+				(clientId !== undefined && this.currentConnection.clientId !== clientId))
 		) {
 			this.clearJoinSessionTimer();
 			throw new NonRetryableError(
