@@ -148,17 +148,9 @@ async function main() {
 		);
 	} catch (e) {
 		logger.sendErrorEvent({ eventName: "runnerFailed" }, e);
-		console.log(
-			`///////////////// Test runner failed 1. Result: ${result}. ${runId}. Error: ${JSON.stringify(
-				e,
-			)}`,
-		);
 	} finally {
 		if (testFailed) {
 			result = -2;
-		}
-		if (result !== 0) {
-			console.log(`///////////////// Test runner failed 2. Result: ${result}. ${runId}`);
 		}
 		await safeExit(result, url, runId);
 	}
