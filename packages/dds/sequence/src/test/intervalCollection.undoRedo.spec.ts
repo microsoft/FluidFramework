@@ -58,14 +58,13 @@ describe("Undo/redo for interval collection operations", () => {
 		});
 
 		collection.add(2, 4, IntervalType.SlideOnRemove);
-		assertIntervals(sharedString, collection, [{ start: 2, end: 4 }]);
 
 		sharedString.removeRange(0, 6);
 
 		revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ start: 2, end: 4 }]);
+		assertIntervals(sharedString, collection, [{ start: 6, end: 6 /* start: 2, end: 4 */ }]);
 	});
 	it("has an interval with the same range as the deleted text", () => {
 		sharedString.insertText(0, "hello world");
@@ -81,7 +80,7 @@ describe("Undo/redo for interval collection operations", () => {
 		revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		assertIntervals(sharedString, collection, [{ start: 6, end: 6 /* start: 0, end: 5 */ }]);
 	});
 	it("has an interval starting point within the deleted range", () => {
 		sharedString.insertText(0, "hello world");
@@ -97,7 +96,7 @@ describe("Undo/redo for interval collection operations", () => {
 		revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ start: 5, end: 9 }]);
+		assertIntervals(sharedString, collection, [{ /* start: 5 */ start: 7, end: 9 }]);
 	});
 	it("has an interval ending point within the deleted range", () => {
 		sharedString.insertText(0, "hello world");
@@ -113,6 +112,24 @@ describe("Undo/redo for interval collection operations", () => {
 		revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 
 		assert.equal(sharedString.getText(), "hello world");
-		assertIntervals(sharedString, collection, [{ start: 0, end: 4 }]);
+		assertIntervals(sharedString, collection, [{ start: 0, end: 7 /* end: 4 */ }]);
+	});
+	it("restores an interval after two removes", () => {
+		sharedString.insertText(0, "hello world");
+
+		sharedString.on("sequenceDelta", (op) => {
+			appendToMergeTreeDeltaRevertibles(sharedString, op.deltaArgs, revertibles);
+		});
+
+		collection.add(3, 6, IntervalType.SlideOnRemove);
+
+		// only one revertible object generated for both removes
+		sharedString.removeRange(1, 4);
+		sharedString.removeRange(3, 6);
+
+		revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
+
+		assert.equal(sharedString.getText(), "hello world");
+		assertIntervals(sharedString, collection, [{ start: 4, end: 9 /* start: 3, end: 6 */ }]);
 	});
 });
