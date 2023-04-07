@@ -3181,11 +3181,16 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
 		);
 		if (recoveryMethod === "restart") {
-			this._summarizer?.stop("latestSummaryStateStale");
-			// TODO: stop execution, but don't cause a cascading series of errors.
-			const error = new GenericError("Restarting summarizer instead of refreshing");
-			this.closeFn(error);
-			throw error;
+			assert(
+				this._summarizer !== undefined,
+				"Should be only summarizer refreshing from storage",
+			);
+			this.mc.logger.sendTelemetryEvent({
+				eventName: "RestartInsteadOfRefreshFromServerFetch",
+				message: "Restarting summarizer instead of refreshing",
+			});
+			this._summarizer.stop("latestSummaryStateStale");
+			this.closeFn();
 		}
 
 		return PerformanceEvent.timedExecAsync(
