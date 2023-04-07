@@ -27,15 +27,9 @@ export {
 	GetRootDataVisualizations,
 	RootDataVisualizations,
 } from "./container-devtools-messages";
+export { ContainerList, GetContainerList } from "./devtools-messages";
 export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
-export {
-	GetContainerListMessage,
-	GetContainerListMessageType,
-	ContainerListMessage,
-	ContainerListMessageData,
-	ContainerListMessageType,
-} from "./DevtoolsMessages";
 export {
 	GetTelemetryHistoryMessage,
 	GetTelemetryHistoryMessageType,

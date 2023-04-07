@@ -102,17 +102,16 @@ export interface ContainerDevtoolsProps {
 }
 
 // @public
-export interface ContainerListMessage extends IDebuggerMessage<ContainerListMessageData> {
-    type: typeof ContainerListMessageType;
+export namespace ContainerList {
+    const MessageType = "CONTAINER_LIST";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDebuggerMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        containers: ContainerMetadata[];
+    }
 }
-
-// @public
-export interface ContainerListMessageData {
-    containers: ContainerMetadata[];
-}
-
-// @public
-export const ContainerListMessageType = "CONTAINER_LIST";
 
 // @public
 export interface ContainerMetadata {
@@ -268,12 +267,13 @@ export namespace GetAudienceSummary {
 }
 
 // @public
-export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
-    type: typeof GetContainerListMessageType;
+export namespace GetContainerList {
+    const MessageType = "GET_CONTAINER_LIST";
+    export function createMessage(): Message;
+    export interface Message extends IDebuggerMessage<undefined> {
+        type: typeof MessageType;
+    }
 }
-
-// @public
-export const GetContainerListMessageType = "GET_CONTAINER_LIST";
 
 // @public
 export namespace GetContainerState {
