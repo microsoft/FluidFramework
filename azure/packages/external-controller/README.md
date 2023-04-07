@@ -95,6 +95,17 @@ In this way, we can toggle between remote and local mode using the same config f
 `AzureFunctionTokenProvider` for running against live Azure Fluid Relay instance since it is more secured, without exposing the tenant
 secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
 
+We can also run the `AzureClient` with the `InsecureTokenProvider` as follows:
+
+```typescript
+const connectionConfig: AzureConnectionConfig = {
+	type: "remote",
+	tenantId: "YOUR-TENANT-ID-HERE",
+	tokenProvider: new InsecureTokenProvider("YOUR-SECRET-HERE", user),
+	endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+};
+```
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->

@@ -45,9 +45,11 @@ import {
 	IdentifierIndex,
 	EditableTree,
 	Identifier,
+	SchemaAware,
 } from "../feature-libraries";
 import { IEmitter, ISubscribable, createEmitter } from "../events";
 import { brand, TransactionResult } from "../util";
+import { SchematizeConfiguration, schematizeView } from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -176,6 +178,36 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * A map of nodes that have been recorded by the identifier index.
 	 */
 	readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
+
+	/**
+	 * Takes in a tree and returns a view of it that conforms to the view schema.
+	 * The returned view referees to and can edit the provided one: it is not a fork of it.
+	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
+	 *
+	 * If the tree is uninitialized (has no nodes or schema at all),
+	 * it is initialized to the config's initial tree and the provided schema are stored.
+	 * This is done even if `AllowedUpdateType.None`.
+	 *
+	 * @remarks
+	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
+	 * Other approach tend to have leave easy to make mistakes.
+	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
+	 * or call it unconditionally leaving an app that can only create new documents.
+	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
+	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
+	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
+	 * on the create code-path (for example how a schematized factory might do it),
+	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
+	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
+	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+	 *
+	 * TODO:
+	 * - Implement schema-aware API for return type.
+	 * - Support adapters for handling out of schema data.
+	 */
+	schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView;
 }
 
 /**
@@ -232,7 +264,7 @@ export const identifierKeySymbol = symbolFromKey(identifierKey);
  *
  * TODO: detail compatibility requirements.
  */
-class SharedTree
+export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
@@ -285,6 +317,12 @@ class SharedTree
 			this.forest.applyDelta(changeDelta);
 			this.finishBatch();
 		});
+	}
+
+	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView {
+		return schematizeView(this, config);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -377,7 +415,7 @@ export class SharedTreeFactory implements IChannelFactory {
 	}
 }
 
-class SharedTreeFork implements ISharedTreeFork {
+export class SharedTreeFork implements ISharedTreeFork {
 	public readonly events = createEmitter<ViewEvents>();
 
 	public constructor(
@@ -410,6 +448,12 @@ class SharedTreeFork implements ISharedTreeFork {
 		abort: () => this.branch.abortTransaction(),
 		inProgress: () => this.branch.isTransacting(),
 	};
+
+	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
+		config: SchematizeConfiguration<TSchema>,
+	): ISharedTreeView {
+		return schematizeView(this, config);
+	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);

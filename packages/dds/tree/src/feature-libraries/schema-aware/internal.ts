@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-// Used by put public types, but not part of the desired API surface
+// Used by public types, but not part of the desired API surface
 export {
 	TypeSetToTypedTrees as TreeTypesToTypedTreeTypes,
-	TypedSchemaData,
 	TypedTree,
 	CollectOptions,
 	TypedFields,
