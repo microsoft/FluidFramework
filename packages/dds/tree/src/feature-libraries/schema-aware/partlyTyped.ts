@@ -5,7 +5,7 @@
 
 import { FieldKey, FieldSchema, ITreeCursor } from "../../core";
 import { FieldEditor, FieldKind, Multiplicity } from "../modular-schema";
-import { UntypedField, UntypedTree, UntypedTreeContext } from "../unknownTree";
+import { UntypedField, UntypedTree, UntypedTreeContext } from "../untypedTree";
 
 /**
  * A sequence field in an {@link UntypedTree}.
