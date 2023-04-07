@@ -83,9 +83,7 @@ export interface IClient {
 	permission: string[];
 
 	/**
-	 * The user associated with this client.
-	 *
-	 * @remarks There may be more than 1 client associated with the same user.
+	 * The user information associated with this client connection.
 	 */
 	user: IUser;
 
