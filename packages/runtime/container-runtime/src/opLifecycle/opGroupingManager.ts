@@ -9,7 +9,7 @@ import { ContainerRuntimeMessage } from "..";
 import { IBatch } from "./definitions";
 
 interface IGroupedMessage {
-	contents?: any;
+	contents?: unknown;
 	metadata?: Record<string, unknown>;
 	compression?: string;
 }

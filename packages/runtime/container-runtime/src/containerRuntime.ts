@@ -1907,7 +1907,9 @@ export class ContainerRuntime
 					}
 			}
 
-			this.emit("op", message, runtimeMessage);
+			if (runtimeMessage || this.groupedBatchingEnabled) {
+				this.emit("op", message, runtimeMessage);
+			}
 
 			this.scheduleManager.afterOpProcessing(undefined, message);
 
