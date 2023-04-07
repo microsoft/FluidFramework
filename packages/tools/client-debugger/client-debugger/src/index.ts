@@ -71,8 +71,8 @@ export {
 } from "./data-visualization";
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
-export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
+export { FluidDevtools, FluidDevtoolsProps, initializeFluidDevtools } from "./FluidDevtools";
 export {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
@@ -87,6 +87,7 @@ export {
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
+	devtoolsMessageSource,
 	DisconnectContainer,
 	GetAudienceSummary,
 	GetContainerList,
@@ -94,11 +95,6 @@ export {
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	GetTelemetryHistory,
-	RootDataVisualizations,
-	TelemetryEvent,
-	TelemetryHistory,
-	// ----
-	devtoolsMessageSource,
 	IDebuggerMessage,
 	IMessageRelay,
 	IMessageRelayEvents,
@@ -109,5 +105,8 @@ export {
 	isDebuggerMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
+	RootDataVisualizations,
+	TelemetryEvent,
+	TelemetryHistory,
 } from "./messaging";
 export { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
