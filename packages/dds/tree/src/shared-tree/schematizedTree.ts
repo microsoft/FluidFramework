@@ -24,7 +24,7 @@ import {
 	ViewSchemaCollection,
 } from "../feature-libraries";
 import { fail } from "../util";
-import { ISharedTreeView, SharedTree, SharedTreeFork } from "./sharedTree";
+import { ISharedTreeView } from "./sharedTree";
 
 /**
  * See {@link ISharedTreeView.schematize} for more details.
@@ -36,7 +36,7 @@ import { ISharedTreeView, SharedTree, SharedTreeFork } from "./sharedTree";
  * - Support lazy schema updates.
  */
 export function schematizeView(
-	tree: SharedTree | SharedTreeFork,
+	tree: ISharedTreeView,
 	config: SchematizeConfiguration,
 ): ISharedTreeView {
 	// Check for empty.
