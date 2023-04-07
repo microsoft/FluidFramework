@@ -9,7 +9,7 @@ import { IWebServer, IWebServerFactory, IRunner } from "@fluidframework/server-s
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import * as app from "./app";
-import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "./utils";
+import { IRepositoryManagerFactory } from "./utils";
 
 export class GitrestRunner implements IRunner {
 	private server: IWebServer;
@@ -19,7 +19,6 @@ export class GitrestRunner implements IRunner {
 		private readonly serverFactory: IWebServerFactory,
 		private readonly config: Provider,
 		private readonly port: string | number,
-		private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
 		private readonly repositoryManagerFactory: IRepositoryManagerFactory,
 		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 	) {}
@@ -29,7 +28,6 @@ export class GitrestRunner implements IRunner {
 		// Create the gitrest app
 		const gitrest = app.create(
 			this.config,
-			this.fileSystemManagerFactory,
 			this.repositoryManagerFactory,
 			this.asyncLocalStorage,
 		);

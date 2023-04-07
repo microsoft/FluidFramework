@@ -5,7 +5,7 @@
 
 import { Router } from "express";
 import nconf from "nconf";
-import { IFileSystemManagerFactory, IRepositoryManagerFactory } from "../utils";
+import { IRepositoryManagerFactory } from "../utils";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -36,22 +36,21 @@ export interface IRoutes {
 
 export function create(
 	store: nconf.Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
 	repoManagerFactory: IRepositoryManagerFactory,
 ): IRoutes {
 	return {
 		git: {
-			blobs: blobs.create(store, fileSystemManagerFactory, repoManagerFactory),
-			commits: commits.create(store, fileSystemManagerFactory, repoManagerFactory),
-			refs: refs.create(store, fileSystemManagerFactory, repoManagerFactory),
+			blobs: blobs.create(store, repoManagerFactory),
+			commits: commits.create(store, repoManagerFactory),
+			refs: refs.create(store, repoManagerFactory),
 			repos: repos.create(store, repoManagerFactory),
-			tags: tags.create(store, fileSystemManagerFactory, repoManagerFactory),
-			trees: trees.create(store, fileSystemManagerFactory, repoManagerFactory),
+			tags: tags.create(store, repoManagerFactory),
+			trees: trees.create(store, repoManagerFactory),
 		},
 		repository: {
-			commits: repositoryCommits.create(store, fileSystemManagerFactory, repoManagerFactory),
-			contents: contents.create(store, fileSystemManagerFactory, repoManagerFactory),
+			commits: repositoryCommits.create(store, repoManagerFactory),
+			contents: contents.create(store, repoManagerFactory),
 		},
-		summaries: summaries.create(store, fileSystemManagerFactory, repoManagerFactory),
+		summaries: summaries.create(store, repoManagerFactory),
 	};
 }

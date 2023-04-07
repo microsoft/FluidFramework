@@ -23,7 +23,6 @@ import {
 import * as routes from "./routes";
 import {
 	getRepoManagerParamsFromRequest,
-	IFileSystemManagerFactory,
 	IRepoManagerParams,
 	IRepositoryManagerFactory,
 } from "./utils";
@@ -34,7 +33,6 @@ function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: expre
 
 export function create(
 	store: nconf.Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
 	repositoryManagerFactory: IRepositoryManagerFactory,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 ) {
@@ -65,7 +63,7 @@ export function create(
 
 	app.use(cors());
 
-	const apiRoutes = routes.create(store, fileSystemManagerFactory, repositoryManagerFactory);
+	const apiRoutes = routes.create(store, repositoryManagerFactory);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
 	app.use(apiRoutes.git.repos);

@@ -50,5 +50,10 @@ export {
 	IsomorphicGitManagerFactory,
 	IsomorphicGitRepositoryManager,
 } from "./isomorphicgitManager";
-export { NodeFsManagerFactory, MemFsManagerFactory } from "./filesystems";
+export {
+	NodeFsManagerFactory,
+	MemFsManagerFactory,
+	isTransactionTrackerProxyFsPromises,
+	TransactionTrackerProxyFsManagerFactory,
+} from "./filesystems";
 export { NodegitRepositoryManager, NodegitRepositoryManagerFactory } from "./nodegitManager";

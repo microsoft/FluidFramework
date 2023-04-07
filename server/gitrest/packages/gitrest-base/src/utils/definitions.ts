@@ -23,6 +23,7 @@ export interface IExternalWriterConfig {
 
 export interface IRepositoryManager {
 	path: string;
+	fileSystemManager: IFileSystemManager;
 	getCommit(sha: string): Promise<git.ICommit>;
 	getCommits(
 		sha: string,

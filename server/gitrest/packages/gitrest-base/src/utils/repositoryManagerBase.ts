@@ -4,7 +4,7 @@
  */
 
 import type * as git from "@fluidframework/gitresources";
-import { IExternalWriterConfig, IRepositoryManager } from "./definitions";
+import { IExternalWriterConfig, IFileSystemManager, IRepositoryManager } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
@@ -15,6 +15,7 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	constructor(
 		protected readonly directory: string,
 		protected readonly lumberjackBaseProperties: Record<string, any>,
+		public readonly fileSystemManager: IFileSystemManager,
 		private readonly enableRepositoryManagerMetrics: boolean = false,
 	) {}
 

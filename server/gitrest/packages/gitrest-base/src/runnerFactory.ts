@@ -11,12 +11,12 @@ import { normalizePort } from "@fluidframework/server-services-utils";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
-	IFileSystemManagerFactory,
 	IRepositoryManagerFactory,
 	IsomorphicGitManagerFactory,
 	NodegitRepositoryManagerFactory,
 	NodeFsManagerFactory,
 	IStorageDirectoryConfig,
+	TransactionTrackerProxyFsManagerFactory,
 } from "./utils";
 
 export class GitrestResources implements core.IResources {
@@ -25,7 +25,6 @@ export class GitrestResources implements core.IResources {
 	constructor(
 		public readonly config: Provider,
 		public readonly port: string | number,
-		public readonly fileSystemManagerFactory: IFileSystemManagerFactory,
 		public readonly repositoryManagerFactory: IRepositoryManagerFactory,
 		public readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		public readonly enableOptimizedInitialSummary?: boolean,
@@ -41,7 +40,12 @@ export class GitrestResources implements core.IResources {
 export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestResources> {
 	public async create(config: Provider): Promise<GitrestResources> {
 		const port = normalizePort(process.env.PORT || "3000");
-		const fileSystemManagerFactory = new NodeFsManagerFactory();
+		const enableTransactionTrackingTelemetry =
+			config.get("git:enableTransactionTrackingTelemetry") ?? false;
+		const nodeFsManagerFactory = new NodeFsManagerFactory();
+		const fileSystemManagerFactory = enableTransactionTrackingTelemetry
+			? new TransactionTrackerProxyFsManagerFactory(nodeFsManagerFactory)
+			: nodeFsManagerFactory;
 		const externalStorageManager = new ExternalStorageManager(config);
 		const storageDirectoryConfig: IStorageDirectoryConfig = config.get(
 			"storageDir",
@@ -75,13 +79,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		const repositoryManagerFactory = getRepositoryManagerFactory();
 		const asyncLocalStorage = config.get("asyncLocalStorageInstance")?.[0];
 
-		return new GitrestResources(
-			config,
-			port,
-			fileSystemManagerFactory,
-			repositoryManagerFactory,
-			asyncLocalStorage,
-		);
+		return new GitrestResources(config, port, repositoryManagerFactory, asyncLocalStorage);
 	}
 }
 
@@ -91,7 +89,6 @@ export class GitrestRunnerFactory implements core.IRunnerFactory<GitrestResource
 			resources.webServerFactory,
 			resources.config,
 			resources.port,
-			resources.fileSystemManagerFactory,
 			resources.repositoryManagerFactory,
 			resources.asyncLocalStorage,
 		);

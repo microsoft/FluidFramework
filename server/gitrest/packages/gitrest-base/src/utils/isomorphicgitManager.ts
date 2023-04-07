@@ -23,14 +23,19 @@ import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 	constructor(
-		private readonly fileSystemManager: IFileSystemManager,
+		fileSystemManager: IFileSystemManager,
 		private readonly repoOwner: string,
 		private readonly repoName: string,
 		directory: string,
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean = false,
 	) {
-		super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics);
+		super(
+			directory,
+			lumberjackBaseProperties,
+			fileSystemManager,
+			enableRepositoryManagerMetrics,
+		);
 	}
 
 	protected async getCommitCore(sha: string): Promise<resources.ICommit> {

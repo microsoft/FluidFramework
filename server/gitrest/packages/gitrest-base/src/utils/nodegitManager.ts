@@ -24,6 +24,7 @@ import { RepositoryManagerFactoryBase } from "./repositoryManagerFactoryBase";
 
 export class NodegitRepositoryManager extends RepositoryManagerBase {
 	constructor(
+		fileSystemManager: IFileSystemManager,
 		private readonly repoOwner: string,
 		private readonly repoName: string,
 		private readonly repo: nodegit.Repository,
@@ -32,7 +33,12 @@ export class NodegitRepositoryManager extends RepositoryManagerBase {
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean = false,
 	) {
-		super(directory, lumberjackBaseProperties, enableRepositoryManagerMetrics);
+		super(
+			directory,
+			lumberjackBaseProperties,
+			fileSystemManager,
+			enableRepositoryManagerMetrics,
+		);
 	}
 
 	protected async getCommitCore(sha: string): Promise<resources.ICommit> {
@@ -418,6 +424,7 @@ export class NodegitRepositoryManagerFactory extends RepositoryManagerFactoryBas
 		enableRepositoryManagerMetrics: boolean,
 	): IRepositoryManager {
 		return new NodegitRepositoryManager(
+			fileSystemManager,
 			repoOwner,
 			repoName,
 			repo,

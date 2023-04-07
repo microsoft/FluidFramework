@@ -11,14 +11,12 @@ import {
 	checkSoftDeleted,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
-	IFileSystemManagerFactory,
 	IRepositoryManagerFactory,
 	logAndThrowApiError,
 } from "../../utils";
 
 export function create(
 	store: nconf.Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
 	repoManagerFactory: IRepositoryManagerFactory,
 ): Router {
 	const router: Router = Router();
@@ -35,11 +33,8 @@ export function create(
 			repoPerDocEnabled,
 		)
 			.then(async (repoManager) => {
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
 				await checkSoftDeleted(
-					fsManager,
+					repoManager.fileSystemManager,
 					repoManager.path,
 					repoManagerParams,
 					repoPerDocEnabled,
@@ -57,11 +52,8 @@ export function create(
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
 				await checkSoftDeleted(
-					fsManager,
+					repoManager.fileSystemManager,
 					repoManager.path,
 					repoManagerParams,
 					repoPerDocEnabled,

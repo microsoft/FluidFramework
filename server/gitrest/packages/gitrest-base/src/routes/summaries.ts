@@ -24,8 +24,6 @@ import {
 	persistLatestFullSummaryInStorage,
 	isContainerSummary,
 	IRepositoryManager,
-	IFileSystemManager,
-	IFileSystemManagerFactory,
 	Constants,
 	getRepoManagerParamsFromRequest,
 	logAndThrowApiError,
@@ -35,15 +33,31 @@ import {
 	getRepoManagerFromWriteAPI,
 	checkSoftDeleted,
 	getSoftDeletedMarkerPath,
+	isTransactionTrackerProxyFsPromises,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
 	return `${repoManager.path}/${documentId}`;
 }
 
+function logFileSystemTransactions(
+	apiName: string,
+	flushFileSystemTransactions: () => string[] | undefined,
+	telemetryProperties?: Record<string, any>,
+): void {
+	if (flushFileSystemTransactions) {
+		// Flush and log fs transactions for api
+		const writeSummaryFileSystemTransactions = flushFileSystemTransactions();
+		Lumberjack.info(`FS Transactions: ${apiName}`, {
+			...telemetryProperties,
+			transactions: writeSummaryFileSystemTransactions,
+			transactionCount: writeSummaryFileSystemTransactions.length,
+		});
+	}
+}
+
 async function getSummary(
 	repoManager: IRepositoryManager,
-	fileSystemManager: IFileSystemManager,
 	sha: string,
 	repoManagerParams: IRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
@@ -53,12 +67,28 @@ async function getSummary(
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
 		[BaseGitRestTelemetryProperties.sha]: sha,
 	};
+	const flushFileSystemTransactions: () => string[] | undefined =
+		isTransactionTrackerProxyFsPromises(repoManager.fileSystemManager.promises)
+			? repoManager.fileSystemManager.promises.flush
+			: undefined;
+
+	if (flushFileSystemTransactions) {
+		// Flush transactions to clear state, just in case
+		flushFileSystemTransactions();
+	}
 
 	if (persistLatestFullSummary && sha === latestSummarySha) {
 		try {
 			const latestFullSummaryFromStorage = await retrieveLatestFullSummaryFromStorage(
-				fileSystemManager,
+				repoManager.fileSystemManager,
 				getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
+				lumberjackProperties,
+			);
+			// Flush and log fs transactions for get latest full summary.
+			// If persist latest full summary is working properly, this should be 1.
+			logFileSystemTransactions(
+				`getSummary: Get Latest Full Summary`,
+				flushFileSystemTransactions,
 				lumberjackProperties,
 			);
 			if (latestFullSummaryFromStorage !== undefined) {
@@ -87,6 +117,12 @@ async function getSummary(
 		externalWriterConfig?.enabled ?? false,
 	);
 	const fullSummary = await wholeSummaryManager.readSummary(sha);
+	// Flush and log fs transactions for read summary.
+	logFileSystemTransactions(
+		`getSummary: Read Summary`,
+		flushFileSystemTransactions,
+		lumberjackProperties,
+	);
 
 	// Now that we computed the summary from scratch, we can persist it to storage if
 	// the following conditions are met.
@@ -96,17 +132,26 @@ async function getSummary(
 		// return as soon as possible. Also, we don't care about failures much, since the
 		// next getSummary or a createSummary request may trigger persisting to storage.
 		persistLatestFullSummaryInStorage(
-			fileSystemManager,
+			repoManager.fileSystemManager,
 			getFullSummaryDirectory(repoManager, repoManagerParams.storageRoutingId.documentId),
 			fullSummary,
 			lumberjackProperties,
-		).catch((error) => {
-			Lumberjack.error(
-				"Failed to persist latest full summary to storage during getSummary",
-				lumberjackProperties,
-				error,
-			);
-		});
+		)
+			.catch((error) => {
+				Lumberjack.error(
+					"Failed to persist latest full summary to storage during getSummary",
+					lumberjackProperties,
+					error,
+				);
+			})
+			.finally(() => {
+				// Flush and log fs transactions for persist latest full summary.
+				logFileSystemTransactions(
+					`getSummary: Persist Latest Full Summary`,
+					flushFileSystemTransactions,
+					lumberjackProperties,
+				);
+			});
 	}
 
 	return fullSummary;
@@ -114,7 +159,6 @@ async function getSummary(
 
 async function createSummary(
 	repoManager: IRepositoryManager,
-	fileSystemManager: IFileSystemManager,
 	payload: IWholeSummaryPayload,
 	repoManagerParams: IRepoManagerParams,
 	externalWriterConfig?: IExternalWriterConfig,
@@ -127,6 +171,15 @@ async function createSummary(
 		...getLumberjackBasePropertiesFromRepoManagerParams(repoManagerParams),
 		[BaseGitRestTelemetryProperties.summaryType]: payload?.type,
 	};
+	const flushFileSystemTransactions: () => string[] | undefined =
+		isTransactionTrackerProxyFsPromises(repoManager.fileSystemManager.promises)
+			? repoManager.fileSystemManager.promises.flush
+			: undefined;
+
+	if (flushFileSystemTransactions) {
+		// Flush transactions to clear state, just in case
+		flushFileSystemTransactions();
+	}
 
 	const wholeSummaryManager = new GitWholeSummaryManager(
 		repoManagerParams.storageRoutingId.documentId,
@@ -145,10 +198,18 @@ async function createSummary(
 		payload,
 		isInitialSummary,
 	);
+	const summaryType = isContainerSummary(payload) ? "Container" : "Channel";
+
+	// Flush and log fs transactions for write summary
+	logFileSystemTransactions(
+		`createSummary: Write ${summaryType} Summary`,
+		flushFileSystemTransactions,
+		lumberjackProperties,
+	);
 
 	// Waiting to pre-compute and persist latest summary would slow down document creation,
 	// so skip this step if it is a new document.
-	if (isContainerSummary(payload)) {
+	if (summaryType === "Container") {
 		const latestFullSummary: IWholeFlatSummary | undefined = (
 			writeSummaryResponse as IWholeFlatSummary
 		).trees
@@ -162,25 +223,49 @@ async function createSummary(
 					);
 					return undefined;
 			  });
+		if (flushFileSystemTransactions) {
+			const getLatestFullSummaryFileSystemTransactions = flushFileSystemTransactions();
+			Lumberjack.info("FS Transactions: Get Latest Full Summary", {
+				...lumberjackProperties,
+				transactions: getLatestFullSummaryFileSystemTransactions,
+				transactionCount: getLatestFullSummaryFileSystemTransactions.length,
+			});
+		}
+		// Flush and log fs transactions for get latest full summary.
+		// If optimized pre-compute is working properly, this should be 0.
+		logFileSystemTransactions(
+			`createSummary: Compute Latest Full Summary`,
+			flushFileSystemTransactions,
+			lumberjackProperties,
+		);
 		if (latestFullSummary) {
 			if (persistLatestFullSummary) {
 				// Send latest full summary to storage for faster read access.
 				const persistP = persistLatestFullSummaryInStorage(
-					fileSystemManager,
+					repoManager.fileSystemManager,
 					getFullSummaryDirectory(
 						repoManager,
 						repoManagerParams.storageRoutingId.documentId,
 					),
 					latestFullSummary,
 					lumberjackProperties,
-				).catch((error) => {
-					// Persisting latest summary is an optimization, not a requirement, so do not throw on failure.
-					Lumberjack.error(
-						"Failed to persist latest full summary to storage during createSummary",
-						lumberjackProperties,
-						error,
-					);
-				});
+				)
+					.catch((error) => {
+						// Persisting latest summary is an optimization, not a requirement, so do not throw on failure.
+						Lumberjack.error(
+							"Failed to persist latest full summary to storage during createSummary",
+							lumberjackProperties,
+							error,
+						);
+					})
+					.finally(() => {
+						// Flush and log fs transactions for persist latest full summary.
+						logFileSystemTransactions(
+							`createSummary: Persist Latest Full Summary`,
+							flushFileSystemTransactions,
+							lumberjackProperties,
+						);
+					});
 				if (!isNew) {
 					// To avoid any possible race conditions when outside the critical path, we can await the persist operation.
 					// Chances for a race condition are slim and likely inconsequential, but better safe than sorry.
@@ -197,7 +282,6 @@ async function createSummary(
 
 async function deleteSummary(
 	repoManager: IRepositoryManager,
-	fileSystemManager: IFileSystemManager,
 	repoManagerParams: IRepoManagerParams,
 	softDelete: boolean,
 	repoPerDocEnabled: boolean,
@@ -211,6 +295,15 @@ async function deleteSummary(
 		[BaseGitRestTelemetryProperties.repoPerDocEnabled]: repoPerDocEnabled,
 		[BaseGitRestTelemetryProperties.softDelete]: softDelete,
 	};
+	const flushFileSystemTransactions: () => string[] | undefined =
+		isTransactionTrackerProxyFsPromises(repoManager.fileSystemManager.promises)
+			? repoManager.fileSystemManager.promises.flush
+			: undefined;
+
+	if (flushFileSystemTransactions) {
+		// Flush transactions to clear state, just in case
+		flushFileSystemTransactions();
+	}
 	// In repo-per-doc model, the repoManager's path represents the directory that contains summary data.
 	const summaryFolderPath = repoManager.path;
 	Lumberjack.info(`Deleting summary`, lumberjackProperties);
@@ -218,7 +311,13 @@ async function deleteSummary(
 	try {
 		if (softDelete) {
 			const softDeletedMarkerPath = getSoftDeletedMarkerPath(summaryFolderPath);
-			await fileSystemManager.promises.writeFile(softDeletedMarkerPath, "");
+			await repoManager.fileSystemManager.promises.writeFile(softDeletedMarkerPath, "");
+			// Flush and log fs transactions for soft delete.
+			logFileSystemTransactions(
+				`deleteSummary: Soft Delete Summary`,
+				flushFileSystemTransactions,
+				lumberjackProperties,
+			);
 			Lumberjack.info(
 				`Successfully marked summary data as soft-deleted.`,
 				lumberjackProperties,
@@ -227,7 +326,13 @@ async function deleteSummary(
 		}
 
 		// Hard delete
-		await fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
+		await repoManager.fileSystemManager.promises.rm(summaryFolderPath, { recursive: true });
+		// Flush and log fs transactions for hard delete.
+		logFileSystemTransactions(
+			`deleteSummary: Hard Delete Summary`,
+			flushFileSystemTransactions,
+			lumberjackProperties,
+		);
 		Lumberjack.info(`Successfully hard-deleted summary data.`, lumberjackProperties);
 	} catch (error: any) {
 		if (
@@ -249,11 +354,7 @@ async function deleteSummary(
 	}
 }
 
-export function create(
-	store: Provider,
-	fileSystemManagerFactory: IFileSystemManagerFactory,
-	repoManagerFactory: IRepositoryManagerFactory,
-): Router {
+export function create(store: Provider, repoManagerFactory: IRepositoryManagerFactory): Router {
 	const router: Router = Router();
 	const persistLatestFullSummary: boolean = store.get("git:persistLatestFullSummary") ?? false;
 	const enableLowIoWrite: "initial" | boolean = store.get("git:enableLowIoWrite") ?? false;
@@ -283,18 +384,14 @@ export function create(
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
 				await checkSoftDeleted(
-					fsManager,
+					repoManager.fileSystemManager,
 					repoManager.path,
 					repoManagerParams,
 					repoPerDocEnabled,
 				);
 				return getSummary(
 					repoManager,
-					fsManager,
 					request.params.sha,
 					repoManagerParams,
 					getExternalWriterParams(request.query?.config as string | undefined),
@@ -344,13 +441,10 @@ export function create(
 				repoPerDocEnabled,
 				optimizeForInitialSummary,
 			);
-			const fsManager = fileSystemManagerFactory.create(
-				repoManagerParams.fileSystemManagerParams,
-			);
 			// A new document cannot already be soft-deleted.
 			if (!optimizeForInitialSummary) {
 				await checkSoftDeleted(
-					fsManager,
+					repoManager.fileSystemManager,
 					repoManager.path,
 					repoManagerParams,
 					repoPerDocEnabled,
@@ -358,7 +452,6 @@ export function create(
 			}
 			return createSummary(
 				repoManager,
-				fsManager,
 				wholeSummaryPayload,
 				repoManagerParams,
 				getExternalWriterParams(request.query?.config as string | undefined),
@@ -394,12 +487,8 @@ export function create(
 		const resultP = repoManagerFactory
 			.open(repoManagerParams)
 			.then(async (repoManager) => {
-				const fsManager = fileSystemManagerFactory.create(
-					repoManagerParams.fileSystemManagerParams,
-				);
 				return deleteSummary(
 					repoManager,
-					fsManager,
 					repoManagerParams,
 					softDelete,
 					repoPerDocEnabled,
