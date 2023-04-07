@@ -21,17 +21,14 @@ import {
 import { IContainerDevtools, ContainerDevtoolsEvents } from "./IContainerDevtools";
 import { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs";
 import {
-	AudienceClientMetadata,
-	AudienceSummaryMessage,
-	AudienceSummaryMessageType,
+	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
 	DisconnectContainer,
-	GetAudienceMessage,
-	GetAudienceMessageType,
+	GetAudienceSummary,
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
@@ -43,6 +40,7 @@ import {
 	postMessagesToWindow,
 	RootDataVisualizations,
 } from "./messaging";
+import { AudienceClientMetadata } from "./AudienceMetadata";
 
 /**
  * Properties for configuring a {@link IContainerDevtools}.
@@ -125,7 +123,8 @@ export interface ContainerDevtoolsProps {
  *
  * - {@link CloseContainer.Message}: When received (if the container ID matches), the debugger will close the container.
  *
- * - {@link GetAudienceMessage}: When received (if the container ID matches), the debugger will broadcast {@link AudienceSummaryMessage}.
+ * - {@link GetAudienceSummary.Message}: When received (if the container ID matches), the debugger will broadcast
+ * {@link AudienceSummary.Message}.
  *
  * - {@link GetRootDataVisualizations.Message}: When received (if the container ID matches), the debugger will
  * broadcast {@link RootDataVisualizations.Message}.
@@ -137,7 +136,10 @@ export interface ContainerDevtoolsProps {
  *
  * **Messages it posts:**
  *
- * - {@link ContainerStateChange.Message}: This is posted any time relevant Container state changes,
+ * - {@link AudienceSummary.Message}: Posted any time the Container's Audience state changes, or when requested
+ * (via {@link GetAudienceSummary.Message}).
+ *
+ * - {@link ContainerStateChange.Message}: Posted any time relevant Container state changes,
  * or when requested (via {@link GetContainerState.Message}).
  *
  * - {@link RootDataVisualizations.Message}: Posted when requested via {@link GetRootDataVisualizations.Message}.
@@ -325,8 +327,8 @@ export class ContainerDevtools
 			}
 			return false;
 		},
-		[GetAudienceMessageType]: (untypedMessage) => {
-			const message = untypedMessage as GetAudienceMessage;
+		[GetAudienceSummary.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as GetAudienceSummary.Message;
 			if (message.data.containerId === this.containerId) {
 				this.postAudienceStateChange();
 				return true;
@@ -382,7 +384,7 @@ export class ContainerDevtools
 	};
 
 	/**
-	 * Posts a {@link AudienceSummaryMessage} to the window (globalThis).
+	 * Posts a {@link AudienceSummary.Message} to the window (globalThis).
 	 */
 	private readonly postAudienceStateChange = (): void => {
 		const allAudienceMembers = this.container.audience.getMembers();
@@ -393,15 +395,15 @@ export class ContainerDevtools
 			return { clientId, client };
 		});
 
-		postMessagesToWindow<AudienceSummaryMessage>(this.messageLoggingOptions, {
-			type: AudienceSummaryMessageType,
-			data: {
+		postMessagesToWindow(
+			this.messageLoggingOptions,
+			AudienceSummary.createMessage({
 				containerId: this.containerId,
 				clientId: this.container.clientId,
 				audienceState: audienceClientMetadata,
 				audienceHistory: this.getAudienceHistory(),
-			},
-		});
+			}),
+		);
 	};
 
 	private readonly postRootDataVisualizations = (

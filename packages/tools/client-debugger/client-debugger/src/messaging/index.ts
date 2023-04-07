@@ -13,6 +13,7 @@
  * by the Fluid Client Debugger.
  */
 
+export { AudienceSummary, GetAudienceSummary } from "./audience-messages";
 export { devtoolsMessageSource } from "./Constants";
 export {
 	CloseContainer,
@@ -35,14 +36,6 @@ export {
 	ContainerListMessageData,
 	ContainerListMessageType,
 } from "./DevtoolsMessages";
-export {
-	AudienceClientMetadata,
-	AudienceSummaryMessage,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessageType,
-	GetAudienceMessage,
-	GetAudienceMessageType,
-} from "./AudienceMessages";
 export {
 	GetTelemetryHistoryMessage,
 	GetTelemetryHistoryMessageType,

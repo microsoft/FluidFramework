@@ -43,7 +43,7 @@
  * @packageDocumentation
  */
 
-export { MemberChangeKind } from "./AudienceMetadata";
+export { AudienceClientMetadata, MemberChangeKind } from "./AudienceMetadata";
 export { FluidObjectId, HasContainerId, HasFluidObjectId } from "./CommonInterfaces";
 export { ContainerStateChangeKind } from "./Container";
 export { ContainerDevtools, ContainerDevtoolsProps } from "./ContainerDevtools";
@@ -80,24 +80,20 @@ export {
 	StateChangeLogEntry,
 } from "./Logs";
 export {
+	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
 	DisconnectContainer,
+	GetAudienceSummary,
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	RootDataVisualizations,
 	// ----
-	AudienceClientMetadata,
-	AudienceSummaryMessage,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessageType,
 	devtoolsMessageSource,
-	GetAudienceMessage,
-	GetAudienceMessageType,
 	ContainerListMessage,
 	ContainerListMessageData,
 	ContainerListMessageType,

@@ -34,19 +34,18 @@ export interface AudienceClientMetadata {
 }
 
 // @public
-export interface AudienceSummaryMessage extends IDebuggerMessage<AudienceSummaryMessageData> {
-    type: typeof AudienceSummaryMessageType;
+export namespace AudienceSummary {
+    const MessageType = "AUDIENCE_SUMMARY";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDebuggerMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData extends HasContainerId {
+        audienceHistory: readonly AudienceChangeLogEntry[];
+        audienceState: AudienceClientMetadata[];
+        clientId: string | undefined;
+    }
 }
-
-// @public
-export interface AudienceSummaryMessageData extends HasContainerId {
-    audienceHistory: readonly AudienceChangeLogEntry[];
-    audienceState: AudienceClientMetadata[];
-    clientId: string | undefined;
-}
-
-// @public
-export const AudienceSummaryMessageType = "AUDIENCE_EVENT";
 
 // @public
 export namespace CloseContainer {
@@ -259,12 +258,14 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 }
 
 // @public
-export interface GetAudienceMessage extends IDebuggerMessage<HasContainerId> {
-    type: typeof GetAudienceMessageType;
+export namespace GetAudienceSummary {
+    const MessageType = "GET_AUDIENCE_SUMMARY";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDebuggerMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export type MessageData = HasContainerId;
 }
-
-// @public
-export const GetAudienceMessageType = "GET_AUDIENCE";
 
 // @public
 export interface GetContainerListMessage extends IDebuggerMessage<undefined> {
