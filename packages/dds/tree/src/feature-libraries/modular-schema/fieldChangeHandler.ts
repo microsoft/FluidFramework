@@ -19,7 +19,7 @@ export interface FieldChangeHandler<
 	_typeCheck?: Invariant<TChangeset>;
 	rebaser: FieldChangeRebaser<TChangeset>;
 	encoder: FieldChangeEncoder<TChangeset>;
-	editor: TEditor;
+	editor: TEditor | EditorFactory<TEditor>;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): Delta.MarkList;
 
 	/**
@@ -28,6 +28,11 @@ export interface FieldChangeHandler<
 	 */
 	isEmpty(change: TChangeset): boolean;
 }
+
+export type EditorFactory<TEditor> = (
+	idAllocator: IdAllocator,
+	detachedFieldKeyAllocator: DetachedFieldKeyAllocator,
+) => TEditor;
 
 /**
  * @alpha
@@ -222,6 +227,11 @@ export type NodeChangeDecoder = (change: JsonCompatibleReadOnly) => NodeChangese
  * @alpha
  */
 export type IdAllocator = () => ChangesetLocalId;
+
+/**
+ * @alpha
+ */
+export type DetachedFieldKeyAllocator = () => FieldKey;
 
 /**
  * Changeset for a subtree rooted at a specific node.

@@ -326,7 +326,8 @@ flowchart
             forestIndex-->treeTextCursor
             schema-aware-->defaultSchema
             schema-aware-->contextuallyTyped
-            modular-schema
+            cell
+            modular-schema-->cell
             object-forest-->mapTreeCursor-->treeCursorUtils
             chunked-forest-->treeCursorUtils
             schemaIndex
