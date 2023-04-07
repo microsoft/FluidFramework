@@ -134,7 +134,20 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			const shouldTrackAttribution = mc.config.getBoolean(enableOnNewFileKey) ?? false;
 			if (shouldTrackAttribution) {
 				(context.options.attribution ??= {}).track = true;
+				// Add telemetry to track if the storage of attribution data was enabled in configuration or not
+				mc.logger.send({
+					category: "generic",
+					eventName: "mixinAttributor_Load",
+					storageOfAttributionDataEnabled: true,
+				});
 			}
+
+			// Add telemetry logging to track using a mixed in attributor or not
+			mc.logger.send({
+				category: "generic",
+				eventName: "mixinAttributor_Load",
+				loadedWithMixinAttributor: true,
+			});
 
 			const runtime = (await Base.load(
 				context,
