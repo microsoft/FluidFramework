@@ -31,8 +31,9 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [garbage-collector and related items removed](#garbage-collector-and-related-items-removed)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
 -   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
+-   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
 
-## IResolvedUrl equivalent to IFluidResolvedUrl
+### IResolvedUrl equivalent to IFluidResolvedUrl
 
 In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed.
 
@@ -68,6 +69,15 @@ The following interfaces available in `@fluidframework/runtime-definitions` were
 ### ensureSynchronizedWithTimeout removed from LoaderContainerTracker
 
 `LoaderContainerTracker.ensureSynchronizedWithTimeout` has been removed as it is equivalent to `LoaderContainerTracker.ensureSynchronized`. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Configure the timeout for the test instead.
+
+### Container-loader deprecation removals
+
+The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so have been removed from export in this release:
+
+-   IContainerLoadOptions
+-   IContainerConfig
+-   IPendingContainerState
+-   ISerializableBlobContents
 
 # 2.0.0-internal.4.1.0
 
