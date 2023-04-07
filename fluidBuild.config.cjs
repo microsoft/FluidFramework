@@ -54,6 +54,8 @@ module.exports = {
 			"azure/packages/azure-local-service/src/index.ts",
 			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+			"server/gitrest/package.json",
+			"server/historian/package.json",
 			"tools/markdown-magic/test",
 			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 		],
