@@ -3,52 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	schemaDataIsEmpty,
 	AllowedUpdateType,
 	Compatibility,
 	SimpleObservingDependent,
+	rootFieldKeySymbol,
+	lookupGlobalFieldSchema,
+	rootFieldKey,
+	SchemaData,
 } from "../core";
 import {
 	ViewSchema,
 	defaultSchemaPolicy,
-	ViewSchemaCollection,
 	ContextuallyTypedFieldData,
+	cursorsFromContextualData,
+	FieldKinds,
+	allowsRepoSuperset,
+	ViewSchemaCollection,
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISharedTreeView } from "./sharedTree";
 
 /**
- * Takes in a tree and returns a view of it that conforms to the view schema.
- * The returned view referees to and can edit the provided one: it is not a fork of it.
- * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
- *
- * If the tree is uninitialized (has no nodes or schema at all),
- * it is initialized to the config's initial tree and the provided schema are stored.
- * This is done even if `AllowedUpdateType.None`.
- *
- * @remarks
- * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
- * Other approach tend to have leave easy to make mistakes.
- * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
- * or call it unconditionally leaving an app that can only create new documents.
- * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
- * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
- * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
- * on the create code-path (for example how a schematized factory might do it),
- * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
- * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
- * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
+ * See {@link ISharedTreeView.schematize} for more details.
  *
  * TODO:
- * - Implement schema-aware API for return type.
  * - Support adapters for handling out of schema data.
  * - Handle initialization via an adapter.
  * - Support per adapter update policy.
  * - Support lazy schema updates.
- * - Improve discoverability of this by either integrating it into the factory or main SharedTree interfaces as a method.
- * @alpha
  */
 export function schematizeView(
 	tree: ISharedTreeView,
@@ -59,14 +44,49 @@ export function schematizeView(
 	{
 		if (tree.context.root.length === 0 && schemaDataIsEmpty(tree.storedSchema)) {
 			tree.transaction.start();
-			// TODO: This schema update can cause the document to be out of schema until the initialTree is applied on the next line.
-			// This is technically invalid and should be done some other way.
-			// An better approach would be to:
-			// 1. Set the schema to an adjusted version of `config.schema` which permits an empty tree (force the root to be optional or sequence),
-			// 2. Set the contents of the tree.
-			// 3. Set the schema to the desired final schema.
-			tree.storedSchema.update(config.schema);
-			tree.root = config.initialTree;
+
+			const rootKind = lookupGlobalFieldSchema(config.schema, rootFieldKey).kind.identifier;
+
+			// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
+			let incrementalSchemaUpdate: SchemaData;
+			if (
+				rootKind === FieldKinds.sequence.identifier ||
+				rootKind === FieldKinds.optional.identifier
+			) {
+				// These kinds are known to tolerate empty, so use the schema as is:
+				incrementalSchemaUpdate = config.schema;
+			} else {
+				assert(rootKind === FieldKinds.value.identifier, "Unexpected kind");
+				incrementalSchemaUpdate = {
+					...config.schema,
+					globalFieldSchema: new Map(config.schema.globalFieldSchema),
+				};
+			}
+
+			// TODO: fix issues with schema comparison and enable this.
+			// assert(
+			// 	allowsRepoSuperset(defaultSchemaPolicy, tree.storedSchema, incrementalSchemaUpdate),
+			// 	"Incremental Schema update should support the existing empty tree",
+			// );
+			assert(
+				allowsRepoSuperset(defaultSchemaPolicy, incrementalSchemaUpdate, config.schema),
+				"Incremental Schema during update should be a allow a superset of the final schema",
+			);
+			// Update to intermediate schema
+			tree.storedSchema.update(incrementalSchemaUpdate);
+			// Insert initial tree
+			const newContent = cursorsFromContextualData(
+				config.schema,
+				lookupGlobalFieldSchema(config.schema, rootFieldKey),
+				config.initialTree,
+			);
+			tree.editor.sequenceField(undefined, rootFieldKeySymbol).insert(0, newContent);
+
+			// If intermediate schema is not final desired schema, update to the final schema:
+			if (incrementalSchemaUpdate !== config.schema) {
+				tree.storedSchema.update(config.schema);
+			}
+
 			tree.transaction.commit();
 		}
 	}
@@ -136,15 +156,15 @@ export function schematizeView(
 
 /**
  * Options used to schematize a `SharedTree`.
- * See {@link schematizeView}.
+ * See {@link ISharedTreeView.schematize}.
  *
  * @alpha
  */
-export interface SchematizeConfiguration {
+export interface SchematizeConfiguration<TMap extends ViewSchemaCollection = ViewSchemaCollection> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: ViewSchemaCollection;
+	readonly schema: TMap;
 	/**
 	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
 	 */
