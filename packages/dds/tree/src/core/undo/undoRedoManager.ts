@@ -14,7 +14,7 @@ import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
  * 3. takes care of "committing" undo/redos
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
-	private pendingCommit?: UndoableCommitType;
+	protected pendingCommit?: UndoableCommitType;
 
 	/**
 	 * @param repairDataStoryFactory - Factory function for creating {@link RepairDataStore}s to create and store repair
@@ -31,12 +31,20 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	) {}
 
 	/**
+	 * Protected for use with testing classes.
+	 */
+	protected getHeadUndoCommit(): UndoableCommit<TChange> | undefined {
+		return this.headUndoCommit;
+	}
+
+	/**
 	 * TODO: should we return anything?
 	 * TODO: trackCommit or addLocalCommit?
 	 */
 	public trackCommit(commit: GraphCommit<TChange>) {
 		if (this.pendingCommit === UndoableCommitType.Undo) {
 			// Currently no need to handle undo commits
+			this.pendingCommit = undefined;
 			return;
 		}
 
@@ -52,7 +60,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Inverts the head undo commit and applies it as a local change.
-	 * 
+	 *
 	 * TODO: return result?
 	 */
 	public undo(): undefined {
@@ -100,7 +108,7 @@ enum UndoableCommitType {
 /**
  * Represents a commit that can be undone.
  */
-interface UndoableCommit<TChange> {
+export interface UndoableCommit<TChange> {
 	/* The commit to undo */
 	readonly commit: GraphCommit<TChange>;
 	/* The repair data associated with the commit */

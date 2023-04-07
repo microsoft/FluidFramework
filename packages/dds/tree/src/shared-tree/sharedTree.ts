@@ -237,11 +237,11 @@ class SharedTree
 			[schemaSummarizer, forestSummarizer],
 			defaultChangeFamily,
 			anchors,
-			() => this.forest,
 			id,
 			runtime,
 			attributes,
 			telemetryContextPrefix,
+			() => this.forest,
 		);
 
 		this.events = createEmitter<ViewEvents>();
