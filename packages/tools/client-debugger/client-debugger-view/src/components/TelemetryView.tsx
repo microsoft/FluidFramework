@@ -16,7 +16,7 @@ import {
 	GetTelemetryHistory,
 	handleIncomingMessage,
 	InboundHandlers,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	ITimestampedTelemetryEvent,
 	TelemetryHistory,
 	TelemetryEvent,
@@ -90,7 +90,7 @@ export function TelemetryView(): React.ReactElement {
 		};
 
 		// Event handler for messages coming from the Message Relay
-		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers);
 		}
 
