@@ -15,6 +15,15 @@ import {
 	ISourcedDebuggerMessage,
 	IMessageRelay,
 	InboundHandlers,
+	ConnectContainerMessageType,
+	DisconnectContainerMessageType,
+	CloseContainerMessageType,
+	GetContainerStateMessageType,
+	ContainerStateChangeMessageType,
+	GetContainerStateMessage,
+	ConnectContainerMessage,
+	DisconnectContainerMessage,
+	CloseContainerMessage,
 } from "@fluid-tools/client-debugger";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
@@ -53,7 +62,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["CONTAINER_STATE_CHANGE"]: (untypedMessage) => {
+			[ContainerStateChangeMessageType]: (untypedMessage) => {
 				const message = untypedMessage as ContainerStateChangeMessage;
 				if (message.data.containerId === containerId) {
 					setContainerState(message.data.containerState);
@@ -81,8 +90,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		setContainerState(undefined);
 
 		// Request state info for the newly specified containerId
-		messageRelay.postMessage({
-			type: "GET_CONTAINER_STATE",
+		messageRelay.postMessage<GetContainerStateMessage>({
+			type: GetContainerStateMessageType,
 			data: {
 				containerId,
 			},
@@ -98,8 +107,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function tryConnect(): void {
-		messageRelay.postMessage({
-			type: "CONNECT_CONTAINER",
+		messageRelay.postMessage<ConnectContainerMessage>({
+			type: ConnectContainerMessageType,
 			data: {
 				containerId,
 			},
@@ -107,8 +116,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function forceDisconnect(): void {
-		messageRelay.postMessage({
-			type: "DISCONNECT_CONTAINER",
+		messageRelay.postMessage<DisconnectContainerMessage>({
+			type: DisconnectContainerMessageType,
 			data: {
 				containerId,
 				/* TODO: Specify debugger reason here once it is supported */
@@ -117,8 +126,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 	}
 
 	function closeContainer(): void {
-		messageRelay.postMessage({
-			type: "CLOSE_CONTAINER",
+		messageRelay.postMessage<CloseContainerMessage>({
+			type: CloseContainerMessageType,
 			data: {
 				containerId,
 				/* TODO: Specify debugger reason here once it is supported */

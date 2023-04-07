@@ -47,7 +47,7 @@ export const timer = timersWithResolution[0].timer;
 // Approach based on Benchmark.js:
 // Resolve time span required to achieve a percent uncertainty of at most 1%.
 // For more information see http://spiff.rit.edu/classes/phys273/uncert/uncert.html.
-export const defaultMinTime = Math.max(timersWithResolution[0].resolution / 2 / 0.01, 0.05);
+export const defaultMinimumTime = Math.max(timersWithResolution[0].resolution / 2 / 0.01, 0.05);
 
 /**
  * Gets the current timer's minimum resolution in seconds.

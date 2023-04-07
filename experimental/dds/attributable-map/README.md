@@ -2,7 +2,7 @@
 
 ## Overview
 
-This experimental DDS is a fork of the SharedMap which implements attribution, the plan is to remove it and integrate those APIs into SharedMap.
+This experimental DDS is a copy of `SharedMap` which additionally tracks attribution information, such as the user who made an update and the timestamp of the change. Please refer to the description of [attributor](../../../packages/framework/attributor/README.md) for more details.
 
 ## SharedMap
 
@@ -32,29 +32,3 @@ when the key becomes available.
 ### Eventing
 
 `SharedMap` is an `EventEmitter`, and will emit events when other clients make modifications. You should register for these events and respond appropriately as the data is modified. `valueChanged` will be emitted in response to a `set` or `delete`, and provide the key and previous value that was stored at that key. `clear` will be emitted in response to a `clear`.
-
-## SharedDirectory and IDirectory
-
-A `SharedDirectory` is a map-like DDS that additionally supports storing key/value pairs within a tree of subdirectories. This subdirectory tree can be used to give hierarchical structure to stored key/value pairs rather than storing them on a flat map. Both the `SharedDirectory` and any subdirectories are `IDirectories`.
-
-### Creation
-
-To create a `SharedDirectory`, call the static create method:
-
-```typescript
-const myDirectory = SharedDirectory.create(this.runtime, id);
-```
-
-### Usage
-
-The map operations on an `IDirectory` refer to the key/value pairs stored in that `IDirectory`, and function just like `SharedMap` including the same extra functionality and restrictions on keys and values. To operate on the subdirectory structure, use the corresponding subdirectory methods.
-
-#### `getWorkingDirectory()`
-
-To "navigate" the subdirectory structure, `IDirectory` provides a `getWorkingDirectory` method which takes a relative path and returns the `IDirectory` located at that path if it exists.
-
-#### Eventing
-
-`valueChanged` events additionally provide the absolute path to the subdirectory storing the value that changed.
-
-`dispose` events are fired on sub directory which is deleted. Any access to this sub directory will throw an error once it is disposed.
