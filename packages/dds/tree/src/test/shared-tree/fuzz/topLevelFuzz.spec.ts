@@ -62,15 +62,12 @@ describe("Fuzz - Top-Level", () => {
 	const opsPerRun = 20;
 	const editGeneratorOpWeights: EditGeneratorOpWeights = {
 		setPayload: 1,
-		start: 3,
-		commit: 1,
-		abort: 1,
 	};
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
 	 */
-	describe.skip("Everything", () => {
+	describe("Everything", () => {
 		runFuzzBatch(
 			makeOpGenerator,
 			performFuzzActions,
