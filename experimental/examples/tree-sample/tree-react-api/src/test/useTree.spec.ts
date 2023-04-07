@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AllowedUpdateType, ISharedTreeView, SharedTreeFactory } from "@fluid-internal/tree";
+import { AllowedUpdateType, ISharedTreeView, SharedTreeFactory } from "@fluid-experimental/tree2";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import React from "react";
 import { SinonSandbox, createSandbox } from "sinon";

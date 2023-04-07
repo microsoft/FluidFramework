@@ -4943,7 +4943,7 @@ importers:
       '@fluid-example/bubblebench-common': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-example/example-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/tree': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluid-internal/tree': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluid-experimental/tree2': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -4983,7 +4983,7 @@ importers:
       '@fluid-example/bubblebench-common': link:../common
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/tree': link:../../../dds/tree
-      '@fluid-internal/tree': link:../../../../packages/dds/tree
+      '@fluid-experimental/tree2': link:../../../../packages/dds/tree
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/container-definitions': link:../../../../packages/common/container-definitions
@@ -5185,7 +5185,7 @@ importers:
     specifiers:
       '@fluid-example/example-utils': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-experimental/tree-react-api': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
-      '@fluid-internal/tree': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluid-experimental/tree2': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/webpack-fluid-loader': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/aqueduct': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluidframework/build-common': ^1.1.0
@@ -5220,7 +5220,7 @@ importers:
     dependencies:
       '@fluid-example/example-utils': link:../../../../examples/utils/example-utils
       '@fluid-experimental/tree-react-api': link:../tree-react-api
-      '@fluid-internal/tree': link:../../../../packages/dds/tree
+      '@fluid-experimental/tree2': link:../../../../packages/dds/tree
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       react: 17.0.2
@@ -5256,7 +5256,7 @@ importers:
 
   experimental/examples/tree-sample/tree-react-api:
     specifiers:
-      '@fluid-internal/tree': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
+      '@fluid-experimental/tree2': '>=2.0.0-internal.4.1.0 <2.0.0-internal.5.0.0'
       '@fluid-tools/benchmark': ^0.46.0
       '@fluid-tools/build-cli': ^0.13.1
       '@fluidframework/build-common': ^1.1.0
@@ -5285,7 +5285,7 @@ importers:
       source-map-support: ^0.5.16
       typescript: ~4.5.5
     dependencies:
-      '@fluid-internal/tree': link:../../../../packages/dds/tree
+      '@fluid-experimental/tree2': link:../../../../packages/dds/tree
       '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       react: 17.0.2
     devDependencies:

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, rootFieldKey, SchemaAware, TypedSchema } from "@fluid-internal/tree";
+import { FieldKinds, rootFieldKey, SchemaAware, TypedSchema } from "@fluid-experimental/tree2";
 
 import { numberSchema } from "./primitivesSchema";
 import { inventorySchema } from "./inventorySchema";

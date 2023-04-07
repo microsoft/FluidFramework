@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, TypedSchema } from "@fluid-internal/tree";
+import { FieldKinds, TypedSchema } from "@fluid-experimental/tree2";
 
 import { numberSchema } from "./primitivesSchema";
 

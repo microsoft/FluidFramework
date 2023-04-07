@@ -12,7 +12,7 @@ import {
 	FieldKinds,
 	fieldSchema,
 	namedTreeSchema,
-} from "@fluid-internal/tree";
+} from "@fluid-experimental/tree2";
 
 // TODO: Remove once primitive types are predeclared.
 const float64 = namedTreeSchema({
