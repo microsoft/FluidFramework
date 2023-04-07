@@ -11,6 +11,7 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
+import { ITelemetryGenericEvent, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { assert, delay, stringToBuffer } from "@fluidframework/common-utils";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -53,16 +54,16 @@ interface IActivityObjectDetails {
 	object: IGCActivityObject;
 }
 
+function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent & { id: string }) {
+	logger.sendTelemetryEvent(props);
+	console.log(`########## ${props.eventName} - ${props.id}`);
+}
+
 /**
  * The activity object implementation for an attachment blob.
  * On run, the attachment blob is retrieved on a regular interval.
  */
 class AttachmentBlobObject implements IGCActivityObject {
-	private get nodeId(): string {
-		assert(this._nodeId !== undefined, "id accessed before run");
-		return this._nodeId;
-	}
-	private _nodeId: string | undefined;
 	private running: boolean = false;
 
 	constructor(public handle: IFluidHandle<ArrayBufferLike>) {}
@@ -72,8 +73,6 @@ class AttachmentBlobObject implements IGCActivityObject {
 			return true;
 		}
 
-		console.log(`~~~~~~~~~~~ Started attachment blob [${id}]`);
-		this._nodeId = id;
 		this.running = true;
 		let done = true;
 		const delayBetweenBlobGetMs = (60 * 1000) / config.testConfig.opRatePerMin;
@@ -95,7 +94,6 @@ class AttachmentBlobObject implements IGCActivityObject {
 
 	public stop() {
 		if (this.running) {
-			console.log(`~~~~~~~~~~~ Stopped attachment blob [${this.nodeId}]`);
 			this.running = false;
 		}
 	}
@@ -135,11 +133,6 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 		return "DataObjectLeaf";
 	}
 
-	private get nodeId(): string {
-		assert(this._nodeId !== undefined, "id accessed before run");
-		return this._nodeId;
-	}
-	private _nodeId: string | undefined;
 	private running: boolean = false;
 
 	public async run(config: IRunConfig, id?: string): Promise<boolean> {
@@ -147,36 +140,20 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 			return true;
 		}
 
-		console.log(`+++++++++ Started leaf data object [${id}]`);
-		this._nodeId = id;
 		this.running = true;
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
-		let localSendCount = 0;
 		while (this.running && !this.runtime.disposed) {
-			if (localSendCount % 10 === 0) {
-				console.log(
-					`+++++++++ Leaf data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
-				);
-			}
-
 			this.counter.increment(1);
-			localSendCount++;
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
 			await delay(
 				delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, 0.5, true)(config.randEng),
 			);
 		}
-		console.log(
-			`+++++++++ Stopped leaf data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
-		);
 		return !this.runtime.disposed;
 	}
 
 	public stop() {
 		if (this.running) {
-			console.log(
-				`+++++++++ Stopped leaf child (in stop) [${this.nodeId}]: ${this.counter.value}`,
-			);
 			this.running = false;
 		}
 	}
@@ -223,6 +200,12 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	protected get childRunConfig(): IRunConfig {
 		assert(this._childRunConfig !== undefined, "Run config must be available");
 		return this._childRunConfig;
+	}
+
+	private _logger: ITelemetryLogger | undefined;
+	private get logger(): ITelemetryLogger {
+		assert(this._logger !== undefined, "Logger must be available");
+		return this._logger;
 	}
 
 	private readonly dataObjectMapKey = "dataObjectMap";
@@ -282,8 +265,8 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			return true;
 		}
 
-		console.log(`########## Started level 1 data object [${id}]`);
 		this._nodeId = id;
+		this._logger = config.logger;
 		this.running = true;
 		/**
 		 * Adjust the totalSendCount and opRatePerMin such that this data object and its child data objects collectively
@@ -337,10 +320,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		) {
 			// After every activityThresholdOpCount ops, perform activities.
 			if (localSendCount % activityThresholdOpCount === 0) {
-				console.log(
-					`########## Level 1 data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value} / ${totalSendCount}`,
-				);
-
 				// We do not await for the activity because we want any data objects created to run asynchronously.
 				this.performDataObjectActivity(config)
 					.then((done: boolean) => {
@@ -374,10 +353,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, 0.5, true)(config.randEng),
 			);
 		}
-
-		console.log(
-			`########## Stopped level 1 data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
-		);
 		this.stop();
 		const notDone = this.runtime.disposed || activityFailed;
 		return !notDone;
@@ -412,7 +387,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				dataObjectHandle
 					.get()
 					.then((dataObject: IGCActivityObject) => {
-						console.log(`---------- Running trailing op data object [${changed.key}]`);
 						dataObject
 							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
 							.catch((error) => {});
@@ -423,7 +397,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				dataObjectHandle
 					.get()
 					.then((dataObject: IGCActivityObject) => {
-						console.log(`---------- Stopping trailing op data object [${changed.key}]`);
 						dataObject.stop();
 					})
 					.catch((error) => {});
@@ -440,7 +413,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				blobHandle
 					.get()
 					.then((blobObject: IGCActivityObject) => {
-						console.log(`---------- Running trailing op blob [${changed.key}]`);
 						blobObject
 							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
 							.catch((error) => {});
@@ -451,7 +423,6 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				blobHandle
 					.get()
 					.then((blobObject: IGCActivityObject) => {
-						console.log(`---------- Stopping trailing op blob [${changed.key}]`);
 						blobObject.stop();
 					})
 					.catch((error) => {});
@@ -563,7 +534,10 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	private async createAndReferenceDataObject(): Promise<boolean> {
 		// Give each data object a unique id w.r.t. this data object's id.
 		const dataObjectId = `${this.nodeId}/ds-${uuid()}`;
-		console.log(`########## Creating data object [${dataObjectId}]`);
+		logEvent(this.logger, {
+			eventName: "DS+",
+			id: dataObjectId,
+		});
 
 		const dataObject = await dataObjectFactoryLeaf.createChildInstance(this.context);
 		this.dataObjectMap.set(dataObjectId, dataObject.handle);
@@ -580,7 +554,10 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	private unreferenceDataObject() {
 		const dataObjectDetails = this.referencedDataObjects.shift();
 		assert(dataObjectDetails !== undefined, "Cannot find data object to unreference");
-		console.log(`########## Unreferencing data object [${dataObjectDetails.id}]`);
+		logEvent(this.logger, {
+			eventName: "DS-",
+			id: dataObjectDetails.id,
+		});
 
 		const dataObjectHandle = this.dataObjectMap.get<IFluidHandle<IGCActivityObject>>(
 			dataObjectDetails.id,
@@ -597,7 +574,10 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 * Retrieves the oldest unreferenced data object, references it and asks it to run.
 	 */
 	private async reviveDataObject(dataObjectDetails: IActivityObjectDetails): Promise<boolean> {
-		console.log(`########## Reviving data object [${dataObjectDetails.id}]`);
+		logEvent(this.logger, {
+			eventName: "DS++",
+			id: dataObjectDetails.id,
+		});
 		this.dataObjectMap.set(dataObjectDetails.id, dataObjectDetails.object.handle);
 		this.referencedDataObjects.push(dataObjectDetails);
 		return dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id);
@@ -617,7 +597,10 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				case GCActivityType.CreateAndReference: {
 					// Give each blob a unique id w.r.t. this data object's id.
 					const blobId = `${this.nodeId}/blob-${uuid()}`;
-					console.log(`########## Creating blob [${blobId}]`);
+					logEvent(this.logger, {
+						eventName: "Blob+",
+						id: blobId,
+					});
 					const blobContents = `Content - ${this.uniqueBlobContentId}-${blobId}`;
 					const blobHandle = await this.context.uploadBlob(
 						stringToBuffer(blobContents, "utf-8"),
@@ -635,7 +618,10 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 					if (this.referencedAttachmentBlobs.length > 0) {
 						const blobDetails = this.referencedAttachmentBlobs.shift();
 						assert(blobDetails !== undefined, "Cannot find blob to unreference");
-						console.log(`########## Unreferencing blob [${blobDetails.id}]`);
+						logEvent(this.logger, {
+							eventName: "Blob-",
+							id: blobDetails.id,
+						});
 
 						const blobHandle = this.blobMap.get<IFluidHandle<ArrayBufferLike>>(
 							blobDetails.id,
@@ -650,20 +636,20 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 					break;
 				}
 				case GCActivityType.Revive: {
-					const nextUnreferencedAttachmentBlobs =
-						this.unreferencedAttachmentBlobs.shift();
-					if (nextUnreferencedAttachmentBlobs !== undefined) {
-						console.log(
-							`########## Reviving blob [${nextUnreferencedAttachmentBlobs.id}]`,
-						);
+					const nextUnreferencedAttachmentBlob = this.unreferencedAttachmentBlobs.shift();
+					if (nextUnreferencedAttachmentBlob !== undefined) {
+						logEvent(this.logger, {
+							eventName: "Blob++",
+							id: nextUnreferencedAttachmentBlob.id,
+						});
 						this.blobMap.set(
-							nextUnreferencedAttachmentBlobs.id,
-							nextUnreferencedAttachmentBlobs.object.handle,
+							nextUnreferencedAttachmentBlob.id,
+							nextUnreferencedAttachmentBlob.object.handle,
 						);
-						this.referencedAttachmentBlobs.push(nextUnreferencedAttachmentBlobs);
-						return nextUnreferencedAttachmentBlobs.object.run(
+						this.referencedAttachmentBlobs.push(nextUnreferencedAttachmentBlob);
+						return nextUnreferencedAttachmentBlob.object.run(
 							this.childRunConfig,
-							nextUnreferencedAttachmentBlobs.id,
+							nextUnreferencedAttachmentBlob.id,
 						);
 					}
 					break;
@@ -710,10 +696,6 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 		const partnerRunId2 = ((myRunId + halfClients + 1) % config.testConfig.numClients) + 1;
 		const partnerId1 = `client${partnerRunId1}`;
 		const partnerId2 = `client${partnerRunId2}`;
-		console.log(
-			`---------- Collab data object partners [${this.nodeId}]: ${partnerId1} / ${partnerId2}`,
-		);
-
 		/**
 		 * Set up an event handler that listens for changes in the data object map meaning that a child data object
 		 * was referenced or unreferenced by a client.
@@ -744,7 +726,6 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 				dataObjectHandle
 					.get()
 					.then((dataObject: IGCActivityObject) => {
-						console.log(`---------- Running remote data object [${changed.key}]`);
 						dataObject
 							.run(this.childRunConfig, `${this.nodeId}/${changed.key}`)
 							.catch((error) => {});
@@ -755,7 +736,6 @@ export class DataObjectCollab extends DataObjectNonCollab implements IGCActivity
 				dataObjectHandle
 					.get()
 					.then((dataObject: IGCActivityObject) => {
-						console.log(`---------- Stopping remote data object [${changed.key}]`);
 						dataObject.stop();
 					})
 					.catch((error) => {});
