@@ -30,7 +30,7 @@
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"start": "npm run start:tinylicious",
-		"start:azure": "webpack serve --define process.env.FLUID_CLIENT='\"azure\"'",
+		"start:azure": "webpack serve --env FLUID_CLIENT=azure",
 		"start:client": "webpack serve",
 		"start:client:test": "webpack serve --config webpack.test.js",
 		"start:tinylicious": "start-server-and-test tinylicious 7070 start:client",
