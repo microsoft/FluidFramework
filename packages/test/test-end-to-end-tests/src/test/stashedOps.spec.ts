@@ -1192,7 +1192,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await provider2.ensureSynchronized();
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "no url");
-		await provider2.opProcessingController.pauseProcessing(container);
+		container.disconnect();
 
 		const dataStore = await requestFluidObject<ITestFluidObject>(container, "default");
 		const map = await dataStore.getSharedObject<SharedMap>(mapId);
