@@ -107,7 +107,6 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 /**
- * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IContainerLoadOptions {
@@ -131,7 +130,6 @@ export interface IContainerLoadOptions {
 }
 
 /**
- * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IContainerConfig {
@@ -263,7 +261,6 @@ export async function ReportIfTooLong(
 /**
  * State saved by a container at close time, to be used to load a new instance
  * of the container to the same state
- * @deprecated this is an internal interface and will not longer be exported in future versions
  * @internal
  */
 export interface IPendingContainerState {

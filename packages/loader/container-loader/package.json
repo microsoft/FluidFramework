@@ -108,11 +108,15 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IContainerConfig": {
+			"RemovedInterfaceDeclaration_IContainerConfig": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IPendingContainerState": {
+			"RemovedInterfaceDeclaration_IContainerLoadOptions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPendingContainerState": {
 				"forwardCompat": false,
 				"backCompat": false
 			}
