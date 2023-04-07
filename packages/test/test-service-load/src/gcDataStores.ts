@@ -50,14 +50,14 @@ function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent & { id
  * Reference activities that can be performed in the test.
  */
 const ReferenceActivityType = {
-	/** Create a child data object and reference it. */
-	CreateAndReference: 0,
+	/** Don't do any referencing or unreferencing. */
+	None: 0,
 	/** Unreference a referenced child data object. */
 	Unreference: 1,
+	/** Create a child data object and reference it. */
+	CreateAndReference: 2,
 	/** Revive an unreferenced child data object. */
-	Revive: 2,
-	/** Don't do any referencing or unreferencing. */
-	None: 3,
+	Revive: 3,
 };
 type ReferenceActivityType = typeof ReferenceActivityType[keyof typeof ReferenceActivityType];
 
@@ -65,10 +65,10 @@ type ReferenceActivityType = typeof ReferenceActivityType[keyof typeof Reference
  * Activities that can be performed by the attachment blob object.
  */
 const BlobActivityType = {
-	/** Get the blob via its handle. */
-	GetBlob: 0,
 	/** Don't do anything. */
-	None: 1,
+	None: 0,
+	/** Get the blob via its handle. */
+	GetBlob: 1,
 };
 type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
 
@@ -76,10 +76,10 @@ type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
  * Activities that can be performed by the leaf blob object.
  */
 const LeafActivityType = {
-	/** Send one or more ops */
-	SendOps: 0,
 	/** Don't do anything. */
-	None: 1,
+	None: 0,
+	/** Send one or more ops */
+	SendOps: 1,
 };
 type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
 
@@ -563,10 +563,12 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		while (!activityCompleted) {
 			activityCompleted = false;
 
-			// Add a new reference or revive only if it's possible to run a data object at the moment.
-			const action = this.canRunNewDataObject()
-				? random.integer(0, 3)(config.randEng)
+			// If it's possible to run a new data object, all activities can be performed upto Revive. If not,
+			// only activities upto Unreference can be preformed.
+			const maxActivityIndex = this.canRunNewDataObject()
+				? ReferenceActivityType.Revive
 				: ReferenceActivityType.Unreference;
+			const action = random.integer(0, maxActivityIndex)(config.randEng);
 			switch (action) {
 				case ReferenceActivityType.CreateAndReference: {
 					return this.createAndReferenceDataObject();
