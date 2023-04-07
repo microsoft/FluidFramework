@@ -387,6 +387,10 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 /**
  * See {@link VisualizeChildData}.
  *
+ * @param data - The child data to (recursively) render.
+ * @param resolveHandle - Function which accepts an {@link @fluidframework/core-interfaces#IFluidHandle} and
+ * returns its resolved object ID.
+ *
  * @privateRemarks Exported from this module for testing purposes. This is not intended to be exported by the package.
  */
 export async function visualizeChildData(
