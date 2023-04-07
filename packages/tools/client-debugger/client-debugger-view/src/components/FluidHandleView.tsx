@@ -7,6 +7,7 @@ import {
 	InboundHandlers,
 	handleIncomingMessage,
 	HasContainerId,
+	HasFluidObjectId, 
 	FluidObjectNode,
 	DataVisualizationMessage,
 } from "@fluid-tools/client-debugger";
@@ -14,15 +15,14 @@ import React from "react";
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import { waitingLabels } from "./WaitingLabels";
-import { FluidDataView } from "./FluidDataView";
+import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "EXTENSION(HandleView)";
 
 /**
  * {@link FluidHandleView} input props.
  */
-export interface FluidHandleViewProps extends HasContainerId {
-	fluidObjectId: string;
+export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {
 }
 
 /**
@@ -80,5 +80,5 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		return <Waiting label={waitingLabels.containerError} />;
 	}
 
-	return <FluidDataView containerId={containerId} node={visualTree} />;
+	return <TreeDataView containerId={containerId} node={visualTree} />;
 }

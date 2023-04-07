@@ -4,7 +4,7 @@
  */
 import React from "react";
 import { HasContainerId, FluidObjectTreeNode } from "@fluid-tools/client-debugger";
-import { FluidDataView } from "./FluidDataView";
+import { TreeDataView } from "./TreeDataView";
 
 /**
  * {@link TreeView} input props.
@@ -22,7 +22,7 @@ export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	return (
 		<>
 			{Object.entries(node.children).map(([key, fluidObject], index) => {
-				return <FluidDataView key={key} containerId={containerId} node={fluidObject} />;
+				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
 			})}
 		</>
 	);

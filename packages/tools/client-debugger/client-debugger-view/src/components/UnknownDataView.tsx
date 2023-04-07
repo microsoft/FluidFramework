@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import { HasContainerId, FluidObjectNodeBase, VisualNodeBase, UnknownObjectNode } from "@fluid-tools/client-debugger";
-// import { Waiting } from "./Waiting";
-// import { waitingLabels } from "./WaitingLabels";
+import {
+	HasContainerId,
+	UnknownObjectNode,
+} from "@fluid-tools/client-debugger";
 
 /**
  * {@link UnknownDataView} input props.
@@ -27,11 +28,5 @@ export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement
 			<h1> Unknown Data Object </h1>
 			{containerId}
 		</div>
-
-		// <Waiting
-		// 	label={`${waitingLabels.unknownDataError}: ${containerId}, Node: ${JSON.stringify(
-		// 		node,
-		// 	)}`}
-		// />
 	);
 }

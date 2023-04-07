@@ -15,19 +15,18 @@ import { UnknownDataView } from "./UnknownDataView";
 // import { waitingLabels } from "./WaitingLabels";
 
 /**
- * {@link FluidDataView} input props.
+ * {@link TreeDataView} input props.
  */
-export interface FluidDataViewProps extends HasContainerId {
+export interface TreeDataViewProps extends HasContainerId {
 	node: VisualNode;
 }
 
 /**
  * Displays visual summary trees for DDS_s within the container.
  */
-export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
+export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
-	let view: React.ReactElement;
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.
@@ -65,12 +64,6 @@ export function FluidDataView(props: FluidDataViewProps): React.ReactElement {
 		case VisualNodeKind.FluidHandleNode:
 			return <FluidHandleView containerId={containerId} fluidObjectId={node.fluidObjectId} />;
 		default:
-			view = 
-			<div>
-				{`unknown ${JSON.stringify(node)}`}
-			</div>
-			break;
+			return <div>{`unknown ${JSON.stringify(node)}`}</div>;
 	}
-
-	return <>{view}</>;
 }

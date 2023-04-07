@@ -4,6 +4,8 @@
  */
 import React from "react";
 import {
+	RootDataVisualizationsMessageType,
+	GetRootDataVisualizationsMessageType, 
 	handleIncomingMessage,
 	RootDataVisualizationsMessage,
 	HasContainerId,
@@ -15,7 +17,7 @@ import {
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
 import { waitingLabels } from "./WaitingLabels";
-import { FluidDataView } from "./FluidDataView";
+import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "EXTENSION(DataObjectsView)";
 
@@ -42,7 +44,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
 	React.useEffect(() => {
 		const inboundMessageHandlers: InboundHandlers = {
-			["ROOT_DATA_VISUALIZATIONS"]: (untypedMessage) => {
+			[RootDataVisualizationsMessageType]: (untypedMessage) => {
 				const message: RootDataVisualizationsMessage =
 					untypedMessage as RootDataVisualizationsMessage;
 
@@ -66,7 +68,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 
 		// POST Request for DDS data in container.
 		messageRelay.postMessage({
-			type: "GET_ROOT_DATA_VISUALIZATIONS",
+			type: GetRootDataVisualizationsMessageType,
 			data: {
 				containerId,
 			},
@@ -84,7 +86,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	return (
 		<>
 			{Object.entries(rootDataHandles).map(([key, fluidObject], index) => {
-				return <FluidDataView key={key} containerId={containerId} node={fluidObject} />;
+				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
 			})}
 		</>
 	);
