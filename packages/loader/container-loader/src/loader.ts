@@ -60,7 +60,7 @@ function ensureResolvedUrlDefined(
 	}
 }
 /**
- * @deprecated - In the next release RelativeLoader will no longer be exported. It is an internal class that should not be used directly.
+ * @internal
  */
 export class RelativeLoader implements ILoader {
 	constructor(
