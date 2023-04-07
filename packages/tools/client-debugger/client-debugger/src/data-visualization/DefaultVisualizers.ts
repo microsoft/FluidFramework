@@ -97,6 +97,7 @@ export const visualizeSharedMatrix: VisualizeSharedObject = async (
 
 	const { rowCount, colCount: columnCount, id: fluidObjectId } = sharedMatrix;
 
+	// Output will list child contents by row first, then by cell (column).
 	const rows: Record<string, VisualTreeNode> = {};
 	for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
 		const cells: Record<string, VisualChildNode> = {};
