@@ -3182,6 +3182,7 @@ export class ContainerRuntime
 		);
 		if (recoveryMethod === "restart") {
 			this._summarizer?.stop("latestSummaryStateStale");
+			// TODO: stop execution, but don't cause a cascading series of errors.
 			const error = new GenericError("Restarting summarizer instead of refreshing");
 			this.closeFn(error);
 			throw error;
