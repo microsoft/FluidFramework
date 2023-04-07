@@ -9,9 +9,10 @@ import { IUser } from "./users";
 /**
  * A client's connection mode - either view-only ("read") or allowing edits ("write").
  *
- * @remarks Note: this should not be confused with user permissions.
- * If a user does not have write privileges, they will still not be permitted to make edits, even if the
- * connection mode is set to "write".
+ * @remarks
+ *
+ * Note: a user's connection mode is dependent on their permissions.
+ * E.g. a user with read-only permissions will not be allowed a "write" connection mode.
  */
 export type ConnectionMode = "write" | "read";
 
