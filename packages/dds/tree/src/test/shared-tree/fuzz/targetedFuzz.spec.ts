@@ -12,7 +12,12 @@ import {
 import { moveToDetachedField, compareUpPaths, rootFieldKeySymbol, UpPath } from "../../../core";
 import { brand } from "../../../util";
 import { TestTreeProvider, SummarizeType, initializeTestTree, validateTree } from "../../utils";
-import { FuzzTestState, makeOpGenerator, Operation } from "./fuzzEditGenerators";
+import {
+	FuzzTestState,
+	makeOpGenerator,
+	Operation,
+	EditGeneratorOpWeights,
+} from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import { initialTreeState, runFuzzBatch, testSchema } from "./fuzzUtils";
 
@@ -44,12 +49,19 @@ export async function performFuzzActionsAbort(
 		testTreeProvider: provider,
 		numberOfEdits: 0,
 	};
+
+	provider.trees[0].transaction.start();
+
 	const finalState = await performFuzzActionsAsync(
 		generator,
 		fuzzReducer,
 		initialState,
 		saveInfo,
 	);
+
+	// aborts any transactions that may still be in progress
+	const finalTree = provider.trees[0];
+	finalTree.transaction.abort();
 	validateTree(provider.trees[0], [initialTreeState]);
 
 	// validate anchor
@@ -63,6 +75,7 @@ export async function performFuzzActionsAbort(
 		parentIndex: 1,
 	};
 	const anchorPath = tree.locate(firstAnchor);
+
 	assert(compareUpPaths(expectedPath, anchorPath));
 	return finalState;
 }
@@ -78,7 +91,17 @@ describe("Fuzz - Targeted", () => {
 	const random = makeRandom(0);
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
-	describe.skip("Anchors are unaffected by aborted transaction", () => {
-		runFuzzBatch(makeOpGenerator, performFuzzActionsAbort, opsPerRun, runsPerBatch, random);
+	const editGeneratorOpWeights: EditGeneratorOpWeights = {
+		setPayload: 1,
+	};
+	describe("Anchors are unaffected by aborted transaction", () => {
+		runFuzzBatch(
+			makeOpGenerator,
+			performFuzzActionsAbort,
+			opsPerRun,
+			runsPerBatch,
+			random,
+			editGeneratorOpWeights,
+		);
 	});
 });

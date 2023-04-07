@@ -3177,6 +3177,17 @@ export class ContainerRuntime
 		readAndParseBlob: ReadAndParseBlob,
 		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
+		const recoveryMethod = this.mc.config.getString(
+			"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod",
+		);
+		if (recoveryMethod === "restart") {
+			this._summarizer?.stop("latestSummaryStateStale");
+			// TODO: stop execution, but don't cause a cascading series of errors.
+			const error = new GenericError("Restarting summarizer instead of refreshing");
+			this.closeFn(error);
+			throw error;
+		}
+
 		return PerformanceEvent.timedExecAsync(
 			logger,
 			event,
