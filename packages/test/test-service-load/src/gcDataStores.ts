@@ -26,19 +26,6 @@ import { IRunConfig } from "./loadTestDataStore";
  */
 const maxRunningLeafDataObjects = 3;
 
-/**
- * Activities that can be performed in the test.
- */
-const GCActivityType = {
-	/** Create a child data object and reference it. */
-	CreateAndReference: 0,
-	/** Unreference a referenced child data object. */
-	Unreference: 1,
-	/** Revive an unreferenced child data object. */
-	Revive: 2,
-};
-type GCActivityType = typeof GCActivityType[keyof typeof GCActivityType];
-
 /** An object (data objects or attachment blob based) that can run / stop activity in the test. */
 export interface IGCActivityObject {
 	readonly handle: IFluidHandle<ArrayBufferLike | DataObject>;
@@ -60,6 +47,43 @@ function logEvent(logger: ITelemetryLogger, props: ITelemetryGenericEvent & { id
 }
 
 /**
+ * Reference activities that can be performed in the test.
+ */
+const ReferenceActivityType = {
+	/** Don't do any referencing or unreferencing. */
+	None: 0,
+	/** Unreference a referenced child data object. */
+	Unreference: 1,
+	/** Create a child data object and reference it. */
+	CreateAndReference: 2,
+	/** Revive an unreferenced child data object. */
+	Revive: 3,
+};
+type ReferenceActivityType = typeof ReferenceActivityType[keyof typeof ReferenceActivityType];
+
+/**
+ * Activities that can be performed by the attachment blob object.
+ */
+const BlobActivityType = {
+	/** Don't do anything. */
+	None: 0,
+	/** Get the blob via its handle. */
+	GetBlob: 1,
+};
+type BlobActivityType = typeof BlobActivityType[keyof typeof BlobActivityType];
+
+/**
+ * Activities that can be performed by the leaf blob object.
+ */
+const LeafActivityType = {
+	/** Don't do anything. */
+	None: 0,
+	/** Send one or more ops */
+	SendOps: 1,
+};
+type LeafActivityType = typeof LeafActivityType[keyof typeof LeafActivityType];
+
+/**
  * The activity object implementation for an attachment blob.
  * On run, the attachment blob is retrieved on a regular interval.
  */
@@ -78,7 +102,7 @@ class AttachmentBlobObject implements IGCActivityObject {
 		const delayBetweenBlobGetMs = (60 * 1000) / config.testConfig.opRatePerMin;
 		while (this.running) {
 			try {
-				await this.handle.get();
+				await this.performActivity(config);
 			} catch (error) {
 				done = false;
 				break;
@@ -95,6 +119,24 @@ class AttachmentBlobObject implements IGCActivityObject {
 	public stop() {
 		if (this.running) {
 			this.running = false;
+		}
+	}
+
+	/**
+	 * Performs one of the following activity at random:
+	 * 1. GetBlob - Retrieves the blob associated with the IFluidHandle.
+	 * 2. None - Do nothing. This is to have summaries where no blobs are retrieved.
+	 */
+	private async performActivity(config: IRunConfig) {
+		const action = random.integer(0, 1)(config.randEng);
+		switch (action) {
+			case BlobActivityType.GetBlob: {
+				await this.handle.get();
+				break;
+			}
+			case BlobActivityType.None:
+			default:
+				break;
 		}
 	}
 }
@@ -143,7 +185,18 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 		this.running = true;
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
 		while (this.running && !this.runtime.disposed) {
+<<<<<<< HEAD
 			this.counter.increment(1);
+=======
+			if (localSendCount % 10 === 0) {
+				console.log(
+					`+++++++++ Leaf data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
+				);
+			}
+
+			this.performActivity(config);
+			localSendCount++;
+>>>>>>> 4d8c6081bb (Add None activity type)
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
 			await delay(
 				delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, 0.5, true)(config.randEng),
@@ -155,6 +208,24 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 	public stop() {
 		if (this.running) {
 			this.running = false;
+		}
+	}
+
+	/**
+	 * Performs one of the following activity at random:
+	 * 1. GetBlob - Retrieves the blob associated with the IFluidHandle.
+	 * 2. None - Do nothing. This is to have summaries where this data store or its DDS does not change.
+	 */
+	private performActivity(config: IRunConfig) {
+		const action = random.integer(0, 1)(config.randEng);
+		switch (action) {
+			case LeafActivityType.SendOps: {
+				this.counter.increment(1);
+				break;
+			}
+			case LeafActivityType.None:
+			default:
+				break;
 		}
 	}
 }
@@ -480,6 +551,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 * 1. CreateAndReference - Create a data object, reference it and ask it to run.
 	 * 2. Unreference - Unreference the oldest referenced data object and asks it to stop running.
 	 * 3. Revive - Re-reference the oldest unreferenced data object and ask it to run.
+	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
 	 */
 	private async performDataObjectActivity(config: IRunConfig): Promise<boolean> {
 		/**
@@ -491,26 +563,32 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		while (!activityCompleted) {
 			activityCompleted = false;
 
-			// Add a new reference or revive only if it's possible to run a data object at the moment.
-			const action = this.canRunNewDataObject()
-				? random.integer(0, 2)(config.randEng)
-				: GCActivityType.Unreference;
+			// If it's possible to run a new data object, all activities can be performed upto Revive. If not,
+			// only activities upto Unreference can be preformed.
+			const maxActivityIndex = this.canRunNewDataObject()
+				? ReferenceActivityType.Revive
+				: ReferenceActivityType.Unreference;
+			const action = random.integer(0, maxActivityIndex)(config.randEng);
 			switch (action) {
-				case GCActivityType.CreateAndReference: {
+				case ReferenceActivityType.CreateAndReference: {
 					return this.createAndReferenceDataObject();
 				}
-				case GCActivityType.Unreference: {
+				case ReferenceActivityType.Unreference: {
 					if (this.referencedDataObjects.length > 0) {
 						this.unreferenceDataObject();
 						activityCompleted = true;
 					}
 					break;
 				}
-				case GCActivityType.Revive: {
+				case ReferenceActivityType.Revive: {
 					const nextUnreferencedDataObjectDetails = this.unreferencedDataObjects.shift();
 					if (nextUnreferencedDataObjectDetails !== undefined) {
 						return this.reviveDataObject(nextUnreferencedDataObjectDetails);
 					}
+					break;
+				}
+				case ReferenceActivityType.None: {
+					activityCompleted = true;
 					break;
 				}
 				default:
@@ -588,13 +666,14 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	 * 1. CreateAndReference - Upload an attachment blob and reference it.
 	 * 2. Unreference - Unreference the oldest referenced attachment blob.
 	 * 3. Revive - Re-reference the oldest unreferenced attachment blob.
+	 * 4. None - Do nothing. This is to have summaries where no references changed leading to incremental GC.
 	 */
 	private async performBlobActivity(config: IRunConfig): Promise<boolean> {
 		let activityCompleted = false;
 		while (!activityCompleted) {
-			const blobAction = random.integer(0, 2)(config.randEng);
+			const blobAction = random.integer(0, 3)(config.randEng);
 			switch (blobAction) {
-				case GCActivityType.CreateAndReference: {
+				case ReferenceActivityType.CreateAndReference: {
 					// Give each blob a unique id w.r.t. this data object's id.
 					const blobId = `${this.nodeId}/blob-${uuid()}`;
 					logEvent(this.logger, {
@@ -614,7 +693,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 					});
 					return blobObject.run(this.childRunConfig, blobId);
 				}
-				case GCActivityType.Unreference: {
+				case ReferenceActivityType.Unreference: {
 					if (this.referencedAttachmentBlobs.length > 0) {
 						const blobDetails = this.referencedAttachmentBlobs.shift();
 						assert(blobDetails !== undefined, "Cannot find blob to unreference");
@@ -635,7 +714,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 					}
 					break;
 				}
-				case GCActivityType.Revive: {
+				case ReferenceActivityType.Revive: {
 					const nextUnreferencedAttachmentBlob = this.unreferencedAttachmentBlobs.shift();
 					if (nextUnreferencedAttachmentBlob !== undefined) {
 						logEvent(this.logger, {
@@ -652,6 +731,10 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 							nextUnreferencedAttachmentBlob.id,
 						);
 					}
+					break;
+				}
+				case ReferenceActivityType.None: {
+					activityCompleted = true;
 					break;
 				}
 				default:
