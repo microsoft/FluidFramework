@@ -30,8 +30,10 @@ IFluidResolvedUrl is now deprecated, all usages should move to IResolvedUrl inst
 -   [IResolvedUrl equivalent to IFluidResolvedUrl](#IResolvedUrl-equivalent-to-IFluidResolvedUrl)
 -   [garbage-collector and related items removed](#garbage-collector-and-related-items-removed)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
+-   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
+-   [Container-loader deprecation removals](#Container-loader-deprecations-removals)
 
-## IResolvedUrl equivalent to IFluidResolvedUrl
+### IResolvedUrl equivalent to IFluidResolvedUrl
 
 In @fluidframework/driver-definitions IResolvedUrlBase and IWebResolvedUrl have now been removed.
 
@@ -64,17 +66,33 @@ The following interfaces available in `@fluidframework/runtime-definitions` were
 -   `IGarbageCollectionSnapshotData`
 -   `IGarbageCollectionSummaryDetailsLegacy`
 
+### ensureSynchronizedWithTimeout removed from LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` has been removed as it is equivalent to `LoaderContainerTracker.ensureSynchronized`. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Configure the timeout for the test instead.
+
+### Container-loader deprecation removals
+
+The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so have been removed from export in this release:
+
+-   IContainerLoadOptions
+-   IContainerConfig
+-   IPendingContainerState
+-   ISerializableBlobContents
+
 # 2.0.0-internal.4.1.0
 
 ## 2.0.0-internal.4.1.0 Upcoming changes
 
--   [garbage-collector and related items deprecated](#garbage-collector-and-related-items-deprecated)
+-   [@fluidframework/garbage-collector deprecated](#@fluidframework/garbage-collector-deprecated)
 -   [GC interfaces removed from runtime-definitions](#gc-interfaces-removed-from-runtime-definitions)
--   [ensureSynchronizedWithTimeout removed from LoaderContainerTracker](#ensuresynchronizedwithtimeout-removed-from-loadercontainertracker)
+-   [Some test packages no longer published](#some-test-packages-no-longer-published)
+-   [ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker](#ensuresynchronizedwithtimeout-deprecated-in-loadercontainertracker)
+-   [Container-loader deprecations](#Container-loader-deprecations)
+-   [Op compression is enabled by default](#op-compression-is-enabled-by-default)
 
-### garbage-collector and related items deprecated
+### @fluidframework/garbage-collector deprecated
 
-The following functions, interfaces, and types currently available in `@fluidframework/garbage-collector` are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
+The `@fluidframework/garbage-collector` package is deprecated with the following functions, interfaces, and types in it. These are internal implementation details and have been deprecated for public use. They will be removed in an upcoming release.
 
 -   `runGarbageCollection`
 -   `trimLeadingAndTrailingSlashes`
@@ -82,6 +100,7 @@ The following functions, interfaces, and types currently available in `@fluidfra
 -   `trimTrailingSlashes`
 -   `cloneGCData`
 -   `unpackChildNodesGCDetails`
+-   `unpackChildNodesUsedRoutes`
 -   `removeRouteFromAllNodes`
 -   `concatGarbageCollectionStates`
 -   `concatGarbageCollectionData`
@@ -98,9 +117,30 @@ The following interfaces available in `@fluidframework/runtime-definitions` are 
 -   `IGarbageCollectionSnapshotData`
 -   `IGarbageCollectionSummaryDetailsLegacy`
 
-### ensureSynchronizedWithTimeout removed from LoaderContainerTracker
+### Some test packages no longer published
 
-`LoaderContainerTracker.ensureSynchronizedWithTimeout` has been removed, as it is equivalent to `LoaderContainerTracker.ensureSynchronized`. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` has also been removed. Please configure the timeout for the test instead.
+These packages were previously published under the `@fluidframework` scope:
+
+-   `@fluidframework/test-end-to-end-tests`
+
+### ensureSynchronizedWithTimeout deprecated in LoaderContainerTracker
+
+`LoaderContainerTracker.ensureSynchronizedWithTimeout` is deprecated as it is equivalent to `LoaderContainerTracker.ensureSynchronized` and will be removed in an upcoming release. The `timeoutDuration` parameter from `TestObjectProvider.ensureSynchronized` will also be removed. Please configure the timeout for the test instead.
+
+### Container-loader deprecations
+
+The following types in the @fluidframework/container-loader package are not used by, or necessary to use our public api, so will be removed from export in the next major release:
+
+-   IContainerLoadOptions
+-   IContainerConfig
+-   IPendingContainerState
+-   ISerializableBlobContents
+
+### Op compression is enabled by default
+
+If the size of a batch is larger than 614kb, the ops will be compressed. After upgrading to this version, if batches exceed the size threshold, the runtime will produce a new type of op with the compression properties. To open a document which contains this type of op, the client's runtime version needs to be at least `client_v2.0.0-internal.2.3.0`. Older clients will close with assert `0x3ce` ("Runtime message of unknown type") and will not be able to open the documents until they upgrade. To minimize the risk, it is recommended to audit existing session and ensure that at least 99.9% of them are using a runtime version equal or greater than `client_v2.0.0-internal.2.3.0`, before upgrading to `2.0.0-internal.4.1.0`.
+
+More information about op compression can be found [here](./packages/runtime/container-runtime/src/opLifecycle/README.md).
 
 # 2.0.0-internal.4.0.0
 

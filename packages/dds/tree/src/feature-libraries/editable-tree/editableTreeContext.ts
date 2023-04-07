@@ -260,7 +260,10 @@ export class ProxyContext implements EditableTreeContext {
 	): void {
 		const field = this.editor.sequenceField(path, fieldKey);
 		field.delete(index, count);
-		field.insert(index, newContent);
+
+		if (!Array.isArray(newContent) || newContent.length > 0) {
+			field.insert(index, newContent);
+		}
 	}
 
 	public on<K extends keyof ForestEvents>(eventName: K, listener: ForestEvents[K]): () => void {

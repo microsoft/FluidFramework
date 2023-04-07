@@ -67,7 +67,8 @@ export async function deliCreate(
 
 	// eslint-disable-next-line @typescript-eslint/await-thenable
 	const collection = await db.collection<core.IDocument>(documentsCollectionName);
-	const documentRepository = customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
+	const documentRepository =
+		customizations?.documentRepository ?? new core.MongoDocumentRepository(collection);
 
 	const forwardProducer = services.createProducer(
 		kafkaLibrary,

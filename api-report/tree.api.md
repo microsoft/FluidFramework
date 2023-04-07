@@ -651,8 +651,8 @@ interface HasModifications<TTree = ProtoNode> {
     readonly setValue?: Value;
 }
 
-// @alpha (undocumented)
-export type IdAllocator = () => ChangesetLocalId;
+// @alpha
+export type IdAllocator = (count?: number) => ChangesetLocalId;
 
 // @alpha
 export interface IDefaultEditBuilder {
@@ -671,6 +671,15 @@ export interface IDefaultEditBuilder {
 }
 
 // @alpha
+export type Identifier = number;
+
+// @alpha
+export const identifierKey: GlobalFieldKey;
+
+// @alpha
+export const identifierKeySymbol: GlobalFieldKeySymbol;
+
+// @alpha
 export interface IEditableForest extends IForestSubscription {
     readonly anchors: AnchorSet;
     applyDelta(delta: Delta.Root): void;
@@ -679,6 +688,7 @@ export interface IEditableForest extends IForestSubscription {
 // @alpha
 export interface IEmitter<E extends Events<E>> {
     emit<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): void;
+    emitAndCollect<K extends keyof Events<E>>(eventName: K, ...args: Parameters<E[K]>): ReturnType<E[K]>[];
 }
 
 // @alpha
@@ -763,6 +773,7 @@ export interface ISharedTreeView extends AnchorLocator {
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
     fork(): ISharedTreeFork;
+    readonly identifiedNodes: ReadonlyMap<Identifier, EditableTree>;
     get root(): UnwrappedEditableField;
     set root(data: ContextuallyTypedNodeData | undefined);
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
@@ -1003,7 +1014,7 @@ export class ModularEditBuilder extends ProgressiveEditBuilderBase<ModularChange
     // (undocumented)
     exitTransaction(): void;
     // (undocumented)
-    generateId(): ChangesetLocalId;
+    generateId(count?: number): ChangesetLocalId;
     // (undocumented)
     setValue(path: UpPath, value: Value): void;
     submitChange(path: UpPath | undefined, field: FieldKey, fieldKind: FieldKindIdentifier, change: FieldChangeset, maxId?: ChangesetLocalId): void;

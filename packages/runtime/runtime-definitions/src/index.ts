@@ -52,6 +52,7 @@ export {
 	channelsTreeName,
 	CreateChildSummarizerNodeParam,
 	CreateSummarizerNodeSource,
+	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,

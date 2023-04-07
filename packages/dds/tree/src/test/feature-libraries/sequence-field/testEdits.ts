@@ -46,12 +46,17 @@ function createInsertChangeset(
 	index: number,
 	size: number,
 	startingValue: number = 0,
+	id?: ChangesetLocalId,
 ): SF.Changeset<never> {
 	const content = [];
 	while (content.length < size) {
 		content.push({ type, value: startingValue + content.length });
 	}
-	return SF.sequenceFieldEditor.insert(index, content.map(singleTextCursor));
+	return SF.sequenceFieldEditor.insert(
+		index,
+		content.map(singleTextCursor),
+		id ?? brand(startingValue),
+	);
 }
 
 function createDeleteChangeset(startIndex: number, size: number): SF.Changeset<never> {

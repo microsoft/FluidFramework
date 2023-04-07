@@ -106,6 +106,9 @@ const detachedContainerRefSeqNumber = 0;
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
+/**
+ * @internal
+ */
 export interface IContainerLoadOptions {
 	/**
 	 * Disables the Container from reconnecting if false, allows reconnect otherwise.

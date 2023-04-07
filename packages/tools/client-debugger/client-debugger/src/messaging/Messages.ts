@@ -35,8 +35,7 @@ export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessa
 	 *
 	 * @remarks
 	 *
-	 * All messages sent by this the client-debuger library will have the same `source`:
-	 * {@link debuggerMessageSource}.
+	 * All messages sent by this library will have the same `source`: {@link devtoolsMessageSource}.
 	 * Listeners that only want to accept messages coming from this library can filter to those with
 	 * a matching source.
 	 *

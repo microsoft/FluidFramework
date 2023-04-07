@@ -19,10 +19,12 @@ import { getGCDataFromSnapshot, generateSortedGCState, getGCVersion } from "./gc
 import { IGarbageCollectionSnapshotData, IGarbageCollectionState } from "./gcSummaryDefinitions";
 import { IGarbageCollectorConfigs } from ".";
 
+export const gcStateBlobKey = `${gcBlobPrefix}_root`;
+
 /**
  * The GC data that is tracked for a summary.
  */
-interface IGCSummaryTrackingData {
+export interface IGCSummaryTrackingData {
 	serializedGCState: string | undefined;
 	serializedTombstones: string | undefined;
 	serializedDeletedNodes: string | undefined;
@@ -104,6 +106,20 @@ export class GCSummaryStateTracker {
 	}
 
 	/**
+	 * Called during GC initialization. Initialize the latest summary data from the base snapshot data.
+	 */
+	public initializeBaseState(baseSnapshotData: IGarbageCollectionSnapshotData) {
+		// If tracking state across summaries, update latest summary data from the snapshot's GC data.
+		this.latestSummaryData = {
+			serializedGCState: baseSnapshotData.gcState
+				? JSON.stringify(generateSortedGCState(baseSnapshotData.gcState))
+				: undefined,
+			serializedTombstones: JSON.stringify(baseSnapshotData.tombstones),
+			serializedDeletedNodes: JSON.stringify(baseSnapshotData.deletedNodes),
+		};
+	}
+
+	/**
 	 * Summarizes three component of the GC data - GC state, tombstones and deleted nodes.
 	 * It does incremental summary, i.e., it writes summary tree / summary blob only for the component that changed.
 	 * For components that did not change, a summary handle is returned that points to the previous successful summary.
@@ -148,7 +164,8 @@ export class GCSummaryStateTracker {
 			// If nothing changed since last summary, send a summary handle for the entire GC data.
 			if (
 				this.latestSummaryData.serializedGCState === serializedGCState &&
-				this.latestSummaryData.serializedTombstones === serializedTombstones
+				this.latestSummaryData.serializedTombstones === serializedTombstones &&
+				this.latestSummaryData.serializedDeletedNodes === serializedDeletedNodes
 			) {
 				const stats = mergeStats();
 				stats.handleNodeCount++;
@@ -195,7 +212,6 @@ export class GCSummaryStateTracker {
 		serializedDeletedNodes: string | undefined,
 		trackState: boolean,
 	): ISummaryTreeWithStats {
-		const gcStateBlobKey = `${gcBlobPrefix}_root`;
 		const builder = new SummaryTreeBuilder();
 
 		// If the GC state hasn't changed, write a summary handle, else write a summary blob for it.
@@ -276,38 +292,38 @@ export class GCSummaryStateTracker {
 		// If the summary was not tracked by this client, the state should be updated from the downloaded snapshot.
 		const snapshotTree = result.snapshotTree;
 		const metadataBlobId = snapshotTree.blobs[metadataBlobName];
-		if (metadataBlobId) {
-			const metadata = await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId);
-			this.latestSummaryGCVersion = getGCVersion(metadata);
-		}
+		const metadata = metadataBlobId
+			? await readAndParseBlob<IContainerRuntimeMetadata>(metadataBlobId)
+			: undefined;
+		this.latestSummaryGCVersion = getGCVersion(metadata);
 
 		const gcSnapshotTree = snapshotTree.trees[gcTreeKey];
 		// If GC ran in the container that generated this snapshot, it will have a GC tree.
 		this.wasGCRunInLatestSummary = gcSnapshotTree !== undefined;
-		let latestGCData: IGarbageCollectionSnapshotData | undefined;
-		if (gcSnapshotTree !== undefined) {
-			latestGCData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
-		}
-		this.pendingSummaryData = undefined;
-		return latestGCData;
-	}
 
-	/**
-	 * Update state from the given snapshot data. This is done during load and during refreshing state from a snapshot.
-	 * @param gcSnapshotData - The GC snapshot data to update state from.
-	 */
-	public updateStateFromSnapshotData(gcSnapshotData: IGarbageCollectionSnapshotData | undefined) {
-		// If there is no snapshot data, it means this snapshot was generated with GC disabled. Unset all GC state.
-		if (gcSnapshotData === undefined) {
-			this.latestSummaryData = undefined;
-			return;
+		if (gcSnapshotTree === undefined) {
+			return undefined;
 		}
 
-		// If tracking state across summaries, update latest summary data from the snapshot's GC data.
+		let snapshotData = await getGCDataFromSnapshot(gcSnapshotTree, readAndParseBlob);
+
+		// If the GC version in the snapshot does not match the GC version currently in effect, the GC data
+		// in the snapshot cannot be interpreted correctly. Set everything to undefined except for deletedNodes
+		// because irrespective of GC versions, these nodes have been deleted and cannot be brought back. The
+		// deletedNodes info is needed to identify when these nodes are used.
+		if (getGCVersion(metadata) !== this.currentGCVersion) {
+			snapshotData = {
+				gcState: undefined,
+				tombstones: undefined,
+				deletedNodes: snapshotData.deletedNodes,
+			};
+		}
+
 		this.latestSummaryData = {
-			serializedGCState: JSON.stringify(generateSortedGCState(gcSnapshotData.gcState)),
-			serializedTombstones: JSON.stringify(gcSnapshotData.tombstones),
-			serializedDeletedNodes: JSON.stringify(gcSnapshotData.deletedNodes),
+			serializedGCState: JSON.stringify(snapshotData.gcState),
+			serializedTombstones: JSON.stringify(snapshotData.tombstones),
+			serializedDeletedNodes: JSON.stringify(snapshotData.deletedNodes),
 		};
+		return snapshotData;
 	}
 }

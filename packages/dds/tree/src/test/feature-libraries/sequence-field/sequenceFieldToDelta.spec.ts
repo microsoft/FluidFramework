@@ -283,6 +283,7 @@ describe("SequenceField - toDelta", () => {
 				type: "Insert",
 				content,
 				changes: nodeChange,
+				id: brand(0),
 			},
 		];
 		const nestedMoveDelta = new Map([

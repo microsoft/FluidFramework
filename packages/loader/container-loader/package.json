@@ -70,7 +70,7 @@
 		"@fluidframework/core-interfaces": ">=2.0.0-internal.5.0.0 <2.0.0-internal.6.0.0",
 		"@fluidframework/driver-definitions": ">=2.0.0-internal.5.0.0 <2.0.0-internal.6.0.0",
 		"@fluidframework/driver-utils": ">=2.0.0-internal.5.0.0 <2.0.0-internal.6.0.0",
-		"@fluidframework/protocol-base": "^0.1038.4000",
+		"@fluidframework/protocol-base": "^0.1039.1000",
 		"@fluidframework/protocol-definitions": "^1.1.0",
 		"@fluidframework/telemetry-utils": ">=2.0.0-internal.5.0.0 <2.0.0-internal.6.0.0",
 		"abort-controller": "^3.0.0",
@@ -108,11 +108,15 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IContainerConfig": {
+			"RemovedInterfaceDeclaration_IContainerConfig": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"InterfaceDeclaration_IPendingContainerState": {
+			"RemovedInterfaceDeclaration_IContainerLoadOptions": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IPendingContainerState": {
 				"forwardCompat": false,
 				"backCompat": false
 			}
