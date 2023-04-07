@@ -9,6 +9,9 @@ import { IErrorEvent } from '@fluidframework/common-definitions';
 import { IEventProvider } from '@fluidframework/common-definitions';
 
 // @public
+export type ClientType = "client" | "summarizer";
+
+// @public
 export type ConnectionMode = "write" | "read";
 
 // @public (undocumented)
@@ -83,7 +86,7 @@ export interface IClientDetails {
     capabilities: ICapabilities;
     device?: string;
     environment?: string;
-    type?: string;
+    type?: ClientType | string;
 }
 
 // @public

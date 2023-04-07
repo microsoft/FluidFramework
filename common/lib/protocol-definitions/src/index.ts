@@ -11,6 +11,7 @@
  */
 
 export {
+	ClientType,
 	ConnectionMode,
 	ICapabilities,
 	IClient,
