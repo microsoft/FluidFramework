@@ -760,11 +760,10 @@ export class SharedDirectory
 			if (currentParent.isSubDirectoryDeletePending(subDirName)) {
 				return true;
 			}
-			const newParent = currentParent.getSubDirectory(subDirName) as SubDirectory;
-			if (newParent === undefined) {
+			currentParent = currentParent.getSubDirectory(subDirName) as SubDirectory;
+			if (currentParent === undefined) {
 				return true;
 			}
-			currentParent = newParent;
 			start += 1;
 		}
 		return false;
