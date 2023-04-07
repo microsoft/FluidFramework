@@ -54,7 +54,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		private readonly mergeIntoBase: (forked: SharedTreeBranch<TEditor, TChange>) => TChange,
 		private readonly sessionId: string,
 		private readonly rebaser: Rebaser<TChange>,
-		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		public readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		private readonly anchors: AnchorSet,
 	) {
 		super();
@@ -158,17 +158,17 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Rebase the changes that have been applied to this branch over all the changes in the base branch that have
 	 * occurred since this branch last pulled (or was forked).
+	 * @param from - the commit on the base branch up to which this branch should be rebased over. Defaults to the head of the base branch.
 	 * @returns the net change to this branch
 	 */
-	public pull(): TChange {
+	public pull(from: GraphCommit<TChange> = this.getBaseBranch()): TChange {
 		this.assertNotDisposed();
-		const baseBranch = this.getBaseBranch();
-		if (this.head === baseBranch) {
+		if (this.head === from) {
 			// Not necessary for correctness, but skips needless rebase and event firing below
 			return this.rebaser.changeRebaser.compose([]);
 		}
 
-		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, baseBranch);
+		const [newBranch, change] = this.rebaser.rebaseBranch(this.head, from);
 		this.head = newBranch;
 		this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);
 		this.emit("onChange", change);
