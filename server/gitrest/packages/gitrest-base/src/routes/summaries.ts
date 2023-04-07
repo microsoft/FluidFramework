@@ -34,26 +34,11 @@ import {
 	checkSoftDeleted,
 	getSoftDeletedMarkerPath,
 	isTransactionTrackerProxyFsPromises,
+	logFileSystemTransactions,
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
 	return `${repoManager.path}/${documentId}`;
-}
-
-function logFileSystemTransactions(
-	apiName: string,
-	flushFileSystemTransactions: () => string[] | undefined,
-	telemetryProperties?: Record<string, any>,
-): void {
-	if (flushFileSystemTransactions) {
-		// Flush and log fs transactions for api
-		const writeSummaryFileSystemTransactions = flushFileSystemTransactions();
-		Lumberjack.info(`FS Transactions: ${apiName}`, {
-			...telemetryProperties,
-			transactions: writeSummaryFileSystemTransactions,
-			transactionCount: writeSummaryFileSystemTransactions.length,
-		});
-	}
 }
 
 async function getSummary(

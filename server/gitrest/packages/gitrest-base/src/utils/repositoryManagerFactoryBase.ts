@@ -21,8 +21,15 @@ import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 } from "./gitrestTelemetryDefinitions";
+import { isTransactionTrackerProxyFsPromises, logFileSystemTransactions } from "./filesystems";
 
 type RepoOperationType = "create" | "open";
+type RepoNotExistsHandler = (
+	fileSystemManager: IFileSystemManager,
+	repoPath: string,
+	gitdir: string,
+	lumberjackBaseProperties: Record<string, any>,
+) => Promise<void> | never;
 
 export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepositoryManagerFactory {
 	// Map each mutex to one repo. We don't want to block concurrent requests on the mutex if
@@ -30,12 +37,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	private readonly mutexes = new Map<string, MutexInterface>();
 	private readonly internalHandler: (
 		params: IRepoManagerParams,
-		onRepoNotExists: (
-			fileSystemManager: IFileSystemManager,
-			repoPath: string,
-			gitdir: string,
-			lumberjackBaseProperties: Record<string, any>,
-		) => Promise<void> | never,
+		onRepoNotExists: RepoNotExistsHandler,
 		repoOperationType: RepoOperationType,
 	) => Promise<IRepositoryManager>;
 	// Cache repositories to allow for reuse
@@ -67,7 +69,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	}
 
 	public async create(params: IRepoManagerParams): Promise<IRepositoryManager> {
-		const onRepoNotExists = async (
+		const onRepoNotExists: RepoNotExistsHandler = async (
 			fileSystemManager: IFileSystemManager,
 			repoPath: string,
 			gitdir: string,
@@ -92,7 +94,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	}
 
 	public async open(params: IRepoManagerParams): Promise<IRepositoryManager> {
-		const onRepoNotExists = (
+		const onRepoNotExists: RepoNotExistsHandler = (
 			fileSystemManager: IFileSystemManager,
 			repoPath: string,
 			gitdir: string,
@@ -117,12 +119,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 
 	private async repoPerDocInternalHandler(
 		params: IRepoManagerParams,
-		onRepoNotExists: (
-			fileSystemManager: IFileSystemManager,
-			repoPath: string,
-			gitdir: string,
-			lumberjackBaseProperties: Record<string, any>,
-		) => Promise<void> | never,
+		onRepoNotExists: RepoNotExistsHandler,
 		repoOperationType: RepoOperationType,
 	): Promise<IRepositoryManager> {
 		if (!params.storageRoutingId?.tenantId || !params.storageRoutingId?.documentId) {
@@ -152,12 +149,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 
 	private async repoPerTenantInternalHandler(
 		params: IRepoManagerParams,
-		onRepoNotExists: (
-			fileSystemManager: IFileSystemManager,
-			repoPath: string,
-			gitdir: string,
-			lumberjackBaseProperties: Record<string, any>,
-		) => Promise<void> | never,
+		onRepoNotExists: RepoNotExistsHandler,
 		repoOperationType: RepoOperationType,
 	): Promise<IRepositoryManager> {
 		const repoPath = helpers.getRepoPath(
@@ -186,12 +178,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		repoPath: string,
 		directoryPath: string,
 		repoName: string,
-		onRepoNotExists: (
-			fileSystemManager: IFileSystemManager,
-			repoPath: string,
-			gitdir: string,
-			lumberjackBaseProperties: Record<string, any>,
-		) => Promise<void> | never,
+		onRepoNotExists: RepoNotExistsHandler,
 		repoOperationType: RepoOperationType,
 	): Promise<IRepositoryManager> {
 		const lumberjackBaseProperties =
@@ -199,8 +186,16 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		const fileSystemManager = this.fileSystemManagerFactory.create(
 			params.fileSystemManagerParams,
 		);
+		const flushFileSystemTransactions: () => string[] | undefined =
+			isTransactionTrackerProxyFsPromises(fileSystemManager.promises)
+				? fileSystemManager.promises.flush
+				: undefined;
 		// We define the function below to be able to call it either on its own or within the mutex.
-		const action = async () => {
+		const action = async (): Promise<IRepositoryManager> => {
+			if (flushFileSystemTransactions) {
+				// Flush transactions to clear state, just in case
+				flushFileSystemTransactions();
+			}
 			if (params.optimizeForInitialSummary && repoOperationType === "create") {
 				// Skip checking if repo exists when optimizing for an initial summary.
 				await onRepoNotExists(
@@ -242,7 +237,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			}
 
 			const repository = this.repositoryCache.get(repoPath);
-			return this.createRepoManager(
+			const repoManager = this.createRepoManager(
 				fileSystemManager,
 				params.repoOwner,
 				repoName,
@@ -252,6 +247,13 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				lumberjackBaseProperties,
 				this.enableRepositoryManagerMetrics,
 			);
+			// Flush and log fs transactions for soft delete.
+			logFileSystemTransactions(
+				`repoManagerFactory: Internal Handler: ${repoOperationType}`,
+				flushFileSystemTransactions,
+				lumberjackBaseProperties,
+			);
+			return repoManager;
 		};
 
 		// RepoManagerFactories support 2 types of operations: "create repo" and "open repo". "Open repo"

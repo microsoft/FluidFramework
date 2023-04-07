@@ -5,6 +5,7 @@
 
 import fsPromises from "node:fs/promises";
 import { Volume } from "memfs";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	IFileSystemManager,
 	IFileSystemManagerFactory,
@@ -131,5 +132,21 @@ export class TransactionTrackerProxyFsManagerFactory implements IFileSystemManag
 			innerFsManager.promises,
 		);
 		return { promises: transactionTrackerProxyFsPromises };
+	}
+}
+
+export function logFileSystemTransactions(
+	apiName: string,
+	flushFileSystemTransactions: () => string[] | undefined,
+	telemetryProperties?: Record<string, any>,
+): void {
+	if (flushFileSystemTransactions) {
+		// Flush and log fs transactions for api
+		const fileSystemTransactions = flushFileSystemTransactions();
+		Lumberjack.info(`FS Transactions: ${apiName}`, {
+			...telemetryProperties,
+			transactions: fileSystemTransactions,
+			transactionCount: fileSystemTransactions.length,
+		});
 	}
 }

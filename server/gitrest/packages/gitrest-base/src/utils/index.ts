@@ -55,5 +55,6 @@ export {
 	MemFsManagerFactory,
 	isTransactionTrackerProxyFsPromises,
 	TransactionTrackerProxyFsManagerFactory,
+	logFileSystemTransactions,
 } from "./filesystems";
 export { NodegitRepositoryManager, NodegitRepositoryManagerFactory } from "./nodegitManager";
