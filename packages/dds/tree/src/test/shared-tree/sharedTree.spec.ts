@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
+import {
+	MockFluidDataStoreRuntime,
+	validateAssertionError,
+} from "@fluidframework/test-runtime-utils";
 import {
 	FieldKinds,
 	singleTextCursor,
@@ -12,10 +15,18 @@ import {
 	namedTreeSchema,
 	on,
 	valueSymbol,
+	TypedSchema,
+	SchemaAware,
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import { ISharedTree, ISharedTreeView, runSynchronous } from "../../shared-tree";
+import {
+	ISharedTree,
+	ISharedTreeView,
+	SharedTreeFactory,
+	runSynchronous,
+	schematizeView,
+} from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -33,6 +44,7 @@ import {
 	SchemaData,
 	EditManager,
 	ValueSchema,
+	AllowedUpdateType,
 } from "../../core";
 
 const fooKey: FieldKey = brand("foo");
@@ -580,41 +592,68 @@ describe("SharedTree", () => {
 	});
 
 	describe("Events", () => {
-		it("triggers events for changes", async () => {
-			const value = "42";
-			const provider = await TestTreeProvider.create(1);
-			const [tree1] = provider.trees;
-			tree1.storedSchema.update({
-				globalFieldSchema: new Map([
-					[globalFieldKey, fieldSchema(FieldKinds.value, [testValueSchema.name])],
-				]),
-				treeSchema: new Map([[testValueSchema.name, testValueSchema]]),
-			});
-
-			// Insert node
-			pushTestValue(tree1, value);
-
-			const root = tree1.context.root.getNode(0);
-
+		it("triggers events for local and subtree changes", async () => {
+			const view = testTreeView();
+			const root = view.context.root.getNode(0);
 			const log: string[] = [];
 			const unsubscribe = root[on]("changing", () => log.push("change"));
-			const unsubscribeAfter = tree1.events.on("afterBatch", () => log.push("after"));
+			const unsubscribeSubtree = root[on]("subtreeChanging", () => log.push("subtree"));
+			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root[valueSymbol] = 5;
 			log.push("editStart");
 			root[valueSymbol] = 6;
 			log.push("unsubscribe");
 			unsubscribe();
+			unsubscribeSubtree();
 			unsubscribeAfter();
 			log.push("editStart");
 			root[valueSymbol] = 7;
 
 			assert.deepEqual(log, [
 				"editStart",
+				"subtree",
 				"change",
 				"after",
 				"editStart",
+				"subtree",
 				"change",
+				"after",
+				"unsubscribe",
+				"editStart",
+			]);
+		});
+
+		it("propagates path and value args for local and subtree changes", async () => {
+			const view = testTreeView();
+			const root = view.context.root.getNode(0);
+			const log: string[] = [];
+			const unsubscribe = root[on]("changing", (upPath, val) =>
+				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}-${val}`),
+			);
+			const unsubscribeSubtree = root[on]("subtreeChanging", (upPath) =>
+				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`),
+			);
+			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
+			log.push("editStart");
+			root[valueSymbol] = 5;
+			log.push("editStart");
+			root[valueSymbol] = 6;
+			log.push("unsubscribe");
+			unsubscribe();
+			unsubscribeSubtree();
+			unsubscribeAfter();
+			log.push("editStart");
+			root[valueSymbol] = 7;
+
+			assert.deepEqual(log, [
+				"editStart",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0-5",
+				"after",
+				"editStart",
+				"subtree-Symbol(rootFieldKey)-0",
+				"change-Symbol(rootFieldKey)-0-6",
 				"after",
 				"unsubscribe",
 				"editStart",
@@ -1951,6 +1990,20 @@ const testValueSchema = namedTreeSchema({
 	value: ValueSchema.Serializable,
 });
 
+function testTreeView(): ISharedTreeView {
+	const factory = new SharedTreeFactory();
+	const treeSchema = TypedSchema.tree("root", { value: ValueSchema.Number });
+	const schema = SchemaAware.typedSchemaData(
+		[[rootFieldKey, TypedSchema.fieldUnrestricted(FieldKinds.optional)]],
+		treeSchema,
+	);
+	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+	return schematizeView(tree, {
+		allowedSchemaModifications: AllowedUpdateType.None,
+		initialTree: 24,
+		schema,
+	});
+}
 /**
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link peekTestValue} to read the value.
