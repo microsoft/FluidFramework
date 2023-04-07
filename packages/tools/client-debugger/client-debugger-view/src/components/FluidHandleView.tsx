@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 import {
+	DataVisualizationMessageType,
 	IDebuggerMessage,
 	InboundHandlers,
 	handleIncomingMessage,
 	HasContainerId,
-	HasFluidObjectId, 
+	HasFluidObjectId,
 	FluidObjectNode,
 	DataVisualizationMessage,
 } from "@fluid-tools/client-debugger";
@@ -22,8 +23,7 @@ const loggingContext = "EXTENSION(HandleView)";
 /**
  * {@link FluidHandleView} input props.
  */
-export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {
-}
+export interface FluidHandleViewProps extends HasContainerId, HasFluidObjectId {}
 
 /**
  * Displays visual summary trees for DDS_s within the container.
@@ -39,7 +39,7 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		 * Handlers for inbound message related to Data View.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["DATA_VISUALIZATION"]: (untypedMessage) => {
+			[DataVisualizationMessageType]: (untypedMessage) => {
 				const message: DataVisualizationMessage =
 					untypedMessage as DataVisualizationMessage;
 

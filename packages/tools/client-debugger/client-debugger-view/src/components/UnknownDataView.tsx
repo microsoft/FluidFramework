@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 import React from "react";
-import {
-	HasContainerId,
-	UnknownObjectNode,
-} from "@fluid-tools/client-debugger";
+import { HasContainerId, UnknownObjectNode } from "@fluid-tools/client-debugger";
 
 /**
  * {@link UnknownDataView} input props.

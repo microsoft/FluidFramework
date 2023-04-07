@@ -5,7 +5,7 @@
 import React from "react";
 import {
 	RootDataVisualizationsMessageType,
-	GetRootDataVisualizationsMessageType, 
+	GetRootDataVisualizationsMessageType,
 	handleIncomingMessage,
 	RootDataVisualizationsMessage,
 	HasContainerId,
