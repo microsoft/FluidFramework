@@ -12,9 +12,12 @@ import { ConfigTypes } from "@fluidframework/telemetry-utils";
 export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 
 /**
- * Flags that can be used to enable experimental features.
+ * Flags to to enable experimental features.
  */
 export interface ExperimentalFlags {
+	/**
+	 * Name of the experimental feature flag.
+	 */
 	[flagName: string]: ConfigTypes;
 }
 

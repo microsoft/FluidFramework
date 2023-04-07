@@ -110,7 +110,6 @@ export interface AzureUser<T = any> extends IUser {
 
 // @public
 export interface ExperimentalFlags {
-    // (undocumented)
     [flagName: string]: ConfigTypes;
 }
 
