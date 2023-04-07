@@ -306,12 +306,13 @@ export namespace GetRootDataVisualizations {
 }
 
 // @public
-export interface GetTelemetryHistoryMessage extends IDebuggerMessage {
-    type: typeof GetTelemetryHistoryMessageType;
+export namespace GetTelemetryHistory {
+    const MessageType = "GET_TELEMETRY_HISTORY";
+    export function createMessage(): Message;
+    export interface Message extends IDebuggerMessage<undefined> {
+        type: typeof MessageType;
+    }
 }
-
-// @public
-export const GetTelemetryHistoryMessageType = "GET_TELEMETRY_HISTORY";
 
 // @internal
 export function handleIncomingMessage(message: Partial<ISourcedDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
@@ -430,25 +431,28 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 }
 
 // @public
-export interface TelemetryEventMessage extends IDebuggerMessage<TelemetryEventMessageData> {
-    type: typeof TelemetryEventMessageType;
+export namespace TelemetryEvent {
+    const MessageType = "TELEMETRY_EVENT";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDebuggerMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        event: ITimestampedTelemetryEvent;
+    }
 }
 
 // @public
-export interface TelemetryEventMessageData {
-    contents: ITimestampedTelemetryEvent[];
+export namespace TelemetryHistory {
+    const MessageType = "TELEMETRY_HISTORY";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDebuggerMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        contents: ITimestampedTelemetryEvent[];
+    }
 }
-
-// @public
-export const TelemetryEventMessageType = "TELEMETRY_EVENT";
-
-// @public
-export interface TelemetryHistoryMessage extends IDebuggerMessage<TelemetryEventMessageData> {
-    type: typeof TelemetryHistoryMessageType;
-}
-
-// @public
-export const TelemetryHistoryMessageType = "TELEMETRY_HISTORY";
 
 // @public
 export interface TreeNodeBase extends VisualNodeBase {

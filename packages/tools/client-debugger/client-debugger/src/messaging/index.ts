@@ -31,16 +31,7 @@ export {
 export { ContainerList, GetContainerList } from "./devtools-messages";
 export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
-export {
-	GetTelemetryHistoryMessage,
-	GetTelemetryHistoryMessageType,
-	ITimestampedTelemetryEvent,
-	TelemetryEventMessage,
-	TelemetryEventMessageData,
-	TelemetryEventMessageType,
-	TelemetryHistoryMessage,
-	TelemetryHistoryMessageType,
-} from "./TelemetryMessages";
+export { GetTelemetryHistory, TelemetryEvent, TelemetryHistory } from "./telemetry-messages";
 export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
