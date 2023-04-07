@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { FieldKinds, TypedSchema, SchemaAware } from "../../feature-libraries";
-import { SharedTreeFactory, schematizeView } from "../../shared-tree";
+import { SharedTreeFactory } from "../../shared-tree";
 import { rootFieldKey, ValueSchema, AllowedUpdateType } from "../../core";
 
 const factory = new SharedTreeFactory();
@@ -27,7 +27,7 @@ describe("schematizeView", () => {
 
 		assert(!tree.storedSchema.globalFieldSchema.has(rootFieldKey));
 
-		const schematized = schematizeView(tree, {
+		const schematized = tree.schematize({
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: 10,
 			schema,
@@ -43,7 +43,7 @@ describe("schematizeView", () => {
 		tree.storedSchema.update(schema);
 
 		// No op upgrade with AllowedUpdateType.None does not error
-		const schematized = schematizeView(tree, {
+		const schematized = tree.schematize({
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: 10,
 			schema,
@@ -56,7 +56,7 @@ describe("schematizeView", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		tree.storedSchema.update(schema);
 		assert.throws(() => {
-			schematizeView(tree, {
+			tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: "x",
 				schema: schemaGeneralized,
@@ -68,7 +68,7 @@ describe("schematizeView", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		tree.storedSchema.update(schemaGeneralized);
 		assert.throws(() => {
-			schematizeView(tree, {
+			tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: "x",
 				schema,
@@ -79,7 +79,7 @@ describe("schematizeView", () => {
 	it("upgrade schema", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 		tree.storedSchema.update(schema);
-		const schematized = schematizeView(tree, {
+		const schematized = tree.schematize({
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: "x",
 			schema: schemaGeneralized,

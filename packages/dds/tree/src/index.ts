@@ -247,7 +247,6 @@ export {
 	SharedTreeFactory,
 	ViewEvents,
 	SchematizeConfiguration,
-	schematizeView,
 } from "./shared-tree";
 
 export { StableId, UuidString } from "./id-compressor";
