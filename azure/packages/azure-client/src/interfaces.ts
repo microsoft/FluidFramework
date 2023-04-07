@@ -6,9 +6,17 @@ import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { IUser } from "@fluidframework/protocol-definitions";
 import { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import { ConfigTypes } from "@fluidframework/telemetry-utils";
 
 // Re-export so developers can build loggers without pulling in common-definitions
 export { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+
+/**
+ * Flags that can be used to enable experimental features.
+ */
+export interface ExperimentalFlags {
+	[flagName: string]: ConfigTypes;
+}
 
 /**
  * Props for initializing a new AzureClient instance
@@ -22,6 +30,11 @@ export interface AzureClientProps {
 	 * Optional. A logger instance to receive diagnostic messages.
 	 */
 	readonly logger?: ITelemetryBaseLogger;
+
+	/**
+	 * Flags to enable experimental features. If unsure, leave this undefined.
+	 */
+	readonly experimentalFlags?: ExperimentalFlags;
 }
 
 /**

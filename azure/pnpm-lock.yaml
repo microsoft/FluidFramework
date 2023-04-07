@@ -59,11 +59,20 @@ importers:
       '@fluidframework/fluid-static': '>=2.0.0-internal.4.0.3 <2.0.0-internal.4.1.0'
       '@fluidframework/map': '>=2.0.0-internal.4.0.3 <2.0.0-internal.4.1.0'
       '@fluidframework/protocol-definitions': ^1.0.0
+<<<<<<< Updated upstream
       '@fluidframework/routerlicious-driver': '>=2.0.0-internal.4.0.3 <2.0.0-internal.4.1.0'
       '@fluidframework/runtime-utils': '>=2.0.0-internal.4.0.3 <2.0.0-internal.4.1.0'
       '@fluidframework/server-services-client': ~0.1038.4001
       '@fluidframework/test-client-utils': 2.0.0-internal.4.0.3
       '@fluidframework/test-utils': '>=2.0.0-internal.4.0.3 <2.0.0-internal.4.1.0'
+=======
+      '@fluidframework/routerlicious-driver': ^1.4.0-121020
+      '@fluidframework/runtime-utils': ^1.4.0-121020
+      '@fluidframework/server-services-client': ^0.1036.5000
+      '@fluidframework/telemetry-utils': ^1.4.0-121020
+      '@fluidframework/test-client-utils': 1.4.0-121020
+      '@fluidframework/test-utils': ^1.4.0-121020
+>>>>>>> Stashed changes
       '@microsoft/api-extractor': ^7.34.4
       '@types/mocha': ^9.1.1
       '@types/node': ^14.18.38
@@ -91,9 +100,16 @@ importers:
       '@fluidframework/fluid-static': 2.0.0-internal.4.0.3
       '@fluidframework/map': 2.0.0-internal.4.0.3
       '@fluidframework/protocol-definitions': 1.1.0
+<<<<<<< Updated upstream
       '@fluidframework/routerlicious-driver': 2.0.0-internal.4.0.3
       '@fluidframework/runtime-utils': 2.0.0-internal.4.0.3
       '@fluidframework/server-services-client': 0.1038.4001
+=======
+      '@fluidframework/routerlicious-driver': 1.4.0-121020
+      '@fluidframework/runtime-utils': 1.4.0-121020
+      '@fluidframework/server-services-client': 0.1036.5001
+      '@fluidframework/telemetry-utils': 1.4.0-121020
+>>>>>>> Stashed changes
       axios: 0.21.4
       uuid: 8.3.2
     devDependencies:

@@ -4,12 +4,13 @@
  */
 import { strict as assert } from "node:assert";
 
-import { AzureClient } from "@fluidframework/azure-client";
+import { AzureClient, ExperimentalFlags } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerSchema } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map";
 import { timeoutPromise } from "@fluidframework/test-utils";
 
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { createAzureClient } from "./AzureClientFactory";
 
 describe("Container create scenarios", () => {
@@ -142,5 +143,35 @@ describe("Container create scenarios", () => {
 		);
 		// eslint-disable-next-line require-atomic-updates
 		console.error = consoleErrorFn;
+	});
+});
+
+describe("Container create with feature flags", () => {
+	let client: AzureClient;
+	let schema: ContainerSchema;
+	let mockLogger: MockLogger;
+
+	beforeEach(() => {
+		mockLogger = new MockLogger();
+		const experimentalFlags: ExperimentalFlags = {
+			"Fluid.ContainerRuntime.DisableOpReentryCheck": true,
+		};
+		client = createAzureClient(undefined, undefined, mockLogger, experimentalFlags);
+		schema = {
+			initialObjects: {
+				map1: SharedMap,
+			},
+		};
+	});
+
+	it.only("can create containers with feature gates", async () => {
+		await client.createContainer(schema);
+		mockLogger.assertMatchAny([
+			{
+				featureGates: JSON.stringify({
+					disableOpReentryCheck: true,
+				}),
+			},
+		]);
 	});
 });

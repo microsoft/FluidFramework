@@ -8,16 +8,23 @@ import {
 	AzureClient,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
+	ExperimentalFlags,
 } from "@fluidframework/azure-client";
 import { InsecureTokenProvider } from "@fluidframework/test-client-utils";
 
+import { MockLogger } from "@fluidframework/telemetry-utils";
 import { createAzureTokenProvider } from "./AzureTokenFactory";
 
 /**
  * This function will determine if local or remote mode is required (based on FLUID_CLIENT), and return a new
  * {@link AzureClient} instance based on the mode by setting the Connection config accordingly.
  */
-export function createAzureClient(userID?: string, userName?: string): AzureClient {
+export function createAzureClient(
+	userID?: string,
+	userName?: string,
+	logger?: MockLogger,
+	experimentalFlags?: ExperimentalFlags,
+): AzureClient {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
@@ -43,5 +50,5 @@ export function createAzureClient(userID?: string, userName?: string): AzureClie
 				endpoint: "http://localhost:7071",
 				type: "local",
 		  };
-	return new AzureClient({ connection: connectionProps });
+	return new AzureClient({ connection: connectionProps, logger, experimentalFlags });
 }
