@@ -39,7 +39,7 @@ export function checkTreesAreSynchronized(provider: ITestTreeProvider) {
 
 function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
 	switch (contents.fuzzType) {
-		case "insert": {
+		case "sequenceFieldInsert": {
 			const field = tree.editor.sequenceField(contents.parent, contents.field);
 			field.insert(
 				contents.index,

@@ -31,8 +31,18 @@ export interface TreeEdit {
 	index: number;
 }
 
-export interface FuzzInsert {
-	fuzzType: "insert";
+// export interface FuzzInsert {
+// 	fuzzType: "insert";
+// 	parent: UpPath | undefined;
+// 	field: FieldKey;
+// 	index: number;
+// 	value: number;
+// }
+
+export type FuzzInsert = FuzzSequenceFieldInsert;
+
+export interface FuzzSequenceFieldInsert {
+	fuzzType: "sequenceFieldInsert";
 	parent: UpPath | undefined;
 	field: FieldKey;
 	index: number;
@@ -113,19 +123,14 @@ export const makeEditGenerator = (
 		const tree = trees[state.treeIndex];
 
 		// generate edit for that specific tree
-		const {
-			parent: path,
-			parentField: nodeField,
-			parentIndex: nodeIndex,
-		} = getRandomPlace(tree, state.random);
-		const insert: FuzzInsert = {
-			fuzzType: "insert",
-			parent: path,
-			field: nodeField,
-			index: nodeIndex,
-			value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER),
-		};
-		return insert;
+		const path: UpPath = getRandomPlace(tree, state.random);
+
+		// if the parent field of the path is a sequence field, generate a sequence field edit
+		if (path.parentField === sequenceFieldKey) {
+			return generateSequenceFieldInsertOp(path, state.random);
+		}
+		// default case returns a sequence field edit for now.
+		return generateSequenceFieldInsertOp(path, state.random);
 	}
 
 	async function deleteGenerator(state: EditState): Promise<FuzzDelete> {
@@ -149,6 +154,16 @@ export const makeEditGenerator = (
 			fuzzType: "setPayload",
 			path,
 			value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+		};
+	}
+
+	function generateSequenceFieldInsertOp(path: UpPath, random: IRandom): FuzzSequenceFieldInsert {
+		return {
+			fuzzType: "sequenceFieldInsert",
+			parent: path.parent,
+			field: path.parentField,
+			index: path.parentIndex,
+			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER),
 		};
 	}
 
@@ -233,8 +248,11 @@ const moves = {
 
 const nodePlaceType = ["beforeNode", "afterNode", "belowNode"];
 
+const sequenceFieldKey: FieldKey = brand("sequenceField");
+
 function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
-	const testerKey: FieldKey = brand("Test");
+	// TODO: should be expanded to include valueFieldKey and optionalFieldKey
+	const fieldKeys: FieldKey[] = [sequenceFieldKey];
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	const firstNode = cursor.firstNode();
@@ -248,7 +266,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
 	const firstField = cursor.firstField();
 	if (!firstField) {
 		cursor.free();
-		return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
+		return { parent: parentPath, parentField: random.pick(fieldKeys), parentIndex: 0 };
 	}
 	currentPath = getExistingRandomNodePosition(tree, random);
 	const choosePath = random.pick(nodePlaceType);
@@ -261,7 +279,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
 			return { ...parentPath, parentIndex: parentPath.parentIndex + 1 };
 		case "belowNode":
 			cursor.free();
-			return { parent: parentPath, parentField: testerKey, parentIndex: 0 };
+			return { parent: parentPath, parentField: random.pick(fieldKeys), parentIndex: 0 };
 		default:
 			fail(`Unexpected option ${choosePath}`);
 	}
