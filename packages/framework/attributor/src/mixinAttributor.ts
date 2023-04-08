@@ -171,6 +171,21 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				async (id) => runtime.storage.readBlob(id),
 				shouldTrackAttribution,
 			);
+
+			if (runtime.runtimeAttributor.isEnabled) {
+				mc.logger.send({
+					category: "generic",
+					eventName: "mixinAttributor_Load",
+					attributionEnabledInDoc: true,
+				});
+			} else {
+				mc.logger.send({
+					category: "generic",
+					eventName: "mixinAttributor_Load",
+					attributionEnabledInDoc: false,
+				});
+			}
+
 			return runtime;
 		}
 
