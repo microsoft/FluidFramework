@@ -231,7 +231,7 @@ export class TestTreeProvider {
 			this.trees.length === 0
 				? await this.provider.makeTestContainer()
 				: await this.provider.loadTestContainer({
-						// TODO : remove this once SharedTree has full reconnect logic implemented
+						// TODO: remove this once SharedTree has full reconnect logic implemented (AB#4023)
 						simulateReadConnectionUsingDelay: false,
 				  });
 
