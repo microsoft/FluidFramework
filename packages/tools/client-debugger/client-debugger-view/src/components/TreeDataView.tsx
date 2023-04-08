@@ -12,7 +12,6 @@ import { FluidValueView } from "./FluidValueView";
 import { UnknownFluidObjectView } from "./UnknownFluidObjectView";
 import { UnknownDataView } from "./UnknownDataView";
 // import { Waiting } from "./Waiting";
-// import { waitingLabels } from "./WaitingLabels";
 
 /**
  * {@link TreeDataView} input props.
@@ -26,7 +25,6 @@ export interface TreeDataViewProps extends HasContainerId {
  */
 export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 	const { containerId, node } = props;
-
 	switch (node.nodeKind) {
 		/**
 		 * Node with children.

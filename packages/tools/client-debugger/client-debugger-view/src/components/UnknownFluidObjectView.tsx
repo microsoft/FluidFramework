@@ -4,8 +4,10 @@
  */
 import React from "react";
 import { HasContainerId, FluidUnknownObjectNode } from "@fluid-tools/client-debugger";
-// import { Waiting } from "./Waiting";
-// import { waitingLabels } from "./WaitingLabels";
+import {
+	Stack,
+	StackItem,
+} from "@fluentui/react";
 
 /**
  * {@link UnknownDataView} input props.
@@ -20,15 +22,13 @@ export interface UnknownFluidObjectViewProps extends HasContainerId {
 export function UnknownFluidObjectView(props: UnknownFluidObjectViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
+	console.log(containerId, node); 
+	
 	return (
-		<>
-			<h1> Unknown Data Object </h1>
-			{containerId}
-			{node.fluidObjectId}
-		</>
-		// 	label={`${waitingLabels.unkownFluidDataError}: ${containerId}, ${
-		// 		node.fluidObjectId
-		// 	} Node: ${JSON.stringify(node)}`}
-		// />
+		<Stack className="UnknownFluidObjectView">
+			<StackItem>
+				Encountered an unrecognized kind of Fluid object: {node.fluidObjectId}
+			</StackItem>
+		</Stack>
 	);
 }

@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import React from "react";
 import {
 	DataVisualizationMessageType,
 	IDebuggerMessage,
@@ -12,10 +13,9 @@ import {
 	FluidObjectNode,
 	DataVisualizationMessage,
 } from "@fluid-tools/client-debugger";
-import React from "react";
 import { useMessageRelay } from "../MessageRelayContext";
+import { Accordion } from "./utility-components/";
 import { Waiting } from "./Waiting";
-import { waitingLabels } from "./WaitingLabels";
 import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "EXTENSION(HandleView)";
@@ -77,8 +77,13 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
-		return <Waiting label={waitingLabels.containerError} />;
+		return <Waiting/>;
 	}
 
-	return <TreeDataView containerId={containerId} node={visualTree} />;
+	// <TreeDataView containerId={containerId} node={visualTree} />;
+	return (
+		<Accordion key={containerId} header={<div>{`${visualTree.metadata}, ${visualTree.nodeKind}`}</div>} className="FluidHandleView">
+			<TreeDataView containerId={containerId} node={visualTree} />;
+		</Accordion>
+	)
 }

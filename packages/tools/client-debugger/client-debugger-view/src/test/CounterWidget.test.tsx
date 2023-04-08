@@ -57,7 +57,7 @@ describe("CounterWidget component tests", () => {
 
 		// Verify component text
 		await screen.findByText("1"); // Will throw if exact text not found
-
+		
 		// Verify that decrement button is now enabled
 		buttons = await screen.findAllByRole("button");
 		expect(buttons).toHaveLength(2);

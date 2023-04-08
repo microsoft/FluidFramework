@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { HasContainerId, FluidObjectTreeNode } from "@fluid-tools/client-debugger";
+import { Accordion } from "./utility-components/";
 import { TreeDataView } from "./TreeDataView";
 
 /**
@@ -18,12 +19,13 @@ export interface FluidTreeViewProps extends HasContainerId {
  */
 export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
-
+	// Accordion header:  fluidObjectId, metadata, typeMetadata
+	// Accordion children: (all of the rendered TreeDataView nodes)
 	return (
-		<>
+		<Accordion key={ containerId } header={<div>{`${node.fluidObjectId}, ${node.metadata}, ${node.typeMetadata}`}</div>} className="FluidTreeView">
 			{Object.entries(node.children).map(([key, fluidObject], index) => {
 				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
 			})}
-		</>
+		</Accordion>
 	);
 }

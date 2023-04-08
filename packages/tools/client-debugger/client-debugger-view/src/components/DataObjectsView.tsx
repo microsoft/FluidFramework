@@ -16,7 +16,6 @@ import {
 
 import { useMessageRelay } from "../MessageRelayContext";
 import { Waiting } from "./Waiting";
-import { waitingLabels } from "./WaitingLabels";
 import { TreeDataView } from "./TreeDataView";
 
 const loggingContext = "EXTENSION(DataObjectsView)";
@@ -80,7 +79,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	}, [containerId, setRootDataHandles, messageRelay]);
 
 	if (rootDataHandles === undefined) {
-		return <Waiting label={waitingLabels.containerError} />;
+		return <Waiting/>;
 	}
 
 	return (

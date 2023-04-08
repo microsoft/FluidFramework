@@ -4,6 +4,7 @@
  */
 import React from "react";
 import { HasContainerId, FluidObjectValueNode } from "@fluid-tools/client-debugger";
+import { Accordion } from "./utility-components";
 
 /**
  * {@link ValueView} input props.
@@ -19,10 +20,8 @@ export function FluidValueView(props: FluidValueViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
 	return (
-		<>
-			{`containerId: ${containerId}, fluidObjectId: ${
-				node.fluidObjectId
-			}, value: ${JSON.stringify(node.value)}`}
-		</>
+		<Accordion key={ containerId } header={<div>{`${String(node.value)}, ${node.metadata}`}</div>} className="FluidValueView">
+			{String(node.value)}
+		</Accordion>
 	);
 }

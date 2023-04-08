@@ -4,6 +4,10 @@
  */
 import React from "react";
 import { HasContainerId, UnknownObjectNode } from "@fluid-tools/client-debugger";
+import {
+	Stack,
+	StackItem,
+} from "@fluentui/react";
 
 /**
  * {@link UnknownDataView} input props.
@@ -18,12 +22,11 @@ export interface UnknownDataViewProps extends HasContainerId {
 export function UnknownDataView(props: UnknownDataViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
-	console.log(node);
-
 	return (
-		<div>
-			<h1> Unknown Data Object </h1>
-			{containerId}
-		</div>
+		<Stack className="UnknownDataView">
+			<StackItem>
+				Encountered an unrecognized kind of data object: {node.nodeKind}, {containerId}
+			</StackItem>
+		</Stack>
 	);
 }
