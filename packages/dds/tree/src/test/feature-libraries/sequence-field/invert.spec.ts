@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
-import { deepFreeze, fakeRepair } from "../../utils";
+import { deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
 import { composeAnonChanges, invert as invertChange } from "./utils";
 import { ChangeMaker as Change, TestChangeset } from "./testEdits";
 

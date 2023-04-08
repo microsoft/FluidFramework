@@ -15,6 +15,7 @@ export {
 	AnchorNode,
 	anchorSlot,
 	AnchorEvents,
+	AnchorSetRootEvents,
 } from "./anchorSet";
 export {
 	ITreeCursor,

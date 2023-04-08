@@ -16,9 +16,16 @@ import {
 	ISequencedDocumentMessage,
 	SummaryType,
 } from "@fluidframework/protocol-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	mixinMonitoringContext,
+	MonitoringContext,
+	TelemetryNullLogger,
+} from "@fluidframework/telemetry-utils";
 
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
+import { sweepAttachmentBlobsKey } from "../gc";
 
 abstract class BaseMockBlobStorage
 	implements Pick<IDocumentStorageService, "readBlob" | "createBlob">
@@ -53,7 +60,11 @@ class MockRuntime
 	implements IBlobManagerRuntime
 {
 	public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
-	constructor(snapshot: IBlobManagerLoadInfo = {}, attached = false) {
+	constructor(
+		public mc: MonitoringContext,
+		snapshot: IBlobManagerLoadInfo = {},
+		attached = false,
+	) {
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
 		this.blobManager = new BlobManager(
@@ -61,7 +72,6 @@ class MockRuntime
 			snapshot,
 			() => this.getStorage(),
 			(localId: string, blobId?: string) => this.sendBlobAttachOp(localId, blobId),
-			() => undefined,
 			() => undefined,
 			(blobPath: string) => this.isBlobDeleted(blobPath),
 			this,
@@ -128,7 +138,7 @@ class MockRuntime
 	public attachState: AttachState;
 	public attachedStorage = new DedupeStorage();
 	public detachedStorage = new NonDedupeStorage();
-	public logger = new TelemetryNullLogger();
+	public logger = this.mc.logger;
 
 	private ops: any[] = [];
 	private processBlobsP = new Deferred<void>();
@@ -244,9 +254,15 @@ describe("BlobManager", () => {
 	let runtime: MockRuntime;
 	let createBlob: (blob: ArrayBufferLike) => Promise<void>;
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
+	let mc: MonitoringContext;
+	let injectedSettings: Record<string, ConfigTypes> = {};
 
 	beforeEach(() => {
-		runtime = new MockRuntime();
+		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+			getRawConfig: (name: string): ConfigTypes => settings[name],
+		});
+		mc = mixinMonitoringContext(new TelemetryNullLogger(), configProvider(injectedSettings));
+		runtime = new MockRuntime(mc);
 		handlePs.length = 0;
 
 		// ensures this blob will be processed next time runtime.processBlobs() is called
@@ -279,6 +295,7 @@ describe("BlobManager", () => {
 	afterEach(async () => {
 		await Promise.all(handlePs);
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
+		injectedSettings = {};
 	});
 
 	it("empty snapshot", () => {
@@ -508,7 +525,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.ids.length, 1);
 		assert.strictEqual(summaryData.redirectTable.size, 3);
 
-		const runtime2 = new MockRuntime(summaryData, true);
+		const runtime2 = new MockRuntime(mc, summaryData, true);
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
 		assert.strictEqual(summaryData2.redirectTable.size, 3);
@@ -569,46 +586,158 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData?.redirectTable.size, 3);
 	});
 
-	it("fetching deleted blob fails", async () => {
-		await runtime.attach();
-		await runtime.connect();
-		const blob1Contents = IsoBuffer.from("blob1", "utf8");
-		const blob2Contents = IsoBuffer.from("blob2", "utf8");
-		const handle1P = runtime.createBlob(blob1Contents);
-		const handle2P = runtime.createBlob(blob2Contents);
-		await runtime.processAll();
+	describe("Garbage Collection", () => {
+		let redirectTable: Map<string, string | undefined>;
 
-		const blob1Handle = await handle1P;
-		const blob2Handle = await handle2P;
+		/** Creates a blob with the given content and returns its local and storage id. */
+		async function createBlobAndGetIds(content: string) {
+			// For a given blob's GC node id, returns the blob id.
+			const getBlobIdFromGCNodeId = (gcNodeId: string) => {
+				const pathParts = gcNodeId.split("/");
+				assert(
+					pathParts.length === 3 && pathParts[1] === BlobManager.basePath,
+					"Invalid blob node path",
+				);
+				return pathParts[2];
+			};
 
-		// Validate that the blobs can be retrieved.
-		assert.strictEqual(await runtime.getBlob(blob1Handle), blob1Contents);
-		assert.strictEqual(await runtime.getBlob(blob2Handle), blob2Contents);
+			// For a given blob's id, returns the GC node id.
+			const getGCNodeIdFromBlobId = (blobId: string) => {
+				return `/${BlobManager.basePath}/${blobId}`;
+			};
 
-		// Delete blob1. Retrieving it should result in an error.
-		runtime.deleteBlob(blob1Handle);
-		await assert.rejects(
-			async () => runtime.getBlob(blob1Handle),
-			(error) => {
-				const blob1Id = blob1Handle.absolutePath.split("/")[2];
-				const correctErrorType = error.code === 404;
-				const correctErrorMessage = error.message === `Blob was deleted: ${blob1Id}`;
-				return correctErrorType && correctErrorMessage;
-			},
-			"Deleted blob2 fetch should have failed",
-		);
+			const blobContents = IsoBuffer.from(content, "utf8");
+			const handleP = runtime.createBlob(blobContents);
+			await runtime.processAll();
 
-		// Delete blob2. Retrieving it should result in an error.
-		runtime.deleteBlob(blob2Handle);
-		await assert.rejects(
-			async () => runtime.getBlob(blob2Handle),
-			(error) => {
-				const blob2Id = blob2Handle.absolutePath.split("/")[2];
-				const correctErrorType = error.code === 404;
-				const correctErrorMessage = error.message === `Blob was deleted: ${blob2Id}`;
-				return correctErrorType && correctErrorMessage;
-			},
-			"Deleted blob2 fetch should have failed",
-		);
+			const blobHandle = await handleP;
+			const localId = getBlobIdFromGCNodeId(blobHandle.absolutePath);
+			assert(redirectTable.has(localId), "blob not found in redirect table");
+			const storageId = redirectTable.get(localId);
+			assert(storageId !== undefined, "storage id not found in redirect table");
+			return {
+				localId,
+				localGCNodeId: getGCNodeIdFromBlobId(localId),
+				storageId,
+				storageGCNodeId: getGCNodeIdFromBlobId(storageId),
+			};
+		}
+
+		beforeEach(() => {
+			injectedSettings[sweepAttachmentBlobsKey] = true;
+			redirectTable = (runtime.blobManager as any).redirectTable;
+		});
+
+		it("fetching deleted blob fails", async () => {
+			await runtime.attach();
+			await runtime.connect();
+			const blob1Contents = IsoBuffer.from("blob1", "utf8");
+			const blob2Contents = IsoBuffer.from("blob2", "utf8");
+			const handle1P = runtime.createBlob(blob1Contents);
+			const handle2P = runtime.createBlob(blob2Contents);
+			await runtime.processAll();
+
+			const blob1Handle = await handle1P;
+			const blob2Handle = await handle2P;
+
+			// Validate that the blobs can be retrieved.
+			assert.strictEqual(await runtime.getBlob(blob1Handle), blob1Contents);
+			assert.strictEqual(await runtime.getBlob(blob2Handle), blob2Contents);
+
+			// Delete blob1. Retrieving it should result in an error.
+			runtime.deleteBlob(blob1Handle);
+			await assert.rejects(
+				async () => runtime.getBlob(blob1Handle),
+				(error) => {
+					const blob1Id = blob1Handle.absolutePath.split("/")[2];
+					const correctErrorType = error.code === 404;
+					const correctErrorMessage = error.message === `Blob was deleted: ${blob1Id}`;
+					return correctErrorType && correctErrorMessage;
+				},
+				"Deleted blob2 fetch should have failed",
+			);
+
+			// Delete blob2. Retrieving it should result in an error.
+			runtime.deleteBlob(blob2Handle);
+			await assert.rejects(
+				async () => runtime.getBlob(blob2Handle),
+				(error) => {
+					const blob2Id = blob2Handle.absolutePath.split("/")[2];
+					const correctErrorType = error.code === 404;
+					const correctErrorMessage = error.message === `Blob was deleted: ${blob2Id}`;
+					return correctErrorType && correctErrorMessage;
+				},
+				"Deleted blob2 fetch should have failed",
+			);
+		});
+
+		it("deletes unused blobs", async () => {
+			await runtime.attach();
+			await runtime.connect();
+
+			const blob1 = await createBlobAndGetIds("blob1");
+			const blob2 = await createBlobAndGetIds("blob2");
+
+			// Delete blob1's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
+			assert(!redirectTable.has(blob1.localId));
+			assert(!redirectTable.has(blob1.storageId));
+
+			// Delete blob2's local id. The local id and the storage id should both be deleted from the redirect table
+			// since the blob only had one reference.
+			runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
+			assert(!redirectTable.has(blob2.localId));
+			assert(!redirectTable.has(blob2.storageId));
+		});
+
+		it("deletes unused de-duped blobs", async () => {
+			await runtime.attach();
+			await runtime.connect();
+
+			// Create 2 blobs with the same content. They should get de-duped.
+			const blob1 = await createBlobAndGetIds("blob1");
+			const blob1Duplicate = await createBlobAndGetIds("blob1");
+			assert(blob1.storageId === blob1Duplicate.storageId, "blob1 not de-duped");
+
+			// Create another 2 blobs with the same content. They should get de-duped.
+			const blob2 = await createBlobAndGetIds("blob2");
+			const blob2Duplicate = await createBlobAndGetIds("blob2");
+			assert(blob2.storageId === blob2Duplicate.storageId, "blob2 not de-duped");
+
+			// Delete blob1's local id. The local id should both be deleted from the redirect table but the storage id
+			// should not because the blob has another referenced from the de-duped blob.
+			runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
+			assert(!redirectTable.has(blob1.localId), "blob1 localId should have been deleted");
+			assert(
+				redirectTable.has(blob1.storageId),
+				"blob1 storageId should not have been deleted",
+			);
+			// Delete blob1's de-duped local id. The local id and the storage id should both be deleted from the redirect table
+			// since all the references for the blob are now deleted.
+			runtime.blobManager.deleteSweepReadyNodes([blob1Duplicate.localGCNodeId]);
+			assert(
+				!redirectTable.has(blob1Duplicate.localId),
+				"blob1Duplicate localId should have been deleted",
+			);
+			assert(!redirectTable.has(blob1.storageId), "blob1 storageId should have been deleted");
+
+			// Delete blob2's local id. The local id should both be deleted from the redirect table but the storage id
+			// should not because the blob has another referenced from the de-duped blob.
+			runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
+			assert(!redirectTable.has(blob2.localId), "blob2 localId should have been deleted");
+			assert(
+				redirectTable.has(blob2.storageId),
+				"blob2 storageId should not have been deleted",
+			);
+			// Delete blob2's de-duped local id. The local id and the storage id should both be deleted from the redirect table
+			// since all the references for the blob are now deleted.
+			runtime.blobManager.deleteSweepReadyNodes([blob2Duplicate.localGCNodeId]);
+			assert(
+				!redirectTable.has(blob2Duplicate.localId),
+				"blob2Duplicate localId should have been deleted",
+			);
+			assert(!redirectTable.has(blob2.storageId), "blob2 storageId should have been deleted");
+		});
 	});
 });

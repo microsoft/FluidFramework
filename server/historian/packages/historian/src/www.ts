@@ -14,8 +14,9 @@ const configPath = path.join(__dirname, "../config.json");
 configureLogging(configPath);
 
 runService(
-    new HistorianResourcesFactory(),
-    new HistorianRunnerFactory(),
-    winston,
-    "historian",
-    configPath);
+	new HistorianResourcesFactory(),
+	new HistorianRunnerFactory(),
+	winston,
+	"historian",
+	configPath,
+);

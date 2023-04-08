@@ -10,8 +10,7 @@ import { IQueuedMessage } from "./queue";
  * A lambda that passes the same message to one or more lambdas
  */
 export class CombinedLambda implements IPartitionLambda {
-	constructor(protected readonly lambdas: IPartitionLambda[]) {
-	}
+	constructor(protected readonly lambdas: IPartitionLambda[]) {}
 
 	/**
 	 * Processes an incoming message
@@ -27,7 +26,7 @@ export class CombinedLambda implements IPartitionLambda {
 		}
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return promises.length > 0 ? Promise.all(promises) as any : undefined;
+		return promises.length > 0 ? (Promise.all(promises) as any) : undefined;
 	}
 
 	/**

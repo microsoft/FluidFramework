@@ -69,34 +69,25 @@ export function combine(
 }
 
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
-	if (a) {
-		if (!b) {
+	if (!a && !b) {
+		return true;
+	}
+
+	const keysA = a ? Object.keys(a) : [];
+	const keysB = b ? Object.keys(b) : [];
+
+	if (keysA.length !== keysB.length) {
+		return false;
+	}
+
+	for (const key of keysA) {
+		if (b?.[key] === undefined) {
 			return false;
-		} else {
-			// For now, straightforward; later use hashing
-
-			// eslint-disable-next-line no-restricted-syntax
-			for (const key in a) {
-				if (b[key] === undefined) {
-					return false;
-				} else if (typeof b[key] === "object") {
-					if (!matchProperties(a[key], b[key])) {
-						return false;
-					}
-				} else if (b[key] !== a[key]) {
-					return false;
-				}
+		} else if (typeof b[key] === "object") {
+			if (!matchProperties(a?.[key], b[key])) {
+				return false;
 			}
-
-			// eslint-disable-next-line no-restricted-syntax
-			for (const key in b) {
-				if (a[key] === undefined) {
-					return false;
-				}
-			}
-		}
-	} else {
-		if (b) {
+		} else if (b[key] !== a?.[key]) {
 			return false;
 		}
 	}

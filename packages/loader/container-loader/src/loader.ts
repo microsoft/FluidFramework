@@ -258,6 +258,31 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 };
 
 /**
+ * With an already-resolved container, we can request a component directly, without loading the container again
+ * @param container - a resolved container
+ * @returns component on the container
+ */
+export async function requestResolvedObjectFromContainer(
+	container: IContainer,
+	headers?: IRequestHeader,
+): Promise<IResponse> {
+	ensureFluidResolvedUrl(container.resolvedUrl);
+	const parsedUrl = parseUrl(container.resolvedUrl.url);
+
+	if (parsedUrl === undefined) {
+		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
+	}
+
+	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
+	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
+
+	return router.request({
+		url: `${parsedUrl.path}${parsedUrl.query}`,
+		headers,
+	});
+}
+
+/**
  * Manages Fluid resource loading
  */
 export class Loader implements IHostLoader {

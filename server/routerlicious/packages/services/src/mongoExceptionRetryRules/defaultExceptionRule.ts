@@ -6,13 +6,13 @@
 import { BaseMongoExceptionRetryRule } from "./IMongoExceptionRetryRule";
 
 export class DefaultExceptionRule extends BaseMongoExceptionRetryRule {
-    protected defaultRetryDecision: boolean = false;
+	protected defaultRetryDecision: boolean = false;
 
-    constructor(retryRuleOverride: Map<string, boolean>) {
-        super("DefaultExceptionRule", retryRuleOverride);
-    }
+	constructor(retryRuleOverride: Map<string, boolean>) {
+		super("DefaultExceptionRule", retryRuleOverride);
+	}
 
-    public match(error: any): boolean {
-        return true;
-    };
+	public match(error: any): boolean {
+		return true;
+	}
 }

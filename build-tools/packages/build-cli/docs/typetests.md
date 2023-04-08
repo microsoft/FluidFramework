@@ -15,15 +15,19 @@ Updates configuration for type tests in package.json files. If the previous vers
 
 ```
 USAGE
-  $ flub typetests [-v] [-d <value> | --packages | -g client|server|azure|build-tools] [--private | ] [--scope
-    <value> | -g client|server|azure|build-tools] [--reset] [-p | --exact <value> | -r | --disable] [-n | --enable]
+  $ flub typetests [-v] [-a | -d <value> | --packages | -g client|server|azure|build-tools]
+    [--releaseGroupRoots] [--private] [--scope <value> | -g client|server|azure|build-tools] [--reset] [-p | --exact
+    <value> | -r | --disable] [-n | --enable]
 
 FLAGS
+  -a, --all
+      Run on all packages and release groups. Cannot be used with --dir, --packages, or --releaseGroup.
+
   -d, --dir=<value>
-      Run on the package in this directory. Cannot be used with --releaseGroup or --packages.
+      Run on the package in this directory. Cannot be used with --all, --packages, or --releaseGroup.
 
   -g, --releaseGroup=<option>
-      Run on all packages within this release group. Cannot be used with --dir or --packages.
+      Run on all packages within this release group. Cannot be used with --all, --dir, or --packages.
       <options: client|server|azure|build-tools>
 
   -g, --skipScope=<option>...
@@ -66,11 +70,13 @@ FLAGS
       An exact string to use as the previous version constraint. The string will be used as-is.
 
   --packages
-      Run on all independent packages in the repo. This is an alternative to using the --dir flag for independent
-      packages.
+      Run on all independent packages in the repo. Cannot be used with --all, --dir, or --releaseGroup.
 
   --[no-]private
       Only include private packages (or non-private packages for --no-private)
+
+  --releaseGroupRoots
+      Runs only on the root package of release groups. Can only be used with --all or --releaseGroup.
 
   --reset
       Resets the broken type test settings in package.json.

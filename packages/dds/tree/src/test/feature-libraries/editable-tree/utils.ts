@@ -11,6 +11,7 @@ import {
 	genericTreeKeys,
 	getGenericTreeField,
 	JsonableTree,
+	lookupTreeSchema,
 } from "../../../core";
 import { fail, brand } from "../../../util";
 import {
@@ -27,12 +28,11 @@ import {
 	isPrimitive,
 	getField,
 	isUnwrappedNode,
-	indexSymbol,
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
+	parentField,
 } from "../../../feature-libraries";
-import { schemaMap } from "./mockData";
 
 /**
  * This helper function traverses the tree using field keys and expects
@@ -44,7 +44,7 @@ export function expectTreeEquals(
 	expected: JsonableTree,
 ): void {
 	assert(inputField !== undefined);
-	const expectedType = schemaMap.get(expected.type) ?? fail("missing type");
+	const expectedType = lookupTreeSchema(schemaData, expected.type);
 	const primary = getPrimaryField(expectedType);
 	if (primary !== undefined) {
 		assert(isEditableField(inputField));
@@ -137,7 +137,10 @@ export function expectFieldEquals(
 	}
 	for (let index = 0; index < field.length; index++) {
 		const node = field.getNode(index);
-		assert.equal(node[indexSymbol], index);
+		assert.equal(node[parentField].index, index);
+		// EditableFields currently don't have stable object identity, so we can't just compare the fields here,
+		// and calling `expectFieldEquals` could recurse infinitely, but we can sanity check something from it.
+		assert.equal(node[parentField].parent.fieldKey, field.fieldKey);
 		expectNodeEquals(schemaData, node, expected[index]);
 	}
 }

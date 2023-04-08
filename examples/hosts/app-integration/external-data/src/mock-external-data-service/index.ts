@@ -5,3 +5,4 @@
 
 export { ExternalDataSource } from "./externalDataSource";
 export { initializeExternalDataService } from "./service";
+export { MockWebhook } from "./webhook";

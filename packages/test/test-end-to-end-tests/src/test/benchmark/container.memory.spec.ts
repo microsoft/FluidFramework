@@ -7,21 +7,15 @@ import { strict as assert } from "assert";
 import { v4 as uuid } from "uuid";
 import { benchmarkMemory, IMemoryTestObject } from "@fluid-tools/benchmark";
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	LoaderHeader,
-	IFluidCodeDetails,
-	ILoader,
-	IContainer,
-} from "@fluidframework/container-definitions";
-import { Container, Loader, ILoaderProps } from "@fluidframework/container-loader";
+import { IFluidCodeDetails, ILoader, IContainer } from "@fluidframework/container-definitions";
+import { Loader, ILoaderProps } from "@fluidframework/container-loader";
 import {
 	LocalCodeLoader,
 	LoaderContainerTracker,
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { ensureFluidResolvedUrl } from "@fluidframework/driver-utils";
-import { describeNoCompat } from "@fluidframework/test-version-utils";
+import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
@@ -116,20 +110,7 @@ describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) 
 			async run() {
 				const requestUrl = await provider.driver.createContainerUrl(fileName, containerUrl);
 				const testRequest: IRequest = { url: requestUrl };
-				const testResolved = await loader.services.urlResolver.resolve(testRequest);
-				ensureFluidResolvedUrl(testResolved);
-				const container = await Container.load(loader, {
-					canReconnect: testRequest.headers?.[LoaderHeader.reconnect],
-					clientDetailsOverride: testRequest.headers?.[LoaderHeader.clientDetails],
-					resolvedUrl: testResolved,
-					version: testRequest.headers?.[LoaderHeader.version] ?? undefined,
-					loadMode: testRequest.headers?.[LoaderHeader.loadMode],
-				});
-				assert.strictEqual(
-					container.clientDetails.capabilities.interactive,
-					true,
-					"Client details should be set with interactive as true",
-				);
+				const container = await loader.resolve(testRequest);
 			}
 		})(),
 	);

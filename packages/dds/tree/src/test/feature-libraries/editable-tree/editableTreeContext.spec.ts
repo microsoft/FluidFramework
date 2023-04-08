@@ -4,8 +4,14 @@
  */
 
 import { strict as assert } from "assert";
-import { FieldKey, JsonableTree, SchemaData } from "../../../core";
-import { createField, isUnwrappedNode, singleTextCursor } from "../../../feature-libraries";
+import { FieldKey, SchemaData, lookupGlobalFieldSchema, rootFieldKey } from "../../../core";
+import {
+	ContextuallyTypedNodeData,
+	createField,
+	cursorsFromContextualData,
+	isUnwrappedNode,
+	singleTextCursor,
+} from "../../../feature-libraries";
 import { ISharedTree } from "../../../shared-tree";
 import { brand } from "../../../util";
 import { ITestTreeProvider, TestTreeProvider } from "../../utils";
@@ -18,7 +24,7 @@ import { fullSchemaData, int32Schema, personData, Person } from "./mockData";
 
 async function createSharedTrees(
 	schemaData: SchemaData,
-	data: JsonableTree[],
+	data: ContextuallyTypedNodeData,
 	numberOfTrees = 1,
 ): Promise<readonly [ITestTreeProvider, readonly ISharedTree[]]> {
 	const provider = await TestTreeProvider.create(numberOfTrees);
@@ -26,14 +32,19 @@ async function createSharedTrees(
 		assert(tree.isAttached());
 	}
 	provider.trees[0].storedSchema.update(schemaData);
-	provider.trees[0].context.root.insertNodes(0, data.map(singleTextCursor));
+	const root = cursorsFromContextualData(
+		provider.trees[0].storedSchema,
+		lookupGlobalFieldSchema(provider.trees[0].storedSchema, rootFieldKey),
+		data,
+	);
+	provider.trees[0].context.root.insertNodes(0, root);
 	await provider.ensureSynchronized();
 	return [provider, provider.trees];
 }
 
 describe("editable-tree context", () => {
 	it("can clear and reuse context", async () => {
-		const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, [personData], 2);
+		const [provider, [tree1, tree2]] = await createSharedTrees(fullSchemaData, personData, 2);
 		const context2 = tree2.context;
 		const person1 = tree1.root as Person;
 
@@ -62,7 +73,7 @@ describe("editable-tree context", () => {
 
 	it("can create fields while clearing the context in afterHandlers", async () => {
 		const ageField: FieldKey = brand("age");
-		const [, [tree]] = await createSharedTrees(fullSchemaData, [personData]);
+		const [, [tree]] = await createSharedTrees(fullSchemaData, personData);
 
 		tree.context.on("afterDelta", () => {
 			tree.context.clear();

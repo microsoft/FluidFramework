@@ -4,48 +4,44 @@
  */
 
 import { EventEmitter } from "events";
-import {
-    IPublisher,
-    ITopic,
-} from "@fluidframework/server-services-core";
+import { IPublisher, ITopic } from "@fluidframework/server-services-core";
 
 export interface IEvent {
-    event: string;
-    args: any[];
+	event: string;
+	args: any[];
 }
 
 export class TestTopic implements ITopic {
-    public events = new Map<string, IEvent[]>();
+	public events = new Map<string, IEvent[]>();
 
-    public emit(event: string, ...args: any[]) {
-        if (!this.events.has(event)) {
-            this.events.set(event, []);
-        }
+	public emit(event: string, ...args: any[]) {
+		if (!this.events.has(event)) {
+			this.events.set(event, []);
+		}
 
-        this.events.get(event).push({ args, event });
-    }
+		this.events.get(event).push({ args, event });
+	}
 
-    public getEvents(key: string) {
-        return this.events.get(key);
-    }
+	public getEvents(key: string) {
+		return this.events.get(key);
+	}
 }
 
 export class TestPublisher implements IPublisher {
-    private readonly events = new EventEmitter();
-    private topics: { [topic: string]: TestTopic; } = {};
+	private readonly events = new EventEmitter();
+	private topics: { [topic: string]: TestTopic } = {};
 
-    public on(event: string, listener: (...args: any[]) => void) {
-        this.events.on(event, listener);
-    }
+	public on(event: string, listener: (...args: any[]) => void) {
+		this.events.on(event, listener);
+	}
 
-    public to(topic: string): TestTopic {
-        if (!(topic in this.topics)) {
-            this.topics[topic] = new TestTopic();
-        }
+	public to(topic: string): TestTopic {
+		if (!(topic in this.topics)) {
+			this.topics[topic] = new TestTopic();
+		}
 
-        return this.topics[topic];
-    }
+		return this.topics[topic];
+	}
 
-    public async close() {
-    }
+	public async close() {}
 }

@@ -283,18 +283,19 @@ export class SummaryGenerator {
 				cancellationToken,
 			});
 
+			this.heuristicData.recordAttempt(summaryData.referenceSequenceNumber);
+
 			// Cumulatively add telemetry properties based on how far generateSummary went.
 			const referenceSequenceNumber = summaryData.referenceSequenceNumber;
-			const opsSinceLastSummary =
-				referenceSequenceNumber -
-				this.heuristicData.lastSuccessfulSummary.refSequenceNumber;
 			summarizeTelemetryProps = {
 				...summarizeTelemetryProps,
 				referenceSequenceNumber,
 				minimumSequenceNumber: summaryData.minimumSequenceNumber,
 				opsSinceLastAttempt:
 					referenceSequenceNumber - this.heuristicData.lastAttempt.refSequenceNumber,
-				opsSinceLastSummary,
+				opsSinceLastSummary:
+					referenceSequenceNumber -
+					this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
 			summarizeTelemetryProps = this.addSummaryDataToTelemetryProps(
 				summaryData,
@@ -318,12 +319,15 @@ export class SummaryGenerator {
 			if (!fullTree && !summaryData.forcedFullTree) {
 				const { summarizedDataStoreCount, gcStateUpdatedDataStoreCount = 0 } =
 					summaryData.summaryStats;
-				if (summarizedDataStoreCount > gcStateUpdatedDataStoreCount + opsSinceLastSummary) {
+				if (
+					summarizedDataStoreCount >
+					gcStateUpdatedDataStoreCount + this.heuristicData.opsSinceLastSummary
+				) {
 					logger.sendErrorEvent({
 						eventName: "IncrementalSummaryViolation",
 						summarizedDataStoreCount,
 						gcStateUpdatedDataStoreCount,
-						opsSinceLastSummary,
+						opsSinceLastSummary: this.heuristicData.opsSinceLastSummary,
 					});
 				}
 			}
@@ -334,7 +338,9 @@ export class SummaryGenerator {
 		} catch (error) {
 			return fail("submitSummaryFailure", error);
 		} finally {
-			this.heuristicData.recordAttempt(summaryData?.referenceSequenceNumber);
+			if (summaryData === undefined) {
+				this.heuristicData.recordAttempt();
+			}
 			this.summarizeTimer.clear();
 		}
 

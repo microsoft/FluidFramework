@@ -27,9 +27,6 @@ import { LoggingError } from "@fluidframework/telemetry-utils";
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
 
-	public get protocolName() {
-		return this.internal.protocolName;
-	}
 	public get documentServices() {
 		return this._documentServices;
 	}

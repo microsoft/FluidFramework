@@ -4,7 +4,6 @@
  */
 /* eslint-disable jsdoc/check-indentation */
 
-import random from "random-js";
 import { v4 as uuid } from "uuid";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
@@ -108,10 +107,7 @@ class AttachmentBlobObject implements IGCActivityObject {
 				break;
 			}
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
-			await delay(
-				delayBetweenBlobGetMs +
-					delayBetweenBlobGetMs * random.real(0, 0.5, true)(config.randEng),
-			);
+			await delay(delayBetweenBlobGetMs * config.random.real(1, 1.5));
 		}
 		return done;
 	}
@@ -128,7 +124,7 @@ class AttachmentBlobObject implements IGCActivityObject {
 	 * 2. None - Do nothing. This is to have summaries where no blobs are retrieved.
 	 */
 	private async performActivity(config: IRunConfig) {
-		const action = random.integer(0, 1)(config.randEng);
+		const action = config.random.integer(0, 1);
 		switch (action) {
 			case BlobActivityType.GetBlob: {
 				await this.handle.get();
@@ -185,22 +181,9 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 		this.running = true;
 		const delayBetweenOpsMs = (60 * 1000) / config.testConfig.opRatePerMin;
 		while (this.running && !this.runtime.disposed) {
-<<<<<<< HEAD
-			this.counter.increment(1);
-=======
-			if (localSendCount % 10 === 0) {
-				console.log(
-					`+++++++++ Leaf data object [${this.nodeId}]: ${localSendCount} / ${this.counter.value}`,
-				);
-			}
-
 			this.performActivity(config);
-			localSendCount++;
->>>>>>> 4d8c6081bb (Add None activity type)
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
-			await delay(
-				delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, 0.5, true)(config.randEng),
-			);
+			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
 		}
 		return !this.runtime.disposed;
 	}
@@ -217,7 +200,7 @@ export class DataObjectLeaf extends BaseDataObject implements IGCActivityObject 
 	 * 2. None - Do nothing. This is to have summaries where this data store or its DDS does not change.
 	 */
 	private performActivity(config: IRunConfig) {
-		const action = random.integer(0, 1)(config.randEng);
+		const action = config.random.integer(0, 1);
 		switch (action) {
 			case LeafActivityType.SendOps: {
 				this.counter.increment(1);
@@ -420,9 +403,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			localSendCount++;
 
 			// Random jitter of +- 50% of delayBetweenOpsMs so that all clients don't do this at the same time.
-			await delay(
-				delayBetweenOpsMs + delayBetweenOpsMs * random.real(0, 0.5, true)(config.randEng),
-			);
+			await delay(delayBetweenOpsMs * config.random.real(1, 1.5));
 		}
 		this.stop();
 		const notDone = this.runtime.disposed || activityFailed;
@@ -568,7 +549,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 			const maxActivityIndex = this.canRunNewDataObject()
 				? ReferenceActivityType.Revive
 				: ReferenceActivityType.Unreference;
-			const action = random.integer(0, maxActivityIndex)(config.randEng);
+			const action = config.random.integer(0, maxActivityIndex);
 			switch (action) {
 				case ReferenceActivityType.CreateAndReference: {
 					return this.createAndReferenceDataObject();
@@ -671,7 +652,7 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	private async performBlobActivity(config: IRunConfig): Promise<boolean> {
 		let activityCompleted = false;
 		while (!activityCompleted) {
-			const blobAction = random.integer(0, 3)(config.randEng);
+			const blobAction = config.random.integer(0, 3);
 			switch (blobAction) {
 				case ReferenceActivityType.CreateAndReference: {
 					// Give each blob a unique id w.r.t. this data object's id.
@@ -895,13 +876,13 @@ export class RootDataObject extends DataObject implements IGCActivityObject {
 
 		// Add a  random jitter of +- 50% of randomDelayMs to stagger the start of child in each client.
 		const approxDelayMs = 1000;
-		await delay(approxDelayMs + approxDelayMs * random.real(0, 0.5, true)(config.randEng));
+		await delay(approxDelayMs * config.random.real(1, 1.5));
 		const child1RunP = this.nonCollabDataObject.run(
 			childConfig,
 			`client${config.runId + 1}NonCollab`,
 		);
 
-		await delay(approxDelayMs + approxDelayMs * random.real(0, 0.5, true)(config.randEng));
+		await delay(approxDelayMs * config.random.real(1, 1.5));
 		const child2RunP = this.collabDataObject.run(
 			childConfig,
 			`client${config.runId + 1}Collab`,

@@ -7,12 +7,15 @@ import { assert } from "@fluidframework/common-utils";
 import {
 	ChangesetLocalId,
 	IdAllocator,
-	RevisionIndexer,
+	idAllocatorFromMaxId,
+	RevisionInfo,
+	RevisionMetadataSource,
+	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange, RevisionTag } from "../../../core";
+import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, fakeRepair } from "../../utils";
+import { assertMarkListEqual, deepFreeze, fakeTaggedRepair as fakeRepair } from "../../utils";
 import { brand, fail } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -20,8 +23,11 @@ export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
 	return compose(changes.map(makeAnonChange));
 }
 
-export function composeNoVerify(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false));
+export function composeNoVerify(
+	changes: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
+): TestChangeset {
+	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
 }
 
 export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
@@ -32,37 +38,39 @@ export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Cha
 	return shallowCompose(changes.map(makeAnonChange));
 }
 
-export function shallowCompose<T>(changes: TaggedChange<SF.Changeset<T>>[]): SF.Changeset<T> {
-	return composeI(changes, (children) => {
-		assert(children.length === 1, "Should only have one child to compose");
-		return children[0].change;
-	});
+export function shallowCompose<T>(
+	changes: TaggedChange<SF.Changeset<T>>[],
+	revInfos?: RevisionInfo[],
+): SF.Changeset<T> {
+	return composeI(
+		changes,
+		(children) => {
+			assert(children.length === 1, "Should only have one child to compose");
+			return children[0].change;
+		},
+		revInfos,
+	);
 }
 
-/**
- * Mints a `RevisionTag` based on the given number.
- * This is safe in the context of 'FieldKind' testing because `RevisionTag`s are only expected to be value-equatable.
- *
- * This function is meant for testing purposes only.
- * RevisionTags minted by this function are meant to be consumed by `integerRevisionIndexer`.
- *
- * @param integer - A number reflecting the relative order of the changeset with that revision compared to other changeset
- * (where higher number means newer changeset/revision).
- * @returns The same number masquerading as a `RevisionTag`.
- */
-export function numberTag(integer: number): RevisionTag {
-	return integer as unknown as RevisionTag;
+function defaultRevisionMetadataFromChanges(
+	changes: readonly TaggedChange<SF.Changeset<unknown>>[],
+): RevisionMetadataSource {
+	const revInfos: RevisionInfo[] = [];
+	for (const change of changes) {
+		if (change.revision !== undefined) {
+			revInfos.push({
+				revision: change.revision,
+				rollbackOf: change.rollbackOf,
+			});
+		}
+	}
+	return revisionMetadataSourceFromInfo(revInfos);
 }
-
-const integerRevisionIndexer = (tag: RevisionTag): number => {
-	// If the revision index query is expected for the given test, use a `RevisionTag` produced by `numberTag`.
-	assert(typeof tag === "number", "Unexpected revision index query");
-	return tag;
-};
 
 function composeI<T>(
 	changes: TaggedChange<SF.Changeset<T>>[],
 	composer: (childChanges: TaggedChange<T>[]) => T,
+	revInfos?: RevisionInfo[],
 ): SF.Changeset<T> {
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = continuingAllocator(changes);
@@ -71,7 +79,9 @@ function composeI<T>(
 		composer,
 		idAllocator,
 		moveEffects,
-		integerRevisionIndexer,
+		revInfos !== undefined
+			? revisionMetadataSourceFromInfo(revInfos)
+			: defaultRevisionMetadataFromChanges(changes),
 	);
 
 	if (moveEffects.isInvalidated) {
@@ -82,25 +92,30 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(
-	change: TestChangeset,
-	base: TaggedChange<TestChangeset>,
-	revisionIndexer?: RevisionIndexer,
-): TestChangeset {
+export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
+	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
-	let rebasedChange = SF.rebase(change, base, TestChange.rebase, idAllocator, moveEffects);
+	let rebasedChange = SF.rebase(
+		change,
+		base,
+		TestChange.rebase,
+		idAllocator,
+		moveEffects,
+		metadata,
+	);
 	if (moveEffects.isInvalidated) {
 		moveEffects.reset();
 		rebasedChange = SF.amendRebase(
 			rebasedChange,
 			base,
+			(a, b) => a,
 			idAllocator,
 			moveEffects,
-			revisionIndexer ?? integerRevisionIndexer,
+			metadata,
 		);
 		assert(!moveEffects.isInvalidated, "Rebase should not need more than one amend pass");
 	}
@@ -198,11 +213,4 @@ export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
 			mark.id = newId!;
 		}
 	}
-}
-
-export function idAllocatorFromMaxId(maxId: ChangesetLocalId | undefined = undefined): IdAllocator {
-	let currId = maxId ?? -1;
-	return () => {
-		return brand(++currId);
-	};
 }

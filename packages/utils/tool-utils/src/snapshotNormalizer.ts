@@ -104,6 +104,10 @@ function getNormalizedBlobContent(blobContent: string, blobName: string): string
 		if (metadata.summaryCount !== undefined) {
 			metadata.summaryCount = 0;
 		}
+		// "telemetryDocumentId" is not a deterministic property (random guid), so we need to set it to something consistent
+		if (metadata.telemetryDocumentId !== undefined) {
+			metadata.telemetryDocumentId = "x";
+		}
 		content = JSON.stringify(metadata);
 	}
 

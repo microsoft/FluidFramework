@@ -159,6 +159,7 @@ describe("Summary Manager", () => {
 				// stopSummarizerCallback
 				(reason) => {},
 				mockRuntime as any as ISummarizerRuntime,
+				true /* listenToDeltaManagerOps */,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);

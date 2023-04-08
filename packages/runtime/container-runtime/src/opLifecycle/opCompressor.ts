@@ -27,7 +27,7 @@ export class OpCompressor {
 	public compressBatch(batch: IBatch): IBatch {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.content.length > 0,
-			"Batch should not be empty",
+			0x5a4 /* Batch should not be empty */,
 		);
 
 		const compressionStart = Date.now();

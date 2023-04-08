@@ -17,10 +17,10 @@ export { releaseVersion } from "./bumpVersion/releaseVersion";
 export { exec, execNoError } from "./bumpVersion/utils";
 export { VersionBag } from "./bumpVersion/versionBag";
 export { FluidRepo, VersionDetails } from "./common/fluidRepo";
-export { getResolvedFluidRoot } from "./common/fluidUtils";
+export { getResolvedFluidRoot, getFluidBuildConfig } from "./common/fluidUtils";
 export { Logger, ErrorLoggingFunction, LoggingFunction } from "./common/logging";
 export { isMonoRepoKind, MonoRepo, MonoRepoKind, supportedMonoRepoValues } from "./common/monoRepo";
-export { Package, PackageJson } from "./common/npmPackage";
+export { Package, PackageJson, updatePackageJsonFile } from "./common/npmPackage";
 export { LayerGraph } from "./layerCheck/layerGraph";
 export { Timer } from "./common/timer";
 export {

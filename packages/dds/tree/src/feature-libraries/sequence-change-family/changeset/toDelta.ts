@@ -5,8 +5,17 @@
 
 import { unreachableCase } from "@fluidframework/common-utils";
 import { singleTextCursor } from "../../treeTextCursor";
-import { TreeSchemaIdentifier, FieldKey, Value, Delta } from "../../../core";
-import { brand, brandOpaque, clone, fail, makeArray, OffsetListFactory } from "../../../util";
+import { TreeSchemaIdentifier, FieldKey, Delta } from "../../../core";
+import { populateChildModifications } from "../../deltaUtils";
+import {
+	brand,
+	brandOpaque,
+	clone,
+	fail,
+	makeArray,
+	Mutable,
+	OffsetListFactory,
+} from "../../../util";
 import { Transposed as T } from "./format";
 import { isSkipMark } from "./utils";
 
@@ -41,11 +50,11 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 					break;
 				}
 				case "MInsert": {
-					const insertMark: Delta.InsertAndModify = {
-						...convertModify(mark),
-						type: Delta.MarkType.InsertAndModify,
-						content: singleTextCursor(mark.content),
+					const insertMark: Delta.Insert = {
+						type: Delta.MarkType.Insert,
+						content: [singleTextCursor(mark.content)],
 					};
+					populateChildModifications(convertModify(mark), insertMark);
 					out.pushContent(insertMark);
 					break;
 				}
@@ -82,20 +91,12 @@ function convertMarkList(marks: T.MarkList): Delta.MarkList {
 					break;
 				}
 				case "MDelete": {
-					const fields = convertModify(mark).fields;
-					if (fields !== undefined) {
-						const deleteMark: Delta.ModifyAndDelete = {
-							type: Delta.MarkType.ModifyAndDelete,
-							fields,
-						};
-						out.pushContent(deleteMark);
-					} else {
-						const deleteMark: Delta.Delete = {
-							type: Delta.MarkType.Delete,
-							count: 1,
-						};
-						out.pushContent(deleteMark);
-					}
+					const deleteMark: Delta.Delete = {
+						type: Delta.MarkType.Delete,
+						count: 1,
+					};
+					populateChildModifications(convertModify(mark), deleteMark);
+					out.pushContent(deleteMark);
 					break;
 				}
 				case "MoveOut": {
@@ -156,18 +157,10 @@ interface ChangesetMods {
 }
 
 /**
- * Modifications to a subtree as described by a Delta.
- */
-interface DeltaMods {
-	fields?: Delta.FieldMarks;
-	setValue?: Value;
-}
-
-/**
  * Converts tree modifications from the Changeset to the Delta format.
  */
-function convertModify(modify: ChangesetMods): DeltaMods {
-	const out: DeltaMods = {};
+function convertModify(modify: ChangesetMods): Delta.HasModifications {
+	const out: Mutable<Delta.HasModifications> = {};
 	if (modify.value !== undefined) {
 		out.setValue = modify.value.value;
 	}

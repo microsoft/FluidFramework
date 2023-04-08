@@ -7,6 +7,7 @@ export {
 	AttributionInfo,
 	AttributionKey,
 	DetachedAttributionKey,
+	LocalAttributionKey,
 	OpAttributionKey,
 } from "./attribution";
 export {
@@ -55,6 +56,7 @@ export {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollectionSummaryDetailsLegacy,
+	IExperimentalIncrementalSummaryContext,
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNode,

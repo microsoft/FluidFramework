@@ -44,8 +44,10 @@ export {
 	retrieveLatestFullSummaryFromStorage,
 	validateBlobContent,
 	validateBlobEncoding,
-	executeApiWithMetric,
 } from "./helpers";
-export { IsomorphicGitManagerFactory, IsomorphicGitRepositoryManager } from "./isomorphicgitManager";
+export {
+	IsomorphicGitManagerFactory,
+	IsomorphicGitRepositoryManager,
+} from "./isomorphicgitManager";
 export { NodeFsManagerFactory, MemFsManagerFactory } from "./filesystems";
 export { NodegitRepositoryManager, NodegitRepositoryManagerFactory } from "./nodegitManager";

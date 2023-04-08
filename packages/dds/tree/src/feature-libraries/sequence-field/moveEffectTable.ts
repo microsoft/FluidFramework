@@ -117,6 +117,7 @@ export function splitMove<T>(
 	count1: number,
 	count2: number,
 ): void {
+	assert(newId !== id, 0x5ba /* Must have distinct ID for each piece of the split mark */);
 	const effect = getOrAddEffect(effects, target, revision, id);
 	const newEffect = getOrAddEffect(effects, target, revision, newId);
 	newEffect.count = count2;
@@ -215,7 +216,7 @@ function applyMoveEffectsToDest<T>(
 
 	assert(effect.modifyAfter === undefined, 0x566 /* Cannot modify move destination */);
 
-	if (!effect.shouldRemove) {
+	if (effect.shouldRemove !== true) {
 		const newMark: MoveIn | ReturnTo = {
 			...mark,
 			count: effect.count ?? mark.count,
@@ -277,7 +278,7 @@ function applyMoveEffectsToSource<T>(
 		mark.id,
 	);
 	const result: Mark<T>[] = [];
-	if (!effect.shouldRemove) {
+	if (effect.shouldRemove !== true) {
 		const newMark = cloneMark(mark);
 		newMark.count = effect.count ?? newMark.count;
 		if (effect.modifyAfter !== undefined) {
@@ -519,7 +520,11 @@ export function splitMarkOnOutput<T, TMark extends OutputSpanningMark<T>>(
 		case "Insert":
 			return [
 				{ ...markObj, content: markObj.content.slice(0, length) },
-				{ ...markObj, content: markObj.content.slice(length) },
+				{
+					...markObj,
+					content: markObj.content.slice(length),
+					id: (markObj.id as number) + length,
+				},
 			];
 		case "MoveIn":
 		case "ReturnTo": {

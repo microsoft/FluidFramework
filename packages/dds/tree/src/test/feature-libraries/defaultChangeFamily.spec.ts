@@ -159,7 +159,7 @@ describe("DefaultEditBuilder", () => {
 		expectForest(forest, { type: jsonNumber.name, value: 42 });
 
 		const change = changes[0];
-		const inverse = family.rebaser.invert(change, repairStore);
+		const inverse = family.rebaser.invert(change, false, repairStore);
 		builder.apply(inverse);
 		expectForest(forest, { type: jsonNumber.name, value: 41 });
 	});

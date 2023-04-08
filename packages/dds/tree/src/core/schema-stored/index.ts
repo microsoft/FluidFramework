@@ -15,6 +15,7 @@ export {
 	TreeTypeSet,
 	SchemaPolicy,
 	FieldKindIdentifier,
+	FieldKindSpecifier,
 	SchemaData,
 	NamedFieldSchema,
 } from "./schema";

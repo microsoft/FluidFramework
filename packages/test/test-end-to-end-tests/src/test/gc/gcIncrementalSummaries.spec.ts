@@ -18,7 +18,7 @@ import {
 	describeNoCompat,
 	ITestDataObject,
 	TestDataObjectType,
-} from "@fluidframework/test-version-utils";
+} from "@fluid-internal/test-version-utils";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
 import { defaultGCConfig } from "./gcTestConfigs";
 

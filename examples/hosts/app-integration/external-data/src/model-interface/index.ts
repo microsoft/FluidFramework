@@ -4,6 +4,7 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/common-definitions";
+import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
 import { SharedString } from "@fluidframework/sequence";
 
 /**
@@ -27,15 +28,21 @@ export interface IAppModelEvents extends IEvent {}
  */
 export interface IAppModel extends IEventProvider<IAppModelEvents> {
 	/**
-	 * A task tracker list.
+	 * Represents the document where one or more task tracker lists will be rendered
 	 */
-	readonly taskList: ITaskList;
+	readonly baseDocument: IBaseDocument;
 
 	/**
 	 * Send custom signal to simulate being the RuntimeMessage signal
 	 * from alfred while that signal is in prototype state on the dev branch.
 	 */
 	readonly sendCustomDebugSignal: () => void;
+
+	/**
+	 * Returns the resolved URL for the attached container. If container is not
+	 * attached then returns undefined.
+	 */
+	readonly getContainerResolvedUrl: () => IFluidResolvedUrl | undefined;
 }
 
 /**
@@ -154,4 +161,38 @@ export interface ITaskList extends IEventProvider<ITaskListEvents> {
 	// readonly handleExternalMessage: (message) => void;
 }
 
-export { assertValidTaskData, TaskData } from "./TaskData";
+/**
+ * Events emitted by {@link IBaseDocumentEvents}.
+ */
+export interface IBaseDocumentEvents extends IEvent {
+	/**
+	 * Emitted when task list collection has changed.
+	 */
+	(event: "taskListCollectionChanged", listener: () => void);
+}
+
+/**
+ * Properties necessary to instantiate a {@link ITaskList}.
+ * TODO: Figure out a better form factor for passing these in once we know all the pieces necessary.
+ */
+export interface IBaseDocumentInitialState {
+	externalTaskListId: string;
+	containerUrl: IFluidResolvedUrl;
+}
+
+/**
+ * A single DataStore object that allows the app to load and the container to instantiate
+ * without a instantiating {@link ITaskList} right away.
+ */
+export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
+	/**
+	 * Add a task list with a specific id.
+	 */
+	readonly addTaskList: (props: IBaseDocumentInitialState) => void;
+	/**
+	 * Get the task list with the specified ID.
+	 */
+	readonly getTaskList: (id: string) => ITaskList | undefined;
+}
+
+export { assertValidTaskData, ITaskListData, ITaskData } from "./TaskData";
