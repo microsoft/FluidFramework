@@ -47,7 +47,7 @@ function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
 			);
 			break;
 		}
-		case "delete": {
+		case "sequenceFieldDelete": {
 			const field = tree.editor.sequenceField(
 				contents.firstNode?.parent,
 				contents.firstNode?.parentField,
@@ -55,7 +55,7 @@ function applyFuzzChange(tree: ISharedTree, contents: FuzzChange): void {
 			field.delete(contents.firstNode?.parentIndex, contents.count);
 			break;
 		}
-		case "setPayload": {
+		case "sequenceFieldSetPayload": {
 			tree.editor.setValue(contents.path, contents.value);
 			break;
 		}

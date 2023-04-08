@@ -31,14 +31,6 @@ export interface TreeEdit {
 	index: number;
 }
 
-// export interface FuzzInsert {
-// 	fuzzType: "insert";
-// 	parent: UpPath | undefined;
-// 	field: FieldKey;
-// 	index: number;
-// 	value: number;
-// }
-
 export type FuzzInsert = FuzzSequenceFieldInsert;
 
 export interface FuzzSequenceFieldInsert {
@@ -49,12 +41,16 @@ export interface FuzzSequenceFieldInsert {
 	value: number;
 }
 
-export interface FuzzDelete extends NodeRangePath {
-	fuzzType: "delete";
+export type FuzzDelete = FuzzSequenceFieldDelete;
+
+export interface FuzzSequenceFieldDelete extends NodeRangePath {
+	fuzzType: "sequenceFieldDelete";
 }
 
-export interface FuzzSetPayload {
-	fuzzType: "setPayload";
+export type FuzzSetPayload = FuzzSequenceFieldSetPayload;
+
+export interface FuzzSequenceFieldSetPayload {
+	fuzzType: "sequenceFieldSetPayload";
 	path: UpPath;
 	value: number;
 }
@@ -121,16 +117,15 @@ export const makeEditGenerator = (
 	async function insertGenerator(state: EditState): Promise<FuzzInsert> {
 		const trees = state.testTreeProvider.trees;
 		const tree = trees[state.treeIndex];
-
 		// generate edit for that specific tree
 		const path: UpPath = getRandomPlace(tree, state.random);
-
-		// if the parent field of the path is a sequence field, generate a sequence field edit
-		if (path.parentField === sequenceFieldKey) {
-			return generateSequenceFieldInsertOp(path, state.random);
+		switch (path.parentField) {
+			case sequenceFieldKey:
+				return generateSequenceFieldInsertOp(path, state.random);
+			default:
+				// default case returns a sequence field edit for now.
+				return generateSequenceFieldInsertOp(path, state.random);
 		}
-		// default case returns a sequence field edit for now.
-		return generateSequenceFieldInsertOp(path, state.random);
 	}
 
 	async function deleteGenerator(state: EditState): Promise<FuzzDelete> {
@@ -138,11 +133,13 @@ export const makeEditGenerator = (
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
 		const { firstNode, count } = getExistingRandomNodeRangePath(tree, state.random);
-		return {
-			fuzzType: "delete",
-			firstNode,
-			count,
-		};
+		switch (firstNode.parentField) {
+			case sequenceFieldKey:
+				return generateSequenceFieldDeleteOp(firstNode, count);
+			default:
+				// default case returns a sequence field edit for now.
+				return generateSequenceFieldDeleteOp(firstNode, count);
+		}
 	}
 
 	async function setPayloadGenerator(state: EditState): Promise<FuzzSetPayload> {
@@ -150,11 +147,13 @@ export const makeEditGenerator = (
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
-		return {
-			fuzzType: "setPayload",
-			path,
-			value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-		};
+		switch (path.parentField) {
+			case sequenceFieldKey:
+				return generateSequenceFieldSetPayloadOp(path, state.random);
+			default:
+				// default case returns a sequence field edit for now.
+				return generateSequenceFieldSetPayloadOp(path, state.random);
+		}
 	}
 
 	function generateSequenceFieldInsertOp(path: UpPath, random: IRandom): FuzzSequenceFieldInsert {
@@ -163,6 +162,28 @@ export const makeEditGenerator = (
 			parent: path.parent,
 			field: path.parentField,
 			index: path.parentIndex,
+			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER),
+		};
+	}
+
+	function generateSequenceFieldDeleteOp(
+		firstNode: UpPath,
+		count: number,
+	): FuzzSequenceFieldDelete {
+		return {
+			fuzzType: "sequenceFieldDelete",
+			firstNode,
+			count,
+		};
+	}
+
+	function generateSequenceFieldSetPayloadOp(
+		path: UpPath,
+		random: IRandom,
+	): FuzzSequenceFieldSetPayload {
+		return {
+			fuzzType: "sequenceFieldSetPayload",
+			path,
 			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MIN_SAFE_INTEGER),
 		};
 	}
