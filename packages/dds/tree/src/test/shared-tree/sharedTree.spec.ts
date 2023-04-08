@@ -20,13 +20,7 @@ import {
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import {
-	ISharedTree,
-	ISharedTreeView,
-	SharedTreeFactory,
-	runSynchronous,
-	schematizeView,
-} from "../../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -1998,7 +1992,7 @@ function testTreeView(): ISharedTreeView {
 		treeSchema,
 	);
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-	return schematizeView(tree, {
+	return tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree: 24,
 		schema,
