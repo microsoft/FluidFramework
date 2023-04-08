@@ -117,11 +117,17 @@ describe("Runtime", () => {
 							updateDirtyContainerState: (_dirty: boolean) => {},
 							submitFn: (
 								_type: MessageType,
-								_contents: any,
+								contents: any,
 								_batch: boolean,
 								appData?: any,
 							) => {
-								submittedOpsMetdata.push(appData);
+								if (contents.type === "groupedBatch") {
+									for (const subMessage of contents.contents) {
+										submittedOpsMetdata.push(subMessage.metadata);
+									}
+								} else {
+									submittedOpsMetdata.push(appData);
+								}
 								return opFakeSequenceNumber++;
 							},
 							connected: true,
@@ -1085,6 +1091,7 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableOpReentryCheck: false,
+				enableGroupedBatching: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
