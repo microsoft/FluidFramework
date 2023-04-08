@@ -3,42 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { Delta, TaggedChange, tagChange } from "../../core";
+import { Delta, RevisionTag, TaggedChange, tagChange } from "../../core";
 import { Brand, JsonCompatibleReadOnly, Mutable } from "../../util";
 import { populateChildModifications } from "../deltaUtils";
 
 export type CellId = Brand<unknown, "CellId">;
 
 export interface CrossCellManager<TDeepChange> {
-	send(to: CellId, change: TDeepChange): void;
-	receive(from: CellId): TDeepChange | undefined;
+	initiateMoveOut(
+		srcMoveId: Delta.MoveId,
+		srcMoveRevision: RevisionTag | undefined,
+		moveOut: ContentMove | undefined,
+		change: TDeepChange | undefined,
+	): void;
+	initiateMoveIn(dstId: CellId, moveId: Delta.MoveId): void;
+	send(id: Delta.MoveId, revision: RevisionTag | undefined, deep: TDeepChange): void;
+	receive(id: Delta.MoveId, revision: RevisionTag | undefined): TDeepChange | undefined;
 }
 
-export interface ShallowChange {
-	/**
-	 * The source for the content that will be in the cell after this change.
-	 * If undefined, the cell will be empty after this change.
-	 */
-	newContentSrc?: CellId;
+export type IdNormalizer = (id: Delta.MoveId, revision: RevisionTag | undefined) => Delta.MoveId;
 
-	/**
-	 * The destination for the content that was in the cell before this change.
-	 * If undefined, the cell was be empty before this change.
-	 */
-	oldContentDst?: CellId;
+export interface ContentMove {
+	readonly cell: CellId;
+	readonly moveId: Delta.MoveId;
 }
 
 export interface Change<TDeepChange> {
 	/**
-	 * If defined, specifies the new content for the cell.
+	 * The destination for the content that was in the cell before this change.
+	 * If undefined, the cell was be empty before this change.
 	 */
-	shallow?: ShallowChange;
+	readonly oldContentDst?: ContentMove;
+
+	/**
+	 * The source for the content that will be in the cell after this change.
+	 * If undefined, the cell will be empty after this change.
+	 */
+	readonly newContentSrc?: ContentMove;
 
 	/**
 	 * Changes internal to the content that was in the cell before this change.
 	 */
-	deep?: TDeepChange;
+	readonly deep?: TDeepChange;
 }
 
 export function encodeForJson<TDeepChange>(
@@ -47,8 +53,11 @@ export function encodeForJson<TDeepChange>(
 	encodeChild: (change: TDeepChange) => JsonCompatibleReadOnly,
 ): JsonCompatibleReadOnly {
 	const result: Mutable<Change<JsonCompatibleReadOnly>> & JsonCompatibleReadOnly = {};
-	if (change.shallow !== undefined) {
-		result.shallow = change.shallow;
+	if (change.oldContentDst !== undefined) {
+		result.oldContentDst = change.oldContentDst;
+	}
+	if (change.newContentSrc !== undefined) {
+		result.newContentSrc = change.newContentSrc;
 	}
 	if (change.deep !== undefined) {
 		result.deep = encodeChild(change.deep);
@@ -63,8 +72,11 @@ export function decodeJson<TDeepChange>(
 ): Change<TDeepChange> {
 	const encoded = change as Mutable<Change<JsonCompatibleReadOnly>>;
 	const result: Mutable<Change<TDeepChange>> = {};
-	if (encoded.shallow !== undefined) {
-		result.shallow = encoded.shallow;
+	if (encoded.oldContentDst !== undefined) {
+		result.oldContentDst = encoded.oldContentDst;
+	}
+	if (encoded.newContentSrc !== undefined) {
+		result.newContentSrc = encoded.newContentSrc;
 	}
 	if (encoded.deep !== undefined) {
 		result.deep = decodeChild(encoded.deep);
@@ -75,30 +87,27 @@ export function decodeJson<TDeepChange>(
 export function intoDelta<TDeepChange>(
 	change: Change<TDeepChange>,
 	deltaFromDeep: (child: TDeepChange) => Delta.Modify,
-	moveIdFromCellId: (cellId: CellId) => Delta.MoveId,
 ): Delta.MarkList {
-	if (change.shallow === undefined) {
-		return change.deep === undefined ? [] : [deltaFromDeep(change.deep)];
-	}
-
 	const marks: Delta.Mark[] = [];
-	if (change.shallow.oldContentDst !== undefined) {
+	if (change.oldContentDst !== undefined) {
 		const remove: Mutable<Delta.MoveOut> = {
 			type: Delta.MarkType.MoveOut,
 			count: 1,
-			moveId: moveIdFromCellId(change.shallow.oldContentDst),
+			moveId: change.oldContentDst.moveId,
 		};
 		if (change.deep !== undefined) {
 			const modify = deltaFromDeep(change.deep);
 			populateChildModifications(modify, remove);
 		}
 		marks.push(remove);
+	} else {
+		return change.deep === undefined ? [] : [deltaFromDeep(change.deep)];
 	}
-	if (change.shallow.newContentSrc !== undefined) {
+	if (change.newContentSrc !== undefined) {
 		const moveIn: Delta.MoveIn = {
 			type: Delta.MarkType.MoveIn,
 			count: 1,
-			moveId: moveIdFromCellId(change.shallow.newContentSrc),
+			moveId: change.newContentSrc.moveId,
 		};
 		marks.push(moveIn);
 	}
@@ -106,33 +115,70 @@ export function intoDelta<TDeepChange>(
 }
 
 export function isEmpty(change: Change<unknown>): boolean {
-	return change.shallow === undefined && change.deep === undefined;
+	return (
+		change.oldContentDst === undefined &&
+		change.newContentSrc === undefined &&
+		change.deep === undefined
+	);
 }
 
 export function editCellContent<TDeepChange>(deep: TDeepChange): Change<TDeepChange> {
 	return { deep };
 }
 
-export function clearContent(oldContentDst: CellId): Change<never> {
-	return { shallow: { oldContentDst } };
+export function clearContent(
+	oldContentDstCell: CellId,
+	oldContentMoveId: Delta.MoveId,
+): Change<never> {
+	return { oldContentDst: { cell: oldContentDstCell, moveId: oldContentMoveId } };
 }
 
-export function insertContent(newContentSrc: CellId): Change<never> {
-	return { shallow: { newContentSrc } };
+export function insertContent(
+	newContentSrcCell: CellId,
+	newContentMoveId: Delta.MoveId,
+): Change<never> {
+	return { newContentSrc: { cell: newContentSrcCell, moveId: newContentMoveId } };
 }
 
-export function replaceContent(oldContentDst: CellId, newContentSrc: CellId): Change<never> {
-	return { shallow: { oldContentDst, newContentSrc } };
+export function replaceContent(
+	oldContentDstCell: CellId,
+	oldContentMoveId: Delta.MoveId,
+	newContentSrcCell: CellId,
+	newContentMoveId: Delta.MoveId,
+): Change<never> {
+	return oldContentMoveId === newContentMoveId
+		? {}
+		: {
+				oldContentDst: { cell: oldContentDstCell, moveId: oldContentMoveId },
+				newContentSrc: { cell: newContentSrcCell, moveId: newContentMoveId },
+		  };
 }
 
 export function compose<TDeepChange>(
 	changes: TaggedChange<Change<TDeepChange>>[],
 	composeDeep: (changes: TaggedChange<TDeepChange>[]) => TDeepChange,
 	crossCellManager: CrossCellManager<TDeepChange>,
+	idNormalizer: IdNormalizer,
 ): Change<TDeepChange> {
-	const composed: Change<TDeepChange> = {};
-	let shallow: ShallowChange | undefined;
-	let deepSource: CellId | undefined;
+	if (changes.length < 2) {
+		return changes.length === 0 ? {} : changes[0].change;
+	}
+	const normalizeMove = (
+		move: ContentMove | undefined,
+		revision: RevisionTag | undefined,
+	): ContentMove | undefined => {
+		if (move !== undefined) {
+			return {
+				cell: move.cell,
+				moveId: idNormalizer(move.moveId, revision),
+			};
+		}
+		return undefined;
+	};
+
+	const composed: Mutable<Change<TDeepChange>> = {};
+
+	let deepSource: ContentMove | undefined;
 	let deepChanges: TaggedChange<TDeepChange>[] = [];
 	for (const { change, revision } of changes) {
 		if (change.deep !== undefined) {
@@ -140,113 +186,119 @@ export function compose<TDeepChange>(
 			deepChanges.push(taggedChange);
 		}
 
-		if (change.shallow !== undefined) {
-			if (deepChanges.length > 0) {
-				const composedDeep = composeDeep(deepChanges);
-				if (deepSource === undefined) {
-					// The changes so far all apply to the content present in the cell before the composed changeset
-					composed.deep = composedDeep;
-				} else {
-					// The changes since the last shallow change apply to the content present in the cell after the
-					// last shallow change.
-					// Those changes should be represented in the source cell of the new content.
-					crossCellManager.send(deepSource, composedDeep);
-				}
-				deepChanges = [];
-				deepSource = change.shallow.newContentSrc;
+		if (deepChanges.length > 0) {
+			const composedDeep = composeDeep(deepChanges);
+			if (deepSource === undefined) {
+				// The changes so far all apply to the content present in the cell before the composed changeset
+				composed.deep = composedDeep;
+			} else {
+				// The changes since the last shallow change apply to the content present in the cell after the
+				// last shallow change.
+				// Those changes should be represented in the source cell of the new content.
+				crossCellManager.initiateMoveOut(deepSource.moveId, composedDeep);
 			}
-			if (shallow === undefined) {
-				shallow = { ...change.shallow };
+			deepChanges = [];
+			deepSource = normalizeMove(change.newContentSrc, revision);
+		}
+		if (shallow === undefined) {
+			shallow = {};
+			if (change.oldContentDst !== undefined) {
+				shallow.oldContentDst = normalizeMove(change.oldContentDst, revision);
 			}
-
-			if (change.shallow.newContentSrc !== undefined) {
-				shallow.newContentSrc = change.shallow.newContentSrc;
+			if (change.newContentSrc !== undefined) {
+				shallow.newContentSrc = normalizeMove(change.newContentSrc, revision);
+			}
+		} else {
+			if (change.newContentSrc !== undefined) {
+				shallow.newContentSrc = normalizeMove(change.newContentSrc, revision);
 			} else {
 				delete shallow.newContentSrc;
+			}
+			// This check will succeed when we compose changes that make the cell go from empty to full to empty again
+			if (shallow.newContentSrc === shallow.oldContentDst) {
+				shallow = undefined;
 			}
 		}
 	}
 
-	if (shallow !== undefined && shallow.newContentSrc !== shallow.oldContentDst) {
+	if (shallow !== undefined) {
 		composed.shallow = shallow;
 	}
 	return composed;
 }
 
 export function invert<TDeepChange>(
-	change: Change<TDeepChange>,
+	{ change, revision }: TaggedChange<Change<TDeepChange>>,
 	invertDeep: (change: TDeepChange) => TDeepChange,
 	crossCellManager: CrossCellManager<TDeepChange>,
 ): Change<TDeepChange> {
-	const inverted: Change<TDeepChange> = {};
-	if (change.shallow !== undefined) {
-		inverted.shallow = {
-			newContentSrc: change.shallow.oldContentDst,
-			oldContentDst: change.shallow.newContentSrc,
-		};
-		if (change.shallow.newContentSrc !== undefined) {
-			// We need to put on this changeset the inverse of any deep changes that were applied to the source of the
-			// original content.
-			const deep = crossCellManager.receive(change.shallow.newContentSrc);
-			if (deep !== undefined) {
-				inverted.deep = deep;
-			}
+	const inverted: Mutable<Change<TDeepChange>> = {};
+	if (change.newContentSrc !== undefined) {
+		// We need to put on this changeset the inverse of any deep changes that were applied to the source of the
+		// original content.
+		const deep = crossCellManager.receive(change.newContentSrc.moveId, revision);
+		if (deep !== undefined) {
+			inverted.deep = deep;
 		}
-		if (change.deep !== undefined) {
-			assert(
-				change.shallow.oldContentDst !== undefined,
-				"Invalid changeset: deep change without content",
-			);
+		inverted.oldContentDst = change.newContentSrc;
+	}
+	if (change.oldContentDst !== undefined) {
+		const deep = change.deep !== undefined ? invertDeep(change.deep) : undefined;
+		if (deep !== undefined) {
 			// The inverse of the changes to the original content should reside where that content was sent.
-			crossCellManager.send(change.shallow.oldContentDst, invertDeep(change.deep));
+			crossCellManager.send(change.oldContentDst.moveId, revision, deep);
 		}
-	} else if (change.deep !== undefined) {
-		inverted.deep = invertDeep(change.deep);
+		inverted.newContentSrc = change.oldContentDst;
 	}
 	return inverted;
 }
 
 export function rebase<TDeepChange>(
 	change: Change<TDeepChange>,
-	over: Change<TDeepChange>,
+	over: TaggedChange<Change<TDeepChange>>,
+	detachedCellAllocator: () => CellId,
+	moveIdAllocator: () => Delta.MoveId,
 	rebaseDeep: (
 		change: TDeepChange | undefined,
 		baseChange: TDeepChange | undefined,
 	) => TDeepChange | undefined,
 	crossCellManager: CrossCellManager<TDeepChange>,
 ): Change<TDeepChange> {
-	const deep = rebaseDeep(change.deep, over.deep);
-	if (over.shallow !== undefined) {
-		if (deep !== undefined) {
-			assert(
-				over.shallow.oldContentDst !== undefined,
-				"Invalid changeset: deep change without content",
-			);
-			// Since the content has been replaced by the concurrent change, the deep changes to it should
-			// reside at its new location.
-			crossCellManager.send(over.shallow.oldContentDst, deep);
-		}
-		if (change.shallow !== undefined) {
-			const shallow: ShallowChange = { ...change.shallow };
-			const rebased: Change<TDeepChange> = { shallow };
-			if (over.shallow.newContentSrc !== undefined) {
-				// Since this change is removing the content that was put in place by `over`,
-				// we adopt that content's original source as its destination when we replace it.
-				// Composing `over` with this change will lead to the replaced content not being moved.
-				shallow.oldContentDst = over.shallow.newContentSrc;
-				// Any deep changes (within this revision) that apply to the content put in place by `over` should
-				// be represented as part of the change on this cell.
-				const newDeep = crossCellManager.receive(over.shallow.newContentSrc);
-				if (newDeep !== undefined) {
-					rebased.deep = newDeep;
-				}
-			} else {
-				delete shallow.oldContentDst;
-			}
-			return rebased;
-		}
-		return {};
+	const rebased: Mutable<Change<TDeepChange>> = { ...change };
+
+	const deep = rebaseDeep(change.deep, over.change.deep);
+	if (deep !== undefined) {
+		rebased.deep = deep;
+	} else {
+		delete rebased.deep;
 	}
 
-	return deep !== undefined ? { deep } : {};
+	if (over.change.oldContentDst !== undefined) {
+		// Since the content has been replaced by the concurrent change, the deep changes to it should
+		// reside at its new location.
+		// If the content was being moved, it also now needs to be moved out of where `over` put it.
+		crossCellManager.initiateMoveOut(
+			over.change.oldContentDst.moveId,
+			over.revision,
+			change.oldContentDst, // PB: if the old content was moved somewhere reachable, this will trash it.
+			deep,
+		);
+		delete rebased.deep;
+		delete rebased.oldContentDst;
+	}
+
+	if (over.change.newContentSrc !== undefined && change.newContentSrc !== undefined) {
+		// This change will overwrite the content put in place by `over`.
+		const trashCell = detachedCellAllocator();
+		const trashMoveId = moveIdAllocator();
+		crossCellManager.initiateMoveIn(trashCell, trashMoveId);
+		rebased.oldContentDst = { cell: trashCell, moveId: trashMoveId };
+		// Any deep changes (within this revision) that apply to the content put in place by `over` should
+		// now be represented as part of the change on this cell.
+		const newDeep = crossCellManager.receive(over.change.newContentSrc.moveId, over.revision);
+		if (newDeep !== undefined) {
+			rebased.deep = newDeep;
+		}
+	}
+	return rebased;
 }

@@ -122,29 +122,29 @@ export class OptionalFieldEditor implements FieldEditor<OptionalChangeset> {
 	public set(
 		newContent: FieldKey | undefined,
 		wasEmpty: boolean,
-	): { fieldChanges: OptionalChangeset; detachedRangeChanges: Delta.Root } {
+	): { fieldChanges: OptionalChangeset; detachedRangeChanges: Map<FieldKey, OptionalChangeset> } {
 		let fieldChanges: OptionalChangeset;
-		const detachedRangeChanges = new Map<FieldKey, Delta.MarkList>();
-		let oldContentMoveId: ChangesetLocalId | undefined;
+		const detachedRangeChanges = new Map<FieldKey, OptionalChangeset>();
+
 		let newContentMoveId: ChangesetLocalId | undefined;
-		if (!wasEmpty) {
-			oldContentMoveId = this.idAllocator();
-			const moveIn: Delta.MoveIn = {
-				type: Delta.MarkType.MoveIn,
-				moveId: brand(oldContentMoveId),
-				count: 1,
-			};
-			const oldRange = this.detachedFieldKeyAllocator();
-			detachedRangeChanges.set(oldRange, [moveIn]);
-		}
 		if (newContent !== undefined) {
-			oldContentMoveId = this.idAllocator();
+			newContentMoveId = this.idAllocator();
 			const moveOut: Delta.MoveOut = {
 				type: Delta.MarkType.MoveOut,
-				moveId: brand(oldContentMoveId),
+				moveId: brand(newContentMoveId),
 				count: 1,
 			};
 			detachedRangeChanges.set(newContent, [moveOut]);
+		}
+
+		let oldContentMoveId: ChangesetLocalId | undefined;
+		if (!wasEmpty) {
+			oldContentMoveId = this.idAllocator();
+			const oldRange = this.detachedFieldKeyAllocator();
+			detachedRangeChanges.set(
+				oldRange,
+				Cell.insertContent(brand(oldRange), brand(oldContentMoveId)),
+			);
 		}
 
 		if (newContent === undefined) {
