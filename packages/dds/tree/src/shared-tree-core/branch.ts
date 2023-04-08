@@ -39,7 +39,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public readonly editor: TEditor;
 	private readonly transactions = new TransactionStack();
 	private readonly forks = new Set<SharedTreeBranch<TEditor, TChange>>();
-	private disposed = false;
 
 	/**
 	 * @param getBaseBranch - a function which retrieves the head of the base branch
@@ -66,7 +65,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	public applyChange(change: TChange, rebaseAnchors = true): void {
-		this.assertNotDisposed();
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
 			revision,
@@ -161,7 +159,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * @returns the net change to this branch
 	 */
 	public pull(): TChange {
-		this.assertNotDisposed();
 		const baseBranch = this.getBaseBranch();
 		if (this.head === baseBranch) {
 			// Not necessary for correctness, but skips needless rebase and event firing below
@@ -180,7 +177,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 */
 	public fork(anchors: AnchorSet): SharedTreeBranch<TEditor, TChange> {
-		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			() => this.head,
 			(forked) => {
@@ -215,41 +211,15 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	/**
 	 * Apply all the changes on this branch to the base branch from which it was forked. If the base branch has new
 	 * changes since this branch last pulled (or was forked), then this branch's changes will be rebased over those first.
-	 * After the merge completes, this branch may no longer be forked or mutated.
 	 * @returns the net change to this branch
 	 */
 	public merge(): TChange {
-		this.assertNotDisposed();
 		assert(
 			this.transactions.size === 0,
 			0x597 /* Branch may not be merged while transaction is in progress */,
 		);
 		const change = this.mergeIntoBase(this);
 		this.head = this.getBaseBranch();
-		this.dispose();
 		return change;
-	}
-
-	/**
-	 * Whether or not this branch has been merged into its base via `merge()`.
-	 * If it has, then it may no longer be forked or mutated.
-	 */
-	public isMerged(): boolean {
-		return this.disposed;
-	}
-
-	/**
-	 * Dispose this branch and all branches that descend from it (i.e. have been transitively forked).
-	 */
-	private dispose(): void {
-		this.assertNotDisposed();
-		this.disposed = true;
-		for (const fork of this.forks) {
-			fork.dispose();
-		}
-	}
-
-	private assertNotDisposed(message?: string | number): void {
-		assert(!this.isMerged(), message ?? "Branch is already merged");
 	}
 }
