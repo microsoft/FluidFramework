@@ -770,7 +770,6 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeFork extends ISharedTreeView {
-    isMerged(): boolean;
     merge(): void;
     pull(): void;
 }
