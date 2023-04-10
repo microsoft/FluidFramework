@@ -10,6 +10,7 @@ export {
 	SharedObjectVisualizers,
 	DataVisualizerEvents,
 	DataVisualizerGraph,
+	visualizeChildData,
 	VisualizerNode,
 } from "./DataVisualization";
 export {
@@ -17,6 +18,7 @@ export {
 	visualizeSharedCell,
 	visualizeSharedCounter,
 	visualizeSharedMap,
+	visualizeSharedMatrix,
 	visualizeSharedString,
 	visualizeUnknownSharedObject,
 } from "./DefaultVisualizers";
