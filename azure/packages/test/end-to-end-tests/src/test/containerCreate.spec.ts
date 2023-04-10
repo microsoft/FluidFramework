@@ -164,7 +164,7 @@ describe("Container create with feature flags", () => {
 		};
 	});
 
-	it.only("can create containers with feature gates", async () => {
+	it("can create containers with feature gates", async () => {
 		await client.createContainer(schema);
 		mockLogger.assertMatchAny([
 			{
