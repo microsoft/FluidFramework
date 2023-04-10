@@ -84,7 +84,7 @@ export type AccordionProps = React.PropsWithChildren<{
 	/**
 	 * Accordion classname for test
 	 */
-	className?: string; 
+	className?: string;
 }>;
 
 /**
@@ -106,6 +106,7 @@ export function Accordion(props: AccordionProps): React.ReactElement {
 							iconProps={{
 								iconName: collapsed ? "ChevronRight" : "ChevronDown",
 							}}
+							data-testid="expand-button"
 						/>
 					</StackItem>
 					<StackItem align="center">{header}</StackItem>

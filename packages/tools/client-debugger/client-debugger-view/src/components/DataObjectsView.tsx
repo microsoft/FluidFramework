@@ -79,7 +79,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	}, [containerId, setRootDataHandles, messageRelay]);
 
 	if (rootDataHandles === undefined) {
-		return <Waiting/>;
+		return <Waiting />;
 	}
 
 	return (

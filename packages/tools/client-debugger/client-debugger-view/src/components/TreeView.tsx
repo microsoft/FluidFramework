@@ -21,12 +21,14 @@ export function TreeView(props: TreeViewProps): React.ReactElement {
 	const { containerId, node } = props;
 
 	return (
-		<Accordion key={ containerId } header={<div>{`${node.metadata}, ${node.nodeKind}`}</div>} className="TreeView">
+		<Accordion
+			key={containerId}
+			header={<div>{`${node.metadata}, ${node.nodeKind}`}</div>}
+			className="TreeView"
+		>
 			{Object.entries(node.children).map(([key, fluidObject], index) => {
 				return <TreeDataView key={key} containerId={containerId} node={fluidObject} />;
 			})}
 		</Accordion>
 	);
 }
-
-

@@ -4,10 +4,7 @@
  */
 import React from "react";
 import { HasContainerId, UnknownObjectNode } from "@fluid-tools/client-debugger";
-import {
-	Stack,
-	StackItem,
-} from "@fluentui/react";
+import { Stack, StackItem } from "@fluentui/react";
 
 /**
  * {@link UnknownDataView} input props.

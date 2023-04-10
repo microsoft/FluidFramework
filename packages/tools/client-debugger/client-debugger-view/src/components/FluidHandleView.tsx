@@ -77,13 +77,17 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 	}, [containerId, setVisualTree, fluidObjectId, messageRelay]);
 
 	if (visualTree === undefined) {
-		return <Waiting/>;
+		return <Waiting />;
 	}
 
 	// <TreeDataView containerId={containerId} node={visualTree} />;
 	return (
-		<Accordion key={containerId} header={<div>{`${visualTree.metadata}, ${visualTree.nodeKind}`}</div>} className="FluidHandleView">
+		<Accordion
+			key={containerId}
+			header={<div>{`${visualTree.metadata}, ${visualTree.nodeKind}`}</div>}
+			className="FluidHandleView"
+		>
 			<TreeDataView containerId={containerId} node={visualTree} />;
 		</Accordion>
-	)
+	);
 }

@@ -18,11 +18,14 @@ export interface ValueViewProps extends HasContainerId {
  */
 export function ValueView(props: ValueViewProps): React.ReactElement {
 	const { containerId, node } = props;
-	// <div>{`containerId: ${containerId}, value: ${String(node.value)}`}</div>;
 
 	return (
-		<Accordion key={ containerId } header={<div>{`${String(node.value)}, ${node.metadata}`}</div>} className="ValueView">
+		<Accordion
+			key={containerId}
+			header={<div>{`${String(node.value)}, ${node.metadata}`}</div>}
+			className="ValueView"
+		>
 			String(node.value)
 		</Accordion>
-	)
+	);
 }

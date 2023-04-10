@@ -16,6 +16,6 @@ export * from "./LandingView";
 export * from "./Menu";
 export * from "./TelemetryView";
 export * from "./Waiting";
-export * from "./UnknownDataView"
+export * from "./UnknownDataView";
 
 /* eslint-enable no-restricted-syntax */
