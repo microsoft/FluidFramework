@@ -229,8 +229,17 @@ export class TestOrchestrator {
 			console.log(this.getStatus());
 		});
 
+		const parallelProcesses = this.doc.env.parallelProcesses ?? true;
+		if (parallelProcesses) {
+			// exec with possible child processes
+			return runner.run({
+				runId: this.runId,
+				scenarioName: this.doc?.title ?? "",
+			});
+		}
+
 		// exec
-		return runner.run({
+		return runner.runSync({
 			runId: this.runId,
 			scenarioName: this.doc?.title ?? "",
 		});

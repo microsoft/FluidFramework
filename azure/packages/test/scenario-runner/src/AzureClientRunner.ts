@@ -24,6 +24,7 @@ export interface AzureClientRunnerConfig {
 	userId?: string;
 	userName?: string;
 }
+export type AzureClientRunnerRunConfig = AzureClientRunnerConfig & IRunConfig;
 
 export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implements IRunner {
 	private status: RunnnerStatus = "notStarted";
@@ -31,23 +32,40 @@ export class AzureClientRunner extends TypedEventEmitter<IRunnerEvents> implemen
 		super();
 	}
 
-	public async run(config: IRunConfig): Promise<AzureClient | undefined> {
+	public async run(config: IRunConfig): Promise<AzureClient> {
 		this.status = "running";
 
+		try {
+			const ac = await AzureClientRunner.execRun({
+				...config,
+				...this.c,
+			});
+
+			this.status = "success";
+			return ac;
+		} catch {
+			this.status = "error";
+			throw new Error("Failed to create client");
+		}
+	}
+
+	public async runSync(config: IRunConfig): Promise<AzureClient> {
+		return this.run(config);
+	}
+
+	public static async execRun(runConfig: AzureClientRunnerRunConfig): Promise<AzureClient> {
 		const ac = await createAzureClient({
-			connType: this.c.connectionConfig.type,
+			connType: runConfig.connectionConfig.type,
 			connEndpoint:
-				this.c.connectionConfig.endpoint ??
+				runConfig.connectionConfig.endpoint ??
 				process.env.azure__fluid__relay__service__endpoint,
-			userId: this.c.userId ?? "testUserId",
-			userName: this.c.userName ?? "testUserId",
+			userId: runConfig.userId ?? "testUserId",
+			userName: runConfig.userName ?? "testUserId",
 			tenantId: process.env.azure__fluid__relay__service__tenantId,
 			tenantKey: process.env.azure__fluid__relay__service__tenantKey,
 			functionUrl: process.env.azure__fluid__relay__service__function__url,
-			secureTokenProvider: this.c.connectionConfig.useSecureTokenProvider,
+			secureTokenProvider: runConfig.connectionConfig.useSecureTokenProvider,
 		});
-
-		this.status = "success";
 		return ac;
 	}
 
