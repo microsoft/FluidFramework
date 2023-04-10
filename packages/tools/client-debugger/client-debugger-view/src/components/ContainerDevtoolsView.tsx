@@ -35,19 +35,19 @@ initializeFluentUiIcons();
 const loggingContext = "INLINE(ContainerView)";
 
 /**
- * `className` used by {@link ContainerView}.
+ * `className` used by {@link ContainerDevtoolsView}.
  */
-const containerViewClassName = `fluid-client-debugger-view`;
+const containerDevtoolsViewClassName = `fluid-client-debugger-view`;
 
 /**
- * {@link ContainerView} input props.
+ * {@link ContainerDevtoolsView} input props.
  */
-export type ContainerViewProps = HasContainerId;
+export type ContainerDevtoolsViewProps = HasContainerId;
 
 /**
  * Displays information about the provided container and its audience.
  */
-export function ContainerView(props: ContainerViewProps): React.ReactElement {
+export function ContainerDevtoolsView(props: ContainerDevtoolsViewProps): React.ReactElement {
 	const { containerId } = props;
 
 	// Set of features supported by the corresponding Container-level devtools instance.
@@ -94,14 +94,14 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 	return supportedFeatures === undefined ? (
 		<Waiting />
 	) : (
-		<_ContainerView containerId={containerId} supportedFeatures={supportedFeatures} />
+		<_ContainerDevtoolsView containerId={containerId} supportedFeatures={supportedFeatures} />
 	);
 }
 
 /**
- * {@link _ContainerView} input props.
+ * {@link _ContainerDevtoolsView} input props.
  */
-interface _ContainerViewProps extends HasContainerId {
+interface _ContainerDevtoolsViewProps extends HasContainerId {
 	/**
 	 * Set of features supported by the corresponding Container-level devtools instance.
 	 */
@@ -109,9 +109,9 @@ interface _ContainerViewProps extends HasContainerId {
 }
 
 /**
- * Displays information about the provided container and its audience.
+ * Internal {@link ContainerDevtoolsView}, displayed after supported feature set has been acquired from the webpage.
  */
-function _ContainerView(props: _ContainerViewProps): React.ReactElement {
+function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.ReactElement {
 	const { containerId, supportedFeatures } = props;
 
 	// Inner view selection
@@ -147,7 +147,7 @@ function _ContainerView(props: _ContainerViewProps): React.ReactElement {
 					height: "100%",
 				},
 			}}
-			className={containerViewClassName}
+			className={containerDevtoolsViewClassName}
 		>
 			<Stack.Item>
 				<ContainerSummaryView containerId={containerId} />

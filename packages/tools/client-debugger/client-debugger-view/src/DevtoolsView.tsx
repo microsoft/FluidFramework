@@ -20,7 +20,7 @@ import {
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
 import { FluentProvider } from "@fluentui/react-components";
 import {
-	ContainerView,
+	ContainerDevtoolsView,
 	TelemetryView,
 	MenuItem,
 	MenuSection,
@@ -237,7 +237,7 @@ function View(props: ViewProps): React.ReactElement {
 				container === undefined ? (
 					<div>Could not find a debugger for that container.</div>
 				) : (
-					<ContainerView containerId={menuSelection.containerId} />
+					<ContainerDevtoolsView containerId={menuSelection.containerId} />
 				);
 			break;
 		default:
