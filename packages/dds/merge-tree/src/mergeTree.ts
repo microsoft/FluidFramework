@@ -555,7 +555,7 @@ export class MergeTree {
 
 	/**
 	 * If we remove a contiguous range of segments, avoid duplicated tree traversal
-	 * for each segment removed, as this scales poorly 
+	 * for each segment removed, as this scales poorly
 	 */
 	private cachedSlideDestination:
 		| {
