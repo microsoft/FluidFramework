@@ -10,7 +10,7 @@
 
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedMap } from "@fluidframework/map";
+import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
@@ -59,6 +59,60 @@ export const visualizeSharedCounter: VisualizeSharedObject = async (
 		nodeKind: VisualNodeKind.FluidValueNode,
 	};
 };
+
+/**
+ * Default {@link VisualizeSharedObject} for {@link SharedCounter}.
+ */
+export const visualizeSharedDirectory: VisualizeSharedObject = async (
+	sharedObject: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const sharedDirectory = sharedObject as SharedDirectory;
+	const renderedChildData = await visualizeDirectory(sharedDirectory, visualizeChildData);
+	return {
+		fluidObjectId: sharedDirectory.id,
+		children: renderedChildData.children,
+		metadata: renderedChildData.metadata,
+		typeMetadata: "SharedDirectory",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
+};
+
+/**
+ * Generates a visual summary for an {@link @fluidframework/map#IDirectory}.
+ *
+ * @remarks Used by {@link visualizeSharedDirectory} to recurse down non-Shared-Object subdirectories.
+ */
+async function visualizeDirectory(
+	directory: IDirectory,
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualTreeNode> {
+	const children: Record<string, VisualChildNode> = {};
+
+	// Generate child entries for directory value content
+	for (const [key, value] of directory) {
+		const renderedChild = await visualizeChildData(value);
+		children[key] = renderedChild;
+	}
+
+	// Generate child entries for sub-directory
+	const subDirectories = directory.subdirectories();
+	for (const [path, subDirectory] of subDirectories) {
+		const renderedChild = await visualizeDirectory(subDirectory, visualizeChildData);
+		children[path] = renderedChild;
+	}
+
+	return {
+		children,
+		metadata: {
+			"absolute-path": directory.absolutePath,
+			"values": directory.size,
+			"sub-directories": directory.countSubDirectory?.(),
+		},
+		typeMetadata: "IDirectory",
+		nodeKind: VisualNodeKind.TreeNode,
+	};
+}
 
 /**
  * Default {@link VisualizeSharedObject} for {@link SharedMap}.
@@ -163,6 +217,7 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,
 	[SharedCounter.getFactory().type]: visualizeSharedCounter,
+	[SharedDirectory.getFactory().type]: visualizeSharedDirectory,
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,

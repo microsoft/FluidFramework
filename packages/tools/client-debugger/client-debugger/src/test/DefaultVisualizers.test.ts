@@ -11,12 +11,13 @@ import { expect } from "chai";
 import { SharedCell } from "@fluidframework/cell";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
+import { FluidObjectId } from "../CommonInterfaces";
 import {
 	FluidObjectTreeNode,
 	FluidObjectValueNode,
@@ -25,13 +26,13 @@ import {
 	visualizeChildData as visualizeChildDataBase,
 	visualizeSharedCell,
 	visualizeSharedCounter,
+	visualizeSharedDirectory,
 	visualizeSharedMap,
 	visualizeSharedMatrix,
 	visualizeSharedString,
 	visualizeUnknownSharedObject,
 	VisualNodeKind,
 } from "../data-visualization";
-import { FluidObjectId } from "../CommonInterfaces";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests
@@ -84,6 +85,119 @@ describe("DefaultVisualizers unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedDirectory", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const sharedDirectory = new SharedDirectory(
+			"test-directory",
+			runtime,
+			SharedDirectory.getFactory().attributes,
+		);
+		sharedDirectory.set("foo", 37);
+		sharedDirectory.set("bar", false);
+		sharedDirectory.set("baz", {
+			a: "Hello",
+			b: "World",
+			c: undefined,
+		});
+
+		const subDirectoryA = sharedDirectory.createSubDirectory("a");
+		subDirectoryA.set("1", null);
+		const subDirectoryB = sharedDirectory.createSubDirectory("b");
+		const subDirectoryBC = subDirectoryB.createSubDirectory("c");
+		subDirectoryBC.set("Meaning of life", 42);
+
+		const result = await visualizeSharedDirectory(sharedDirectory, visualizeChildData);
+
+		const expected: FluidObjectTreeNode = {
+			fluidObjectId: sharedDirectory.id,
+			children: {
+				a: {
+					children: {
+						"1": {
+							value: null,
+							typeMetadata: "null",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					typeMetadata: "IDirectory",
+					metadata: {
+						"absolute-path": "/a",
+						"sub-directories": 0,
+						"values": 1,
+					},
+					nodeKind: VisualNodeKind.TreeNode,
+				},
+				b: {
+					children: {
+						c: {
+							children: {
+								"Meaning of life": {
+									value: 42,
+									typeMetadata: "number",
+									nodeKind: VisualNodeKind.ValueNode,
+								},
+							},
+							typeMetadata: "IDirectory",
+							metadata: {
+								"absolute-path": "/b/c",
+								"sub-directories": 0,
+								"values": 1,
+							},
+							nodeKind: VisualNodeKind.TreeNode,
+						},
+					},
+					typeMetadata: "IDirectory",
+					metadata: {
+						"absolute-path": "/b",
+						"sub-directories": 1,
+						"values": 0,
+					},
+					nodeKind: VisualNodeKind.TreeNode,
+				},
+				foo: {
+					value: 37,
+					typeMetadata: "number",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+				bar: {
+					value: false,
+					typeMetadata: "boolean",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+				baz: {
+					children: {
+						a: {
+							value: "Hello",
+							typeMetadata: "string",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						b: {
+							value: "World",
+							typeMetadata: "string",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						c: {
+							value: undefined,
+							typeMetadata: "undefined",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					typeMetadata: "object",
+					nodeKind: VisualNodeKind.TreeNode,
+				},
+			},
+			metadata: {
+				"absolute-path": "/",
+				"sub-directories": 2,
+				"values": 3,
+			},
+			typeMetadata: "SharedDirectory",
+			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
 		expect(result).to.deep.equal(expected);
