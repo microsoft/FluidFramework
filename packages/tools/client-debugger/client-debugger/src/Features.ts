@@ -10,7 +10,7 @@
  */
 export enum DevtoolsFeature {
 	/**
-	 * Indicates that the debugger is capable of providing Fluid telemetry logs.
+	 * Indicates that the {@link FluidDevtools} instance is capable of providing Fluid telemetry logs.
 	 */
 	Telemetry = "telemetry",
 }
