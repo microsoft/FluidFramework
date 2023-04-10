@@ -8,14 +8,13 @@ import { UsageError } from "@fluidframework/container-utils";
 import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
 import { IContainerDevtools } from "./IContainerDevtools";
 import {
-	ContainerListMessage,
+	ContainerList,
+	GetContainerList,
 	handleIncomingWindowMessage,
-	ISourcedDebuggerMessage,
 	InboundHandlers,
+	ISourcedDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
-	GetContainerListMessageType,
-	ContainerListMessageType,
 } from "./messaging";
 import { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 import { ContainerMetadata } from "./ContainerMetadata";
@@ -76,14 +75,14 @@ export interface FluidDevtoolsProps {
  *
  * **Messages it listens for:**
  *
- * - {@link GetContainerListMessage}: When received, {@link ContainerListMessage} will be posted in response.
+ * - {@link GetContainerList.Message}: When received, {@link ContainerList.Message} will be posted in response.
  *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
  *
- * - {@link ContainerListMessage}: Posted whenever the list of registered
- * containers changes, or when requested (via {@link GetContainerListMessage}).
+ * - {@link ContainerList.Message}: Posted whenever the list of registered Containers changes, or when requested
+ * (via {@link GetContainerList.Message}).
  *
  * TODO: Document others as they are added.
  *
@@ -110,7 +109,7 @@ export class FluidDevtools
 	 * Handlers for inbound messages specific to FluidDevTools.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
-		[GetContainerListMessageType]: () => {
+		[GetContainerList.MessageType]: () => {
 			this.postContainerList();
 			return true;
 		},
@@ -120,7 +119,7 @@ export class FluidDevtools
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		handleIncomingWindowMessage(
 			event,
@@ -130,7 +129,7 @@ export class FluidDevtools
 	};
 
 	/**
-	 * Posts a {@link ContainerListMessage} to the window (globalThis).
+	 * Posts a {@link ContainerList.Message} to the window (globalThis).
 	 */
 	private readonly postContainerList = (): void => {
 		const containers: ContainerMetadata[] = this.getAllContainerDevtools().map(
@@ -140,12 +139,12 @@ export class FluidDevtools
 			}),
 		);
 
-		postMessagesToWindow<ContainerListMessage>(devtoolsMessageLoggingOptions, {
-			type: ContainerListMessageType,
-			data: {
+		postMessagesToWindow(
+			devtoolsMessageLoggingOptions,
+			ContainerList.createMessage({
 				containers,
-			},
-		});
+			}),
+		);
 	};
 
 	// #endregion

@@ -5,15 +5,13 @@
 import React from "react";
 
 import {
-	ContainerListMessage,
-	ContainerListMessageType,
+	ContainerList,
 	ContainerMetadata,
-	GetContainerListMessage,
-	GetContainerListMessageType,
+	GetContainerList,
 	handleIncomingMessage,
 	IMessageRelay,
 	InboundHandlers,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 } from "@fluid-tools/client-debugger";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
@@ -31,10 +29,7 @@ initializeFluentUiIcons();
 /**
  * Message sent to the webpage to query for the full container list.
  */
-const getContainerListMessage: GetContainerListMessage = {
-	type: GetContainerListMessageType,
-	data: undefined,
-};
+const getContainerListMessage = GetContainerList.createMessage();
 
 /**
  * Indicates that the currently selected menu option is a particular Container.
@@ -88,8 +83,8 @@ export function FluidClientDebuggers(): React.ReactElement {
 		 * Handlers for inbound messages related to the registry.
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			[ContainerListMessageType]: (untypedMessage) => {
-				const message = untypedMessage as ContainerListMessage;
+			[ContainerList.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
 				return true;
 			},
@@ -98,7 +93,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
@@ -106,7 +101,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 
 		messageRelay.on("message", messageHandler);
 
-		messageRelay.postMessage<GetContainerListMessage>(getContainerListMessage);
+		messageRelay.postMessage(getContainerListMessage);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);

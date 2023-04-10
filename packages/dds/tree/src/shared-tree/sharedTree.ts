@@ -230,15 +230,8 @@ export interface ISharedTreeFork extends ISharedTreeView {
 	 * Apply all the changes on this view to the base view from which it was forked.
 	 * If the base view has new changes since this view last pulled (or was forked),
 	 * then this view's changes will be rebased over those first.
-	 * After the merge completes, this view may no longer be forked or mutated.
 	 */
 	merge(): void;
-
-	/**
-	 * Whether or not this view has been merged into its base view via `merge()`.
-	 * If it has, then it may no longer be forked or mutated.
-	 */
-	isMerged(): boolean;
 }
 
 /**
@@ -491,10 +484,6 @@ export class SharedTreeFork implements ISharedTreeFork {
 
 	public merge(): void {
 		this.branch.merge();
-	}
-
-	public isMerged(): boolean {
-		return this.branch.isMerged();
 	}
 
 	public get root(): UnwrappedEditableField {
