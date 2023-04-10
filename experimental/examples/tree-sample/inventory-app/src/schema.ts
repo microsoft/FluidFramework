@@ -30,6 +30,6 @@ export const schema = SchemaAware.typedSchemaData(
 
 export type Inventory = SchemaAware.NodeDataFor<
 	typeof schema,
-	SchemaAware.ApiMode.Normalized,
+	SchemaAware.ApiMode.Editable,
 	typeof inventorySchema
 >;

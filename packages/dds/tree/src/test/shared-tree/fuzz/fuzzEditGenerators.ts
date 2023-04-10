@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { promises as fs } from "fs";
 import { strict as assert } from "assert";
 import {
 	AsyncGenerator,
@@ -10,7 +11,9 @@ import {
 	createWeightedAsyncGenerator,
 	done,
 	IRandom,
+	asyncGeneratorFromArray,
 } from "@fluid-internal/stochastic-test-utils";
+import { safelyParseJSON } from "@fluidframework/common-utils";
 import { ISharedTree } from "../../../shared-tree";
 import { brand, fail } from "../../../util";
 import { ITestTreeProvider } from "../../utils";
@@ -49,10 +52,28 @@ export interface FuzzSetPayload {
 	value: number;
 }
 
-export type FuzzChange = FuzzInsert | FuzzDelete | FuzzSetPayload;
+export type FuzzChange =
+	| FuzzInsert
+	| FuzzDelete
+	| FuzzSetPayload
+	| TransactionStartOp
+	| TransactionAbortOp
+	| TransactionCommitOp;
 
 export interface Synchronize {
 	type: "synchronize";
+}
+
+export interface TransactionStartOp {
+	fuzzType: "transactionStart";
+}
+
+export interface TransactionCommitOp {
+	fuzzType: "transactionCommit";
+}
+
+export interface TransactionAbortOp {
+	fuzzType: "transactionAbort";
 }
 
 export interface FuzzTestState extends BaseFuzzTestState {
@@ -69,7 +90,26 @@ export interface NodeRangePath {
 	count: number;
 }
 
-export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> => {
+export interface EditGeneratorOpWeights {
+	insert?: number;
+	delete?: number;
+	setPayload?: number;
+	start?: number;
+	commit?: number;
+	abort?: number;
+}
+const defaultEditGeneratorOpWeights = {
+	insert: 5,
+	delete: 1,
+	setPayload: 1,
+	start: 3,
+	commit: 1,
+	abort: 1,
+};
+
+export const makeEditGenerator = (
+	opWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+): AsyncGenerator<Operation, FuzzTestState> => {
 	type EditState = FuzzTestState & TreeContext;
 	async function insertGenerator(state: EditState): Promise<FuzzInsert> {
 		const trees = state.testTreeProvider.trees;
@@ -115,19 +155,50 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 		};
 	}
 
+	async function transactionStartGenerator(state: EditState): Promise<TransactionStartOp> {
+		return {
+			fuzzType: "transactionStart",
+		};
+	}
+
+	async function transactionCommitGenerator(state: EditState): Promise<TransactionCommitOp> {
+		return {
+			fuzzType: "transactionCommit",
+		};
+	}
+
+	async function transactionAbortGenerator(state: EditState): Promise<TransactionAbortOp> {
+		return {
+			fuzzType: "transactionAbort",
+		};
+	}
+
 	const baseEditGenerator = createWeightedAsyncGenerator<FuzzChange, EditState>([
-		[insertGenerator, 5],
+		[insertGenerator, opWeights.insert ?? 0],
 		[
 			deleteGenerator,
-			1,
+			opWeights.delete ?? 0,
 			({ testTreeProvider, treeIndex }) =>
 				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
 		],
 		[
 			setPayloadGenerator,
-			1,
+			opWeights.setPayload ?? 0,
 			({ testTreeProvider, treeIndex }) =>
 				containsAtLeastOneNode(testTreeProvider.trees[treeIndex]),
+		],
+		[transactionStartGenerator, opWeights.start ?? 0],
+		[
+			transactionCommitGenerator,
+			opWeights.commit ?? 0,
+			({ testTreeProvider, treeIndex }) =>
+				transactionsInProgress(testTreeProvider.trees[treeIndex]),
+		],
+		[
+			transactionAbortGenerator,
+			opWeights.abort ?? 0,
+			({ testTreeProvider, treeIndex }) =>
+				transactionsInProgress(testTreeProvider.trees[treeIndex]),
 		],
 	]);
 
@@ -148,12 +219,22 @@ export const makeEditGenerator = (): AsyncGenerator<Operation, FuzzTestState> =>
 	};
 };
 
-export function makeOpGenerator(): AsyncGenerator<Operation, FuzzTestState> {
+export function makeOpGenerator(
+	editOpWeights: EditGeneratorOpWeights = defaultEditGeneratorOpWeights,
+): AsyncGenerator<Operation, FuzzTestState> {
 	const opWeights: AsyncWeights<Operation, FuzzTestState> = [
-		[makeEditGenerator(), 3],
+		[makeEditGenerator(editOpWeights), 3],
 		[{ type: "synchronize" }, 1],
 	];
 	return createWeightedAsyncGenerator(opWeights);
+}
+
+export async function makeOpGeneratorFromFilePath(
+	filepath: string,
+): Promise<AsyncGenerator<Operation, FuzzTestState>> {
+	const savedOperationsStr = await fs.readFile(filepath, "utf-8");
+	const operations: Operation[] = safelyParseJSON(savedOperationsStr) ?? [];
+	return asyncGeneratorFromArray(operations);
 }
 
 const moves = {
@@ -269,4 +350,8 @@ function containsAtLeastOneNode(tree: ISharedTree): boolean {
 	const firstNode = cursor.firstNode();
 	cursor.free();
 	return firstNode;
+}
+
+function transactionsInProgress(tree: ISharedTree) {
+	return tree.transaction.inProgress();
 }
