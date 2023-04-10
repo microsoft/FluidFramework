@@ -1052,10 +1052,6 @@ export class ContainerRuntime
 		);
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(this.logger, "ContainerRuntime"));
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "ConfigEntries",
-			configEntries: JSON.stringify(this.mc.config.getRawConfigEntries?.()),
-		});
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",

@@ -101,8 +101,6 @@ export interface IConfigProvider extends IConfigProviderBase {
 export interface IConfigProviderBase {
     // (undocumented)
     getRawConfig(name: string): ConfigTypes;
-    // (undocumented)
-    getRawConfigEntries?(): [string, string][];
 }
 
 // @public

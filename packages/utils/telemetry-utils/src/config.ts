@@ -4,6 +4,7 @@
  */
 import { ITelemetryBaseLogger, ITelemetryLogger } from "@fluidframework/common-definitions";
 import { Lazy } from "@fluidframework/common-utils";
+import { TelemetryDataTag } from "./logger";
 
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
@@ -12,7 +13,6 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
  */
 export interface IConfigProviderBase {
 	getRawConfig(name: string): ConfigTypes;
-	getRawConfigEntries?(): [string, string][];
 }
 
 /**
@@ -37,7 +37,6 @@ export const sessionStorageConfigProvider = new Lazy<IConfigProviderBase>(() =>
 
 const NullConfigProvider: IConfigProviderBase = {
 	getRawConfig: () => undefined,
-	getRawConfigEntries: () => [],
 };
 
 /**
@@ -49,26 +48,12 @@ const NullConfigProvider: IConfigProviderBase = {
  */
 export const inMemoryConfigProvider = (storage: Storage | undefined): IConfigProviderBase => {
 	if (storage !== undefined && storage !== null) {
-		return new CachedConfigProvider({
+		return new CachedConfigProvider(undefined, {
 			getRawConfig: (name: string) => {
 				try {
 					return stronglyTypedParse(storage.getItem(name) ?? undefined)?.raw;
 				} catch {}
 				return undefined;
-			},
-			getRawConfigEntries(): [string, string][] {
-				const configEntries: Map<string, string> = new Map();
-				for (let i = 0; i < storage.length; i++) {
-					const key = storage.key(i);
-					if (key !== undefined && key !== null && !configEntries.has(key)) {
-						const rawValue = storage.getItem(key);
-						if (rawValue === null) {
-							continue;
-						}
-						configEntries.set(key, rawValue);
-					}
-				}
-				return Array.from(configEntries.entries());
 			},
 		});
 	}
@@ -181,7 +166,10 @@ export class CachedConfigProvider implements IConfigProvider {
 	private readonly configCache = new Map<string, StronglyTypedValue>();
 	private readonly orderedBaseProviders: (IConfigProviderBase | undefined)[];
 
-	constructor(...orderedBaseProviders: (IConfigProviderBase | undefined)[]) {
+	constructor(
+		private readonly logger?: ITelemetryBaseLogger,
+		...orderedBaseProviders: (IConfigProviderBase | undefined)[]
+	) {
 		this.orderedBaseProviders = [];
 		const knownProviders = new Set<IConfigProviderBase>();
 		const candidateProviders = [...orderedBaseProviders];
@@ -224,24 +212,21 @@ export class CachedConfigProvider implements IConfigProvider {
 		return this.getCacheEntry(name)?.raw;
 	}
 
-	getRawConfigEntries(): [string, string][] {
-		const configEntriesRaw = new Map<string, string>();
-		for (const provider of this.orderedBaseProviders) {
-			provider?.getRawConfigEntries?.().forEach(([key, value]) => {
-				if (!configEntriesRaw.has(key)) {
-					configEntriesRaw.set(key, value);
-				}
-			});
-		}
-		return Array.from(configEntriesRaw.entries());
-	}
-
 	private getCacheEntry(name: string): StronglyTypedValue | undefined {
 		if (!this.configCache.has(name)) {
 			for (const provider of this.orderedBaseProviders) {
 				const parsed = stronglyTypedParse(provider?.getRawConfig(name));
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
+					this.logger?.send({
+						category: "error",
+						eventName: "ConfigRead",
+						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
+						configValue: {
+							tag: TelemetryDataTag.CodeArtifact,
+							value: JSON.stringify(parsed),
+						},
+					});
 					return parsed;
 				}
 			}
@@ -292,7 +277,7 @@ export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemet
 	 * of the MonitoringContext and get the config provider.
 	 */
 	const mc: L & Partial<MonitoringContext<L>> = logger;
-	mc.config = new CachedConfigProvider(...configs);
+	mc.config = new CachedConfigProvider(logger, ...configs);
 	mc.logger = logger;
 	return mc as MonitoringContext<L>;
 }
