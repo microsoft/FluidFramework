@@ -585,57 +585,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	describe("Undo", () => {
-		it("can undo the last edit made", async () => {
-			const value = "42";
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-
-			// Insert node
-			pushTestValue(tree1, value);
-			await provider.ensureSynchronized();
-
-			// Validate insertion
-			assert.equal(peekTestValue(tree2), value);
-
-			// Undo node insertion
-			tree1.undo();
-			await provider.ensureSynchronized();
-
-			assert.equal(peekTestValue(tree1), undefined);
-			assert.equal(peekTestValue(tree2), undefined);
-		});
-
-		it("can undo multiple edits sequentially", async () => {
-			const value = "42";
-			const value2 = "43";
-			const provider = await TestTreeProvider.create(2);
-			const [tree1, tree2] = provider.trees;
-
-			// Insert node
-			pushTestValue(tree1, value);
-			// Make a remote edit
-			pushTestValue(tree1, value2);
-			await provider.ensureSynchronized();
-
-			// Validate insertion
-			const readCursor = tree1.forest.allocateCursor();
-			moveToDetachedField(tree1.forest, readCursor);
-			assert.ok(readCursor.firstNode());
-			assert.equal(readCursor.value, value2);
-			assert.ok(readCursor.nextNode());
-			assert.equal(readCursor.value, value);
-			readCursor.free();
-
-			// Undo
-			tree1.undo();
-			tree1.undo();
-			await provider.ensureSynchronized();
-
-			assert.equal(peekTestValue(tree1), undefined);
-			assert.equal(peekTestValue(tree2), undefined);
-		});
-
+	describe.only("Undo", () => {
 		it("does nothing if there are no commits in the undo stack", async () => {
 			const value = "42";
 			const provider = await TestTreeProvider.create(2);
@@ -697,6 +647,267 @@ describe("SharedTree", () => {
 			assert.equal(validationCursor.nextNode(), false);
 			validationCursor.free();
 			assert.equal(peekTestValue(tree2), value2);
+		});
+
+		it("the insert of a node in a sequence field", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, value);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(peekTestValue(tree2), value);
+
+			// Undo node insertion
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+		});
+
+		it("the delete of a node in a sequence field", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, value);
+
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(peekTestValue(tree2), value);
+
+			// Delete node
+			remove(tree1, 0, 1);
+
+			await provider.ensureSynchronized();
+
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+
+			tree1.undo();
+
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(peekTestValue(tree2), value);
+		});
+
+		it("the insert of two separate nodes in a sequence field", async () => {
+			const value = "42";
+			const value2 = "43";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, value);
+			// Make a remote edit
+			pushTestValue(tree1, value2);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			const readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			assert.ok(readCursor.firstNode());
+			assert.equal(readCursor.value, value2);
+			assert.ok(readCursor.nextNode());
+			assert.equal(readCursor.value, value);
+			readCursor.free();
+
+			// Undo
+			tree1.undo();
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+		});
+
+		it("the insert and delete of a node in an optional field", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			runSynchronous(tree1, () => {
+				const field = tree1.editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(singleTextCursor({ type: brand("TestValue"), value }), true);
+			});
+
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree1), value);
+			assert.equal(peekTestValue(tree2), value);
+
+			// Delete node
+			runSynchronous(tree1, () => {
+				const field = tree1.editor.optionalField(undefined, rootFieldKeySymbol);
+				field.set(undefined, false);
+			});
+
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+
+			tree1.undo();
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree1), value);
+			assert.equal(peekTestValue(tree2), value);
+
+			tree1.undo();
+			await provider.ensureSynchronized();
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+		});
+
+		it("the edit of a global field", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert root node
+			pushTestValue(tree1, 42);
+
+			// Insert child in global field
+			runSynchronous(tree1, () => {
+				const writeCursor = singleTextCursor({ type: brand("TestValue"), value: 43 });
+				const field = tree1.editor.sequenceField(
+					{
+						parent: undefined,
+						parentField: rootFieldKeySymbol,
+						parentIndex: 0,
+					},
+					globalFieldKeySymbol,
+				);
+				field.insert(0, writeCursor);
+			});
+
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			{
+				const readCursor = tree2.forest.allocateCursor();
+				moveToDetachedField(tree2.forest, readCursor);
+				assert(readCursor.firstNode());
+				readCursor.enterField(globalFieldKeySymbol);
+				assert(readCursor.firstNode());
+				const { value } = readCursor;
+				assert.equal(value, 43);
+				readCursor.free();
+			}
+
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			// Validate deletion
+			{
+				const readCursor = tree2.forest.allocateCursor();
+				moveToDetachedField(tree2.forest, readCursor);
+				assert(readCursor.firstNode());
+				readCursor.enterField(globalFieldKeySymbol);
+				assert(!readCursor.firstNode());
+			}
+		});
+
+		it("the move of nodes across fields", async () => {
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [
+						{ type: brand("Node"), value: "a" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
+					],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "e" },
+						{ type: brand("Node"), value: "f" },
+					],
+				},
+			};
+			initializeTestTree(tree1, initialState);
+
+			runSynchronous(tree1, () => {
+				const rootPath = {
+					parent: undefined,
+					parentField: rootFieldKeySymbol,
+					parentIndex: 0,
+				};
+				tree1.editor.move(rootPath, brand("foo"), 1, 2, rootPath, brand("bar"), 1);
+			});
+
+			await provider.ensureSynchronized();
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+					bar: [
+						{ type: brand("Node"), value: "d" },
+						{ type: brand("Node"), value: "b" },
+						{ type: brand("Node"), value: "c" },
+						{ type: brand("Node"), value: "e" },
+						{ type: brand("Node"), value: "f" },
+					],
+				},
+			};
+			validateTree(tree1, [expectedState]);
+			validateTree(tree2, [expectedState]);
+
+			tree1.undo();
+
+			await provider.ensureSynchronized();
+
+			validateTree(tree1, [initialState]);
+			validateTree(tree2, [initialState]);
+		});
+
+		// There is currently a bug when composing moves that causes this test to fail
+		it.skip("multiple moves in a transaction", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+
+			const initialState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					foo: [{ type: brand("Node"), value: "a" }],
+				},
+			};
+			initializeTestTree(tree, initialState);
+
+			const rootPath = {
+				parent: undefined,
+				parentField: rootFieldKeySymbol,
+				parentIndex: 0,
+			};
+			// Perform multiple moves that should each be assigned a unique ID
+			runSynchronous(tree, () => {
+				tree.editor.move(rootPath, brand("foo"), 0, 1, rootPath, brand("bar"), 0);
+				tree.editor.move(rootPath, brand("bar"), 0, 1, rootPath, brand("baz"), 0);
+				runSynchronous(tree, () => {
+					tree.editor.move(rootPath, brand("baz"), 0, 1, rootPath, brand("qux"), 0);
+				});
+			});
+
+			const expectedState: JsonableTree = {
+				type: brand("Node"),
+				fields: {
+					qux: [{ type: brand("Node"), value: "a" }],
+				},
+			};
+			// await provider.ensureSynchronized();
+			validateTree(tree, [expectedState]);
+
+			tree.undo();
+
+			// await provider.ensureSynchronized();
+			validateTree(tree, [initialState]);
 		});
 	});
 

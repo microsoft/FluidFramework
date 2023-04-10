@@ -204,6 +204,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	private submitCommit(commit: Commit<TChange>): void {
+		// Nested transactions are tracked as part of the outermost transaction
+		if (this.transactions.size === 0) {
+			this.undoRedoManager.trackCommit(commit);
+		}
+
 		// Edits submitted before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
 		// Until this attach workflow happens, this instance essentially behaves as a centralized data structure.
@@ -218,7 +223,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			changeset: this.changeFamily.encoder.encodeForJson(formatVersion, commit.change),
 		};
 		this.submitLocalMessage(message);
-		this.undoRedoManager.trackCommit(commit);
 	}
 
 	/**
@@ -234,11 +238,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			revision: revision ?? mintRevisionTag(),
 			sessionId: this.editManager.localSessionId,
 		};
-		const delta = this.editManager.addLocalChange(commit.revision, change, false);
+		this.undoRedoManager.trackRepairData(
+			this.changeFamily.intoDelta(change),
+			this.transactions.size === 0 ? commit.revision : this.transactions.outerRevision,
+		);
 		this.transactions.repairStore?.capture(
 			this.changeFamily.intoDelta(change),
 			commit.revision,
 		);
+		const delta = this.editManager.addLocalChange(commit.revision, change, false);
 		if (this.transactions.size === 0) {
 			this.submitCommit(commit);
 		}
@@ -272,14 +280,18 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	public startTransaction(repairStore?: RepairDataStore): void {
-		this.transactions.push(this.editManager.getLocalBranchHead().revision, repairStore);
+		this.transactions.push(
+			this.editManager.getLocalBranchHead().revision,
+			mintRevisionTag(),
+			repairStore,
+		);
 		this.editor.enterTransaction();
 	}
 
 	public commitTransaction(): TransactionResult.Commit {
-		const { startRevision } = this.transactions.pop();
+		const { startRevision, revision } = this.transactions.pop();
 		this.editor.exitTransaction();
-		const squashCommit = this.editManager.squashLocalChanges(startRevision);
+		const squashCommit = this.editManager.squashLocalChanges(startRevision, revision);
 		this.submitCommit(squashCommit);
 		return TransactionResult.Commit;
 	}

@@ -4,8 +4,9 @@
  */
 
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
-import { GraphCommit, tagChange } from "../rebase";
+import { GraphCommit, RevisionTag, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
+import { Delta } from "../tree";
 
 /**
  * Needed functionality:
@@ -14,6 +15,7 @@ import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
  * 3. takes care of "committing" undo/redos
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
+	private pendingRepairData?: RepairDataStore;
 	protected pendingCommit?: UndoableCommitType;
 
 	/**
@@ -32,6 +34,19 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	) {}
 
 	/**
+	 * Used to capture repair data from changes within a transaction. The repair data will be
+	 * add to the same {@link RepairDataStore} until {@link UndoRedoManager.trackCommit} is called.
+	 * @param startRevision - the revision of the first commit in the transaction
+	 */
+	public trackRepairData(change: Delta.Root, startRevision: RevisionTag) {
+		if (this.pendingRepairData === undefined) {
+			this.pendingRepairData = this.repairDataStoryFactory();
+		}
+
+		this.pendingRepairData.capture(change, startRevision);
+	}
+
+	/**
 	 * Adds the provided commit to the undo commit tree. Also deals with commits created by calling {@link UndoRedoManager.undo}.
 	 */
 	public trackCommit(commit: GraphCommit<TChange>) {
@@ -42,8 +57,12 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		}
 
 		const parent = this.headUndoCommit;
-		const repairData = this.repairDataStoryFactory();
-		repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
+		const repairData = this.pendingRepairData ?? this.repairDataStoryFactory();
+		if (this.pendingRepairData === undefined) {
+			repairData.capture(this.changeFamily.intoDelta(commit.change), commit.revision);
+		} else {
+			this.pendingRepairData = undefined;
+		}
 		this.headUndoCommit = {
 			commit,
 			parent,

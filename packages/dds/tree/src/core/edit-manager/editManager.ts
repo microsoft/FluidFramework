@@ -308,7 +308,10 @@ export class EditManager<
 	 * an equivalent composition of changes.
 	 * @returns the new commit (which is now the head of the local branch)
 	 */
-	public squashLocalChanges(startRevision: RevisionTag): Commit<TChangeset> {
+	public squashLocalChanges(
+		startRevision: RevisionTag,
+		revision?: RevisionTag,
+	): Commit<TChangeset> {
 		const [squashStart, commits] = this.findLocalCommit(startRevision);
 		// Anonymize the commits from this transaction by stripping their revision tags.
 		// Otherwise, the change rebaser will record their tags and those tags no longer exist.
@@ -317,7 +320,7 @@ export class EditManager<
 		{
 			const change = this.changeFamily.rebaser.compose(anonymousCommits);
 			this.localBranch = mintCommit(squashStart, {
-				revision: mintRevisionTag(),
+				revision: revision ?? mintRevisionTag(),
 				sessionId: this.localSessionId,
 				change,
 			});
