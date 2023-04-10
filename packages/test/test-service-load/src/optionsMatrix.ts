@@ -96,7 +96,7 @@ export function generateRuntimeOptions(
 		enableOpReentryCheck: [true],
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
-		enableRuntimeIdCompressor: [undefined],
+		enableRuntimeIdCompressor: [undefined, true],
 		enableGroupedBatching: [true, false],
 	};
 

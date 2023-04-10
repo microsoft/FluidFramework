@@ -1754,6 +1754,15 @@ export class ContainerRuntime
 		this.updateDocumentDirtyState(newState);
 	}
 
+	/**
+	 * Updates the runtime's IdCompressor with the stashed state present in the given op. This is a bit of a
+	 * hack and is unnecessarily expensive. As it stands, every locally stashed op (all ops that get stored in
+	 * the PendingStateManager) will store their serialized representation locally until ack'd. Upon receiving
+	 * this stashed state, the IdCompressor blindly deserializes to the stashed state and assumes the session.
+	 * Technically only the last stashed state is needed to do this correctly, but we would have to write some
+	 * more hacky code to modify the batch before it gets sent out.
+	 * @param content - An IdAllocationOp with "stashedState", which is a representation of un-ack'd local state.
+	 */
 	private async applyStashedIdAllocationOp(content: any) {
 		this.idCompressor = IdCompressor.deserialize(content.stashedState);
 		delete content.stashedState;
@@ -2976,6 +2985,11 @@ export class ContainerRuntime
 				type === ContainerMessageType.Attach &&
 				this.disableAttachReorder !== true
 			) {
+				// Generate an Id allocation op if compressed Ids have been generated
+				if (idAllocationBatchMessage !== undefined) {
+					this.outbox.submit(idAllocationBatchMessage);
+				}
+
 				this.outbox.submitAttach(message);
 			} else {
 				// Generate an Id allocation op if compressed Ids have been generated
