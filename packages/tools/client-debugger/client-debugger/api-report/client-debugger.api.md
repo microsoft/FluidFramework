@@ -235,7 +235,7 @@ export namespace DisconnectContainer {
 
 // @public @sealed
 export class FluidDebuggerLogger extends TelemetryLogger {
-    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
+    static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): FluidDebuggerLogger;
     static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     send(event: ITelemetryBaseEvent): void;
 }

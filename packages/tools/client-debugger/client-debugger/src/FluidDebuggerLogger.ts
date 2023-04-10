@@ -98,7 +98,7 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	public static create(
 		namespace?: string,
 		properties?: ITelemetryLoggerPropertyBags,
-	): TelemetryLogger {
+	): FluidDebuggerLogger {
 		return new FluidDebuggerLogger(namespace, properties);
 	}
 
