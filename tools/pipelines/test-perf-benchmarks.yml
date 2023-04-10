@@ -546,7 +546,7 @@ stages:
             FLUID_ENDPOINTNAME: "local"
 
         - task: Bash@3
-          displayName: Remove Output Folders before ODSP run
+          displayName: Remove Output Folders from local server run
           inputs:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
@@ -659,12 +659,12 @@ stages:
               echo "FLUID_BUILD_ID $(Build.BuildId)"
 
               # Run execution time tests
-              echo "FLUID_ENDPOINTNAME = frs"
+              echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
               npm run test:benchmark:report:frs;
               executionTimeTestsExitCodeFrs=$?;
 
               # Run memory tests
-              echo "FLUID_ENDPOINTNAME = frs"
+              echo "FLUID_ENDPOINTNAME = $FLUID_ENDPOINTNAME"
               npm run test:memory-profiling:report:frs;
               memoryTestsExitCodeFrs=$?;
 
