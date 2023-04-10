@@ -219,7 +219,7 @@ export class CachedConfigProvider implements IConfigProvider {
 				if (parsed !== undefined) {
 					this.configCache.set(name, parsed);
 					this.logger?.send({
-						category: "error",
+						category: "generic",
 						eventName: "ConfigRead",
 						configName: { tag: TelemetryDataTag.CodeArtifact, value: name },
 						configValue: {
