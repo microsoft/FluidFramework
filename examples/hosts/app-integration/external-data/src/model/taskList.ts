@@ -556,6 +556,10 @@ export class BaseDocument extends DataObject implements IBaseDocument {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			this.taskListCollection.set(id, taskListResolved);
 		}
+		this.root.on("valueChanged", (changed) => {
+			const newLeader: string | undefined = this.root.get(changed.key);
+			this.emit("leaderChanged", newLeader);
+		});
 	}
 }
 

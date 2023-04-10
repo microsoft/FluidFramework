@@ -9,8 +9,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { ExternalSnapshotTask, IAppModel, ITask, ITaskList } from "../model-interface";
 
 interface ITaskRowProps {
-	readonly leader: string | undefined
-	readonly model: IAppModel;
+	readonly leader: string | undefined;
+	readonly clientID: string | undefined;
 	readonly task: ITask;
 	readonly deleteDraftTask: () => void;
 }
@@ -19,7 +19,7 @@ interface ITaskRowProps {
  * The view for a single task in the TaskListView, as a table row.
  */
 const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
-	const { task, deleteDraftTask, model, leader } = props;
+	const { task, deleteDraftTask, clientID, leader } = props;
 	const priorityRef = useRef<HTMLInputElement>(null);
 	const [externalDataSnapshot, setExternalDataSnapshot] = useState<ExternalSnapshotTask>(
 		task.externalDataSnapshot,
@@ -42,7 +42,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			task.off("draftPriorityChanged", updatePriorityFromFluid);
 			task.off("changesAvailable", updateExternalSnapshotData);
 		};
-	}, [task, priorityRef, model, leader]);
+	}, [task, priorityRef, leader]);
 
 	const inputHandler = (e: React.FormEvent): void => {
 		const newValue = Number.parseInt((e.target as HTMLInputElement).value, 10);
@@ -76,7 +76,7 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 	}
 
 	return (
-		<tr style={{margin: 0}}>
+		<tr style={{ margin: 0 }}>
 			<td>{task.id}</td>
 			<td>
 				<CollaborativeInput
@@ -99,19 +99,23 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 			</td>
 			{showNameDiff ? (
 				<td style={{ backgroundColor: diffColor }}>{externalDataSnapshot.name}</td>
-			) : <td/>}
+			) : (
+				<td />
+			)}
 			{showPriorityDiff ? (
 				<td style={{ backgroundColor: diffColor, width: "30px" }}>
 					{externalDataSnapshot.priority}
 				</td>
-			): <td/>}
+			) : (
+				<td />
+			)}
 			<td>
 				<div style={{ visibility: showAcceptButton }}>
-				{model.getClientID() !== undefined && model.getClientID() ===  model.baseDocument.getLeader()? (
-					<button onClick={task.overwriteWithExternalData}>Accept change</button>
-				) : (
-					<h4 style={{margin: 0}}>Changes in progress</h4>
-				)}
+					{clientID !== undefined && clientID === leader ? (
+						<button onClick={task.overwriteWithExternalData}>Accept change</button>
+					) : (
+						<h4 style={{ margin: 0 }}>Changes in progress</h4>
+					)}
 				</div>
 			</td>
 		</tr>
@@ -124,16 +128,17 @@ const TaskRow: React.FC<ITaskRowProps> = (props: ITaskRowProps) => {
 export interface ITaskListViewProps {
 	readonly taskList: ITaskList;
 	readonly model: IAppModel;
+	readonly clientID: string | undefined;
+	readonly leaderID: string | undefined;
 }
 
 /**
  * A tabular, editable view of the task list.  Includes a save button to sync the changes back to the data source.
  */
 export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewProps) => {
-	const { taskList, model } = props;
+	const { taskList, model, clientID, leaderID } = props;
 
 	const [tasks, setTasks] = useState<ITask[]>(taskList.getDraftTasks());
-	const [leader, setLeader ] = useState(model.baseDocument.getLeader());
 	const [lastSaved, setLastSaved] = useState<number | undefined>();
 	const [failedUpdate, setFailedUpdate] = useState(false);
 	const handleSaveChanges = useCallback(() => {
@@ -152,9 +157,8 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 	/**
 	 * Set the current client to be the leader of the Fluid document.
 	 */
-	const setLeaderShip = ():void => {
+	const setLeaderShip = (): void => {
 		model.handleClaimLeadership();
-		setLeader(model.getClientID());
 	};
 
 	useEffect(() => {
@@ -168,12 +172,12 @@ export const TaskListView: React.FC<ITaskListViewProps> = (props: ITaskListViewP
 			taskList.off("draftTaskAdded", updateTasks);
 			taskList.off("draftTaskDeleted", updateTasks);
 		};
-	}, [taskList, leader]);
+	}, [taskList, leaderID]);
 
 	const taskRows = tasks.map((task: ITask) => (
 		<TaskRow
-			leader={leader}
-			model={model}
+			leader={leaderID}
+			clientID={clientID}
 			key={task.id}
 			task={task}
 			deleteDraftTask={(): void => taskList.deleteDraftTask(task.id)}

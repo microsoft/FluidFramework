@@ -179,6 +179,11 @@ export interface IBaseDocumentEvents extends IEvent {
 	 * Emitted when task list collection has changed.
 	 */
 	(event: "taskListCollectionChanged", listener: () => void);
+
+	/**
+	 * Emitted when a client claims leadership.
+	 */
+	(event: "leaderChanged", listener: (newLeader) => void);
 }
 
 /**
@@ -199,20 +204,20 @@ export interface IBaseDocument extends IEventProvider<IBaseDocumentEvents> {
 	 * Add a task list with a specific id.
 	 */
 	readonly addTaskList: (props: IBaseDocumentInitialState) => void;
-	
+
 	/**
 	 * Get the task list with the specified ID.
 	 */
 	readonly getTaskList: (id: string) => ITaskList | undefined;
 
 	/**
-	 * Gets the client ID of the current leader 
+	 * Gets the client ID of the current leader
 	 */
 	readonly getLeader: () => string | undefined;
 
 	/**
 	 * Updates the shared leader property to be the cu
-	 * @param newLeader - the clientID of the user  
+	 * @param newLeader - the clientID of the user
 	 */
 	readonly setLeader: (newLeader: string) => void;
 }
