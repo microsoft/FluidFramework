@@ -10,21 +10,20 @@ This implementation demonstrates plugging that Container into a standalone appli
 [Tinylicious](/server/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
 bind to the data in the container.
 
-<!-- AUTO-GENERATED-CONTENT:START (GET_STARTED) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
-
-<!-- This section is automatically generated. To update it, make the appropriate changes to docs/md-magic.config.js or the embedded content, then run 'npm run build:md-magic' in the docs folder. -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
 ## Getting Started
 
 You can run this example using the following steps:
 
-1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
-1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
+1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `npm run build:fast -- --nolint @fluid-example/app-integration-external-controller`
-1. Run `npm start` from this directory (azure/packages/external-controller) and open <http://localhost:8080> in a web browser to see the app running.
+      `pnpm run build:fast --nolint @fluid-example/app-integration-external-controller`
+1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 
@@ -95,6 +94,17 @@ const connectionConfig: AzureConnectionConfig = useAzure
 In this way, we can toggle between remote and local mode using the same config format. We make use of
 `AzureFunctionTokenProvider` for running against live Azure Fluid Relay instance since it is more secured, without exposing the tenant
 secret key in the client-side code whereas while running the service locally for development purpose, we make use of `InsecureTokenProvider`.
+
+We can also run the `AzureClient` with the `InsecureTokenProvider` as follows:
+
+```typescript
+const connectionConfig: AzureConnectionConfig = {
+	type: "remote",
+	tenantId: "YOUR-TENANT-ID-HERE",
+	tokenProvider: new InsecureTokenProvider("YOUR-SECRET-HERE", user),
+	endpoint: "ENTER-DISCOVERY-ENDPOINT-URL-HERE",
+};
+```
 
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 

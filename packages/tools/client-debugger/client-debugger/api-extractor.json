@@ -11,9 +11,15 @@
 	},
 	"messages": {
 		"extractorMessageReporting": {
+			// Require explicit release tags
 			"ae-missing-release-tag": {
 				"logLevel": "error",
-				"addToApiReportFile": false
+				"addToApiReportFile": false // Fail build rather than adding warning comment to API report
+			},
+			// TODO: Remove once base config is fixed to correctly fail build on incompatible release tags
+			"ae-incompatible-release-tags": {
+				"logLevel": "error",
+				"addToApiReportFile": false // Fail build rather than adding warning comment to API report
 			}
 		}
 	}

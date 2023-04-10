@@ -375,3 +375,13 @@ export const UnreferencedState = {
 	SweepReady: "SweepReady",
 } as const;
 export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
+
+/**
+ * Represents the result of a GC run.
+ */
+export interface IGCResult {
+	/** The ids of nodes that are referenced in the referenced graph */
+	referencedNodeIds: string[];
+	/** The ids of nodes that are not-referenced or deleted in the referenced graph */
+	deletedNodeIds: string[];
+}

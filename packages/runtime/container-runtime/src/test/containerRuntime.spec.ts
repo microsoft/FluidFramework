@@ -117,11 +117,17 @@ describe("Runtime", () => {
 							updateDirtyContainerState: (_dirty: boolean) => {},
 							submitFn: (
 								_type: MessageType,
-								_contents: any,
+								contents: any,
 								_batch: boolean,
 								appData?: any,
 							) => {
-								submittedOpsMetdata.push(appData);
+								if (contents.type === "groupedBatch") {
+									for (const subMessage of contents.contents) {
+										submittedOpsMetdata.push(subMessage.metadata);
+									}
+								} else {
+									submittedOpsMetdata.push(appData);
+								}
 								return opFakeSequenceNumber++;
 							},
 							connected: true,
@@ -1078,15 +1084,15 @@ describe("Runtime", () => {
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
 				flushMode: FlushMode.TurnBased,
-				enableOfflineLoad: false,
 				compressionOptions: {
-					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					minimumBatchSizeInBytes: 614400,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
-				maxBatchSizeInBytes: 950 * 1024,
-				chunkSizeInBytes: Number.POSITIVE_INFINITY,
+				maxBatchSizeInBytes: 700 * 1024,
+				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: false,
 				enableOpReentryCheck: false,
+				enableGroupedBatching: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
 
@@ -1110,9 +1116,9 @@ describe("Runtime", () => {
 
 			it("Container load stats with feature gate overrides", async () => {
 				const featureGates = {
-					"Fluid.ContainerRuntime.DisableCompression": true,
+					"Fluid.ContainerRuntime.CompressionDisabled": true,
+					"Fluid.ContainerRuntime.CompressionChunkingDisabled": true,
 					"Fluid.ContainerRuntime.DisableOpReentryCheck": false,
-					"Fluid.ContainerRuntime.DisableCompressionChunking": true,
 				};
 				await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(featureGates) as IContainerContext,

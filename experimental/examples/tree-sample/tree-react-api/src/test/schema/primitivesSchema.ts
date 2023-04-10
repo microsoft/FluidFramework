@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { brand, namedTreeSchema, ValueSchema } from "@fluid-internal/tree";
+import { TypedSchema, ValueSchema } from "@fluid-internal/tree";
 
-export const numberSchema = namedTreeSchema({
-	name: brand("number"),
-	value: ValueSchema.Number,
-});
+export const numberSchema = TypedSchema.tree("number", { value: ValueSchema.Number });

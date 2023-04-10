@@ -88,7 +88,6 @@ export function generateRuntimeOptions(
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
-		enableOfflineLoad: [undefined],
 		flushMode: [undefined],
 		compressionOptions: [
 			{ minimumBatchSizeInBytes: 500, compressionAlgorithm: CompressionAlgorithms.lz4 },
@@ -98,6 +97,7 @@ export function generateRuntimeOptions(
 		// Compressed payloads exceeding this size will be chunked into messages of exactly this size
 		chunkSizeInBytes: [204800],
 		enableRuntimeIdCompressor: [undefined],
+		enableGroupedBatching: [true, false],
 	};
 
 	return generatePairwiseOptions<IContainerRuntimeOptions>(

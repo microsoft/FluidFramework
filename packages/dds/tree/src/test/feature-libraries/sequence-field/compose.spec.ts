@@ -11,7 +11,7 @@ import {
 	TreeSchemaIdentifier,
 	mintRevisionTag,
 } from "../../../core";
-import { RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
+import { ChangesetLocalId, RevisionInfo, SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { fakeTaggedRepair as fakeRepair } from "../../utils";
@@ -29,6 +29,8 @@ const revInfos: RevisionInfo[] = [
 	{ revision: tag3 },
 	{ revision: tag4 },
 ];
+
+const defaultInsertId: ChangesetLocalId = brand(0);
 
 describe("SequenceField - Compose", () => {
 	describe("associativity of triplets", () => {
@@ -85,8 +87,9 @@ describe("SequenceField - Compose", () => {
 				type: "Insert",
 				content: [{ type, value: 0 }],
 				changes: TestChange.mint([], 42),
+				id: brand(0),
 			},
-			{ type: "Insert", content: [{ type, value: 1 }] },
+			{ type: "Insert", content: [{ type, value: 1 }], id: brand(1) },
 		];
 		const actual = compose([makeAnonChange(insert), makeAnonChange(modify)]);
 		assert.deepEqual(actual, expected);
@@ -105,6 +108,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag1,
 				content: [{ type, value: 1 }],
 				changes: childChangeA,
+				id: defaultInsertId,
 			},
 		];
 		const modify = Change.modify(0, childChangeB);
@@ -114,6 +118,7 @@ describe("SequenceField - Compose", () => {
 				revision: tag1,
 				content: [{ type, value: 1 }],
 				changes: childChangeAB,
+				id: defaultInsertId,
 			},
 		];
 		const actual = compose([tagChange(insert, tag1), tagChange(modify, tag2)]);
@@ -221,10 +226,13 @@ describe("SequenceField - Compose", () => {
 		const expected: SF.Changeset = [
 			{
 				type: "Insert",
-				content: [
-					{ type, value: 1 },
-					{ type, value: 3 },
-				],
+				content: [{ type, value: 1 }],
+				id: brand(1),
+			},
+			{
+				type: "Insert",
+				content: [{ type, value: 3 }],
+				id: brand(3),
 			},
 		];
 		assert.deepEqual(actual, expected);
@@ -237,11 +245,18 @@ describe("SequenceField - Compose", () => {
 		const expected: SF.Changeset = [
 			{
 				type: "Insert",
-				content: [
-					{ type, value: 2 },
-					{ type, value: 1 },
-					{ type, value: 3 },
-				],
+				content: [{ type, value: 2 }],
+				id: brand(2),
+			},
+			{
+				type: "Insert",
+				content: [{ type, value: 1 }],
+				id: brand(1),
+			},
+			{
+				type: "Insert",
+				content: [{ type, value: 3 }],
+				id: brand(3),
 			},
 		];
 		assert.deepEqual(actual, expected);
@@ -256,6 +271,7 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 1 },
 					{ type, value: 2 },
 				],
+				id: brand(1),
 			},
 			{
 				type: "Insert",
@@ -264,6 +280,7 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 3 },
 					{ type, value: 4 },
 				],
+				id: brand(3),
 			},
 			{
 				type: "Insert",
@@ -272,6 +289,7 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 5 },
 					{ type, value: 6 },
 				],
+				id: brand(5),
 			},
 		];
 		const deletion = Change.delete(1, 4);
@@ -280,10 +298,14 @@ describe("SequenceField - Compose", () => {
 			{
 				type: "Insert",
 				revision: tag1,
-				content: [
-					{ type, value: 1 },
-					{ type, value: 6 },
-				],
+				content: [{ type, value: 1 }],
+				id: brand(1),
+			},
+			{
+				type: "Insert",
+				revision: tag1,
+				content: [{ type, value: 6 }],
+				id: brand(6),
 			},
 		];
 		assert.deepEqual(actual, expected);
@@ -298,6 +320,7 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 1 },
 					{ type, value: 2 },
 				],
+				id: brand(1),
 			},
 			{
 				type: "Insert",
@@ -306,6 +329,7 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 3 },
 					{ type, value: 4 },
 				],
+				id: brand(3),
 			},
 			{
 				type: "Insert",
@@ -314,15 +338,18 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 5 },
 					{ type, value: 6 },
 				],
+				id: brand(5),
 			},
 		];
 		const move = Change.move(1, 4, 0);
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)], revInfos);
+
 		const expected: SF.Changeset = [
 			{
 				type: "Insert",
 				revision: tag1,
 				content: [{ type, value: 2 }],
+				id: brand(2),
 			},
 			{
 				type: "Insert",
@@ -331,15 +358,25 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 3 },
 					{ type, value: 4 },
 				],
+				id: brand(3),
 			},
 			{
 				type: "Insert",
 				revision: tag1,
-				content: [
-					{ type, value: 5 },
-					{ type, value: 1 },
-					{ type, value: 6 },
-				],
+				content: [{ type, value: 5 }],
+				id: brand(5),
+			},
+			{
+				type: "Insert",
+				revision: tag1,
+				content: [{ type, value: 1 }],
+				id: brand(1),
+			},
+			{
+				type: "Insert",
+				revision: tag1,
+				content: [{ type, value: 6 }],
+				id: brand(6),
 			},
 		];
 		assert.deepEqual(actual, expected);
@@ -428,7 +465,7 @@ describe("SequenceField - Compose", () => {
 		const modify = Change.modify(0, { valueChange: { value: 1 } });
 		const insert = Change.insert(0, 1, 2);
 		const expected: SF.Changeset = [
-			{ type: "Insert", content: [{ type, value: 2 }] },
+			{ type: "Insert", content: [{ type, value: 2 }], id: brand(2) },
 			{
 				type: "Modify",
 				changes: { valueChange: { value: 1 } },
@@ -443,7 +480,7 @@ describe("SequenceField - Compose", () => {
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected: SF.Changeset = [
-			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }] },
+			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
 			{ type: "Delete", revision: tag1, count: 3 },
 		];
 		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
@@ -455,7 +492,7 @@ describe("SequenceField - Compose", () => {
 		const insert = Change.insert(0, 1, 2);
 		// TODO: test with merge-right policy as well
 		const expected: SF.Changeset = [
-			{ type: "Insert", content: [{ type, value: 2 }] },
+			{ type: "Insert", content: [{ type, value: 2 }], id: brand(2) },
 			{
 				type: "Revive",
 				content: fakeRepair(tag1, 0, 5),
@@ -470,7 +507,7 @@ describe("SequenceField - Compose", () => {
 
 	it("insert ○ insert", () => {
 		const insertA: SF.Changeset = [
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }] },
+			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
 			2,
 			{
 				type: "Insert",
@@ -479,21 +516,23 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 2 },
 					{ type, value: 3 },
 				],
+				id: brand(2),
 			},
 		];
+
 		const insertB: SF.Changeset = [
-			{ type: "Insert", revision: tag3, content: [{ type, value: 3 }] },
+			{ type: "Insert", revision: tag3, content: [{ type, value: 4 }], id: brand(4) },
 			4,
-			{ type: "Insert", revision: tag4, content: [{ type, value: 4 }] },
+			{ type: "Insert", revision: tag4, content: [{ type, value: 5 }], id: brand(5) },
 		];
 		const actual = shallowCompose([makeAnonChange(insertA), makeAnonChange(insertB)], revInfos);
 		const expected: SF.Changeset = [
-			{ type: "Insert", revision: tag3, content: [{ type, value: 3 }] },
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }] },
+			{ type: "Insert", revision: tag3, content: [{ type, value: 4 }], id: brand(4) },
+			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
 			2,
-			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }] },
-			{ type: "Insert", revision: tag4, content: [{ type, value: 4 }] },
-			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }] },
+			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
+			{ type: "Insert", revision: tag4, content: [{ type, value: 5 }], id: brand(5) },
+			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -724,7 +763,7 @@ describe("SequenceField - Compose", () => {
 
 	it("insert ○ revive", () => {
 		const insert: SF.Changeset = [
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }] },
+			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
 			2,
 			{
 				type: "Insert",
@@ -733,6 +772,7 @@ describe("SequenceField - Compose", () => {
 					{ type, value: 2 },
 					{ type, value: 3 },
 				],
+				id: brand(2),
 			},
 		];
 		const revive: SF.Changeset = [
@@ -764,9 +804,9 @@ describe("SequenceField - Compose", () => {
 				detachedBy: tag1,
 				detachIndex: 0,
 			},
-			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }] },
+			{ type: "Insert", revision: tag1, content: [{ type, value: 1 }], id: brand(1) },
 			2,
-			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }] },
+			{ type: "Insert", revision: tag2, content: [{ type, value: 2 }], id: brand(2) },
 			{
 				type: "Revive",
 				revision: tag4,
@@ -775,7 +815,7 @@ describe("SequenceField - Compose", () => {
 				detachedBy: tag1,
 				detachIndex: 0,
 			},
-			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }] },
+			{ type: "Insert", revision: tag2, content: [{ type, value: 3 }], id: brand(3) },
 		];
 		assert.deepEqual(actual, expected);
 	});

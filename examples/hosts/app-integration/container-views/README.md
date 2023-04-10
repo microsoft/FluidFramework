@@ -13,12 +13,12 @@ This implementation demonstrates plugging the container into a standalone applic
 
 You can run this example using the following steps:
 
-1. Install [pnpm](https://pnpm.io/) by running `npm i -g pnpm`.
-1. Run `pnpm install` and `npm run build:fast -- --nolint` from the `FluidFramework` root directory.
+1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
+1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `npm run build:fast -- --nolint @fluid-example/app-integration-container-views`
+      `pnpm run build:fast --nolint @fluid-example/app-integration-container-views`
 1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious).
-1. Run `npm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
+1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
 
