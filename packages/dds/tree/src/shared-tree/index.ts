@@ -4,6 +4,8 @@
  */
 
 export {
+	identifierKey,
+	identifierKeySymbol,
 	ISharedTree,
 	ISharedTreeView,
 	ISharedTreeFork,
@@ -12,4 +14,4 @@ export {
 	ViewEvents,
 } from "./sharedTree";
 
-export { SchematizeConfiguration, schematizeView } from "./schematizedTree";
+export { SchematizeConfiguration } from "./schematizedTree";

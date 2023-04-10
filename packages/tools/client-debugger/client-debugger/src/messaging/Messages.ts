@@ -8,16 +8,16 @@
  *
  * @public
  */
-export interface IDebuggerMessage<TData = unknown> {
+export interface IDevtoolsMessage<TData = unknown> {
 	/**
 	 * The type of message being sent.
-	 * Informs the action that needs to be taken, and the form that the {@link IDebuggerMessage.data} will take.
+	 * Informs the action that needs to be taken, and the form that the {@link IDevtoolsMessage.data} will take.
 	 */
 	type: string;
 
 	/**
 	 * Message payload.
-	 * The type of data is informed by the {@link IDebuggerMessage."type"}.
+	 * The type of data is informed by the {@link IDevtoolsMessage."type"}.
 	 */
 	data: TData;
 }
@@ -27,7 +27,7 @@ export interface IDebuggerMessage<TData = unknown> {
  *
  * @public
  */
-export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessage<TData> {
+export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
 	/**
 	 * Identifies the source of the message.
 	 * Can be used to filter the messages being listened to / accepted.
@@ -35,7 +35,7 @@ export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessa
 	 *
 	 * @remarks
 	 *
-	 * All messages sent by this library will have the same `source`: {@link debuggerMessageSource}.
+	 * All messages sent by this library will have the same `source`: {@link devtoolsMessageSource}.
 	 * Listeners that only want to accept messages coming from this library can filter to those with
 	 * a matching source.
 	 *

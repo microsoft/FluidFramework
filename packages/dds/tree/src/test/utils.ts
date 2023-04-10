@@ -24,7 +24,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { ISummarizer } from "@fluidframework/container-runtime";
-import { ISharedTree, SharedTreeFactory } from "../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../shared-tree";
 import {
 	FieldKinds,
 	jsonableTreeFromCursor,
@@ -411,12 +411,12 @@ export const fakeTaggedRepair = createFakeRepair(
 	true,
 );
 
-export function validateTree(tree: ISharedTree, expected: JsonableTree[]): void {
+export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
 }
 
-export function toJsonableTree(tree: ISharedTree): JsonableTree[] {
+export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
@@ -447,7 +447,7 @@ const testSchema: SchemaData = {
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 export function initializeTestTree(
-	tree: ISharedTree,
+	tree: ISharedTreeView,
 	state: JsonableTree,
 	schema: SchemaData = testSchema,
 ): void {

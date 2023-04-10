@@ -18,6 +18,7 @@ import { PendingStateManager } from "../pendingStateManager";
 import { BatchManager, estimateSocketSize } from "./batchManager";
 import { BatchMessage, IBatch } from "./definitions";
 import { OpCompressor } from "./opCompressor";
+import { OpGroupingManager } from "./opGroupingManager";
 import { OpSplitter } from "./opSplitter";
 
 export interface IOutboxConfig {
@@ -35,6 +36,7 @@ export interface IOutboxParameters {
 	readonly compressor: OpCompressor;
 	readonly splitter: OpSplitter;
 	readonly logger: ITelemetryLogger;
+	readonly groupingManager: OpGroupingManager;
 }
 
 export class Outbox {
@@ -180,10 +182,12 @@ export class Outbox {
 			this.params.containerContext.submitBatchFn === undefined
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
-			return batch;
+			return this.params.groupingManager.groupBatch(batch);
 		}
 
-		const compressedBatch = this.params.compressor.compressBatch(batch);
+		const compressedBatch = this.params.groupingManager.groupBatch(
+			this.params.compressor.compressBatch(batch),
+		);
 
 		if (this.params.splitter.isBatchChunkingEnabled) {
 			return compressedBatch.contentSizeInBytes <= this.params.splitter.chunkSizeInBytes

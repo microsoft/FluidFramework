@@ -13,9 +13,9 @@ import {
 	TaggedChange,
 	ITreeCursorSynchronous,
 	tagChange,
-	TreeSchemaIdentifier,
 	FieldSchema,
 	RevisionTag,
+	TreeTypeSet,
 } from "../core";
 import { brand, fail, JsonCompatible, JsonCompatibleReadOnly, Mutable } from "../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
@@ -57,10 +57,7 @@ function brandedFieldKind<
 	identifier: TName,
 	multiplicity: TMultiplicity,
 	changeHandler: FieldChangeHandler<any, TEditor>,
-	allowsTreeSupersetOf: (
-		originalTypes: ReadonlySet<TreeSchemaIdentifier> | undefined,
-		superset: FieldSchema,
-	) => boolean,
+	allowsTreeSupersetOf: (originalTypes: TreeTypeSet, superset: FieldSchema) => boolean,
 	handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 ): BrandedFieldKind<TName, TMultiplicity, TEditor> {
 	return new FieldKind<TEditor, TMultiplicity>(
