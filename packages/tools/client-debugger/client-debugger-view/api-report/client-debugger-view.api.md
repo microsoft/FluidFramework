@@ -5,9 +5,9 @@
 ```ts
 
 import { IClient } from '@fluidframework/protocol-definitions';
-import { IDebuggerMessage } from '@fluid-tools/client-debugger';
+import { IDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { IMessageRelay } from '@fluid-tools/client-debugger';
-import { ISourcedDebuggerMessage } from '@fluid-tools/client-debugger';
+import { ISourcedDevtoolsMessage } from '@fluid-tools/client-debugger';
 import { default as React_2 } from 'react';
 
 // @public
@@ -26,7 +26,7 @@ export interface AudienceMemberViewProps {
 export { IMessageRelay }
 
 // @public
-export const MessageRelayContext: React_2.Context<IMessageRelay<IDebuggerMessage<unknown>, ISourcedDebuggerMessage<unknown>> | undefined>;
+export const MessageRelayContext: React_2.Context<IMessageRelay<IDevtoolsMessage<unknown>, ISourcedDevtoolsMessage<unknown>> | undefined>;
 
 // @public
 export function RootView(props: RootViewProps): React_2.ReactElement;

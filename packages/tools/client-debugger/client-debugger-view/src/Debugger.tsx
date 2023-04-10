@@ -11,7 +11,7 @@ import {
 	handleIncomingMessage,
 	IMessageRelay,
 	InboundHandlers,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 } from "@fluid-tools/client-debugger";
 
 import { IStackItemStyles, IStackStyles, Stack } from "@fluentui/react";
@@ -93,7 +93,7 @@ export function FluidClientDebuggers(): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<ISourcedDebuggerMessage>): void {
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
