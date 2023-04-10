@@ -389,7 +389,8 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 
 // @alpha
 export interface EditableTreeEvents {
-    changing(): void;
+    changing(upPath: UpPath, value: Value): void;
+    subtreeChanging(upPath: UpPath): void;
 }
 
 // @alpha
@@ -770,7 +771,6 @@ export interface ISharedTree extends ISharedObject, ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeFork extends ISharedTreeView {
-    isMerged(): boolean;
     merge(): void;
     pull(): void;
 }

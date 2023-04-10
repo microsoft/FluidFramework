@@ -248,6 +248,7 @@ describe("Runtime", () => {
 						stopCall++;
 					},
 					mockRuntime as any as ISummarizerRuntime,
+					true /* listenToDeltaManagerOps */,
 				);
 			};
 

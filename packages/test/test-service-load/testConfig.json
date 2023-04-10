@@ -27,13 +27,15 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Container.summarizeProtocolTree2": [true, false]
+						"Fluid.Container.summarizeProtocolTree2": [true, false],
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
 				},
 				"odsp-odsp-df": {
 					"configurations": {
 						"Fluid.Driver.Odsp.snapshotFormatFetchType": [2],
-						"Fluid.Container.summarizeProtocolTree2": [true, false]
+						"Fluid.Container.summarizeProtocolTree2": [true, false],
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
 				}
 			},
@@ -85,7 +87,8 @@
 			"optionOverrides": {
 				"odsp": {
 					"configurations": {
-						"Fluid.Container.summarizeProtocolTree2": [true, false]
+						"Fluid.Container.summarizeProtocolTree2": [true, false],
+						"Fluid.ContainerRuntime.Test.SummarizationRecoveryMethod": ["restart", "default"]
 					}
 				}
 			}
