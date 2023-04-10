@@ -98,14 +98,14 @@ describe("DefaultVisualizers unit tests", () => {
 			SharedDirectory.getFactory().attributes,
 		);
 		sharedDirectory.set("foo", 37);
-		sharedDirectory.set("bar", true);
+		sharedDirectory.set("bar", false);
 		sharedDirectory.set("baz", {
 			a: "Hello",
 			b: "World",
+			c: undefined,
 		});
 
 		const subDirectoryA = sharedDirectory.createSubDirectory("a");
-		// eslint-disable-next-line unicorn/no-null
 		subDirectoryA.set("1", null);
 		const subDirectoryB = sharedDirectory.createSubDirectory("b");
 		const subDirectoryBC = subDirectoryB.createSubDirectory("c");
@@ -116,23 +116,87 @@ describe("DefaultVisualizers unit tests", () => {
 		const expected: FluidObjectTreeNode = {
 			fluidObjectId: sharedDirectory.id,
 			children: {
+				a: {
+					children: {
+						"1": {
+							value: null,
+							typeMetadata: "null",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					typeMetadata: "IDirectory",
+					metadata: {
+						"absolute-path": "/a",
+						"sub-directories": 0,
+						"values": 1,
+					},
+					nodeKind: VisualNodeKind.TreeNode,
+				},
+				b: {
+					children: {
+						c: {
+							children: {
+								"Meaning of life": {
+									value: 42,
+									typeMetadata: "number",
+									nodeKind: VisualNodeKind.ValueNode,
+								},
+							},
+							typeMetadata: "IDirectory",
+							metadata: {
+								"absolute-path": "/b/c",
+								"sub-directories": 0,
+								"values": 1,
+							},
+							nodeKind: VisualNodeKind.TreeNode,
+						},
+					},
+					typeMetadata: "IDirectory",
+					metadata: {
+						"absolute-path": "/b",
+						"sub-directories": 1,
+						"values": 0,
+					},
+					nodeKind: VisualNodeKind.TreeNode,
+				},
 				foo: {
-					value: "test",
+					value: 37,
+					typeMetadata: "number",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
 				bar: {
-					value: "test",
+					value: false,
+					typeMetadata: "boolean",
 					nodeKind: VisualNodeKind.ValueNode,
 				},
 				baz: {
-					value: "test",
-					nodeKind: VisualNodeKind.ValueNode,
+					children: {
+						a: {
+							value: "Hello",
+							typeMetadata: "string",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						b: {
+							value: "World",
+							typeMetadata: "string",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+						c: {
+							value: undefined,
+							typeMetadata: "undefined",
+							nodeKind: VisualNodeKind.ValueNode,
+						},
+					},
+					typeMetadata: "object",
+					nodeKind: VisualNodeKind.TreeNode,
 				},
 			},
 			metadata: {
-				size: 3,
+				"absolute-path": "/",
+				"sub-directories": 2,
+				"values": 3,
 			},
-			typeMetadata: "SharedMap",
+			typeMetadata: "SharedDirectory",
 			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
