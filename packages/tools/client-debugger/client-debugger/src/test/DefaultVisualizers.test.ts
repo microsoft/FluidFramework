@@ -7,7 +7,7 @@ import { expect } from "chai";
 
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
-import { SharedMap } from "@fluidframework/map";
+import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
@@ -24,6 +24,7 @@ import {
 	VisualNodeKind,
 	VisualValueNode,
 } from "../data-visualization";
+import { visualizeSharedDirectory } from "../data-visualization/DefaultVisualizers";
 
 /**
  * Mock {@link VisualizeChildData} for use in tests
@@ -73,6 +74,55 @@ describe("DefaultVisualizers unit tests", () => {
 			value: 37,
 			typeMetadata: "SharedCounter",
 			nodeKind: VisualNodeKind.FluidValueNode,
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
+	it("SharedDirectory", async () => {
+		const runtime = new MockFluidDataStoreRuntime();
+		const sharedDirectory = new SharedDirectory(
+			"test-directory",
+			runtime,
+			SharedDirectory.getFactory().attributes,
+		);
+		sharedDirectory.set("foo", 37);
+		sharedDirectory.set("bar", true);
+		sharedDirectory.set("baz", {
+			a: "Hello",
+			b: "World",
+		});
+
+		const subDirectoryA = sharedDirectory.createSubDirectory("a");
+		// eslint-disable-next-line unicorn/no-null
+		subDirectoryA.set("1", null);
+		const subDirectoryB = sharedDirectory.createSubDirectory("b");
+		const subDirectoryBC = subDirectoryB.createSubDirectory("c");
+		subDirectoryBC.set("Meaning of life", 42);
+
+		const result = await visualizeSharedDirectory(sharedDirectory, visualizeChildData);
+
+		const expected: FluidObjectTreeNode = {
+			fluidObjectId: sharedDirectory.id,
+			children: {
+				foo: {
+					value: "test",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+				bar: {
+					value: "test",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+				baz: {
+					value: "test",
+					nodeKind: VisualNodeKind.ValueNode,
+				},
+			},
+			metadata: {
+				size: 3,
+			},
+			typeMetadata: "SharedMap",
+			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
 
 		expect(result).to.deep.equal(expected);
