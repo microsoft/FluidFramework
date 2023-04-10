@@ -188,26 +188,6 @@ export function FluidClientDebuggers(): React.ReactElement {
 		};
 	}, [messageRelay, setSupportedFeatures, setContainers]);
 
-	let innerView: React.ReactElement;
-	switch (menuSelection?.type) {
-		case "telemetryMenuSelection":
-			innerView = <TelemetryView />;
-			break;
-		case "containerMenuSelection":
-			// eslint-disable-next-line no-case-declarations
-			const container = containers?.find((x) => x.id === menuSelection.containerId);
-			innerView =
-				container === undefined ? (
-					<div>Could not find a debugger for that container.</div>
-				) : (
-					<ContainerView containerId={menuSelection.containerId} />
-				);
-			break;
-		default:
-			innerView = <LandingView />;
-			break;
-	}
-
 	return (
 		<FluentProvider theme={getFluentUIThemeToUse()}>
 			<Stack enableScopedSelectors horizontal styles={stackStyles}>
@@ -217,16 +197,64 @@ export function FluidClientDebuggers(): React.ReactElement {
 					containers={containers}
 					supportedFeatures={supportedFeatures}
 				/>
-				<Stack.Item grow={5} styles={contentViewStyles}>
-					<div
-						id="debugger-view-content"
-						style={{ width: "100%", height: "100%", overflowY: "auto" }}
-					>
-						{innerView}
-					</div>
-				</Stack.Item>
+				<View menuSelection={menuSelection} containers={containers} />
 			</Stack>
 		</FluentProvider>
+	);
+}
+
+/**
+ * {@link View} input props.
+ */
+interface ViewProps {
+	/**
+	 * The current menu selection.
+	 *
+	 * @remarks `undefined` indicates that the landing page should be displayed.
+	 */
+	menuSelection?: MenuSelection;
+
+	/**
+	 * The list of Containers, if any are registered with the webpage's Devtools instance.
+	 */
+	containers?: ContainerMetadata[];
+}
+
+/**
+ * View body component used by {@link FluidClientDebuggers}.
+ */
+function View(props: ViewProps): React.ReactElement {
+	const { menuSelection, containers } = props;
+
+	let view: React.ReactElement;
+	switch (menuSelection?.type) {
+		case "telemetryMenuSelection":
+			view = <TelemetryView />;
+			break;
+		case "containerMenuSelection":
+			// eslint-disable-next-line no-case-declarations
+			const container = containers?.find((x) => x.id === menuSelection.containerId);
+			view =
+				container === undefined ? (
+					<div>Could not find a debugger for that container.</div>
+				) : (
+					<ContainerView containerId={menuSelection.containerId} />
+				);
+			break;
+		default:
+			view = <LandingView />;
+			break;
+	}
+
+	return (
+		<Stack.Item grow={5} styles={contentViewStyles}>
+			<div
+				id="debugger-view-content"
+				style={{ width: "100%", height: "100%", overflowY: "auto" }}
+			>
+				{view}
+			</div>
+		</Stack.Item>
 	);
 }
 
