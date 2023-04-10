@@ -2,11 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
 
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
-import { AggregationCursor, Collection, MongoClient, MongoClientOptions, OptionalUnlessRequiredId } from "mongodb";
+import { AggregationCursor, Collection, FindOneAndUpdateOptions, FindOptions, MongoClient, MongoClientOptions, OptionalUnlessRequiredId } from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -72,7 +71,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		return this.requestWithRetry(req, "MongoCollection.find", query);
 	}
 
-	public async findOne(query: object, options?: any): Promise<T> {
+	public async findOne(query: object, options?: FindOptions): Promise<T> {
 		const req: () => Promise<T> = async () => this.collection.findOne<T>(query, options);
 		return this.requestWithRetry(
 			req, // request
@@ -252,14 +251,17 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async findOrCreate(
 		query: any,
 		value: any,
+        options = {
+			returnOriginal: true,
+			upsert: true,
+		},
 	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
 				const result = await this.collection.findOneAndUpdate(
 					query,
 					{$setOnInsert: value},
-                    {upsert: true,
-                     returnDocument: "before"},
+                    options,
 				);
 
 				return result.value
@@ -280,13 +282,15 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async findAndUpdate(
 		query: any,
 		value: any,
+        options: FindOneAndUpdateOptions = {returnDocument: "before"},
 	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
+				// eslint-disable-next-line @typescript-eslint/await-thenable
 				const result = await this.collection.findOneAndUpdate(
 					query,
 					{$set: value},
-					{returnDocument: "before"},
+					options,
 				);
 
 				return result.value
