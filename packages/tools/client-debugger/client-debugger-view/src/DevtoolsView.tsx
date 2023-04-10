@@ -13,7 +13,6 @@ import {
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingMessage,
-	IMessageRelay,
 	InboundHandlers,
 	ISourcedDevtoolsMessage,
 } from "@fluid-tools/client-debugger";
@@ -140,14 +139,14 @@ const menuStyles: IStackItemStyles = {
  *
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
-export function FluidClientDebuggers(): React.ReactElement {
+export function DevtoolsView(): React.ReactElement {
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
 	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
 	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
-	const messageRelay: IMessageRelay = useMessageRelay();
+	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {
 		/**
@@ -221,7 +220,7 @@ interface ViewProps {
 }
 
 /**
- * View body component used by {@link FluidClientDebuggers}.
+ * View body component used by {@link DevtoolsView}.
  */
 function View(props: ViewProps): React.ReactElement {
 	const { menuSelection, containers } = props;
@@ -286,7 +285,7 @@ interface MenuProps {
 }
 
 /**
- * Menu component for {@link FluidClientDebuggers}.
+ * Menu component for {@link DevtoolsView}.
  */
 function Menu(props: MenuProps): React.ReactElement {
 	const { currentSelection, setSelection, supportedFeatures, containers } = props;
