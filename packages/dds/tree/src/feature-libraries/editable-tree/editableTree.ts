@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/common-utils";
 import {
 	Value,
 	Anchor,
@@ -29,11 +29,8 @@ import { singleMapTreeCursor } from "../mapTreeCursor";
 import {
 	getFieldKind,
 	getFieldSchema,
-	isPrimitiveValue,
-	assertPrimitiveValueType,
 	ContextuallyTypedNodeData,
 	applyFieldTypesFromContext,
-	getPossibleTypes,
 	typeNameSymbol,
 	valueSymbol,
 	allowsValue,
@@ -246,7 +243,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		}
 	}
 
-	public replaceField(fieldKey: FieldKey, newContent: ITreeCursor | ITreeCursor[]): void {
+	public replaceField(
+		fieldKey: FieldKey,
+		newContent: undefined | ITreeCursor | ITreeCursor[],
+	): void {
 		const fieldKind = this.lookupFieldKind(fieldKey);
 		const path = this.anchorNode;
 		switch (fieldKind.multiplicity) {
@@ -259,6 +259,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				break;
 			}
 			case Multiplicity.Sequence: {
+				assert(
+					Array.isArray(newContent),
+					"It is invalid to replace the sequence field with a non array value.",
+				);
 				const length = this.fieldLength(fieldKey);
 				/**
 				 * `replaceNodes` has different merge semantics than the `replaceField` would ideally offer:
@@ -274,6 +278,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 				assert(
 					!Array.isArray(newContent),
 					0x4ce /* It is invalid to replace the value field using the array data. */,
+				);
+				assert(
+					newContent !== undefined,
+					"It is invalid to replace a value field with undefined",
 				);
 				this.context.setValueField(path, fieldKey, newContent);
 				break;
@@ -306,15 +314,28 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
-		assert(eventName === "changing", 0x5b3 /* unexpected eventName */);
-		const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", () => listener());
-		const unsubscribeFromChildrenChange = this.anchorNode.on("childrenChanging", () =>
-			listener(),
-		);
-		return () => {
-			unsubscribeFromValueChange();
-			unsubscribeFromChildrenChange();
-		};
+		switch (eventName) {
+			case "changing": {
+				const unsubscribeFromValueChange = this.anchorNode.on("valueChanging", listener);
+				const unsubscribeFromChildrenChange = this.anchorNode.on(
+					"childrenChanging",
+					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+				);
+				return () => {
+					unsubscribeFromValueChange();
+					unsubscribeFromChildrenChange();
+				};
+			}
+			case "subtreeChanging": {
+				const unsubscribeFromSubtreeChange = this.anchorNode.on(
+					"subtreeChanging",
+					(anchorNode: AnchorNode) => listener(anchorNode, undefined),
+				);
+				return unsubscribeFromSubtreeChange;
+			}
+			default:
+				unreachableCase(eventName);
+		}
 	}
 }
 
@@ -366,24 +387,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			const fieldKey: FieldKey = brand(key);
 			const fieldSchema = target.getFieldSchema(fieldKey);
 			const multiplicity = target.lookupFieldKind(fieldKey).multiplicity;
-			if (target.has(fieldKey) && isPrimitiveValue(value)) {
-				assert(
-					multiplicity === Multiplicity.Value || multiplicity === Multiplicity.Optional,
-					0x4cf /* single value provided for an unsupported field */,
-				);
-				const possibleTypes = getPossibleTypes(
-					target.context.schema,
-					fieldSchema.types,
-					value,
-				);
-				if (possibleTypes.length > 1) {
-					const field = target.getField(fieldKey);
-					const node = field.getNode(0);
-					assertPrimitiveValueType(value, node[typeSymbol]);
-					node[valueSymbol] = value;
-					return true;
-				}
-			}
 			const content = applyFieldTypesFromContext(target.context.schema, fieldSchema, value);
 			const cursors = content.map(singleMapTreeCursor);
 			// This unconditionally uses `replaceField`, which differs from `createField`
@@ -393,13 +396,13 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 			// Since `insertNodes` and `replaceNodes` have same merge semantics with `replaceNodes`
 			// being a bit more general purpose function, it's ok to just use that.
 			if (multiplicity !== Multiplicity.Sequence) {
-				target.replaceField(fieldKey, cursors[0]);
+				assert(cursors.length <= 1, "more than one top level node in non-sequence filed");
+				target.replaceField(fieldKey, cursors.length === 0 ? undefined : cursors[0]);
 			} else {
 				target.replaceField(fieldKey, cursors);
 			}
 			return true;
-		}
-		if (key === valueSymbol) {
+		} else if (key === valueSymbol) {
 			target.value = value;
 			return true;
 		}

@@ -654,6 +654,82 @@ describe("Directory", () => {
 		});
 
 		describe("Op processing", () => {
+			it("Should lead to eventual consistency 1", async () => {
+				// Load a new SharedDirectory in connected state from the summarize of the first one.
+				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+				const containerRuntime2 =
+					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+				const services2 = MockSharedObjectServices.createFromSummary(
+					directory.getAttachSummary().summary,
+				);
+				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+
+				const directory2 = new SharedDirectory(
+					"directory2",
+					dataStoreRuntime2,
+					DirectoryFactory.Attributes,
+				);
+				await directory2.load(services2);
+
+				// Now connect the first SharedDirectory
+				dataStoreRuntime.local = false;
+				const containerRuntime1 =
+					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+				const services1 = {
+					deltaConnection: containerRuntime1.createDeltaConnection(),
+					objectStorage: new MockStorage(undefined),
+				};
+				directory.connect(services1);
+
+				// Create a sub direcotry in a sub directory and queue up keys to be set in it
+				const someParentDir1 = directory.createSubDirectory("lists");
+
+				const subdir1 = someParentDir1.createSubDirectory("ListLevels-0");
+				subdir1.set("random1", 1);
+				subdir1.set("random2", 2);
+
+				// Let everything get stamped and round-trip back to us
+				containerRuntimeFactory.processAllMessages();
+
+				// Now, let's be tricky. Let's set one of the keys again...
+				const dir1 = directory.getSubDirectory("lists");
+				const subdirDir11 = dir1?.getSubDirectory("ListLevels-0");
+				subdirDir11?.set("random1", 3);
+
+				// ... then delete the sub directory and its parent, create a new sub directory
+				// and parent with the exact same paths. We need to set at least one of the same
+				// keys as we had unacked in the old sub directory instance. In this case, we only
+				// need to set one of the keys.
+				directory.getSubDirectory("lists")?.deleteSubDirectory("ListLevels-0");
+				directory.deleteSubDirectory("lists");
+
+				const someParentDir2 = directory.createSubDirectory("lists");
+				const subdir2 = someParentDir2.createSubDirectory("ListLevels-0");
+				subdir2.set("random1", 4);
+
+				// Let everything get stamped and round-trip back to us
+				containerRuntimeFactory.processAllMessages();
+				const testSubDir1 = directory
+					.getSubDirectory("lists")
+					?.getSubDirectory("ListLevels-0");
+				const testSubDir2 = directory2
+					.getSubDirectory("lists")
+					?.getSubDirectory("ListLevels-0");
+				assert(testSubDir1 !== undefined, "second level subdir should exists in dir1");
+				assert(testSubDir2 !== undefined, "second level subdir should exists in dir2");
+				assert(testSubDir1.get("random1") === 4, "value should be correct in dir1");
+				assert(testSubDir2.get("random1") === 4, "value should be correct in dir2");
+				assert(
+					testSubDir1.get("random2") === undefined,
+					"value should be correct in dir1 for key2",
+				);
+				assert(
+					testSubDir2.get("random2") === undefined,
+					"value should be correct in dir2 for key2",
+				);
+			});
+
 			/**
 			 * These tests test the scenario found in the following bug:
 			 * {@link https://github.com/microsoft/FluidFramework/issues/2400}.
@@ -1108,7 +1184,7 @@ describe("Directory", () => {
 				);
 			});
 
-			it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+			it("Directories should ensure eventual consistency using LWW approach 1: Test 1", async () => {
 				const root1SubDir = directory1.createSubDirectory("testSubDir");
 				root1SubDir.set("key1", "testValue1");
 
@@ -1118,9 +1194,6 @@ describe("Directory", () => {
 				directory2.createSubDirectory("testSubDir");
 
 				// After the above scenario, the consistent state using LWW would be to have testSubDir with 1 key.
-				// Right now what happens is directory B just ignores the delete Op from directory 1 because its own
-				// create is not acked and it ends up ignoring the delete op. So directory 2 ends up having 2 keys
-				// instead of one.
 				containerRuntimeFactory.processAllMessages();
 				const directory1SubDir = directory1.getSubDirectory("testSubDir");
 				const directory2SubDir = directory2.getSubDirectory("testSubDir");
@@ -1142,7 +1215,7 @@ describe("Directory", () => {
 				);
 			});
 
-			it.skip("Directories should ensure eventual consistency using LWW approach 1", async () => {
+			it("Directories should ensure eventual consistency using LWW approach 1: Test 2", async () => {
 				const root1SubDir = directory1.createSubDirectory("testSubDir");
 				directory2.createSubDirectory("testSubDir");
 
@@ -1151,9 +1224,6 @@ describe("Directory", () => {
 				directory2.createSubDirectory("testSubDir");
 
 				// After the above scenario, the consistent state using LWW would be to have testSubDir with 0 keys.
-				// Right now what happens is directory B just sees the set Op from directory 1 and set the key while
-				// directory A sees delete and create sub directory op from B and eventually have a sub directory
-				// testSubDir with 0 keys. So the state of directory 2 ends up wrong.
 				containerRuntimeFactory.processAllMessages();
 				const directory1SubDir = directory1.getSubDirectory("testSubDir");
 				const directory2SubDir = directory2.getSubDirectory("testSubDir");

@@ -32,7 +32,7 @@ import * as alfredRoutes from "./routes";
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
@@ -89,7 +89,7 @@ export function create(
 	const routes = alfredRoutes.create(
 		config,
 		tenantManager,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		deltaService,

@@ -24,7 +24,7 @@ import * as documents from "./documents";
 export function create(
 	config: Provider,
 	tenantManager: ITenantManager,
-	tenantThrottler: IThrottler,
+	tenantThrottlers: Map<string, IThrottler>,
 	clusterThrottlers: Map<string, IThrottler>,
 	singleUseTokenCache: ICache,
 	storage: IDocumentStorage,
@@ -40,14 +40,14 @@ export function create(
 		tenantManager,
 		deltaService,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		tokenManager,
 	);
 	const documentsRoute = documents.create(
 		storage,
 		appTenants,
-		tenantThrottler,
+		tenantThrottlers,
 		clusterThrottlers,
 		singleUseTokenCache,
 		config,
@@ -60,7 +60,7 @@ export function create(
 		producer,
 		tenantManager,
 		storage,
-		tenantThrottler,
+		tenantThrottlers,
 		tokenManager,
 	);
 

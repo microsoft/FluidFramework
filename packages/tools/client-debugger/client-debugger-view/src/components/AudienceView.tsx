@@ -7,20 +7,20 @@ import React from "react";
 
 import { IClient } from "@fluidframework/protocol-definitions";
 import {
-	HasContainerId,
 	AudienceChangeLogEntry,
-	AudienceClientMetaData,
-	IDebuggerMessage,
+	AudienceClientMetadata,
+	AudienceSummary,
+	GetAudienceSummary,
 	handleIncomingMessage,
+	HasContainerId,
+	IDevtoolsMessage,
 	InboundHandlers,
-	AudienceSummaryMessageData,
-	AudienceSummaryMessage,
 } from "@fluid-tools/client-debugger";
 
 import { useMessageRelay } from "../MessageRelayContext";
 import { combineMembersWithMultipleConnections } from "../Audience";
-import { AudienceMemberViewProps } from "./client-data-views";
 import { Waiting } from "./Waiting";
+import { AudienceMemberView } from "./client-data-views";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer
@@ -30,23 +30,18 @@ const loggingContext = "EXTENSION(AudienceView)";
 /**
  * {@link AudienceView} input props.
  */
-export interface AudienceViewProps extends HasContainerId {
-	/**
-	 * Callback to render data about an individual audience member.
-	 */
-	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
-}
+export type AudienceViewProps = HasContainerId;
 
 /**
  * Displays information about a container's audience.
  */
 export function AudienceView(props: AudienceViewProps): React.ReactElement {
-	const { containerId, onRenderAudienceMember } = props;
+	const { containerId } = props;
 
 	const messageRelay = useMessageRelay();
 
 	const [audienceData, setAudienceData] = React.useState<
-		AudienceSummaryMessageData | undefined
+		AudienceSummary.MessageData | undefined
 	>();
 
 	React.useEffect(() => {
@@ -54,8 +49,8 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		 * Handlers for inbound messages related to Audience
 		 */
 		const inboundMessageHandlers: InboundHandlers = {
-			["AUDIENCE_EVENT"]: (untypedMessage) => {
-				const message: AudienceSummaryMessage = untypedMessage as AudienceSummaryMessage;
+			[AudienceSummary.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as AudienceSummary.Message;
 
 				setAudienceData(message.data);
 
@@ -66,7 +61,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<IDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
@@ -75,12 +70,11 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// Request the current Audience State of the Container
-		messageRelay.postMessage({
-			type: "GET_AUDIENCE",
-			data: {
+		messageRelay.postMessage(
+			GetAudienceSummary.createMessage({
 				containerId,
-			},
-		});
+			}),
+		);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -109,7 +103,6 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 					audience={audienceData.audienceState}
 					myClientId={audienceData.clientId}
 					myClientConnection={myClientMetadata}
-					onRenderAudienceMember={onRenderAudienceMember}
 				/>
 			</StackItem>
 			<StackItem>
@@ -127,7 +120,7 @@ interface MembersViewProps {
 	/**
 	 * The current audience
 	 */
-	audience: AudienceClientMetaData[];
+	audience: AudienceClientMetadata[];
 
 	/**
 	 * My client ID, if the Container is connected.
@@ -138,18 +131,13 @@ interface MembersViewProps {
 	 * My client connection data, if the Container is connected.
 	 */
 	myClientConnection: IClient | undefined;
-
-	/**
-	 * Callback to render data about an individual audience member.
-	 */
-	onRenderAudienceMember(props: AudienceMemberViewProps): React.ReactElement;
 }
 
 /**
  * Displays a list of current audience members and their metadata.
  */
 function MembersView(props: MembersViewProps): React.ReactElement {
-	const { audience, myClientId, myClientConnection, onRenderAudienceMember } = props;
+	const { audience, myClientId, myClientConnection } = props;
 
 	const transformedAudience = combineMembersWithMultipleConnections(audience);
 
@@ -157,11 +145,11 @@ function MembersView(props: MembersViewProps): React.ReactElement {
 	for (const member of transformedAudience.values()) {
 		memberViews.push(
 			<StackItem key={member.userId}>
-				{onRenderAudienceMember({
-					audienceMember: member,
-					myClientId,
-					myClientConnection,
-				})}
+				<AudienceMemberView
+					audienceMember={member}
+					myClientId={myClientId}
+					myClientConnection={myClientConnection}
+				/>
 			</StackItem>,
 		);
 	}
