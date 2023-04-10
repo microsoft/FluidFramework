@@ -33,9 +33,9 @@ import {
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	handleIncomingWindowMessage,
-	IDebuggerMessage,
+	IDevtoolsMessage,
 	InboundHandlers,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 	RootDataVisualizations,
@@ -361,16 +361,16 @@ export class ContainerDevtools
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a {@link ISourcedDebuggerMessage} to the window (globalThis).
+	 * Posts a {@link ISourcedDevtoolsMessage} to the window (globalThis).
 	 */
 	private readonly postContainerStateChange = (): void => {
-		postMessagesToWindow<IDebuggerMessage>(
+		postMessagesToWindow<IDevtoolsMessage>(
 			this.messageLoggingOptions,
 			ContainerStateChange.createMessage({
 				containerId: this.containerId,
