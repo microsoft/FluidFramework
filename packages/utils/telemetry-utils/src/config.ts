@@ -12,6 +12,7 @@ export type ConfigTypes = string | number | boolean | number[] | string[] | bool
  */
 export interface IConfigProviderBase {
 	getRawConfig(name: string): ConfigTypes;
+	getRawConfigEntries?(): [string, string][];
 }
 
 /**
@@ -36,6 +37,7 @@ export const sessionStorageConfigProvider = new Lazy<IConfigProviderBase>(() =>
 
 const NullConfigProvider: IConfigProviderBase = {
 	getRawConfig: () => undefined,
+	getRawConfigEntries: () => [],
 };
 
 /**
@@ -53,6 +55,20 @@ export const inMemoryConfigProvider = (storage: Storage | undefined): IConfigPro
 					return stronglyTypedParse(storage.getItem(name) ?? undefined)?.raw;
 				} catch {}
 				return undefined;
+			},
+			getRawConfigEntries(): [string, string][] {
+				const configEntries: Map<string, string> = new Map();
+				for (let i = 0; i < storage.length; i++) {
+					const key = storage.key(i);
+					if (key !== undefined && key !== null && !configEntries.has(key)) {
+						const rawValue = storage.getItem(key);
+						if (rawValue === null) {
+							continue;
+						}
+						configEntries.set(key, rawValue);
+					}
+				}
+				return Array.from(configEntries.entries());
 			},
 		});
 	}
@@ -206,6 +222,18 @@ export class CachedConfigProvider implements IConfigProvider {
 
 	getRawConfig(name: string): ConfigTypes {
 		return this.getCacheEntry(name)?.raw;
+	}
+
+	getRawConfigEntries(): [string, string][] {
+		const configEntriesRaw = new Map<string, string>();
+		for (const provider of this.orderedBaseProviders) {
+			provider?.getRawConfigEntries?.().forEach(([key, value]) => {
+				if (!configEntriesRaw.has(key)) {
+					configEntriesRaw.set(key, value);
+				}
+			});
+		}
+		return Array.from(configEntriesRaw.entries());
 	}
 
 	private getCacheEntry(name: string): StronglyTypedValue | undefined {

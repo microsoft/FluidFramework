@@ -10,5 +10,7 @@ export const mockConfigProvider = (
 ): IConfigProviderBase => {
 	return {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
+		getRawConfigEntries: (): [string, string][] =>
+			Object.entries(settings).map(([key, value]) => [key, `${value}`]),
 	};
 };
