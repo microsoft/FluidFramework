@@ -93,6 +93,16 @@ export interface ContainerDevtoolsEvents extends IEvent {
 }
 
 // @public
+export enum ContainerDevtoolsFeature {
+    ContainerData = "container-data"
+}
+
+// @public
+export type ContainerDevtoolsFeatures = {
+    [Feature in ContainerDevtoolsFeature]?: boolean;
+};
+
+// @public
 export interface ContainerDevtoolsProps {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
@@ -177,14 +187,13 @@ export namespace DataVisualization {
 }
 
 // @public
-export enum DebuggerFeature {
-    ContainerData = "containerData",
+export enum DevtoolsFeature {
     Telemetry = "telemetry"
 }
 
 // @public
-export type DebuggerFeatures = {
-    [Feature in DebuggerFeature]?: boolean;
+export type DevtoolsFeatures = {
+    [Feature in DevtoolsFeature]?: boolean;
 };
 
 // @public

@@ -69,7 +69,12 @@ export {
 	VisualizeSharedObject,
 	UnknownObjectNode,
 } from "./data-visualization";
-export { DebuggerFeature, DebuggerFeatures } from "./Features";
+export {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatures,
+	DevtoolsFeature,
+	DevtoolsFeatures,
+} from "./Features";
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
 export { FluidDebuggerLogger } from "./FluidDebuggerLogger";
