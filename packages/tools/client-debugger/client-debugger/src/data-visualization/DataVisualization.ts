@@ -437,10 +437,9 @@ export async function visualizeChildData(
 		}),
 	);
 
-	const result: VisualTreeNode = {
+	return {
 		children,
 		nodeKind: VisualNodeKind.TreeNode,
 		typeMetadata: "object",
 	};
-	return result;
 }
