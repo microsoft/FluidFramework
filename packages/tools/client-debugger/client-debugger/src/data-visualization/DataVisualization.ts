@@ -14,7 +14,6 @@ import {
 	createHandleNode,
 	FluidObjectNode,
 	VisualNodeKind,
-	VisualTreeNode,
 	VisualChildNode,
 	Primitive,
 	RootHandleNode,
