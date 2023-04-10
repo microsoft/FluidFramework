@@ -13,7 +13,7 @@ import {
 import {
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
-	IDebuggerMessage,
+	IDevtoolsMessage,
 	InboundHandlers,
 	MessageLoggingOptions,
 	postMessagesToWindow,
@@ -70,13 +70,13 @@ export class FluidDebuggerLogger extends TelemetryLogger {
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<IDebuggerMessage>>,
+		event: MessageEvent<Partial<IDevtoolsMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
 	};
 
 	/**
-	 * Posts a list of {@link IDebuggerMessage} to the window (globalThis). It will be send
+	 * Posts a list of {@link IDevtoolsMessage} to the window (globalThis). It will be send
 	 * when requesting all the telemetry history/log since logger created.
 	 */
 	private readonly postLogHistory = (): void => {

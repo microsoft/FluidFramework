@@ -12,7 +12,7 @@ import {
 	GetContainerList,
 	handleIncomingWindowMessage,
 	InboundHandlers,
-	ISourcedDebuggerMessage,
+	ISourcedDevtoolsMessage,
 	MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
@@ -119,7 +119,7 @@ export class FluidDevtools
 	 * Event handler for messages coming from the window (globalThis).
 	 */
 	private readonly windowMessageHandler = (
-		event: MessageEvent<Partial<ISourcedDebuggerMessage>>,
+		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		handleIncomingWindowMessage(
 			event,

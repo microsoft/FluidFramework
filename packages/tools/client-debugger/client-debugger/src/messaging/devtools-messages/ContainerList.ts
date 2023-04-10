@@ -4,7 +4,7 @@
  */
 
 import { ContainerMetadata } from "../../ContainerMetadata";
-import { IDebuggerMessage } from "../Messages";
+import { IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link ContainerList.Message}.
@@ -13,7 +13,7 @@ import { IDebuggerMessage } from "../Messages";
  */
 export namespace ContainerList {
 	/**
-	 * {@link ContainerList.Message} {@link IDebuggerMessage."type"}.
+	 * {@link ContainerList.Message} {@link IDevtoolsMessage."type"}.
 	 *
 	 * @public
 	 */
@@ -38,9 +38,9 @@ export namespace ContainerList {
 	 *
 	 * @public
 	 */
-	export interface Message extends IDebuggerMessage<MessageData> {
+	export interface Message extends IDevtoolsMessage<MessageData> {
 		/**
-		 * {@inheritDoc IDebuggerMessage."type"}
+		 * {@inheritDoc IDevtoolsMessage."type"}
 		 */
 		type: typeof MessageType;
 	}

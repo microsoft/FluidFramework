@@ -11,6 +11,7 @@
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
 import { IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
+import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization";
@@ -109,7 +110,7 @@ async function visualizeDirectory(
 			"sub-directories": directory.countSubDirectory?.(),
 			"values": directory.values.length,
 		},
-		typeMetadata: "SharedDirectory",
+		typeMetadata: "IDirectory",
 		nodeKind: VisualNodeKind.TreeNode,
 	};
 }
@@ -136,6 +137,47 @@ export const visualizeSharedMap: VisualizeSharedObject = async (
 			size: sharedMap.size,
 		},
 		typeMetadata: "SharedMap",
+		nodeKind: VisualNodeKind.FluidTreeNode,
+	};
+};
+
+/**
+ * Default {@link VisualizeSharedObject} for {@link SharedMap}.
+ */
+export const visualizeSharedMatrix: VisualizeSharedObject = async (
+	sharedObject: ISharedObject,
+	visualizeChildData: VisualizeChildData,
+): Promise<FluidObjectTreeNode> => {
+	const sharedMatrix = sharedObject as SharedMatrix;
+
+	const { rowCount, colCount: columnCount, id: fluidObjectId } = sharedMatrix;
+
+	// Output will list child contents by row first, then by cell (column).
+	const rows: Record<string, VisualTreeNode> = {};
+	for (let rowIndex = 0; rowIndex < rowCount; rowIndex++) {
+		const cells: Record<string, VisualChildNode> = {};
+		for (let columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+			const cell = sharedMatrix.getCell(rowIndex, columnIndex) as unknown;
+			const renderedCell = await visualizeChildData(cell);
+			cells[columnIndex] = renderedCell;
+		}
+		rows[rowIndex] = {
+			children: cells,
+			metadata: {
+				cells: columnCount,
+			},
+			nodeKind: VisualNodeKind.TreeNode,
+		};
+	}
+
+	return {
+		fluidObjectId,
+		children: rows,
+		metadata: {
+			rows: rowCount,
+			columns: columnCount,
+		},
+		typeMetadata: "SharedMatrix",
 		nodeKind: VisualNodeKind.FluidTreeNode,
 	};
 };
@@ -178,6 +220,7 @@ export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCounter.getFactory().type]: visualizeSharedCounter,
 	[SharedDirectory.getFactory().type]: visualizeSharedDirectory,
 	[SharedMap.getFactory().type]: visualizeSharedMap,
+	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,
 	[SharedString.getFactory().type]: visualizeSharedString,
 	// TODO: the others
 };
