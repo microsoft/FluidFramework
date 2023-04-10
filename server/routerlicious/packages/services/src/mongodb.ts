@@ -5,7 +5,15 @@
 
 import { assert } from "console";
 import * as core from "@fluidframework/server-services-core";
-import { AggregationCursor, Collection, FindOneAndUpdateOptions, FindOptions, MongoClient, MongoClientOptions, OptionalUnlessRequiredId } from "mongodb";
+import {
+	AggregationCursor,
+	Collection,
+	FindOneAndUpdateOptions,
+	FindOptions,
+	MongoClient,
+	MongoClientOptions,
+	OptionalUnlessRequiredId,
+} from "mongodb";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
@@ -184,7 +192,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async insertOne(value: T): Promise<any> {
 		const req = async () => {
 			try {
-				const result = await this.collection.insertOne(value as OptionalUnlessRequiredId<T>);
+				const result = await this.collection.insertOne(
+					value as OptionalUnlessRequiredId<T>,
+				);
 				// Older mongo driver bug, this insertedId was objectId or 3.2 but changed to any ID type consumer provided.
 				return result.insertedId;
 			} catch (error) {
@@ -202,7 +212,9 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async insertMany(values: T[], ordered: boolean): Promise<void> {
 		const req = async () => {
 			try {
-				await this.collection.insertMany(values as OptionalUnlessRequiredId<T>[], { ordered: false });
+				await this.collection.insertMany(values as OptionalUnlessRequiredId<T>[], {
+					ordered: false,
+				});
 			} catch (error) {
 				this.sanitizeError(error);
 				throw error;
@@ -251,7 +263,7 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async findOrCreate(
 		query: any,
 		value: any,
-        options = {
+		options = {
 			returnOriginal: true,
 			upsert: true,
 		},
@@ -260,8 +272,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 			try {
 				const result = await this.collection.findOneAndUpdate(
 					query,
-					{$setOnInsert: value},
-                    options,
+					{ $setOnInsert: value },
+					options,
 				);
 
 				return result.value
@@ -282,14 +294,14 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 	public async findAndUpdate(
 		query: any,
 		value: any,
-        options: FindOneAndUpdateOptions = {returnDocument: "before"},
+		options: FindOneAndUpdateOptions = { returnDocument: "before" },
 	): Promise<{ value: T; existing: boolean }> {
 		const req = async () => {
 			try {
 				// eslint-disable-next-line @typescript-eslint/await-thenable
 				const result = await this.collection.findOneAndUpdate(
 					query,
-					{$set: value},
+					{ $set: value },
 					options,
 				);
 
@@ -382,7 +394,8 @@ export class MongoCollection<T> implements core.ICollection<T>, core.IRetryable 
 		if (error) {
 			try {
 				Object.keys(error).forEach((key) => {
-					if (key === "_id" || /^\d+$/.test(key)) { // skip mongodb's ObjectId and array indexes
+					if (key === "_id" || /^\d+$/.test(key)) {
+						// skip mongodb's ObjectId and array indexes
 						return;
 					} else if (typeof error[key] === "object") {
 						this.sanitizeError(error[key]);
