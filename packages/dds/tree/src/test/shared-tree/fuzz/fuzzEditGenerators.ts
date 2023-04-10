@@ -47,10 +47,8 @@ export interface FuzzSequenceFieldDelete extends NodeRangePath {
 	fuzzType: "sequenceFieldDelete";
 }
 
-export type FuzzSetPayload = FuzzSequenceFieldSetPayload;
-
-export interface FuzzSequenceFieldSetPayload {
-	fuzzType: "sequenceFieldSetPayload";
+export interface FuzzSetPayload {
+	fuzzType: "setPayload";
 	path: UpPath;
 	value: number;
 }
@@ -147,13 +145,11 @@ export const makeEditGenerator = (
 		const tree = trees[state.treeIndex];
 		// generate edit for that specific tree
 		const path = getExistingRandomNodePosition(tree, state.random);
-		switch (path.parentField) {
-			case sequenceFieldKey:
-				return generateSequenceFieldSetPayloadOp(path, state.random);
-			default:
-				// default case returns a sequence field edit for now.
-				return generateSequenceFieldSetPayloadOp(path, state.random);
-		}
+		return {
+			fuzzType: "setPayload",
+			path,
+			value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+		};
 	}
 
 	function generateSequenceFieldInsertOp(path: UpPath, random: IRandom): FuzzSequenceFieldInsert {
@@ -174,17 +170,6 @@ export const makeEditGenerator = (
 			fuzzType: "sequenceFieldDelete",
 			firstNode,
 			count,
-		};
-	}
-
-	function generateSequenceFieldSetPayloadOp(
-		path: UpPath,
-		random: IRandom,
-	): FuzzSequenceFieldSetPayload {
-		return {
-			fuzzType: "sequenceFieldSetPayload",
-			path,
-			value: random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 		};
 	}
 
@@ -272,8 +257,6 @@ const nodePlaceType = ["beforeNode", "afterNode", "belowNode"];
 const sequenceFieldKey: FieldKey = brand("sequenceField");
 
 function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
-	// TODO: should be expanded to include valueFieldKey and optionalFieldKey
-	const fieldKeys: FieldKey[] = [sequenceFieldKey];
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	const firstNode = cursor.firstNode();
@@ -287,7 +270,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
 	const firstField = cursor.firstField();
 	if (!firstField) {
 		cursor.free();
-		return { parent: parentPath, parentField: random.pick(fieldKeys), parentIndex: 0 };
+		return { parent: parentPath, parentField: sequenceFieldKey, parentIndex: 0 };
 	}
 	currentPath = getExistingRandomNodePosition(tree, random);
 	const choosePath = random.pick(nodePlaceType);
@@ -300,7 +283,7 @@ function getRandomPlace(tree: ISharedTree, random: IRandom): UpPath {
 			return { ...parentPath, parentIndex: parentPath.parentIndex + 1 };
 		case "belowNode":
 			cursor.free();
-			return { parent: parentPath, parentField: random.pick(fieldKeys), parentIndex: 0 };
+			return { parent: parentPath, parentField: sequenceFieldKey, parentIndex: 0 };
 		default:
 			fail(`Unexpected option ${choosePath}`);
 	}
