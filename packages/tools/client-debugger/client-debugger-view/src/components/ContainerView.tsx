@@ -3,14 +3,25 @@
  * Licensed under the MIT License.
  */
 import { IOverflowSetItemProps, IconButton, Link, OverflowSet, Stack } from "@fluentui/react";
-import { HasContainerId } from "@fluid-tools/client-debugger";
+import {
+	ContainerDevtoolsFeature,
+	ContainerDevtoolsFeatureFlags,
+	ContainerDevtoolsFeatures,
+	GetContainerDevtoolsFeatures,
+	HasContainerId,
+	ISourcedDevtoolsMessage,
+	InboundHandlers,
+	handleIncomingMessage,
+} from "@fluid-tools/client-debugger";
 import React from "react";
 
 import { initializeFluentUiIcons } from "../InitializeIcons";
+import { useMessageRelay } from "../MessageRelayContext";
 import { AudienceView } from "./AudienceView";
 import { ContainerHistoryView } from "./ContainerHistoryView";
 import { ContainerSummaryView } from "./ContainerSummaryView";
 import { DataObjectsView } from "./DataObjectsView";
+import { Waiting } from "./Waiting";
 
 // TODOs:
 // - Allow consumers to specify additional tabs / views for list of inner app view options.
@@ -21,32 +32,95 @@ import { DataObjectsView } from "./DataObjectsView";
 // Ensure FluentUI icons are initialized for use below.
 initializeFluentUiIcons();
 
+const loggingContext = "INLINE(ContainerView)";
+
 /**
  * `className` used by {@link ContainerView}.
- *
- * @internal
  */
 const containerViewClassName = `fluid-client-debugger-view`;
 
 /**
  * {@link ContainerView} input props.
- *
- * @internal
  */
 export type ContainerViewProps = HasContainerId;
 
 /**
  * Displays information about the provided container and its audience.
- *
- * @internal
  */
 export function ContainerView(props: ContainerViewProps): React.ReactElement {
 	const { containerId } = props;
 
+	// Set of features supported by the corresponding Container-level devtools instance.
+	const [supportedFeatures, setSupportedFeatures] = React.useState<
+		ContainerDevtoolsFeatureFlags | undefined
+	>();
+
+	const messageRelay = useMessageRelay();
+
+	React.useEffect(() => {
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			[ContainerDevtoolsFeatures.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
+				if (message.data.containerId === containerId) {
+					setSupportedFeatures(message.data.features);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the Message Relay
+		 */
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: loggingContext,
+			});
+		}
+
+		messageRelay.on("message", messageHandler);
+
+		// Query for supported feature set
+		messageRelay.postMessage(GetContainerDevtoolsFeatures.createMessage({ containerId }));
+
+		return (): void => {
+			messageRelay.off("message", messageHandler);
+		};
+	}, [containerId, messageRelay, setSupportedFeatures]);
+
+	return supportedFeatures === undefined ? (
+		<Waiting />
+	) : (
+		<_ContainerView containerId={containerId} supportedFeatures={supportedFeatures} />
+	);
+}
+
+/**
+ * {@link _ContainerView} input props.
+ */
+interface _ContainerViewProps extends HasContainerId {
+	/**
+	 * Set of features supported by the corresponding Container-level devtools instance.
+	 */
+	supportedFeatures: ContainerDevtoolsFeatureFlags;
+}
+
+/**
+ * Displays information about the provided container and its audience.
+ */
+function _ContainerView(props: _ContainerViewProps): React.ReactElement {
+	const { containerId, supportedFeatures } = props;
+
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<PanelView>(
-		PanelView.ContainerData,
+		supportedFeatures[ContainerDevtoolsFeature.ContainerData] === true
+			? PanelView.ContainerData
+			: PanelView.ContainerStateHistory,
 	);
+
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData:
@@ -61,15 +135,6 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 		default:
 			throw new Error(`Unrecognized PanelView selection value: "${innerViewSelection}".`);
 	}
-	const view = (
-		<Stack tokens={{ childrenGap: 10 }}>
-			<PanelViewSelectionMenu
-				currentSelection={innerViewSelection}
-				updateSelection={setInnerViewSelection}
-			/>
-			{innerView}
-		</Stack>
-	);
 
 	return (
 		<Stack
@@ -84,18 +149,26 @@ export function ContainerView(props: ContainerViewProps): React.ReactElement {
 			}}
 			className={containerViewClassName}
 		>
-			<ContainerSummaryView containerId={containerId} />
-			<div style={{ width: "100%", height: "100%", overflowY: "auto" }}>{view}</div>
+			<Stack.Item>
+				<ContainerSummaryView containerId={containerId} />
+			</Stack.Item>
+			<Stack.Item style={{ width: "100%", height: "100%", overflowY: "auto" }}>
+				<Stack tokens={{ childrenGap: 10 }}>
+					<PanelViewSelectionMenu
+						currentSelection={innerViewSelection}
+						updateSelection={setInnerViewSelection}
+					/>
+					{innerView}
+				</Stack>
+			</Stack.Item>
 		</Stack>
 	);
 }
 
 /**
  * Inner view options within the container view.
- *
- * @internal
  */
-export enum PanelView {
+enum PanelView {
 	/**
 	 * Display view of Container data.
 	 */
@@ -118,10 +191,8 @@ export enum PanelView {
 
 /**
  * {@link PanelViewSelectionMenu} input props.
- *
- * @internal
  */
-export interface PanelViewSelectionMenuProps {
+interface PanelViewSelectionMenuProps {
 	/**
 	 * The currently selected inner view.
 	 */
@@ -135,10 +206,8 @@ export interface PanelViewSelectionMenuProps {
 
 /**
  * Menu for selecting the inner view to be displayed within the view for the currently selected container.
- *
- * @internal
  */
-export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
+function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): React.ReactElement {
 	const { currentSelection, updateSelection } = props;
 
 	const options: IOverflowSetItemProps[] = Object.entries(PanelView).map(([_, flag]) => ({
