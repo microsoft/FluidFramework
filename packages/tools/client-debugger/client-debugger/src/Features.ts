@@ -31,7 +31,7 @@ export enum DevtoolsFeature {
  *
  * @public
  */
-export type DevtoolsFeatures = {
+export type DevtoolsFeatureFlags = {
 	/**
 	 * Indicates whether or not a given {@link DebuggerFeature} is supported by an instance of the debugger.
 	 */
@@ -67,7 +67,7 @@ export enum ContainerDevtoolsFeature {
  *
  * @public
  */
-export type ContainerDevtoolsFeatures = {
+export type ContainerDevtoolsFeatureFlags = {
 	/**
 	 * Indicates whether or not a given {@link DebuggerFeature} is supported by an instance of the debugger.
 	 */

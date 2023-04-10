@@ -98,9 +98,21 @@ export enum ContainerDevtoolsFeature {
 }
 
 // @public
-export type ContainerDevtoolsFeatures = {
+export type ContainerDevtoolsFeatureFlags = {
     [Feature in ContainerDevtoolsFeature]?: boolean;
 };
+
+// @public
+export namespace ContainerDevtoolsFeatures {
+    const MessageType = "DEVTOOLS_FEATURES";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData extends HasContainerId {
+        features: DevtoolsFeatureFlags;
+    }
+}
 
 // @public
 export interface ContainerDevtoolsProps {
@@ -192,9 +204,21 @@ export enum DevtoolsFeature {
 }
 
 // @public
-export type DevtoolsFeatures = {
+export type DevtoolsFeatureFlags = {
     [Feature in DevtoolsFeature]?: boolean;
 };
+
+// @public
+export namespace DevtoolsFeatures {
+    const MessageType = "DEVTOOLS_FEATURES";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export interface MessageData {
+        features: DevtoolsFeatureFlags;
+    }
+}
 
 // @public
 export const devtoolsMessageSource: string;
@@ -287,6 +311,16 @@ export namespace GetAudienceSummary {
 }
 
 // @public
+export namespace GetContainerDevtoolsFeatures {
+    const MessageType = "GET_CONTAINER_DEVTOOLS_FEATURES";
+    export function createMessage(data: MessageData): Message;
+    export interface Message extends IDevtoolsMessage<MessageData> {
+        type: typeof MessageType;
+    }
+    export type MessageData = HasContainerId;
+}
+
+// @public
 export namespace GetContainerList {
     const MessageType = "GET_CONTAINER_LIST";
     export function createMessage(): Message;
@@ -313,6 +347,15 @@ export namespace GetDataVisualization {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId & HasFluidObjectId;
+}
+
+// @public
+export namespace GetDevtoolsFeatures {
+    const MessageType = "GET_DEVTOOLS_FEATURES";
+    export function createMessage(): Message;
+    export interface Message extends IDevtoolsMessage<undefined> {
+        type: typeof MessageType;
+    }
 }
 
 // @public

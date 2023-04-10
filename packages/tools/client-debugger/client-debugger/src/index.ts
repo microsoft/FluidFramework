@@ -71,9 +71,9 @@ export {
 } from "./data-visualization";
 export {
 	ContainerDevtoolsFeature,
-	ContainerDevtoolsFeatures,
+	ContainerDevtoolsFeatureFlags,
 	DevtoolsFeature,
-	DevtoolsFeatures,
+	DevtoolsFeatureFlags,
 } from "./Features";
 export { ContainerDevtoolsEvents, IContainerDevtools } from "./IContainerDevtools";
 export { FluidDevtoolsEvents, IFluidDevtools } from "./IFluidDevtools";
@@ -89,16 +89,20 @@ export {
 	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
+	ContainerDevtoolsFeatures,
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
+	DevtoolsFeatures,
 	devtoolsMessageSource,
 	DisconnectContainer,
 	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
 	GetContainerList,
 	GetContainerState,
 	GetDataVisualization,
+	GetDevtoolsFeatures,
 	GetRootDataVisualizations,
 	GetTelemetryHistory,
 	IDevtoolsMessage,
