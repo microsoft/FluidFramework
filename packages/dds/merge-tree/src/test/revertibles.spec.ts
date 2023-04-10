@@ -23,6 +23,9 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
  * @param spy - the spy function to run alongside the method
  * @returns a function which will remove the spy function when invoked. Should be called exactly once
  * after the spy is no longer needed.
+ *
+ * This method is duplicated between shared-tree test code, and should eventually
+ * be merged with the implementation that lives there
  */
 export function spyOnMethod(
 	// eslint-disable-next-line @typescript-eslint/ban-types
@@ -87,64 +90,66 @@ describe("MergeTree.Revertibles", () => {
 		const unspy3 = spyOnMethod(UnorderedTrackingGroup, "link", () => (linkCount += 1));
 		const unspy4 = spyOnMethod(UnorderedTrackingGroup, "unlink", () => (unlinkCount += 1));
 
-		const clients = createClientsAtInitialState(
-			{
-				initialState: "",
-				options: { mergeTreeUseNewLengthCalculations: true },
-			},
-			"A",
-		);
+		try {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "",
+					options: { mergeTreeUseNewLengthCalculations: true },
+				},
+				"A",
+			);
 
-		for (let i = 1; i <= length; i++) {
-			const insertOp = clients.A.insertTextLocal(i - 1, "a");
+			for (let i = 1; i <= length; i++) {
+				const insertOp = clients.A.insertTextLocal(i - 1, "a");
+				clients.A.applyMsg(
+					clients.A.makeOpMessage(
+						insertOp,
+						/* seq */ i + 1,
+						/* refSeq */ i,
+						clients.A.longClientId,
+						/* minSeq */ 1,
+					),
+				);
+			}
+
+			const driver = createRevertDriver(clients.A);
+
+			const revertibles: MergeTreeDeltaRevertible[] = [];
+			clients.A.on("delta", (_op, delta) => {
+				appendToMergeTreeDeltaRevertibles(driver, delta, revertibles);
+			});
+
+			const op = clients.A.removeRangeLocal(0, length - 1);
+
 			clients.A.applyMsg(
 				clients.A.makeOpMessage(
-					insertOp,
-					/* seq */ i + 1,
-					/* refSeq */ i,
+					op,
+					/* seq */ length + 1,
+					/* refSeq */ length,
 					clients.A.longClientId,
-					/* minSeq */ 1,
+					/* minSeq */ length,
 				),
 			);
+
+			// the below checks act as a proxy for the asymptotics of undo-redo
+			// linking. they are perhaps a bit more strict than necessary. if these
+			// tests are failing and the number of calls is still within a sane limit,
+			// it should be fine to update these checks to allow a larger number of
+			// calls
+			assert(
+				linkCount <= length * 2,
+				`expected tracking group link to occur at most twice per segment. found ${linkCount}`,
+			);
+			assert(
+				unlinkCount <= length,
+				`expected tracking group unlink to occur at most once per segment. found ${unlinkCount}`,
+			);
+		} finally {
+			unspy1();
+			unspy2();
+			unspy3();
+			unspy4();
 		}
-
-		const driver = createRevertDriver(clients.A);
-
-		const revertibles: MergeTreeDeltaRevertible[] = [];
-		clients.A.on("delta", (_op, delta) => {
-			appendToMergeTreeDeltaRevertibles(driver, delta, revertibles);
-		});
-
-		const op = clients.A.removeRangeLocal(0, length - 1);
-
-		clients.A.applyMsg(
-			clients.A.makeOpMessage(
-				op,
-				/* seq */ length + 1,
-				/* refSeq */ length,
-				clients.A.longClientId,
-				/* minSeq */ length,
-			),
-		);
-
-		// the below checks act as a proxy for the asymptotics of undo-redo
-		// linking. they are perhaps a bit more strict than necessary. if these
-		// tests are failing and the number of calls is still within a sane limit,
-		// it should be fine to update these checks to allow a larger number of
-		// calls
-		assert(
-			linkCount <= length * 2,
-			`expected tracking group link to occur at most twice per segment. found ${linkCount}`,
-		);
-		assert(
-			unlinkCount <= length,
-			`expected tracking group unlink to occur at most once per segment. found ${unlinkCount}`,
-		);
-
-		unspy1();
-		unspy2();
-		unspy3();
-		unspy4();
 	});
 
 	it("revert remove", () => {

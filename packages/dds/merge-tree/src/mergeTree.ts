@@ -554,8 +554,8 @@ export class MergeTree {
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
 	/**
-	 * Cache the sliding destination for segments after a remove to improve the
-	 * pathological case in which we slide the same segment multiple times
+	 * If we remove a contiguous range of segments, avoid duplicated tree traversal
+	 * for each segment removed, as this scales poorly 
 	 */
 	private cachedSlideDestination:
 		| {
@@ -1349,30 +1349,31 @@ export class MergeTree {
 				});
 			});
 
+			// Perform slides after all segments have been acked, so that
+			// positions after slide are final
 			if (opArgs.op.type === MergeTreeDeltaType.REMOVE) {
-				// if segments slid to the right, then we have to slide pending
-				// segments in reverse order
+				// if the slide destination is further, then we have to slide
+				// references in reverse to preserve their order
 				const newSegment = this._getSlideToSegment(pendingSegmentGroup.segments[0]);
 				const shouldReverse =
 					pendingSegmentGroup.segments[0] &&
 					newSegment &&
 					pendingSegmentGroup.segments[0].ordinal < newSegment.ordinal;
 
-				const pendingSegments = shouldReverse
-					? pendingSegmentGroup.segments.slice().reverse()
-					: pendingSegmentGroup.segments;
+				let idx = shouldReverse ? pendingSegmentGroup.segments.length - 1 : 0;
 
-				if (shouldReverse) {
-					overlappingRemoves.reverse();
-				}
-
-				// Perform slides after all segments have been acked, so that
-				// positions after slide are final
-				pendingSegments.map((pendingSegment, idx) => {
+				while (idx >= 0 && idx < pendingSegmentGroup.segments.length) {
+					const pendingSegment = pendingSegmentGroup.segments[idx];
 					if (!overlappingRemoves[idx]) {
 						this.slideAckedRemovedSegmentReferences(pendingSegment);
 					}
-				});
+
+					if (shouldReverse) {
+						idx--;
+					} else {
+						idx++;
+					}
+				}
 			}
 
 			this.mergeTreeMaintenanceCallback?.(
