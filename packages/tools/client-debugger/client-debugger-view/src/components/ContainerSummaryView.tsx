@@ -9,7 +9,6 @@ import {
 	Badge,
 	createTableColumn,
 	Table,
-	TableBody,
 	TableRow,
 	TableCell,
 	TableCellLayout,
@@ -52,11 +51,9 @@ export type ContainerSummaryViewProps = HasContainerId;
 const columnsDef: TableColumnDefinition<Item>[] = [
 	createTableColumn<Item>({
 		columnId: "containerProperty",
-		renderHeaderCell: () => <>Boi</>,
 	}),
 	createTableColumn<Item>({
 		columnId: "value",
-		renderHeaderCell: () => <>gyal</>,
 	}),
 ];
 interface Item {
@@ -175,90 +172,72 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			statusComponents.push(connectionStateToString(containerState.connectionState));
 		}
 	}
-	// const statusString = statusComponents.join(" | ");
+
+	function ContainerIDRow(label: string, id: string | undefined): React.ReactElement {
+		return (
+			<TableRow>
+				<TableCell {...columnSizing_unstable.getTableCellProps("containerProperty")}>
+					<b>{label}</b>
+				</TableCell>
+				<TableCell>{id}</TableCell>
+			</TableRow>
+		);
+	}
+
+	function ContainerStatusRow(): React.ReactElement {
+		return (
+			<TableRow>
+				<TableCell>
+					<b>Status</b>
+				</TableCell>
+				<TableCell>
+					<TableCellLayout
+						media={((): JSX.Element => {
+							switch (statusComponents[0]) {
+								case "attaching":
+									return (
+										<Badge shape="rounded" color="warning">
+											{statusComponents[0]}
+										</Badge>
+									);
+								case "detached":
+									return (
+										<Badge shape="rounded" color="danger">
+											{statusComponents[0]}
+										</Badge>
+									);
+								default:
+									return (
+										<Badge shape="rounded" color="success">
+											{statusComponents[0]}
+										</Badge>
+									);
+							}
+						})()}
+					>
+						{statusComponents[1] === "Connected" ? (
+							<Badge shape="rounded" color="success">
+								{statusComponents[1]}
+							</Badge>
+						) : (
+							<Badge shape="rounded" color="danger">
+								{statusComponents[1]}
+							</Badge>
+						)}
+					</TableCellLayout>
+				</TableCell>
+			</TableRow>
+		);
+	}
 
 	return (
 		<Stack>
 			<StackItem>
 				<Table size="extra-small" ref={tableRef}>
-					<TableBody>
-						<TableRow>
-							<TableCell
-								{...columnSizing_unstable.getTableCellProps("containerProperty")}
-							>
-								<TableCellLayout>
-									<b>Container</b>
-								</TableCellLayout>
-							</TableCell>
-							<TableCell>
-								<TableCellLayout>{containerState.id}</TableCellLayout>
-							</TableCell>
-						</TableRow>
-						<TableRow>
-							<TableCell>
-								<TableCellLayout>
-									<b>Status</b>
-								</TableCellLayout>
-							</TableCell>
-							<TableCell>
-								<TableCellLayout
-									media={((): JSX.Element => {
-										switch (statusComponents[0]) {
-											case "attaching":
-												return (
-													<Badge shape="rounded" color="warning">
-														{statusComponents[0]}
-													</Badge>
-												);
-											case "detached":
-												return (
-													<Badge shape="rounded" color="danger">
-														{statusComponents[0]}
-													</Badge>
-												);
-											default:
-												return (
-													<Badge shape="rounded" color="success">
-														{statusComponents[0]}
-													</Badge>
-												);
-										}
-									})()}
-								>
-									{statusComponents[1] === "Connected" ? (
-										<Badge shape="rounded" color="success">
-											{statusComponents[1]}
-										</Badge>
-									) : (
-										<Badge shape="rounded" color="danger">
-											{statusComponents[1]}
-										</Badge>
-									)}
-								</TableCellLayout>
-							</TableCell>
-						</TableRow>
-						<TableRow>
-							<TableCell>
-								<TableCellLayout>
-									<b>Client ID</b>
-								</TableCellLayout>
-							</TableCell>
-							<TableCell>
-								<TableCellLayout>{containerState.clientId}</TableCellLayout>
-							</TableCell>
-						</TableRow>
-
-						<TableRow>
-							<TableCell>
-								<TableCellLayout>
-									<b>Audience ID</b>
-								</TableCellLayout>
-							</TableCell>
-							<TableCell>
-								<TableCellLayout>{containerState.audienceId}</TableCellLayout>
-							</TableCell>
-						</TableRow>
-					</TableBody>
+					{ContainerIDRow("Container", containerState.id)}
+					{ContainerStatusRow()}
+					{ContainerIDRow("Client ID", containerState.clientId)}
+					{ContainerIDRow("Audience ID", containerState.audienceId)}
 				</Table>
 			</StackItem>
 			<StackItem align="end">

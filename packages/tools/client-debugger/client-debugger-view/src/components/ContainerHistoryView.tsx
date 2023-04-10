@@ -88,6 +88,22 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 	const nowTimeStamp = new Date();
 	const historyViews: React.ReactElement[] = [];
 
+	function getBackgroundColour(newState): string {
+		switch (newState) {
+			case ContainerStateChangeKind.Connected:
+				return tokens.colorPaletteLightGreenBackground2;
+			case ContainerStateChangeKind.Attached:
+				return tokens.colorPaletteRoyalBlueBackground2;
+			case ContainerStateChangeKind.Disconnected:
+				return tokens.colorPaletteYellowBackground2;
+			case ContainerStateChangeKind.Closed:
+				return tokens.colorPaletteRedForegroundInverted;
+			case ContainerStateChangeKind.Disposed:
+				return tokens.colorPalettePlatinumBackground2;
+			default:
+				return tokens.colorPaletteBeigeBackground2;
+		}
+	}
 	// Newest events are displayed first
 	for (let i = containerHistory.length - 1; i >= 0; i--) {
 		const changeTimeStamp = new Date(containerHistory[i].timestamp);
@@ -95,18 +111,7 @@ export function ContainerHistoryView(props: ContainerHistoryProps): React.ReactE
 
 		const accordionBackgroundColor: IStackItemStyles = {
 			root: {
-				background:
-					containerHistory[i].newState === ContainerStateChangeKind.Connected
-						? tokens.colorPaletteLightGreenBackground2 // green
-						: containerHistory[i].newState === ContainerStateChangeKind.Attached
-						? tokens.colorPaletteRoyalBlueBackground2 // blue
-						: containerHistory[i].newState === ContainerStateChangeKind.Disconnected
-						? tokens.colorPaletteYellowBackground2 // yellow
-						: containerHistory[i].newState === ContainerStateChangeKind.Closed
-						? tokens.colorPaletteRedForegroundInverted // red
-						: containerHistory[i].newState === ContainerStateChangeKind.Disposed
-						? tokens.colorPalettePlatinumBackground2 // bluish grey/platinum
-						: tokens.colorPaletteBeigeBackground2, // grey for unknown state
+				background: getBackgroundColour(containerHistory[i].newState),
 				borderStyle: "solid",
 				borderWidth: 1,
 				borderColor: DefaultPalette.neutralTertiary,

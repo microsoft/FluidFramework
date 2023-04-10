@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IOverflowSetItemProps, Stack } from "@fluentui/react";
+import { Stack } from "@fluentui/react";
 import { Tab, TabList, SelectTabData, SelectTabEvent, TabValue } from "@fluentui/react-components";
 import { HasContainerId } from "@fluid-tools/client-debugger";
 import * as React from "react";
@@ -147,7 +147,7 @@ export function PanelViewSelectionMenu(props: PanelViewSelectionMenuProps): Reac
 		setSelectedValue(data.value);
 		updateSelection(data.value as PanelView);
 	};
-	const options: IOverflowSetItemProps[] = Object.entries(PanelView).map(([_, flag]) => ({
+	const options = Object.entries(PanelView).map(([_, flag]) => ({
 		key: flag,
 	}));
 
