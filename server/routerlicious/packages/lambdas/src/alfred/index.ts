@@ -882,6 +882,18 @@ export function configureWebSocketServices(
 			}
 			await Promise.all(removeAndStoreP);
 		});
+
+        socket.on("connect_error", (error) => {
+            Lumberjack.info(
+                `[Temp] socket connect_error = ${JSON.stringify(error)}`, undefined
+            );
+        });
+
+        socket.on("error", (error) => {
+            Lumberjack.info(
+                `[Temp] socket error = ${JSON.stringify(error)}`, undefined
+            );
+        });
 	});
 }
 
