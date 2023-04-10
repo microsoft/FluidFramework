@@ -17,6 +17,7 @@ export {
 	defaultVisualizers,
 	visualizeSharedCell,
 	visualizeSharedCounter,
+	visualizeSharedDirectory,
 	visualizeSharedMap,
 	visualizeSharedMatrix,
 	visualizeSharedString,
