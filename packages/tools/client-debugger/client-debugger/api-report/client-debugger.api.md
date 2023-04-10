@@ -104,7 +104,7 @@ export type ContainerDevtoolsFeatureFlags = {
 
 // @public
 export namespace ContainerDevtoolsFeatures {
-    const MessageType = "DEVTOOLS_FEATURES";
+    const MessageType = "CONTAINER_DEVTOOLS_FEATURES";
     export function createMessage(data: MessageData): Message;
     export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
