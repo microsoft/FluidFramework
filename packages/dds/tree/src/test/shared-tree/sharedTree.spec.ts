@@ -579,6 +579,121 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Undo", () => {
+		it("can undo the last edit made", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, value);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(peekTestValue(tree2), value);
+
+			// Undo node insertion
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+		});
+
+		it("can undo multiple edits sequentially", async () => {
+			const value = "42";
+			const value2 = "43";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, value);
+			// Make a remote edit
+			pushTestValue(tree1, value2);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			const readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			assert.ok(readCursor.firstNode());
+			assert.equal(readCursor.value, value2);
+			assert.ok(readCursor.nextNode());
+			assert.equal(readCursor.value, value);
+			readCursor.free();
+
+			// Undo
+			tree1.undo();
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+		});
+
+		it("does nothing if there are no commits in the undo stack", async () => {
+			const value = "42";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, value);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			assert.equal(peekTestValue(tree2), value);
+
+			// Undo node insertion
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+
+			// Undo again
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			assert.equal(peekTestValue(tree1), undefined);
+			assert.equal(peekTestValue(tree2), undefined);
+		});
+
+		it("does not undo edits made remotely", async () => {
+			const value = "42";
+			const value2 = "43";
+			const provider = await TestTreeProvider.create(2);
+			const [tree1, tree2] = provider.trees;
+
+			// Insert node
+			pushTestValue(tree1, value);
+			// Make a remote edit
+			pushTestValue(tree2, value2);
+			await provider.ensureSynchronized();
+
+			// Validate insertion
+			const readCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, readCursor);
+			assert.ok(readCursor.firstNode());
+			assert.equal(readCursor.value, value);
+			assert.ok(readCursor.nextNode());
+			assert.equal(readCursor.value, value2);
+			readCursor.free();
+
+			// Undo
+			tree1.undo();
+			// Call undo to ensure it doesn't undo the change from tree2
+			tree1.undo();
+			await provider.ensureSynchronized();
+
+			const validationCursor = tree1.forest.allocateCursor();
+			moveToDetachedField(tree1.forest, validationCursor);
+			assert.ok(validationCursor.firstNode());
+			assert.equal(validationCursor.value, value2);
+			assert.equal(validationCursor.nextNode(), false);
+			validationCursor.free();
+			assert.equal(peekTestValue(tree2), value2);
+		});
+	});
+
 	describe("Events", () => {
 		it("triggers events for changes", async () => {
 			const value = "42";

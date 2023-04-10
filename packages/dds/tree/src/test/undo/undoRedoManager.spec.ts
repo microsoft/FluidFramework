@@ -12,6 +12,7 @@ import {
 	GraphCommit,
 	ITreeCursorSynchronous,
 	RepairDataStore,
+	RevisionTag,
 	SessionId,
 	UndoRedoManager,
 	UpPath,
@@ -19,12 +20,12 @@ import {
 	mintRevisionTag,
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
-import { UndoableCommit } from "../../core/undo/undoRedoManager";
+import { UndoableCommit, UndoableCommitType } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
 
 const localSessionId: SessionId = "0";
 
-describe.only("UndoRedoManager", () => {
+describe("UndoRedoManager", () => {
 	describe("trackCommit", () => {
 		it("should create an undoable commit with the provided commit as the child", () => {
 			const parent = {
@@ -32,93 +33,109 @@ describe.only("UndoRedoManager", () => {
 				repairData: new MockRepairDataStore(),
 			};
 			const childCommit = createTestGraphCommit([0], 1, localSessionId);
-			const manager = undoRedoManagerFactory({ headUndoCommit: parent });
+			const manager = new TestUndoRedoManager(parent);
 			manager.trackCommit(childCommit);
 
-			assert.equal(manager.getHeadUndoCommit(), {
-				commit: childCommit,
-				parent,
-				repairData: assert.ok(Object),
-			});
+			const headUndoCommit = manager.getHeadUndoCommit();
+			assert.equal(headUndoCommit?.commit, childCommit);
+			assert.equal(headUndoCommit?.parent, parent);
 		});
-
-		// it('should not create an undoable commit if the pending commit type is "Undo"', () => {
-		// 	const manager = undoRedoManagerFactory({});
-		// 	const undoCommit = { revision: 0, change: "undo" };
-		// 	manager.pendingCommit = "undo";
-		// 	manager.trackCommit(undoCommit);
-
-		// 	expect(manager.getHeadUndoCommit()).toBeUndefined();
-		// });
 	});
 
-	// describe("undo", () => {
-	// 	it("should undo the head undo commit", () => {
-	// 		const manager = undoRedoManagerFactory({});
-	// 		const undoCommit = { revision: 0, change: "undo" };
-	// 		const parentCommit = { revision: 1, change: "parent" };
-	// 		const childCommit = { revision: 2, change: "child" };
-	// 		const repairData = { get: jest.fn() };
-	// 		const invertedChange = "inverted";
-	// 		manager.getHeadUndoCommit() = {
-	// 			commit: undoCommit,
-	// 			parent: {
-	// 				commit: parentCommit,
-	// 				parent: undefined,
-	// 				repairData,
-	// 			},
-	// 			repairData: { get: jest.fn() },
-	// 		};
-	// 		manager.pendingCommit = undefined;
-	// 		(manager.changeFamily.rebaser.invert as jest.Mock).mockReturnValue(
-	// 			invertedChange,
-	// 		);
-	// 		(repairData.get as jest.Mock).mockReturnValue(childCommit.change);
+	describe("undo", () => {
+		it("should undo the head undo commit", () => {
+			const initialCommit = {
+				commit: createTestGraphCommit([], 0, localSessionId),
+				repairData: new MockRepairDataStore(),
+			};
+			const manager = new TestUndoRedoManager(initialCommit);
+			const undoCommit = createTestGraphCommit([0], 1, localSessionId);
+			manager.trackCommit(undoCommit);
+			manager.undo();
+			assert.equal(manager.getPendingCommitType(), UndoableCommitType.Undo);
+			assert.equal(manager.getHeadUndoCommit(), initialCommit);
+			assert.equal(manager.changesApplied, 1);
 
-	// 		manager.undo();
+			const fakeInvertedCommit = createTestGraphCommit([0, 1], 2, localSessionId);
+			manager.trackCommit(fakeInvertedCommit);
+			// The head undo commit will not be the new inverted commit
+			assert.equal(manager.getHeadUndoCommit(), initialCommit);
+		});
 
-	// 		expect(manager.getHeadUndoCommit()?.commit).toEqual(parentCommit);
-	// 		expect(applyChange).toHaveBeenCalledWith(invertedChange);
-	// 	});
+		it("should do nothing if there is no head undo commit", () => {
+			const manager = new TestUndoRedoManager();
+			manager.undo();
 
-	// 	it("should do nothing if there is no head undo commit", () => {
-	// 		const manager = undoRedoManagerFactory({});
-	// 		manager.undo();
+			assert.equal(manager.getHeadUndoCommit(), undefined);
+			assert.equal(manager.changesApplied, 0);
+		});
+	});
 
-	// 		expect(manager.getHeadUndoCommit()).toBeUndefined();
-	// 		expect(applyChange).not.toHaveBeenCalled();
-	// 	});
-	// });
+	it("clone should return a new instance of UndoRedoManager with the same head undo commit and the provided applyChange callback", () => {
+		const initialCommit = {
+			commit: createTestGraphCommit([], 0, localSessionId),
+			repairData: new MockRepairDataStore(),
+		};
+		const manager = new TestUndoRedoManager(initialCommit);
 
-	// describe("clone", () => {
-	// 	it("should return a new instance of UndoRedoManager with the same head undo commit and the provided applyChange callback", () => {
-	// 		const manager = undoRedoManagerFactory({});
-	// 		const applyChange2 = jest.fn();
-	// 		const headUndoCommit = { commit: { revision: 0, change: "head" } };
-	// 		manager.getHeadUndoCommit() = headUndoCommit;
-	// 		const clonedUndoRedoManager = manager.clone(applyChange2);
+		let clonedApplyChangesCount = 0;
+		const clonedApplyChanges = () => {
+			clonedApplyChangesCount++;
+		};
+		const clonedUndoRedoManager = manager.clone(clonedApplyChanges);
 
-	// 		expect(clonedUndoRedoManager).toBeInstanceOf(UndoRedoManager);
-	// 		expect(clonedUndoRedoManager.getHeadUndoCommit()).toBe(headUndoCommit);
-	// 	});
-	// });
+		const undoCommit = createTestGraphCommit([0], 1, localSessionId);
+		clonedUndoRedoManager.trackCommit(undoCommit);
+		clonedUndoRedoManager.undo();
+		assert.equal(manager.changesApplied, 0);
+		assert.equal(clonedApplyChangesCount, 1);
+	});
 });
 
 class TestUndoRedoManager extends UndoRedoManager<TestChange, ChangeFamilyEditor> {
-	public getHeadUndoCommit(): UndoableCommit<TestChange> {
-		return this.getHeadUndoCommit();
+	public changesApplied = 0;
+
+	public constructor(
+		headUndoCommit?: UndoableCommit<TestChange>,
+		applyChanges?: (changes: TestChange) => void,
+		rebaser?: ChangeRebaser<TestChange>,
+	) {
+		super(
+			() => new MockRepairDataStore(),
+			testChangeFamilyFactory(rebaser),
+			applyChanges !== undefined
+				? applyChanges
+				: () => {
+						this.changesApplied++;
+				  },
+			headUndoCommit,
+		);
+	}
+
+	public getHeadUndoCommit(): UndoableCommit<TestChange> | undefined {
+		return this.headUndoCommit as UndoableCommit<TestChange>;
+	}
+
+	public getPendingCommitType(): UndoableCommitType | undefined {
+		return this.pendingCommit;
 	}
 }
 
 class MockRepairDataStore implements RepairDataStore {
-	public capturedData: ITreeCursorSynchronous | Value[][] = [];
+	public capturedData = new Map<RevisionTag, (ITreeCursorSynchronous | Value)[]>();
 
-	public capture(change: Delta.Root, revision: unknown): void {
-		throw new Error("Method not implemented.");
+	public capture(change: Delta.Root, revision: RevisionTag): void {
+		const existing = this.capturedData.get(revision);
+
+		if (existing === undefined) {
+			this.capturedData.set(revision, [revision]);
+		} else {
+			existing.push(revision);
+		}
 	}
 
 	public getNodes(
-		revision: unknown,
+		revision: RevisionTag,
 		path: UpPath | undefined,
 		key: FieldKey,
 		index: number,
@@ -127,23 +144,9 @@ class MockRepairDataStore implements RepairDataStore {
 		throw new Error("Method not implemented.");
 	}
 
-	public getValue(revision: unknown, path: UpPath): Value {
+	public getValue(revision: RevisionTag, path: UpPath): Value {
 		throw new Error("Method not implemented.");
 	}
-}
-
-function undoRedoManagerFactory(options: {
-	rebaser?: ChangeRebaser<TestChange>;
-	headUndoCommit?: UndoableCommit<TestChange>;
-}): TestUndoRedoManager {
-	const family = testChangeFamilyFactory(options.rebaser);
-	const manager = new TestUndoRedoManager(
-		() => new MockRepairDataStore(),
-		family,
-		() => {},
-		options.headUndoCommit,
-	);
-	return manager;
 }
 
 function createTestGraphCommit(

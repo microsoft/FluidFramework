@@ -20,26 +20,19 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * @param repairDataStoryFactory - Factory function for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link UndoableCommit}s.
 	 * @param changeFamily - TODO
-	 * @param applyChange - Callback to apply undos as local changes.
+	 * @param applyChange - Callback to apply undos as local changes. This should call {@link UndoRedoManager.trackCommit}
+	 * with the created commit.
 	 * @param headUndoCommit - Optional commit to set as the initial undoable commit.
 	 */
 	public constructor(
 		private readonly repairDataStoryFactory: () => RepairDataStore,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		private readonly applyChange: (change: TChange) => void,
-		private headUndoCommit?: UndoableCommit<TChange>,
+		protected readonly applyChange: (change: TChange) => void,
+		protected headUndoCommit?: UndoableCommit<TChange>,
 	) {}
 
 	/**
-	 * Protected for use with testing classes.
-	 */
-	protected getHeadUndoCommit(): UndoableCommit<TChange> | undefined {
-		return this.headUndoCommit;
-	}
-
-	/**
-	 * TODO: should we return anything?
-	 * TODO: trackCommit or addLocalCommit?
+	 * Adds the provided commit to the undo commit tree. Also deals with commits created by calling {@link UndoRedoManager.undo}.
 	 */
 	public trackCommit(commit: GraphCommit<TChange>) {
 		if (this.pendingCommit === UndoableCommitType.Undo) {
@@ -60,10 +53,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 
 	/**
 	 * Inverts the head undo commit and applies it as a local change.
-	 *
-	 * TODO: return result?
 	 */
-	public undo(): undefined {
+	public undo(): void {
 		const commitToUndo = this.headUndoCommit;
 
 		if (commitToUndo === undefined) {
@@ -101,7 +92,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	}
 }
 
-enum UndoableCommitType {
+export enum UndoableCommitType {
 	Undo = "undo",
 }
 

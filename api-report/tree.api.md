@@ -794,6 +794,7 @@ export interface ISharedTreeView extends AnchorLocator {
         abort(): TransactionResult.Abort;
         inProgress(): boolean;
     };
+    undo(): void;
 }
 
 // @alpha (undocumented)

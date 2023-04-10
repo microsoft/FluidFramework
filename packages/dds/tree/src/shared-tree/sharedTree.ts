@@ -127,6 +127,11 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly editor: IDefaultEditBuilder;
 
 	/**
+	 * Undoes the last edit made by the client within the current session.
+	 */
+	undo(): void;
+
+	/**
 	 * An collection of functions for managing transactions.
 	 * Transactions allow edits to be batched into atomic units.
 	 * Edits made during a transaction will update the local state of the tree immediately, but will be squashed into a single edit when the transaction is committed.
@@ -449,6 +454,10 @@ export class SharedTreeFork implements ISharedTreeFork {
 		abort: () => this.branch.abortTransaction(),
 		inProgress: () => this.branch.isTransacting(),
 	};
+
+	public undo() {
+		this.branch.undo();
+	}
 
 	public schematize<TSchema extends SchemaAware.TypedSchemaData>(
 		config: SchematizeConfiguration<TSchema>,
