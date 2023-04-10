@@ -11,25 +11,21 @@ import {
 	ValueSchema,
 } from "@fluid-internal/tree";
 
-export const numberSchema = TypedSchema.tree("number", { value: ValueSchema.Number });
+export const float64 = TypedSchema.tree("number", { value: ValueSchema.Number });
 
-export const inventorySchema = TypedSchema.tree("Contoso:Inventory-1.0.0", {
+export const inventory = TypedSchema.tree("Contoso:Inventory-1.0.0", {
 	local: {
-		nuts: TypedSchema.field(FieldKinds.value, numberSchema),
-		bolts: TypedSchema.field(FieldKinds.value, numberSchema),
+		nuts: TypedSchema.field(FieldKinds.value, float64),
+		bolts: TypedSchema.field(FieldKinds.value, float64),
 	},
 });
 
-export const rootField = TypedSchema.field(FieldKinds.value, inventorySchema);
+export const rootField = TypedSchema.field(FieldKinds.value, inventory);
 
-export const schema = SchemaAware.typedSchemaData(
-	[[rootFieldKey, rootField]],
-	numberSchema,
-	inventorySchema,
-);
+export const schema = SchemaAware.typedSchemaData([[rootFieldKey, rootField]], float64, inventory);
 
 export type Inventory = SchemaAware.NodeDataFor<
 	typeof schema,
 	SchemaAware.ApiMode.Editable,
-	typeof inventorySchema
+	typeof inventory
 >;
