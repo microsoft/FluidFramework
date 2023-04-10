@@ -239,7 +239,8 @@ export function App(): React.ReactElement {
 	const logger = React.useMemo(() => FluidDebuggerLogger.create(), []);
 
 	// Initialize devtools
-	const devtools = React.useMemo(() => initializeFluidDevtools(), []);
+	const devtools = React.useMemo(() => initializeFluidDevtools({ logger }), [logger]);
+
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.
 		return (): void => devtools.dispose();
