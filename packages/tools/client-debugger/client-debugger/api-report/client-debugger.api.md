@@ -37,7 +37,7 @@ export interface AudienceClientMetadata {
 export namespace AudienceSummary {
     const MessageType = "AUDIENCE_SUMMARY";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData extends HasContainerId {
@@ -51,7 +51,7 @@ export namespace AudienceSummary {
 export namespace CloseContainer {
     const MessageType = "CLOSE_CONTAINER";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
@@ -61,7 +61,7 @@ export namespace CloseContainer {
 export namespace ConnectContainer {
     const MessageType = "CONNECT_CONTAINER";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
@@ -105,7 +105,7 @@ export interface ContainerDevtoolsProps {
 export namespace ContainerList {
     const MessageType = "CONTAINER_LIST";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData {
@@ -123,7 +123,7 @@ export interface ContainerMetadata {
 export namespace ContainerStateChange {
     const MessageType = "CONTAINER_STATE_CHANGE";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData extends HasContainerId {
@@ -144,7 +144,7 @@ export enum ContainerStateChangeKind {
 export namespace ContainerStateHistory {
     const MessageType = "CONTAINER_STATE_HISTORY";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData extends HasContainerId {
@@ -168,7 +168,7 @@ export interface ContainerStateMetadata extends ContainerMetadata {
 export namespace DataVisualization {
     const MessageType = "DATA_VISUALIZATION";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData extends HasContainerId, HasFluidObjectId {
@@ -194,7 +194,7 @@ export const devtoolsMessageSource: string;
 export namespace DisconnectContainer {
     const MessageType = "DISCONNECT_CONTAINER";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
@@ -271,7 +271,7 @@ export interface FluidUnknownObjectNode extends FluidObjectNodeBase {
 export namespace GetAudienceSummary {
     const MessageType = "GET_AUDIENCE_SUMMARY";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
@@ -281,7 +281,7 @@ export namespace GetAudienceSummary {
 export namespace GetContainerList {
     const MessageType = "GET_CONTAINER_LIST";
     export function createMessage(): Message;
-    export interface Message extends IDebuggerMessage<undefined> {
+    export interface Message extends IDevtoolsMessage<undefined> {
         type: typeof MessageType;
     }
 }
@@ -290,7 +290,7 @@ export namespace GetContainerList {
 export namespace GetContainerState {
     const MessageType = "GET_CONTAINER_STATE";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<HasContainerId> {
+    export interface Message extends IDevtoolsMessage<HasContainerId> {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
@@ -300,7 +300,7 @@ export namespace GetContainerState {
 export namespace GetDataVisualization {
     const MessageType = "GET_DATA_VISUALIZATION";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId & HasFluidObjectId;
@@ -310,7 +310,7 @@ export namespace GetDataVisualization {
 export namespace GetRootDataVisualizations {
     const MessageType = "GET_ROOT_DATA_VISUALIZATIONS";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export type MessageData = HasContainerId;
@@ -320,16 +320,16 @@ export namespace GetRootDataVisualizations {
 export namespace GetTelemetryHistory {
     const MessageType = "GET_TELEMETRY_HISTORY";
     export function createMessage(): Message;
-    export interface Message extends IDebuggerMessage<undefined> {
+    export interface Message extends IDevtoolsMessage<undefined> {
         type: typeof MessageType;
     }
 }
 
 // @internal
-export function handleIncomingMessage(message: Partial<ISourcedDebuggerMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+export function handleIncomingMessage(message: Partial<ISourcedDevtoolsMessage>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
 // @internal
-export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDebuggerMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
+export function handleIncomingWindowMessage(event: MessageEvent<Partial<ISourcedDevtoolsMessage>>, handlers: InboundHandlers, loggingOptions?: MessageLoggingOptions): void;
 
 // @public
 export interface HasContainerId {
@@ -354,7 +354,7 @@ export interface IContainerDevtools extends IEventProvider<ContainerDevtoolsEven
 }
 
 // @public
-export interface IDebuggerMessage<TData = unknown> {
+export interface IDevtoolsMessage<TData = unknown> {
     data: TData;
     type: string;
 }
@@ -368,28 +368,28 @@ export interface IFluidDevtools extends IEventProvider<FluidDevtoolsEvents>, IDi
 }
 
 // @internal
-export interface IMessageRelay<TSend extends IDebuggerMessage = IDebuggerMessage, TReceive extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEventProvider<IMessageRelayEvents<TReceive>> {
+export interface IMessageRelay<TSend extends IDevtoolsMessage = IDevtoolsMessage, TReceive extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage> extends IEventProvider<IMessageRelayEvents<TReceive>> {
     postMessage<TPost extends TSend>(message: TPost): void;
 }
 
 // @internal
-export interface IMessageRelayEvents<TMessage extends ISourcedDebuggerMessage = ISourcedDebuggerMessage> extends IEvent {
+export interface IMessageRelayEvents<TMessage extends ISourcedDevtoolsMessage = ISourcedDevtoolsMessage> extends IEvent {
     (event: "message", listener: (message: TMessage) => void): any;
 }
 
 // @internal
 export interface InboundHandlers {
-    [type: string]: (message: ISourcedDebuggerMessage) => boolean;
+    [type: string]: (message: ISourcedDevtoolsMessage) => boolean;
 }
 
 // @public
 export function initializeFluidDevtools(props?: FluidDevtoolsProps): IFluidDevtools;
 
 // @internal
-export function isDebuggerMessage(value: Partial<ISourcedDebuggerMessage>): value is ISourcedDebuggerMessage;
+export function isDebuggerMessage(value: Partial<ISourcedDevtoolsMessage>): value is ISourcedDevtoolsMessage;
 
 // @public
-export interface ISourcedDebuggerMessage<TData = unknown> extends IDebuggerMessage<TData> {
+export interface ISourcedDevtoolsMessage<TData = unknown> extends IDevtoolsMessage<TData> {
     source: string;
 }
 
@@ -416,7 +416,7 @@ export interface MessageLoggingOptions {
 }
 
 // @internal
-export function postMessagesToWindow<TMessage extends IDebuggerMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
+export function postMessagesToWindow<TMessage extends IDevtoolsMessage>(loggingOptions?: MessageLoggingOptions, ...messages: TMessage[]): void;
 
 // @public
 export type Primitive = bigint | number | boolean | null | string | symbol | undefined;
@@ -425,7 +425,7 @@ export type Primitive = bigint | number | boolean | null | string | symbol | und
 export namespace RootDataVisualizations {
     const MessageType = "ROOT_DATA_VISUALIZATIONS";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData extends HasContainerId {
@@ -445,7 +445,7 @@ export interface StateChangeLogEntry<TState> extends LogEntry {
 export namespace TelemetryEvent {
     const MessageType = "TELEMETRY_EVENT";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData {
@@ -457,7 +457,7 @@ export namespace TelemetryEvent {
 export namespace TelemetryHistory {
     const MessageType = "TELEMETRY_HISTORY";
     export function createMessage(data: MessageData): Message;
-    export interface Message extends IDebuggerMessage<MessageData> {
+    export interface Message extends IDevtoolsMessage<MessageData> {
         type: typeof MessageType;
     }
     export interface MessageData {

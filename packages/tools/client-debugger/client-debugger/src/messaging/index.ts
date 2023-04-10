@@ -29,7 +29,7 @@ export {
 	RootDataVisualizations,
 } from "./container-devtools-messages";
 export { ContainerList, GetContainerList } from "./devtools-messages";
-export { ISourcedDebuggerMessage, IDebuggerMessage } from "./Messages";
+export { ISourcedDevtoolsMessage, IDevtoolsMessage } from "./Messages";
 export { IMessageRelay, IMessageRelayEvents } from "./MessageRelay";
 export { GetTelemetryHistory, TelemetryEvent, TelemetryHistory } from "./telemetry-messages";
 export {
