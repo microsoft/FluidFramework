@@ -106,9 +106,8 @@ async function visualizeDirectory(
 		children,
 		metadata: {
 			"absolute-path": directory.absolutePath,
-			"size": directory.size,
+			"values": directory.size,
 			"sub-directories": directory.countSubDirectory?.(),
-			"values": directory.values.length,
 		},
 		typeMetadata: "IDirectory",
 		nodeKind: VisualNodeKind.TreeNode,
