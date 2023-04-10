@@ -164,6 +164,10 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.IFluidHandleContext;
 	}
 
+	public get idCompressor(): IIdCompressor | undefined {
+		return this.dataStoreContext.idCompressor;
+	}
+
 	public get IFluidHandleContext() {
 		return this;
 	}
@@ -201,7 +205,6 @@ export class FluidDataStoreRuntime
 	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
-	public readonly idCompressor?: IIdCompressor;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLogger {
 		return this.mc.logger;
@@ -262,7 +265,6 @@ export class FluidDataStoreRuntime
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
 		this.deltaManager = dataStoreContext.deltaManager;
-		this.idCompressor = dataStoreContext.idCompressor;
 		this.quorum = dataStoreContext.getQuorum();
 		this.audience = dataStoreContext.getAudience();
 

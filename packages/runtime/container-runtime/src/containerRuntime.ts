@@ -2919,7 +2919,7 @@ export class ContainerRuntime
 		}
 
 		let idRange: IdCreationRange | undefined;
-		// Resubmited ops will already have an idRange specified and taking the next creation range
+		// Resubmitted ops will already have an idRange specified and taking the next creation range
 		// again will result in finalizations out of order
 		if (this.runtimeOptions.enableRuntimeIdCompressor === true) {
 			idRange = this.idCompressor?.takeNextCreationRange();

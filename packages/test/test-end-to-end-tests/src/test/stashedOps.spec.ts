@@ -250,9 +250,7 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		assert.strictEqual(directory2.get(testKey), testValue);
 	});
 
-	// Stashed ops aren't working properly here - for some reason
-	// local compressors are out of sync after applying stashed ops
-	it.skip("resends compressed Ids and correctly assumes session", async function () {
+	it("resends compressed Ids and correctly assumes session", async function () {
 		let mapCompressedId;
 		let cellCompressedId;
 		let directoryCompressedId;
@@ -299,6 +297,12 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		// Loaded container should reassume the state of the stashed compressor - so same sessionId as before
+		const runtimeIdCompressor = (map2 as any).runtime.dataStoreContext.idCompressor;
+		const dataStoreIdCompressor = (map2 as any).runtime.idCompressor;
+		assert.strictEqual(
+			runtimeIdCompressor.localSessionId,
+			dataStoreIdCompressor.localSessionId,
+		);
 		assert.strictEqual(sessionId, (map2 as any).runtime.idCompressor.localSessionId);
 		assert.strictEqual(sessionId, (cell2 as any).runtime.idCompressor.localSessionId);
 		assert.strictEqual(sessionId, (directory2 as any).runtime.idCompressor.localSessionId);
