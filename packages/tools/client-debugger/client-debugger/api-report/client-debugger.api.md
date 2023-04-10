@@ -110,7 +110,7 @@ export namespace ContainerDevtoolsFeatures {
         type: typeof MessageType;
     }
     export interface MessageData extends HasContainerId {
-        features: DevtoolsFeatureFlags;
+        features: ContainerDevtoolsFeatureFlags;
     }
 }
 
@@ -233,7 +233,7 @@ export namespace DisconnectContainer {
     export type MessageData = HasContainerId;
 }
 
-// @internal @sealed
+// @public @sealed
 export class FluidDebuggerLogger extends TelemetryLogger {
     static create(namespace?: string, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
     static mixinLogger(namespace?: string, baseLogger?: ITelemetryBaseLogger, properties?: ITelemetryLoggerPropertyBags): TelemetryLogger;
@@ -266,6 +266,7 @@ export interface FluidDevtoolsEvents extends IEvent {
 // @public
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
+    logger?: FluidDebuggerLogger;
 }
 
 // @public

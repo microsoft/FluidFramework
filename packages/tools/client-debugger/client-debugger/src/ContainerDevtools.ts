@@ -24,11 +24,13 @@ import {
 	AudienceSummary,
 	CloseContainer,
 	ConnectContainer,
+	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	ContainerStateHistory,
 	DataVisualization,
 	DisconnectContainer,
 	GetAudienceSummary,
+	GetContainerDevtoolsFeatures,
 	GetContainerState,
 	GetDataVisualization,
 	GetRootDataVisualizations,
@@ -41,6 +43,7 @@ import {
 	RootDataVisualizations,
 } from "./messaging";
 import { AudienceClientMetadata } from "./AudienceMetadata";
+import { ContainerDevtoolsFeature, ContainerDevtoolsFeatureFlags } from "./Features";
 
 /**
  * Properties for configuring a {@link IContainerDevtools}.
@@ -110,31 +113,34 @@ export interface ContainerDevtoolsProps {
  * This class listens to incoming messages from the window (globalThis), and posts messages to it upon relevant
  * state changes and when requested.
  *
- * **Messages it listens for:**
+ * **Messages it listens for (if the {@link HasContainerId.containerId} matches):**
  *
- * - {@link GetContainerState.Message}: When received (if the container ID matches), the debugger will broadcast
- * {@link ContainerStateChange.Message}.
+ * - {@link GetContainerDevtoolsFeatures.Message}: When received, {@link ContainerDevtoolsFeatures.Message} will be
+ * posted in response.
  *
- * - {@link ConnectContainer.Message}: When received (if the container ID matches), the debugger will connect to
- * the container.
+ * - {@link GetContainerState.Message}: When received, {@link ContainerStateChange.Message} will be posted in response.
  *
- * - {@link DisconnectContainer.Message}: When received (if the container ID matches), the debugger will disconnect
- * from the container.
+ * - {@link ConnectContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.connect}
+ * will be called on the {@link ContainerDevtools.container} (if it is disconnected).
  *
- * - {@link CloseContainer.Message}: When received (if the container ID matches), the debugger will close the container.
+ * - {@link DisconnectContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.disconnect}
+ * will be called on the {@link ContainerDevtools.container} (if it is connected).
  *
- * - {@link GetAudienceSummary.Message}: When received (if the container ID matches), the debugger will broadcast
- * {@link AudienceSummary.Message}.
+ * - {@link CloseContainer.Message}: When received, {@link @fluidframework/container-definitions#IContainer.close}
+ * will be called on the {@link ContainerDevtools.container}.
  *
- * - {@link GetRootDataVisualizations.Message}: When received (if the container ID matches), the debugger will
- * broadcast {@link RootDataVisualizations.Message}.
+ * - {@link GetAudienceSummary.Message}: When received, {@link AudienceSummary.Message} will be posted in response.
  *
- * - {@link GetDataVisualization.Message}: When received (if the container ID matches), the debugger will
- * broadcast {@link DataVisualization.Message}.
+ * - {@link GetRootDataVisualizations.Message}: When received, {@link RootDataVisualizations.Message} will be posted
+ * in response.
+ *
+ * - {@link GetDataVisualization.Message}: When received, {@link DataVisualization.Message} will be posted in response.
  *
  * TODO: Document others as they are added.
  *
  * **Messages it posts:**
+ *
+ * - {@link ContainerDevtoolsFeatures.Message}: Posted only when requested via {@link GetContainerDevtoolsFeatures.Message}.
  *
  * - {@link AudienceSummary.Message}: Posted any time the Container's Audience state changes, or when requested
  * (via {@link GetAudienceSummary.Message}).
@@ -295,6 +301,14 @@ export class ContainerDevtools
 	 * Handlers for inbound messages related to the debugger.
 	 */
 	private readonly inboundMessageHandlers: InboundHandlers = {
+		[GetContainerDevtoolsFeatures.MessageType]: (untypedMessage) => {
+			const message = untypedMessage as GetContainerDevtoolsFeatures.Message;
+			if (message.data.containerId === this.containerId) {
+				this.postSupportedFeatures();
+				return true;
+			}
+			return false;
+		},
 		[GetContainerState.MessageType]: (untypedMessage) => {
 			const message = untypedMessage as GetContainerState.Message;
 			if (message.data.containerId === this.containerId) {
@@ -364,6 +378,21 @@ export class ContainerDevtools
 		event: MessageEvent<Partial<ISourcedDevtoolsMessage>>,
 	): void => {
 		handleIncomingWindowMessage(event, this.inboundMessageHandlers, this.messageLoggingOptions);
+	};
+
+	/**
+	 * Posts {@link ContainerDevtoolsFeatures.Message} to the window (globalThis) with the set of features supported
+	 * by this instance.
+	 */
+	private readonly postSupportedFeatures = (): void => {
+		const supportedFeatures = this.getSupportedFeatures();
+		postMessagesToWindow(
+			this.messageLoggingOptions,
+			ContainerDevtoolsFeatures.createMessage({
+				containerId: this.containerId,
+				features: supportedFeatures,
+			}),
+		);
 	};
 
 	/**
@@ -539,6 +568,15 @@ export class ContainerDevtools
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
+	}
+
+	/**
+	 * Gets the set of features supported by this instance.
+	 */
+	private getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
+		return {
+			[ContainerDevtoolsFeature.ContainerData]: this.containerData !== undefined,
+		};
 	}
 
 	/**

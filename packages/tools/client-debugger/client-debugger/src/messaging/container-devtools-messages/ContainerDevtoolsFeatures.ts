@@ -4,7 +4,7 @@
  */
 
 import { HasContainerId } from "../../CommonInterfaces";
-import { DevtoolsFeatureFlags } from "../../Features";
+import { ContainerDevtoolsFeatureFlags } from "../../Features";
 import { IDevtoolsMessage } from "../Messages";
 
 /**
@@ -30,7 +30,7 @@ export namespace ContainerDevtoolsFeatures {
 		 * Describes the set of features supported by the {@link ContainerDevtools} instance associated with the
 		 * specified {@link HasContainerId.containerId}.
 		 */
-		features: DevtoolsFeatureFlags;
+		features: ContainerDevtoolsFeatureFlags;
 	}
 
 	/**
