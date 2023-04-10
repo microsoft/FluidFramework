@@ -256,7 +256,7 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		assert.strictEqual(opSpaceId2, 1);
 		assert.strictEqual(opSpaceId3, 2);
 		assert.strictEqual(opSpaceId3, finalId3);
-		assert.strictEqual(opSpaceId3, 3);
+		assert.strictEqual(opSpaceId4, 3);
 		assert.strictEqual(opSpaceId4, finalId4);
 
 		assert.equal(
@@ -294,16 +294,17 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 		assert(getIdCompressor(sharedMapContainer2) !== undefined, "IdCompressor is undefined");
 		assert(getIdCompressor(sharedMapContainer3) !== undefined, "IdCompressor is undefined");
 
-		const firstId = getIdCompressor(sharedMapContainer1).generateCompressedId();
-		const secondId = getIdCompressor(sharedMapContainer2).generateCompressedId();
-		const thirdId = getIdCompressor(sharedMapContainer2).generateCompressedId();
+		const firstIdContainer1 = getIdCompressor(sharedMapContainer1).generateCompressedId();
+		const secondIdContainer2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
+		const thirdIdContainer2 = getIdCompressor(sharedMapContainer2).generateCompressedId();
 		const decompressedIds: string[] = [];
 
-		const firstDecompressedId = getIdCompressor(sharedMapContainer1).decompress(firstId);
-		decompressedIds.push(firstDecompressedId);
-		sharedMapContainer1.set(firstDecompressedId, "value1");
+		const firstDecompressedIdContainer1 =
+			getIdCompressor(sharedMapContainer1).decompress(firstIdContainer1);
+		decompressedIds.push(firstDecompressedIdContainer1);
+		sharedMapContainer1.set(firstDecompressedIdContainer1, "value1");
 
-		[secondId, thirdId].forEach((id, index) => {
+		[secondIdContainer2, thirdIdContainer2].forEach((id, index) => {
 			assert(getIdCompressor(sharedMapContainer2) !== undefined, "IdCompressor is undefined");
 			const decompressedId = getIdCompressor(sharedMapContainer2).decompress(id);
 			decompressedIds.push(decompressedId);
@@ -312,23 +313,32 @@ describeNoCompat("Runtime IdCompressor", (getTestObjectProvider) => {
 
 		// should be negative
 		assert(
-			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(firstId) < 0,
+			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(firstIdContainer1) < 0,
 			"Expected op space id to be < 0",
 		);
 		assert(
-			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(secondId) < 0,
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(secondIdContainer2) < 0,
 			"Expected op space id to be < 0",
 		);
 		assert(
-			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(thirdId) < 0,
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(thirdIdContainer2) < 0,
 			"Expected op space id to be < 0",
 		);
 
 		await provider.ensureSynchronized();
 
-		assert.strictEqual(getIdCompressor(sharedMapContainer1).normalizeToOpSpace(firstId), 0);
-		assert.strictEqual(getIdCompressor(sharedMapContainer2).normalizeToOpSpace(secondId), 512);
-		assert.strictEqual(getIdCompressor(sharedMapContainer2).normalizeToOpSpace(thirdId), 513);
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer1).normalizeToOpSpace(firstIdContainer1),
+			0,
+		);
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(secondIdContainer2),
+			512,
+		);
+		assert.strictEqual(
+			getIdCompressor(sharedMapContainer2).normalizeToOpSpace(thirdIdContainer2),
+			513,
+		);
 
 		decompressedIds.forEach((id, index) => {
 			assert.equal(sharedMapContainer1.get(id), `value${index + 1}`);
