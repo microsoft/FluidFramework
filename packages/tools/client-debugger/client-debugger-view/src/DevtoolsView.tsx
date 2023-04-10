@@ -140,11 +140,10 @@ const menuStyles: IStackItemStyles = {
  * @remarks If no debugger has been initialized, will display a note to the user and a refresh button to search again.
  */
 export function DevtoolsView(): React.ReactElement {
+	// Set of features supported by the Devtools.
 	const [supportedFeatures, setSupportedFeatures] = React.useState<
 		DevtoolsFeatureFlags | undefined
 	>();
-	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
-	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
 
 	const messageRelay = useMessageRelay();
 
@@ -156,11 +155,6 @@ export function DevtoolsView(): React.ReactElement {
 			[DevtoolsFeatures.MessageType]: (untypedMessage) => {
 				const message = untypedMessage as DevtoolsFeatures.Message;
 				setSupportedFeatures(message.data.features);
-				return true;
-			},
-			[ContainerList.MessageType]: (untypedMessage) => {
-				const message = untypedMessage as ContainerList.Message;
-				setContainers(message.data.containers);
 				return true;
 			},
 		};
@@ -179,13 +173,70 @@ export function DevtoolsView(): React.ReactElement {
 		// Query for supported feature set
 		messageRelay.postMessage(getSupportedFeaturesMessage);
 
+		return (): void => {
+			messageRelay.off("message", messageHandler);
+		};
+	}, [messageRelay, setSupportedFeatures]);
+
+	return (
+		<FluentProvider theme={getFluentUIThemeToUse()}>
+			{supportedFeatures === undefined ? (
+				<Waiting />
+			) : (
+				<_DevtoolsView supportedFeatures={supportedFeatures} />
+			)}
+		</FluentProvider>
+	);
+}
+
+interface _DevtoolsViewProps {
+	/**
+	 * Set of features supported by the Devtools.
+	 */
+	supportedFeatures: DevtoolsFeatureFlags;
+}
+
+/**
+ * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
+ */
+function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
+	const { supportedFeatures } = props;
+
+	const [containers, setContainers] = React.useState<ContainerMetadata[] | undefined>();
+	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
+
+	const messageRelay = useMessageRelay();
+
+	React.useEffect(() => {
+		/**
+		 * Handlers for inbound messages related to the registry.
+		 */
+		const inboundMessageHandlers: InboundHandlers = {
+			[ContainerList.MessageType]: (untypedMessage) => {
+				const message = untypedMessage as ContainerList.Message;
+				setContainers(message.data.containers);
+				return true;
+			},
+		};
+
+		/**
+		 * Event handler for messages coming from the Message Relay
+		 */
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: loggingContext,
+			});
+		}
+
+		messageRelay.on("message", messageHandler);
+
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
-	}, [messageRelay, setSupportedFeatures, setContainers]);
+	}, [messageRelay, setContainers]);
 
 	return (
 		<FluentProvider theme={getFluentUIThemeToUse()}>
@@ -276,7 +327,7 @@ interface MenuProps {
 	/**
 	 * Set of features supported by the {@link FluidDevtools} instance being used by the page application.
 	 */
-	supportedFeatures?: DevtoolsFeatureFlags;
+	supportedFeatures: DevtoolsFeatureFlags;
 
 	/**
 	 * The set of Containers to offer as selection options.
@@ -322,7 +373,7 @@ function Menu(props: MenuProps): React.ReactElement {
 	}
 
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
-	if (supportedFeatures?.[DevtoolsFeature.Telemetry] === true) {
+	if (supportedFeatures[DevtoolsFeature.Telemetry] === true) {
 		menuSections.push(
 			<MenuSection header="Telemetry" key="telemetry-menu-section">
 				<MenuItem
