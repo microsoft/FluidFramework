@@ -81,7 +81,8 @@ interface TelemetryMenuSelection {
  */
 type MenuSelection = TelemetryMenuSelection | ContainerMenuSelection;
 
-// Styles definition
+// #region Styles definitions
+
 const stackStyles: IStackStyles = {
 	root: {
 		"display": "flex",
@@ -101,6 +102,7 @@ const stackStyles: IStackStyles = {
 		},
 	},
 };
+
 const contentViewStyles: IStackItemStyles = {
 	root: {
 		"alignItems": "center",
@@ -132,6 +134,8 @@ const menuStyles: IStackItemStyles = {
 		minWidth: 150,
 	},
 };
+
+// #endregion
 
 /**
  * Renders drop down to show more than 2 containers and manage the selected container in the debug view for an active
