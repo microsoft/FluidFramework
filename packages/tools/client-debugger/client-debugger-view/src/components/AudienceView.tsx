@@ -13,7 +13,7 @@ import {
 	GetAudienceSummary,
 	handleIncomingMessage,
 	HasContainerId,
-	IDebuggerMessage,
+	IDevtoolsMessage,
 	InboundHandlers,
 } from "@fluid-tools/client-debugger";
 
@@ -61,7 +61,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 		/**
 		 * Event handler for messages coming from the Message Relay
 		 */
-		function messageHandler(message: Partial<IDebuggerMessage>): void {
+		function messageHandler(message: Partial<IDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: loggingContext,
 			});
