@@ -18,7 +18,7 @@ export namespace ContainerDevtoolsFeatures {
 	 *
 	 * @public
 	 */
-	export const MessageType = "DEVTOOLS_FEATURES";
+	export const MessageType = "CONTAINER_DEVTOOLS_FEATURES";
 
 	/**
 	 * Message data format used by {@link ContainerDevtoolsFeatures.Message}.
