@@ -59,6 +59,13 @@ class SocketIoServer implements core.IWebSocketServer {
 		this.io.on("connection", (socket: Socket) => {
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
+
+			// server side listening for ping events
+			socket.on("ping", (cb) => {
+				if (typeof cb === "function") {
+					cb();
+				}
+			});
 		});
 	}
 

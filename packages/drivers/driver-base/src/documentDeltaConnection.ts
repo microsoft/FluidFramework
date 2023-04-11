@@ -72,6 +72,8 @@ export class DocumentDeltaConnection
 
 	private _details: IConnected | undefined;
 
+	private trackLatencyTimer: number | undefined;
+
 	// Listeners only needed while the connection is in progress
 	private readonly connectionListeners: Map<string, (...args: any[]) => void> = new Map();
 	// Listeners used throughout the lifetime of the DocumentDeltaConnection
@@ -146,7 +148,7 @@ export class DocumentDeltaConnection
 
 		this.mc = loggerToMonitoringContext(ChildLogger.create(logger, "DeltaConnection"));
 
-		this.on("newListener", (event, listener) => {
+		this.on("newListener", (event, _listener) => {
 			assert(!this.disposed, 0x20a /* "register for event on disposed object" */);
 
 			// Some events are already forwarded - see this.addTrackedListener() calls in initialize().
@@ -169,9 +171,33 @@ export class DocumentDeltaConnection
 				0x20b /* "mismatch" */,
 			);
 			if (!this.trackedListeners.has(event)) {
-				this.addTrackedListener(event, (...args: any[]) => {
-					this.emit(event, ...args);
-				});
+				if (event === "pong") {
+					// Garbage so we don't subscribe to any event coming from socket
+					this.trackedListeners.set("pong", () => {});
+
+					// log latency every minute
+					this.trackLatencyTimer = setInterval(() => {
+						const start = Date.now();
+
+						// Emit ping event every minute. Log if latency is longer than 1 min
+						this.socket.volatile.emit("ping", () => {
+							const latency = Date.now() - start;
+							if (latency > 1000 * 60) {
+								this.mc.logger.sendErrorEvent({
+									eventName: "LatencyTooLong",
+									driverVersion,
+									duration: latency,
+								});
+							}
+
+							this.emit("pong", latency);
+						});
+					}, 1000 * 60);
+				} else {
+					this.addTrackedListener(event, (...args: any[]) => {
+						this.emit(event, ...args);
+					});
+				}
 			}
 		});
 	}
@@ -394,6 +420,11 @@ export class DocumentDeltaConnection
 		// "dispose" event.
 		if (this._disposed) {
 			return;
+		}
+
+		if (this.trackLatencyTimer !== undefined) {
+			clearInterval(this.trackLatencyTimer);
+			this.trackLatencyTimer = undefined;
 		}
 
 		// We set the disposed flag as a part of the contract for overriding the disconnect method. This is used by
