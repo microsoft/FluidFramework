@@ -20,10 +20,16 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { IRunConfig } from "./loadTestDataStore";
 
 /**
- * The maximum number of leaf data objects that can be running at a given time. This is used to limit the number of
- * ops that can be sent per minute so that ops are not throttled.
+ * The maximum number of leaf data objects that can be running at a given time per client. This is used to limit the
+ * number of ops that can be sent per minute so that ops are not throttled.
  */
 const maxRunningLeafDataObjects = 3;
+
+/**
+ * The maximum number of attachment blob objects that can be running at a give time per client. This is used to limit
+ * the number of network calls for fetching blobs so that network calls are not throttled.
+ */
+const maxRunningAttachmentBlobs = 3;
 
 /** An object (data objects or attachment blob based) that can run / stop activity in the test. */
 export interface IGCActivityObject {
@@ -357,7 +363,8 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 		// Set up the listener that would run / stop activity from previous run of this client.
 		this.setupEventHandlers();
 
-		// Run activity on initial set of referenced objects, if any.
+		// Initialize referenced objects, if any and run activity on them.
+		await this.initialize();
 		this.runInitialActivity()
 			.then((results: boolean[]) => {
 				for (const result of results) {
@@ -488,16 +495,14 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	/**
-	 * Runs activity on initial set of objects that are referenced, if any. When a container reloads because
+	 * Initialize the data stores and attachment blobs created by this client. When a container reloads because
 	 * of error or session expiry, it can have referenced objects that should now run.
-	 * @returns A set of promises of each object's run result.
 	 */
-	private async runInitialActivity(): Promise<boolean[]> {
-		const runP: Promise<boolean>[] = [];
+	private async initialize(): Promise<void> {
 		// Initialize the referenced data object list from the data object map.
 		for (const dataObjectDetails of this.dataObjectMap) {
 			const dataObjectId = dataObjectDetails[0];
-			// Only run data objects created by this node.
+			// Only initialize data objects created by this node.
 			if (!dataObjectId.startsWith(this.nodeId)) {
 				continue;
 			}
@@ -508,13 +513,12 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				id: dataObjectId,
 				object: dataObject,
 			});
-			runP.push(dataObject.run(this.childRunConfig, dataObjectId));
 		}
 
 		// Initialize the referenced blob list from the blob map.
 		for (const blobDetails of this.blobMap) {
 			const blobId = blobDetails[0];
-			// Only run blobs created by this node.
+			// Only initialize blobs created by this node.
 			if (!blobId.startsWith(this.nodeId)) {
 				continue;
 			}
@@ -526,9 +530,23 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 				id: blobId,
 				object: blobObject,
 			});
-			runP.push(blobObject.run(this.childRunConfig, blobId));
 		}
+	}
 
+	/**
+	 * Runs activity on initial set of objects that are referenced, if any. When a container reloads because
+	 * of error or session expiry, it can have referenced objects that should now run.
+	 * @returns A set of promises of each object's run result.
+	 */
+	private async runInitialActivity(): Promise<boolean[]> {
+		const runP: Promise<boolean>[] = [];
+		// Run the data objects and blobs that are in the referenced list.
+		for (const dataObjectDetails of this.referencedDataObjects) {
+			runP.push(dataObjectDetails.object.run(this.childRunConfig, dataObjectDetails.id));
+		}
+		for (const blobDetails of this.referencedAttachmentBlobs) {
+			runP.push(blobDetails.object.run(this.childRunConfig, blobDetails.id));
+		}
 		return Promise.all(runP);
 	}
 
@@ -648,6 +666,13 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	}
 
 	/**
+	 * Returns whether it's possible to run a new attachment blob object at the moment.
+	 */
+	private canRunNewBlobObject() {
+		return this.referencedAttachmentBlobs.length < maxRunningAttachmentBlobs;
+	}
+
+	/**
 	 * Performs one of the following activity at random:
 	 * 1. CreateAndReference - Upload an attachment blob and reference it.
 	 * 2. Unreference - Unreference the oldest referenced attachment blob.
@@ -657,7 +682,14 @@ export class DataObjectNonCollab extends BaseDataObject implements IGCActivityOb
 	private async performBlobActivity(config: IRunConfig): Promise<boolean> {
 		let activityCompleted = false;
 		while (!activityCompleted) {
-			const blobAction = config.random.integer(0, 3);
+			activityCompleted = false;
+
+			// If it's possible to run a new blob, all activities can be performed upto Revive. If not,
+			// only activities upto Unreference can be preformed.
+			const maxActivityIndex = this.canRunNewBlobObject()
+				? ReferenceActivityType.Revive
+				: ReferenceActivityType.Unreference;
+			const blobAction = config.random.integer(0, maxActivityIndex);
 			switch (blobAction) {
 				case ReferenceActivityType.CreateAndReference: {
 					const blobContents = `Content - ${this.uniqueBlobContentId}-${uuid()}`;
