@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/container-runtime";
 import { ILoaderOptions } from "@fluidframework/container-loader";
 import { ConfigTypes, LoggingError } from "@fluidframework/telemetry-utils";
-import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
+import { DriverEndpoint, TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { ILoadTestConfig, OptionOverride } from "./testConfigFile";
 
 const loaderOptionsMatrix: OptionsMatrix<ILoaderOptions> = {
@@ -124,7 +124,7 @@ export function generateConfigurations(
 export function getOptionOverride(
 	testConfig: ILoadTestConfig | undefined,
 	driverType: TestDriverTypes,
-	endpoint: string | undefined,
+	endpoint: DriverEndpoint | undefined,
 ): OptionOverride | undefined {
 	const driverEndpointOverride = `${driverType}-${endpoint}`;
 	return (
