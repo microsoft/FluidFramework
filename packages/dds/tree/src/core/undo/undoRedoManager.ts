@@ -18,7 +18,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	/**
 	 * @param repairDataStoryFactory - Factory function for creating {@link RepairDataStore}s to create and store repair
 	 * data for {@link UndoableCommit}s.
-	 * @param changeFamily - TODO
+	 * @param changeFamily - {@link ChangeFamily} used for inverting changes.
 	 * @param applyChange - Callback to apply undos as local changes. This should call {@link UndoRedoManager.trackCommit}
 	 * with the created commit.
 	 * @param headUndoCommit - Optional commit to set as the initial undoable commit.
@@ -74,8 +74,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		const commitToUndo = this.headUndoCommit;
 
 		if (commitToUndo === undefined) {
-			// No undoable commits, send event and exit early
-			// TODO: sent event?
+			// No undoable commits, exit early
 			return undefined;
 		}
 
