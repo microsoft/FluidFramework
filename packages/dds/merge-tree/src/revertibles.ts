@@ -106,7 +106,10 @@ export interface RevertRootMergeBlock {
 function findRevertRootMergeBlock(trackable: Trackable): RevertRootMergeBlock {
 	const segmentOrNode = trackable.isLeaf() ? trackable : trackable.getSegment();
 	const maybeRoot: Partial<RevertRootMergeBlock> | undefined = findRootMergeBlock(segmentOrNode);
-	assert(maybeRoot?.mergeTree !== undefined, "trackable is invalid as it is not in a rooted merge tree.");
+	assert(
+		maybeRoot?.mergeTree !== undefined,
+		"trackable is invalid as it is not in a rooted merge tree.",
+	);
 
 	if (maybeRoot.__mergeTreeRevertible === undefined) {
 		const detachedReferences = new EndOfTreeSegment(maybeRoot.mergeTree);
