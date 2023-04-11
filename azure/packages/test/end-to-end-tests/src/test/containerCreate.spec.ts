@@ -164,6 +164,11 @@ describe("Container create with feature flags", () => {
 		};
 	});
 
+	/**
+	 * Scenario: Test if AzureClient can create a container with feature gates.
+	 *
+	 * Expected behavior: An error should not be thrown and the logger should have logged the enabled feature gates.
+	 */
 	it("can create containers with feature gates", async () => {
 		await client.createContainer(schema);
 		mockLogger.assertMatchAny([
