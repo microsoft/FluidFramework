@@ -229,7 +229,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		Object.entries(stashedBlobs).forEach(([localId, entry]) => {
 			if (entry.minTTLInSeconds && entry.localUploadTime) {
 				const timeLapseSinceLocalUpload = (Date.now() - entry.localUploadTime) / 1000;
-				// stashed entries with more than half-life in storage will not be reuploaded  
+				// stashed entries with more than half-life in storage will not be reuploaded
 				if (entry.minTTLInSeconds - timeLapseSinceLocalUpload > entry.minTTLInSeconds / 2) {
 					return;
 				}
@@ -531,11 +531,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private sendBlobAttach(localId: string, blobId?: string): void {
 		const pendingEntry = this.pendingBlobs.get(localId);
-		if (pendingEntry){
+		if (pendingEntry) {
 			this.logTimeInfo(pendingEntry);
 			if (pendingEntry.minTTLInSeconds && pendingEntry.localUploadTime) {
 				const timeLapseSinceUpload = (Date.now() - pendingEntry.localUploadTime) / 1000;
-				if (timeLapseSinceUpload - pendingEntry.minTTLInSeconds > 0){
+				if (timeLapseSinceUpload - pendingEntry.minTTLInSeconds > 0) {
 					this.deleteAndEmitsIfEmpty(localId);
 					throw new Error("Trying to send BlobAttachOp of expired blob");
 				}
