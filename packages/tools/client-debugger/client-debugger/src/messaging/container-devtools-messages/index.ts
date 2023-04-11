@@ -4,7 +4,7 @@
  */
 
 /**
- * This directory contains {@link IDebuggerMessage} types listened for and posted by {@link ContainerDevtools}.
+ * This directory contains {@link IDevtoolsMessage} types listened for and posted by {@link ContainerDevtools}.
  */
 
 export { AudienceSummary } from "./AudienceSummary";

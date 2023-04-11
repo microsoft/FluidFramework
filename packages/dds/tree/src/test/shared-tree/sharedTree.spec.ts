@@ -20,13 +20,7 @@ import {
 } from "../../feature-libraries";
 import { brand, TransactionResult } from "../../util";
 import { SharedTreeTestFactory, SummarizeType, TestTreeProvider } from "../utils";
-import {
-	ISharedTree,
-	ISharedTreeView,
-	SharedTreeFactory,
-	runSynchronous,
-	schematizeView,
-} from "../../shared-tree";
+import { ISharedTree, ISharedTreeView, SharedTreeFactory, runSynchronous } from "../../shared-tree";
 import {
 	compareUpPaths,
 	FieldKey,
@@ -1345,52 +1339,37 @@ describe("SharedTree", () => {
 			cursor.clear();
 		});
 
-		it("are disposed after merging", async () => {
+		it("can be mutated after merging", async () => {
 			const provider = await TestTreeProvider.create(1);
 			const [tree] = provider.trees;
-			const viewA = tree.fork();
-			const viewB = viewA.fork();
-			const viewC = viewB.fork();
-			assert.equal(viewA.isMerged(), false);
-			assert.equal(viewB.isMerged(), false);
-			assert.equal(viewC.isMerged(), false);
-			viewA.merge();
-			assert.equal(viewA.isMerged(), true);
-			assert.equal(viewB.isMerged(), true);
-			assert.equal(viewC.isMerged(), true);
+			const baseView = tree.fork();
+			pushTestValue(baseView, "A");
+			baseView.merge();
+			pushTestValue(baseView, "B");
+			assert.deepEqual([...getTestValues(tree)].reverse(), ["A"]);
+			assert.deepEqual([...getTestValues(baseView)].reverse(), ["A", "B"]);
+			baseView.merge();
+			assert.deepEqual([...getTestValues(tree)].reverse(), ["A", "B"]);
 		});
 
-		it("can be read after disposal", async () => {
+		it("can pull after merging", async () => {
+			const provider = await TestTreeProvider.create(1);
+			const [tree] = provider.trees;
+			const baseView = tree.fork();
+			pushTestValue(baseView, "A");
+			baseView.merge();
+			pushTestValue(tree, "B");
+			baseView.pull();
+			assert.deepEqual([...getTestValues(baseView)].reverse(), ["A", "B"]);
+		});
+
+		it("can be read after merging", async () => {
 			const provider = await TestTreeProvider.create(1);
 			const [tree] = provider.trees;
 			pushTestValue(tree, "root");
 			const view = tree.fork();
 			view.merge();
 			assert.equal(peekTestValue(view), "root");
-		});
-
-		it("cannot be mutated after disposal", async () => {
-			const provider = await TestTreeProvider.create(1);
-			const [tree] = provider.trees;
-			const view = tree.fork();
-			view.merge();
-			const expectedError = "Branch is already merged";
-			assert.throws(
-				() => view.pull(),
-				(e) => validateAssertionError(e, expectedError),
-			);
-			assert.throws(
-				() => view.fork(),
-				(e) => validateAssertionError(e, expectedError),
-			);
-			assert.throws(
-				() => view.merge(),
-				(e) => validateAssertionError(e, expectedError),
-			);
-			assert.throws(
-				() => pushTestValue(view, "unused"),
-				(e) => validateAssertionError(e, expectedError),
-			);
 		});
 
 		it("properly fork the tree schema", async () => {
@@ -1998,7 +1977,7 @@ function testTreeView(): ISharedTreeView {
 		treeSchema,
 	);
 	const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-	return schematizeView(tree, {
+	return tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree: 24,
 		schema,
