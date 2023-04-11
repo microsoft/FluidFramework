@@ -191,17 +191,11 @@ describe("MergeTree.Client", () => {
 							}
 						});
 						const revertRoot: Partial<RevertRootMergeBlock> = clients.B.mergeTree.root;
-						if (
-							revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs !==
-							undefined
-						) {
-							assert.notDeepStrictEqual(
-								revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs
-									?.empty,
-								false,
-								"there should be no left over local references in detached references",
-							);
-						}
+						assert.notDeepStrictEqual(
+							revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs?.empty,
+							false,
+							"there should be no left over local references in detached references",
+						);
 					} catch (e) {
 						throw logger.addLogsToError(e);
 					}

@@ -65,14 +65,26 @@ export interface MergeTreeRevertibleDriver {
 	insertFromSpec(pos: number, spec: IJSONSegment);
 	removeRange(start: number, end: number);
 	annotateRange(start: number, end: number, props: PropertySet);
+	/**
+	 * @deprecated This function will be removed from this interface in the next release
+	 */
 	createLocalReferencePosition(
 		segment: ISegment,
 		offset: number,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 	): LocalReferencePosition;
+	/**
+	 * @deprecated This function will be removed from this interface in the next release
+	 */
 	localReferencePositionToPosition(lref: LocalReferencePosition): number;
+	/**
+	 * @deprecated This function will be removed from this interface in the next release
+	 */
 	getPosition(segment: ISegment): number;
+	/**
+	 * @deprecated This function will be removed from this interface in the next release
+	 */
 	getContainingSegment(pos: number): {
 		segment: ISegment | undefined;
 		offset: number | undefined;
@@ -404,29 +416,24 @@ export function revertMergeTreeDeltaRevertibles(
 	driver: MergeTreeRevertibleDriver,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {
-	if (revertibles.length === 0) {
-		return;
-	}
 	const revertRoot = findRevertRootMergeBlock(revertibles[0].trackingGroup.tracked[0]);
 
 	while (revertibles.length > 0) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const r = revertibles.pop()!;
 		const operation = r.operation;
-		if (r.trackingGroup.size > 0) {
-			switch (operation) {
-				case MergeTreeDeltaType.INSERT:
-					revertLocalInsert(driver, revertRoot, r);
-					break;
-				case MergeTreeDeltaType.REMOVE:
-					revertLocalRemove(driver, revertRoot, r);
-					break;
-				case MergeTreeDeltaType.ANNOTATE:
-					revertLocalAnnotate(driver, revertRoot, r);
-					break;
-				default:
-					unreachableCase(operation);
-			}
+		switch (operation) {
+			case MergeTreeDeltaType.INSERT:
+				revertLocalInsert(driver, revertRoot, r);
+				break;
+			case MergeTreeDeltaType.REMOVE:
+				revertLocalRemove(driver, revertRoot, r);
+				break;
+			case MergeTreeDeltaType.ANNOTATE:
+				revertLocalAnnotate(driver, revertRoot, r);
+				break;
+			default:
+				unreachableCase(operation);
 		}
 	}
 }
