@@ -4,7 +4,7 @@
  */
 
 import { ChangeFamily, ChangeFamilyEditor } from "../change-family";
-import { GraphCommit, RevisionTag, tagChange } from "../rebase";
+import { GraphCommit, GraphCommitType, RevisionTag, tagChange } from "../rebase";
 import { ReadonlyRepairDataStore, RepairDataStore } from "../repair";
 import { Delta } from "../tree";
 
@@ -13,7 +13,6 @@ import { Delta } from "../tree";
  */
 export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	private pendingRepairData?: RepairDataStore;
-	protected pendingCommit?: UndoableCommitType;
 
 	/**
 	 * @param repairDataStoryFactory - Factory function for creating {@link RepairDataStore}s to create and store repair
@@ -26,7 +25,11 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	public constructor(
 		private readonly repairDataStoryFactory: () => RepairDataStore,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		protected readonly applyChange: (change: TChange) => void,
+		protected readonly applyChange: (
+			change: TChange,
+			revision?: RevisionTag,
+			type?: GraphCommitType,
+		) => void,
 		protected headUndoCommit?: UndoableCommit<TChange>,
 	) {}
 
@@ -47,9 +50,8 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 	 * Adds the provided commit to the undo commit tree. Also deals with commits created by calling {@link UndoRedoManager.undo}.
 	 */
 	public trackCommit(commit: GraphCommit<TChange>) {
-		if (this.pendingCommit === UndoableCommitType.Undo) {
+		if (commit.type === GraphCommitType.Undo) {
 			// Currently no need to handle undo commits
-			this.pendingCommit = undefined;
 			return;
 		}
 
@@ -81,9 +83,6 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		const { commit, parent, repairData } = commitToUndo;
 		// Removes this undo from the undo commit tree
 		this.headUndoCommit = parent;
-		// Set the pending commit type so that the next call to `trackCommit` knows how
-		// to handle the provided undo commit.
-		this.pendingCommit = UndoableCommitType.Undo;
 
 		const inverse = this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
@@ -91,7 +90,7 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			repairData,
 		);
 
-		this.applyChange(inverse);
+		this.applyChange(inverse, undefined, GraphCommitType.Undo);
 	}
 
 	/**
@@ -108,10 +107,6 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 			this.headUndoCommit,
 		);
 	}
-}
-
-export enum UndoableCommitType {
-	Undo = "undo",
 }
 
 /**

@@ -145,6 +145,7 @@ export {
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
+	GraphCommitType,
 	RevisionTag,
 	TaggedChange,
 	makeAnonChange,
@@ -181,4 +182,4 @@ export {
 
 export { RepairDataStore, ReadonlyRepairDataStore } from "./repair";
 
-export { UndoRedoManager } from "./undo";
+export { UndoRedoManager, UndoableCommitType } from "./undo";

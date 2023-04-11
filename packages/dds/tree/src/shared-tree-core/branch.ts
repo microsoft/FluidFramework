@@ -10,6 +10,7 @@ import {
 	ChangeFamilyEditor,
 	findAncestor,
 	GraphCommit,
+	GraphCommitType,
 	mintCommit,
 	mintRevisionTag,
 	Rebaser,
@@ -74,12 +75,13 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		);
 	}
 
-	public applyChange(change: TChange, rebaseAnchors = true): void {
+	public applyChange(change: TChange, rebaseAnchors = true, type?: GraphCommitType): void {
 		const revision = mintRevisionTag();
 		this.head = mintCommit(this.head, {
 			revision,
 			sessionId: this.sessionId,
 			change,
+			type,
 		});
 
 		const delta = this.changeFamily.intoDelta(change);
@@ -88,6 +90,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.transactions.size === 0 ? revision : this.transactions.outerRevision,
 		);
 		this.transactions.repairStore?.capture(delta, this.head.revision);
+
+		// If this is not part of a transaction, add it to the undo commit tree
+		if (this.transactions.size === 0) {
+			this.undoRedoManager.trackCommit(this.head);
+		}
 
 		if (rebaseAnchors) {
 			this.changeFamily.rebaser.rebaseAnchors(this.anchors, change);

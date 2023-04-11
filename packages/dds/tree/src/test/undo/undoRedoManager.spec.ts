@@ -13,7 +13,7 @@ import {
 	mintRevisionTag,
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
-import { UndoableCommit, UndoableCommitType } from "../../core/undo/undoRedoManager";
+import { UndoableCommit } from "../../core/undo/undoRedoManager";
 import { TestChange, testChangeFamilyFactory } from "../testChange";
 import { MockRepairDataStore } from "../utils";
 
@@ -46,7 +46,6 @@ describe("UndoRedoManager", () => {
 			const undoCommit = createTestGraphCommit([0], 1, localSessionId);
 			manager.trackCommit(undoCommit);
 			manager.undo();
-			assert.equal(manager.getPendingCommitType(), UndoableCommitType.Undo);
 			assert.equal(manager.getHeadUndoCommit(), initialCommit);
 			assert.equal(manager.changesApplied, 1);
 
@@ -111,10 +110,6 @@ class TestUndoRedoManager extends UndoRedoManager<TestChange, ChangeFamilyEditor
 
 	public getHeadUndoCommit(): UndoableCommit<TestChange> | undefined {
 		return this.headUndoCommit as UndoableCommit<TestChange>;
-	}
-
-	public getPendingCommitType(): UndoableCommitType | undefined {
-		return this.pendingCommit;
 	}
 }
 
