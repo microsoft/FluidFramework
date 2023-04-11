@@ -101,9 +101,7 @@ describe("Pong", () => {
 			});
 
 			clock.tick(60 * 1000);
-			await timeoutPromise(
-				(resolve) => container.deltaManager.once("pong", () => resolve()),
-			);
+			await timeoutPromise((resolve) => container.deltaManager.once("pong", () => resolve()));
 			assert.strictEqual(run, 1);
 		}).timeout(100 * 1000);
 	});
