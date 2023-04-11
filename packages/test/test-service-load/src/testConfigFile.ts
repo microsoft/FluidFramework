@@ -61,7 +61,12 @@ export interface ILoadTestConfig {
 	detachedBlobCount?: number;
 
 	/**
-	 * Override loader options to force a specific value
+	 * Override loader options to force a specific value.
+	 *
+	 * The optionOverride selected is the "TestDriverType-DriverEndpoint". If it's empty then the optionOverride selected is
+	 * based on "TestDriverType"
+	 *
+	 * "TestDriverType" and "DriverEndpoint" can be found in packages/test/test-driver-definitions/src/interfaces.ts
 	 */
 	optionOverrides?: Record<string, OptionOverride | undefined>;
 
