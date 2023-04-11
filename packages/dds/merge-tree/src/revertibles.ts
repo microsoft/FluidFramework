@@ -205,7 +205,7 @@ function appendLocalAnnotateToRevertibles(
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
-	driver: MergeTreeRevertibleDriver | undefined,
+	driver: MergeTreeRevertibleDriver,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
 	revertibles: MergeTreeDeltaRevertible[],
 ) {

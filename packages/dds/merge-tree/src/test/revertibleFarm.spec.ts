@@ -190,11 +190,10 @@ describe("MergeTree.Client", () => {
 								);
 							}
 						});
-						const revertRoot = clients.B.mergeTree
-							.root as Partial<RevertRootMergeBlock>;
+						const revertRoot: Partial<RevertRootMergeBlock> = clients.B.mergeTree.root;
 						if (
-							revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs
-								?.empty === false
+							revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs !==
+							undefined
 						) {
 							assert.notDeepStrictEqual(
 								revertRoot.__mergeTreeRevertible?.detachedReferences?.localRefs
