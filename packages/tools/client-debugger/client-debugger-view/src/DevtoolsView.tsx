@@ -243,17 +243,15 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	}, [messageRelay, setContainers]);
 
 	return (
-		<FluentProvider theme={getFluentUIThemeToUse()}>
-			<Stack enableScopedSelectors horizontal styles={stackStyles}>
-				<Menu
-					currentSelection={menuSelection}
-					setSelection={setMenuSelection}
-					containers={containers}
-					supportedFeatures={supportedFeatures}
-				/>
-				<View menuSelection={menuSelection} containers={containers} />
-			</Stack>
-		</FluentProvider>
+		<Stack enableScopedSelectors horizontal styles={stackStyles}>
+			<Menu
+				currentSelection={menuSelection}
+				setSelection={setMenuSelection}
+				containers={containers}
+				supportedFeatures={supportedFeatures}
+			/>
+			<View menuSelection={menuSelection} containers={containers} />
+		</Stack>
 	);
 }
 
