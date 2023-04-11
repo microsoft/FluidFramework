@@ -85,7 +85,7 @@ export function AudienceView(props: AudienceViewProps): React.ReactElement {
 	const myClientMetadata = audienceData.audienceState.find(
 		(audience) => audience.clientId === audienceData.clientId,
 	)?.client;
-	
+
 	const audienceStateItems: TransformedAudienceStateData[] = audienceData.audienceState.map(
 		(entry) => {
 			return {
