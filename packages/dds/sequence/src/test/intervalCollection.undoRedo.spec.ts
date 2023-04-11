@@ -20,6 +20,9 @@ import { IntervalCollection, IntervalType, SequenceInterval } from "../intervalC
 import { SharedStringFactory } from "../sequenceFactory";
 import { assertIntervals } from "./intervalUtils";
 
+// The code being tested currently does the wrong behavior. Currently,
+// the tests validate the bug and should be updated when the implementation
+// is fixed.
 describe("Undo/redo for interval collection operations", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
@@ -73,7 +76,7 @@ describe("Undo/redo for interval collection operations", () => {
 			appendToMergeTreeDeltaRevertibles(sharedString, op.deltaArgs, revertibles);
 		});
 
-		collection.add(0, 5, IntervalType.SlideOnRemove);
+		collection.add(0, 6, IntervalType.SlideOnRemove);
 
 		sharedString.removeRange(0, 6);
 
